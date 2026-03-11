@@ -1,0 +1,74 @@
+  console.warn
+    NetInfo not available: TypeError: A dynamic import callback was invoked without --experimental-vm-modules
+        at importModuleDynamicallyCallback (node:internal/modules/esm/utils:266:11)
+        at C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\src\hooks\useNetworkStatus.ts:33:34
+        at Generator.next (<anonymous>)
+        at asyncGeneratorStep (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\@babel\runtime\helpers\asyncToGenerator.js:3:17)
+        at _next (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\@babel\runtime\helpers\asyncToGenerator.js:17:9)
+        at C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\@babel\runtime\helpers\asyncToGenerator.js:22:7
+        at new Promise (<anonymous>)
+        at C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\@babel\runtime\helpers\asyncToGenerator.js:14:12
+        at C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\src\hooks\useNetworkStatus.ts:44:14
+        at Object.react-stack-bottom-frame (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:14062:20)
+        at runWithFiberInDEV (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:1574:13)
+        at commitHookEffectListMount (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:8376:29)
+        at commitHookPassiveMountEffects (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:8463:11)
+        at commitPassiveMountOnFiber (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:9782:13)
+        at recursivelyTraversePassiveMountEffects (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:9756:11)
+        at commitPassiveMountOnFiber (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:9794:11)
+        at flushPendingEffects (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:11528:11)
+        at performWorkOnRootViaSchedulerTask (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\react-test-renderer\cjs\react-test-renderer.development.js:2082:11)
+        at flushActQueue (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\react\cjs\react.development.js:566:34)
+        at Object.<anonymous>.process.env.NODE_ENV.exports.act (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\react\cjs\react.development.js:859:10)
+        at actImplementation (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\@testing-library\react-native\src\act.ts:30:25)
+        at renderWithAct (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\@testing-library\react-native\src\render-act.ts:13:11)
+        at renderInternal (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\@testing-library\react-native\src\render.tsx:69:33)
+        at renderInternal (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\@testing-library\react-native\src\render.tsx:44:10)
+        at renderHook (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\@testing-library\react-native\src\render-hook.tsx:55:58)
+        at Object.<anonymous> (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\src\hooks\__tests__\useNetworkStatus.test.ts:25:36)
+        at Promise.then.completed (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\jest-circus\build\utils.js:298:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\jest-circus\build\utils.js:231:10)
+        at _callCircusTest (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\jest-circus\build\run.js:316:40)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at _runTest (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\jest-circus\build\run.js:252:3)
+        at _runTestsForDescribeBlock (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\jest-circus\build\run.js:126:9)
+        at _runTestsForDescribeBlock (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\jest-circus\build\run.js:121:9)
+        at _runTestsForDescribeBlock (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\jest-circus\build\run.js:121:9)
+        at run (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\jest-circus\build\run.js:71:3)
+        at runAndTransformResultsToJestFormat (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+        at jestAdapter (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+        at runTestInternal (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\jest-runner\build\runTest.js:367:16)
+        at runTest (C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app\node_modules\jest-runner\build\runTest.js:444:34) {
+      code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING_FLAG'
+    }
+
+    [0m [90m 39 |[39m                     setIsConnected(initialState[33m.[39misConnected)[33m;[39m
+     [90m 40 |[39m                 } [36mcatch[39m (err) {
+    [31m[1m>[22m[39m[90m 41 |[39m                     console[33m.[39mwarn([32m'NetInfo not available:'[39m[33m,[39m err)[33m;[39m
+     [90m    |[39m                             [31m[1m^[22m[39m
+     [90m 42 |[39m                     setIsConnected([36mtrue[39m)[33m;[39m [90m// Assume connected if NetInfo fails[39m
+     [90m 43 |[39m                 }
+     [90m 44 |[39m             })()[33m;[39m[0m
+
+      at warn (src/hooks/useNetworkStatus.ts:41:29)
+          at Generator.throw (<anonymous>)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _throw (node_modules/@babel/runtime/helpers/asyncToGenerator.js:20:9)
+
+PASS src/hooks/__tests__/useNetworkStatus.test.ts (5.026 s)
+  useNetworkStatus
+    native platform (default in jest-expo)
+      √ returns isConnected=true and isOffline=false by default (136 ms)
+      √ gracefully handles dynamic import failure (79 ms)
+      √ stays connected after fallback (assumes connected) (61 ms)
+    web platform
+      √ uses navigator.onLine on web platform (4 ms)
+      √ registers online/offline listeners on web (4 ms)
+      √ responds to offline/online events (6 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+Time:        5.474 s
+Ran all test suites matching /src\\hooks\\__tests__\\useNetworkStatus.test.ts/i.

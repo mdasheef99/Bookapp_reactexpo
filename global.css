@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+
+    /* Daylight (Phase 1) */
+    .daylight {
+        --bg-primary: #F8FAFC;
+        /* Slate 50 */
+        --bg-card: rgba(255, 255, 255, 0.7);
+        /* White, 70% opacity for glass */
+        --text-primary: #0F172A;
+        /* Slate 900 */
+        --text-secondary: #475569;
+        /* Slate 600 */
+        --accent: #6366F1;
+        /* Indigo 500 */
+        --border: rgba(15, 23, 42, 0.1);
+    }
+
+    /* Golden Hour (Phase 2) */
+    .golden {
+        --bg-primary: #FFF7ED;
+        /* Orange 50 */
+        --bg-card: rgba(255, 237, 213, 0.6);
+        /* Orange 100, 60% opacity */
+        --text-primary: #451a03;
+        /* Amber 950 (Darker than sepia for contrast) */
+        --text-secondary: #9a3412;
+        /* Orange 900 */
+        --accent: #EA580C;
+        /* Orange 600 */
+        --border: rgba(120, 53, 15, 0.1);
+    }
+
+    /* Midnight (Phase 3) */
+    .midnight {
+        --bg-primary: #020617;
+        /* Slate 950 */
+        --bg-card: rgba(15, 23, 42, 0.6);
+        /* Slate 900, 60% opacity */
+        --text-primary: #E2E8F0;
+        /* Slate 200 */
+        --text-secondary: #94A3B8;
+        /* Slate 400 */
+        --accent: #818CF8;
+        /* Indigo 400 */
+        --border: rgba(226, 232, 240, 0.1);
+    }
+}

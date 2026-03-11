@@ -1,0 +1,293 @@
+import { useEffect, useMemo, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, TextInput } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { profileService } from '@/features/auth/services/profileService';
+import { useAcceptClubInvitation, useCastClubBookVote, useClubBookNominations, useClubJoinQuestions, useClubMembers, useClubMembership, useClubPublicDetail, useFinalizeClubBookNomination, useJoinClub, useMyClubApplication, useMyClubInvitation, useRemoveClubBookVote } from '@/features/clubs/hooks/useClubs';
+import { ClubMemberList } from '@/features/clubs/components/ClubMemberList';
+import { getClubAccessRequirementMessage, getClubsEntitlementErrorMessage, membershipTierSatisfiesAccessLevel } from '@/features/clubs/services/clubsEntitlement';
+import type { AccessLevel, ClubBookNominationWithDetails, ClubJoinQuestion, ClubType, MeetingType, MembershipTier } from '@/features/clubs/services/clubsService';
+
+const CLUB_TYPE_LABELS: Record<ClubType, string> = {
+    public: 'Public club',
+    approval: 'Approval club',
+    invite_only: 'Invite-only club',
+    author_club: 'Author club',
+};
+
+const ACCESS_LEVEL_LABELS: Record<AccessLevel, string> = {
+    all: 'All members',
+    pro: 'Pro members',
+    pro_plus: 'Pro+ members',
+};
+
+const MEETING_TYPE_LABELS: Record<MeetingType, string> = {
+    online_only: 'Online only',
+    venue_based: 'Venue based',
+    hybrid: 'Hybrid',
+};
+
+function getQuestionPlaceholder(question: ClubJoinQuestion) {
+    return question.is_required ? 'Required answer' : 'Optional answer';
+}
+
+function getNominationCoverUrl(nomination: ClubBookNominationWithDetails) {
+    const imageUrl = nomination.book?.cover_url;
+    if (!imageUrl) return 'https://via.placeholder.com/96x144?text=Book';
+    return imageUrl.replace(/^http:\/\//i, 'https://');
+}
+
+function formatNominationStatus(status: ClubBookNominationWithDetails['status']) {
+    if (!status) return 'Unknown';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+export default function ClubDetailScreen() {
+    const { clubId } = useLocalSearchParams<{ clubId: string }>();
+    const { colors } = useTheme();
+    const { user } = useAuth();
+    const userId = user?.id ?? null;
+    const { data: club, isLoading, isError, refetch } = useClubPublicDetail(clubId ?? null);
+    const joinMutation = useJoinClub();
+    const acceptInvitationMutation = useAcceptClubInvitation();
+    const { data: membership, isLoading: isMembershipLoading } = useClubMembership(clubId ?? null, userId);
+    const isMember = membership?.status === 'active' || membership?.status === 'muted';
+    const shouldLoadApplicationData = club?.club_type === 'approval' || club?.club_type === 'author_club';
+    const shouldLoadInvitationData = club?.club_type === 'invite_only' && !!userId && !isMember;
+    const isManager = !!userId && (club?.admin_id === userId || membership?.role === 'admin' || membership?.role === 'moderator');
+    const isAdmin = !!userId && (club?.admin_id === userId || membership?.role === 'admin');
+    const { data: joinQuestions = [], isLoading: isQuestionsLoading } = useClubJoinQuestions(clubId ?? null, shouldLoadApplicationData);
+    const { data: myApplication, isLoading: isApplicationLoading } = useMyClubApplication(clubId ?? null, userId, shouldLoadApplicationData);
+    const { data: myInvitation, isLoading: isInvitationLoading } = useMyClubInvitation(clubId ?? null, userId, shouldLoadInvitationData);
+    const { data: members = [], isLoading: isMembersLoading } = useClubMembers(clubId ?? null, isMember);
+    const { data: nominations = [], isLoading: isNominationsLoading, isError: isNominationsError, error: nominationsError, refetch: refetchNominations } = useClubBookNominations(clubId ?? null, userId, isMember);
+    const castVoteMutation = useCastClubBookVote();
+    const removeVoteMutation = useRemoveClubBookVote();
+    const finalizeNominationMutation = useFinalizeClubBookNomination();
+    const [answers, setAnswers] = useState<Record<string, string>>({});
+    const [actionFeedback, setActionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const [bookFeedback, setBookFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const [viewerMembershipTier, setViewerMembershipTier] = useState<MembershipTier | null>(null);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        if (!userId) {
+            setViewerMembershipTier(null);
+            return () => {
+                isMounted = false;
+            };
+        }
+
+        void profileService.getProfileSummary(userId)
+            .then((profile) => {
+                if (isMounted) setViewerMembershipTier(profile?.membership_tier ?? 'free');
+            })
+            .catch(() => {
+                if (isMounted) setViewerMembershipTier(null);
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [userId]);
+
+    useEffect(() => {
+        if (!myApplication?.answers) return;
+        setAnswers((current) => (Object.keys(current).length > 0 ? current : myApplication.answers));
+    }, [myApplication]);
+
+    const requiredQuestionErrors = useMemo(() => {
+        return joinQuestions.filter((question) => question.is_required).filter((question) => !answers[question.id]?.trim()).map((question) => question.id);
+    }, [answers, joinQuestions]);
+
+    if (isLoading) {
+        return <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary }]}><ActivityIndicator size="large" color={colors.accent} /></View>;
+    }
+    if (isError || !club) {
+        return (
+            <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}> 
+                <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>Unable to load this club</Text>
+                <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.accent }]} onPress={() => refetch()}><Text style={styles.backButtonText}>Retry</Text></TouchableOpacity>
+                <TouchableOpacity style={[styles.secondaryButton, { borderColor: colors.border }]} onPress={() => router.back()}><Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>Go back</Text></TouchableOpacity>
+            </View>
+        );
+    }
+
+    const coverUrl = club.cover_url || club.current_book_cover_url || 'https://via.placeholder.com/160x240?text=Club';
+    const hostName = club.author_display_name || club.admin_display_name || 'BookTalks Reader';
+    const canJoinDirectly = club.club_type === 'public';
+    const requiresApplication = club.club_type === 'approval' || club.club_type === 'author_club';
+    const isJoinFlowLoading = isMembershipLoading || (shouldLoadApplicationData && (isQuestionsLoading || isApplicationLoading)) || isInvitationLoading;
+    const meetsClubAccessRequirement = viewerMembershipTier ? membershipTierSatisfiesAccessLevel(viewerMembershipTier, club.access_level ?? 'all') : null;
+    const blocksDirectJoin = !isMember && !!userId && canJoinDirectly && meetsClubAccessRequirement === false;
+    const blocksInvitationAcceptance = !isMember && !!userId && !!myInvitation && meetsClubAccessRequirement === false;
+    const canManageBookActions = membership?.status === 'active';
+
+    const handleVoteToggle = async (nomination: ClubBookNominationWithDetails) => {
+        if (!clubId || !userId) {
+            return setBookFeedback({ type: 'error', message: 'You must be signed in as an active club member to vote.' });
+        }
+
+        try {
+            setBookFeedback(null);
+            if (nomination.currentUserVote) {
+                await removeVoteMutation.mutateAsync({ nominationId: nomination.id, clubId });
+                setBookFeedback({ type: 'success', message: 'Your vote was removed.' });
+            } else {
+                await castVoteMutation.mutateAsync({ nominationId: nomination.id, clubId });
+                setBookFeedback({ type: 'success', message: 'Your vote was recorded.' });
+            }
+        } catch (error) {
+            setBookFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to update your vote right now.') });
+        }
+    };
+
+    const handleFinalizeNomination = async (nomination: ClubBookNominationWithDetails) => {
+        try {
+            setBookFeedback(null);
+            await finalizeNominationMutation.mutateAsync({ nominationId: nomination.id });
+            setBookFeedback({ type: 'success', message: 'Current book finalized successfully.' });
+        } catch (error) {
+            setBookFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to finalize the current book right now.') });
+        }
+    };
+
+    const handleJoinAction = async () => {
+        if (!clubId || !userId) return setActionFeedback({ type: 'error', message: 'You must be signed in to join or apply.' });
+        if (requiresApplication && requiredQuestionErrors.length > 0) return setActionFeedback({ type: 'error', message: 'Please answer all required join questions before applying.' });
+        if (blocksDirectJoin) {
+            return setActionFeedback({ type: 'error', message: getClubAccessRequirementMessage(club.access_level ?? 'all', viewerMembershipTier, 'join this club') });
+        }
+
+        try {
+            setActionFeedback(null);
+            const result = await joinMutation.mutateAsync({ clubId, userId, answers });
+            setActionFeedback({ type: 'success', message: result.status === 'joined' ? 'You are now an active member of this club.' : 'Your application has been submitted for review.' });
+        } catch (error) {
+            setActionFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to complete this club action right now.') });
+        }
+    };
+
+    const handleAcceptInvitation = async () => {
+        if (!clubId || !userId || !myInvitation) return setActionFeedback({ type: 'error', message: 'No pending invitation is available to accept for this account.' });
+        if (blocksInvitationAcceptance) {
+            return setActionFeedback({ type: 'error', message: getClubAccessRequirementMessage(club.access_level ?? 'all', viewerMembershipTier, 'accept this invitation') });
+        }
+
+        try {
+            setActionFeedback(null);
+            await acceptInvitationMutation.mutateAsync({ invitationId: myInvitation.id, clubId, userId });
+            setActionFeedback({ type: 'success', message: 'Invitation accepted. You are now an active member of this club.' });
+        } catch (error) {
+            setActionFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to accept this invitation right now.') });
+        }
+    };
+
+    return (
+        <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.contentContainer}>
+            <View style={styles.headerRow}>
+                <TouchableOpacity onPress={() => router.back()} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>{club.name}</Text>
+                <View style={styles.headerSpacer} />
+            </View>
+            <View style={[styles.heroCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                <Image source={{ uri: coverUrl }} style={styles.cover} contentFit="cover" transition={200} />
+                <View style={styles.heroBody}>
+                    <Text style={[styles.clubName, { color: colors.textPrimary }]}>{club.name}</Text>
+                    <Text style={[styles.clubMeta, { color: colors.textSecondary }]}>Hosted by {hostName}</Text>
+                    <Text style={[styles.clubDescription, { color: colors.textSecondary }]}>{club.description || 'Public club details and membership entry points are live here. Chat, events, and other member-only areas are still being added.'}</Text>
+                    <View style={styles.badgesRow}>
+                        <View style={[styles.badge, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.badgeText, { color: colors.accent }]}>{CLUB_TYPE_LABELS[club.club_type]}</Text></View>
+                        <View style={[styles.badge, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.badgeText, { color: colors.textPrimary }]} testID="club-detail-access">{ACCESS_LEVEL_LABELS[club.access_level ?? 'all']}</Text></View>
+                        <View style={[styles.badge, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.badgeText, { color: colors.textPrimary }]} testID="club-detail-meeting">{club.meeting_type ? MEETING_TYPE_LABELS[club.meeting_type] : 'Flexible format'}</Text></View>
+                        <View style={[styles.badge, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.badgeText, { color: colors.textPrimary }]}>{club.member_count ?? 0} members</Text></View>
+                    </View>
+                </View>
+            </View>
+            <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Club details</Text>
+                <View style={styles.detailGrid}>
+                    <View style={styles.detailItem}><Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Access requirement</Text><Text style={[styles.detailValue, { color: colors.textPrimary }]}>{ACCESS_LEVEL_LABELS[club.access_level ?? 'all']}</Text></View>
+                    <View style={styles.detailItem}><Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Meeting format</Text><Text style={[styles.detailValue, { color: colors.textPrimary }]}>{club.meeting_type ? MEETING_TYPE_LABELS[club.meeting_type] : 'Flexible format'}</Text></View>
+                    <View style={styles.detailItem}><Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Club admin</Text><Text style={[styles.detailValue, { color: colors.textPrimary }]}>{club.admin_display_name || 'BookTalks Reader'}</Text></View>
+                    <View style={styles.detailItem}><Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Member capacity</Text><Text style={[styles.detailValue, { color: colors.textPrimary }]}>{club.max_members ? `${club.max_members} readers` : 'Open capacity'}</Text></View>
+                    {club.author_display_name ? <View style={styles.detailItem}><Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Featured author</Text><Text style={[styles.detailValue, { color: colors.textPrimary }]}>{club.author_display_name}</Text></View> : null}
+                    {(club.admin_city || club.author_city) ? <View style={styles.detailItem}><Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Community city</Text><Text style={[styles.detailValue, { color: colors.textPrimary }]}>{club.author_city || club.admin_city}</Text></View> : null}
+                </View>
+            </View>
+            <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Current read</Text>
+                <Text style={[styles.sectionPrimary, { color: colors.textPrimary }]}>{club.current_book_title || 'No current book selected yet'}</Text>
+                <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>{club.current_book_authors?.join(', ') || 'Once a book is selected it will appear here for all visitors.'}</Text>
+            </View>
+            {isMember ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Club events</Text>
+                <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Member-only club events are now available here. Active members can RSVP, while muted members can still review the schedule. Eligible managers can create and manage their club events.</Text>
+                <TouchableOpacity onPress={() => router.push(`/clubs/${club.id}/events`)} style={[styles.secondaryActionButton, { borderColor: colors.accent }]} testID="club-view-events"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>View club events</Text></TouchableOpacity>
+            </View> : null}
+            {isMember ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Book nominations & voting</Text>
+                <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Active club members can nominate books, vote on the next read, and see when the club admin can finalize the current book.</Text>
+                {isNominationsLoading ? <View style={styles.inlineLoadingRow}><ActivityIndicator size="small" color={colors.accent} /><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Loading nominations…</Text></View> : null}
+                {isNominationsError ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Unable to load nominations</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{getClubsEntitlementErrorMessage(nominationsError, 'Unable to load book nominations right now.')}</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => refetchNominations()} testID="club-book-retry"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Retry</Text></TouchableOpacity></View> : null}
+                {canManageBookActions ? <TouchableOpacity onPress={() => router.push(`/clubs/${club.id}/nominate`)} style={[styles.secondaryActionButton, { marginTop: 0, borderColor: colors.accent }]} testID="club-nominate-book"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Nominate a book</Text></TouchableOpacity> : <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Read-only nominations</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Only active club members can nominate books or vote. Muted members can still view the current nomination slate.</Text></View>}
+                {!isNominationsLoading && !isNominationsError && nominations.length === 0 ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>No nominations yet</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>This club has not nominated any books yet. Use the nomination flow above to add the first candidate for the next read.</Text></View> : null}
+                {!isNominationsLoading && !isNominationsError ? nominations.map((nomination) => { const isVotingOpen = nomination.status === 'active'; const canFinalize = isAdmin && canManageBookActions && isVotingOpen; return <View key={nomination.id} style={[styles.nominationCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}> 
+                    <View style={styles.nominationHeaderRow}>
+                        <Image source={{ uri: getNominationCoverUrl(nomination) }} style={styles.nominationCover} contentFit="cover" transition={200} />
+                        <View style={styles.nominationBody}>
+                            <Text style={[styles.nominationTitle, { color: colors.textPrimary }]}>{nomination.book?.title || 'Untitled nomination'}</Text>
+                            <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{nomination.book?.authors?.join(', ') || 'Author information unavailable'}</Text>
+                            <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{`Votes: ${nomination.vote_count ?? 0}`}</Text>
+                            <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{`Status: ${formatNominationStatus(nomination.status)}`}</Text>
+                            <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{nomination.voting_ends_at ? `Voting ends: ${new Date(nomination.voting_ends_at).toLocaleString()}` : 'Voting end time not set yet.'}</Text>
+                            <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{`Nominated by ${nomination.nominatorProfile?.display_name || nomination.nominatorProfile?.username || 'a club member'}`}</Text>
+                            <Text style={[styles.nominationMeta, { color: nomination.currentUserVote ? colors.accent : colors.textSecondary }]}>{nomination.currentUserVote ? 'Your vote is currently active on this nomination.' : 'You have not voted on this nomination yet.'}</Text>
+                        </View>
+                    </View>
+                    <View style={styles.nominationActionsRow}>
+                        <TouchableOpacity onPress={() => handleVoteToggle(nomination)} disabled={!canManageBookActions || !isVotingOpen || castVoteMutation.isPending || removeVoteMutation.isPending} style={[styles.secondaryActionButton, { flex: 1, marginTop: 0, borderColor: colors.accent, opacity: !canManageBookActions || !isVotingOpen || castVoteMutation.isPending || removeVoteMutation.isPending ? 0.65 : 1 }]} testID={`club-book-vote-${nomination.id}`}><Text style={[styles.secondaryActionText, { color: colors.accent }]}>{nomination.currentUserVote ? 'Remove my vote' : 'Vote for this book'}</Text></TouchableOpacity>
+                        {canFinalize ? <TouchableOpacity onPress={() => handleFinalizeNomination(nomination)} disabled={finalizeNominationMutation.isPending} style={[styles.primaryActionButton, { flex: 1, marginTop: 0, backgroundColor: colors.accent, opacity: finalizeNominationMutation.isPending ? 0.65 : 1 }]} testID={`club-book-finalize-${nomination.id}`}><Text style={styles.primaryActionText}>{finalizeNominationMutation.isPending ? 'Finalizing…' : 'Finalize current book'}</Text></TouchableOpacity> : null}
+                    </View>
+                </View>; }) : null}
+                {bookFeedback ? <View style={[styles.feedbackBanner, { backgroundColor: bookFeedback.type === 'success' ? '#DCFCE7' : '#FEE2E2', borderColor: bookFeedback.type === 'success' ? '#22C55E' : '#EF4444' }]}><Text style={[styles.feedbackText, { color: bookFeedback.type === 'success' ? '#166534' : '#991B1B' }]}>{bookFeedback.message}</Text></View> : null}
+            </View> : null}
+            <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Join this club</Text>
+                <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Public clubs support direct joins here, approval and author clubs support applications, and invite-only clubs require invitations that invited readers can accept here.</Text>
+                {!userId ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Sign in required</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>You need an authenticated session before you can join or apply.</Text></View> : null}
+                {isJoinFlowLoading ? <View style={styles.inlineLoadingRow}><ActivityIndicator size="small" color={colors.accent} /><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Preparing the right join flow…</Text></View> : null}
+                {membership?.status === 'banned' ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Membership restricted</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>This account is currently banned from the club and cannot join or apply.</Text></View> : null}
+                {isMember ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>{membership?.status === 'muted' ? 'You are a muted member' : 'You are already a member'}</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Member-only spaces like club events and the private member list are available here now. Chat remains a later Clubs phase.</Text></View> : null}
+                {!isMember && userId && meetsClubAccessRequirement === false ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]} testID="club-entitlement-warning"><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Membership tier required</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{canJoinDirectly || myInvitation ? getClubAccessRequirementMessage(club.access_level ?? 'all', viewerMembershipTier, canJoinDirectly ? 'join this club' : 'accept this invitation') : `This club currently requires ${ACCESS_LEVEL_LABELS[club.access_level ?? 'all']}. If your application is approved, membership cannot become active until your subscription tier meets that requirement.`}</Text></View> : null}
+                {!isMember && myApplication?.status === 'pending' ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Application pending</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Your application is waiting for moderator review. You do not need to submit it again.</Text></View> : null}
+                {!isMember && myApplication?.status === 'declined' ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Application declined</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{myApplication.decline_reason || 'Your previous application was declined. Reapply is not available in this version yet.'}</Text></View> : null}
+                {!isMember && club.club_type === 'invite_only' && myInvitation ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Invitation ready</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>You have a pending invitation from {myInvitation.inviterProfile?.display_name || 'a club manager'}. Accepting it adds you to the club immediately through the live invite workflow.</Text>{myInvitation.note ? <Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{`Note: ${myInvitation.note}`}</Text> : null}</View> : null}
+                {!isMember && club.club_type === 'invite_only' && !myInvitation ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Invite required</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Invite-only clubs require a moderator or admin invitation. If you have already been invited, sign in with the invited account to accept it here. Revoke and read-state flows still depend on backend support.</Text></View> : null}
+                {!isMember && requiresApplication && !myApplication ? <View style={styles.joinSection}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Join questions</Text><Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Answer the questions below to apply for moderator review.</Text>{joinQuestions.length === 0 ? <Text style={[styles.noticeBody, { color: colors.textSecondary }]}>This club does not currently require written answers, so your application can be sent immediately.</Text> : null}{joinQuestions.map((question) => { const hasError = requiredQuestionErrors.includes(question.id); return <View key={question.id} style={styles.questionBlock}><Text style={[styles.questionLabel, { color: colors.textPrimary }]}>{question.question}{question.is_required ? ' *' : ''}</Text><TextInput value={answers[question.id] ?? ''} onChangeText={(value) => setAnswers((current) => ({ ...current, [question.id]: value }))} placeholder={getQuestionPlaceholder(question)} placeholderTextColor={colors.textTertiary} multiline style={[styles.answerInput, { color: colors.textPrimary, borderColor: hasError ? '#DC2626' : colors.border, backgroundColor: colors.bgPrimary }]} testID={`join-question-${question.id}`} /></View>; })}</View> : null}
+                {!isMember && !myApplication && userId && (canJoinDirectly || requiresApplication) ? <TouchableOpacity onPress={handleJoinAction} disabled={joinMutation.isPending || blocksDirectJoin} style={[styles.primaryActionButton, { backgroundColor: colors.accent, opacity: joinMutation.isPending || blocksDirectJoin ? 0.65 : 1 }]} testID="club-primary-action"><Text style={styles.primaryActionText}>{joinMutation.isPending ? 'Working…' : canJoinDirectly ? 'Join this club' : 'Apply to join'}</Text></TouchableOpacity> : null}
+                {!isMember && club.club_type === 'invite_only' && userId && myInvitation ? <TouchableOpacity onPress={handleAcceptInvitation} disabled={acceptInvitationMutation.isPending || blocksInvitationAcceptance} style={[styles.primaryActionButton, { backgroundColor: colors.accent, opacity: acceptInvitationMutation.isPending || blocksInvitationAcceptance ? 0.65 : 1 }]} testID="club-accept-invitation"><Text style={styles.primaryActionText}>{acceptInvitationMutation.isPending ? 'Accepting…' : 'Accept invitation'}</Text></TouchableOpacity> : null}
+                {actionFeedback ? <View style={[styles.feedbackBanner, { backgroundColor: actionFeedback.type === 'success' ? '#DCFCE7' : '#FEE2E2', borderColor: actionFeedback.type === 'success' ? '#22C55E' : '#EF4444' }]}><Text style={[styles.feedbackText, { color: actionFeedback.type === 'success' ? '#166534' : '#991B1B' }]}>{actionFeedback.message}</Text></View> : null}
+            </View>
+            {requiresApplication && isManager ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Moderator tools</Text><Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Review pending join applications for this club with the live moderator workflow.</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => router.push(`/clubs/${club.id}/applications`)} testID="club-review-applications"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Review applications</Text></TouchableOpacity></View> : null}
+            {club.club_type === 'invite_only' && isManager ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Invitation tools</Text><Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Username-based invitation creation and invitation history are live here. Revocation and read tracking still depend on backend workflows that are not exposed live yet.</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => router.push(`/clubs/${club.id}/invite`)} testID="club-invite-readers"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Invite readers</Text></TouchableOpacity></View> : null}
+            {isAdmin ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Admin tools</Text><Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Open Manage Club for basic settings, member-role management, remove-member workflows, and join-question management. Archiving is not part of the current roadmap.</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => router.push(`/clubs/${club.id}/manage`)} testID="club-manage"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Manage club</Text></TouchableOpacity></View> : null}
+            <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Members</Text>
+                {!isMember ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Member list is private</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>The current Clubs spec allows all visitors to see public club details, but member names only become visible after you join.</Text></View> : isMembersLoading ? <View style={styles.inlineLoadingRow}><ActivityIndicator size="small" color={colors.accent} /><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Loading members…</Text></View> : members.length === 0 ? <Text style={[styles.noticeBody, { color: colors.textSecondary }]}>No active member cards are available yet.</Text> : <ClubMemberList members={members} colors={colors} />}
+            </View>
+        </ScrollView>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: { flex: 1 }, contentContainer: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 48 }, loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
+    headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 }, iconButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' }, headerTitle: { flex: 1, marginHorizontal: 12, fontSize: 18, fontWeight: '700' }, headerSpacer: { width: 40 },
+    heroCard: { flexDirection: 'row', gap: 14, borderWidth: 1, borderRadius: 18, padding: 14, marginBottom: 16 }, cover: { width: 108, height: 160, borderRadius: 14, backgroundColor: '#E2E8F0' }, heroBody: { flex: 1 }, clubName: { fontSize: 22, fontWeight: '800', marginBottom: 6 }, clubMeta: { fontSize: 14, fontWeight: '500', marginBottom: 10 }, clubDescription: { fontSize: 14, lineHeight: 21, marginBottom: 12 }, badgesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, badge: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }, badgeText: { fontSize: 12, fontWeight: '700', textTransform: 'capitalize' },
+    sectionCard: { borderWidth: 1, borderRadius: 18, padding: 16, marginBottom: 14 }, sectionTitle: { fontSize: 15, fontWeight: '700', marginBottom: 8 }, sectionPrimary: { fontSize: 17, fontWeight: '700', marginBottom: 4 }, sectionBody: { fontSize: 14, lineHeight: 20 }, detailGrid: { gap: 12 }, detailItem: { gap: 4 }, detailLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }, detailValue: { fontSize: 15, fontWeight: '600', lineHeight: 21 }, noticeCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12 }, noticeTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6 }, noticeBody: { fontSize: 14, lineHeight: 20 }, inlineLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 }, joinSection: { marginTop: 14 }, questionBlock: { marginTop: 12 }, questionLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8 }, answerInput: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, minHeight: 88, textAlignVertical: 'top' }, nominationCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12, gap: 10 }, nominationHeaderRow: { flexDirection: 'row', gap: 12 }, nominationCover: { width: 72, height: 108, borderRadius: 12, backgroundColor: '#E2E8F0' }, nominationBody: { flex: 1, gap: 4 }, nominationTitle: { fontSize: 15, fontWeight: '700' }, nominationMeta: { fontSize: 13, lineHeight: 18 }, nominationActionsRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
+    primaryActionButton: { marginTop: 16, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }, primaryActionText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' }, secondaryActionButton: { marginTop: 16, borderWidth: 1, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }, secondaryActionText: { fontSize: 15, fontWeight: '800' }, feedbackBanner: { marginTop: 14, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }, feedbackText: { fontSize: 13, fontWeight: '600', lineHeight: 18 }, errorTitle: { fontSize: 18, fontWeight: '700' }, backButton: { borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 }, backButtonText: { color: '#FFFFFF', fontWeight: '700' }, secondaryButton: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 }, secondaryButtonText: { fontWeight: '700' },
+});

@@ -1,0 +1,236 @@
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import ClubDetailScreen from '../ClubDetailScreen';
+import { profileService } from '@/features/auth/services/profileService';
+
+const mockRouterBack = jest.fn();
+const mockRouterPush = jest.fn();
+const mockUseClubPublicDetail = jest.fn();
+const mockUseJoinClub = jest.fn();
+const mockUseAcceptClubInvitation = jest.fn();
+const mockUseClubMembership = jest.fn();
+const mockUseClubJoinQuestions = jest.fn();
+const mockUseMyClubApplication = jest.fn();
+const mockUseMyClubInvitation = jest.fn();
+const mockUseClubMembers = jest.fn();
+const mockUseClubBookNominations = jest.fn();
+const mockUseCastClubBookVote = jest.fn();
+const mockUseRemoveClubBookVote = jest.fn();
+const mockUseFinalizeClubBookNomination = jest.fn();
+
+jest.mock('expo-image', () => ({ Image: 'Image' }));
+jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
+jest.mock('expo-router', () => ({
+    router: { back: (...args: unknown[]) => mockRouterBack(...args), push: (...args: unknown[]) => mockRouterPush(...args) },
+    useLocalSearchParams: () => ({ clubId: 'club-1' }),
+}));
+jest.mock('@/hooks/useTheme', () => ({
+    useTheme: () => ({
+        colors: {
+            bgPrimary: '#FFFFFF', bgCard: '#F8FAFC', bgSecondary: '#EEF2FF', border: '#CBD5E1', accent: '#4F46E5',
+            textPrimary: '#0F172A', textSecondary: '#475569', textTertiary: '#94A3B8', accentLight: '#818CF8',
+        },
+    }),
+}));
+jest.mock('@/features/auth/hooks/useAuth', () => ({
+    useAuth: () => ({ user: { id: 'reader-1' } }),
+}));
+jest.mock('@/features/auth/services/profileService', () => ({
+    profileService: {
+        getProfileSummary: jest.fn(),
+    },
+}));
+jest.mock('@/features/clubs/hooks/useClubs', () => ({
+    useClubPublicDetail: (...args: unknown[]) => mockUseClubPublicDetail(...args),
+    useJoinClub: (...args: unknown[]) => mockUseJoinClub(...args),
+    useAcceptClubInvitation: (...args: unknown[]) => mockUseAcceptClubInvitation(...args),
+    useClubMembership: (...args: unknown[]) => mockUseClubMembership(...args),
+    useClubJoinQuestions: (...args: unknown[]) => mockUseClubJoinQuestions(...args),
+    useMyClubApplication: (...args: unknown[]) => mockUseMyClubApplication(...args),
+    useMyClubInvitation: (...args: unknown[]) => mockUseMyClubInvitation(...args),
+    useClubMembers: (...args: unknown[]) => mockUseClubMembers(...args),
+    useClubBookNominations: (...args: unknown[]) => mockUseClubBookNominations(...args),
+    useCastClubBookVote: (...args: unknown[]) => mockUseCastClubBookVote(...args),
+    useRemoveClubBookVote: (...args: unknown[]) => mockUseRemoveClubBookVote(...args),
+    useFinalizeClubBookNomination: (...args: unknown[]) => mockUseFinalizeClubBookNomination(...args),
+}));
+
+const baseClub = {
+    id: 'club-1', name: 'Author Circle', description: 'Discuss monthly author picks.', cover_url: null, club_type: 'author_club',
+    access_level: 'pro_plus', meeting_type: 'hybrid', member_count: 12, max_members: 20,
+    current_book_id: null, current_book_google_books_id: null, current_book_title: 'Beloved', current_book_authors: ['Toni Morrison'],
+    current_book_cover_url: null, current_book_retail_price: null, current_book_currency_code: null,
+    admin_id: 'admin-1', admin_profile_id: 'profile-1', admin_display_name: 'Curator Cam', admin_avatar_url: null, admin_city: 'Bengaluru',
+    author_id: 'author-1', author_user_id: 'author-user-1', author_display_name: 'Toni Morrison', author_avatar_url: null, author_city: 'Bengaluru',
+    created_at: null, updated_at: null,
+};
+
+beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseClubPublicDetail.mockReturnValue({
+        data: baseClub,
+        isLoading: false,
+        isError: false,
+        refetch: jest.fn(),
+    });
+    mockUseJoinClub.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseAcceptClubInvitation.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseClubMembership.mockReturnValue({ data: null, isLoading: false });
+    mockUseClubJoinQuestions.mockReturnValue({ data: [], isLoading: false });
+    mockUseMyClubApplication.mockReturnValue({ data: null, isLoading: false });
+    mockUseMyClubInvitation.mockReturnValue({ data: null, isLoading: false });
+    mockUseClubMembers.mockReturnValue({ data: [], isLoading: false });
+    mockUseClubBookNominations.mockReturnValue({ data: [], isLoading: false, isError: false, error: null, refetch: jest.fn() });
+    mockUseCastClubBookVote.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseRemoveClubBookVote.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseFinalizeClubBookNomination.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    (profileService.getProfileSummary as jest.Mock).mockResolvedValue({ membership_tier: 'pro_plus' });
+});
+
+describe('ClubDetailScreen', () => {
+    it('shows the live public metadata summary for access, meeting format, and curator details', async () => {
+        const { getByText, getAllByText } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        expect(getByText('Club details')).toBeOnTheScreen();
+        expect(getByText('Access requirement')).toBeOnTheScreen();
+        expect(getAllByText('Pro+ members').length).toBeGreaterThan(0);
+        expect(getByText('Meeting format')).toBeOnTheScreen();
+        expect(getAllByText('Hybrid').length).toBeGreaterThan(0);
+        expect(getByText('Club admin')).toBeOnTheScreen();
+        expect(getByText('Curator Cam')).toBeOnTheScreen();
+        expect(getByText('Featured author')).toBeOnTheScreen();
+        expect(getAllByText('Toni Morrison').length).toBeGreaterThan(0);
+    });
+
+    it('shows invite acceptance UI when the signed-in user has a pending invite-only invitation', async () => {
+        mockUseClubPublicDetail.mockReturnValue({
+            data: {
+                ...baseClub,
+                id: 'club-invite',
+                name: 'Invite Circle',
+                club_type: 'invite_only',
+                author_id: null,
+                author_user_id: null,
+                author_display_name: null,
+                author_avatar_url: null,
+                author_city: null,
+            },
+            isLoading: false,
+            isError: false,
+            refetch: jest.fn(),
+        });
+        mockUseMyClubInvitation.mockReturnValue({
+            data: {
+                id: 'invite-1',
+                club_id: 'club-invite',
+                inviter_user_id: 'admin-1',
+                invitee_user_id: 'reader-1',
+                status: 'pending',
+                note: 'Come join our private read.',
+                created_at: '2026-03-06T00:00:00Z',
+                responded_at: null,
+                inviterProfile: { id: 'profile-1', user_id: 'admin-1', display_name: 'Curator Cam', username: 'curatorcam', avatar_url: null, trust_score: 4.8, city: 'Bengaluru' },
+                inviteeProfile: { id: 'profile-2', user_id: 'reader-1', display_name: 'Reader One', username: 'readerone', avatar_url: null, trust_score: 4.2, city: 'Bengaluru' },
+            },
+            isLoading: false,
+        });
+
+        const { getByText } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        expect(getByText('Invitation ready')).toBeOnTheScreen();
+        expect(getByText(/pending invitation from Curator Cam/i)).toBeOnTheScreen();
+        expect(getByText('Accept invitation')).toBeOnTheScreen();
+        expect(getByText('Note: Come join our private read.')).toBeOnTheScreen();
+    });
+
+    it('describes the current manage-club scope for admins without implying archive or invite lifecycle support', async () => {
+        mockUseClubMembership.mockReturnValue({ data: { role: 'admin', status: 'active' }, isLoading: false });
+
+        const { getByText } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        expect(getByText('Admin tools')).toBeOnTheScreen();
+        expect(getByText(/basic settings, member-role management, remove-member workflows, and join-question management/i)).toBeOnTheScreen();
+        expect(getByText('Manage club')).toBeOnTheScreen();
+    });
+
+    it('shows an entitlement warning when the current user tier does not meet the club access level', async () => {
+        (profileService.getProfileSummary as jest.Mock).mockResolvedValueOnce({ membership_tier: 'free' });
+
+        const { findByTestId, getByText } = render(<ClubDetailScreen />);
+
+        expect(await findByTestId('club-entitlement-warning')).toBeOnTheScreen();
+        expect(getByText(/cannot become active until your subscription tier meets that requirement/i)).toBeOnTheScreen();
+    });
+
+    it('shows member nominations and lets a member cast a vote', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue({ nomination_id: 'nomination-1', user_id: 'reader-1' });
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
+        mockUseClubBookNominations.mockReturnValue({
+            data: [{
+                id: 'nomination-1', club_id: 'club-1', book_id: 'book-1', nominated_by: 'admin-1', vote_count: 2, status: 'active', voting_ends_at: null, created_at: '2026-03-10T00:00:00Z',
+                book: { id: 'book-1', google_books_id: 'gb-1', title: 'Beloved', authors: ['Toni Morrison'], cover_url: 'https://books.example/beloved.jpg' },
+                nominatorProfile: { id: 'profile-1', user_id: 'admin-1', display_name: 'Curator Cam', username: 'curatorcam', avatar_url: null, trust_score: 4.8, city: 'Bengaluru' },
+                currentUserVote: null,
+            }],
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: jest.fn(),
+        });
+        mockUseCastClubBookVote.mockReturnValue({ mutateAsync, isPending: false });
+
+        const { getByText, getByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(getByText('Book nominations & voting')).toBeOnTheScreen());
+
+        expect(getByText('Nominated by Curator Cam')).toBeOnTheScreen();
+        expect(getByText('You have not voted on this nomination yet.')).toBeOnTheScreen();
+
+        fireEvent.press(getByTestId('club-book-vote-nomination-1'));
+
+        await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ nominationId: 'nomination-1', clubId: 'club-1' }));
+    });
+
+    it('shows the nomination entry point for active members', async () => {
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
+
+        const { getByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        fireEvent.press(getByTestId('club-nominate-book'));
+
+        expect(mockRouterPush).toHaveBeenCalledWith('/clubs/club-1/nominate');
+    });
+
+    it('shows admin finalization controls for an active nomination', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue({ id: 'club-1' });
+        mockUseClubMembership.mockReturnValue({ data: { role: 'admin', status: 'active' }, isLoading: false });
+        mockUseClubBookNominations.mockReturnValue({
+            data: [{
+                id: 'nomination-2', club_id: 'club-1', book_id: 'book-2', nominated_by: 'reader-2', vote_count: 5, status: 'active', voting_ends_at: null, created_at: '2026-03-10T00:00:00Z',
+                book: { id: 'book-2', google_books_id: 'gb-2', title: 'Song of Solomon', authors: ['Toni Morrison'], cover_url: null },
+                nominatorProfile: { id: 'profile-2', user_id: 'reader-2', display_name: 'Reader Two', username: 'readertwo', avatar_url: null, trust_score: 4.1, city: 'Bengaluru' },
+                currentUserVote: null,
+            }],
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: jest.fn(),
+        });
+        mockUseFinalizeClubBookNomination.mockReturnValue({ mutateAsync, isPending: false });
+
+        const { getByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        fireEvent.press(getByTestId('club-book-finalize-nomination-2'));
+
+        await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ nominationId: 'nomination-2' }));
+    });
+});

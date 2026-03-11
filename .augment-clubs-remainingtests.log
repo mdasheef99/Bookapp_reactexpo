@@ -1,0 +1,31 @@
+PASS src/features/clubs/services/__tests__/clubsService.test.ts
+  clubsService
+    √ reads public club browse results from club_public_details (25 ms)
+    √ reads a single public club detail row from club_public_details (2 ms)
+    √ checks membership limits through the edge function (2 ms)
+    √ creates a club after limit check and inserts the admin membership (5 ms)
+    √ joins public clubs by inserting an active member row (2 ms)
+    √ applies to approval clubs with pending answers payload (2 ms)
+    √ applies to author clubs through the same application flow (2 ms)
+    √ returns an existing pending application when a duplicate application insert races (2 ms)
+    √ reads the current user application for a club (2 ms)
+    √ maps applicant profile summaries onto club applications (2 ms)
+    √ reviews a join application through the live rpc contract (1 ms)
+    √ creates a join question for admin management (3 ms)
+    √ updates a join question for admin management (32 ms)
+    √ deletes a join question for admin management (2 ms)
+    √ maps invitation profiles for invite-only management (5 ms)
+    √ creates an invite-only club invitation through the live rpc contract (1 ms)
+    √ maps member profile summaries onto club members (53 ms)
+
+PASS src/features/clubs/hooks/__tests__/useClubs.test.ts
+  useClubs cache invalidation
+    √ invalidates every browse query root after joining or applying to a club (80 ms)
+    √ invalidates browse queries after moderator review updates member counts (12 ms)
+
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+Test Suites: 2 passed, 2 total
+Tests:       19 passed, 19 total
+Snapshots:   0 total
+Time:        6.571 s
+Ran all test suites within paths "src\features\clubs\hooks\__tests__\useClubs.test.ts", "src\features\clubs\services\__tests__\clubsService.test.ts".

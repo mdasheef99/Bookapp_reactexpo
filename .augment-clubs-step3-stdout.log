@@ -1,0 +1,11 @@
+PASS src/features/clubs/services/__tests__/clubsService.test.ts
+PASS src/features/clubs/hooks/__tests__/useClubs.test.ts
+PASS src/features/clubs/screens/__tests__/ClubDetailScreen.test.tsx (7.198 s)
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+
+Test Suites: 3 passed, 3 total
+Tests:       20 passed, 20 total
+Snapshots:   0 total
+Time:        9.766 s
+Ran all test suites within paths "src\features\clubs\hooks\__tests__\useClubs.test.ts", "src\features\clubs\services\__tests__\clubsService.test.ts", "src\features\clubs\screens\__tests__\ClubDetailScreen.test.tsx".
+Test results written to: .augment-clubs-step3-results.json

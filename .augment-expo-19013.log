@@ -1,0 +1,28 @@
+env: load .env.local .env
+env: export EXPO_PUBLIC_DEV_SKIP_AUTH EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_ANON_KEY EXPO_PUBLIC_SENTRY_DSN EXPO_PUBLIC_APP_ENV EXPO_PUBLIC_ENABLE_SENTRY_IN_DEV EXPO_PUBLIC_SENTRY_TEST_EVENT
+Starting project at C:\Users\LEGION\Documents\augment-projects\antigravity copy\Bookconnect_new_react_app
+Metro is running in CI mode, reloads are disabled. Remove CI=true to enable watch mode.
+Starting Metro Bundler
+The following packages should be updated for best compatibility with the installed expo version:
+  expo@54.0.30 - expected version: ~54.0.33
+  expo-router@6.0.21 - expected version: ~6.0.23
+  react-native-reanimated@4.2.1 - expected version: ~4.1.1
+  @types/jest@30.0.0 - expected version: 29.5.14
+  babel-preset-expo@54.0.9 - expected version: ~54.0.10
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:19013
+Logs for your project will appear below.
+Web Bundled 2212ms node_modules\expo-router\entry.js (1854 modules)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 122ms node_modules\expo-router\entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 274ms node_modules\expo-router\entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 113ms node_modules\expo-router\entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 336ms node_modules\expo-router\entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console

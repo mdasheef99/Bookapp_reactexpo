@@ -1,0 +1,9 @@
+PASS src/features/clubs/screens/__tests__/ClubDetailScreen.test.tsx
+  ClubDetailScreen
+    √ shows the live public metadata summary for access, meeting format, and curator details (1319 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        5.839 s, estimated 8 s
+Ran all test suites within paths "src\features\clubs\screens\__tests__\ClubDetailScreen.test.tsx".
