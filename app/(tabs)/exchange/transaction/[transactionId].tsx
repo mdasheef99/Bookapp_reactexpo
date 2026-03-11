@@ -46,9 +46,13 @@ const STATUS_COLORS: Record<TransactionStatus, string> = {
 };
 
 // Ordered steps for the progress timeline
-const TIMELINE_STEPS: TransactionStatus[] = [
+const SHIPPING_TIMELINE_STEPS: TransactionStatus[] = [
     'requested', 'approved', 'payment_pending',
     'ready_to_ship', 'shipped', 'delivered', 'completed',
+];
+
+const MEETUP_TIMELINE_STEPS: TransactionStatus[] = [
+    'requested', 'approved', 'delivered', 'completed',
 ];
 
 const DELIVERY_LABELS: Record<string, string> = {
@@ -96,12 +100,15 @@ function ProfileCard({
 
 function TimelineBar({
     status,
+    deliveryType,
     colors,
 }: {
     status: TransactionStatus;
+    deliveryType: string;
     colors: ReturnType<typeof useTheme>['colors'];
 }) {
     const isTerminal = ['declined', 'cancelled', 'disputed'].includes(status);
+    const steps = deliveryType === 'meetup' ? MEETUP_TIMELINE_STEPS : SHIPPING_TIMELINE_STEPS;
     if (isTerminal) {
         return (
             <View style={[styles.terminalBanner, { backgroundColor: STATUS_COLORS[status] + '22', borderColor: STATUS_COLORS[status] + '55' }]}>
@@ -109,11 +116,11 @@ function TimelineBar({
             </View>
         );
     }
-    const currentIdx = TIMELINE_STEPS.indexOf(status);
+    const currentIdx = steps.indexOf(status);
     return (
         <View style={styles.timeline}>
-            {TIMELINE_STEPS.map((step, idx) => {
-                const done = idx < currentIdx;
+            {steps.map((step, idx) => {
+                const done = currentIdx >= 0 && idx < currentIdx;
                 const active = idx === currentIdx;
                 const color = done || active ? colors.accent : colors.border;
                 return (
@@ -121,7 +128,7 @@ function TimelineBar({
                         <View style={[styles.timelineDot, { backgroundColor: color, borderColor: color }]}>
                             {done && <Ionicons name="checkmark" size={10} color="#FFF" />}
                         </View>
-                        {idx < TIMELINE_STEPS.length - 1 && (
+                        {idx < steps.length - 1 && (
                             <View style={[styles.timelineLine, { backgroundColor: done ? colors.accent : colors.border }]} />
                         )}
                     </View>
@@ -156,6 +163,13 @@ function ActionButtons({
     onComplete: () => void;
     onTransition: (newStatus: TransactionStatus, label: string) => void;
 }) {
+    if (deliveryType !== 'meetup' && ['payment_pending', 'ready_to_ship', 'shipped'].includes(status)) {
+        return (
+            <View style={[styles.infoBox, { backgroundColor: colors.bgSecondary }]}>
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>Meetup-only exchange: delivery-based progress is not currently supported in-app.</Text>
+            </View>
+        );
+    }
     if (status === 'requested') {
         if (isLender) {
             return (
@@ -179,10 +193,17 @@ function ActionButtons({
     }
     if (status === 'approved') {
         if (isBorrower) {
-            const nextStatus: TransactionStatus = deliveryType === 'meetup' ? 'delivered' : 'payment_pending';
-            const label = deliveryType === 'meetup' ? 'Confirm Meetup' : 'Proceed to Payment';
+            if (deliveryType !== 'meetup') {
+                return (
+                    <View style={[styles.infoBox, { backgroundColor: colors.bgSecondary }]}>
+                        <Text style={[styles.infoText, { color: colors.textSecondary }]}>Meetup-only exchange: this request can&apos;t move into payment or delivery steps in-app yet.</Text>
+                    </View>
+                );
+            }
+            const nextStatus: TransactionStatus = 'delivered';
+            const label = 'Confirm Meetup';
             return (
-                <TouchableOpacity onPress={() => onTransition(nextStatus, label)} style={[styles.btn, styles.btnFull, { backgroundColor: colors.accent }]}>
+                <TouchableOpacity testID="exchange-transaction-primary-action" onPress={() => onTransition(nextStatus, label)} style={[styles.btn, styles.btnFull, { backgroundColor: colors.accent }]}> 
                     <Text style={[styles.btnText, { color: '#FFF' }]}>📬 {label}</Text>
                 </TouchableOpacity>
             );
@@ -194,13 +215,6 @@ function ActionButtons({
                 </TouchableOpacity>
             );
         }
-    }
-    if (status === 'payment_pending') {
-        return (
-            <View style={[styles.infoBox, { backgroundColor: colors.bgSecondary }]}>
-                <Text style={[styles.infoText, { color: colors.textSecondary }]}>💳 Awaiting payment confirmation…</Text>
-            </View>
-        );
     }
     if (status === 'ready_to_ship' && isLender) {
         return (
@@ -360,7 +374,7 @@ export default function TransactionDetailScreen() {
 
                 {/* Timeline */}
                 <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                    <TimelineBar status={status} colors={colors} />
+                    <TimelineBar status={status} deliveryType={txn.delivery_type} colors={colors} />
                 </View>
 
                 {/* Book info */}

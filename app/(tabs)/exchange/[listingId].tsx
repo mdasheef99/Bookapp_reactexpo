@@ -10,7 +10,6 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useListingDetails } from '@/features/exchange/hooks/useListings';
 import { useRequestTransaction } from '@/features/exchange/hooks/useTransactions';
 import type { DeliveryOption } from '@/features/exchange/services/listingsService';
-import { AddressPicker } from '@/components/exchange/AddressPicker';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -28,6 +27,8 @@ const DELIVERY_LABELS: Record<string, string> = {
     dunzo: '🚗 Dunzo',
 };
 
+const SUPPORTED_DELIVERY: DeliveryOption = 'meetup';
+
 export default function ListingDetailScreen() {
     const { listingId } = useLocalSearchParams<{ listingId: string }>();
     const { colors } = useTheme();
@@ -38,14 +39,15 @@ export default function ListingDetailScreen() {
     const requestMutation = useRequestTransaction();
 
     const [photoIndex, setPhotoIndex] = useState(0);
-    const [selectedDelivery, setSelectedDelivery] = useState<DeliveryOption | null>(null);
-    const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
 
     const isOwner = currentUserId === listing?.owner_id;
     const isActive = listing?.status === 'active';
-    const needsAddress = selectedDelivery !== null && selectedDelivery !== 'meetup';
-    const canRequest = !isOwner && isActive && !!selectedDelivery && !requestMutation.isPending
-        && (!needsAddress || !!selectedAddressId);
+    const meetupAvailable = (listing?.delivery_options ?? []).includes(SUPPORTED_DELIVERY);
+    const hasUnsupportedDeliveryOptions = (listing?.delivery_options ?? []).some(
+        option => option !== SUPPORTED_DELIVERY
+    );
+    const selectedDelivery: DeliveryOption | null = meetupAvailable ? SUPPORTED_DELIVERY : null;
+    const canRequest = !isOwner && isActive && meetupAvailable && !requestMutation.isPending;
 
     const handleRequest = () => {
         if (!currentUserId || !listing || !selectedDelivery) return;
@@ -54,7 +56,6 @@ export default function ListingDetailScreen() {
                 listingId: listing.id,
                 borrowerId: currentUserId,
                 deliveryType: selectedDelivery,
-                shippingAddressId: needsAddress ? (selectedAddressId ?? undefined) : undefined,
             },
             {
                 onSuccess: (txn) => {
@@ -194,42 +195,33 @@ export default function ListingDetailScreen() {
                 {/* Delivery */}
                 <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                     <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
-                        {isOwner ? 'Delivery Options' : 'Pick Delivery Method'}
+                        {isOwner ? 'Delivery Option' : 'Exchange Method'}
                     </Text>
-                    <View style={styles.chipRow}>
-                        {(listing.delivery_options ?? []).map(opt => {
-                            const active = selectedDelivery === opt;
-                            return (
-                                <TouchableOpacity key={opt} disabled={isOwner}
-                                    onPress={() => setSelectedDelivery(opt)}
-                                    style={[styles.chip,
-                                        { borderColor: active ? colors.accent : colors.border },
-                                        active && { backgroundColor: colors.accent }]}>
-                                    <Text style={[styles.chipText, { color: active ? '#FFF' : colors.textSecondary }]}>
-                                        {DELIVERY_LABELS[opt] ?? opt}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-                    {!isOwner && !selectedDelivery && (
-                        <Text style={[styles.hint, { color: colors.textTertiary }]}>
-                            Select a delivery method to continue
+                    {meetupAvailable ? (
+                        <View style={styles.chipRow}>
+                            <View
+                                testID="exchange-meetup-chip"
+                                style={[styles.chip, { borderColor: colors.accent, backgroundColor: colors.accent }]}
+                            >
+                                <Text style={[styles.chipText, { color: '#FFF' }]}>
+                                    {DELIVERY_LABELS[SUPPORTED_DELIVERY]}
+                                </Text>
+                            </View>
+                        </View>
+                    ) : (
+                        <Text style={[styles.hint, { color: colors.textSecondary }]}>
+                            Meetup isn&apos;t available for this listing yet, so it can&apos;t be requested in-app right now.
+                        </Text>
+                    )}
+                    <Text style={[styles.hint, { color: colors.textTertiary }]}> 
+                        BookTalks Exchange currently supports same-city meetup handoffs only.
+                    </Text>
+                    {hasUnsupportedDeliveryOptions && (
+                        <Text style={[styles.hint, { color: colors.textTertiary }]}> 
+                            Porter and delivery-based flows will return once they are fully supported end to end.
                         </Text>
                     )}
                 </View>
-
-                {/* Address Picker — shown for porter/dunzo delivery, borrower only */}
-                {!isOwner && needsAddress && !!currentUserId && (
-                    <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                        <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>📍 Delivery Address</Text>
-                        <AddressPicker
-                            userId={currentUserId}
-                            selectedAddressId={selectedAddressId}
-                            onSelect={setSelectedAddressId}
-                        />
-                    </View>
-                )}
 
                 <View style={{ height: 100 }} />
             </ScrollView>
@@ -245,19 +237,17 @@ export default function ListingDetailScreen() {
                         <Text style={[styles.ctaBtnText, { color: colors.textTertiary }]}>No longer available</Text>
                     </View>
                 ) : (
-                    <TouchableOpacity onPress={handleRequest} disabled={!canRequest}
+                    <TouchableOpacity testID="exchange-request-cta" onPress={handleRequest} disabled={!canRequest}
                         style={[styles.ctaBtn, { backgroundColor: canRequest ? colors.accent : colors.border }]}>
                         {requestMutation.isPending ? (
                             <ActivityIndicator color="#FFF" />
                         ) : (
                             <Text style={[styles.ctaBtnText, { color: canRequest ? '#FFF' : colors.textTertiary }]}>
                                 {canRequest
-                                    ? '📚 Request Book'
-                                    : !selectedDelivery
-                                        ? 'Pick a delivery method'
-                                        : needsAddress && !selectedAddressId
-                                            ? 'Pick a delivery address'
-                                            : 'Pick a delivery method'}
+                                    ? '📚 Request Meetup Exchange'
+                                    : meetupAvailable
+                                        ? 'Meetup exchange only'
+                                        : 'Meetup not available'}
                             </Text>
                         )}
                     </TouchableOpacity>

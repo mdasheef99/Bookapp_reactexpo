@@ -92,6 +92,7 @@ describe('useAuth', () => {
     });
 
     it('stops loading on error (timeout or network failure)', async () => {
+      const Sentry = require('@sentry/react-native');
       (mockAuth.getSession as jest.Mock).mockRejectedValueOnce(
         new Error('Auth initialization timed out'),
       );
@@ -105,6 +106,18 @@ describe('useAuth', () => {
 
       expect(result.current.isLoading).toBe(false);
       expect(result.current.session).toBeNull();
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Auth initialization timed out' }),
+        expect.objectContaining({
+          tags: expect.objectContaining({
+            area: 'auth',
+            action: 'initialize_session_failed',
+            feature: 'auth',
+            hook: 'useAuth',
+          }),
+          extra: expect.objectContaining({ timeout_ms: 5000 }),
+        }),
+      );
     });
   });
 

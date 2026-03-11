@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { captureAppException } from '@/lib/sentry';
 
 // Simple React hooks-based auth state (replacing zustand)
 let globalSession: Session | null = null;
@@ -86,6 +87,17 @@ export function useAuth() {
             });
         } catch (error) {
             console.warn('Auth initialization error or timeout:', error);
+            captureAppException(error, {
+                area: 'auth',
+                action: 'initialize_session_failed',
+                tags: {
+                    feature: 'auth',
+                    hook: 'useAuth',
+                },
+                extra: {
+                    timeout_ms: 5000,
+                },
+            });
             // Even on error, we must stop loading to show the app (likely Login screen)
             globalIsLoading = false;
             notifyListeners();

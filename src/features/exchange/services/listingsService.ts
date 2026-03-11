@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { profileService, type UserProfileSummary } from '@/features/auth/services/profileService';
+import { captureAppException } from '@/lib/sentry';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -64,6 +65,22 @@ export interface ListingFilters {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function captureListingsServiceError(
+    error: unknown,
+    action: string,
+    extra?: Record<string, unknown>,
+) {
+    captureAppException(error, {
+        area: 'exchange',
+        action,
+        tags: {
+            feature: 'exchange',
+            service: 'listingsService',
+        },
+        extra,
+    });
+}
 
 /**
  * Upload a single photo to the listing-photos bucket.
@@ -160,29 +177,41 @@ export const listingsService = {
     async browseListings(city: string, filters: ListingFilters = {}): Promise<ListingWithBook[]> {
         const { condition, deliveryOption, limit = 20, offset = 0 } = filters;
 
-        let query = supabase
-            .from('listings')
-            .select(`
-                *,
-                book:books(
-                    id, title, subtitle, authors, cover_url, average_rating
-                )
-            `)
-            .eq('status', 'active')
-            .eq('city', city)
-            .order('created_at', { ascending: false })
-            .range(offset, offset + limit - 1);
+        try {
+            let query = supabase
+                .from('listings')
+                .select(`
+                    *,
+                    book:books(
+                        id, title, subtitle, authors, cover_url, average_rating
+                    )
+                `)
+                .eq('status', 'active')
+                .eq('city', city)
+                .order('created_at', { ascending: false })
+                .range(offset, offset + limit - 1);
 
-        if (condition) {
-            query = query.eq('condition', condition);
-        }
-        if (deliveryOption) {
-            query = query.contains('delivery_options', [deliveryOption]);
-        }
+            if (condition) {
+                query = query.eq('condition', condition);
+            }
+            if (deliveryOption) {
+                query = query.contains('delivery_options', [deliveryOption]);
+            }
 
-        const { data, error } = await query;
-        if (error) throw error;
-        return (data ?? []) as ListingWithBook[];
+            const { data, error } = await query;
+            if (error) throw error;
+            return (data ?? []) as ListingWithBook[];
+        } catch (error) {
+            captureListingsServiceError(error, 'browse_listings_failed', {
+                operation: 'browseListings',
+                table: 'listings',
+                has_condition_filter: Boolean(condition),
+                delivery_option: deliveryOption ?? 'none',
+                limit,
+                offset,
+            });
+            throw error;
+        }
     },
 
     /**
@@ -190,23 +219,32 @@ export const listingsService = {
      * RICH: Fetches listing+book in one query, then owner profile separately.
      */
     async getListingDetails(listingId: string): Promise<ListingWithDetails> {
-        const { data, error } = await supabase
-            .from('listings')
-            .select(`
-                *,
-                book:books(
-                    id, title, subtitle, authors, cover_url, average_rating
-                )
-            `)
-            .eq('id', listingId)
-            .single();
+        try {
+            const { data, error } = await supabase
+                .from('listings')
+                .select(`
+                    *,
+                    book:books(
+                        id, title, subtitle, authors, cover_url, average_rating
+                    )
+                `)
+                .eq('id', listingId)
+                .single();
 
-        if (error) throw error;
+            if (error) throw error;
 
-        // Fetch owner profile separately (1 extra query, but only for detail view)
-        const owner = await profileService.getProfileSummary(data.owner_id);
+            // Fetch owner profile separately (1 extra query, but only for detail view)
+            const owner = await profileService.getProfileSummary(data.owner_id);
 
-        return { ...data, owner } as ListingWithDetails;
+            return { ...data, owner } as ListingWithDetails;
+        } catch (error) {
+            captureListingsServiceError(error, 'get_listing_details_failed', {
+                operation: 'getListingDetails',
+                table: 'listings',
+                listing_id: listingId,
+            });
+            throw error;
+        }
     },
 
     /**
