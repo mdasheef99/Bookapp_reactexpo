@@ -8,9 +8,11 @@ import {
     useClubMembers,
     useClubJoinQuestions,
     useClubMembership,
+    useClubBookNominations,
     useClubPublicDetail,
     useCreateClubJoinQuestion,
     useDeleteClubJoinQuestion,
+    useFinalizeClubBookNomination,
     useUpdateClub,
     useRemoveClubMember,
     useUpdateClubMemberRole,
@@ -128,6 +130,18 @@ function formatStatus(status: ClubMemberWithProfile['status']) {
     return 'Active member';
 }
 
+function formatNominationStatus(status: string | null | undefined) {
+    if (!status) return 'Unknown';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function hasNominationVotingClosed(votingEndsAt: string | null) {
+    if (!votingEndsAt) return false;
+    const votingEndTime = Date.parse(votingEndsAt);
+    if (Number.isNaN(votingEndTime)) return false;
+    return votingEndTime <= Date.now();
+}
+
 export default function ClubManageScreen() {
     const { clubId } = useLocalSearchParams<{ clubId: string }>();
     const { colors } = useTheme();
@@ -136,11 +150,21 @@ export default function ClubManageScreen() {
     const { data: club, isLoading, isError, refetch } = useClubPublicDetail(clubId ?? null);
     const { data: membership, isLoading: isMembershipLoading } = useClubMembership(clubId ?? null, userId);
     const isAdmin = !!userId && !!club && (club.admin_id === userId || membership?.role === 'admin');
+    const isActiveModerator = membership?.role === 'moderator' && membership?.status === 'active';
+    const canManageCurrentBook = !!userId && !!club && (isAdmin || isActiveModerator);
     const { data: members = [], isLoading: isMembersLoading, refetch: refetchMembers } = useClubMembers(clubId ?? null, isAdmin);
     const { data: questions = [], isLoading: isQuestionsLoading, refetch: refetchQuestions } = useClubJoinQuestions(clubId ?? null, isAdmin);
+    const {
+        data: nominations = [],
+        isLoading: isNominationsLoading,
+        isError: isNominationsError,
+        error: nominationsError,
+        refetch: refetchNominations,
+    } = useClubBookNominations(clubId ?? null, userId, canManageCurrentBook);
     const createQuestion = useCreateClubJoinQuestion();
     const updateQuestion = useUpdateClubJoinQuestion();
     const deleteQuestion = useDeleteClubJoinQuestion();
+    const finalizeNomination = useFinalizeClubBookNomination();
     const updateClub = useUpdateClub();
     const removeMember = useRemoveClubMember();
     const updateMemberRole = useUpdateClubMemberRole();
@@ -302,16 +326,60 @@ export default function ClubManageScreen() {
         }
     };
 
+    const handleFinalizeNomination = async (nominationId: string) => {
+        if (!clubId) return;
+
+        try {
+            setFeedback(null);
+            await finalizeNomination.mutateAsync({ nominationId });
+            setFeedback({ type: 'success', message: 'Current book finalized successfully.' });
+            await Promise.all([refetch(), refetchNominations()]);
+        } catch (error) {
+            setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to finalize the current book right now.') });
+        }
+    };
+
     if (isLoading || isMembershipLoading || !settings) return <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary }]}><ActivityIndicator size="large" color={colors.accent} /></View>;
     if (isError || !club) return <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}><Text style={[styles.title, { color: colors.textPrimary }]}>Unable to load club settings</Text><TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.accent }]} onPress={() => refetch()}><Text style={styles.primaryButtonText}>Retry</Text></TouchableOpacity></View>;
-    if (!isAdmin) return <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}><Text style={[styles.title, { color: colors.textPrimary }]}>Admin access required</Text><Text style={[styles.body, { color: colors.textSecondary }]}>Only club admins can manage basic settings and join questions.</Text><TouchableOpacity style={[styles.secondaryButton, { borderColor: colors.border }]} onPress={() => router.back()}><Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>Go back</Text></TouchableOpacity></View>;
+    if (!canManageCurrentBook) return <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}><Text style={[styles.title, { color: colors.textPrimary }]}>Manager access required</Text><Text style={[styles.body, { color: colors.textSecondary }]}>Only club admins and active moderators can access current-book management here. Basic settings, member roles, and join questions remain admin-only.</Text><TouchableOpacity style={[styles.secondaryButton, { borderColor: colors.border }]} onPress={() => router.back()}><Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>Go back</Text></TouchableOpacity></View>;
 
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.contentContainer}>
             <View style={styles.headerRow}><TouchableOpacity onPress={() => router.back()} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity><Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Manage club</Text><View style={styles.headerSpacer} /></View>
-            <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.title, { color: colors.textPrimary }]}>{club.name}</Text><Text style={[styles.body, { color: colors.textSecondary }]}>This Manage Club slice now covers deeper basic settings, member-role management, remove-member workflows, and join-question management. Archive controls are not part of the current roadmap.</Text></View>
+            <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.title, { color: colors.textPrimary }]}>{club.name}</Text><Text style={[styles.body, { color: colors.textSecondary }]}>{isAdmin ? 'Manage Club includes current-book management plus the existing basic settings, member-role management, remove-member workflows, and join-question management. Archive controls are not part of the current roadmap.' : 'Manage Club now gives eligible moderators a current-book management path. Basic settings, member-role management, remove-member workflows, and join-question management remain admin-only.'}</Text></View>
             {feedback ? <View style={[styles.feedbackBanner, { backgroundColor: feedback.type === 'success' ? '#DCFCE7' : '#FEE2E2', borderColor: feedback.type === 'success' ? '#22C55E' : '#EF4444' }]}><Text style={[styles.feedbackText, { color: feedback.type === 'success' ? '#166534' : '#991B1B' }]}>{feedback.message}</Text></View> : null}
-            <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
+                <Text style={[styles.title, { color: colors.textPrimary }]}>Current book management</Text>
+                <Text style={[styles.body, { color: colors.textSecondary }]}>Review the current nomination slate and finalize the club&apos;s next read here after voting closes. This workflow is available to club admins and active moderators only.</Text>
+                <View style={[styles.summaryCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}>
+                    <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Current selection</Text>
+                    <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{club.current_book_title || 'No current book selected yet'}</Text>
+                    <Text style={[styles.summaryFootnote, { color: colors.textSecondary }]}>{club.current_book_authors?.join(', ') || 'Finalize a closed nomination to set the current club read.'}</Text>
+                </View>
+                {isNominationsLoading ? <View style={styles.loadingRow}><ActivityIndicator size="small" color={colors.accent} /><Text style={[styles.body, { color: colors.textSecondary }]}>Loading nominations…</Text></View> : null}
+                {isNominationsError ? <View style={[styles.summaryCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}><Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Unable to load nominations</Text><Text style={[styles.summaryFootnote, { color: colors.textSecondary }]}>{getClubsEntitlementErrorMessage(nominationsError, 'Unable to load book nominations right now.')}</Text><TouchableOpacity style={[styles.secondaryButton, { borderColor: colors.border, marginTop: 12 }]} onPress={() => refetchNominations()} testID="manage-book-retry"><Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>Retry</Text></TouchableOpacity></View> : null}
+                {!isNominationsLoading && !isNominationsError && nominations.length === 0 ? <View style={[styles.summaryCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}><Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>No nominations yet</Text><Text style={[styles.summaryFootnote, { color: colors.textSecondary }]}>No club books are waiting for finalization right now. Once members nominate titles, they will appear here with vote counts and deadline status.</Text></View> : null}
+                {!isNominationsLoading && !isNominationsError && nominations.map((nomination) => {
+                    const isVotingClosed = hasNominationVotingClosed(nomination.voting_ends_at);
+                    const canFinalize = nomination.status === 'active' && isVotingClosed;
+                    const isSelected = nomination.status === 'selected';
+
+                    return <View key={nomination.id} style={[styles.nominationCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}>
+                        <Text style={[styles.nominationTitle, { color: colors.textPrimary }]}>{nomination.book?.title || 'Untitled nomination'}</Text>
+                        <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{nomination.book?.authors?.join(', ') || 'Author information unavailable'}</Text>
+                        <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{`Votes: ${nomination.vote_count ?? 0}`}</Text>
+                        <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{`Status: ${formatNominationStatus(nomination.status)}`}</Text>
+                        <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{nomination.voting_ends_at ? `Voting ends: ${new Date(nomination.voting_ends_at).toLocaleString()}` : 'Voting end time not set yet.'}</Text>
+                        <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{`Nominated by ${nomination.nominatorProfile?.display_name || nomination.nominatorProfile?.username || 'a club member'}`}</Text>
+                        {isSelected ? <Text style={[styles.nominationMeta, { color: colors.accent }]} testID={`manage-current-book-selected-${nomination.id}`}>This nomination is currently selected for the club.</Text> : null}
+                        {!isSelected && nomination.status === 'active' ? <Text style={[styles.nominationMeta, { color: isVotingClosed ? colors.accent : colors.textSecondary }]} testID={`manage-current-book-status-${nomination.id}`}>{isVotingClosed ? 'Voting has closed. You can finalize this book now.' : 'Finalize becomes available after voting closes.'}</Text> : null}
+                        {canFinalize ? <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.accent, marginTop: 12, opacity: finalizeNomination.isPending ? 0.65 : 1 }]} onPress={() => handleFinalizeNomination(nomination.id)} disabled={finalizeNomination.isPending} testID={`manage-finalize-${nomination.id}`}><Text style={styles.primaryButtonText}>{finalizeNomination.isPending ? 'Finalizing…' : 'Finalize current book'}</Text></TouchableOpacity> : null}
+                    </View>;
+                })}
+            </View>
+            {!isAdmin ? <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="admin-only-manage-notice"><Text style={[styles.title, { color: colors.textPrimary }]}>Admin-only tools stay locked</Text><Text style={[styles.body, { color: colors.textSecondary }]}>Basic settings, member-role management, remove-member workflows, and join-question management still require club admin access in this phase.</Text></View> : null}
+            {isAdmin ? <>
+            <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
                 <Text style={[styles.title, { color: colors.textPrimary }]}>Basic settings</Text>
                 <Text style={[styles.body, { color: colors.textSecondary }]}>Edit the club profile fields the live backend supports today. Cover photo is still a URL field in this first pass.</Text>
                 <View style={[styles.summaryCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}>
@@ -402,6 +470,7 @@ export default function ClubManageScreen() {
                 const edit = getEditState(question.id, question.question, question.is_required ?? true);
                 return <View key={question.id} style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.meta, { color: colors.textSecondary }]}>Question #{question.order_index + 1}</Text><TextInput value={edit.question} onChangeText={(value) => setEdits((current) => ({ ...current, [question.id]: { ...edit, question: value } }))} placeholder="Join question" placeholderTextColor={colors.textTertiary} style={[styles.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgPrimary }]} testID={`edit-question-${question.id}`} /><TouchableOpacity style={[styles.toggleButton, { borderColor: edit.isRequired ? colors.accent : colors.border, backgroundColor: colors.bgSecondary }]} onPress={() => setEdits((current) => ({ ...current, [question.id]: { ...edit, isRequired: !edit.isRequired } }))} testID={`toggle-required-${question.id}`}><Text style={[styles.toggleText, { color: edit.isRequired ? colors.accent : colors.textSecondary }]}>{edit.isRequired ? 'Required answer' : 'Optional answer'}</Text></TouchableOpacity><View style={styles.actionsRow}><TouchableOpacity style={[styles.secondaryButton, { borderColor: '#EF4444' }]} onPress={() => handleDelete(question.id)} disabled={deleteQuestion.isPending} testID={`delete-question-${question.id}`}><Text style={[styles.secondaryButtonText, { color: '#B91C1C' }]}>{deleteQuestion.isPending ? 'Working…' : 'Delete'}</Text></TouchableOpacity><TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.accent, opacity: updateQuestion.isPending ? 0.7 : 1 }]} onPress={() => handleUpdate(question.id, edit.question, edit.isRequired)} disabled={updateQuestion.isPending} testID={`save-question-${question.id}`}><Text style={styles.primaryButtonText}>{updateQuestion.isPending ? 'Saving…' : 'Save changes'}</Text></TouchableOpacity></View></View>;
             })}
+            </> : null}
         </ScrollView>
     );
 }
@@ -439,6 +508,9 @@ const styles = StyleSheet.create({
     toggleButton: { borderWidth: 1, borderRadius: 14, paddingVertical: 12, alignItems: 'center', marginBottom: 12 },
     toggleText: { fontSize: 14, fontWeight: '700' },
     validationText: { fontSize: 13, fontWeight: '600', lineHeight: 18, marginBottom: 12 },
+    nominationCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12, gap: 4 },
+    nominationTitle: { fontSize: 15, fontWeight: '700', marginBottom: 2 },
+    nominationMeta: { fontSize: 13, lineHeight: 18 },
     memberRow: { borderWidth: 1, borderRadius: 14, padding: 12, marginTop: 12, flexDirection: 'row', gap: 12, alignItems: 'center' },
     memberBody: { flex: 1, gap: 4 },
     memberName: { fontSize: 15, fontWeight: '700' },

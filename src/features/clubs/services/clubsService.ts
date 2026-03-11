@@ -10,6 +10,8 @@ export type {
     AccessLevel,
     Club,
     ClubBookSummary,
+    ClubCurrentBookReadingStatus,
+    ClubCurrentBookStatusOverview,
     ClubBookNomination,
     ClubBookNominationStatus,
     ClubBookNominationWithDetails,

@@ -5,6 +5,8 @@ import type {
     ClubBookNomination,
     ClubBookNominationWithDetails,
     ClubBookVote,
+    ClubCurrentBookReadingStatus,
+    ClubCurrentBookStatusOverview,
     ClubNominationBookSummary,
     NominateClubBookInput,
 } from './clubsService.types';
@@ -109,4 +111,23 @@ export async function finalizeClubBookNomination(nominationId: string): Promise<
     const { data, error } = await supabase.rpc('finalize_club_book_nomination', { p_nomination_id: nominationId });
     if (error) throw error;
     return data as Club;
+}
+
+export async function getClubCurrentBookStatusOverview(clubId: string): Promise<ClubCurrentBookStatusOverview> {
+    const { data, error } = await supabase.rpc('get_club_current_book_status_overview', { p_club_id: clubId });
+    if (error) throw error;
+
+    const overview = Array.isArray(data) ? data[0] : data;
+    return overview as ClubCurrentBookStatusOverview;
+}
+
+export async function setClubCurrentBookReadingStatus(clubId: string, status: ClubCurrentBookReadingStatus): Promise<ClubCurrentBookStatusOverview> {
+    const { data, error } = await supabase.rpc('set_club_current_book_reading_status', {
+        p_club_id: clubId,
+        p_status: status,
+    });
+    if (error) throw error;
+
+    const overview = Array.isArray(data) ? data[0] : data;
+    return overview as ClubCurrentBookStatusOverview;
 }

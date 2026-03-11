@@ -12,8 +12,17 @@ export type MembershipLimitAction = 'create_club' | 'check_downgrade';
 export type ClubEventFormat = 'virtual' | 'in_person' | 'hybrid';
 export type ClubEventStatus = 'scheduled' | 'cancelled';
 export type ClubEventRsvpStatus = 'going' | 'maybe' | 'not_going';
+export type ClubCurrentBookReadingStatus = 'want_to_read' | 'reading' | 'completed';
 
 export interface ClubBookSummary { id: string; title: string; authors: string[] | null; cover_url: string | null; }
+export interface ClubCurrentBookStatusOverview {
+    current_book_id: string | null;
+    member_reading_status: ClubCurrentBookReadingStatus | null;
+    to_start_count: number;
+    reading_count: number;
+    completed_count: number;
+    active_member_count: number;
+}
 export interface ClubPublicDetails {
     id: string;
     name: string;

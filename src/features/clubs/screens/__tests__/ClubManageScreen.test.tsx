@@ -2,12 +2,15 @@ import { Alert } from 'react-native';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import ClubManageScreen from '../ClubManageScreen';
 
+let mockUserId = 'admin-1';
 const mockUseClubPublicDetail = jest.fn();
 const mockUseClubMembership = jest.fn();
+const mockUseClubBookNominations = jest.fn();
 const mockUseClubJoinQuestions = jest.fn();
 const mockUseCreateClubJoinQuestion = jest.fn();
 const mockUseUpdateClubJoinQuestion = jest.fn();
 const mockUseDeleteClubJoinQuestion = jest.fn();
+const mockUseFinalizeClubBookNomination = jest.fn();
 const mockUseUpdateClub = jest.fn();
 const mockUseClubMembers = jest.fn();
 const mockUseUpdateClubMemberRole = jest.fn();
@@ -27,16 +30,18 @@ jest.mock('@/hooks/useTheme', () => ({
     }),
 }));
 jest.mock('@/features/auth/hooks/useAuth', () => ({
-    useAuth: () => ({ user: { id: 'admin-1' } }),
+    useAuth: () => ({ user: { id: mockUserId } }),
 }));
 jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useClubPublicDetail: (...args: unknown[]) => mockUseClubPublicDetail(...args),
     useClubMembership: (...args: unknown[]) => mockUseClubMembership(...args),
+    useClubBookNominations: (...args: unknown[]) => mockUseClubBookNominations(...args),
     useClubJoinQuestions: (...args: unknown[]) => mockUseClubJoinQuestions(...args),
     useClubMembers: (...args: unknown[]) => mockUseClubMembers(...args),
     useCreateClubJoinQuestion: (...args: unknown[]) => mockUseCreateClubJoinQuestion(...args),
     useUpdateClubJoinQuestion: (...args: unknown[]) => mockUseUpdateClubJoinQuestion(...args),
     useDeleteClubJoinQuestion: (...args: unknown[]) => mockUseDeleteClubJoinQuestion(...args),
+    useFinalizeClubBookNomination: (...args: unknown[]) => mockUseFinalizeClubBookNomination(...args),
     useUpdateClub: (...args: unknown[]) => mockUseUpdateClub(...args),
     useUpdateClubMemberRole: (...args: unknown[]) => mockUseUpdateClubMemberRole(...args),
     useRemoveClubMember: (...args: unknown[]) => mockUseRemoveClubMember(...args),
@@ -75,28 +80,57 @@ const baseClub = {
 
 beforeEach(() => {
     jest.clearAllMocks();
+    mockUserId = 'admin-1';
     mockUseClubPublicDetail.mockReturnValue({ data: baseClub, isLoading: false, isError: false, refetch: jest.fn() });
-    mockUseClubMembership.mockReturnValue({ data: { role: 'admin' }, isLoading: false });
+    mockUseClubMembership.mockReturnValue({ data: { role: 'admin', status: 'active' }, isLoading: false });
+    mockUseClubBookNominations.mockReturnValue({ data: [], isLoading: false, isError: false, error: null, refetch: jest.fn() });
     mockUseClubJoinQuestions.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
     mockUseClubMembers.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
     mockUseCreateClubJoinQuestion.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseUpdateClubJoinQuestion.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseDeleteClubJoinQuestion.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseFinalizeClubBookNomination.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
     mockUseUpdateClub.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
     mockUseUpdateClubMemberRole.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'member-1' }), isPending: false });
     mockUseRemoveClubMember.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue(undefined), isPending: false });
 });
 
 describe('ClubManageScreen', () => {
-    it('shows the settings, member-management, and join-question sections on the manage screen', () => {
+    it('shows current-book management alongside the admin-only sections for admins', () => {
         const { getByText, getByTestId } = render(<ClubManageScreen />);
 
         expect(getByText('Manage club')).toBeOnTheScreen();
+        expect(getByText('Current book management')).toBeOnTheScreen();
         expect(getByText('Basic settings')).toBeOnTheScreen();
         expect(getByText('Current saved state')).toBeOnTheScreen();
         expect(getByTestId('settings-name-input')).toBeOnTheScreen();
         expect(getByText('Members & roles')).toBeOnTheScreen();
         expect(getByText('Add join question')).toBeOnTheScreen();
+    });
+
+    it('shows current-book management for active moderators while keeping admin-only sections hidden', async () => {
+        mockUserId = 'reader-2';
+        mockUseClubMembership.mockReturnValue({ data: { role: 'moderator', status: 'active' }, isLoading: false });
+        mockUseClubBookNominations.mockReturnValue({
+            data: [{
+                id: 'nomination-1', club_id: 'club-1', book_id: 'book-1', nominated_by: 'reader-3', vote_count: 4, status: 'active', voting_ends_at: '2000-01-01T00:00:00Z', created_at: '2026-03-10T00:00:00Z',
+                book: { id: 'book-1', google_books_id: 'gb-1', title: 'Beloved', authors: ['Toni Morrison'], cover_url: null },
+                nominatorProfile: { id: 'profile-3', user_id: 'reader-3', display_name: 'Reader Three', username: 'readerthree', avatar_url: null, trust_score: 4.4, city: 'Bangalore' },
+                currentUserVote: null,
+            }],
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: jest.fn(),
+        });
+
+        const { getByText, getByTestId, queryByText } = render(<ClubManageScreen />);
+
+        await waitFor(() => expect(getByText('Current book management')).toBeOnTheScreen());
+
+        expect(getByTestId('admin-only-manage-notice')).toBeOnTheScreen();
+        expect(queryByText('Basic settings')).toBeNull();
+        expect(getByTestId('manage-finalize-nomination-1')).toBeOnTheScreen();
     });
 
     it('saves updated club settings through the manage-club settings mutation', async () => {
@@ -177,6 +211,37 @@ describe('ClubManageScreen', () => {
 
         expect(getByText(/author clubs keep their club type locked here/i)).toBeOnTheScreen();
         expect(queryByTestId('club-type-option-public')).toBeNull();
+    });
+
+    it('finalizes a closed nomination from Manage Club for an active moderator', async () => {
+        mockUserId = 'reader-2';
+        const mutateAsync = jest.fn().mockResolvedValue({ id: 'club-1' });
+        const refetchClub = jest.fn().mockResolvedValue({ data: null });
+        const refetchNominations = jest.fn().mockResolvedValue({ data: null });
+        mockUseClubPublicDetail.mockReturnValue({ data: baseClub, isLoading: false, isError: false, refetch: refetchClub });
+        mockUseClubMembership.mockReturnValue({ data: { role: 'moderator', status: 'active' }, isLoading: false });
+        mockUseClubBookNominations.mockReturnValue({
+            data: [{
+                id: 'nomination-1', club_id: 'club-1', book_id: 'book-1', nominated_by: 'reader-3', vote_count: 6, status: 'active', voting_ends_at: '2000-01-01T00:00:00Z', created_at: '2026-03-10T00:00:00Z',
+                book: { id: 'book-1', google_books_id: 'gb-1', title: 'Beloved', authors: ['Toni Morrison'], cover_url: null },
+                nominatorProfile: { id: 'profile-3', user_id: 'reader-3', display_name: 'Reader Three', username: 'readerthree', avatar_url: null, trust_score: 4.4, city: 'Bangalore' },
+                currentUserVote: null,
+            }],
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: refetchNominations,
+        });
+        mockUseFinalizeClubBookNomination.mockReturnValue({ mutateAsync, isPending: false });
+
+        const { getByTestId, getByText } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByTestId('manage-finalize-nomination-1'));
+
+        await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ nominationId: 'nomination-1' }));
+        expect(refetchClub).toHaveBeenCalled();
+        expect(refetchNominations).toHaveBeenCalled();
+        expect(getByText('Current book finalized successfully.')).toBeOnTheScreen();
     });
 
     it('toggles moderator assignment from the current member list', async () => {

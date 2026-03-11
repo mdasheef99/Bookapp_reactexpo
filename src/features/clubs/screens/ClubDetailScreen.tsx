@@ -6,10 +6,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { profileService } from '@/features/auth/services/profileService';
-import { useAcceptClubInvitation, useCastClubBookVote, useClubBookNominations, useClubJoinQuestions, useClubMembers, useClubMembership, useClubPublicDetail, useFinalizeClubBookNomination, useJoinClub, useMyClubApplication, useMyClubInvitation, useRemoveClubBookVote } from '@/features/clubs/hooks/useClubs';
+import { useAcceptClubInvitation, useCastClubBookVote, useClubBookNominations, useClubCurrentBookStatusOverview, useClubJoinQuestions, useClubMembers, useClubMembership, useClubPublicDetail, useJoinClub, useMyClubApplication, useMyClubInvitation, useRemoveClubBookVote, useSetClubCurrentBookReadingStatus } from '@/features/clubs/hooks/useClubs';
 import { ClubMemberList } from '@/features/clubs/components/ClubMemberList';
 import { getClubAccessRequirementMessage, getClubsEntitlementErrorMessage, membershipTierSatisfiesAccessLevel } from '@/features/clubs/services/clubsEntitlement';
-import type { AccessLevel, ClubBookNominationWithDetails, ClubJoinQuestion, ClubType, MeetingType, MembershipTier } from '@/features/clubs/services/clubsService';
+import type { AccessLevel, ClubBookNominationWithDetails, ClubCurrentBookReadingStatus, ClubJoinQuestion, ClubType, MeetingType, MembershipTier } from '@/features/clubs/services/clubsService';
 
 const CLUB_TYPE_LABELS: Record<ClubType, string> = {
     public: 'Public club',
@@ -28,6 +28,12 @@ const MEETING_TYPE_LABELS: Record<MeetingType, string> = {
     online_only: 'Online only',
     venue_based: 'Venue based',
     hybrid: 'Hybrid',
+};
+
+const CURRENT_BOOK_STATUS_LABELS: Record<ClubCurrentBookReadingStatus, string> = {
+    want_to_read: 'To start',
+    reading: 'Reading',
+    completed: 'Completed',
 };
 
 function getQuestionPlaceholder(question: ClubJoinQuestion) {
@@ -71,12 +77,15 @@ export default function ClubDetailScreen() {
     const { data: myInvitation, isLoading: isInvitationLoading } = useMyClubInvitation(clubId ?? null, userId, shouldLoadInvitationData);
     const { data: members = [], isLoading: isMembersLoading } = useClubMembers(clubId ?? null, isMember);
     const { data: nominations = [], isLoading: isNominationsLoading, isError: isNominationsError, error: nominationsError, refetch: refetchNominations } = useClubBookNominations(clubId ?? null, userId, isMember);
+    const shouldLoadCurrentBookStatus = isMember && !!club?.current_book_id;
+    const { data: currentBookStatus, isLoading: isCurrentBookStatusLoading, isError: isCurrentBookStatusError, error: currentBookStatusError, refetch: refetchCurrentBookStatus } = useClubCurrentBookStatusOverview(clubId ?? null, userId, shouldLoadCurrentBookStatus);
     const castVoteMutation = useCastClubBookVote();
     const removeVoteMutation = useRemoveClubBookVote();
-    const finalizeNominationMutation = useFinalizeClubBookNomination();
+    const setCurrentBookStatusMutation = useSetClubCurrentBookReadingStatus();
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [actionFeedback, setActionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
     const [bookFeedback, setBookFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const [currentBookFeedback, setCurrentBookFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
     const [viewerMembershipTier, setViewerMembershipTier] = useState<MembershipTier | null>(null);
 
     useEffect(() => {
@@ -133,6 +142,21 @@ export default function ClubDetailScreen() {
     const blocksDirectJoin = !isMember && !!userId && canJoinDirectly && meetsClubAccessRequirement === false;
     const blocksInvitationAcceptance = !isMember && !!userId && !!myInvitation && meetsClubAccessRequirement === false;
     const canManageBookActions = membership?.status === 'active';
+    const canOpenManageClub = isAdmin || (membership?.role === 'moderator' && membership?.status === 'active');
+
+    const handleCurrentBookStatusChange = async (status: ClubCurrentBookReadingStatus) => {
+        if (!clubId || !club.current_book_id || !canManageBookActions) {
+            return setCurrentBookFeedback({ type: 'error', message: 'Only active club members can update current-book reading status.' });
+        }
+
+        try {
+            setCurrentBookFeedback(null);
+            await setCurrentBookStatusMutation.mutateAsync({ clubId, status });
+            setCurrentBookFeedback({ type: 'success', message: `Your current-book status is now ${CURRENT_BOOK_STATUS_LABELS[status]}.` });
+        } catch (error) {
+            setCurrentBookFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to update your current-book status right now.') });
+        }
+    };
 
     const handleVoteToggle = async (nomination: ClubBookNominationWithDetails) => {
         if (!clubId || !userId) {
@@ -150,16 +174,6 @@ export default function ClubDetailScreen() {
             }
         } catch (error) {
             setBookFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to update your vote right now.') });
-        }
-    };
-
-    const handleFinalizeNomination = async (nomination: ClubBookNominationWithDetails) => {
-        try {
-            setBookFeedback(null);
-            await finalizeNominationMutation.mutateAsync({ nominationId: nomination.id });
-            setBookFeedback({ type: 'success', message: 'Current book finalized successfully.' });
-        } catch (error) {
-            setBookFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to finalize the current book right now.') });
         }
     };
 
@@ -230,6 +244,32 @@ export default function ClubDetailScreen() {
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Current read</Text>
                 <Text style={[styles.sectionPrimary, { color: colors.textPrimary }]}>{club.current_book_title || 'No current book selected yet'}</Text>
                 <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>{club.current_book_authors?.join(', ') || 'Once a book is selected it will appear here for all visitors.'}</Text>
+                {isMember && club.current_book_id ? (
+                    <>
+                        {isCurrentBookStatusLoading ? <View style={styles.inlineLoadingRow}><ActivityIndicator size="small" color={colors.accent} /><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Loading current-book progress…</Text></View> : null}
+                        {isCurrentBookStatusError ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Unable to load current-book progress</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{getClubsEntitlementErrorMessage(currentBookStatusError, 'Unable to load current-book progress right now.')}</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => refetchCurrentBookStatus()} testID="club-current-book-status-retry"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Retry</Text></TouchableOpacity></View> : null}
+                        {!isCurrentBookStatusLoading && !isCurrentBookStatusError && currentBookStatus ? (
+                            <>
+                                <View style={styles.currentBookStatsGrid}>
+                                    <View style={[styles.currentBookStatCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.currentBookStatLabel, { color: colors.textSecondary }]}>Active members</Text><Text style={[styles.currentBookStatValue, { color: colors.textPrimary }]}>{currentBookStatus.active_member_count}</Text></View>
+                                    <View style={[styles.currentBookStatCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.currentBookStatLabel, { color: colors.textSecondary }]}>To start</Text><Text style={[styles.currentBookStatValue, { color: colors.textPrimary }]}>{currentBookStatus.to_start_count}</Text></View>
+                                    <View style={[styles.currentBookStatCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.currentBookStatLabel, { color: colors.textSecondary }]}>Reading</Text><Text style={[styles.currentBookStatValue, { color: colors.textPrimary }]}>{currentBookStatus.reading_count}</Text></View>
+                                    <View style={[styles.currentBookStatCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.currentBookStatLabel, { color: colors.textSecondary }]}>Completed</Text><Text style={[styles.currentBookStatValue, { color: colors.textPrimary }]}>{currentBookStatus.completed_count}</Text></View>
+                                </View>
+                                <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+                                    <Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Your club reading status</Text>
+                                    <Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{`Current status: ${CURRENT_BOOK_STATUS_LABELS[currentBookStatus.member_reading_status ?? 'want_to_read']}`}</Text>
+                                    {canManageBookActions ? <View style={styles.currentBookActionsRow}>{(['want_to_read', 'reading', 'completed'] as ClubCurrentBookReadingStatus[]).map((status) => {
+                                        const isSelected = (currentBookStatus.member_reading_status ?? 'want_to_read') === status;
+                                        const isDisabled = setCurrentBookStatusMutation.isPending;
+                                        return <TouchableOpacity key={status} onPress={() => handleCurrentBookStatusChange(status)} disabled={isDisabled} style={[styles.currentBookStatusButton, { backgroundColor: isSelected ? colors.accent : colors.bgCard, borderColor: colors.accent, opacity: isDisabled ? 0.7 : 1 }]} testID={`club-current-book-status-${status}`}><Text style={[styles.currentBookStatusButtonText, { color: isSelected ? '#FFFFFF' : colors.accent }]}>{CURRENT_BOOK_STATUS_LABELS[status]}</Text></TouchableOpacity>;
+                                    })}</View> : <Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Only active club members can update the current-book reading status. Muted members can still view club progress.</Text>}
+                                </View>
+                                {currentBookFeedback ? <View style={[styles.feedbackBanner, { backgroundColor: currentBookFeedback.type === 'success' ? '#DCFCE7' : '#FEE2E2', borderColor: currentBookFeedback.type === 'success' ? '#22C55E' : '#EF4444' }]}><Text style={[styles.feedbackText, { color: currentBookFeedback.type === 'success' ? '#166534' : '#991B1B' }]}>{currentBookFeedback.message}</Text></View> : null}
+                            </>
+                        ) : null}
+                    </>
+                ) : null}
             </View>
             {isMember ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Club events</Text>
@@ -238,12 +278,12 @@ export default function ClubDetailScreen() {
             </View> : null}
             {isMember ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Book nominations & voting</Text>
-                <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Active club members can nominate books and vote on the next read. Club admins can finalize the current book only after voting closes.</Text>
+                <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Active club members can nominate books and vote on the next read. Eligible managers finalize the current book from Manage Club after voting closes.</Text>
                 {isNominationsLoading ? <View style={styles.inlineLoadingRow}><ActivityIndicator size="small" color={colors.accent} /><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Loading nominations…</Text></View> : null}
                 {isNominationsError ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Unable to load nominations</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{getClubsEntitlementErrorMessage(nominationsError, 'Unable to load book nominations right now.')}</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => refetchNominations()} testID="club-book-retry"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Retry</Text></TouchableOpacity></View> : null}
                 {canManageBookActions ? <TouchableOpacity onPress={() => router.push(`/clubs/${club.id}/nominate`)} style={[styles.secondaryActionButton, { marginTop: 0, borderColor: colors.accent }]} testID="club-nominate-book"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Nominate a book</Text></TouchableOpacity> : <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Read-only nominations</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Only active club members can nominate books or vote. Muted members can still view the current nomination slate.</Text></View>}
                 {!isNominationsLoading && !isNominationsError && nominations.length === 0 ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>No nominations yet</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>This club has not nominated any books yet. Use the nomination flow above to add the first candidate for the next read.</Text></View> : null}
-                {!isNominationsLoading && !isNominationsError ? nominations.map((nomination) => { const isVotingClosed = hasNominationVotingClosed(nomination.voting_ends_at); const isVotingOpen = nomination.status === 'active' && !isVotingClosed; const canFinalize = isAdmin && canManageBookActions && nomination.status === 'active' && isVotingClosed; return <View key={nomination.id} style={[styles.nominationCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}> 
+                {!isNominationsLoading && !isNominationsError ? nominations.map((nomination) => { const isVotingClosed = hasNominationVotingClosed(nomination.voting_ends_at); const isVotingOpen = nomination.status === 'active' && !isVotingClosed; return <View key={nomination.id} style={[styles.nominationCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}> 
                     <View style={styles.nominationHeaderRow}>
                         <Image source={{ uri: getNominationCoverUrl(nomination) }} style={styles.nominationCover} contentFit="cover" transition={200} />
                         <View style={styles.nominationBody}>
@@ -252,14 +292,12 @@ export default function ClubDetailScreen() {
                             <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{`Votes: ${nomination.vote_count ?? 0}`}</Text>
                             <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{`Status: ${formatNominationStatus(nomination.status)}`}</Text>
                             <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{nomination.voting_ends_at ? `Voting ends: ${new Date(nomination.voting_ends_at).toLocaleString()}` : 'Voting end time not set yet.'}</Text>
-                            {isAdmin && canManageBookActions && nomination.status === 'active' ? <Text style={[styles.nominationMeta, { color: isVotingClosed ? colors.accent : colors.textSecondary }]}>{isVotingClosed ? 'Voting has closed. You can now finalize the current book.' : 'Finalize becomes available after voting closes.'}</Text> : null}
                             <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{`Nominated by ${nomination.nominatorProfile?.display_name || nomination.nominatorProfile?.username || 'a club member'}`}</Text>
                             <Text style={[styles.nominationMeta, { color: nomination.currentUserVote ? colors.accent : colors.textSecondary }]}>{nomination.currentUserVote ? 'Your vote is currently active on this nomination.' : 'You have not voted on this nomination yet.'}</Text>
                         </View>
                     </View>
                     <View style={styles.nominationActionsRow}>
                         <TouchableOpacity onPress={() => handleVoteToggle(nomination)} disabled={!canManageBookActions || !isVotingOpen || castVoteMutation.isPending || removeVoteMutation.isPending} style={[styles.secondaryActionButton, { flex: 1, marginTop: 0, borderColor: colors.accent, opacity: !canManageBookActions || !isVotingOpen || castVoteMutation.isPending || removeVoteMutation.isPending ? 0.65 : 1 }]} testID={`club-book-vote-${nomination.id}`}><Text style={[styles.secondaryActionText, { color: colors.accent }]}>{nomination.currentUserVote ? 'Remove my vote' : 'Vote for this book'}</Text></TouchableOpacity>
-                        {canFinalize ? <TouchableOpacity onPress={() => handleFinalizeNomination(nomination)} disabled={finalizeNominationMutation.isPending} style={[styles.primaryActionButton, { flex: 1, marginTop: 0, backgroundColor: colors.accent, opacity: finalizeNominationMutation.isPending ? 0.65 : 1 }]} testID={`club-book-finalize-${nomination.id}`}><Text style={styles.primaryActionText}>{finalizeNominationMutation.isPending ? 'Finalizing…' : 'Finalize current book'}</Text></TouchableOpacity> : null}
                     </View>
                 </View>; }) : null}
                 {bookFeedback ? <View style={[styles.feedbackBanner, { backgroundColor: bookFeedback.type === 'success' ? '#DCFCE7' : '#FEE2E2', borderColor: bookFeedback.type === 'success' ? '#22C55E' : '#EF4444' }]}><Text style={[styles.feedbackText, { color: bookFeedback.type === 'success' ? '#166534' : '#991B1B' }]}>{bookFeedback.message}</Text></View> : null}
@@ -283,7 +321,7 @@ export default function ClubDetailScreen() {
             </View>
             {requiresApplication && isManager ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Moderator tools</Text><Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Review pending join applications for this club with the live moderator workflow.</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => router.push(`/clubs/${club.id}/applications`)} testID="club-review-applications"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Review applications</Text></TouchableOpacity></View> : null}
             {club.club_type === 'invite_only' && isManager ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Invitation tools</Text><Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Username-based invitation creation and invitation history are live here. Revocation and read tracking still depend on backend workflows that are not exposed live yet.</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => router.push(`/clubs/${club.id}/invite`)} testID="club-invite-readers"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Invite readers</Text></TouchableOpacity></View> : null}
-            {isAdmin ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Admin tools</Text><Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Open Manage Club for basic settings, member-role management, remove-member workflows, and join-question management. Archiving is not part of the current roadmap.</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => router.push(`/clubs/${club.id}/manage`)} testID="club-manage"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Manage club</Text></TouchableOpacity></View> : null}
+            {canOpenManageClub ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Club management</Text><Text style={[styles.sectionBody, { color: colors.textSecondary }]}>{isAdmin ? 'Open Manage Club for current-book management, plus the existing basic settings, member-role management, remove-member workflows, and join-question management.' : 'Open Manage Club to review nominations and finalize the current book after voting closes. The broader settings, member-role management, remove-member workflows, and join-question management stay admin-only.'}</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => router.push(`/clubs/${club.id}/manage`)} testID="club-manage"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Manage club</Text></TouchableOpacity></View> : null}
             <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Members</Text>
                 {!isMember ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Member list is private</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>The current Clubs spec allows all visitors to see public club details, but member names only become visible after you join.</Text></View> : isMembersLoading ? <View style={styles.inlineLoadingRow}><ActivityIndicator size="small" color={colors.accent} /><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Loading members…</Text></View> : members.length === 0 ? <Text style={[styles.noticeBody, { color: colors.textSecondary }]}>No active member cards are available yet.</Text> : <ClubMemberList members={members} colors={colors} />}
@@ -296,6 +334,6 @@ const styles = StyleSheet.create({
     container: { flex: 1 }, contentContainer: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 48 }, loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
     headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 }, iconButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' }, headerTitle: { flex: 1, marginHorizontal: 12, fontSize: 18, fontWeight: '700' }, headerSpacer: { width: 40 },
     heroCard: { flexDirection: 'row', gap: 14, borderWidth: 1, borderRadius: 18, padding: 14, marginBottom: 16 }, cover: { width: 108, height: 160, borderRadius: 14, backgroundColor: '#E2E8F0' }, heroBody: { flex: 1 }, clubName: { fontSize: 22, fontWeight: '800', marginBottom: 6 }, clubMeta: { fontSize: 14, fontWeight: '500', marginBottom: 10 }, clubDescription: { fontSize: 14, lineHeight: 21, marginBottom: 12 }, badgesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, badge: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }, badgeText: { fontSize: 12, fontWeight: '700', textTransform: 'capitalize' },
-    sectionCard: { borderWidth: 1, borderRadius: 18, padding: 16, marginBottom: 14 }, sectionTitle: { fontSize: 15, fontWeight: '700', marginBottom: 8 }, sectionPrimary: { fontSize: 17, fontWeight: '700', marginBottom: 4 }, sectionBody: { fontSize: 14, lineHeight: 20 }, detailGrid: { gap: 12 }, detailItem: { gap: 4 }, detailLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }, detailValue: { fontSize: 15, fontWeight: '600', lineHeight: 21 }, noticeCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12 }, noticeTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6 }, noticeBody: { fontSize: 14, lineHeight: 20 }, inlineLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 }, joinSection: { marginTop: 14 }, questionBlock: { marginTop: 12 }, questionLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8 }, answerInput: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, minHeight: 88, textAlignVertical: 'top' }, nominationCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12, gap: 10 }, nominationHeaderRow: { flexDirection: 'row', gap: 12 }, nominationCover: { width: 72, height: 108, borderRadius: 12, backgroundColor: '#E2E8F0' }, nominationBody: { flex: 1, gap: 4 }, nominationTitle: { fontSize: 15, fontWeight: '700' }, nominationMeta: { fontSize: 13, lineHeight: 18 }, nominationActionsRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
+    sectionCard: { borderWidth: 1, borderRadius: 18, padding: 16, marginBottom: 14 }, sectionTitle: { fontSize: 15, fontWeight: '700', marginBottom: 8 }, sectionPrimary: { fontSize: 17, fontWeight: '700', marginBottom: 4 }, sectionBody: { fontSize: 14, lineHeight: 20 }, detailGrid: { gap: 12 }, detailItem: { gap: 4 }, detailLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }, detailValue: { fontSize: 15, fontWeight: '600', lineHeight: 21 }, noticeCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12 }, noticeTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6 }, noticeBody: { fontSize: 14, lineHeight: 20 }, inlineLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 }, currentBookStatsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 }, currentBookStatCard: { minWidth: 120, flexGrow: 1, borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, gap: 4 }, currentBookStatLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 }, currentBookStatValue: { fontSize: 20, fontWeight: '800' }, currentBookActionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 }, currentBookStatusButton: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 }, currentBookStatusButtonText: { fontSize: 14, fontWeight: '800' }, joinSection: { marginTop: 14 }, questionBlock: { marginTop: 12 }, questionLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8 }, answerInput: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, minHeight: 88, textAlignVertical: 'top' }, nominationCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12, gap: 10 }, nominationHeaderRow: { flexDirection: 'row', gap: 12 }, nominationCover: { width: 72, height: 108, borderRadius: 12, backgroundColor: '#E2E8F0' }, nominationBody: { flex: 1, gap: 4 }, nominationTitle: { fontSize: 15, fontWeight: '700' }, nominationMeta: { fontSize: 13, lineHeight: 18 }, nominationActionsRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
     primaryActionButton: { marginTop: 16, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }, primaryActionText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' }, secondaryActionButton: { marginTop: 16, borderWidth: 1, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }, secondaryActionText: { fontSize: 15, fontWeight: '800' }, feedbackBanner: { marginTop: 14, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }, feedbackText: { fontSize: 13, fontWeight: '600', lineHeight: 18 }, errorTitle: { fontSize: 18, fontWeight: '700' }, backButton: { borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 }, backButtonText: { color: '#FFFFFF', fontWeight: '700' }, secondaryButton: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 }, secondaryButtonText: { fontWeight: '700' },
 });

@@ -13,9 +13,10 @@ const mockUseMyClubApplication = jest.fn();
 const mockUseMyClubInvitation = jest.fn();
 const mockUseClubMembers = jest.fn();
 const mockUseClubBookNominations = jest.fn();
+const mockUseClubCurrentBookStatusOverview = jest.fn();
 const mockUseCastClubBookVote = jest.fn();
 const mockUseRemoveClubBookVote = jest.fn();
-const mockUseFinalizeClubBookNomination = jest.fn();
+const mockUseSetClubCurrentBookReadingStatus = jest.fn();
 
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
@@ -49,9 +50,10 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useMyClubInvitation: (...args: unknown[]) => mockUseMyClubInvitation(...args),
     useClubMembers: (...args: unknown[]) => mockUseClubMembers(...args),
     useClubBookNominations: (...args: unknown[]) => mockUseClubBookNominations(...args),
+    useClubCurrentBookStatusOverview: (...args: unknown[]) => mockUseClubCurrentBookStatusOverview(...args),
     useCastClubBookVote: (...args: unknown[]) => mockUseCastClubBookVote(...args),
     useRemoveClubBookVote: (...args: unknown[]) => mockUseRemoveClubBookVote(...args),
-    useFinalizeClubBookNomination: (...args: unknown[]) => mockUseFinalizeClubBookNomination(...args),
+    useSetClubCurrentBookReadingStatus: (...args: unknown[]) => mockUseSetClubCurrentBookReadingStatus(...args),
 }));
 
 const baseClub = {
@@ -80,9 +82,10 @@ beforeEach(() => {
     mockUseMyClubInvitation.mockReturnValue({ data: null, isLoading: false });
     mockUseClubMembers.mockReturnValue({ data: [], isLoading: false });
     mockUseClubBookNominations.mockReturnValue({ data: [], isLoading: false, isError: false, error: null, refetch: jest.fn() });
+    mockUseClubCurrentBookStatusOverview.mockReturnValue({ data: null, isLoading: false, isError: false, error: null, refetch: jest.fn() });
     mockUseCastClubBookVote.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseRemoveClubBookVote.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
-    mockUseFinalizeClubBookNomination.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseSetClubCurrentBookReadingStatus.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     (profileService.getProfileSummary as jest.Mock).mockResolvedValue({ membership_tier: 'pro_plus' });
 });
 
@@ -101,6 +104,18 @@ describe('ClubDetailScreen', () => {
         expect(getByText('Curator Cam')).toBeOnTheScreen();
         expect(getByText('Featured author')).toBeOnTheScreen();
         expect(getAllByText('Toni Morrison').length).toBeGreaterThan(0);
+    });
+
+    it('keeps current-book analytics and status controls hidden when no current book is selected', async () => {
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
+
+        const { queryByText, queryByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        expect(queryByText('Active members')).toBeNull();
+        expect(queryByText('Your club reading status')).toBeNull();
+        expect(queryByTestId('club-current-book-status-want_to_read')).toBeNull();
     });
 
     it('shows invite acceptance UI when the signed-in user has a pending invite-only invitation', async () => {
@@ -146,15 +161,27 @@ describe('ClubDetailScreen', () => {
         expect(getByText('Note: Come join our private read.')).toBeOnTheScreen();
     });
 
-    it('describes the current manage-club scope for admins without implying archive or invite lifecycle support', async () => {
+    it('shows the Manage Club entry point for admins with current-book guidance', async () => {
         mockUseClubMembership.mockReturnValue({ data: { role: 'admin', status: 'active' }, isLoading: false });
 
         const { getByText } = render(<ClubDetailScreen />);
 
         await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
 
-        expect(getByText('Admin tools')).toBeOnTheScreen();
-        expect(getByText(/basic settings, member-role management, remove-member workflows, and join-question management/i)).toBeOnTheScreen();
+        expect(getByText('Club management')).toBeOnTheScreen();
+        expect(getByText(/current-book management, plus the existing basic settings, member-role management, remove-member workflows, and join-question management/i)).toBeOnTheScreen();
+        expect(getByText('Manage club')).toBeOnTheScreen();
+    });
+
+    it('shows the Manage Club entry point for active moderators without exposing admin-only scope on the detail page', async () => {
+        mockUseClubMembership.mockReturnValue({ data: { role: 'moderator', status: 'active' }, isLoading: false });
+
+        const { getByText } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        expect(getByText('Club management')).toBeOnTheScreen();
+        expect(getByText(/finalize the current book after voting closes/i)).toBeOnTheScreen();
         expect(getByText('Manage club')).toBeOnTheScreen();
     });
 
@@ -196,6 +223,93 @@ describe('ClubDetailScreen', () => {
         await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ nominationId: 'nomination-1', clubId: 'club-1' }));
     });
 
+    it('shows current-book analytics and lets an active member update status', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue({
+            current_book_id: 'book-1',
+            member_reading_status: 'reading',
+            to_start_count: 3,
+            reading_count: 5,
+            completed_count: 4,
+            active_member_count: 12,
+        });
+        mockUseClubPublicDetail.mockReturnValue({
+            data: {
+                ...baseClub,
+                current_book_id: 'book-1',
+            },
+            isLoading: false,
+            isError: false,
+            refetch: jest.fn(),
+        });
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
+        mockUseClubCurrentBookStatusOverview.mockReturnValue({
+            data: {
+                current_book_id: 'book-1',
+                member_reading_status: 'want_to_read',
+                to_start_count: 3,
+                reading_count: 5,
+                completed_count: 4,
+                active_member_count: 12,
+            },
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: jest.fn(),
+        });
+        mockUseSetClubCurrentBookReadingStatus.mockReturnValue({ mutateAsync, isPending: false });
+
+        const { getByText, getByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(getByText('Your club reading status')).toBeOnTheScreen());
+
+        expect(getByText('Active members')).toBeOnTheScreen();
+        expect(getByText('Current status: To start')).toBeOnTheScreen();
+        expect(getByTestId('club-current-book-status-want_to_read')).toBeOnTheScreen();
+        expect(getByTestId('club-current-book-status-reading')).toBeOnTheScreen();
+        expect(getByTestId('club-current-book-status-completed')).toBeOnTheScreen();
+
+        fireEvent.press(getByTestId('club-current-book-status-reading'));
+
+        await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ clubId: 'club-1', status: 'reading' }));
+    });
+
+    it('shows current-book analytics but keeps status controls read-only for muted members', async () => {
+        mockUseClubPublicDetail.mockReturnValue({
+            data: {
+                ...baseClub,
+                current_book_id: 'book-1',
+            },
+            isLoading: false,
+            isError: false,
+            refetch: jest.fn(),
+        });
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'muted' }, isLoading: false });
+        mockUseClubCurrentBookStatusOverview.mockReturnValue({
+            data: {
+                current_book_id: 'book-1',
+                member_reading_status: 'completed',
+                to_start_count: 2,
+                reading_count: 3,
+                completed_count: 7,
+                active_member_count: 12,
+            },
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: jest.fn(),
+        });
+
+        const { getByText, queryByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(getByText('Your club reading status')).toBeOnTheScreen());
+
+        expect(getByText('Current status: Completed')).toBeOnTheScreen();
+        expect(getByText(/Muted members can still view club progress/i)).toBeOnTheScreen();
+        expect(queryByTestId('club-current-book-status-want_to_read')).toBeNull();
+        expect(queryByTestId('club-current-book-status-reading')).toBeNull();
+        expect(queryByTestId('club-current-book-status-completed')).toBeNull();
+    });
+
     it('shows the nomination entry point for active members', async () => {
         mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
 
@@ -208,31 +322,7 @@ describe('ClubDetailScreen', () => {
         expect(mockRouterPush).toHaveBeenCalledWith('/clubs/club-1/nominate');
     });
 
-    it('hides admin finalization controls until voting has closed', async () => {
-        mockUseClubMembership.mockReturnValue({ data: { role: 'admin', status: 'active' }, isLoading: false });
-        mockUseClubBookNominations.mockReturnValue({
-            data: [{
-                id: 'nomination-2', club_id: 'club-1', book_id: 'book-2', nominated_by: 'reader-2', vote_count: 5, status: 'active', voting_ends_at: '2999-01-01T00:00:00Z', created_at: '2026-03-10T00:00:00Z',
-                book: { id: 'book-2', google_books_id: 'gb-2', title: 'Song of Solomon', authors: ['Toni Morrison'], cover_url: null },
-                nominatorProfile: { id: 'profile-2', user_id: 'reader-2', display_name: 'Reader Two', username: 'readertwo', avatar_url: null, trust_score: 4.1, city: 'Bengaluru' },
-                currentUserVote: null,
-            }],
-            isLoading: false,
-            isError: false,
-            error: null,
-            refetch: jest.fn(),
-        });
-
-        const { getByText, queryByTestId } = render(<ClubDetailScreen />);
-
-        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
-
-        expect(queryByTestId('club-book-finalize-nomination-2')).toBeNull();
-        expect(getByText('Finalize becomes available after voting closes.')).toBeOnTheScreen();
-    });
-
-    it('shows admin finalization controls after voting has closed', async () => {
-        const mutateAsync = jest.fn().mockResolvedValue({ id: 'club-1' });
+    it('keeps finalization controls off the main club page even after voting has closed', async () => {
         mockUseClubMembership.mockReturnValue({ data: { role: 'admin', status: 'active' }, isLoading: false });
         mockUseClubBookNominations.mockReturnValue({
             data: [{
@@ -246,16 +336,14 @@ describe('ClubDetailScreen', () => {
             error: null,
             refetch: jest.fn(),
         });
-        mockUseFinalizeClubBookNomination.mockReturnValue({ mutateAsync, isPending: false });
 
-        const { getByTestId, getByText } = render(<ClubDetailScreen />);
+        const { getByText, queryByTestId, queryByText } = render(<ClubDetailScreen />);
 
         await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
 
-        expect(getByText('Voting has closed. You can now finalize the current book.')).toBeOnTheScreen();
-
-        fireEvent.press(getByTestId('club-book-finalize-nomination-2'));
-
-        await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ nominationId: 'nomination-2' }));
+        expect(queryByTestId('club-book-finalize-nomination-2')).toBeNull();
+        expect(getByText(/Eligible managers finalize the current book from Manage Club after voting closes/i)).toBeOnTheScreen();
+        expect(queryByText('Finalize becomes available after voting closes.')).toBeNull();
+        expect(queryByText('Voting has closed. You can now finalize the current book.')).toBeNull();
     });
 });

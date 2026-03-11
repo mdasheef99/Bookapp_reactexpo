@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { clubsService, type ClubEventRsvpStatus, type ClubFilters, type ClubJoinApplicationStatus, type ClubJoinQuestionInput, type CreateClubEventInput, type MemberRole, type NominateClubBookInput, type ReviewApplicationDecision, type UpdateClubEventInput, type UpdateClubInput } from '../services/clubsService';
+import { clubsService, type ClubCurrentBookReadingStatus, type ClubEventRsvpStatus, type ClubFilters, type ClubJoinApplicationStatus, type ClubJoinQuestionInput, type CreateClubEventInput, type MemberRole, type NominateClubBookInput, type ReviewApplicationDecision, type UpdateClubEventInput, type UpdateClubInput } from '../services/clubsService';
 
 const CLUBS_QUERY_KEY = ['clubs'] as const;
 const CLUBS_BROWSE_QUERY_KEY = [...CLUBS_QUERY_KEY, 'browse'] as const;
@@ -23,6 +23,8 @@ export const clubKeys = {
     application: (clubId: string, userId: string) => [...clubKeys.all, 'application', clubId, userId] as const,
     applications: (clubId: string, status: ClubJoinApplicationStatus) => [...clubKeys.all, 'applications', clubId, status] as const,
     invitations: (clubId: string) => [...clubKeys.all, 'invitations', clubId] as const,
+    currentBookStatusRoot: (clubId: string) => [...clubKeys.all, 'current-book-status', clubId] as const,
+    currentBookStatus: (clubId: string, userId?: string | null) => [...clubKeys.currentBookStatusRoot(clubId), userId ?? 'anonymous'] as const,
 };
 
 export function useBrowseClubs(filters: ClubFilters = {}) {
@@ -143,6 +145,16 @@ export function useClubInvitations(clubId: string | null, enabled = true) {
     });
 }
 
+export function useClubCurrentBookStatusOverview(clubId: string | null, userId?: string | null, enabled = true) {
+    return useQuery({
+        queryKey: clubKeys.currentBookStatus(clubId ?? '', userId),
+        queryFn: () => clubsService.getClubCurrentBookStatusOverview(clubId!),
+        enabled: !!clubId && enabled,
+        staleTime: 10_000,
+        retry: false,
+    });
+}
+
 export function useMyClubInvitation(clubId: string | null, userId: string | null, enabled = true) {
     return useQuery({
         queryKey: clubKeys.myInvitation(clubId ?? '', userId ?? ''),
@@ -165,6 +177,7 @@ export function useJoinClub() {
                 queryClient.invalidateQueries({ queryKey: clubKeys.membership(variables.clubId, variables.userId) }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.members(variables.clubId) }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.application(variables.clubId, variables.userId) }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(variables.clubId) }),
             ]);
         },
     });
@@ -184,6 +197,7 @@ export function useReviewClubApplication() {
                 queryClient.invalidateQueries({ queryKey: clubKeys.browseRoot }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.members(result.club_id) }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.applications(result.club_id, 'pending') }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(result.club_id) }),
                 result.user_id ? queryClient.invalidateQueries({ queryKey: clubKeys.application(result.club_id, result.user_id) }) : Promise.resolve(),
             ]);
         },
@@ -312,7 +326,20 @@ export function useFinalizeClubBookNomination() {
                 queryClient.invalidateQueries({ queryKey: clubKeys.nominationsRoot(result.id) }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(result.id) }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.browseRoot }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(result.id) }),
             ]);
+        },
+    });
+}
+
+export function useSetClubCurrentBookReadingStatus() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ clubId, status }: { clubId: string; status: ClubCurrentBookReadingStatus }) =>
+            clubsService.setClubCurrentBookReadingStatus(clubId, status),
+        onSuccess: async (_result, variables) => {
+            await queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(variables.clubId) });
         },
     });
 }
@@ -355,6 +382,7 @@ export function useRemoveClubMember() {
                 queryClient.invalidateQueries({ queryKey: clubKeys.browseRoot }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.members(variables.clubId) }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.membership(variables.clubId, variables.userId) }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(variables.clubId) }),
             ]);
         },
     });
@@ -419,6 +447,7 @@ export function useAcceptClubInvitation() {
                 queryClient.invalidateQueries({ queryKey: clubKeys.members(variables.clubId) }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.invitations(variables.clubId) }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.myInvitation(variables.clubId, variables.userId) }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(variables.clubId) }),
             ]);
         },
     });
