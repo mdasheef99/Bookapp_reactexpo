@@ -93,7 +93,7 @@
 
 #### Partially implemented
 - Book nomination/voting/current-book workflow now has a narrow implemented product slice: local migration/service-hook support, club-detail nomination + vote/remove-vote/admin-finalize actions, and a dedicated nomination screen.
-- That slice remains partial because it was not established as a deployed live end-to-end backend contract in this session.
+- That slice remains partial because the search input still depends on unreliable Google Books results (`429` during this validation cycle) and the finalize button is still shown before the live backend voting-close rule is satisfied, even though the seeded end-to-end backend path was verified.
 
 #### Drifting / inconsistent
 - Earlier reviewed docs/spec language conflicted with the corrected model by implying or stating that free users could be moderators.
@@ -111,6 +111,9 @@
   - invite acceptance
   - application review access model
   - manage-club / member-role flows
+  - Manage Club settings save
+  - club event create/edit
+  - nomination render / vote / current-book finalization on seeded `ZZ_TEST` data
 - Verified current live/backend gap:
   - pre-`013` live/backend entitlement gaps were confirmed and then reconciled through the deployment sequence in this session
 - Verified live after deployment/reconciliation:
@@ -126,8 +129,6 @@
 - Full live deployment/use of downgrade enforcement logic
 - Automated grace-period handling for non-renewal/downgrade
 - Automated remediation for invalid moderators/admins/memberships
-- A fresh end-to-end invite-acceptance walk with a newly created live invitation after `013` deployment
-- Live deployment and end-to-end backend verification of the nominations/voting/current-book flow
 
 ### 5. Known inconsistencies and risks
 

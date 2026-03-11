@@ -33,6 +33,27 @@ Use this together with:
   - muted-member RSVP is denied by RLS
   - an eligible moderator can create a hybrid event with `manual_location` + `meeting_link`, update/cancel/delete their own event, and cannot update/delete an admin-created event
 
+### Session update — 2026-03-11
+
+- live browser + Supabase validation now also confirms:
+  - invite acceptance on `ZZ_TEST Invite Only Club`
+  - application approval on `ZZ_TEST Approval Club`
+  - Manage Club settings save on `ZZ_TEST Manage Basics Club`
+  - club event create and edit on `ZZ_TEST Manage Basics Club`
+  - nomination rendering, vote cast, and live `finalize_club_book_nomination` on `ZZ_TEST Manage Basics Club`
+- live `ZZ_TEST Manage Basics Club` state after validation now includes:
+  - selected nomination `b5dfe15a-7c4a-49ae-95ed-4a6165311511`
+  - selected/current-book title `ZZ_TEST Playwright Nomination Book`
+  - `vote_count = 1`
+  - current `book_clubs.current_book_id = f8165329-f97b-45c9-ac85-39c8f263252d`
+- live `ZZ_TEST` validation also re-confirmed the currently active test setup:
+  - `ZZ_TEST Approval Club`: Playwright user is an active `moderator`; `zz_test_reader` has an approved application row; the Playwright user still has a pending application row used for the review path
+  - `ZZ_TEST Invite Only Club`: Playwright user is now an active `member`; `zz_test_admin` remains the active `admin`; `zz_test_reader` still has a pending invitation
+  - `ZZ_TEST Manage Basics Club`: Playwright user is an active `admin`; a `virtual` event row created/edited in-session exists; the selected nomination/current-book row exists
+- confirmed remaining non-backend blockers/mismatches around that live contract:
+  - Google Books search is still externally unreliable because repeated `429` responses block the normal nomination lookup path
+  - the current frontend finalize button is shown while voting is still open, but live finalization only succeeds after `voting_ends_at`
+
 ### Identity and discovery
 
 - `public.user_profiles.username` exists live
@@ -45,6 +66,15 @@ Use this together with:
 - live RPC: `review_club_join_application(p_application_id uuid, p_decision text, p_decline_reason text)` -> `club_join_applications`
 - live RPC: `create_club_invitation(p_club_id uuid, p_invitee_username text, p_note text)` -> `club_invitations`
 - live RPC: `accept_club_invitation(p_invitation_id uuid)` -> `club_members`
+
+### Books/voting infrastructure
+
+- `public.book_nominations` exists live
+- `public.book_votes` exists live
+- live RPC: `nominate_club_book`
+- live RPC: `cast_club_book_vote`
+- live RPC: `remove_club_book_vote`
+- live RPC: `finalize_club_book_nomination`
 
 ### Entitlement helpers now live
 
@@ -60,6 +90,33 @@ Use this together with:
 
 - `revoke_club_invitation` — **not live**
 - `mark_invitation_read` — **not live**
+
+## Minimal `ZZ_TEST` live data used for 2026-03-11 validation
+
+### Already present before the extra validation seed work
+
+- seeded clubs already existed live:
+  - `ZZ_TEST Manage Basics Club`
+  - `ZZ_TEST Approval Club`
+  - `ZZ_TEST Invite Only Club`
+- seeded support users already existed live:
+  - `zz_test_admin`
+  - `zz_test_member`
+  - `zz_test_reader`
+- before the new seed adjustments, the Playwright user already had:
+  - active membership in `ZZ_TEST Manage Basics Club`
+  - a pending application in `ZZ_TEST Approval Club`
+  - no usable pending invitation in `ZZ_TEST Invite Only Club`
+
+### Added or adjusted minimally during validation
+
+- added a `public.user_profiles` row for the Playwright user so the current runtime profile contract matched live test execution
+- elevated the Playwright user to:
+  - `admin` in `ZZ_TEST Manage Basics Club`
+  - `moderator` in `ZZ_TEST Approval Club`
+- created a fresh pending invitation for the Playwright user in `ZZ_TEST Invite Only Club` and accepted it through the current client flow
+- created and edited one `ZZ_TEST` event row in `public.club_events`
+- seeded one `ZZ_TEST` nomination/vote scenario in `public.book_nominations` / `public.book_votes` and moved `voting_ends_at` into the past so live finalization could be validated
 
 ## Public browse/detail contract
 
@@ -278,6 +335,7 @@ These Clubs areas can continue without new backend work right now:
 - invite acceptance under access-level enforcement
 - moderator assignment/admin membership updates under the deployed entitlement rules
 - member-only club events with creator/admin management and active-member RSVP under the deployed Events rules
+- seeded nominations/voting/current-book finalization under `nominate_club_book`, `cast_club_book_vote`, `remove_club_book_vote`, and `finalize_club_book_nomination`
 
 ## Supporting auth/session baseline used for current Clubs validation
 

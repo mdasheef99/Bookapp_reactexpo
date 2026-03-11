@@ -19,6 +19,49 @@ Use this together with:
 
 ## Current snapshot
 
+## Session update — 2026-03-11
+
+### Verified end to end in this session
+
+- live browser + Supabase-backed validation now confirms:
+  - invite acceptance on `ZZ_TEST Invite Only Club`
+  - Manage Club settings save on `ZZ_TEST Manage Basics Club`
+  - application approval on `ZZ_TEST Approval Club`
+  - club event create and edit on `ZZ_TEST Manage Basics Club`
+  - nomination rendering, vote cast, and current-book finalization on `ZZ_TEST Manage Basics Club`
+- the nominations/current-book path was validated against the live backend using seeded `ZZ_TEST` data after repeated Google Books `429` responses blocked normal search-driven nomination entry
+
+### Live `ZZ_TEST` data already present before this validation
+
+- seeded clubs already existed live:
+  - `ZZ_TEST Manage Basics Club`
+  - `ZZ_TEST Approval Club`
+  - `ZZ_TEST Invite Only Club`
+- seeded supporting users already existed live:
+  - `zz_test_admin`
+  - `zz_test_member`
+  - `zz_test_reader`
+- before the additional validation seed work, the Playwright user already had:
+  - active membership in `ZZ_TEST Manage Basics Club`
+  - a pending application in `ZZ_TEST Approval Club`
+  - no usable pending invitation in `ZZ_TEST Invite Only Club`
+
+### Additional minimal `ZZ_TEST` data seeded or adjusted in this session
+
+- added a `public.user_profiles` row for the Playwright user so profile-backed manager flows could run against the normal live contract
+- elevated the Playwright user to:
+  - `admin` in `ZZ_TEST Manage Basics Club`
+  - `moderator` in `ZZ_TEST Approval Club`
+- created a fresh pending invitation for the Playwright user in `ZZ_TEST Invite Only Club` and accepted it through the current detail-screen path
+- created and edited one `ZZ_TEST` club event in `ZZ_TEST Manage Basics Club`
+- seeded one `ZZ_TEST` nomination/vote scenario in `ZZ_TEST Manage Basics Club` and closed the voting window so live `finalize_club_book_nomination` could be validated safely
+
+### Remaining blockers and mismatches
+
+- Google Books nomination search remains unreliable because repeated `429` responses still block the normal live search path
+- invite revoke and invitation read-state/inbox remain unsupported live
+- frontend/backend mismatch: `ClubDetailScreen` currently exposes finalize while `nomination.status === 'active'`, but live finalization succeeds only after `voting_ends_at` has passed
+
 ## Session update — 2026-03-10
 
 ### Implemented
@@ -255,11 +298,12 @@ Use this together with:
 - invite-only clubs show invite-required messaging when no pending invitation is available to the signed-in reader
 - signed-in invitees can accept a pending invitation from the detail screen via live `accept_club_invitation`
 
-### Validated in this session
+### Validated in the current Clubs validation cycle
 
 - public join on `ZZ_TEST Manage Basics Club`
 - approval apply on `ZZ_TEST Approval Club`
 - invite-required messaging on the current invite-only seeded club when no invitation exists for the signed-in user
+- invite acceptance on `ZZ_TEST Invite Only Club` using a fresh pending invitation created for the Playwright user
 
 ### Remediated after audit
 
@@ -276,9 +320,9 @@ Use this together with:
 - leave-club behavior exists in the service layer but is not surfaced as a polished detail-screen action in this current status pass
 - member-only chat is still not implemented yet
 - member-only Events is now implemented with member-only visibility, active-member RSVP, and creator-scoped moderator management under the live backend rules
-- the current-book nominations/voting surface is now implemented in a narrow UI slice
+- the current-book nominations/voting surface now has a verified live end-to-end path for seeded `ZZ_TEST` data, but it remains a narrow UI slice and still depends on unreliable Google Books search input
 - invite-only lifecycle is still incomplete because inbox/read-state/revoke flows are not fully supported live
-- invite acceptance is now entitlement-enforced live, but this session did not create a fresh pending invitation solely to re-walk that path end to end after `013`
+- frontend/backend mismatch: finalize is still exposed before voting has closed even though live finalization only succeeds after `voting_ends_at`
 
 ### Relevant files
 
@@ -427,7 +471,7 @@ Use this together with:
 
 ### Phase 4 — chat and engagement
 
-**Partially implemented.** Chat, reactions, and reading-progress surfaces remain deferred. Member-only Events/RSVP is implemented and verified in the current live slice; the current-book nominations/voting flow exists in a narrow app slice but was not established as a fully live end-to-end backend contract in this session. Broader engagement depth is still incomplete.
+**Partially implemented.** Chat, reactions, and reading-progress surfaces remain deferred. Member-only Events/RSVP is implemented and verified in the current live slice; the current-book nominations/voting flow now has a verified live end-to-end backend path for seeded `ZZ_TEST` data (nomination render, vote cast, finalize, current-book update), but the slice remains narrow, Google Books search is still externally unreliable (`429`), and finalize-button gating is still misaligned with the backend voting-close rule. Broader engagement depth is still incomplete.
 
 ### Phase 5 — author-club enhancements
 

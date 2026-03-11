@@ -45,6 +45,13 @@ function formatNominationStatus(status: ClubBookNominationWithDetails['status'])
     return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
+function hasNominationVotingClosed(votingEndsAt: string | null) {
+    if (!votingEndsAt) return false;
+    const votingEndTime = Date.parse(votingEndsAt);
+    if (Number.isNaN(votingEndTime)) return false;
+    return votingEndTime <= Date.now();
+}
+
 export default function ClubDetailScreen() {
     const { clubId } = useLocalSearchParams<{ clubId: string }>();
     const { colors } = useTheme();
@@ -231,12 +238,12 @@ export default function ClubDetailScreen() {
             </View> : null}
             {isMember ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Book nominations & voting</Text>
-                <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Active club members can nominate books, vote on the next read, and see when the club admin can finalize the current book.</Text>
+                <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Active club members can nominate books and vote on the next read. Club admins can finalize the current book only after voting closes.</Text>
                 {isNominationsLoading ? <View style={styles.inlineLoadingRow}><ActivityIndicator size="small" color={colors.accent} /><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Loading nominations…</Text></View> : null}
                 {isNominationsError ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Unable to load nominations</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{getClubsEntitlementErrorMessage(nominationsError, 'Unable to load book nominations right now.')}</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => refetchNominations()} testID="club-book-retry"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Retry</Text></TouchableOpacity></View> : null}
                 {canManageBookActions ? <TouchableOpacity onPress={() => router.push(`/clubs/${club.id}/nominate`)} style={[styles.secondaryActionButton, { marginTop: 0, borderColor: colors.accent }]} testID="club-nominate-book"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Nominate a book</Text></TouchableOpacity> : <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Read-only nominations</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Only active club members can nominate books or vote. Muted members can still view the current nomination slate.</Text></View>}
                 {!isNominationsLoading && !isNominationsError && nominations.length === 0 ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>No nominations yet</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>This club has not nominated any books yet. Use the nomination flow above to add the first candidate for the next read.</Text></View> : null}
-                {!isNominationsLoading && !isNominationsError ? nominations.map((nomination) => { const isVotingOpen = nomination.status === 'active'; const canFinalize = isAdmin && canManageBookActions && isVotingOpen; return <View key={nomination.id} style={[styles.nominationCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}> 
+                {!isNominationsLoading && !isNominationsError ? nominations.map((nomination) => { const isVotingClosed = hasNominationVotingClosed(nomination.voting_ends_at); const isVotingOpen = nomination.status === 'active' && !isVotingClosed; const canFinalize = isAdmin && canManageBookActions && nomination.status === 'active' && isVotingClosed; return <View key={nomination.id} style={[styles.nominationCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}> 
                     <View style={styles.nominationHeaderRow}>
                         <Image source={{ uri: getNominationCoverUrl(nomination) }} style={styles.nominationCover} contentFit="cover" transition={200} />
                         <View style={styles.nominationBody}>
@@ -245,6 +252,7 @@ export default function ClubDetailScreen() {
                             <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{`Votes: ${nomination.vote_count ?? 0}`}</Text>
                             <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{`Status: ${formatNominationStatus(nomination.status)}`}</Text>
                             <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{nomination.voting_ends_at ? `Voting ends: ${new Date(nomination.voting_ends_at).toLocaleString()}` : 'Voting end time not set yet.'}</Text>
+                            {isAdmin && canManageBookActions && nomination.status === 'active' ? <Text style={[styles.nominationMeta, { color: isVotingClosed ? colors.accent : colors.textSecondary }]}>{isVotingClosed ? 'Voting has closed. You can now finalize the current book.' : 'Finalize becomes available after voting closes.'}</Text> : null}
                             <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{`Nominated by ${nomination.nominatorProfile?.display_name || nomination.nominatorProfile?.username || 'a club member'}`}</Text>
                             <Text style={[styles.nominationMeta, { color: nomination.currentUserVote ? colors.accent : colors.textSecondary }]}>{nomination.currentUserVote ? 'Your vote is currently active on this nomination.' : 'You have not voted on this nomination yet.'}</Text>
                         </View>

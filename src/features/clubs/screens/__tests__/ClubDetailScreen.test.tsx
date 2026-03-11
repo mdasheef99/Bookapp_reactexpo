@@ -208,12 +208,35 @@ describe('ClubDetailScreen', () => {
         expect(mockRouterPush).toHaveBeenCalledWith('/clubs/club-1/nominate');
     });
 
-    it('shows admin finalization controls for an active nomination', async () => {
+    it('hides admin finalization controls until voting has closed', async () => {
+        mockUseClubMembership.mockReturnValue({ data: { role: 'admin', status: 'active' }, isLoading: false });
+        mockUseClubBookNominations.mockReturnValue({
+            data: [{
+                id: 'nomination-2', club_id: 'club-1', book_id: 'book-2', nominated_by: 'reader-2', vote_count: 5, status: 'active', voting_ends_at: '2999-01-01T00:00:00Z', created_at: '2026-03-10T00:00:00Z',
+                book: { id: 'book-2', google_books_id: 'gb-2', title: 'Song of Solomon', authors: ['Toni Morrison'], cover_url: null },
+                nominatorProfile: { id: 'profile-2', user_id: 'reader-2', display_name: 'Reader Two', username: 'readertwo', avatar_url: null, trust_score: 4.1, city: 'Bengaluru' },
+                currentUserVote: null,
+            }],
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: jest.fn(),
+        });
+
+        const { getByText, queryByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        expect(queryByTestId('club-book-finalize-nomination-2')).toBeNull();
+        expect(getByText('Finalize becomes available after voting closes.')).toBeOnTheScreen();
+    });
+
+    it('shows admin finalization controls after voting has closed', async () => {
         const mutateAsync = jest.fn().mockResolvedValue({ id: 'club-1' });
         mockUseClubMembership.mockReturnValue({ data: { role: 'admin', status: 'active' }, isLoading: false });
         mockUseClubBookNominations.mockReturnValue({
             data: [{
-                id: 'nomination-2', club_id: 'club-1', book_id: 'book-2', nominated_by: 'reader-2', vote_count: 5, status: 'active', voting_ends_at: null, created_at: '2026-03-10T00:00:00Z',
+                id: 'nomination-2', club_id: 'club-1', book_id: 'book-2', nominated_by: 'reader-2', vote_count: 5, status: 'active', voting_ends_at: '2000-01-01T00:00:00Z', created_at: '2026-03-10T00:00:00Z',
                 book: { id: 'book-2', google_books_id: 'gb-2', title: 'Song of Solomon', authors: ['Toni Morrison'], cover_url: null },
                 nominatorProfile: { id: 'profile-2', user_id: 'reader-2', display_name: 'Reader Two', username: 'readertwo', avatar_url: null, trust_score: 4.1, city: 'Bengaluru' },
                 currentUserVote: null,
@@ -225,9 +248,11 @@ describe('ClubDetailScreen', () => {
         });
         mockUseFinalizeClubBookNomination.mockReturnValue({ mutateAsync, isPending: false });
 
-        const { getByTestId } = render(<ClubDetailScreen />);
+        const { getByTestId, getByText } = render(<ClubDetailScreen />);
 
         await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        expect(getByText('Voting has closed. You can now finalize the current book.')).toBeOnTheScreen();
 
         fireEvent.press(getByTestId('club-book-finalize-nomination-2'));
 
