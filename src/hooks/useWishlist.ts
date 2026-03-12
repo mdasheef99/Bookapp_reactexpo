@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { GoogleBook } from '@/features/books/services/booksService';
+import { booksService, GoogleBook } from '@/features/books/services/booksService';
 
 interface WishlistItem {
     id: string;
     user_id: string;
-    google_books_id: string;
-    book_data: GoogleBook;
+    ownership: 'wishlist';
+    book?: {
+        google_books_id?: string;
+        [key: string]: unknown;
+    } | null;
     created_at: string;
 }
 
@@ -24,16 +26,15 @@ export const useWishlist = (userId?: string) => {
         setError(null);
 
         try {
-            const { data, error: fetchError } = await supabase
-                .from('user_wishlist')
-                .select('*')
-                .eq('user_id', userId)
-                .order('created_at', { ascending: false });
+            const library = await booksService.getUserLibrary(userId);
+            const wishlistData = (library || []).filter((item: any) => item.ownership === 'wishlist') as WishlistItem[];
 
-            if (fetchError) throw fetchError;
-
-            setWishlist(data || []);
-            setWishlistBookIds(new Set(data?.map(item => item.google_books_id) || []));
+            setWishlist(wishlistData);
+            setWishlistBookIds(new Set(
+                wishlistData
+                    .map(item => item.book?.google_books_id)
+                    .filter((googleBooksId): googleBooksId is string => Boolean(googleBooksId))
+            ));
         } catch (err: any) {
             setError(err.message || 'Failed to fetch wishlist');
             console.error('Wishlist fetch error:', err);
@@ -55,25 +56,19 @@ export const useWishlist = (userId?: string) => {
         }
 
         try {
-            const { error: insertError } = await supabase
-                .from('user_wishlist')
-                .insert({
-                    user_id: userId,
-                    google_books_id: book.id,
-                    book_data: book,
-                });
+            setError(null);
 
-            if (insertError) {
-                if (insertError.code === '23505') {
-                    setError('Book already in wishlist');
-                    return false;
-                }
-                throw insertError;
+            const existingUserBook = await booksService.getUserBookByGoogleBookId(userId, book.id);
+
+            if (existingUserBook) {
+                setError(existingUserBook.ownership === 'wishlist'
+                    ? 'Book already in wishlist'
+                    : 'Book already in your library');
+                return false;
             }
 
-            // Optimistic update
-            setWishlistBookIds(prev => new Set([...prev, book.id]));
-            await fetchWishlist(); // Refresh to get full data
+            await booksService.addToLibrary(userId, book, 'want_to_read', 'wishlist');
+            await fetchWishlist();
             return true;
         } catch (err: any) {
             setError(err.message || 'Failed to add to wishlist');
@@ -90,21 +85,17 @@ export const useWishlist = (userId?: string) => {
         }
 
         try {
-            const { error: deleteError } = await supabase
-                .from('user_wishlist')
-                .delete()
-                .eq('user_id', userId)
-                .eq('google_books_id', googleBooksId);
+            setError(null);
 
-            if (deleteError) throw deleteError;
+            const existingUserBook = await booksService.getUserBookByGoogleBookId(userId, googleBooksId);
 
-            // Optimistic update
-            setWishlistBookIds(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(googleBooksId);
-                return newSet;
-            });
-            await fetchWishlist(); // Refresh
+            if (!existingUserBook || existingUserBook.ownership !== 'wishlist') {
+                await fetchWishlist();
+                return true;
+            }
+
+            await booksService.removeFromLibrary(existingUserBook.id);
+            await fetchWishlist();
             return true;
         } catch (err: any) {
             setError(err.message || 'Failed to remove from wishlist');
