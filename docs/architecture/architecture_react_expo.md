@@ -149,12 +149,12 @@ booktalks-mobile/
 │   │   └── setup-profile.tsx     ✅
 │   ├── (tabs)/                   🟡  Main app (authenticated)
 │   │   ├── _layout.tsx           ✅  Tab bar navigation
-│   │   ├── library/              ✅  Book library feature
+│   │   ├── library/              ✅  Book library feature (manual entry + community reviews UI)
 │   │   │   ├── index.tsx         ✅
-│   │   │   ├── search.tsx        ✅
+│   │   │   ├── search.tsx        ✅  Google Books + manual entry fallback
 │   │   │   ├── _layout.tsx       ✅
 │   │   │   ├── notes.tsx         ✅
-│   │   │   └── [bookId].tsx      ✅  Book detail (dynamic route)
+│   │   │   └── [bookId].tsx      ✅  Book detail, notes, and community reviews
 │   │   ├── exchange/             ❌  P2P exchange feature
 │   │   │   ├── index.tsx         ❌  Browse listings
 │   │   │   ├── create.tsx        ❌  Create listing
@@ -220,7 +220,7 @@ booktalks-mobile/
 │   │   │   └── types.ts          ✅
 │   │   │
 │   │   ├── books/                ✅  Books/library feature
-│   │   │   ├── services/         ✅  Google Books & library services
+│   │   │   ├── services/         ✅  Google Books, manual entry, library CRUD, public reviews
 │   │   │   └── types.ts          ✅
 │   │   │
 │   │   ├── exchange/             ❌  P2P exchange feature
@@ -253,7 +253,7 @@ booktalks-mobile/
 │   │   ├── useDebounce.ts        ✅  Search optimization
 │   │   ├── useNetworkStatus.ts   ✅  Network status detection
 │   │   ├── useRecentSearches.ts  ✅  Recent searches management
-│   │   ├── useWishlist.ts        ✅  Wishlist management
+│   │   ├── useWishlist.ts        ✅  Wishlist management via `user_books.ownership`
 │   │   ├── useAtmosphericTheme.ts ✅  Atmospheric theme hook
 │   │   └── useLocation.ts        ❌  City geolocation
 │   │
@@ -285,6 +285,7 @@ booktalks-mobile/
 │   ├── migrations/               🟡  SQL schema files
 │   │   ├── 20260101105319_create_user_wishlist.sql ✅  Live-versioned wishlist migration
 │   │   ├── 20260212150120_create_reading_notes.sql ✅  Live-versioned reading notes migration
+│   │   ├── 20260312120000_019_book_public_reviews_contract.sql ✅  Live public-review RPC contract
 │   │   └── LIVE_MIGRATION_HISTORY_2026-03-06.md ✅  Canonical live migration manifest
 │   │
 │   ├── functions/                ❌  Edge Functions (Deno)

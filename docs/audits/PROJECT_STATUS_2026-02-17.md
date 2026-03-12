@@ -7,9 +7,15 @@
 >
 > In particular, Sections 2 and 3 below contain database/backend details that were accurate for an earlier moment
 > in the project but are now partially superseded by the live database.
+>
+> **Library remediation note (2026-03-12):** Library rows in this snapshot were reconciled with the current repo
+> implementation. The app now uses `user_books.ownership = 'wishlist'` as the canonical wishlist model, supports
+> manual library entry, and includes a community/public review UI backed by the repo migration
+> `20260312120000_019_book_public_reviews_contract.sql`. `get_public_book_reviews()` is now deployed live in the
+> database, so the repo contract and live Library public-review path are aligned.
 
 **Date:** 2026-02-17 (End of Week 1)
-**Last Updated:** 2026-02-18 (Week 2 Day 1 — Session 2)
+**Last Updated:** 2026-03-12 (Library public-reviews live-status update)
 **Timeline:** Feb 17 – Apr 28, 2026 (10 weeks)
 **Overall Completion:** ~48%
 **MVP Deadline:** Week 8 (Apr 13, 2026)
@@ -22,7 +28,7 @@
 |---------|--------|---------|
 | Authentication (Phone OTP) | ✅ Complete | Supabase Auth, +91 prefix, dev bypass via `EXPO_PUBLIC_DEV_SKIP_AUTH` |
 | User Profiles | 🟡 In Progress | `setup-profile.tsx` currently covers name, city, referral code, and signup bonus against `public.user_profiles`. Avatar/edit flows are still pending. |
-| Personal Library | ✅ Complete | Google Books search, add/remove books, reading notes CRUD |
+| Personal Library | ✅ Complete | Google Books search, manual entry fallback, canonical wishlist via `user_books.ownership`, ratings/reviews, and reading notes CRUD. Community review UI is implemented in repo and now backed by live `get_public_book_reviews()`. |
 | P2P Exchange System | 🟡 In Progress | Backend 100% (Phase A+B + 9 SECURITY DEFINER fns), service layer complete (listingsService, transactionsService, addressesService). Exchange screens: browse ✅, create listing ✅, listing detail ✅, transaction detail ✅, my transactions list ✅. Address picker integrated for porter/dunzo ✅. Remaining: payment/delivery Edge Functions (blocked by API keys), rating system |
 | Book Clubs | ❌ Not Started | `app/(tabs)/clubs.tsx` is 11-line placeholder |
 | Venues / Meetup Points | ❌ Not Started | DB tables exist, no frontend |
@@ -159,9 +165,9 @@ Some high-traffic exchange FKs now point to `user_profiles(user_id)`, but not al
 | OTP Verification | `app/(auth)/verify-otp.tsx` | ✅ | 6-digit code, resend timer, and `user_profiles` existence check so returning users enter the app instead of being sent to duplicate profile setup |
 | Profile Setup | `app/(auth)/setup-profile.tsx` | ✅ | New-user setup only: name, city, referral code, and `grant_signup_bonus()` RPC. Existing users should bypass this screen after OTP verification. |
 | Tab Layout | `app/(tabs)/_layout.tsx` | ✅ | 4 tabs: Library, Exchange, Clubs, Profile |
-| Library | `app/(tabs)/library/index.tsx` | ✅ | Book grid, search, filters |
-| Book Detail | `app/(tabs)/library/[bookId].tsx` | ✅ | Full detail with notes |
-| Book Search | `app/(tabs)/library/search.tsx` | ✅ | Google Books API integration |
+| Library | `app/(tabs)/library/index.tsx` | ✅ | Book grid, filters, and canonical wishlist-backed library states |
+| Book Detail | `app/(tabs)/library/[bookId].tsx` | ✅ | Full detail with notes, review editing, and community reviews UI |
+| Book Search | `app/(tabs)/library/search.tsx` | ✅ | Google Books API integration plus manual entry fallback |
 | Reading Notes | `app/(tabs)/library/notes.tsx` | ✅ | CRUD for reading notes |
 | Exchange Browse | `app/(tabs)/exchange/index.tsx` | ✅ | Filter chips (condition ×5, delivery ×3), ListingCard, empty/loading/error states, pull-to-refresh. P0-5 |
 | Create Listing | `app/(tabs)/exchange/create.tsx` | ✅ | Book picker, ImagePicker (2–4 photos), condition+delivery chips, form validation (RHF+Zod), city warning. P0-6 |
@@ -178,7 +184,7 @@ Some high-traffic exchange FKs now point to `user_profiles(user_id)`, but not al
 | `src/lib/supabase.ts` | ✅ | Supabase client with MMKV storage adapter |
 | `src/features/auth/hooks/useAuth.ts` | ✅ | Global auth state, dev bypass, singleton pattern |
 | `src/features/auth/services/authService.ts` | ✅ | OTP sign-in, verify, sign-out, getSession |
-| `src/features/books/services/booksService.ts` | ✅ | Google Books search, library CRUD (285 lines) |
+| `src/features/books/services/booksService.ts` | ✅ | Google Books search, manual entry, library CRUD, and public review RPC client |
 | `src/features/books/services/notesService.ts` | ✅ | Reading notes CRUD (144 lines) |
 | `src/features/auth/services/profileService.ts` | ✅ | Profile summary + batch fetching helper (86 lines). Created 2026-02-18 |
 | `src/features/exchange/services/listingsService.ts` | ✅ | Listing CRUD, browse, photo upload (313 lines). Lean Lists pattern. Created 2026-02-18 |
@@ -199,6 +205,7 @@ Some high-traffic exchange FKs now point to `user_profiles(user_id)`, but not al
 | Exchange approve/decline | `approve_transaction()` / `decline_transaction()` | ✅ Wired in `transaction/[transactionId].tsx` lender action buttons |
 | Transaction completion | `complete_transaction()` | ✅ Wired in `transaction/[transactionId].tsx` Complete Exchange button |
 | Transaction cancellation | `cancel_transaction()` | ✅ Wired in `transaction/[transactionId].tsx` Cancel button |
+| Library community reviews | `get_public_book_reviews()` | ✅ Wired via `booksService.getPublicReviewsForBook()` and deployed live through `20260312120000_019_book_public_reviews_contract.sql` |
 | Status transitions | `transition_transaction_status()` | ✅ Used internally by all RPC functions (server-side) |
 
 ---
@@ -259,7 +266,7 @@ Week 10 (Apr 21-28)             Phase 7: Launch prep, final QA
 | Storage | 100% | 3 buckets configured with RLS ✅ |
 | Service Layer | 88% | 7 services + exchange/address hooks complete. Clubs hooks/services pending |
 | Frontend — Auth | 100% | Login, OTP, profile setup |
-| Frontend — Library | 90% | Search, CRUD, notes |
+| Frontend — Library | 95% | Search, manual entry, canonical wishlist model, CRUD, notes, and community review UI. The public-review feed is now backed by live `get_public_book_reviews()` deployment. |
 | Frontend — Exchange | 65% | 5 screens ✅ + AddressPicker ✅ + address service layer ✅. Payment/delivery Edge Functions pending. |
 | Frontend — Clubs | 0% | Placeholder only |
 | Frontend — Profile | 45% | Credit balance card ✅ (available + stats grid). Edit functionality pending. |

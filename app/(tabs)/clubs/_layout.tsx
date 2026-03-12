@@ -12,6 +12,7 @@ export default function ClubsLayout() {
             <Stack.Screen name="index" />
             <Stack.Screen name="[clubId]/index" />
             <Stack.Screen name="[clubId]/applications" />
+            <Stack.Screen name="[clubId]/discussion" />
             <Stack.Screen name="[clubId]/events" />
             <Stack.Screen name="[clubId]/events/create" />
             <Stack.Screen name="[clubId]/events/[eventId]/edit" />

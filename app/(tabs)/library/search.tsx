@@ -1,4 +1,18 @@
-import { View, Text, FlatList, TouchableOpacity, Alert, Share, Linking, RefreshControl, StyleSheet } from 'react-native';
+import {
+    View,
+    Text,
+    FlatList,
+    TouchableOpacity,
+    Alert,
+    Share,
+    Linking,
+    RefreshControl,
+    StyleSheet,
+    Modal,
+    KeyboardAvoidingView,
+    Platform,
+    TextInput,
+} from 'react-native';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { booksService, GoogleBook, SearchFilters, PaginatedResult } from '@/features/books/services/booksService';
@@ -73,10 +87,14 @@ export default function SearchBooksScreen() {
     const debouncedQuery = useDebounce(query, 500);
     const debouncedSuggestionQuery = useDebounce(query, 300);
     const { recentSearches, saveRecentSearch, removeRecentSearch } = useRecentSearches();
-    const { wishlistBookIds, toggleWishlist } = useWishlist(session?.user?.id);
+    const { wishlistBookIds, toggleWishlist, refreshWishlist } = useWishlist(session?.user?.id);
 
     // Wishlist state
     const [wishlistTogglingId, setWishlistTogglingId] = useState<string | null>(null);
+    const [showManualEntryModal, setShowManualEntryModal] = useState(false);
+    const [manualTitle, setManualTitle] = useState('');
+    const [manualAuthor, setManualAuthor] = useState('');
+    const [manualSubmitting, setManualSubmitting] = useState(false);
 
     // Fetch suggestions
     useEffect(() => {
@@ -102,7 +120,10 @@ export default function SearchBooksScreen() {
     });
 
     const libraryBookIds = useMemo(() => new Set(
-        userLibrary?.map((ub: any) => ub.book?.google_books_id).filter(Boolean) || []
+        userLibrary
+            ?.filter((ub: any) => ub.ownership !== 'wishlist')
+            .map((ub: any) => ub.book?.google_books_id)
+            .filter(Boolean) || []
     ), [userLibrary]);
 
     // Search function
@@ -169,6 +190,18 @@ export default function SearchBooksScreen() {
         setSuggestions([]);
     }, []);
 
+    const closeManualEntryModal = useCallback(() => {
+        setShowManualEntryModal(false);
+        setManualTitle('');
+        setManualAuthor('');
+    }, []);
+
+    const openManualEntryModal = useCallback(() => {
+        setManualTitle(query.trim());
+        setManualAuthor('');
+        setShowManualEntryModal(true);
+    }, [query]);
+
     const handleSuggestionSelect = useCallback((suggestion: string) => {
         setQuery(suggestion);
         setShowSuggestions(false);
@@ -215,16 +248,56 @@ export default function SearchBooksScreen() {
         setAddingId(book.id);
         try {
             await booksService.addToLibrary(session.user.id, book);
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['library'] }),
+                refreshWishlist(),
+            ]);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Alert.alert('Added!', `"${book.volumeInfo.title}" is now in your library`);
-            queryClient.invalidateQueries({ queryKey: ['library'] });
         } catch (error: any) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert('Oops!', error.message);
         } finally {
             setAddingId(null);
         }
-    }, [session, queryClient]);
+    }, [session, queryClient, refreshWishlist]);
+
+    const handleManualAddBook = useCallback(async () => {
+        if (!session?.user) return;
+
+        const trimmedTitle = manualTitle.trim();
+        const trimmedAuthor = manualAuthor.trim();
+
+        if (!trimmedTitle) {
+            Alert.alert('Title required', 'Enter a book title to add it manually.');
+            return;
+        }
+
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        setManualSubmitting(true);
+
+        try {
+            const bookData = await booksService.addManualBookToLibrary(session.user.id, {
+                title: trimmedTitle,
+                author: trimmedAuthor || undefined,
+            });
+
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['library'] }),
+                refreshWishlist(),
+            ]);
+
+            closeManualEntryModal();
+            handleClear();
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            Alert.alert('Added!', `"${bookData.title}" is now in your library`);
+        } catch (error: any) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert('Oops!', error.message || 'Failed to add book manually.');
+        } finally {
+            setManualSubmitting(false);
+        }
+    }, [session, manualTitle, manualAuthor, queryClient, refreshWishlist, closeManualEntryModal, handleClear]);
 
     const handlePreview = useCallback(async (previewLink?: string) => {
         if (!previewLink) {
@@ -251,11 +324,26 @@ export default function SearchBooksScreen() {
 
     const handleWishlistToggle = useCallback(async (book: GoogleBook) => {
         if (!session?.user) return;
+
+        if (libraryBookIds.has(book.id) && !wishlistBookIds.has(book.id)) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert('Already in Library', 'This book is already in your library.');
+            return;
+        }
+
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         setWishlistTogglingId(book.id);
 
         try {
-            await toggleWishlist(book);
+            const success = await toggleWishlist(book);
+
+            if (!success) {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                Alert.alert('Oops!', 'Failed to update wishlist');
+                return;
+            }
+
+            await queryClient.invalidateQueries({ queryKey: ['library'] });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error: any) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -263,7 +351,7 @@ export default function SearchBooksScreen() {
         } finally {
             setWishlistTogglingId(null);
         }
-    }, [session, toggleWishlist]);
+    }, [session, libraryBookIds, wishlistBookIds, toggleWishlist, queryClient]);
 
     // Render book card using extracted component
     const renderItem = useCallback(({ item, index }: { item: GoogleBook; index: number }) => (
@@ -328,6 +416,29 @@ export default function SearchBooksScreen() {
             <Text style={{ color: colors.textSecondary, fontSize: 18, fontWeight: '600', textAlign: 'center' }}>No books found</Text>
             <Text style={{ color: colors.textTertiary, fontSize: 15, textAlign: 'center', marginTop: 8 }}>
                 Try a different search term or adjust filters
+            </Text>
+            <TouchableOpacity
+                testID="library-manual-entry-open"
+                onPress={openManualEntryModal}
+                style={{
+                    marginTop: 20,
+                    backgroundColor: colors.accent,
+                    paddingHorizontal: 18,
+                    paddingVertical: 12,
+                    borderRadius: 14,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                }}
+                accessibilityLabel="Add book manually"
+                accessibilityHint="Opens a form to add a book without Google Books results"
+            >
+                <Ionicons name="create-outline" size={18} color="#fff" />
+                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', marginLeft: 8 }}>
+                    Add it manually
+                </Text>
+            </TouchableOpacity>
+            <Text style={{ color: colors.textTertiary, fontSize: 13, textAlign: 'center', marginTop: 10 }}>
+                Can’t find the book? Save a basic title and optional author to your library.
             </Text>
         </View>
     );
@@ -520,6 +631,123 @@ export default function SearchBooksScreen() {
                 onApply={handleFilterApply}
                 colors={colors}
             />
+
+            <Modal
+                visible={showManualEntryModal}
+                transparent
+                animationType="fade"
+                onRequestClose={closeManualEntryModal}
+            >
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                    style={{
+                        flex: 1,
+                        justifyContent: 'center',
+                        padding: 24,
+                        backgroundColor: 'rgba(15, 23, 42, 0.45)',
+                    }}
+                >
+                    <View
+                        style={{
+                            backgroundColor: colors.bgCard,
+                            borderRadius: 24,
+                            padding: 20,
+                            borderWidth: 1,
+                            borderColor: colors.border,
+                        }}
+                    >
+                        <Text style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '700' }}>
+                            Add book manually
+                        </Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginTop: 8 }}>
+                            Add a basic library entry when search doesn’t return the title you need.
+                        </Text>
+
+                        <View style={{ marginTop: 18 }}>
+                            <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>
+                                Title
+                            </Text>
+                            <TextInput
+                                testID="library-manual-entry-title"
+                                value={manualTitle}
+                                onChangeText={setManualTitle}
+                                placeholder="Enter the book title"
+                                placeholderTextColor={colors.textTertiary}
+                                style={{
+                                    borderWidth: 1,
+                                    borderColor: colors.border,
+                                    borderRadius: 14,
+                                    paddingHorizontal: 14,
+                                    paddingVertical: 12,
+                                    fontSize: 15,
+                                    color: colors.textPrimary,
+                                    backgroundColor: colors.bgPrimary,
+                                }}
+                            />
+                        </View>
+
+                        <View style={{ marginTop: 14 }}>
+                            <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>
+                                Author (optional)
+                            </Text>
+                            <TextInput
+                                testID="library-manual-entry-author"
+                                value={manualAuthor}
+                                onChangeText={setManualAuthor}
+                                placeholder="Enter the author name"
+                                placeholderTextColor={colors.textTertiary}
+                                style={{
+                                    borderWidth: 1,
+                                    borderColor: colors.border,
+                                    borderRadius: 14,
+                                    paddingHorizontal: 14,
+                                    paddingVertical: 12,
+                                    fontSize: 15,
+                                    color: colors.textPrimary,
+                                    backgroundColor: colors.bgPrimary,
+                                }}
+                            />
+                        </View>
+
+                        <View style={{ flexDirection: 'row', marginTop: 22, gap: 12 }}>
+                            <TouchableOpacity
+                                testID="library-manual-entry-cancel"
+                                onPress={closeManualEntryModal}
+                                style={{
+                                    flex: 1,
+                                    borderWidth: 1,
+                                    borderColor: colors.border,
+                                    borderRadius: 14,
+                                    paddingVertical: 12,
+                                    alignItems: 'center',
+                                    backgroundColor: colors.bgPrimary,
+                                }}
+                            >
+                                <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600' }}>
+                                    Cancel
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                testID="library-manual-entry-save"
+                                onPress={handleManualAddBook}
+                                disabled={manualSubmitting}
+                                style={{
+                                    flex: 1,
+                                    borderRadius: 14,
+                                    paddingVertical: 12,
+                                    alignItems: 'center',
+                                    backgroundColor: manualSubmitting ? colors.textTertiary : colors.accent,
+                                }}
+                            >
+                                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>
+                                    {manualSubmitting ? 'Saving...' : 'Save to library'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
         </View>
     );
 }
+

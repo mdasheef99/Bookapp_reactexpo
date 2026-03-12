@@ -13,6 +13,9 @@ export type ClubEventFormat = 'virtual' | 'in_person' | 'hybrid';
 export type ClubEventStatus = 'scheduled' | 'cancelled';
 export type ClubEventRsvpStatus = 'going' | 'maybe' | 'not_going';
 export type ClubCurrentBookReadingStatus = 'want_to_read' | 'reading' | 'completed';
+export type ClubDiscussionVoteType = 'upvote' | 'downvote';
+export type ClubDiscussionReactionEmoji = '👍' | '❤️' | '🔥' | '👏' | '😂';
+export type ClubDiscussionReportReason = 'spam' | 'abuse' | 'off_topic' | 'spoiler' | 'other';
 
 export interface ClubBookSummary { id: string; title: string; authors: string[] | null; cover_url: string | null; }
 export interface ClubCurrentBookStatusOverview {
@@ -153,6 +156,113 @@ export interface ClubEventInput {
 }
 export interface CreateClubEventInput extends ClubEventInput { clubId: string; }
 export interface UpdateClubEventInput extends ClubEventInput {}
+
+export interface ClubDiscussionTopic {
+    id: string;
+    club_id: string | null;
+    author_user_id: string | null;
+    title: string;
+    body: string | null;
+    is_deleted: boolean | null;
+    is_edited: boolean | null;
+    created_at: string | null;
+    updated_at: string | null;
+    deleted_at: string | null;
+    last_replied_at: string | null;
+}
+export interface ClubDiscussionReply {
+    id: string;
+    topic_id: string | null;
+    parent_reply_id: string | null;
+    author_user_id: string | null;
+    body: string | null;
+    is_deleted: boolean | null;
+    created_at: string | null;
+    deleted_at: string | null;
+}
+export interface ClubDiscussionVote {
+    id: string;
+    topic_id: string | null;
+    reply_id: string | null;
+    user_id: string;
+    vote_type: ClubDiscussionVoteType;
+    created_at: string | null;
+}
+export interface ClubDiscussionReaction {
+    id: string;
+    topic_id: string | null;
+    reply_id: string | null;
+    user_id: string;
+    emoji: ClubDiscussionReactionEmoji | string;
+    created_at: string | null;
+}
+export interface ClubDiscussionReactionSummary {
+    emoji: ClubDiscussionReactionEmoji | string;
+    count: number;
+    viewerReacted: boolean;
+}
+export interface ClubDiscussionReport {
+    id: string;
+    topic_id: string | null;
+    reply_id: string | null;
+    reporter_user_id: string;
+    reason: ClubDiscussionReportReason | string;
+    details: string | null;
+    status: 'open' | 'resolved';
+    created_at: string | null;
+    resolved_at: string | null;
+    resolved_by: string | null;
+}
+export interface ClubDiscussionTopicReadState {
+    topic_id: string;
+    user_id: string;
+    last_read_at: string | null;
+    unread_reply_count: number | null;
+}
+export interface ClubDiscussionReplyWithDetails extends ClubDiscussionReply {
+    authorProfile: UserProfileSummary | null;
+    depth: number;
+    voteCount: number;
+    viewerVote: ClubDiscussionVoteType | null;
+    reactions: ClubDiscussionReactionSummary[];
+}
+export interface ClubDiscussionTopicWithDetails extends ClubDiscussionTopic {
+    authorProfile: UserProfileSummary | null;
+    replies: ClubDiscussionReplyWithDetails[];
+    replyCount: number;
+    voteCount: number;
+    viewerVote: ClubDiscussionVoteType | null;
+    reactions: ClubDiscussionReactionSummary[];
+    unreadReplyCount: number;
+    hasUnread: boolean;
+    recentActivityAt: string | null;
+}
+export interface CreateClubDiscussionTopicInput {
+    clubId: string;
+    title: string;
+    body: string;
+}
+export interface CreateClubDiscussionReplyInput {
+    topicId: string;
+    parentReplyId?: string | null;
+    body: string;
+}
+export interface SetClubDiscussionVoteInput {
+    topicId?: string | null;
+    replyId?: string | null;
+    voteType: ClubDiscussionVoteType;
+}
+export interface SetClubDiscussionReactionInput {
+    topicId?: string | null;
+    replyId?: string | null;
+    emoji: ClubDiscussionReactionEmoji;
+}
+export interface CreateClubDiscussionReportInput {
+    topicId?: string | null;
+    replyId?: string | null;
+    reason: ClubDiscussionReportReason;
+    details?: string | null;
+}
 
 export type ClubBookNominationStatus = 'active' | 'selected' | 'rejected';
 export interface ClubNominationBookSummary {

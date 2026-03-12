@@ -1,27 +1,22 @@
 /**
  * Unit tests for useWishlist.ts
  *
- * Tests: fetchWishlist, addToWishlist (optimistic + 23505), removeFromWishlist,
+ * Tests: fetchWishlist, addToWishlist (canonical user_books flow), removeFromWishlist,
  * toggleWishlist, isInWishlist, unauthenticated guard, error states.
  */
-jest.mock('@/lib/supabase');
+jest.mock('@/features/books/services/booksService', () => ({
+  booksService: {
+    getUserLibrary: jest.fn(),
+    getUserBookByGoogleBookId: jest.fn(),
+    addToLibrary: jest.fn(),
+    removeFromLibrary: jest.fn(),
+  },
+}));
 
 import { renderHook, act, waitFor } from '@testing-library/react-native';
-import { supabase } from '@/lib/supabase';
+import { booksService } from '@/features/books/services/booksService';
 import { useWishlist } from '../useWishlist';
 import { GoogleBook } from '@/features/books/services/booksService';
-
-// Helper: chainable query builder
-function mockQuery(response: Record<string, any>) {
-  const builder: any = {};
-  const methods = [
-    'select', 'insert', 'update', 'delete', 'upsert', 'eq', 'neq',
-    'order', 'limit', 'single', 'maybeSingle',
-  ];
-  methods.forEach((m) => { builder[m] = jest.fn(() => builder); });
-  builder.then = jest.fn((resolve: any) => resolve(response));
-  return builder;
-}
 
 const mockBook: GoogleBook = {
   id: 'gb-1',
@@ -35,23 +30,21 @@ beforeEach(() => {
 describe('useWishlist', () => {
   describe('without userId', () => {
     it('does not fetch wishlist and returns empty state', () => {
-      // Mock from() for the initial useEffect fetch
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery({ data: [], error: null }));
-
       const { result } = renderHook(() => useWishlist(undefined));
 
       expect(result.current.wishlist).toEqual([]);
       expect(result.current.loading).toBe(false);
-      expect(supabase.from).not.toHaveBeenCalled();
+      expect(booksService.getUserLibrary).not.toHaveBeenCalled();
     });
   });
 
   describe('fetchWishlist', () => {
     it('fetches wishlist and builds bookIds Set', async () => {
-      const wishlistData = [
-        { id: 'w1', google_books_id: 'gb-1', user_id: 'u1', book_data: mockBook, created_at: '2024-01-01' },
+      const libraryData = [
+        { id: 'w1', ownership: 'wishlist', user_id: 'u1', book: { google_books_id: 'gb-1' }, created_at: '2024-01-01' },
+        { id: 'l1', ownership: 'owned', user_id: 'u1', book: { google_books_id: 'gb-2' }, created_at: '2024-01-02' },
       ];
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery({ data: wishlistData, error: null }));
+      (booksService.getUserLibrary as jest.Mock).mockResolvedValue(libraryData);
 
       const { result } = renderHook(() => useWishlist('u1'));
 
@@ -59,15 +52,13 @@ describe('useWishlist', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(result.current.wishlist).toEqual(wishlistData);
+      expect(result.current.wishlist).toEqual([libraryData[0]]);
       expect(result.current.isInWishlist('gb-1')).toBe(true);
       expect(result.current.isInWishlist('gb-2')).toBe(false);
     });
 
     it('sets error on fetch failure', async () => {
-      (supabase.from as jest.Mock).mockReturnValue(
-        mockQuery({ data: null, error: { message: 'Network error' } }),
-      );
+      (booksService.getUserLibrary as jest.Mock).mockRejectedValue(new Error('Network error'));
 
       const { result } = renderHook(() => useWishlist('u1'));
 
@@ -81,7 +72,6 @@ describe('useWishlist', () => {
 
   describe('addToWishlist', () => {
     it('returns false and sets error when not authenticated', async () => {
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery({ data: [], error: null }));
       const { result } = renderHook(() => useWishlist(undefined));
 
       let success: boolean | undefined;
@@ -93,17 +83,32 @@ describe('useWishlist', () => {
       expect(result.current.error).toBe('User not authenticated');
     });
 
-    it('handles 23505 duplicate gracefully', async () => {
-      // Initial fetch
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery({ data: [], error: null }));
-      const { result } = renderHook(() => useWishlist('u1'));
+    it('adds a canonical wishlist row through booksService', async () => {
+      (booksService.getUserLibrary as jest.Mock)
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ id: 'ub1', ownership: 'wishlist', user_id: 'u1', book: { google_books_id: 'gb-1' }, created_at: '2024-01-01' }]);
+      (booksService.getUserBookByGoogleBookId as jest.Mock).mockResolvedValue(null);
+      (booksService.addToLibrary as jest.Mock).mockResolvedValue(undefined);
 
+      const { result } = renderHook(() => useWishlist('u1'));
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      // Attempt to add — returns 23505
-      (supabase.from as jest.Mock).mockReturnValue(
-        mockQuery({ data: null, error: { code: '23505', message: 'duplicate' } }),
-      );
+      let success: boolean | undefined;
+      await act(async () => {
+        success = await result.current.addToWishlist(mockBook);
+      });
+
+      expect(success).toBe(true);
+      expect(booksService.addToLibrary).toHaveBeenCalledWith('u1', mockBook, 'want_to_read', 'wishlist');
+      expect(result.current.isInWishlist('gb-1')).toBe(true);
+    });
+
+    it('returns false when the book is already wishlisted', async () => {
+      (booksService.getUserLibrary as jest.Mock).mockResolvedValue([]);
+      (booksService.getUserBookByGoogleBookId as jest.Mock).mockResolvedValue({ id: 'ub1', ownership: 'wishlist' });
+
+      const { result } = renderHook(() => useWishlist('u1'));
+      await waitFor(() => expect(result.current.loading).toBe(false));
 
       let success: boolean | undefined;
       await act(async () => {
@@ -113,11 +118,27 @@ describe('useWishlist', () => {
       expect(success).toBe(false);
       expect(result.current.error).toBe('Book already in wishlist');
     });
+
+    it('returns false when the book is already in the main library', async () => {
+      (booksService.getUserLibrary as jest.Mock).mockResolvedValue([]);
+      (booksService.getUserBookByGoogleBookId as jest.Mock).mockResolvedValue({ id: 'ub1', ownership: 'owned' });
+
+      const { result } = renderHook(() => useWishlist('u1'));
+
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      let success: boolean | undefined;
+      await act(async () => {
+        success = await result.current.addToWishlist(mockBook);
+      });
+
+      expect(success).toBe(false);
+      expect(result.current.error).toBe('Book already in your library');
+    });
   });
 
   describe('removeFromWishlist', () => {
     it('returns false when not authenticated', async () => {
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery({ data: [], error: null }));
       const { result } = renderHook(() => useWishlist(undefined));
 
       let success: boolean | undefined;
@@ -128,27 +149,41 @@ describe('useWishlist', () => {
       expect(success).toBe(false);
       expect(result.current.error).toBe('User not authenticated');
     });
-  });
 
-  describe('toggleWishlist', () => {
-    it('adds when book is not in wishlist', async () => {
-      // Initial fetch returns empty
-      const fetchBuilder = mockQuery({ data: [], error: null });
-      (supabase.from as jest.Mock).mockReturnValue(fetchBuilder);
+    it('removes the canonical wishlist row from user_books', async () => {
+      (booksService.getUserLibrary as jest.Mock)
+        .mockResolvedValueOnce([{ id: 'ub1', ownership: 'wishlist', user_id: 'u1', book: { google_books_id: 'gb-1' }, created_at: '2024-01-01' }])
+        .mockResolvedValueOnce([]);
+      (booksService.getUserBookByGoogleBookId as jest.Mock).mockResolvedValue({ id: 'ub1', ownership: 'wishlist' });
+      (booksService.removeFromLibrary as jest.Mock).mockResolvedValue(undefined);
 
       const { result } = renderHook(() => useWishlist('u1'));
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      // Toggle should call addToWishlist (insert)
-      const insertBuilder = mockQuery({ data: null, error: null });
-      (supabase.from as jest.Mock).mockReturnValue(insertBuilder);
+      await act(async () => {
+        await result.current.removeFromWishlist('gb-1');
+      });
+
+      expect(booksService.removeFromLibrary).toHaveBeenCalledWith('ub1');
+    });
+  });
+
+  describe('toggleWishlist', () => {
+    it('adds when book is not in wishlist', async () => {
+      (booksService.getUserLibrary as jest.Mock)
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ id: 'ub1', ownership: 'wishlist', user_id: 'u1', book: { google_books_id: 'gb-1' }, created_at: '2024-01-01' }]);
+      (booksService.getUserBookByGoogleBookId as jest.Mock).mockResolvedValue(null);
+      (booksService.addToLibrary as jest.Mock).mockResolvedValue(undefined);
+
+      const { result } = renderHook(() => useWishlist('u1'));
+      await waitFor(() => expect(result.current.loading).toBe(false));
 
       await act(async () => {
         await result.current.toggleWishlist(mockBook);
       });
 
-      // Verify insert was called (not delete)
-      expect(insertBuilder.insert).toHaveBeenCalled();
+      expect(booksService.addToLibrary).toHaveBeenCalledWith('u1', mockBook, 'want_to_read', 'wishlist');
     });
   });
 });

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, TextInput, Alert, ActivityIndicator, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -24,6 +24,26 @@ import {
 import { NoteCard, NoteEditor } from '@/components/notes';
 import { AtmosphericBackground } from '@/components/ui/AtmosphericBackground';
 
+const formatReviewDate = (value?: string | null) => {
+    if (!value) return 'Recently';
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Recently';
+
+    return date.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    });
+};
+
+const getReviewerName = (review: {
+    author: {
+        display_name?: string | null;
+        username?: string | null;
+    };
+}) => review.author.display_name?.trim() || review.author.username?.trim() || 'Community reader';
+
 export default function BookDetailScreen() {
     const { bookId } = useLocalSearchParams<{ bookId: string }>();
     const router = useRouter();
@@ -44,7 +64,25 @@ export default function BookDetailScreen() {
         enabled: !!bookId,
     });
 
+    useEffect(() => {
+        if (!userBook) return;
+
+        setReviewText(userBook.review ?? '');
+        setIsReviewPublic(userBook.review_is_public ?? true);
+    }, [userBook]);
+
     const book = userBook?.book;
+
+    const {
+        data: publicReviews = [],
+        isLoading: publicReviewsLoading,
+        error: publicReviewsError,
+    } = useQuery({
+        queryKey: ['book-public-reviews', userBook?.book_id],
+        queryFn: () => booksService.getPublicReviewsForBook(userBook!.book_id),
+        enabled: !!userBook?.book_id,
+        retry: false,
+    });
 
     // Fetch notes for this book (preview: last 3)
     const { data: notes = [], refetch: refetchNotes } = useQuery({
@@ -122,9 +160,12 @@ export default function BookDetailScreen() {
     });
 
     const updateRatingMutation = useMutation({
-        mutationFn: ({ rating, review, isPublic }: { rating: number; review?: string; isPublic?: boolean }) =>
+        mutationFn: ({ rating, review, isPublic }: { rating?: number; review?: string; isPublic?: boolean }) =>
             booksService.addRating(bookId!, rating, review, isPublic),
         onSuccess: invalidateQueries,
+        onError: (err: any) => {
+            Alert.alert('Error', err.message || 'Failed to save review');
+        },
     });
 
     const toggleLendingMutation = useMutation({
@@ -145,14 +186,23 @@ export default function BookDetailScreen() {
 
     // --- Handlers ---
 
+    const getPersistedRating = useCallback(() => {
+        if (typeof userBook?.rating !== 'number') return undefined;
+        return userBook.rating > 0 ? userBook.rating : undefined;
+    }, [userBook?.rating]);
+
     const handleSaveReview = () => {
         if (!userBook) return;
+
         updateRatingMutation.mutate({
-            rating: userBook.rating || 0,
+            rating: getPersistedRating(),
             review: reviewText,
             isPublic: isReviewPublic
+        }, {
+            onSuccess: () => {
+                Alert.alert('Success', 'Review saved!');
+            }
         });
-        Alert.alert('Success', 'Review saved!');
     };
 
     if (isLoading) {
@@ -251,7 +301,7 @@ export default function BookDetailScreen() {
                         {/* Rating & Review */}
                         <RatingInput
                             rating={userBook.rating || 0}
-                            onChange={(val) => updateRatingMutation.mutate({ rating: val, review: userBook.review, isPublic: userBook.review_is_public })}
+                            onChange={(val) => updateRatingMutation.mutate({ rating: val, review: reviewText, isPublic: isReviewPublic })}
                             disabled={updateRatingMutation.isPending}
                         />
 
@@ -263,31 +313,34 @@ export default function BookDetailScreen() {
                                     color: colors.textPrimary,
                                     borderColor: colors.border
                                 }]}
+                                testID="library-review-input"
                                 placeholder="Write your thoughts..."
                                 placeholderTextColor={colors.textTertiary}
                                 multiline
-                                value={reviewText || userBook.review || ''}
+                                value={reviewText}
                                 onChangeText={setReviewText}
                                 onBlur={handleSaveReview} // Auto-save on blur
                             />
                             <TouchableOpacity
+                                testID="library-review-privacy-toggle"
                                 style={styles.publicToggle}
                                 onPress={() => {
-                                    setIsReviewPublic(!isReviewPublic);
+                                    const nextIsPublic = !isReviewPublic;
+                                    setIsReviewPublic(nextIsPublic);
                                     updateRatingMutation.mutate({
-                                        rating: userBook.rating,
-                                        review: reviewText || userBook.review,
-                                        isPublic: !isReviewPublic
+                                        rating: getPersistedRating(),
+                                        review: reviewText,
+                                        isPublic: nextIsPublic
                                     });
                                 }}
                             >
                                 <Ionicons
-                                    name={userBook.review_is_public ? "eye-outline" : "eye-off-outline"}
+                                    name={isReviewPublic ? "eye-outline" : "eye-off-outline"}
                                     size={16}
                                     color={colors.textSecondary}
                                 />
                                 <Text style={{ color: colors.textSecondary, fontSize: 13, marginLeft: 6 }}>
-                                    {userBook.review_is_public ? 'Public Review' : 'Private Note'}
+                                    {isReviewPublic ? 'Public Review' : 'Private Note'}
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -305,6 +358,79 @@ export default function BookDetailScreen() {
                                 </Text>
                             )}
                         </View>
+                    </View>
+
+                    <View style={[styles.communityReviewsSection, { backgroundColor: colors.bgCard }]}>
+                        <View style={styles.communityReviewsHeader}>
+                            <Text style={[styles.communityReviewsTitle, { color: colors.textPrimary }]}>Community Reviews</Text>
+                            {publicReviews.length > 0 && (
+                                <Text style={[styles.communityReviewsCount, { color: colors.textSecondary }]}>
+                                    {publicReviews.length}
+                                </Text>
+                            )}
+                        </View>
+
+                        {publicReviewsLoading ? (
+                            <View style={styles.communityReviewsState}>
+                                <ActivityIndicator size="small" color={colors.accent} />
+                            </View>
+                        ) : publicReviewsError ? (
+                            <View style={styles.communityReviewsState}>
+                                <Text style={[styles.communityReviewsStateText, { color: colors.textSecondary }]}>
+                                    Community reviews are temporarily unavailable.
+                                </Text>
+                            </View>
+                        ) : publicReviews.length === 0 ? (
+                            <View style={styles.communityReviewsState} testID="community-reviews-empty">
+                                <Text style={[styles.communityReviewsStateText, { color: colors.textSecondary }]}>
+                                    No public reviews yet.
+                                </Text>
+                            </View>
+                        ) : (
+                            publicReviews.map((review) => {
+                                const authorName = getReviewerName(review);
+                                const authorHandle = review.author.username?.trim();
+
+                                return (
+                                    <View
+                                        key={review.user_book_id}
+                                        testID={`community-review-${review.user_book_id}`}
+                                        style={[
+                                            styles.communityReviewCard,
+                                            { backgroundColor: colors.bgSecondary, borderColor: colors.border },
+                                        ]}
+                                    >
+                                        <View style={styles.communityReviewHeader}>
+                                            <View style={styles.communityReviewAuthorBlock}>
+                                                <Text style={[styles.communityReviewAuthor, { color: colors.textPrimary }]}>
+                                                    {authorName}
+                                                </Text>
+                                                {authorHandle && (
+                                                    <Text style={[styles.communityReviewHandle, { color: colors.textSecondary }]}>
+                                                        @{authorHandle}
+                                                    </Text>
+                                                )}
+                                            </View>
+
+                                            <View style={styles.communityReviewMeta}>
+                                                {typeof review.rating === 'number' && review.rating > 0 && (
+                                                    <Text style={[styles.communityReviewRating, { color: colors.accent }]}> 
+                                                        {'★'.repeat(review.rating)}
+                                                    </Text>
+                                                )}
+                                                <Text style={[styles.communityReviewDate, { color: colors.textTertiary }]}>
+                                                    {formatReviewDate(review.created_at)}
+                                                </Text>
+                                            </View>
+                                        </View>
+
+                                        <Text style={[styles.communityReviewText, { color: colors.textPrimary }]}>
+                                            {review.review}
+                                        </Text>
+                                    </View>
+                                );
+                            })
+                        )}
                     </View>
 
                     {/* === My Notes Section === */}
@@ -504,6 +630,79 @@ const styles = StyleSheet.create({
     metadata: {
         marginTop: 24,
         alignItems: 'center',
+    },
+    communityReviewsSection: {
+        marginHorizontal: 16,
+        marginTop: 16,
+        borderRadius: 24,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
+    },
+    communityReviewsHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    communityReviewsTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    communityReviewsCount: {
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    communityReviewsState: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 16,
+    },
+    communityReviewsStateText: {
+        fontSize: 14,
+        textAlign: 'center',
+    },
+    communityReviewCard: {
+        borderWidth: 1,
+        borderRadius: 18,
+        padding: 14,
+        marginBottom: 12,
+    },
+    communityReviewHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        gap: 12,
+        marginBottom: 10,
+    },
+    communityReviewAuthorBlock: {
+        flex: 1,
+    },
+    communityReviewAuthor: {
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    communityReviewHandle: {
+        fontSize: 12,
+        marginTop: 2,
+    },
+    communityReviewMeta: {
+        alignItems: 'flex-end',
+    },
+    communityReviewRating: {
+        fontSize: 12,
+        fontWeight: '700',
+        marginBottom: 2,
+    },
+    communityReviewDate: {
+        fontSize: 11,
+    },
+    communityReviewText: {
+        fontSize: 14,
+        lineHeight: 21,
     },
     metaText: {
         fontSize: 12,

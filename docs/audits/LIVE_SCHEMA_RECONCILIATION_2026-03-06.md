@@ -127,7 +127,7 @@ Older docs describe fewer deployed DB functions than currently exist. Verified l
 - `src/features/exchange/services/transactionsService.ts` matches live transaction statuses and delivery types.
 - `src/features/exchange/services/listingsService.ts` matches live listing statuses and conditions.
 - `src/features/credits/services/creditService.ts` matches live `credit_events` enums.
-- `src/hooks/useWishlist.ts` correctly uses `user_wishlist`.
+- `src/hooks/useWishlist.ts` correctly used `user_wishlist` at the time of this 2026-03-06 reconciliation. As of the 2026-03-12 Library remediation, app-side wishlist handling has been standardized on `user_books.ownership = 'wishlist'`; the live `user_wishlist` table still exists.
 
 ### Recently aligned before this reconciliation
 
