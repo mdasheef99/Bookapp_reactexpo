@@ -1,13 +1,16 @@
 import React, { type ReactNode } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, notifyManager } from '@tanstack/react-query';
 import { renderHook, act, waitFor } from '@testing-library/react-native';
-import { useAcceptClubInvitation, useJoinClub, useRemoveClubMember, useReviewClubApplication, useUpdateClub, clubKeys } from '../useClubs';
+import { useAcceptClubInvitation, useCreateClubDiscussionReply, useCreateClubDiscussionTopic, useJoinClub, useMarkClubDiscussionTopicRead, useRemoveClubMember, useReviewClubApplication, useUpdateClub, clubKeys } from '../useClubs';
 import { clubsService } from '../../services/clubsService';
 
 jest.mock('../../services/clubsService', () => ({
     clubsService: {
         acceptClubInvitation: jest.fn(),
+        createClubDiscussionReply: jest.fn(),
+        createClubDiscussionTopic: jest.fn(),
         joinClub: jest.fn(),
+        markClubDiscussionTopicRead: jest.fn(),
         removeMember: jest.fn(),
         reviewJoinApplication: jest.fn(),
         updateClub: jest.fn(),
@@ -23,13 +26,25 @@ function createWrapper(queryClient: QueryClient) {
 function createQueryClient() {
     return new QueryClient({
         defaultOptions: {
-            queries: { retry: false },
-            mutations: { retry: false },
+            queries: { retry: false, gcTime: Infinity },
+            mutations: { retry: false, gcTime: Infinity },
         },
     });
 }
 
 describe('useClubs cache invalidation', () => {
+    beforeAll(() => {
+        notifyManager.setNotifyFunction((callback) => {
+            act(callback);
+        });
+    });
+
+    afterAll(() => {
+        notifyManager.setNotifyFunction((callback) => {
+            callback();
+        });
+    });
+
     beforeEach(() => {
         jest.clearAllMocks();
     });
@@ -146,5 +161,57 @@ describe('useClubs cache invalidation', () => {
         expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.browseRoot });
         expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.members('club-5') });
         expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.membership('club-5', 'user-5') });
+    });
+
+    it('invalidates the discussion root after creating a new discussion topic', async () => {
+        const queryClient = createQueryClient();
+        const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
+        (clubsService.createClubDiscussionTopic as jest.Mock).mockResolvedValue({ club_id: 'club-6' });
+
+        const { result } = renderHook(() => useCreateClubDiscussionTopic(), { wrapper: createWrapper(queryClient) });
+
+        await act(async () => {
+            await result.current.mutateAsync({ clubId: 'club-6', title: 'Theme check-in', body: 'What did this week reveal?' });
+        });
+
+        await waitFor(() => {
+            expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionRoot('club-6') });
+        });
+    });
+
+    it('invalidates discussion list and topic detail queries after posting a reply', async () => {
+        const queryClient = createQueryClient();
+        const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
+        (clubsService.createClubDiscussionReply as jest.Mock).mockResolvedValue({ topic_id: 'topic-7' });
+
+        const { result } = renderHook(() => useCreateClubDiscussionReply(), { wrapper: createWrapper(queryClient) });
+
+        await act(async () => {
+            await result.current.mutateAsync({ clubId: 'club-7', input: { topicId: 'topic-7', body: 'Count me in.' }, userId: 'user-7' });
+        });
+
+        await waitFor(() => {
+            expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionRoot('club-7') });
+        });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopicRoot('topic-7') });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopic('topic-7', 'user-7') });
+    });
+
+    it('invalidates unread state queries after marking a discussion topic as read', async () => {
+        const queryClient = createQueryClient();
+        const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
+        (clubsService.markClubDiscussionTopicRead as jest.Mock).mockResolvedValue(undefined);
+
+        const { result } = renderHook(() => useMarkClubDiscussionTopicRead(), { wrapper: createWrapper(queryClient) });
+
+        await act(async () => {
+            await result.current.mutateAsync({ clubId: 'club-8', topicId: 'topic-8', userId: 'user-8' });
+        });
+
+        await waitFor(() => {
+            expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionRoot('club-8') });
+        });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopicRoot('topic-8') });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopic('topic-8', 'user-8') });
     });
 });

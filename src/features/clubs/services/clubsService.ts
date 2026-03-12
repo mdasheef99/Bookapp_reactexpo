@@ -1,5 +1,6 @@
 import * as clubsApplicationsService from './clubsApplicationsService';
 import * as clubsBooksService from './clubsBooksService';
+import * as clubsDiscussionService from './clubsDiscussionService';
 import * as clubsEventsService from './clubsEventsService';
 import * as clubsInvitationsService from './clubsInvitationsService';
 import * as clubsManagementService from './clubsManagementService';
@@ -12,6 +13,18 @@ export type {
     ClubBookSummary,
     ClubCurrentBookReadingStatus,
     ClubCurrentBookStatusOverview,
+    ClubDiscussionReaction,
+    ClubDiscussionReactionEmoji,
+    ClubDiscussionReactionSummary,
+    ClubDiscussionReport,
+    ClubDiscussionReportReason,
+    ClubDiscussionReply,
+    ClubDiscussionReplyWithDetails,
+    ClubDiscussionTopic,
+    ClubDiscussionTopicReadState,
+    ClubDiscussionTopicWithDetails,
+    ClubDiscussionVote,
+    ClubDiscussionVoteType,
     ClubBookNomination,
     ClubBookNominationStatus,
     ClubBookNominationWithDetails,
@@ -42,6 +55,9 @@ export type {
     ClubWithDetails,
     CreateClubEventInput,
     ClubNominationBookSummary,
+    CreateClubDiscussionReplyInput,
+    CreateClubDiscussionReportInput,
+    CreateClubDiscussionTopicInput,
     CreateClubInput,
     JoinClubResult,
     MemberRole,
@@ -52,6 +68,8 @@ export type {
     MeetingType,
     NominateClubBookInput,
     ReviewApplicationDecision,
+    SetClubDiscussionReactionInput,
+    SetClubDiscussionVoteInput,
     UpdateClubEventInput,
     UpdateClubInput,
 } from './clubsService.types';
@@ -61,6 +79,7 @@ export const clubsService = {
     ...clubsManagementService,
     ...clubsMembershipService,
     ...clubsApplicationsService,
+    ...clubsDiscussionService,
     ...clubsBooksService,
     ...clubsEventsService,
     ...clubsInvitationsService,

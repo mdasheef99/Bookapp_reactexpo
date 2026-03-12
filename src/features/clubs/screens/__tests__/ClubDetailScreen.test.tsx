@@ -106,6 +106,36 @@ describe('ClubDetailScreen', () => {
         expect(getAllByText('Toni Morrison').length).toBeGreaterThan(0);
     });
 
+    it('uses the live discussion copy for fallback public and member-only messaging', async () => {
+        mockUseClubPublicDetail.mockReturnValue({
+            data: { ...baseClub, description: null },
+            isLoading: false,
+            isError: false,
+            refetch: jest.fn(),
+        });
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
+
+        const { getByText } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        expect(getByText(/Public club details, discussion entry points, and membership actions are live here\. Join to take part in member-only discussion, events, and current-book decisions\./i)).toBeOnTheScreen();
+        expect(getByText(/Member-only spaces like discussion, club events, nominations, and the private member list are available here now\./i)).toBeOnTheScreen();
+        expect(getByText(/Member-only discussion is now live here\. Active members can start topics and reply, while muted members can still read the conversation and keep up with unread activity\./i)).toBeOnTheScreen();
+    });
+
+    it('opens the club discussion route from the member discussion card', async () => {
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
+
+        const { getByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        fireEvent.press(getByTestId('club-view-discussion'));
+
+        expect(mockRouterPush).toHaveBeenCalledWith('/clubs/club-1/discussion');
+    });
+
     it('keeps current-book analytics and status controls hidden when no current book is selected', async () => {
         mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
 
