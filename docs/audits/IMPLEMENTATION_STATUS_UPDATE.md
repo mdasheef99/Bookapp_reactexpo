@@ -1,5 +1,10 @@
 # Implementation Status Update - 2025-02-17
 
+> **Historical note (2026-03-12):** This file records a 2025 documentation-maintenance pass, not the canonical
+> current implementation audit. The Library row below has been minimally annotated to reflect the current repo
+> implementation: canonical wishlist handling via `user_books.ownership = 'wishlist'`, manual entry fallback, and a
+> repo-side public review flow that is now aligned with live `get_public_book_reviews()` deployment.
+
 **Completion Date:** 2025-02-17  
 **Tasks Completed:** 2/2 ✅
 
@@ -22,7 +27,7 @@
 | Feature | Status | Details |
 |---------|--------|---------|
 | **Authentication** | ✅ Complete | Login, OTP, profile setup all implemented |
-| **Library** | ✅ Complete | Book search, wishlist, notes, ratings implemented |
+| **Library** | ✅ Complete | Historical baseline: search, wishlist, notes, ratings. Current repo also includes manual entry fallback and community/public review UI, and the live review feed is now backed by `get_public_book_reviews()`. |
 | **Exchange** | ❌ Not Started | Listings, transactions, payment flow pending |
 | **Clubs** | ❌ Not Started | Club creation, chat, voting pending |
 | **Venues** | ❌ Not Started | Venue integration pending |

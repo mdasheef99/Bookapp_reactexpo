@@ -123,12 +123,12 @@ Regular table storing current credit balances (updated in real-time via database
 
 ### books
 
-Catalog of all books in the system (populated from Google Books API).
+Catalog of all books in the system (populated from Google Books API and manual library entry fallback).
 
 **Key Fields:**
-- `google_books_id` - Unique identifier from Google Books
-- `title` - Book title
-- `authors` - Array of author names
+- `google_books_id` - Unique identifier from Google Books when available; nullable for manual entries
+- `title` - Book title (`NOT NULL` in live schema)
+- `authors` - Array of author names; nullable in live schema
 - `cover_url` - Book cover image URL
 - `isbn_10`, `isbn_13` - ISBN identifiers
 - `description` - Book description
@@ -161,6 +161,11 @@ User's personal library (owned books, wishlist, reading status).
 - `idx_user_books_wishlist` - Fast wishlist queries
 
 **Unique Constraint:** (user_id, book_id) - One entry per user per book
+
+**Operational Notes:**
+- App-side canonical wishlist state is `user_books.ownership = 'wishlist'`.
+- Live RLS still restricts direct `user_books` reads to `auth.uid() = user_id`, so public review browsing cannot rely on direct client-side `user_books` queries.
+- `20260312120000_019_book_public_reviews_contract.sql` defines `get_public_book_reviews(p_book_id UUID)` for safe public review reads, and that RPC is now deployed live in the database.
 
 ---
 
