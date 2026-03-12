@@ -41,6 +41,44 @@ describe('sentry helpers', () => {
     expect(Sentry.setUser).toHaveBeenNthCalledWith(2, null);
   });
 
+  it('captures handled exceptions with privacy-safe tags and extras', () => {
+    const Sentry = require('@sentry/react-native');
+    const { captureAppException } = require('@/lib/sentry');
+
+    captureAppException(new Error('Exchange request failed'), {
+      area: 'exchange',
+      action: 'request_transaction_failed',
+      tags: {
+        feature: 'exchange',
+        attempt: 2,
+        retryable: false,
+      },
+      extra: {
+        listing_id: 'listing-123',
+        phone: '+1234567890',
+        shipping_address: '123 Main Street',
+      },
+    });
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Exchange request failed' }),
+      expect.objectContaining({
+        tags: expect.objectContaining({
+          area: 'exchange',
+          action: 'request_transaction_failed',
+          feature: 'exchange',
+          attempt: '2',
+          retryable: 'false',
+        }),
+        extra: expect.objectContaining({
+          listing_id: 'listing-123',
+          phone: '[REDACTED]',
+          shipping_address: '[REDACTED]',
+        }),
+      }),
+    );
+  });
+
   it('records navigation breadcrumbs only when the route changes', () => {
     const Sentry = require('@sentry/react-native');
     const { trackSentryRoute } = require('@/lib/sentry');

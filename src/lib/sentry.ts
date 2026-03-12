@@ -42,6 +42,29 @@ function sanitizeRecord(
     }, {});
 }
 
+function sanitizeTags(
+    record?: Record<string, unknown> | null,
+): Record<string, string> | undefined {
+    const sanitized = sanitizeRecord(record);
+    if (!sanitized) return undefined;
+
+    return Object.entries(sanitized).reduce<Record<string, string>>((acc, [key, value]) => {
+        if (value === undefined || value === null) return acc;
+        acc[key] = typeof value === 'string' ? value : String(value);
+        return acc;
+    }, {});
+}
+
+function toError(error: unknown): Error {
+    if (error instanceof Error) return error;
+    if (typeof error === 'string') return new Error(error);
+    if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+        return new Error(error.message);
+    }
+
+    return new Error('Unknown application error');
+}
+
 function sanitizeEvent(event: Sentry.ErrorEvent): Sentry.ErrorEvent {
     if (event.user) {
         delete event.user.email;
@@ -105,6 +128,27 @@ export function initSentry() {
 
 export function syncSentryUser(userId: string | null) {
     Sentry.setUser(userId ? { id: userId } : null);
+}
+
+export function captureAppException(
+    error: unknown,
+    context: {
+        area: string;
+        action: string;
+        tags?: Record<string, unknown>;
+        extra?: Record<string, unknown>;
+    },
+) {
+    const normalizedError = toError(error);
+
+    Sentry.captureException(normalizedError, {
+        tags: sanitizeTags({
+            area: context.area,
+            action: context.action,
+            ...context.tags,
+        }),
+        extra: sanitizeRecord(context.extra),
+    });
 }
 
 export function trackSentryRoute(route: string) {

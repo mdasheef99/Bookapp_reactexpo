@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { profileService, type UserProfileSummary } from '@/features/auth/services/profileService';
+import { captureAppException } from '@/lib/sentry';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,6 +83,24 @@ export interface RequestTransactionParams {
 
 // ─── Service ──────────────────────────────────────────────────────────────────
 
+function captureTransactionsServiceError(
+    error: unknown,
+    action: string,
+    rpc: string,
+    extra?: Record<string, unknown>,
+) {
+    captureAppException(error, {
+        area: 'exchange',
+        action,
+        tags: {
+            feature: 'exchange',
+            service: 'transactionsService',
+            rpc,
+        },
+        extra,
+    });
+}
+
 export const transactionsService = {
     /**
      * Request a book exchange (atomic DB function).
@@ -90,40 +109,64 @@ export const transactionsService = {
     async requestTransaction(params: RequestTransactionParams): Promise<Transaction> {
         const { listingId, borrowerId, deliveryType, message, shippingAddressId } = params;
 
-        const { data, error } = await supabase.rpc('request_transaction', {
-            p_listing_id: listingId,
-            p_borrower_id: borrowerId,
-            p_delivery_type: deliveryType,
-            p_message: message ?? null,
-            p_shipping_address_id: shippingAddressId ?? null,
-        });
+        try {
+            const { data, error } = await supabase.rpc('request_transaction', {
+                p_listing_id: listingId,
+                p_borrower_id: borrowerId,
+                p_delivery_type: deliveryType,
+                p_message: message ?? null,
+                p_shipping_address_id: shippingAddressId ?? null,
+            });
 
-        if (error) throw error;
-        return data as Transaction;
+            if (error) throw error;
+            return data as Transaction;
+        } catch (error) {
+            captureTransactionsServiceError(error, 'request_transaction_failed', 'request_transaction', {
+                listing_id: listingId,
+                delivery_type: deliveryType,
+                has_message: Boolean(message),
+                shipping_details_provided: Boolean(shippingAddressId),
+            });
+            throw error;
+        }
     },
 
     /**
      * Lender approves a REQUESTED transaction → status becomes APPROVED.
      */
     async approveTransaction(transactionId: string, actorId: string): Promise<Transaction> {
-        const { data, error } = await supabase.rpc('approve_transaction', {
-            p_transaction_id: transactionId,
-            p_actor_id: actorId,
-        });
-        if (error) throw error;
-        return data as Transaction;
+        try {
+            const { data, error } = await supabase.rpc('approve_transaction', {
+                p_transaction_id: transactionId,
+                p_actor_id: actorId,
+            });
+            if (error) throw error;
+            return data as Transaction;
+        } catch (error) {
+            captureTransactionsServiceError(error, 'approve_transaction_failed', 'approve_transaction', {
+                transaction_id: transactionId,
+            });
+            throw error;
+        }
     },
 
     /**
      * Lender declines a REQUESTED transaction → hold released, status DECLINED.
      */
     async declineTransaction(transactionId: string, actorId: string): Promise<Transaction> {
-        const { data, error } = await supabase.rpc('decline_transaction', {
-            p_transaction_id: transactionId,
-            p_actor_id: actorId,
-        });
-        if (error) throw error;
-        return data as Transaction;
+        try {
+            const { data, error } = await supabase.rpc('decline_transaction', {
+                p_transaction_id: transactionId,
+                p_actor_id: actorId,
+            });
+            if (error) throw error;
+            return data as Transaction;
+        } catch (error) {
+            captureTransactionsServiceError(error, 'decline_transaction_failed', 'decline_transaction', {
+                transaction_id: transactionId,
+            });
+            throw error;
+        }
     },
 
     /**
@@ -131,12 +174,19 @@ export const transactionsService = {
      * Releases the credit hold back to borrower's available balance.
      */
     async cancelTransaction(transactionId: string, actorId: string): Promise<Transaction> {
-        const { data, error } = await supabase.rpc('cancel_transaction', {
-            p_transaction_id: transactionId,
-            p_actor_id: actorId,
-        });
-        if (error) throw error;
-        return data as Transaction;
+        try {
+            const { data, error } = await supabase.rpc('cancel_transaction', {
+                p_transaction_id: transactionId,
+                p_actor_id: actorId,
+            });
+            if (error) throw error;
+            return data as Transaction;
+        } catch (error) {
+            captureTransactionsServiceError(error, 'cancel_transaction_failed', 'cancel_transaction', {
+                transaction_id: transactionId,
+            });
+            throw error;
+        }
     },
 
     /**
@@ -144,12 +194,19 @@ export const transactionsService = {
      * Releases held credit (consumed), awards lender 1 credit.
      */
     async completeTransaction(transactionId: string, actorId: string): Promise<Transaction> {
-        const { data, error } = await supabase.rpc('complete_transaction', {
-            p_transaction_id: transactionId,
-            p_actor_id: actorId,
-        });
-        if (error) throw error;
-        return data as Transaction;
+        try {
+            const { data, error } = await supabase.rpc('complete_transaction', {
+                p_transaction_id: transactionId,
+                p_actor_id: actorId,
+            });
+            if (error) throw error;
+            return data as Transaction;
+        } catch (error) {
+            captureTransactionsServiceError(error, 'complete_transaction_failed', 'complete_transaction', {
+                transaction_id: transactionId,
+            });
+            throw error;
+        }
     },
 
     /**
@@ -160,13 +217,21 @@ export const transactionsService = {
         newStatus: TransactionStatus,
         actorId: string
     ): Promise<Transaction> {
-        const { data, error } = await supabase.rpc('transition_transaction_status', {
-            p_transaction_id: transactionId,
-            p_new_status: newStatus,
-            p_actor_id: actorId,
-        });
-        if (error) throw error;
-        return data as Transaction;
+        try {
+            const { data, error } = await supabase.rpc('transition_transaction_status', {
+                p_transaction_id: transactionId,
+                p_new_status: newStatus,
+                p_actor_id: actorId,
+            });
+            if (error) throw error;
+            return data as Transaction;
+        } catch (error) {
+            captureTransactionsServiceError(error, 'transition_transaction_status_failed', 'transition_transaction_status', {
+                transaction_id: transactionId,
+                new_status: newStatus,
+            });
+            throw error;
+        }
     },
 
     /** Get all transactions where user is lender or borrower. */
