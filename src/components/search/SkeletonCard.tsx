@@ -1,6 +1,6 @@
 import { View, Animated } from 'react-native';
 import { useEffect, useRef } from 'react';
-import { ThemeColors } from '@/hooks/useTheme';
+import { useTheme } from '@/hooks/useTheme';
 
 // Shimmer Animation Hook
 const useShimmer = () => {
@@ -28,11 +28,8 @@ const useShimmer = () => {
     return animatedValue;
 };
 
-interface SkeletonCardProps {
-    colors: ThemeColors;
-}
-
-export const SkeletonCard = ({ colors }: SkeletonCardProps) => {
+export const SkeletonCard = () => {
+    const { colors } = useTheme();
     const shimmer = useShimmer();
     const opacity = shimmer.interpolate({
         inputRange: [0, 1],

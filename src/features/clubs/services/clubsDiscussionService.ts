@@ -5,6 +5,7 @@ import { normalizeOptionalText } from './clubsService.shared';
 import type {
     ClubDiscussionReaction,
     ClubDiscussionReactionSummary,
+    ClubDiscussionReactionUserSummary,
     ClubDiscussionReply,
     ClubDiscussionReplyWithDetails,
     ClubDiscussionReport,
@@ -33,19 +34,48 @@ function requireNonEmptyText(value: string, fieldLabel: string) {
 }
 
 function getVoteSnapshot(votes: ClubDiscussionVote[], userId?: string | null) {
+    const upvoteCount = votes.filter((vote) => vote.vote_type === 'upvote').length;
+    const downvoteCount = votes.filter((vote) => vote.vote_type === 'downvote').length;
     return {
-        voteCount: votes.reduce((sum, vote) => sum + (vote.vote_type === 'upvote' ? 1 : -1), 0),
+        voteCount: upvoteCount - downvoteCount,
+        upvoteCount,
+        downvoteCount,
         viewerVote: userId ? votes.find((vote) => vote.user_id === userId)?.vote_type ?? null : null,
     };
 }
 
-function getReactionSummary(reactions: ClubDiscussionReaction[], userId?: string | null): ClubDiscussionReactionSummary[] {
-    const counts = new Map<string, { count: number; viewerReacted: boolean }>();
+function getReactionSummary(
+    reactions: ClubDiscussionReaction[],
+    profileMap: Map<string, Awaited<ReturnType<typeof profileService.getProfileSummaries>>[number]>,
+    userId?: string | null,
+): ClubDiscussionReactionSummary[] {
+    const counts = new Map<string, { count: number; viewerReacted: boolean; users: ClubDiscussionReactionUserSummary[] }>();
     reactions.forEach((reaction) => {
-        const current = counts.get(reaction.emoji) ?? { count: 0, viewerReacted: false };
-        counts.set(reaction.emoji, { count: current.count + 1, viewerReacted: current.viewerReacted || reaction.user_id === userId });
+        const current = counts.get(reaction.emoji) ?? { count: 0, viewerReacted: false, users: [] };
+        const profile = profileMap.get(reaction.user_id);
+        const displayName = profile?.display_name || profile?.username || 'A club member';
+        const nextUsers = current.users.some((user) => user.userId === reaction.user_id)
+            ? current.users
+            : [...current.users, { userId: reaction.user_id, displayName, username: profile?.username ?? null }];
+        counts.set(reaction.emoji, {
+            count: current.count + 1,
+            viewerReacted: current.viewerReacted || reaction.user_id === userId,
+            users: nextUsers,
+        });
     });
-    return Array.from(counts.entries()).map(([emoji, value]) => ({ emoji, count: value.count, viewerReacted: value.viewerReacted }));
+    return Array.from(counts.entries()).map(([emoji, value]) => {
+        const summary = {
+            emoji,
+            count: value.count,
+            viewerReacted: value.viewerReacted,
+        } as ClubDiscussionReactionSummary;
+        Object.defineProperty(summary, 'users', {
+            value: value.users,
+            enumerable: false,
+            writable: false,
+        });
+        return summary;
+    });
 }
 
 function getReplyDepths(replies: ClubDiscussionReply[]) {
@@ -85,6 +115,7 @@ async function mapDiscussionTopics(input: {
     const authorIds = Array.from(new Set([
         ...topics.map((topic) => topic.author_user_id),
         ...replies.map((reply) => reply.author_user_id),
+        ...reactions.map((reaction) => reaction.user_id),
     ].filter((value): value is string => Boolean(value))));
     const profiles = authorIds.length > 0 ? await profileService.getProfileSummaries(authorIds) : [];
     const profileMap = new Map(profiles.map((profile) => [profile.user_id, profile]));
@@ -111,24 +142,30 @@ async function mapDiscussionTopics(input: {
             const mappedReplies: ClubDiscussionReplyWithDetails[] = topicReplies.map((reply) => {
                 const replyVotes = votes.filter((vote) => vote.reply_id === reply.id);
                 const replyReactions = reactions.filter((reaction) => reaction.reply_id === reply.id);
+                const replyVoteSnapshot = getVoteSnapshot(replyVotes, userId);
                 return {
                     ...reply,
                     authorProfile: reply.author_user_id ? profileMap.get(reply.author_user_id) ?? null : null,
                     depth: replyDepths.get(reply.id) ?? 0,
-                    voteCount: reply.is_deleted ? 0 : getVoteSnapshot(replyVotes, userId).voteCount,
-                    viewerVote: reply.is_deleted ? null : getVoteSnapshot(replyVotes, userId).viewerVote,
-                    reactions: reply.is_deleted ? [] : getReactionSummary(replyReactions, userId),
+                    voteCount: reply.is_deleted ? 0 : replyVoteSnapshot.voteCount,
+                    upvoteCount: reply.is_deleted ? 0 : replyVoteSnapshot.upvoteCount,
+                    downvoteCount: reply.is_deleted ? 0 : replyVoteSnapshot.downvoteCount,
+                    viewerVote: reply.is_deleted ? null : replyVoteSnapshot.viewerVote,
+                    reactions: reply.is_deleted ? [] : getReactionSummary(replyReactions, profileMap, userId),
                 };
             });
             const recentActivityAt = topic.last_replied_at ?? mappedReplies[mappedReplies.length - 1]?.created_at ?? topic.updated_at ?? topic.created_at;
+            const topicVoteSnapshot = getVoteSnapshot(topicVotes, userId);
             return {
                 ...topic,
                 authorProfile: topic.author_user_id ? profileMap.get(topic.author_user_id) ?? null : null,
                 replies: mappedReplies,
                 replyCount: mappedReplies.length,
-                voteCount: topic.is_deleted ? 0 : getVoteSnapshot(topicVotes, userId).voteCount,
-                viewerVote: topic.is_deleted ? null : getVoteSnapshot(topicVotes, userId).viewerVote,
-                reactions: topic.is_deleted ? [] : getReactionSummary(topicReactions, userId),
+                voteCount: topic.is_deleted ? 0 : topicVoteSnapshot.voteCount,
+                upvoteCount: topic.is_deleted ? 0 : topicVoteSnapshot.upvoteCount,
+                downvoteCount: topic.is_deleted ? 0 : topicVoteSnapshot.downvoteCount,
+                viewerVote: topic.is_deleted ? null : topicVoteSnapshot.viewerVote,
+                reactions: topic.is_deleted ? [] : getReactionSummary(topicReactions, profileMap, userId),
                 unreadReplyCount: readState?.unread_reply_count ?? 0,
                 hasUnread: (readState?.unread_reply_count ?? 0) > 0,
                 recentActivityAt,
@@ -154,23 +191,35 @@ export async function getClubDiscussionTopics(clubId: string, userId?: string | 
     if (topicRows.length === 0) return [];
 
     const topicIds = topicRows.map((topic) => topic.id);
-    const [repliesResult, votesResult, reactionsResult, readsResult] = await Promise.all([
-        supabase.from('club_discussion_replies').select(CLUB_DISCUSSION_REPLY_SELECT).in('topic_id', topicIds).order('created_at', { ascending: true }),
-        supabase.from('club_discussion_votes').select(CLUB_DISCUSSION_VOTE_SELECT).in('topic_id', topicIds),
-        supabase.from('club_discussion_reactions').select(CLUB_DISCUSSION_REACTION_SELECT).in('topic_id', topicIds),
+    const repliesResult = await supabase
+        .from('club_discussion_replies')
+        .select(CLUB_DISCUSSION_REPLY_SELECT)
+        .in('topic_id', topicIds)
+        .order('created_at', { ascending: true });
+
+    if (repliesResult.error) throw repliesResult.error;
+
+    const replyRows = (repliesResult.data ?? []) as ClubDiscussionReply[];
+    const replyIds = replyRows.map((reply) => reply.id);
+    const topicOrReplyFilter = replyIds.length > 0
+        ? `topic_id.in.(${topicIds.join(',')}),reply_id.in.(${replyIds.join(',')})`
+        : `topic_id.in.(${topicIds.join(',')})`;
+
+    const [votesResult, reactionsResult, readsResult] = await Promise.all([
+        supabase.from('club_discussion_votes').select(CLUB_DISCUSSION_VOTE_SELECT).or(topicOrReplyFilter),
+        supabase.from('club_discussion_reactions').select(CLUB_DISCUSSION_REACTION_SELECT).or(topicOrReplyFilter),
         userId
             ? supabase.from('club_discussion_topic_reads').select(CLUB_DISCUSSION_READ_SELECT).eq('user_id', userId).in('topic_id', topicIds)
             : Promise.resolve({ data: [], error: null }),
     ]);
 
-    if (repliesResult.error) throw repliesResult.error;
     if (votesResult.error) throw votesResult.error;
     if (reactionsResult.error) throw reactionsResult.error;
     if (readsResult.error) throw readsResult.error;
 
     return mapDiscussionTopics({
         topics: topicRows,
-        replies: (repliesResult.data ?? []) as ClubDiscussionReply[],
+        replies: replyRows,
         votes: (votesResult.data ?? []) as ClubDiscussionVote[],
         reactions: (reactionsResult.data ?? []) as ClubDiscussionReaction[],
         reads: (readsResult.data ?? []) as ClubDiscussionTopicReadState[],
@@ -187,23 +236,35 @@ export async function getClubDiscussionTopic(topicId: string, userId?: string | 
 
     if (topicError) throw topicError;
 
-    const [repliesResult, votesResult, reactionsResult, readsResult] = await Promise.all([
-        supabase.from('club_discussion_replies').select(CLUB_DISCUSSION_REPLY_SELECT).eq('topic_id', topicId).order('created_at', { ascending: true }),
-        supabase.from('club_discussion_votes').select(CLUB_DISCUSSION_VOTE_SELECT).or(`topic_id.eq.${topicId},reply_id.in.(select id from club_discussion_replies where topic_id = '${topicId}')`),
-        supabase.from('club_discussion_reactions').select(CLUB_DISCUSSION_REACTION_SELECT).or(`topic_id.eq.${topicId},reply_id.in.(select id from club_discussion_replies where topic_id = '${topicId}')`),
+    const repliesResult = await supabase
+        .from('club_discussion_replies')
+        .select(CLUB_DISCUSSION_REPLY_SELECT)
+        .eq('topic_id', topicId)
+        .order('created_at', { ascending: true });
+
+    if (repliesResult.error) throw repliesResult.error;
+
+    const replyRows = (repliesResult.data ?? []) as ClubDiscussionReply[];
+    const replyIds = replyRows.map((reply) => reply.id);
+    const topicOrReplyFilter = replyIds.length > 0
+        ? `topic_id.in.(${topicId}),reply_id.in.(${replyIds.join(',')})`
+        : `topic_id.in.(${topicId})`;
+
+    const [votesResult, reactionsResult, readsResult] = await Promise.all([
+        supabase.from('club_discussion_votes').select(CLUB_DISCUSSION_VOTE_SELECT).or(topicOrReplyFilter),
+        supabase.from('club_discussion_reactions').select(CLUB_DISCUSSION_REACTION_SELECT).or(topicOrReplyFilter),
         userId
             ? supabase.from('club_discussion_topic_reads').select(CLUB_DISCUSSION_READ_SELECT).eq('user_id', userId).eq('topic_id', topicId)
             : Promise.resolve({ data: [], error: null }),
     ]);
 
-    if (repliesResult.error) throw repliesResult.error;
     if (votesResult.error) throw votesResult.error;
     if (reactionsResult.error) throw reactionsResult.error;
     if (readsResult.error) throw readsResult.error;
 
     const [mappedTopic] = await mapDiscussionTopics({
         topics: [topic as ClubDiscussionTopic],
-        replies: (repliesResult.data ?? []) as ClubDiscussionReply[],
+        replies: replyRows,
         votes: (votesResult.data ?? []) as ClubDiscussionVote[],
         reactions: (reactionsResult.data ?? []) as ClubDiscussionReaction[],
         reads: (readsResult.data ?? []) as ClubDiscussionTopicReadState[],

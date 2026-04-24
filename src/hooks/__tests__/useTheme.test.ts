@@ -79,14 +79,15 @@ describe('useTheme', () => {
     const expectedKeys: Array<keyof ThemeColors> = [
       'bgPrimary', 'bgSecondary', 'bgCard',
       'textPrimary', 'textSecondary', 'textTertiary',
-      'accent', 'accentLight', 'border', 'shadow',
+      'accent', 'accentLight', 'error', 'errorLight',
+      'disabled', 'disabledLight', 'border', 'shadow',
     ];
 
     it.each([
       { hour: 12, phase: 'daylight' },
       { hour: 18, phase: 'golden' },
       { hour: 23, phase: 'midnight' },
-    ])('$phase phase has all 10 color properties', ({ hour, phase }) => {
+    ])('$phase phase has all 14 color properties', ({ hour, phase }) => {
       jest.setSystemTime(new Date(2026, 1, 17, hour, 0, 0));
       const { result } = renderHook(() => useTheme());
 

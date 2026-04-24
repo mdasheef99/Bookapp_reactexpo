@@ -10,7 +10,7 @@ export const AtmosphericBackground: React.FC<Props> = ({ children }) => {
 
     // Map phases to background images
     return (
-        <View style={styles.container} className={`${phase} bg-[--bg-primary]`}>
+        <View style={styles.container}>
             {/* Background Image REMOVED as per user request */}
 
             {/* Main Content */}

@@ -26,7 +26,7 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useWishlist } from '@/hooks/useWishlist';
 import * as Haptics from 'expo-haptics';
 import { SortOption } from '@/lib/constants';
-import { LinearGradient } from 'expo-linear-gradient';
+import { ScreenBackground } from '@/components/ui/ScreenBackground';
 
 // Import components
 import {
@@ -42,7 +42,8 @@ import {
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 
 // Loading footer for pagination
-const LoadingFooter = ({ loading, colors }: { loading: boolean; colors: any }) => {
+const LoadingFooter = ({ loading }: { loading: boolean }) => {
+    const { colors } = useTheme();
     if (!loading) return null;
     return (
         <View style={{ paddingVertical: 20, alignItems: 'center' }}>
@@ -155,8 +156,9 @@ export default function SearchBooksScreen() {
             if (saveToRecent && result.items.length > 0 && index === 0) {
                 saveRecentSearch(searchQuery);
             }
-        } catch (err: any) {
-            setError(err.message || 'Failed to search. Please try again.');
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to search. Please try again.';
+            setError(message);
         } finally {
             setLoading(false);
             setLoadingMore(false);
@@ -254,9 +256,10 @@ export default function SearchBooksScreen() {
             ]);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Alert.alert('Added!', `"${book.volumeInfo.title}" is now in your library`);
-        } catch (error: any) {
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to add book. Please try again.';
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Oops!', error.message);
+            Alert.alert('Oops!', message);
         } finally {
             setAddingId(null);
         }
@@ -291,9 +294,10 @@ export default function SearchBooksScreen() {
             handleClear();
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Alert.alert('Added!', `"${bookData.title}" is now in your library`);
-        } catch (error: any) {
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to add book manually.';
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Oops!', error.message || 'Failed to add book manually.');
+            Alert.alert('Oops!', message);
         } finally {
             setManualSubmitting(false);
         }
@@ -345,9 +349,10 @@ export default function SearchBooksScreen() {
 
             await queryClient.invalidateQueries({ queryKey: ['library'] });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } catch (error: any) {
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to update wishlist';
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Oops!', error.message || 'Failed to update wishlist');
+            Alert.alert('Oops!', message);
         } finally {
             setWishlistTogglingId(null);
         }
@@ -362,18 +367,17 @@ export default function SearchBooksScreen() {
             isAdding={addingId === item.id}
             isInWishlist={wishlistBookIds.has(item.id)}
             isTogglingWishlist={wishlistTogglingId === item.id}
-            colors={colors}
             onSwipeAddToLibrary={handleAddBook}
             onSwipeAddToWishlist={handleWishlistToggle}
             onPreview={handlePreview}
             onShare={handleShare}
         />
-    ), [libraryBookIds, addingId, wishlistBookIds, wishlistTogglingId, colors, handleAddBook, handlePreview, handleShare, handleWishlistToggle]);
+    ), [libraryBookIds, addingId, wishlistBookIds, wishlistTogglingId, handleAddBook, handlePreview, handleShare, handleWishlistToggle]);
 
     // Render helpers
     const renderSkeletons = () => (
         <View>
-            {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} colors={colors} />)}
+            {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)}
         </View>
     );
 
@@ -409,8 +413,8 @@ export default function SearchBooksScreen() {
     );
 
     const renderNoResults = () => (
-        <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 80, paddingHorizontal: 32 }}>
-            <View style={{ width: 80, height: 80, backgroundColor: colors.bgCard, borderRadius: 40, alignItems: 'center', justifyContent: 'center', marginBottom: 16, borderWidth: 1, borderColor: colors.border }}>
+        <View style={styles.noResultsContainer}>
+            <View style={[styles.noResultsIconCircle, { backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border }]}>
                 <Ionicons name="search-outline" size={36} color={colors.textTertiary} />
             </View>
             <Text style={{ color: colors.textSecondary, fontSize: 18, fontWeight: '600', textAlign: 'center' }}>No books found</Text>
@@ -420,20 +424,12 @@ export default function SearchBooksScreen() {
             <TouchableOpacity
                 testID="library-manual-entry-open"
                 onPress={openManualEntryModal}
-                style={{
-                    marginTop: 20,
-                    backgroundColor: colors.accent,
-                    paddingHorizontal: 18,
-                    paddingVertical: 12,
-                    borderRadius: 14,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                }}
+                style={[styles.manualEntryButton, { backgroundColor: colors.accent }]}
                 accessibilityLabel="Add book manually"
                 accessibilityHint="Opens a form to add a book without Google Books results"
             >
                 <Ionicons name="create-outline" size={18} color="#fff" />
-                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', marginLeft: 8 }}>
+                <Text style={[styles.manualEntryButtonText, { color: '#fff' }]}>
                     Add it manually
                 </Text>
             </TouchableOpacity>
@@ -450,15 +446,7 @@ export default function SearchBooksScreen() {
     ].filter(Boolean).length;
 
     return (
-        <View style={{ flex: 1 }}>
-            {/* Whimsical gradient background */}
-            <LinearGradient
-                colors={['#d9f99d', '#fef08a', '#bae6fd']}
-                style={StyleSheet.absoluteFill}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-            />
-
+        <ScreenBackground>
             {/* Offline Banner */}
             <OfflineBanner visible={isOffline} />
 
@@ -499,7 +487,6 @@ export default function SearchBooksScreen() {
                         onSubmit={handleSearch}
                         onClear={handleClear}
                         loading={loading}
-                        colors={colors}
                     />
 
                     {/* Suggestions Dropdown */}
@@ -508,12 +495,11 @@ export default function SearchBooksScreen() {
                         recentSearches={recentSearches}
                         onSelect={handleSuggestionSelect}
                         visible={showSuggestions && isFocused && query.length >= 2}
-                        colors={colors}
                     />
                 </View>
 
                 {/* Filter Chips */}
-                <FilterChips filters={filters} onRemove={handleFilterRemove} colors={colors} />
+                <FilterChips filters={filters} onRemove={handleFilterRemove} />
 
                 {/* Recent Searches */}
                 {results.length === 0 && !loading && !query && (
@@ -524,7 +510,6 @@ export default function SearchBooksScreen() {
                             performSearch(q, 0, true);
                         }}
                         onRemove={removeRecentSearch}
-                        colors={colors}
                     />
                 )}
 
@@ -601,7 +586,7 @@ export default function SearchBooksScreen() {
                         showsVerticalScrollIndicator={false}
                         onEndReached={handleLoadMore}
                         onEndReachedThreshold={0.5}
-                        ListFooterComponent={<LoadingFooter loading={loadingMore} colors={colors} />}
+                        ListFooterComponent={<LoadingFooter loading={loadingMore} />}
                         refreshControl={
                             <RefreshControl
                                 refreshing={refreshing}
@@ -621,7 +606,6 @@ export default function SearchBooksScreen() {
                 onClose={() => setShowSortModal(false)}
                 currentSort={sortBy}
                 onSelect={setSortBy}
-                colors={colors}
             />
 
             <FilterModal
@@ -629,7 +613,6 @@ export default function SearchBooksScreen() {
                 onClose={() => setShowFilterModal(false)}
                 filters={filters}
                 onApply={handleFilterApply}
-                colors={colors}
             />
 
             <Modal
@@ -747,7 +730,36 @@ export default function SearchBooksScreen() {
                     </View>
                 </KeyboardAvoidingView>
             </Modal>
-        </View>
+        </ScreenBackground>
     );
 }
 
+const styles = StyleSheet.create({
+    noResultsContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 80,
+        paddingHorizontal: 32,
+    },
+    noResultsIconCircle: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 16,
+    },
+    manualEntryButton: {
+        marginTop: 20,
+        paddingHorizontal: 18,
+        paddingVertical: 12,
+        borderRadius: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    manualEntryButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginLeft: 8,
+    },
+});

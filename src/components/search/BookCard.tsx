@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRef, useEffect } from 'react';
 import { GoogleBook } from '@/features/books/services/booksService';
-import { ThemeColors } from '@/hooks/useTheme';
+import { useTheme } from '@/hooks/useTheme';
 import { RatingStars, PriceBadge, GenreTag, InLibraryBadge, WishlistButton } from './index';
 
 // Props interface
@@ -14,7 +14,6 @@ export interface BookCardProps {
     isAdding: boolean;
     isInWishlist: boolean;
     isTogglingWishlist: boolean;
-    colors: ThemeColors;
     onAdd: (book: GoogleBook) => void;
     onPreview: (previewLink?: string) => void;
     onShare: (book: GoogleBook) => void;
@@ -53,12 +52,12 @@ export const BookCard = ({
     isAdding,
     isInWishlist,
     isTogglingWishlist,
-    colors,
     onAdd,
     onPreview,
     onShare,
     onWishlistToggle,
 }: BookCardProps) => {
+    const { colors } = useTheme();
     const imageUrl = getHighResImage(book.volumeInfo.imageLinks);
     const categories = book.volumeInfo.categories?.slice(0, 2) || [];
 

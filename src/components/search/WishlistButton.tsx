@@ -2,6 +2,7 @@ import { TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRef, useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
+import { useTheme } from '@/hooks/useTheme';
 
 interface WishlistButtonProps {
     isWishlisted: boolean;
@@ -16,8 +17,10 @@ export const WishlistButton = ({
     isLoading = false,
     onToggle,
     size = 20,
-    color = '#EF4444'
+    color,
 }: WishlistButtonProps) => {
+    const { colors } = useTheme();
+    const heartColor = color ?? colors.error;
     const scaleAnim = useRef(new Animated.Value(1)).current;
 
     // Animate on wishlist state change
@@ -56,7 +59,7 @@ export const WishlistButton = ({
                 <Ionicons
                     name={isWishlisted ? 'heart' : 'heart-outline'}
                     size={size}
-                    color={color}
+                    color={heartColor}
                 />
             </Animated.View>
         </TouchableOpacity>

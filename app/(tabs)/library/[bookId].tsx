@@ -23,6 +23,7 @@ import {
 } from '@/components/library';
 import { NoteCard, NoteEditor } from '@/components/notes';
 import { AtmosphericBackground } from '@/components/ui/AtmosphericBackground';
+import { navigateBackOrFallback } from '@/lib/navigation';
 
 const formatReviewDate = (value?: string | null) => {
     if (!value) return 'Recently';
@@ -56,6 +57,10 @@ export default function BookDetailScreen() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showNoteEditor, setShowNoteEditor] = useState(false);
     const [editingNote, setEditingNote] = useState<ReadingNote | null>(null);
+
+    const handleBackPress = useCallback(() => {
+        navigateBackOrFallback(router, '/(tabs)/library');
+    }, [router]);
 
     // Fetch Book Details
     const { data: userBook, isLoading, error } = useQuery({
@@ -177,7 +182,7 @@ export default function BookDetailScreen() {
         mutationFn: () => booksService.removeFromLibrary(bookId!),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['library'] });
-            router.back();
+            handleBackPress();
         },
         onError: (err: any) => {
             Alert.alert('Error', err.message || 'Failed to remove book');
@@ -217,7 +222,7 @@ export default function BookDetailScreen() {
         return (
             <View style={[styles.center, { backgroundColor: colors.bgPrimary }]}>
                 <Text style={{ color: colors.textSecondary }}>Book not found.</Text>
-                <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
+                <TouchableOpacity onPress={handleBackPress} style={{ marginTop: 20 }}>
                     <Text style={{ color: colors.accent, fontWeight: '700' }}>Go Back</Text>
                 </TouchableOpacity>
             </View>
@@ -232,7 +237,8 @@ export default function BookDetailScreen() {
                     {/* Header / Nav */}
                     <View style={styles.header}>
                         <TouchableOpacity
-                            onPress={() => router.back()}
+                            onPress={handleBackPress}
+                            testID="library-book-back-button"
                             style={[styles.backButton, { backgroundColor: colors.bgCard }]}
                         >
                             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />

@@ -1,7 +1,8 @@
 import { View, Text, TouchableOpacity, Pressable, Modal, ScrollView } from 'react-native';
+import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { ThemeColors } from '@/hooks/useTheme';
+import { useTheme } from '@/hooks/useTheme';
 import { SearchFilters } from '@/features/books/services/booksService';
 
 const GENRE_OPTIONS = [
@@ -38,10 +39,10 @@ interface FilterModalProps {
     onClose: () => void;
     filters: SearchFilters;
     onApply: (filters: SearchFilters) => void;
-    colors: ThemeColors;
 }
 
-export const FilterModal = ({ visible, onClose, filters, onApply, colors }: FilterModalProps) => {
+export const FilterModal = ({ visible, onClose, filters, onApply }: FilterModalProps) => {
+    const { colors } = useTheme();
     const [localFilters, setLocalFilters] = useState<SearchFilters>(filters);
 
     const handleApply = () => {
@@ -254,10 +255,10 @@ export const FilterModal = ({ visible, onClose, filters, onApply, colors }: Filt
 interface FilterChipsProps {
     filters: SearchFilters;
     onRemove: (key: keyof SearchFilters) => void;
-    colors: ThemeColors;
 }
 
-export const FilterChips = ({ filters, onRemove, colors }: FilterChipsProps) => {
+export const FilterChips = ({ filters, onRemove }: FilterChipsProps) => {
+    const { colors } = useTheme();
     const activeFilters: { key: keyof SearchFilters; label: string }[] = [];
 
     if (filters.genre && filters.genre !== 'all') {
@@ -299,5 +300,3 @@ export const FilterChips = ({ filters, onRemove, colors }: FilterChipsProps) => 
         </View>
     );
 };
-
-import { useState } from 'react';

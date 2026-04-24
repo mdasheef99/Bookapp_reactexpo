@@ -196,10 +196,16 @@ export interface ClubDiscussionReaction {
     emoji: ClubDiscussionReactionEmoji | string;
     created_at: string | null;
 }
+export interface ClubDiscussionReactionUserSummary {
+    userId: string;
+    displayName: string;
+    username: string | null;
+}
 export interface ClubDiscussionReactionSummary {
     emoji: ClubDiscussionReactionEmoji | string;
     count: number;
     viewerReacted: boolean;
+    users: ClubDiscussionReactionUserSummary[];
 }
 export interface ClubDiscussionReport {
     id: string;
@@ -223,6 +229,8 @@ export interface ClubDiscussionReplyWithDetails extends ClubDiscussionReply {
     authorProfile: UserProfileSummary | null;
     depth: number;
     voteCount: number;
+    upvoteCount: number;
+    downvoteCount: number;
     viewerVote: ClubDiscussionVoteType | null;
     reactions: ClubDiscussionReactionSummary[];
 }
@@ -231,6 +239,8 @@ export interface ClubDiscussionTopicWithDetails extends ClubDiscussionTopic {
     replies: ClubDiscussionReplyWithDetails[];
     replyCount: number;
     voteCount: number;
+    upvoteCount: number;
+    downvoteCount: number;
     viewerVote: ClubDiscussionVoteType | null;
     reactions: ClubDiscussionReactionSummary[];
     unreadReplyCount: number;

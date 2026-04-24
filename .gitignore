@@ -40,3 +40,15 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# logs
+*.log
+
+# test artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+
+# temporary
+.expo-web.log
+.e2e-serve.log

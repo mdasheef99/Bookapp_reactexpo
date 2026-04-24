@@ -1,13 +1,19 @@
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Image, ImageBackground } from 'react-native';
+import { View, Text, Alert, StyleSheet } from 'react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { Button } from '@/components/ui/Button';
+import { ScreenBackground } from '@/components/ui/ScreenBackground';
+import { Input } from '@/components/ui/Input';
 import { authService } from '@/features/auth/services/authService';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function LoginScreen() {
+    const { colors } = useTheme();
     const [phone, setPhone] = useState('');
     const [loading, setLoading] = useState(false);
-    const [focused, setFocused] = useState(false);
 
     // Input sanitization: only allow numeric digits
     const handlePhoneChange = (text: string) => {
@@ -25,8 +31,9 @@ export default function LoginScreen() {
         try {
             await authService.signInWithOtp(phone);
             router.push({ pathname: '/(auth)/verify-otp', params: { phone } });
-        } catch (error: any) {
-            Alert.alert('Error', error.message);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to send OTP. Please try again.';
+            Alert.alert('Error', message);
         } finally {
             setLoading(false);
         }
@@ -35,28 +42,10 @@ export default function LoginScreen() {
     const isButtonEnabled = phone.length === 10 && !loading;
 
     return (
-        <ImageBackground
-            source={require('../../assets/images/backgrounds/bg_golden.webp')}
-            style={styles.container}
-            resizeMode="cover"
-        >
-            <View style={styles.overlay} />
-
+        <ScreenBackground>
             {/* Main Content Card with Glassmorphism */}
             <View style={styles.contentContainer}>
-                <View style={styles.cardContainer}>
-                    {/* Glassmorphism gradient overlay - Golden Brown Transparent */}
-                    <LinearGradient
-                        colors={['rgba(100, 70, 20, 0.55)', 'rgba(80, 50, 10, 0.45)']} // Golden Brown, more transparent
-                        style={styles.glassOverlay}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 0, y: 1 }}
-                    />
-
-                    {/* Border for extra glass definition */}
-                    <View style={styles.glassBorder} />
-
-                    <View style={styles.card}>
+                <GlassCard style={{ width: '85%', maxWidth: 360 }} padding={32} borderRadius={32}>
                         {/* Logo Icon */}
                         <View style={styles.logoContainer}>
                             <LinearGradient
@@ -65,42 +54,35 @@ export default function LoginScreen() {
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 1 }}
                             >
-                                <Text style={styles.logoIcon}>📖</Text>
+                                <Ionicons name="book" size={40} color="#FFFFFF" accessibilityLabel="BookTalks logo" />
                             </LinearGradient>
                         </View>
 
                         {/* Title */}
-                        <Text style={[styles.title, { color: '#FFFFFF' }]}>BookTalks</Text>
+                        <Text style={[styles.title, { color: colors.textPrimary }]}>BookTalks</Text>
 
                         {/* Tagline */}
-                        <Text style={[styles.tagline, { color: '#eab308' }]}>Where Books Keep Moving Forward</Text>
+                        <Text style={[styles.tagline, { color: colors.accent }]}>Where Books Keep Moving Forward</Text>
 
                         {/* Input Section */}
                         <View style={styles.inputSection}>
-                            <Text style={[styles.label, { color: '#F3F4F6' }]}>Mobile Number</Text>
-
-                            <View style={[
-                                styles.inputRow,
-                                focused && styles.inputRowFocused,
-                                { backgroundColor: 'rgba(255, 255, 255, 0.95)', opacity: 1 } // High opacity for readability
-                            ]}>
-                                <View style={styles.countryCodeBox}>
-                                    <Text style={styles.countryCode}>+91</Text>
-                                    <View style={styles.countryDivider} />
-                                </View>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="98765"
-                                    placeholderTextColor="#6B7280"
-                                    keyboardType="number-pad"
-                                    maxLength={10}
-                                    value={phone}
-                                    onChangeText={handlePhoneChange}
-                                    onFocus={() => setFocused(true)}
-                                    onBlur={() => setFocused(false)}
-                                    testID="login-phone-input"
-                                />
-                            </View>
+                            <Input
+                                label="Mobile Number"
+                                value={phone}
+                                onChangeText={handlePhoneChange}
+                                placeholder="98765"
+                                keyboardType="number-pad"
+                                maxLength={10}
+                                testID="login-phone-input"
+                                accessibilityLabel="Mobile number input"
+                                accessibilityHint="Enter your 10 digit Indian mobile number"
+                                leftElement={
+                                    <View style={styles.countryCodeBox}>
+                                        <Text style={styles.countryCode}>+91</Text>
+                                        <View style={styles.countryDivider} />
+                                    </View>
+                                }
+                            />
 
                             {/* Progress indicator */}
                             {phone.length > 0 && (
@@ -110,7 +92,7 @@ export default function LoginScreen() {
                                             styles.progressFill,
                                             {
                                                 width: `${(phone.length / 10) * 100}%`,
-                                                backgroundColor: phone.length === 10 ? '#84cc16' : '#facc15'
+                                                backgroundColor: phone.length === 10 ? colors.accent : colors.accentLight
                                             }
                                         ]} />
                                     </View>
@@ -122,46 +104,16 @@ export default function LoginScreen() {
                         </View>
 
                         {/* Continue Button */}
-                        <TouchableOpacity
+                        <Button
+                            title="Continue"
                             onPress={handleSendOtp}
+                            variant="primary"
+                            size="lg"
                             disabled={!isButtonEnabled}
-                            activeOpacity={0.85}
-                            style={[styles.buttonWrapper, !isButtonEnabled && styles.buttonDisabled]}
+                            loading={loading}
                             testID="login-continue-button"
-                        >
-                            <LinearGradient
-                                colors={
-                                    isButtonEnabled
-                                        ? ['#84cc16', '#eab308']
-                                        : ['#E0E0E0', '#CCCCCC']
-                                }
-                                style={styles.button}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                            >
-                                {loading ? (
-                                    <View style={styles.loadingContainer}>
-                                        <View style={styles.loadingDot} />
-                                        <View style={[styles.loadingDot, styles.loadingDot2]} />
-                                        <View style={[styles.loadingDot, styles.loadingDot3]} />
-                                    </View>
-                                ) : (
-                                    <>
-                                        <Text style={[
-                                            styles.buttonText,
-                                            { color: isButtonEnabled ? '#FFFFFF' : '#A0A0A0' }
-                                        ]}>
-                                            Continue
-                                        </Text>
-                                        <Text style={[styles.buttonArrow, {
-                                            color: isButtonEnabled ? '#FFFFFF' : '#A0A0A0'
-                                        }]}>
-                                            →
-                                        </Text>
-                                    </>
-                                )}
-                            </LinearGradient>
-                        </TouchableOpacity>
+                            accessibilityLabel="Continue to OTP verification"
+                        />
 
                         {/* Footer */}
                         <View style={styles.footer}>
@@ -172,92 +124,20 @@ export default function LoginScreen() {
                                 <Text style={styles.footerLink}>Privacy Policy</Text>
                             </Text>
                         </View>
-                    </View>
-                </View>
+                </GlassCard>
             </View>
-        </ImageBackground>
+        </ScreenBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
-    },
-    overlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.2)', // Slight dark overlay for text contrast on the background
-    },
-    gradient: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-    },
-    bookDecor: {
-        position: 'absolute',
-    },
-    bookDecor1: {
-        width: 120,
-        height: 160,
-        top: 60,
-        left: -40,
-        opacity: 0.6,
-    },
-    bookDecor2: {
-        width: 100,
-        height: 140,
-        bottom: 100,
-        right: -30,
-        opacity: 0.5,
-    },
-    bookDecor3: {
-        width: 80,
-        height: 110,
-        top: '45%',
-        right: 20,
-        opacity: 0.4,
-    },
     contentContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 24,
     },
-    cardContainer: {
-        width: '85%', // Responsive width for mobile
-        maxWidth: 360, // Standard mobile width limit
-        borderRadius: 32,
-        overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 15 },
-        shadowOpacity: 0.3,
-        shadowRadius: 35,
-        elevation: 20,
-    },
-    glassOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-    },
-    glassBorder: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        borderRadius: 32,
-        borderWidth: 1.5,
-        borderColor: 'rgba(255, 237, 213, 0.3)', // Soft golden border
-    },
-    card: {
-        padding: 32,
-        backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    },
+
     logoContainer: {
         alignItems: 'center',
         marginBottom: 16,
@@ -274,9 +154,7 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 5,
     },
-    logoIcon: {
-        fontSize: 40,
-    },
+
     title: {
         fontSize: 42,
         fontWeight: '700',

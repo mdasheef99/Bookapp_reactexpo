@@ -173,3 +173,20 @@ Avoid:
 Sentry in this repo should stay focused on real errors, actionable debugging context, safe metadata, and stable release/environment visibility.
 
 When in doubt, prefer less instrumentation with better privacy and lower noise.
+
+---
+
+### Frontend Design System Rule
+
+All UI must use the shared primitive component layer under `src/components/ui/`.
+**Forbidden patterns:**
+- Hardcoded hex / rgba colors in screen files (e.g. `#84cc16`, `rgba(100,70,20,0.55)`). All colors must derive from `useTheme()` tokens.
+- Per-screen glassmorphism duplication. Use `<GlassCard>` from `src/components/ui/GlassCard.tsx` instead of inline `LinearGradient` + border + shadow copy-pasta.
+- `StyleSheet.create()` blocks longer than 50 lines without justification. Prefer shared components or NativeWind utility classes.
+- Missing `accessibilityLabel` / `accessibilityHint` on any interactive element.
+
+**Required primitives:**
+- `GlassCard` for any translucent card surface.
+- Future: `Button`, `Input`, `Card`, `Modal` (create when first needed; do not inline).
+
+Enforcement: Before finishing any screen or component change, verify no new hardcoded colors were introduced and no glassmorphism was duplicated.

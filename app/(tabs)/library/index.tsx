@@ -1,11 +1,14 @@
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, RefreshControl } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { booksService } from '@/features/books/services/booksService';
 import { useTheme } from '@/hooks/useTheme';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { ScreenBackground } from '@/components/ui/ScreenBackground';
+import { Button } from '@/components/ui/Button';
 
 export default function LibraryScreen() {
     const { session } = useAuth();
@@ -21,44 +24,25 @@ export default function LibraryScreen() {
         return (
             <View style={styles.loadingContainer}>
 
-                <ActivityIndicator size="large" color="#91C55E" />
+                <ActivityIndicator size="large" color={colors.accent} />
             </View>
         );
     }
 
     return (
-        <View style={styles.container}>
-            {/* Whimsical gradient background */}
-            <LinearGradient
-                colors={['#d9f99d', '#fef08a', '#bae6fd']}
-                style={styles.gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-            />
-
-
-            {/* Decorative book elements */}
-            <View style={[styles.bookDecor, styles.bookDecor1]} />
-            <View style={[styles.bookDecor, styles.bookDecor2]} />
-
+        <ScreenBackground>
             {/* Content */}
             <View style={styles.content}>
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.title}>My Library</Text>
-                    <TouchableOpacity
+                    <Button
+                        title="+ Add Book"
                         onPress={() => router.push('/(tabs)/library/search')}
-                        activeOpacity={0.85}
-                    >
-                        <LinearGradient
-                            colors={['#84cc16', '#eab308']}
-                            style={styles.addButton}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                        >
-                            <Text style={styles.addButtonText}>+ Add Book</Text>
-                        </LinearGradient>
-                    </TouchableOpacity>
+                        variant="primary"
+                        size="sm"
+                        accessibilityLabel="Add a new book to your library"
+                    />
                 </View>
 
                 {/* Book List */}
@@ -73,16 +57,8 @@ export default function LibraryScreen() {
                             activeOpacity={0.9}
                             onPress={() => router.push(`/(tabs)/library/${item.id}`)}
                         >
-                            <View style={styles.bookCardContainer}>
-                                {/* Glassmorphism overlay */}
-                                <LinearGradient
-                                    colors={['rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0.7)']}
-                                    style={styles.bookCardOverlay}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 0, y: 1 }}
-                                />
-
-                                <View style={styles.bookCard}>
+                            <GlassCard style={{ marginBottom: 16 }} padding={16} borderRadius={20}>
+                                <View style={{ flexDirection: 'row' }}>
                                     <Image
                                         source={{ uri: item.book.cover_url || 'https://via.placeholder.com/100x150' }}
                                         style={styles.bookCover}
@@ -109,12 +85,12 @@ export default function LibraryScreen() {
                                         </View>
                                     </View>
                                 </View>
-                            </View>
+                            </GlassCard>
                         </TouchableOpacity>
                     )}
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
-                            <Text style={styles.emptyTitle}>📚</Text>
+                            <Ionicons name="library" size={64} color={colors.textTertiary} style={{ marginBottom: 16 }} accessibilityLabel="Empty library" />
                             <Text style={styles.emptySubtitle}>Your library is empty</Text>
                             <Text style={styles.emptyText}>
                                 Tap the "+ Add Book" button to start building your collection.
@@ -125,41 +101,12 @@ export default function LibraryScreen() {
                     showsVerticalScrollIndicator={false}
                 />
             </View>
-        </View>
+        </ScreenBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    gradient: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-    },
-    bookDecor: {
-        position: 'absolute',
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-        borderRadius: 8,
-        transform: [{ rotate: '-15deg' }],
-    },
-    bookDecor1: {
-        width: 100,
-        height: 140,
-        top: 100,
-        left: -30,
-        opacity: 0.4,
-    },
-    bookDecor2: {
-        width: 80,
-        height: 110,
-        bottom: 150,
-        right: -20,
-        opacity: 0.3,
-    },
+
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -182,49 +129,11 @@ const styles = StyleSheet.create({
         color: '#1A1A1A',
         letterSpacing: -0.5,
     },
-    addButton: {
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-        borderRadius: 24,
-        shadowColor: '#84cc16',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    addButtonText: {
-        color: '#FFFFFF',
-        fontSize: 15,
-        fontWeight: '700',
-    },
+
     listContent: {
         paddingBottom: 100,
     },
-    bookCardContainer: {
-        marginBottom: 16,
-        borderRadius: 20,
-        overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.15,
-        shadowRadius: 20,
-        elevation: 8,
-    },
-    bookCardOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.5)',
-    },
-    bookCard: {
-        flexDirection: 'row',
-        padding: 16,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    },
+
     bookCover: {
         width: 80,
         height: 120,
@@ -272,10 +181,7 @@ const styles = StyleSheet.create({
         marginTop: 100,
         paddingHorizontal: 40,
     },
-    emptyTitle: {
-        fontSize: 64,
-        marginBottom: 16,
-    },
+
     emptySubtitle: {
         fontSize: 20,
         fontWeight: '700',

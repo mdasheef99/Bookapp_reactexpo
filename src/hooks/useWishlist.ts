@@ -35,8 +35,9 @@ export const useWishlist = (userId?: string) => {
                     .map(item => item.book?.google_books_id)
                     .filter((googleBooksId): googleBooksId is string => Boolean(googleBooksId))
             ));
-        } catch (err: any) {
-            setError(err.message || 'Failed to fetch wishlist');
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to fetch wishlist';
+            setError(message);
             console.error('Wishlist fetch error:', err);
         } finally {
             setLoading(false);
@@ -70,8 +71,9 @@ export const useWishlist = (userId?: string) => {
             await booksService.addToLibrary(userId, book, 'want_to_read', 'wishlist');
             await fetchWishlist();
             return true;
-        } catch (err: any) {
-            setError(err.message || 'Failed to add to wishlist');
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to add to wishlist';
+            setError(message);
             console.error('Add to wishlist error:', err);
             return false;
         }
@@ -97,8 +99,9 @@ export const useWishlist = (userId?: string) => {
             await booksService.removeFromLibrary(existingUserBook.id);
             await fetchWishlist();
             return true;
-        } catch (err: any) {
-            setError(err.message || 'Failed to remove from wishlist');
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to remove from wishlist';
+            setError(message);
             console.error('Remove from wishlist error:', err);
             return false;
         }

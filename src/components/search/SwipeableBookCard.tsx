@@ -3,7 +3,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useRef } from 'react';
 import { GoogleBook } from '@/features/books/services/booksService';
-import { ThemeColors } from '@/hooks/useTheme';
+import { useTheme } from '@/hooks/useTheme';
 import { BookCard, BookCardProps } from './BookCard';
 import * as Haptics from 'expo-haptics';
 

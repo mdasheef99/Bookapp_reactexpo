@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, Pressable, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { ThemeColors } from '@/hooks/useTheme';
+import { useTheme } from '@/hooks/useTheme';
 import { SORT_OPTIONS, SortOption } from '@/lib/constants';
 
 interface SortModalProps {
@@ -9,10 +9,11 @@ interface SortModalProps {
     onClose: () => void;
     currentSort: SortOption;
     onSelect: (sort: SortOption) => void;
-    colors: ThemeColors;
 }
 
-export const SortModal = ({ visible, onClose, currentSort, onSelect, colors }: SortModalProps) => (
+export const SortModal = ({ visible, onClose, currentSort, onSelect }: SortModalProps) => {
+    const { colors } = useTheme();
+    return (
     <Modal
         visible={visible}
         transparent
@@ -76,3 +77,4 @@ export const SortModal = ({ visible, onClose, currentSort, onSelect, colors }: S
         </Pressable>
     </Modal>
 );
+};

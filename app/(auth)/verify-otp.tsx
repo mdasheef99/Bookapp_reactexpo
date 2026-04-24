@@ -1,7 +1,10 @@
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { authService } from '@/features/auth/services/authService';
 import { profileService } from '@/features/auth/services/profileService';
 
@@ -12,7 +15,6 @@ export default function VerifyOtpScreen() {
     const { phone } = useLocalSearchParams();
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
-    const [focused, setFocused] = useState(false);
     const isDevTestPhone = phone === DEV_TEST_PHONE;
 
     // Input sanitization: only allow numeric digits
@@ -38,8 +40,9 @@ export default function VerifyOtpScreen() {
 
             const existingProfile = await profileService.getProfile(userId);
             router.replace(existingProfile ? '/(tabs)/library' : '/(auth)/setup-profile');
-        } catch (error: any) {
-            Alert.alert('Error', error.message);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to verify OTP. Please try again.';
+            Alert.alert('Error', message);
         } finally {
             setLoading(false);
         }
@@ -48,20 +51,7 @@ export default function VerifyOtpScreen() {
     const isButtonEnabled = otp.length === 6 && !loading;
 
     return (
-        <View style={styles.container}>
-            {/* Whimsical gradient background */}
-            <LinearGradient
-                colors={['#d9f99d', '#fef08a', '#bae6fd']}
-                style={styles.gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-            />
-
-            {/* Decorative book elements */}
-            <View style={[styles.bookDecor, styles.bookDecor1]} />
-            <View style={[styles.bookDecor, styles.bookDecor2]} />
-            <View style={[styles.bookDecor, styles.bookDecor3]} />
-
+        <ScreenBackground>
             {/* Main Content */}
             <View style={styles.contentContainer}>
                 {/* Back Button */}
@@ -72,17 +62,7 @@ export default function VerifyOtpScreen() {
                     <Text style={styles.backButtonText}>← Back</Text>
                 </TouchableOpacity>
 
-                {/* Card with Glassmorphism */}
-                <View style={styles.cardContainer}>
-                    {/* Glassmorphism gradient overlay */}
-                    <LinearGradient
-                        colors={['rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0.7)']}
-                        style={styles.glassOverlay}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 0, y: 1 }}
-                    />
-
-                    <View style={styles.card}>
+                <GlassCard style={{ width: '100%', maxWidth: 400, alignSelf: 'center' }} padding={32} borderRadius={32}>
                         {/* Header */}
                         <View style={styles.header}>
                             <Text style={styles.title}>Enter OTP</Text>
@@ -95,25 +75,17 @@ export default function VerifyOtpScreen() {
 
                         {/* OTP Input Section */}
                         <View style={styles.inputSection}>
-                            <Text style={styles.label}>Verification Code</Text>
-
-                            <View style={[
-                                styles.inputRow,
-                                focused && styles.inputRowFocused
-                            ]}>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="• • • • • •"
-                                    placeholderTextColor="#A0A0A0"
-                                    keyboardType="number-pad"
-                                    maxLength={6}
-                                    value={otp}
-                                    onChangeText={handleOtpChange}
-                                    onFocus={() => setFocused(true)}
-                                    onBlur={() => setFocused(false)}
-                                    testID="verify-otp-input"
-                                />
-                            </View>
+                            <Input
+                                label="Verification Code"
+                                value={otp}
+                                onChangeText={handleOtpChange}
+                                placeholder="• • • • • •"
+                                keyboardType="number-pad"
+                                maxLength={6}
+                                testID="verify-otp-input"
+                                accessibilityLabel="OTP input"
+                                accessibilityHint="Enter the 6 digit verification code"
+                            />
 
                             {/* Progress indicator */}
                             {otp.length > 0 && (
@@ -135,81 +107,33 @@ export default function VerifyOtpScreen() {
                         </View>
 
                         {/* Verify Button */}
-                        <TouchableOpacity
+                        <Button
+                            title={loading ? 'Verifying...' : 'Verify OTP'}
                             onPress={handleVerifyOtp}
+                            variant="primary"
+                            size="lg"
                             disabled={!isButtonEnabled}
-                            activeOpacity={0.85}
-                            style={[styles.buttonWrapper, !isButtonEnabled && styles.buttonDisabled]}
+                            loading={loading}
                             testID="verify-otp-button"
-                        >
-                            <LinearGradient
-                                colors={
-                                    isButtonEnabled
-                                        ? ['#84cc16', '#eab308']
-                                        : ['#E0E0E0', '#CCCCCC']
-                                }
-                                style={styles.button}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                            >
-                                <Text style={[
-                                    styles.buttonText,
-                                    { color: isButtonEnabled ? '#FFFFFF' : '#A0A0A0' }
-                                ]}>
-                                    {loading ? 'Verifying...' : 'Verify OTP'}
-                                </Text>
-                            </LinearGradient>
-                        </TouchableOpacity>
+                            accessibilityLabel="Verify one-time password"
+                        />
 
                         {/* Resend */}
-                        <TouchableOpacity style={styles.resendButton}>
-                            <Text style={styles.resendText}>Resend OTP</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
+                        <Button
+                            title="Resend OTP"
+                            onPress={() => {}}
+                            variant="ghost"
+                            size="sm"
+                            accessibilityLabel="Resend OTP code"
+                        />
+                    </GlassCard>
             </View>
-        </View>
+        </ScreenBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    gradient: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-    },
-    bookDecor: {
-        position: 'absolute',
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-        borderRadius: 8,
-        transform: [{ rotate: '-15deg' }],
-    },
-    bookDecor1: {
-        width: 120,
-        height: 160,
-        top: 60,
-        left: -40,
-        opacity: 0.6,
-    },
-    bookDecor2: {
-        width: 100,
-        height: 140,
-        bottom: 100,
-        right: -30,
-        opacity: 0.5,
-    },
-    bookDecor3: {
-        width: 80,
-        height: 110,
-        top: '45%',
-        right: 20,
-        opacity: 0.4,
-    },
+
     contentContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -224,32 +148,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#84cc16',
     },
-    cardContainer: {
-        width: '100%',
-        maxWidth: 400,
-        alignSelf: 'center',
-        borderRadius: 32,
-        overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 15 },
-        shadowOpacity: 0.2,
-        shadowRadius: 35,
-        elevation: 15,
-    },
-    glassOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        borderRadius: 32,
-        borderWidth: 1.5,
-        borderColor: 'rgba(255, 255, 255, 0.6)',
-    },
-    card: {
-        padding: 32,
-        backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    },
+
     header: {
         marginBottom: 32,
     },

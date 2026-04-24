@@ -1,13 +1,12 @@
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemeColors } from '@/hooks/useTheme';
+import { useTheme } from '@/hooks/useTheme';
 
 interface SearchSuggestionsProps {
     suggestions: string[];
     recentSearches: string[];
     onSelect: (query: string) => void;
     visible: boolean;
-    colors: ThemeColors;
 }
 
 export const SearchSuggestions = ({
@@ -15,8 +14,8 @@ export const SearchSuggestions = ({
     recentSearches,
     onSelect,
     visible,
-    colors
 }: SearchSuggestionsProps) => {
+    const { colors } = useTheme();
     if (!visible) return null;
 
     const hasContent = suggestions.length > 0 || recentSearches.length > 0;

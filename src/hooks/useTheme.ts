@@ -11,6 +11,10 @@ export interface ThemeColors {
     textTertiary: string;
     accent: string;
     accentLight: string;
+    error: string;
+    errorLight: string;
+    disabled: string;
+    disabledLight: string;
     border: string;
     shadow: string;
 }
@@ -25,6 +29,10 @@ const THEME_COLORS: Record<ThemePhase, ThemeColors> = {
         textTertiary: '#94A3B8',
         accent: '#6366F1',
         accentLight: '#818CF8',
+        error: '#EF4444',
+        errorLight: '#F87171',
+        disabled: '#E0E0E0',
+        disabledLight: '#CCCCCC',
         border: '#E2E8F0',
         shadow: 'rgba(0, 0, 0, 0.1)',
     },
@@ -37,6 +45,10 @@ const THEME_COLORS: Record<ThemePhase, ThemeColors> = {
         textTertiary: '#B45309',
         accent: '#EA580C',
         accentLight: '#F97316',
+        error: '#EF4444',
+        errorLight: '#F87171',
+        disabled: '#E0E0E0',
+        disabledLight: '#CCCCCC',
         border: '#FED7AA',
         shadow: 'rgba(234, 88, 12, 0.2)',
     },
@@ -49,6 +61,10 @@ const THEME_COLORS: Record<ThemePhase, ThemeColors> = {
         textTertiary: '#64748B',
         accent: '#818CF8',
         accentLight: '#A5B4FC',
+        error: '#F87171',
+        errorLight: '#FCA5A5',
+        disabled: '#475569',
+        disabledLight: '#334155',
         border: '#334155',
         shadow: 'rgba(129, 140, 248, 0.3)',
     },

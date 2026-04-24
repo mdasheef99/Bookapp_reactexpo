@@ -1,7 +1,7 @@
 import { View, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { ThemeColors } from '@/hooks/useTheme';
+import { useTheme } from '@/hooks/useTheme';
 
 interface SearchBarProps {
     query: string;
@@ -9,7 +9,6 @@ interface SearchBarProps {
     onSubmit: () => void;
     onClear: () => void;
     loading: boolean;
-    colors: ThemeColors;
     autoFocus?: boolean;
     placeholder?: string;
 }
@@ -20,10 +19,10 @@ export const SearchBar = ({
     onSubmit,
     onClear,
     loading,
-    colors,
     autoFocus = true,
     placeholder = "Search books, authors...",
 }: SearchBarProps) => {
+    const { colors } = useTheme();
     const handleClear = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onClear();

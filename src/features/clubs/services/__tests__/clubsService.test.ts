@@ -21,6 +21,75 @@ function mockQuery(response: Record<string, any>) {
 beforeEach(() => { jest.clearAllMocks(); });
 
 describe('clubsService', () => {
+    it('includes reply-level votes and reactions when reading discussion topics', async () => {
+        const topicsBuilder = mockQuery({
+            data: [{
+                id: 'topic-1',
+                club_id: 'club-1',
+                author_user_id: 'user-1',
+                title: 'Thread title',
+                body: 'Thread body',
+                is_deleted: false,
+                is_edited: false,
+                created_at: '2026-03-11T08:00:00.000Z',
+                updated_at: '2026-03-11T08:00:00.000Z',
+                deleted_at: null,
+                last_replied_at: '2026-03-11T09:00:00.000Z',
+            }],
+            error: null,
+        });
+        const repliesBuilder = mockQuery({
+            data: [{
+                id: 'reply-1',
+                topic_id: 'topic-1',
+                parent_reply_id: null,
+                author_user_id: 'user-2',
+                body: 'Reply body',
+                is_deleted: false,
+                created_at: '2026-03-11T09:00:00.000Z',
+                deleted_at: null,
+            }],
+            error: null,
+        });
+        const votesBuilder = mockQuery({
+            data: [
+                { id: 'vote-topic', topic_id: 'topic-1', reply_id: null, user_id: 'user-3', vote_type: 'upvote', created_at: null },
+                { id: 'vote-reply', topic_id: null, reply_id: 'reply-1', user_id: 'viewer-1', vote_type: 'upvote', created_at: null },
+            ],
+            error: null,
+        });
+        const reactionsBuilder = mockQuery({
+            data: [
+                { id: 'reaction-topic', topic_id: 'topic-1', reply_id: null, user_id: 'user-3', emoji: '👍', created_at: null },
+                { id: 'reaction-reply', topic_id: null, reply_id: 'reply-1', user_id: 'viewer-1', emoji: '🔥', created_at: null },
+            ],
+            error: null,
+        });
+        const readsBuilder = mockQuery({
+            data: [{ topic_id: 'topic-1', user_id: 'viewer-1', last_read_at: null, unread_reply_count: 2 }],
+            error: null,
+        });
+        (supabase.from as jest.Mock)
+            .mockReturnValueOnce(topicsBuilder)
+            .mockReturnValueOnce(repliesBuilder)
+            .mockReturnValueOnce(votesBuilder)
+            .mockReturnValueOnce(reactionsBuilder)
+            .mockReturnValueOnce(readsBuilder);
+        (profileService.getProfileSummaries as jest.Mock).mockResolvedValueOnce([
+            { id: 'profile-1', user_id: 'user-1', display_name: 'Thread Starter', username: 'starter', avatar_url: null, trust_score: 4.5, city: 'Bengaluru' },
+            { id: 'profile-2', user_id: 'user-2', display_name: 'Reply Author', username: 'replier', avatar_url: null, trust_score: 4.1, city: 'Mumbai' },
+        ]);
+
+        const result = await clubsService.getClubDiscussionTopics('club-1', 'viewer-1');
+
+        expect(votesBuilder.or).toHaveBeenCalledWith('topic_id.in.(topic-1),reply_id.in.(reply-1)');
+        expect(reactionsBuilder.or).toHaveBeenCalledWith('topic_id.in.(topic-1),reply_id.in.(reply-1)');
+        expect(result[0].voteCount).toBe(1);
+        expect(result[0].replies[0].voteCount).toBe(1);
+        expect(result[0].replies[0].viewerVote).toBe('upvote');
+        expect(result[0].replies[0].reactions).toEqual([{ emoji: '🔥', count: 1, viewerReacted: true }]);
+    });
+
     it('reads public club browse results from club_public_details', async () => {
         const publicBuilder = mockQuery({ data: [{ id: 'club-1', name: 'Open Readers', club_type: 'public', current_book_title: 'Dune' }], error: null });
         (supabase.from as jest.Mock).mockReturnValueOnce(publicBuilder);

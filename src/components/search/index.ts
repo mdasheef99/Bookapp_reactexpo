@@ -5,7 +5,7 @@ export { GenreTag } from './GenreTag';
 export { InLibraryBadge } from './InLibraryBadge';
 export { SkeletonCard } from './SkeletonCard';
 export { SortModal } from './SortModal';
-export { RecentSearches, RecentSearchItem } from './RecentSearches';
+export { RecentSearches } from './RecentSearches';
 export { SearchBar } from './SearchBar';
 export { SearchSuggestions } from './SearchSuggestions';
 export { FilterModal, FilterChips } from './FilterModal';

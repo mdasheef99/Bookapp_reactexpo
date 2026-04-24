@@ -7,6 +7,9 @@ import { booksService } from '@/features/books/services/booksService';
 import { notesService } from '@/features/books/services/notesService';
 
 let mockUserBook: any;
+const mockBack = jest.fn();
+const mockReplace = jest.fn();
+const mockCanGoBack = jest.fn(() => true);
 
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
@@ -14,7 +17,11 @@ jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
 jest.mock('expo-router', () => ({
     useLocalSearchParams: () => ({ bookId: 'user-book-1' }),
-    useRouter: () => ({ back: jest.fn() }),
+    useRouter: () => ({
+        back: mockBack,
+        replace: mockReplace,
+        canGoBack: mockCanGoBack,
+    }),
 }));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
@@ -84,6 +91,7 @@ const renderScreen = () => {
 describe('BookDetailScreen review persistence', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockCanGoBack.mockReturnValue(true);
         mockUserBook = {
             id: 'user-book-1',
             book_id: 'book-1',
@@ -124,6 +132,7 @@ describe('BookDetailScreen review persistence', () => {
     it('uses local review state for privacy toggles and review saves without forcing rating 0', async () => {
         const { getByTestId, getByText, unmount, queryClient } = renderScreen();
 
+        await waitFor(() => expect(getByText('Beloved')).toBeOnTheScreen());
         await waitFor(() => expect(getByTestId('library-review-input').props.value).toBe('Existing review'));
 
         fireEvent.changeText(getByTestId('library-review-input'), 'Updated review copy');
@@ -176,6 +185,22 @@ describe('BookDetailScreen review persistence', () => {
         expect(getByText('@reader-two')).toBeOnTheScreen();
         expect(getByText('A beautifully written review from another reader.')).toBeOnTheScreen();
         expect(queryByText('No public reviews yet.')).not.toBeOnTheScreen();
+
+        unmount();
+        queryClient.clear();
+    });
+
+    it('falls back to the library tab when back history is unavailable', async () => {
+        mockCanGoBack.mockReturnValue(false);
+
+        const { getByTestId, queryClient, unmount } = renderScreen();
+
+        await waitFor(() => expect(getByTestId('library-book-back-button')).toBeOnTheScreen());
+
+        fireEvent.press(getByTestId('library-book-back-button'));
+
+        expect(mockBack).not.toHaveBeenCalled();
+        expect(mockReplace).toHaveBeenCalledWith('/(tabs)/library');
 
         unmount();
         queryClient.clear();

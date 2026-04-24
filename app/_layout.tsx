@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Text } from 'react-native';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { AtmosphericBackground } from '@/components/ui/AtmosphericBackground';
 import { initSentry, syncSentryUser, trackSentryRoute, maybeSendSentryVerificationEvent, Sentry } from '@/lib/sentry';
@@ -69,18 +69,33 @@ function InitialLayout() {
     return <Slot />;
 }
 
+function ErrorFallback() {
+    return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: '#ffffff' }}>
+            <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 8, color: '#111827' }}>
+                Something went wrong
+            </Text>
+            <Text style={{ fontSize: 14, color: '#6b7280', textAlign: 'center' }}>
+                The app encountered an unexpected error. Please restart the app.
+            </Text>
+        </View>
+    );
+}
+
 function RootLayout() {
     return (
-        <GestureHandlerRootView style={{ flex: 1 }}>
-            <SafeAreaProvider>
-                <QueryClientProvider client={queryClient}>
-                    <AtmosphericBackground>
-                        <InitialLayout />
-                    </AtmosphericBackground>
-                    <StatusBar style="auto" />
-                </QueryClientProvider>
-            </SafeAreaProvider>
-        </GestureHandlerRootView>
+        <Sentry.ErrorBoundary fallback={ErrorFallback}>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+                <SafeAreaProvider>
+                    <QueryClientProvider client={queryClient}>
+                        <AtmosphericBackground>
+                            <InitialLayout />
+                        </AtmosphericBackground>
+                        <StatusBar style="auto" />
+                    </QueryClientProvider>
+                </SafeAreaProvider>
+            </GestureHandlerRootView>
+        </Sentry.ErrorBoundary>
     );
 }
 

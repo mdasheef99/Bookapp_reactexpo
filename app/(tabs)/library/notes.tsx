@@ -18,6 +18,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { notesService, ReadingNote, NoteTag } from '@/features/books/services/notesService';
 import { NoteCard, NoteEditor, TagSelector } from '@/components/notes';
 import { AtmosphericBackground } from '@/components/ui/AtmosphericBackground';
+import { navigateBackOrFallback } from '@/lib/navigation';
 
 export default function NotesScreen() {
     const { userBookId, bookTitle } = useLocalSearchParams<{ userBookId: string; bookTitle: string }>();
@@ -29,6 +30,18 @@ export default function NotesScreen() {
     const [showEditor, setShowEditor] = useState(false);
     const [editingNote, setEditingNote] = useState<ReadingNote | null>(null);
     const [activeTagFilter, setActiveTagFilter] = useState<NoteTag | null>(null);
+
+    const handleBackPress = useCallback(() => {
+        if (userBookId) {
+            navigateBackOrFallback(router, {
+                pathname: '/(tabs)/library/[bookId]',
+                params: { bookId: userBookId },
+            });
+            return;
+        }
+
+        navigateBackOrFallback(router, '/(tabs)/library');
+    }, [router, userBookId]);
 
     // Fetch notes
     const { data: notes = [], isLoading, refetch } = useQuery({
@@ -102,7 +115,7 @@ export default function NotesScreen() {
                 {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity
-                        onPress={() => router.back()}
+                        onPress={handleBackPress}
                         style={[styles.backButton, { backgroundColor: colors.bgCard }]}
                     >
                         <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
