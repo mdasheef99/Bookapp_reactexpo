@@ -23,7 +23,7 @@ export function ClubManageJoinQuestionsSection({ clubId, questions, isLoading, o
 
     const nextOrderIndex = useMemo(() => questions.reduce((max, q) => Math.max(max, q.order_index), -1) + 1, [questions]);
 
-    const getEdit = (id: string, fallbackQ: string, fallbackR: boolean) => edits[id] ?? { question: fallbackQ, isRequired: fallbackR };
+    const getEdit = (id: string, fallbackQ: string, fallbackR: boolean | null) => edits[id] ?? { question: fallbackQ, isRequired: fallbackR ?? true };
 
     const handleCreate = async () => {
         if (!clubId || !draftQuestion.trim()) return;

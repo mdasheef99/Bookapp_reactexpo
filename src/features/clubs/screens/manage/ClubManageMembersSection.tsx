@@ -23,7 +23,7 @@ export function ClubManageMembersSection({ club, members, isLoading, onToggleRol
     const { colors } = useTheme();
     const [activeUserId, setActiveUserId] = useState<string | null>(null);
     const manageableMembers = useMemo(
-        () => members.filter((member) => member.user_id !== club.admin_id),
+        () => members.filter((member) => member.user_id !== null && member.user_id !== club.admin_id),
         [members, club.admin_id],
     );
 
