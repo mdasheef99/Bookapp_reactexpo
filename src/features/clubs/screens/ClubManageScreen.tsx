@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, TextInput, Alert } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { SearchBar } from '@/components/search/SearchBar';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { booksService, type GoogleBook } from '@/features/books/services/booksService';
 import {
     useClubMembers,
     useClubJoinQuestions,
@@ -13,6 +17,7 @@ import {
     useCreateClubJoinQuestion,
     useDeleteClubJoinQuestion,
     useFinalizeClubBookNomination,
+    useNominateClubBook,
     useUpdateClub,
     useRemoveClubMember,
     useUpdateClubMemberRole,
@@ -96,6 +101,22 @@ function isHttpUrl(value: string) {
     }
 }
 
+function getBookCoverUrl(book: GoogleBook | null): string {
+    const imageUrl = book?.volumeInfo.imageLinks?.thumbnail ?? book?.volumeInfo.imageLinks?.smallThumbnail;
+    if (!imageUrl) return 'https://via.placeholder.com/120x180?text=No+Cover';
+    return imageUrl.replace(/^http:\/\//i, 'https://').replace('zoom=1', 'zoom=0');
+}
+
+function isTooManyRequestsError(error: unknown): boolean {
+    if (error && typeof error === 'object') {
+        const e = error as Record<string, unknown>;
+        if (e.status === 429 || e.response?.status === 429) return true;
+        const message = String(e.message ?? e.error ?? error);
+        if (message.includes('429') || message.toLowerCase().includes('too many requests')) return true;
+    }
+    return false;
+}
+
 function getSettingsValidationMessage(settings: SettingsDraft, club: ClubPublicDetails) {
     if (!settings.name.trim()) return 'Club name is required.';
 
@@ -165,6 +186,7 @@ export default function ClubManageScreen() {
     const updateQuestion = useUpdateClubJoinQuestion();
     const deleteQuestion = useDeleteClubJoinQuestion();
     const finalizeNomination = useFinalizeClubBookNomination();
+    const nominateMutation = useNominateClubBook();
     const updateClub = useUpdateClub();
     const removeMember = useRemoveClubMember();
     const updateMemberRole = useUpdateClubMemberRole();
@@ -176,6 +198,14 @@ export default function ClubManageScreen() {
     const [feedback, setFeedback] = useState<FeedbackState>(null);
     const [activeModeratorUserId, setActiveModeratorUserId] = useState<string | null>(null);
     const [activeRemovalUserId, setActiveRemovalUserId] = useState<string | null>(null);
+
+    const [overrideQuery, setOverrideQuery] = useState('');
+    const [overrideResults, setOverrideResults] = useState<GoogleBook[]>([]);
+    const [overrideSearched, setOverrideSearched] = useState(false);
+    const [overrideSearching, setOverrideSearching] = useState(false);
+    const [overrideSelected, setOverrideSelected] = useState<GoogleBook | null>(null);
+    const [overrideFeedback, setOverrideFeedback] = useState<FeedbackState>(null);
+    const [showOverrideSection, setShowOverrideSection] = useState(false);
 
     useEffect(() => {
         if (club) setSettings(createSettingsDraft(club));
@@ -327,15 +357,83 @@ export default function ClubManageScreen() {
     };
 
     const handleFinalizeNomination = async (nominationId: string) => {
-        if (!clubId) return;
+        if (!clubId || !isAdmin) return;
 
         try {
             setFeedback(null);
             await finalizeNomination.mutateAsync({ nominationId });
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setFeedback({ type: 'success', message: 'Current book finalized successfully.' });
             await Promise.all([refetch(), refetchNominations()]);
         } catch (error) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to finalize the current book right now.') });
+        }
+    };
+
+    const handleOverrideSearch = async () => {
+        const trimmed = overrideQuery.trim();
+        if (trimmed.length < 3) {
+            setOverrideFeedback({ type: 'error', message: 'Enter at least 3 characters to search Google Books.' });
+            return;
+        }
+        try {
+            setOverrideFeedback(null);
+            setOverrideSearching(true);
+            setOverrideSearched(true);
+            const response = await booksService.searchGoogleBooks(trimmed, 0, 10);
+            setOverrideResults(response.items);
+        } catch (error) {
+            if (isTooManyRequestsError(error)) {
+                setOverrideFeedback({ type: 'error', message: 'Google Books search is temporarily rate-limited. Please try again in a moment.' });
+            } else {
+                setOverrideFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to search books right now.') });
+            }
+            setOverrideResults([]);
+        } finally {
+            setOverrideSearching(false);
+        }
+    };
+
+    const confirmManualOverride = (book: GoogleBook) => {
+        Alert.alert(
+            'Set current book',
+            `Set "${book.volumeInfo.title || 'Untitled'}" as the current club read? This bypasses nominations and voting.`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Set current book',
+                    style: 'default',
+                    onPress: () => { void handleManualOverride(book); },
+                },
+            ],
+        );
+    };
+
+    const handleManualOverride = async (book: GoogleBook) => {
+        if (!clubId || !isAdmin) return;
+        try {
+            setOverrideFeedback(null);
+            // Step 1: create a nomination with a past voting deadline so it can be immediately finalized
+            const pastDate = new Date();
+            pastDate.setSeconds(pastDate.getSeconds() - 5);
+            const nomination = await nominateMutation.mutateAsync({
+                clubId,
+                googleBook: book,
+                votingEndsAt: pastDate.toISOString(),
+            });
+            // Step 2: finalize it immediately
+            await finalizeNomination.mutateAsync({ nominationId: nomination.id });
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setOverrideFeedback({ type: 'success', message: `"${book.volumeInfo.title || 'Untitled'}" is now the current club read.` });
+            setOverrideSelected(null);
+            setOverrideQuery('');
+            setOverrideResults([]);
+            setOverrideSearched(false);
+            await Promise.all([refetch(), refetchNominations()]);
+        } catch (error) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            setOverrideFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to set the current book right now.') });
         }
     };
 
@@ -348,21 +446,22 @@ export default function ClubManageScreen() {
             <View style={styles.headerRow}><TouchableOpacity onPress={() => router.back()} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity><Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Manage club</Text><View style={styles.headerSpacer} /></View>
             <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.title, { color: colors.textPrimary }]}>{club.name}</Text><Text style={[styles.body, { color: colors.textSecondary }]}>{isAdmin ? 'Manage Club includes current-book management plus the existing basic settings, member-role management, remove-member workflows, and join-question management. Archive controls are not part of the current roadmap.' : 'Manage Club now gives eligible moderators a current-book management path. Basic settings, member-role management, remove-member workflows, and join-question management remain admin-only.'}</Text></View>
             {feedback ? <View style={[styles.feedbackBanner, { backgroundColor: feedback.type === 'success' ? '#DCFCE7' : '#FEE2E2', borderColor: feedback.type === 'success' ? '#22C55E' : '#EF4444' }]}><Text style={[styles.feedbackText, { color: feedback.type === 'success' ? '#166534' : '#991B1B' }]}>{feedback.message}</Text></View> : null}
-            <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
+            <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                 <Text style={[styles.title, { color: colors.textPrimary }]}>Current book management</Text>
-                <Text style={[styles.body, { color: colors.textSecondary }]}>Review the current nomination slate and finalize the club&apos;s next read here after voting closes. This workflow is available to club admins and active moderators only.</Text>
+                <Text style={[styles.body, { color: colors.textSecondary }]}>Review the current nomination slate and finalize the club&apos;s next read here after voting closes. Finalizing is admin-only. Moderators can view and vote, but cannot finalize.</Text>
                 <View style={[styles.summaryCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}>
                     <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Current selection</Text>
                     <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{club.current_book_title || 'No current book selected yet'}</Text>
-                    <Text style={[styles.summaryFootnote, { color: colors.textSecondary }]}>{club.current_book_authors?.join(', ') || 'Finalize a closed nomination to set the current club read.'}</Text>
+                    <Text style={[styles.summaryFootnote, { color: colors.textSecondary }]}>{club.current_book_authors?.join(', ') || 'Finalize a closed nomination to set the current club read, or use the manual override below.'}</Text>
                 </View>
                 {isNominationsLoading ? <View style={styles.loadingRow}><ActivityIndicator size="small" color={colors.accent} /><Text style={[styles.body, { color: colors.textSecondary }]}>Loading nominations…</Text></View> : null}
                 {isNominationsError ? <View style={[styles.summaryCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}><Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Unable to load nominations</Text><Text style={[styles.summaryFootnote, { color: colors.textSecondary }]}>{getClubsEntitlementErrorMessage(nominationsError, 'Unable to load book nominations right now.')}</Text><TouchableOpacity style={[styles.secondaryButton, { borderColor: colors.border, marginTop: 12 }]} onPress={() => refetchNominations()} testID="manage-book-retry"><Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>Retry</Text></TouchableOpacity></View> : null}
                 {!isNominationsLoading && !isNominationsError && nominations.length === 0 ? <View style={[styles.summaryCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}><Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>No nominations yet</Text><Text style={[styles.summaryFootnote, { color: colors.textSecondary }]}>No club books are waiting for finalization right now. Once members nominate titles, they will appear here with vote counts and deadline status.</Text></View> : null}
                 {!isNominationsLoading && !isNominationsError && nominations.map((nomination) => {
                     const isVotingClosed = hasNominationVotingClosed(nomination.voting_ends_at);
-                    const canFinalize = nomination.status === 'active' && isVotingClosed;
+                    const canFinalize = isAdmin && nomination.status === 'active' && isVotingClosed;
                     const isSelected = nomination.status === 'selected';
+                    const showClosedBanner = isAdmin && !isSelected && nomination.status === 'active' && isVotingClosed;
 
                     return <View key={nomination.id} style={[styles.nominationCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}>
                         <Text style={[styles.nominationTitle, { color: colors.textPrimary }]}>{nomination.book?.title || 'Untitled nomination'}</Text>
@@ -372,10 +471,35 @@ export default function ClubManageScreen() {
                         <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{nomination.voting_ends_at ? `Voting ends: ${new Date(nomination.voting_ends_at).toLocaleString()}` : 'Voting end time not set yet.'}</Text>
                         <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>{`Nominated by ${nomination.nominatorProfile?.display_name || nomination.nominatorProfile?.username || 'a club member'}`}</Text>
                         {isSelected ? <Text style={[styles.nominationMeta, { color: colors.accent }]} testID={`manage-current-book-selected-${nomination.id}`}>This nomination is currently selected for the club.</Text> : null}
-                        {!isSelected && nomination.status === 'active' ? <Text style={[styles.nominationMeta, { color: isVotingClosed ? colors.accent : colors.textSecondary }]} testID={`manage-current-book-status-${nomination.id}`}>{isVotingClosed ? 'Voting has closed. You can finalize this book now.' : 'Finalize becomes available after voting closes.'}</Text> : null}
+                        {showClosedBanner ? <View style={[styles.closedBanner, { backgroundColor: '#FEF3C7', borderColor: '#F59E0B' }]} testID={`manage-current-book-closed-${nomination.id}`}><Text style={[styles.closedBannerText, { color: '#92400E' }]}>Voting has closed. This book is ready to be finalized.</Text></View> : null}
+                        {!isSelected && nomination.status === 'active' && !isVotingClosed ? <Text style={[styles.nominationMeta, { color: colors.textSecondary }]} testID={`manage-current-book-status-${nomination.id}`}>Finalize becomes available after voting closes.</Text> : null}
                         {canFinalize ? <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.accent, marginTop: 12, opacity: finalizeNomination.isPending ? 0.65 : 1 }]} onPress={() => handleFinalizeNomination(nomination.id)} disabled={finalizeNomination.isPending} testID={`manage-finalize-${nomination.id}`}><Text style={styles.primaryButtonText}>{finalizeNomination.isPending ? 'Finalizing…' : 'Finalize current book'}</Text></TouchableOpacity> : null}
+                        {!isAdmin && isVotingClosed && nomination.status === 'active' ? <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>Only admins can finalize nominations.</Text> : null}
                     </View>;
                 })}
+                {isAdmin ? <>
+                    <TouchableOpacity style={[styles.secondaryButton, { borderColor: colors.border, marginTop: 16 }]} onPress={() => setShowOverrideSection((value) => !value)} testID="manage-toggle-override"><Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>{showOverrideSection ? 'Hide manual override' : 'Set current book directly'}</Text></TouchableOpacity>
+                    {showOverrideSection ? <View style={[styles.summaryCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary, marginTop: 14 }]}>
+                        <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Manual current-book override</Text>
+                        <Text style={[styles.summaryFootnote, { color: colors.textSecondary }]}>Search for a book and set it directly as the current read. This bypasses nominations and voting.</Text>
+                        <SearchBar query={overrideQuery} onQueryChange={setOverrideQuery} onSubmit={handleOverrideSearch} onClear={() => { setOverrideQuery(''); setOverrideResults([]); setOverrideSearched(false); setOverrideSelected(null); setOverrideFeedback(null); }} loading={overrideSearching} placeholder="Search by title or author" autoFocus={false} />
+                        <TouchableOpacity onPress={handleOverrideSearch} disabled={overrideSearching} style={[styles.primaryButton, { backgroundColor: colors.accent, opacity: overrideSearching ? 0.65 : 1, marginTop: 12 }]} testID="manage-override-search"><Text style={styles.primaryButtonText}>{overrideSearching ? 'Searching…' : 'Search Google Books'}</Text></TouchableOpacity>
+                        {overrideSearched && !overrideSearching && overrideResults.length === 0 ? <View style={[styles.summaryCard, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}><Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>No matches found</Text><Text style={[styles.summaryFootnote, { color: colors.textSecondary }]}>Try another title, author, or broader search term.</Text></View> : null}
+                        {overrideResults.map((book) => {
+                            const selected = overrideSelected?.id === book.id;
+                            return <TouchableOpacity key={book.id} onPress={() => setOverrideSelected(book)} style={[styles.resultCard, { backgroundColor: colors.bgPrimary, borderColor: selected ? colors.accent : colors.border }]} testID={`manage-override-result-${book.id}`}>
+                                <Image source={{ uri: getBookCoverUrl(book) }} style={styles.resultCover} contentFit="cover" transition={200} />
+                                <View style={styles.resultBody}>
+                                    <Text style={[styles.nominationTitle, { color: colors.textPrimary }]} numberOfLines={2}>{book.volumeInfo.title || 'Untitled book'}</Text>
+                                    <Text style={[styles.nominationMeta, { color: colors.textSecondary }]} numberOfLines={2}>{book.volumeInfo.authors?.join(', ') || 'Author information unavailable'}</Text>
+                                    <Text style={[styles.nominationMeta, { color: selected ? colors.accent : colors.textTertiary }]}>{selected ? 'Selected' : 'Tap to select'}</Text>
+                                </View>
+                            </TouchableOpacity>;
+                        })}
+                        {overrideSelected ? <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.accent, marginTop: 12, opacity: nominateMutation.isPending || finalizeNomination.isPending ? 0.65 : 1 }]} onPress={() => confirmManualOverride(overrideSelected)} disabled={nominateMutation.isPending || finalizeNomination.isPending} testID="manage-override-set"><Text style={styles.primaryButtonText}>{nominateMutation.isPending || finalizeNomination.isPending ? 'Working…' : 'Set as current book'}</Text></TouchableOpacity> : null}
+                        {overrideFeedback ? <View style={[styles.feedbackBanner, { backgroundColor: overrideFeedback.type === 'success' ? '#DCFCE7' : '#FEE2E2', borderColor: overrideFeedback.type === 'success' ? '#22C55E' : '#EF4444', marginTop: 12 }]}><Text style={[styles.feedbackText, { color: overrideFeedback.type === 'success' ? '#166534' : '#991B1B' }]}>{overrideFeedback.message}</Text></View> : null}
+                    </View> : null}
+                </> : null}
             </View>
             {!isAdmin ? <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="admin-only-manage-notice"><Text style={[styles.title, { color: colors.textPrimary }]}>Admin-only tools stay locked</Text><Text style={[styles.body, { color: colors.textSecondary }]}>Basic settings, member-role management, remove-member workflows, and join-question management still require club admin access in this phase.</Text></View> : null}
             {isAdmin ? <>
@@ -526,6 +650,11 @@ const styles = StyleSheet.create({
     primaryButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
     secondaryButton: { flex: 1, borderWidth: 1, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
     secondaryButtonText: { fontSize: 15, fontWeight: '800' },
+    closedBanner: { marginTop: 10, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
+    closedBannerText: { fontSize: 13, fontWeight: '700', lineHeight: 18 },
+    resultCard: { marginTop: 12, borderWidth: 1, borderRadius: 16, padding: 12, flexDirection: 'row', gap: 12 },
+    resultCover: { width: 72, height: 108, borderRadius: 12, backgroundColor: '#E2E8F0' },
+    resultBody: { flex: 1, gap: 4, justifyContent: 'center' },
     feedbackBanner: { marginBottom: 14, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
     feedbackText: { fontSize: 13, fontWeight: '600', lineHeight: 18 },
 });

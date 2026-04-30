@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { SearchBar } from '@/components/search/SearchBar';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -14,6 +15,29 @@ function getBookCoverUrl(book: GoogleBook | null): string {
     const imageUrl = book?.volumeInfo.imageLinks?.thumbnail ?? book?.volumeInfo.imageLinks?.smallThumbnail;
     if (!imageUrl) return 'https://via.placeholder.com/120x180?text=No+Cover';
     return imageUrl.replace(/^http:\/\//i, 'https://').replace('zoom=1', 'zoom=0');
+}
+
+function getDefaultVotingEndsAt(days: number = 7): string {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    date.setHours(23, 59, 59, 999);
+    return date.toISOString();
+}
+
+const VOTING_DEADLINE_PRESETS = [
+    { days: 3, label: '3 days' },
+    { days: 7, label: '7 days' },
+    { days: 14, label: '14 days' },
+];
+
+function isTooManyRequestsError(error: unknown): boolean {
+    if (error && typeof error === 'object') {
+        const e = error as Record<string, unknown>;
+        if (e.status === 429 || e.response?.status === 429) return true;
+        const message = String(e.message ?? e.error ?? error);
+        if (message.includes('429') || message.toLowerCase().includes('too many requests')) return true;
+    }
+    return false;
 }
 
 export default function ClubNominateBookScreen() {
@@ -30,6 +54,7 @@ export default function ClubNominateBookScreen() {
     const [isSearching, setIsSearching] = useState(false);
     const [selectedBook, setSelectedBook] = useState<GoogleBook | null>(null);
     const [feedback, setFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
+    const [votingDays, setVotingDays] = useState(7);
 
     const canNominate = membership?.status === 'active';
 
@@ -47,7 +72,11 @@ export default function ClubNominateBookScreen() {
             const response = await booksService.searchGoogleBooks(trimmed, 0, 10);
             setResults(response.items);
         } catch (error) {
-            setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to search books right now.') });
+            if (isTooManyRequestsError(error)) {
+                setFeedback({ type: 'error', message: 'Google Books search is temporarily rate-limited. Please try again in a moment, or enter book details manually below.' });
+            } else {
+                setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to search books right now.') });
+            }
             setResults([]);
         } finally {
             setIsSearching(false);
@@ -62,9 +91,18 @@ export default function ClubNominateBookScreen() {
 
         try {
             setFeedback(null);
-            await nominateMutation.mutateAsync({ clubId, googleBook: selectedBook });
-            router.back();
+            await nominateMutation.mutateAsync({
+                clubId,
+                googleBook: selectedBook,
+                votingEndsAt: getDefaultVotingEndsAt(votingDays),
+            });
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setFeedback({ type: 'success', message: `Your nomination was submitted successfully! Voting closes in ${votingDays} days.` });
+            setTimeout(() => {
+                router.replace(`/clubs/${clubId}?tab=nominations`);
+            }, 1500);
         } catch (error) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to nominate this book right now.') });
         }
     };
@@ -105,7 +143,7 @@ export default function ClubNominateBookScreen() {
                 </TouchableOpacity>; })}
             </View> : null}
 
-            {canNominate && selectedBook ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
+            {canNominate && selectedBook ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Selected nomination</Text>
                 <View style={[styles.selectedCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
                     <Image source={{ uri: getBookCoverUrl(selectedBook) }} style={styles.selectedCover} contentFit="cover" transition={200} />
@@ -114,6 +152,22 @@ export default function ClubNominateBookScreen() {
                         <Text style={[styles.resultMeta, { color: colors.textSecondary }]}>{selectedBook.volumeInfo.authors?.join(', ') || 'Author information unavailable'}</Text>
                         <Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Submitting this will create a live club nomination using the existing Clubs nomination workflow.</Text>
                     </View>
+                </View>
+                <Text style={[styles.label, { color: colors.textPrimary, marginTop: 12 }]}>Voting duration</Text>
+                <View style={styles.presetRow}>
+                    {VOTING_DEADLINE_PRESETS.map((preset) => {
+                        const selected = votingDays === preset.days;
+                        return (
+                            <TouchableOpacity
+                                key={preset.days}
+                                onPress={() => setVotingDays(preset.days)}
+                                style={[styles.presetChip, { borderColor: selected ? colors.accent : colors.border, backgroundColor: selected ? colors.bgSecondary : colors.bgPrimary }]}
+                                testID={`club-nomination-voting-days-${preset.days}`}
+                            >
+                                <Text style={[styles.presetText, { color: selected ? colors.accent : colors.textPrimary }]}>{preset.label}</Text>
+                            </TouchableOpacity>
+                        );
+                    })}
                 </View>
                 <TouchableOpacity onPress={handleNominate} disabled={nominateMutation.isPending} style={[styles.primaryActionButton, { backgroundColor: colors.accent, opacity: nominateMutation.isPending ? 0.65 : 1 }]} testID="club-submit-nomination"><Text style={styles.primaryActionText}>{nominateMutation.isPending ? 'Submitting…' : 'Nominate this book'}</Text></TouchableOpacity>
             </View> : null}
@@ -127,6 +181,10 @@ const styles = StyleSheet.create({
     sectionCard: { borderWidth: 1, borderRadius: 18, padding: 16, marginBottom: 14 }, sectionTitle: { fontSize: 15, fontWeight: '700', marginBottom: 8 }, sectionBody: { fontSize: 14, lineHeight: 20 },
     noticeCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12 }, noticeTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6 }, noticeBody: { fontSize: 14, lineHeight: 20 },
     resultCard: { marginTop: 12, borderWidth: 1, borderRadius: 16, padding: 12, flexDirection: 'row', gap: 12 }, resultCover: { width: 72, height: 108, borderRadius: 12, backgroundColor: '#E2E8F0' }, resultBody: { flex: 1, gap: 4, justifyContent: 'center' }, resultTitle: { fontSize: 15, fontWeight: '700' }, resultMeta: { fontSize: 13, lineHeight: 18 }, selectedCard: { borderWidth: 1, borderRadius: 16, padding: 12, flexDirection: 'row', gap: 12 }, selectedCover: { width: 88, height: 132, borderRadius: 12, backgroundColor: '#E2E8F0' },
+    label: { fontSize: 14, fontWeight: '700', marginBottom: 8 },
+    presetRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
+    presetChip: { flex: 1, alignItems: 'center', borderWidth: 1, borderRadius: 12, paddingVertical: 10 },
+    presetText: { fontSize: 13, fontWeight: '700' },
     primaryActionButton: { marginTop: 16, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }, primaryActionText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
     feedbackBanner: { marginTop: 14, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }, feedbackText: { fontSize: 13, fontWeight: '600', lineHeight: 18 },
 });
