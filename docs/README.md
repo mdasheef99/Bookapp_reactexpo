@@ -195,26 +195,36 @@ booktalks-mobile/
 
 ## 👥 Membership Tiers
 
+> **Source of truth for entitlement enforcement:**
+> `src/features/clubs/services/clubsEntitlement.ts`, `supabase/functions/check-membership-limits/index.ts`, and live DB triggers / RPCs (`can_user_hold_club_role`, `is_active_eligible_club_manager`).
+> Cross-checked against `docs/features/CLUBS_ENTITLEMENT_IMPLEMENTATION_ANALYSIS_2026-03-10.md` and `docs/architecture/booktalks_mobile_spec.md`.
+
 ### Free Tier
-- ✅ Unlimited Book Club memberships
-- ✅ Full club participation (chat, vote, RSVP)
-- ✅ Can be promoted to Moderator
-- ❌ Cannot create clubs
+- ✅ Unlimited Book Club memberships **for clubs with `access_level = all`**
+- ✅ Full club participation after joining (vote, RSVP, forum discussion, nominate books)
+- ❌ **Cannot be promoted to Moderator or Admin** — only Pro and Pro+ users may hold privileged roles
+- ❌ Cannot create clubs (creation cap: 0)
 - ✅ Unlimited library features
 
 ### Pro Tier ($2.99/month)
 - ✅ Everything in Free
+- ✅ Can join clubs with `access_level = all` or `pro`
 - ✅ Create up to 5 book clubs
-- ✅ Can be promoted to Admin role
+- ✅ **Can be promoted to Moderator or Admin role** (requires Pro or Pro+ subscription)
 - ✅ Priority support
+- ✅ Early access to new features
 
 ### Pro+ Tier ($4.99/month)
 - ✅ Everything in Pro
+- ✅ Can join clubs with `access_level = all`, `pro`, or `pro_plus`
 - ✅ Create up to 15 book clubs
+- ✅ **Can be promoted to Moderator or Admin role** (requires Pro or Pro+ subscription)
 - ✅ Premium badge on profile
 - ✅ Exclusive author events access
+- ✅ Priority customer support
 
-**Downgrade Policy:** 30-day grace period with warnings on Day 7, 14, 21, 29. See [full specification](./architecture/ARCHITECTURE.md#membership-tiers).
+**Downgrade Policy:** 30-day grace period with warnings on Day 7, 14, 21, 29 is specified in `booktalks_mobile_spec.md`.
+> ⚠️ **Not yet implemented:** The `handle-downgrade-grace-period` Edge Function and any automated cron / scheduled warning job do not exist in the repo. Automated archiving and grace-period enforcement are pending.
 
 ---
 

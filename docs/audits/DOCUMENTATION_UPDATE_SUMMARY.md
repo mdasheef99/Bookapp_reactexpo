@@ -69,14 +69,14 @@
 **Terminology Change: "Lead" → "Admin":**
 - All references to "Club Lead" replaced with "Club Admin"
 - Admin role requires Pro/Pro+ subscription
-- Moderator role available to Free tier users
+- **Moderator role requires Pro/Pro+ subscription** (corrected from earlier draft that listed Free tier eligibility)
 - Updated permissions table with new "Transfer admin role" permission
-- **Current Location:** [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md#migration-004), [CHANGELOG.md](./CHANGELOG.md#terminology-change)
+- **Current Location:** [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md#migration-004), [CHANGELOG.md](./CHANGELOG.md#terminology-change), [CLUBS_ENTITLEMENT_IMPLEMENTATION_ANALYSIS_2026-03-10.md](../features/CLUBS_ENTITLEMENT_IMPLEMENTATION_ANALYSIS_2026-03-10.md)
 
 **Membership Tier Limits Table Updated:**
-- Free: Unlimited joins, 0 creates
-- Pro: Unlimited joins, 5 creates
-- Pro+: Unlimited joins, 15 creates
+- Free: Unlimited joins (clubs with `access_level = all` only), 0 creates, cannot hold Moderator/Admin roles
+- Pro: Unlimited joins (clubs with `access_level = all` or `pro`), 5 creates, may hold Moderator/Admin roles
+- Pro+: Unlimited joins (all access levels), 15 creates, may hold Moderator/Admin roles
 - **Current Location:** [README.md](./README.md#membership-tiers)
 
 ### 1.5 Venues System
