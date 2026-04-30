@@ -33,36 +33,6 @@ export function useAuth() {
 
     const initialize = async () => {
         try {
-            // Development bypass: Create a mock session for testing
-            if (process.env.EXPO_PUBLIC_DEV_SKIP_AUTH === 'true') {
-                const mockUser = {
-                    id: 'dev-user-00000000-0000-0000-0000-000000000000',
-                    email: 'dev@booktalks.test',
-                    phone: '+1234567890',
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                    aud: 'authenticated',
-                    role: 'authenticated',
-                    app_metadata: {},
-                    user_metadata: { name: 'Dev User' },
-                } as User;
-
-                const mockSession = {
-                    access_token: 'dev-access-token',
-                    refresh_token: 'dev-refresh-token',
-                    expires_in: 3600,
-                    token_type: 'bearer',
-                    user: mockUser,
-                } as Session;
-
-                globalSession = mockSession;
-                globalUser = mockUser;
-                globalIsLoading = false;
-                notifyListeners();
-                console.log('[DEV] Using mock auth session');
-                return;
-            }
-
             // Create a promise that rejects after 5 seconds to prevent hanging
             const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Auth initialization timed out')), 5000)

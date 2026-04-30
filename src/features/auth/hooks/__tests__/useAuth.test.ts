@@ -20,38 +20,7 @@ beforeEach(() => {
 });
 
 describe('useAuth', () => {
-  describe('dev bypass mode (EXPO_PUBLIC_DEV_SKIP_AUTH=true)', () => {
-    it('creates mock session and user without calling supabase', async () => {
-      // Dev skip auth is already 'true' from jest.setup.ts
-      const { useAuth } = require('../useAuth');
-      const { result } = renderHook(() => useAuth());
-
-      await act(async () => {
-        await result.current.initialize();
-      });
-
-      expect(result.current.isLoading).toBe(false);
-      expect(result.current.session).toBeDefined();
-      expect(result.current.session?.access_token).toBe('dev-access-token');
-      expect(result.current.user?.id).toBe('dev-user-00000000-0000-0000-0000-000000000000');
-      expect(result.current.user?.email).toBe('dev@booktalks.test');
-      // Should NOT have called supabase.auth.getSession in dev mode
-      expect(mockAuth.getSession).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('production mode', () => {
-    let originalEnv: string | undefined;
-
-    beforeEach(() => {
-      originalEnv = process.env.EXPO_PUBLIC_DEV_SKIP_AUTH;
-      process.env.EXPO_PUBLIC_DEV_SKIP_AUTH = 'false';
-    });
-
-    afterEach(() => {
-      process.env.EXPO_PUBLIC_DEV_SKIP_AUTH = originalEnv;
-    });
-
+  describe('initialize', () => {
     it('calls getSession and sets session on success', async () => {
       const mockSession = {
         access_token: 'real-token',
@@ -123,7 +92,12 @@ describe('useAuth', () => {
 
   describe('signOut', () => {
     it('clears session and user, calls supabase.auth.signOut', async () => {
-      // First initialize with dev bypass to set session
+      // First initialize with a real session
+      (mockAuth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: { access_token: 'real-token', user: { id: 'user-1' } } },
+        error: null,
+      });
+
       const { useAuth } = require('../useAuth');
       const { result } = renderHook(() => useAuth());
 
