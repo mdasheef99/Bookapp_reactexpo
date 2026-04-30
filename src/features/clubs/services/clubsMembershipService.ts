@@ -36,7 +36,13 @@ export async function joinClub(clubId: string, userId: string, answers: Record<s
         }
 
         const { error } = await supabase.from('club_members').insert({ club_id: clubId, user_id: userId, role: 'member', status: 'active' });
-        if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to join this club right now.'));
+        if (error) {
+            if ((error as { code?: string }).code === '23505') {
+                const existing = await getMyMembership(clubId, userId);
+                if (existing) return { status: 'joined', membership: existing };
+            }
+            throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to join this club right now.'));
+        }
 
         const membership = await getMyMembership(clubId, userId);
         if (!membership) throw new Error('Membership was created but could not be loaded. Please refresh the club and try again.');

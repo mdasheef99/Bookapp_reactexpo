@@ -337,6 +337,9 @@ export const booksService = {
     },
 
     async getUserLibrary(userId: string, options?: UserLibraryQueryOptions) {
+        if (process.env.EXPO_PUBLIC_APP_ENV === 'development') {
+            return [];
+        }
         let query = supabase
             .from('user_books')
             .select(`

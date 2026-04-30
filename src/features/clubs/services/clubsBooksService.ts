@@ -93,13 +93,21 @@ export async function nominateClubBook(input: NominateClubBookInput): Promise<Cl
     });
 
     if (error) throw error;
-    return data as ClubBookNomination;
+    const result = Array.isArray(data) ? data[0] : data;
+    if (!result) {
+        throw new Error('Nomination response was empty');
+    }
+    return result as ClubBookNomination;
 }
 
 export async function castClubBookVote(nominationId: string): Promise<ClubBookVote> {
     const { data, error } = await supabase.rpc('cast_club_book_vote', { p_nomination_id: nominationId });
     if (error) throw error;
-    return data as ClubBookVote;
+    const result = Array.isArray(data) ? data[0] : data;
+    if (!result) {
+        throw new Error('Vote response was empty');
+    }
+    return result as ClubBookVote;
 }
 
 export async function removeClubBookVote(nominationId: string): Promise<void> {
@@ -110,7 +118,11 @@ export async function removeClubBookVote(nominationId: string): Promise<void> {
 export async function finalizeClubBookNomination(nominationId: string): Promise<Club> {
     const { data, error } = await supabase.rpc('finalize_club_book_nomination', { p_nomination_id: nominationId });
     if (error) throw error;
-    return data as Club;
+    const result = Array.isArray(data) ? data[0] : data;
+    if (!result) {
+        throw new Error('Finalize nomination response was empty');
+    }
+    return result as Club;
 }
 
 export async function getClubCurrentBookStatusOverview(clubId: string): Promise<ClubCurrentBookStatusOverview> {
