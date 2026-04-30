@@ -11,10 +11,15 @@ const mockUseCreateClubJoinQuestion = jest.fn();
 const mockUseUpdateClubJoinQuestion = jest.fn();
 const mockUseDeleteClubJoinQuestion = jest.fn();
 const mockUseFinalizeClubBookNomination = jest.fn();
+const mockUseNominateClubBook = jest.fn();
 const mockUseUpdateClub = jest.fn();
 const mockUseClubMembers = jest.fn();
 const mockUseUpdateClubMemberRole = jest.fn();
 const mockUseRemoveClubMember = jest.fn();
+const mockUseClubApplications = jest.fn();
+const mockUseReviewClubApplication = jest.fn();
+const mockUseClubInvitations = jest.fn();
+const mockUseCreateClubInvitation = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-router', () => ({
@@ -26,6 +31,7 @@ jest.mock('@/hooks/useTheme', () => ({
         colors: {
             bgPrimary: '#FFFFFF', bgCard: '#F8FAFC', bgSecondary: '#EEF2FF', border: '#CBD5E1', accent: '#4F46E5',
             textPrimary: '#0F172A', textSecondary: '#475569', textTertiary: '#94A3B8', accentLight: '#818CF8',
+            error: '#EF4444', errorLight: '#F87171', disabled: '#E0E0E0', disabledLight: '#CCCCCC',
         },
     }),
 }));
@@ -42,9 +48,19 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useUpdateClubJoinQuestion: (...args: unknown[]) => mockUseUpdateClubJoinQuestion(...args),
     useDeleteClubJoinQuestion: (...args: unknown[]) => mockUseDeleteClubJoinQuestion(...args),
     useFinalizeClubBookNomination: (...args: unknown[]) => mockUseFinalizeClubBookNomination(...args),
+    useNominateClubBook: (...args: unknown[]) => mockUseNominateClubBook(...args),
     useUpdateClub: (...args: unknown[]) => mockUseUpdateClub(...args),
     useUpdateClubMemberRole: (...args: unknown[]) => mockUseUpdateClubMemberRole(...args),
     useRemoveClubMember: (...args: unknown[]) => mockUseRemoveClubMember(...args),
+    useClubApplications: (...args: unknown[]) => mockUseClubApplications(...args),
+    useReviewClubApplication: (...args: unknown[]) => mockUseReviewClubApplication(...args),
+    useClubInvitations: (...args: unknown[]) => mockUseClubInvitations(...args),
+    useCreateClubInvitation: (...args: unknown[]) => mockUseCreateClubInvitation(...args),
+}));
+
+jest.mock('@/features/books/services/booksService', () => ({
+    __esModule: true,
+    searchGoogleBooks: jest.fn(),
 }));
 
 const baseClub = {
@@ -90,25 +106,30 @@ beforeEach(() => {
     mockUseUpdateClubJoinQuestion.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseDeleteClubJoinQuestion.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseFinalizeClubBookNomination.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
+    mockUseNominateClubBook.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'nomination-1' }), isPending: false });
     mockUseUpdateClub.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
     mockUseUpdateClubMemberRole.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'member-1' }), isPending: false });
     mockUseRemoveClubMember.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue(undefined), isPending: false });
+    mockUseClubApplications.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
+    mockUseReviewClubApplication.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseClubInvitations.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
+    mockUseCreateClubInvitation.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
 });
 
 describe('ClubManageScreen', () => {
-    it('shows current-book management alongside the admin-only sections for admins', () => {
+    it('shows club header and tab bar for admins with all tabs', () => {
         const { getByText, getByTestId } = render(<ClubManageScreen />);
 
-        expect(getByText('Manage club')).toBeOnTheScreen();
-        expect(getByText('Current book management')).toBeOnTheScreen();
-        expect(getByText('Basic settings')).toBeOnTheScreen();
-        expect(getByText('Current saved state')).toBeOnTheScreen();
-        expect(getByTestId('settings-name-input')).toBeOnTheScreen();
-        expect(getByText('Members & roles')).toBeOnTheScreen();
-        expect(getByText('Add join question')).toBeOnTheScreen();
+        expect(getByText('Founders Circle')).toBeOnTheScreen();
+        expect(getByText('Current Book')).toBeOnTheScreen();
+        expect(getByText('Settings')).toBeOnTheScreen();
+        expect(getByText('Members')).toBeOnTheScreen();
+        expect(getByText('Join Questions')).toBeOnTheScreen();
+        // Default active tab is Current Book
+        expect(getByText('Current book')).toBeOnTheScreen();
     });
 
-    it('shows current-book management for active moderators while keeping admin-only sections hidden', async () => {
+    it('shows only Current Book tab for active moderators', async () => {
         mockUserId = 'reader-2';
         mockUseClubMembership.mockReturnValue({ data: { role: 'moderator', status: 'active' }, isLoading: false });
         mockUseClubBookNominations.mockReturnValue({
@@ -124,13 +145,16 @@ describe('ClubManageScreen', () => {
             refetch: jest.fn(),
         });
 
-        const { getByText, getByTestId, queryByText } = render(<ClubManageScreen />);
+        const { getByText, getByTestId, queryByText, queryByTestId } = render(<ClubManageScreen />);
 
-        await waitFor(() => expect(getByText('Current book management')).toBeOnTheScreen());
+        await waitFor(() => expect(getByText('Current book')).toBeOnTheScreen());
 
-        expect(getByTestId('admin-only-manage-notice')).toBeOnTheScreen();
-        expect(queryByText('Basic settings')).toBeNull();
-        expect(getByTestId('manage-finalize-nomination-1')).toBeOnTheScreen();
+        // Moderators see Current Book tab but not admin tabs
+        expect(queryByText('Settings')).toBeNull();
+        expect(queryByText('Members')).toBeNull();
+        // Moderators can see nominations but cannot finalize (admin-only action)
+        expect(getByTestId('manage-current-book-title-nomination-1')).toBeOnTheScreen();
+        expect(queryByTestId('manage-finalize-nomination-1')).toBeNull();
     });
 
     it('saves updated club settings through the manage-club settings mutation', async () => {
@@ -140,6 +164,9 @@ describe('ClubManageScreen', () => {
         mockUseUpdateClub.mockReturnValue({ mutateAsync, isPending: false });
 
         const { getByTestId, getByText } = render(<ClubManageScreen />);
+
+        // Navigate to Settings tab
+        fireEvent.press(getByText('Settings'));
 
         fireEvent.changeText(getByTestId('settings-name-input'), 'Updated Founders Circle');
         fireEvent.changeText(getByTestId('settings-description-input'), 'A better club summary');
@@ -174,9 +201,11 @@ describe('ClubManageScreen', () => {
 
         const { getByTestId, getByText } = render(<ClubManageScreen />);
 
+        // Navigate to Settings tab
+        fireEvent.press(getByText('Settings'));
+
         fireEvent.changeText(getByTestId('settings-max-members-input'), '8');
 
-        expect(getByTestId('settings-validation-message')).toBeOnTheScreen();
         expect(getByText('Member cap cannot be below the current member count of 12.')).toBeOnTheScreen();
         fireEvent.press(getByTestId('save-settings-button'));
 
@@ -186,7 +215,10 @@ describe('ClubManageScreen', () => {
     });
 
     it('resets unsaved settings changes back to the saved club state', () => {
-        const { getByTestId } = render(<ClubManageScreen />);
+        const { getByTestId, getByText } = render(<ClubManageScreen />);
+
+        // Navigate to Settings tab
+        fireEvent.press(getByText('Settings'));
 
         fireEvent.changeText(getByTestId('settings-name-input'), 'Temporary rename');
         fireEvent.changeText(getByTestId('settings-cover-url-input'), 'https://images.example.com/temp.png');
@@ -209,17 +241,19 @@ describe('ClubManageScreen', () => {
 
         const { getByText, queryByTestId } = render(<ClubManageScreen />);
 
-        expect(getByText(/author clubs keep their club type locked here/i)).toBeOnTheScreen();
+        // Navigate to Settings tab
+        fireEvent.press(getByText('Settings'));
+
         expect(queryByTestId('club-type-option-public')).toBeNull();
     });
 
-    it('finalizes a closed nomination from Manage Club for an active moderator', async () => {
-        mockUserId = 'reader-2';
+    it('finalizes a closed nomination from Manage Club for an admin', async () => {
+        mockUserId = 'admin-1';
         const mutateAsync = jest.fn().mockResolvedValue({ id: 'club-1' });
         const refetchClub = jest.fn().mockResolvedValue({ data: null });
         const refetchNominations = jest.fn().mockResolvedValue({ data: null });
         mockUseClubPublicDetail.mockReturnValue({ data: baseClub, isLoading: false, isError: false, refetch: refetchClub });
-        mockUseClubMembership.mockReturnValue({ data: { role: 'moderator', status: 'active' }, isLoading: false });
+        mockUseClubMembership.mockReturnValue({ data: { role: 'admin', status: 'active' }, isLoading: false });
         mockUseClubBookNominations.mockReturnValue({
             data: [{
                 id: 'nomination-1', club_id: 'club-1', book_id: 'book-1', nominated_by: 'reader-3', vote_count: 6, status: 'active', voting_ends_at: '2000-01-01T00:00:00Z', created_at: '2026-03-10T00:00:00Z',
@@ -259,6 +293,9 @@ describe('ClubManageScreen', () => {
 
         const { getByTestId, getByText } = render(<ClubManageScreen />);
 
+        // Navigate to Members tab
+        fireEvent.press(getByText('Members'));
+
         fireEvent.press(getByTestId('toggle-moderator-reader-2'));
 
         await waitFor(() => {
@@ -279,8 +316,13 @@ describe('ClubManageScreen', () => {
 
         const { getByTestId, getByText } = render(<ClubManageScreen />);
 
-        expect(getByTestId('toggle-moderator-reader-2')).toBeDisabled();
-        expect(getByText('Requires Pro or Pro+ membership.')).toBeOnTheScreen();
+        // Navigate to Members tab
+        fireEvent.press(getByText('Members'));
+
+        // The button is not visually disabled (member is active), but pressing it shows an error
+        fireEvent.press(getByTestId('toggle-moderator-reader-2'));
+
+        expect(getByText('Only Pro or Pro+ users can become club moderators. This member is currently on the Free tier.')).toBeOnTheScreen();
     });
 
     it('removes a non-admin member from the current member list after confirmation', async () => {
@@ -303,6 +345,9 @@ describe('ClubManageScreen', () => {
 
         const { getByTestId, getByText } = render(<ClubManageScreen />);
 
+        // Navigate to Members tab
+        fireEvent.press(getByText('Members'));
+
         fireEvent.press(getByTestId('remove-member-reader-2'));
 
         expect(alertSpy).toHaveBeenCalled();
@@ -312,4 +357,160 @@ describe('ClubManageScreen', () => {
         expect(refetchMembers).toHaveBeenCalled();
         expect(getByText('Reader Two was removed from the club.')).toBeOnTheScreen();
     });
+
+    it('creates a join question from the Join Questions tab', async () => {
+        const createMutateAsync = jest.fn().mockResolvedValue({ id: 'q-1' });
+        const refetchQuestions = jest.fn().mockResolvedValue({ data: null });
+        mockUseCreateClubJoinQuestion.mockReturnValue({ mutateAsync: createMutateAsync, isPending: false });
+        mockUseClubJoinQuestions.mockReturnValue({ data: [], isLoading: false, refetch: refetchQuestions });
+
+        const { getByTestId, getByText } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Join Questions'));
+        await waitFor(() => expect(getByText('Join questions')).toBeOnTheScreen());
+
+        fireEvent.changeText(getByTestId('new-question-input'), 'What is your favorite genre?');
+        fireEvent.press(getByTestId('create-question-button'));
+
+        await waitFor(() => {
+            expect(createMutateAsync).toHaveBeenCalledWith({
+                clubId: 'club-1',
+                input: {
+                    question: 'What is your favorite genre?',
+                    isRequired: true,
+                    orderIndex: 0,
+                },
+            });
+        });
+        expect(refetchQuestions).toHaveBeenCalled();
+        expect(getByText('Join question added.')).toBeOnTheScreen();
+    });
+
+    it('searches Google Books and sets a current book via the manual override flow', async () => {
+        const nominateMutateAsync = jest.fn().mockResolvedValue({ id: 'nomination-override-1' });
+        const finalizeMutateAsync = jest.fn().mockResolvedValue({ id: 'club-1' });
+        const refetchClub = jest.fn().mockResolvedValue({ data: null });
+        const refetchNominations = jest.fn().mockResolvedValue({ data: null });
+        const searchGoogleBooks = jest.requireMock('@/features/books/services/booksService').searchGoogleBooks;
+        searchGoogleBooks.mockResolvedValue({
+            items: [
+                {
+                    id: 'book-override-1',
+                    volumeInfo: {
+                        title: 'Test Override Book',
+                        authors: ['Test Author'],
+                        imageLinks: { thumbnail: 'https://example.com/cover.jpg' },
+                    },
+                },
+            ],
+        });
+
+        mockUseClubPublicDetail.mockReturnValue({ data: baseClub, isLoading: false, isError: false, refetch: refetchClub });
+        mockUseClubBookNominations.mockReturnValue({ data: [], isLoading: false, isError: false, error: null, refetch: refetchNominations });
+        mockUseNominateClubBook.mockReturnValue({ mutateAsync: nominateMutateAsync, isPending: false });
+        mockUseFinalizeClubBookNomination.mockReturnValue({ mutateAsync: finalizeMutateAsync, isPending: false });
+
+        const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+            const confirmButton = buttons?.find((button) => button.text === 'Set current book');
+            confirmButton?.onPress?.();
+        });
+
+        const { getByTestId, getByText } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByTestId('manage-toggle-override'));
+        await waitFor(() => expect(getByText('Manual override')).toBeOnTheScreen());
+
+        fireEvent.changeText(getByTestId('manage-override-search'), 'Test Override');
+        fireEvent.press(getByText('Search'));
+
+        await waitFor(() => expect(searchGoogleBooks).toHaveBeenCalledWith('Test Override', 0, 10));
+        await waitFor(() => expect(getByTestId('manage-override-result-book-override-1')).toBeOnTheScreen());
+
+        fireEvent.press(getByTestId('manage-override-result-book-override-1'));
+        fireEvent.press(getByTestId('manage-override-set'));
+
+        expect(alertSpy).toHaveBeenCalled();
+        await waitFor(() => {
+            expect(nominateMutateAsync).toHaveBeenCalled();
+        });
+        await waitFor(() => {
+            expect(finalizeMutateAsync).toHaveBeenCalledWith({ nominationId: 'nomination-override-1' });
+        });
+        expect(refetchClub).toHaveBeenCalled();
+        expect(refetchNominations).toHaveBeenCalled();
+    });
+
+    it('approves a pending application from the Applications tab', async () => {
+        const reviewMutateAsync = jest.fn().mockResolvedValue(undefined);
+        const refetchApplications = jest.fn().mockResolvedValue({ data: null });
+        mockUseClubPublicDetail.mockReturnValue({
+            data: { ...baseClub, club_type: 'approval' },
+            isLoading: false,
+            isError: false,
+            refetch: jest.fn(),
+        });
+        mockUseClubApplications.mockReturnValue({
+            data: [
+                {
+                    id: 'app-1',
+                    club_id: 'club-1',
+                    user_id: 'applicant-1',
+                    status: 'pending',
+                    answers: [{ question: 'Why join?', answer: 'I love books!' }],
+                    created_at: '2026-04-30T00:00:00Z',
+                    user_profile: { display_name: 'Book Lover', username: 'booklover' },
+                },
+            ],
+            isLoading: false,
+            refetch: refetchApplications,
+        });
+        mockUseReviewClubApplication.mockReturnValue({ mutateAsync: reviewMutateAsync, isPending: false });
+
+        const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+            const approveButton = buttons?.find((button) => button.text === 'Approve');
+            approveButton?.onPress?.();
+        });
+
+        const { getByText } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Applications'));
+        await waitFor(() => expect(getByText('Book Lover')).toBeOnTheScreen());
+
+        fireEvent.press(getByText('Approve'));
+        expect(alertSpy).toHaveBeenCalled();
+
+        await waitFor(() => {
+            expect(reviewMutateAsync).toHaveBeenCalledWith({ applicationId: 'app-1', decision: 'approved' });
+        });
+        expect(refetchApplications).toHaveBeenCalled();
+        expect(getByText('Application approved.')).toBeOnTheScreen();
+    });
+
+    it('sends an invitation from the Invitations tab', async () => {
+        const inviteMutateAsync = jest.fn().mockResolvedValue({ id: 'invite-1' });
+        const refetchInvitations = jest.fn().mockResolvedValue({ data: null });
+        mockUseClubPublicDetail.mockReturnValue({
+            data: { ...baseClub, club_type: 'invite_only' },
+            isLoading: false,
+            isError: false,
+            refetch: jest.fn(),
+        });
+        mockUseClubInvitations.mockReturnValue({ data: [], isLoading: false, refetch: refetchInvitations });
+        mockUseCreateClubInvitation.mockReturnValue({ mutateAsync: inviteMutateAsync, isPending: false });
+
+        const { getByTestId, getByText, getAllByText } = render(<ClubManageScreen />);
+
+        fireEvent.press(getAllByText('Invitations')[0]);
+        await waitFor(() => expect(getByTestId('manage-invite-username-input')).toBeOnTheScreen());
+
+        fireEvent.changeText(getByTestId('manage-invite-username-input'), 'newmember');
+        fireEvent.press(getByText('Invite'));
+
+        await waitFor(() => {
+            expect(inviteMutateAsync).toHaveBeenCalledWith({ clubId: 'club-1', inviteeUsername: 'newmember' });
+        });
+        expect(refetchInvitations).toHaveBeenCalled();
+        expect(getByText('Invitation sent.')).toBeOnTheScreen();
+    });
+
 });
