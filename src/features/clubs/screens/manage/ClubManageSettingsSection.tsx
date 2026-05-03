@@ -1,6 +1,9 @@
 import { useState, useMemo } from 'react';
-import { StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '@/hooks/useTheme';
+import { supabase } from '@/lib/supabase';
 import { type ClubPublicDetails, type AccessLevel, type ClubType, type MeetingType } from '@/features/clubs/services/clubsService';
 import type { FeedbackState, SettingsDraft } from './manageUtils';
 import {
@@ -46,6 +49,65 @@ export function ClubManageSettingsSection({ club, settings, setSettings, isSavin
         setHasTouched(true);
     };
 
+    const [isUploadingCover, setIsUploadingCover] = useState(false);
+    const [coverError, setCoverError] = useState<string | null>(null);
+
+    const pickCoverImage = async () => {
+        setCoverError(null);
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                setCoverError('Permission denied. Please allow photo access to select a cover image, or enter a URL below.');
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                mediaTypes: (ImagePicker as any).MediaType?.Images ?? ImagePicker.MediaTypeOptions.Images,
+                quality: 0.85,
+                allowsEditing: true,
+                aspect: [3, 4],
+            });
+
+            if (result.canceled || !result.assets || result.assets.length === 0) return;
+
+            const asset = result.assets[0];
+            setIsUploadingCover(true);
+
+            const photoUri = asset.uri;
+            const response = await fetch(photoUri);
+            if (!response.ok) {
+                throw new Error(`Fetch failed: ${response.status} ${response.statusText}`);
+            }
+            const blob = await response.blob();
+
+            const contentType = asset.mimeType || blob.type || 'image/jpeg';
+            const ext = contentType === 'image/png' ? 'png' : contentType === 'image/webp' ? 'webp' : 'jpg';
+            const path = `${club.id}/cover.${ext}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('club-banners')
+                .upload(path, blob, { contentType, upsert: true });
+
+            if (uploadError) throw uploadError;
+
+            const { data } = supabase.storage.from('club-banners').getPublicUrl(path);
+            updateField('coverUrl', data.publicUrl);
+        } catch (error: any) {
+            const message = error?.message || String(error);
+
+            if (message.toLowerCase().includes('row-level security') || message.toLowerCase().includes('rls') || message.toLowerCase().includes('new row violates')) {
+                setCoverError(
+                    'Upload blocked by server security policy. To fix this, add an RLS policy in Supabase Storage → club-banners → Policies: "Allow authenticated users to upload objects to bucket_id = club-banners". You can also enter an image URL below.'
+                );
+            } else {
+                setCoverError(`Upload failed: ${message}. You can still enter a URL manually below.`);
+            }
+        } finally {
+            setIsUploadingCover(false);
+        }
+    };
+
     const CLUB_TYPE_OPTIONS: ClubType[] = ['public', 'approval', 'invite_only'];
     const ACCESS_LEVEL_OPTIONS: AccessLevel[] = ['all', 'pro', 'pro_plus'];
     const MEETING_TYPE_OPTIONS: (MeetingType | null)[] = [null, 'online_only', 'venue_based', 'hybrid'];
@@ -76,7 +138,37 @@ export function ClubManageSettingsSection({ club, settings, setSettings, isSavin
                 numberOfLines={3}
             />
 
-            <Text style={[styles.label, { color: colors.textSecondary }]}>Cover image URL</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Cover image</Text>
+            {localSettings.coverUrl ? (
+                <View style={styles.coverPreviewContainer}>
+                    <Image
+                        source={{ uri: localSettings.coverUrl }}
+                        style={[styles.coverPreview, { borderColor: colors.border }]}
+                        contentFit="cover"
+                        testID="settings-cover-preview"
+                    />
+                </View>
+            ) : null}
+            {coverError && (
+                <View style={[styles.coverErrorBanner, { backgroundColor: colors.errorLight, borderColor: colors.error }]}>
+                    <Text style={[styles.coverErrorText, { color: colors.error }]}>{coverError}</Text>
+                </View>
+            )}
+            <TouchableOpacity
+                onPress={pickCoverImage}
+                disabled={isUploadingCover}
+                style={[styles.coverButton, { borderColor: colors.accent, opacity: isUploadingCover ? 0.7 : 1 }]}
+                testID="settings-pick-cover"
+            >
+                {isUploadingCover ? (
+                    <ActivityIndicator size="small" color={colors.accent} />
+                ) : (
+                    <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 14 }}>
+                        {localSettings.coverUrl ? 'Change cover image' : 'Select cover image'}
+                    </Text>
+                )}
+            </TouchableOpacity>
+            <Text style={[styles.label, { color: colors.textSecondary, marginTop: 12 }]}>Or enter image URL</Text>
             <TextInput
                 testID="settings-cover-url-input"
                 value={localSettings.coverUrl}
@@ -233,5 +325,33 @@ const styles = StyleSheet.create({
     resetText: {
         fontSize: 13,
         fontWeight: '600',
+    },
+    coverPreviewContainer: {
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    coverPreview: {
+        width: 120,
+        height: 160,
+        borderRadius: 8,
+        borderWidth: 1,
+    },
+    coverButton: {
+        borderWidth: 1.5,
+        borderRadius: 12,
+        paddingVertical: 12,
+        alignItems: 'center',
+    },
+    coverErrorBanner: {
+        borderWidth: 1,
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        marginBottom: 12,
+    },
+    coverErrorText: {
+        fontSize: 13,
+        fontWeight: '600',
+        lineHeight: 18,
     },
 });

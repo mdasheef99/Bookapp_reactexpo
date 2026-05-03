@@ -74,7 +74,7 @@ export default function CreateListingScreen() {
             return;
         }
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ImagePicker.MediaType.Images,
             quality: 0.8,
             allowsMultipleSelection: Platform.OS !== 'web',
             selectionLimit: 4 - photoUris.length,
