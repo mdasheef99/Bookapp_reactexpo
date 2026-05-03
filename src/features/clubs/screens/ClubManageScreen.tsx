@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { View, Text, ScrollView, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { navigateBackOrFallback } from '@/lib/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { type GoogleBook } from '@/features/books/services/booksService';
 import {
@@ -229,6 +231,14 @@ export default function ClubManageScreen() {
 
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.content}>
+            <View style={styles.headerRow}>
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                    <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+                </TouchableOpacity>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Manage Club</Text>
+                <View style={styles.headerSpacer} />
+            </View>
+
             <View style={[styles.headerCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{club.name}</Text>
                 <Text style={[styles.headerMeta, { color: colors.textSecondary }]}>
@@ -338,13 +348,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
     },
+    headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+    iconButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+    headerTitle: { flex: 1, marginHorizontal: 12, fontSize: 18, fontWeight: '700' },
+    headerSpacer: { width: 40 },
     headerCard: {
         padding: 14,
         borderRadius: 12,
         borderWidth: 1,
         marginBottom: 14,
     },
-    headerTitle: {
+    cardHeaderTitle: {
         fontSize: 18,
         fontWeight: '700',
     },

@@ -1,7 +1,9 @@
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { navigateBackOrFallback } from '@/lib/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
     useClubCurrentBookStatusOverview,
@@ -73,7 +75,13 @@ export default function ClubReadingProgressScreen(): JSX.Element {
 
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.content}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Reading Progress</Text>
+            <View style={styles.headerRow}>
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                    <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+                </TouchableOpacity>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Reading Progress</Text>
+                <View style={styles.headerSpacer} />
+            </View>
 
             {!hasBook ? (
                 <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
@@ -167,6 +175,10 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     content: { padding: 24, paddingBottom: 48 },
     loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+    iconButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+    headerTitle: { flex: 1, marginHorizontal: 12, fontSize: 18, fontWeight: '700' },
+    headerSpacer: { width: 40 },
     title: { fontSize: 22, fontWeight: '800', marginBottom: 16 },
     errorTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
     errorBody: { fontSize: 14, textAlign: 'center', lineHeight: 20 },

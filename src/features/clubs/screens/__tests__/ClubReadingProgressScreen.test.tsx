@@ -15,7 +15,11 @@ jest.mock('@/hooks/useTheme', () => ({
     useTheme: (...args: unknown[]) => mockUseTheme(...args),
 }));
 jest.mock('expo-router', () => ({
+    router: { back: jest.fn(), push: jest.fn(), replace: jest.fn() },
     useLocalSearchParams: (...args: unknown[]) => mockUseLocalSearchParams(...args),
+}));
+jest.mock('@/lib/navigation', () => ({
+    navigateBackOrFallback: jest.fn(),
 }));
 jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useClubPublicDetail: (...args: unknown[]) => mockUseClubPublicDetail(...args),

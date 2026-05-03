@@ -25,6 +25,9 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('@/hooks/useDebounce', () => ({
     useDebounce: (value: string) => value,
 }));
+jest.mock('@/lib/navigation', () => ({
+    navigateBackOrFallback: jest.fn(),
+}));
 jest.mock('expo-router', () => ({
     router: { back: jest.fn() },
     useLocalSearchParams: () => ({ clubId: 'club-1' }),
