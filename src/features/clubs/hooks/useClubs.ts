@@ -504,6 +504,30 @@ export function useRemoveClubMember() {
     });
 }
 
+/**
+ * Leave a club and invalidate all related query caches.
+ * Mirrors the cache-invalidation pattern of `useRemoveClubMember`.
+ * On success, the user is no longer a member and all club-derived
+ * caches (public detail, browse list, members, membership, current-book status)
+ * are refetched automatically.
+ */
+export function useLeaveClub() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ clubId, userId }: { clubId: string; userId: string }) => clubsService.leaveClub(clubId, userId),
+        onSuccess: async (_result, variables) => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(variables.clubId), refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.browseRoot, refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.members(variables.clubId), refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.membership(variables.clubId, variables.userId), refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(variables.clubId), refetchType: 'all' }),
+            ]);
+        },
+    });
+}
+
 export function useCreateClubJoinQuestion() {
     const queryClient = useQueryClient();
 

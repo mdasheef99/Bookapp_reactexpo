@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { navigateBackOrFallback } from '@/lib/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { profileService } from '@/features/auth/services/profileService';
 import { useClubEvent, useClubEventVenues, useClubMembership, useClubPublicDetail, useCreateClubEvent, useUpdateClubEvent } from '@/features/clubs/hooks/useClubs';
@@ -13,7 +14,7 @@ import { canCreateClubEvents, canManageClubEvent, combineDateAndTime, toDateInpu
 type LocationMode = 'linked_venue' | 'manual_location';
 
 export default function ClubEventEditorScreen() {
-    const { clubId, eventId } = useLocalSearchParams<{ clubId: string; eventId?: string }>();
+    const { clubId, eventId, preselectedVenueId } = useLocalSearchParams<{ clubId: string; eventId?: string; preselectedVenueId?: string }>();
     const isEditing = !!eventId;
     const { colors } = useTheme();
     const { user } = useAuth();
@@ -77,6 +78,13 @@ export default function ClubEventEditorScreen() {
         }
     }, [linkedVenues, locationMode, selectedVenueId]);
 
+    // Auto-select venue when returning from the venue picker
+    useEffect(() => {
+        if (!preselectedVenueId) return;
+        setSelectedVenueId(preselectedVenueId);
+        setLocationMode('linked_venue');
+    }, [preselectedVenueId]);
+
     const canCreate = canCreateClubEvents({ userId, club, role: membership?.role, status: membership?.status, membershipTier: viewerMembershipTier });
     const canManageCurrentEvent = event ? canManageClubEvent({ userId, club, role: membership?.role, status: membership?.status, membershipTier: viewerMembershipTier, event }) : false;
     const canSubmit = isEditing ? canManageCurrentEvent : canCreate;
@@ -130,7 +138,7 @@ export default function ClubEventEditorScreen() {
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.contentContainer}>
             <View style={styles.headerRow}>
-                <TouchableOpacity onPress={() => router.back()} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity>
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}/events`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>{isEditing ? 'Edit club event' : 'Create club event'}</Text>
                 <View style={styles.headerSpacer} />
             </View>
@@ -159,7 +167,16 @@ export default function ClubEventEditorScreen() {
                 {requiresPhysicalLocation ? <>
                     <Text style={[styles.label, { color: colors.textPrimary }]}>Physical location</Text>
                     {hasLinkedVenues ? <View style={styles.row}><TouchableOpacity onPress={() => setLocationMode('linked_venue')} style={[styles.choiceButton, { backgroundColor: locationMode === 'linked_venue' ? colors.accent : colors.bgPrimary, borderColor: locationMode === 'linked_venue' ? colors.accent : colors.border }]} testID="club-event-location-linked"><Text style={[styles.choiceText, { color: locationMode === 'linked_venue' ? '#FFFFFF' : colors.textPrimary }]}>Use linked venue</Text></TouchableOpacity><TouchableOpacity onPress={() => setLocationMode('manual_location')} style={[styles.choiceButton, { backgroundColor: locationMode === 'manual_location' ? colors.accent : colors.bgPrimary, borderColor: locationMode === 'manual_location' ? colors.accent : colors.border }]} testID="club-event-location-manual"><Text style={[styles.choiceText, { color: locationMode === 'manual_location' ? '#FFFFFF' : colors.textPrimary }]}>Enter meetup place</Text></TouchableOpacity></View> : <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>This club does not have a linked venue yet, so this event will use a meetup-place field.</Text>}
-                    {locationMode === 'linked_venue' && hasLinkedVenues ? linkedVenues.map((venueLink) => <TouchableOpacity key={venueLink.venue_id ?? venueLink.venue?.id ?? venueLink.venue?.name} onPress={() => setSelectedVenueId(venueLink.venue_id ?? null)} style={[styles.venueCard, { backgroundColor: colors.bgPrimary, borderColor: selectedVenueId === venueLink.venue_id ? colors.accent : colors.border }]} testID={`club-event-venue-${venueLink.venue_id}`}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{venueLink.venue?.name || 'Unnamed venue'}</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{[venueLink.venue?.address_line1, venueLink.venue?.city].filter(Boolean).join(', ') || 'Venue details will be shown to members.'}</Text></TouchableOpacity>) : <TextInput value={manualLocation} onChangeText={setManualLocation} placeholder="Library reading room, café upstairs, bookstore front hall…" placeholderTextColor={colors.textTertiary} multiline style={[styles.input, styles.multilineInput, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgPrimary }]} testID="club-event-manual-location" />}
+                    {locationMode === 'linked_venue' && hasLinkedVenues ? <>
+                        <TouchableOpacity
+                            onPress={() => router.push(`/clubs/${clubId}/venues?returnTo=events`)}
+                            style={[styles.secondaryActionButton, { borderColor: colors.accent, marginBottom: 12 }]}
+                            testID="event-browse-venues"
+                        >
+                            <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 14 }}>Browse all venues</Text>
+                        </TouchableOpacity>
+                        {linkedVenues.map((venueLink) => <TouchableOpacity key={venueLink.venue_id ?? venueLink.venue?.id ?? venueLink.venue?.name} onPress={() => setSelectedVenueId(venueLink.venue_id ?? null)} style={[styles.venueCard, { backgroundColor: colors.bgPrimary, borderColor: selectedVenueId === venueLink.venue_id ? colors.accent : colors.border }]} testID={`club-event-venue-${venueLink.venue_id}`}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{venueLink.venue?.name || 'Unnamed venue'}</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{[venueLink.venue?.address_line1, venueLink.venue?.city].filter(Boolean).join(', ') || 'Venue details will be shown to members.'}</Text></TouchableOpacity>)}
+                    </> : <TextInput value={manualLocation} onChangeText={setManualLocation} placeholder="Library reading room, café upstairs, bookstore front hall…" placeholderTextColor={colors.textTertiary} multiline style={[styles.input, styles.multilineInput, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgPrimary }]} testID="club-event-manual-location" />}
                 </> : null}
 
                 {requiresMeetingLink ? <><Text style={[styles.label, { color: colors.textPrimary }]}>Meeting link</Text><TextInput value={meetingLink} onChangeText={setMeetingLink} placeholder="https://meet.example.com/club-room" placeholderTextColor={colors.textTertiary} autoCapitalize="none" autoCorrect={false} style={[styles.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgPrimary }]} testID="club-event-meeting-link" /></> : null}
@@ -179,4 +196,5 @@ const styles = StyleSheet.create({
     sectionCard: { borderWidth: 1, borderRadius: 18, padding: 16, marginBottom: 14 }, sectionTitle: { fontSize: 15, fontWeight: '700', marginBottom: 8 }, sectionBody: { fontSize: 14, lineHeight: 20 }, noticeCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12 }, noticeTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6 }, noticeBody: { fontSize: 14, lineHeight: 20 },
     label: { fontSize: 14, fontWeight: '700', marginTop: 14, marginBottom: 8 }, input: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, fontSize: 14 }, multilineInput: { minHeight: 96, textAlignVertical: 'top' }, row: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' }, rowInput: { flex: 1, minWidth: 120 }, choiceButton: { flex: 1, minWidth: 120, borderWidth: 1, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 12, alignItems: 'center' }, choiceText: { fontSize: 14, fontWeight: '700' }, venueCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 10 },
     primaryActionButton: { marginTop: 18, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }, primaryActionText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' }, feedbackBanner: { marginTop: 14, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }, feedbackText: { fontSize: 13, fontWeight: '600', lineHeight: 18 },
+    secondaryActionButton: { borderWidth: 1.5, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
 });

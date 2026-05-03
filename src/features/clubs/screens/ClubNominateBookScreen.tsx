@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import { navigateBackOrFallback } from '@/lib/navigation';
 import * as Haptics from 'expo-haptics';
 import { SearchBar } from '@/components/search/SearchBar';
 import { useTheme } from '@/hooks/useTheme';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { booksService, type GoogleBook } from '@/features/books/services/booksService';
 import { useClubMembership, useClubPublicDetail, useNominateClubBook } from '@/features/clubs/hooks/useClubs';
@@ -49,17 +51,29 @@ export default function ClubNominateBookScreen() {
     const { data: membership, isLoading: isMembershipLoading } = useClubMembership(clubId ?? null, userId);
     const nominateMutation = useNominateClubBook();
     const [query, setQuery] = useState('');
+    const debouncedQuery = useDebounce(query, 400);
     const [results, setResults] = useState<GoogleBook[]>([]);
     const [searched, setSearched] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
     const [selectedBook, setSelectedBook] = useState<GoogleBook | null>(null);
     const [feedback, setFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
+    const [fromCache, setFromCache] = useState(false);
     const [votingDays, setVotingDays] = useState(7);
 
     const canNominate = membership?.status === 'active';
 
-    const handleSearch = async () => {
-        const trimmed = query.trim();
+    // Auto-search after 400ms of typing inactivity to reduce Google Books 429 rate-limit errors.
+    // `isSearching` is intentionally excluded from deps to avoid re-triggering when the flag flips.
+    useEffect(() => {
+        const trimmed = debouncedQuery.trim();
+        if (trimmed.length >= 3 && !isSearching) {
+            handleSearch(trimmed);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debouncedQuery]);
+
+    const handleSearch = async (searchQuery?: string) => {
+        const trimmed = (searchQuery ?? query).trim();
         if (trimmed.length < 3) {
             setFeedback({ type: 'error', message: 'Enter at least 3 characters to search Google Books.' });
             return;
@@ -69,9 +83,11 @@ export default function ClubNominateBookScreen() {
             setFeedback(null);
             setIsSearching(true);
             setSearched(true);
-            const response = await booksService.searchGoogleBooks(trimmed, 0, 10);
+            const response = await booksService.searchGoogleBooksCached(trimmed, 0, 10);
             setResults(response.items);
+            setFromCache(response.fromCache);
         } catch (error) {
+            setFromCache(false);
             if (isTooManyRequestsError(error)) {
                 setFeedback({ type: 'error', message: 'Google Books search is temporarily rate-limited. Please try again in a moment, or enter book details manually below.' });
             } else {
@@ -114,7 +130,7 @@ export default function ClubNominateBookScreen() {
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.contentContainer}>
             <View style={styles.headerRow}>
-                <TouchableOpacity onPress={() => router.back()} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity>
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}?tab=nominations`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Nominate a book</Text>
                 <View style={styles.headerSpacer} />
             </View>
@@ -125,6 +141,7 @@ export default function ClubNominateBookScreen() {
                 {!userId ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Sign in required</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>You must be signed in before you can nominate a book.</Text></View> : null}
                 {userId && !canNominate ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Active membership required</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Only active club members can nominate books for this club.</Text></View> : null}
                 {feedback ? <View style={[styles.feedbackBanner, { backgroundColor: feedback.type === 'success' ? '#DCFCE7' : '#FEE2E2', borderColor: feedback.type === 'success' ? '#22C55E' : '#EF4444' }]}><Text style={[styles.feedbackText, { color: feedback.type === 'success' ? '#166534' : '#991B1B' }]}>{feedback.message}</Text></View> : null}
+                {fromCache && results.length > 0 && !feedback ? <View style={[styles.cacheBanner, { backgroundColor: colors.accentLight, borderColor: colors.accent }]}><Text style={{ color: colors.accent }}>Showing cached results</Text></View> : null}
             </View>
 
             {canNominate ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
@@ -187,4 +204,5 @@ const styles = StyleSheet.create({
     presetText: { fontSize: 13, fontWeight: '700' },
     primaryActionButton: { marginTop: 16, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }, primaryActionText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
     feedbackBanner: { marginTop: 14, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }, feedbackText: { fontSize: 13, fontWeight: '600', lineHeight: 18 },
+    cacheBanner: { marginTop: 14, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, alignItems: 'center' },
 });

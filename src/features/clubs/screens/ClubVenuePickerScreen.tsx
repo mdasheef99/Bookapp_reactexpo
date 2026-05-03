@@ -1,0 +1,133 @@
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { navigateBackOrFallback } from '@/lib/navigation';
+import { useTheme } from '@/hooks/useTheme';
+import { useClubEventVenues, useClubPublicDetail } from '@/features/clubs/hooks/useClubs';
+import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
+
+export default function ClubVenuePickerScreen(): JSX.Element {
+    const { clubId, returnTo } = useLocalSearchParams<{ clubId: string; returnTo?: string }>();
+    const { colors } = useTheme();
+
+    const { data: club, isLoading: isClubLoading, isError: isClubError, error: clubError } = useClubPublicDetail(clubId ?? null);
+    const { data: linkedVenues = [], isLoading: isVenuesLoading, isError: isVenuesError, error: venuesError } = useClubEventVenues(clubId ?? null, !!clubId);
+
+    const handleSelectVenue = (venueId: string) => {
+        const target = returnTo && returnTo !== 'events' ? `/clubs/${clubId}/${returnTo}` : `/clubs/${clubId}/events`;
+        router.replace(`${target}?preselectedVenueId=${venueId}`);
+    };
+
+    if (isClubLoading || isVenuesLoading) {
+        return (
+            <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary }]}>
+                <ActivityIndicator size="large" color={colors.accent} testID="venue-picker-loading" />
+            </View>
+        );
+    }
+
+    if (isClubError || !club) {
+        return (
+            <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}>
+                <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>Unable to load club</Text>
+                <Text style={[styles.errorBody, { color: colors.textSecondary }]}>{getClubsEntitlementErrorMessage(clubError, 'Unable to load this club right now.')}</Text>
+            </View>
+        );
+    }
+
+    if (isVenuesError) {
+        return (
+            <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}>
+                <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>Unable to load venues</Text>
+                <Text style={[styles.errorBody, { color: colors.textSecondary }]}>{getClubsEntitlementErrorMessage(venuesError, 'Unable to load venues right now.')}</Text>
+            </View>
+        );
+    }
+
+    const hasVenues = linkedVenues.length > 0;
+
+    return (
+        <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.content}>
+            <View style={styles.headerRow}>
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="back-button">
+                    <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+                </TouchableOpacity>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Select a venue</Text>
+                <View style={styles.headerSpacer} />
+            </View>
+
+            {!hasVenues ? (
+                <View style={[styles.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                    <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No venues registered</Text>
+                    <Text style={[styles.emptyBody, { color: colors.textSecondary }]}>
+                        This club does not have any linked venues yet. Admins can add venues from the Manage Club screen.
+                    </Text>
+                </View>
+            ) : (
+                <View style={styles.venuesList}>
+                    {linkedVenues.map((venueLink) => {
+                        const venue = venueLink.venue;
+                        if (!venue) return null;
+                        const venueId = venueLink.venue_id;
+                        return (
+                            <TouchableOpacity
+                                key={venueId}
+                                onPress={() => handleSelectVenue(venueId)}
+                                style={[styles.venueCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
+                                testID={`venue-picker-item-${venueId}`}
+                            >
+                                <View style={styles.venueHeader}>
+                                    <Text style={[styles.venueName, { color: colors.textPrimary }]}>{venue.name}</Text>
+                                    {venueLink.is_primary ? (
+                                        <View style={[styles.badge, { backgroundColor: colors.accentLight }]}>
+                                            <Text style={[styles.badgeText, { color: colors.accent }]}>Primary</Text>
+                                        </View>
+                                    ) : null}
+                                </View>
+                                <Text style={[styles.venueAddress, { color: colors.textSecondary }]}>
+                                    {[venue.address_line1, venue.address_line2, venue.city].filter(Boolean).join(', ')}
+                                </Text>
+                                {venue.venue_type ? (
+                                    <Text style={[styles.venueType, { color: colors.textTertiary }]}>
+                                        {venue.venue_type.charAt(0).toUpperCase() + venue.venue_type.slice(1)}
+                                    </Text>
+                                ) : null}
+                                {venue.verification_status === 'approved' ? (
+                                    <View style={[styles.verifiedBadge, { backgroundColor: colors.accentLight }]}>
+                                        <Ionicons name="checkmark-circle" size={14} color={colors.accent} />
+                                        <Text style={[styles.verifiedText, { color: colors.accent }]}> Verified</Text>
+                                    </View>
+                                ) : null}
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+            )}
+        </ScrollView>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: { flex: 1 },
+    content: { padding: 24, paddingBottom: 48 },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+    iconButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+    headerTitle: { flex: 1, marginHorizontal: 12, fontSize: 18, fontWeight: '700' },
+    headerSpacer: { width: 40 },
+    errorTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
+    errorBody: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
+    emptyCard: { borderRadius: 16, borderWidth: 1, padding: 20, alignItems: 'center' },
+    emptyTitle: { fontSize: 16, fontWeight: '700', marginBottom: 6 },
+    emptyBody: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
+    venuesList: { gap: 12 },
+    venueCard: { borderRadius: 16, borderWidth: 1, padding: 16 },
+    venueHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+    venueName: { fontSize: 16, fontWeight: '700', flex: 1 },
+    badge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+    badgeText: { fontSize: 11, fontWeight: '700' },
+    venueAddress: { fontSize: 14, lineHeight: 20, marginBottom: 4 },
+    venueType: { fontSize: 13, marginBottom: 8 },
+    verifiedBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+    verifiedText: { fontSize: 12, fontWeight: '700' },
+});
