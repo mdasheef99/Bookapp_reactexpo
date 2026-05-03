@@ -22,9 +22,27 @@ const mockUseClubInvitations = jest.fn();
 const mockUseCreateClubInvitation = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
+jest.mock('@/hooks/useDebounce', () => ({
+    useDebounce: (value: string) => value,
+}));
 jest.mock('expo-router', () => ({
     router: { back: jest.fn() },
     useLocalSearchParams: () => ({ clubId: 'club-1' }),
+}));
+jest.mock('expo-image-picker', () => ({
+    requestMediaLibraryPermissionsAsync: jest.fn(),
+    launchImageLibraryAsync: jest.fn(),
+    MediaType: { Images: 'Images' },
+}));
+jest.mock('@/lib/supabase', () => ({
+    supabase: {
+        storage: {
+            from: jest.fn(() => ({
+                upload: jest.fn().mockResolvedValue({ error: null }),
+                getPublicUrl: jest.fn().mockReturnValue({ data: { publicUrl: 'https://cdn.example.com/club-banner.jpg' } }),
+            })),
+        },
+    },
 }));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
@@ -60,7 +78,7 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
 
 jest.mock('@/features/books/services/booksService', () => ({
     __esModule: true,
-    searchGoogleBooks: jest.fn(),
+    searchGoogleBooksCached: jest.fn(),
 }));
 
 const baseClub = {
@@ -391,8 +409,7 @@ describe('ClubManageScreen', () => {
         const finalizeMutateAsync = jest.fn().mockResolvedValue({ id: 'club-1' });
         const refetchClub = jest.fn().mockResolvedValue({ data: null });
         const refetchNominations = jest.fn().mockResolvedValue({ data: null });
-        const searchGoogleBooks = jest.requireMock('@/features/books/services/booksService').searchGoogleBooks;
-        searchGoogleBooks.mockResolvedValue({
+        jest.requireMock('@/features/books/services/booksService').searchGoogleBooksCached.mockResolvedValue({
             items: [
                 {
                     id: 'book-override-1',
@@ -403,6 +420,9 @@ describe('ClubManageScreen', () => {
                     },
                 },
             ],
+            totalItems: 1,
+            hasMore: false,
+            fromCache: false,
         });
 
         mockUseClubPublicDetail.mockReturnValue({ data: baseClub, isLoading: false, isError: false, refetch: refetchClub });
@@ -420,10 +440,11 @@ describe('ClubManageScreen', () => {
         fireEvent.press(getByTestId('manage-toggle-override'));
         await waitFor(() => expect(getByText('Manual override')).toBeOnTheScreen());
 
-        fireEvent.changeText(getByTestId('manage-override-search'), 'Test Override');
-        fireEvent.press(getByText('Search'));
+        const searchGoogleBooksCached = jest.requireMock('@/features/books/services/booksService').searchGoogleBooksCached;
 
-        await waitFor(() => expect(searchGoogleBooks).toHaveBeenCalledWith('Test Override', 0, 10));
+        fireEvent.changeText(getByTestId('manage-override-search'), 'Test Override');
+
+        await waitFor(() => expect(searchGoogleBooksCached).toHaveBeenCalledWith('Test Override', 0, 10));
         await waitFor(() => expect(getByTestId('manage-override-result-book-override-1')).toBeOnTheScreen());
 
         fireEvent.press(getByTestId('manage-override-result-book-override-1'));
@@ -438,6 +459,37 @@ describe('ClubManageScreen', () => {
         });
         expect(refetchClub).toHaveBeenCalled();
         expect(refetchNominations).toHaveBeenCalled();
+    });
+
+    it('only searches once after a single override query input change', async () => {
+        jest.requireMock('@/features/books/services/booksService').searchGoogleBooksCached.mockResolvedValue({ items: [], totalItems: 0, hasMore: false, fromCache: false });
+
+        const { getByTestId, getByText } = render(<ClubManageScreen />);
+        fireEvent.press(getByTestId('manage-toggle-override'));
+        await waitFor(() => expect(getByText('Manual override')).toBeOnTheScreen());
+
+        fireEvent.changeText(getByTestId('manage-override-search'), 'Test Override');
+
+        await waitFor(() => expect(jest.requireMock('@/features/books/services/booksService').searchGoogleBooksCached).toHaveBeenCalledWith('Test Override', 0, 10));
+        expect(jest.requireMock('@/features/books/services/booksService').searchGoogleBooksCached).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows cached results banner when search returns from cache', async () => {
+        jest.requireMock('@/features/books/services/booksService').searchGoogleBooksCached.mockResolvedValue({
+            items: [{ id: 'cached-book', volumeInfo: { title: 'Cached Book' } }],
+            totalItems: 1,
+            hasMore: false,
+            fromCache: true,
+        });
+
+        const { getByTestId, getByText } = render(<ClubManageScreen />);
+        fireEvent.press(getByTestId('manage-toggle-override'));
+        await waitFor(() => expect(getByText('Manual override')).toBeOnTheScreen());
+
+        fireEvent.changeText(getByTestId('manage-override-search'), 'Cached Book');
+
+        await waitFor(() => expect(jest.requireMock('@/features/books/services/booksService').searchGoogleBooksCached).toHaveBeenCalledWith('Cached Book', 0, 10));
+        await waitFor(() => expect(getByText('Showing cached results')).toBeOnTheScreen());
     });
 
     it('approves a pending application from the Applications tab', async () => {
@@ -511,6 +563,71 @@ describe('ClubManageScreen', () => {
         });
         expect(refetchInvitations).toHaveBeenCalled();
         expect(getByText('Invitation sent.')).toBeOnTheScreen();
+    });
+
+    it('shows a cover image preview when the club already has a cover URL', async () => {
+        mockUseClubPublicDetail.mockReturnValue({
+            data: { ...baseClub, cover_url: 'https://images.example.com/founders.png' },
+            isLoading: false,
+            isError: false,
+            refetch: jest.fn(),
+        });
+
+        const { getByTestId, getByText } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Settings'));
+        await waitFor(() => expect(getByTestId('settings-cover-preview')).toBeOnTheScreen());
+    });
+
+    it('shows "Select cover image" button and manual URL fallback in settings', async () => {
+        mockUseClubPublicDetail.mockReturnValue({
+            data: { ...baseClub, cover_url: null },
+            isLoading: false,
+            isError: false,
+            refetch: jest.fn(),
+        });
+
+        const { getByTestId, getByText, queryByTestId } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Settings'));
+        await waitFor(() => expect(getByTestId('settings-pick-cover')).toBeOnTheScreen());
+        expect(queryByTestId('settings-cover-preview')).toBeNull();
+    });
+
+    it('picks an image, uploads to Supabase Storage, and updates the cover URL field', async () => {
+        const mockImagePicker = jest.requireMock('expo-image-picker');
+        mockImagePicker.requestMediaLibraryPermissionsAsync.mockResolvedValue({ status: 'granted' });
+        mockImagePicker.launchImageLibraryAsync.mockResolvedValue({
+            canceled: false,
+            assets: [{ uri: 'file://test-photo.jpg' }],
+        });
+
+        jest.spyOn(global, 'fetch').mockResolvedValue({
+            blob: jest.fn().mockResolvedValue({ type: 'image/jpeg' }),
+        } as any);
+
+        const { getByTestId, getByText, getByDisplayValue } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Settings'));
+        fireEvent.press(getByTestId('settings-pick-cover'));
+
+        await waitFor(() => expect(mockImagePicker.launchImageLibraryAsync).toHaveBeenCalled());
+        await waitFor(() => expect(getByDisplayValue('https://cdn.example.com/club-banner.jpg')).toBeOnTheScreen());
+    });
+
+    it('shows an alert when image picker permission is denied', async () => {
+        const mockImagePicker = jest.requireMock('expo-image-picker');
+        mockImagePicker.requestMediaLibraryPermissionsAsync.mockResolvedValue({ status: 'denied' });
+
+        const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+        const { getByTestId, getByText } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Settings'));
+        fireEvent.press(getByTestId('settings-pick-cover'));
+
+        await waitFor(() => expect(alertSpy).toHaveBeenCalledWith('Permission needed', expect.any(String)));
+        alertSpy.mockRestore();
     });
 
 });
