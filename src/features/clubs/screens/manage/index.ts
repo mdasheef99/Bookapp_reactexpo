@@ -6,6 +6,8 @@ export { ClubManageMembersSection } from './ClubManageMembersSection';
 export { ClubManageJoinQuestionsSection } from './ClubManageJoinQuestionsSection';
 export { ClubManageApplicationsSection } from './ClubManageApplicationsSection';
 export { ClubManageInvitationsSection } from './ClubManageInvitationsSection';
+export { ClubManageAnalyticsSection } from './ClubManageAnalyticsSection';
+export { ClubManageEventsSection } from './ClubManageEventsSection';
 export {
     type FeedbackState,
     type SettingsDraft,

@@ -15,15 +15,20 @@ import {
     useCreateClubJoinQuestion,
     useDeleteClubJoinQuestion,
     useFinalizeClubBookNomination,
+    useSetClubCurrentBookFromNomination,
     useNominateClubBook,
     useUpdateClub,
     useRemoveClubMember,
     useUpdateClubMemberRole,
+    useUpdateClubMemberStatus,
     useUpdateClubJoinQuestion,
     useClubApplications,
     useReviewClubApplication,
     useClubInvitations,
     useCreateClubInvitation,
+    useClubEvents,
+    useCancelClubEvent,
+    useDeleteClubEvent,
 } from '@/features/clubs/hooks/useClubs';
 import {
     ManageTabBar,
@@ -34,6 +39,8 @@ import {
     ClubManageJoinQuestionsSection,
     ClubManageApplicationsSection,
     ClubManageInvitationsSection,
+    ClubManageAnalyticsSection,
+    ClubManageEventsSection,
 } from './manage';
 import {
     type FeedbackState,
@@ -53,6 +60,8 @@ interface TabDef {
 
 const ALL_TABS: TabDef[] = [
     { key: 'current-book', label: 'Current Book', adminOnly: false },
+    { key: 'analytics', label: 'Analytics', adminOnly: true },
+    { key: 'events', label: 'Events', adminOnly: true },
     { key: 'applications', label: 'Applications', adminOnly: false, visibleWhen: (c) => c.club_type === 'approval' || c.club_type === 'author_club' },
     { key: 'invitations', label: 'Invitations', adminOnly: false, visibleWhen: (c) => c.club_type === 'invite_only' },
     { key: 'members', label: 'Members', adminOnly: true },
@@ -83,17 +92,22 @@ export default function ClubManageScreen() {
     } = useClubBookNominations(clubId ?? null, userId, canManageCurrentBook);
     const { data: applications = [], isLoading: isApplicationsLoading, refetch: refetchApplications } = useClubApplications(clubId ?? null, 'pending', isAdmin || isActiveModerator);
     const { data: invitations = [], isLoading: isInvitationsLoading, refetch: refetchInvitations } = useClubInvitations(clubId ?? null, isAdmin || isActiveModerator);
+    const { data: events = [], isLoading: isEventsLoading } = useClubEvents(clubId ?? null, userId, isAdmin || isActiveModerator);
 
     const createQuestion = useCreateClubJoinQuestion();
     const updateQuestion = useUpdateClubJoinQuestion();
     const deleteQuestion = useDeleteClubJoinQuestion();
     const finalizeNomination = useFinalizeClubBookNomination();
+    const setCurrentBookFromNomination = useSetClubCurrentBookFromNomination();
     const nominateMutation = useNominateClubBook();
     const updateClub = useUpdateClub();
     const removeMember = useRemoveClubMember();
     const updateMemberRole = useUpdateClubMemberRole();
+    const updateMemberStatus = useUpdateClubMemberStatus();
     const reviewApplication = useReviewClubApplication();
     const createInvitation = useCreateClubInvitation();
+    const cancelEvent = useCancelClubEvent();
+    const deleteEvent = useDeleteClubEvent();
 
     const [settings, setSettings] = useState<SettingsDraft | null>(null);
     const [feedback, setFeedback] = useState<FeedbackState>(null);
@@ -168,6 +182,12 @@ export default function ClubManageScreen() {
         await refetchMembers();
     };
 
+    const handleToggleMute = async (member: ClubMemberWithProfile, nextStatus: 'active' | 'muted') => {
+        if (!clubId || !member.user_id) throw new Error('Missing data');
+        await updateMemberStatus.mutateAsync({ clubId, userId: member.user_id, status: nextStatus });
+        await refetchMembers();
+    };
+
     const handleRemoveMember = async (member: ClubMemberWithProfile) => {
         if (!clubId || !member.user_id) throw new Error('Missing data');
         await removeMember.mutateAsync({ clubId, userId: member.user_id });
@@ -204,6 +224,18 @@ export default function ClubManageScreen() {
         }
     };
 
+    const handleSetCurrentBook = async (nominationId: string) => {
+        if (!clubId || !isAdmin) throw new Error('Not authorized');
+        try {
+            onFeedback(null);
+            await setCurrentBookFromNomination.mutateAsync({ nominationId });
+            onFeedback({ type: 'success', message: 'Current book updated successfully.' });
+            await Promise.all([refetchClub(), refetchNominations()]);
+        } catch (error) {
+            onFeedback({ type: 'error', message: error instanceof Error ? error.message : 'Unable to set the current book right now.' });
+        }
+    };
+
     const handleOverride = async (book: GoogleBook) => {
         if (!clubId || !isAdmin) throw new Error('Not authorized');
         const pastDate = new Date();
@@ -228,6 +260,26 @@ export default function ClubManageScreen() {
         await createInvitation.mutateAsync({ clubId, inviteeUsername });
         await refetchInvitations();
     };
+
+    const handleCancelEvent = async (eventId: string) => {
+        if (!clubId || !userId) throw new Error('Missing data');
+        await cancelEvent.mutateAsync({ eventId, clubId, cancelledBy: userId });
+    };
+
+    const handleDeleteEvent = async (eventId: string) => {
+        if (!clubId) throw new Error('Missing clubId');
+        await deleteEvent.mutateAsync({ eventId, clubId });
+    };
+
+    const handleCreateEvent = () => {
+        router.push(`/clubs/${clubId}/events/create`);
+    };
+
+    const handleEditEvent = (eventId: string) => {
+        router.push(`/clubs/${clubId}/events/${eventId}/edit`);
+    };
+
+    const moderatorsCount = members.filter((m) => m.role === 'moderator').length;
 
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.content}>
@@ -265,6 +317,7 @@ export default function ClubManageScreen() {
                             error={nominationsError}
                             isAdmin={isAdmin}
                             onFinalize={handleFinalize}
+                            onSetCurrentBook={handleSetCurrentBook}
                             onShowOverride={() => setShowOverride(true)}
                         />
                     ) : (
@@ -303,7 +356,33 @@ export default function ClubManageScreen() {
                     members={members}
                     isLoading={isMembersLoading}
                     onToggleRole={handleToggleRole}
+                    onToggleMute={handleToggleMute}
                     onRemove={handleRemoveMember}
+                    onFeedback={onFeedback}
+                />
+            )}
+
+            {activeTab === 'analytics' && (
+                <ClubManageAnalyticsSection
+                    club={club}
+                    membersCount={members.length}
+                    moderatorsCount={moderatorsCount}
+                    nominations={nominations}
+                    events={events}
+                    isLoading={isMembersLoading || isNominationsLoading || isEventsLoading}
+                />
+            )}
+
+            {activeTab === 'events' && (
+                <ClubManageEventsSection
+                    events={events}
+                    isLoading={isEventsLoading}
+                    canCreate={isAdmin}
+                    canManageEvent={() => isAdmin}
+                    onCreate={handleCreateEvent}
+                    onEdit={handleEditEvent}
+                    onCancel={handleCancelEvent}
+                    onDelete={handleDeleteEvent}
                     onFeedback={onFeedback}
                 />
             )}

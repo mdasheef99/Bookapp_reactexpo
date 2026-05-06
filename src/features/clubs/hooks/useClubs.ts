@@ -448,6 +448,22 @@ export function useFinalizeClubBookNomination() {
     });
 }
 
+export function useSetClubCurrentBookFromNomination() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ nominationId }: { nominationId: string }) => clubsService.setClubCurrentBookFromNomination(nominationId),
+        onSuccess: async (result) => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: clubKeys.nominationsRoot(result.id), refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(result.id), refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.browseRoot, refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(result.id), refetchType: 'all' }),
+            ]);
+        },
+    });
+}
+
 export function useSetClubCurrentBookReadingStatus() {
     const queryClient = useQueryClient();
 
@@ -483,6 +499,20 @@ export function useUpdateClubMemberRole() {
         onSuccess: async (result) => {
             if (!result.club_id) return;
             await queryClient.invalidateQueries({ queryKey: clubKeys.members(result.club_id) });
+        },
+    });
+}
+
+export function useUpdateClubMemberStatus() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ clubId, userId, status }: { clubId: string; userId: string; status: 'active' | 'muted' | 'banned' }) =>
+            clubsService.updateMemberStatus(clubId, userId, status),
+        onSuccess: async (result) => {
+            if (!result.club_id) return;
+            await queryClient.invalidateQueries({ queryKey: clubKeys.members(result.club_id) });
+            await queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(result.club_id) });
         },
     });
 }

@@ -3,6 +3,7 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import ClubManageScreen from '../ClubManageScreen';
 
 let mockUserId = 'admin-1';
+const mockRouterPush = jest.fn();
 const mockUseClubPublicDetail = jest.fn();
 const mockUseClubMembership = jest.fn();
 const mockUseClubBookNominations = jest.fn();
@@ -20,6 +21,11 @@ const mockUseClubApplications = jest.fn();
 const mockUseReviewClubApplication = jest.fn();
 const mockUseClubInvitations = jest.fn();
 const mockUseCreateClubInvitation = jest.fn();
+const mockUseClubEvents = jest.fn();
+const mockUseCancelClubEvent = jest.fn();
+const mockUseDeleteClubEvent = jest.fn();
+const mockUseUpdateClubMemberStatus = jest.fn();
+const mockUseSetClubCurrentBookFromNomination = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('@/hooks/useDebounce', () => ({
@@ -29,7 +35,7 @@ jest.mock('@/lib/navigation', () => ({
     navigateBackOrFallback: jest.fn(),
 }));
 jest.mock('expo-router', () => ({
-    router: { back: jest.fn() },
+    router: { back: jest.fn(), push: (...args: unknown[]) => mockRouterPush(...args) },
     useLocalSearchParams: () => ({ clubId: 'club-1' }),
 }));
 jest.mock('expo-image-picker', () => ({
@@ -69,6 +75,7 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useUpdateClubJoinQuestion: (...args: unknown[]) => mockUseUpdateClubJoinQuestion(...args),
     useDeleteClubJoinQuestion: (...args: unknown[]) => mockUseDeleteClubJoinQuestion(...args),
     useFinalizeClubBookNomination: (...args: unknown[]) => mockUseFinalizeClubBookNomination(...args),
+    useSetClubCurrentBookFromNomination: (...args: unknown[]) => mockUseSetClubCurrentBookFromNomination(...args),
     useNominateClubBook: (...args: unknown[]) => mockUseNominateClubBook(...args),
     useUpdateClub: (...args: unknown[]) => mockUseUpdateClub(...args),
     useUpdateClubMemberRole: (...args: unknown[]) => mockUseUpdateClubMemberRole(...args),
@@ -77,6 +84,10 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useReviewClubApplication: (...args: unknown[]) => mockUseReviewClubApplication(...args),
     useClubInvitations: (...args: unknown[]) => mockUseClubInvitations(...args),
     useCreateClubInvitation: (...args: unknown[]) => mockUseCreateClubInvitation(...args),
+    useClubEvents: (...args: unknown[]) => mockUseClubEvents(...args),
+    useCancelClubEvent: (...args: unknown[]) => mockUseCancelClubEvent(...args),
+    useDeleteClubEvent: (...args: unknown[]) => mockUseDeleteClubEvent(...args),
+    useUpdateClubMemberStatus: (...args: unknown[]) => mockUseUpdateClubMemberStatus(...args),
 }));
 
 jest.mock('@/features/books/services/booksService', () => ({
@@ -118,6 +129,7 @@ const baseClub = {
 beforeEach(() => {
     jest.clearAllMocks();
     mockUserId = 'admin-1';
+    mockRouterPush.mockReset();
     mockUseClubPublicDetail.mockReturnValue({ data: baseClub, isLoading: false, isError: false, refetch: jest.fn() });
     mockUseClubMembership.mockReturnValue({ data: { role: 'admin', status: 'active' }, isLoading: false });
     mockUseClubBookNominations.mockReturnValue({ data: [], isLoading: false, isError: false, error: null, refetch: jest.fn() });
@@ -127,6 +139,7 @@ beforeEach(() => {
     mockUseUpdateClubJoinQuestion.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseDeleteClubJoinQuestion.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseFinalizeClubBookNomination.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
+    mockUseSetClubCurrentBookFromNomination.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
     mockUseNominateClubBook.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'nomination-1' }), isPending: false });
     mockUseUpdateClub.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
     mockUseUpdateClubMemberRole.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'member-1' }), isPending: false });
@@ -135,19 +148,63 @@ beforeEach(() => {
     mockUseReviewClubApplication.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseClubInvitations.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
     mockUseCreateClubInvitation.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseClubEvents.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
+    mockUseCancelClubEvent.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseDeleteClubEvent.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseUpdateClubMemberStatus.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'member-1' }), isPending: false });
 });
 
 describe('ClubManageScreen', () => {
     it('shows club header and tab bar for admins with all tabs', () => {
-        const { getByText, getByTestId } = render(<ClubManageScreen />);
+        const { getByText } = render(<ClubManageScreen />);
 
         expect(getByText('Founders Circle')).toBeOnTheScreen();
         expect(getByText('Current Book')).toBeOnTheScreen();
+        expect(getByText('Analytics')).toBeOnTheScreen();
+        expect(getByText('Events')).toBeOnTheScreen();
         expect(getByText('Settings')).toBeOnTheScreen();
         expect(getByText('Members')).toBeOnTheScreen();
         expect(getByText('Join Questions')).toBeOnTheScreen();
         // Default active tab is Current Book
         expect(getByText('Current book')).toBeOnTheScreen();
+    });
+
+    it('opens create and edit actions from the manage events tab', () => {
+        mockUseClubEvents.mockReturnValue({
+            data: [{
+                id: 'event-1',
+                club_id: 'club-1',
+                title: 'April planning session',
+                description: 'Discuss next month picks.',
+                event_type: 'hybrid',
+                start_time: '2026-04-12T18:00:00.000Z',
+                end_time: null,
+                venue_id: null,
+                manual_location: 'Library board room',
+                meeting_link: 'https://meet.example.com/april-planning',
+                max_attendees: null,
+                created_by: 'admin-1',
+                created_at: null,
+                updated_at: null,
+                status: 'scheduled',
+                cancelled_at: null,
+                cancelled_by: null,
+                venue: null,
+                creatorProfile: null,
+                currentUserRsvp: null,
+            }],
+            isLoading: false,
+            refetch: jest.fn(),
+        });
+
+        const { getByText, getByTestId } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Events'));
+        fireEvent.press(getByTestId('manage-create-event'));
+        fireEvent.press(getByTestId('manage-edit-event-event-1'));
+
+        expect(mockRouterPush).toHaveBeenNthCalledWith(1, '/clubs/club-1/events/create');
+        expect(mockRouterPush).toHaveBeenNthCalledWith(2, '/clubs/club-1/events/event-1/edit');
     });
 
     it('shows only Current Book tab for active moderators', async () => {
@@ -297,6 +354,36 @@ describe('ClubManageScreen', () => {
         expect(refetchClub).toHaveBeenCalled();
         expect(refetchNominations).toHaveBeenCalled();
         expect(getByText('Current book finalized successfully.')).toBeOnTheScreen();
+    });
+
+    it('lets an admin set an active nomination as the current book before voting closes', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue({ id: 'club-1' });
+        const refetchClub = jest.fn().mockResolvedValue({ data: null });
+        const refetchNominations = jest.fn().mockResolvedValue({ data: null });
+        mockUseClubPublicDetail.mockReturnValue({ data: baseClub, isLoading: false, isError: false, refetch: refetchClub });
+        mockUseClubMembership.mockReturnValue({ data: { role: 'admin', status: 'active' }, isLoading: false });
+        mockUseClubBookNominations.mockReturnValue({
+            data: [{
+                id: 'nomination-open-1', club_id: 'club-1', book_id: 'book-1', nominated_by: 'reader-3', vote_count: 4, status: 'active', voting_ends_at: '2099-01-01T00:00:00Z', created_at: '2026-03-10T00:00:00Z',
+                book: { id: 'book-1', google_books_id: 'gb-1', title: 'Beloved', authors: ['Toni Morrison'], cover_url: null },
+                nominatorProfile: { id: 'profile-3', user_id: 'reader-3', display_name: 'Reader Three', username: 'readerthree', avatar_url: null, trust_score: 4.4, city: 'Bangalore' },
+                currentUserVote: null,
+            }],
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: refetchNominations,
+        });
+        mockUseSetClubCurrentBookFromNomination.mockReturnValue({ mutateAsync, isPending: false });
+
+        const { getByTestId, getByText } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByTestId('manage-set-current-nomination-open-1'));
+
+        await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ nominationId: 'nomination-open-1' }));
+        expect(refetchClub).toHaveBeenCalled();
+        expect(refetchNominations).toHaveBeenCalled();
+        expect(getByText('Current book updated successfully.')).toBeOnTheScreen();
     });
 
     it('toggles moderator assignment from the current member list', async () => {
@@ -602,10 +689,13 @@ describe('ClubManageScreen', () => {
         mockImagePicker.requestMediaLibraryPermissionsAsync.mockResolvedValue({ status: 'granted' });
         mockImagePicker.launchImageLibraryAsync.mockResolvedValue({
             canceled: false,
-            assets: [{ uri: 'file://test-photo.jpg' }],
+            assets: [{ uri: 'file://test-photo.jpg', mimeType: 'image/jpeg' }],
         });
 
         jest.spyOn(global, 'fetch').mockResolvedValue({
+            ok: true,
+            status: 200,
+            statusText: 'OK',
             blob: jest.fn().mockResolvedValue({ type: 'image/jpeg' }),
         } as any);
 
@@ -622,15 +712,122 @@ describe('ClubManageScreen', () => {
         const mockImagePicker = jest.requireMock('expo-image-picker');
         mockImagePicker.requestMediaLibraryPermissionsAsync.mockResolvedValue({ status: 'denied' });
 
-        const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-
         const { getByTestId, getByText } = render(<ClubManageScreen />);
 
         fireEvent.press(getByText('Settings'));
         fireEvent.press(getByTestId('settings-pick-cover'));
 
-        await waitFor(() => expect(alertSpy).toHaveBeenCalledWith('Permission needed', expect.any(String)));
+        await waitFor(() => expect(getByText(/Permission denied\./)).toBeOnTheScreen());
+    });
+
+    it('renders analytics tab with member and nomination stats', () => {
+        mockUseClubMembers.mockReturnValue({
+            data: [
+                { id: 'member-1', club_id: 'club-1', user_id: 'admin-1', role: 'admin', status: 'active', joined_at: null, profile: { display_name: 'Admin', username: 'admin' } },
+                { id: 'member-2', club_id: 'club-1', user_id: 'reader-2', role: 'moderator', status: 'active', joined_at: null, profile: { display_name: 'Reader Two', username: 'readertwo' } },
+                { id: 'member-3', club_id: 'club-1', user_id: 'reader-3', role: 'member', status: 'active', joined_at: null, profile: { display_name: 'Reader Three', username: 'readerthree' } },
+            ],
+            isLoading: false,
+            refetch: jest.fn(),
+        });
+        mockUseClubBookNominations.mockReturnValue({
+            data: [{ id: 'nom-1', club_id: 'club-1', book_id: 'b1', book_title: 'Book One', nominated_by: 'reader-2', vote_count: 3, status: 'active', voting_ends_at: '2000-01-01T00:00:00Z', created_at: '2026-03-10T00:00:00Z', book: { id: 'b1', google_books_id: 'gb1', title: 'Book One', authors: ['A'], cover_url: null }, nominatorProfile: { display_name: 'Reader Two' }, currentUserVote: null }],
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: jest.fn(),
+        });
+        mockUseClubEvents.mockReturnValue({
+            data: [{ id: 'evt-1', club_id: 'club-1', title: 'March Meet', description: null, event_type: 'virtual', start_time: '2026-06-01T18:00:00Z', end_time: null, venue_id: null, manual_location: null, meeting_link: null, max_attendees: null, created_by: 'admin-1', created_at: null, updated_at: null, status: 'scheduled', cancelled_at: null, cancelled_by: null, venue: null, creatorProfile: null, currentUserRsvp: null }],
+            isLoading: false,
+            refetch: jest.fn(),
+        });
+
+        const { getByText, getAllByText } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Analytics'));
+        expect(getByText('Club overview')).toBeOnTheScreen();
+        expect(getByText('3')).toBeOnTheScreen(); // Members
+        expect(getAllByText('Members')[1]).toBeOnTheScreen();
+        // Use specific stat labels to avoid ambiguity with duplicate numbers
+        expect(getAllByText('1')[0]).toBeOnTheScreen(); // Moderators
+    });
+
+    it('mutes and unmutes a member from the Members tab', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue({ id: 'member-2', club_id: 'club-1', user_id: 'reader-2', role: 'member', status: 'muted' });
+        const refetchMembers = jest.fn().mockResolvedValue({ data: null });
+        mockUseClubMembers.mockReturnValue({
+            data: [
+                { id: 'member-admin', club_id: 'club-1', user_id: 'admin-1', role: 'admin', status: 'active', joined_at: null, profile: { display_name: 'Admin Reader', username: 'adminreader' } },
+                { id: 'member-2', club_id: 'club-1', user_id: 'reader-2', role: 'member', status: 'active', joined_at: null, profile: { display_name: 'Reader Two', username: 'readertwo' } },
+            ],
+            isLoading: false,
+            refetch: refetchMembers,
+        });
+        mockUseUpdateClubMemberStatus.mockReturnValue({ mutateAsync, isPending: false });
+
+        const { getByText, getByTestId } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Members'));
+        fireEvent.press(getByTestId('mute-member-reader-2'));
+
+        await waitFor(() => {
+            expect(mutateAsync).toHaveBeenCalledWith({ clubId: 'club-1', userId: 'reader-2', status: 'muted' });
+        });
+        expect(refetchMembers).toHaveBeenCalled();
+        expect(getByText('Reader Two has been muted.')).toBeOnTheScreen();
+    });
+
+    it('shows upcoming and past events in the Events tab and cancels an event', async () => {
+        const cancelMutateAsync = jest.fn().mockResolvedValue({});
+        mockUseClubEvents.mockReturnValue({
+            data: [
+                { id: 'evt-upcoming', club_id: 'club-1', title: 'Upcoming Event', description: null, event_type: 'virtual', start_time: '2026-12-01T18:00:00Z', end_time: null, venue_id: null, manual_location: null, meeting_link: null, max_attendees: null, created_by: 'admin-1', created_at: null, updated_at: null, status: 'scheduled', cancelled_at: null, cancelled_by: null, venue: null, creatorProfile: null, currentUserRsvp: null },
+                { id: 'evt-past', club_id: 'club-1', title: 'Past Event', description: null, event_type: 'virtual', start_time: '2020-01-01T18:00:00Z', end_time: null, venue_id: null, manual_location: null, meeting_link: null, max_attendees: null, created_by: 'admin-1', created_at: null, updated_at: null, status: 'scheduled', cancelled_at: null, cancelled_by: null, venue: null, creatorProfile: null, currentUserRsvp: null },
+            ],
+            isLoading: false,
+            refetch: jest.fn(),
+        });
+        mockUseCancelClubEvent.mockReturnValue({ mutateAsync: cancelMutateAsync, isPending: false });
+
+        const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+            const cancelButton = buttons?.find((button) => button.text === 'Cancel event');
+            cancelButton?.onPress?.();
+        });
+
+        const { getByText, getByTestId } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Events'));
+        expect(getByText('Upcoming events')).toBeOnTheScreen();
+        expect(getByText('Past & cancelled events')).toBeOnTheScreen();
+
+        fireEvent.press(getByTestId('cancel-event-evt-upcoming'));
+
+        await waitFor(() => {
+            expect(cancelMutateAsync).toHaveBeenCalledWith({ eventId: 'evt-upcoming', clubId: 'club-1', cancelledBy: 'admin-1' });
+        });
         alertSpy.mockRestore();
+    });
+
+    it('shows nomination book cover and nominator in the Current Book tab', () => {
+        mockUseClubBookNominations.mockReturnValue({
+            data: [{
+                id: 'nom-1', club_id: 'club-1', book_id: 'book-1', book_title: 'Beloved', nominated_by: 'reader-3', vote_count: 4, status: 'active', voting_ends_at: '2000-01-01T00:00:00Z', created_at: '2026-03-10T00:00:00Z',
+                book: { id: 'book-1', google_books_id: 'gb-1', title: 'Beloved', authors: ['Toni Morrison'], cover_url: 'https://example.com/cover.jpg' },
+                nominatorProfile: { id: 'profile-3', user_id: 'reader-3', display_name: 'Reader Three', username: 'readerthree', avatar_url: null, trust_score: 4.4, city: 'Bangalore' },
+                currentUserVote: null,
+            }],
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: jest.fn(),
+        });
+
+        const { getByText, getByTestId } = render(<ClubManageScreen />);
+
+        expect(getByText('Beloved')).toBeOnTheScreen();
+        expect(getByText('Nominated by Reader Three')).toBeOnTheScreen();
+        expect(getByTestId('manage-current-book-closed-nom-1')).toBeOnTheScreen();
     });
 
 });

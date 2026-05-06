@@ -125,6 +125,16 @@ export async function finalizeClubBookNomination(nominationId: string): Promise<
     return result as Club;
 }
 
+export async function setClubCurrentBookFromNomination(nominationId: string): Promise<Club> {
+    const { data, error } = await supabase.rpc('set_club_current_book_from_nomination', { p_nomination_id: nominationId });
+    if (error) throw error;
+    const result = Array.isArray(data) ? data[0] : data;
+    if (!result) {
+        throw new Error('Set current book response was empty');
+    }
+    return result as Club;
+}
+
 export async function getClubCurrentBookStatusOverview(clubId: string): Promise<ClubCurrentBookStatusOverview> {
     const { data, error } = await supabase.rpc('get_club_current_book_status_overview', { p_club_id: clubId });
     if (error) throw error;
