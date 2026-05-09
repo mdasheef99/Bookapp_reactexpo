@@ -38,6 +38,9 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useClubDiscussionTopics: (...args: unknown[]) => mockUseClubDiscussionTopics(...args),
     useCreateClubDiscussionTopic: (...args: unknown[]) => mockUseCreateClubDiscussionTopic(...args),
 }));
+jest.mock('@/lib/navigation', () => ({
+    navigateBackOrFallback: jest.fn(),
+}));
 
 const baseTopic = {
     id: 'topic-1',

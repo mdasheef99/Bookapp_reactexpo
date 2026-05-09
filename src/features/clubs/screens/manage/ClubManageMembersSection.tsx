@@ -15,15 +15,16 @@ interface Props {
     members: ClubMemberWithProfile[];
     isLoading: boolean;
     onToggleRole: (member: ClubMemberWithProfile, nextRole: 'member' | 'moderator') => Promise<void>;
+    onToggleMute: (member: ClubMemberWithProfile, nextStatus: 'active' | 'muted') => Promise<void>;
     onRemove: (member: ClubMemberWithProfile) => Promise<void>;
     onFeedback: (feedback: FeedbackState) => void;
 }
 
-export function ClubManageMembersSection({ club, members, isLoading, onToggleRole, onRemove, onFeedback }: Props) {
+export function ClubManageMembersSection({ club, members, isLoading, onToggleRole, onToggleMute, onRemove, onFeedback }: Props) {
     const { colors } = useTheme();
     const [activeUserId, setActiveUserId] = useState<string | null>(null);
     const manageableMembers = useMemo(
-        () => members.filter((member) => member.user_id !== club.admin_id),
+        () => members.filter((member) => member.user_id !== null && member.user_id !== club.admin_id),
         [members, club.admin_id],
     );
 
@@ -66,6 +67,26 @@ export function ClubManageMembersSection({ club, members, isLoading, onToggleRol
             `Remove ${name} from this club? They will lose club access immediately.`,
             [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => handleRemove(member) }],
         );
+    };
+
+    const handleMuteToggle = async (member: ClubMemberWithProfile) => {
+        if (!member.user_id || member.role === 'admin') return;
+        if (member.status !== 'active' && member.status !== 'muted') {
+            onFeedback({ type: 'error', message: 'Only active or muted members can be muted or unmuted.' });
+            return;
+        }
+        const nextStatus = member.status === 'muted' ? 'active' : 'muted';
+        const memberName = member.profile?.display_name || 'This member';
+        try {
+            onFeedback(null);
+            setActiveUserId(member.user_id);
+            await onToggleMute(member, nextStatus);
+            onFeedback({ type: 'success', message: nextStatus === 'muted' ? `${memberName} has been muted.` : `${memberName} is now unmuted.` });
+        } catch (error) {
+            onFeedback({ type: 'error', message: error instanceof Error ? error.message : 'Unable to update mute status right now.' });
+        } finally {
+            setActiveUserId(null);
+        }
     };
 
     const handleRemove = async (member: ClubMemberWithProfile) => {
@@ -129,6 +150,16 @@ export function ClubManageMembersSection({ club, members, isLoading, onToggleRol
                                             Only active or muted members can be assigned as moderators.
                                         </Text>
                                     )}
+                                    <TouchableOpacity
+                                        testID={`mute-member-${member.user_id}`}
+                                        onPress={() => handleMuteToggle(member)}
+                                        disabled={activeUserId === member.user_id}
+                                        style={{ opacity: activeUserId === member.user_id ? 0.5 : 1 }}
+                                    >
+                                        <Text style={{ color: member.status === 'muted' ? colors.accent : colors.textSecondary, fontSize: 13, fontWeight: '600' }}>
+                                            {member.status === 'muted' ? 'Unmute' : 'Mute'}
+                                        </Text>
+                                    </TouchableOpacity>
                                     <TouchableOpacity
                                         testID={`remove-member-${member.user_id}`}
                                         onPress={() => confirmRemove(member)}

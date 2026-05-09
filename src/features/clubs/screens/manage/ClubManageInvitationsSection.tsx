@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
-import type { ClubInvitation } from '@/features/clubs/services/clubsService';
+import type { ClubInvitationWithProfiles } from '@/features/clubs/services/clubsService';
 import type { FeedbackState } from './manageUtils';
 
 interface Props {
-    invitations: ClubInvitation[];
+    invitations: ClubInvitationWithProfiles[];
     isLoading: boolean;
     isCreating: boolean;
     onCreate: (username: string) => Promise<void>;
@@ -67,7 +67,7 @@ export function ClubManageInvitationsSection({ invitations, isLoading, isCreatin
                     <View key={inv.id} style={[styles.invRow, { borderBottomColor: colors.border }]}>
                         <View style={styles.invInfo}>
                             <Text style={[styles.invName, { color: colors.textPrimary }]}>
-                                {inv.invitee_profile?.display_name || inv.invitee_username || 'Unknown'}
+                                {inv.inviteeProfile?.display_name || inv.inviteeProfile?.username || 'Unknown'}
                             </Text>
                             <Text style={[styles.invMeta, { color: colors.textSecondary }]}>
                                 {inv.status} · {new Date(inv.created_at).toLocaleDateString()}

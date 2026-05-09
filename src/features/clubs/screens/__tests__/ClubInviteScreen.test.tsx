@@ -28,6 +28,9 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
   useClubInvitations: (...args: unknown[]) => mockUseClubInvitations(...args),
   useCreateClubInvitation: (...args: unknown[]) => mockUseCreateClubInvitation(...args),
 }));
+jest.mock('@/lib/navigation', () => ({
+  navigateBackOrFallback: jest.fn(),
+}));
 
 beforeEach(() => {
   jest.clearAllMocks();

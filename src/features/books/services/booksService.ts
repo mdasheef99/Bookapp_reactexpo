@@ -1,4 +1,8 @@
 import { supabase } from '@/lib/supabase';
+import {
+    getCachedSearchResults,
+    setCachedSearchResults,
+} from './booksSearchCache';
 
 const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
 
@@ -172,6 +176,85 @@ const getUserBookByBookId = async (userId: string, bookId: string) => {
     return data;
 };
 
+/**
+ * Search Google Books with an in-memory LRU cache (20 entries, 60s TTL).
+ * On a fresh cache hit, results are returned immediately without a network call.
+ * On a 429 rate-limit error, stale cached results (< 5 min) are returned as a
+ * fallback with `fromCache: true` so the UI can show a "cached results" banner.
+ */
+export async function searchGoogleBooksCached(
+    query: string,
+    startIndex: number = 0,
+    maxResults: number = 20,
+    filters?: SearchFilters
+): Promise<PaginatedResult & { fromCache: boolean }> {
+    const trimmed = query.trim();
+
+    // Check cache first
+    const cached = getCachedSearchResults(trimmed);
+    if (cached && !cached.isStale) {
+        return {
+            items: cached.items,
+            totalItems: cached.items.length,
+            hasMore: false,
+            fromCache: true,
+        };
+    }
+
+    try {
+        const searchQuery = buildSearchQuery(query, filters);
+        let url = `${GOOGLE_BOOKS_API_URL}?q=${encodeURIComponent(searchQuery)}&startIndex=${startIndex}&maxResults=${maxResults}`;
+
+        if (filters?.language && filters.language !== 'all') {
+            url += `&langRestrict=${filters.language}`;
+        }
+
+        if (filters?.priceType === 'free') {
+            url += '&filter=free-ebooks';
+        } else if (filters?.priceType === 'paid') {
+            url += '&filter=paid-ebooks';
+        }
+
+        const response = await fetch(url);
+
+        if (response.status === 429) {
+            const error = Object.assign(new Error('Google Books API rate limit exceeded (429)'), { status: 429 });
+            throw error;
+        }
+        if (!response.ok) {
+            throw new Error(`Google Books API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const items = data.items || [];
+        const totalItems = data.totalItems || 0;
+
+        // Cache successful results
+        setCachedSearchResults(trimmed, items);
+
+        return {
+            items,
+            totalItems,
+            hasMore: startIndex + items.length < totalItems,
+            fromCache: false,
+        };
+    } catch (error) {
+        // On 429, try stale cache fallback
+        if (cached?.isStale) {
+            const e = error as any;
+            if (e?.status === 429 || String(e?.message).includes('429')) {
+                return {
+                    items: cached.items,
+                    totalItems: cached.items.length,
+                    hasMore: false,
+                    fromCache: true,
+                };
+            }
+        }
+        throw error;
+    }
+}
+
 export const booksService = {
     // Paginated search with filters
     async searchGoogleBooks(
@@ -212,6 +295,8 @@ export const booksService = {
             return { items: [], totalItems: 0, hasMore: false };
         }
     },
+
+    searchGoogleBooksCached,
 
     // Get suggestions for autocomplete
     async getSearchSuggestions(partialQuery: string): Promise<string[]> {

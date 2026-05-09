@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useDebounce } from '@/hooks/useDebounce';
 import * as Haptics from 'expo-haptics';
-import { searchGoogleBooks, type GoogleBook } from '@/features/books/services/booksService';
+import { searchGoogleBooksCached, type GoogleBook } from '@/features/books/services/booksService';
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
 import { getBookCoverUrl, isTooManyRequestsError, type FeedbackState } from './manageUtils';
 
@@ -16,14 +17,26 @@ interface Props {
 export function ClubManageBookOverrideSection({ clubId, onOverride, onClose, onFeedback }: Props) {
     const { colors } = useTheme();
     const [query, setQuery] = useState('');
+    const debouncedQuery = useDebounce(query, 400);
     const [results, setResults] = useState<GoogleBook[]>([]);
     const [searched, setSearched] = useState(false);
     const [searching, setSearching] = useState(false);
     const [selected, setSelected] = useState<GoogleBook | null>(null);
+    const [fromCache, setFromCache] = useState(false);
     const [overrideFeedback, setOverrideFeedback] = useState<FeedbackState>(null);
 
-    const handleSearch = async () => {
-        const trimmed = query.trim();
+    // Auto-search after 400ms of typing inactivity to reduce Google Books 429 rate-limit errors.
+    // `searching` is intentionally excluded from deps to avoid re-triggering when the flag flips.
+    useEffect(() => {
+        const trimmed = debouncedQuery.trim();
+        if (trimmed.length >= 3 && !searching) {
+            handleSearch(trimmed);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debouncedQuery]);
+
+    const handleSearch = async (searchQuery?: string) => {
+        const trimmed = (searchQuery ?? query).trim();
         if (trimmed.length < 3) {
             setOverrideFeedback({ type: 'error', message: 'Enter at least 3 characters to search Google Books.' });
             return;
@@ -32,9 +45,11 @@ export function ClubManageBookOverrideSection({ clubId, onOverride, onClose, onF
             setOverrideFeedback(null);
             setSearching(true);
             setSearched(true);
-            const response = await searchGoogleBooks(trimmed, 0, 10);
+            const response = await searchGoogleBooksCached(trimmed, 0, 10);
             setResults(response.items);
+            setFromCache(response.fromCache);
         } catch (error) {
+            setFromCache(false);
             if (isTooManyRequestsError(error)) {
                 setOverrideFeedback({ type: 'error', message: 'Google Books search is temporarily rate-limited. Please try again in a moment.' });
             } else {
@@ -98,6 +113,11 @@ export function ClubManageBookOverrideSection({ clubId, onOverride, onClose, onF
             {overrideFeedback && (
                 <View style={[styles.feedbackBanner, { backgroundColor: overrideFeedback.type === 'error' ? colors.errorLight : colors.accentLight, borderColor: overrideFeedback.type === 'error' ? colors.error : colors.accent }]}>
                     <Text style={{ color: overrideFeedback.type === 'error' ? colors.error : colors.accent }}>{overrideFeedback.message}</Text>
+                </View>
+            )}
+            {fromCache && results.length > 0 && (
+                <View style={[styles.cacheBanner, { backgroundColor: colors.accentLight, borderColor: colors.accent }]}>
+                    <Text style={{ color: colors.accent }}>Showing cached results</Text>
                 </View>
             )}
 
@@ -228,5 +248,12 @@ const styles = StyleSheet.create({
     },
     closeText: {
         fontSize: 13,
+    },
+    cacheBanner: {
+        borderRadius: 8,
+        borderWidth: 1,
+        padding: 10,
+        marginTop: 10,
+        alignItems: 'center',
     },
 });

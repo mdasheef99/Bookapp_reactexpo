@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { View, Text, ScrollView, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { navigateBackOrFallback } from '@/lib/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { type GoogleBook } from '@/features/books/services/booksService';
 import {
@@ -13,15 +15,20 @@ import {
     useCreateClubJoinQuestion,
     useDeleteClubJoinQuestion,
     useFinalizeClubBookNomination,
+    useSetClubCurrentBookFromNomination,
     useNominateClubBook,
     useUpdateClub,
     useRemoveClubMember,
     useUpdateClubMemberRole,
+    useUpdateClubMemberStatus,
     useUpdateClubJoinQuestion,
     useClubApplications,
     useReviewClubApplication,
     useClubInvitations,
     useCreateClubInvitation,
+    useClubEvents,
+    useCancelClubEvent,
+    useDeleteClubEvent,
 } from '@/features/clubs/hooks/useClubs';
 import {
     ManageTabBar,
@@ -32,6 +39,8 @@ import {
     ClubManageJoinQuestionsSection,
     ClubManageApplicationsSection,
     ClubManageInvitationsSection,
+    ClubManageAnalyticsSection,
+    ClubManageEventsSection,
 } from './manage';
 import {
     type FeedbackState,
@@ -51,6 +60,8 @@ interface TabDef {
 
 const ALL_TABS: TabDef[] = [
     { key: 'current-book', label: 'Current Book', adminOnly: false },
+    { key: 'analytics', label: 'Analytics', adminOnly: true },
+    { key: 'events', label: 'Events', adminOnly: true },
     { key: 'applications', label: 'Applications', adminOnly: false, visibleWhen: (c) => c.club_type === 'approval' || c.club_type === 'author_club' },
     { key: 'invitations', label: 'Invitations', adminOnly: false, visibleWhen: (c) => c.club_type === 'invite_only' },
     { key: 'members', label: 'Members', adminOnly: true },
@@ -59,7 +70,7 @@ const ALL_TABS: TabDef[] = [
 ];
 
 export default function ClubManageScreen() {
-    const { clubId } = useLocalSearchParams<{ clubId: string }>();
+    const { clubId, tab } = useLocalSearchParams<{ clubId: string; tab?: string }>();
     const { colors } = useTheme();
     const { user } = useAuth();
     const userId = user?.id ?? null;
@@ -81,22 +92,28 @@ export default function ClubManageScreen() {
     } = useClubBookNominations(clubId ?? null, userId, canManageCurrentBook);
     const { data: applications = [], isLoading: isApplicationsLoading, refetch: refetchApplications } = useClubApplications(clubId ?? null, 'pending', isAdmin || isActiveModerator);
     const { data: invitations = [], isLoading: isInvitationsLoading, refetch: refetchInvitations } = useClubInvitations(clubId ?? null, isAdmin || isActiveModerator);
+    const { data: events = [], isLoading: isEventsLoading } = useClubEvents(clubId ?? null, userId, isAdmin || isActiveModerator);
 
     const createQuestion = useCreateClubJoinQuestion();
     const updateQuestion = useUpdateClubJoinQuestion();
     const deleteQuestion = useDeleteClubJoinQuestion();
     const finalizeNomination = useFinalizeClubBookNomination();
+    const setCurrentBookFromNomination = useSetClubCurrentBookFromNomination();
     const nominateMutation = useNominateClubBook();
     const updateClub = useUpdateClub();
     const removeMember = useRemoveClubMember();
     const updateMemberRole = useUpdateClubMemberRole();
+    const updateMemberStatus = useUpdateClubMemberStatus();
     const reviewApplication = useReviewClubApplication();
     const createInvitation = useCreateClubInvitation();
+    const cancelEvent = useCancelClubEvent();
+    const deleteEvent = useDeleteClubEvent();
 
     const [settings, setSettings] = useState<SettingsDraft | null>(null);
     const [feedback, setFeedback] = useState<FeedbackState>(null);
-    const [activeTab, setActiveTab] = useState('current-book');
+    const [activeTab, setActiveTab] = useState(tab === 'events' ? 'events' : 'current-book');
     const [showOverride, setShowOverride] = useState(false);
+    const [appliedRouteTab, setAppliedRouteTab] = useState<string | null>(tab ?? null);
 
     useEffect(() => {
         if (club) setSettings(createSettingsDraft(club));
@@ -110,6 +127,21 @@ export default function ClubManageScreen() {
             return true;
         });
     }, [club, isAdmin]);
+
+    useEffect(() => {
+        const requestedTab = typeof tab === 'string' ? tab : null;
+        if (requestedTab && requestedTab !== appliedRouteTab && visibleTabs.some((item) => item.key === requestedTab)) {
+            setActiveTab(requestedTab);
+            setAppliedRouteTab(requestedTab);
+            return;
+        }
+        if (requestedTab !== appliedRouteTab) {
+            setAppliedRouteTab(requestedTab);
+        }
+        if (!visibleTabs.some((item) => item.key === activeTab) && visibleTabs[0]) {
+            setActiveTab(visibleTabs[0].key);
+        }
+    }, [activeTab, appliedRouteTab, tab, visibleTabs]);
 
     if (isLoading || isMembershipLoading || !settings) {
         return (
@@ -166,6 +198,12 @@ export default function ClubManageScreen() {
         await refetchMembers();
     };
 
+    const handleToggleMute = async (member: ClubMemberWithProfile, nextStatus: 'active' | 'muted') => {
+        if (!clubId || !member.user_id) throw new Error('Missing data');
+        await updateMemberStatus.mutateAsync({ clubId, userId: member.user_id, status: nextStatus });
+        await refetchMembers();
+    };
+
     const handleRemoveMember = async (member: ClubMemberWithProfile) => {
         if (!clubId || !member.user_id) throw new Error('Missing data');
         await removeMember.mutateAsync({ clubId, userId: member.user_id });
@@ -202,6 +240,18 @@ export default function ClubManageScreen() {
         }
     };
 
+    const handleSetCurrentBook = async (nominationId: string) => {
+        if (!clubId || !isAdmin) throw new Error('Not authorized');
+        try {
+            onFeedback(null);
+            await setCurrentBookFromNomination.mutateAsync({ nominationId });
+            onFeedback({ type: 'success', message: 'Current book updated successfully.' });
+            await Promise.all([refetchClub(), refetchNominations()]);
+        } catch (error) {
+            onFeedback({ type: 'error', message: error instanceof Error ? error.message : 'Unable to set the current book right now.' });
+        }
+    };
+
     const handleOverride = async (book: GoogleBook) => {
         if (!clubId || !isAdmin) throw new Error('Not authorized');
         const pastDate = new Date();
@@ -227,8 +277,36 @@ export default function ClubManageScreen() {
         await refetchInvitations();
     };
 
+    const handleCancelEvent = async (eventId: string) => {
+        if (!clubId || !userId) throw new Error('Missing data');
+        await cancelEvent.mutateAsync({ eventId, clubId, cancelledBy: userId });
+    };
+
+    const handleDeleteEvent = async (eventId: string) => {
+        if (!clubId) throw new Error('Missing clubId');
+        await deleteEvent.mutateAsync({ eventId, clubId });
+    };
+
+    const handleCreateEvent = () => {
+        router.push(`/clubs/${clubId}/events/create?returnTo=manage&manageTab=events`);
+    };
+
+    const handleEditEvent = (eventId: string) => {
+        router.push(`/clubs/${clubId}/events/${eventId}/edit?returnTo=manage&manageTab=events`);
+    };
+
+    const moderatorsCount = members.filter((m) => m.role === 'moderator').length;
+
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.content}>
+            <View style={styles.headerRow}>
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                    <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+                </TouchableOpacity>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Manage Club</Text>
+                <View style={styles.headerSpacer} />
+            </View>
+
             <View style={[styles.headerCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{club.name}</Text>
                 <Text style={[styles.headerMeta, { color: colors.textSecondary }]}>
@@ -255,6 +333,7 @@ export default function ClubManageScreen() {
                             error={nominationsError}
                             isAdmin={isAdmin}
                             onFinalize={handleFinalize}
+                            onSetCurrentBook={handleSetCurrentBook}
                             onShowOverride={() => setShowOverride(true)}
                         />
                     ) : (
@@ -293,7 +372,33 @@ export default function ClubManageScreen() {
                     members={members}
                     isLoading={isMembersLoading}
                     onToggleRole={handleToggleRole}
+                    onToggleMute={handleToggleMute}
                     onRemove={handleRemoveMember}
+                    onFeedback={onFeedback}
+                />
+            )}
+
+            {activeTab === 'analytics' && (
+                <ClubManageAnalyticsSection
+                    club={club}
+                    membersCount={members.length}
+                    moderatorsCount={moderatorsCount}
+                    nominations={nominations}
+                    events={events}
+                    isLoading={isMembersLoading || isNominationsLoading || isEventsLoading}
+                />
+            )}
+
+            {activeTab === 'events' && (
+                <ClubManageEventsSection
+                    events={events}
+                    isLoading={isEventsLoading}
+                    canCreate={isAdmin}
+                    canManageEvent={() => isAdmin}
+                    onCreate={handleCreateEvent}
+                    onEdit={handleEditEvent}
+                    onCancel={handleCancelEvent}
+                    onDelete={handleDeleteEvent}
                     onFeedback={onFeedback}
                 />
             )}
@@ -338,13 +443,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
     },
+    headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+    iconButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+    headerTitle: { flex: 1, marginHorizontal: 12, fontSize: 18, fontWeight: '700' },
+    headerSpacer: { width: 40 },
     headerCard: {
         padding: 14,
         borderRadius: 12,
         borderWidth: 1,
         marginBottom: 14,
     },
-    headerTitle: {
+    cardHeaderTitle: {
         fontSize: 18,
         fontWeight: '700',
     },

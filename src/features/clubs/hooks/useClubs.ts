@@ -448,6 +448,22 @@ export function useFinalizeClubBookNomination() {
     });
 }
 
+export function useSetClubCurrentBookFromNomination() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ nominationId }: { nominationId: string }) => clubsService.setClubCurrentBookFromNomination(nominationId),
+        onSuccess: async (result) => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: clubKeys.nominationsRoot(result.id), refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(result.id), refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.browseRoot, refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(result.id), refetchType: 'all' }),
+            ]);
+        },
+    });
+}
+
 export function useSetClubCurrentBookReadingStatus() {
     const queryClient = useQueryClient();
 
@@ -487,11 +503,49 @@ export function useUpdateClubMemberRole() {
     });
 }
 
+export function useUpdateClubMemberStatus() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ clubId, userId, status }: { clubId: string; userId: string; status: 'active' | 'muted' }) =>
+            clubsService.updateMemberStatus(clubId, userId, status),
+        onSuccess: async (result) => {
+            if (!result.club_id) return;
+            await queryClient.invalidateQueries({ queryKey: clubKeys.members(result.club_id) });
+            await queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(result.club_id) });
+        },
+    });
+}
+
 export function useRemoveClubMember() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: ({ clubId, userId }: { clubId: string; userId: string }) => clubsService.removeMember(clubId, userId),
+        onSuccess: async (_result, variables) => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(variables.clubId), refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.browseRoot, refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.members(variables.clubId), refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.membership(variables.clubId, variables.userId), refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(variables.clubId), refetchType: 'all' }),
+            ]);
+        },
+    });
+}
+
+/**
+ * Leave a club and invalidate all related query caches.
+ * Mirrors the cache-invalidation pattern of `useRemoveClubMember`.
+ * On success, the user is no longer a member and all club-derived
+ * caches (public detail, browse list, members, membership, current-book status)
+ * are refetched automatically.
+ */
+export function useLeaveClub() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ clubId, userId }: { clubId: string; userId: string }) => clubsService.leaveClub(clubId, userId),
         onSuccess: async (_result, variables) => {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(variables.clubId), refetchType: 'all' }),

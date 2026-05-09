@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import type { ClubPublicDetails, ClubBookNominationWithDetails } from '@/features/clubs/services/clubsService';
-import { formatNominationStatus, hasNominationVotingClosed } from './manageUtils';
+import { formatNominationStatus, getBookCoverUrl, hasNominationVotingClosed } from './manageUtils';
 
 interface Props {
     club: ClubPublicDetails;
@@ -12,10 +12,11 @@ interface Props {
     error: unknown;
     isAdmin: boolean;
     onFinalize: (nominationId: string) => Promise<void>;
+    onSetCurrentBook: (nominationId: string) => Promise<void>;
     onShowOverride: () => void;
 }
 
-export function ClubManageCurrentBookSection({ club, nominations, isLoading, isError, error, isAdmin, onFinalize, onShowOverride }: Props) {
+export function ClubManageCurrentBookSection({ club, nominations, isLoading, isError, error, isAdmin, onFinalize, onSetCurrentBook, onShowOverride }: Props) {
     const { colors } = useTheme();
     const [activeNominationId, setActiveNominationId] = useState<string | null>(null);
 
@@ -59,14 +60,28 @@ export function ClubManageCurrentBookSection({ club, nominations, isLoading, isE
                     {nominations.map((nom) => {
                         const isVotingClosed = hasNominationVotingClosed(nom.voting_ends_at);
                         const canFinalize = isAdmin && nom.status === 'active' && isVotingClosed;
+                        const canSetCurrent = isAdmin && nom.status === 'active' && !isVotingClosed;
+                        const isCurrentBook = !!club.current_book_id && club.current_book_id === nom.book_id;
+                        const coverUrl = nom.book?.cover_url
+                            ? getBookCoverUrl({ volumeInfo: { imageLinks: { thumbnail: nom.book.cover_url } } } as any)
+                            : null;
+
                         return (
                             <View key={nom.id} style={[styles.nominationRow, { borderBottomColor: colors.border }]}>
+                                {coverUrl ? (
+                                    <Image source={{ uri: coverUrl }} style={styles.nominationCover} resizeMode="cover" />
+                                ) : (
+                                    <View style={[styles.nominationCover, styles.nominationCoverPlaceholder, { backgroundColor: colors.bgSecondary }]}>
+                                        <Text style={[styles.coverPlaceholderText, { color: colors.textTertiary }]}>No cover</Text>
+                                    </View>
+                                )}
+
                                 <View style={styles.nominationInfo}>
                                     <Text style={[styles.nominationTitle, { color: colors.textPrimary }]} testID={`manage-current-book-title-${nom.id}`}>
-                                        {nom.book_title}
+                                        {nom.book?.title || 'Untitled nomination'}
                                     </Text>
                                     <Text style={[styles.nominationMeta, { color: colors.textSecondary }]}>
-                                        {formatNominationStatus(nom.status)} · {nom.votes_count} votes
+                                        {formatNominationStatus(nom.status)} · {nom.vote_count ?? 0} votes
                                         {isVotingClosed && nom.status === 'active' && (
                                             <Text testID={`manage-current-book-closed-${nom.id}`}> · Voting closed</Text>
                                         )}
@@ -74,12 +89,23 @@ export function ClubManageCurrentBookSection({ club, nominations, isLoading, isE
                                             <Text testID={`manage-current-book-active-${nom.id}`}> · Voting open</Text>
                                         )}
                                     </Text>
-                                    {nom.status === 'active' && isVotingClosed && (
+                                    {nom.nominatorProfile?.display_name && (
+                                        <Text style={[styles.nominationNominator, { color: colors.textTertiary }]}>
+                                            Nominated by {nom.nominatorProfile.display_name}
+                                        </Text>
+                                    )}
+                                    {isCurrentBook && (
+                                        <Text style={[styles.nominationSelected, { color: colors.accent }]} testID={`manage-current-book-current-${nom.id}`}>
+                                            Current book
+                                        </Text>
+                                    )}
+                                    {!isCurrentBook && nom.status === 'active' && isVotingClosed && (
                                         <Text style={[styles.nominationSelected, { color: colors.accent }]} testID={`manage-current-book-selected-${nom.id}`}>
                                             Selected: will be finalized when confirmed
                                         </Text>
                                     )}
                                 </View>
+
                                 {canFinalize && (
                                     <TouchableOpacity
                                         testID={`manage-finalize-${nom.id}`}
@@ -89,8 +115,24 @@ export function ClubManageCurrentBookSection({ club, nominations, isLoading, isE
                                             setActiveNominationId(null);
                                         }}
                                         disabled={activeNominationId === nom.id}
-                                        style={[styles.finalizeButton, { backgroundColor: colors.accent, opacity: activeNominationId === nom.id ? 0.5 : 1 }]}>
-                                        <Text style={styles.finalizeButtonText}>{activeNominationId === nom.id ? 'Finalizing…' : 'Finalize'}</Text>
+                                        style={[styles.finalizeButton, { backgroundColor: colors.accent, opacity: activeNominationId === nom.id ? 0.5 : 1 }]}
+                                    >
+                                        <Text style={styles.finalizeButtonText}>{activeNominationId === nom.id ? 'Finalizing...' : 'Finalize'}</Text>
+                                    </TouchableOpacity>
+                                )}
+
+                                {canSetCurrent && (
+                                    <TouchableOpacity
+                                        testID={`manage-set-current-${nom.id}`}
+                                        onPress={async () => {
+                                            setActiveNominationId(nom.id);
+                                            await onSetCurrentBook(nom.id);
+                                            setActiveNominationId(null);
+                                        }}
+                                        disabled={activeNominationId === nom.id}
+                                        style={[styles.finalizeButton, { backgroundColor: colors.accent, opacity: activeNominationId === nom.id ? 0.5 : 1 }]}
+                                    >
+                                        <Text style={styles.finalizeButtonText}>{activeNominationId === nom.id ? 'Saving...' : 'Set as current'}</Text>
                                     </TouchableOpacity>
                                 )}
                             </View>
@@ -103,7 +145,8 @@ export function ClubManageCurrentBookSection({ club, nominations, isLoading, isE
                 <TouchableOpacity
                     testID="manage-toggle-override"
                     onPress={onShowOverride}
-                    style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                    style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
+                >
                     <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Manual override</Text>
                     <Text style={[styles.placeholder, { color: colors.textSecondary }]}>Set a current book directly without nominations or voting.</Text>
                 </TouchableOpacity>
@@ -151,6 +194,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 10,
         borderBottomWidth: 1,
+        gap: 10,
+    },
+    nominationCover: {
+        width: 48,
+        height: 72,
+        borderRadius: 4,
+    },
+    nominationCoverPlaceholder: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    coverPlaceholderText: {
+        fontSize: 10,
+        textAlign: 'center',
     },
     nominationInfo: {
         flex: 1,
@@ -163,6 +220,11 @@ const styles = StyleSheet.create({
     nominationMeta: {
         fontSize: 12,
         marginTop: 2,
+    },
+    nominationNominator: {
+        fontSize: 12,
+        marginTop: 2,
+        fontStyle: 'italic',
     },
     nominationSelected: {
         fontSize: 12,

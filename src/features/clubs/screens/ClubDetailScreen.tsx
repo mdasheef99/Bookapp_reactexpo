@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, TextInput } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { profileService } from '@/features/auth/services/profileService';
-import { useAcceptClubInvitation, useCastClubBookVote, useClubBookNominations, useClubCurrentBookStatusOverview, useClubJoinQuestions, useClubMembers, useClubMembership, useClubPublicDetail, useJoinClub, useMyClubApplication, useMyClubInvitation, useRemoveClubBookVote, useSetClubCurrentBookReadingStatus } from '@/features/clubs/hooks/useClubs';
+import { navigateBackOrFallback } from '@/lib/navigation';
+import { useAcceptClubInvitation, useCastClubBookVote, useClubBookNominations, useClubCurrentBookStatusOverview, useClubJoinQuestions, useClubMembers, useClubMembership, useClubPublicDetail, useJoinClub, useLeaveClub, useMyClubApplication, useMyClubInvitation, useRemoveClubBookVote, useSetClubCurrentBookReadingStatus } from '@/features/clubs/hooks/useClubs';
 import { ClubMemberList } from '@/features/clubs/components/ClubMemberList';
 import { getClubAccessRequirementMessage, getClubsEntitlementErrorMessage, membershipTierSatisfiesAccessLevel } from '@/features/clubs/services/clubsEntitlement';
 import type { AccessLevel, ClubBookNominationWithDetails, ClubCurrentBookReadingStatus, ClubJoinQuestion, ClubType, MeetingType, MembershipTier } from '@/features/clubs/services/clubsService';
@@ -83,7 +84,9 @@ export default function ClubDetailScreen() {
     const castVoteMutation = useCastClubBookVote();
     const removeVoteMutation = useRemoveClubBookVote();
     const setCurrentBookStatusMutation = useSetClubCurrentBookReadingStatus();
+    const leaveClubMutation = useLeaveClub();
     const [answers, setAnswers] = useState<Record<string, string>>({});
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [actionFeedback, setActionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
     const [bookFeedback, setBookFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
     const [currentBookFeedback, setCurrentBookFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -149,7 +152,7 @@ export default function ClubDetailScreen() {
             <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}>
                 <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>Unable to load this club</Text>
                 <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.accent }]} onPress={() => refetch()}><Text style={styles.backButtonText}>Retry</Text></TouchableOpacity>
-                <TouchableOpacity style={[styles.secondaryButton, { borderColor: colors.border }]} onPress={() => router.back()}><Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>Go back</Text></TouchableOpacity>
+                <TouchableOpacity style={[styles.secondaryButton, { borderColor: colors.border }]} onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')}><Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>Go back</Text></TouchableOpacity>
             </View>
         );
     }
@@ -232,6 +235,22 @@ export default function ClubDetailScreen() {
         }
     };
 
+    const handleLeaveClub = () => {
+        if (!clubId || !userId) return;
+        setShowLeaveConfirm(true);
+    };
+
+    const executeLeave = async () => {
+        setShowLeaveConfirm(false);
+        try {
+            setActionFeedback(null);
+            await leaveClubMutation.mutateAsync({ clubId, userId });
+            router.push('/clubs');
+        } catch (error) {
+            setActionFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to leave this club right now.') });
+        }
+    };
+
     const renderAboutTab = () => (
         <>
             <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
@@ -252,6 +271,7 @@ export default function ClubDetailScreen() {
                 {isJoinFlowLoading ? <View style={styles.inlineLoadingRow}><ActivityIndicator size="small" color={colors.accent} /><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Preparing the right join flow…</Text></View> : null}
                 {membership?.status === 'banned' ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Membership restricted</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>This account is currently banned from the club and cannot join or apply.</Text></View> : null}
                 {isMember ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>{membership?.status === 'muted' ? 'You are a muted member' : 'You are already a member'}</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Member-only spaces like discussion, club events, nominations, and the private member list are available here now.</Text></View> : null}
+                {isMember ? <TouchableOpacity onPress={handleLeaveClub} disabled={leaveClubMutation.isPending} style={[styles.dangerButton, { borderColor: colors.error, opacity: leaveClubMutation.isPending ? 0.65 : 1 }]} testID="club-leave"><Text style={[styles.dangerButtonText, { color: colors.error }]}>{leaveClubMutation.isPending ? 'Leaving…' : 'Leave club'}</Text></TouchableOpacity> : null}
                 {!isMember && userId && meetsClubAccessRequirement === false ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]} testID="club-entitlement-warning"><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Membership tier required</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{canJoinDirectly || myInvitation ? getClubAccessRequirementMessage(club.access_level ?? 'all', viewerMembershipTier, canJoinDirectly ? 'join this club' : 'accept this invitation') : `This club currently requires ${ACCESS_LEVEL_LABELS[club.access_level ?? 'all']}. If your application is approved, membership cannot become active until your subscription tier meets that requirement.`}</Text></View> : null}
                 {!isMember && myApplication?.status === 'pending' ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Application pending</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Your application is waiting for moderator review. You do not need to submit it again.</Text></View> : null}
                 {!isMember && myApplication?.status === 'declined' ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Application declined</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{myApplication.decline_reason || 'Your previous application was declined. Reapply is not available in this version yet.'}</Text></View> : null}
@@ -299,6 +319,15 @@ export default function ClubDetailScreen() {
                                 })}</View> : <Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Only active club members can update the current-book reading status. Muted members can still view club progress.</Text>}
                             </View>
                             {currentBookFeedback ? <View style={[styles.feedbackBanner, { backgroundColor: currentBookFeedback.type === 'success' ? '#DCFCE7' : '#FEE2E2', borderColor: currentBookFeedback.type === 'success' ? '#22C55E' : '#EF4444' }]}><Text style={[styles.feedbackText, { color: currentBookFeedback.type === 'success' ? '#166534' : '#991B1B' }]}>{currentBookFeedback.message}</Text></View> : null}
+                            {isMember && club.current_book_id ? (
+                                <TouchableOpacity
+                                    onPress={() => router.push(`/clubs/${club.id}/reading`)}
+                                    style={[styles.secondaryActionButton, { borderColor: colors.accent, marginTop: 12 }]}
+                                    testID="club-view-reading-progress"
+                                >
+                                    <Text style={[styles.secondaryActionText, { color: colors.accent }]}>View full reading progress</Text>
+                                </TouchableOpacity>
+                            ) : null}
                         </>
                     ) : null}
                 </>
@@ -377,7 +406,7 @@ export default function ClubDetailScreen() {
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.contentContainer}>
             <View style={styles.headerRow}>
-                <TouchableOpacity onPress={() => router.back()} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity>
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>{club.name}</Text>
                 <View style={styles.headerSpacer} />
             </View>
@@ -403,6 +432,7 @@ export default function ClubDetailScreen() {
                             key={tab.key}
                             onPress={() => setActiveTab(tab.key)}
                             style={[styles.tabButton, isActive && { backgroundColor: colors.accent }]}
+                            testID={`tab-${tab.key}`}
                         >
                             <Text style={[styles.tabText, { color: isActive ? '#FFFFFF' : colors.textSecondary }]}>{tab.label}</Text>
                         </TouchableOpacity>
@@ -414,6 +444,37 @@ export default function ClubDetailScreen() {
             {activeTab === 'nominations' && renderNominationsTab()}
             {activeTab === 'events' && renderEventsTab()}
             {activeTab === 'discussion' && renderDiscussionTab()}
+
+            {/* Leave Club Confirmation Modal */}
+            {showLeaveConfirm && (
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="leave-confirm-modal">
+                        <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Leave club</Text>
+                        <Text style={[styles.modalBody, { color: colors.textSecondary }]}>
+                            Are you sure you want to leave this club? You will lose access to member-only content.
+                        </Text>
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity
+                                onPress={() => setShowLeaveConfirm(false)}
+                                style={[styles.modalButton, styles.modalButtonSecondary, { borderColor: colors.border }]}
+                                testID="leave-confirm-cancel"
+                            >
+                                <Text style={{ color: colors.textSecondary, fontWeight: '700', fontSize: 14 }}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={executeLeave}
+                                disabled={leaveClubMutation.isPending}
+                                style={[styles.modalButton, styles.modalButtonDanger, { backgroundColor: colors.error, opacity: leaveClubMutation.isPending ? 0.65 : 1 }]}
+                                testID="leave-confirm-leave"
+                            >
+                                <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>
+                                    {leaveClubMutation.isPending ? 'Leaving…' : 'Leave Club'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            )}
         </ScrollView>
     );
 }
@@ -424,6 +485,15 @@ const styles = StyleSheet.create({
     heroCard: { flexDirection: 'row', gap: 14, borderWidth: 1, borderRadius: 18, padding: 14, marginBottom: 16 }, cover: { width: 108, height: 160, borderRadius: 14, backgroundColor: '#E2E8F0' }, heroBody: { flex: 1 }, clubName: { fontSize: 22, fontWeight: '800', marginBottom: 6 }, clubMeta: { fontSize: 14, fontWeight: '500', marginBottom: 10 }, clubDescription: { fontSize: 14, lineHeight: 21, marginBottom: 12 }, badgesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, badge: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }, badgeText: { fontSize: 12, fontWeight: '700', textTransform: 'capitalize' },
     sectionCard: { borderWidth: 1, borderRadius: 18, padding: 16, marginBottom: 14 }, sectionTitle: { fontSize: 15, fontWeight: '700', marginBottom: 8 }, sectionPrimary: { fontSize: 17, fontWeight: '700', marginBottom: 4 }, sectionBody: { fontSize: 14, lineHeight: 20 }, detailGrid: { gap: 12 }, detailItem: { gap: 4 }, detailLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }, detailValue: { fontSize: 15, fontWeight: '600', lineHeight: 21 }, noticeCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12 }, noticeTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6 }, noticeBody: { fontSize: 14, lineHeight: 20 }, inlineLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 }, currentBookStatsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 }, currentBookStatCard: { minWidth: 120, flexGrow: 1, borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, gap: 4 }, currentBookStatLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 }, currentBookStatValue: { fontSize: 20, fontWeight: '800' }, currentBookActionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 }, currentBookStatusButton: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 }, currentBookStatusButtonText: { fontSize: 14, fontWeight: '800' }, joinSection: { marginTop: 14 }, questionBlock: { marginTop: 12 }, questionLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8 }, answerInput: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, minHeight: 88, textAlignVertical: 'top' }, nominationCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12, gap: 10 }, nominationHeaderRow: { flexDirection: 'row', gap: 12 }, nominationCover: { width: 72, height: 108, borderRadius: 12, backgroundColor: '#E2E8F0' }, nominationBody: { flex: 1, gap: 4 }, nominationTitle: { fontSize: 15, fontWeight: '700' }, nominationMeta: { fontSize: 13, lineHeight: 18 }, nominationActionsRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
     tabBar: { flexDirection: 'row', gap: 8, marginBottom: 14 }, tabButton: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, backgroundColor: 'transparent' }, tabText: { fontSize: 13, fontWeight: '700' }, tabContent: { paddingBottom: 24 },
+    dangerButton: { marginTop: 16, borderWidth: 1, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }, dangerButtonText: { fontSize: 15, fontWeight: '800' },
     nominationStatsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }, voteBadge: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }, voteBadgeText: { fontSize: 12, fontWeight: '700' },
     primaryActionButton: { marginTop: 16, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }, primaryActionText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' }, secondaryActionButton: { marginTop: 16, borderWidth: 1, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }, secondaryActionText: { fontSize: 15, fontWeight: '800' }, feedbackBanner: { marginTop: 14, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }, feedbackText: { fontSize: 13, fontWeight: '600', lineHeight: 18 }, errorTitle: { fontSize: 18, fontWeight: '700' }, backButton: { borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 }, backButtonText: { color: '#FFFFFF', fontWeight: '700' }, secondaryButton: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 }, secondaryButtonText: { fontWeight: '700' },
+    modalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24, zIndex: 1000 },
+    modalCard: { width: '100%', maxWidth: 400, borderRadius: 18, borderWidth: 1, padding: 24, gap: 16 },
+    modalTitle: { fontSize: 20, fontWeight: '800' },
+    modalBody: { fontSize: 14, lineHeight: 21 },
+    modalActions: { flexDirection: 'row', gap: 12 },
+    modalButton: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+    modalButtonSecondary: { borderWidth: 1.5 },
+    modalButtonDanger: {},
 });

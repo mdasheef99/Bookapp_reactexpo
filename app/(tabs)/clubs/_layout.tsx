@@ -19,6 +19,8 @@ export default function ClubsLayout() {
             <Stack.Screen name="[clubId]/invite" />
             <Stack.Screen name="[clubId]/manage" />
             <Stack.Screen name="[clubId]/nominate" />
+            <Stack.Screen name="[clubId]/reading" />
+            <Stack.Screen name="[clubId]/venues" />
         </Stack>
     );
 }

@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { navigateBackOrFallback } from '@/lib/navigation';
 import { useClubApplications, useClubJoinQuestions, useClubMembership, useClubPublicDetail, useReviewClubApplication } from '@/features/clubs/hooks/useClubs';
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
 import type { ClubJoinApplicationWithProfile, ReviewApplicationDecision } from '@/features/clubs/services/clubsService';
@@ -77,7 +78,7 @@ export default function ClubApplicationsScreen() {
 
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.contentContainer}>
-            <View style={styles.headerRow}><TouchableOpacity onPress={() => router.back()} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity><Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Applications</Text><View style={styles.headerSpacer} /></View>
+            <View style={styles.headerRow}><TouchableOpacity onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity><Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Applications</Text><View style={styles.headerSpacer} /></View>
             <View style={[styles.heroCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.title, { color: colors.textPrimary }]}>{club.name}</Text><Text style={[styles.body, { color: colors.textSecondary }]}>Review pending applications with the live moderator workflow. Approvals add the user to the club atomically through Supabase.</Text></View>
             {feedback ? <View style={[styles.feedbackBanner, { backgroundColor: feedback.type === 'success' ? '#DCFCE7' : '#FEE2E2', borderColor: feedback.type === 'success' ? '#22C55E' : '#EF4444' }]}><Text style={[styles.feedbackText, { color: feedback.type === 'success' ? '#166534' : '#991B1B' }]}>{feedback.message}</Text></View> : null}
             {isApplicationsLoading ? <View style={styles.loadingRow}><ActivityIndicator size="small" color={colors.accent} /><Text style={[styles.body, { color: colors.textSecondary }]}>Loading pending applications…</Text></View> : null}

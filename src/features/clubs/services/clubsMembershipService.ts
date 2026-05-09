@@ -94,3 +94,9 @@ export async function updateMemberRole(clubId: string, userId: string, role: Exc
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to update this club role right now.'));
     return data as ClubMember;
 }
+
+export async function updateMemberStatus(clubId: string, userId: string, status: 'active' | 'muted'): Promise<ClubMember> {
+    const { data, error } = await supabase.from('club_members').update({ status }).eq('club_id', clubId).eq('user_id', userId).select(CLUB_MEMBER_SELECT).single();
+    if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to update this member status right now.'));
+    return data as ClubMember;
+}

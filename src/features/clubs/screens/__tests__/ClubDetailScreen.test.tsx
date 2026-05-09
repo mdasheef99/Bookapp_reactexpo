@@ -1,6 +1,9 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 import ClubDetailScreen from '../ClubDetailScreen';
 import { profileService } from '@/features/auth/services/profileService';
+
+
 
 const mockRouterBack = jest.fn();
 const mockRouterPush = jest.fn();
@@ -17,6 +20,7 @@ const mockUseClubCurrentBookStatusOverview = jest.fn();
 const mockUseCastClubBookVote = jest.fn();
 const mockUseRemoveClubBookVote = jest.fn();
 const mockUseSetClubCurrentBookReadingStatus = jest.fn();
+const mockUseLeaveClub = jest.fn();
 
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
@@ -54,6 +58,7 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useCastClubBookVote: (...args: unknown[]) => mockUseCastClubBookVote(...args),
     useRemoveClubBookVote: (...args: unknown[]) => mockUseRemoveClubBookVote(...args),
     useSetClubCurrentBookReadingStatus: (...args: unknown[]) => mockUseSetClubCurrentBookReadingStatus(...args),
+    useLeaveClub: (...args: unknown[]) => mockUseLeaveClub(...args),
 }));
 
 const baseClub = {
@@ -86,6 +91,8 @@ beforeEach(() => {
     mockUseCastClubBookVote.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseRemoveClubBookVote.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseSetClubCurrentBookReadingStatus.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseLeaveClub.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseClubCurrentBookStatusOverview.mockReturnValue({ data: null, isLoading: false, isError: false, error: null });
     (profileService.getProfileSummary as jest.Mock).mockResolvedValue({ membership_tier: 'pro_plus' });
 });
 
@@ -338,6 +345,140 @@ describe('ClubDetailScreen', () => {
         expect(queryByTestId('club-current-book-status-want_to_read')).toBeNull();
         expect(queryByTestId('club-current-book-status-reading')).toBeNull();
         expect(queryByTestId('club-current-book-status-completed')).toBeNull();
+    });
+
+    it('shows a Leave Club button for active members', async () => {
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
+
+        const { getByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        expect(getByTestId('club-leave')).toBeOnTheScreen();
+    });
+
+    it('shows a Leave Club button for muted members', async () => {
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'muted' }, isLoading: false });
+
+        const { getByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        expect(getByTestId('club-leave')).toBeOnTheScreen();
+    });
+
+    it('shows a reading progress entry point for active members when there is a current book', async () => {
+        mockUseClubPublicDetail.mockReturnValue({ data: { ...baseClub, current_book_id: 'book-1', current_book_title: 'Beloved', current_book_authors: ['Toni Morrison'] }, isLoading: false, isError: false, error: null });
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
+        mockUseClubCurrentBookStatusOverview.mockReturnValue({
+            data: {
+                current_book_id: 'book-1',
+                member_reading_status: 'want_to_read',
+                to_start_count: 3,
+                reading_count: 2,
+                completed_count: 1,
+                active_member_count: 6,
+            },
+            isLoading: false,
+            isError: false,
+            error: null,
+        });
+
+        const { getByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        fireEvent.press(getByTestId('tab-current-book'));
+        expect(getByTestId('club-view-reading-progress')).toBeOnTheScreen();
+    });
+
+    it('navigates to the reading progress screen from the current-book tab', async () => {
+        mockUseClubPublicDetail.mockReturnValue({ data: { ...baseClub, current_book_id: 'book-1', current_book_title: 'Beloved', current_book_authors: ['Toni Morrison'] }, isLoading: false, isError: false, error: null });
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
+        mockUseClubCurrentBookStatusOverview.mockReturnValue({
+            data: {
+                current_book_id: 'book-1',
+                member_reading_status: 'want_to_read',
+                to_start_count: 3,
+                reading_count: 2,
+                completed_count: 1,
+                active_member_count: 6,
+            },
+            isLoading: false,
+            isError: false,
+            error: null,
+        });
+
+        const { getByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        fireEvent.press(getByTestId('tab-current-book'));
+        fireEvent.press(getByTestId('club-view-reading-progress'));
+
+        expect(mockRouterPush).toHaveBeenCalledWith('/clubs/club-1/reading');
+    });
+
+    it('shows a custom leave confirmation modal when Leave club is tapped', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue(undefined);
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
+        mockUseLeaveClub.mockReturnValue({ mutateAsync, isPending: false });
+
+        const { getByTestId, queryByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        // Modal should not be visible initially
+        expect(queryByTestId('leave-confirm-modal')).toBeNull();
+
+        // Tap Leave club button
+        fireEvent.press(getByTestId('club-leave'));
+
+        // Modal should now be visible with title, message, and two buttons
+        await waitFor(() => expect(getByTestId('leave-confirm-modal')).toBeOnTheScreen());
+        expect(getByTestId('leave-confirm-cancel')).toBeOnTheScreen();
+        expect(getByTestId('leave-confirm-leave')).toBeOnTheScreen();
+    });
+
+    it('cancels leave when Cancel is tapped in the confirmation modal', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue(undefined);
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
+        mockUseLeaveClub.mockReturnValue({ mutateAsync, isPending: false });
+
+        const { getByTestId, queryByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        fireEvent.press(getByTestId('club-leave'));
+        await waitFor(() => expect(getByTestId('leave-confirm-modal')).toBeOnTheScreen());
+
+        fireEvent.press(getByTestId('leave-confirm-cancel'));
+
+        // Modal should be dismissed, mutation should NOT be called
+        await waitFor(() => expect(queryByTestId('leave-confirm-modal')).toBeNull());
+        expect(mutateAsync).not.toHaveBeenCalled();
+    });
+
+    it('leaves the club and navigates to browse when Leave Club is confirmed in modal', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue(undefined);
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
+        mockUseLeaveClub.mockReturnValue({ mutateAsync, isPending: false });
+
+        const { getByTestId, queryByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        fireEvent.press(getByTestId('club-leave'));
+        await waitFor(() => expect(getByTestId('leave-confirm-modal')).toBeOnTheScreen());
+
+        fireEvent.press(getByTestId('leave-confirm-leave'));
+
+        // Modal should dismiss, mutation fires, navigation happens
+        await waitFor(() => expect(queryByTestId('leave-confirm-modal')).toBeNull());
+        await waitFor(() => {
+            expect(mutateAsync).toHaveBeenCalledWith({ clubId: 'club-1', userId: 'reader-1' });
+        });
+        expect(mockRouterPush).toHaveBeenCalledWith('/clubs');
     });
 
     it('shows the nomination entry point for active members', async () => {
