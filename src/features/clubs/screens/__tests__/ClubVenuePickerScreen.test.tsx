@@ -1,5 +1,6 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import ClubVenuePickerScreen from '../ClubVenuePickerScreen';
+import { navigateBackOrFallback } from '@/lib/navigation';
 
 const mockUseAuth = jest.fn();
 const mockUseTheme = jest.fn();
@@ -18,6 +19,9 @@ jest.mock('@/hooks/useTheme', () => ({
 jest.mock('expo-router', () => ({
     useLocalSearchParams: (...args: unknown[]) => mockUseLocalSearchParams(...args),
     router: { back: (...args: unknown[]) => mockRouterBack(...args), replace: (...args: unknown[]) => mockRouterReplace(...args) },
+}));
+jest.mock('@/lib/navigation', () => ({
+    navigateBackOrFallback: jest.fn(),
 }));
 jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useClubPublicDetail: (...args: unknown[]) => mockUseClubPublicDetail(...args),
@@ -90,6 +94,47 @@ describe('ClubVenuePickerScreen', () => {
         expect(mockRouterReplace).toHaveBeenCalledWith('/clubs/club-1/events?preselectedVenueId=venue-1');
     });
 
+    it('returns to the event editor with manage context when opened from the editor', async () => {
+        const draft = JSON.stringify({
+            title: 'Draft planning night',
+            description: '',
+            eventType: 'hybrid',
+            startDate: '2026-03-24',
+            startTime: '18:30',
+            endDate: '',
+            endTime: '',
+            meetingLink: 'https://meet.example.com/draft-night',
+            manualLocation: '',
+            selectedVenueId: null,
+            locationMode: 'linked_venue',
+        });
+        mockUseLocalSearchParams.mockReturnValue({
+            clubId: 'club-1',
+            returnTo: 'event-editor',
+            editorMode: 'create',
+            editorReturnTo: 'manage',
+            manageTab: 'events',
+            draft,
+        });
+
+        const { getByTestId } = render(<ClubVenuePickerScreen />);
+
+        await waitFor(() => expect(getByTestId('venue-picker-item-venue-1')).toBeOnTheScreen());
+
+        fireEvent.press(getByTestId('venue-picker-item-venue-1'));
+
+        const nextUrl = mockRouterReplace.mock.calls[0][0] as string;
+        const params = new URLSearchParams(nextUrl.split('?')[1]);
+        expect(nextUrl).toContain('/clubs/club-1/events/create?');
+        expect(params.get('preselectedVenueId')).toBe('venue-1');
+        expect(params.get('returnTo')).toBe('manage');
+        expect(params.get('manageTab')).toBe('events');
+        expect(JSON.parse(params.get('draft') ?? '{}')).toMatchObject({
+            title: 'Draft planning night',
+            eventType: 'hybrid',
+        });
+    });
+
     it('shows empty state when no venues are linked', async () => {
         mockUseClubEventVenues.mockReturnValue({ data: [], isLoading: false, isError: false, error: null });
 
@@ -113,6 +158,55 @@ describe('ClubVenuePickerScreen', () => {
         await waitFor(() => expect(getByTestId('venue-picker-item-venue-1')).toBeOnTheScreen());
 
         fireEvent.press(getByTestId('back-button'));
-        expect(mockRouterBack).toHaveBeenCalled();
+        expect(navigateBackOrFallback).toHaveBeenCalledWith(
+            expect.objectContaining({ back: expect.any(Function), replace: expect.any(Function) }),
+            '/clubs/club-1',
+        );
+    });
+
+    it('uses the event editor as the back fallback when opened from the editor', async () => {
+        const draft = JSON.stringify({
+            title: 'Draft edit event',
+            description: '',
+            eventType: 'in_person',
+            startDate: '2026-03-24',
+            startTime: '18:30',
+            endDate: '',
+            endTime: '',
+            meetingLink: '',
+            manualLocation: '',
+            selectedVenueId: 'venue-1',
+            locationMode: 'linked_venue',
+        });
+        mockUseLocalSearchParams.mockReturnValue({
+            clubId: 'club-1',
+            returnTo: 'event-editor',
+            editorMode: 'edit',
+            eventId: 'event-9',
+            editorReturnTo: 'manage',
+            manageTab: 'events',
+            draft,
+        });
+
+        const { getByTestId } = render(<ClubVenuePickerScreen />);
+
+        await waitFor(() => expect(getByTestId('venue-picker-item-venue-1')).toBeOnTheScreen());
+
+        fireEvent.press(getByTestId('back-button'));
+
+        const [, fallbackHref] = (navigateBackOrFallback as jest.Mock).mock.calls[0];
+        const params = new URLSearchParams((fallbackHref as string).split('?')[1]);
+        expect(navigateBackOrFallback).toHaveBeenCalledWith(
+            expect.objectContaining({ back: expect.any(Function), replace: expect.any(Function) }),
+            expect.any(String),
+        );
+        expect(fallbackHref).toContain('/clubs/club-1/events/event-9/edit?');
+        expect(params.get('returnTo')).toBe('manage');
+        expect(params.get('manageTab')).toBe('events');
+        expect(JSON.parse(params.get('draft') ?? '{}')).toMatchObject({
+            title: 'Draft edit event',
+            eventType: 'in_person',
+            selectedVenueId: 'venue-1',
+        });
     });
 });

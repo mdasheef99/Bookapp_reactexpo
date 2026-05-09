@@ -26,6 +26,7 @@ const mockUseCancelClubEvent = jest.fn();
 const mockUseDeleteClubEvent = jest.fn();
 const mockUseUpdateClubMemberStatus = jest.fn();
 const mockUseSetClubCurrentBookFromNomination = jest.fn();
+const mockUseLocalSearchParams = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('@/hooks/useDebounce', () => ({
@@ -36,7 +37,7 @@ jest.mock('@/lib/navigation', () => ({
 }));
 jest.mock('expo-router', () => ({
     router: { back: jest.fn(), push: (...args: unknown[]) => mockRouterPush(...args) },
-    useLocalSearchParams: () => ({ clubId: 'club-1' }),
+    useLocalSearchParams: (...args: unknown[]) => mockUseLocalSearchParams(...args),
 }));
 jest.mock('expo-image-picker', () => ({
     requestMediaLibraryPermissionsAsync: jest.fn(),
@@ -130,6 +131,7 @@ beforeEach(() => {
     jest.clearAllMocks();
     mockUserId = 'admin-1';
     mockRouterPush.mockReset();
+    mockUseLocalSearchParams.mockReturnValue({ clubId: 'club-1', tab: undefined });
     mockUseClubPublicDetail.mockReturnValue({ data: baseClub, isLoading: false, isError: false, refetch: jest.fn() });
     mockUseClubMembership.mockReturnValue({ data: { role: 'admin', status: 'active' }, isLoading: false });
     mockUseClubBookNominations.mockReturnValue({ data: [], isLoading: false, isError: false, error: null, refetch: jest.fn() });
@@ -203,8 +205,21 @@ describe('ClubManageScreen', () => {
         fireEvent.press(getByTestId('manage-create-event'));
         fireEvent.press(getByTestId('manage-edit-event-event-1'));
 
-        expect(mockRouterPush).toHaveBeenNthCalledWith(1, '/clubs/club-1/events/create');
-        expect(mockRouterPush).toHaveBeenNthCalledWith(2, '/clubs/club-1/events/event-1/edit');
+        expect(mockRouterPush).toHaveBeenNthCalledWith(1, '/clubs/club-1/events/create?returnTo=manage&manageTab=events');
+        expect(mockRouterPush).toHaveBeenNthCalledWith(2, '/clubs/club-1/events/event-1/edit?returnTo=manage&manageTab=events');
+    });
+
+    it('lets admins switch away from the events tab after returning with the events query param', async () => {
+        mockUseLocalSearchParams.mockReturnValue({ clubId: 'club-1', tab: 'events' });
+
+        const { getByText, queryByText } = render(<ClubManageScreen />);
+
+        await waitFor(() => expect(getByText('Manage events')).toBeOnTheScreen());
+
+        fireEvent.press(getByText('Settings'));
+
+        await waitFor(() => expect(getByText('Basic settings')).toBeOnTheScreen());
+        expect(queryByText('Manage events')).toBeNull();
     });
 
     it('shows only Current Book tab for active moderators', async () => {

@@ -7,13 +7,41 @@ import { useClubEventVenues, useClubPublicDetail } from '@/features/clubs/hooks/
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
 
 export default function ClubVenuePickerScreen(): JSX.Element {
-    const { clubId, returnTo } = useLocalSearchParams<{ clubId: string; returnTo?: string }>();
+    const { clubId, returnTo, editorMode, eventId, editorReturnTo, manageTab, draft } = useLocalSearchParams<{
+        clubId: string;
+        returnTo?: string;
+        editorMode?: string;
+        eventId?: string;
+        editorReturnTo?: string;
+        manageTab?: string;
+        draft?: string;
+    }>();
     const { colors } = useTheme();
 
     const { data: club, isLoading: isClubLoading, isError: isClubError, error: clubError } = useClubPublicDetail(clubId ?? null);
     const { data: linkedVenues = [], isLoading: isVenuesLoading, isError: isVenuesError, error: venuesError } = useClubEventVenues(clubId ?? null, !!clubId);
 
+    const editorDestination = editorMode === 'edit' && eventId
+        ? `/clubs/${clubId}/events/${eventId}/edit`
+        : `/clubs/${clubId}/events/create`;
+    const editorDestinationQuery = new URLSearchParams({
+        ...(editorReturnTo ? { returnTo: editorReturnTo } : {}),
+        ...(manageTab ? { manageTab } : {}),
+        ...(draft ? { draft } : {}),
+    }).toString();
+    const editorDestinationWithQuery = editorDestinationQuery ? `${editorDestination}?${editorDestinationQuery}` : editorDestination;
+
     const handleSelectVenue = (venueId: string) => {
+        if (returnTo === 'event-editor') {
+            const targetQuery = new URLSearchParams({
+                preselectedVenueId: venueId,
+                ...(editorReturnTo ? { returnTo: editorReturnTo } : {}),
+                ...(manageTab ? { manageTab } : {}),
+                ...(draft ? { draft } : {}),
+            }).toString();
+            router.replace(`${editorDestination}?${targetQuery}`);
+            return;
+        }
         const target = returnTo && returnTo !== 'events' ? `/clubs/${clubId}/${returnTo}` : `/clubs/${clubId}/events`;
         router.replace(`${target}?preselectedVenueId=${venueId}`);
     };
@@ -49,7 +77,7 @@ export default function ClubVenuePickerScreen(): JSX.Element {
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.content}>
             <View style={styles.headerRow}>
-                <TouchableOpacity onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="back-button">
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, returnTo === 'event-editor' ? editorDestinationWithQuery : `/clubs/${clubId}`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="back-button">
                     <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Select a venue</Text>

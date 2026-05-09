@@ -507,7 +507,7 @@ export function useUpdateClubMemberStatus() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ clubId, userId, status }: { clubId: string; userId: string; status: 'active' | 'muted' | 'banned' }) =>
+        mutationFn: ({ clubId, userId, status }: { clubId: string; userId: string; status: 'active' | 'muted' }) =>
             clubsService.updateMemberStatus(clubId, userId, status),
         onSuccess: async (result) => {
             if (!result.club_id) return;

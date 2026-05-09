@@ -70,7 +70,7 @@ const ALL_TABS: TabDef[] = [
 ];
 
 export default function ClubManageScreen() {
-    const { clubId } = useLocalSearchParams<{ clubId: string }>();
+    const { clubId, tab } = useLocalSearchParams<{ clubId: string; tab?: string }>();
     const { colors } = useTheme();
     const { user } = useAuth();
     const userId = user?.id ?? null;
@@ -111,8 +111,9 @@ export default function ClubManageScreen() {
 
     const [settings, setSettings] = useState<SettingsDraft | null>(null);
     const [feedback, setFeedback] = useState<FeedbackState>(null);
-    const [activeTab, setActiveTab] = useState('current-book');
+    const [activeTab, setActiveTab] = useState(tab === 'events' ? 'events' : 'current-book');
     const [showOverride, setShowOverride] = useState(false);
+    const [appliedRouteTab, setAppliedRouteTab] = useState<string | null>(tab ?? null);
 
     useEffect(() => {
         if (club) setSettings(createSettingsDraft(club));
@@ -126,6 +127,21 @@ export default function ClubManageScreen() {
             return true;
         });
     }, [club, isAdmin]);
+
+    useEffect(() => {
+        const requestedTab = typeof tab === 'string' ? tab : null;
+        if (requestedTab && requestedTab !== appliedRouteTab && visibleTabs.some((item) => item.key === requestedTab)) {
+            setActiveTab(requestedTab);
+            setAppliedRouteTab(requestedTab);
+            return;
+        }
+        if (requestedTab !== appliedRouteTab) {
+            setAppliedRouteTab(requestedTab);
+        }
+        if (!visibleTabs.some((item) => item.key === activeTab) && visibleTabs[0]) {
+            setActiveTab(visibleTabs[0].key);
+        }
+    }, [activeTab, appliedRouteTab, tab, visibleTabs]);
 
     if (isLoading || isMembershipLoading || !settings) {
         return (
@@ -272,11 +288,11 @@ export default function ClubManageScreen() {
     };
 
     const handleCreateEvent = () => {
-        router.push(`/clubs/${clubId}/events/create`);
+        router.push(`/clubs/${clubId}/events/create?returnTo=manage&manageTab=events`);
     };
 
     const handleEditEvent = (eventId: string) => {
-        router.push(`/clubs/${clubId}/events/${eventId}/edit`);
+        router.push(`/clubs/${clubId}/events/${eventId}/edit?returnTo=manage&manageTab=events`);
     };
 
     const moderatorsCount = members.filter((m) => m.role === 'moderator').length;
