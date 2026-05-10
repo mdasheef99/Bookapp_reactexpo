@@ -8,10 +8,6 @@ import {
     Linking,
     RefreshControl,
     StyleSheet,
-    Modal,
-    KeyboardAvoidingView,
-    Platform,
-    TextInput,
 } from 'react-native';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'expo-router';
@@ -38,6 +34,7 @@ import {
     FilterModal,
     FilterChips,
     SwipeableBookCard,
+    ManualEntryModal,
 } from '@/components/search';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 
@@ -58,6 +55,14 @@ export default function SearchBooksScreen() {
     const { colors } = useTheme();
     const queryClient = useQueryClient();
     const { isOffline } = useNetworkStatus();
+    const browserLocation = typeof window !== 'undefined'
+        ? window.location
+        : typeof globalThis !== 'undefined'
+            ? globalThis.location
+            : undefined;
+    const locationText = `${browserLocation?.hostname ?? ''} ${browserLocation?.href ?? ''}`;
+    const isLocalPreview = /(^|\s|\/\/)(localhost|127\.0\.0\.1|\[::1\]|::1)(:|\/|\s|$)/.test(locationText);
+    const searchIsOffline = isOffline && !isLocalPreview;
 
     // Search state
     const [query, setQuery] = useState('');
@@ -66,6 +71,8 @@ export default function SearchBooksScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [addingId, setAddingId] = useState<string | null>(null);
+    const [showCachedResultsNotice, setShowCachedResultsNotice] = useState(false);
+    const [showOpenLibraryFallbackNotice, setShowOpenLibraryFallbackNotice] = useState(false);
 
     // Pagination
     const [startIndex, setStartIndex] = useState(0);
@@ -108,10 +115,10 @@ export default function SearchBooksScreen() {
 
     // Auto-search when debounced query changes
     useEffect(() => {
-        if (debouncedQuery.trim().length >= 3 && !isOffline) {
+        if (debouncedQuery.trim().length >= 3 && !searchIsOffline) {
             performSearch(debouncedQuery, 0, false);
         }
-    }, [debouncedQuery, filters, isOffline]);
+    }, [debouncedQuery, filters, searchIsOffline]);
 
     // Fetch user's library
     const { data: userLibrary } = useQuery({
@@ -129,7 +136,7 @@ export default function SearchBooksScreen() {
 
     // Search function
     const performSearch = useCallback(async (searchQuery: string, index: number = 0, saveToRecent: boolean = true) => {
-        if (!searchQuery.trim() || isOffline) return;
+        if (!searchQuery.trim() || searchIsOffline) return;
 
         if (index === 0) {
             setLoading(true);
@@ -139,9 +146,11 @@ export default function SearchBooksScreen() {
         }
         setError(null);
         setShowSuggestions(false);
+        setShowCachedResultsNotice(false);
+        setShowOpenLibraryFallbackNotice(false);
 
         try {
-            const result: PaginatedResult = await booksService.searchGoogleBooks(searchQuery, index, 20, filters);
+            const result = await booksService.searchGoogleBooksCached(searchQuery, index, 20, filters);
 
             if (index === 0) {
                 setResults(result.items);
@@ -152,6 +161,10 @@ export default function SearchBooksScreen() {
             setHasMore(result.hasMore);
             setTotalItems(result.totalItems);
             setStartIndex(index + result.items.length);
+            setShowCachedResultsNotice(result.fromCache && index === 0);
+            setShowOpenLibraryFallbackNotice(
+                result.fallbackUsed === true && result.providerUsed === 'openLibrary' && index === 0
+            );
 
             if (saveToRecent && result.items.length > 0 && index === 0) {
                 saveRecentSearch(searchQuery);
@@ -163,26 +176,26 @@ export default function SearchBooksScreen() {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [isOffline, filters, saveRecentSearch]);
+    }, [searchIsOffline, filters, saveRecentSearch]);
 
     const handleSearch = useCallback(() => {
-        if (!isOffline) {
+        if (!searchIsOffline) {
             performSearch(query, 0, true);
         }
-    }, [isOffline, query, performSearch]);
+    }, [searchIsOffline, query, performSearch]);
 
     const handleLoadMore = useCallback(() => {
-        if (!loadingMore && hasMore && !isOffline) {
+        if (!loadingMore && hasMore && !searchIsOffline) {
             performSearch(query, startIndex, false);
         }
-    }, [loadingMore, hasMore, isOffline, query, startIndex, performSearch]);
+    }, [loadingMore, hasMore, searchIsOffline, query, startIndex, performSearch]);
 
     const handleRefresh = useCallback(async () => {
-        if (!query.trim() || isOffline) return;
+        if (!query.trim() || searchIsOffline) return;
         setRefreshing(true);
         await performSearch(query, 0, false);
         setRefreshing(false);
-    }, [query, isOffline, performSearch]);
+    }, [query, searchIsOffline, performSearch]);
 
     const handleClear = useCallback(() => {
         setQuery('');
@@ -190,6 +203,8 @@ export default function SearchBooksScreen() {
         setStartIndex(0);
         setHasMore(false);
         setSuggestions([]);
+        setShowCachedResultsNotice(false);
+        setShowOpenLibraryFallbackNotice(false);
     }, []);
 
     const closeManualEntryModal = useCallback(() => {
@@ -448,7 +463,7 @@ export default function SearchBooksScreen() {
     return (
         <ScreenBackground>
             {/* Offline Banner */}
-            <OfflineBanner visible={isOffline} />
+            <OfflineBanner visible={searchIsOffline} />
 
             <View style={{ flex: 1, paddingTop: isOffline ? 60 : 60, paddingHorizontal: 16 }}>
                 {/* Header with Back Button */}
@@ -487,6 +502,8 @@ export default function SearchBooksScreen() {
                         onSubmit={handleSearch}
                         onClear={handleClear}
                         loading={loading}
+                        onFocus={() => setIsFocused(true)}
+                        onBlur={() => setIsFocused(false)}
                     />
 
                     {/* Suggestions Dropdown */}
@@ -515,61 +532,104 @@ export default function SearchBooksScreen() {
 
                 {/* Results Header with Sort & Filter */}
                 {results.length > 0 && !loading && (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                        <Text style={{ fontSize: 14, color: colors.textSecondary, fontWeight: '500' }}>
-                            {totalItems > 0 ? `${totalItems.toLocaleString()} results` : `${results.length} results`}
-                        </Text>
-                        <View style={{ flexDirection: 'row', gap: 8 }}>
-                            {/* Filter Button */}
-                            <TouchableOpacity
-                                onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    setShowFilterModal(true);
-                                }}
+                    <>
+                        {showCachedResultsNotice && (
+                            <View
                                 style={{
                                     flexDirection: 'row',
                                     alignItems: 'center',
-                                    backgroundColor: activeFiltersCount > 0 ? colors.accent : colors.bgCard,
+                                    marginBottom: 12,
                                     paddingHorizontal: 12,
-                                    paddingVertical: 8,
-                                    borderRadius: 12,
-                                    borderWidth: 1,
-                                    borderColor: activeFiltersCount > 0 ? colors.accent : colors.border,
-                                }}
-                                accessibilityLabel="Filter results"
-                                accessibilityHint="Opens filter options"
-                            >
-                                <Ionicons name="filter" size={16} color={activeFiltersCount > 0 ? '#fff' : colors.textSecondary} />
-                                {activeFiltersCount > 0 && (
-                                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>
-                                        {activeFiltersCount}
-                                    </Text>
-                                )}
-                            </TouchableOpacity>
-
-                            {/* Sort Button */}
-                            <TouchableOpacity
-                                onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    setShowSortModal(true);
-                                }}
-                                style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
+                                    paddingVertical: 10,
+                                    borderRadius: 14,
                                     backgroundColor: colors.bgCard,
-                                    paddingHorizontal: 12,
-                                    paddingVertical: 8,
-                                    borderRadius: 12,
                                     borderWidth: 1,
                                     borderColor: colors.border,
                                 }}
-                                accessibilityLabel="Sort results"
-                                accessibilityHint="Opens sort options"
                             >
-                                <Ionicons name="swap-vertical" size={16} color={colors.textSecondary} />
-                            </TouchableOpacity>
+                                <Ionicons name="cloud-offline-outline" size={16} color={colors.textSecondary} />
+                                <Text style={{ color: colors.textSecondary, fontSize: 13, marginLeft: 8, flex: 1 }}>
+                                    Showing recent cached Google Books results.
+                                </Text>
+                            </View>
+                        )}
+                        {showOpenLibraryFallbackNotice && (
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    marginBottom: 12,
+                                    paddingHorizontal: 12,
+                                    paddingVertical: 10,
+                                    borderRadius: 14,
+                                    backgroundColor: colors.bgCard,
+                                    borderWidth: 1,
+                                    borderColor: colors.border,
+                                }}
+                            >
+                                <Ionicons name="library-outline" size={16} color={colors.textSecondary} />
+                                <Text style={{ color: colors.textSecondary, fontSize: 13, marginLeft: 8, flex: 1 }}>
+                                    Showing results from Open Library while Google Books is unavailable.
+                                </Text>
+                            </View>
+                        )}
+
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                            <Text style={{ fontSize: 14, color: colors.textSecondary, fontWeight: '500' }}>
+                                {totalItems > 0 ? `${totalItems.toLocaleString()} results` : `${results.length} results`}
+                            </Text>
+                            <View style={{ flexDirection: 'row', gap: 8 }}>
+                                {/* Filter Button */}
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setShowFilterModal(true);
+                                    }}
+                                    style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        backgroundColor: activeFiltersCount > 0 ? colors.accent : colors.bgCard,
+                                        paddingHorizontal: 12,
+                                        paddingVertical: 8,
+                                        borderRadius: 12,
+                                        borderWidth: 1,
+                                        borderColor: activeFiltersCount > 0 ? colors.accent : colors.border,
+                                    }}
+                                    accessibilityLabel="Filter results"
+                                    accessibilityHint="Opens filter options"
+                                >
+                                    <Ionicons name="filter" size={16} color={activeFiltersCount > 0 ? '#fff' : colors.textSecondary} />
+                                    {activeFiltersCount > 0 && (
+                                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>
+                                            {activeFiltersCount}
+                                        </Text>
+                                    )}
+                                </TouchableOpacity>
+
+                                {/* Sort Button */}
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setShowSortModal(true);
+                                    }}
+                                    style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        backgroundColor: colors.bgCard,
+                                        paddingHorizontal: 12,
+                                        paddingVertical: 8,
+                                        borderRadius: 12,
+                                        borderWidth: 1,
+                                        borderColor: colors.border,
+                                    }}
+                                    accessibilityLabel="Sort results"
+                                    accessibilityHint="Opens sort options"
+                                >
+                                    <Ionicons name="swap-vertical" size={16} color={colors.textSecondary} />
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                    </View>
+                    </>
                 )}
 
                 {/* Content */}
@@ -615,121 +675,16 @@ export default function SearchBooksScreen() {
                 onApply={handleFilterApply}
             />
 
-            <Modal
+            <ManualEntryModal
                 visible={showManualEntryModal}
-                transparent
-                animationType="fade"
-                onRequestClose={closeManualEntryModal}
-            >
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                    style={{
-                        flex: 1,
-                        justifyContent: 'center',
-                        padding: 24,
-                        backgroundColor: 'rgba(15, 23, 42, 0.45)',
-                    }}
-                >
-                    <View
-                        style={{
-                            backgroundColor: colors.bgCard,
-                            borderRadius: 24,
-                            padding: 20,
-                            borderWidth: 1,
-                            borderColor: colors.border,
-                        }}
-                    >
-                        <Text style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '700' }}>
-                            Add book manually
-                        </Text>
-                        <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginTop: 8 }}>
-                            Add a basic library entry when search doesn’t return the title you need.
-                        </Text>
-
-                        <View style={{ marginTop: 18 }}>
-                            <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>
-                                Title
-                            </Text>
-                            <TextInput
-                                testID="library-manual-entry-title"
-                                value={manualTitle}
-                                onChangeText={setManualTitle}
-                                placeholder="Enter the book title"
-                                placeholderTextColor={colors.textTertiary}
-                                style={{
-                                    borderWidth: 1,
-                                    borderColor: colors.border,
-                                    borderRadius: 14,
-                                    paddingHorizontal: 14,
-                                    paddingVertical: 12,
-                                    fontSize: 15,
-                                    color: colors.textPrimary,
-                                    backgroundColor: colors.bgPrimary,
-                                }}
-                            />
-                        </View>
-
-                        <View style={{ marginTop: 14 }}>
-                            <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>
-                                Author (optional)
-                            </Text>
-                            <TextInput
-                                testID="library-manual-entry-author"
-                                value={manualAuthor}
-                                onChangeText={setManualAuthor}
-                                placeholder="Enter the author name"
-                                placeholderTextColor={colors.textTertiary}
-                                style={{
-                                    borderWidth: 1,
-                                    borderColor: colors.border,
-                                    borderRadius: 14,
-                                    paddingHorizontal: 14,
-                                    paddingVertical: 12,
-                                    fontSize: 15,
-                                    color: colors.textPrimary,
-                                    backgroundColor: colors.bgPrimary,
-                                }}
-                            />
-                        </View>
-
-                        <View style={{ flexDirection: 'row', marginTop: 22, gap: 12 }}>
-                            <TouchableOpacity
-                                testID="library-manual-entry-cancel"
-                                onPress={closeManualEntryModal}
-                                style={{
-                                    flex: 1,
-                                    borderWidth: 1,
-                                    borderColor: colors.border,
-                                    borderRadius: 14,
-                                    paddingVertical: 12,
-                                    alignItems: 'center',
-                                    backgroundColor: colors.bgPrimary,
-                                }}
-                            >
-                                <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600' }}>
-                                    Cancel
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                testID="library-manual-entry-save"
-                                onPress={handleManualAddBook}
-                                disabled={manualSubmitting}
-                                style={{
-                                    flex: 1,
-                                    borderRadius: 14,
-                                    paddingVertical: 12,
-                                    alignItems: 'center',
-                                    backgroundColor: manualSubmitting ? colors.textTertiary : colors.accent,
-                                }}
-                            >
-                                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>
-                                    {manualSubmitting ? 'Saving...' : 'Save to library'}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
+                title={manualTitle}
+                author={manualAuthor}
+                submitting={manualSubmitting}
+                onTitleChange={setManualTitle}
+                onAuthorChange={setManualAuthor}
+                onCancel={closeManualEntryModal}
+                onSave={handleManualAddBook}
+            />
         </ScreenBackground>
     );
 }

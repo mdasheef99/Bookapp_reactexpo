@@ -2,7 +2,7 @@
  * Unit tests for booksService.ts
  *
  * Tests: searchGoogleBooks (pagination, filters, errors), getSearchSuggestions (dedup, limit),
- * addToLibrary (upsert + 23505 duplicate), getUserLibrary, getBookDetails,
+ * addToLibrary (catalog reuse/insert + 23505 duplicate), getUserLibrary, getBookDetails,
  * updateReadingStatus (completed_at), removeFromLibrary, and private helpers
  * (getHighResCoverUrl, buildSearchQuery) tested indirectly.
  */
@@ -57,6 +57,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   // Reset global.fetch mock
   global.fetch = jest.fn();
+  delete process.env.EXPO_PUBLIC_APP_ENV;
 });
 
 afterEach(() => {
@@ -143,6 +144,65 @@ describe('booksService', () => {
     });
   });
 
+  // ──────────────────── searchGoogleBooksCached provider fallback ────────────────────
+  describe('searchGoogleBooksCached provider fallback', () => {
+    it('falls back to Open Library results when Google Books rate-limits the request', async () => {
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          status: 429,
+          ok: false,
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            start: 0,
+            numFound: 1,
+            docs: [{
+              key: '/works/OL123W',
+              title: 'Fallback Book',
+              author_name: ['Fallback Author'],
+              first_publish_year: 1998,
+              isbn: ['9780141187761'],
+              cover_i: 123456,
+            }],
+          }),
+        });
+
+      const result = await booksService.searchGoogleBooksCached('fallback query');
+
+      expect((result as any).fallbackUsed).toBe(true);
+      expect((result as any).providerUsed).toBe('openLibrary');
+      expect(result.items[0].volumeInfo.title).toBe('Fallback Book');
+      expect(result.items[0].volumeInfo.authors).toEqual(['Fallback Author']);
+    });
+
+    it('falls back to Open Library results when Google Books throws a network error', async () => {
+      (global.fetch as jest.Mock)
+        .mockRejectedValueOnce(new Error('Google unavailable'))
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            start: 0,
+            numFound: 1,
+            docs: [{
+              key: '/works/OL999W',
+              title: 'Open Library Rescue',
+              author_name: ['Archive Author'],
+              isbn: ['9780679783275'],
+              cover_i: 98765,
+            }],
+          }),
+        });
+
+      const result = await booksService.searchGoogleBooksCached('rescue query');
+
+      expect((result as any).fallbackUsed).toBe(true);
+      expect((result as any).providerUsed).toBe('openLibrary');
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].volumeInfo.title).toBe('Open Library Rescue');
+    });
+  });
+
   // ──────────────────── getSearchSuggestions ────────────────────
   describe('getSearchSuggestions', () => {
     it('returns empty array for short queries', async () => {
@@ -183,18 +243,102 @@ describe('booksService', () => {
       const result = await booksService.getSearchSuggestions('test');
       expect(result).toEqual([]);
     });
+
+    it('falls back to Open Library suggestions when Google Books fails', async () => {
+      (global.fetch as jest.Mock)
+        .mockRejectedValueOnce(new Error('Google suggestions unavailable'))
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            docs: [
+              { title: 'Open Suggestion', author_name: ['Archive Writer'] },
+              { title: 'Open Suggestion', author_name: ['archive writer'] },
+            ],
+          }),
+        });
+
+      const result = await booksService.getSearchSuggestions('open');
+
+      expect(result).toEqual(['Open Suggestion', 'Archive Writer']);
+    });
   });
 
   // ──────────────────── addToLibrary ────────────────────
   describe('addToLibrary', () => {
-    it('upserts book then inserts user_book, returns book data', async () => {
-      const bookData = { id: 'book-uuid-1', title: 'Test Book' };
-      const booksBuilder = mockQuery({ data: bookData, error: null });
+    it('reuses an existing catalog row instead of upserting when the google_books_id already exists', async () => {
+      const existingBooksLookupBuilder = mockQuery({
+        data: { id: 'existing-book-row' },
+        error: null,
+      });
       const existingUserBookBuilder = mockQuery({ data: null, error: null });
       const userBooksBuilder = mockQuery({ data: null, error: null });
 
       (supabase.from as jest.Mock)
-        .mockReturnValueOnce(booksBuilder)
+        .mockReturnValueOnce(existingBooksLookupBuilder)
+        .mockReturnValueOnce(existingUserBookBuilder)
+        .mockReturnValueOnce(userBooksBuilder);
+
+      const result = await booksService.addToLibrary('user-1', mockGoogleBook);
+
+      expect(supabase.from).toHaveBeenNthCalledWith(1, 'books');
+      expect(existingBooksLookupBuilder.select).toHaveBeenCalledWith('id');
+      expect(existingBooksLookupBuilder.eq).toHaveBeenCalledWith('google_books_id', 'gb-123');
+      expect(existingBooksLookupBuilder.maybeSingle).toHaveBeenCalled();
+      expect(existingBooksLookupBuilder.upsert).not.toHaveBeenCalled();
+      expect(userBooksBuilder.insert).toHaveBeenCalledWith({
+        user_id: 'user-1',
+        book_id: 'existing-book-row',
+        reading_status: 'want_to_read',
+        ownership: 'owned',
+        condition: 'new',
+        available_for_lending: false,
+      });
+      expect(result).toEqual({ id: 'existing-book-row' });
+    });
+
+    it('creates a catalog row only when the google_books_id is missing', async () => {
+      const missingBooksLookupBuilder = mockQuery({ data: null, error: null });
+      const booksInsertBuilder = mockQuery({
+        data: { id: 'new-book-row', title: 'Test Book' },
+        error: null,
+      });
+      const existingUserBookBuilder = mockQuery({ data: null, error: null });
+      const userBooksBuilder = mockQuery({ data: null, error: null });
+
+      (supabase.from as jest.Mock)
+        .mockReturnValueOnce(missingBooksLookupBuilder)
+        .mockReturnValueOnce(booksInsertBuilder)
+        .mockReturnValueOnce(existingUserBookBuilder)
+        .mockReturnValueOnce(userBooksBuilder);
+
+      const result = await booksService.addToLibrary('user-1', mockGoogleBook);
+
+      expect(missingBooksLookupBuilder.select).toHaveBeenCalledWith('id');
+      expect(missingBooksLookupBuilder.eq).toHaveBeenCalledWith('google_books_id', 'gb-123');
+      expect(missingBooksLookupBuilder.maybeSingle).toHaveBeenCalled();
+      expect(booksInsertBuilder.insert).toHaveBeenCalled();
+      expect(booksInsertBuilder.upsert).not.toHaveBeenCalled();
+      expect(userBooksBuilder.insert).toHaveBeenCalledWith({
+        user_id: 'user-1',
+        book_id: 'new-book-row',
+        reading_status: 'want_to_read',
+        ownership: 'owned',
+        condition: 'new',
+        available_for_lending: false,
+      });
+      expect(result).toEqual({ id: 'new-book-row', title: 'Test Book' });
+    });
+
+    it('inserts a missing catalog row then inserts user_book, returns book data', async () => {
+      const bookLookupBuilder = mockQuery({ data: null, error: null });
+      const bookData = { id: 'book-uuid-1', title: 'Test Book' };
+      const booksInsertBuilder = mockQuery({ data: bookData, error: null });
+      const existingUserBookBuilder = mockQuery({ data: null, error: null });
+      const userBooksBuilder = mockQuery({ data: null, error: null });
+
+      (supabase.from as jest.Mock)
+        .mockReturnValueOnce(bookLookupBuilder)
+        .mockReturnValueOnce(booksInsertBuilder)
         .mockReturnValueOnce(existingUserBookBuilder)
         .mockReturnValueOnce(userBooksBuilder);
 
@@ -202,31 +346,33 @@ describe('booksService', () => {
 
       expect(supabase.from).toHaveBeenCalledWith('books');
       expect(supabase.from).toHaveBeenCalledWith('user_books');
-      expect(booksBuilder.upsert).toHaveBeenCalled();
+      expect(bookLookupBuilder.select).toHaveBeenCalledWith('id');
+      expect(booksInsertBuilder.insert).toHaveBeenCalled();
       expect(userBooksBuilder.insert).toHaveBeenCalled();
       expect(result).toEqual(bookData);
     });
 
-    it('converts HTTP thumbnail to HTTPS and replaces zoom parameter', async () => {
+    it('converts HTTP thumbnail to HTTPS and replaces zoom parameter before insert', async () => {
+      const bookLookupBuilder = mockQuery({ data: null, error: null });
       const bookData = { id: 'b1' };
-      const booksBuilder = mockQuery({ data: bookData, error: null });
+      const booksInsertBuilder = mockQuery({ data: bookData, error: null });
       const existingUserBookBuilder = mockQuery({ data: null, error: null });
       const userBooksBuilder = mockQuery({ data: null, error: null });
 
       (supabase.from as jest.Mock)
-        .mockReturnValueOnce(booksBuilder)
+        .mockReturnValueOnce(bookLookupBuilder)
+        .mockReturnValueOnce(booksInsertBuilder)
         .mockReturnValueOnce(existingUserBookBuilder)
         .mockReturnValueOnce(userBooksBuilder);
 
       await booksService.addToLibrary('user-1', mockGoogleBook);
 
-      // The upsert call should have HTTPS URL with zoom=0
-      const upsertArg = booksBuilder.upsert.mock.calls[0][0];
-      expect(upsertArg.cover_url).toBe('https://books.google.com/books?id=123&zoom=0');
+      const insertArg = booksInsertBuilder.insert.mock.calls[0][0];
+      expect(insertArg.cover_url).toBe('https://books.google.com/books?id=123&zoom=0');
     });
 
     it('promotes an existing wishlist row instead of inserting a duplicate', async () => {
-      const booksBuilder = mockQuery({ data: { id: 'b1' }, error: null });
+      const bookLookupBuilder = mockQuery({ data: { id: 'b1' }, error: null });
       const existingWishlistBuilder = mockQuery({
         data: { id: 'ub-wishlist', ownership: 'wishlist' },
         error: null,
@@ -234,7 +380,7 @@ describe('booksService', () => {
       const updateBuilder = mockQuery({ data: null, error: null });
 
       (supabase.from as jest.Mock)
-        .mockReturnValueOnce(booksBuilder)
+        .mockReturnValueOnce(bookLookupBuilder)
         .mockReturnValueOnce(existingWishlistBuilder)
         .mockReturnValueOnce(updateBuilder);
 
@@ -245,23 +391,26 @@ describe('booksService', () => {
     });
 
     it('throws "already in your library" when a non-wishlist row already exists', async () => {
-      const booksBuilder = mockQuery({ data: { id: 'b1' }, error: null });
+      const bookLookupBuilder = mockQuery({ data: { id: 'b1' }, error: null });
       const existingUserBookBuilder = mockQuery({
         data: { id: 'ub-owned', ownership: 'owned' },
         error: null,
       });
 
       (supabase.from as jest.Mock)
-        .mockReturnValueOnce(booksBuilder)
+        .mockReturnValueOnce(bookLookupBuilder)
         .mockReturnValueOnce(existingUserBookBuilder);
 
       await expect(booksService.addToLibrary('user-1', mockGoogleBook))
         .rejects.toThrow('This book is already in your library.');
     });
 
-    it('throws on book upsert error', async () => {
-      const booksBuilder = mockQuery({ data: null, error: { message: 'DB error' } });
-      (supabase.from as jest.Mock).mockReturnValueOnce(booksBuilder);
+    it('throws on book insert error when the catalog row is missing', async () => {
+      const bookLookupBuilder = mockQuery({ data: null, error: null });
+      const booksInsertBuilder = mockQuery({ data: null, error: { message: 'DB error' } });
+      (supabase.from as jest.Mock)
+        .mockReturnValueOnce(bookLookupBuilder)
+        .mockReturnValueOnce(booksInsertBuilder);
 
       await expect(booksService.addToLibrary('user-1', mockGoogleBook))
         .rejects.toEqual({ message: 'DB error' });
@@ -325,6 +474,20 @@ describe('booksService', () => {
 
   // ──────────────────── getUserLibrary ────────────────────
   describe('getUserLibrary', () => {
+    it('still queries the real library in development mode', async () => {
+      process.env.EXPO_PUBLIC_APP_ENV = 'development';
+
+      const libraryData = [{ id: 'ub-dev', book: { title: 'Dev Book' } }];
+      const builder = mockQuery({ data: libraryData, error: null });
+      (supabase.from as jest.Mock).mockReturnValueOnce(builder);
+
+      const result = await booksService.getUserLibrary('user-1');
+
+      expect(supabase.from).toHaveBeenCalledWith('user_books');
+      expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
+      expect(result).toEqual(libraryData);
+    });
+
     it('queries user_books with book join, ordered by created_at desc', async () => {
       const libraryData = [{ id: 'ub1', book: { title: 'Book 1' } }];
       const builder = mockQuery({ data: libraryData, error: null });

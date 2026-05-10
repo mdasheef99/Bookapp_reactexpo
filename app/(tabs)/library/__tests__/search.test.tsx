@@ -85,11 +85,38 @@ jest.mock('@/components/search', () => {
         FilterModal: () => null,
         FilterChips: () => null,
         SwipeableBookCard: () => null,
+        ManualEntryModal: ({ visible, title, author, onTitleChange, onAuthorChange, onCancel, onSave }: any) => (
+            visible ? React.createElement(
+                React.Fragment,
+                null,
+                React.createElement(TextInput, {
+                    testID: 'library-manual-entry-title',
+                    value: title,
+                    onChangeText: onTitleChange,
+                }),
+                React.createElement(TextInput, {
+                    testID: 'library-manual-entry-author',
+                    value: author,
+                    onChangeText: onAuthorChange,
+                }),
+                React.createElement(
+                    TouchableOpacity,
+                    { testID: 'library-manual-entry-cancel', onPress: onCancel },
+                    React.createElement(Text, null, 'Cancel')
+                ),
+                React.createElement(
+                    TouchableOpacity,
+                    { testID: 'library-manual-entry-save', onPress: onSave },
+                    React.createElement(Text, null, 'Save to library')
+                )
+            ) : null
+        ),
     };
 });
 jest.mock('@/features/books/services/booksService', () => ({
     booksService: {
         searchGoogleBooks: jest.fn(),
+        searchGoogleBooksCached: jest.fn(),
         getSearchSuggestions: jest.fn(),
         getUserLibrary: jest.fn(),
         addManualBookToLibrary: jest.fn(),
@@ -117,6 +144,7 @@ describe('SearchBooksScreen manual entry', () => {
         (booksService.getSearchSuggestions as jest.Mock).mockResolvedValue([]);
         (booksService.getUserLibrary as jest.Mock).mockResolvedValue([]);
         (booksService.searchGoogleBooks as jest.Mock).mockResolvedValue({ items: [], totalItems: 0, hasMore: false });
+        (booksService.searchGoogleBooksCached as jest.Mock).mockResolvedValue({ items: [], totalItems: 0, hasMore: false, fromCache: false });
         (booksService.addManualBookToLibrary as jest.Mock).mockResolvedValue({ id: 'manual-book-1', title: 'Manual Title' });
         jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
     });
@@ -131,7 +159,7 @@ describe('SearchBooksScreen manual entry', () => {
         fireEvent.changeText(getByTestId('library-search-input'), 'Manual Title');
         fireEvent.press(getByTestId('library-search-submit'));
 
-        await waitFor(() => expect(booksService.searchGoogleBooks).toHaveBeenCalledWith('Manual Title', 0, 20, {}));
+        await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalledWith('Manual Title', 0, 20, {}));
 
         fireEvent.press(getByTestId('library-manual-entry-open'));
 
@@ -146,5 +174,30 @@ describe('SearchBooksScreen manual entry', () => {
         await waitFor(() => expect(mockRefreshWishlist).toHaveBeenCalled());
         await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith('Added!', '"Manual Title" is now in your library'));
         await waitFor(() => expect(queryByTestId('library-manual-entry-title')).toBeNull());
+    });
+
+    it('shows an Open Library fallback notice when the provider fallback is used', async () => {
+        (booksService.searchGoogleBooksCached as jest.Mock).mockResolvedValue({
+            items: [{
+                id: 'ol-1',
+                volumeInfo: {
+                    title: 'Fallback Title',
+                    authors: ['Fallback Author'],
+                },
+            }],
+            totalItems: 1,
+            hasMore: false,
+            fromCache: false,
+            providerUsed: 'openLibrary',
+            fallbackUsed: true,
+        });
+
+        const { getByTestId, getByText } = renderScreen();
+
+        fireEvent.changeText(getByTestId('library-search-input'), 'Fallback Title');
+        fireEvent.press(getByTestId('library-search-submit'));
+
+        await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalled());
+        expect(getByText('Showing results from Open Library while Google Books is unavailable.')).toBeOnTheScreen();
     });
 });

@@ -5,6 +5,7 @@ import {
 } from './booksSearchCache';
 
 const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
+const OPEN_LIBRARY_SEARCH_API_URL = 'https://openlibrary.org/search.json';
 
 export interface GoogleBook {
     id: string;
@@ -48,6 +49,8 @@ export interface PaginatedResult {
     items: GoogleBook[];
     totalItems: number;
     hasMore: boolean;
+    providerUsed?: 'google' | 'openLibrary';
+    fallbackUsed?: boolean;
 }
 
 export interface ManualBookInput {
@@ -87,6 +90,25 @@ type PublicBookReviewRow = {
     author_avatar_url: string | null;
 };
 
+type OpenLibrarySearchDoc = {
+    key?: string;
+    title?: string;
+    author_name?: string[];
+    first_publish_year?: number;
+    isbn?: string[];
+    cover_i?: number;
+    edition_key?: string[];
+    subject?: string[];
+    language?: string[];
+};
+
+type OpenLibrarySearchResponse = {
+    start?: number;
+    numFound?: number;
+    num_found?: number;
+    docs?: OpenLibrarySearchDoc[];
+};
+
 const getHighResCoverUrl = (url?: string): string | null => {
     if (!url) return null;
     let secureUrl = url.replace(/^http:\/\//i, 'https://');
@@ -103,6 +125,133 @@ const buildSearchQuery = (query: string, filters?: SearchFilters): string => {
     }
 
     return searchQuery;
+};
+
+const getIsbnIdentifiers = (isbns?: string[]) => {
+    const cleanIsbns = (isbns || [])
+        .map((isbn) => isbn.replace(/[-\s]/g, ''))
+        .filter(Boolean);
+    const isbn13 = cleanIsbns.find((isbn) => isbn.length === 13);
+    const isbn10 = cleanIsbns.find((isbn) => isbn.length === 10);
+
+    return [
+        isbn10 ? { type: 'ISBN_10', identifier: isbn10 } : null,
+        isbn13 ? { type: 'ISBN_13', identifier: isbn13 } : null,
+    ].filter(Boolean) as { type: string; identifier: string }[];
+};
+
+const getOpenLibraryCoverUrl = (doc: OpenLibrarySearchDoc): string | undefined => {
+    if (doc.cover_i) return `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
+
+    const isbn = doc.isbn?.find((value) => value.replace(/[-\s]/g, '').length === 13)
+        || doc.isbn?.find((value) => value.replace(/[-\s]/g, '').length === 10);
+
+    return isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg` : undefined;
+};
+
+const getOpenLibraryInfoLink = (key?: string): string | undefined => {
+    if (!key) return undefined;
+    return `https://openlibrary.org${key.startsWith('/') ? key : `/${key}`}`;
+};
+
+const mapOpenLibraryDocToGoogleBook = (doc: OpenLibrarySearchDoc): GoogleBook | null => {
+    if (!doc.title) return null;
+
+    const providerId = doc.edition_key?.[0] || doc.key || doc.title;
+    const coverUrl = getOpenLibraryCoverUrl(doc);
+    const industryIdentifiers = getIsbnIdentifiers(doc.isbn);
+
+    return {
+        id: `open-library:${providerId.replace(/^\//, '')}`,
+        volumeInfo: {
+            title: doc.title,
+            authors: doc.author_name,
+            imageLinks: coverUrl ? { thumbnail: coverUrl, smallThumbnail: coverUrl } : undefined,
+            categories: doc.subject?.slice(0, 3),
+            publishedDate: doc.first_publish_year ? String(doc.first_publish_year) : undefined,
+            industryIdentifiers: industryIdentifiers.length > 0 ? industryIdentifiers : undefined,
+            language: doc.language?.[0],
+            previewLink: getOpenLibraryInfoLink(doc.key),
+            infoLink: getOpenLibraryInfoLink(doc.key),
+        },
+        saleInfo: {
+            saleability: 'NOT_FOR_SALE',
+        },
+    };
+};
+
+const searchOpenLibraryBooks = async (
+    query: string,
+    startIndex: number,
+    maxResults: number
+): Promise<PaginatedResult> => {
+    const params = new URLSearchParams({
+        q: query.trim(),
+        offset: String(startIndex),
+        limit: String(maxResults),
+        fields: [
+            'key',
+            'title',
+            'author_name',
+            'first_publish_year',
+            'isbn',
+            'cover_i',
+            'edition_key',
+            'subject',
+            'language',
+        ].join(','),
+    });
+    const response = await fetch(`${OPEN_LIBRARY_SEARCH_API_URL}?${params.toString()}`);
+
+    if (!response?.ok) {
+        throw new Error(`Open Library API error: ${response?.status ?? 'unknown'}`);
+    }
+
+    const data: OpenLibrarySearchResponse = await response.json();
+    const items = (data.docs || [])
+        .map(mapOpenLibraryDocToGoogleBook)
+        .filter(Boolean) as GoogleBook[];
+    const totalItems = data.numFound ?? data.num_found ?? items.length;
+
+    return {
+        items,
+        totalItems,
+        hasMore: startIndex + items.length < totalItems,
+        providerUsed: 'openLibrary',
+    };
+};
+
+const collectSearchSuggestion = (suggestions: string[], seen: Set<string>, value?: string) => {
+    if (!value) return;
+    const key = value.toLowerCase();
+    if (seen.has(key)) return;
+
+    seen.add(key);
+    suggestions.push(value);
+};
+
+const getOpenLibrarySearchSuggestions = async (partialQuery: string): Promise<string[]> => {
+    const params = new URLSearchParams({
+        q: partialQuery,
+        limit: '5',
+        fields: 'title,author_name',
+    });
+    const response = await fetch(`${OPEN_LIBRARY_SEARCH_API_URL}?${params.toString()}`);
+
+    if (!response?.ok) {
+        throw new Error(`Open Library suggestions error: ${response?.status ?? 'unknown'}`);
+    }
+
+    const data: OpenLibrarySearchResponse = await response.json();
+    const suggestions: string[] = [];
+    const seen = new Set<string>();
+
+    (data.docs || []).forEach((doc) => {
+        collectSearchSuggestion(suggestions, seen, doc.title);
+        collectSearchSuggestion(suggestions, seen, doc.author_name?.[0]);
+    });
+
+    return suggestions.slice(0, 8);
 };
 
 const normalizeManualBookInput = (input: ManualBookInput) => {
@@ -129,35 +278,58 @@ const mapPublicBookReview = (row: PublicBookReviewRow): PublicBookReview => ({
     },
 });
 
-const upsertBookRecord = async (googleBook: GoogleBook) => {
+const buildBookRecordPayload = (googleBook: GoogleBook) => ({
+    google_books_id: googleBook.id,
+    title: googleBook.volumeInfo.title,
+    subtitle: googleBook.volumeInfo.subtitle,
+    authors: googleBook.volumeInfo.authors,
+    cover_url: getHighResCoverUrl(googleBook.volumeInfo.imageLinks?.thumbnail),
+    description: googleBook.volumeInfo.description,
+    page_count: googleBook.volumeInfo.pageCount,
+    categories: googleBook.volumeInfo.categories,
+    publisher: googleBook.volumeInfo.publisher,
+    published_date: googleBook.volumeInfo.publishedDate,
+    average_rating: googleBook.volumeInfo.averageRating,
+    ratings_count: googleBook.volumeInfo.ratingsCount,
+    language: googleBook.volumeInfo.language,
+    preview_link: googleBook.volumeInfo.previewLink,
+    info_link: googleBook.volumeInfo.infoLink,
+    retail_price: googleBook.saleInfo?.retailPrice?.amount,
+    currency_code: googleBook.saleInfo?.retailPrice?.currencyCode,
+    buy_link: googleBook.saleInfo?.buyLink,
+    isbn_10: googleBook.volumeInfo.industryIdentifiers?.find(id => id.type === 'ISBN_10')?.identifier,
+    isbn_13: googleBook.volumeInfo.industryIdentifiers?.find(id => id.type === 'ISBN_13')?.identifier,
+});
+
+const getStoredBookByGoogleBookId = async (googleBooksId: string) => {
+    const { data, error } = await supabase
+        .from('books')
+        .select('id')
+        .eq('google_books_id', googleBooksId)
+        .maybeSingle();
+
+    if (error) throw error;
+    return data;
+};
+
+const storeBookRecord = async (googleBook: GoogleBook) => {
+    const existingBook = await getStoredBookByGoogleBookId(googleBook.id);
+    if (existingBook) return existingBook;
+
     const { data: bookData, error: bookError } = await supabase
         .from('books')
-        .upsert({
-            google_books_id: googleBook.id,
-            title: googleBook.volumeInfo.title,
-            subtitle: googleBook.volumeInfo.subtitle,
-            authors: googleBook.volumeInfo.authors,
-            cover_url: getHighResCoverUrl(googleBook.volumeInfo.imageLinks?.thumbnail),
-            description: googleBook.volumeInfo.description,
-            page_count: googleBook.volumeInfo.pageCount,
-            categories: googleBook.volumeInfo.categories,
-            publisher: googleBook.volumeInfo.publisher,
-            published_date: googleBook.volumeInfo.publishedDate,
-            average_rating: googleBook.volumeInfo.averageRating,
-            ratings_count: googleBook.volumeInfo.ratingsCount,
-            language: googleBook.volumeInfo.language,
-            preview_link: googleBook.volumeInfo.previewLink,
-            info_link: googleBook.volumeInfo.infoLink,
-            retail_price: googleBook.saleInfo?.retailPrice?.amount,
-            currency_code: googleBook.saleInfo?.retailPrice?.currencyCode,
-            buy_link: googleBook.saleInfo?.buyLink,
-            isbn_10: googleBook.volumeInfo.industryIdentifiers?.find(id => id.type === 'ISBN_10')?.identifier,
-            isbn_13: googleBook.volumeInfo.industryIdentifiers?.find(id => id.type === 'ISBN_13')?.identifier,
-        }, { onConflict: 'google_books_id' })
+        .insert(buildBookRecordPayload(googleBook))
         .select()
         .single();
 
-    if (bookError) throw bookError;
+    if (bookError) {
+        if (bookError.code === '23505') {
+            const duplicateBook = await getStoredBookByGoogleBookId(googleBook.id);
+            if (duplicateBook) return duplicateBook;
+        }
+        throw bookError;
+    }
+
     return bookData;
 };
 
@@ -198,6 +370,8 @@ export async function searchGoogleBooksCached(
             totalItems: cached.items.length,
             hasMore: false,
             fromCache: true,
+            providerUsed: 'google',
+            fallbackUsed: false,
         };
     }
 
@@ -229,7 +403,16 @@ export async function searchGoogleBooksCached(
         const items = data.items || [];
         const totalItems = data.totalItems || 0;
 
-        // Cache successful results
+        if (items.length === 0 && startIndex === 0) {
+            const openLibraryResult = await searchOpenLibraryBooks(trimmed, startIndex, maxResults);
+            return {
+                ...openLibraryResult,
+                fromCache: false,
+                fallbackUsed: true,
+            };
+        }
+
+        // Cache successful Google results.
         setCachedSearchResults(trimmed, items);
 
         return {
@@ -237,6 +420,8 @@ export async function searchGoogleBooksCached(
             totalItems,
             hasMore: startIndex + items.length < totalItems,
             fromCache: false,
+            providerUsed: 'google',
+            fallbackUsed: false,
         };
     } catch (error) {
         // On 429, try stale cache fallback
@@ -248,10 +433,22 @@ export async function searchGoogleBooksCached(
                     totalItems: cached.items.length,
                     hasMore: false,
                     fromCache: true,
+                    providerUsed: 'google',
+                    fallbackUsed: false,
                 };
             }
         }
-        throw error;
+
+        try {
+            const openLibraryResult = await searchOpenLibraryBooks(trimmed, startIndex, maxResults);
+            return {
+                ...openLibraryResult,
+                fromCache: false,
+                fallbackUsed: true,
+            };
+        } catch {
+            throw error;
+        }
     }
 }
 
@@ -313,28 +510,24 @@ export const booksService = {
             const seen = new Set<string>();
 
             (data.items || []).forEach((book: GoogleBook) => {
-                const title = book.volumeInfo.title;
-                if (title && !seen.has(title.toLowerCase())) {
-                    seen.add(title.toLowerCase());
-                    suggestions.push(title);
-                }
-
-                const author = book.volumeInfo.authors?.[0];
-                if (author && !seen.has(author.toLowerCase())) {
-                    seen.add(author.toLowerCase());
-                    suggestions.push(author);
-                }
+                collectSearchSuggestion(suggestions, seen, book.volumeInfo.title);
+                collectSearchSuggestion(suggestions, seen, book.volumeInfo.authors?.[0]);
             });
 
             return suggestions.slice(0, 8);
         } catch (error) {
-            console.error('Error getting suggestions:', error);
+            try {
+                return await getOpenLibrarySearchSuggestions(partialQuery);
+            } catch {
+                console.error('Error getting suggestions:', error);
+            }
+
             return [];
         }
     },
 
     async addToLibrary(userId: string, googleBook: GoogleBook, status: string = 'want_to_read', ownership: LibraryOwnership = 'owned') {
-        const bookData = await upsertBookRecord(googleBook);
+        const bookData = await storeBookRecord(googleBook);
         const existingUserBook = await getUserBookByBookId(userId, bookData.id);
 
         if (existingUserBook) {
@@ -422,9 +615,6 @@ export const booksService = {
     },
 
     async getUserLibrary(userId: string, options?: UserLibraryQueryOptions) {
-        if (process.env.EXPO_PUBLIC_APP_ENV === 'development') {
-            return [];
-        }
         let query = supabase
             .from('user_books')
             .select(`

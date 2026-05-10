@@ -4,7 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRef, useEffect } from 'react';
 import { GoogleBook } from '@/features/books/services/booksService';
 import { useTheme } from '@/hooks/useTheme';
-import { RatingStars, PriceBadge, GenreTag, InLibraryBadge, WishlistButton } from './index';
+import { RatingStars } from './RatingStars';
+import { PriceBadge } from './PriceBadge';
+import { GenreTag } from './GenreTag';
+import { InLibraryBadge } from './InLibraryBadge';
+import { WishlistButton } from './WishlistButton';
 
 // Props interface
 export interface BookCardProps {

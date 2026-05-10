@@ -12,3 +12,4 @@ export { FilterModal, FilterChips } from './FilterModal';
 export { BookCard } from './BookCard';
 export { WishlistButton } from './WishlistButton';
 export { SwipeableBookCard } from './SwipeableBookCard';
+export { ManualEntryModal } from './ManualEntryModal';

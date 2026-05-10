@@ -11,6 +11,8 @@ interface SearchBarProps {
     loading: boolean;
     autoFocus?: boolean;
     placeholder?: string;
+    onFocus?: () => void;
+    onBlur?: () => void;
 }
 
 export const SearchBar = ({
@@ -21,6 +23,8 @@ export const SearchBar = ({
     loading,
     autoFocus = true,
     placeholder = "Search books, authors...",
+    onFocus,
+    onBlur,
 }: SearchBarProps) => {
     const { colors } = useTheme();
     const handleClear = () => {
@@ -61,6 +65,8 @@ export const SearchBar = ({
                 value={query}
                 onChangeText={onQueryChange}
                 onSubmitEditing={onSubmit}
+                onFocus={onFocus}
+                onBlur={onBlur}
                 returnKeyType="search"
                 autoFocus={autoFocus}
                 accessibilityLabel="Search books"
