@@ -176,6 +176,26 @@ describe('booksService', () => {
       expect(result.items[0].volumeInfo.authors).toEqual(['Fallback Author']);
     });
 
+    it('does not fall back when Google Books successfully returns no results', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        status: 200,
+        ok: true,
+        json: () => Promise.resolve({ items: [], totalItems: 0 }),
+      });
+
+      const result = await booksService.searchGoogleBooksCached('no matches');
+
+      expect(result).toEqual({
+        items: [],
+        totalItems: 0,
+        hasMore: false,
+        fromCache: false,
+        providerUsed: 'google',
+        fallbackUsed: false,
+      });
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
     it('falls back to Open Library results when Google Books throws a network error', async () => {
       (global.fetch as jest.Mock)
         .mockRejectedValueOnce(new Error('Google unavailable'))
@@ -200,6 +220,29 @@ describe('booksService', () => {
       expect((result as any).providerUsed).toBe('openLibrary');
       expect(result.items).toHaveLength(1);
       expect(result.items[0].volumeInfo.title).toBe('Open Library Rescue');
+    });
+
+    it('sanitizes Open Library ISBNs before building cover URLs', async () => {
+      (global.fetch as jest.Mock)
+        .mockRejectedValueOnce(new Error('Google unavailable'))
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            start: 0,
+            numFound: 1,
+            docs: [{
+              key: '/works/OLISBNW',
+              title: 'Hyphenated ISBN',
+              author_name: ['Archive Author'],
+              isbn: ['978-0-679-78327-5'],
+            }],
+          }),
+        });
+
+      const result = await booksService.searchGoogleBooksCached('hyphenated isbn');
+
+      expect(result.items[0].volumeInfo.imageLinks?.thumbnail)
+        .toBe('https://covers.openlibrary.org/b/isbn/9780679783275-L.jpg');
     });
   });
 
@@ -267,7 +310,7 @@ describe('booksService', () => {
   describe('addToLibrary', () => {
     it('reuses an existing catalog row instead of upserting when the google_books_id already exists', async () => {
       const existingBooksLookupBuilder = mockQuery({
-        data: { id: 'existing-book-row' },
+        data: { id: 'existing-book-row', title: 'Existing Book', cover_url: 'https://cover' },
         error: null,
       });
       const existingUserBookBuilder = mockQuery({ data: null, error: null });
@@ -281,7 +324,7 @@ describe('booksService', () => {
       const result = await booksService.addToLibrary('user-1', mockGoogleBook);
 
       expect(supabase.from).toHaveBeenNthCalledWith(1, 'books');
-      expect(existingBooksLookupBuilder.select).toHaveBeenCalledWith('id');
+      expect(existingBooksLookupBuilder.select).toHaveBeenCalledWith('*');
       expect(existingBooksLookupBuilder.eq).toHaveBeenCalledWith('google_books_id', 'gb-123');
       expect(existingBooksLookupBuilder.maybeSingle).toHaveBeenCalled();
       expect(existingBooksLookupBuilder.upsert).not.toHaveBeenCalled();
@@ -293,7 +336,7 @@ describe('booksService', () => {
         condition: 'new',
         available_for_lending: false,
       });
-      expect(result).toEqual({ id: 'existing-book-row' });
+      expect(result).toEqual({ id: 'existing-book-row', title: 'Existing Book', cover_url: 'https://cover' });
     });
 
     it('creates a catalog row only when the google_books_id is missing', async () => {
@@ -313,7 +356,7 @@ describe('booksService', () => {
 
       const result = await booksService.addToLibrary('user-1', mockGoogleBook);
 
-      expect(missingBooksLookupBuilder.select).toHaveBeenCalledWith('id');
+      expect(missingBooksLookupBuilder.select).toHaveBeenCalledWith('*');
       expect(missingBooksLookupBuilder.eq).toHaveBeenCalledWith('google_books_id', 'gb-123');
       expect(missingBooksLookupBuilder.maybeSingle).toHaveBeenCalled();
       expect(booksInsertBuilder.insert).toHaveBeenCalled();
@@ -346,7 +389,7 @@ describe('booksService', () => {
 
       expect(supabase.from).toHaveBeenCalledWith('books');
       expect(supabase.from).toHaveBeenCalledWith('user_books');
-      expect(bookLookupBuilder.select).toHaveBeenCalledWith('id');
+      expect(bookLookupBuilder.select).toHaveBeenCalledWith('*');
       expect(booksInsertBuilder.insert).toHaveBeenCalled();
       expect(userBooksBuilder.insert).toHaveBeenCalled();
       expect(result).toEqual(bookData);
