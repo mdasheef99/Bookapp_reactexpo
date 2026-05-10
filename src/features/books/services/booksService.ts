@@ -143,8 +143,9 @@ const getIsbnIdentifiers = (isbns?: string[]) => {
 const getOpenLibraryCoverUrl = (doc: OpenLibrarySearchDoc): string | undefined => {
     if (doc.cover_i) return `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
 
-    const isbn = doc.isbn?.find((value) => value.replace(/[-\s]/g, '').length === 13)
-        || doc.isbn?.find((value) => value.replace(/[-\s]/g, '').length === 10);
+    const isbn = doc.isbn
+        ?.map((value) => value.replace(/[-\s]/g, ''))
+        .find((value) => value.length === 13 || value.length === 10);
 
     return isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg` : undefined;
 };
@@ -304,7 +305,7 @@ const buildBookRecordPayload = (googleBook: GoogleBook) => ({
 const getStoredBookByGoogleBookId = async (googleBooksId: string) => {
     const { data, error } = await supabase
         .from('books')
-        .select('id')
+        .select('*')
         .eq('google_books_id', googleBooksId)
         .maybeSingle();
 
@@ -402,15 +403,6 @@ export async function searchGoogleBooksCached(
         const data = await response.json();
         const items = data.items || [];
         const totalItems = data.totalItems || 0;
-
-        if (items.length === 0 && startIndex === 0) {
-            const openLibraryResult = await searchOpenLibraryBooks(trimmed, startIndex, maxResults);
-            return {
-                ...openLibraryResult,
-                fromCache: false,
-                fallbackUsed: true,
-            };
-        }
 
         // Cache successful Google results.
         setCachedSearchResults(trimmed, items);
