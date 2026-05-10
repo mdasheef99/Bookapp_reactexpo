@@ -143,9 +143,11 @@ const getIsbnIdentifiers = (isbns?: string[]) => {
 const getOpenLibraryCoverUrl = (doc: OpenLibrarySearchDoc): string | undefined => {
     if (doc.cover_i) return `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
 
-    const isbn = doc.isbn
-        ?.map((value) => value.replace(/[-\s]/g, ''))
-        .find((value) => value.length === 13 || value.length === 10);
+    const cleanIsbns = (doc.isbn || [])
+        .map((isbn) => isbn.replace(/[-\s]/g, ''))
+        .filter(Boolean);
+    const isbn = cleanIsbns.find((value) => value.length === 13)
+        || cleanIsbns.find((value) => value.length === 10);
 
     return isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg` : undefined;
 };
