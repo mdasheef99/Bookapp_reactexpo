@@ -161,6 +161,7 @@ describe('SearchBooksScreen manual entry', () => {
 
         await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalledWith('Manual Title', 0, 20, {}));
 
+        await waitFor(() => expect(getByTestId('library-manual-entry-open')).toBeOnTheScreen());
         fireEvent.press(getByTestId('library-manual-entry-open'));
 
         expect(getByTestId('library-manual-entry-title').props.value).toBe('Manual Title');
