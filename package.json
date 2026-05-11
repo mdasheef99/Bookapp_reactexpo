@@ -68,6 +68,13 @@
     "setupFilesAfterEnv": [
       "./jest.setup.ts"
     ],
+    "modulePathIgnorePatterns": [
+      "<rootDir>/.worktrees"
+    ],
+    "testPathIgnorePatterns": [
+      "\\\\node_modules\\\\",
+      "<rootDir>/.worktrees"
+    ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"
     }

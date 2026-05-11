@@ -155,7 +155,7 @@ Status meanings:
 - Balance service: `Implemented`
 - Credit history service: `Implemented`
 - Profile balance card: `Implemented`
-- Credit history screen: `Missing`
+- Credit history screen: `Implemented`
 - Dedicated credits section/route: `Missing`
 - Downgrade grace-period automation: `Missing`
 
@@ -169,7 +169,8 @@ Status meanings:
   - `app/(auth)/setup-profile.tsx`
 - Transfer-credits edge function exists:
   - `supabase/functions/transfer-credits/index.ts`
-- No `credits.tsx` route or equivalent found in `app/`
+- Dedicated credit history route exists:
+  - `app/(tabs)/profile/credit-history.tsx`
 - No grace-period edge function found in `supabase/functions/`
 
 ## 5. Clubs
@@ -325,6 +326,7 @@ Status meanings:
 - Base profile screen: `Implemented`
 - Credit summary in profile: `Implemented`
 - Real account destinations and settings flows: `Partial`
+- Credit history filters and running balances: `Implemented`
 - Edit profile: `Missing`
 
 ### Evidence
