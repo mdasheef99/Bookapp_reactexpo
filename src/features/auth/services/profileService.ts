@@ -38,6 +38,17 @@ export interface UserProfileSummary {
 
 const SUMMARY_COLUMNS = 'id, user_id, display_name, username, avatar_url, trust_score, city, membership_tier';
 
+export interface UpdateProfileInput {
+    display_name?: string;
+    username?: string | null;
+    city?: string;
+}
+
+function normalizeUsername(username?: string | null) {
+    const value = username?.trim();
+    return value ? value.toLowerCase().replace(/\s+/g, '_') : null;
+}
+
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 export const profileService = {
@@ -88,6 +99,59 @@ export const profileService = {
 
         if (error) throw error;
         return (data ?? []) as UserProfileSummary[];
+    },
+
+    async updateProfile(userId: string, input: UpdateProfileInput): Promise<UserProfile | null> {
+        const payload: Record<string, string | null> = {
+            updated_at: new Date().toISOString(),
+        };
+
+        if (input.display_name !== undefined) payload.display_name = input.display_name.trim();
+        if (input.city !== undefined) payload.city = input.city.trim();
+        if (input.username !== undefined) payload.username = normalizeUsername(input.username);
+
+        const { data, error } = await supabase
+            .from(PROFILE_SOURCE_TABLE)
+            .update(payload)
+            .eq('user_id', userId)
+            .select('*')
+            .maybeSingle();
+
+        if (error) throw error;
+        return data as UserProfile | null;
+    },
+
+    async uploadAvatar(userId: string, photoUri: string): Promise<string> {
+        const response = await fetch(photoUri);
+        if (!response.ok) {
+            throw new Error('Could not read the selected profile photo.');
+        }
+        const blob = await response.blob();
+        const contentType = blob.type || 'image/jpeg';
+        const ext = contentType === 'image/png' ? 'png' : contentType === 'image/webp' ? 'webp' : 'jpg';
+        const path = `${userId}/avatar.${ext}`;
+
+        const { error } = await supabase.storage
+            .from('profile-avatars')
+            .upload(path, blob, { contentType, upsert: true });
+
+        if (error) throw error;
+
+        const { data } = supabase.storage.from('profile-avatars').getPublicUrl(path);
+        const publicUrl = data?.publicUrl;
+        if (!publicUrl) {
+            throw new Error('Could not create a public URL for the profile photo.');
+        }
+
+        const { error: updateError } = await supabase
+            .from(PROFILE_SOURCE_TABLE)
+            .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
+            .eq('user_id', userId)
+            .select('*')
+            .maybeSingle();
+
+        if (updateError) throw updateError;
+        return publicUrl;
     },
 };
 
