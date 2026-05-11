@@ -99,7 +99,7 @@ describe('profileService', () => {
 
   it('uploads a profile avatar and stores the public URL on the profile', async () => {
     const blob = new Blob(['avatar'], { type: 'image/png' });
-    global.fetch = jest.fn().mockResolvedValue({ blob: jest.fn().mockResolvedValue(blob) }) as jest.Mock;
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, blob: jest.fn().mockResolvedValue(blob) }) as jest.Mock;
     const upload = jest.fn().mockResolvedValue({ error: null });
     const getPublicUrl = jest.fn().mockReturnValue({ data: { publicUrl: 'https://cdn.example/avatar.png' } });
     (supabase as any).storage = {
@@ -120,5 +120,37 @@ describe('profileService', () => {
       updated_at: expect.any(String),
     });
     expect(result).toBe('https://cdn.example/avatar.png');
+  });
+
+  it('fails avatar upload early when the selected photo cannot be read', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 404, blob: jest.fn() }) as jest.Mock;
+    const upload = jest.fn();
+    (supabase as any).storage = {
+      from: jest.fn(() => ({ upload })),
+    };
+
+    await expect(profileService.uploadAvatar('user-1', 'file:///missing-avatar.png')).rejects.toThrow(
+      'Could not read the selected profile photo.'
+    );
+
+    expect(upload).not.toHaveBeenCalled();
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it('does not persist avatar_url when storage cannot produce a public URL', async () => {
+    const blob = new Blob(['avatar'], { type: 'image/jpeg' });
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, blob: jest.fn().mockResolvedValue(blob) }) as jest.Mock;
+    const upload = jest.fn().mockResolvedValue({ error: null });
+    const getPublicUrl = jest.fn().mockReturnValue({ data: { publicUrl: '' } });
+    (supabase as any).storage = {
+      from: jest.fn(() => ({ upload, getPublicUrl })),
+    };
+
+    await expect(profileService.uploadAvatar('user-1', 'file:///avatar.jpg')).rejects.toThrow(
+      'Could not create a public URL for the profile photo.'
+    );
+
+    expect(upload).toHaveBeenCalledWith('user-1/avatar.jpg', blob, { contentType: 'image/jpeg', upsert: true });
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 });

@@ -29,6 +29,10 @@ const FILTERS: Array<{ key: CreditFilter; label: string }> = [
     { key: 'holds', label: 'Holds' },
 ];
 
+export function shouldRefetchCurrentHistoryPageOnRefresh(offset: number): boolean {
+    return offset === 0;
+}
+
 const EVENT_LABELS: Record<CreditEventType, string> = {
     signup_bonus: 'Signup bonus',
     lend_completed: 'Lending reward',
@@ -161,9 +165,14 @@ export default function CreditHistoryScreen() {
     );
 
     const refresh = () => {
-        setOffset(0);
         balanceQuery.refetch();
-        historyQuery.refetch();
+        if (shouldRefetchCurrentHistoryPageOnRefresh(offset)) {
+            historyQuery.refetch();
+            return;
+        }
+
+        setEvents([]);
+        setOffset(0);
     };
 
     const loadMore = () => {

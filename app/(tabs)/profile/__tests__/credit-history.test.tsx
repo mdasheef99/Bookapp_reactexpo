@@ -1,7 +1,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
-import CreditHistoryScreen from '../credit-history';
+import CreditHistoryScreen, { shouldRefetchCurrentHistoryPageOnRefresh } from '../credit-history';
 import { creditService } from '@/features/credits/services/creditService';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
@@ -143,5 +143,10 @@ describe('CreditHistoryScreen', () => {
 
         unmount();
         queryClient.clear();
+    });
+
+    it('only refetches the current history query when already on the first page', () => {
+        expect(shouldRefetchCurrentHistoryPageOnRefresh(0)).toBe(true);
+        expect(shouldRefetchCurrentHistoryPageOnRefresh(20)).toBe(false);
     });
 });

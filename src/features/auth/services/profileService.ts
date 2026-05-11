@@ -123,6 +123,9 @@ export const profileService = {
 
     async uploadAvatar(userId: string, photoUri: string): Promise<string> {
         const response = await fetch(photoUri);
+        if (!response.ok) {
+            throw new Error('Could not read the selected profile photo.');
+        }
         const blob = await response.blob();
         const contentType = blob.type || 'image/jpeg';
         const ext = contentType === 'image/png' ? 'png' : contentType === 'image/webp' ? 'webp' : 'jpg';
@@ -135,15 +138,20 @@ export const profileService = {
         if (error) throw error;
 
         const { data } = supabase.storage.from('profile-avatars').getPublicUrl(path);
+        const publicUrl = data?.publicUrl;
+        if (!publicUrl) {
+            throw new Error('Could not create a public URL for the profile photo.');
+        }
+
         const { error: updateError } = await supabase
             .from(PROFILE_SOURCE_TABLE)
-            .update({ avatar_url: data.publicUrl, updated_at: new Date().toISOString() })
+            .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
             .eq('user_id', userId)
             .select('*')
             .maybeSingle();
 
         if (updateError) throw updateError;
-        return data.publicUrl;
+        return publicUrl;
     },
 };
 
