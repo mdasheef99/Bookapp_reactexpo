@@ -39,6 +39,7 @@ import {
     type TransactionMessageTone,
 } from '@/features/exchange/utils/transactionActionResolver';
 import { useTheme } from '@/hooks/useTheme';
+import { navigateBackOrFallback } from '@/lib/navigation';
 
 const STATUS_LABELS: Record<TransactionStatus, string> = {
     requested: 'ðŸ“¬ Requested',
@@ -327,7 +328,7 @@ export default function TransactionDetailScreen() {
             <View style={[styles.center, { backgroundColor: colors.bgPrimary }]}>
                 <Ionicons name="alert-circle-outline" size={48} color={colors.textTertiary} />
                 <Text style={[styles.errorText, { color: colors.textSecondary }]}>Transaction not found</Text>
-                <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.accent }]}>
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, '/(tabs)/exchange/my-transactions')} style={[styles.backBtn, { backgroundColor: colors.accent }]}>
                     <Text style={styles.backBtnText}>Go Back</Text>
                 </TouchableOpacity>
             </View>
@@ -452,7 +453,7 @@ export default function TransactionDetailScreen() {
     return (
         <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
             <View style={[styles.header, { borderBottomColor: colors.border }]}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, '/(tabs)/exchange/my-transactions')} style={styles.headerBack}>
                     <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Exchange Request</Text>

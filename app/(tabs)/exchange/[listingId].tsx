@@ -14,6 +14,7 @@ import {
     getDefaultRequestDeliveryOption,
     isDeliveryOptionEnabled,
 } from '@/features/exchange/config/exchangeConfig';
+import { navigateBackOrFallback } from '@/lib/navigation';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -85,7 +86,7 @@ export default function ListingDetailScreen() {
                 <Text style={[styles.errorText, { color: colors.textSecondary }]}>
                     Listing not found
                 </Text>
-                <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.accent }]}>
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, '/(tabs)/exchange')} style={[styles.backBtn, { backgroundColor: colors.accent }]}>
                     <Text style={styles.backBtnText}>Go Back</Text>
                 </TouchableOpacity>
             </View>
@@ -100,7 +101,7 @@ export default function ListingDetailScreen() {
         <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
             {/* Header */}
             <View style={[styles.header, { borderBottomColor: colors.border }]}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, '/(tabs)/exchange')} style={styles.headerBack}>
                     <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
