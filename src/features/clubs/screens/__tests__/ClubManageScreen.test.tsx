@@ -5,6 +5,15 @@ import ClubManageScreen from '../ClubManageScreen';
 let mockUserId = 'admin-1';
 const mockRouterPush = jest.fn();
 const mockUseClubPublicDetail = jest.fn();
+const mockUseClubReadingSchedule = jest.fn();
+const mockUseUpsertClubReadingSchedule = jest.fn();
+const mockUseArchiveClub = jest.fn();
+const mockUseUnarchiveClub = jest.fn();
+const mockUseTransferClubAdmin = jest.fn();
+const mockUseClubAdminTransferRequests = jest.fn();
+const mockUseRequestClubAdminTransfer = jest.fn();
+const mockUseClubMemberActions = jest.fn();
+const mockUseCreateClubMemberAction = jest.fn();
 const mockUseClubMembership = jest.fn();
 const mockUseClubBookNominations = jest.fn();
 const mockUseClubJoinQuestions = jest.fn();
@@ -21,11 +30,17 @@ const mockUseClubApplications = jest.fn();
 const mockUseReviewClubApplication = jest.fn();
 const mockUseClubInvitations = jest.fn();
 const mockUseCreateClubInvitation = jest.fn();
+const mockUseRevokeClubInvitation = jest.fn();
 const mockUseClubEvents = jest.fn();
 const mockUseCancelClubEvent = jest.fn();
 const mockUseDeleteClubEvent = jest.fn();
 const mockUseUpdateClubMemberStatus = jest.fn();
 const mockUseSetClubCurrentBookFromNomination = jest.fn();
+const mockUseClubCurrentBookStatusOverview = jest.fn();
+const mockUseClubDiscussionReports = jest.fn();
+const mockUseResolveClubDiscussionReport = jest.fn();
+const mockUseClubComplaints = jest.fn();
+const mockUseResolveClubComplaint = jest.fn();
 const mockUseLocalSearchParams = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
@@ -68,15 +83,18 @@ jest.mock('@/features/auth/hooks/useAuth', () => ({
 }));
 jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useClubPublicDetail: (...args: unknown[]) => mockUseClubPublicDetail(...args),
+    useClubManageDetail: (...args: unknown[]) => mockUseClubPublicDetail(...args),
     useClubMembership: (...args: unknown[]) => mockUseClubMembership(...args),
     useClubBookNominations: (...args: unknown[]) => mockUseClubBookNominations(...args),
     useClubJoinQuestions: (...args: unknown[]) => mockUseClubJoinQuestions(...args),
     useClubMembers: (...args: unknown[]) => mockUseClubMembers(...args),
+    useClubMemberActions: (...args: unknown[]) => mockUseClubMemberActions(...args),
     useCreateClubJoinQuestion: (...args: unknown[]) => mockUseCreateClubJoinQuestion(...args),
     useUpdateClubJoinQuestion: (...args: unknown[]) => mockUseUpdateClubJoinQuestion(...args),
     useDeleteClubJoinQuestion: (...args: unknown[]) => mockUseDeleteClubJoinQuestion(...args),
     useFinalizeClubBookNomination: (...args: unknown[]) => mockUseFinalizeClubBookNomination(...args),
     useSetClubCurrentBookFromNomination: (...args: unknown[]) => mockUseSetClubCurrentBookFromNomination(...args),
+    useClubCurrentBookStatusOverview: (...args: unknown[]) => mockUseClubCurrentBookStatusOverview(...args),
     useNominateClubBook: (...args: unknown[]) => mockUseNominateClubBook(...args),
     useUpdateClub: (...args: unknown[]) => mockUseUpdateClub(...args),
     useUpdateClubMemberRole: (...args: unknown[]) => mockUseUpdateClubMemberRole(...args),
@@ -85,10 +103,23 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useReviewClubApplication: (...args: unknown[]) => mockUseReviewClubApplication(...args),
     useClubInvitations: (...args: unknown[]) => mockUseClubInvitations(...args),
     useCreateClubInvitation: (...args: unknown[]) => mockUseCreateClubInvitation(...args),
+    useRevokeClubInvitation: (...args: unknown[]) => mockUseRevokeClubInvitation(...args),
     useClubEvents: (...args: unknown[]) => mockUseClubEvents(...args),
     useCancelClubEvent: (...args: unknown[]) => mockUseCancelClubEvent(...args),
     useDeleteClubEvent: (...args: unknown[]) => mockUseDeleteClubEvent(...args),
     useUpdateClubMemberStatus: (...args: unknown[]) => mockUseUpdateClubMemberStatus(...args),
+    useCreateClubMemberAction: (...args: unknown[]) => mockUseCreateClubMemberAction(...args),
+    useClubReadingSchedule: (...args: unknown[]) => mockUseClubReadingSchedule(...args),
+    useUpsertClubReadingSchedule: (...args: unknown[]) => mockUseUpsertClubReadingSchedule(...args),
+    useClubDiscussionReports: (...args: unknown[]) => mockUseClubDiscussionReports(...args),
+    useResolveClubDiscussionReport: (...args: unknown[]) => mockUseResolveClubDiscussionReport(...args),
+    useClubComplaints: (...args: unknown[]) => mockUseClubComplaints(...args),
+    useResolveClubComplaint: (...args: unknown[]) => mockUseResolveClubComplaint(...args),
+    useArchiveClub: (...args: unknown[]) => mockUseArchiveClub(...args),
+    useUnarchiveClub: (...args: unknown[]) => mockUseUnarchiveClub(...args),
+    useTransferClubAdmin: (...args: unknown[]) => mockUseTransferClubAdmin(...args),
+    useClubAdminTransferRequests: (...args: unknown[]) => mockUseClubAdminTransferRequests(...args),
+    useRequestClubAdminTransfer: (...args: unknown[]) => mockUseRequestClubAdminTransfer(...args),
 }));
 
 jest.mock('@/features/books/services/booksService', () => ({
@@ -125,6 +156,8 @@ const baseClub = {
     author_city: null,
     created_at: null,
     updated_at: null,
+    is_archived: false,
+    archived_at: null,
 };
 
 beforeEach(() => {
@@ -133,6 +166,15 @@ beforeEach(() => {
     mockRouterPush.mockReset();
     mockUseLocalSearchParams.mockReturnValue({ clubId: 'club-1', tab: undefined });
     mockUseClubPublicDetail.mockReturnValue({ data: baseClub, isLoading: false, isError: false, refetch: jest.fn() });
+    mockUseClubReadingSchedule.mockReturnValue({ data: null, isLoading: false, isError: false, error: null, refetch: jest.fn() });
+    mockUseUpsertClubReadingSchedule.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseArchiveClub.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
+    mockUseUnarchiveClub.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
+    mockUseTransferClubAdmin.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
+    mockUseClubAdminTransferRequests.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
+    mockUseRequestClubAdminTransfer.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'request-1' }), isPending: false });
+    mockUseClubMemberActions.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
+    mockUseCreateClubMemberAction.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'action-1' }), isPending: false });
     mockUseClubMembership.mockReturnValue({ data: { role: 'admin', status: 'active' }, isLoading: false });
     mockUseClubBookNominations.mockReturnValue({ data: [], isLoading: false, isError: false, error: null, refetch: jest.fn() });
     mockUseClubJoinQuestions.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
@@ -142,6 +184,7 @@ beforeEach(() => {
     mockUseDeleteClubJoinQuestion.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseFinalizeClubBookNomination.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
     mockUseSetClubCurrentBookFromNomination.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
+    mockUseClubCurrentBookStatusOverview.mockReturnValue({ data: null, isLoading: false, isError: false, error: null, refetch: jest.fn() });
     mockUseNominateClubBook.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'nomination-1' }), isPending: false });
     mockUseUpdateClub.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
     mockUseUpdateClubMemberRole.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'member-1' }), isPending: false });
@@ -150,10 +193,15 @@ beforeEach(() => {
     mockUseReviewClubApplication.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseClubInvitations.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
     mockUseCreateClubInvitation.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseRevokeClubInvitation.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseClubEvents.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
     mockUseCancelClubEvent.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseDeleteClubEvent.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseUpdateClubMemberStatus.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'member-1' }), isPending: false });
+    mockUseClubDiscussionReports.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
+    mockUseResolveClubDiscussionReport.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'report-1' }), isPending: false });
+    mockUseClubComplaints.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
+    mockUseResolveClubComplaint.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'complaint-1' }), isPending: false });
 });
 
 describe('ClubManageScreen', () => {
@@ -162,13 +210,329 @@ describe('ClubManageScreen', () => {
 
         expect(getByText('Founders Circle')).toBeOnTheScreen();
         expect(getByText('Current Book')).toBeOnTheScreen();
+        expect(getByText('Schedule')).toBeOnTheScreen();
         expect(getByText('Analytics')).toBeOnTheScreen();
         expect(getByText('Events')).toBeOnTheScreen();
         expect(getByText('Settings')).toBeOnTheScreen();
         expect(getByText('Members')).toBeOnTheScreen();
         expect(getByText('Join Questions')).toBeOnTheScreen();
+        expect(getByText('Lifecycle')).toBeOnTheScreen();
         // Default active tab is Current Book
         expect(getByText('Current book')).toBeOnTheScreen();
+    });
+
+    it('shows platform complaints in Reports and resolves them', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue({ id: 'complaint-1', status: 'resolved' });
+        const refetchComplaints = jest.fn().mockResolvedValue({ data: null });
+        mockUseClubComplaints.mockReturnValue({
+            data: [{
+                id: 'complaint-1',
+                club_id: 'club-1',
+                reporter_id: 'reader-1',
+                reported_user_id: 'reader-2',
+                message_id: 'message-1',
+                reason: 'harassment',
+                description: 'Personal attack in chat.',
+                status: 'pending',
+                resolved_by: null,
+                resolution_action: null,
+                resolved_at: null,
+                created_at: '2026-05-30T00:00:00Z',
+                reporterProfile: { display_name: 'Reporter One', username: 'reporterone' },
+                reportedUserProfile: { display_name: 'Reported Two', username: 'reportedtwo' },
+                resolvedByProfile: null,
+            }],
+            isLoading: false,
+            refetch: refetchComplaints,
+        });
+        mockUseResolveClubComplaint.mockReturnValue({ mutateAsync, isPending: false });
+
+        const { getByText, getByTestId } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Reports'));
+        expect(getByText('Platform complaints')).toBeOnTheScreen();
+        expect(getByText('Resolution actions create moderation records; durable resolution notes need the app-wide audit/RPC contract before they are saved.')).toBeOnTheScreen();
+        expect(getByText('Reported Two')).toBeOnTheScreen();
+        expect(getByText('Personal attack in chat.')).toBeOnTheScreen();
+
+        fireEvent.press(getByTestId('resolve-complaint-no-action-complaint-1'));
+
+        await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({
+            clubId: 'club-1',
+            complaintId: 'complaint-1',
+            status: 'resolved',
+            resolutionAction: 'no_action',
+        }));
+        expect(refetchComplaints).toHaveBeenCalled();
+        expect(getByText('Platform complaint resolved.')).toBeOnTheScreen();
+    });
+
+    it('bridges a platform complaint to a member warning before resolving it', async () => {
+        const resolveComplaint = jest.fn().mockResolvedValue({ id: 'complaint-1', status: 'resolved' });
+        const createAction = jest.fn().mockResolvedValue({ id: 'action-1' });
+        const refetchComplaints = jest.fn().mockResolvedValue({ data: null });
+        const refetchMembers = jest.fn().mockResolvedValue({ data: null });
+        const refetchMemberActions = jest.fn().mockResolvedValue({ data: null });
+        mockUseClubMembers.mockReturnValue({
+            data: [{
+                id: 'member-2',
+                club_id: 'club-1',
+                user_id: 'reader-2',
+                role: 'member',
+                status: 'active',
+                joined_at: null,
+                profile: { display_name: 'Reported Two', username: 'reportedtwo', membership_tier: 'pro' },
+            }],
+            isLoading: false,
+            refetch: refetchMembers,
+        });
+        mockUseClubMemberActions.mockReturnValue({ data: [], isLoading: false, refetch: refetchMemberActions });
+        mockUseCreateClubMemberAction.mockReturnValue({ mutateAsync: createAction, isPending: false });
+        mockUseClubComplaints.mockReturnValue({
+            data: [{
+                id: 'complaint-1',
+                club_id: 'club-1',
+                reporter_id: 'reader-1',
+                reported_user_id: 'reader-2',
+                message_id: 'message-1',
+                reason: 'harassment',
+                description: 'Personal attack in chat.',
+                status: 'pending',
+                resolved_by: null,
+                resolution_action: null,
+                resolved_at: null,
+                created_at: '2026-05-30T00:00:00Z',
+                reporterProfile: { display_name: 'Reporter One', username: 'reporterone' },
+                reportedUserProfile: { display_name: 'Reported Two', username: 'reportedtwo' },
+                resolvedByProfile: null,
+            }],
+            isLoading: false,
+            refetch: refetchComplaints,
+        });
+        mockUseResolveClubComplaint.mockReturnValue({ mutateAsync: resolveComplaint, isPending: false });
+
+        const { getByText, getByTestId } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Reports'));
+        fireEvent.press(getByTestId('resolve-complaint-warned-complaint-1'));
+
+        await waitFor(() => expect(createAction).toHaveBeenCalledWith({
+            clubId: 'club-1',
+            userId: 'reader-2',
+            actionType: 'warned',
+            reason: 'Personal attack in chat.',
+            durationHours: null,
+        }));
+        expect(resolveComplaint).toHaveBeenCalledWith({
+            clubId: 'club-1',
+            complaintId: 'complaint-1',
+            status: 'resolved',
+            resolutionAction: 'warned',
+        });
+        expect(refetchComplaints).toHaveBeenCalled();
+        expect(refetchMembers).toHaveBeenCalled();
+        expect(refetchMemberActions).toHaveBeenCalled();
+        expect(getByText('Platform complaint action saved.')).toBeOnTheScreen();
+    });
+
+    it('saves reading schedule milestones for the current book', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue({ id: 'schedule-1', club_id: 'club-1' });
+        const refetchSchedule = jest.fn().mockResolvedValue({ data: null });
+        mockUseClubPublicDetail.mockReturnValue({
+            data: { ...baseClub, current_book_id: 'book-1', current_book_title: 'Beloved', current_book_authors: ['Toni Morrison'] },
+            isLoading: false,
+            isError: false,
+            refetch: jest.fn(),
+        });
+        mockUseClubReadingSchedule.mockReturnValue({ data: null, isLoading: false, isError: false, error: null, refetch: refetchSchedule });
+        mockUseUpsertClubReadingSchedule.mockReturnValue({ mutateAsync, isPending: false });
+
+        const { getByText, getByTestId } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Schedule'));
+        fireEvent.changeText(getByTestId('schedule-label-0'), 'Week 1');
+        fireEvent.changeText(getByTestId('schedule-target-0'), 'Chapters 1-5');
+        fireEvent.changeText(getByTestId('schedule-due-0'), '2026-06-15');
+        fireEvent.press(getByTestId('schedule-save'));
+
+        await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({
+            clubId: 'club-1',
+            bookId: 'book-1',
+            createdBy: 'admin-1',
+            milestones: [{
+                id: expect.any(String),
+                label: 'Week 1',
+                target: 'Chapters 1-5',
+                dueDate: '2026-06-15',
+            }],
+        }));
+        expect(refetchSchedule).toHaveBeenCalled();
+        expect(getByText('Reading schedule saved.')).toBeOnTheScreen();
+    });
+
+    it('blocks reading schedule milestones when due dates move backward', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue({ id: 'schedule-1', club_id: 'club-1' });
+        mockUseClubPublicDetail.mockReturnValue({
+            data: { ...baseClub, current_book_id: 'book-1', current_book_title: 'Beloved', current_book_authors: ['Toni Morrison'] },
+            isLoading: false,
+            isError: false,
+            refetch: jest.fn(),
+        });
+        mockUseClubReadingSchedule.mockReturnValue({ data: null, isLoading: false, isError: false, error: null, refetch: jest.fn() });
+        mockUseUpsertClubReadingSchedule.mockReturnValue({ mutateAsync, isPending: false });
+
+        const { getByText, getByTestId } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Schedule'));
+        fireEvent.changeText(getByTestId('schedule-label-0'), 'Week 1');
+        fireEvent.changeText(getByTestId('schedule-target-0'), 'Chapters 1-5');
+        fireEvent.changeText(getByTestId('schedule-due-0'), '2026-06-20');
+        fireEvent.press(getByTestId('schedule-add-milestone'));
+        fireEvent.changeText(getByTestId('schedule-label-1'), 'Week 2');
+        fireEvent.changeText(getByTestId('schedule-target-1'), 'Chapters 6-10');
+        fireEvent.changeText(getByTestId('schedule-due-1'), '2026-06-10');
+        fireEvent.press(getByTestId('schedule-save'));
+
+        expect(mutateAsync).not.toHaveBeenCalled();
+        expect(getByText('Due dates must stay in chronological order.')).toBeOnTheScreen();
+    });
+
+    it('blocks reading schedule milestones when chapter targets move backward', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue({ id: 'schedule-1', club_id: 'club-1' });
+        mockUseClubPublicDetail.mockReturnValue({
+            data: { ...baseClub, current_book_id: 'book-1', current_book_title: 'Beloved', current_book_authors: ['Toni Morrison'] },
+            isLoading: false,
+            isError: false,
+            refetch: jest.fn(),
+        });
+        mockUseClubReadingSchedule.mockReturnValue({ data: null, isLoading: false, isError: false, error: null, refetch: jest.fn() });
+        mockUseUpsertClubReadingSchedule.mockReturnValue({ mutateAsync, isPending: false });
+
+        const { getByText, getByTestId } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Schedule'));
+        expect(getByText('One active schedule is stored per current book; reminder delivery is deferred to the app-wide notification pipeline.')).toBeOnTheScreen();
+        fireEvent.changeText(getByTestId('schedule-label-0'), 'Week 1');
+        fireEvent.changeText(getByTestId('schedule-target-0'), 'Chapters 10-12');
+        fireEvent.changeText(getByTestId('schedule-due-0'), '2026-06-10');
+        fireEvent.press(getByTestId('schedule-add-milestone'));
+        fireEvent.changeText(getByTestId('schedule-label-1'), 'Week 2');
+        fireEvent.changeText(getByTestId('schedule-target-1'), 'Chapters 1-3');
+        fireEvent.changeText(getByTestId('schedule-due-1'), '2026-06-20');
+        fireEvent.press(getByTestId('schedule-save'));
+
+        expect(mutateAsync).not.toHaveBeenCalled();
+        expect(getByText('Chapter targets must stay in reading order.')).toBeOnTheScreen();
+    });
+
+    it('archives the club from the lifecycle tab after confirmation', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue({ id: 'club-1' });
+        const refetchClub = jest.fn().mockResolvedValue({ data: null });
+        mockUseClubPublicDetail.mockReturnValue({ data: baseClub, isLoading: false, isError: false, refetch: refetchClub });
+        mockUseArchiveClub.mockReturnValue({ mutateAsync, isPending: false });
+        const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+            buttons?.find((button) => button.text === 'Archive')?.onPress?.();
+        });
+
+        const { getByText, getByTestId } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Lifecycle'));
+        fireEvent.press(getByTestId('manage-archive-club'));
+
+        await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ clubId: 'club-1' }));
+        expect(refetchClub).toHaveBeenCalled();
+        expect(getByText('Club archived. You can restore it from Archived clubs.')).toBeOnTheScreen();
+        alertSpy.mockRestore();
+    });
+
+    it('opens a requested manage route tab on initial render', () => {
+        mockUseLocalSearchParams.mockReturnValue({ clubId: 'club-1', tab: 'lifecycle' });
+
+        const { getByText } = render(<ClubManageScreen />);
+
+        expect(getByText('Archive status')).toBeOnTheScreen();
+        expect(getByText('Admin succession')).toBeOnTheScreen();
+    });
+
+    it('surfaces downgrade succession and archive retention guidance in lifecycle', () => {
+        const { getByText } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Lifecycle'));
+
+        expect(getByText('Downgrade succession')).toBeOnTheScreen();
+        expect(getByText('Select a Pro or Pro+ successor before downgrading the current admin so the club stays active.')).toBeOnTheScreen();
+        expect(getByText('Automatic successor selection is not enabled yet. Request a successor before downgrade.')).toBeOnTheScreen();
+        expect(getByText('Archive retention')).toBeOnTheScreen();
+        expect(getByText('Archived clubs stay restorable for admins while retention rules are active.')).toBeOnTheScreen();
+        expect(getByText('Deletion rules are policy-controlled; archived clubs stay restorable until a retention rule is rolled out.')).toBeOnTheScreen();
+    });
+
+    it('surfaces lifecycle readiness, successor coverage, retention state, and admin warnings', () => {
+        mockUseClubMembers.mockReturnValue({
+            data: [
+                { id: 'member-admin', club_id: 'club-1', user_id: 'admin-1', role: 'admin', status: 'active', joined_at: null, profile: { display_name: 'Admin Reader', username: 'adminreader', membership_tier: 'pro_plus' } },
+                { id: 'member-2', club_id: 'club-1', user_id: 'reader-2', role: 'member', status: 'active', joined_at: null, profile: { display_name: 'Reader Two', username: 'readertwo', membership_tier: 'pro' } },
+                { id: 'member-3', club_id: 'club-1', user_id: 'reader-3', role: 'member', status: 'active', joined_at: null, profile: { display_name: 'Reader Three', username: 'readerthree', membership_tier: 'free' } },
+            ],
+            isLoading: false,
+            refetch: jest.fn(),
+        });
+        mockUseClubAdminTransferRequests.mockReturnValue({
+            data: [{
+                id: 'request-1',
+                club_id: 'club-1',
+                requested_by: 'admin-1',
+                proposed_admin_user_id: 'reader-2',
+                status: 'pending',
+                created_at: '2026-06-01T00:00:00Z',
+                responded_at: null,
+                expires_at: '2026-06-15T00:00:00Z',
+            }],
+            isLoading: false,
+            refetch: jest.fn(),
+        });
+
+        const { getByText } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Lifecycle'));
+
+        expect(getByText('Lifecycle policy')).toBeOnTheScreen();
+        expect(getByText('Downgrade readiness')).toBeOnTheScreen();
+        expect(getByText('Ready for admin handoff: an eligible successor has a pending request.')).toBeOnTheScreen();
+        expect(getByText('Successor coverage')).toBeOnTheScreen();
+        expect(getByText('1 eligible successor · 1 pending transfer request')).toBeOnTheScreen();
+        expect(getByText('Archive retention state')).toBeOnTheScreen();
+        expect(getByText('Active: no archive retention countdown is running for this club.')).toBeOnTheScreen();
+        expect(getByText('Admin warning')).toBeOnTheScreen();
+        expect(getByText('This screen does not automatically demote admins, transfer ownership, archive excess clubs, or delete archived clubs. Use explicit requests until product policy confirms automation.')).toBeOnTheScreen();
+    });
+
+    it('requests admin transfer to an eligible Pro member from lifecycle', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue({ id: 'club-1' });
+        const refetchRequests = jest.fn().mockResolvedValue({ data: null });
+        mockUseRequestClubAdminTransfer.mockReturnValue({ mutateAsync, isPending: false });
+        mockUseClubAdminTransferRequests.mockReturnValue({ data: [], isLoading: false, refetch: refetchRequests });
+        mockUseClubMembers.mockReturnValue({
+            data: [
+                { id: 'member-admin', club_id: 'club-1', user_id: 'admin-1', role: 'admin', status: 'active', joined_at: null, profile: { display_name: 'Admin Reader', username: 'adminreader', membership_tier: 'pro_plus' } },
+                { id: 'member-2', club_id: 'club-1', user_id: 'reader-2', role: 'member', status: 'active', joined_at: null, profile: { display_name: 'Reader Two', username: 'readertwo', membership_tier: 'pro' } },
+            ],
+            isLoading: false,
+            refetch: jest.fn(),
+        });
+        const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+            buttons?.find((button) => button.text === 'Send request')?.onPress?.();
+        });
+
+        const { getByText, getByTestId } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Lifecycle'));
+        fireEvent.press(getByTestId('transfer-admin-reader-2'));
+
+        await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ clubId: 'club-1', newAdminUserId: 'reader-2' }));
+        expect(refetchRequests).toHaveBeenCalled();
+        expect(getByText('Admin transfer request sent to Reader Two.')).toBeOnTheScreen();
+        alertSpy.mockRestore();
     });
 
     it('opens create and edit actions from the manage events tab', () => {
@@ -393,6 +757,8 @@ describe('ClubManageScreen', () => {
 
         const { getByTestId, getByText } = render(<ClubManageScreen />);
 
+        expect(getByText('Nominations are the default source of truth for choosing the club\'s current read.')).toBeOnTheScreen();
+        expect(getByText('Admin shortcut: set this active nomination as the current read before voting closes.')).toBeOnTheScreen();
         fireEvent.press(getByTestId('manage-set-current-nomination-open-1'));
 
         await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ nominationId: 'nomination-open-1' }));
@@ -536,14 +902,14 @@ describe('ClubManageScreen', () => {
         mockUseFinalizeClubBookNomination.mockReturnValue({ mutateAsync: finalizeMutateAsync, isPending: false });
 
         const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
-            const confirmButton = buttons?.find((button) => button.text === 'Set current book');
+            const confirmButton = buttons?.find((button) => button.text === 'Apply override');
             confirmButton?.onPress?.();
         });
 
         const { getByTestId, getByText } = render(<ClubManageScreen />);
 
         fireEvent.press(getByTestId('manage-toggle-override'));
-        await waitFor(() => expect(getByText('Manual override')).toBeOnTheScreen());
+        await waitFor(() => expect(getByText('Admin override')).toBeOnTheScreen());
 
         const searchGoogleBooksCached = jest.requireMock('@/features/books/services/booksService').searchGoogleBooksCached;
 
@@ -571,7 +937,7 @@ describe('ClubManageScreen', () => {
 
         const { getByTestId, getByText } = render(<ClubManageScreen />);
         fireEvent.press(getByTestId('manage-toggle-override'));
-        await waitFor(() => expect(getByText('Manual override')).toBeOnTheScreen());
+        await waitFor(() => expect(getByText('Admin override')).toBeOnTheScreen());
 
         fireEvent.changeText(getByTestId('manage-override-search'), 'Test Override');
 
@@ -589,12 +955,27 @@ describe('ClubManageScreen', () => {
 
         const { getByTestId, getByText } = render(<ClubManageScreen />);
         fireEvent.press(getByTestId('manage-toggle-override'));
-        await waitFor(() => expect(getByText('Manual override')).toBeOnTheScreen());
+        await waitFor(() => expect(getByText('Admin override')).toBeOnTheScreen());
 
         fireEvent.changeText(getByTestId('manage-override-search'), 'Cached Book');
 
         await waitFor(() => expect(jest.requireMock('@/features/books/services/booksService').searchGoogleBooksCached).toHaveBeenCalledWith('Cached Book', 0, 10));
         await waitFor(() => expect(getByText('Showing cached results')).toBeOnTheScreen());
+    });
+
+    it('handles a manual override search button press on web without treating the press event as the query', async () => {
+        const searchGoogleBooksCached = jest.requireMock('@/features/books/services/booksService').searchGoogleBooksCached;
+        searchGoogleBooksCached.mockResolvedValue({ items: [], totalItems: 0, hasMore: false, fromCache: false });
+
+        const { getByTestId, getByText } = render(<ClubManageScreen />);
+        fireEvent.press(getByTestId('manage-toggle-override'));
+        await waitFor(() => expect(getByText('Admin override')).toBeOnTheScreen());
+
+        fireEvent.changeText(getByTestId('manage-override-search'), 'ab');
+        fireEvent.press(getByText('Search'));
+
+        expect(searchGoogleBooksCached).not.toHaveBeenCalled();
+        expect(getByText('Enter at least 3 characters to search Google Books.')).toBeOnTheScreen();
     });
 
     it('approves a pending application from the Applications tab', async () => {
@@ -615,7 +996,7 @@ describe('ClubManageScreen', () => {
                     status: 'pending',
                     answers: [{ question: 'Why join?', answer: 'I love books!' }],
                     created_at: '2026-04-30T00:00:00Z',
-                    user_profile: { display_name: 'Book Lover', username: 'booklover' },
+                    applicantProfile: { display_name: 'Book Lover', username: 'booklover' },
                 },
             ],
             isLoading: false,
@@ -736,6 +1117,17 @@ describe('ClubManageScreen', () => {
     });
 
     it('renders analytics tab with member and nomination stats', () => {
+        mockUseClubPublicDetail.mockReturnValue({
+            data: {
+                ...baseClub,
+                current_book_id: 'book-1',
+                current_book_title: 'Book One',
+                current_book_authors: ['A'],
+            },
+            isLoading: false,
+            isError: false,
+            refetch: jest.fn(),
+        });
         mockUseClubMembers.mockReturnValue({
             data: [
                 { id: 'member-1', club_id: 'club-1', user_id: 'admin-1', role: 'admin', status: 'active', joined_at: null, profile: { display_name: 'Admin', username: 'admin' } },
@@ -757,15 +1149,79 @@ describe('ClubManageScreen', () => {
             isLoading: false,
             refetch: jest.fn(),
         });
+        mockUseClubCurrentBookStatusOverview.mockReturnValue({
+            data: {
+                current_book_id: 'book-1',
+                member_reading_status: 'reading',
+                to_start_count: 1,
+                reading_count: 1,
+                completed_count: 1,
+                active_member_count: 3,
+            },
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: jest.fn(),
+        });
 
         const { getByText, getAllByText } = render(<ClubManageScreen />);
 
         fireEvent.press(getByText('Analytics'));
         expect(getByText('Club overview')).toBeOnTheScreen();
-        expect(getByText('3')).toBeOnTheScreen(); // Members
+        expect(getAllByText('3')[0]).toBeOnTheScreen(); // Members
         expect(getAllByText('Members')[1]).toBeOnTheScreen();
         // Use specific stat labels to avoid ambiguity with duplicate numbers
         expect(getAllByText('1')[0]).toBeOnTheScreen(); // Moderators
+        expect(getByText('Members / Capacity')).toBeOnTheScreen();
+        expect(getByText('3/30')).toBeOnTheScreen();
+        expect(getByText('Reading progress')).toBeOnTheScreen();
+        expect(getByText('To start')).toBeOnTheScreen();
+        expect(getByText('Completed')).toBeOnTheScreen();
+    });
+
+    it('shows an error message when current-book analytics fail to load', () => {
+        mockUseClubPublicDetail.mockReturnValue({
+            data: {
+                ...baseClub,
+                current_book_id: 'book-1',
+                current_book_title: 'Book One',
+                current_book_authors: ['A'],
+            },
+            isLoading: false,
+            isError: false,
+            refetch: jest.fn(),
+        });
+        mockUseClubMembers.mockReturnValue({
+            data: [
+                { id: 'member-1', club_id: 'club-1', user_id: 'admin-1', role: 'admin', status: 'active', joined_at: null, profile: { display_name: 'Admin', username: 'admin' } },
+            ],
+            isLoading: false,
+            refetch: jest.fn(),
+        });
+        mockUseClubBookNominations.mockReturnValue({
+            data: [],
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: jest.fn(),
+        });
+        mockUseClubEvents.mockReturnValue({
+            data: [],
+            isLoading: false,
+            refetch: jest.fn(),
+        });
+        mockUseClubCurrentBookStatusOverview.mockReturnValue({
+            data: null,
+            isLoading: false,
+            isError: true,
+            error: new Error('Current book progress is unavailable.'),
+            refetch: jest.fn(),
+        });
+
+        const { getByText } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Analytics'));
+        expect(getByText('Current book progress is unavailable.')).toBeOnTheScreen();
     });
 
     it('mutes and unmutes a member from the Members tab', async () => {
@@ -791,6 +1247,42 @@ describe('ClubManageScreen', () => {
         });
         expect(refetchMembers).toHaveBeenCalled();
         expect(getByText('Reader Two has been muted.')).toBeOnTheScreen();
+    });
+
+    it('records a warning action from the Members tab', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue({ id: 'action-1' });
+        const refetchMembers = jest.fn().mockResolvedValue({ data: null });
+        const refetchActions = jest.fn().mockResolvedValue({ data: null });
+        mockUseClubMembers.mockReturnValue({
+            data: [
+                { id: 'member-admin', club_id: 'club-1', user_id: 'admin-1', role: 'admin', status: 'active', joined_at: null, profile: { display_name: 'Admin Reader', username: 'adminreader' } },
+                { id: 'member-2', club_id: 'club-1', user_id: 'reader-2', role: 'member', status: 'active', joined_at: null, profile: { display_name: 'Reader Two', username: 'readertwo' } },
+            ],
+            isLoading: false,
+            refetch: refetchMembers,
+        });
+        mockUseClubMemberActions.mockReturnValue({ data: [], isLoading: false, refetch: refetchActions });
+        mockUseCreateClubMemberAction.mockReturnValue({ mutateAsync, isPending: false });
+
+        const { getByText, getByTestId } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Members'));
+        fireEvent.press(getByTestId('member-action-warned-reader-2'));
+        fireEvent.changeText(getByTestId('member-action-reason-reader-2'), 'Repeated spoilers');
+        fireEvent.press(getByTestId('member-action-submit-reader-2'));
+
+        await waitFor(() => {
+            expect(mutateAsync).toHaveBeenCalledWith({
+                clubId: 'club-1',
+                userId: 'reader-2',
+                actionType: 'warned',
+                reason: 'Repeated spoilers',
+                durationHours: null,
+            });
+        });
+        expect(refetchMembers).toHaveBeenCalled();
+        expect(refetchActions).toHaveBeenCalled();
+        await waitFor(() => expect(getByText('Reader Two moderation action saved.')).toBeOnTheScreen());
     });
 
     it('shows upcoming and past events in the Events tab and cancels an event', async () => {

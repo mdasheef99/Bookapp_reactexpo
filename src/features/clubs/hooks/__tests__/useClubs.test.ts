@@ -1,7 +1,7 @@
 import React, { type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider, notifyManager } from '@tanstack/react-query';
 import { renderHook, act, waitFor } from '@testing-library/react-native';
-import { useAcceptClubInvitation, useCreateClubDiscussionReply, useCreateClubDiscussionTopic, useJoinClub, useMarkClubDiscussionTopicRead, useRemoveClubMember, useReviewClubApplication, useUpdateClub, clubKeys } from '../useClubs';
+import { useAcceptClubInvitation, useCreateClubDiscussionReply, useCreateClubDiscussionTopic, useCreateClubJoinQuestion, useDeleteClubJoinQuestion, useJoinClub, useMarkClubDiscussionTopicRead, useMarkInvitationRead, useRemoveClubMember, useReviewClubApplication, useUpdateClub, useUpdateClubJoinQuestion, clubKeys } from '../useClubs';
 import { clubsService } from '../../services/clubsService';
 
 jest.mock('../../services/clubsService', () => ({
@@ -9,11 +9,15 @@ jest.mock('../../services/clubsService', () => ({
         acceptClubInvitation: jest.fn(),
         createClubDiscussionReply: jest.fn(),
         createClubDiscussionTopic: jest.fn(),
+        createJoinQuestion: jest.fn(),
+        deleteJoinQuestion: jest.fn(),
         joinClub: jest.fn(),
         markClubDiscussionTopicRead: jest.fn(),
+        markInvitationRead: jest.fn(),
         removeMember: jest.fn(),
         reviewJoinApplication: jest.fn(),
         updateClub: jest.fn(),
+        updateJoinQuestion: jest.fn(),
     },
 }));
 
@@ -30,6 +34,10 @@ function createQueryClient() {
             mutations: { retry: false, gcTime: Infinity },
         },
     });
+}
+
+function expectInvalidatedWithRefetchAll(invalidateQueries: jest.SpyInstance, queryKey: readonly unknown[]) {
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey, refetchType: 'all' });
 }
 
 describe('useClubs cache invalidation', () => {
@@ -61,12 +69,12 @@ describe('useClubs cache invalidation', () => {
         });
 
         await waitFor(() => {
-            expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.browseRoot });
+            expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.browseRoot);
         });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.publicDetail('club-1') });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.membership('club-1', 'user-1') });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.members('club-1') });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.application('club-1', 'user-1') });
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.publicDetail('club-1'));
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.membership('club-1', 'user-1'));
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.members('club-1'));
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.application('club-1', 'user-1'));
     });
 
     it('invalidates browse queries after moderator review updates member counts', async () => {
@@ -86,12 +94,12 @@ describe('useClubs cache invalidation', () => {
         });
 
         await waitFor(() => {
-            expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.browseRoot });
+            expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.browseRoot);
         });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.publicDetail('club-2') });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.members('club-2') });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.applications('club-2', 'pending') });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.application('club-2', 'user-2') });
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.publicDetail('club-2'));
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.members('club-2'));
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.applications('club-2', 'pending'));
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.application('club-2', 'user-2'));
     });
 
     it('invalidates invitation and membership state after accepting an invite', async () => {
@@ -112,13 +120,36 @@ describe('useClubs cache invalidation', () => {
         });
 
         await waitFor(() => {
-            expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.browseRoot });
+            expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.browseRoot);
         });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.publicDetail('club-3') });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.membership('club-3', 'user-3') });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.members('club-3') });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.invitations('club-3') });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.myInvitation('club-3', 'user-3') });
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.publicDetail('club-3'));
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.membership('club-3', 'user-3'));
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.members('club-3'));
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.invitations('club-3'));
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.myInvitation('club-3', 'user-3'));
+    });
+
+    it('invalidates invitation inbox unread state after marking an invite as read', async () => {
+        const queryClient = createQueryClient();
+        const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
+        (clubsService.markInvitationRead as jest.Mock).mockResolvedValue({
+            id: 'invite-4',
+            club_id: 'club-4',
+            invitee_user_id: 'user-4',
+            read_at: '2026-05-23T00:00:00Z',
+        });
+
+        const { result } = renderHook(() => useMarkInvitationRead(), { wrapper: createWrapper(queryClient) });
+
+        await act(async () => {
+            await result.current.mutateAsync({ invitationId: 'invite-4', clubId: 'club-4', userId: 'user-4' });
+        });
+
+        await waitFor(() => {
+            expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.myInvitationInbox('user-4'));
+        });
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.invitations('club-4'));
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.myInvitation('club-4', 'user-4'));
     });
 
     it('invalidates public detail and browse queries after updating club settings', async () => {
@@ -156,11 +187,11 @@ describe('useClubs cache invalidation', () => {
         });
 
         await waitFor(() => {
-            expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.publicDetail('club-5') });
+            expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.publicDetail('club-5'));
         });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.browseRoot });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.members('club-5') });
-        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.membership('club-5', 'user-5') });
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.browseRoot);
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.members('club-5'));
+        expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.membership('club-5', 'user-5'));
     });
 
     it('invalidates the discussion root after creating a new discussion topic', async () => {
@@ -213,5 +244,87 @@ describe('useClubs cache invalidation', () => {
         });
         expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopicRoot('topic-8') });
         expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopic('topic-8', 'user-8') });
+    });
+
+    it('updates the join-question cache after creating a manage question', async () => {
+        const queryClient = createQueryClient();
+        const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
+        queryClient.setQueryData(clubKeys.joinQuestions('club-9'), [
+            { id: 'question-2', club_id: 'club-9', question: 'Second?', is_required: true, order_index: 2 },
+        ]);
+        (clubsService.createJoinQuestion as jest.Mock).mockResolvedValue({
+            id: 'question-1',
+            club_id: 'club-9',
+            question: 'First?',
+            is_required: true,
+            order_index: 1,
+        });
+
+        const { result } = renderHook(() => useCreateClubJoinQuestion(), { wrapper: createWrapper(queryClient) });
+
+        await act(async () => {
+            await result.current.mutateAsync({ clubId: 'club-9', input: { question: 'First?', isRequired: true, orderIndex: 1 } });
+        });
+
+        await waitFor(() => {
+            expect(queryClient.getQueryData(clubKeys.joinQuestions('club-9'))).toEqual([
+                { id: 'question-1', club_id: 'club-9', question: 'First?', is_required: true, order_index: 1 },
+                { id: 'question-2', club_id: 'club-9', question: 'Second?', is_required: true, order_index: 2 },
+            ]);
+        });
+        expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: clubKeys.joinQuestions('club-9') });
+    });
+
+    it('updates the join-question cache after editing a manage question', async () => {
+        const queryClient = createQueryClient();
+        const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
+        queryClient.setQueryData(clubKeys.joinQuestions('club-10'), [
+            { id: 'question-1', club_id: 'club-10', question: 'Old first?', is_required: true, order_index: 1 },
+            { id: 'question-2', club_id: 'club-10', question: 'Second?', is_required: true, order_index: 2 },
+        ]);
+        (clubsService.updateJoinQuestion as jest.Mock).mockResolvedValue({
+            id: 'question-1',
+            club_id: 'club-10',
+            question: 'Updated first?',
+            is_required: false,
+            order_index: 1,
+        });
+
+        const { result } = renderHook(() => useUpdateClubJoinQuestion(), { wrapper: createWrapper(queryClient) });
+
+        await act(async () => {
+            await result.current.mutateAsync({ clubId: 'club-10', questionId: 'question-1', input: { question: 'Updated first?', isRequired: false } });
+        });
+
+        await waitFor(() => {
+            expect(queryClient.getQueryData(clubKeys.joinQuestions('club-10'))).toEqual([
+                { id: 'question-1', club_id: 'club-10', question: 'Updated first?', is_required: false, order_index: 1 },
+                { id: 'question-2', club_id: 'club-10', question: 'Second?', is_required: true, order_index: 2 },
+            ]);
+        });
+        expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: clubKeys.joinQuestions('club-10') });
+    });
+
+    it('updates the join-question cache after deleting a manage question', async () => {
+        const queryClient = createQueryClient();
+        const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
+        queryClient.setQueryData(clubKeys.joinQuestions('club-11'), [
+            { id: 'question-1', club_id: 'club-11', question: 'Remove?', is_required: true, order_index: 1 },
+            { id: 'question-2', club_id: 'club-11', question: 'Keep?', is_required: true, order_index: 2 },
+        ]);
+        (clubsService.deleteJoinQuestion as jest.Mock).mockResolvedValue(undefined);
+
+        const { result } = renderHook(() => useDeleteClubJoinQuestion(), { wrapper: createWrapper(queryClient) });
+
+        await act(async () => {
+            await result.current.mutateAsync({ clubId: 'club-11', questionId: 'question-1' });
+        });
+
+        await waitFor(() => {
+            expect(queryClient.getQueryData(clubKeys.joinQuestions('club-11'))).toEqual([
+                { id: 'question-2', club_id: 'club-11', question: 'Keep?', is_required: true, order_index: 2 },
+            ]);
+        });
+        expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: clubKeys.joinQuestions('club-11') });
     });
 });

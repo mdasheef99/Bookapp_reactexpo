@@ -6,7 +6,8 @@ import { navigateBackOrFallback } from '@/lib/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { profileService } from '@/features/auth/services/profileService';
 import { useCancelClubEvent, useClubEvents, useClubMembership, useClubPublicDetail, useDeleteClubEvent, useUpsertClubEventRsvp } from '@/features/clubs/hooks/useClubs';
-import { getClubsEntitlementErrorMessage, type MembershipTier } from '@/features/clubs/services/clubsEntitlement';
+import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
+import type { MembershipTier } from '@/features/clubs/services/clubsService';
 import { useTheme } from '@/hooks/useTheme';
 import { canCreateClubEvents, canManageClubEvent, canRsvpToClubEvents, canViewClubEvents, formatClubEventStatus, formatClubEventTiming, formatClubEventType, getClubEventLocationLabel } from './clubEvents.shared';
 
@@ -33,7 +34,7 @@ export default function ClubEventsScreen() {
             return;
         }
         profileService.getProfileSummary(userId)
-            .then((profile) => { if (active) setViewerMembershipTier(profile.membership_tier); })
+            .then((profile) => { if (active) setViewerMembershipTier(profile?.membership_tier ?? null); })
             .catch(() => { if (active) setViewerMembershipTier(null); });
         return () => { active = false; };
     }, [userId]);

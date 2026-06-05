@@ -8,6 +8,10 @@ export { ClubManageApplicationsSection } from './ClubManageApplicationsSection';
 export { ClubManageInvitationsSection } from './ClubManageInvitationsSection';
 export { ClubManageAnalyticsSection } from './ClubManageAnalyticsSection';
 export { ClubManageEventsSection } from './ClubManageEventsSection';
+export { ClubManageLifecycleSection } from './ClubManageLifecycleSection';
+export { ClubManageReadingScheduleSection } from './ClubManageReadingScheduleSection';
+export { ClubManageDiscussionReportsSection } from './ClubManageDiscussionReportsSection';
+export { ClubManagePlatformComplaintsSection } from './ClubManagePlatformComplaintsSection';
 export {
     type FeedbackState,
     type SettingsDraft,

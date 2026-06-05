@@ -1,5 +1,6 @@
 import * as clubsApplicationsService from './clubsApplicationsService';
 import * as clubsBooksService from './clubsBooksService';
+import * as clubsComplaintsService from './clubsComplaintsService';
 import * as clubsDiscussionService from './clubsDiscussionService';
 import * as clubsEventsService from './clubsEventsService';
 import * as clubsInvitationsService from './clubsInvitationsService';
@@ -10,14 +11,18 @@ import * as clubsReadService from './clubsReadService';
 export type {
     AccessLevel,
     Club,
+    ClubAdminTransferRequest,
     ClubBookSummary,
     ClubCurrentBookReadingStatus,
     ClubCurrentBookStatusOverview,
+    ClubManageDetails,
+    ClubMemberReadingProgress,
     ClubDiscussionReaction,
     ClubDiscussionReactionEmoji,
     ClubDiscussionReactionSummary,
     ClubDiscussionReport,
     ClubDiscussionReportReason,
+    ClubDiscussionReportWithTarget,
     ClubDiscussionReply,
     ClubDiscussionReplyWithDetails,
     ClubDiscussionTopic,
@@ -36,8 +41,15 @@ export type {
     ClubEventStatus,
     ClubEventWithDetails,
     ClubBookVote,
+    ClubComplaint,
+    ClubComplaintReason,
+    ClubComplaintResolutionAction,
+    ClubComplaintStatus,
+    ClubComplaintWithProfiles,
     ClubFilters,
     ClubInvitation,
+    ClubInvitationInboxOptions,
+    ClubInvitationInboxItem,
     ClubInvitationStatus,
     ClubInvitationWithProfiles,
     ClubJoinApplication,
@@ -46,8 +58,12 @@ export type {
     ClubJoinQuestion,
     ClubJoinQuestionInput,
     ClubMember,
+    ClubMemberAction,
+    ClubMemberActionType,
     ClubMemberWithProfile,
     ClubPublicDetails,
+    ClubReadingSchedule,
+    ClubReadingScheduleMilestone,
     ClubVenueLink,
     ClubVenueSummary,
     ClubType,
@@ -59,6 +75,7 @@ export type {
     CreateClubDiscussionReportInput,
     CreateClubDiscussionTopicInput,
     CreateClubInput,
+    CreateClubMemberActionInput,
     JoinClubResult,
     MemberRole,
     MemberStatus,
@@ -68,10 +85,12 @@ export type {
     MeetingType,
     NominateClubBookInput,
     ReviewApplicationDecision,
+    ResolveClubComplaintInput,
     SetClubDiscussionReactionInput,
     SetClubDiscussionVoteInput,
     UpdateClubEventInput,
     UpdateClubInput,
+    UpsertClubReadingScheduleInput,
 } from './clubsService.types';
 
 export const clubsService = {
@@ -79,6 +98,7 @@ export const clubsService = {
     ...clubsManagementService,
     ...clubsMembershipService,
     ...clubsApplicationsService,
+    ...clubsComplaintsService,
     ...clubsDiscussionService,
     ...clubsBooksService,
     ...clubsEventsService,

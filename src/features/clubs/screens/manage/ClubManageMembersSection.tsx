@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Alert, ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
-import { type ClubMemberWithProfile, type ClubPublicDetails } from '@/features/clubs/services/clubsService';
+import { type ClubMemberAction, type ClubMemberActionType, type ClubMemberWithProfile, type ClubPublicDetails } from '@/features/clubs/services/clubsService';
 import {
     canHoldPrivilegedClubRole,
     getModeratorEligibilityMessage,
@@ -13,16 +13,20 @@ import { formatStatus } from './manageUtils';
 interface Props {
     club: ClubPublicDetails;
     members: ClubMemberWithProfile[];
+    actions: ClubMemberAction[];
     isLoading: boolean;
+    isActionsLoading: boolean;
     onToggleRole: (member: ClubMemberWithProfile, nextRole: 'member' | 'moderator') => Promise<void>;
     onToggleMute: (member: ClubMemberWithProfile, nextStatus: 'active' | 'muted') => Promise<void>;
+    onCreateAction: (member: ClubMemberWithProfile, actionType: ClubMemberActionType, reason: string, durationHours?: number | null) => Promise<void>;
     onRemove: (member: ClubMemberWithProfile) => Promise<void>;
     onFeedback: (feedback: FeedbackState) => void;
 }
 
-export function ClubManageMembersSection({ club, members, isLoading, onToggleRole, onToggleMute, onRemove, onFeedback }: Props) {
+export function ClubManageMembersSection({ club, members, actions, isLoading, isActionsLoading, onToggleRole, onToggleMute, onCreateAction, onRemove, onFeedback }: Props) {
     const { colors } = useTheme();
     const [activeUserId, setActiveUserId] = useState<string | null>(null);
+    const [actionDraft, setActionDraft] = useState<{ userId: string; actionType: ClubMemberActionType; reason: string; durationHours: string } | null>(null);
     const manageableMembers = useMemo(
         () => members.filter((member) => member.user_id !== null && member.user_id !== club.admin_id),
         [members, club.admin_id],
@@ -104,6 +108,37 @@ export function ClubManageMembersSection({ club, members, isLoading, onToggleRol
         }
     };
 
+    const openActionDraft = (member: ClubMemberWithProfile, actionType: ClubMemberActionType) => {
+        if (!member.user_id || member.role === 'admin') return;
+        setActionDraft({ userId: member.user_id, actionType, reason: '', durationHours: actionType === 'muted' ? '24' : '' });
+    };
+
+    const handleSubmitAction = async (member: ClubMemberWithProfile) => {
+        if (!actionDraft || !member.user_id) return;
+        const reason = actionDraft.reason.trim();
+        if (!reason) {
+            onFeedback({ type: 'error', message: 'Add a reason before applying a moderation action.' });
+            return;
+        }
+        const durationHours = actionDraft.durationHours.trim() ? Number(actionDraft.durationHours.trim()) : null;
+        if (durationHours !== null && (!Number.isInteger(durationHours) || durationHours < 1)) {
+            onFeedback({ type: 'error', message: 'Duration must be a whole number of hours.' });
+            return;
+        }
+        const memberName = member.profile?.display_name || 'This member';
+        try {
+            onFeedback(null);
+            setActiveUserId(member.user_id);
+            await onCreateAction(member, actionDraft.actionType, reason, durationHours);
+            setActionDraft(null);
+            onFeedback({ type: 'success', message: `${memberName} moderation action saved.` });
+        } catch (error) {
+            onFeedback({ type: 'error', message: error instanceof Error ? error.message : 'Unable to save this moderation action right now.' });
+        } finally {
+            setActiveUserId(null);
+        }
+    };
+
     if (isLoading) {
         return (
             <View style={styles.loadingContainer}>
@@ -121,6 +156,8 @@ export function ClubManageMembersSection({ club, members, isLoading, onToggleRol
                 ) : (
                     manageableMembers.map((member) => {
                         const canAssignModerator = member.status === 'active' || member.status === 'muted';
+                        const memberActionDraft = actionDraft?.userId === member.user_id ? actionDraft : null;
+                        const recentActions = actions.filter((action) => action.user_id === member.user_id).slice(0, 3);
                         return (
                             <View key={member.user_id} style={[styles.memberRow, { borderBottomColor: colors.border }]}>
                                 <View style={styles.memberInfo}>
@@ -160,6 +197,21 @@ export function ClubManageMembersSection({ club, members, isLoading, onToggleRol
                                             {member.status === 'muted' ? 'Unmute' : 'Mute'}
                                         </Text>
                                     </TouchableOpacity>
+                                    <View style={styles.moderationRow}>
+                                        {(['warned', 'muted', 'banned'] as ClubMemberActionType[]).map((actionType) => (
+                                            <TouchableOpacity
+                                                key={actionType}
+                                                testID={`member-action-${actionType}-${member.user_id}`}
+                                                onPress={() => openActionDraft(member, actionType)}
+                                                disabled={activeUserId === member.user_id}
+                                                style={{ opacity: activeUserId === member.user_id ? 0.5 : 1 }}
+                                            >
+                                                <Text style={{ color: actionType === 'banned' ? colors.error : colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
+                                                    {actionType === 'warned' ? 'Warn' : actionType === 'muted' ? 'Timed mute' : 'Ban'}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
                                     <TouchableOpacity
                                         testID={`remove-member-${member.user_id}`}
                                         onPress={() => confirmRemove(member)}
@@ -169,6 +221,42 @@ export function ClubManageMembersSection({ club, members, isLoading, onToggleRol
                                         <Text style={{ color: colors.error, fontSize: 13 }}>Remove</Text>
                                     </TouchableOpacity>
                                 </View>
+                                {memberActionDraft ? (
+                                    <View style={styles.actionDraft}>
+                                        <TextInput
+                                            value={memberActionDraft.reason}
+                                            onChangeText={(reason) => setActionDraft({ ...memberActionDraft, reason })}
+                                            placeholder="Reason"
+                                            placeholderTextColor={colors.textTertiary}
+                                            style={[styles.actionInput, { borderColor: colors.border, color: colors.textPrimary }]}
+                                            testID={`member-action-reason-${member.user_id}`}
+                                        />
+                                        {memberActionDraft.actionType === 'muted' ? (
+                                            <TextInput
+                                                value={memberActionDraft.durationHours}
+                                                onChangeText={(durationHours) => setActionDraft({ ...memberActionDraft, durationHours })}
+                                                placeholder="Hours"
+                                                placeholderTextColor={colors.textTertiary}
+                                                keyboardType="number-pad"
+                                                style={[styles.actionInput, { borderColor: colors.border, color: colors.textPrimary }]}
+                                                testID={`member-action-duration-${member.user_id}`}
+                                            />
+                                        ) : null}
+                                        <View style={styles.draftButtons}>
+                                            <TouchableOpacity onPress={() => setActionDraft(null)} testID={`member-action-cancel-${member.user_id}`}>
+                                                <Text style={{ color: colors.textSecondary, fontWeight: '700' }}>Cancel</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity onPress={() => handleSubmitAction(member)} testID={`member-action-submit-${member.user_id}`}>
+                                                <Text style={{ color: colors.accent, fontWeight: '800' }}>Apply</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                ) : null}
+                                {isActionsLoading ? null : recentActions.map((action) => (
+                                    <Text key={action.id} style={[styles.actionHistory, { color: colors.textTertiary }]}>
+                                        {action.action_type} · {action.reason}{action.expires_at ? ` · until ${new Date(action.expires_at).toLocaleString()}` : ''}
+                                    </Text>
+                                ))}
                             </View>
                         );
                     })
@@ -198,6 +286,7 @@ const styles = StyleSheet.create({
     },
     memberRow: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingVertical: 10,
@@ -218,6 +307,35 @@ const styles = StyleSheet.create({
     memberActions: {
         alignItems: 'flex-end',
         gap: 6,
+    },
+    moderationRow: {
+        flexDirection: 'row',
+        gap: 8,
+        flexWrap: 'wrap',
+        justifyContent: 'flex-end',
+    },
+    actionDraft: {
+        width: '100%',
+        gap: 8,
+        marginTop: 10,
+    },
+    actionInput: {
+        borderWidth: 1,
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 9,
+        fontSize: 13,
+    },
+    draftButtons: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        gap: 16,
+    },
+    actionHistory: {
+        width: '100%',
+        fontSize: 11,
+        lineHeight: 16,
+        marginTop: 4,
     },
     roleBadge: {
         paddingHorizontal: 10,

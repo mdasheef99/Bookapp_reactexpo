@@ -8,11 +8,13 @@ interface Props {
     invitations: ClubInvitationWithProfiles[];
     isLoading: boolean;
     isCreating: boolean;
+    isRevoking: boolean;
     onCreate: (username: string) => Promise<void>;
+    onRevoke: (invitationId: string) => Promise<void>;
     onFeedback: (feedback: FeedbackState) => void;
 }
 
-export function ClubManageInvitationsSection({ invitations, isLoading, isCreating, onCreate, onFeedback }: Props) {
+export function ClubManageInvitationsSection({ invitations, isLoading, isCreating, isRevoking, onCreate, onRevoke, onFeedback }: Props) {
     const { colors } = useTheme();
     const [username, setUsername] = useState('');
 
@@ -26,6 +28,16 @@ export function ClubManageInvitationsSection({ invitations, isLoading, isCreatin
             onFeedback({ type: 'success', message: 'Invitation sent.' });
         } catch (error) {
             onFeedback({ type: 'error', message: error instanceof Error ? error.message : 'Unable to send invitation right now.' });
+        }
+    };
+
+    const handleRevoke = async (invitationId: string) => {
+        try {
+            onFeedback(null);
+            await onRevoke(invitationId);
+            onFeedback({ type: 'success', message: 'Invitation revoked.' });
+        } catch (error) {
+            onFeedback({ type: 'error', message: error instanceof Error ? error.message : 'Unable to revoke invitation right now.' });
         }
     };
 
@@ -73,6 +85,17 @@ export function ClubManageInvitationsSection({ invitations, isLoading, isCreatin
                                 {inv.status} · {new Date(inv.created_at).toLocaleDateString()}
                             </Text>
                         </View>
+                        {inv.status === 'pending' ? (
+                            <TouchableOpacity
+                                onPress={() => handleRevoke(inv.id)}
+                                disabled={isRevoking}
+                                style={[styles.revokeButton, { borderColor: colors.error, opacity: isRevoking ? 0.5 : 1 }]}
+                                accessibilityRole="button"
+                                accessibilityLabel="Revoke invitation"
+                            >
+                                <Text style={[styles.revokeButtonText, { color: colors.error }]}>Revoke</Text>
+                            </TouchableOpacity>
+                        ) : null}
                     </View>
                 ))
             )}
@@ -123,6 +146,9 @@ const styles = StyleSheet.create({
     invRow: {
         paddingVertical: 10,
         borderBottomWidth: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
     },
     invInfo: {
         flex: 1,
@@ -134,5 +160,15 @@ const styles = StyleSheet.create({
     invMeta: {
         fontSize: 12,
         marginTop: 2,
+    },
+    revokeButton: {
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+    },
+    revokeButtonText: {
+        fontSize: 12,
+        fontWeight: '700',
     },
 });

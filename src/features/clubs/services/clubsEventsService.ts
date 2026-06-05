@@ -25,6 +25,7 @@ const CLUB_EVENT_SELECT = `
     venue:venues!club_events_venue_id_fkey(
         id,
         name,
+        venue_type,
         city,
         address_line1,
         address_line2,
@@ -38,6 +39,10 @@ const CLUB_EVENT_SELECT = `
     )
 `;
 
+const CLUB_EVENT_MUTATION_SELECT = 'id, club_id, title, description, event_type, start_time, end_time, venue_id, manual_location, meeting_link, max_attendees, created_by, created_at, updated_at, status, cancelled_at, cancelled_by';
+
+const CLUB_EVENT_RSVP_SELECT = 'event_id, user_id, status, created_at';
+
 const CLUB_VENUE_SELECT = `
     club_id,
     venue_id,
@@ -45,6 +50,7 @@ const CLUB_VENUE_SELECT = `
     venue:venues!club_venues_venue_id_fkey(
         id,
         name,
+        venue_type,
         city,
         address_line1,
         address_line2,
@@ -52,7 +58,14 @@ const CLUB_VENUE_SELECT = `
     )
 `;
 
-type ClubEventRow = ClubEvent & { venue: ClubVenueSummary | null; rsvps?: ClubEventRsvp[] | null; };
+type RelatedOne<T> = T | T[] | null;
+type ClubEventRow = ClubEvent & { venue: RelatedOne<ClubVenueSummary>; rsvps?: ClubEventRsvp[] | null; };
+type ClubVenueLinkRow = Omit<ClubVenueLink, 'venue'> & { venue: RelatedOne<ClubVenueSummary>; };
+
+function normalizeRelatedOne<T>(value: RelatedOne<T> | undefined): T | null {
+    if (Array.isArray(value)) return value[0] ?? null;
+    return value ?? null;
+}
 
 function isHttpUrl(value: string | null | undefined) {
     if (!value) return false;
@@ -113,6 +126,7 @@ async function mapClubEvents(rows: ClubEventRow[], userId?: string | null): Prom
 
     return sortClubEvents(rows.map((row) => ({
         ...row,
+        venue: normalizeRelatedOne(row.venue),
         creatorProfile: row.created_by ? creatorProfileMap.get(row.created_by) ?? null : null,
         currentUserRsvp: userId ? row.rsvps?.find((rsvp) => rsvp.user_id === userId) ?? null : null,
     })));
@@ -126,7 +140,10 @@ export async function getClubEventVenues(clubId: string): Promise<ClubVenueLink[
         .order('is_primary', { ascending: false });
 
     if (error) throw error;
-    return (data ?? []) as ClubVenueLink[];
+    return ((data ?? []) as unknown as ClubVenueLinkRow[]).map((row) => ({
+        ...row,
+        venue: normalizeRelatedOne(row.venue),
+    }));
 }
 
 export async function getClubEvents(clubId: string, userId?: string | null): Promise<ClubEventWithDetails[]> {
@@ -137,7 +154,7 @@ export async function getClubEvents(clubId: string, userId?: string | null): Pro
         .order('start_time', { ascending: true });
 
     if (error) throw error;
-    return mapClubEvents((data ?? []) as ClubEventRow[], userId);
+    return mapClubEvents((data ?? []) as unknown as ClubEventRow[], userId);
 }
 
 export async function getClubEventById(eventId: string, userId?: string | null): Promise<ClubEventWithDetails> {
@@ -148,7 +165,7 @@ export async function getClubEventById(eventId: string, userId?: string | null):
         .single();
 
     if (error) throw error;
-    const [event] = await mapClubEvents([data as ClubEventRow], userId);
+    const [event] = await mapClubEvents([data as unknown as ClubEventRow], userId);
     return event;
 }
 
@@ -156,7 +173,7 @@ export async function createClubEvent(input: CreateClubEventInput): Promise<Club
     const { data, error } = await supabase
         .from('club_events')
         .insert({ club_id: input.clubId, created_by: (await supabase.auth.getUser()).data.user?.id ?? null, ...buildClubEventPayload(input) })
-        .select('*')
+        .select(CLUB_EVENT_MUTATION_SELECT)
         .single();
 
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to create this club event right now.'));
@@ -168,7 +185,7 @@ export async function updateClubEvent(eventId: string, input: UpdateClubEventInp
         .from('club_events')
         .update(buildClubEventPayload(input))
         .eq('id', eventId)
-        .select('*')
+        .select(CLUB_EVENT_MUTATION_SELECT)
         .single();
 
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to save this club event right now.'));
@@ -180,7 +197,7 @@ export async function cancelClubEvent(eventId: string, cancelledBy: string): Pro
         .from('club_events')
         .update({ status: 'cancelled' satisfies ClubEventStatus, cancelled_at: new Date().toISOString(), cancelled_by: cancelledBy })
         .eq('id', eventId)
-        .select('*')
+        .select(CLUB_EVENT_MUTATION_SELECT)
         .single();
 
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to cancel this club event right now.'));
@@ -196,7 +213,7 @@ export async function upsertClubEventRsvp(eventId: string, userId: string, statu
     const { data, error } = await supabase
         .from('event_rsvps')
         .upsert({ event_id: eventId, user_id: userId, status }, { onConflict: 'event_id,user_id' })
-        .select('*')
+        .select(CLUB_EVENT_RSVP_SELECT)
         .single();
 
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to update your RSVP right now.'));

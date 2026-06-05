@@ -9,6 +9,7 @@ import type {
     ClubDiscussionReply,
     ClubDiscussionReplyWithDetails,
     ClubDiscussionReport,
+    ClubDiscussionReportWithTarget,
     ClubDiscussionTopic,
     ClubDiscussionTopicReadState,
     ClubDiscussionTopicWithDetails,
@@ -26,6 +27,28 @@ const CLUB_DISCUSSION_REPLY_SELECT = 'id, topic_id, parent_reply_id, author_user
 const CLUB_DISCUSSION_VOTE_SELECT = 'id, topic_id, reply_id, user_id, vote_type, created_at';
 const CLUB_DISCUSSION_REACTION_SELECT = 'id, topic_id, reply_id, user_id, emoji, created_at';
 const CLUB_DISCUSSION_READ_SELECT = 'topic_id, user_id, last_read_at, unread_reply_count';
+const CLUB_DISCUSSION_REPORT_SELECT = 'id, topic_id, reply_id, reporter_user_id, reason, details, status, created_at, resolved_at, resolved_by';
+const CLUB_DISCUSSION_REPORT_QUEUE_SELECT = `
+    id,
+    topic_id,
+    reply_id,
+    reporter_user_id,
+    reason,
+    details,
+    status,
+    created_at,
+    resolved_at,
+    resolved_by,
+    topic:club_discussion_topics!topic_id(id, club_id, title, body, author_user_id, is_deleted),
+    reply:club_discussion_replies!reply_id(
+        id,
+        topic_id,
+        body,
+        author_user_id,
+        is_deleted,
+        topic:club_discussion_topics!topic_id(id, club_id, title)
+    )
+`;
 
 function requireNonEmptyText(value: string, fieldLabel: string) {
     const trimmed = value.trim();
@@ -282,7 +305,7 @@ export async function createClubDiscussionTopic(input: CreateClubDiscussionTopic
     const { data, error } = await supabase
         .from('club_discussion_topics')
         .insert({ club_id: input.clubId, author_user_id: authorUserId, title, body, last_replied_at: timestamp })
-        .select('*')
+        .select(CLUB_DISCUSSION_TOPIC_SELECT)
         .single();
 
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to create this discussion topic right now.'));
@@ -295,7 +318,7 @@ export async function createClubDiscussionReply(input: CreateClubDiscussionReply
     const { data, error } = await supabase
         .from('club_discussion_replies')
         .insert({ topic_id: input.topicId, parent_reply_id: input.parentReplyId ?? null, author_user_id: authorUserId, body })
-        .select('*')
+        .select(CLUB_DISCUSSION_REPLY_SELECT)
         .single();
 
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to post this reply right now.'));
@@ -308,7 +331,7 @@ export async function setClubDiscussionVote(input: SetClubDiscussionVoteInput): 
     const { data, error } = await supabase
         .from('club_discussion_votes')
         .upsert({ topic_id: input.topicId ?? null, reply_id: input.replyId ?? null, user_id: userId, vote_type: input.voteType }, { onConflict: input.topicId ? 'topic_id,user_id' : 'reply_id,user_id' })
-        .select('*')
+        .select(CLUB_DISCUSSION_VOTE_SELECT)
         .single();
 
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to update your discussion vote right now.'));
@@ -330,7 +353,7 @@ export async function setClubDiscussionReaction(input: SetClubDiscussionReaction
     const { data, error } = await supabase
         .from('club_discussion_reactions')
         .upsert({ topic_id: input.topicId ?? null, reply_id: input.replyId ?? null, user_id: userId, emoji: input.emoji }, { onConflict: input.topicId ? 'topic_id,user_id,emoji' : 'reply_id,user_id,emoji' })
-        .select('*')
+        .select(CLUB_DISCUSSION_REACTION_SELECT)
         .single();
 
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to save this discussion reaction right now.'));
@@ -352,7 +375,7 @@ export async function reportClubDiscussionContent(input: CreateClubDiscussionRep
     const { data, error } = await supabase
         .from('club_discussion_reports')
         .insert({ topic_id: input.topicId ?? null, reply_id: input.replyId ?? null, reporter_user_id: reporterUserId, reason: input.reason, details: normalizeOptionalText(input.details) })
-        .select('*')
+        .select(CLUB_DISCUSSION_REPORT_SELECT)
         .single();
 
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to report this discussion content right now.'));
@@ -364,9 +387,45 @@ export async function markClubDiscussionTopicRead(topicId: string, userId?: stri
     const { data, error } = await supabase
         .from('club_discussion_topic_reads')
         .upsert({ topic_id: topicId, user_id: viewerUserId, last_read_at: new Date().toISOString(), unread_reply_count: 0 }, { onConflict: 'topic_id,user_id' })
-        .select('*')
+        .select(CLUB_DISCUSSION_READ_SELECT)
         .single();
 
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to update the unread state for this topic right now.'));
     return data as ClubDiscussionTopicReadState;
+}
+
+export async function getClubDiscussionReports(clubId: string, status: 'open' | 'resolved' = 'open'): Promise<ClubDiscussionReportWithTarget[]> {
+    const { data, error } = await supabase
+        .from('club_discussion_reports')
+        .select(CLUB_DISCUSSION_REPORT_QUEUE_SELECT)
+        .eq('status', status)
+        .order('created_at', { ascending: false });
+
+    if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to load discussion reports right now.'));
+
+    const rows = ((data ?? []) as unknown as ClubDiscussionReportWithTarget[])
+        .filter((report) => {
+            const targetClubId = report.topic?.club_id ?? report.reply?.topic?.club_id ?? null;
+            return targetClubId === clubId;
+        });
+    const reporterIds = rows.map((report) => report.reporter_user_id).filter(Boolean);
+    const profiles = reporterIds.length > 0 ? await profileService.getProfileSummaries(reporterIds) : [];
+    const profileByUserId = new Map(profiles.map((profile) => [profile.user_id, profile]));
+
+    return rows.map((report) => ({
+        ...report,
+        reporterProfile: profileByUserId.get(report.reporter_user_id) ?? null,
+    }));
+}
+
+export async function resolveClubDiscussionReport(reportId: string): Promise<ClubDiscussionReport> {
+    const { data, error } = await supabase
+        .from('club_discussion_reports')
+        .update({ status: 'resolved' })
+        .eq('id', reportId)
+        .select(CLUB_DISCUSSION_REPORT_SELECT)
+        .single();
+
+    if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to resolve this discussion report right now.'));
+    return data as ClubDiscussionReport;
 }

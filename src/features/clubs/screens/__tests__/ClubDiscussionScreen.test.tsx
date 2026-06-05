@@ -110,7 +110,7 @@ describe('ClubDiscussionScreen', () => {
         await waitFor(() => expect(createTopic).toHaveBeenCalledWith({ clubId: 'club-1', title: 'Theme check-in', body: 'What themes stood out the most this week?' }));
 
         fireEvent.press(getByTestId('discussion-topic-topic-1'));
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-1/discussion/topic-1');
+        expect(mockRouterPush).toHaveBeenCalledWith('/clubs/club-1/discussion/topic-1');
     });
 
     it('shows read-only discussion access for muted members', () => {

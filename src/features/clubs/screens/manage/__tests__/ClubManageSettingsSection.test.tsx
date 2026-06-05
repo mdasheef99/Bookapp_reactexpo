@@ -66,8 +66,8 @@ const baseSettings = {
     slug: 'test-club',
     description: 'A test club',
     coverUrl: 'https://images.example.com/founders.png',
-    clubType: 'book' as const,
-    meetingType: 'virtual' as const,
+    clubType: 'public' as const,
+    meetingType: 'online_only' as const,
     accessLevel: 'pro_plus' as const,
     maxMembers: '100',
 };

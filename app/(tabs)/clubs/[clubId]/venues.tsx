@@ -1,5 +1,5 @@
 import ClubVenuePickerScreen from '@/features/clubs/screens/ClubVenuePickerScreen';
 
-export default function VenuesRoute(): JSX.Element {
+export default function VenuesRoute() {
     return <ClubVenuePickerScreen />;
 }

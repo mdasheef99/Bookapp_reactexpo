@@ -115,7 +115,9 @@ export function getBookCoverUrl(book: GoogleBook | null): string {
 export function isTooManyRequestsError(error: unknown): boolean {
     if (error && typeof error === 'object') {
         const e = error as Record<string, unknown>;
-        if (e.status === 429 || e.response?.status === 429) return true;
+        const response = e.response;
+        const responseStatus = response && typeof response === 'object' ? (response as { status?: unknown }).status : undefined;
+        if (e.status === 429 || responseStatus === 429) return true;
         const message = String(e.message ?? e.error ?? error);
         if (message.includes('429') || message.toLowerCase().includes('too many requests')) return true;
     }

@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabase';
 import { profileService } from '@/features/auth/services/profileService';
 import { getMyJoinApplication } from './clubsApplicationsService';
-import { CLUB_MEMBER_SELECT, mapMembersWithProfiles } from './clubsService.shared';
+import { CLUB_JOIN_APPLICATION_SELECT, CLUB_MEMBER_SELECT, mapMembersWithProfiles } from './clubsService.shared';
 import { getClubAccessRequirementMessage, getClubsEntitlementErrorMessage, getModeratorEligibilityMessage, membershipTierSatisfiesAccessLevel, canHoldPrivilegedClubRole } from './clubsEntitlement';
-import type { ClubJoinApplication, ClubMember, ClubMemberWithProfile, JoinClubResult, MemberRole } from './clubsService.types';
+import type { ClubJoinApplication, ClubMember, ClubMemberAction, ClubMemberWithProfile, CreateClubMemberActionInput, JoinClubResult, MemberRole } from './clubsService.types';
 
 export async function getMyMembership(clubId: string, userId: string): Promise<ClubMember | null> {
     const { data, error } = await supabase.from('club_members').select(CLUB_MEMBER_SELECT).eq('club_id', clubId).eq('user_id', userId).maybeSingle();
@@ -50,7 +50,7 @@ export async function joinClub(clubId: string, userId: string, answers: Record<s
     }
 
     if (club.club_type === 'approval' || club.club_type === 'author_club') {
-        const { data, error } = await supabase.from('club_join_applications').insert({ club_id: clubId, user_id: userId, status: 'pending', answers }).select('*').single();
+        const { data, error } = await supabase.from('club_join_applications').insert({ club_id: clubId, user_id: userId, status: 'pending', answers }).select(CLUB_JOIN_APPLICATION_SELECT).single();
         if (error) {
             if ((error as { code?: string }).code === '23505') {
                 const existing = await getMyJoinApplication(clubId, userId);
@@ -99,4 +99,33 @@ export async function updateMemberStatus(clubId: string, userId: string, status:
     const { data, error } = await supabase.from('club_members').update({ status }).eq('club_id', clubId).eq('user_id', userId).select(CLUB_MEMBER_SELECT).single();
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to update this member status right now.'));
     return data as ClubMember;
+}
+
+export async function getClubMemberActions(clubId: string, userId?: string | null): Promise<ClubMemberAction[]> {
+    let query = supabase
+        .from('club_member_actions')
+        .select('id, club_id, user_id, action_type, reason, duration_hours, expires_at, performed_by, created_at')
+        .eq('club_id', clubId)
+        .order('created_at', { ascending: false });
+
+    if (userId) query = query.eq('user_id', userId);
+
+    const { data, error } = await query;
+    if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to load moderation history right now.'));
+    return (data ?? []) as ClubMemberAction[];
+}
+
+export async function createClubMemberAction(input: CreateClubMemberActionInput): Promise<ClubMemberAction> {
+    const reason = input.reason.trim();
+    if (!reason) throw new Error('A moderation reason is required.');
+
+    const { data, error } = await supabase.rpc('issue_club_member_action', {
+        p_club_id: input.clubId,
+        p_user_id: input.userId,
+        p_action_type: input.actionType,
+        p_reason: reason,
+        p_duration_hours: input.durationHours ?? null,
+    });
+    if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to apply this moderation action right now.'));
+    return data as ClubMemberAction;
 }

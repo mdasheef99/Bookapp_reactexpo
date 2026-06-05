@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,7 +35,9 @@ const VOTING_DEADLINE_PRESETS = [
 function isTooManyRequestsError(error: unknown): boolean {
     if (error && typeof error === 'object') {
         const e = error as Record<string, unknown>;
-        if (e.status === 429 || e.response?.status === 429) return true;
+        const response = e.response;
+        const responseStatus = response && typeof response === 'object' ? (response as { status?: unknown }).status : undefined;
+        if (e.status === 429 || responseStatus === 429) return true;
         const message = String(e.message ?? e.error ?? error);
         if (message.includes('429') || message.toLowerCase().includes('too many requests')) return true;
     }
@@ -59,6 +61,9 @@ export default function ClubNominateBookScreen() {
     const [feedback, setFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
     const [fromCache, setFromCache] = useState(false);
     const [votingDays, setVotingDays] = useState(7);
+    const [manualTitle, setManualTitle] = useState('');
+    const [manualAuthor, setManualAuthor] = useState('');
+    const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const canNominate = membership?.status === 'active';
 
@@ -71,6 +76,10 @@ export default function ClubNominateBookScreen() {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [debouncedQuery]);
+
+    useEffect(() => () => {
+        if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current);
+    }, []);
 
     const handleSearch = async (searchQuery?: string) => {
         const trimmed = (searchQuery ?? query).trim();
@@ -114,7 +123,42 @@ export default function ClubNominateBookScreen() {
             });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setFeedback({ type: 'success', message: `Your nomination was submitted successfully! Voting closes in ${votingDays} days.` });
-            setTimeout(() => {
+            redirectTimeoutRef.current = setTimeout(() => {
+                router.replace(`/clubs/${clubId}?tab=nominations`);
+            }, 1500);
+        } catch (error) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to nominate this book right now.') });
+        }
+    };
+
+    const handleManualNominate = async () => {
+        const title = manualTitle.trim();
+        const author = manualAuthor.trim();
+        if (!clubId || !title) {
+            setFeedback({ type: 'error', message: 'Enter a book title before submitting a manual nomination.' });
+            return;
+        }
+
+        const manualBook: GoogleBook = {
+            id: `manual:${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'book'}:${Date.now()}`,
+            volumeInfo: {
+                title,
+                authors: author ? [author] : undefined,
+            },
+            saleInfo: { saleability: 'NOT_FOR_SALE' },
+        };
+
+        try {
+            setFeedback(null);
+            await nominateMutation.mutateAsync({
+                clubId,
+                googleBook: manualBook,
+                votingEndsAt: getDefaultVotingEndsAt(votingDays),
+            });
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setFeedback({ type: 'success', message: `Your nomination was submitted successfully! Voting closes in ${votingDays} days.` });
+            redirectTimeoutRef.current = setTimeout(() => {
                 router.replace(`/clubs/${clubId}?tab=nominations`);
             }, 1500);
         } catch (error) {
@@ -147,7 +191,7 @@ export default function ClubNominateBookScreen() {
             {canNominate ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Search Google Books</Text>
                 <SearchBar query={query} onQueryChange={setQuery} onSubmit={handleSearch} onClear={() => { setQuery(''); setResults([]); setSearched(false); setSelectedBook(null); setFeedback(null); }} loading={isSearching} placeholder="Search by title or author" autoFocus={false} />
-                <TouchableOpacity onPress={handleSearch} disabled={isSearching} style={[styles.primaryActionButton, { backgroundColor: colors.accent, opacity: isSearching ? 0.65 : 1 }]} testID="club-nomination-search"><Text style={styles.primaryActionText}>{isSearching ? 'Searching…' : 'Search Google Books'}</Text></TouchableOpacity>
+                <TouchableOpacity onPress={() => handleSearch()} disabled={isSearching} style={[styles.primaryActionButton, { backgroundColor: colors.accent, opacity: isSearching ? 0.65 : 1 }]} testID="club-nomination-search"><Text style={styles.primaryActionText}>{isSearching ? 'Searching…' : 'Search Google Books'}</Text></TouchableOpacity>
                 {searched && !isSearching && results.length === 0 ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>No matches found</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Try another title, author, or broader search term.</Text></View> : null}
                 {results.map((book) => { const selected = selectedBook?.id === book.id; return <TouchableOpacity key={book.id} onPress={() => setSelectedBook(book)} style={[styles.resultCard, { backgroundColor: colors.bgPrimary, borderColor: selected ? colors.accent : colors.border }]} testID={`club-nomination-result-${book.id}`}> 
                     <Image source={{ uri: getBookCoverUrl(book) }} style={styles.resultCover} contentFit="cover" transition={200} />
@@ -158,6 +202,30 @@ export default function ClubNominateBookScreen() {
                         <Text style={[styles.resultMeta, { color: selected ? colors.accent : colors.textTertiary }]}>{selected ? 'Selected for nomination' : 'Tap to select this book'}</Text>
                     </View>
                 </TouchableOpacity>; })}
+            </View> : null}
+
+            {canNominate ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Manual nomination</Text>
+                <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Use this when search is rate-limited or the book is not listed.</Text>
+                <Text style={[styles.label, { color: colors.textPrimary, marginTop: 12 }]}>Title</Text>
+                <TextInput
+                    value={manualTitle}
+                    onChangeText={setManualTitle}
+                    placeholder="Book title"
+                    placeholderTextColor={colors.textTertiary}
+                    style={[styles.input, { borderColor: colors.border, color: colors.textPrimary }]}
+                    testID="club-nomination-manual-title"
+                />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Author</Text>
+                <TextInput
+                    value={manualAuthor}
+                    onChangeText={setManualAuthor}
+                    placeholder="Optional"
+                    placeholderTextColor={colors.textTertiary}
+                    style={[styles.input, { borderColor: colors.border, color: colors.textPrimary }]}
+                    testID="club-nomination-manual-author"
+                />
+                <TouchableOpacity onPress={handleManualNominate} disabled={nominateMutation.isPending} style={[styles.primaryActionButton, { backgroundColor: colors.accent, opacity: nominateMutation.isPending ? 0.65 : 1 }]} testID="club-submit-manual-nomination"><Text style={styles.primaryActionText}>{nominateMutation.isPending ? 'Submitting...' : 'Nominate manually'}</Text></TouchableOpacity>
             </View> : null}
 
             {canNominate && selectedBook ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
@@ -199,6 +267,7 @@ const styles = StyleSheet.create({
     noticeCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12 }, noticeTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6 }, noticeBody: { fontSize: 14, lineHeight: 20 },
     resultCard: { marginTop: 12, borderWidth: 1, borderRadius: 16, padding: 12, flexDirection: 'row', gap: 12 }, resultCover: { width: 72, height: 108, borderRadius: 12, backgroundColor: '#E2E8F0' }, resultBody: { flex: 1, gap: 4, justifyContent: 'center' }, resultTitle: { fontSize: 15, fontWeight: '700' }, resultMeta: { fontSize: 13, lineHeight: 18 }, selectedCard: { borderWidth: 1, borderRadius: 16, padding: 12, flexDirection: 'row', gap: 12 }, selectedCover: { width: 88, height: 132, borderRadius: 12, backgroundColor: '#E2E8F0' },
     label: { fontSize: 14, fontWeight: '700', marginBottom: 8 },
+    input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11, fontSize: 15, marginBottom: 10 },
     presetRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
     presetChip: { flex: 1, alignItems: 'center', borderWidth: 1, borderRadius: 12, paddingVertical: 10 },
     presetText: { fontSize: 13, fontWeight: '700' },

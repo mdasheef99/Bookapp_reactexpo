@@ -8,10 +8,12 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { type GoogleBook } from '@/features/books/services/booksService';
 import {
     useClubMembers,
+    useClubMemberActions,
     useClubJoinQuestions,
     useClubMembership,
     useClubBookNominations,
-    useClubPublicDetail,
+    useClubCurrentBookStatusOverview,
+    useClubManageDetail,
     useCreateClubJoinQuestion,
     useDeleteClubJoinQuestion,
     useFinalizeClubBookNomination,
@@ -21,14 +23,27 @@ import {
     useRemoveClubMember,
     useUpdateClubMemberRole,
     useUpdateClubMemberStatus,
+    useCreateClubMemberAction,
     useUpdateClubJoinQuestion,
     useClubApplications,
     useReviewClubApplication,
     useClubInvitations,
     useCreateClubInvitation,
+    useRevokeClubInvitation,
     useClubEvents,
     useCancelClubEvent,
     useDeleteClubEvent,
+    useArchiveClub,
+    useUnarchiveClub,
+    useTransferClubAdmin,
+    useClubAdminTransferRequests,
+    useRequestClubAdminTransfer,
+    useClubReadingSchedule,
+    useUpsertClubReadingSchedule,
+    useClubDiscussionReports,
+    useResolveClubDiscussionReport,
+    useClubComplaints,
+    useResolveClubComplaint,
 } from '@/features/clubs/hooks/useClubs';
 import {
     ManageTabBar,
@@ -41,6 +56,10 @@ import {
     ClubManageInvitationsSection,
     ClubManageAnalyticsSection,
     ClubManageEventsSection,
+    ClubManageLifecycleSection,
+    ClubManageReadingScheduleSection,
+    ClubManageDiscussionReportsSection,
+    ClubManagePlatformComplaintsSection,
 } from './manage';
 import {
     type FeedbackState,
@@ -49,39 +68,48 @@ import {
     formatAccessLevel,
     formatMeetingType,
 } from './manage';
-import type { ClubMemberWithProfile, ClubPublicDetails } from '@/features/clubs/services/clubsService';
+import type { ClubComplaintResolutionAction, ClubManageDetails, ClubMemberWithProfile, ClubReadingScheduleMilestone } from '@/features/clubs/services/clubsService';
 
 interface TabDef {
     key: string;
     label: string;
     adminOnly: boolean;
-    visibleWhen?: (club: ClubPublicDetails) => boolean;
+    visibleWhen?: (club: ClubManageDetails) => boolean;
 }
 
 const ALL_TABS: TabDef[] = [
     { key: 'current-book', label: 'Current Book', adminOnly: false },
+    { key: 'schedule', label: 'Schedule', adminOnly: true },
     { key: 'analytics', label: 'Analytics', adminOnly: true },
     { key: 'events', label: 'Events', adminOnly: true },
+    { key: 'reports', label: 'Reports', adminOnly: false },
     { key: 'applications', label: 'Applications', adminOnly: false, visibleWhen: (c) => c.club_type === 'approval' || c.club_type === 'author_club' },
     { key: 'invitations', label: 'Invitations', adminOnly: false, visibleWhen: (c) => c.club_type === 'invite_only' },
     { key: 'members', label: 'Members', adminOnly: true },
     { key: 'settings', label: 'Settings', adminOnly: true },
     { key: 'questions', label: 'Join Questions', adminOnly: true },
+    { key: 'lifecycle', label: 'Lifecycle', adminOnly: true },
 ];
 
 export default function ClubManageScreen() {
     const { clubId, tab } = useLocalSearchParams<{ clubId: string; tab?: string }>();
+    const routeTab = typeof tab === 'string'
+        ? tab
+        : typeof window !== 'undefined' && window.location
+        ? new URLSearchParams(window.location.search).get('tab')
+        : null;
     const { colors } = useTheme();
     const { user } = useAuth();
     const userId = user?.id ?? null;
 
-    const { data: club, isLoading, isError, refetch: refetchClub } = useClubPublicDetail(clubId ?? null);
+    const { data: club, isLoading, isError, refetch: refetchClub } = useClubManageDetail(clubId ?? null);
     const { data: membership, isLoading: isMembershipLoading } = useClubMembership(clubId ?? null, userId);
     const isAdmin = !!userId && !!club && (club.admin_id === userId || membership?.role === 'admin');
     const isActiveModerator = membership?.role === 'moderator' && membership?.status === 'active';
     const canManageCurrentBook = !!userId && !!club && (isAdmin || isActiveModerator);
 
-    const { data: members = [], isLoading: isMembersLoading, refetch: refetchMembers } = useClubMembers(clubId ?? null, isAdmin);
+    const { data: members = [], isLoading: isMembersLoading, refetch: refetchMembers } = useClubMembers(clubId ?? null, isAdmin || isActiveModerator);
+    const { data: memberActions = [], isLoading: isMemberActionsLoading, refetch: refetchMemberActions } = useClubMemberActions(clubId ?? null, null, isAdmin || isActiveModerator);
     const { data: questions = [], isLoading: isQuestionsLoading, refetch: refetchQuestions } = useClubJoinQuestions(clubId ?? null, isAdmin);
     const {
         data: nominations = [],
@@ -90,9 +118,24 @@ export default function ClubManageScreen() {
         error: nominationsError,
         refetch: refetchNominations,
     } = useClubBookNominations(clubId ?? null, userId, canManageCurrentBook);
+    const shouldLoadCurrentBookStatus = isAdmin && !!club?.current_book_id;
+    const {
+        data: currentBookStatus,
+        isLoading: isCurrentBookStatusLoading,
+        isError: isCurrentBookStatusError,
+        error: currentBookStatusError,
+    } = useClubCurrentBookStatusOverview(clubId ?? null, userId, shouldLoadCurrentBookStatus);
     const { data: applications = [], isLoading: isApplicationsLoading, refetch: refetchApplications } = useClubApplications(clubId ?? null, 'pending', isAdmin || isActiveModerator);
     const { data: invitations = [], isLoading: isInvitationsLoading, refetch: refetchInvitations } = useClubInvitations(clubId ?? null, isAdmin || isActiveModerator);
     const { data: events = [], isLoading: isEventsLoading } = useClubEvents(clubId ?? null, userId, isAdmin || isActiveModerator);
+    const { data: discussionReports = [], isLoading: isDiscussionReportsLoading, refetch: refetchDiscussionReports } = useClubDiscussionReports(clubId ?? null, 'open', isAdmin || isActiveModerator);
+    const { data: platformComplaints = [], isLoading: isPlatformComplaintsLoading, refetch: refetchPlatformComplaints } = useClubComplaints(clubId ?? null, ['pending', 'reviewing'], isAdmin || isActiveModerator);
+    const { data: adminTransferRequests = [], isLoading: isAdminTransferRequestsLoading, refetch: refetchAdminTransferRequests } = useClubAdminTransferRequests(clubId ?? null, isAdmin);
+    const {
+        data: readingSchedule,
+        isLoading: isReadingScheduleLoading,
+        refetch: refetchReadingSchedule,
+    } = useClubReadingSchedule(clubId ?? null, club?.current_book_id ?? null, userId, isAdmin && !!club?.current_book_id);
 
     const createQuestion = useCreateClubJoinQuestion();
     const updateQuestion = useUpdateClubJoinQuestion();
@@ -104,16 +147,26 @@ export default function ClubManageScreen() {
     const removeMember = useRemoveClubMember();
     const updateMemberRole = useUpdateClubMemberRole();
     const updateMemberStatus = useUpdateClubMemberStatus();
+    const createMemberAction = useCreateClubMemberAction();
     const reviewApplication = useReviewClubApplication();
     const createInvitation = useCreateClubInvitation();
+    const revokeInvitation = useRevokeClubInvitation();
     const cancelEvent = useCancelClubEvent();
     const deleteEvent = useDeleteClubEvent();
+    const archiveClub = useArchiveClub();
+    const unarchiveClub = useUnarchiveClub();
+    const transferClubAdmin = useTransferClubAdmin();
+    const requestClubAdminTransfer = useRequestClubAdminTransfer();
+    const upsertReadingSchedule = useUpsertClubReadingSchedule();
+    const resolveDiscussionReport = useResolveClubDiscussionReport();
+    const resolveClubComplaint = useResolveClubComplaint();
 
     const [settings, setSettings] = useState<SettingsDraft | null>(null);
     const [feedback, setFeedback] = useState<FeedbackState>(null);
-    const [activeTab, setActiveTab] = useState(tab === 'events' ? 'events' : 'current-book');
+    const initialRouteTab = routeTab && ALL_TABS.some((item) => item.key === routeTab) ? routeTab : 'current-book';
+    const [activeTab, setActiveTab] = useState(initialRouteTab);
     const [showOverride, setShowOverride] = useState(false);
-    const [appliedRouteTab, setAppliedRouteTab] = useState<string | null>(tab ?? null);
+    const [appliedRouteTab, setAppliedRouteTab] = useState<string | null>(null);
 
     useEffect(() => {
         if (club) setSettings(createSettingsDraft(club));
@@ -129,7 +182,7 @@ export default function ClubManageScreen() {
     }, [club, isAdmin]);
 
     useEffect(() => {
-        const requestedTab = typeof tab === 'string' ? tab : null;
+        const requestedTab = routeTab;
         if (requestedTab && requestedTab !== appliedRouteTab && visibleTabs.some((item) => item.key === requestedTab)) {
             setActiveTab(requestedTab);
             setAppliedRouteTab(requestedTab);
@@ -141,7 +194,7 @@ export default function ClubManageScreen() {
         if (!visibleTabs.some((item) => item.key === activeTab) && visibleTabs[0]) {
             setActiveTab(visibleTabs[0].key);
         }
-    }, [activeTab, appliedRouteTab, tab, visibleTabs]);
+    }, [activeTab, appliedRouteTab, routeTab, visibleTabs]);
 
     if (isLoading || isMembershipLoading || !settings) {
         return (
@@ -202,6 +255,12 @@ export default function ClubManageScreen() {
         if (!clubId || !member.user_id) throw new Error('Missing data');
         await updateMemberStatus.mutateAsync({ clubId, userId: member.user_id, status: nextStatus });
         await refetchMembers();
+    };
+
+    const handleCreateMemberAction = async (member: ClubMemberWithProfile, actionType: 'warned' | 'muted' | 'banned', reason: string, durationHours?: number | null) => {
+        if (!clubId || !member.user_id) throw new Error('Missing member context');
+        await createMemberAction.mutateAsync({ clubId, userId: member.user_id, actionType, reason, durationHours });
+        await Promise.all([refetchMembers(), refetchMemberActions()]);
     };
 
     const handleRemoveMember = async (member: ClubMemberWithProfile) => {
@@ -277,6 +336,12 @@ export default function ClubManageScreen() {
         await refetchInvitations();
     };
 
+    const handleRevokeInvite = async (invitationId: string) => {
+        if (!clubId) throw new Error('Missing clubId');
+        await revokeInvitation.mutateAsync({ clubId, invitationId });
+        await refetchInvitations();
+    };
+
     const handleCancelEvent = async (eventId: string) => {
         if (!clubId || !userId) throw new Error('Missing data');
         await cancelEvent.mutateAsync({ eventId, clubId, cancelledBy: userId });
@@ -285,6 +350,56 @@ export default function ClubManageScreen() {
     const handleDeleteEvent = async (eventId: string) => {
         if (!clubId) throw new Error('Missing clubId');
         await deleteEvent.mutateAsync({ eventId, clubId });
+    };
+
+    const handleArchiveClub = async () => {
+        if (!clubId) throw new Error('Missing clubId');
+        await archiveClub.mutateAsync({ clubId });
+        await refetchClub();
+    };
+
+    const handleUnarchiveClub = async () => {
+        if (!clubId) throw new Error('Missing clubId');
+        await unarchiveClub.mutateAsync({ clubId });
+        await refetchClub();
+    };
+
+    const handleRequestTransferAdmin = async (newAdminUserId: string) => {
+        if (!clubId) throw new Error('Missing clubId');
+        await requestClubAdminTransfer.mutateAsync({ clubId, newAdminUserId });
+        await refetchAdminTransferRequests();
+    };
+
+    const handleSaveReadingSchedule = async (milestones: ClubReadingScheduleMilestone[]) => {
+        if (!clubId || !club.current_book_id) throw new Error('Set a current book before creating a reading schedule.');
+        await upsertReadingSchedule.mutateAsync({ clubId, bookId: club.current_book_id, milestones, createdBy: userId });
+        await refetchReadingSchedule();
+    };
+
+    const handleResolveDiscussionReport = async (reportId: string) => {
+        if (!clubId) throw new Error('Missing clubId');
+        await resolveDiscussionReport.mutateAsync({ clubId, reportId });
+        await refetchDiscussionReports();
+    };
+
+    const handleResolvePlatformComplaint = async (complaintId: string, resolutionAction: ClubComplaintResolutionAction) => {
+        if (!clubId) throw new Error('Missing clubId');
+        if (resolutionAction !== 'no_action') {
+            const complaint = platformComplaints.find((item) => item.id === complaintId);
+            if (!complaint?.reported_user_id) throw new Error('This complaint is missing a reported member.');
+            const member = members.find((item) => item.user_id === complaint.reported_user_id);
+            if (!member?.user_id) throw new Error('Reported member is not available in the current member list.');
+            const reason = complaint.description?.trim() || `Platform complaint: ${complaint.reason}`;
+            await createMemberAction.mutateAsync({
+                clubId,
+                userId: member.user_id,
+                actionType: resolutionAction,
+                reason,
+                durationHours: resolutionAction === 'muted' ? 24 : null,
+            });
+        }
+        await resolveClubComplaint.mutateAsync({ clubId, complaintId, status: 'resolved', resolutionAction });
+        await Promise.all([refetchPlatformComplaints(), refetchMembers(), refetchMemberActions()]);
     };
 
     const handleCreateEvent = () => {
@@ -356,12 +471,25 @@ export default function ClubManageScreen() {
                 />
             )}
 
+            {activeTab === 'schedule' && (
+                <ClubManageReadingScheduleSection
+                    bookId={club.current_book_id}
+                    schedule={readingSchedule}
+                    isLoading={isReadingScheduleLoading}
+                    isSaving={upsertReadingSchedule.isPending}
+                    onSave={handleSaveReadingSchedule}
+                    onFeedback={onFeedback}
+                />
+            )}
+
             {activeTab === 'invitations' && (
                 <ClubManageInvitationsSection
                     invitations={invitations}
                     isLoading={isInvitationsLoading}
                     isCreating={createInvitation.isPending}
+                    isRevoking={revokeInvitation.isPending}
                     onCreate={handleCreateInvite}
+                    onRevoke={handleRevokeInvite}
                     onFeedback={onFeedback}
                 />
             )}
@@ -370,9 +498,12 @@ export default function ClubManageScreen() {
                 <ClubManageMembersSection
                     club={club}
                     members={members}
+                    actions={memberActions}
                     isLoading={isMembersLoading}
+                    isActionsLoading={isMemberActionsLoading}
                     onToggleRole={handleToggleRole}
                     onToggleMute={handleToggleMute}
+                    onCreateAction={handleCreateMemberAction}
                     onRemove={handleRemoveMember}
                     onFeedback={onFeedback}
                 />
@@ -385,7 +516,10 @@ export default function ClubManageScreen() {
                     moderatorsCount={moderatorsCount}
                     nominations={nominations}
                     events={events}
-                    isLoading={isMembersLoading || isNominationsLoading || isEventsLoading}
+                    currentBookStatus={currentBookStatus ?? null}
+                    isCurrentBookStatusError={isCurrentBookStatusError}
+                    currentBookStatusError={currentBookStatusError}
+                    isLoading={isMembersLoading || isNominationsLoading || isEventsLoading || isCurrentBookStatusLoading}
                 />
             )}
 
@@ -401,6 +535,25 @@ export default function ClubManageScreen() {
                     onDelete={handleDeleteEvent}
                     onFeedback={onFeedback}
                 />
+            )}
+
+            {activeTab === 'reports' && (
+                <>
+                    <ClubManageDiscussionReportsSection
+                        reports={discussionReports}
+                        isLoading={isDiscussionReportsLoading}
+                        isResolving={resolveDiscussionReport.isPending}
+                        onResolve={handleResolveDiscussionReport}
+                        onFeedback={onFeedback}
+                    />
+                    <ClubManagePlatformComplaintsSection
+                        complaints={platformComplaints}
+                        isLoading={isPlatformComplaintsLoading}
+                        isResolving={resolveClubComplaint.isPending}
+                        onResolve={handleResolvePlatformComplaint}
+                        onFeedback={onFeedback}
+                    />
+                </>
             )}
 
             {activeTab === 'settings' && (
@@ -422,6 +575,23 @@ export default function ClubManageScreen() {
                     onCreate={handleCreateQuestion}
                     onUpdate={handleUpdateQuestion}
                     onDelete={handleDeleteQuestion}
+                    onFeedback={onFeedback}
+                />
+            )}
+
+            {activeTab === 'lifecycle' && (
+                <ClubManageLifecycleSection
+                    club={club}
+                    members={members}
+                    isLoading={isMembersLoading}
+                    requests={adminTransferRequests}
+                    isRequestsLoading={isAdminTransferRequestsLoading}
+                    isArchiving={archiveClub.isPending}
+                    isUnarchiving={unarchiveClub.isPending}
+                    isTransferring={requestClubAdminTransfer.isPending || transferClubAdmin.isPending}
+                    onArchive={handleArchiveClub}
+                    onUnarchive={handleUnarchiveClub}
+                    onTransferAdmin={handleRequestTransferAdmin}
                     onFeedback={onFeedback}
                 />
             )}

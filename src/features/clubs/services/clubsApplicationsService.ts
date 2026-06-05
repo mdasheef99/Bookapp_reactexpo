@@ -1,16 +1,16 @@
 import { supabase } from '@/lib/supabase';
 import { getClubsEntitlementErrorMessage } from './clubsEntitlement';
-import { mapApplicationsWithProfiles, normalizeOptionalText } from './clubsService.shared';
+import { CLUB_JOIN_APPLICATION_SELECT, mapApplicationsWithProfiles, normalizeOptionalText } from './clubsService.shared';
 import type { ClubJoinApplication, ClubJoinApplicationStatus, ClubJoinApplicationWithProfile, ReviewApplicationDecision } from './clubsService.types';
 
 export async function getMyJoinApplication(clubId: string, userId: string): Promise<ClubJoinApplication | null> {
-    const { data, error } = await supabase.from('club_join_applications').select('*').eq('club_id', clubId).eq('user_id', userId).maybeSingle();
+    const { data, error } = await supabase.from('club_join_applications').select(CLUB_JOIN_APPLICATION_SELECT).eq('club_id', clubId).eq('user_id', userId).maybeSingle();
     if (error) throw error;
     return data as ClubJoinApplication | null;
 }
 
 export async function getClubApplications(clubId: string, status: ClubJoinApplicationStatus = 'pending'): Promise<ClubJoinApplicationWithProfile[]> {
-    const { data, error } = await supabase.from('club_join_applications').select('*').eq('club_id', clubId).eq('status', status).order('created_at', { ascending: true });
+    const { data, error } = await supabase.from('club_join_applications').select(CLUB_JOIN_APPLICATION_SELECT).eq('club_id', clubId).eq('status', status).order('created_at', { ascending: true });
     if (error) throw error;
     return mapApplicationsWithProfiles((data ?? []) as ClubJoinApplication[]);
 }

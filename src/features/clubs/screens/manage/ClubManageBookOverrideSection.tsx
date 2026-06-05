@@ -35,8 +35,9 @@ export function ClubManageBookOverrideSection({ clubId, onOverride, onClose, onF
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [debouncedQuery]);
 
-    const handleSearch = async (searchQuery?: string) => {
-        const trimmed = (searchQuery ?? query).trim();
+    const handleSearch = async (searchQuery?: string | unknown) => {
+        const normalizedQuery = typeof searchQuery === 'string' ? searchQuery : query;
+        const trimmed = normalizedQuery.trim();
         if (trimmed.length < 3) {
             setOverrideFeedback({ type: 'error', message: 'Enter at least 3 characters to search Google Books.' });
             return;
@@ -63,12 +64,12 @@ export function ClubManageBookOverrideSection({ clubId, onOverride, onClose, onF
 
     const confirmOverride = (book: GoogleBook) => {
         Alert.alert(
-            'Set current book',
-            `Set "${book.volumeInfo.title || 'Untitled'}" as the current club read? This bypasses nominations and voting.`,
+            'Admin override',
+            `Apply an admin override for "${book.volumeInfo.title || 'Untitled'}"? This bypasses the normal nomination and voting path.`,
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
-                    text: 'Set current book',
+                    text: 'Apply override',
                     style: 'default',
                     onPress: async () => {
                         try {
@@ -92,8 +93,8 @@ export function ClubManageBookOverrideSection({ clubId, onOverride, onClose, onF
 
     return (
         <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Manual override</Text>
-            <Text style={[styles.sectionDesc, { color: colors.textSecondary }]}>Search Google Books and set a book directly.</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Admin override</Text>
+            <Text style={[styles.sectionDesc, { color: colors.textSecondary }]}>Search Google Books and set a book directly when the club needs to bypass the normal nomination flow.</Text>
 
             <TextInput
                 testID="manage-override-search"
@@ -104,7 +105,9 @@ export function ClubManageBookOverrideSection({ clubId, onOverride, onClose, onF
                 style={[styles.textInput, { borderColor: colors.border, color: colors.textPrimary }]}
             />
             <TouchableOpacity
-                onPress={handleSearch}
+                onPress={() => {
+                    void handleSearch();
+                }}
                 disabled={searching || !query.trim()}
                 style={[styles.searchButton, { backgroundColor: colors.accent, opacity: searching || !query.trim() ? 0.5 : 1 }]}>
                 <Text style={styles.searchButtonText}>{searching ? 'Searching…' : 'Search'}</Text>
@@ -150,7 +153,7 @@ export function ClubManageBookOverrideSection({ clubId, onOverride, onClose, onF
                     testID="manage-override-set"
                     onPress={() => confirmOverride(selected)}
                     style={[styles.overrideButton, { backgroundColor: colors.accent }]}>
-                    <Text style={styles.overrideButtonText}>Set as current book</Text>
+                    <Text style={styles.overrideButtonText}>Apply admin override</Text>
                 </TouchableOpacity>
             )}
 

@@ -7,8 +7,12 @@ import type {
     ClubBookVote,
     ClubCurrentBookReadingStatus,
     ClubCurrentBookStatusOverview,
+    ClubMemberReadingProgress,
     ClubNominationBookSummary,
+    ClubReadingSchedule,
+    ClubReadingScheduleMilestone,
     NominateClubBookInput,
+    UpsertClubReadingScheduleInput,
 } from './clubsService.types';
 
 const CLUB_BOOK_NOMINATION_SELECT = `
@@ -34,10 +38,21 @@ const CLUB_BOOK_NOMINATION_SELECT = `
     )
 `;
 
+type RelatedOne<T> = T | T[] | null;
+
 type ClubBookNominationRow = ClubBookNomination & {
-    book: ClubNominationBookSummary | null;
+    book: RelatedOne<ClubNominationBookSummary>;
     votes?: ClubBookVote[] | null;
 };
+
+type ClubReadingScheduleRow = Omit<ClubReadingSchedule, 'milestones' | 'currentUserProgress'> & {
+    milestones: unknown;
+};
+
+function normalizeRelatedOne<T>(value: RelatedOne<T> | undefined): T | null {
+    if (Array.isArray(value)) return value[0] ?? null;
+    return value ?? null;
+}
 
 function getGoogleBookCoverUrl(input: NominateClubBookInput): string | null {
     return input.googleBook?.volumeInfo.imageLinks?.thumbnail
@@ -55,7 +70,7 @@ export async function getClubBookNominations(clubId: string, userId?: string | n
 
     if (error) throw error;
 
-    const nominations = (data ?? []) as ClubBookNominationRow[];
+    const nominations = (data ?? []) as unknown as ClubBookNominationRow[];
     const nominatorIds = nominations
         .map((nomination) => nomination.nominated_by)
         .filter((value): value is string => Boolean(value));
@@ -71,7 +86,7 @@ export async function getClubBookNominations(clubId: string, userId?: string | n
         status: nomination.status,
         voting_ends_at: nomination.voting_ends_at,
         created_at: nomination.created_at,
-        book: nomination.book ?? null,
+        book: normalizeRelatedOne(nomination.book),
         nominatorProfile: nomination.nominated_by ? profileByUserId.get(nomination.nominated_by) ?? null : null,
         currentUserVote: userId ? nomination.votes?.find((vote) => vote.user_id === userId) ?? null : null,
     }));
@@ -125,6 +140,34 @@ export async function finalizeClubBookNomination(nominationId: string): Promise<
     return result as Club;
 }
 
+function normalizeMilestones(value: unknown): ClubReadingScheduleMilestone[] {
+    if (!Array.isArray(value)) return [];
+    return value
+        .map((item, index) => {
+            if (!item || typeof item !== 'object') return null;
+            const record = item as Record<string, unknown>;
+            const label = typeof record.label === 'string' ? record.label.trim() : '';
+            const target = typeof record.target === 'string' ? record.target.trim() : '';
+            const dueDate = typeof record.dueDate === 'string' && record.dueDate.trim() ? record.dueDate.trim() : null;
+            if (!label && !target) return null;
+            return {
+                id: typeof record.id === 'string' && record.id.trim() ? record.id.trim() : `milestone-${index + 1}`,
+                label: label || `Milestone ${index + 1}`,
+                target,
+                dueDate,
+            };
+        })
+        .filter((item): item is ClubReadingScheduleMilestone => Boolean(item));
+}
+
+function normalizeSchedule(row: ClubReadingScheduleRow, progress: ClubMemberReadingProgress | null = null): ClubReadingSchedule {
+    return {
+        ...row,
+        milestones: normalizeMilestones(row.milestones),
+        currentUserProgress: progress,
+    };
+}
+
 export async function setClubCurrentBookFromNomination(nominationId: string): Promise<Club> {
     const { data, error } = await supabase.rpc('set_club_current_book_from_nomination', { p_nomination_id: nominationId });
     if (error) throw error;
@@ -152,4 +195,78 @@ export async function setClubCurrentBookReadingStatus(clubId: string, status: Cl
 
     const overview = Array.isArray(data) ? data[0] : data;
     return overview as ClubCurrentBookStatusOverview;
+}
+
+export async function getClubReadingSchedule(clubId: string, bookId: string | null, userId?: string | null): Promise<ClubReadingSchedule | null> {
+    if (!bookId) return null;
+    const { data, error } = await supabase
+        .from('reading_schedules')
+        .select('id, club_id, book_id, milestones, created_by, created_at')
+        .eq('club_id', clubId)
+        .eq('book_id', bookId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    let progress: ClubMemberReadingProgress | null = null;
+    if (userId) {
+        const { data: progressData, error: progressError } = await supabase
+            .from('member_reading_progress')
+            .select('id, schedule_id, user_id, chapters_completed, last_updated')
+            .eq('schedule_id', (data as ClubReadingScheduleRow).id)
+            .eq('user_id', userId)
+            .maybeSingle();
+        if (progressError) throw progressError;
+        progress = progressData as ClubMemberReadingProgress | null;
+    }
+
+    return normalizeSchedule(data as ClubReadingScheduleRow, progress);
+}
+
+export async function upsertClubReadingSchedule(input: UpsertClubReadingScheduleInput): Promise<ClubReadingSchedule> {
+    const normalizedMilestones = normalizeMilestones(input.milestones);
+    if (normalizedMilestones.length === 0) throw new Error('Add at least one reading milestone.');
+
+    const { data: existing, error: existingError } = await supabase
+        .from('reading_schedules')
+        .select('id')
+        .eq('club_id', input.clubId)
+        .eq('book_id', input.bookId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+    if (existingError) throw existingError;
+
+    const payload = {
+        club_id: input.clubId,
+        book_id: input.bookId,
+        milestones: normalizedMilestones,
+    };
+
+    const query = existing?.id
+        ? supabase.from('reading_schedules').update(payload).eq('id', existing.id)
+        : supabase.from('reading_schedules').insert({ ...payload, created_by: input.createdBy ?? null });
+
+    const { data, error } = await query.select('id, club_id, book_id, milestones, created_by, created_at').single();
+    if (error) throw error;
+    return normalizeSchedule(data as ClubReadingScheduleRow);
+}
+
+export async function updateClubReadingProgress(scheduleId: string, userId: string, chaptersCompleted: number): Promise<ClubMemberReadingProgress> {
+    const sanitizedCount = Math.max(0, Math.trunc(chaptersCompleted));
+    const { data, error } = await supabase
+        .from('member_reading_progress')
+        .upsert({
+            schedule_id: scheduleId,
+            user_id: userId,
+            chapters_completed: sanitizedCount,
+            last_updated: new Date().toISOString(),
+        }, { onConflict: 'schedule_id,user_id' })
+        .select('id, schedule_id, user_id, chapters_completed, last_updated')
+        .single();
+    if (error) throw error;
+    return data as ClubMemberReadingProgress;
 }
