@@ -27,6 +27,44 @@ function expectExplicitSelect(builder: any, expectedColumn: string) {
 beforeEach(() => { jest.clearAllMocks(); });
 
 describe('clubsService', () => {
+    it('links an approved venue to a club', async () => {
+        const insertBuilder = mockQuery({ data: { club_id: 'club-1', venue_id: 'venue-1', is_primary: false }, error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(insertBuilder);
+
+        const result = await clubsService.addClubVenueLink('club-1', 'venue-1');
+
+        expect(supabase.from).toHaveBeenCalledWith('club_venues');
+        expect(insertBuilder.insert).toHaveBeenCalledWith({ club_id: 'club-1', venue_id: 'venue-1', is_primary: false });
+        expect(result.venue_id).toBe('venue-1');
+    });
+
+    it('removes a venue link from a club', async () => {
+        const deleteBuilder = mockQuery({ data: null, error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(deleteBuilder);
+
+        await clubsService.removeClubVenueLink('club-1', 'venue-1');
+
+        expect(supabase.from).toHaveBeenCalledWith('club_venues');
+        expect(deleteBuilder.delete).toHaveBeenCalled();
+        expect(deleteBuilder.eq).toHaveBeenCalledWith('club_id', 'club-1');
+        expect(deleteBuilder.eq).toHaveBeenCalledWith('venue_id', 'venue-1');
+    });
+
+    it('marks one linked venue as primary for a club', async () => {
+        const clearBuilder = mockQuery({ data: null, error: null });
+        const primaryBuilder = mockQuery({ data: { club_id: 'club-1', venue_id: 'venue-1', is_primary: true }, error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(clearBuilder).mockReturnValueOnce(primaryBuilder);
+
+        const result = await clubsService.setPrimaryClubVenue('club-1', 'venue-1');
+
+        expect(clearBuilder.update).toHaveBeenCalledWith({ is_primary: false });
+        expect(clearBuilder.eq).toHaveBeenCalledWith('club_id', 'club-1');
+        expect(primaryBuilder.update).toHaveBeenCalledWith({ is_primary: true });
+        expect(primaryBuilder.eq).toHaveBeenCalledWith('club_id', 'club-1');
+        expect(primaryBuilder.eq).toHaveBeenCalledWith('venue_id', 'venue-1');
+        expect(result.is_primary).toBe(true);
+    });
+
     it('includes reply-level votes and reactions when reading discussion topics', async () => {
         const topicsBuilder = mockQuery({
             data: [{

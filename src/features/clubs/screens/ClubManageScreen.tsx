@@ -31,6 +31,10 @@ import {
     useCreateClubInvitation,
     useRevokeClubInvitation,
     useClubEvents,
+    useClubEventVenues,
+    useAddClubVenueLink,
+    useRemoveClubVenueLink,
+    useSetPrimaryClubVenue,
     useCancelClubEvent,
     useDeleteClubEvent,
     useArchiveClub,
@@ -56,6 +60,7 @@ import {
     ClubManageInvitationsSection,
     ClubManageAnalyticsSection,
     ClubManageEventsSection,
+    ClubManageVenuesSection,
     ClubManageLifecycleSection,
     ClubManageReadingScheduleSection,
     ClubManageDiscussionReportsSection,
@@ -82,6 +87,7 @@ const ALL_TABS: TabDef[] = [
     { key: 'schedule', label: 'Schedule', adminOnly: true },
     { key: 'analytics', label: 'Analytics', adminOnly: true },
     { key: 'events', label: 'Events', adminOnly: true },
+    { key: 'venues', label: 'Venues', adminOnly: true },
     { key: 'reports', label: 'Reports', adminOnly: false },
     { key: 'applications', label: 'Applications', adminOnly: false, visibleWhen: (c) => c.club_type === 'approval' || c.club_type === 'author_club' },
     { key: 'invitations', label: 'Invitations', adminOnly: false, visibleWhen: (c) => c.club_type === 'invite_only' },
@@ -128,6 +134,7 @@ export default function ClubManageScreen() {
     const { data: applications = [], isLoading: isApplicationsLoading, refetch: refetchApplications } = useClubApplications(clubId ?? null, 'pending', isAdmin || isActiveModerator);
     const { data: invitations = [], isLoading: isInvitationsLoading, refetch: refetchInvitations } = useClubInvitations(clubId ?? null, isAdmin || isActiveModerator);
     const { data: events = [], isLoading: isEventsLoading } = useClubEvents(clubId ?? null, userId, isAdmin || isActiveModerator);
+    const { data: linkedVenues = [], isLoading: isLinkedVenuesLoading, refetch: refetchLinkedVenues } = useClubEventVenues(clubId ?? null, isAdmin);
     const { data: discussionReports = [], isLoading: isDiscussionReportsLoading, refetch: refetchDiscussionReports } = useClubDiscussionReports(clubId ?? null, 'open', isAdmin || isActiveModerator);
     const { data: platformComplaints = [], isLoading: isPlatformComplaintsLoading, refetch: refetchPlatformComplaints } = useClubComplaints(clubId ?? null, ['pending', 'reviewing'], isAdmin || isActiveModerator);
     const { data: adminTransferRequests = [], isLoading: isAdminTransferRequestsLoading, refetch: refetchAdminTransferRequests } = useClubAdminTransferRequests(clubId ?? null, isAdmin);
@@ -151,6 +158,9 @@ export default function ClubManageScreen() {
     const reviewApplication = useReviewClubApplication();
     const createInvitation = useCreateClubInvitation();
     const revokeInvitation = useRevokeClubInvitation();
+    const addClubVenueLink = useAddClubVenueLink();
+    const removeClubVenueLink = useRemoveClubVenueLink();
+    const setPrimaryClubVenue = useSetPrimaryClubVenue();
     const cancelEvent = useCancelClubEvent();
     const deleteEvent = useDeleteClubEvent();
     const archiveClub = useArchiveClub();
@@ -410,6 +420,34 @@ export default function ClubManageScreen() {
         router.push(`/clubs/${clubId}/events/${eventId}/edit?returnTo=manage&manageTab=events`);
     };
 
+    const handleAddVenue = () => {
+        router.push(`/clubs/${clubId}/venues?returnTo=manage-venues`);
+    };
+
+    const handleRemoveVenue = async (venueId: string) => {
+        if (!clubId) throw new Error('Missing clubId');
+        try {
+            onFeedback(null);
+            await removeClubVenueLink.mutateAsync({ clubId, venueId });
+            await refetchLinkedVenues();
+            onFeedback({ type: 'success', message: 'Venue unlinked.' });
+        } catch (error) {
+            onFeedback({ type: 'error', message: error instanceof Error ? error.message : 'Unable to unlink this venue right now.' });
+        }
+    };
+
+    const handleSetPrimaryVenue = async (venueId: string) => {
+        if (!clubId) throw new Error('Missing clubId');
+        try {
+            onFeedback(null);
+            await setPrimaryClubVenue.mutateAsync({ clubId, venueId });
+            await refetchLinkedVenues();
+            onFeedback({ type: 'success', message: 'Primary venue updated.' });
+        } catch (error) {
+            onFeedback({ type: 'error', message: error instanceof Error ? error.message : 'Unable to update the primary venue right now.' });
+        }
+    };
+
     const moderatorsCount = members.filter((m) => m.role === 'moderator').length;
 
     return (
@@ -534,6 +572,18 @@ export default function ClubManageScreen() {
                     onCancel={handleCancelEvent}
                     onDelete={handleDeleteEvent}
                     onFeedback={onFeedback}
+                />
+            )}
+
+            {activeTab === 'venues' && (
+                <ClubManageVenuesSection
+                    venues={linkedVenues}
+                    isLoading={isLinkedVenuesLoading}
+                    isSaving={addClubVenueLink.isPending || removeClubVenueLink.isPending || setPrimaryClubVenue.isPending}
+                    colors={colors}
+                    onAddVenue={handleAddVenue}
+                    onRemoveVenue={handleRemoveVenue}
+                    onSetPrimaryVenue={handleSetPrimaryVenue}
                 />
             )}
 

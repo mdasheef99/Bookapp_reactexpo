@@ -1102,7 +1102,7 @@ git commit -m "feat: add venue detail routes"
 - Test: `src/features/clubs/services/__tests__/clubsService.test.ts`
 - Test: `src/features/clubs/screens/__tests__/ClubManageScreen.test.tsx`
 
-- [ ] **Step 1: Add failing service tests for club venue mutations**
+- [x] **Step 1: Add failing service tests for club venue mutations**
 
 Add to `src/features/clubs/services/__tests__/clubsService.test.ts`:
 
@@ -1146,7 +1146,7 @@ it('marks one linked venue as primary for a club', async () => {
 });
 ```
 
-- [ ] **Step 2: Run service tests and verify RED**
+- [x] **Step 2: Run service tests and verify RED**
 
 Run:
 
@@ -1156,7 +1156,7 @@ npm.cmd test -- --runInBand src/features/clubs/services/__tests__/clubsService.t
 
 Expected: fail because mutation methods do not exist.
 
-- [ ] **Step 3: Add club venue mutation methods**
+- [x] **Step 3: Add club venue mutation methods**
 
 In `src/features/clubs/services/clubsEventsService.ts`, add:
 
@@ -1207,7 +1207,7 @@ export async function setPrimaryClubVenue(clubId: string, venueId: string): Prom
 
 Export these through `src/features/clubs/services/clubsService.ts` following the existing aggregate pattern.
 
-- [ ] **Step 4: Add hooks and invalidation**
+- [x] **Step 4: Add hooks and invalidation**
 
 In `src/features/clubs/hooks/useClubs.ts`, import the new input types only if needed and add:
 
@@ -1243,7 +1243,7 @@ export function useSetPrimaryClubVenue() {
 }
 ```
 
-- [ ] **Step 5: Run service tests and verify GREEN**
+- [x] **Step 5: Run service tests and verify GREEN**
 
 Run:
 
@@ -1253,7 +1253,7 @@ npm.cmd test -- --runInBand src/features/clubs/services/__tests__/clubsService.t
 
 Expected: pass.
 
-- [ ] **Step 6: Add failing Manage Club venue tab test**
+- [x] **Step 6: Add failing Manage Club venue tab test**
 
 Add to `src/features/clubs/screens/__tests__/ClubManageScreen.test.tsx` using existing mocks in that file:
 
@@ -1277,7 +1277,7 @@ it('shows a venue management tab for admins and can open venue linking', async (
 });
 ```
 
-- [ ] **Step 7: Run Manage test and verify RED**
+- [x] **Step 7: Run Manage test and verify RED**
 
 Run:
 
@@ -1287,7 +1287,7 @@ npm.cmd test -- --runInBand src/features/clubs/screens/__tests__/ClubManageScree
 
 Expected: fail because the Venues tab/section is not implemented.
 
-- [ ] **Step 8: Add Manage venues section**
+- [x] **Step 8: Add Manage venues section**
 
 Create `src/features/clubs/screens/manage/ClubManageVenuesSection.tsx`:
 
@@ -1374,7 +1374,7 @@ const styles = StyleSheet.create({
 
 Export it from `src/features/clubs/screens/manage/index.ts`.
 
-- [ ] **Step 9: Wire Manage Club screen**
+- [x] **Step 9: Wire Manage Club screen**
 
 Modify `src/features/clubs/screens/ClubManageScreen.tsx`:
 
@@ -1431,7 +1431,7 @@ const handleSetPrimaryVenue = async (venueId: string) => {
 )}
 ```
 
-- [ ] **Step 10: Run Manage test and verify GREEN**
+- [x] **Step 10: Run Manage test and verify GREEN**
 
 Run:
 
@@ -1441,7 +1441,7 @@ npm.cmd test -- --runInBand src/features/clubs/screens/__tests__/ClubManageScree
 
 Expected: pass.
 
-- [ ] **Step 11: Commit Task 4**
+- [x] **Step 11: Commit Task 4**
 
 Run:
 
