@@ -198,6 +198,22 @@ export default function ClubsBrowseScreen() {
                             </View>
                         ) : null}
 
+                        <TouchableOpacity
+                            activeOpacity={0.85}
+                            onPress={() => router.push('/(tabs)/clubs/venues')}
+                            style={[styles.venueDiscoveryCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
+                            testID="clubs-venues-discovery-link"
+                        >
+                            <View style={styles.venueDiscoveryIcon}>
+                                <Ionicons name="location-outline" size={18} color={colors.accent} />
+                            </View>
+                            <View style={styles.venueDiscoveryBody}>
+                                <Text style={[styles.venueDiscoveryTitle, { color: colors.textPrimary }]}>Find club venues</Text>
+                                <Text style={[styles.venueDiscoveryText, { color: colors.textSecondary }]}>Explore libraries, bookstores, cafes, and community spaces where clubs can meet.</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+                        </TouchableOpacity>
+
                         <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Browse</Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
                             {BROWSE_SCOPE_FILTERS.map(({ label, value }) => renderFilterChip({
@@ -331,6 +347,25 @@ const styles = StyleSheet.create({
         marginTop: 6,
     },
     authorSpotlightLinkText: { fontSize: 12, fontWeight: '800' },
+    venueDiscoveryCard: {
+        borderWidth: 1,
+        borderRadius: 16,
+        padding: 14,
+        marginBottom: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    venueDiscoveryIcon: {
+        width: 34,
+        height: 34,
+        borderRadius: 17,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    venueDiscoveryBody: { flex: 1, gap: 3 },
+    venueDiscoveryTitle: { fontSize: 15, fontWeight: '800' },
+    venueDiscoveryText: { fontSize: 13, lineHeight: 18 },
     inboxButton: {
         width: 44,
         height: 44,

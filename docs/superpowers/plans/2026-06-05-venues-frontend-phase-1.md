@@ -321,7 +321,7 @@ npm.cmd test -- --runInBand src/features/venues/services/__tests__/venuesService
 
 Expected: pass.
 
-- [ ] **Step 6: Commit Task 1**
+- [x] **Step 6: Commit Task 1**
 
 Run:
 
@@ -343,7 +343,7 @@ git commit -m "feat: add venue service"
 - Test: `src/features/venues/screens/__tests__/VenuesBrowseScreen.test.tsx`
 - Modify: `app/(tabs)/clubs/index.tsx`
 
-- [ ] **Step 1: Write failing browse screen tests**
+- [x] **Step 1: Write failing browse screen tests**
 
 Create `src/features/venues/screens/__tests__/VenuesBrowseScreen.test.tsx`:
 
@@ -432,7 +432,7 @@ describe('VenuesBrowseScreen', () => {
 });
 ```
 
-- [ ] **Step 2: Run browse tests and verify RED**
+- [x] **Step 2: Run browse tests and verify RED**
 
 Run:
 
@@ -442,7 +442,7 @@ npm.cmd test -- --runInBand src/features/venues/screens/__tests__/VenuesBrowseSc
 
 Expected: fail because `VenuesBrowseScreen` and hooks/components do not exist.
 
-- [ ] **Step 3: Add venue hooks**
+- [x] **Step 3: Add venue hooks**
 
 Create `src/features/venues/hooks/useVenues.ts`:
 
@@ -477,7 +477,7 @@ export function useVenueDetail(venueId: string | null) {
 }
 ```
 
-- [ ] **Step 4: Add venue display components**
+- [x] **Step 4: Add venue display components**
 
 Create `src/features/venues/components/VenueTypeBadge.tsx`:
 
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
 });
 ```
 
-- [ ] **Step 5: Add venue browse screen**
+- [x] **Step 5: Add venue browse screen**
 
 Create `src/features/venues/screens/VenuesBrowseScreen.tsx`:
 
@@ -713,7 +713,7 @@ const styles = StyleSheet.create({
 });
 ```
 
-- [ ] **Step 6: Run browse tests and verify GREEN**
+- [x] **Step 6: Run browse tests and verify GREEN**
 
 Run:
 
@@ -723,7 +723,7 @@ npm.cmd test -- --runInBand src/features/venues/screens/__tests__/VenuesBrowseSc
 
 Expected: pass.
 
-- [ ] **Step 7: Add Clubs browse entry test**
+- [x] **Step 7: Add Clubs browse entry test**
 
 Modify `app/(tabs)/clubs/__tests__/index.test.tsx` with:
 
@@ -737,7 +737,7 @@ it('opens venue discovery from the clubs browse screen', () => {
 });
 ```
 
-- [ ] **Step 8: Run Clubs browse test and verify RED**
+- [x] **Step 8: Run Clubs browse test and verify RED**
 
 Run:
 
@@ -747,7 +747,7 @@ npm.cmd test -- --runInBand app/(tabs)/clubs/__tests__/index.test.tsx
 
 Expected: fail because `clubs-venues-discovery-link` does not exist.
 
-- [ ] **Step 9: Add Clubs browse entry UI**
+- [x] **Step 9: Add Clubs browse entry UI**
 
 Modify `app/(tabs)/clubs/index.tsx` after the author spotlight block:
 
@@ -793,7 +793,7 @@ venueDiscoveryTitle: { fontSize: 15, fontWeight: '800' },
 venueDiscoveryText: { fontSize: 13, lineHeight: 18 },
 ```
 
-- [ ] **Step 10: Run Clubs browse test and verify GREEN**
+- [x] **Step 10: Run Clubs browse test and verify GREEN**
 
 Run:
 
@@ -803,7 +803,7 @@ npm.cmd test -- --runInBand app/(tabs)/clubs/__tests__/index.test.tsx
 
 Expected: pass.
 
-- [ ] **Step 11: Commit Task 2**
+- [x] **Step 11: Commit Task 2**
 
 Run:
 

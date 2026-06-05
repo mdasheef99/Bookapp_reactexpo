@@ -99,6 +99,14 @@ describe('ClubsBrowseScreen', () => {
         expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/authors');
     });
 
+    it('opens venue discovery from the clubs browse screen', () => {
+        const { getByTestId } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-venues-discovery-link'));
+
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/venues');
+    });
+
     it('switches to my clubs and shows the membership-scoped empty state or results', () => {
         const { getByText, getByTestId } = render(<ClubsBrowseScreen />);
 
