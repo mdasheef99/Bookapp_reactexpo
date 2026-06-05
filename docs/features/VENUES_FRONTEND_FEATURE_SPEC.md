@@ -437,7 +437,7 @@ Browser smoke should cover:
 | Maps | `react-native-maps` is not installed. | 1+ | Defer map until approved as separate dependency/workflow. |
 | Live data | Docs recorded `club_venues` link count as `0`. | 1 | Keep manual location fallback and support empty states. |
 | Owner management | Owner fields exist, but workflow policy is not defined. | 3 | Defer and document separately. |
-| Exchange pickup | Exchange has meetup type but no durable venue selection. | 2 | Defer schema/RPC decision. |
+| Exchange pickup | Exchange meetup requests need a durable venue handoff point. | 2 | Implemented with `transactions.pickup_venue_id` and approved exchange-partner venue validation in `request_transaction`. |
 
 ## Implementation Tracker
 
@@ -457,7 +457,7 @@ Browser smoke should cover:
 | Public related event query | Phase 1 | Needs Verification | Confirm RLS/view/RPC strategy before building public venue detail relationships. |
 | Geospatial radius search | Future | Deferred | PostGIS exists, but UX/RPC/location permission are not in Phase 1. |
 | Map view | Future | Deferred | Requires dependency and separate UX approval. |
-| Exchange pickup venue selection | Phase 2 | Deferred | Should reuse venue module and may require transaction schema/RPC changes. |
+| Exchange pickup venue selection | Phase 2 | Implemented | Listing detail now requires an approved exchange-partner pickup venue for meetup requests and transaction detail displays the selected venue. |
 | Venue owner registration/manage | Phase 3 | Deferred | Requires verification/admin policy. |
 
 ## Phase 1 Acceptance Criteria

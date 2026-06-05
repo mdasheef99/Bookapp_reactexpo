@@ -28,6 +28,7 @@ export interface VenueFilters {
     search?: string;
     city?: string;
     venueType?: string;
+    isExchangePartner?: boolean;
     limit?: number;
     offset?: number;
 }

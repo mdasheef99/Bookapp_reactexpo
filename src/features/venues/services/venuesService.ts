@@ -35,6 +35,7 @@ function normalizeVenueSearchTerm(search?: string) {
 function applyVenueFilters(query: any, filters: VenueFilters) {
     if (filters.city?.trim()) query = query.eq('city', filters.city.trim());
     if (filters.venueType?.trim()) query = query.eq('venue_type', filters.venueType.trim());
+    if (typeof filters.isExchangePartner === 'boolean') query = query.eq('is_exchange_partner', filters.isExchangePartner);
     const term = normalizeVenueSearchTerm(filters.search);
     if (term) {
         query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%,address_line1.ilike.%${term}%,address_line2.ilike.%${term}%,city.ilike.%${term}%`);

@@ -47,6 +47,19 @@ describe('venuesService', () => {
         expect(result[0].name).toBe('Central Library');
     });
 
+    it('can filter approved venues to exchange pickup partners', async () => {
+        const builder = mockQuery({
+            data: [{ id: 'venue-1', name: 'Chapter Cafe', city: 'Bengaluru', venue_type: 'cafe', verification_status: 'approved', is_exchange_partner: true }],
+            error: null,
+        });
+        (supabase.from as jest.Mock).mockReturnValueOnce(builder);
+
+        await venuesService.getApprovedVenues({ isExchangePartner: true });
+
+        expect(builder.eq).toHaveBeenCalledWith('verification_status', 'approved');
+        expect(builder.eq).toHaveBeenCalledWith('is_exchange_partner', true);
+    });
+
     it('sanitizes venue search terms before building the PostgREST or filter', async () => {
         const builder = mockQuery({ data: [], error: null });
         (supabase.from as jest.Mock).mockReturnValueOnce(builder);

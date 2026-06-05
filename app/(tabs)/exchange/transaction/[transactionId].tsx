@@ -344,6 +344,9 @@ export default function TransactionDetailScreen() {
     const ratingTargetName = isLender
         ? txn.borrower?.display_name ?? 'the borrower'
         : txn.lender?.display_name ?? 'the lender';
+    const pickupVenueAddress = txn.pickup_venue
+        ? [txn.pickup_venue.address_line1, txn.pickup_venue.address_line2, txn.pickup_venue.city].filter(Boolean).join(', ')
+        : '';
 
     function confirm(title: string, message: string, onConfirm: () => void) {
         Alert.alert(title, message, [
@@ -494,6 +497,20 @@ export default function TransactionDetailScreen() {
                 <ProfileCard label="Lender" profile={txn.lender} colors={colors} />
                 <ProfileCard label="Borrower" profile={txn.borrower} colors={colors} />
 
+                {txn.pickup_venue ? (
+                    <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                        <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>Pickup venue</Text>
+                        <Text style={[styles.pickupVenueName, { color: colors.textPrimary }]}>
+                            {txn.pickup_venue.name}
+                        </Text>
+                        {pickupVenueAddress ? (
+                            <Text style={[styles.messageText, { color: colors.textSecondary }]}>
+                                {pickupVenueAddress}
+                            </Text>
+                        ) : null}
+                    </View>
+                ) : null}
+
                 {txn.message ? (
                     <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                         <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>Message</Text>
@@ -616,6 +633,7 @@ const styles = StyleSheet.create({
     avatarPlaceholder: { alignItems: 'center', justifyContent: 'center' },
     profileName: { fontSize: 15, fontWeight: '600' },
     profileCity: { fontSize: 13, marginTop: 2 },
+    pickupVenueName: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
     messageText: { fontSize: 14, lineHeight: 20 },
     timeline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     timelineItem: { flexDirection: 'row', alignItems: 'center', flex: 1 },

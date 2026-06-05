@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { profileService, type UserProfileSummary } from '@/features/auth/services/profileService';
 import { captureAppException } from '@/lib/sentry';
+import type { Venue } from '@/features/venues/services/venuesService';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,6 +36,7 @@ export interface Transaction {
     is_signed_copy: boolean;
     tracking_url: string | null;
     delivery_service: string | null;
+    pickup_venue_id: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -59,6 +61,7 @@ export interface TransactionWithListing extends Transaction {
 export interface TransactionWithDetails extends Transaction {
     lender: UserProfileSummary | null;
     borrower: UserProfileSummary | null;
+    pickup_venue: Pick<Venue, 'id' | 'name' | 'venue_type' | 'address_line1' | 'address_line2' | 'city' | 'state' | 'pincode'> | null;
     listing: {
         id: string;
         photos: string[];
@@ -79,6 +82,7 @@ export interface RequestTransactionParams {
     deliveryType: DeliveryType;
     message?: string;
     shippingAddressId?: string;
+    pickupVenueId?: string;
 }
 
 export interface FileDisputeParams {
@@ -113,7 +117,7 @@ export const transactionsService = {
      * Validates listing is active, borrower has ≥1 credit, places hold, creates transaction.
      */
     async requestTransaction(params: RequestTransactionParams): Promise<Transaction> {
-        const { listingId, borrowerId, deliveryType, message, shippingAddressId } = params;
+        const { listingId, borrowerId, deliveryType, message, shippingAddressId, pickupVenueId } = params;
 
         try {
             const { data, error } = await supabase.rpc('request_transaction', {
@@ -122,6 +126,7 @@ export const transactionsService = {
                 p_delivery_type: deliveryType,
                 p_message: message ?? null,
                 p_shipping_address_id: shippingAddressId ?? null,
+                p_pickup_venue_id: pickupVenueId ?? null,
             });
 
             if (error) throw error;
@@ -132,6 +137,7 @@ export const transactionsService = {
                 delivery_type: deliveryType,
                 has_message: Boolean(message),
                 shipping_details_provided: Boolean(shippingAddressId),
+                pickup_venue_selected: Boolean(pickupVenueId),
             });
             throw error;
         }
@@ -287,6 +293,9 @@ export const transactionsService = {
                 listing:listings(
                     id, photos, condition, delivery_options,
                     book:books(id, title, authors, cover_url)
+                ),
+                pickup_venue:venues!transactions_pickup_venue_id_fkey(
+                    id, name, venue_type, address_line1, address_line2, city, state, pincode
                 )
             `)
             .or(`lender_id.eq.${userId},borrower_id.eq.${userId}`)
@@ -308,6 +317,9 @@ export const transactionsService = {
                 listing:listings(
                     id, photos, condition, delivery_options,
                     book:books(id, title, authors, cover_url)
+                ),
+                pickup_venue:venues!transactions_pickup_venue_id_fkey(
+                    id, name, venue_type, address_line1, address_line2, city, state, pincode
                 )
             `)
             .eq('id', transactionId)

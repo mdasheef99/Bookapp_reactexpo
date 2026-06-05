@@ -103,4 +103,26 @@ describe('transactionsService Sentry instrumentation', () => {
     });
     expect(result).toEqual(saved);
   });
+
+  it('passes a selected pickup venue through the request transaction RPC', async () => {
+    const saved = { id: 'txn-venue', pickup_venue_id: 'venue-1' };
+    (supabase.rpc as jest.Mock).mockResolvedValueOnce({ data: saved, error: null });
+
+    const result = await transactionsService.requestTransaction({
+      listingId: 'listing-1',
+      borrowerId: 'user-1',
+      deliveryType: 'meetup',
+      pickupVenueId: 'venue-1',
+    });
+
+    expect(supabase.rpc).toHaveBeenCalledWith('request_transaction', {
+      p_listing_id: 'listing-1',
+      p_borrower_id: 'user-1',
+      p_delivery_type: 'meetup',
+      p_message: null,
+      p_shipping_address_id: null,
+      p_pickup_venue_id: 'venue-1',
+    });
+    expect(result).toEqual(saved);
+  });
 });

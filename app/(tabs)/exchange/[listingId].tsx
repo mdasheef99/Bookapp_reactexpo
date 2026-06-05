@@ -14,6 +14,8 @@ import {
     getDefaultRequestDeliveryOption,
     isDeliveryOptionEnabled,
 } from '@/features/exchange/config/exchangeConfig';
+import { VenueCard } from '@/features/venues/components/VenueCard';
+import { useApprovedVenues } from '@/features/venues/hooks/useVenues';
 import { navigateBackOrFallback } from '@/lib/navigation';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -33,18 +35,28 @@ export default function ListingDetailScreen() {
     const currentUserId = session?.user?.id ?? null;
 
     const { data: listing, isLoading, isError } = useListingDetails(listingId ?? null);
+    const { data: pickupVenues = [], isLoading: isPickupVenuesLoading, isError: isPickupVenuesError } = useApprovedVenues({
+        city: listing?.city ?? undefined,
+        isExchangePartner: true,
+        limit: 20,
+        offset: 0,
+    });
     const requestMutation = useRequestTransaction();
 
     const [photoIndex, setPhotoIndex] = useState(0);
+    const [selectedPickupVenueId, setSelectedPickupVenueId] = useState<string | null>(null);
 
     const isOwner = currentUserId === listing?.owner_id;
     const isActive = listing?.status === 'active';
     const selectedDelivery = getDefaultRequestDeliveryOption(listing?.delivery_options ?? []);
     const requestDeliveryAvailable = selectedDelivery !== null;
+    const selectedPickupVenue = pickupVenues.find(venue => venue.id === selectedPickupVenueId) ?? null;
+    const pickupVenueRequired = selectedDelivery === 'meetup';
+    const pickupVenueReady = !pickupVenueRequired || Boolean(selectedPickupVenueId);
     const hasUnsupportedDeliveryOptions = (listing?.delivery_options ?? []).some(
         option => !isDeliveryOptionEnabled(option)
     );
-    const canRequest = !isOwner && isActive && requestDeliveryAvailable && !requestMutation.isPending;
+    const canRequest = !isOwner && isActive && requestDeliveryAvailable && pickupVenueReady && !requestMutation.isPending;
 
     const handleRequest = () => {
         if (!currentUserId || !listing || !selectedDelivery) return;
@@ -53,6 +65,7 @@ export default function ListingDetailScreen() {
                 listingId: listing.id,
                 borrowerId: currentUserId,
                 deliveryType: selectedDelivery,
+                pickupVenueId: selectedPickupVenueId ?? undefined,
             },
             {
                 onSuccess: (txn) => {
@@ -220,6 +233,47 @@ export default function ListingDetailScreen() {
                     )}
                 </View>
 
+                {requestDeliveryAvailable && selectedDelivery === 'meetup' ? (
+                    <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                        <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Pickup venue</Text>
+                        <Text style={[styles.hint, { color: colors.textTertiary }]}>
+                            Choose an approved pickup partner for this same-city meetup.
+                        </Text>
+                        {isPickupVenuesLoading ? (
+                            <ActivityIndicator color={colors.accent} style={styles.venueLoader} />
+                        ) : isPickupVenuesError ? (
+                            <Text style={[styles.hint, { color: colors.textSecondary }]}>
+                                Pickup venues could not be loaded. Please try again later.
+                            </Text>
+                        ) : pickupVenues.length === 0 ? (
+                            <Text style={[styles.hint, { color: colors.textSecondary }]}>
+                                No exchange pickup venues are available in this listing city yet.
+                            </Text>
+                        ) : (
+                            <View style={styles.venueList}>
+                                {pickupVenues.map(venue => (
+                                    <VenueCard
+                                        key={venue.id}
+                                        venue={venue}
+                                        colors={colors}
+                                        rightLabel={selectedPickupVenueId === venue.id ? 'Selected' : 'Choose'}
+                                        onPress={() => setSelectedPickupVenueId(venue.id)}
+                                    />
+                                ))}
+                            </View>
+                        )}
+                        {selectedPickupVenue ? (
+                            <Text style={[styles.hint, { color: colors.textSecondary }]}>
+                                Selected: {selectedPickupVenue.name}
+                            </Text>
+                        ) : (
+                            <Text style={[styles.hint, { color: colors.textSecondary }]}>
+                                Select a pickup venue before requesting this exchange.
+                            </Text>
+                        )}
+                    </View>
+                ) : null}
+
                 <View style={{ height: 100 }} />
             </ScrollView>
 
@@ -286,6 +340,8 @@ const styles = StyleSheet.create({
     chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5 },
     chipText: { fontSize: 14, fontWeight: '500' },
     hint: { fontSize: 12, marginTop: 8 },
+    venueLoader: { alignSelf: 'flex-start', marginTop: 12 },
+    venueList: { marginTop: 12 },
     cta: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, paddingBottom: 32, borderTopWidth: 1 },
     ctaBtn: { borderRadius: 14, paddingVertical: 15, alignItems: 'center' },
     ctaBtnText: { fontSize: 16, fontWeight: '700' },
