@@ -104,7 +104,7 @@ Modify:
 - Create: `src/features/venues/services/venuesService.ts`
 - Test: `src/features/venues/services/__tests__/venuesService.test.ts`
 
-- [ ] **Step 1: Write failing service tests**
+- [x] **Step 1: Write failing service tests**
 
 Create `src/features/venues/services/__tests__/venuesService.test.ts`:
 
@@ -185,7 +185,7 @@ describe('venuesService', () => {
 });
 ```
 
-- [ ] **Step 2: Run service tests and verify RED**
+- [x] **Step 2: Run service tests and verify RED**
 
 Run:
 
@@ -195,7 +195,7 @@ npm.cmd test -- --runInBand src/features/venues/services/__tests__/venuesService
 
 Expected: fail because `src/features/venues/services/venuesService.ts` does not exist.
 
-- [ ] **Step 3: Add venue types**
+- [x] **Step 3: Add venue types**
 
 Create `src/features/venues/services/venuesService.types.ts`:
 
@@ -235,7 +235,7 @@ export interface VenueFilters {
 }
 ```
 
-- [ ] **Step 4: Add venue service implementation**
+- [x] **Step 4: Add venue service implementation**
 
 Create `src/features/venues/services/venuesService.ts`:
 
@@ -311,7 +311,7 @@ export const venuesService = {
 };
 ```
 
-- [ ] **Step 5: Run service tests and verify GREEN**
+- [x] **Step 5: Run service tests and verify GREEN**
 
 Run:
 
