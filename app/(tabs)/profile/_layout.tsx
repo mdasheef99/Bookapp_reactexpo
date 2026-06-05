@@ -7,6 +7,7 @@ export default function ProfileLayout() {
             <Stack.Screen name="settings" />
             <Stack.Screen name="edit" />
             <Stack.Screen name="credit-history" />
+            <Stack.Screen name="addresses" />
         </Stack>
     );
 }
