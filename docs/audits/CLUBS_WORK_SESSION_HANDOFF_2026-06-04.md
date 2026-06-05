@@ -96,7 +96,7 @@ The docs now record the 2026-06-04 verification state, completed non-venue Mediu
 
 Read-only checks were run on 2026-06-05 against Supabase project `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`). No Auth users were mutated and no maintenance functions were executed.
 
-Result:
+Initial result:
 
 - Live migration history does not include local migrations `20260529143000_clubs_moderation_cleanup_and_policy_notes.sql`, `20260529154500_club_moderation_author_lifecycle_rpc.sql`, or `20260529170000_club_downgrade_grace_period.sql`.
 - Catalog checks found no `cleanup_expired_club_member_actions`.
@@ -104,6 +104,23 @@ Result:
 - Catalog checks found no `club_downgrade_grace_events`.
 - `pg_cron` is available in the extension catalog but not installed.
 - No `cron.job` relation exists, so cleanup/downgrade scheduled jobs are not present.
+
+Follow-up rollout completed on 2026-06-05:
+
+- Applied the missing Clubs maintenance migrations to live:
+  - `clubs_moderation_cleanup_and_policy_notes`
+  - `club_moderation_author_lifecycle_rpc`
+  - `club_downgrade_grace_period`
+- Deployed `handle-club-downgrade-grace-period` as an ACTIVE Edge Function with `verify_jwt: true`.
+- Enabled `pg_cron` successfully (`pg_cron` 1.6.4).
+- Verified active scheduled jobs:
+  - `cleanup-expired-club-member-actions` every 30 minutes.
+  - `club-downgrade-grace-period` daily at `0 2 * * *`.
+- Added hardening so maintenance RPCs are executable by `service_role`/owner only:
+  - `cleanup_expired_club_member_actions()`
+  - `process_club_downgrade_grace_period(uuid, integer, boolean)`
+- Added the missed cleanup cron schedule after `pg_cron` became available.
+- No Supabase Auth users were mutated.
 
 ## Verification from this session
 
@@ -145,9 +162,9 @@ Non-venue pending items:
 2. Reading schedule reminders and multi-plan behavior.
 3. Automated downgrade-driven successor selection and archive retention/deletion rules.
 4. Durable moderation resolution notes or stricter RPC-backed punitive workflow policy, if product/security wants it.
-5. Roll out and re-run live verification for expired `club_member_actions` cleanup.
-6. Roll out and re-run live verification for downgrade grace cron.
-7. Broader notification pipeline: push token registration, notification preferences/history, `send-notification`, `wishlist-notify`, and reminder delivery for invitations/nominations/downgrades/events.
+5. Broader notification pipeline: push token registration, notification preferences/history, `send-notification`, `wishlist-notify`, and reminder delivery for invitations/nominations/downgrades/events.
+6. Product policy for downgrade warnings, user-selected keep lists, and any automated successor-selection rules on top of the conservative live remediation.
+7. Operational monitoring for the newly active expired-mute cleanup and downgrade grace cron jobs.
 8. High-priority Clubs chat/realtime path remains outside the Medium/Low-only pass and is still listed in the pending inventory, but implementation is explicitly deferred by current user direction.
 
 Recommended non-chat task order:
@@ -157,8 +174,8 @@ Recommended non-chat task order:
 3. Expand reading schedule product depth: reminders and multi-plan behavior.
 4. Define exact admin lifecycle automation policy: automated downgrade-driven successor selection and archive retention/deletion rules. Current UI only surfaces readiness and warnings.
 5. Decide whether moderation needs durable resolution notes or a stricter RPC-backed punitive workflow policy.
-6. Roll out and then re-run read-only live verification for expired `club_member_actions` cleanup.
-7. Roll out and then re-run read-only live verification for downgrade grace cron/job state.
+6. Monitor the newly active expired `club_member_actions` cleanup and downgrade grace cron jobs after their first scheduled runs.
+7. Define downgrade warning/user-choice/successor-selection policy before adding richer lifecycle automation.
 8. Keep venue frontend work excluded unless product direction changes.
 
 ## Suggested first checks for next session
@@ -166,7 +183,7 @@ Recommended non-chat task order:
 1. Read the three source-of-truth docs listed above.
 2. Run `git status --short` and do not revert unrelated dirty files.
 3. If implementing UI changes, check whether `http://localhost:8081` is reachable before starting Expo. Use the approved outside-sandbox Expo workflow if the sandbox hits `EPERM`.
-4. If live Supabase read-only MCP is available after rollout, verify migration rollout state for:
+4. If live Supabase read-only MCP is available, verify ongoing maintenance state for:
    - `cleanup_expired_club_member_actions`
    - downgrade grace cron/job state
    - raw `book_clubs` policy posture if needed

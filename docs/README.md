@@ -223,8 +223,7 @@ booktalks-mobile/
 - ✅ Exclusive author events access
 - ✅ Priority customer support
 
-**Downgrade Policy:** 30-day grace period with warnings on Day 7, 14, 21, 29 is specified in `booktalks_mobile_spec.md`.
-> ⚠️ **Not yet implemented:** The `handle-downgrade-grace-period` Edge Function and any automated cron / scheduled warning job do not exist in the repo. Automated archiving and grace-period enforcement are pending.
+**Downgrade Policy:** The live backend now has conservative downgrade grace tracking and remediation support. On 2026-06-05, Supabase project `ahntbtktjjmvfosgkmgn` was rolled forward with `club_downgrade_grace_events`, `process_club_downgrade_grace_period(...)`, the deployed `handle-club-downgrade-grace-period` Edge Function, and active `pg_cron` jobs for downgrade grace processing and expired club-member mute cleanup. Product-level warning delivery and automated successor-selection policy remain separate notification/governance work.
 
 ---
 

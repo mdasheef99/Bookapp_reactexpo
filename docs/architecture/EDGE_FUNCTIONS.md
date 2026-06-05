@@ -184,6 +184,8 @@ All Edge Functions use Supabase service role key for database access and run in 
 
 **Purpose:** Enforces membership tier limits for club creation.
 
+**Status:** Deployed; live project `ahntbtktjjmvfosgkmgn` has version 1 ACTIVE with `verify_jwt: true`.
+
 **Trigger:** Called before club creation and during downgrade checks
 
 **Input:** `{ user_id: string, action: "create_club" | "check_downgrade" }`
@@ -201,23 +203,25 @@ All Edge Functions use Supabase service role key for database access and run in 
 
 ---
 
-### handle-downgrade-grace-period
+### handle-club-downgrade-grace-period
 
-**Purpose:** Scheduled job to manage membership downgrade grace period.
+**Purpose:** Service-role Edge Function wrapper around the live downgrade grace-period RPC.
 
-**Trigger:** Runs daily via pg_cron or external scheduler
+**Status:** Deployed 2026-06-05 to Supabase project `ahntbtktjjmvfosgkmgn`; version 1, status ACTIVE, `verify_jwt: true`.
+
+**Trigger:** POST invocation by an authorized caller. The live scheduled maintenance path uses `pg_cron` to call the database RPC directly.
+
+**Input:** `{ user_id?: string | null, grace_days?: number, dry_run?: boolean | string }`
 
 **Process:**
-1. Find users in downgrade grace period (tier changed in last 30 days)
-2. Calculate days remaining in grace period
-3. Send warnings on Day 7, 14, 21, 29 via push notification
-4. On Day 30:
-   - Prompt user to select clubs to keep (if not already selected)
-   - Archive excess clubs based on user choice or chronology
-   - Update book_clubs.is_archived and archived_at
-5. Send final notification with archived club list
+1. Validate method and required Supabase service env vars.
+2. Optionally enforce `CLUB_DOWNGRADE_CRON_SECRET` through `x-cron-secret` when configured.
+3. Call `process_club_downgrade_grace_period(p_user_id, p_grace_days, p_dry_run)`.
+4. Return `{ processed, results }` or a mapped RPC error.
 
-**Scheduling:** Daily execution at 2 AM UTC
+**Scheduling:** Live `pg_cron` job `club-downgrade-grace-period` runs daily at `0 2 * * *` and executes `select count(*) from public.process_club_downgrade_grace_period(null, 14, false);`.
+
+**Current Limits:** This rollout records grace status and archives excess active clubs after the grace window. Push warning delivery, user-selected keep lists, and automated successor-selection policy are not part of this Edge Function.
 
 ---
 
@@ -291,7 +295,7 @@ All Edge Functions use Supabase service role key for database access and run in 
 8. check-membership-limits
 
 **Week 7-8 (Scheduled Jobs):**
-9. handle-downgrade-grace-period
+9. handle-club-downgrade-grace-period - Deployed 2026-06-05
 10. cleanup-expired-holds
 11. send-batch-notifications
 
