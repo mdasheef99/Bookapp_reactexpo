@@ -214,7 +214,7 @@ export default function ProfileScreen() {
 
                     <TouchableOpacity
                         style={[styles.menuItem, { borderBottomColor: colors.border }]}
-                        onPress={() => router.push('/(tabs)/addresses')}
+                        onPress={() => router.push('/(tabs)/profile/addresses')}
                         accessibilityLabel="Addresses"
                         accessibilityHint="Manage saved exchange addresses"
                         accessibilityRole="button"
