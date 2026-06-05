@@ -824,7 +824,7 @@ git commit -m "feat: add clubs venue discovery"
 - Create: `src/features/venues/screens/VenueDetailScreen.tsx`
 - Test: `src/features/venues/screens/__tests__/VenueDetailScreen.test.tsx`
 
-- [ ] **Step 1: Write failing detail screen tests**
+- [x] **Step 1: Write failing detail screen tests**
 
 Create `src/features/venues/screens/__tests__/VenueDetailScreen.test.tsx`:
 
@@ -912,7 +912,7 @@ describe('VenueDetailScreen', () => {
 });
 ```
 
-- [ ] **Step 2: Run detail tests and verify RED**
+- [x] **Step 2: Run detail tests and verify RED**
 
 Run:
 
@@ -922,7 +922,7 @@ npm.cmd test -- --runInBand src/features/venues/screens/__tests__/VenueDetailScr
 
 Expected: fail because `VenueDetailScreen` does not exist.
 
-- [ ] **Step 3: Add venue detail screen**
+- [x] **Step 3: Add venue detail screen**
 
 Create `src/features/venues/screens/VenueDetailScreen.tsx`:
 
@@ -1038,7 +1038,7 @@ const styles = StyleSheet.create({
 });
 ```
 
-- [ ] **Step 4: Add route files and stack registration**
+- [x] **Step 4: Add route files and stack registration**
 
 Create `app/(tabs)/clubs/venues.tsx`:
 
@@ -1067,7 +1067,7 @@ Modify `app/(tabs)/clubs/_layout.tsx` to include:
 <Stack.Screen name="venues/[venueId]" />
 ```
 
-- [ ] **Step 5: Run detail tests and route type check**
+- [x] **Step 5: Run detail tests and route type check**
 
 Run:
 
@@ -1078,7 +1078,7 @@ npx.cmd tsc --noEmit
 
 Expected: both pass.
 
-- [ ] **Step 6: Commit Task 3**
+- [x] **Step 6: Commit Task 3**
 
 Run:
 
