@@ -71,19 +71,19 @@ export const creditService = {
         limit: number = 20,
         offset: number = 0
     ): Promise<CreditHistoryResult> {
-        const { data, error, count } = await supabase
+        const { data, error } = await supabase
             .from('credit_events')
-            .select('*', { count: 'exact' })
+            .select('*')
             .eq('user_id', userId)
             .order('created_at', { ascending: false })
-            .range(offset, offset + limit - 1);
+            .range(offset, offset + limit);
 
         if (error) throw error;
 
-        const total = count ?? 0;
+        const rows = (data ?? []) as CreditEvent[];
         return {
-            events: (data ?? []) as CreditEvent[],
-            hasMore: offset + limit < total,
+            events: rows.slice(0, limit),
+            hasMore: rows.length > limit,
         };
     },
 

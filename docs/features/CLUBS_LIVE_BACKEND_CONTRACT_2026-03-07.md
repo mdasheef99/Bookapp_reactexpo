@@ -86,10 +86,13 @@ Use this together with:
 - `can_user_hold_club_role(uuid, uuid, text)`
 - `is_active_eligible_club_manager(uuid, uuid)`
 
-### Missing live RPCs that still matter
+### Invitation lifecycle RPCs
 
-- `revoke_club_invitation` — **not live**
-- `mark_invitation_read` — **not live**
+2026-05-24 live verification confirms:
+
+- `revoke_club_invitation(p_invitation_id uuid)` -- live, granted to `authenticated` and `service_role`, not executable by `anon`
+- `mark_invitation_read(p_invitation_id uuid)` -- live, granted to `authenticated` and `service_role`, not executable by `anon`
+- `club_invitations.read_at` exists as `timestamp with time zone`
 
 ## Minimal `ZZ_TEST` live data used for 2026-03-11 validation
 
@@ -333,6 +336,7 @@ These Clubs areas can continue without new backend work right now:
 - join-question management under existing policies
 - manager invitation creation/listing by username under eligible-manager enforcement
 - invite acceptance under access-level enforcement
+- invitation revoke/read-state RPC support under authenticated-user enforcement
 - moderator assignment/admin membership updates under the deployed entitlement rules
 - member-only club events with creator/admin management and active-member RSVP under the deployed Events rules
 - seeded nominations/voting/current-book finalization under `nominate_club_book`, `cast_club_book_vote`, `remove_club_book_vote`, and `finalize_club_book_nomination`
@@ -346,17 +350,22 @@ These Clubs areas can continue without new backend work right now:
 
 **Implication:** current Clubs browser validation results are based on a real authenticated session and can be reused across app launches until sign-out/session expiry.
 
-## What backend is still incomplete live
+## What is still incomplete
 
-These areas still need backend support before they can be considered complete:
+These areas still need UX/manual validation before they can be considered complete:
 
-- invitation revoke workflow
-- invitation read-state workflow
-- any full invite-only lifecycle claim that depends on revoke/read/inbox completeness
+- invitee-facing invitation inbox and unread badge UX
+- manual invite-only lifecycle validation with real users/sessions:
+  - create invite
+  - revoke pending invite
+  - invitee sees pending invite
+  - invitee marks read
+  - invitee accepts
+  - membership/member count update
 
 ## Current practical guidance
 
 1. Keep browse/detail reads on `club_public_details`.
 2. Keep using `username` as the user-facing invitation identifier.
-3. Treat invite-only Clubs as **partially complete** until revoke/read-state support exists live.
+3. Treat invite-only Clubs as **partially complete** until inbox UX and real-session lifecycle validation are complete.
 4. If future documentation or code conflicts with live Supabase, use live Supabase as canonical and document the drift explicitly.

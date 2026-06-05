@@ -47,6 +47,12 @@ export function ClubCard({ club, colors, onPress }: ClubCardProps) {
                     <View style={[styles.typeChip, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
                         <Text style={[styles.typeChipText, { color: colors.accent }]}>{CLUB_TYPE_LABELS[club.club_type]}</Text>
                     </View>
+                    {club.club_type === 'author_club' && club.author_display_name ? (
+                        <View style={[styles.authorChip, { borderColor: colors.accent }]}>
+                            <Ionicons name="checkmark-circle-outline" size={12} color={colors.accent} />
+                            <Text style={[styles.authorChipText, { color: colors.accent }]}>Verified author</Text>
+                        </View>
+                    ) : null}
                     <View style={styles.metaRow}>
                         <Ionicons name="people-outline" size={13} color={colors.textTertiary} />
                         <Text style={[styles.metaText, { color: colors.textTertiary }]}>{club.member_count ?? 0}</Text>
@@ -64,7 +70,7 @@ export function ClubCard({ club, colors, onPress }: ClubCardProps) {
                 </Text>
 
                 <Text style={[styles.bookSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {club.current_book_authors?.join(', ') || `Hosted by ${curatorName}`}
+                    {club.club_type === 'author_club' && club.author_display_name ? `Hosted by verified author ${club.author_display_name}` : club.current_book_authors?.join(', ') || `Hosted by ${curatorName}`}
                 </Text>
 
                 <View style={styles.footerRow}>
@@ -114,6 +120,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 6,
         marginBottom: 8,
     },
     typeChip: {
@@ -126,6 +134,19 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: '700',
         textTransform: 'uppercase',
+    },
+    authorChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 3,
+        borderWidth: 1,
+        borderRadius: 999,
+        paddingHorizontal: 7,
+        paddingVertical: 3,
+    },
+    authorChipText: {
+        fontSize: 10,
+        fontWeight: '800',
     },
     title: {
         fontSize: 17,

@@ -17,6 +17,10 @@ function formatTier(tier?: UserMembershipTier | null) {
     return 'Free';
 }
 
+function canCreateClub(tier?: UserMembershipTier | null) {
+    return tier === 'pro' || tier === 'pro_plus';
+}
+
 export default function ProfileScreen() {
     const { signOut, session } = useAuth();
     const { colors } = useTheme();
@@ -193,6 +197,20 @@ export default function ProfileScreen() {
                         <Text style={[styles.menuText, { color: colors.textPrimary }]}>My Clubs</Text>
                         <Text style={styles.menuArrow}>→</Text>
                     </TouchableOpacity>
+
+                    {canCreateClub(profile?.membership_tier) ? (
+                        <TouchableOpacity
+                            style={[styles.menuItem, { borderBottomColor: colors.border }]}
+                            onPress={() => router.push('/(tabs)/clubs/create')}
+                            accessibilityLabel="Create Club"
+                            accessibilityHint="Create and manage a new book club"
+                            accessibilityRole="button"
+                        >
+                            <Ionicons name="people-circle-outline" size={24} color={colors.textPrimary} style={styles.menuIconGraphic} />
+                            <Text style={[styles.menuText, { color: colors.textPrimary }]}>Create Club</Text>
+                            <Text style={styles.menuArrow}>→</Text>
+                        </TouchableOpacity>
+                    ) : null}
 
                     <TouchableOpacity
                         style={[styles.menuItem, { borderBottomColor: colors.border }]}

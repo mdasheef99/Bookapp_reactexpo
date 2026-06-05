@@ -4,6 +4,8 @@
 
 This document defines the **Manage Club** scope for BookTalks Mobile using the current audited/remediated Clubs baseline from `2026-03-07`.
 
+> **Historical snapshot note (2026-05-25):** This file remains the Manage Club scope baseline from the March remediation. For current implementation status, including Create Club, invite revoke/read-state, reading progress, and venue picker updates, use `docs/features/CLUBS_IMPLEMENTATION_INVENTORY.md` and `docs/audits/CLUBS_PENDING_INVENTORY_2026-04-24.md`.
+
 Use this together with:
 - `docs/features/CLUBS_SPEC_2026-03-06_234839.md` for canonical Clubs intent and roadmap.
 - `docs/features/CLUBS_IMPLEMENTATION_STATUS_2026-03-07.md` for current repo reality.
@@ -17,9 +19,10 @@ Use this together with:
 - Full club management is still **partial**.
 - The clearest broader full-management areas already implied by the audited state are:
   - deeper settings refinement
-- Known live backend gaps still matter for invitation lifecycle completeness:
-  - `revoke_club_invitation` is not live
-  - `mark_invitation_read` is not live
+- Invitation lifecycle backend support has since landed live:
+  - `revoke_club_invitation`
+  - `mark_invitation_read`
+  - `club_invitations.read_at`
 
 ## 2026-03-08 status framing
 
@@ -70,9 +73,9 @@ Manage Club means **managing one specific club as a moderator/admin**, not broad
 Current club-management functionality is split across multiple routes:
 - `app/(tabs)/clubs/[clubId]/applications.tsx` — application review
 - `app/(tabs)/clubs/[clubId]/invite.tsx` — manager invitation creation/history
-- `app/(tabs)/clubs/[clubId]/manage.tsx` — admin-only manage basics: settings slice + member-role management + remove-member workflows + join-question management
+- `app/(tabs)/clubs/[clubId]/manage.tsx` — the current tabbed management surface for current-book workflows, lightweight analytics, events administration, settings, members, and join-question management
 
-The current **Manage Club** button/entry should therefore be understood as **a narrow admin management entry point**, not a complete club-admin dashboard.
+The current **Manage Club** button/entry should therefore be understood as **a real but still intentionally bounded club-admin surface**, not a complete club-governance dashboard.
 
 ## Accepted Manage Club scope for the current application
 
@@ -91,10 +94,26 @@ These items fit the **current mobile management reality** and should be treated 
 - admin-only member-role management from the current member list:
   - assign moderator
   - remove moderator
+  - mute / unmute member
   - remove member
 - application review for pending join requests
 - review of join-question answers during application decisions
 - manager invitation creation/listing by username
+- current-book management:
+  - view current book from Manage Club
+  - finalize a closed nomination as current book
+  - set an active nomination as current book
+  - manual current-book override via nomination-backed shortcut flow
+- admin event administration from Manage Club:
+  - create event
+  - edit event
+  - cancel event
+  - delete cancelled/past event
+- lightweight analytics:
+  - member / moderator counts
+  - active nominations count
+  - upcoming / past event counts
+  - current-book summary
 
 These items are **implemented**, but only the surrounding authenticated Clubs baseline (login + join/apply/member gating) was freshly validated in this session.
 
@@ -103,8 +122,8 @@ These items are **implemented**, but only the surrounding authenticated Clubs ba
 These items fit the **intended near-term roadmap** for fuller club management, but they are **not yet implemented** in the current client:
 
 - deeper settings refinement beyond the current basic slice
-- event create/edit/delete
-- current-book update
+- moderator event-management parity with the live backend capability model
+- richer analytics / reporting beyond the current summary cards
 
 ## Broader Clubs scope, but not Manage Club
 
@@ -128,17 +147,18 @@ These items were proposed in the source material, but they do **not** suit the c
 - treating store-level managers as part of the normal club-scoped mobile role model
 - treating platform-admin workflows as part of the normal mobile Clubs scope
 - treating leadership transfer as a standard current Manage Club feature
-- treating analytics/reporting as near-term mobile Manage Club scope
+- treating advanced analytics/reporting as part of the accepted current or near-term mobile Manage Club roadmap
 - treating archive club as part of the accepted current or near-term mobile Manage Club roadmap
 
 ## Blocked or dependent on backend or product decisions
 
 These items should stay explicitly marked as blocked or dependent, not merged into supported scope:
 
-- invitation revoke workflow — blocked by missing live `revoke_club_invitation`
-- invitation read-state / inbox workflow — blocked by missing live `mark_invitation_read`
+- invitation revoke workflow -- backend support is live; keep manual lifecycle validation explicit
+- invitation read-state / inbox workflow -- backend support is live; invitee inbox UX remains pending
 - granular moderator permission UI — needs explicit product-policy cleanup before implementation
 - current-book workflow rules — still need product clarification if nominations remain the source of truth
+- moderator event-management parity — backend support now exists, but the current manage UI still restricts the events tab/actions to admins
 - delete lifecycle actions — need explicit governance and safety UX decisions
 - advanced event analytics / reminders — need broader product-scope decisions before implementation
 
@@ -151,13 +171,13 @@ These items should stay explicitly marked as blocked or dependent, not merged in
 | B. Club detail | Broader Clubs scope; may expose management entry points. |
 | C. Joining / applications / invitations | Split: user join/apply belongs elsewhere; manager application review and invite tooling are current Manage Club; revoke/read-state remain blocked. |
 | D. Discussions / chat | Broader Clubs scope; later moderation tooling is management-adjacent but not core Manage Club. |
-| E. Events / meetings | Split: member viewing belongs elsewhere; event administration is future Manage Club scope. |
-| F. Current book management | Split: current-book display belongs elsewhere; changing the current book is future Manage Club scope. |
+| E. Events / meetings | Split: member viewing belongs elsewhere; admin event administration is now part of current Manage Club, while moderator parity and richer event tooling remain future work. |
+| F. Current book management | Split: current-book display belongs elsewhere; admin current-book management is now part of current Manage Club, while the long-term product rules remain unsettled. |
 | G. Nominations | Broader Clubs scope; only nomination-based current-book rules affect management planning. |
 | H. Member management | Split: join-request review and remove-member now fit current Manage Club; leadership transfer is not adopted into the current baseline. |
 | I. Moderator management | Partially implemented now via admin-only member-list role toggles; granular permissions remain blocked/future. |
 | J. Club settings | Partially implemented now and still the clearest next expansion area. |
-| K. Analytics / reporting | Not adopted into the near-term mobile Manage Club scope. |
+| K. Analytics / reporting | Lightweight summary analytics are now implemented in Manage Club; richer reporting remains outside the accepted near-term scope. |
 | L. Moderation / content controls | Later management-adjacent scope, not current core Manage Club. |
 | M. Ownership / transfer / archive / delete | Not adopted into the current mobile Manage Club roadmap: archive and delete need separate lifecycle/governance decisions, and transfer is not part of the current v1 owner model. |
 | N. Permissions / access control | Broader Clubs foundation, not a user-facing Manage Club feature area. |
@@ -169,16 +189,20 @@ These items should stay explicitly marked as blocked or dependent, not merged in
 - applications review
 - invitation creation/history
 - moderator assignment
+- mute / unmute member
 - remove-member workflows
 - current basic settings slice
 - join-question management
+- current-book management
+- admin event administration
+- lightweight analytics
 
 ### Stage 2 — club-admin essentials
 
 - refine and extend the current basic settings slice
 - deepen metadata and cover management beyond the initial fields
-- change current book
-- create/edit/delete events
+- align moderator event-management UX with the live backend capability model
+- define richer analytics/reporting and reminder needs
 
 ### Stage 3 — broader management and governance
 
@@ -188,9 +212,10 @@ These items should stay explicitly marked as blocked or dependent, not merged in
 
 ## Single most justified next product/documentation step
 
-Treat the current `manage` route and button copy as **primarily join-question management with a broader settings slice and member-list management added**, while continuing the next full-management expansion around:
+Treat the current `manage` route and button copy as **a bounded tabbed management surface** with current-book, events, settings, membership, invitations/applications, and join-question workflows, while continuing the next full-management expansion around:
 
 - deeper settings refinement
-- moderator assignment planning
+- moderator permission/event-management alignment
+- invitation revoke/read-state support
 
 That is the cleanest remaining Manage Club path from the current audited implementation.

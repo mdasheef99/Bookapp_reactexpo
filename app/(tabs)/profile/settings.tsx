@@ -17,7 +17,12 @@ export default function SettingsScreen() {
         <ScreenBackground>
             <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Go back">
+                    <TouchableOpacity
+                        onPress={() => router.replace('/(tabs)/profile')}
+                        style={styles.backButton}
+                        accessibilityRole="button"
+                        accessibilityLabel="Go back"
+                    >
                         <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Settings</Text>

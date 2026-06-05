@@ -1,22 +1,51 @@
 import { useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
-import type { ClubJoinApplication } from '@/features/clubs/services/clubsService';
+import type { ClubJoinApplicationWithProfile } from '@/features/clubs/services/clubsService';
 import type { FeedbackState } from './manageUtils';
 
+type ApplicationAnswerValue = string | { answer?: string | null; question?: string | null; questionId?: string | null };
+
 interface Props {
-    applications: ClubJoinApplication[];
+    applications: ClubJoinApplicationWithProfile[];
     isLoading: boolean;
     onReview: (applicationId: string, action: 'approve' | 'decline') => Promise<void>;
     onFeedback: (feedback: FeedbackState) => void;
+}
+
+function normalizeApplicationAnswers(answers: unknown) {
+    if (!answers) return [];
+
+    if (Array.isArray(answers)) {
+        return answers.map((entry, index) => {
+            const answerEntry = (entry ?? {}) as { answer?: string | null; question?: string | null; questionId?: string | null };
+            return {
+                key: `${answerEntry.questionId || answerEntry.question || 'question'}-${index}`,
+                question: answerEntry.question || `Question ${index + 1}`,
+                answer: answerEntry.answer || 'No answer submitted.',
+            };
+        });
+    }
+
+    return Object.entries(answers as Record<string, ApplicationAnswerValue>).map(([key, value], index) => {
+        if (typeof value === 'string') {
+            return { key: `${key}-${index}`, question: key.replace(/_/g, ' '), answer: value };
+        }
+
+        return {
+            key: `${key}-${index}`,
+            question: value?.question || value?.questionId || key.replace(/_/g, ' '),
+            answer: value?.answer || 'No answer submitted.',
+        };
+    });
 }
 
 export function ClubManageApplicationsSection({ applications, isLoading, onReview, onFeedback }: Props) {
     const { colors } = useTheme();
     const [activeId, setActiveId] = useState<string | null>(null);
 
-    const handleReview = async (application: ClubJoinApplication, action: 'approve' | 'decline') => {
-        const applicantName = application.user_profile?.display_name || 'this applicant';
+    const handleReview = async (application: ClubJoinApplicationWithProfile, action: 'approve' | 'decline') => {
+        const applicantName = application.applicantProfile?.display_name || 'this applicant';
         const actionLabel = action === 'approve' ? 'Approve' : 'Decline';
 
         Alert.alert(
@@ -68,15 +97,15 @@ export function ClubManageApplicationsSection({ applications, isLoading, onRevie
                 <View key={app.id} style={[styles.appRow, { borderBottomColor: colors.border }]}>
                     <View style={styles.appInfo}>
                         <Text style={[styles.appName, { color: colors.textPrimary }]}>
-                            {app.user_profile?.display_name || 'Unknown'}
+                            {app.applicantProfile?.display_name || 'Unknown'}
                         </Text>
                         <Text style={[styles.appMeta, { color: colors.textSecondary }]}>
-                            Applied {new Date(app.created_at).toLocaleDateString()}
+                            Applied {app.created_at ? new Date(app.created_at).toLocaleDateString() : 'recently'}
                         </Text>
-                        {app.answers && app.answers.length > 0 && (
+                        {normalizeApplicationAnswers(app.answers).length > 0 && (
                             <View style={styles.answersBlock}>
-                                {app.answers.map((ans, idx) => (
-                                    <View key={idx} style={styles.answerItem}>
+                                {normalizeApplicationAnswers(app.answers).map((ans) => (
+                                    <View key={ans.key} style={styles.answerItem}>
                                         <Text style={[styles.answerQuestion, { color: colors.textSecondary }]}>{ans.question}</Text>
                                         <Text style={[styles.answerText, { color: colors.textPrimary }]}>{ans.answer}</Text>
                                     </View>

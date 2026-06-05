@@ -18,6 +18,12 @@ function mockQuery(response: Record<string, any>) {
     return builder;
 }
 
+function expectExplicitSelect(builder: any, expectedColumn: string) {
+    const selectArg = builder.select.mock.calls[0]?.[0];
+    expect(selectArg).toEqual(expect.stringContaining(expectedColumn));
+    expect(selectArg).not.toContain('*');
+}
+
 beforeEach(() => { jest.clearAllMocks(); });
 
 describe('clubsService', () => {
@@ -97,11 +103,21 @@ describe('clubsService', () => {
         const result = await clubsService.getPublicClubs({ clubType: 'public', meetingType: 'hybrid', accessLevel: 'pro', search: 'Dune' });
 
         expect(supabase.from).toHaveBeenCalledWith('club_public_details');
+        expectExplicitSelect(publicBuilder, 'current_book_title');
         expect(publicBuilder.eq).toHaveBeenCalledWith('club_type', 'public');
         expect(publicBuilder.eq).toHaveBeenCalledWith('meeting_type', 'hybrid');
         expect(publicBuilder.eq).toHaveBeenCalledWith('access_level', 'pro');
         expect(publicBuilder.or).toHaveBeenCalledWith('name.ilike.%Dune%,current_book_title.ilike.%Dune%,admin_display_name.ilike.%Dune%,author_display_name.ilike.%Dune%');
         expect(result[0].name).toBe('Open Readers');
+    });
+
+    it('sanitizes public club search terms before building the PostgREST or filter', async () => {
+        const publicBuilder = mockQuery({ data: [], error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(publicBuilder);
+
+        await clubsService.getPublicClubs({ search: ' Dune),name.ilike.%% ' });
+
+        expect(publicBuilder.or).toHaveBeenCalledWith('name.ilike.%Dune name ilike%,current_book_title.ilike.%Dune name ilike%,admin_display_name.ilike.%Dune name ilike%,author_display_name.ilike.%Dune name ilike%');
     });
 
     it('reads club events with venue details, creator profiles, and the current user RSVP', async () => {
@@ -154,6 +170,7 @@ describe('clubsService', () => {
         });
 
         expect(supabase.from).toHaveBeenCalledWith('club_events');
+        expectExplicitSelect(insertBuilder, 'cancelled_by');
         expect(insertBuilder.insert).toHaveBeenCalledWith(expect.objectContaining({
             club_id: 'club-1',
             created_by: 'test-user-id',
@@ -176,6 +193,7 @@ describe('clubsService', () => {
         expect(membershipsBuilder.eq).toHaveBeenCalledWith('user_id', 'user-1');
         expect(membershipsBuilder.in).toHaveBeenCalledWith('status', ['active', 'muted']);
         expect(supabase.from).toHaveBeenNthCalledWith(2, 'club_public_details');
+        expectExplicitSelect(publicBuilder, 'current_book_title');
         expect(publicBuilder.in).toHaveBeenCalledWith('id', ['club-2', 'club-3']);
         expect(publicBuilder.eq).toHaveBeenCalledWith('club_type', 'approval');
         expect(publicBuilder.eq).toHaveBeenCalledWith('meeting_type', 'hybrid');
@@ -201,8 +219,39 @@ describe('clubsService', () => {
         const result = await clubsService.getPublicClubById('club-7');
 
         expect(supabase.from).toHaveBeenCalledWith('club_public_details');
+        expectExplicitSelect(detailBuilder, 'admin_display_name');
         expect(detailBuilder.eq).toHaveBeenCalledWith('id', 'club-7');
         expect(result.id).toBe('club-7');
+    });
+
+    it('normalizes nested current book rows when reading legacy club rows', async () => {
+        const clubsBuilder = mockQuery({
+            data: [{
+                id: 'club-book-row',
+                name: 'Book Row Club',
+                description: null,
+                cover_url: null,
+                club_type: 'public',
+                access_level: 'all',
+                current_book_id: 'book-1',
+                admin_id: 'user-1',
+                member_count: 1,
+                max_members: null,
+                is_archived: false,
+                created_at: null,
+                updated_at: null,
+                meeting_type: null,
+                archived_at: null,
+                author_id: null,
+                current_book: [{ id: 'book-1', title: 'Dune', authors: ['Frank Herbert'], cover_url: null }],
+            }],
+            error: null,
+        });
+        (supabase.from as jest.Mock).mockReturnValueOnce(clubsBuilder);
+
+        const result = await clubsService.getClubs();
+
+        expect(result[0].current_book?.title).toBe('Dune');
     });
 
     it('checks membership limits through the edge function', async () => {
@@ -213,10 +262,9 @@ describe('clubsService', () => {
         expect(result.tier).toBe('pro');
     });
 
-    it('creates a club after limit check and inserts the admin membership', async () => {
+    it('creates a club through the transactional rpc after limit check', async () => {
         (supabase.functions.invoke as jest.Mock).mockResolvedValueOnce({ data: { allowed: true, current_count: 0, max_allowed: 5, tier: 'pro' }, error: null });
-        const insertClubBuilder = mockQuery({ data: { id: 'club-1' }, error: null });
-        const insertMemberBuilder = mockQuery({ data: null, error: null });
+        (supabase.rpc as jest.Mock).mockResolvedValueOnce({ data: { id: 'club-1' }, error: null });
         const detailBuilder = mockQuery({
             data: {
                 id: 'club-1', name: 'Founders Club', description: null, cover_url: null, club_type: 'public', access_level: 'all', current_book_id: null,
@@ -225,16 +273,25 @@ describe('clubsService', () => {
             },
             error: null,
         });
-        (supabase.from as jest.Mock)
-            .mockReturnValueOnce(insertClubBuilder)
-            .mockReturnValueOnce(insertMemberBuilder)
-            .mockReturnValueOnce(detailBuilder);
+        (supabase.from as jest.Mock).mockReturnValueOnce(detailBuilder);
         (profileService.getProfileSummary as jest.Mock).mockResolvedValueOnce(null);
 
         const result = await clubsService.createClub({ name: ' Founders Club ', club_type: 'public', admin_id: 'user-1' });
 
-        expect(insertClubBuilder.insert).toHaveBeenCalledWith(expect.objectContaining({ name: 'Founders Club', admin_id: 'user-1' }));
-        expect(insertMemberBuilder.insert).toHaveBeenCalledWith({ club_id: 'club-1', user_id: 'user-1', role: 'admin', status: 'active' });
+        expect(supabase.rpc).toHaveBeenCalledWith('create_club', {
+            p_name: 'Founders Club',
+            p_description: null,
+            p_cover_url: null,
+            p_club_type: 'public',
+            p_access_level: 'all',
+            p_meeting_type: null,
+            p_admin_id: 'user-1',
+            p_current_book_id: null,
+            p_max_members: null,
+            p_author_id: null,
+        });
+        expect(supabase.from).toHaveBeenCalledTimes(1);
+        expectExplicitSelect(detailBuilder, 'current_book:books');
         expect(detailBuilder.eq).toHaveBeenCalledWith('id', 'club-1');
         expect(result.id).toBe('club-1');
     });
@@ -273,6 +330,7 @@ describe('clubsService', () => {
         });
 
         expect(supabase.from).toHaveBeenCalledWith('book_clubs');
+        expectExplicitSelect(updateBuilder, 'archived_at');
         expect(updateBuilder.update).toHaveBeenCalledWith(expect.objectContaining({
             name: 'Updated Founders Club',
             description: 'New details',
@@ -299,6 +357,156 @@ describe('clubsService', () => {
         expect(memberBuilder.eq).toHaveBeenNthCalledWith(1, 'club_id', 'club-1');
         expect(memberBuilder.eq).toHaveBeenNthCalledWith(2, 'user_id', 'user-2');
         expect(result.role).toBe('moderator');
+    });
+
+    it('records a club member action through the moderation rpc', async () => {
+        (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+            data: {
+                id: 'action-1',
+                club_id: 'club-1',
+                user_id: 'user-2',
+                action_type: 'warned',
+                reason: 'Repeated spoilers',
+                duration_hours: null,
+                expires_at: null,
+                performed_by: 'admin-1',
+                created_at: '2026-05-29T00:00:00Z',
+            },
+            error: null,
+        });
+
+        const result = await clubsService.createClubMemberAction({
+            clubId: 'club-1',
+            userId: 'user-2',
+            actionType: 'warned',
+            reason: ' Repeated spoilers ',
+        });
+
+        expect(supabase.rpc).toHaveBeenCalledWith('issue_club_member_action', {
+            p_club_id: 'club-1',
+            p_user_id: 'user-2',
+            p_action_type: 'warned',
+            p_reason: 'Repeated spoilers',
+            p_duration_hours: null,
+        });
+        expect(result.action_type).toBe('warned');
+    });
+
+    it('reads platform complaints for manager review with reporter and reported profiles', async () => {
+        const complaintsBuilder = mockQuery({
+            data: [{
+                id: 'complaint-1',
+                club_id: 'club-1',
+                reporter_id: 'reader-1',
+                reported_user_id: 'reader-2',
+                message_id: 'message-1',
+                reason: 'harassment',
+                description: 'Personal attack in chat.',
+                status: 'pending',
+                resolved_by: null,
+                resolution_action: null,
+                resolved_at: null,
+                created_at: '2026-05-30T00:00:00Z',
+            }],
+            error: null,
+        });
+        (supabase.from as jest.Mock).mockReturnValueOnce(complaintsBuilder);
+        (profileService.getProfileSummaries as jest.Mock).mockResolvedValueOnce([
+            { id: 'profile-reporter', user_id: 'reader-1', display_name: 'Reporter One', username: 'reporterone', avatar_url: null, trust_score: 4.8, city: 'Bangalore' },
+            { id: 'profile-reported', user_id: 'reader-2', display_name: 'Reported Two', username: 'reportedtwo', avatar_url: null, trust_score: 3.2, city: 'Mumbai' },
+        ]);
+
+        const result = await clubsService.getClubComplaints('club-1');
+
+        expect(supabase.from).toHaveBeenCalledWith('club_complaints');
+        expectExplicitSelect(complaintsBuilder, 'resolution_action');
+        expect(complaintsBuilder.eq).toHaveBeenCalledWith('club_id', 'club-1');
+        expect(complaintsBuilder.in).toHaveBeenCalledWith('status', ['pending', 'reviewing']);
+        expect(result[0].reporterProfile?.display_name).toBe('Reporter One');
+        expect(result[0].reportedUserProfile?.display_name).toBe('Reported Two');
+    });
+
+    it('resolves platform complaints with status and resolution action', async () => {
+        const updateBuilder = mockQuery({
+            data: {
+                id: 'complaint-1',
+                club_id: 'club-1',
+                reporter_id: 'reader-1',
+                reported_user_id: 'reader-2',
+                message_id: 'message-1',
+                reason: 'harassment',
+                description: 'Personal attack in chat.',
+                status: 'resolved',
+                resolved_by: null,
+                resolution_action: 'no_action',
+                resolved_at: '2026-05-30T01:00:00Z',
+                created_at: '2026-05-30T00:00:00Z',
+            },
+            error: null,
+        });
+        (supabase.from as jest.Mock).mockReturnValueOnce(updateBuilder);
+
+        const result = await clubsService.resolveClubComplaint('complaint-1', { status: 'resolved', resolutionAction: 'no_action' });
+
+        expect(supabase.from).toHaveBeenCalledWith('club_complaints');
+        expect(updateBuilder.update).toHaveBeenCalledWith(expect.objectContaining({
+            status: 'resolved',
+            resolution_action: 'no_action',
+        }));
+        expect(updateBuilder.eq).toHaveBeenCalledWith('id', 'complaint-1');
+        expectExplicitSelect(updateBuilder, 'resolution_action');
+        expect(result.status).toBe('resolved');
+    });
+
+    it('requests and accepts admin transfer through acceptance-flow rpcs', async () => {
+        (supabase.rpc as jest.Mock)
+            .mockResolvedValueOnce({
+                data: {
+                    id: 'request-1',
+                    club_id: 'club-1',
+                    requested_by: 'admin-1',
+                    proposed_admin_user_id: 'user-2',
+                    status: 'pending',
+                    created_at: '2026-05-29T00:00:00Z',
+                    responded_at: null,
+                    expires_at: '2026-06-05T00:00:00Z',
+                },
+                error: null,
+            })
+            .mockResolvedValueOnce({
+                data: {
+                    id: 'club-1',
+                    name: 'Founders Club',
+                    description: null,
+                    cover_url: null,
+                    club_type: 'public',
+                    access_level: 'all',
+                    current_book_id: null,
+                    admin_id: 'user-2',
+                    member_count: 2,
+                    max_members: null,
+                    is_archived: false,
+                    created_at: null,
+                    updated_at: null,
+                    meeting_type: null,
+                    archived_at: null,
+                    author_id: null,
+                },
+                error: null,
+            });
+
+        const request = await clubsService.requestClubAdminTransfer('club-1', 'user-2');
+        const club = await clubsService.acceptClubAdminTransferRequest('request-1');
+
+        expect(supabase.rpc).toHaveBeenNthCalledWith(1, 'request_club_admin_transfer', {
+            p_club_id: 'club-1',
+            p_new_admin_user_id: 'user-2',
+        });
+        expect(supabase.rpc).toHaveBeenNthCalledWith(2, 'accept_club_admin_transfer_request', {
+            p_request_id: 'request-1',
+        });
+        expect(request.status).toBe('pending');
+        expect(club.admin_id).toBe('user-2');
     });
 
     it('blocks assigning moderator to a free-tier user before the update mutation runs', async () => {
@@ -342,6 +550,7 @@ describe('clubsService', () => {
         (supabase.from as jest.Mock).mockReturnValueOnce(clubLookupBuilder).mockReturnValueOnce(applicationBuilder);
         const result = await clubsService.joinClub('club-2', 'user-2', { why: 'Because books' });
         expect(result.status).toBe('applied');
+        expectExplicitSelect(applicationBuilder, 'decline_reason');
         expect(applicationBuilder.insert).toHaveBeenCalledWith({ club_id: 'club-2', user_id: 'user-2', status: 'pending', answers: { why: 'Because books' } });
     });
 
@@ -376,6 +585,7 @@ describe('clubsService', () => {
         const result = await clubsService.getMyJoinApplication('club-9', 'user-9');
 
         expect(supabase.from).toHaveBeenCalledWith('club_join_applications');
+        expectExplicitSelect(applicationBuilder, 'answers');
         expect(applicationBuilder.eq).toHaveBeenNthCalledWith(1, 'club_id', 'club-9');
         expect(applicationBuilder.eq).toHaveBeenNthCalledWith(2, 'user_id', 'user-9');
         expect(result?.status).toBe('pending');
@@ -389,10 +599,27 @@ describe('clubsService', () => {
         const result = await clubsService.getClubApplications('club-10');
 
         expect(supabase.from).toHaveBeenCalledWith('club_join_applications');
+        expectExplicitSelect(applicationsBuilder, 'reviewed_at');
         expect(applicationsBuilder.eq).toHaveBeenNthCalledWith(1, 'club_id', 'club-10');
         expect(applicationsBuilder.eq).toHaveBeenNthCalledWith(2, 'status', 'pending');
         expect(profileService.getProfileSummaries).toHaveBeenCalledWith(['user-10']);
         expect(result[0].applicantProfile?.display_name).toBe('Applicant Reader');
+    });
+
+    it('deduplicates applicant profile summary lookups for repeated application user ids', async () => {
+        const applicationsBuilder = mockQuery({
+            data: [
+                { id: 'application-10a', club_id: 'club-10', user_id: 'user-10', status: 'pending', answers: {}, reviewed_by: null, reviewed_at: null, decline_reason: null, created_at: null },
+                { id: 'application-10b', club_id: 'club-10', user_id: 'user-10', status: 'pending', answers: {}, reviewed_by: null, reviewed_at: null, decline_reason: null, created_at: null },
+            ],
+            error: null,
+        });
+        (supabase.from as jest.Mock).mockReturnValueOnce(applicationsBuilder);
+        (profileService.getProfileSummaries as jest.Mock).mockResolvedValueOnce([{ id: 'profile-10', user_id: 'user-10', display_name: 'Applicant Reader', avatar_url: null, trust_score: 4.5, city: 'Ibadan', membership_tier: 'pro' }]);
+
+        await clubsService.getClubApplications('club-10');
+
+        expect(profileService.getProfileSummaries).toHaveBeenCalledWith(['user-10']);
     });
 
     it('reviews a join application through the live rpc contract', async () => {
@@ -414,6 +641,7 @@ describe('clubsService', () => {
 
         const result = await clubsService.createJoinQuestion('club-11', { question: 'What do you hope to discuss?', isRequired: true, orderIndex: 2 });
 
+        expectExplicitSelect(questionBuilder, 'order_index');
         expect(questionBuilder.insert).toHaveBeenCalledWith({ club_id: 'club-11', question: 'What do you hope to discuss?', is_required: true, order_index: 2 });
         expect(result.id).toBe('question-11');
     });
@@ -424,6 +652,7 @@ describe('clubsService', () => {
 
         const result = await clubsService.updateJoinQuestion('question-12', { question: 'Updated question', isRequired: false });
 
+        expectExplicitSelect(questionBuilder, 'order_index');
         expect(questionBuilder.update).toHaveBeenCalledWith({ question: 'Updated question', is_required: false });
         expect(questionBuilder.eq).toHaveBeenCalledWith('id', 'question-12');
         expect(result.question).toBe('Updated question');
@@ -462,6 +691,7 @@ describe('clubsService', () => {
         const result = await clubsService.getClubInvitations('club-14');
 
         expect(supabase.from).toHaveBeenCalledWith('club_invitations');
+        expectExplicitSelect(invitationBuilder, 'read_at');
         expect(invitationBuilder.eq).toHaveBeenCalledWith('club_id', 'club-14');
         expect(result[0].inviteeProfile?.username).toBe('invitedreader');
     });
@@ -477,10 +707,80 @@ describe('clubsService', () => {
         const result = await clubsService.getMyPendingInvitation('club-16', 'user-invitee');
 
         expect(supabase.from).toHaveBeenCalledWith('club_invitations');
+        expectExplicitSelect(invitationBuilder, 'read_at');
         expect(invitationBuilder.eq).toHaveBeenNthCalledWith(1, 'club_id', 'club-16');
         expect(invitationBuilder.eq).toHaveBeenNthCalledWith(2, 'invitee_user_id', 'user-invitee');
         expect(invitationBuilder.eq).toHaveBeenNthCalledWith(3, 'status', 'pending');
         expect(result?.inviterProfile?.display_name).toBe('Admin Reader');
+    });
+
+    it('reads the current users invitation inbox across pending and historical statuses with club details', async () => {
+        const invitationBuilder = mockQuery({
+            data: [
+                {
+                    id: 'invite-inbox',
+                    club_id: 'club-invite-only',
+                    inviter_user_id: 'user-admin',
+                    invitee_user_id: 'user-invitee',
+                    status: 'pending',
+                    note: 'Join our next read',
+                    created_at: '2026-05-23T00:00:00Z',
+                    responded_at: null,
+                    read_at: null,
+                },
+                {
+                    id: 'invite-accepted',
+                    club_id: 'club-accepted',
+                    inviter_user_id: 'user-admin',
+                    invitee_user_id: 'user-invitee',
+                    status: 'accepted',
+                    note: null,
+                    created_at: '2026-05-20T00:00:00Z',
+                    responded_at: '2026-05-21T00:00:00Z',
+                    read_at: '2026-05-20T01:00:00Z',
+                },
+            ],
+            error: null,
+        });
+        const clubBuilder = mockQuery({
+            data: [
+                {
+                    id: 'club-invite-only',
+                    name: 'Quiet Sci-Fi Circle',
+                    club_type: 'invite_only',
+                    current_book_title: 'Dune',
+                    admin_display_name: 'Admin Reader',
+                },
+                {
+                    id: 'club-accepted',
+                    name: 'Accepted Classics',
+                    club_type: 'invite_only',
+                    current_book_title: 'Beloved',
+                    admin_display_name: 'Admin Reader',
+                },
+            ],
+            error: null,
+        });
+        (supabase.from as jest.Mock).mockReturnValueOnce(invitationBuilder).mockReturnValueOnce(clubBuilder);
+        (profileService.getProfileSummaries as jest.Mock).mockResolvedValueOnce([
+            { id: 'profile-admin', user_id: 'user-admin', display_name: 'Admin Reader', username: 'adminreader', avatar_url: null, trust_score: 4.8, city: 'Lagos' },
+            { id: 'profile-invitee', user_id: 'user-invitee', display_name: 'Invited Reader', username: 'invitedreader', avatar_url: null, trust_score: 4.7, city: 'Abuja' },
+        ]);
+
+        const result = await clubsService.getMyPendingInvitations('user-invitee');
+
+        expect(supabase.from).toHaveBeenNthCalledWith(1, 'club_invitations');
+        expectExplicitSelect(invitationBuilder, 'read_at');
+        expect(invitationBuilder.eq).toHaveBeenNthCalledWith(1, 'invitee_user_id', 'user-invitee');
+        expect(invitationBuilder.in).toHaveBeenCalledWith('status', ['pending', 'accepted', 'expired', 'revoked']);
+        expect(supabase.from).toHaveBeenNthCalledWith(2, 'club_public_details');
+        expectExplicitSelect(clubBuilder, 'current_book_title');
+        expect(clubBuilder.in).toHaveBeenCalledWith('id', ['club-invite-only', 'club-accepted']);
+        expect(result[0].club?.name).toBe('Quiet Sci-Fi Circle');
+        expect(result[0].inviterProfile?.display_name).toBe('Admin Reader');
+        expect(result[0].read_at).toBeNull();
+        expect(result[1].club?.name).toBe('Accepted Classics');
+        expect(result[1].status).toBe('accepted');
     });
 
     it('creates an invite-only club invitation through the live rpc contract', async () => {
@@ -507,6 +807,34 @@ describe('clubsService', () => {
         expect(result.status).toBe('active');
     });
 
+    it('revokes a pending invitation through the live rpc contract', async () => {
+        (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+            data: { id: 'invite-revoke', club_id: 'club-16', inviter_user_id: 'user-admin', invitee_user_id: 'user-invitee', status: 'revoked', note: null, created_at: '2026-03-06T00:00:00Z', responded_at: '2026-05-23T00:00:00Z', read_at: null },
+            error: null,
+        });
+
+        const result = await clubsService.revokeClubInvitation('invite-revoke');
+
+        expect(supabase.rpc).toHaveBeenCalledWith('revoke_club_invitation', {
+            p_invitation_id: 'invite-revoke',
+        });
+        expect(result.status).toBe('revoked');
+    });
+
+    it('marks an invitation read through the live rpc contract', async () => {
+        (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+            data: { id: 'invite-read', club_id: 'club-16', inviter_user_id: 'user-admin', invitee_user_id: 'user-invitee', status: 'pending', note: null, created_at: '2026-03-06T00:00:00Z', responded_at: null, read_at: '2026-05-23T00:00:00Z' },
+            error: null,
+        });
+
+        const result = await clubsService.markInvitationRead('invite-read');
+
+        expect(supabase.rpc).toHaveBeenCalledWith('mark_invitation_read', {
+            p_invitation_id: 'invite-read',
+        });
+        expect(result.read_at).toBe('2026-05-23T00:00:00Z');
+    });
+
     it('maps member profile summaries onto club members', async () => {
         const membersBuilder = mockQuery({ data: [{ id: 'member-1', club_id: 'club-1', user_id: 'user-1', role: 'member', status: 'active', joined_at: null }], error: null });
         (supabase.from as jest.Mock).mockReturnValueOnce(membersBuilder);
@@ -515,6 +843,22 @@ describe('clubsService', () => {
         expect(supabase.from).toHaveBeenCalledWith('club_members');
         expect(profileService.getProfileSummaries).toHaveBeenCalledWith(['user-1']);
         expect(result[0].profile?.display_name).toBe('Reader One');
+    });
+
+    it('deduplicates member profile summary lookups for repeated member user ids', async () => {
+        const membersBuilder = mockQuery({
+            data: [
+                { id: 'member-1', club_id: 'club-1', user_id: 'user-1', role: 'member', status: 'active', joined_at: null },
+                { id: 'member-2', club_id: 'club-1', user_id: 'user-1', role: 'moderator', status: 'muted', joined_at: null },
+            ],
+            error: null,
+        });
+        (supabase.from as jest.Mock).mockReturnValueOnce(membersBuilder);
+        (profileService.getProfileSummaries as jest.Mock).mockResolvedValueOnce([{ id: 'profile-1', user_id: 'user-1', display_name: 'Reader One', avatar_url: null, trust_score: 4.8, city: 'Bangalore' }]);
+
+        await clubsService.getClubMembers('club-1');
+
+        expect(profileService.getProfileSummaries).toHaveBeenCalledWith(['user-1']);
     });
 
     it('maps club book nominations with book details, nominator profiles, and current user vote state', async () => {

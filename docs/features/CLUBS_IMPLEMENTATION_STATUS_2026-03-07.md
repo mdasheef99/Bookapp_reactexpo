@@ -4,6 +4,8 @@
 
 This document records the **current implementation reality** for Clubs after the audit and remediation work completed on `2026-03-07`.
 
+> **Historical snapshot note (2026-05-25):** This file preserves the March implementation/audit history. For the current implemented-vs-pending state after Create Club, reading progress, invitation revoke/read-state, venue picker, and nomination-gating updates, use `docs/features/CLUBS_IMPLEMENTATION_INVENTORY.md` and `docs/audits/CLUBS_PENDING_INVENTORY_2026-04-24.md`.
+
 Use this together with:
 - `docs/features/CLUBS_SPEC_2026-03-06_234839.md` for canonical product intent and roadmap.
 - `docs/features/CLUBS_LIVE_BACKEND_CONTRACT_2026-03-07.md` for verified live Supabase behavior.
@@ -144,7 +146,7 @@ Use this together with:
 
 ### Partially implemented or not re-verified in this session
 
-- the current Manage Club route baseline remains the audited one from `2026-03-07` (basic settings slice + join-question management + admin-only member-role/remove-member actions), but those admin actions were not re-walked end to end in this session
+- the current Manage Club route baseline has expanded beyond the original audited narrow slice: it now includes current-book workflows, lightweight analytics, admin event administration, the current settings slice, member-role/status management, and join-question management
 - invite acceptance still exists in the client/live RPC surface, but it was not re-verified in this session because the dev login user had no fresh pending invitation
 - the current dev login user state is no longer clean-room neutral after validation: it now has an active membership in `ZZ_TEST Manage Basics Club` and a pending application in `ZZ_TEST Approval Club`
 
@@ -210,6 +212,8 @@ Use this together with:
   - `review_club_join_application`
   - `create_club_invitation`
   - `accept_club_invitation`
+  - `revoke_club_invitation`
+  - `mark_invitation_read`
 - live entitlement helpers now exist for Clubs enforcement:
   - `user_meets_club_access_level`
   - `can_user_hold_club_role`
@@ -217,8 +221,8 @@ Use this together with:
 
 ### Still incomplete or caveated
 
-- live `revoke_club_invitation` RPC is still missing
-- live `mark_invitation_read` RPC is still missing
+- invitee-facing invitation inbox/read badge UX is still incomplete
+- manual invite-only lifecycle validation with real users/sessions is still pending
 - the raw `book_clubs` SELECT policy still does not serve as the public-by-type contract; the app correctly relies on `club_public_details` instead
 
 ### Relevant backend surfaces
@@ -394,37 +398,57 @@ Use this together with:
 
 ### Intended scope
 
-- broader manage-club settings, starting with join rules; the current route remains primarily the join-question-management surface, with a first basic settings slice now added
+- broader manage-club settings, starting with join rules; the current route now includes current-book workflows, lightweight analytics, event administration, member management, and join-question management, while still remaining intentionally bounded
 
 ### Current implementation status
 
-**Partial and intentionally narrowed.**
+**Implemented, but still intentionally bounded.**
 
 ### Implemented now
 
 - route: `app/(tabs)/clubs/[clubId]/manage.tsx`
 - screen: `src/features/clubs/screens/ClubManageScreen.tsx`
 - admin-only access guard on the manage surface
+- current-book workflows:
+  - view current book
+  - finalize a closed nomination
+  - set an active nomination as current book
+  - manual override via nomination-backed shortcut flow
+- lightweight analytics summary cards
+- admin event administration:
+  - create
+  - edit
+  - cancel
+  - delete cancelled/past events
 - first basic settings slice via live-supported `book_clubs` updates:
   - metadata editing
   - privacy / access rule editing
   - cover photo URL field
+  - member-cap editing
   - meeting format editing
+  - saved-state summary, reset affordance, and validation
+- member role/status management:
+  - assign/remove moderator
+  - mute/unmute member
+  - remove member
 - join-question CRUD via:
   - `useClubJoinQuestions`
   - `useCreateClubJoinQuestion`
   - `useUpdateClubJoinQuestion`
   - `useDeleteClubJoinQuestion`
+- conditional applications and invitations tabs tied to club type
 
 ### Remediated after audit
 
 - corrected stale copy that implied broader settings were already in progress
-- kept labels/copy honest so the screen is still presented as primarily **join-question management**, not a complete manage-club surface
+- kept labels/copy honest so the screen is still presented as a bounded club-management surface, not a complete governance dashboard
 
 ### Still partial / caveats
 
 - the current settings support is only the first basic slice, not a complete manage-club settings surface
 - admin-only moderator assignment/remove-member actions remain part of the current manage-screen baseline, and moderator assignment is now constrained by live paid-tier + access-level enforcement
+- the current events tab/actions are admin-only in the client, even though the live backend now supports creator-scoped eligible-manager event management
+- current-book management is implemented, but the longer-term product rule for nominations versus override flows still needs clarification
 - archive is out of the accepted current Manage Club roadmap
 - the detailed intended Manage Club expansion path now lives in `docs/features/CLUBS_MANAGE_CLUB_SPEC_2026-03-07.md`
 
@@ -438,7 +462,7 @@ Use this together with:
 
 ### Current implementation status
 
-**Partial, with live entitlement enforcement aligned but invite-lifecycle gaps still present.**
+**Partial, with live entitlement and invitation revoke/read-state backend support aligned; invitee inbox UX and manual lifecycle validation remain pending.**
 
 ### Implemented now
 
@@ -447,25 +471,32 @@ Use this together with:
 - service/hook path:
   - `useClubInvitations`
   - `useCreateClubInvitation`
+  - `useRevokeClubInvitation`
+  - `useMarkInvitationRead`
   - `clubsService.getClubInvitations()`
   - `clubsService.createClubInvitation()`
+  - `clubsService.revokeClubInvitation()`
+  - `clubsService.markInvitationRead()`
 - backend path:
   - `public.club_invitations`
   - live `create_club_invitation` RPC
   - live `accept_club_invitation` RPC is surfaced in the client through the club-detail invitation-acceptance flow
+  - live `revoke_club_invitation` RPC
+  - live `mark_invitation_read` RPC
+  - live `club_invitations.read_at`
 
 ### Remediated after audit
 
 - aligned invite-screen copy with current live capabilities
 - removed unsupported local invitation status drift (`declined`)
 - normalized invitation loading/sending entitlement failures so the screen matches the live eligible-manager backend checks
+- added revoke/read-state service and hook support after the 2026-05-23 live migration
+- surfaced pending-invitation revoke in Manage Club invitations
 
 ### Still partial / blocked
 
 - no invitee-facing invitation inbox yet
-- no live revoke RPC yet
-- no live read-state RPC yet
-- resend/revoke/read-state cannot be called complete until backend support exists or the scope is explicitly reduced
+- resend/revoke/read-state cannot be called complete until inbox UX and real-session lifecycle validation are finished or the scope is explicitly reduced
 
 ## Deferred or still-partial phases
 
@@ -511,21 +542,18 @@ Use this together with:
 - fixed the recursive `public.club_members` SELECT policy that caused `42P17 infinite recursion detected in policy for relation "club_members"`
 - updated public join to avoid depending on insert-time row representation for `club_members`
 
-## What is blocked by live backend gaps
+## What still needs UX/validation
 
-- full invite revoke workflow
-- invitation read-state/inbox workflow
+- invitee-facing invitation inbox/read-state UX
+- manual full invite-only lifecycle validation with real users/sessions
 - any claim that invite-only Clubs are fully complete end-to-end
 
 ## What should come next
 
-1. Refine and validate the current **basic club settings** slice for full Manage Club expansion.
-2. Define the next justified Manage Club work around:
-   - moderator assignment
-   - remove-member workflows
-   - deeper settings coverage where needed
-3. Schedule targeted backend work for the known invite-only blockers:
-   - `revoke_club_invitation`
-   - `mark_invitation_read`
-4. Add real seeded Clubs data in a safe environment if stronger end-to-end validation is needed.
-5. Keep future Clubs work aligned to the canonical spec, this status doc, the dedicated Manage Club spec, and the live backend contract doc together.
+1. Refine and validate the current **basic club settings** slice for fuller Manage Club expansion.
+2. Align the manage UI with the live backend capability model where appropriate, especially for moderator event-management parity.
+3. Resolve the remaining current-book product-policy questions around nomination-driven versus override-driven flows.
+4. Finish and validate the invite-only lifecycle UX now that `revoke_club_invitation` and `mark_invitation_read` are live.
+5. Define whether richer analytics/reporting belongs in the near-term Manage Club roadmap or should stay out of scope.
+6. Add real seeded Clubs data in a safe environment if stronger end-to-end validation is needed.
+7. Keep future Clubs work aligned to the canonical spec, this status doc, the dedicated Manage Club spec, and the live backend contract doc together.

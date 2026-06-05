@@ -9,7 +9,11 @@ import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useListingDetails } from '@/features/exchange/hooks/useListings';
 import { useRequestTransaction } from '@/features/exchange/hooks/useTransactions';
-import type { DeliveryOption } from '@/features/exchange/services/listingsService';
+import {
+    DELIVERY_OPTION_META,
+    getDefaultRequestDeliveryOption,
+    isDeliveryOptionEnabled,
+} from '@/features/exchange/config/exchangeConfig';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -20,14 +24,6 @@ const CONDITION_LABELS: Record<string, string> = {
     acceptable: '👌 Okay',
     poor: '📦 Poor',
 };
-
-const DELIVERY_LABELS: Record<string, string> = {
-    meetup: '🤝 Meetup',
-    porter: '🚲 Porter',
-    dunzo: '🚗 Dunzo',
-};
-
-const SUPPORTED_DELIVERY: DeliveryOption = 'meetup';
 
 export default function ListingDetailScreen() {
     const { listingId } = useLocalSearchParams<{ listingId: string }>();
@@ -42,12 +38,12 @@ export default function ListingDetailScreen() {
 
     const isOwner = currentUserId === listing?.owner_id;
     const isActive = listing?.status === 'active';
-    const meetupAvailable = (listing?.delivery_options ?? []).includes(SUPPORTED_DELIVERY);
+    const selectedDelivery = getDefaultRequestDeliveryOption(listing?.delivery_options ?? []);
+    const requestDeliveryAvailable = selectedDelivery !== null;
     const hasUnsupportedDeliveryOptions = (listing?.delivery_options ?? []).some(
-        option => option !== SUPPORTED_DELIVERY
+        option => !isDeliveryOptionEnabled(option)
     );
-    const selectedDelivery: DeliveryOption | null = meetupAvailable ? SUPPORTED_DELIVERY : null;
-    const canRequest = !isOwner && isActive && meetupAvailable && !requestMutation.isPending;
+    const canRequest = !isOwner && isActive && requestDeliveryAvailable && !requestMutation.isPending;
 
     const handleRequest = () => {
         if (!currentUserId || !listing || !selectedDelivery) return;
@@ -197,14 +193,14 @@ export default function ListingDetailScreen() {
                     <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
                         {isOwner ? 'Delivery Option' : 'Exchange Method'}
                     </Text>
-                    {meetupAvailable ? (
+                    {selectedDelivery ? (
                         <View style={styles.chipRow}>
                             <View
                                 testID="exchange-meetup-chip"
                                 style={[styles.chip, { borderColor: colors.accent, backgroundColor: colors.accent }]}
                             >
                                 <Text style={[styles.chipText, { color: '#FFF' }]}>
-                                    {DELIVERY_LABELS[SUPPORTED_DELIVERY]}
+                                    {DELIVERY_OPTION_META[selectedDelivery].filterLabel}
                                 </Text>
                             </View>
                         </View>
@@ -245,7 +241,7 @@ export default function ListingDetailScreen() {
                             <Text style={[styles.ctaBtnText, { color: canRequest ? '#FFF' : colors.textTertiary }]}>
                                 {canRequest
                                     ? '📚 Request Meetup Exchange'
-                                    : meetupAvailable
+                                    : requestDeliveryAvailable
                                         ? 'Meetup exchange only'
                                         : 'Meetup not available'}
                             </Text>

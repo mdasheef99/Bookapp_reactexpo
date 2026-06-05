@@ -46,17 +46,26 @@ export function ClubManageCurrentBookSection({ club, nominations, isLoading, isE
                     {club.current_book_authors && (
                         <Text style={[styles.authors, { color: colors.textSecondary }]}>{club.current_book_authors.join(', ')}</Text>
                     )}
+                    <Text style={[styles.helperText, { color: colors.textSecondary }]}>
+                        The normal flow is to choose the current read from club nominations. Admin override is available for exceptions.
+                    </Text>
                 </View>
             ) : (
                 <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                     <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Current book</Text>
                     <Text style={[styles.placeholder, { color: colors.textSecondary }]}>No current book is set.</Text>
+                    <Text style={[styles.helperText, { color: colors.textSecondary }]}>
+                        Start with nominations whenever possible. Admin override is there when the club needs to bypass the normal selection path.
+                    </Text>
                 </View>
             )}
 
             {nominations.length > 0 && (
                 <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                     <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Nominations</Text>
+                    <Text style={[styles.helperText, { color: colors.textSecondary }]}>
+                        {"Nominations are the default source of truth for choosing the club's current read."}
+                    </Text>
                     {nominations.map((nom) => {
                         const isVotingClosed = hasNominationVotingClosed(nom.voting_ends_at);
                         const canFinalize = isAdmin && nom.status === 'active' && isVotingClosed;
@@ -104,6 +113,16 @@ export function ClubManageCurrentBookSection({ club, nominations, isLoading, isE
                                             Selected: will be finalized when confirmed
                                         </Text>
                                     )}
+                                    {canFinalize && (
+                                        <Text style={[styles.nominationHint, { color: colors.textSecondary }]}>
+                                            Voting is closed. Finalize this nomination to make it the current club read.
+                                        </Text>
+                                    )}
+                                    {canSetCurrent && (
+                                        <Text style={[styles.nominationHint, { color: colors.textSecondary }]}>
+                                            Admin shortcut: set this active nomination as the current read before voting closes.
+                                        </Text>
+                                    )}
                                 </View>
 
                                 {canFinalize && (
@@ -147,8 +166,8 @@ export function ClubManageCurrentBookSection({ club, nominations, isLoading, isE
                     onPress={onShowOverride}
                     style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
                 >
-                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Manual override</Text>
-                    <Text style={[styles.placeholder, { color: colors.textSecondary }]}>Set a current book directly without nominations or voting.</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Admin override</Text>
+                    <Text style={[styles.placeholder, { color: colors.textSecondary }]}>Use only when the club needs to bypass the normal nomination and voting flow.</Text>
                 </TouchableOpacity>
             )}
         </View>
@@ -183,6 +202,11 @@ const styles = StyleSheet.create({
     authors: {
         fontSize: 13,
         marginTop: 2,
+    },
+    helperText: {
+        fontSize: 12,
+        marginTop: 8,
+        lineHeight: 18,
     },
     placeholder: {
         fontSize: 14,
@@ -230,6 +254,11 @@ const styles = StyleSheet.create({
         fontSize: 12,
         marginTop: 2,
         fontWeight: '700',
+    },
+    nominationHint: {
+        fontSize: 12,
+        marginTop: 6,
+        lineHeight: 18,
     },
     finalizeButton: {
         paddingVertical: 6,

@@ -46,6 +46,13 @@ beforeEach(() => {
 });
 
 describe('ClubInviteScreen', () => {
+  it('shows current live invitation workflow copy', () => {
+    const { getByText, queryByText } = render(<ClubInviteScreen />);
+
+    expect(getByText(/This screen supports username-based invitation creation and invitation history\. Manage Club handles pending-invite revocation, and read-state support is wired for invitee workflows\./i)).toBeOnTheScreen();
+    expect(queryByText(/not exposed live yet/i)).toBeNull();
+  });
+
   it('shows a normalized entitlement error when invitation history cannot be loaded', () => {
     mockUseClubInvitations.mockReturnValue({
       data: [],

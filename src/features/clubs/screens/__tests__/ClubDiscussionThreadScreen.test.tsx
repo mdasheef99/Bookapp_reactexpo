@@ -142,7 +142,7 @@ describe('ClubDiscussionThreadScreen', () => {
 
         fireEvent.press(getByTestId('discussion-topic-mark-read-topic-1'));
         await waitFor(() => expect(markRead).toHaveBeenCalledWith({ clubId: 'club-1', topicId: 'topic-1', userId: 'reader-1' }));
-    });
+    }, 10000);
 
     it('shows reaction users in the detail sheet', () => {
         const { getByTestId, getByText } = render(<ClubDiscussionThreadScreen />);

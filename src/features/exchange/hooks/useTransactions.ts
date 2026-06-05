@@ -1,9 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import {
     transactionsService,
+    type FileDisputeParams,
     type RequestTransactionParams,
     type TransactionStatus,
 } from '../services/transactionsService';
+import { listingKeys } from './useListings';
 
 // ─── Query Keys ────────────────────────────────────────────────────────────────
 
@@ -18,6 +20,16 @@ export const transactionKeys = {
     detail: (transactionId: string) =>
         [...transactionKeys.all, 'detail', transactionId] as const,
 };
+
+function invalidateCreditQueries(queryClient: QueryClient) {
+    queryClient.invalidateQueries({ queryKey: ['creditBalance'] });
+    queryClient.invalidateQueries({ queryKey: ['creditHistory'] });
+}
+
+function invalidateListingAndCreditQueries(queryClient: QueryClient) {
+    queryClient.invalidateQueries({ queryKey: listingKeys.all });
+    invalidateCreditQueries(queryClient);
+}
 
 // ─── Hooks ─────────────────────────────────────────────────────────────────────
 
@@ -79,6 +91,7 @@ export function useRequestTransaction() {
             transactionsService.requestTransaction(params),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: transactionKeys.all });
+            invalidateListingAndCreditQueries(queryClient);
         },
     });
 }
@@ -109,6 +122,7 @@ export function useDeclineTransaction() {
         onSuccess: (_data, { transactionId }) => {
             queryClient.invalidateQueries({ queryKey: transactionKeys.all });
             queryClient.invalidateQueries({ queryKey: transactionKeys.detail(transactionId) });
+            invalidateListingAndCreditQueries(queryClient);
         },
     });
 }
@@ -125,6 +139,7 @@ export function useCancelTransaction() {
         onSuccess: (_data, { transactionId }) => {
             queryClient.invalidateQueries({ queryKey: transactionKeys.all });
             queryClient.invalidateQueries({ queryKey: transactionKeys.detail(transactionId) });
+            invalidateListingAndCreditQueries(queryClient);
         },
     });
 }
@@ -141,6 +156,7 @@ export function useCompleteTransaction() {
         onSuccess: (_data, { transactionId }) => {
             queryClient.invalidateQueries({ queryKey: transactionKeys.all });
             queryClient.invalidateQueries({ queryKey: transactionKeys.detail(transactionId) });
+            invalidateListingAndCreditQueries(queryClient);
         },
     });
 }
@@ -161,6 +177,20 @@ export function useTransitionStatus() {
             newStatus: TransactionStatus;
             actorId: string;
         }) => transactionsService.transitionStatus(transactionId, newStatus, actorId),
+        onSuccess: (_data, { transactionId }) => {
+            queryClient.invalidateQueries({ queryKey: transactionKeys.all });
+            queryClient.invalidateQueries({ queryKey: transactionKeys.detail(transactionId) });
+        },
+    });
+}
+
+/**
+ * File a dispute for a delivered transaction.
+ */
+export function useFileDispute() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (params: FileDisputeParams) => transactionsService.fileDispute(params),
         onSuccess: (_data, { transactionId }) => {
             queryClient.invalidateQueries({ queryKey: transactionKeys.all });
             queryClient.invalidateQueries({ queryKey: transactionKeys.detail(transactionId) });

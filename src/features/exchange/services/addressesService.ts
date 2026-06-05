@@ -78,13 +78,6 @@ export const addressesService = {
     async createAddress(input: CreateAddressInput): Promise<Address> {
         const { userId, name, phone, line1, line2, city, state, pincode, isDefault = false } = input;
 
-        if (isDefault) {
-            await supabase
-                .from('user_addresses')
-                .update({ is_default: false })
-                .eq('user_id', userId);
-        }
-
         const { data, error } = await supabase
             .from('user_addresses')
             .insert({
@@ -96,12 +89,18 @@ export const addressesService = {
                 city,
                 state,
                 pincode,
-                is_default: isDefault,
+                is_default: false,
             })
             .select()
             .single();
 
         if (error) throw error;
+
+        if (isDefault) {
+            await addressesService.setDefaultAddress(userId, data.id);
+            return { ...data, is_default: true } as Address;
+        }
+
         return data as Address;
     },
 
@@ -109,14 +108,30 @@ export const addressesService = {
      * Update an existing address by id.
      */
     async updateAddress(id: string, input: UpdateAddressInput): Promise<Address> {
-        const { data, error } = await supabase
-            .from('user_addresses')
-            .update(input)
-            .eq('id', id)
-            .select()
-            .single();
+        const { is_default: shouldSetDefault, ...fields } = input;
+        const updatePayload = shouldSetDefault === true ? fields : input;
+        const hasAddressFields = Object.keys(updatePayload).length > 0;
+
+        const { data, error } = hasAddressFields
+            ? await supabase
+                .from('user_addresses')
+                .update(updatePayload)
+                .eq('id', id)
+                .select()
+                .single()
+            : await supabase
+                .from('user_addresses')
+                .select()
+                .eq('id', id)
+                .single();
 
         if (error) throw error;
+
+        if (shouldSetDefault === true) {
+            await addressesService.setDefaultAddress(data.user_id, id);
+            return { ...data, is_default: true } as Address;
+        }
+
         return data as Address;
     },
 
@@ -136,17 +151,10 @@ export const addressesService = {
      * Set one address as the default, clearing is_default on all others for the user.
      */
     async setDefaultAddress(userId: string, addressId: string): Promise<void> {
-        const { error: clearError } = await supabase
-            .from('user_addresses')
-            .update({ is_default: false })
-            .eq('user_id', userId);
-
-        if (clearError) throw clearError;
-
-        const { error } = await supabase
-            .from('user_addresses')
-            .update({ is_default: true })
-            .eq('id', addressId);
+        const { error } = await supabase.rpc('set_default_user_address', {
+            p_user_id: userId,
+            p_address_id: addressId,
+        });
 
         if (error) throw error;
     },

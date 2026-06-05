@@ -238,10 +238,8 @@ Status meanings:
 
 - Create-club backend service exists:
   - `src/features/clubs/services/clubsManagementService.ts`
-- But no create-club route was found in `app/`
-- No `useCreateClub` hook was found in `src/features/clubs/hooks/useClubs.ts`
-- No `revoke_club_invitation` implementation found in app or edge functions
-- No `mark_invitation_read` implementation found in app or edge functions
+- 2026-05-24 update: create-club route/hook support now exists in the Clubs/Profile slice.
+- 2026-05-24 update: `revoke_club_invitation` and `mark_invitation_read` now exist in app services/hooks and live Supabase; invitee inbox UX remains a separate gap.
 - Reading schedule/progress backend tables exist only in migrations:
   - `supabase/migrations/20251228114118_004_chat_and_moderation.sql`
 - No reading schedule or member-progress UI route/module found in `app/` or `src/features/clubs/screens/`

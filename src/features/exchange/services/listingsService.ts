@@ -109,6 +109,22 @@ async function uploadPhoto(
     return data.publicUrl;
 }
 
+function getListingPhotoPaths(photoUrls: string[]): string[] {
+    return photoUrls
+        .map(url => {
+            const match = url.match(/listing-photos\/(.+)$/);
+            return match ? match[1] : null;
+        })
+        .filter(Boolean) as string[];
+}
+
+async function removeListingPhotos(photoUrls: string[]): Promise<void> {
+    const paths = getListingPhotoPaths(photoUrls);
+    if (paths.length > 0) {
+        await supabase.storage.from('listing-photos').remove(paths);
+    }
+}
+
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 export const listingsService = {
@@ -126,7 +142,8 @@ export const listingsService = {
             throw new Error('Listings require between 2 and 4 photos.');
         }
 
-        // Step 1: Insert placeholder row to get a UUID
+        // Step 1: Insert a hidden draft row to get a UUID.
+        // Keep the placeholder array schema-valid for the >=2 photos constraint.
         const { data: draft, error: insertError } = await supabase
             .from('listings')
             .insert({
@@ -135,10 +152,10 @@ export const listingsService = {
                 book_id: bookId,
                 condition,
                 condition_notes: conditionNotes ?? null,
-                photos: ['placeholder'],   // Will be replaced after upload
+                photos: photoUris.map(() => 'uploading'),
                 delivery_options: deliveryOptions,
                 city,
-                status: 'active',
+                status: 'paused',
             })
             .select()
             .single();
@@ -160,12 +177,20 @@ export const listingsService = {
         // Step 3: Update row with real photo URLs
         const { data: listing, error: updateError } = await supabase
             .from('listings')
-            .update({ photos: photoUrls })
+            .update({ photos: photoUrls, status: 'active' })
             .eq('id', draft.id)
             .select()
             .single();
 
-        if (updateError) throw updateError;
+        if (updateError) {
+            await supabase.from('listings').delete().eq('id', draft.id);
+            try {
+                await removeListingPhotos(photoUrls);
+            } catch {
+                console.warn('listingsService.createListing: failed to clean up storage photos');
+            }
+            throw updateError;
+        }
         return listing as Listing;
     },
 
@@ -295,6 +320,7 @@ export const listingsService = {
             .from('listings')
             .select('photos, status')
             .eq('id', listingId)
+            .eq('owner_id', ownerId)
             .single();
 
         if (fetchError) throw fetchError;
@@ -306,22 +332,13 @@ export const listingsService = {
         const { error: deleteError } = await supabase
             .from('listings')
             .delete()
-            .eq('id', listingId);
+            .eq('id', listingId)
+            .eq('owner_id', ownerId);
         if (deleteError) throw deleteError;
 
         // Best-effort cleanup of storage photos (don't fail if this errors)
         try {
-            const paths = (listing.photos as string[])
-                .map(url => {
-                    // Extract path after bucket name in URL
-                    const match = url.match(/listing-photos\/(.+)$/);
-                    return match ? match[1] : null;
-                })
-                .filter(Boolean) as string[];
-
-            if (paths.length > 0) {
-                await supabase.storage.from('listing-photos').remove(paths);
-            }
+            await removeListingPhotos(listing.photos as string[]);
         } catch {
             console.warn('listingsService.deleteListing: failed to clean up storage photos');
         }

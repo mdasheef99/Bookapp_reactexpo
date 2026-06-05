@@ -8,7 +8,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { profileService } from '@/features/auth/services/profileService';
 import { navigateBackOrFallback } from '@/lib/navigation';
-import { useAcceptClubInvitation, useCastClubBookVote, useClubBookNominations, useClubCurrentBookStatusOverview, useClubJoinQuestions, useClubMembers, useClubMembership, useClubPublicDetail, useJoinClub, useLeaveClub, useMyClubApplication, useMyClubInvitation, useRemoveClubBookVote, useSetClubCurrentBookReadingStatus } from '@/features/clubs/hooks/useClubs';
+import { useAcceptClubAdminTransferRequest, useAcceptClubInvitation, useCastClubBookVote, useClubAdminTransferRequests, useClubBookNominations, useClubCurrentBookStatusOverview, useClubJoinQuestions, useClubMembers, useClubMembership, useClubPublicDetail, useJoinClub, useLeaveClub, useMyClubApplication, useMyClubInvitation, useRemoveClubBookVote, useSetClubCurrentBookReadingStatus } from '@/features/clubs/hooks/useClubs';
 import { ClubMemberList } from '@/features/clubs/components/ClubMemberList';
 import { getClubAccessRequirementMessage, getClubsEntitlementErrorMessage, membershipTierSatisfiesAccessLevel } from '@/features/clubs/services/clubsEntitlement';
 import type { AccessLevel, ClubBookNominationWithDetails, ClubCurrentBookReadingStatus, ClubJoinQuestion, ClubType, MeetingType, MembershipTier } from '@/features/clubs/services/clubsService';
@@ -77,6 +77,7 @@ export default function ClubDetailScreen() {
     const { data: joinQuestions = [], isLoading: isQuestionsLoading } = useClubJoinQuestions(clubId ?? null, shouldLoadApplicationData);
     const { data: myApplication, isLoading: isApplicationLoading } = useMyClubApplication(clubId ?? null, userId, shouldLoadApplicationData);
     const { data: myInvitation, isLoading: isInvitationLoading } = useMyClubInvitation(clubId ?? null, userId, shouldLoadInvitationData);
+    const { data: adminTransferRequests = [], refetch: refetchAdminTransferRequests } = useClubAdminTransferRequests(clubId ?? null, !!userId);
     const { data: members = [], isLoading: isMembersLoading } = useClubMembers(clubId ?? null, isMember);
     const { data: nominations = [], isLoading: isNominationsLoading, isError: isNominationsError, error: nominationsError, refetch: refetchNominations } = useClubBookNominations(clubId ?? null, userId, isMember);
     const shouldLoadCurrentBookStatus = isMember && !!club?.current_book_id;
@@ -85,6 +86,7 @@ export default function ClubDetailScreen() {
     const removeVoteMutation = useRemoveClubBookVote();
     const setCurrentBookStatusMutation = useSetClubCurrentBookReadingStatus();
     const leaveClubMutation = useLeaveClub();
+    const acceptAdminTransferMutation = useAcceptClubAdminTransferRequest();
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [actionFeedback, setActionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -105,6 +107,10 @@ export default function ClubDetailScreen() {
         { key: 'events' as const, label: 'Events' },
         { key: 'discussion' as const, label: 'Discussion' },
     ];
+    const pendingAdminTransferRequest = useMemo(
+        () => adminTransferRequests.find((request) => request.status === 'pending' && request.proposed_admin_user_id === userId) ?? null,
+        [adminTransferRequests, userId],
+    );
 
     useEffect(() => {
         let isMounted = true;
@@ -220,6 +226,18 @@ export default function ClubDetailScreen() {
         }
     };
 
+    const handleAcceptAdminTransfer = async () => {
+        if (!clubId || !pendingAdminTransferRequest) return;
+        try {
+            setActionFeedback(null);
+            await acceptAdminTransferMutation.mutateAsync({ clubId, requestId: pendingAdminTransferRequest.id });
+            await Promise.all([refetch(), refetchAdminTransferRequests()]);
+            setActionFeedback({ type: 'success', message: 'You are now the club admin.' });
+        } catch (error) {
+            setActionFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to accept admin transfer right now.') });
+        }
+    };
+
     const handleAcceptInvitation = async () => {
         if (!clubId || !userId || !myInvitation) return setActionFeedback({ type: 'error', message: 'No pending invitation is available to accept for this account.' });
         if (blocksInvitationAcceptance) {
@@ -242,6 +260,7 @@ export default function ClubDetailScreen() {
 
     const executeLeave = async () => {
         setShowLeaveConfirm(false);
+        if (!clubId || !userId) return;
         try {
             setActionFeedback(null);
             await leaveClubMutation.mutateAsync({ clubId, userId });
@@ -260,7 +279,7 @@ export default function ClubDetailScreen() {
                     <View style={styles.detailItem}><Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Meeting format</Text><Text style={[styles.detailValue, { color: colors.textPrimary }]}>{club.meeting_type ? MEETING_TYPE_LABELS[club.meeting_type] : 'Flexible format'}</Text></View>
                     <View style={styles.detailItem}><Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Club admin</Text><Text style={[styles.detailValue, { color: colors.textPrimary }]}>{club.admin_display_name || 'BookTalks Reader'}</Text></View>
                     <View style={styles.detailItem}><Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Member capacity</Text><Text style={[styles.detailValue, { color: colors.textPrimary }]}>{club.max_members ? `${club.max_members} readers` : 'Open capacity'}</Text></View>
-                    {club.author_display_name ? <View style={styles.detailItem}><Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Featured author</Text><Text style={[styles.detailValue, { color: colors.textPrimary }]}>{club.author_display_name}</Text></View> : null}
+                    {club.author_display_name ? <View style={styles.detailItem}><Text style={[styles.detailLabel, { color: colors.textSecondary }]}>{club.club_type === 'author_club' ? 'Verified author' : 'Featured author'}</Text><Text style={[styles.detailValue, { color: colors.textPrimary }]}>{club.author_display_name}</Text></View> : null}
                     {(club.admin_city || club.author_city) ? <View style={styles.detailItem}><Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Community city</Text><Text style={[styles.detailValue, { color: colors.textPrimary }]}>{club.author_city || club.admin_city}</Text></View> : null}
                 </View>
             </View>
@@ -276,14 +295,28 @@ export default function ClubDetailScreen() {
                 {!isMember && myApplication?.status === 'pending' ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Application pending</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Your application is waiting for moderator review. You do not need to submit it again.</Text></View> : null}
                 {!isMember && myApplication?.status === 'declined' ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Application declined</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{myApplication.decline_reason || 'Your previous application was declined. Reapply is not available in this version yet.'}</Text></View> : null}
                 {!isMember && club.club_type === 'invite_only' && myInvitation ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Invitation ready</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>You have a pending invitation from {myInvitation.inviterProfile?.display_name || 'a club manager'}. Accepting it adds you to the club immediately through the live invite workflow.</Text>{myInvitation.note ? <Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{`Note: ${myInvitation.note}`}</Text> : null}</View> : null}
-                {!isMember && club.club_type === 'invite_only' && !myInvitation ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Invite required</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Invite-only clubs require a moderator or admin invitation. If you have already been invited, sign in with the invited account to accept it here. Revoke and read-state flows still depend on backend support.</Text></View> : null}
+                {!isMember && club.club_type === 'invite_only' && !myInvitation ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Invite required</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Invite-only clubs require a moderator or admin invitation. If you have already been invited, sign in with the invited account to accept it here.</Text></View> : null}
                 {!isMember && requiresApplication && !myApplication ? <View style={styles.joinSection}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Join questions</Text><Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Answer the questions below to apply for moderator review.</Text>{joinQuestions.length === 0 ? <Text style={[styles.noticeBody, { color: colors.textSecondary }]}>This club does not currently require written answers, so your application can be sent immediately.</Text> : null}{joinQuestions.map((question) => { const hasError = requiredQuestionErrors.includes(question.id); return <View key={question.id} style={styles.questionBlock}><Text style={[styles.questionLabel, { color: colors.textPrimary }]}>{question.question}{question.is_required ? ' *' : ''}</Text><TextInput value={answers[question.id] ?? ''} onChangeText={(value) => setAnswers((current) => ({ ...current, [question.id]: value }))} placeholder={getQuestionPlaceholder(question)} placeholderTextColor={colors.textTertiary} multiline style={[styles.answerInput, { color: colors.textPrimary, borderColor: hasError ? '#DC2626' : colors.border, backgroundColor: colors.bgPrimary }]} testID={`join-question-${question.id}`} /></View>; })}</View> : null}
                 {!isMember && !myApplication && userId && (canJoinDirectly || requiresApplication) ? <TouchableOpacity onPress={handleJoinAction} disabled={joinMutation.isPending || blocksDirectJoin} style={[styles.primaryActionButton, { backgroundColor: colors.accent, opacity: joinMutation.isPending || blocksDirectJoin ? 0.65 : 1 }]} testID="club-primary-action"><Text style={styles.primaryActionText}>{joinMutation.isPending ? 'Working…' : canJoinDirectly ? 'Join this club' : 'Apply to join'}</Text></TouchableOpacity> : null}
                 {!isMember && club.club_type === 'invite_only' && userId && myInvitation ? <TouchableOpacity onPress={handleAcceptInvitation} disabled={acceptInvitationMutation.isPending || blocksInvitationAcceptance} style={[styles.primaryActionButton, { backgroundColor: colors.accent, opacity: acceptInvitationMutation.isPending || blocksInvitationAcceptance ? 0.65 : 1 }]} testID="club-accept-invitation"><Text style={styles.primaryActionText}>{acceptInvitationMutation.isPending ? 'Accepting…' : 'Accept invitation'}</Text></TouchableOpacity> : null}
                 {actionFeedback ? <View style={[styles.feedbackBanner, { backgroundColor: actionFeedback.type === 'success' ? '#DCFCE7' : '#FEE2E2', borderColor: actionFeedback.type === 'success' ? '#22C55E' : '#EF4444' }]}><Text style={[styles.feedbackText, { color: actionFeedback.type === 'success' ? '#166534' : '#991B1B' }]}>{actionFeedback.message}</Text></View> : null}
             </View>
+            {pendingAdminTransferRequest ? (
+                <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="club-admin-transfer-offer">
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Admin transfer request</Text>
+                    <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>The current admin has asked you to take over this club. Accepting will make you the club admin and move the previous admin back to member status.</Text>
+                    <TouchableOpacity
+                        style={[styles.primaryActionButton, { backgroundColor: colors.accent, opacity: acceptAdminTransferMutation.isPending ? 0.65 : 1 }]}
+                        onPress={handleAcceptAdminTransfer}
+                        disabled={acceptAdminTransferMutation.isPending}
+                        testID="club-accept-admin-transfer"
+                    >
+                        <Text style={styles.primaryActionText}>{acceptAdminTransferMutation.isPending ? 'Accepting...' : 'Accept admin role'}</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : null}
             {requiresApplication && isManager ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Moderator tools</Text><Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Review pending join applications for this club with the live moderator workflow.</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => router.push(`/clubs/${club.id}/applications`)} testID="club-review-applications"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Review applications</Text></TouchableOpacity></View> : null}
-            {club.club_type === 'invite_only' && isManager ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Invitation tools</Text><Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Username-based invitation creation and invitation history are live here. Revocation and read tracking still depend on backend workflows that are not exposed live yet.</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => router.push(`/clubs/${club.id}/invite`)} testID="club-invite-readers"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Invite readers</Text></TouchableOpacity></View> : null}
+            {club.club_type === 'invite_only' && isManager ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Invitation tools</Text><Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Username-based invitation creation, invitation history, revocation, and read tracking are wired to the live invite backend.</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => router.push(`/clubs/${club.id}/invite`)} testID="club-invite-readers"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Invite readers</Text></TouchableOpacity></View> : null}
             {canOpenManageClub ? <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Club management</Text><Text style={[styles.sectionBody, { color: colors.textSecondary }]}>{isAdmin ? 'Open Manage Club for current-book management, plus the existing basic settings, member-role management, remove-member workflows, and join-question management.' : 'Open Manage Club to review nominations and finalize the current book after voting closes. The broader settings, member-role management, remove-member workflows, and join-question management stay admin-only.'}</Text><TouchableOpacity style={[styles.secondaryActionButton, { borderColor: colors.accent }]} onPress={() => router.push(`/clubs/${club.id}/manage`)} testID="club-manage"><Text style={[styles.secondaryActionText, { color: colors.accent }]}>Manage club</Text></TouchableOpacity></View> : null}
             <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Members</Text>

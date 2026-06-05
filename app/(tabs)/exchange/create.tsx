@@ -13,6 +13,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { profileService } from '@/features/auth/services/profileService';
 import { booksService } from '@/features/books/services/booksService';
 import { useCreateListing } from '@/features/exchange/hooks/useListings';
+import { DELIVERY_OPTION_META, ENABLED_DELIVERY_OPTIONS } from '@/features/exchange/config/exchangeConfig';
 import type { BookCondition, DeliveryOption } from '@/features/exchange/services/listingsService';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -25,11 +26,11 @@ const CONDITIONS: { value: BookCondition; label: string; emoji: string }[] = [
     { value: 'poor', label: 'Poor', emoji: '📦' },
 ];
 
-const DELIVERY_OPTIONS: { value: DeliveryOption; label: string; emoji: string }[] = [
-    { value: 'meetup', label: 'Meetup', emoji: '🤝' },
-    { value: 'porter', label: 'Porter', emoji: '🚲' },
-    { value: 'dunzo', label: 'Dunzo', emoji: '🚗' },
-];
+const DELIVERY_OPTIONS: { value: DeliveryOption; label: string; emoji: string }[] = ENABLED_DELIVERY_OPTIONS.map(value => ({
+    value,
+    label: DELIVERY_OPTION_META[value].label,
+    emoji: DELIVERY_OPTION_META[value].emoji,
+}));
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
@@ -47,7 +48,9 @@ export default function CreateListingScreen() {
 
     const { data: library, isLoading: libraryLoading, isError: libraryError } = useQuery({
         queryKey: ['library', session?.user?.id],
-        queryFn: () => booksService.getUserLibrary(session!.user.id),
+        queryFn: () => booksService.getUserLibrary(session!.user.id, {
+            excludeOwnership: ['wishlist', 'borrowed', 'lent_out'],
+        }),
         enabled: !!session?.user?.id,
         retry: 0,
     });
@@ -74,7 +77,7 @@ export default function CreateListingScreen() {
             return;
         }
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaType.Images,
+            mediaTypes: 'images',
             quality: 0.8,
             allowsMultipleSelection: Platform.OS !== 'web',
             selectionLimit: 4 - photoUris.length,
@@ -137,7 +140,7 @@ export default function CreateListingScreen() {
                 ) : libraryError || !library?.length ? (
                     <View style={[styles.emptyLibrary, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                         <Text style={[styles.emptyLibraryText, { color: colors.textSecondary }]}>
-                            No books in your library. Add books first.
+                            No owned books ready to list. Add a book to your library first.
                         </Text>
                     </View>
                 ) : (

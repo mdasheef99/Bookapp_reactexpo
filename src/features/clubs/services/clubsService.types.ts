@@ -6,6 +6,7 @@ export type AccessLevel = 'all' | 'pro' | 'pro_plus';
 export type MeetingType = 'online_only' | 'venue_based' | 'hybrid';
 export type MemberRole = 'member' | 'moderator' | 'admin';
 export type MemberStatus = 'active' | 'muted' | 'banned';
+export type ClubMemberActionType = 'warned' | 'muted' | 'banned';
 export type ClubJoinApplicationStatus = 'pending' | 'approved' | 'declined';
 export type MembershipTier = 'free' | 'pro' | 'pro_plus';
 export type MembershipLimitAction = 'create_club' | 'check_downgrade';
@@ -16,6 +17,9 @@ export type ClubCurrentBookReadingStatus = 'want_to_read' | 'reading' | 'complet
 export type ClubDiscussionVoteType = 'upvote' | 'downvote';
 export type ClubDiscussionReactionEmoji = '👍' | '❤️' | '🔥' | '👏' | '😂';
 export type ClubDiscussionReportReason = 'spam' | 'abuse' | 'off_topic' | 'spoiler' | 'other';
+export type ClubComplaintReason = 'spam' | 'harassment' | 'spoilers' | 'other';
+export type ClubComplaintStatus = 'pending' | 'reviewing' | 'resolved' | 'dismissed';
+export type ClubComplaintResolutionAction = 'warned' | 'muted' | 'banned' | 'no_action';
 
 export interface ClubBookSummary { id: string; title: string; authors: string[] | null; cover_url: string | null; }
 export interface ClubCurrentBookStatusOverview {
@@ -56,6 +60,10 @@ export interface ClubPublicDetails {
     created_at: string | null;
     updated_at: string | null;
 }
+export interface ClubManageDetails extends ClubPublicDetails {
+    is_archived: boolean | null;
+    archived_at: string | null;
+}
 export interface Club {
     id: string; name: string; description: string | null; cover_url: string | null; club_type: ClubType;
     access_level: AccessLevel | null; current_book_id: string | null; admin_id: string | null;
@@ -67,6 +75,34 @@ export interface ClubWithBook extends Club { current_book: ClubBookSummary | nul
 export interface ClubWithDetails extends ClubWithBook { admin: UserProfileSummary | null; }
 export interface ClubMember { id: string; club_id: string | null; user_id: string | null; role: MemberRole | null; status: MemberStatus | null; joined_at: string | null; }
 export interface ClubMemberWithProfile extends ClubMember { profile: UserProfileSummary | null; }
+export interface ClubMemberAction {
+    id: string;
+    club_id: string | null;
+    user_id: string | null;
+    action_type: ClubMemberActionType;
+    reason: string;
+    duration_hours: number | null;
+    expires_at: string | null;
+    performed_by: string | null;
+    created_at: string | null;
+}
+export interface CreateClubMemberActionInput {
+    clubId: string;
+    userId: string;
+    actionType: ClubMemberActionType;
+    reason: string;
+    durationHours?: number | null;
+}
+export interface ClubAdminTransferRequest {
+    id: string;
+    club_id: string;
+    requested_by: string;
+    proposed_admin_user_id: string;
+    status: 'pending' | 'accepted' | 'cancelled' | 'expired';
+    created_at: string;
+    responded_at: string | null;
+    expires_at: string;
+}
 export interface ClubJoinQuestion { id: string; club_id: string | null; question: string; is_required: boolean | null; order_index: number; }
 export interface ClubJoinQuestionInput { question: string; isRequired?: boolean; orderIndex: number; }
 export interface ClubJoinApplication {
@@ -96,12 +132,15 @@ export interface MembershipLimitResult { allowed: boolean; current_count: number
 export interface JoinClubResult { status: 'joined' | 'applied'; membership?: ClubMember; application?: ClubJoinApplication; }
 export type ReviewApplicationDecision = 'approved' | 'declined';
 export type ClubInvitationStatus = 'pending' | 'accepted' | 'expired' | 'revoked';
-export interface ClubInvitation { id: string; club_id: string; inviter_user_id: string; invitee_user_id: string; status: ClubInvitationStatus | string; note: string | null; created_at: string; responded_at: string | null; }
+export interface ClubInvitation { id: string; club_id: string; inviter_user_id: string; invitee_user_id: string; status: ClubInvitationStatus | string; note: string | null; created_at: string; responded_at: string | null; read_at?: string | null; }
 export interface ClubInvitationWithProfiles extends ClubInvitation { inviterProfile: UserProfileSummary | null; inviteeProfile: UserProfileSummary | null; }
+export interface ClubInvitationInboxItem extends ClubInvitationWithProfiles { club: ClubPublicDetails | null; }
+export interface ClubInvitationInboxOptions { limit?: number; offset?: number; }
 
 export interface ClubVenueSummary {
     id: string;
     name: string;
+    venue_type: string | null;
     city: string | null;
     address_line1: string | null;
     address_line2: string | null;
@@ -156,6 +195,35 @@ export interface ClubEventInput {
 }
 export interface CreateClubEventInput extends ClubEventInput { clubId: string; }
 export interface UpdateClubEventInput extends ClubEventInput {}
+
+export interface ClubReadingScheduleMilestone {
+    id: string;
+    label: string;
+    target: string;
+    dueDate: string | null;
+}
+export interface ClubMemberReadingProgress {
+    id: string;
+    schedule_id: string | null;
+    user_id: string | null;
+    chapters_completed: number | null;
+    last_updated: string | null;
+}
+export interface ClubReadingSchedule {
+    id: string;
+    club_id: string | null;
+    book_id: string | null;
+    milestones: ClubReadingScheduleMilestone[];
+    created_by: string | null;
+    created_at: string | null;
+    currentUserProgress: ClubMemberReadingProgress | null;
+}
+export interface UpsertClubReadingScheduleInput {
+    clubId: string;
+    bookId: string;
+    milestones: ClubReadingScheduleMilestone[];
+    createdBy?: string | null;
+}
 
 export interface ClubDiscussionTopic {
     id: string;
@@ -218,6 +286,36 @@ export interface ClubDiscussionReport {
     created_at: string | null;
     resolved_at: string | null;
     resolved_by: string | null;
+}
+export interface ClubDiscussionReportWithTarget extends ClubDiscussionReport {
+    topic: Pick<ClubDiscussionTopic, 'id' | 'club_id' | 'title' | 'body' | 'author_user_id' | 'is_deleted'> | null;
+    reply: (Pick<ClubDiscussionReply, 'id' | 'topic_id' | 'body' | 'author_user_id' | 'is_deleted'> & {
+        topic?: Pick<ClubDiscussionTopic, 'id' | 'club_id' | 'title'> | null;
+    }) | null;
+    reporterProfile: UserProfileSummary | null;
+}
+export interface ClubComplaint {
+    id: string;
+    club_id: string | null;
+    reporter_id: string | null;
+    reported_user_id: string | null;
+    message_id: string | null;
+    reason: ClubComplaintReason | string;
+    description: string | null;
+    status: ClubComplaintStatus;
+    resolved_by: string | null;
+    resolution_action: ClubComplaintResolutionAction | null;
+    resolved_at: string | null;
+    created_at: string | null;
+}
+export interface ClubComplaintWithProfiles extends ClubComplaint {
+    reporterProfile: UserProfileSummary | null;
+    reportedUserProfile: UserProfileSummary | null;
+    resolvedByProfile: UserProfileSummary | null;
+}
+export interface ResolveClubComplaintInput {
+    status: ClubComplaintStatus;
+    resolutionAction?: ClubComplaintResolutionAction | null;
 }
 export interface ClubDiscussionTopicReadState {
     topic_id: string;

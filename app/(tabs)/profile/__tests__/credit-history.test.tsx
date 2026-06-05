@@ -4,9 +4,19 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import CreditHistoryScreen, { shouldRefetchCurrentHistoryPageOnRefresh } from '../credit-history';
 import { creditService } from '@/features/credits/services/creditService';
 
+const mockBack = jest.fn();
+const mockCanGoBack = jest.fn();
+const mockReplace = jest.fn();
+
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
-jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
+jest.mock('expo-router', () => ({
+    router: {
+        back: (...args: unknown[]) => mockBack(...args),
+        canGoBack: (...args: unknown[]) => mockCanGoBack(...args),
+        replace: (...args: unknown[]) => mockReplace(...args),
+    },
+}));
 jest.mock('@/features/auth/hooks/useAuth', () => ({
     useAuth: () => ({ session: { user: { id: 'reader-1' } } }),
 }));
@@ -57,6 +67,7 @@ function renderWithQueryClient() {
 describe('CreditHistoryScreen', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockCanGoBack.mockReturnValue(false);
         (creditService.getCreditBalance as jest.Mock).mockResolvedValue({
             user_id: 'reader-1',
             available: 2,
@@ -148,5 +159,19 @@ describe('CreditHistoryScreen', () => {
     it('only refetches the current history query when already on the first page', () => {
         expect(shouldRefetchCurrentHistoryPageOnRefresh(0)).toBe(true);
         expect(shouldRefetchCurrentHistoryPageOnRefresh(20)).toBe(false);
+    });
+
+    it('falls back to Profile when the header back button has no local history', async () => {
+        const { getByLabelText, queryClient, unmount } = renderWithQueryClient();
+
+        await waitFor(() => expect(getByLabelText('Go back')).toBeOnTheScreen());
+
+        fireEvent.press(getByLabelText('Go back'));
+
+        expect(mockReplace).toHaveBeenCalledWith('/(tabs)/profile');
+        expect(mockBack).not.toHaveBeenCalled();
+
+        unmount();
+        queryClient.clear();
     });
 });

@@ -9,6 +9,8 @@ import {
     useClubCurrentBookStatusOverview,
     useSetClubCurrentBookReadingStatus,
     useClubPublicDetail,
+    useClubReadingSchedule,
+    useUpdateClubReadingProgress,
 } from '@/features/clubs/hooks/useClubs';
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
 import type { ClubCurrentBookReadingStatus } from '@/features/clubs/services/clubsService';
@@ -19,7 +21,7 @@ const CURRENT_BOOK_STATUS_LABELS: Record<ClubCurrentBookReadingStatus, string> =
     completed: 'Completed',
 };
 
-export default function ClubReadingProgressScreen(): JSX.Element {
+export default function ClubReadingProgressScreen() {
     const { clubId } = useLocalSearchParams<{ clubId: string }>();
     const { colors } = useTheme();
     const { user } = useAuth();
@@ -32,8 +34,15 @@ export default function ClubReadingProgressScreen(): JSX.Element {
         isError: isStatusError,
         error: statusError,
     } = useClubCurrentBookStatusOverview(clubId, userId);
+    const {
+        data: readingSchedule,
+        isLoading: isScheduleLoading,
+        isError: isScheduleError,
+        error: scheduleError,
+    } = useClubReadingSchedule(clubId, club?.current_book_id ?? null, userId, !!club?.current_book_id);
 
     const setStatusMutation = useSetClubCurrentBookReadingStatus();
+    const updateProgressMutation = useUpdateClubReadingProgress();
 
     const handleStatusChange = async (status: ClubCurrentBookReadingStatus) => {
         if (!clubId) return;
@@ -44,7 +53,22 @@ export default function ClubReadingProgressScreen(): JSX.Element {
         }
     };
 
-    if (isClubLoading || isStatusLoading) {
+    const handleMilestoneProgress = async (completedCount: number) => {
+        if (!clubId || !userId || !club?.current_book_id || !readingSchedule?.id) return;
+        try {
+            await updateProgressMutation.mutateAsync({
+                clubId,
+                bookId: club.current_book_id,
+                scheduleId: readingSchedule.id,
+                userId,
+                chaptersCompleted: completedCount,
+            });
+        } catch {
+            // Error is rendered below.
+        }
+    };
+
+    if (isClubLoading || isStatusLoading || isScheduleLoading) {
         return (
             <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary }]}>
                 <ActivityIndicator size="large" color={colors.accent} testID="loading-indicator" />
@@ -72,6 +96,7 @@ export default function ClubReadingProgressScreen(): JSX.Element {
 
     const hasBook = !!club.current_book_id;
     const currentStatus = statusOverview?.member_reading_status ?? 'want_to_read';
+    const completedMilestones = readingSchedule?.currentUserProgress?.chapters_completed ?? 0;
 
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.content}>
@@ -165,6 +190,49 @@ export default function ClubReadingProgressScreen(): JSX.Element {
                             </Text>
                         ) : null}
                     </View>
+
+                    <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Reading schedule</Text>
+                        {isScheduleError ? (
+                            <Text style={[styles.feedbackText, { color: colors.error }]}>
+                                {getClubsEntitlementErrorMessage(scheduleError, 'Unable to load the reading schedule right now.')}
+                            </Text>
+                        ) : readingSchedule?.milestones.length ? (
+                            <>
+                                {readingSchedule.milestones.map((milestone, index) => {
+                                    const milestoneNumber = index + 1;
+                                    const isComplete = completedMilestones >= milestoneNumber;
+                                    return (
+                                        <View key={milestone.id} style={[styles.timelineRow, { borderLeftColor: isComplete ? colors.accent : colors.border }]} testID={`reading-schedule-milestone-${index}`}>
+                                            <View style={[styles.timelineDot, { backgroundColor: isComplete ? colors.accent : colors.bgSecondary, borderColor: isComplete ? colors.accent : colors.border }]}>
+                                                <Text style={[styles.timelineDotText, { color: isComplete ? '#FFFFFF' : colors.textSecondary }]}>{milestoneNumber}</Text>
+                                            </View>
+                                            <View style={styles.timelineContent}>
+                                                <Text style={[styles.timelineTitle, { color: colors.textPrimary }]}>{milestone.label}</Text>
+                                                {milestone.target ? <Text style={[styles.timelineBody, { color: colors.textSecondary }]}>{milestone.target}</Text> : null}
+                                                {milestone.dueDate ? <Text style={[styles.timelineDate, { color: colors.textTertiary }]}>Due {milestone.dueDate}</Text> : null}
+                                                <TouchableOpacity
+                                                    onPress={() => handleMilestoneProgress(isComplete ? milestoneNumber - 1 : milestoneNumber)}
+                                                    disabled={updateProgressMutation.isPending || !userId}
+                                                    style={[styles.timelineButton, { borderColor: colors.accent, opacity: updateProgressMutation.isPending || !userId ? 0.6 : 1 }]}
+                                                    testID={`reading-schedule-toggle-${index}`}
+                                                >
+                                                    <Text style={[styles.timelineButtonText, { color: colors.accent }]}>{isComplete ? 'Mark incomplete' : 'Mark complete'}</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    );
+                                })}
+                                {updateProgressMutation.isError ? (
+                                    <Text style={[styles.feedbackText, { color: colors.error }]}>
+                                        {getClubsEntitlementErrorMessage(updateProgressMutation.error, 'Unable to update milestone progress right now.')}
+                                    </Text>
+                                ) : null}
+                            </>
+                        ) : (
+                            <Text style={[styles.cardBody, { color: colors.textSecondary }]}>No reading schedule has been set for this book yet.</Text>
+                        )}
+                    </View>
                 </>
             )}
         </ScrollView>
@@ -198,4 +266,13 @@ const styles = StyleSheet.create({
     statusButton: { flex: 1, borderRadius: 12, borderWidth: 1.5, paddingVertical: 10, alignItems: 'center' },
     statusButtonText: { fontSize: 13, fontWeight: '700' },
     feedbackText: { fontSize: 13, marginTop: 10, textAlign: 'center' },
+    timelineRow: { borderLeftWidth: 2, marginLeft: 10, paddingLeft: 18, paddingBottom: 16, position: 'relative' },
+    timelineDot: { position: 'absolute', left: -12, top: 0, width: 24, height: 24, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+    timelineDotText: { fontSize: 12, fontWeight: '800' },
+    timelineContent: { gap: 4 },
+    timelineTitle: { fontSize: 15, fontWeight: '700' },
+    timelineBody: { fontSize: 14, lineHeight: 20 },
+    timelineDate: { fontSize: 12 },
+    timelineButton: { alignSelf: 'flex-start', marginTop: 8, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+    timelineButtonText: { fontSize: 13, fontWeight: '800' },
 });

@@ -6,7 +6,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useClubEventVenues, useClubPublicDetail } from '@/features/clubs/hooks/useClubs';
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
 
-export default function ClubVenuePickerScreen(): JSX.Element {
+export default function ClubVenuePickerScreen() {
     const { clubId, returnTo, editorMode, eventId, editorReturnTo, manageTab, draft } = useLocalSearchParams<{
         clubId: string;
         returnTo?: string;
@@ -97,6 +97,7 @@ export default function ClubVenuePickerScreen(): JSX.Element {
                         const venue = venueLink.venue;
                         if (!venue) return null;
                         const venueId = venueLink.venue_id;
+                        if (!venueId) return null;
                         return (
                             <TouchableOpacity
                                 key={venueId}

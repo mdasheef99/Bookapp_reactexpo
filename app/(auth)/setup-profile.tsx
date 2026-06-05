@@ -35,12 +35,6 @@ export default function SetupProfileScreen() {
         setReferralCode(sanitized);
     };
 
-    const generateReferralCode = (name: string) => {
-        const cleanName = name.replace(/\s/g, '').toUpperCase();
-        const randomNum = Math.floor(Math.random() * 9999);
-        return `${cleanName.substring(0, 4)}${randomNum}`;
-    };
-
     const handleCompleteProfile = async () => {
         if (!name || !city) {
             Alert.alert('Error', 'Please fill in all required fields');
@@ -54,40 +48,13 @@ export default function SetupProfileScreen() {
 
         setLoading(true);
         try {
-            const myReferralCode = generateReferralCode(name);
+            const { error } = await supabase.rpc('complete_profile_setup', {
+                p_display_name: name.trim(),
+                p_city: city.trim(),
+                p_referral_code: referralCode.trim() || null,
+            });
 
-            // Create user profile
-            const { error: profileError } = await supabase
-                .from('user_profiles')
-                .insert({
-                    user_id: user.id,
-                    display_name: name,
-                    city,
-                    referral_code: myReferralCode,
-                    referred_by_code: referralCode || null,
-                });
-
-            if (profileError) throw profileError;
-
-            // Handle referral if provided
-            if (referralCode) {
-                const { data: referrer, error: referrerError } = await supabase
-                    .from('user_profiles')
-                    .select('user_id')
-                    .eq('referral_code', referralCode)
-                    .single();
-
-                if (!referrerError && referrer) {
-                    await supabase.from('referrals').insert({
-                        referrer_id: referrer.user_id,
-                        referred_id: user.id,
-                        referral_code: referralCode,
-                    });
-                }
-            }
-
-            // Award signup bonus (via SECURITY DEFINER function — credit_events INSERT is locked down)
-            await supabase.rpc('grant_signup_bonus', { p_user_id: user.id });
+            if (error) throw error;
 
             router.replace('/(tabs)/library');
         } catch (error) {

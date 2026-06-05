@@ -51,4 +51,7 @@ playwright/.cache/
 
 # temporary
 .expo-web.log
+.expo-web.err
 .e2e-serve.log
+.worktrees/
+supabase/.temp/

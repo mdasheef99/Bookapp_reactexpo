@@ -28,13 +28,29 @@ describe('profileService', () => {
     const result = await profileService.getProfile('user-1');
 
     expect(supabase.from).toHaveBeenCalledWith('user_profiles');
-    expect(builder.select).toHaveBeenCalledWith('*');
+    expect(builder.select).toHaveBeenCalledWith('id, user_id, display_name, username, avatar_url, city, email, referral_code, account_type, is_verified_author, membership_tier, trust_score, created_at, updated_at');
     expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
     expect(builder.maybeSingle).toHaveBeenCalled();
     expect(result?.account_type).toBe('admin');
   });
 
-  it('reads profile summaries from user_profiles with the summary column contract', async () => {
+  it('checks profile existence with an id-only query', async () => {
+    const builder = mockQuery({
+      data: { id: 'profile-1' },
+      error: null,
+    });
+    (supabase.from as jest.Mock).mockReturnValueOnce(builder);
+
+    const result = await profileService.hasProfile('user-1');
+
+    expect(supabase.from).toHaveBeenCalledWith('user_profiles');
+    expect(builder.select).toHaveBeenCalledWith('id');
+    expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
+    expect(builder.maybeSingle).toHaveBeenCalled();
+    expect(result).toBe(true);
+  });
+
+  it('reads profile summaries from the public profile summary surface', async () => {
     const builder = mockQuery({
       data: { id: 'profile-1', user_id: 'user-1', display_name: 'Reader One', username: 'readerone', avatar_url: null, trust_score: 4.8, city: 'Lagos', membership_tier: 'pro' },
       error: null,
@@ -43,14 +59,14 @@ describe('profileService', () => {
 
     const result = await profileService.getProfileSummary('user-1');
 
-    expect(supabase.from).toHaveBeenCalledWith('user_profiles');
+    expect(supabase.from).toHaveBeenCalledWith('profile_public_summaries');
     expect(builder.select).toHaveBeenCalledWith('id, user_id, display_name, username, avatar_url, trust_score, city, membership_tier');
     expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
     expect(result?.membership_tier).toBe('pro');
     expect(result?.username).toBe('readerone');
   });
 
-  it('batch reads profile summaries from user_profiles using user_id filters', async () => {
+  it('batch reads profile summaries from the public profile summary surface using user_id filters', async () => {
     const builder = mockQuery({
       data: [{ id: 'profile-1', user_id: 'user-1', display_name: 'Reader One', username: 'readerone', avatar_url: null, trust_score: 4.8, city: 'Lagos', membership_tier: 'free' }],
       error: null,
@@ -59,7 +75,7 @@ describe('profileService', () => {
 
     const result = await profileService.getProfileSummaries(['user-1']);
 
-    expect(supabase.from).toHaveBeenCalledWith('user_profiles');
+    expect(supabase.from).toHaveBeenCalledWith('profile_public_summaries');
     expect(builder.in).toHaveBeenCalledWith('user_id', ['user-1']);
     expect(result).toHaveLength(1);
   });
@@ -92,7 +108,7 @@ describe('profileService', () => {
       updated_at: expect.any(String),
     });
     expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
-    expect(builder.select).toHaveBeenCalledWith('*');
+    expect(builder.select).toHaveBeenCalledWith('id, user_id, display_name, username, avatar_url, city, email, referral_code, account_type, is_verified_author, membership_tier, trust_score, created_at, updated_at');
     expect(builder.maybeSingle).toHaveBeenCalled();
     expect(result?.username).toBe('reader_one');
   });
@@ -119,6 +135,8 @@ describe('profileService', () => {
       avatar_url: 'https://cdn.example/avatar.png',
       updated_at: expect.any(String),
     });
+    expect(builder.select).not.toHaveBeenCalled();
+    expect(builder.maybeSingle).not.toHaveBeenCalled();
     expect(result).toBe('https://cdn.example/avatar.png');
   });
 

@@ -7,6 +7,8 @@ const mockUseLocalSearchParams = jest.fn();
 const mockUseClubPublicDetail = jest.fn();
 const mockUseClubCurrentBookStatusOverview = jest.fn();
 const mockUseSetClubCurrentBookReadingStatus = jest.fn();
+const mockUseClubReadingSchedule = jest.fn();
+const mockUseUpdateClubReadingProgress = jest.fn();
 
 jest.mock('@/features/auth/hooks/useAuth', () => ({
     useAuth: (...args: unknown[]) => mockUseAuth(...args),
@@ -25,6 +27,8 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useClubPublicDetail: (...args: unknown[]) => mockUseClubPublicDetail(...args),
     useClubCurrentBookStatusOverview: (...args: unknown[]) => mockUseClubCurrentBookStatusOverview(...args),
     useSetClubCurrentBookReadingStatus: (...args: unknown[]) => mockUseSetClubCurrentBookReadingStatus(...args),
+    useClubReadingSchedule: (...args: unknown[]) => mockUseClubReadingSchedule(...args),
+    useUpdateClubReadingProgress: (...args: unknown[]) => mockUseUpdateClubReadingProgress(...args),
 }));
 
 const colors = {
@@ -73,6 +77,8 @@ describe('ClubReadingProgressScreen', () => {
             error: null,
         });
         mockUseSetClubCurrentBookReadingStatus.mockReturnValue({ mutateAsync: jest.fn(), isPending: false, isError: false, error: null });
+        mockUseClubReadingSchedule.mockReturnValue({ data: null, isLoading: false, isError: false, error: null });
+        mockUseUpdateClubReadingProgress.mockReturnValue({ mutateAsync: jest.fn(), isPending: false, isError: false, error: null });
     });
 
     it('renders the current book and aggregated stats', async () => {
@@ -84,6 +90,45 @@ describe('ClubReadingProgressScreen', () => {
         expect(getByText('3')).toBeOnTheScreen();
         expect(getByText('2')).toBeOnTheScreen();
         expect(getByText('1')).toBeOnTheScreen();
+        expect(getByText('No reading schedule has been set for this book yet.')).toBeOnTheScreen();
+    });
+
+    it('renders reading schedule milestones and updates milestone progress', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue(undefined);
+        mockUseClubReadingSchedule.mockReturnValue({
+            data: {
+                id: 'schedule-1',
+                club_id: 'club-1',
+                book_id: 'book-1',
+                milestones: [
+                    { id: 'm1', label: 'Week 1', target: 'Chapters 1-5', dueDate: '2026-06-15' },
+                    { id: 'm2', label: 'Week 2', target: 'Chapters 6-10', dueDate: null },
+                ],
+                created_by: 'admin-1',
+                created_at: null,
+                currentUserProgress: { id: 'progress-1', schedule_id: 'schedule-1', user_id: 'reader-1', chapters_completed: 1, last_updated: null },
+            },
+            isLoading: false,
+            isError: false,
+            error: null,
+        });
+        mockUseUpdateClubReadingProgress.mockReturnValue({ mutateAsync, isPending: false, isError: false, error: null });
+
+        const { getByText, getByTestId } = render(<ClubReadingProgressScreen />);
+
+        await waitFor(() => expect(getByText('Week 1')).toBeOnTheScreen());
+        expect(getByText('Chapters 1-5')).toBeOnTheScreen();
+        expect(getByText('Due 2026-06-15')).toBeOnTheScreen();
+
+        fireEvent.press(getByTestId('reading-schedule-toggle-1'));
+
+        await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({
+            clubId: 'club-1',
+            bookId: 'book-1',
+            scheduleId: 'schedule-1',
+            userId: 'reader-1',
+            chaptersCompleted: 2,
+        }));
     });
 
     it('shows no-current-book state when club has no current book', async () => {

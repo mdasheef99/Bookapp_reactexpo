@@ -15,14 +15,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ClubCard } from '@/features/clubs/components/ClubCard';
-import { useBrowseClubs, useMyBrowseClubs } from '@/features/clubs/hooks/useClubs';
+import { useBrowseClubs, useMyArchivedManagedClubs, useMyBrowseClubs, useMyClubInvitationInbox } from '@/features/clubs/hooks/useClubs';
 import { type AccessLevel, type ClubType, type ClubFilters, type ClubPublicDetails, type MeetingType } from '@/features/clubs/services/clubsService';
 
-type BrowseScope = 'all' | 'mine';
+type BrowseScope = 'all' | 'mine' | 'archived';
 
 const BROWSE_SCOPE_FILTERS: Array<{ label: string; value: BrowseScope }> = [
     { label: 'All clubs', value: 'all' },
     { label: 'My clubs', value: 'mine' },
+    { label: 'Archived', value: 'archived' },
 ];
 
 const CLUB_TYPE_FILTERS: Array<{ label: string; value?: ClubType }> = [
@@ -68,23 +69,34 @@ export default function ClubsBrowseScreen() {
 
     const allBrowseQuery = useBrowseClubs(filters);
     const myBrowseQuery = useMyBrowseClubs(userId, filters, browseScope === 'mine');
-    const activeBrowseQuery = browseScope === 'mine' ? myBrowseQuery : allBrowseQuery;
+    const archivedBrowseQuery = useMyArchivedManagedClubs(userId, filters, browseScope === 'archived');
+    const invitationInboxQuery = useMyClubInvitationInbox(userId);
+    const activeBrowseQuery = browseScope === 'mine' ? myBrowseQuery : browseScope === 'archived' ? archivedBrowseQuery : allBrowseQuery;
     const clubs = activeBrowseQuery.data ?? [];
     const { isLoading, isError, refetch, isRefetching } = activeBrowseQuery;
+    const unreadInvitationCount = (invitationInboxQuery.data ?? []).filter((invitation) => !invitation.read_at).length;
+    const authorClubCount = clubs.filter((club) => club.club_type === 'author_club').length;
+    const showAuthorSpotlight = browseScope === 'all' && !selectedClubType && authorClubCount > 0;
 
     const handleClubPress = (club: ClubPublicDetails) => {
-        router.push(`/(tabs)/clubs/${club.id}`);
+        router.push(browseScope === 'archived' ? `/(tabs)/clubs/${club.id}/manage?tab=lifecycle` : `/(tabs)/clubs/${club.id}`);
     };
 
-    const scopeDescription = browseScope === 'mine'
+    const scopeDescription = browseScope === 'archived'
+        ? 'Restore clubs you administer after they have been archived.'
+        : browseScope === 'mine'
         ? 'See the clubs where you already have an active reader seat.'
         : 'Discover public club details, browse current reads, and find your next reading community.';
 
-    const emptyStateTitle = browseScope === 'mine' ? 'You have not joined any clubs yet' : 'No clubs matched this search';
-    const emptyStateBody = browseScope === 'mine'
+    const emptyStateTitle = browseScope === 'archived' ? 'No archived clubs' : browseScope === 'mine' ? 'You have not joined any clubs yet' : 'No clubs matched this search';
+    const emptyStateBody = browseScope === 'archived'
+        ? 'Archived clubs you administer will appear here for restoration.'
+        : browseScope === 'mine'
         ? 'Join a public club, apply to an approval club, or accept an invite-only club invitation to build your personal club shelf here.'
         : 'Try a different club type, meeting format, access tier, or search term to discover more communities.';
-    const errorBody = browseScope === 'mine'
+    const errorBody = browseScope === 'archived'
+        ? 'Try refreshing to fetch archived clubs you administer from Supabase.'
+        : browseScope === 'mine'
         ? 'Try refreshing to fetch your latest membership-linked club list from Supabase.'
         : 'Try refreshing to fetch the latest public club list from Supabase.';
 
@@ -141,8 +153,50 @@ export default function ClubsBrowseScreen() {
                 }
                 ListHeaderComponent={
                     <View style={styles.headerSection}>
-                        <Text style={[styles.title, { color: colors.textPrimary }]}>Book clubs</Text>
+                        <View style={styles.titleRow}>
+                            <View style={styles.titleTextBlock}>
+                                <Text style={[styles.title, { color: colors.textPrimary }]}>Book clubs</Text>
+                            </View>
+                            {userId ? (
+                                <TouchableOpacity
+                                    activeOpacity={0.85}
+                                    onPress={() => router.push('/(tabs)/clubs/invitations')}
+                                    style={[styles.inboxButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
+                                    testID="clubs-invitations-inbox"
+                                >
+                                    <Ionicons name="mail-outline" size={20} color={colors.textPrimary} />
+                                    {unreadInvitationCount > 0 ? (
+                                        <View style={[styles.unreadBadge, { backgroundColor: colors.accent }]}>
+                                            <Text style={styles.unreadBadgeText}>{unreadInvitationCount > 99 ? '99+' : unreadInvitationCount}</Text>
+                                        </View>
+                                    ) : null}
+                                </TouchableOpacity>
+                            ) : null}
+                        </View>
                         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{scopeDescription}</Text>
+
+                        {showAuthorSpotlight ? (
+                            <View style={[styles.authorSpotlight, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="clubs-author-spotlight">
+                                <View style={styles.authorSpotlightIcon}>
+                                    <Ionicons name="mic-outline" size={18} color={colors.accent} />
+                                </View>
+                                <View style={styles.authorSpotlightBody}>
+                                    <Text style={[styles.authorSpotlightTitle, { color: colors.textPrimary }]}>Author clubs spotlight</Text>
+                                    <Text style={[styles.authorSpotlightText, { color: colors.textSecondary }]}>AMA-style discussions, signed-edition reads, and verified author communities.</Text>
+                                    <Text style={[styles.authorSpotlightCount, { color: colors.accent }]}>
+                                        {authorClubCount === 1 ? '1 verified author club' : `${authorClubCount} verified author clubs`}
+                                    </Text>
+                                    <TouchableOpacity
+                                        activeOpacity={0.85}
+                                        onPress={() => router.push('/(tabs)/clubs/authors')}
+                                        style={[styles.authorSpotlightLink, { borderColor: colors.accent }]}
+                                        testID="author-clubs-landing-link"
+                                    >
+                                        <Text style={[styles.authorSpotlightLinkText, { color: colors.accent }]}>View author clubs</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        ) : null}
 
                         <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Browse</Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
@@ -150,15 +204,17 @@ export default function ClubsBrowseScreen() {
                                 label,
                                 value,
                                 selectedValue: browseScope,
-                                onPress: setBrowseScope,
+                                onPress: (nextValue) => {
+                                    if (nextValue) setBrowseScope(nextValue);
+                                },
                                 testID: `clubs-filter-scope-${value}`,
                             }))}
                         </ScrollView>
 
-                        {browseScope === 'mine' && !userId ? (
+                        {(browseScope === 'mine' || browseScope === 'archived') && !userId ? (
                             <View style={[styles.feedbackCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                                 <Text style={[styles.feedbackTitle, { color: colors.textPrimary }]}>Sign in to view your clubs</Text>
-                                <Text style={[styles.feedbackBody, { color: colors.textSecondary }]}>The My clubs view is tied to your current membership state, so it only appears for the signed-in reader account.</Text>
+                                <Text style={[styles.feedbackBody, { color: colors.textSecondary }]}>This view is tied to your current club membership and admin state, so it only appears for the signed-in reader account.</Text>
                             </View>
                         ) : null}
 
@@ -209,7 +265,7 @@ export default function ClubsBrowseScreen() {
 
                         <View style={[styles.infoBanner, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
                             <Ionicons name="information-circle-outline" size={18} color={colors.accent} />
-                            <Text style={[styles.infoText, { color: colors.textSecondary }]}>Public club details, direct joins, approval applications, moderator/admin tools, and invite acceptance are live. Invitation revoke and read-state flows are still pending backend support.</Text>
+                            <Text style={[styles.infoText, { color: colors.textSecondary }]}>Public club details, direct joins, approval applications, moderator/admin tools, invite acceptance, invitation revocation, read-state support, and archived-club recovery are live.</Text>
                         </View>
 
                         {isError ? (
@@ -243,8 +299,58 @@ const styles = StyleSheet.create({
     loadingText: { fontSize: 14, fontWeight: '500' },
     contentContainer: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 120 },
     headerSection: { marginBottom: 12 },
+    titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 8 },
+    titleTextBlock: { flex: 1 },
     title: { fontSize: 30, fontWeight: '800', marginBottom: 8 },
     subtitle: { fontSize: 15, lineHeight: 22, marginBottom: 16 },
+    authorSpotlight: {
+        borderWidth: 1,
+        borderRadius: 16,
+        padding: 14,
+        marginBottom: 16,
+        flexDirection: 'row',
+        gap: 12,
+    },
+    authorSpotlightIcon: {
+        width: 34,
+        height: 34,
+        borderRadius: 17,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    authorSpotlightBody: { flex: 1, gap: 3 },
+    authorSpotlightTitle: { fontSize: 15, fontWeight: '800' },
+    authorSpotlightText: { fontSize: 13, lineHeight: 18 },
+    authorSpotlightCount: { fontSize: 12, fontWeight: '800', marginTop: 2 },
+    authorSpotlightLink: {
+        alignSelf: 'flex-start',
+        borderWidth: 1,
+        borderRadius: 999,
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+        marginTop: 6,
+    },
+    authorSpotlightLinkText: { fontSize: 12, fontWeight: '800' },
+    inboxButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        borderWidth: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    unreadBadge: {
+        position: 'absolute',
+        top: -5,
+        right: -5,
+        minWidth: 20,
+        height: 20,
+        borderRadius: 10,
+        paddingHorizontal: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    unreadBadgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' },
     searchShell: {
         flexDirection: 'row',
         alignItems: 'center',

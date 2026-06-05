@@ -1,12 +1,14 @@
 # Clubs Feature — Full Implementation Inventory
 
-**Last updated:** 2026-05-01
+**Last updated:** 2026-06-04
 **Sources cross-referenced:**
 - `docs/features/CLUBS_SPEC_2026-03-06_234839.md` (canonical product intent)
 - `docs/features/CLUBS_IMPLEMENTATION_STATUS_2026-03-07.md` (repo reality)
 - `docs/features/CLUBS_MANAGE_CLUB_SPEC_2026-03-07.md` (Manage Club scope)
 - `docs/features/CLUBS_ENTITLEMENT_IMPLEMENTATION_ANALYSIS_2026-03-10.md` (tier/role rules)
 - Direct codebase inspection of `app/(tabs)/clubs/**`, `src/features/clubs/**`
+- Direct codebase reconciliation after Create Club, invite revoke/read-state/notification handoff, venue picker, reading-progress work, admin lifecycle guidance, reading-schedule validation, moderation actions, platform complaint queue action bridge, author-club verified creation/discovery treatment, admin transfer acceptance, and downgrade grace automation
+- Web smoke result from 2026-05-30 on `http://localhost:8082/clubs?smoke=1780053066028`
 - **Live Supabase DB audit:** `information_schema.columns`, `pg_policies`, `pg_trigger`, `pg_publication_tables`, `pg_class` (replica identity, Realtime status)
 
 ---
@@ -36,25 +38,24 @@
 | Member removal | `ClubManageScreen.tsx` lines 291–319 | Admin can remove non-admin members. `Alert` confirmation. Hook: `useRemoveClubMember`. |
 | Current-book finalization | `ClubManageScreen.tsx` lines 359–372 | Admin can finalize closed nominations. Hook: `useFinalizeClubBookNomination`. |
 | Manual current-book override | `ClubManageScreen.tsx` lines 374–438 | Admin can search Google Books and bypass nominations by creating a past-date nomination + immediate finalize. |
-| Supporting service | `src/features/clubs/services/clubsManagementService.ts` | `updateClub`, `createClub`, `deleteClub` (soft-archive), `getJoinQuestions`, `createJoinQuestion`, `updateJoinQuestion`, `deleteJoinQuestion`. |
-| Supporting hooks | `src/features/clubs/hooks/useClubs.ts` | `useUpdateClub`, `useRemoveClubMember`, `useUpdateClubMemberRole`, `useCreateClubJoinQuestion`, `useUpdateClubJoinQuestion`, `useDeleteClubJoinQuestion`, `useFinalizeClubBookNomination`. |
+| Archive / restore lifecycle UI | `src/features/clubs/screens/manage/ClubManageLifecycleSection.tsx` | Admin can archive active clubs and restore archived clubs from the Manage lifecycle tab. Archived clubs are recoverable from Browse > Archived. |
+| Admin transfer / succession UI | `src/features/clubs/screens/manage/ClubManageLifecycleSection.tsx`, `src/features/clubs/screens/ClubDetailScreen.tsx` | Current admin sends transfer requests to eligible active/muted Pro or Pro+ members. Proposed successors accept from the club detail page before the admin role changes. Author-club requests are backend-limited to the verified author profile owner. Direct Manage route tabs such as `?tab=lifecycle` now initialize correctly on web. Manage > Lifecycle also surfaces lifecycle policy state: downgrade readiness, successor coverage, archive retention state, and explicit admin warnings. |
+| Moderation actions | `src/features/clubs/screens/manage/ClubManageMembersSection.tsx`, `src/features/clubs/services/clubsMembershipService.ts` | Manage > Members can issue warnings, timed mutes, and bans with required reasons. Recent `club_member_actions` history is shown per member. |
+| Platform complaint queue | `src/features/clubs/screens/manage/ClubManagePlatformComplaintsSection.tsx`, `src/features/clubs/services/clubsComplaintsService.ts` | Manage > Reports now lists open `club_complaints` (`pending`, `reviewing`) with reporter/reported profile summaries. Resolutions can be `no_action` or bridged into warning/timed-mute/ban member actions before closing the complaint. |
+| Supporting service | `src/features/clubs/services/clubsManagementService.ts` | `updateClub`, `createClub`, `deleteClub` (soft-archive), `archiveClub`, `unarchiveClub`, `transferClubAdmin`, `requestClubAdminTransfer`, `acceptClubAdminTransferRequest`, `getClubAdminTransferRequests`, `getJoinQuestions`, `createJoinQuestion`, `updateJoinQuestion`, `deleteJoinQuestion`. |
+| Supporting hooks | `src/features/clubs/hooks/useClubs.ts` | `useUpdateClub`, `useArchiveClub`, `useUnarchiveClub`, `useTransferClubAdmin`, `useRequestClubAdminTransfer`, `useAcceptClubAdminTransferRequest`, `useClubAdminTransferRequests`, `useCreateClubMemberAction`, `useClubMemberActions`, `useRemoveClubMember`, `useUpdateClubMemberRole`, `useCreateClubJoinQuestion`, `useUpdateClubJoinQuestion`, `useDeleteClubJoinQuestion`, `useFinalizeClubBookNomination`. |
+| Admin transfer RPC | `supabase/migrations/20260527104248_transfer_club_admin_rpc.sql` | Security-definer RPC validates current admin, successor membership, access level, Pro/Pro+ tier, blocks `author_club`, updates `book_clubs.admin_id`, demotes previous admin, and promotes successor to active admin. |
+| Admin transfer acceptance RPC | `supabase/migrations/20260529154500_club_moderation_author_lifecycle_rpc.sql` | Adds `club_admin_transfer_requests`, request/accept RPCs, and author-club owner consistency checks for transfer acceptance. |
 
 ### Partially Implemented
 
 | Item | Code Location | Gap |
 |------|---------------|-----|
-| Current-book override reliability | `ClubManageScreen.tsx` lines 374–438 | Depends on Google Books search which frequently returns `429`. Manual-only path is a workaround, not a first-class product flow. |
-| Settings depth | `ClubManageScreen.tsx` | Cover is still a raw URL `TextInput`. No image upload picker. No genre/tags, no rich description editor. Described as "first basic settings slice" in docs. |
+| Current-book override reliability | `ClubManageScreen.tsx`, `ClubNominateBookScreen.tsx` | Current-book override and nominations now use cached provider search with Open Library fallback; nomination also has a manual title/author fallback. Override manual entry remains less polished than nomination. |
+| Settings depth | `ClubManageScreen.tsx` | Manage settings supports cover image picker/upload plus URL input. No genre/tags or rich description editor yet. |
 | Granular moderator permissions | `ClubManageScreen.tsx` | Flat `member ↔ moderator` toggle only. No per-moderator permission matrix. Spec notes this needs "explicit product-policy cleanup." |
-
-### Blocked / Pending
-
-| Item | Blocker | Notes |
-|------|---------|-------|
-| Ownership transfer UI | Not in v1 scope per canonical spec | Spec: "v1 does not support ownership transfer." No RPC exists. |
-| Archive / unarchive UI | Explicitly deferred by product decision | `deleteClub()` soft-deletes via `is_archived`. No admin-facing archive toggle or "archived clubs" list. |
-| Moderation dashboard (mute / ban / warnings) | No frontend screen; `club_member_actions` table unused by app | `ClubManageScreen` only shows `active/muted/banned` status label, no action buttons. |
-
+| Moderation product depth | `ClubManageScreen.tsx`, `ClubManagePlatformComplaintsSection.tsx` | Discussion reports, member actions, platform complaints, and complaint-to-member-action bridging are exposed. Manage > Reports now states that durable resolution notes need an app-wide audit/RPC contract before they are saved. |
+| Admin lifecycle product policy | `ClubManageLifecycleSection.tsx` | Transfer acceptance is implemented. Lifecycle now surfaces downgrade readiness, successor coverage, archive retention state, admin-facing warnings, downgrade-succession guidance, and archive-retention guidance. Automated downgrade-triggered successor selection and retention/deletion windows remain backend/product-policy work. |
 ---
 
 ## 2. Invite Lifecycle
@@ -66,21 +67,23 @@
 | Invitation creation by username | `src/features/clubs/screens/ClubInviteScreen.tsx` | Manager can invite by username. Uses `create_club_invitation` RPC. |
 | Invitation history listing | `ClubInviteScreen.tsx` | Shows `pending | accepted | expired | revoked` statuses. |
 | Invitation acceptance (invitee) | `src/features/clubs/screens/ClubDetailScreen.tsx` | Accept pending invite from detail screen. Uses `accept_club_invitation` RPC. |
-| Supporting service | `src/features/clubs/services/clubsInvitationsService.ts` | `getClubInvitations`, `getMyPendingInvitation`, `createClubInvitation`, `acceptClubInvitation`. |
-| Supporting hooks | `src/features/clubs/hooks/useClubs.ts` | `useClubInvitations`, `useCreateClubInvitation`, `useAcceptClubInvitation`. |
+| Invitee inbox / unread badge | `src/features/clubs/screens/ClubInvitationsInboxScreen.tsx`, `app/(tabs)/clubs/invitations.tsx`, `app/(tabs)/clubs/index.tsx` | Signed-in invitees can open a dedicated invitations inbox from Browse. Browse shows unread pending invitation count from `club_invitations.read_at`; inbox groups pending unread/read invitations separately from accepted/expired/revoked history, can mark unread invitations read before opening club detail, can accept pending invitations directly, and hands reminder preferences off to Profile notification settings. |
+| Invitation revoke | `src/features/clubs/screens/manage/ClubManageInvitationsSection.tsx` | Managers can revoke pending invitations. Uses live `revoke_club_invitation` RPC. |
+| Invitation read-state service | `src/features/clubs/services/clubsInvitationsService.ts` | `markInvitationRead` uses live `mark_invitation_read` RPC and `club_invitations.read_at`. |
+| Supporting service | `src/features/clubs/services/clubsInvitationsService.ts` | `getClubInvitations`, `getMyPendingInvitation`, `getMyPendingInvitations`, `createClubInvitation`, `acceptClubInvitation`, `revokeClubInvitation`, `markInvitationRead`. |
+| Supporting hooks | `src/features/clubs/hooks/useClubs.ts` | `useClubInvitations`, `useMyClubInvitationInbox`, `useCreateClubInvitation`, `useAcceptClubInvitation`, `useRevokeClubInvitation`, `useMarkInvitationRead`. |
 
 ### Partially Implemented
 
 | Item | Code Location | Gap |
 |------|---------------|-----|
-| Invitation status surface | `ClubInviteScreen.tsx` | Displays `revoked` status but no user action can produce it. `declined` was removed from local typing to match live DB. |
+| Invitation inbox polish | `ClubInvitationsInboxScreen.tsx` | Inbox groups pending unread/read invites separately from accepted/expired/revoked history, supports incremental "Load more" paging, and links invitation reminder preferences to Profile notification settings. Actual push/email reminders still depend on the broader notification pipeline. |
 
 ### Blocked / Pending
 
 | Item | Blocker | Notes |
 |------|---------|-------|
-| Revoke invitation | `revoke_club_invitation` RPC missing live | UI can display history but admin cannot cancel a pending invite. Confirmed in `CLUBS_LIVE_BACKEND_CONTRACT_2026-03-07.md`. |
-| Mark invitation read / invitee inbox | `mark_invitation_read` RPC missing live | No invitee-facing unread badge or inbox. |
+| Invitation reminder notifications | Notification pipeline not built | Inbox/read-state exists, but push/email reminders for unread invitations depend on the broader notification token/preferences/history work. |
 
 ---
 
@@ -91,24 +94,28 @@
 | Item | Code Location | Notes |
 |------|---------------|-------|
 | Nomination list & vote casting | `src/features/clubs/screens/ClubDetailScreen.tsx` | Members can view nominations, cast/remove vote. Hook: `useCastClubBookVote`, `useRemoveClubBookVote`. |
-| Nomination creation | `src/features/clubs/screens/ClubNominateBookScreen.tsx` | Search Google Books, set voting deadline (3/7/14 day presets), nominate. Hook: `useNominateClubBook`. |
+| Nomination creation | `src/features/clubs/screens/ClubNominateBookScreen.tsx` | Search Google Books/Open Library fallback, set voting deadline (3/7/14 day presets), nominate, or use manual title/author fallback when provider search is unavailable. Hook: `useNominateClubBook`. |
 | Finalization (admin) | `ClubManageScreen.tsx` lines 359–372 | Finalize after voting closes. Live RPC `finalize_club_book_nomination`. |
 | Current-book status overview | `src/features/clubs/services/clubsBooksService.ts` | `getClubCurrentBookStatusOverview` via `get_club_current_book_status_overview` RPC. |
 | Reading status mutation | `clubsBooksService.ts` | `setClubCurrentBookReadingStatus` via `set_club_current_book_reading_status` RPC. |
 | Reading progress screen | `src/features/clubs/screens/ClubReadingProgressScreen.tsx` | Displays current book, aggregated progress counts, personal status toggle (`want_to_read`/`reading`/`completed`). Route: `app/(tabs)/clubs/[clubId]/reading.tsx`. Entry point from `ClubDetailScreen.tsx` Current Book tab. |
-| Supporting service | `src/features/clubs/services/clubsBooksService.ts` | Full coverage: `getClubBookNominations`, `nominateClubBook`, `castClubBookVote`, `removeClubBookVote`, `finalizeClubBookNomination`. |
+| Reading schedule builder | `src/features/clubs/screens/manage/ClubManageReadingScheduleSection.tsx` | Admin can create/update milestones for the current book using `reading_schedules.milestones`. Captures label, target, due date, starter templates, validates YYYY-MM-DD dates, blocks backward due dates, and blocks backward-moving explicit chapter targets. |
+| Reading schedule timeline | `src/features/clubs/screens/ClubReadingProgressScreen.tsx` | Members see schedule milestones on the reading progress screen and can mark milestone progress through `member_reading_progress.chapters_completed`. |
+| Supporting service | `src/features/clubs/services/clubsBooksService.ts` | Full coverage: `getClubBookNominations`, `nominateClubBook`, `castClubBookVote`, `removeClubBookVote`, `finalizeClubBookNomination`, `getClubReadingSchedule`, `upsertClubReadingSchedule`, `updateClubReadingProgress`. |
+| Supporting hooks | `src/features/clubs/hooks/useClubs.ts` | `useClubReadingSchedule`, `useUpsertClubReadingSchedule`, and `useUpdateClubReadingProgress` wrap the schedule/progress services and invalidate schedule caches. |
 
 ### Partially Implemented
 
 | Item | Code Location | Gap |
 |------|---------------|-----|
-| Finalize UI gating | `ClubDetailScreen.tsx` | Shows finalize action while `nomination.status === 'active'` even if voting hasn't closed. Backend only succeeds after `voting_ends_at`. `ClubManageScreen` has correct gating; detail screen does not. |
+| Google Books-backed nomination search | `ClubNominateBookScreen.tsx` | Uses cached Google Books search with Open Library fallback and a manual nomination escape hatch, so provider `429` does not block nominations. |
+| Reading schedule product depth | `ClubManageReadingScheduleSection.tsx` | Builder supports one latest schedule per club/book, validates YYYY-MM-DD due dates, blocks backward-moving milestone due dates, blocks explicit chapter targets that move backward, and offers starter templates. Multi-plan support and calendar/reminder delivery remain deferred to the app-wide notification/calendar pipeline. |
 
 ### Blocked / Pending
 
 | Item | Blocker | Notes |
 |------|---------|-------|
-| Reading schedule UI | No route or screen | `reading_schedules` table exists in migrations. Milestones/chapters builder and schedule timeline not built. Reading progress screen exists but schedule management is separate. |
+| *(none for basic reading schedule UI)* | — | Basic milestone builder and member timeline are implemented. |
 
 ---
 
@@ -132,13 +139,13 @@
 
 | Item | Code Location | Gap |
 |------|---------------|-----|
-| Venue selection in event editor | `ClubEventEditorScreen.tsx` | `useClubEventVenues` hook exists but live `club_venues` link count is `0`. Editor supports manual location fallback; no venue browse/registration UI exists. |
+| Venue selection in event editor | `ClubEventEditorScreen.tsx`, `ClubVenuePickerScreen.tsx` | Event editor can navigate to a linked-club venue picker and still supports manual location fallback. Full venue browse/registration/CRUD is not implemented. |
 
 ### Blocked / Pending
 
 | Item | Blocker | Notes |
 |------|---------|-------|
-| Venue frontend module | No `src/features/venues/` | Full `venues` schema with PostGIS exists. No venue routes or venue picker. |
+| Venue frontend module | No `src/features/venues/` | Full `venues` schema with PostGIS exists. Clubs now have a linked venue picker, but there is still no standalone venue module, venue registration flow, or geo-search UX. |
 
 ---
 
@@ -196,41 +203,47 @@
 | Item | Code Location | Notes |
 |------|---------------|-------|
 | Browse route | `app/(tabs)/clubs/index.tsx` | Re-export of `ClubsBrowseScreen`. |
-| Browse screen | `src/features/clubs/screens/` (logic in route file) | `ClubsBrowseScreen` with `All clubs / My clubs` scope toggle, search, filter chips. |
+| Browse screen | `src/features/clubs/screens/` (logic in route file) | `ClubsBrowseScreen` with `All clubs / My clubs / Archived` scope toggle, search, filter chips. |
 | Search | `app/(tabs)/clubs/index.tsx` lines 54, 12 | Searches `name`, `current_book_title`, `admin_display_name`, `author_display_name` via `club_public_details`. |
 | Filters | `app/(tabs)/clubs/index.tsx` lines 28–48 | `club_type`, `meeting_type`, `access_level`. |
 | Club card component | `src/features/clubs/components/ClubCard.tsx` | Displays cover, name, type badge, member count, current book snippet. |
 | Public detail route | `app/(tabs)/clubs/[clubId]/index.tsx` | Re-export of `ClubDetailScreen`. |
 | Public detail screen | `src/features/clubs/screens/ClubDetailScreen.tsx` | Cover, metadata, join/apply/invite-only banner, member-list gating, nominations, events entry, discussion entry, management entry points. |
 | Supporting read service | `src/features/clubs/services/clubsReadService.ts` | `getPublicClubs`, `getMyPublicClubs`, `getPublicClubById` over `club_public_details`. |
-| Supporting hooks | `src/features/clubs/hooks/useClubs.ts` | `useBrowseClubs`, `useMyBrowseClubs`, `useClubPublicDetail`. |
+| Archived managed clubs recovery | `app/(tabs)/clubs/index.tsx`, `src/features/clubs/services/clubsReadService.ts` | Browse > Archived lists archived clubs administered by the current user and routes them to Manage > Lifecycle for restore. Uses raw `book_clubs` because `club_public_details` intentionally filters archived clubs. |
+| Supporting hooks | `src/features/clubs/hooks/useClubs.ts` | `useBrowseClubs`, `useMyBrowseClubs`, `useMyArchivedManagedClubs`, `useClubPublicDetail`, `useClubManageDetail`. |
 
 ### Partially Implemented
 
 | Item | Code Location | Gap |
 |------|---------------|-----|
-| Create CTA on browse | Missing | No "Create club" button on browse screen because `create.tsx` route does not exist. |
+| Author club product depth | `app/(tabs)/clubs/index.tsx`, `app/(tabs)/clubs/authors.tsx`, `src/features/clubs/screens/ClubAuthorsScreen.tsx`, `src/features/clubs/components/ClubCard.tsx` | Browse supports the Author clubs filter, shows a dedicated Author clubs spotlight when author clubs are present, links to an Author clubs landing route filtered to `author_club`, and cards have verified-author treatment. `e2e/smoke.spec.ts` includes a mocked dev author club so the Author Clubs card badge is covered without mutating live Supabase Auth users. Schema-backed AMA/signed-edition workflows remain future product depth. |
 
 ### Blocked / Pending
 
 | Item | Blocker | Notes |
 |------|---------|-------|
-| Author club discovery section | No dedicated UX | Schema supports `author_club`. No separate author-club browse filter or verified-author badge flow. |
+| *(none for automated Author Clubs badge smoke coverage)* | — | 2026-05-30 follow-up added Playwright smoke fixture `dev-author-club`, which verifies the Author clubs filter renders an author-club card and exact `Verified author` badge. |
 
 ---
 
 ## 7. Create Club
 
-### Blocked / Pending — **MVP Blocker**
+### Implemented
 
-| Item | Code Location / Absence | Notes |
-|------|------------------------|-------|
-| Create club route | **`app/(tabs)/clubs/create.tsx` does not exist** | Spec §4.4 defines required route. `_layout.tsx` does not register it. |
-| Create club screen | **No `ClubCreateScreen.tsx`** | No component in `src/features/clubs/screens/`. |
-| Create club hook | **`useCreateClub` not in `useClubs.ts`** | `clubsManagementService.createClub()` exists and is fully backend-ready. No TanStack Query wrapper. |
-| Membership-limit check | `src/features/clubs/services/clubsManagementService.ts` lines 7–12 | `checkMembershipLimits` calls `check-membership-limits` Edge Function. Live and deployed. **Service exists but is unreachable from UI.** |
+| Item | Code Location | Notes |
+|------|---------------|-------|
+| Create club route | `app/(tabs)/clubs/create.tsx` | Registered in Clubs stack. |
+| Create club screen | `src/features/clubs/screens/ClubCreateScreen.tsx` | Form covers name, description, cover URL, club type, access level, meeting type, and member cap. Verified authors also see Author club as a club type, with their profile id passed to `create_club`. |
+| Create club hook | `src/features/clubs/hooks/useClubs.ts` | `useCreateClub` wraps `clubsManagementService.createClub()` and refreshes club browse/detail caches. |
+| Membership-limit check | `src/features/clubs/services/clubsManagementService.ts` | `checkMembershipLimits` calls the `check-membership-limits` Edge Function before creating the club. |
+| Product entry point | Profile section | Current product direction keeps Create Club visible only to Pro / Pro+ users from Profile. |
 
-**Discrepancy:** The canonical spec lists Create Club as Phase 1 buildable-after-prerequisites. All prerequisites (username, invitation model, public detail view) are live. The backend service is implemented. The frontend is entirely missing.
+### Partially Implemented
+
+| Item | Code Location | Gap |
+|------|---------------|-----|
+| Create Club polish | `ClubCreateScreen.tsx` | Supports cover image picker/upload plus raw URL input and verified-author author-club creation. Advanced tags/genre controls remain pending. Smoke confirmed Browse does not expose Create Club and Profile exposes Create Club for a Pro test user. |
 
 ---
 
@@ -272,7 +285,7 @@
 
 | Item | Code Location | Gap |
 |------|---------------|-----|
-| Downgrade grace-period automation | Not in service layer | `MembershipLimitAction` includes `'check_downgrade'` but no automation. No `handle-downgrade-grace-period` Edge Function. No cron job. Spec promises grace period but no enforcement exists. |
+| Downgrade grace-period automation | `supabase/functions/handle-club-downgrade-grace-period/index.ts`, `supabase/migrations/20260529170000_club_downgrade_grace_period.sql` | Adds a grace-event table, conservative remediation RPC, Edge Function wrapper, and daily pg_cron scheduling when `pg_cron` is available. It records warnings and archives excess active clubs after the grace window without mutating Supabase Auth users. Notification tie-ins remain future work. |
 
 ### Blocked / Pending
 
@@ -295,20 +308,58 @@
 
 ---
 
+## 11. Latest Smoke Verification
+
+**Smoke date:** 2026-06-04
+**URL:** `http://localhost:8081`
+**Result:** Focused TypeScript/Jest verification passed in the prior session. Browser smoke was completed after starting Expo web with the approved outside-sandbox workflow because sandboxed `npx.cmd expo start --web --non-interactive` still fails with `EPERM` on `C:\Users\user`.
+
+| Area | Result |
+|------|--------|
+| Browse | Live smoke passed. Seeded clubs loaded, Browse did not expose Create Club, and the Author clubs filter was present. No live seeded author-club spotlight/card was available in this dataset, so author spotlight remains covered by mocked Playwright fixture rather than live seeded data. |
+| Invitations | Live smoke passed for the notification handoff and history path. The Invitation reminders card was visible and linked to notification settings; one accepted past invitation rendered. No pending invitation existed for the signed-in account, so pending unread/read grouping remains unit-covered but not live-verified in this smoke. |
+| Manage | Live smoke passed on `ZZ_TEST Manage Basics Club` at `/clubs/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1/manage`. The handoff URL `/clubs/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3/manage` points to `ZZ_TEST Invite Only Club` and correctly denied management for the current session. |
+| Manage > Reports | Live smoke passed for the Reports surface. It showed "No open discussion reports" and "No open platform complaints"; complaint action buttons remain data-dependent and were not visible without seeded open complaints. |
+| Manage > Schedule | Live smoke passed. Entering backward due dates produced "Due dates must stay in chronological order." |
+| Manage > Lifecycle | Live smoke passed. Downgrade successor guidance and archive retention guidance were visible, including eligible Pro successor rows. |
+| Follow-up route smoke | Live smoke passed after the latest pass: `/clubs/authors`, Manage `?tab=reports`, `?tab=lifecycle`, and `?tab=schedule` rendered the expected updated surfaces. The route-tab smoke exposed and fixed a web initialization bug where non-`events` manage tabs could default to Current Book on fresh navigation. |
+| Live Supabase cleanup/cron verification | Read-only verification on 2026-06-05 against project `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) found that local migrations `20260529143000_clubs_moderation_cleanup_and_policy_notes.sql`, `20260529154500_club_moderation_author_lifecycle_rpc.sql`, and `20260529170000_club_downgrade_grace_period.sql` are not in live migration history. Catalog checks returned no `cleanup_expired_club_member_actions`, no `process_club_downgrade_grace_period`, no `club_downgrade_grace_events`, no installed `pg_cron`, and no `cron.job` relation. No Auth users were mutated and no maintenance functions were executed. |
+| Create Club entry point | Product constraint remains unchanged and live-smoked: Create Club appears on Profile for the Pro test user and does not appear in Browse. |
+| Console | Expected development warnings were observed (`shadow*`/`pointerEvents` deprecations and missing Sentry DSN). Slow browser-plugin reloads also produced a transient `6000ms timeout exceeded` dev LogBox/console entry, but the target routes rendered successfully afterward. |
+| Verification commands | `npx.cmd tsc --noEmit` passed. Focused Jest passed: Manage suite 40/40 tests, Browse/author route suites 7/7 tests. Prior invite-inclusive focused suite remains 3 suites / 48 tests. |
+
+**Previous live smoke baseline:** 2026-05-30 partial pass on `http://localhost:8082/clubs?smoke=1780053066028`: auth was not blocking; Browse, Club detail, and Manage loaded; Members showed Warn / Timed mute / Ban / Remove controls; Lifecycle showed archive/admin succession UI; Browse did not expose Create Club; Profile for Pro test user exposed Create Club; no runtime JS errors were observed.
+
+**Immediate non-chat tasks after this smoke:**
+
+1. Build the broader notification pipeline: push token registration, notification preferences/history, `send-notification`, `wishlist-notify`, and reminder delivery for invitations, nominations, downgrade warnings, and events.
+2. Add schema-backed author experiences such as AMA and signed-edition workflows.
+3. Expand reading schedule product depth: reminders and multi-plan behavior.
+4. Define exact admin lifecycle automation policy: automated downgrade-driven successor selection and archive retention/deletion rules. The current UI only surfaces readiness and warnings.
+5. Decide whether moderation needs durable resolution notes or a stricter RPC-backed punitive workflow policy.
+6. Roll out and then re-run read-only live verification for expired `club_member_actions` cleanup.
+7. Roll out and then re-run read-only live verification for downgrade grace cron/job state.
+8. Keep venue frontend work excluded unless product direction changes.
+9. Keep Clubs chat/realtime as a known high-priority gap, but defer implementation per the current user direction.
+
+---
+
 ## Summary Table
 
 | Feature Area | Implemented | Partially Implemented | Blocked / Pending |
 |--------------|-------------|---------------------|-----------------|
-| Manage Club | Settings slice, join-question CRUD, member-role toggle, member removal, current-book finalization, manual override | Settings depth (URL cover), override reliability, granular moderator perms | Ownership transfer UI, archive UI, moderation dashboard |
-| Invite Lifecycle | Create by username, history list, invitee accept | Status surface shows `revoked` with no production path | Revoke RPC, mark-read RPC |
-| Current Book / Nominations | Nomination list, vote cast/remove, nomination creation, finalize, reading status RPC, reading progress screen | Finalize UI gating on detail screen | Reading schedule UI (milestones/timeline) |
-| Events | List, create, edit, cancel, delete, RSVP | Venue selection (no venues registered live) | Venue frontend module |
+| Manage Club | Settings slice, join-question CRUD, member-role toggle, member removal, current-book finalization, manual override, archive/restore UI, lifecycle policy state, admin transfer request/accept flow, discussion report queue, platform complaint queue, warning/timed-mute/ban member actions | Granular moderator perms, moderation product depth, automated downgrade-driven succession, archive retention/deletion rules | â€” |
+| Invite Lifecycle | Create by username, history list, invitee accept, invitee inbox/unread badge, manager revoke, read-state RPC/service, inbox paging, pending unread/read grouping, accepted/expired/revoked history grouping | Notification handoff | Invitation reminder notifications |
+| Current Book / Nominations | Nomination list, vote cast/remove, nomination creation with provider/manual fallback, finalize, reading status RPC, reading progress screen, reading schedule builder/templates, explicit chapter-order validation, reading schedule timeline/milestone progress | Multi-plan schedules, reminders | — |
+| Events | List, create, edit, cancel, delete, RSVP, linked venue picker | Full venue registration/CRUD absent | Standalone venue frontend module |
 | Chat (backend) | `club_messages`, `message_reactions` with RLS + moderation columns | *(Backend ready; frontend completely missing)* | `chat.tsx` route, `ClubChatScreen`, `useRealtimeMessages`, Realtime publication (`is_in_publication = false`) |
 | Discussion | Topics, replies, votes, reactions, reports, read-state — 6 tables, 22 RLS policies, 4 triggers | *(Fully end-to-end; frontend consumes exclusively)* | Realtime publication (`is_in_publication = false`) — currently polled via TanStack Query |
-| Browse / Discovery | Browse screen, search, filters, scope toggle, detail screen, member-list gating | Create CTA missing | Author club discovery section |
-| Create Club | *(service layer only)* | — | **Route, screen, hook entirely missing** |
+| Browse / Discovery | Browse screen, search, filters including Author clubs, Author clubs landing route, All/My/Archived scope toggle, archived-club recovery, detail screen, member-list gating, verified-author card treatment, automated author-club badge smoke fixture | Schema-backed author experiences | — |
+| Create Club | Route, screen, hook, service, membership-limit check, cover image picker/upload | Author-club creation flow, advanced tags/genre controls | — |
 | Membership & Applications | Join, apply, application review, member list, leave service, leave-club UX | — | — |
-| Entitlement | Tier logic, frontend gating, live RLS/RPC enforcement | Grace-period automation | Automated invalid-role remediation |
+| Entitlement | Tier logic, frontend gating, live RLS/RPC enforcement, downgrade grace event/RPC/Edge Function/cron scaffolding | Notification tie-ins for downgrade warnings | Automated invalid-role remediation |
+
+> 2026-05-30 correction: the Create Club summary row above should be read with verified-author author-club creation and Profile-only Pro/Pro+ entry point included in Implemented. The remaining Create Club gap is advanced tags/genre metadata.
 
 ---
 
@@ -323,22 +374,25 @@
    - **Decision required:** Either (a) migrate Discussion to Chat and deprecate 6 discussion tables, (b) keep Discussion as primary and delete orphaned chat schema, or (c) run both side-by-side (Discussion for long-form threads, Chat for real-time messaging) with separate routes.
    - **Files:** `CLUBS_SPEC_2026-03-06_234839.md` §4.5 vs live DB `club_messages`/`message_reactions` vs `src/features/clubs/services/clubsDiscussionService.ts`.
 
-2. **Create Club route missing**  
-   - **Spec:** §4.4 defines `app/(tabs)/clubs/create.tsx` with full form.  
-   - **Reality:** No route file. No screen. No hook. Backend `createClub()` is orphaned.  
-   - **Files:** `CLUBS_SPEC_2026-03-06_234839.md` §4.4 vs `app/(tabs)/clubs/` directory listing.
+2. **Create Club documentation drift — resolved in code**
+   - **Spec:** §4.4 defines `app/(tabs)/clubs/create.tsx` with a full creation form.
+   - **Current code:** Route, screen, hook, service, and membership-limit check now exist. Product entry point is Profile-only for Pro / Pro+ users.
+   - **Remaining gap:** Polish only: richer metadata and tags/genre controls.
+   - **Files:** `app/(tabs)/clubs/create.tsx`, `src/features/clubs/screens/ClubCreateScreen.tsx`, `src/features/clubs/hooks/useClubs.ts`, `src/features/clubs/services/clubsManagementService.ts`.
 
 3. **`lead` role legacy in old migrations**  
    - **Spec:** §1.2 mandates `member | moderator | admin`. Rejects `lead`.  
    - **Reality:** Early migration `20251228114444_008_rls_policies_venues_clubs.sql` still references `lead_id` and `role = 'lead'`. Later migration `20260310153000_013_clubs_entitlement_enforcement.sql` cleans this live.  
    - **Files:** `CLUBS_SPEC_2026-03-06_234839.md` §1.2 vs `supabase/migrations/20251228114444_008_rls_policies_venues_clubs.sql`.
 
-4. **Finalize button gating mismatch**  
-   - **Spec:** Admin should finalize after voting closes.  
-   - **Reality:** `ClubDetailScreen` exposes finalize while `nomination.status === 'active'` without checking `voting_ends_at`. `ClubManageScreen` has correct gating via `hasNominationVotingClosed()`.  
-   - **Files:** `CLUBS_SPEC_2026-03-06_234839.md` vs `src/features/clubs/screens/ClubDetailScreen.tsx` (finalize guard) vs `src/features/clubs/screens/ClubManageScreen.tsx` lines 461–476.
+4. **Nomination finalization gating — resolved in current UI**
+   - **Spec:** Admin should finalize after voting closes.
+   - **Current code:** Detail screen now gates voting with `hasNominationVotingClosed()` and does not expose a premature finalize action from the nomination card. Manage current-book controls remain the admin finalization surface.
+   - **Current code:** Nomination search now uses cached provider fallback and manual nomination fallback. Remaining depth is around richer book metadata validation, not provider availability blocking.
+   - **Files:** `src/features/clubs/screens/ClubDetailScreen.tsx`, `src/features/clubs/screens/manage/ClubManageCurrentBookSection.tsx`.
 
-5. **Reading schedules orphaned (progress UI now implemented)**
+5. **Reading schedules orphaned (resolved for basic milestone UI)**
    - **Spec:** Mentions "reading schedules" and "member reading progress" as member-visible features.
-   - **Reality:** Tables exist (`reading_schedules`, `member_reading_progress`). RPC `set_club_current_book_reading_status` exists. **Reading progress screen implemented** (`ClubReadingProgressScreen.tsx`, route `app/(tabs)/clubs/[clubId]/reading.tsx`). Reading *schedule* builder (milestones, chapters, timeline) still not built.
+   - **Reality:** Tables exist (`reading_schedules`, `member_reading_progress`). RPC `set_club_current_book_reading_status` exists. **Reading progress screen implemented** (`ClubReadingProgressScreen.tsx`, route `app/(tabs)/clubs/[clubId]/reading.tsx`). **Reading schedule builder and member timeline are now implemented** using `reading_schedules.milestones` and `member_reading_progress.chapters_completed`.
+   - **Remaining gap:** Multi-plan schedules and reminder notifications are product-depth work rather than the basic missing UI.
    - **Files:** `CLUBS_SPEC_2026-03-06_234839.md` §2.2 vs `src/features/clubs/services/clubsBooksService.ts` vs `src/features/clubs/screens/ClubReadingProgressScreen.tsx`.

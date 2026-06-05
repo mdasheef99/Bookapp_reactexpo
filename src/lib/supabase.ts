@@ -17,6 +17,11 @@ if ((!supabaseUrl || !supabaseAnonKey) && !isDevAuthBypass) {
 // Expo did not inline public env vars into a static export.
 const resolvedSupabaseUrl = supabaseUrl ?? 'https://dev-bypass-placeholder.supabase.co';
 const resolvedSupabaseAnonKey = supabaseAnonKey ?? 'dev-bypass-anon-key';
+const localAuthLock = async <T,>(
+    _name: string,
+    _acquireTimeout: number,
+    fn: () => Promise<T>
+): Promise<T> => fn();
 
 export const supabase = createClient(resolvedSupabaseUrl, resolvedSupabaseAnonKey, {
     auth: {
@@ -24,5 +29,6 @@ export const supabase = createClient(resolvedSupabaseUrl, resolvedSupabaseAnonKe
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,
+        lock: localAuthLock,
     },
 });
