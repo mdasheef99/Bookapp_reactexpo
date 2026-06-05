@@ -2,9 +2,9 @@
 
 **Document Type:** Feature Status / Technical Handoff
 **Feature:** P2P Book Exchange (P0-priority MVP feature)
-**Last Updated:** 2026-02-18 (Week 2, Day 1 — Session 4)
+**Last Updated:** 2026-05-11 (dispute filing flow applied)
 **Review Conducted By:** Sessions 2–3 comprehensive analysis
-**Overall Status:** ~65% complete end-to-end
+**Overall Status:** ~60-65% complete end-to-end; meetup path is active, payment/shipping paths are intentionally disabled in-app
 
 ---
 
@@ -45,20 +45,22 @@ Step 8: Rate & Review       → Both parties rate the exchange (1–5 stars + te
 
 ## 2. Implementation Status Summary
 
-**Overall Exchange completion: ~65%** (up from 55% before Session 2)
+**Overall Exchange completion: ~70%** (meetup path active with ratings and dispute filing)
 
 ### 2.1 What Works Today (End-to-End)
 
 The **meetup delivery path is fully functional** end-to-end:
 
-- ✅ Browse city-filtered listings with condition and delivery filters
-- ✅ Create listing with 2–4 photos, condition rating, and delivery options
+- ✅ Browse city-filtered listings with condition and enabled delivery filters
+- ✅ Create listing with 2–4 photos, condition rating, and enabled delivery options
 - ✅ Request a book (meetup) — credit hold placed atomically via `request_transaction()` RPC
 - ✅ Lender receives pending request; can approve or decline
 - ✅ Borrower confirms delivery; lender marks complete
 - ✅ `complete_transaction()` RPC atomically releases hold, debits borrower, credits lender
 - ✅ Credit balance visible on Profile screen (available + held/earned/spent grid)
-- ✅ Address selection for porter/dunzo enforced in UI — no null `shipping_address_id`
+- ✅ Dedicated address management surface available from Profile (`app/(tabs)/addresses.tsx`)
+- ✅ Delivery/payment capability gating centralized in `src/features/exchange/config/exchangeConfig.ts`
+- ⚠️ Porter/Dunzo are currently hidden from browse/create request surfaces until shipping and payment integrations are complete
 
 ### 2.2 What Is Blocked
 
@@ -66,12 +68,15 @@ Steps 4–5 require external API keys not yet available:
 
 - ❌ Razorpay payment deposit collection (Step 4) — awaiting sandbox credentials
 - ❌ Porter/Dunzo delivery booking (Step 5) — awaiting API access
+- ❌ `create-payment-order`, `verify-payment`, and `book-shipment` Edge Functions are not deployed
 
 ### 2.3 What Is Not Started
 
-- ❌ Rating & review system (Step 8) — `transaction_ratings` table exists, no frontend or RPC
-- ❌ Credit history screen — `creditService.getCreditHistory()` exists, no UI
-- ❌ Dispute resolution flow — `disputed` status handled in DB, no frontend path
+- ✅ Rating & review frontend/service flow — completed transactions now prompt each participant to rate the other
+- ✅ Rating RPC hardening is applied via `submit_transaction_rating`, deriving `from_user_id` from `auth.uid()` and `to_user_id` from the completed transaction; direct INSERT policy also validates the opposite participant
+- ✅ Credit history screen — `app/(tabs)/profile/credit-history.tsx` surfaces balance and event history from `creditService.getCreditHistory()`
+- ✅ Dispute filing flow — participants can file a dispute on delivered exchanges; `file_transaction_dispute()` records `dispute_opened` in `transaction_events.metadata`
+- ⚠️ Dispute resolution is currently "Resolve & Complete" via existing `complete_transaction()` from `disputed`; dedicated admin/moderation resolution remains future work
 
 ---
 
@@ -84,8 +89,10 @@ Steps 4–5 require external API keys not yet available:
 | `src/features/exchange/services/listingsService.ts` | 313 | Listing CRUD, city-filtered browse, photo upload to `listing-photos` storage bucket |
 | `src/features/exchange/services/transactionsService.ts` | 258 | Wraps all 6 transaction RPCs + query functions (`getMyTransactionsWithListings`, `getTransactionDetails`, `getIncomingRequests`) |
 | `src/features/exchange/services/addressesService.ts` | 155 | Full CRUD for `user_addresses`: getAddresses, getDefaultAddress, createAddress, updateAddress, deleteAddress, setDefaultAddress |
+| `src/features/exchange/services/ratingsService.ts` | — | Fetches/submits current user's `transaction_ratings` row for a completed exchange |
 | `src/features/credits/services/creditService.ts` | 145 | `getCreditBalance()`, `getCreditHistory()`, `subscribeToCreditBalance()` Realtime subscription |
 | `src/features/auth/services/profileService.ts` | 86 | `getProfileSummary()` + batch helper used by transaction detail screen |
+| `src/features/exchange/utils/transactionActionResolver.ts` | — | Pure role/status/delivery resolver for transaction detail CTAs and guard messages |
 
 ### 3.2 Hooks
 
@@ -109,9 +116,11 @@ Steps 4–5 require external API keys not yet available:
 
 | Component | Path | Purpose |
 |-----------|------|---------|
-| `AddressPicker` | `src/components/exchange/AddressPicker.tsx` | Address selection + creation modal. Radio list, 7-field form, default badge. Used in Listing Detail for porter/dunzo delivery. |
+| `AddressPicker` | `src/components/exchange/AddressPicker.tsx` | Address selection + creation modal. Radio list, 7-field form, default badge. Available for future shipping/address management surfaces; not currently rendered in Listing Detail while Porter/Dunzo are disabled. |
+| `AddressesScreen` | `app/(tabs)/addresses.tsx` | Profile-linked address management surface for listing, adding, editing, deleting, and setting a default saved address. |
 | `ListingCard` | Inline in `exchange/index.tsx` | Book cover, title, condition badge, delivery option chips |
-| `TransactionCard` | Inline in `my-transactions.tsx` | Role-aware card — status badge (10 states), role badge (📥/📤), timestamp |
+| `TransactionCard` | `src/components/exchange/TransactionCard.tsx` | Role-aware card — status badge (10 states), role badge, timestamp, and detail navigation |
+| `TransactionRatingPrompt` | `src/components/exchange/TransactionRatingPrompt.tsx` | Completed-exchange rating form with stars, quick tags, optional review, and submitted-rating state |
 
 ### 3.5 Database Functions (SECURITY DEFINER)
 
@@ -149,15 +158,16 @@ All transaction state mutations go through these RPCs. Direct `UPDATE` on `trans
 | Step | Description | Frontend | Backend RPC / Function | Status |
 |------|-------------|----------|------------------------|--------|
 | **1** | Browse Listings | `exchange/index.tsx` — filter chips (condition ×5, delivery ×3), pull-to-refresh | `listingsService.browseListings(city, filters)` | ✅ **Complete** |
-| **2** | Request Book | `[listingId].tsx` — delivery chip selection + `AddressPicker` for porter/dunzo → Request Book CTA | `request_transaction()` RPC | ✅ **Complete** |
+| **2** | Request Book | `[listingId].tsx` — meetup-only Request Book CTA while shipping integrations are disabled | `request_transaction()` RPC | ✅ **Complete for meetup / deferred for Porter-Dunzo** |
 | **3** | Approve / Decline | `transaction/[transactionId].tsx` — Approve / Decline buttons (lender, `requested` status) | `approve_transaction()` / `decline_transaction()` | ✅ **Complete** |
 | **4** | Payment | Status banner `payment_pending` shown; no action button rendered | `create-payment-order` Edge Fn ❌ / `verify-payment` Edge Fn ❌ | ❌ **Blocked — Razorpay API key** |
-| **5** | Ship | "Mark Shipped" button shown for lender in `ready_to_ship` state; tapping currently no-ops | `book-shipment` Edge Fn ❌ | ❌ **Blocked — Porter/Dunzo API key** |
+| **5** | Ship | Delivery-based actions are guarded with explanatory meetup-only copy | `book-shipment` Edge Fn ❌ | ❌ **Blocked — Porter/Dunzo API key** |
 | **6** | Delivery Confirm | "Confirm Delivery" button — borrower, `shipped` status | `transition_transaction_status()` → `delivered` | ✅ **Complete** |
 | **7** | Complete Exchange | "Complete Exchange" button — either party, `delivered` status | `complete_transaction()` RPC — atomic credit transfer | ✅ **Complete** |
-| **8** | Rate & Review | Not built | `transaction_ratings` table exists; no INSERT RPC or frontend | ❌ **Not Started** |
+| **8** | Rate & Review | Completed transaction detail prompt; rating service + hook | `submit_transaction_rating()` RPC; tight INSERT policy validates opposite participant | ✅ **Complete with server-side hardening** |
+| **Disputes** | File dispute | Delivered transaction detail form + disputed status banner | `file_transaction_dispute()` RPC + `transaction_events.dispute_opened` metadata | ✅ **Participant filing complete; admin resolution deferred** |
 
-**Summary: 5 of 8 steps are complete end-to-end. Steps 4–5 blocked by external APIs. Step 8 not started.**
+**Summary: Meetup covers the core request → approve → confirm → complete → rate path. Steps 4–5 remain blocked by external APIs and are hidden/guarded in-app.**
 
 ---
 
@@ -221,7 +231,7 @@ All 5 Exchange screens, 3 new service/hook files, and `AddressPicker` compile wi
 
 ### 6.1 Current Coverage
 
-No automated tests exist for the Exchange feature. All QA to date has been manual Playwright browser testing of screen navigation, state transitions, and error states.
+Exchange now has focused automated tests for listing detail, transaction detail, ratings, service instrumentation, delivery capability gating, credit history, and address management. Full lifecycle E2E coverage is still pending.
 
 ### 6.2 Recommended Test Priorities
 
@@ -294,9 +304,12 @@ The two broken steps (4: payment, 5: delivery) are **purely gated by external AP
 | This session (now) | Deploy `complete-transaction` + `transfer-credits` Edge wrappers | 45 min |
 | Week 5–6 (after Clubs) | `create-payment-order` + `verify-payment` Edge Functions (Razorpay) | 6–8 hours |
 | Week 5–6 | `book-shipment` Edge Function (Porter or Dunzo) | 4–6 hours |
-| Week 6–7 | Rating & review frontend + RPC | 3–4 hours |
-| Week 6–7 | Credit history screen | 2–3 hours |
-| Week 7 | Dispute resolution flow | 4–5 hours |
+| Done 2026-05-10 | Rating & review frontend/service flow | Completed transaction prompt + existing `transaction_ratings` table |
+| Done 2026-05-11 | Rating RPC / stricter DB policy | Live RPC and tightened INSERT policy applied; anon EXECUTE revoked |
+| Done 2026-05-10 | Credit history screen | Implemented as hidden Profile-linked tab route |
+| Done 2026-05-10 | Dedicated address management surface | Implemented as hidden Profile-linked tab route |
+| Done 2026-05-11 | Dispute filing flow | Live RPC, frontend form, disputed banner, and resolve/complete action |
+| Future | Dedicated dispute moderation/admin resolution | Add staff/admin workflow if product requires adjudication beyond participant resolution |
 
 **Total remaining Exchange effort (post-API-keys):** ~20–26 hours across Weeks 5–7.
 

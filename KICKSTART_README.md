@@ -47,10 +47,11 @@ Practical checklist for each session:
 ## 🎯 Quick Start (30 seconds)
 
 1. Open `DEVELOPMENT_SESSION_KICKSTART.md`
-2. Copy the prompt from the "PROMPT TO COPY-PASTE" section
-3. Paste it into your AI assistant
-4. Wait for the status report
-5. Follow the AI's recommendations
+2. If your AI assistant supports Augment `codebase-retrieval`, make sure it uses that tool first for project context
+3. Copy the prompt from the "PROMPT TO COPY-PASTE" section
+4. Paste it into your AI assistant
+5. Wait for the status report
+6. Follow the AI's recommendations
 
 ---
 
