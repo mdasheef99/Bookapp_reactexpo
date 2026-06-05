@@ -1462,7 +1462,7 @@ git commit -m "feat: add club venue management"
 - Test: `src/features/clubs/screens/__tests__/ClubVenuePickerScreen.test.tsx`
 - Test: `src/features/clubs/screens/__tests__/ClubEventEditorScreen.test.tsx`
 
-- [ ] **Step 1: Update failing picker tests for manage venue linking**
+- [x] **Step 1: Update failing picker tests for manage venue linking**
 
 In `src/features/clubs/screens/__tests__/ClubVenuePickerScreen.test.tsx`, add a test that expects manage venue linking:
 
@@ -1504,7 +1504,7 @@ jest.mock('@/features/venues/hooks/useVenues', () => ({
 
 Include `useAddClubVenueLink` in the existing `@/features/clubs/hooks/useClubs` mock.
 
-- [ ] **Step 2: Run picker tests and verify RED**
+- [x] **Step 2: Run picker tests and verify RED**
 
 Run:
 
@@ -1514,7 +1514,7 @@ npm.cmd test -- --runInBand src/features/clubs/screens/__tests__/ClubVenuePicker
 
 Expected: fail because the picker cannot browse approved venues or link from Manage.
 
-- [ ] **Step 3: Implement picker behavior**
+- [x] **Step 3: Implement picker behavior**
 
 Modify `src/features/clubs/screens/ClubVenuePickerScreen.tsx` so it supports two modes:
 
@@ -1553,7 +1553,7 @@ if (returnTo === 'manage-venues') {
 
 Render `approvedVenues` with `VenueCard` in manage mode and preserve the linked venue cards for event mode.
 
-- [ ] **Step 4: Run picker tests and verify GREEN**
+- [x] **Step 4: Run picker tests and verify GREEN**
 
 Run:
 
@@ -1563,7 +1563,7 @@ npm.cmd test -- --runInBand src/features/clubs/screens/__tests__/ClubVenuePicker
 
 Expected: pass.
 
-- [ ] **Step 5: Run event editor tests**
+- [x] **Step 5: Run event editor tests**
 
 Run:
 
@@ -1573,7 +1573,7 @@ npm.cmd test -- --runInBand src/features/clubs/screens/__tests__/ClubEventEditor
 
 Expected: pass, confirming manual fallback and event-editor venue return flow still work.
 
-- [ ] **Step 6: Commit Task 5**
+- [x] **Step 6: Commit Task 5**
 
 Run:
 

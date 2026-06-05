@@ -3,8 +3,10 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { navigateBackOrFallback } from '@/lib/navigation';
 import { useTheme } from '@/hooks/useTheme';
-import { useClubEventVenues, useClubPublicDetail } from '@/features/clubs/hooks/useClubs';
+import { useAddClubVenueLink, useClubEventVenues, useClubPublicDetail } from '@/features/clubs/hooks/useClubs';
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
+import { VenueCard } from '@/features/venues/components/VenueCard';
+import { useApprovedVenues } from '@/features/venues/hooks/useVenues';
 
 export default function ClubVenuePickerScreen() {
     const { clubId, returnTo, editorMode, eventId, editorReturnTo, manageTab, draft } = useLocalSearchParams<{
@@ -17,9 +19,12 @@ export default function ClubVenuePickerScreen() {
         draft?: string;
     }>();
     const { colors } = useTheme();
+    const isManageVenueLinking = returnTo === 'manage-venues';
 
     const { data: club, isLoading: isClubLoading, isError: isClubError, error: clubError } = useClubPublicDetail(clubId ?? null);
-    const { data: linkedVenues = [], isLoading: isVenuesLoading, isError: isVenuesError, error: venuesError } = useClubEventVenues(clubId ?? null, !!clubId);
+    const { data: linkedVenues = [], isLoading: isVenuesLoading, isError: isVenuesError, error: venuesError } = useClubEventVenues(clubId ?? null, !!clubId && !isManageVenueLinking);
+    const { data: approvedVenues = [], isLoading: isApprovedVenuesLoading, isError: isApprovedVenuesError, error: approvedVenuesError } = useApprovedVenues({ limit: 50, offset: 0 });
+    const addClubVenueLink = useAddClubVenueLink();
 
     const editorDestination = editorMode === 'edit' && eventId
         ? `/clubs/${clubId}/events/${eventId}/edit`
@@ -31,7 +36,12 @@ export default function ClubVenuePickerScreen() {
     }).toString();
     const editorDestinationWithQuery = editorDestinationQuery ? `${editorDestination}?${editorDestinationQuery}` : editorDestination;
 
-    const handleSelectVenue = (venueId: string) => {
+    const handleSelectVenue = async (venueId: string) => {
+        if (isManageVenueLinking) {
+            await addClubVenueLink.mutateAsync({ clubId, venueId });
+            router.replace(`/clubs/${clubId}/manage?tab=venues`);
+            return;
+        }
         if (returnTo === 'event-editor') {
             const targetQuery = new URLSearchParams({
                 preselectedVenueId: venueId,
@@ -46,7 +56,11 @@ export default function ClubVenuePickerScreen() {
         router.replace(`${target}?preselectedVenueId=${venueId}`);
     };
 
-    if (isClubLoading || isVenuesLoading) {
+    const isVenueDataLoading = isManageVenueLinking ? isApprovedVenuesLoading : isVenuesLoading;
+    const isVenueDataError = isManageVenueLinking ? isApprovedVenuesError : isVenuesError;
+    const venueDataError = isManageVenueLinking ? approvedVenuesError : venuesError;
+
+    if (isClubLoading || isVenueDataLoading) {
         return (
             <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary }]}>
                 <ActivityIndicator size="large" color={colors.accent} testID="venue-picker-loading" />
@@ -63,33 +77,46 @@ export default function ClubVenuePickerScreen() {
         );
     }
 
-    if (isVenuesError) {
+    if (isVenueDataError) {
         return (
             <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}>
                 <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>Unable to load venues</Text>
-                <Text style={[styles.errorBody, { color: colors.textSecondary }]}>{getClubsEntitlementErrorMessage(venuesError, 'Unable to load venues right now.')}</Text>
+                <Text style={[styles.errorBody, { color: colors.textSecondary }]}>{getClubsEntitlementErrorMessage(venueDataError, 'Unable to load venues right now.')}</Text>
             </View>
         );
     }
 
-    const hasVenues = linkedVenues.length > 0;
+    const venuesToRender = isManageVenueLinking ? approvedVenues : linkedVenues;
+    const hasVenues = venuesToRender.length > 0;
+    const backFallback = isManageVenueLinking ? `/clubs/${clubId}/manage?tab=venues` : returnTo === 'event-editor' ? editorDestinationWithQuery : `/clubs/${clubId}`;
 
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.content}>
             <View style={styles.headerRow}>
-                <TouchableOpacity onPress={() => navigateBackOrFallback(router, returnTo === 'event-editor' ? editorDestinationWithQuery : `/clubs/${clubId}`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="back-button">
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, backFallback)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="back-button">
                     <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Select a venue</Text>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>{isManageVenueLinking ? 'Link a venue' : 'Select a venue'}</Text>
                 <View style={styles.headerSpacer} />
             </View>
 
             {!hasVenues ? (
                 <View style={[styles.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                    <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No venues registered</Text>
+                    <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{isManageVenueLinking ? 'No approved venues available' : 'No venues registered'}</Text>
                     <Text style={[styles.emptyBody, { color: colors.textSecondary }]}>
-                        This club does not have any linked venues yet. Admins can add venues from the Manage Club screen.
+                        {isManageVenueLinking ? 'Approved venues will appear here when they are ready to link.' : 'This club does not have any linked venues yet. Admins can add venues from the Manage Club screen.'}
                     </Text>
+                </View>
+            ) : isManageVenueLinking ? (
+                <View style={styles.venuesList}>
+                    {approvedVenues.map((venue) => (
+                        <VenueCard
+                            key={venue.id}
+                            venue={venue}
+                            colors={colors}
+                            onPress={(selectedVenue) => { void handleSelectVenue(selectedVenue.id); }}
+                        />
+                    ))}
                 </View>
             ) : (
                 <View style={styles.venuesList}>

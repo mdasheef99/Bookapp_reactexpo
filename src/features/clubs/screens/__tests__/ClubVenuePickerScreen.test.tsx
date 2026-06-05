@@ -7,6 +7,9 @@ const mockUseTheme = jest.fn();
 const mockUseLocalSearchParams = jest.fn();
 const mockUseClubPublicDetail = jest.fn();
 const mockUseClubEventVenues = jest.fn();
+const mockUseApprovedVenues = jest.fn();
+const mockUseAddClubVenueLink = jest.fn();
+const mockAddClubVenueLink = jest.fn();
 const mockRouterBack = jest.fn();
 const mockRouterReplace = jest.fn();
 
@@ -26,6 +29,10 @@ jest.mock('@/lib/navigation', () => ({
 jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useClubPublicDetail: (...args: unknown[]) => mockUseClubPublicDetail(...args),
     useClubEventVenues: (...args: unknown[]) => mockUseClubEventVenues(...args),
+    useAddClubVenueLink: (...args: unknown[]) => mockUseAddClubVenueLink(...args),
+}));
+jest.mock('@/features/venues/hooks/useVenues', () => ({
+    useApprovedVenues: (...args: unknown[]) => mockUseApprovedVenues(...args),
 }));
 
 const colors = {
@@ -72,6 +79,9 @@ describe('ClubVenuePickerScreen', () => {
             isError: false,
             error: null,
         });
+        mockUseApprovedVenues.mockReturnValue({ data: [], isLoading: false, isError: false, error: null });
+        mockUseAddClubVenueLink.mockReturnValue({ mutateAsync: mockAddClubVenueLink, isPending: false });
+        mockAddClubVenueLink.mockResolvedValue({ club_id: 'club-1', venue_id: 'venue-9', is_primary: false });
     });
 
     it('renders venue list with names, addresses, and badges', async () => {
@@ -142,6 +152,27 @@ describe('ClubVenuePickerScreen', () => {
 
         await waitFor(() => expect(getByText('No venues registered')).toBeOnTheScreen());
         expect(getByText('This club does not have any linked venues yet. Admins can add venues from the Manage Club screen.')).toBeOnTheScreen();
+    });
+
+    it('links a selected venue when opened from Manage Club venues', async () => {
+        mockUseLocalSearchParams.mockReturnValue({ clubId: 'club-1', returnTo: 'manage-venues' });
+        mockUseClubEventVenues.mockReturnValue({ data: [], isLoading: false, isError: false, error: null });
+        mockUseApprovedVenues.mockReturnValue({
+            data: [{ id: 'venue-9', name: 'New Library', venue_type: 'library', city: 'Bengaluru', address_line1: '9 MG Road', verification_status: 'approved' }],
+            isLoading: false,
+            isError: false,
+            error: null,
+        });
+        mockUseAddClubVenueLink.mockReturnValue({ mutateAsync: mockAddClubVenueLink, isPending: false });
+
+        const { getByTestId } = render(<ClubVenuePickerScreen />);
+
+        await waitFor(() => expect(getByTestId('venue-card-venue-9')).toBeOnTheScreen());
+
+        fireEvent.press(getByTestId('venue-card-venue-9'));
+
+        await waitFor(() => expect(mockAddClubVenueLink).toHaveBeenCalledWith({ clubId: 'club-1', venueId: 'venue-9' }));
+        expect(mockRouterReplace).toHaveBeenCalledWith('/clubs/club-1/manage?tab=venues');
     });
 
     it('shows a loading state initially', () => {
