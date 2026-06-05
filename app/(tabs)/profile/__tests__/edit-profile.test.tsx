@@ -5,6 +5,8 @@ import EditProfileScreen from '../edit';
 import { profileService } from '@/features/auth/services/profileService';
 
 const mockBack = jest.fn();
+const mockCanGoBack = jest.fn();
+const mockReplace = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
@@ -14,7 +16,13 @@ jest.mock('expo-image-picker', () => ({
     launchImageLibraryAsync: jest.fn(),
     MediaTypeOptions: { Images: 'Images' },
 }));
-jest.mock('expo-router', () => ({ router: { back: (...args: unknown[]) => mockBack(...args) } }));
+jest.mock('expo-router', () => ({
+    router: {
+        back: (...args: unknown[]) => mockBack(...args),
+        canGoBack: (...args: unknown[]) => mockCanGoBack(...args),
+        replace: (...args: unknown[]) => mockReplace(...args),
+    },
+}));
 jest.mock('@/features/auth/hooks/useAuth', () => ({
     useAuth: () => ({ session: { user: { id: 'reader-1' } } }),
 }));
@@ -67,6 +75,7 @@ function renderWithQueryClient() {
 describe('EditProfileScreen', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockCanGoBack.mockReturnValue(false);
         (profileService.getProfile as jest.Mock).mockResolvedValue({
             id: 'profile-1',
             user_id: 'reader-1',
@@ -95,6 +104,7 @@ describe('EditProfileScreen', () => {
 
     it('loads existing fields and saves editable profile details', async () => {
         const { getByDisplayValue, getByTestId, getByText, queryClient, unmount } = renderWithQueryClient();
+        const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
         await waitFor(() => expect(getByTestId('edit-profile-display-name')).toBeOnTheScreen());
         await waitFor(() => expect(profileService.getProfile).toHaveBeenCalledWith('reader-1'));
@@ -110,7 +120,27 @@ describe('EditProfileScreen', () => {
             username: 'Priya S',
             city: 'Delhi',
         }));
-        expect(mockBack).toHaveBeenCalled();
+        expect(queryClient.getQueryData(['profile', 'reader-1'])).toEqual(expect.objectContaining({
+            display_name: 'Priya S',
+            username: 'priya_s',
+            city: 'Delhi',
+        }));
+        expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['profile', 'reader-1'] });
+        expect(mockReplace).toHaveBeenCalledWith('/(tabs)/profile');
+
+        unmount();
+        queryClient.clear();
+    });
+
+    it('falls back to Profile when the header back button has no local history', async () => {
+        const { getByLabelText, queryClient, unmount } = renderWithQueryClient();
+
+        await waitFor(() => expect(getByLabelText('Go back')).toBeOnTheScreen());
+
+        fireEvent.press(getByLabelText('Go back'));
+
+        expect(mockReplace).toHaveBeenCalledWith('/(tabs)/profile');
+        expect(mockBack).not.toHaveBeenCalled();
 
         unmount();
         queryClient.clear();
@@ -125,11 +155,16 @@ describe('EditProfileScreen', () => {
         });
         (profileService.uploadAvatar as jest.Mock).mockResolvedValue('https://cdn.example/avatar.png');
         const { getByText, queryClient, unmount } = renderWithQueryClient();
+        const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
         await waitFor(() => expect(getByText('Change Photo')).toBeOnTheScreen());
         fireEvent.press(getByText('Change Photo'));
 
         await waitFor(() => expect(profileService.uploadAvatar).toHaveBeenCalledWith('reader-1', 'file:///avatar.png'));
+        expect(queryClient.getQueryData(['profile', 'reader-1'])).toEqual(expect.objectContaining({
+            avatar_url: 'https://cdn.example/avatar.png',
+        }));
+        expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['profile', 'reader-1'] });
 
         unmount();
         queryClient.clear();

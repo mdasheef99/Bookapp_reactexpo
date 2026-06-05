@@ -125,6 +125,46 @@ describe('ProfileScreen', () => {
         queryClient.clear();
     });
 
+    it('opens the create club route from the account menu', async () => {
+        const { getByText, queryClient, unmount } = renderWithQueryClient();
+
+        await waitFor(() => expect(getByText('Priya Sharma')).toBeOnTheScreen());
+
+        fireEvent.press(getByText('Create Club'));
+
+        expect(mockPush).toHaveBeenCalledWith('/(tabs)/clubs/create');
+
+        unmount();
+        queryClient.clear();
+    });
+
+    it('hides the create club route for free members', async () => {
+        (profileService.getProfile as jest.Mock).mockResolvedValueOnce({
+            id: 'profile-1',
+            user_id: 'reader-1',
+            display_name: 'Priya Sharma',
+            username: 'priya_reads',
+            avatar_url: null,
+            city: 'Mumbai',
+            email: null,
+            referral_code: 'PRIY1234',
+            account_type: 'user',
+            is_verified_author: false,
+            membership_tier: 'free',
+            trust_score: 4.75,
+            created_at: '2026-05-10T10:00:00.000Z',
+            updated_at: '2026-05-10T10:00:00.000Z',
+        });
+        const { getByText, queryByText, queryClient, unmount } = renderWithQueryClient();
+
+        await waitFor(() => expect(getByText('Priya Sharma')).toBeOnTheScreen());
+
+        expect(queryByText('Create Club')).toBeNull();
+
+        unmount();
+        queryClient.clear();
+    });
+
     it('opens the edit profile route from the profile header', async () => {
         const { getByText, queryClient, unmount } = renderWithQueryClient();
 

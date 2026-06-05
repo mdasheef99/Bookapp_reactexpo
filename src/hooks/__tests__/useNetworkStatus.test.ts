@@ -116,6 +116,41 @@ describe('useNetworkStatus', () => {
       expect(result.current.isOffline).toBe(false);
     });
 
+    it('ignores offline events for localhost web previews', () => {
+      Object.defineProperty(window, 'location', {
+        value: { hostname: 'localhost' },
+        writable: true,
+        configurable: true,
+      });
+
+      const { result } = renderHook(() => useNetworkStatus());
+
+      act(() => {
+        (listeners['offline'] || []).forEach((h) => h());
+      });
+
+      expect(result.current.isConnected).toBe(true);
+      expect(result.current.isOffline).toBe(false);
+    });
+
+    it('treats localhost web previews as connected when navigator.onLine is unreliable', () => {
+      Object.defineProperty(navigator, 'onLine', {
+        value: false,
+        writable: true,
+        configurable: true,
+      });
+      Object.defineProperty(window, 'location', {
+        value: { hostname: '127.0.0.1' },
+        writable: true,
+        configurable: true,
+      });
+
+      const { result } = renderHook(() => useNetworkStatus());
+
+      expect(result.current.isConnected).toBe(true);
+      expect(result.current.isOffline).toBe(false);
+    });
+
     it('registers online/offline listeners on web', () => {
       renderHook(() => useNetworkStatus());
 
@@ -124,6 +159,12 @@ describe('useNetworkStatus', () => {
     });
 
     it('responds to offline/online events', () => {
+      Object.defineProperty(window, 'location', {
+        value: { hostname: 'app.example.test' },
+        writable: true,
+        configurable: true,
+      });
+
       const { result } = renderHook(() => useNetworkStatus());
 
       // Simulate going offline

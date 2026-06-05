@@ -49,13 +49,18 @@ export default function EditProfileScreen() {
 
         setIsSaving(true);
         try {
-            await profileService.updateProfile(userId, {
+            const updatedProfile = await profileService.updateProfile(userId, {
                 display_name: displayName,
                 username,
                 city,
             });
-            await queryClient.invalidateQueries({ queryKey: ['profile', userId] });
-            router.back();
+            if (updatedProfile) {
+                queryClient.setQueryData(['profile', userId], (current: typeof updatedProfile | undefined) => ({
+                    ...current,
+                    ...updatedProfile,
+                }));
+            }
+            router.replace('/(tabs)/profile');
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Could not update your profile.';
             Alert.alert('Update failed', message);
@@ -86,7 +91,9 @@ export default function EditProfileScreen() {
             setIsUploadingAvatar(true);
             const publicUrl = await profileService.uploadAvatar(userId, result.assets[0].uri);
             setAvatarUrl(publicUrl);
-            await queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+            queryClient.setQueryData(['profile', userId], (current: typeof profile | undefined) => current
+                ? { ...current, avatar_url: publicUrl, updated_at: new Date().toISOString() }
+                : current);
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Could not update your profile photo.';
             Alert.alert('Upload failed', message);
@@ -99,7 +106,12 @@ export default function EditProfileScreen() {
         <ScreenBackground>
             <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Go back">
+                    <TouchableOpacity
+                        onPress={() => router.replace('/(tabs)/profile')}
+                        style={styles.backButton}
+                        accessibilityRole="button"
+                        accessibilityLabel="Go back"
+                    >
                         <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Edit Profile</Text>

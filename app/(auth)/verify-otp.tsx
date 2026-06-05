@@ -38,8 +38,8 @@ export default function VerifyOtpScreen() {
                 throw new Error('Unable to determine the authenticated user after OTP verification. Please try again.');
             }
 
-            const existingProfile = await profileService.getProfile(userId);
-            router.replace(existingProfile ? '/(tabs)/library' : '/(auth)/setup-profile');
+            const hasProfile = await profileService.hasProfile(userId);
+            router.replace(hasProfile ? '/(tabs)/library' : '/(auth)/setup-profile');
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Failed to verify OTP. Please try again.';
             Alert.alert('Error', message);

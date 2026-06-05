@@ -6,6 +6,9 @@ export type UserAccountType = 'user' | 'venue_owner' | 'author' | 'admin';
 export type UserMembershipTier = 'free' | 'pro' | 'pro_plus';
 
 const PROFILE_SOURCE_TABLE = 'user_profiles';
+const PROFILE_SUMMARY_SOURCE = 'profile_public_summaries';
+const PROFILE_COLUMNS = 'id, user_id, display_name, username, avatar_url, city, email, referral_code, account_type, is_verified_author, membership_tier, trust_score, created_at, updated_at';
+const SUMMARY_COLUMNS = 'id, user_id, display_name, username, avatar_url, trust_score, city, membership_tier';
 
 export interface UserProfile {
     id: string;
@@ -36,8 +39,6 @@ export interface UserProfileSummary {
     membership_tier: UserMembershipTier;
 }
 
-const SUMMARY_COLUMNS = 'id, user_id, display_name, username, avatar_url, trust_score, city, membership_tier';
-
 export interface UpdateProfileInput {
     display_name?: string;
     username?: string | null;
@@ -60,7 +61,7 @@ export const profileService = {
     async getProfile(userId: string): Promise<UserProfile | null> {
         const { data, error } = await supabase
             .from(PROFILE_SOURCE_TABLE)
-            .select('*')
+            .select(PROFILE_COLUMNS)
             .eq('user_id', userId)
             .maybeSingle();
 
@@ -69,13 +70,28 @@ export const profileService = {
     },
 
     /**
+     * Check whether a user has completed profile setup.
+     * Uses an id-only query for routing decisions.
+     */
+    async hasProfile(userId: string): Promise<boolean> {
+        const { data, error } = await supabase
+            .from(PROFILE_SOURCE_TABLE)
+            .select('id')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (error) throw error;
+        return Boolean(data?.id);
+    },
+
+    /**
      * Fetch a lightweight profile summary by auth user_id.
-     * Canonical app-side source: public.user_profiles.
+     * Canonical app-side source: public.profile_public_summaries.
      * Use this for cards, avatars, and list items.
      */
     async getProfileSummary(userId: string): Promise<UserProfileSummary | null> {
         const { data, error } = await supabase
-            .from(PROFILE_SOURCE_TABLE)
+            .from(PROFILE_SUMMARY_SOURCE)
             .select(SUMMARY_COLUMNS)
             .eq('user_id', userId)
             .maybeSingle();
@@ -93,7 +109,7 @@ export const profileService = {
         if (userIds.length === 0) return [];
 
         const { data, error } = await supabase
-            .from(PROFILE_SOURCE_TABLE)
+            .from(PROFILE_SUMMARY_SOURCE)
             .select(SUMMARY_COLUMNS)
             .in('user_id', userIds);
 
@@ -114,7 +130,7 @@ export const profileService = {
             .from(PROFILE_SOURCE_TABLE)
             .update(payload)
             .eq('user_id', userId)
-            .select('*')
+            .select(PROFILE_COLUMNS)
             .maybeSingle();
 
         if (error) throw error;

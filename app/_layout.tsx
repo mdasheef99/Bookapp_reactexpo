@@ -45,11 +45,12 @@ function InitialLayout() {
         }
 
         const inAuthGroup = segments[0] === '(auth)';
+        const isSetupProfileRoute = segments.join('/') === '(auth)/setup-profile';
 
         if (!session && !inAuthGroup) {
             // Redirect to login if not authenticated
             router.replace('/(auth)/login');
-        } else if (session && inAuthGroup) {
+        } else if (session && inAuthGroup && !isSetupProfileRoute) {
             // Redirect to tabs if authenticated
             router.replace('/(tabs)/library');
         }

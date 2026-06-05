@@ -3,11 +3,19 @@ import { fireEvent, render } from '@testing-library/react-native';
 import SettingsScreen from '../settings';
 
 const mockBack = jest.fn();
+const mockCanGoBack = jest.fn();
+const mockReplace = jest.fn();
 const mockSignOut = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
-jest.mock('expo-router', () => ({ router: { back: (...args: unknown[]) => mockBack(...args) } }));
+jest.mock('expo-router', () => ({
+    router: {
+        back: (...args: unknown[]) => mockBack(...args),
+        canGoBack: (...args: unknown[]) => mockCanGoBack(...args),
+        replace: (...args: unknown[]) => mockReplace(...args),
+    },
+}));
 jest.mock('@/features/auth/hooks/useAuth', () => ({
     useAuth: () => ({
         signOut: mockSignOut,
@@ -38,6 +46,7 @@ jest.mock('@/hooks/useTheme', () => ({
 describe('SettingsScreen', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockCanGoBack.mockReturnValue(false);
     });
 
     it('renders account settings without theme controls and signs out', () => {
@@ -51,5 +60,14 @@ describe('SettingsScreen', () => {
         fireEvent.press(getByText('Sign Out'));
 
         expect(mockSignOut).toHaveBeenCalled();
+    });
+
+    it('falls back to Profile when the header back button has no local history', () => {
+        const { getByLabelText } = render(<SettingsScreen />);
+
+        fireEvent.press(getByLabelText('Go back'));
+
+        expect(mockReplace).toHaveBeenCalledWith('/(tabs)/profile');
+        expect(mockBack).not.toHaveBeenCalled();
     });
 });

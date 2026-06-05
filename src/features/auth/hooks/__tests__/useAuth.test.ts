@@ -17,6 +17,11 @@ const mockAuth = supabase.auth;
 beforeEach(() => {
   jest.clearAllMocks();
   jest.useRealTimers();
+  try {
+    require('../useAuth').__resetAuthForTests();
+  } catch {
+    // Module has not been loaded yet in the first test.
+  }
 });
 
 describe('useAuth', () => {
@@ -87,6 +92,39 @@ describe('useAuth', () => {
           extra: expect.objectContaining({ timeout_ms: 5000 }),
         }),
       );
+    });
+
+    it('still listens for later auth changes when initial getSession fails', async () => {
+      let authStateCallback: ((_event: string, session: any) => void) | undefined;
+      const laterSession = {
+        access_token: 'later-token',
+        user: { id: 'user-after-timeout', phone: '+911234567890' },
+      };
+
+      (mockAuth.getSession as jest.Mock).mockRejectedValueOnce(
+        new Error('Auth initialization timed out'),
+      );
+      (mockAuth.onAuthStateChange as jest.Mock).mockImplementationOnce((callback) => {
+        authStateCallback = callback;
+        return { data: { subscription: { unsubscribe: jest.fn() } } };
+      });
+
+      const { useAuth } = require('../useAuth');
+      const { result } = renderHook(() => useAuth());
+
+      await act(async () => {
+        await result.current.initialize();
+      });
+
+      expect(mockAuth.onAuthStateChange).toHaveBeenCalled();
+      expect(result.current.session).toBeNull();
+
+      await act(async () => {
+        authStateCallback?.('SIGNED_IN', laterSession);
+      });
+
+      await waitFor(() => expect(result.current.session?.access_token).toBe('later-token'));
+      expect(result.current.user?.id).toBe('user-after-timeout');
     });
   });
 

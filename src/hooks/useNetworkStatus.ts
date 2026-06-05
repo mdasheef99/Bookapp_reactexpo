@@ -7,15 +7,24 @@ export const useNetworkStatus = () => {
 
     useEffect(() => {
         // For web platform, use navigator.onLine
-        if (Platform.OS === 'web') {
+        const hasWindowNetworkEvents = typeof window !== 'undefined' && typeof window.addEventListener === 'function';
+
+        if (Platform.OS === 'web' || hasWindowNetworkEvents) {
+            const browserLocation = typeof window !== 'undefined'
+                ? window.location
+                : typeof globalThis !== 'undefined'
+                    ? globalThis.location
+                    : undefined;
+            const locationText = `${browserLocation?.hostname ?? ''} ${browserLocation?.href ?? ''}`;
+            const isLocalPreview = /(^|\s|\/\/)(localhost|127\.0\.0\.1|\[::1\]|::1)(:|\/|\s|$)/.test(locationText);
             const handleOnline = () => setIsConnected(true);
-            const handleOffline = () => setIsConnected(false);
+            const handleOffline = () => setIsConnected(isLocalPreview ? true : false);
 
             // Set initial value
-            setIsConnected(typeof navigator !== 'undefined' ? navigator.onLine : true);
+            setIsConnected(isLocalPreview || typeof navigator === 'undefined' ? true : navigator.onLine);
 
             // Add event listeners
-            if (typeof window !== 'undefined') {
+            if (hasWindowNetworkEvents) {
                 window.addEventListener('online', handleOnline);
                 window.addEventListener('offline', handleOffline);
 
