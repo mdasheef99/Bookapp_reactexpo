@@ -162,9 +162,7 @@ export const profileService = {
         const { error: updateError } = await supabase
             .from(PROFILE_SOURCE_TABLE)
             .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
-            .eq('user_id', userId)
-            .select('*')
-            .maybeSingle();
+            .eq('user_id', userId);
 
         if (updateError) throw updateError;
         return publicUrl;
