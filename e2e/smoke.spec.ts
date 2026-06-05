@@ -22,6 +22,37 @@ const testSession = {
   },
 };
 
+const devAuthorClub = {
+  id: 'dev-author-club',
+  name: 'Dev Author Circle',
+  description: 'A smoke-test author club with verified author treatment.',
+  cover_url: null,
+  club_type: 'author_club',
+  access_level: 'all',
+  meeting_type: 'online_only',
+  member_count: 12,
+  max_members: 50,
+  current_book_id: 'dev-author-book',
+  current_book_google_books_id: 'dev-author-google-book',
+  current_book_title: 'Smoke-Test Signed Edition',
+  current_book_authors: ['Asha Dev'],
+  current_book_cover_url: null,
+  current_book_retail_price: null,
+  current_book_currency_code: null,
+  admin_id: 'dev-author-user',
+  admin_profile_id: 'dev-author-profile',
+  admin_display_name: 'Asha Dev',
+  admin_avatar_url: null,
+  admin_city: 'Bangalore',
+  author_id: 'dev-author-profile',
+  author_user_id: 'dev-author-user',
+  author_display_name: 'Asha Dev',
+  author_avatar_url: null,
+  author_city: 'Bangalore',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
 async function mockSupabase(page: Page) {
   await page.route('https://ahntbtktjjmvfosgkmgn.supabase.co/**', async (route) => {
     const request = route.request();
@@ -84,10 +115,12 @@ async function mockSupabase(page: Page) {
     }
 
     if (pathname.startsWith('/rest/v1/club_public_details')) {
+      const clubTypeFilter = searchParams.get('club_type');
+      const clubs = clubTypeFilter === 'eq.author_club' || !clubTypeFilter ? [devAuthorClub] : [];
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([]),
+        body: JSON.stringify(clubs),
       });
     }
 
@@ -218,6 +251,9 @@ test.describe('BookTalks web smoke flows', () => {
     await page.goto('/clubs');
     await expect(page.getByText('Book clubs')).toBeVisible();
     await expect(page.getByTestId('clubs-search-input')).toBeVisible();
+    await page.getByTestId('clubs-filter-type-author_club').click();
+    await expect(page.getByTestId('club-card-dev-author-club')).toBeVisible();
+    await expect(page.getByText('Verified author', { exact: true })).toBeVisible();
     await page.getByTestId('clubs-filter-scope-mine').click();
     await expect(page.getByText(/You have not joined any clubs yet/i)).toBeVisible();
     await page.getByTestId('clubs-filter-type-public').click();
