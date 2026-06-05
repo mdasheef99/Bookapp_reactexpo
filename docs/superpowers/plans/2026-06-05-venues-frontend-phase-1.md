@@ -1590,7 +1590,7 @@ git commit -m "feat: reuse venue picker for club flows"
 
 - Modify: `docs/features/VENUES_FRONTEND_FEATURE_SPEC.md`
 
-- [ ] **Step 1: Update tracker statuses**
+- [x] **Step 1: Update tracker statuses**
 
 In `docs/features/VENUES_FRONTEND_FEATURE_SPEC.md`, update Phase 1 tracker rows that were completed:
 
@@ -1607,7 +1607,7 @@ In `docs/features/VENUES_FRONTEND_FEATURE_SPEC.md`, update Phase 1 tracker rows 
 
 Keep relationship-query rows as `Needs Verification` unless a public-safe query was implemented.
 
-- [ ] **Step 2: Run focused Jest suites**
+- [x] **Step 2: Run focused Jest suites**
 
 Run:
 
@@ -1617,7 +1617,7 @@ npm.cmd test -- --runInBand src/features/venues/services/__tests__/venuesService
 
 Expected: all listed suites pass.
 
-- [ ] **Step 3: Run TypeScript**
+- [x] **Step 3: Run TypeScript**
 
 Run:
 
@@ -1627,7 +1627,7 @@ npx.cmd tsc --noEmit
 
 Expected: pass.
 
-- [ ] **Step 4: Commit docs tracker update**
+- [x] **Step 4: Commit docs tracker update**
 
 Run:
 
@@ -1636,7 +1636,7 @@ git add docs/features/VENUES_FRONTEND_FEATURE_SPEC.md
 git commit -m "docs: update venue feature tracker"
 ```
 
-- [ ] **Step 5: Final status check**
+- [x] **Step 5: Final status check**
 
 Run:
 

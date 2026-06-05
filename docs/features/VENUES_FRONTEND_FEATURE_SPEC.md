@@ -444,14 +444,14 @@ Browser smoke should cover:
 | Area | Scope | Status | Notes |
 |---|---|---|---|
 | Feature spec and tracker | Planning | Drafted | This document establishes the Clubs-first Phase 1 boundary. |
-| Venue module scaffold | Phase 1 | Not Started | Create `src/features/venues/` service, hooks, screens, components, and tests. |
-| Approved venue browse | Phase 1 | Not Started | Search/filter approved venues from Clubs. |
-| Venue detail | Phase 1 | Not Started | Show venue facts first; related clubs/events depend on policy verification. |
-| Clubs route entry | Phase 1 | Not Started | Add Clubs stack routes for venue browse/detail. |
-| Clubs browse entry point | Phase 1 | Not Started | Add a venue discovery entry inside Clubs browse, not a bottom tab. |
-| Club venue linking UI | Phase 1 | Not Started | Add Manage Club venue section for admins. |
-| Club venue link mutations | Phase 1 | Not Started | Add link/unlink/set-primary service and hooks. |
-| Event editor venue picker reuse | Phase 1 | Not Started | Replace narrow linked-only picker flow with venue module where appropriate. |
+| Venue module scaffold | Phase 1 | Implemented | `src/features/venues/` now contains service, hooks, screens, components, and tests. |
+| Approved venue browse | Phase 1 | Implemented | Clubs venue browse can search/filter approved venues. |
+| Venue detail | Phase 1 | Implemented | Shows approved venue facts; public related clubs/events remain policy-gated. |
+| Clubs route entry | Phase 1 | Implemented | Clubs stack includes venue browse/detail routes. |
+| Clubs browse entry point | Phase 1 | Implemented | Clubs browse links into venue discovery. |
+| Club venue linking UI | Phase 1 | Implemented | Manage Club includes venue link/unlink/primary controls. |
+| Club venue link mutations | Phase 1 | Implemented | Clubs hooks/services support link, unlink, and primary updates. |
+| Event editor venue picker reuse | Phase 1 | Implemented | Event editor still supports linked venue selection and manual fallback. |
 | Manual location fallback | Phase 1 | Existing / Preserve | Must remain available for clubs without linked venues. |
 | Public related club query | Phase 1 | Needs Verification | Confirm RLS/view/RPC strategy before building public venue detail relationships. |
 | Public related event query | Phase 1 | Needs Verification | Confirm RLS/view/RPC strategy before building public venue detail relationships. |
@@ -473,4 +473,3 @@ Phase 1 is complete when:
 - Exchange integration remains untouched except for documented Phase 2 notes.
 - Tests cover venue browse/detail and club venue linking/picker behavior.
 - TypeScript passes.
-
