@@ -81,6 +81,12 @@ export interface RequestTransactionParams {
     shippingAddressId?: string;
 }
 
+export interface FileDisputeParams {
+    transactionId: string;
+    actorId: string;
+    reason: string;
+}
+
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 function captureTransactionsServiceError(
@@ -229,6 +235,28 @@ export const transactionsService = {
             captureTransactionsServiceError(error, 'transition_transaction_status_failed', 'transition_transaction_status', {
                 transaction_id: transactionId,
                 new_status: newStatus,
+            });
+            throw error;
+        }
+    },
+
+    /**
+     * File a dispute for a delivered transaction and record the reason in transaction_events metadata.
+     */
+    async fileDispute(params: FileDisputeParams): Promise<Transaction> {
+        const reason = params.reason.trim();
+        try {
+            const { data, error } = await supabase.rpc('file_transaction_dispute', {
+                p_transaction_id: params.transactionId,
+                p_actor_id: params.actorId,
+                p_reason: reason,
+            });
+            if (error) throw error;
+            return data as Transaction;
+        } catch (error) {
+            captureTransactionsServiceError(error, 'file_transaction_dispute_failed', 'file_transaction_dispute', {
+                transaction_id: params.transactionId,
+                has_reason: Boolean(reason),
             });
             throw error;
         }

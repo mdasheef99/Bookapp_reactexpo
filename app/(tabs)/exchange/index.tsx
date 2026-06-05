@@ -12,6 +12,11 @@ import { useTheme } from '@/hooks/useTheme';
 import { profileService } from '@/features/auth/services/profileService';
 import { useBrowseListings } from '@/features/exchange/hooks/useListings';
 import { ListingCard } from '@/components/exchange/ListingCard';
+import {
+    DELIVERY_OPTION_META,
+    ENABLED_DELIVERY_OPTIONS,
+    getEnabledDeliveryOptions,
+} from '@/features/exchange/config/exchangeConfig';
 import type {
     ListingFilters, BookCondition, DeliveryOption, ListingWithBook,
 } from '@/features/exchange/services/listingsService';
@@ -26,11 +31,10 @@ const CONDITIONS: { value: BookCondition | null; label: string }[] = [
     { value: 'acceptable', label: 'Okay' },
 ];
 
-const DELIVERY_OPTIONS: { value: DeliveryOption; label: string }[] = [
-    { value: 'meetup', label: '🤝 Meetup' },
-    { value: 'porter', label: '🚲 Porter' },
-    { value: 'dunzo', label: '🚗 Dunzo' },
-];
+const DELIVERY_OPTIONS: { value: DeliveryOption; label: string }[] = ENABLED_DELIVERY_OPTIONS.map(value => ({
+    value,
+    label: DELIVERY_OPTION_META[value].filterLabel,
+}));
 
 // ─── Skeleton card for loading state ─────────────────────────────────────────
 
@@ -72,6 +76,11 @@ export default function ExchangeScreen() {
     // Browse listings (enabled once we know the city)
     const { data: listings, isLoading, isError, refetch, isRefetching } =
         useBrowseListings(profile?.city ?? null, filters);
+
+    const requestableListings = useMemo(
+        () => (listings ?? []).filter(listing => getEnabledDeliveryOptions(listing.delivery_options).length > 0),
+        [listings]
+    );
 
     const handleListingPress = (listing: ListingWithBook) => {
         router.push(`/(tabs)/exchange/${listing.id}`);
@@ -176,7 +185,7 @@ export default function ExchangeScreen() {
                     </View>
                 ) : (
                     <FlatList
-                        data={listings}
+                        data={requestableListings}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
                             <ListingCard listing={item} colors={colors} onPress={handleListingPress} />

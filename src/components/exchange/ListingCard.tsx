@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { type ListingWithBook, type BookCondition, type DeliveryOption } from '@/features/exchange/services/listingsService';
+import { DELIVERY_OPTION_META, getEnabledDeliveryOptions } from '@/features/exchange/config/exchangeConfig';
 import { type ThemeColors } from '@/hooks/useTheme';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -22,12 +23,6 @@ const CONDITION_COLORS: Record<BookCondition, string> = {
     poor: '#EF4444',
 };
 
-const DELIVERY_ICONS: Record<DeliveryOption, { icon: string; label: string }> = {
-    meetup: { icon: 'people-outline', label: 'Meetup' },
-    porter: { icon: 'bicycle-outline', label: 'Porter' },
-    dunzo: { icon: 'car-outline', label: 'Dunzo' },
-};
-
 interface ListingCardProps {
     listing: ListingWithBook;
     colors: ThemeColors;
@@ -39,6 +34,7 @@ export const ListingCard = ({ listing, colors, onPress }: ListingCardProps) => {
     const coverUrl = book?.cover_url || 'https://via.placeholder.com/100x150?text=No+Cover';
     const conditionColor = CONDITION_COLORS[listing.condition];
     const conditionLabel = CONDITION_LABELS[listing.condition];
+    const enabledDeliveryOptions = getEnabledDeliveryOptions(listing.delivery_options);
 
     return (
         <TouchableOpacity
@@ -81,8 +77,8 @@ export const ListingCard = ({ listing, colors, onPress }: ListingCardProps) => {
 
                 {/* Delivery options */}
                 <View style={styles.deliveryRow}>
-                    {listing.delivery_options.map((opt) => {
-                        const d = DELIVERY_ICONS[opt];
+                    {enabledDeliveryOptions.map((opt) => {
+                        const d = DELIVERY_OPTION_META[opt];
                         return (
                             <View key={opt} style={[styles.deliveryChip, { borderColor: colors.border }]}>
                                 <Ionicons name={d.icon as any} size={12} color={colors.textTertiary} />

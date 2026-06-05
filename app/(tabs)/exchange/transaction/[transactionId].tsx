@@ -1,35 +1,56 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-    View, Text, ScrollView, Image, TouchableOpacity,
-    ActivityIndicator, Alert, StyleSheet,
+    ActivityIndicator,
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
+import { router, useLocalSearchParams } from 'expo-router';
+import {
+    TransactionRatingPrompt,
+    type RatingDraft,
+} from '@/components/exchange/TransactionRatingPrompt';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useTransactionDetails } from '@/features/exchange/hooks/useTransactions';
 import {
     useApproveTransaction,
-    useDeclineTransaction,
     useCancelTransaction,
     useCompleteTransaction,
+    useDeclineTransaction,
+    useFileDispute,
+    useTransactionDetails,
     useTransitionStatus,
 } from '@/features/exchange/hooks/useTransactions';
+import {
+    useMyTransactionRating,
+    useSubmitTransactionRating,
+} from '@/features/exchange/hooks/useRatings';
 import type { TransactionStatus } from '@/features/exchange/services/transactionsService';
-
-// ─── Status config ────────────────────────────────────────────────────────────
+import {
+    resolveTransactionActions,
+    type TransactionAction,
+    type TransactionActionTone,
+    type TransactionActorRole,
+    type TransactionMessageTone,
+} from '@/features/exchange/utils/transactionActionResolver';
+import { useTheme } from '@/hooks/useTheme';
 
 const STATUS_LABELS: Record<TransactionStatus, string> = {
-    requested: '📬 Requested',
-    approved: '✅ Approved',
-    declined: '❌ Declined',
-    cancelled: '🚫 Cancelled',
-    payment_pending: '💳 Payment Pending',
-    ready_to_ship: '📦 Ready to Ship',
-    shipped: '🚚 Shipped',
-    delivered: '📮 Delivered',
-    completed: '🎉 Completed',
-    disputed: '⚠️ Disputed',
+    requested: 'ðŸ“¬ Requested',
+    approved: 'âœ… Approved',
+    declined: 'âŒ Declined',
+    cancelled: 'ðŸš« Cancelled',
+    payment_pending: 'ðŸ’³ Payment Pending',
+    ready_to_ship: 'ðŸ“¦ Ready to Ship',
+    shipped: 'ðŸšš Shipped',
+    delivered: 'ðŸ“® Delivered',
+    completed: 'ðŸŽ‰ Completed',
+    disputed: 'âš ï¸ Disputed',
 };
 
 const STATUS_COLORS: Record<TransactionStatus, string> = {
@@ -45,23 +66,28 @@ const STATUS_COLORS: Record<TransactionStatus, string> = {
     disputed: '#EF4444',
 };
 
-// Ordered steps for the progress timeline
 const SHIPPING_TIMELINE_STEPS: TransactionStatus[] = [
-    'requested', 'approved', 'payment_pending',
-    'ready_to_ship', 'shipped', 'delivered', 'completed',
+    'requested',
+    'approved',
+    'payment_pending',
+    'ready_to_ship',
+    'shipped',
+    'delivered',
+    'completed',
 ];
 
 const MEETUP_TIMELINE_STEPS: TransactionStatus[] = [
-    'requested', 'approved', 'delivered', 'completed',
+    'requested',
+    'approved',
+    'delivered',
+    'completed',
 ];
 
 const DELIVERY_LABELS: Record<string, string> = {
-    meetup: '🤝 Meetup',
-    porter: '🚲 Porter',
-    dunzo: '🚗 Dunzo',
+    meetup: 'ðŸ¤ Meetup',
+    porter: 'ðŸš² Porter',
+    dunzo: 'ðŸš— Dunzo',
 };
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function ProfileCard({
     label,
@@ -87,7 +113,7 @@ function ProfileCard({
                     <View>
                         <Text style={[styles.profileName, { color: colors.textPrimary }]}>{profile.display_name}</Text>
                         {profile.city ? (
-                            <Text style={[styles.profileCity, { color: colors.textTertiary }]}>📍 {profile.city}</Text>
+                            <Text style={[styles.profileCity, { color: colors.textTertiary }]}>ðŸ“ {profile.city}</Text>
                         ) : null}
                     </View>
                 </View>
@@ -109,13 +135,15 @@ function TimelineBar({
 }) {
     const isTerminal = ['declined', 'cancelled', 'disputed'].includes(status);
     const steps = deliveryType === 'meetup' ? MEETUP_TIMELINE_STEPS : SHIPPING_TIMELINE_STEPS;
+
     if (isTerminal) {
         return (
-            <View style={[styles.terminalBanner, { backgroundColor: STATUS_COLORS[status] + '22', borderColor: STATUS_COLORS[status] + '55' }]}>
+            <View style={[styles.terminalBanner, { backgroundColor: `${STATUS_COLORS[status]}22`, borderColor: `${STATUS_COLORS[status]}55` }]}>
                 <Text style={[styles.terminalText, { color: STATUS_COLORS[status] }]}>{STATUS_LABELS[status]}</Text>
             </View>
         );
     }
+
     const currentIdx = steps.indexOf(status);
     return (
         <View style={styles.timeline}>
@@ -138,126 +166,134 @@ function TimelineBar({
     );
 }
 
-// ─── Action Buttons ───────────────────────────────────────────────────────────
-
 function ActionButtons({
     status,
-    isLender,
-    isBorrower,
+    role,
     deliveryType,
     colors,
     onApprove,
     onDecline,
     onCancel,
     onComplete,
+    onDispute,
     onTransition,
 }: {
     status: TransactionStatus;
-    isLender: boolean;
-    isBorrower: boolean;
+    role: TransactionActorRole;
     deliveryType: string;
     colors: ReturnType<typeof useTheme>['colors'];
     onApprove: () => void;
     onDecline: () => void;
     onCancel: () => void;
     onComplete: () => void;
+    onDispute: () => void;
     onTransition: (newStatus: TransactionStatus, label: string) => void;
 }) {
-    if (deliveryType !== 'meetup' && ['payment_pending', 'ready_to_ship', 'shipped'].includes(status)) {
+    const resolution = resolveTransactionActions({ status, role, deliveryType });
+
+    if (resolution.kind === 'message') {
+        const isSuccess = resolution.tone === 'success';
         return (
-            <View style={[styles.infoBox, { backgroundColor: colors.bgSecondary }]}>
-                <Text style={[styles.infoText, { color: colors.textSecondary }]}>Meetup-only exchange: delivery-based progress is not currently supported in-app.</Text>
+            <View style={[styles.infoBox, { backgroundColor: isSuccess ? '#10B98122' : colors.bgSecondary }]}>
+                <Text style={[styles.infoText, { color: getMessageColor(resolution.tone, colors) }]}>
+                    {isSuccess ? 'ðŸŽ‰ ' : ''}{resolution.message}
+                </Text>
             </View>
         );
     }
-    if (status === 'requested') {
-        if (isLender) {
-            return (
-                <View style={styles.btnRow}>
-                    <TouchableOpacity onPress={onDecline} style={[styles.btn, styles.btnOutline, { borderColor: '#EF4444' }]}>
-                        <Text style={[styles.btnText, { color: '#EF4444' }]}>❌ Decline</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={onApprove} style={[styles.btn, { backgroundColor: '#10B981' }]}>
-                        <Text style={[styles.btnText, { color: '#FFF' }]}>✅ Approve</Text>
-                    </TouchableOpacity>
-                </View>
-            );
-        }
-        if (isBorrower) {
-            return (
-                <TouchableOpacity onPress={onCancel} style={[styles.btn, styles.btnFull, { backgroundColor: '#EF4444' }]}>
-                    <Text style={[styles.btnText, { color: '#FFF' }]}>🚫 Cancel Request</Text>
-                </TouchableOpacity>
-            );
-        }
-    }
-    if (status === 'approved') {
-        if (isBorrower) {
-            if (deliveryType !== 'meetup') {
-                return (
-                    <View style={[styles.infoBox, { backgroundColor: colors.bgSecondary }]}>
-                        <Text style={[styles.infoText, { color: colors.textSecondary }]}>Meetup-only exchange: this request can&apos;t move into payment or delivery steps in-app yet.</Text>
-                    </View>
-                );
-            }
-            const nextStatus: TransactionStatus = 'delivered';
-            const label = 'Confirm Meetup';
-            return (
-                <TouchableOpacity testID="exchange-transaction-primary-action" onPress={() => onTransition(nextStatus, label)} style={[styles.btn, styles.btnFull, { backgroundColor: colors.accent }]}> 
-                    <Text style={[styles.btnText, { color: '#FFF' }]}>📬 {label}</Text>
-                </TouchableOpacity>
-            );
-        }
-        if (isLender) {
-            return (
-                <TouchableOpacity onPress={onCancel} style={[styles.btn, styles.btnFull, { backgroundColor: '#EF4444' }]}>
-                    <Text style={[styles.btnText, { color: '#FFF' }]}>🚫 Cancel</Text>
-                </TouchableOpacity>
-            );
-        }
-    }
-    if (status === 'ready_to_ship' && isLender) {
-        return (
-            <TouchableOpacity onPress={() => onTransition('shipped', 'Shipped')} style={[styles.btn, styles.btnFull, { backgroundColor: colors.accent }]}>
-                <Text style={[styles.btnText, { color: '#FFF' }]}>🚚 Mark as Shipped</Text>
-            </TouchableOpacity>
-        );
-    }
-    if (status === 'shipped' && isBorrower) {
-        return (
-            <TouchableOpacity onPress={() => onTransition('delivered', 'Delivered')} style={[styles.btn, styles.btnFull, { backgroundColor: colors.accent }]}>
-                <Text style={[styles.btnText, { color: '#FFF' }]}>📮 Confirm Delivery</Text>
-            </TouchableOpacity>
-        );
-    }
-    if (status === 'delivered') {
-        return (
-            <TouchableOpacity onPress={onComplete} style={[styles.btn, styles.btnFull, { backgroundColor: '#10B981' }]}>
-                <Text style={[styles.btnText, { color: '#FFF' }]}>🎉 Complete Exchange</Text>
-            </TouchableOpacity>
-        );
-    }
-    if (status === 'completed') {
-        return (
-            <View style={[styles.infoBox, { backgroundColor: '#10B98122' }]}>
-                <Text style={[styles.infoText, { color: '#10B981' }]}>🎉 Exchange successfully completed!</Text>
-            </View>
-        );
-    }
-    // Terminal / no action
+
+    const isSingleAction = resolution.actions.length === 1;
     return (
-        <View style={[styles.infoBox, { backgroundColor: colors.bgSecondary }]}>
-            <Text style={[styles.infoText, { color: colors.textTertiary }]}>No actions available for this status.</Text>
+        <View style={isSingleAction ? undefined : styles.btnRow}>
+            {resolution.actions.map(action => (
+                <TouchableOpacity
+                    key={`${action.key}-${action.label}`}
+                    testID={action.key === 'transition' ? 'exchange-transaction-primary-action' : undefined}
+                    onPress={() => handleResolvedAction(action, {
+                        onApprove,
+                        onDecline,
+                        onCancel,
+                        onComplete,
+                        onDispute,
+                        onTransition,
+                    })}
+                    style={[
+                        styles.btn,
+                        isSingleAction && styles.btnFull,
+                        action.variant === 'outline' && styles.btnOutline,
+                        getActionButtonStyle(action, colors),
+                    ]}
+                >
+                    <Text style={[styles.btnText, { color: action.variant === 'outline' ? getActionColor(action.tone, colors) : '#FFF' }]}>
+                        {`${getActionPrefix(action)}${action.label}`}
+                    </Text>
+                </TouchableOpacity>
+            ))}
         </View>
     );
 }
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
+function getActorRole(isLender: boolean, isBorrower: boolean): TransactionActorRole {
+    if (isLender) return 'lender';
+    if (isBorrower) return 'borrower';
+    return 'viewer';
+}
+
+function getActionColor(tone: TransactionActionTone, colors: ReturnType<typeof useTheme>['colors']) {
+    if (tone === 'danger') return '#EF4444';
+    if (tone === 'success') return '#10B981';
+    return colors.accent;
+}
+
+function getActionButtonStyle(action: TransactionAction, colors: ReturnType<typeof useTheme>['colors']) {
+    const color = getActionColor(action.tone, colors);
+    if (action.variant === 'outline') return { borderColor: color };
+    return { backgroundColor: color };
+}
+
+function getActionPrefix(action: TransactionAction) {
+    if (action.key === 'decline') return '❌ ';
+    if (action.key === 'approve') return '✅ ';
+    if (action.key === 'cancel') return '🚫 ';
+    if (action.key === 'complete') return '🎉 ';
+    if (action.nextStatus === 'shipped') return '🚚 ';
+    if (action.nextStatus === 'delivered' && action.label === 'Confirm Delivery') return '📮 ';
+    return '📬 ';
+}
+
+function getMessageColor(tone: TransactionMessageTone, colors: ReturnType<typeof useTheme>['colors']) {
+    if (tone === 'success') return '#10B981';
+    if (tone === 'muted') return colors.textTertiary;
+    return colors.textSecondary;
+}
+
+function handleResolvedAction(
+    action: TransactionAction,
+    handlers: {
+        onApprove: () => void;
+        onDecline: () => void;
+        onCancel: () => void;
+        onComplete: () => void;
+        onDispute: () => void;
+        onTransition: (newStatus: TransactionStatus, label: string) => void;
+    }
+) {
+    if (action.key === 'approve') handlers.onApprove();
+    if (action.key === 'decline') handlers.onDecline();
+    if (action.key === 'cancel') handlers.onCancel();
+    if (action.key === 'complete') handlers.onComplete();
+    if (action.key === 'dispute') handlers.onDispute();
+    if (action.key === 'transition' && action.nextStatus) {
+        handlers.onTransition(action.nextStatus, action.label);
+    }
+}
 
 export default function TransactionDetailScreen() {
     const { transactionId } = useLocalSearchParams<{ transactionId: string }>();
     const { colors } = useTheme();
     const { session } = useAuth();
+    const [isDisputeFormOpen, setIsDisputeFormOpen] = useState(false);
+    const [disputeReason, setDisputeReason] = useState('');
     const currentUserId = session?.user?.id ?? null;
 
     const { data: txn, isLoading, isError, refetch } = useTransactionDetails(transactionId ?? null);
@@ -266,13 +302,18 @@ export default function TransactionDetailScreen() {
     const cancelMutation = useCancelTransaction();
     const completeMutation = useCompleteTransaction();
     const transitionMutation = useTransitionStatus();
+    const fileDisputeMutation = useFileDispute();
+    const ratingQuery = useMyTransactionRating(transactionId ?? null, currentUserId);
+    const submitRatingMutation = useSubmitTransactionRating();
 
     const anyPending =
-        approveMutation.isPending || declineMutation.isPending ||
-        cancelMutation.isPending || completeMutation.isPending ||
+        approveMutation.isPending ||
+        declineMutation.isPending ||
+        cancelMutation.isPending ||
+        completeMutation.isPending ||
+        fileDisputeMutation.isPending ||
         transitionMutation.isPending;
 
-    // ── Loading / Error ───────────────────────────────────────────────────────
     if (isLoading) {
         return (
             <View style={[styles.center, { backgroundColor: colors.bgPrimary }]}>
@@ -280,6 +321,7 @@ export default function TransactionDetailScreen() {
             </View>
         );
     }
+
     if (isError || !txn) {
         return (
             <View style={[styles.center, { backgroundColor: colors.bgPrimary }]}>
@@ -294,8 +336,13 @@ export default function TransactionDetailScreen() {
 
     const isLender = currentUserId === txn.lender_id;
     const isBorrower = currentUserId === txn.borrower_id;
+    const role = getActorRole(isLender, isBorrower);
     const status = txn.status;
     const book = txn.listing?.book;
+    const ratingTargetUserId = isLender ? txn.borrower_id : isBorrower ? txn.lender_id : null;
+    const ratingTargetName = isLender
+        ? txn.borrower?.display_name ?? 'the borrower'
+        : txn.lender?.display_name ?? 'the lender';
 
     function confirm(title: string, message: string, onConfirm: () => void) {
         Alert.alert(title, message, [
@@ -308,11 +355,12 @@ export default function TransactionDetailScreen() {
         approveMutation.mutate(
             { transactionId: txn!.id, actorId: currentUserId! },
             {
-                onSuccess: () => Alert.alert('✅ Approved!', 'You approved the exchange request.', [{ text: 'OK', onPress: () => refetch() }]),
+                onSuccess: () => Alert.alert('âœ… Approved!', 'You approved the exchange request.', [{ text: 'OK', onPress: () => refetch() }]),
                 onError: (e: any) => Alert.alert('Error', e?.message ?? 'Failed to approve'),
             }
         );
     }
+
     function handleDecline() {
         confirm('Decline Request?', 'The borrower\'s credit will be refunded.', () => {
             declineMutation.mutate(
@@ -324,6 +372,7 @@ export default function TransactionDetailScreen() {
             );
         });
     }
+
     function handleCancel() {
         confirm('Cancel Exchange?', 'Your credit hold will be released.', () => {
             cancelMutation.mutate(
@@ -335,17 +384,19 @@ export default function TransactionDetailScreen() {
             );
         });
     }
+
     function handleComplete() {
         confirm('Complete Exchange?', 'This will transfer your 1 credit to the lender.', () => {
             completeMutation.mutate(
                 { transactionId: txn!.id, actorId: currentUserId! },
                 {
-                    onSuccess: () => Alert.alert('🎉 Exchange Complete!', 'Thank you for using BookTalks!', [{ text: 'OK', onPress: () => refetch() }]),
+                    onSuccess: () => Alert.alert('ðŸŽ‰ Exchange Complete!', 'Thank you for using BookTalks!', [{ text: 'OK', onPress: () => refetch() }]),
                     onError: (e: any) => Alert.alert('Error', e?.message ?? 'Failed to complete'),
                 }
             );
         });
     }
+
     function handleTransition(newStatus: TransactionStatus, label: string) {
         transitionMutation.mutate(
             { transactionId: txn!.id, newStatus, actorId: currentUserId! },
@@ -356,9 +407,50 @@ export default function TransactionDetailScreen() {
         );
     }
 
+    function handleOpenDispute() {
+        setIsDisputeFormOpen(true);
+    }
+
+    function handleSubmitDispute() {
+        const reason = disputeReason.trim();
+        if (!currentUserId || !reason) {
+            Alert.alert('Reason required', 'Please describe what happened before filing a dispute.');
+            return;
+        }
+
+        fileDisputeMutation.mutate(
+            { transactionId: txn!.id, actorId: currentUserId, reason },
+            {
+                onSuccess: () => {
+                    setIsDisputeFormOpen(false);
+                    setDisputeReason('');
+                    Alert.alert('Dispute filed', 'We marked this exchange as disputed.', [{ text: 'OK', onPress: () => refetch() }]);
+                },
+                onError: (e: any) => Alert.alert('Error', e?.message ?? 'Failed to file dispute'),
+            }
+        );
+    }
+
+    function handleSubmitRating(draft: RatingDraft) {
+        if (!currentUserId || !ratingTargetUserId) return;
+        submitRatingMutation.mutate(
+            {
+                transactionId: txn!.id,
+                fromUserId: currentUserId,
+                toUserId: ratingTargetUserId,
+                rating: draft.rating,
+                tags: draft.tags,
+                review: draft.review,
+            },
+            {
+                onSuccess: () => Alert.alert('Rating submitted', 'Thanks for helping keep BookTalks exchanges trustworthy.'),
+                onError: (e: any) => Alert.alert('Error', e?.message ?? 'Failed to submit rating'),
+            }
+        );
+    }
+
     return (
         <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
-            {/* Header */}
             <View style={[styles.header, { borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
                     <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
@@ -367,17 +459,14 @@ export default function TransactionDetailScreen() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                {/* Status badge */}
-                <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[status] + '22' }]}>
+                <View style={[styles.statusBadge, { backgroundColor: `${STATUS_COLORS[status]}22` }]}>
                     <Text style={[styles.statusText, { color: STATUS_COLORS[status] }]}>{STATUS_LABELS[status]}</Text>
                 </View>
 
-                {/* Timeline */}
                 <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                     <TimelineBar status={status} deliveryType={txn.delivery_type} colors={colors} />
                 </View>
 
-                {/* Book info */}
                 <View style={[styles.card, styles.bookCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                     {txn.listing?.photos?.[0] ? (
                         <Image source={{ uri: txn.listing.photos[0] }} style={styles.bookCover} />
@@ -401,11 +490,9 @@ export default function TransactionDetailScreen() {
                     </View>
                 </View>
 
-                {/* Profiles */}
                 <ProfileCard label="Lender" profile={txn.lender} colors={colors} />
                 <ProfileCard label="Borrower" profile={txn.borrower} colors={colors} />
 
-                {/* Message */}
                 {txn.message ? (
                     <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                         <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>Message</Text>
@@ -413,7 +500,6 @@ export default function TransactionDetailScreen() {
                     </View>
                 ) : null}
 
-                {/* Tracking (if available) */}
                 {txn.awb_number ? (
                     <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                         <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>Tracking</Text>
@@ -424,24 +510,80 @@ export default function TransactionDetailScreen() {
                     </View>
                 ) : null}
 
-                <View style={{ height: 120 }} />
+                {status === 'disputed' ? (
+                    <View style={[styles.disputeBanner, { backgroundColor: '#EF444422', borderColor: '#EF444455' }]}>
+                        <Text style={styles.disputeTitle}>This exchange is in dispute</Text>
+                        <Text style={[styles.disputeCopy, { color: colors.textSecondary }]}>
+                            Resolve this only after both participants agree the issue is settled.
+                        </Text>
+                    </View>
+                ) : null}
+
+                {isDisputeFormOpen ? (
+                    <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                        <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>Dispute reason</Text>
+                        <TextInput
+                            value={disputeReason}
+                            onChangeText={setDisputeReason}
+                            placeholder="What happened?"
+                            placeholderTextColor={colors.textTertiary}
+                            multiline
+                            style={[
+                                styles.disputeInput,
+                                {
+                                    borderColor: colors.border,
+                                    color: colors.textPrimary,
+                                    backgroundColor: colors.bgSecondary,
+                                },
+                            ]}
+                        />
+                        <View style={styles.disputeActions}>
+                            <TouchableOpacity
+                                onPress={() => setIsDisputeFormOpen(false)}
+                                style={[styles.disputeSecondaryBtn, { borderColor: colors.border }]}
+                            >
+                                <Text style={[styles.disputeSecondaryText, { color: colors.textSecondary }]}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={handleSubmitDispute}
+                                disabled={fileDisputeMutation.isPending}
+                                style={[styles.disputePrimaryBtn, { backgroundColor: '#EF4444' }]}
+                            >
+                                <Text style={styles.disputePrimaryText}>
+                                    {fileDisputeMutation.isPending ? 'Submitting...' : 'Submit dispute'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                ) : null}
+
+                {status === 'completed' && ratingTargetUserId ? (
+                    <TransactionRatingPrompt
+                        colors={colors}
+                        otherPartyName={ratingTargetName}
+                        existingRating={ratingQuery.data}
+                        isSubmitting={submitRatingMutation.isPending}
+                        onSubmit={handleSubmitRating}
+                    />
+                ) : null}
+
+                <View style={styles.bottomSpacer} />
             </ScrollView>
 
-            {/* Action buttons */}
             <View style={[styles.cta, { backgroundColor: colors.bgCard, borderTopColor: colors.border }]}>
                 {anyPending ? (
                     <ActivityIndicator size="large" color={colors.accent} />
                 ) : (
                     <ActionButtons
                         status={status}
-                        isLender={isLender}
-                        isBorrower={isBorrower}
+                        role={role}
                         deliveryType={txn.delivery_type}
                         colors={colors}
                         onApprove={handleApprove}
                         onDecline={handleDecline}
                         onCancel={handleCancel}
                         onComplete={handleComplete}
+                        onDispute={handleOpenDispute}
                         onTransition={handleTransition}
                     />
                 )}
@@ -449,8 +591,6 @@ export default function TransactionDetailScreen() {
         </View>
     );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
@@ -490,8 +630,17 @@ const styles = StyleSheet.create({
     btnText: { fontSize: 15, fontWeight: '700' },
     infoBox: { padding: 14, borderRadius: 12, alignItems: 'center' },
     infoText: { fontSize: 14, fontWeight: '500' },
+    disputeBanner: { marginHorizontal: 16, marginTop: 12, padding: 14, borderRadius: 12, borderWidth: 1 },
+    disputeTitle: { color: '#EF4444', fontSize: 15, fontWeight: '700' },
+    disputeCopy: { fontSize: 13, lineHeight: 18, marginTop: 4 },
+    disputeInput: { minHeight: 88, borderWidth: 1, borderRadius: 10, padding: 10, textAlignVertical: 'top', fontSize: 14 },
+    disputeActions: { flexDirection: 'row', gap: 10, marginTop: 12 },
+    disputeSecondaryBtn: { flex: 1, borderWidth: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+    disputeSecondaryText: { fontSize: 14, fontWeight: '700' },
+    disputePrimaryBtn: { flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
+    disputePrimaryText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
     errorText: { fontSize: 16, marginTop: 8 },
     backBtn: { marginTop: 16, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 8 },
     backBtnText: { color: '#FFF', fontWeight: '600' },
-    bgSecondary: {},
+    bottomSpacer: { height: 120 },
 });

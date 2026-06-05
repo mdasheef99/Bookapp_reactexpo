@@ -11,15 +11,32 @@ import { listingsService } from '../listingsService';
 
 function mockQuery(response: Record<string, unknown>) {
   const builder: any = {};
-  ['select', 'eq', 'order', 'range', 'contains', 'single'].forEach((method) => {
+  ['select', 'insert', 'update', 'delete', 'eq', 'order', 'range', 'contains', 'single'].forEach((method) => {
     builder[method] = jest.fn(() => builder);
   });
   builder.then = jest.fn((resolve: (value: unknown) => unknown) => resolve(response));
   return builder;
 }
 
+function mockListingPhotoStorage() {
+  const upload = jest.fn(() => Promise.resolve({ error: null }));
+  const getPublicUrl = jest.fn((path: string) => ({
+    data: { publicUrl: `https://cdn.test/storage/v1/object/public/listing-photos/${path}` },
+  }));
+  const remove = jest.fn(() => Promise.resolve({ error: null }));
+
+  (supabase as any).storage = {
+    from: jest.fn(() => ({ upload, getPublicUrl, remove })),
+  };
+
+  return { upload, getPublicUrl, remove };
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
+  (global as any).fetch = jest.fn(() => Promise.resolve({
+    blob: () => Promise.resolve({ type: 'image/jpeg' }),
+  }));
 });
 
 describe('listingsService Sentry instrumentation', () => {
@@ -73,5 +90,52 @@ describe('listingsService Sentry instrumentation', () => {
         }),
       }),
     );
+  });
+});
+
+describe('listingsService.createListing', () => {
+  it('creates the draft listing as paused with schema-valid photo placeholders, then activates it with uploaded URLs', async () => {
+    const insertBuilder = mockQuery({
+      data: { id: 'listing-1' },
+      error: null,
+    });
+    const updateBuilder = mockQuery({
+      data: {
+        id: 'listing-1',
+        photos: [
+          'https://cdn.test/storage/v1/object/public/listing-photos/owner-1/listing-1/0.jpg',
+          'https://cdn.test/storage/v1/object/public/listing-photos/owner-1/listing-1/1.jpg',
+        ],
+        status: 'active',
+      },
+      error: null,
+    });
+    (supabase.from as jest.Mock)
+      .mockReturnValueOnce(insertBuilder)
+      .mockReturnValueOnce(updateBuilder);
+    mockListingPhotoStorage();
+
+    const listing = await listingsService.createListing({
+      userBookId: 'user-book-1',
+      ownerId: 'owner-1',
+      bookId: 'book-1',
+      condition: 'good',
+      photoUris: ['file://cover-a.jpg', 'file://cover-b.jpg'],
+      deliveryOptions: ['meetup'],
+      city: 'Delhi',
+    });
+
+    expect(insertBuilder.insert).toHaveBeenCalledWith(expect.objectContaining({
+      photos: ['uploading', 'uploading'],
+      status: 'paused',
+    }));
+    expect(updateBuilder.update).toHaveBeenCalledWith({
+      photos: [
+        'https://cdn.test/storage/v1/object/public/listing-photos/owner-1/listing-1/0.jpg',
+        'https://cdn.test/storage/v1/object/public/listing-photos/owner-1/listing-1/1.jpg',
+      ],
+      status: 'active',
+    });
+    expect(listing.status).toBe('active');
   });
 });
