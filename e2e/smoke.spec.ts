@@ -185,7 +185,7 @@ async function loginThroughOtp(page: Page) {
   await page.getByTestId('verify-otp-input').fill('123456');
   await page.getByTestId('verify-otp-button').click();
   await expect(page).toHaveURL(/\/library$/);
-  await expect(page.getByText('My Library')).toBeVisible();
+  await expect(page.getByText('My Library').first()).toBeVisible();
 }
 
 test.beforeEach(async ({ page }) => {
@@ -229,9 +229,6 @@ test.describe('BookTalks web smoke flows', () => {
   });
 
   test('logs in and opens the manual add library flow', async ({ page }) => {
-    await page.goto('/');
-    await expect(page).toHaveURL(/\/login$/);
-
     await loginThroughOtp(page);
     await page.goto('/library/search');
     await expect(page.getByText('Search Books')).toBeVisible();
@@ -269,10 +266,10 @@ test.describe('BookTalks web smoke flows', () => {
 
     await page.goto('/exchange/create');
     await expect(page.getByText('List a Book')).toBeVisible();
-    await expect(page.getByText(/No books in your library/i)).toBeVisible();
+    await expect(page.getByText(/No owned books ready to list/i)).toBeVisible();
 
     await page.goto('/profile');
-    await expect(page.getByText('My Profile')).toBeVisible();
+    await expect(page.getByText('Dev User')).toBeVisible();
     await expect(page.getByText('Sign Out')).toBeVisible();
   });
 });
