@@ -10,8 +10,6 @@ export default function TabsLayout() {
             <Tabs.Screen name="exchange" options={{ title: 'Exchange' }} />
             <Tabs.Screen name="clubs" options={{ title: 'Clubs' }} />
             <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
-            <Tabs.Screen name="credit-history" options={{ href: null }} />
-            <Tabs.Screen name="addresses" options={{ href: null }} />
         </Tabs>
     );
 }
