@@ -14,6 +14,7 @@ import { TransactionCard } from '@/components/exchange/TransactionCard';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useMyTransactionsWithListings } from '@/features/exchange/hooks/useTransactions';
 import { useTheme } from '@/hooks/useTheme';
+import { navigateBackOrFallback } from '@/lib/navigation';
 
 type Segment = 'all' | 'borrowing' | 'lending';
 
@@ -59,7 +60,7 @@ export default function MyTransactionsScreen() {
             style={styles.container}
         >
             <View style={[styles.header, { borderBottomColor: colors.border }]}>
-                <TouchableOpacity style={styles.headerBack} onPress={() => router.back()}>
+                <TouchableOpacity style={styles.headerBack} onPress={() => navigateBackOrFallback(router, '/(tabs)/exchange')}>
                     <Ionicons name="arrow-back" size={24} color="#FFF" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>My Exchanges</Text>
@@ -106,7 +107,7 @@ export default function MyTransactionsScreen() {
                     </Text>
                     <TouchableOpacity
                         style={[styles.actionBtn, { backgroundColor: colors.accent }]}
-                        onPress={() => router.back()}
+                        onPress={() => navigateBackOrFallback(router, '/(tabs)/exchange')}
                     >
                         <Text style={styles.actionBtnText}>Browse Books</Text>
                     </TouchableOpacity>

@@ -7,6 +7,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useAcceptClubInvitation, useMarkInvitationRead, useMyClubInvitationInbox } from '@/features/clubs/hooks/useClubs';
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
 import type { ClubInvitationInboxItem } from '@/features/clubs/services/clubsService';
+import { navigateBackOrFallback } from '@/lib/navigation';
 
 const PAGE_SIZE = 20;
 
@@ -87,7 +88,7 @@ export default function ClubInvitationsInboxScreen() {
             refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.accent} />}
         >
             <View style={styles.headerRow}>
-                <TouchableOpacity onPress={() => router.back()} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                     <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <View style={styles.headerTextBlock}>

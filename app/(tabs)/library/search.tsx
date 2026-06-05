@@ -22,6 +22,7 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useWishlist } from '@/hooks/useWishlist';
 import * as Haptics from 'expo-haptics';
 import { SortOption } from '@/lib/constants';
+import { navigateBackOrFallback } from '@/lib/navigation';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 
 // Import components
@@ -469,7 +470,7 @@ export default function SearchBooksScreen() {
                 {/* Header with Back Button */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
                     <TouchableOpacity
-                        onPress={() => router.back()}
+                        onPress={() => navigateBackOrFallback(router, '/(tabs)/library')}
                         style={{
                             width: 40,
                             height: 40,

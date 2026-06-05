@@ -15,6 +15,7 @@ import { booksService } from '@/features/books/services/booksService';
 import { useCreateListing } from '@/features/exchange/hooks/useListings';
 import { DELIVERY_OPTION_META, ENABLED_DELIVERY_OPTIONS } from '@/features/exchange/config/exchangeConfig';
 import type { BookCondition, DeliveryOption } from '@/features/exchange/services/listingsService';
+import { navigateBackOrFallback } from '@/lib/navigation';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -108,7 +109,7 @@ export default function CreateListingScreen() {
                 city: profile!.city,
             },
             {
-                onSuccess: () => router.back(),
+                onSuccess: () => router.replace('/(tabs)/exchange'),
                 onError: (err) => Alert.alert('Error', err.message || 'Failed to create listing.'),
             }
         );
@@ -123,7 +124,7 @@ export default function CreateListingScreen() {
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, '/(tabs)/exchange')} style={styles.backBtn}>
                     <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>List a Book</Text>
