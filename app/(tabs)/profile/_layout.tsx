@@ -8,6 +8,8 @@ export default function ProfileLayout() {
             <Stack.Screen name="edit" />
             <Stack.Screen name="credit-history" />
             <Stack.Screen name="addresses" />
+            <Stack.Screen name="notifications" />
+            <Stack.Screen name="notification-settings" />
         </Stack>
     );
 }

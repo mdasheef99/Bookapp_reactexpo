@@ -4,6 +4,7 @@ import SettingsScreen from '../settings';
 
 const mockBack = jest.fn();
 const mockCanGoBack = jest.fn();
+const mockPush = jest.fn();
 const mockReplace = jest.fn();
 const mockSignOut = jest.fn();
 
@@ -13,6 +14,7 @@ jest.mock('expo-router', () => ({
     router: {
         back: (...args: unknown[]) => mockBack(...args),
         canGoBack: (...args: unknown[]) => mockCanGoBack(...args),
+        push: (...args: unknown[]) => mockPush(...args),
         replace: (...args: unknown[]) => mockReplace(...args),
     },
 }));
@@ -54,6 +56,7 @@ describe('SettingsScreen', () => {
 
         expect(getByText('Settings')).toBeOnTheScreen();
         expect(getByText('+919876543210')).toBeOnTheScreen();
+        expect(getByText('Notifications')).toBeOnTheScreen();
         expect(getByText('Notification preferences')).toBeOnTheScreen();
         expect(queryByText('Theme')).toBeNull();
 
@@ -69,5 +72,15 @@ describe('SettingsScreen', () => {
 
         expect(mockReplace).toHaveBeenCalledWith('/(tabs)/profile');
         expect(mockBack).not.toHaveBeenCalled();
+    });
+
+    it('opens notification history and preferences from account settings', () => {
+        const { getByText } = render(<SettingsScreen />);
+
+        fireEvent.press(getByText('Notifications'));
+        fireEvent.press(getByText('Notification preferences'));
+
+        expect(mockPush).toHaveBeenNthCalledWith(1, '/(tabs)/profile/notifications');
+        expect(mockPush).toHaveBeenNthCalledWith(2, '/(tabs)/profile/notification-settings');
     });
 });

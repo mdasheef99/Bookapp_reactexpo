@@ -38,13 +38,28 @@ export default function SettingsScreen() {
                             <Text style={[styles.settingValue, { color: colors.textSecondary }]} selectable>{userPhone}</Text>
                         </View>
                     </View>
-                    <View style={[styles.settingRow, { borderBottomColor: colors.border }]}>
+                    <TouchableOpacity
+                        onPress={() => router.push('/(tabs)/profile/notifications')}
+                        style={[styles.settingRow, { borderBottomColor: colors.border }]}
+                        accessibilityRole="button"
+                    >
+                        <Ionicons name="notifications-outline" size={22} color={colors.textPrimary} style={styles.settingIcon} />
+                        <View style={styles.settingTextBlock}>
+                            <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>Notifications</Text>
+                            <Text style={[styles.settingValue, { color: colors.textSecondary }]}>Review updates, reminders, and account activity.</Text>
+                        </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => router.push('/(tabs)/profile/notification-settings')}
+                        style={[styles.settingRow, { borderBottomColor: colors.border }]}
+                        accessibilityRole="button"
+                    >
                         <Ionicons name="notifications-outline" size={22} color={colors.textPrimary} style={styles.settingIcon} />
                         <View style={styles.settingTextBlock}>
                             <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>Notification preferences</Text>
-                            <Text style={[styles.settingValue, { color: colors.textSecondary }]}>Push settings are coming with the notification service.</Text>
+                            <Text style={[styles.settingValue, { color: colors.textSecondary }]}>Choose which non-critical updates can reach you.</Text>
                         </View>
-                    </View>
+                    </TouchableOpacity>
                 </GlassCard>
 
                 <Button
