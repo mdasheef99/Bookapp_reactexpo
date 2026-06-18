@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-06
 
-**Status:** Implemented foundation
+**Status:** Implemented foundation plus Clubs/wishlist reminder rollout
 
 **Goal:** Add a durable, enterprise-grade notification system that supports in-app notification history, push delivery, preferences, event-driven routing, and a clean integration contract for future features.
 
@@ -27,6 +27,7 @@ Live Supabase Edge Functions currently deployed:
 - `check-membership-limits`
 - `handle-club-downgrade-grace-period`
 - `send-notification`
+- `wishlist-notify`
 
 Implemented notification infrastructure:
 
@@ -36,11 +37,13 @@ Implemented notification infrastructure:
 - Profile notification center and notification settings screens.
 - Live routing triggers for exchange transaction events/status changes and club invitations.
 - `send-notification` Edge Function deployed with JWT verification.
+- 2026-06-06 completion pass: live routing for wishlist listing matches, club event create/update/cancel, book nominations, reading schedule create/update, downgrade grace events, unread invitation reminders, voting-ending reminders, event reminders, reading milestone reminders, and downgrade deadline reminders.
+- `wishlist-notify` Edge Function deployed with JWT verification and required `WISHLIST_NOTIFY_CRON_SECRET` gate for safe backfill/manual runs.
 
 Remaining notification rollout work:
 
-- Add trigger coverage for wishlist/listing matches, club events, club discussions, club moderation, credits, reminders, and system announcements.
-- Add scheduled or queue-based invocation for `send-notification`.
+- Add trigger coverage for club discussions, club moderation resolution, credits, and system announcements.
+- Configure authenticated scheduled invocation for `send-notification` using DB settings: `app.settings.send_notification_url`, `app.settings.send_notification_bearer`, and optional `app.settings.send_notification_cron_secret`.
 - Add production monitoring for failed push deliveries and provider receipt reconciliation.
 
 Security notes from Supabase advisors:

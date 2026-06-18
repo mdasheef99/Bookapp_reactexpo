@@ -2,9 +2,9 @@
 
 **Date:** 2026-06-06
 
-**Status:** Foundation implemented; matrix remains the source of truth for future trigger rollout
+**Status:** Foundation plus Clubs/wishlist rollout implemented; matrix remains the source of truth for future trigger rollout
 
-**Implemented on 2026-06-06:** exchange transaction events, exchange transaction status updates, and club invitation create/status updates are wired through live database triggers. Remaining rows are planned rollout targets.
+**Implemented on 2026-06-06:** exchange transaction events, exchange transaction status updates, club invitation create/status updates, wishlist listing matches, club event create/update/cancel, book nominations, reading schedule create/update, downgrade grace events, unread invitation reminders, voting-ending reminders, event reminders, reading milestone reminders, and downgrade deadline reminders are wired through live database triggers/functions. Remaining rows are planned rollout targets.
 
 This matrix defines which current and near-term application workflows should create notifications. New features should add rows here before implementation.
 
@@ -49,6 +49,7 @@ This matrix defines which current and near-term application workflows should cre
 |---|---|---|---|---|---|---|
 | `club.created` | `create_club` RPC | Creator | clubs | in_app | optional | `/(tabs)/clubs/:clubId` |
 | `club.invitation_created` | `create_club_invitation` RPC | Invitee | clubs | in_app, push | optional | `/(tabs)/clubs/invitations` |
+| `club.invitation_reminder` | Hourly reminder job for unread pending invites older than 24 hours | Invitee | reminders | in_app, push | optional | `/(tabs)/clubs/invitations` |
 | `club.invitation_revoked` | `revoke_club_invitation` RPC | Invitee | clubs | in_app, push | optional | `/(tabs)/clubs/invitations` |
 | `club.invitation_accepted` | `accept_club_invitation` RPC | Inviter, club admin | clubs | in_app | optional | `/(tabs)/clubs/:clubId/manage` |
 | `club.join_application_submitted` | `joinClub` approval flow inserts `club_join_applications` | Club admins/moderators | clubs | in_app, push | optional | `/(tabs)/clubs/:clubId/applications` |
@@ -61,6 +62,8 @@ This matrix defines which current and near-term application workflows should cre
 | `club.admin_transfer_accepted` | `accept_club_admin_transfer_request` RPC | Previous admin, new admin | clubs | in_app | optional | `/(tabs)/clubs/:clubId/manage` |
 | `membership.downgrade_grace_started` | `process_club_downgrade_grace_period` scheduled workflow | Affected user | account | in_app, push | mandatory | `/(tabs)/profile/settings` |
 | `membership.downgrade_grace_deadline_near` | Scheduled reminder | Affected user | account | in_app, push | mandatory | `/(tabs)/profile/settings` |
+
+Implemented note: downgrade warning/remediation notifications and deadline-near reminders are live. Richer user-selected keep lists and automatic successor-selection policy are not live.
 
 ## Clubs: Books And Reading
 
@@ -75,6 +78,8 @@ This matrix defines which current and near-term application workflows should cre
 | `club.reading_schedule_updated` | `upsertClubReadingSchedule` update | Club members | reminders | in_app, push | optional | `/(tabs)/clubs/:clubId/reading` |
 | `club.reading_milestone_due` | Scheduled job | Club members behind milestone | reminders | in_app, push | optional | `/(tabs)/clubs/:clubId/reading` |
 
+Implemented note: reading milestone-due reminders are live for members based on schedule milestone due dates. Behind/ahead personalization remains future product depth.
+
 ## Clubs: Events
 
 | Event type | Source workflow | Recipient | Category | Channel | Preference | Deep link |
@@ -85,6 +90,8 @@ This matrix defines which current and near-term application workflows should cre
 | `club.event_rsvp_changed` | `upsertClubEventRsvp` | Event creator for important changes | events | in_app | optional | `/(tabs)/clubs/:clubId/events/:eventId/edit` |
 | `club.event_reminder` | Scheduled job | `going` and `maybe` users | reminders | in_app, push | optional | `/(tabs)/clubs/:clubId/events` |
 | `club.ama_question_answered` | AMA answer workflow | Question asker | events | in_app, push | optional | `/(tabs)/clubs/:clubId/events` |
+
+Implemented note: event create/update/cancel routing and event reminders are live. AMA-specific event notifications remain future author-club product depth.
 
 ## Clubs: Discussion And Moderation
 

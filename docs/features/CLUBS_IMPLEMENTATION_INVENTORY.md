@@ -1,6 +1,6 @@
 # Clubs Feature — Full Implementation Inventory
 
-**Last updated:** 2026-06-04
+**Last updated:** 2026-06-06
 **Sources cross-referenced:**
 - `docs/features/CLUBS_SPEC_2026-03-06_234839.md` (canonical product intent)
 - `docs/features/CLUBS_IMPLEMENTATION_STATUS_2026-03-07.md` (repo reality)
@@ -8,8 +8,19 @@
 - `docs/features/CLUBS_ENTITLEMENT_IMPLEMENTATION_ANALYSIS_2026-03-10.md` (tier/role rules)
 - Direct codebase inspection of `app/(tabs)/clubs/**`, `src/features/clubs/**`
 - Direct codebase reconciliation after Create Club, invite revoke/read-state/notification handoff, venue picker, reading-progress work, admin lifecycle guidance, reading-schedule validation, moderation actions, platform complaint queue action bridge, author-club verified creation/discovery treatment, admin transfer acceptance, and downgrade grace automation
+- 2026-06-06 reconciliation after venue frontend Phase 1 work started and enterprise notification routing/reminder rollout was applied live
 - Web smoke result from 2026-05-30 on `http://localhost:8082/clubs?smoke=1780053066028`
 - **Live Supabase DB audit:** `information_schema.columns`, `pg_policies`, `pg_trigger`, `pg_publication_tables`, `pg_class` (replica identity, Realtime status)
+
+---
+
+## 2026-06-06 Update
+
+- Venue work has started: `src/features/venues/` now provides approved venue browse/detail services, hooks, reusable cards, browse/detail screens, and Clubs routes. Manage Club now includes linked venue add/remove/set-primary support. Venue owner registration/CRUD, admin verification UI, map/geospatial radius UX, and exchange pickup venue selection remain pending.
+- Enterprise notification foundation is live: Profile inbox/settings, push token registration, `send-notification`, `wishlist-notify`, notification tables/preferences, and event routing are implemented.
+- New live notification routing covers wishlist listing matches, club invitation create/status updates, unread invitation reminders, club event create/update/cancel/reminders, book nomination create/voting-ending reminders, reading schedule create/update/milestone-due reminders, and downgrade grace warning/remediation/deadline-near notifications.
+- Live Supabase verification through MCP on 2026-06-06 confirmed migrations `complete_clubs_notifications_and_reminders`, `wishlist_notify_rpc`, active Edge Functions `send-notification` and `wishlist-notify`, installed `pg_cron` 1.6.4, and installed `pg_net` 0.19.5.
+- Push dispatch cron is scheduled through `notification-push-dispatch`, but authenticated dispatch requires server-side `app.settings.send_notification_url`, `app.settings.send_notification_bearer`, and optional `app.settings.send_notification_cron_secret` configuration.
 
 ---
 
@@ -332,15 +343,13 @@
 
 **Immediate non-chat tasks after this smoke:**
 
-1. Build the broader notification pipeline: push token registration, notification preferences/history, `send-notification`, `wishlist-notify`, and reminder delivery for invitations, nominations, downgrade warnings, and events.
-2. Add schema-backed author experiences such as AMA and signed-edition workflows.
-3. Expand reading schedule product depth: reminders and multi-plan behavior.
-4. Define exact admin lifecycle automation policy: automated downgrade-driven successor selection and archive retention/deletion rules. The current UI only surfaces readiness and warnings.
+1. Add schema-backed author experiences such as AMA and signed-edition workflows.
+2. Expand reading schedule product depth: multi-plan behavior.
+3. Define exact admin lifecycle automation policy beyond conservative remediation. Current policy warns, allows manual reduction, then archives excess newest clubs after grace; automatic successor selection is not enabled.
+4. Configure and monitor authenticated push dispatch settings for `notification-push-dispatch`.
 5. Decide whether moderation needs durable resolution notes or a stricter RPC-backed punitive workflow policy.
-6. Roll out and then re-run read-only live verification for expired `club_member_actions` cleanup.
-7. Roll out and then re-run read-only live verification for downgrade grace cron/job state.
-8. Keep venue frontend work excluded unless product direction changes.
-9. Keep Clubs chat/realtime as a known high-priority gap, but defer implementation per the current user direction.
+6. Continue venue frontend Phase 1 follow-through; venue owner/admin/geospatial and exchange pickup venue flows remain pending.
+7. Keep Clubs chat/realtime as a known high-priority gap, but defer implementation per the current user direction.
 
 ---
 
@@ -349,15 +358,15 @@
 | Feature Area | Implemented | Partially Implemented | Blocked / Pending |
 |--------------|-------------|---------------------|-----------------|
 | Manage Club | Settings slice, join-question CRUD, member-role toggle, member removal, current-book finalization, manual override, archive/restore UI, lifecycle policy state, admin transfer request/accept flow, discussion report queue, platform complaint queue, warning/timed-mute/ban member actions | Granular moderator perms, moderation product depth, automated downgrade-driven succession, archive retention/deletion rules | â€” |
-| Invite Lifecycle | Create by username, history list, invitee accept, invitee inbox/unread badge, manager revoke, read-state RPC/service, inbox paging, pending unread/read grouping, accepted/expired/revoked history grouping | Notification handoff | Invitation reminder notifications |
-| Current Book / Nominations | Nomination list, vote cast/remove, nomination creation with provider/manual fallback, finalize, reading status RPC, reading progress screen, reading schedule builder/templates, explicit chapter-order validation, reading schedule timeline/milestone progress | Multi-plan schedules, reminders | — |
-| Events | List, create, edit, cancel, delete, RSVP, linked venue picker | Full venue registration/CRUD absent | Standalone venue frontend module |
+| Invite Lifecycle | Create by username, history list, invitee accept, invitee inbox/unread badge, manager revoke, read-state RPC/service, inbox paging, pending unread/read grouping, accepted/expired/revoked history grouping, notification routing, unread invite reminders | Notification handoff card remains a route into Profile settings | — |
+| Current Book / Nominations | Nomination list, vote cast/remove, nomination creation with provider/manual fallback, finalize, reading status RPC, reading progress screen, reading schedule builder/templates, explicit chapter-order validation, reading schedule timeline/milestone progress, nomination/schedule/reminder notification routing | Multi-plan schedules | — |
+| Events | List, create, edit, cancel, delete, RSVP, linked venue picker, event notification routing/reminders | Full venue registration/CRUD absent | — |
 | Chat (backend) | `club_messages`, `message_reactions` with RLS + moderation columns | *(Backend ready; frontend completely missing)* | `chat.tsx` route, `ClubChatScreen`, `useRealtimeMessages`, Realtime publication (`is_in_publication = false`) |
 | Discussion | Topics, replies, votes, reactions, reports, read-state — 6 tables, 22 RLS policies, 4 triggers | *(Fully end-to-end; frontend consumes exclusively)* | Realtime publication (`is_in_publication = false`) — currently polled via TanStack Query |
-| Browse / Discovery | Browse screen, search, filters including Author clubs, Author clubs landing route, All/My/Archived scope toggle, archived-club recovery, detail screen, member-list gating, verified-author card treatment, automated author-club badge smoke fixture | Schema-backed author experiences | — |
+| Browse / Discovery | Browse screen, search, filters including Author clubs, Author clubs landing route, All/My/Archived scope toggle, archived-club recovery, detail screen, member-list gating, verified-author card treatment, automated author-club badge smoke fixture, Clubs venue browse/detail entry point | Schema-backed author experiences and advanced venue discovery | — |
 | Create Club | Route, screen, hook, service, membership-limit check, cover image picker/upload | Author-club creation flow, advanced tags/genre controls | — |
 | Membership & Applications | Join, apply, application review, member list, leave service, leave-club UX | — | — |
-| Entitlement | Tier logic, frontend gating, live RLS/RPC enforcement, downgrade grace event/RPC/Edge Function/cron scaffolding | Notification tie-ins for downgrade warnings | Automated invalid-role remediation |
+| Entitlement | Tier logic, frontend gating, live RLS/RPC enforcement, downgrade grace event/RPC/Edge Function/cron scaffolding, downgrade notification/reminder routing | Richer user-choice keep-list and successor-selection policy | Automated invalid-role remediation beyond conservative club archiving |
 
 > 2026-05-30 correction: the Create Club summary row above should be read with verified-author author-club creation and Profile-only Pro/Pro+ entry point included in Implemented. The remaining Create Club gap is advanced tags/genre metadata.
 

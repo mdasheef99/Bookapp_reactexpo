@@ -8,6 +8,17 @@
 
 **Tech Stack:** Expo Router, React Native, Supabase JS, TanStack Query, Jest, `@testing-library/react-native`, TypeScript.
 
+## Status Update - 2026-06-06
+
+Venue work has started and the Clubs-first Phase 1 surface is partially implemented in the repo:
+
+- `src/features/venues/` includes approved venue browse/detail services, hooks, reusable cards, badges, and browse/detail screens.
+- Clubs routes exist for `/clubs/venues` and `/clubs/venues/:venueId`.
+- Manage Club includes a linked venues section with add/remove/set-primary flows through Clubs services/hooks.
+- Event creation/editing can consume linked venues while preserving manual location fallback.
+
+Still pending for this plan: full verification of club venue linking in browser smoke, any missing tests around Manage venue mutations, and out-of-scope venue owner/admin/geospatial/exchange pickup flows.
+
 ---
 
 ## Scope Guard
