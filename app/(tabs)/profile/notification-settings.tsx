@@ -71,6 +71,15 @@ export default function NotificationSettingsScreen() {
                     <View style={styles.headerSpacer} />
                 </View>
 
+                {!userId ? (
+                    <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+                        <Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Sign in required</Text>
+                        <Text style={[styles.noticeBody, { color: colors.textSecondary }]}>
+                            Notification preferences are saved to your account. Sign in before changing optional updates.
+                        </Text>
+                    </View>
+                ) : null}
+
                 {PREFERENCE_GROUPS.map(group => (
                     <View key={group.key} style={[styles.preferenceCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                         <View style={styles.preferenceHeader}>
@@ -136,6 +145,20 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 16,
         gap: 12,
+    },
+    noticeCard: {
+        borderWidth: 1,
+        borderRadius: 8,
+        padding: 14,
+        gap: 4,
+    },
+    noticeTitle: {
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    noticeBody: {
+        fontSize: 13,
+        lineHeight: 18,
     },
     preferenceHeader: {
         flexDirection: 'row',

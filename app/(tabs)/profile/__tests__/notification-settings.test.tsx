@@ -4,6 +4,7 @@ import NotificationSettingsScreen from '../notification-settings';
 
 const mockReplace = jest.fn();
 const mockMutate = jest.fn();
+let mockSession: { user: { id: string } } | null = { user: { id: 'reader-1' } };
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
@@ -13,7 +14,7 @@ jest.mock('expo-router', () => ({
     },
 }));
 jest.mock('@/features/auth/hooks/useAuth', () => ({
-    useAuth: () => ({ session: { user: { id: 'reader-1' } } }),
+    useAuth: () => ({ session: mockSession }),
 }));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
@@ -42,6 +43,7 @@ jest.mock('@/features/notifications/hooks/useNotifications', () => ({
 describe('NotificationSettingsScreen', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockSession = { user: { id: 'reader-1' } };
     });
 
     it('shows critical preferences as always on and lets users toggle optional push settings', () => {
@@ -59,5 +61,18 @@ describe('NotificationSettingsScreen', () => {
             channel: 'push',
             enabled: false,
         });
+    });
+
+    it('explains why preferences cannot be changed without a signed-in user', () => {
+        mockSession = null;
+
+        const { getByLabelText, getByText } = render(<NotificationSettingsScreen />);
+
+        expect(getByText('Sign in required')).toBeOnTheScreen();
+        expect(getByText(/Notification preferences are saved to your account/i)).toBeOnTheScreen();
+
+        fireEvent(getByLabelText('Disable push notifications for Club activity'), 'valueChange', false);
+
+        expect(mockMutate).not.toHaveBeenCalled();
     });
 });
