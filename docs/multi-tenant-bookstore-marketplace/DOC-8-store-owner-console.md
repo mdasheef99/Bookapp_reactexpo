@@ -397,11 +397,11 @@ store_statement_summaries
   store_id
   period_start
   period_end
-  gross_sales_inr
-  commission_inr
-  delivery_adjustments_inr
-  refunds_inr
-  net_payout_inr
+  gross_sales_minor
+  commission_minor
+  delivery_adjustments_minor
+  refunds_minor
+  net_payout_minor
   status
   created_at
   updated_at

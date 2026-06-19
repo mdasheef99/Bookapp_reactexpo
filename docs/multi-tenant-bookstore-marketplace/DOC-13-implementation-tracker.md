@@ -36,12 +36,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 1: Foundation Schema and Security Planning |
-| Overall status | `needs_review` |
-| Last updated | 2026-05-22 |
-| Latest handoff | Phase 0 audit is recorded and Phase 1 foundation schema/security plan is drafted for review. No marketplace migrations or app code have started. |
-| Current risk level | Medium-high until Phase 1 plan is reviewed and tenant/RLS/storage decisions are accepted. Existing Supabase security advisor issues must not be copied into marketplace work and should be remediated or explicitly isolated before launch. |
-| Next recommended task | Review the Phase 1 foundation schema/security plan, answer its review questions, then implement approved migrations and RLS/security tests. |
+| Current phase | Phase 1: Foundation Schema and Security — **Applied and Audited** |
+| Overall status | `in_progress` |
+| Last updated | 2026-06-19 |
+| Latest handoff | All five Phase 1 foundation migrations applied to live Supabase project via MCP and verified by post-deployment audit. The four split migrations (schema, helpers, RLS, storage) landed cleanly. One discrepancy was found and remediated immediately: `marketplace_notifications` was missing FK indexes on `user_id` and `store_id` (required by SEC-04); fixed via follow-up migration `marketplace_notifications_fk_indexes`. All 27 tables exist, all CHECK constraints match v0.2 spec, all monetary columns are `INTEGER`, all storage policies have correct `foldername[1]` path isolation, and the `trg_sync_public_store_profile` trigger was live-tested (projection, retraction, and locality name resolution all verified). Next step: begin Phase 2 store onboarding and verification implementation. |
+| Current risk level | Medium — foundation is applied and audited. Remaining risks are payment provider, delivery provider, and legal/accounting reviews required before Phase 7 payment work. |
+| Next recommended task | Begin Phase 2: Store Onboarding and Verification. Implement store creation flow, verification request submission, document upload to `seller-verification-docs` bucket, and platform reviewer workflow against the already-live foundation tables. |
 
 ---
 
@@ -50,7 +50,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase | Status | Tracker | Notes |
 |---|---|---|---|
 | Phase 0: Codebase and DB Audit | `needs_review` | [PHASE-0](./implementation/PHASE-0-codebase-db-audit.md) | Audit complete; review before Phase 1. |
-| Phase 1: Foundation Schema and Security | `needs_review` | [PHASE-1](./implementation/PHASE-1-foundation-schema-security.md) | [Plan](./implementation/PHASE-1-foundation-schema-security-plan.md) drafted; review before migrations. |
+| Phase 1: Foundation Schema and Security | `in_progress` | [PHASE-1](./implementation/PHASE-1-foundation-schema-security.md) | Foundation migrations applied and post-deployment audit passed. Follow-up index fix applied. Ready for Phase 2. |
 | Phase 2: Store Onboarding and Verification | `not_started` | [PHASE-2](./implementation/PHASE-2-store-onboarding-verification.md) | Depends on Phase 1. |
 | Phase 3: Inventory, Canonical Books, and Listings | `not_started` | [PHASE-3](./implementation/PHASE-3-inventory-canonical-listings.md) | Manual inventory before image-to-LLM. |
 | Phase 4: Store Owner Console | `not_started` | [PHASE-4](./implementation/PHASE-4-store-owner-console.md) | Basic operating console only. |
@@ -76,12 +76,32 @@ If implementation changes product or architecture behavior, update the relevant 
 - DOC-15 finance/tax/settlement review pending before payment work.
 - DOC-16 Bangalore pilot/unit-economics review pending before pilot launch planning.
 - Existing Supabase security advisor issues must be remediated separately or explicitly isolated before marketplace production launch.
+- Payment provider not selected; required before Phase 7.
+- Delivery provider not selected; required before Phase 10.
+- Legal/accounting review pending before production payment work (Phase 7).
+- India marketplace compliance review pending before production payments.
 
 ---
 
 ## 5. Global Decisions Made During Implementation
 
-None yet.
+- 2026-06-19: Architecture Remediation Plan executed (v0.2 sweep).
+  - Money fields standardized to integer `_minor` (paise) across DOC-2, DOC-3, DOC-4, DOC-5, DOC-6, DOC-7, DOC-8, DOC-9, DOC-15, README, and PHASE-1 plan.
+  - Canonical table names applied: `finance_ledger_entries`, `settlement_batches`, `seller_payout_accounts`, `marketplace_audit_logs`, `marketplace_localities`, `commerce_idempotency_keys`, `marketplace_notifications`.
+  - DOC-4 and DOC-15 bumped to v0.2.
+  - Commerce state machines refined with `awaiting_clarification`, `awaiting_customer_decision`, and two-tier soft/firm inventory holds.
+  - `marketplace_localities` promoted to Phase 1; `stores.locality` converted to `locality_id` FK.
+  - `commerce_idempotency_keys` promoted to Phase 1.
+  - `settlement_batches` reserved TCS/GST tax fields (`tcs_deduction_minor`, `gst_on_commission_minor`, `tax_adjustments_minor`, `tax_treatment_version`).
+  - `marketplace_notifications` projection added; raw `marketplace_events` client SELECT removed.
+  - Security helper standardized on `marketplace_sec.is_store_admin(store_id)`; SEC-16 added to acceptance criteria.
+  - DPDP section updated to name LLM vendor as data processor with image egress/residency rules.
+
+- 2026-06-19: Phase 1 foundation migrations applied to live Supabase project.
+  - Four split migrations applied in order via Supabase MCP: schema (A), helpers (B), RLS (C), storage (D).
+  - Post-deployment audit run across all 5 high-risk areas: financial column types, security helper definitions, trigger projection sync, CHECK constraints, and storage path isolation.
+  - **Audit finding (SEC-04):** `marketplace_notifications` was missing FK indexes on `user_id` and `store_id` — columns evaluated in the `notifications select own` RLS USING clause. Fixed immediately via follow-up migration `marketplace_notifications_fk_indexes`.
+  - All other checks passed: 27 tables present, all monetary columns `INTEGER`, all state machine CHECK constraints match v0.2 spec, all `marketplace_sec` functions are SECURITY DEFINER with blank `search_path`, trigger live-tested with full projection/retraction/locality-name cycle, all storage policies use `foldername[1]` path isolation with `store_administrators` join, `marketplace_events` has no client SELECT policy.
 
 ---
 
@@ -111,10 +131,12 @@ Implementation milestones completed:
 - Current P2P exchange boundary audited; P2P `listings`, `transactions`, credit tables, and transaction RPCs are confirmed as forbidden reuse for bookstore commerce.
 - Live Supabase schema, RLS/policies, storage buckets, Edge Functions, realtime publication state, and advisor findings audited.
 - Confirmed no marketplace/store/seller/inventory/order/payment/ledger/settlement/shipment schema exists yet.
+- Phase 1 foundation migrations (split A–D + follow-up index fix) applied to live Supabase project and verified by comprehensive post-deployment audit (2026-06-19). All v0.2 standards confirmed in live DB.
 
 Documentation milestones completed:
 
 - Source specs `DOC-0` through `DOC-16` created.
+- v0.2 architecture remediation sweep completed: `ARCHITECTURE-REMEDIATION-PLAN.md` tasks applied across DOC-1, DOC-2, DOC-4, DOC-6, DOC-14, DOC-15, README, and PHASE-1 plan; foundation migration aligned with remediation plan.
 - India marketplace, payment, delivery, compliance, and operations guardrails added.
 - Tracking scaffolds created.
 - Store Owner entry rule documented: Login / first-run auth for new users, Profile section for existing signed-in users, both routed through the Store Owner gate.
@@ -127,15 +149,19 @@ Documentation milestones completed:
 
 ## 8. Next Recommended Task
 
-Review the [Phase 1 foundation schema/security implementation plan](./implementation/PHASE-1-foundation-schema-security-plan.md), then convert the accepted plan into migrations and RLS/security tests.
+**Begin Phase 2: Store Onboarding and Verification.**
 
-Before migration work, decide:
+The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The following tables are live and ready for feature implementation:
 
-- separate marketplace table names and tenant boundaries
-- Store Owner gate and server-side ownership checks
-- strict RLS and cross-store denial tests
-- private seller-document storage and public asset storage without broad listing
-- platform/admin primitives, policy config, and append-only audit/event foundations
-- whether existing Supabase advisor issues are cleaned before launch or isolated from new marketplace code
+- `stores`, `store_administrators`, `store_status_history` — store creation and admin assignment
+- `store_verification_requests`, `store_verification_documents` — verification submission and review
+- `seller_payout_accounts` — payout account metadata collection
+- `store_verification-docs` bucket — document upload with path-scoped store isolation
+- `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
-Do not write Phase 1 migrations or app code until the Phase 1 plan is reviewed.
+Phase 2 work:
+1. Store creation Edge Function (service-role, with cross-tenant denial test).
+2. Verification request submission flow (store owner app → `store_verification_requests`).
+3. Document upload to `seller-verification-docs/{store_id}/` with the live storage policy.
+4. Platform reviewer workflow (`store_reviewer` role) against `store_verification_requests`.
+5. Store status transition to `approved_pending_setup` on approval.

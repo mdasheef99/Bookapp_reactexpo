@@ -112,23 +112,42 @@ Existing pieces we should not reuse directly:
 - current P2P transaction states and RPCs
 - existing broad public storage bucket patterns
 
-New marketplace domain required:
+New marketplace domain required (v0.2):
 
 - `stores`
 - `store_administrators`
 - `store_verification_requests`
 - `store_subscriptions`
 - `store_entitlements`
+- `store_usage_counters`
+- `marketplace_policy_config`
+- `marketplace_localities`
 - `store_inventory`
 - `marketplace_book_listings`
+- `marketplace_carts`
+- `marketplace_cart_items`
 - `store_order_requests`
+- `store_order_request_items`
 - `store_orders`
 - `store_order_items`
+- `inventory_holds`
 - `payments`
 - `delivery_shipments`
-- `store_settlements`
+- `finance_ledger_entries`
+- `settlement_batches`
 - `seller_payout_accounts`
+- `invoice_snapshots`
+- `commerce_transition_log`
+- `commerce_idempotency_keys`
+- `marketplace_events`
+- `marketplace_notifications`
+- `marketplace_audit_logs`
 - `image_extraction_sessions`
+- `image_extraction_inputs`
+- `image_extraction_candidates`
+- `metadata_enrichment_attempts`
+
+All monetary fields are integer minor units (paise). See the canonical table register in `implementation/ARCHITECTURE-REMEDIATION-PLAN.md` (DD-01) for authoritative names and rationale.
 
 Security issues already present in the live DB, to avoid repeating in new work:
 

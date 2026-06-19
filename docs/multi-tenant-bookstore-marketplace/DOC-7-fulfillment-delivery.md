@@ -300,7 +300,7 @@ store_delivery_settings
   store_id
   pickup_enabled
   third_party_delivery_enabled
-  min_delivery_order_value_inr
+  min_delivery_order_value_minor
   packing_time_minutes
   pickup_instructions
   delivery_notes
@@ -314,9 +314,9 @@ delivery_quotes
   user_id
   delivery_address_id
   provider
-  quote_amount_inr
+  quote_amount_minor
   serviceable
-  min_order_value_inr
+  min_order_value_minor
   estimated_pickup_at nullable
   estimated_delivery_at nullable
   expires_at
@@ -332,8 +332,8 @@ delivery_shipments
   status
   pickup_address_snapshot
   delivery_address_snapshot private
-  quoted_amount_inr
-  final_amount_inr nullable
+  quoted_amount_minor
+  final_amount_minor nullable
   tracking_url nullable
   awb nullable
   label_url nullable

@@ -376,8 +376,8 @@ refund_cases
   store_order_id
   payment_id
   dispute_id nullable
-  requested_amount_inr
-  approved_amount_inr nullable
+  requested_amount_minor
+  approved_amount_minor nullable
   status
   reason
   decided_by nullable
@@ -389,11 +389,15 @@ settlement_batches
   store_id
   period_start
   period_end
-  gross_amount_inr
-  commission_amount_inr
-  fee_amount_inr
-  adjustment_amount_inr
-  net_payout_inr
+  gross_amount_minor
+  commission_amount_minor
+  fee_amount_minor
+  adjustment_amount_minor
+  net_payout_minor
+  tcs_deduction_minor
+  gst_on_commission_minor
+  tax_adjustments_minor
+  tax_treatment_version
   status
   payout_reference nullable
   statement_url nullable
@@ -406,7 +410,7 @@ payment_reconciliation_cases
   provider
   case_type
   status
-  amount_inr nullable
+  amount_minor nullable
   notes private
   created_at
   updated_at

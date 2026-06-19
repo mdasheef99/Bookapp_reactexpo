@@ -130,11 +130,14 @@ Required store-scoped tables:
 - `marketplace_book_listings`
 - `image_extraction_sessions`
 - `store_order_requests`
+- `store_order_request_items`
 - `store_orders`
 - `store_order_items`
 - `delivery_shipments`
-- `store_settlements`
-- `store_audit_logs`
+- `finance_ledger_entries`
+- `settlement_batches`
+- `marketplace_audit_logs`
+- `commerce_idempotency_keys`
 
 Defense-in-depth rule:
 
@@ -153,14 +156,10 @@ Store Owners can read and mutate rows for stores they own.
 Conceptual policy:
 
 ```sql
-exists (
-  select 1
-  from store_administrators sa
-  where sa.store_id = target_table.store_id
-    and sa.user_id = auth.uid()
-    and sa.role = 'owner'
-)
+marketplace_sec.is_store_admin(target_table.store_id)
 ```
+
+where `marketplace_sec.is_store_admin(UUID)` is a `SECURITY DEFINER` helper in the private `marketplace_sec` schema with a pinned `search_path` and `EXECUTE` revoked from `anon` (see SEC-04).
 
 ### 7.2 Consumer Public Reads
 
@@ -245,13 +244,13 @@ Rules:
 - Store Owners cannot browse global customer profiles.
 - Store Owners cannot export customer PII.
 - Customer address and phone may be shared with delivery partners only after order confirmation/payment and only for fulfillment.
-- Privacy policy must disclose third-party delivery partner sharing.
+- Privacy policy must disclose third-party delivery partner sharing and image-to-LLM data processor sharing (including the LLM vendor and any metadata-enrichment providers used by the image extraction workflow).
 - Customer data must not be logged to Sentry or device logs.
 - Support/dispute workflows must minimize customer data shown to store owners.
 
 Additional planning requirements:
 
-- notices must explain what personal data is processed for marketplace orders, delivery, support, refunds, and seller onboarding
+- notices must explain what personal data is processed for marketplace orders, delivery, support, refunds, seller onboarding, and image-to-LLM extraction (including that shelf/cover images may be processed by an LLM vendor and metadata providers)
 - consent/notice text must be clear and independently understandable where required
 - data principal rights and grievance paths must route through BookConnect platform operations
 - breach notification and incident response processes must be defined before production payments
@@ -311,6 +310,14 @@ Required storage buckets:
 | `seller-verification-docs` | Private | Seller KYC/business verification documents. |
 | `order-dispute-evidence` | Private | Support/dispute images and attachments. |
 | `image-extraction-inputs` | Private or short-lived signed URL | Images uploaded for LLM extraction. |
+
+Image extraction egress rules (DPDP/data processor alignment):
+
+- Uploaded extraction images must have EXIF/geolocation stripped before transmission to the LLM vendor.
+- Only the minimum image data required for book extraction should be sent to the LLM vendor and metadata providers.
+- The LLM vendor and metadata providers are data processors; a data-processing agreement must be in place before production use.
+- Vendor reuse of images for model training or marketing is prohibited unless explicit platform policy and consent allow it.
+- A cross-border data residency/transfer review must be completed before production launch and documented as a payment/launch gate.
 
 Storage policies must avoid broad object listing. Public buckets should provide object URL access without allowing clients to enumerate all objects.
 
@@ -392,6 +399,7 @@ Audit logs should be append-only for normal application code.
 | SEC-13 | Customer-facing marketplace APIs expose policy and seller disclosure data without leaking private seller/customer data. |
 | SEC-14 | Payment, delivery, and dispute evidence is retained server-side and not exposed to unauthorized clients. |
 | SEC-15 | Store Owner console cannot process formal customer erasure or grievance requests directly. |
+| SEC-16 | Every service-role function has a passing cross-tenant denial test. |
 
 ---
 
@@ -407,6 +415,7 @@ Audit logs should be append-only for normal application code.
 | Seller docs are sensitive | Store in private bucket with signed access only for platform ops. |
 | Legal/accounting interpretation can change checkout copy, seller onboarding fields, and settlement reporting. | Treat legal/accounting review as a payment-launch gate. |
 | DPDP Rules 2025 and implementation timeline affect privacy notices, rights handling, breach process, and child/minor handling | Treat DPDP/privacy review as a launch gate before production payments and before broader consumer growth. |
+| LLM vendor data processor and image egress/residency | Require data-processing agreement, EXIF stripping, minimum-data transfer, and cross-border residency review before production image extraction. |
 | Children/minors or school communities may trigger additional privacy/product obligations | Not targeted in pilot; revisit before broader launch or school/community programs. |
 
 ---

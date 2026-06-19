@@ -74,14 +74,15 @@ Create these tables first:
 
 | Table | Purpose | Tenant Scope |
 |---|---|---|
-| `stores` | Canonical bookstore tenant and public/private profile base. | Own row by `id`; store-owned root. |
+| `marketplace_localities` | Controlled city/locality entity for pilot gating and policy scoping. | Platform-level. |
+| `stores` | Canonical bookstore tenant and public/private profile base. | Own row by `id`; store-owned root; FK to `marketplace_localities`. |
 | `store_administrators` | Server-authoritative Store Owner membership. | `store_id`; user-scoped via `user_id`. |
 | `store_status_history` | Append-only record of store status changes. | `store_id`. |
 
 Recommended `stores` fields:
 
 - identity: `id`, `display_name`, `legal_name`, `legal_seller_name`, `store_type`
-- public profile: `description`, `logo_url`, `cover_url`, `city`, `state`, `pincode`, `locality`, `public_address_mode`
+- public profile: `description`, `logo_url`, `cover_url`, `city`, `state`, `pincode`, `locality_id` (FK to `marketplace_localities`), `public_address_mode`
 - location: `location`
 - operating settings: `operating_hours`, `pickup_enabled`, `delivery_enabled`, `minimum_delivery_order_value_minor`, `return_policy_type`
 - status: `status`, `verification_status`, `setup_status`, `selling_status`, `suspension_reason`
@@ -236,8 +237,10 @@ Create:
 | Table | Purpose | Tenant Scope |
 |---|---|---|
 | `marketplace_events` | Append-only product/commerce/system event stream. | Optional `store_id`, optional `user_id`. |
+| `marketplace_notifications` | Column-safe client-readable notification projection populated from events. | Optional `store_id`, optional `user_id`. |
 | `marketplace_audit_logs` | Append-only security/compliance audit trail. | Optional `store_id`. |
 | `event_action_tasks` | Queue items derived from events for ops follow-up. | Optional `store_id`, assigned role. |
+| `commerce_idempotency_keys` | Cross-scope idempotency contract for transitions/webhooks. | None; service-role only. |
 
 Recommended `marketplace_events` fields:
 
@@ -355,7 +358,7 @@ Storage policy principles:
 | `store_verification_documents` | Own document metadata/status. | Upload metadata for own store during onboarding. | Raw access through private storage rules. |
 | `seller_payout_accounts` | Own masked payout status. | Initial submit/update only through controlled server path. | Full account fields private. |
 | `store_subscriptions` / `store_entitlements` / `store_usage_counters` | Own store only. | No direct client writes. | Usage should be server/system-owned. |
-| `marketplace_events` | Own store events if payload is safe. | No direct writes from client. | Prefer server event creation. |
+| `marketplace_events` | None for clients; server-side only. | No direct writes from client. | Clients read `marketplace_notifications` instead. |
 | ops/case tables | Own store cases where store participation is required. | Store responses only in later phases. | Platform notes hidden. |
 
 ### Consumer Access
@@ -385,7 +388,7 @@ Phase 1 implementation is not acceptable without tests proving:
 - Store Owner A cannot read Store Owner B private store fields.
 - Store Owner A cannot update Store Owner B rows.
 - Consumer can read only public active store projection.
-- Consumer cannot read seller verification documents, payout accounts, risk reviews, private notes, admin actions, or policy internals.
+- Consumer cannot read seller verification documents, payout accounts, risk reviews, private notes, admin actions, raw marketplace events, or policy internals.
 - Store applicant cannot publish/sell because publishing/order tables do not exist yet and selling status is not active.
 - Platform role `store_reviewer` can read verification request and document metadata.
 - Platform role `support_agent` cannot change payout account or settlement status.
@@ -473,12 +476,13 @@ Test fixtures should include:
 
 - [ ] Define `platform_user_roles`.
 - [ ] Define `platform_admin_actions`.
-- [ ] Define `marketplace_events`.
+- [ ] Define `marketplace_events` (no client SELECT policy).
+- [ ] Define `marketplace_notifications` (column-safe projection for clients).
 - [ ] Define `marketplace_audit_logs`.
 - [ ] Define `event_action_tasks`.
 - [ ] Define `support_cases`, `refund_cases`, `finance_reconciliation_cases`, `settlement_batches`, `moderation_cases`, and `delivery_ops_cases`.
+- [ ] Define `commerce_idempotency_keys` with `(scope, key)` unique and service-role-only access.
 - [ ] Keep all event/audit/case private payloads inaccessible to consumers.
-- [ ] Add idempotency fields where future system/webhook processing will use them.
 
 ### Task 6: Create Storage Bucket And Policy Design
 
@@ -503,7 +507,7 @@ Test fixtures should include:
 
 - [ ] Enable RLS on every new exposed table.
 - [ ] Grant table access only where RLS policies intentionally allow it.
-- [ ] Write Store Owner policies through `store_administrators`.
+- [ ] Write Store Owner policies through a single private-schema helper `marketplace_sec.is_store_admin(store_id)` (or equivalent) that checks `store_administrators`.
 - [ ] Write consumer public-read policies only for safe public store fields/projections.
 - [ ] Write platform operator policies through `platform_user_roles`.
 - [ ] Avoid public `SECURITY DEFINER` functions.
