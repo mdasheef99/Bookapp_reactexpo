@@ -470,6 +470,7 @@ The following must be platform-configurable, not hardcoded in mobile clients:
 
 - store confirmation SLA
 - payment window expiry
+- **acceptance_window** — the partial-acceptance decision window (separate from the payment window); starts when a request enters `awaiting_customer_decision` and expires at `acceptance_expires_at`. Default range and minimum/maximum values must be specified in `marketplace_policy_config`. The confirmation SLA clock is distinct from this window.
 - delivery minimum value
 - delivery fee subsidy/free delivery rules
 - commission rate
@@ -480,7 +481,7 @@ The following must be platform-configurable, not hardcoded in mobile clients:
 - cancellation windows
 - suspension thresholds
 - store reliability thresholds
-- pilot locality/store allowlist
+- pilot locality/store allowlist (referenced via `marketplace_localities.is_pilot_enabled`)
 - provider enablement flags
 
 Policy values should be server-read and cached safely by clients only for display.
@@ -597,9 +598,10 @@ For any future implementation session:
 5. Keep bookstore marketplace code separate from P2P exchange code.
 6. Add tests for RLS, state transitions, and public/private data boundaries.
 7. Prefer server-side transition functions or Edge Functions for privileged commerce actions.
-8. Never expose service role keys, payment secrets, delivery provider secrets, or raw webhooks to mobile clients.
-9. Build manual inventory and pickup before image-to-LLM and delivery.
-10. Stop and ask for review before enabling payment or delivery provider integration.
+8. **Every service-role Edge Function or private-schema RPC that performs a privileged commerce or store action must have a passing cross-tenant denial test (acceptance criterion SEC-16).** Each function requires tests proving: (a) `auth.uid()` is resolved server-side; (b) store relationship is independently verified against `store_administrators`; (c) a Store A actor targeting a Store B entity is denied; (d) platform-role actions require a `platform_user_roles` row.
+9. Never expose service role keys, payment secrets, delivery provider secrets, or raw webhooks to mobile clients.
+10. Build manual inventory and pickup before image-to-LLM and delivery.
+11. Stop and ask for review before enabling payment or delivery provider integration.
 
 ---
 

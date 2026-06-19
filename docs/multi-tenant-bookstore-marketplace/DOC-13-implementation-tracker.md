@@ -97,6 +97,11 @@ If implementation changes product or architecture behavior, update the relevant 
   - Security helper standardized on `marketplace_sec.is_store_admin(store_id)`; SEC-16 added to acceptance criteria.
   - DPDP section updated to name LLM vendor as data processor with image egress/residency rules.
 
+- 2026-06-19: v0.2 sweep consistency gap-fill (DOC-12, DOC-16).
+  - Post-push audit identified three remediation plan targets that were marked `[x]` but not yet edited: DOC-12 §7 (SM-02: `acceptance_window` policy), DOC-12 §12 (SEC-01: cross-tenant denial test requirement / SEC-16), and DOC-16 §2 + §5 (P1-02: `marketplace_localities.is_pilot_enabled` enforcement).
+  - DOC-10 (SEC-02 target) confirmed to not exist as a standalone file; the `marketplace_events` raw-read removal was correctly applied to DOC-1 §7 and DOC-14 §13 instead. No action needed.
+  - All three live edits applied; remediation plan task list now accurately reflects actual document coverage.
+
 - 2026-06-19: Phase 1 foundation migrations applied to live Supabase project.
   - Four split migrations applied in order via Supabase MCP: schema (A), helpers (B), RLS (C), storage (D).
   - Post-deployment audit run across all 5 high-risk areas: financial column types, security helper definitions, trigger projection sync, CHECK constraints, and storage path isolation.
@@ -136,7 +141,7 @@ Implementation milestones completed:
 Documentation milestones completed:
 
 - Source specs `DOC-0` through `DOC-16` created.
-- v0.2 architecture remediation sweep completed: `ARCHITECTURE-REMEDIATION-PLAN.md` tasks applied across DOC-1, DOC-2, DOC-4, DOC-6, DOC-14, DOC-15, README, and PHASE-1 plan; foundation migration aligned with remediation plan.
+- v0.2 architecture remediation sweep completed: `ARCHITECTURE-REMEDIATION-PLAN.md` tasks applied across DOC-1, DOC-2, DOC-4, DOC-6, DOC-12, DOC-14, DOC-15, DOC-16, README, and PHASE-1 plan; foundation migration aligned with remediation plan. Post-sweep consistency audit confirmed DOC-12 (SM-02 §7, SEC-01 §12) and DOC-16 (P1-02 §2/§5) gap-filled.
 - India marketplace, payment, delivery, compliance, and operations guardrails added.
 - Tracking scaffolds created.
 - Store Owner entry rule documented: Login / first-run auth for new users, Profile section for existing signed-in users, both routed through the Store Owner gate.
