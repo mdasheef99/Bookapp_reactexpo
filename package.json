@@ -10,6 +10,7 @@
     "export:web": "expo export --platform web",
     "e2e:build:web": "node scripts/e2e-build-web.js",
     "test:e2e:web": "npm run e2e:build:web && playwright test",
+    "smoke:phase2b:store-application": "node scripts/smoke-phase2b-store-application.js",
     "sentry:upload-sourcemaps": "node node_modules/@sentry/react-native/scripts/expo-upload-sourcemaps.js dist",
     "sentry:upload-sourcemaps:web": "npm run export:web && npm run sentry:upload-sourcemaps",
     "test": "jest",

@@ -10,6 +10,8 @@
 
 BookTalks is a revolutionary peer-to-peer (P2P) book sharing ecosystem designed specifically for the Indian market. Unlike traditional library apps, **BookTalks treats books as a shared community resource that "circulates" rather than returns**. The fundamental philosophy is that a book read is a book that should move forward to the next reader, creating an ever-flowing stream of literature through the community.
 
+> **Codebase orientation:** Before starting implementation or broad analysis, read [`../CODEBASE_INTELLIGENCE/README.md`](../CODEBASE_INTELLIGENCE/README.md). It preserves the curated Augment/codebase-retrieval map of app architecture, feature ownership, Supabase integration, marketplace readiness, and testing patterns.
+
 ### Core Differentiators
 
 1. **Circulation Over Return**: Books move forward in the community, not back to original owners
@@ -52,6 +54,8 @@ npm start
 
 ```
 booktalks-mobile/
+├── CODEBASE_INTELLIGENCE/         # Durable codebase map and agent instructions
+│
 ├── src/                          # Application source code
 │   ├── app/                      # Expo Router pages
 │   ├── components/               # Reusable UI components

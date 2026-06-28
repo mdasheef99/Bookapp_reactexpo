@@ -56,13 +56,13 @@ select
   sa.store_id,
   sa.role,
   s.status,
-  s.name,
+  s.display_name,
   s.verification_status
 from store_administrators sa
 join stores s on s.id = sa.store_id
 where sa.user_id = auth.uid()
   and sa.role = 'owner'
-  and s.status in ('active', 'pending_setup')
+  and s.status in ('active', 'approved_pending_setup')
 limit 1;
 ```
 
@@ -76,7 +76,7 @@ The Store Owner surface should expose:
 interface StoreOwnerContextValue {
   storeId: string;
   storeName: string;
-  storeStatus: 'pending_setup' | 'active' | 'suspended' | 'closed';
+  storeStatus: 'approved_pending_setup' | 'active' | 'selling_restricted' | 'suspended' | 'closed';
   verificationStatus: 'draft' | 'submitted' | 'approved' | 'rejected' | 'suspended';
   role: 'owner';
 }

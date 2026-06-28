@@ -18,14 +18,14 @@ If you are a new coding or review agent, start here and do not write code immedi
 4. Read [DOC-12: Build Strategy and Implementation Sequence](./DOC-12-build-strategy-and-implementation-sequence.md) before creating an implementation plan or touching files.
 5. Read the source specification docs linked by the active phase tracker. Do not rely on memory or older summaries.
 
-Current handoff as of 2026-05-22:
+Current handoff as of 2026-06-24:
 
-- Phase 0 audit is recorded and marked `needs_review`.
-- Phase 1 foundation schema/security implementation plan is drafted and marked `needs_review`.
-- The current app and database are consumer/P2P/bookclub-oriented.
-- No bookstore marketplace schema, Store Owner gate, payment ledger, settlement, delivery, or ops primitives exist yet.
-- The next recommended task is to review the Phase 1 plan and answer its review questions.
-- Do not write Phase 1 migrations or app code until the Phase 1 plan is reviewed.
+- Phase 1 foundation schema/security migrations are applied to the live Supabase project and post-deployment checks have been refreshed through Supabase MCP.
+- The app is still consumer/P2P/bookclub-oriented; Store Owner routes, onboarding screens, and platform review UI do not exist yet.
+- Phase 2 Store Onboarding and Verification is the active planning target.
+- The live private seller document bucket is `seller-verification-docs`.
+- The next recommended task is to review and approve a Phase 2 implementation plan before writing feature code.
+- Do not build inventory, orders, payments, delivery, or image-to-LLM workflows until their later phases.
 
 When in doubt, treat [DOC-13](./DOC-13-implementation-tracker.md) as the live source of implementation status and this README as the stable source of reading order and guardrails.
 
@@ -87,14 +87,21 @@ Bookstore onboarding
 
 ## 3. Live Database Audit Summary
 
-Supabase MCP audit on 2026-05-22 found:
+Supabase MCP audit on 2026-05-22 found the pre-marketplace baseline:
 
 - Live project: `Bookconnect_reactexpo`
 - Project ref: `ahntbtktjjmvfosgkmgn`
 - Region: `ap-southeast-2`
 - Postgres: `17`
-- Current schema is consumer/P2P/bookclub-oriented, not bookstore-marketplace-oriented.
-- No marketplace/store/seller/inventory/order/payment/ledger/settlement/shipment schema exists yet.
+- Current schema was consumer/P2P/bookclub-oriented, not bookstore-marketplace-oriented.
+- No marketplace/store/seller/inventory/order/payment/ledger/settlement/shipment schema existed yet.
+
+Supabase MCP refresh on 2026-06-24 found:
+
+- Phase 1 marketplace foundation migrations are applied live.
+- Store onboarding foundation tables exist with RLS enabled, including `stores`, `store_administrators`, `store_status_history`, `store_verification_requests`, `store_verification_documents`, `seller_payout_accounts`, subscriptions, entitlements, platform roles, events, notifications, audit logs, and `commerce_idempotency_keys`.
+- Storage bucket `seller-verification-docs` exists, is private, and is path-scoped by first folder segment store ID.
+- The old bucket spelling `store_verification-docs` does not exist.
 
 The detailed Phase 0 audit is recorded in [`implementation/PHASE-0-codebase-db-audit.md`](./implementation/PHASE-0-codebase-db-audit.md).
 
@@ -112,7 +119,7 @@ Existing pieces we should not reuse directly:
 - current P2P transaction states and RPCs
 - existing broad public storage bucket patterns
 
-New marketplace domain required (v0.2):
+New marketplace domain required across all phases (v0.2):
 
 - `stores`
 - `store_administrators`

@@ -12,7 +12,7 @@ const DEV_TEST_PHONE = '1234567890';
 const DEV_TEST_OTP = '123456';
 
 export default function VerifyOtpScreen() {
-    const { phone } = useLocalSearchParams();
+    const { phone, intent } = useLocalSearchParams();
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
     const isDevTestPhone = phone === DEV_TEST_PHONE;
@@ -39,7 +39,15 @@ export default function VerifyOtpScreen() {
             }
 
             const hasProfile = await profileService.hasProfile(userId);
-            router.replace(hasProfile ? '/(tabs)/library' : '/(auth)/setup-profile');
+            const isStoreOwnerIntent = intent === 'store_owner';
+
+            if (hasProfile) {
+                router.replace(isStoreOwnerIntent ? '/(store-owner)' : '/(tabs)/library');
+            } else {
+                router.replace(isStoreOwnerIntent
+                    ? { pathname: '/(auth)/setup-profile', params: { intent: 'store_owner' } }
+                    : '/(auth)/setup-profile');
+            }
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Failed to verify OTP. Please try again.';
             Alert.alert('Error', message);

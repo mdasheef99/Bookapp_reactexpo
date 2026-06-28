@@ -76,4 +76,18 @@ describe('Root auth routing', () => {
 
         await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)/library'));
     });
+
+    it('allows authenticated users to stay in the Store Owner route group', async () => {
+        mockSegments = ['(store-owner)'];
+        mockAuthState = {
+            session: { user: { id: 'user-1' } },
+            isLoading: false,
+            initialize: mockInitialize,
+        };
+
+        render(<RootLayout />);
+
+        await waitFor(() => expect(mockInitialize).toHaveBeenCalled());
+        expect(mockReplace).not.toHaveBeenCalled();
+    });
 });

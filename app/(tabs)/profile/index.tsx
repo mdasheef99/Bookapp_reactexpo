@@ -10,15 +10,12 @@ import { creditService } from '@/features/credits/services/creditService';
 import { profileService, type UserMembershipTier } from '@/features/auth/services/profileService';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { router } from 'expo-router';
+import { ProfileAccountMenu } from '@/features/profile/components/ProfileAccountMenu';
 
 function formatTier(tier?: UserMembershipTier | null) {
     if (tier === 'pro_plus') return 'Pro+';
     if (tier === 'pro') return 'Pro';
     return 'Free';
-}
-
-function canCreateClub(tier?: UserMembershipTier | null) {
-    return tier === 'pro' || tier === 'pro_plus';
 }
 
 export default function ProfileScreen() {
@@ -161,80 +158,7 @@ export default function ProfileScreen() {
                 <GlassCard style={{ marginTop: 8 }} padding={24} borderRadius={24}>
                     <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Account</Text>
 
-                    {/* Menu Items */}
-                    <TouchableOpacity
-                        style={[styles.menuItem, { borderBottomColor: colors.border }]}
-                        onPress={() => router.push('/(tabs)/library')}
-                        accessibilityLabel="My Books"
-                        accessibilityHint="Navigate to your book library"
-                        accessibilityRole="button"
-                    >
-                        <Ionicons name="library-outline" size={24} color={colors.textPrimary} style={styles.menuIconGraphic} />
-                        <Text style={[styles.menuText, { color: colors.textPrimary }]}>My Books</Text>
-                        <Text style={styles.menuArrow}>→</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.menuItem, { borderBottomColor: colors.border }]}
-                        onPress={() => router.push('/(tabs)/exchange/my-transactions')}
-                        accessibilityLabel="Exchange History"
-                        accessibilityHint="Navigate to your exchange history"
-                        accessibilityRole="button"
-                    >
-                        <Ionicons name="swap-horizontal-outline" size={24} color={colors.textPrimary} style={styles.menuIconGraphic} />
-                        <Text style={[styles.menuText, { color: colors.textPrimary }]}>Exchange History</Text>
-                        <Text style={styles.menuArrow}>→</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.menuItem, { borderBottomColor: colors.border }]}
-                        onPress={() => router.push('/(tabs)/clubs')}
-                        accessibilityLabel="My Clubs"
-                        accessibilityHint="Navigate to your clubs"
-                        accessibilityRole="button"
-                    >
-                        <Ionicons name="people-outline" size={24} color={colors.textPrimary} style={styles.menuIconGraphic} />
-                        <Text style={[styles.menuText, { color: colors.textPrimary }]}>My Clubs</Text>
-                        <Text style={styles.menuArrow}>→</Text>
-                    </TouchableOpacity>
-
-                    {canCreateClub(profile?.membership_tier) ? (
-                        <TouchableOpacity
-                            style={[styles.menuItem, { borderBottomColor: colors.border }]}
-                            onPress={() => router.push('/(tabs)/clubs/create')}
-                            accessibilityLabel="Create Club"
-                            accessibilityHint="Create and manage a new book club"
-                            accessibilityRole="button"
-                        >
-                            <Ionicons name="people-circle-outline" size={24} color={colors.textPrimary} style={styles.menuIconGraphic} />
-                            <Text style={[styles.menuText, { color: colors.textPrimary }]}>Create Club</Text>
-                            <Text style={styles.menuArrow}>→</Text>
-                        </TouchableOpacity>
-                    ) : null}
-
-                    <TouchableOpacity
-                        style={[styles.menuItem, { borderBottomColor: colors.border }]}
-                        onPress={() => router.push('/(tabs)/profile/addresses')}
-                        accessibilityLabel="Addresses"
-                        accessibilityHint="Manage saved exchange addresses"
-                        accessibilityRole="button"
-                    >
-                        <Ionicons name="home-outline" size={24} color={colors.textPrimary} style={styles.menuIconGraphic} />
-                        <Text style={[styles.menuText, { color: colors.textPrimary }]}>Addresses</Text>
-                        <Text style={styles.menuArrow}>→</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.menuItem, { borderBottomColor: colors.border }]}
-                        onPress={() => router.push('/(tabs)/profile/settings')}
-                        accessibilityLabel="Settings"
-                        accessibilityHint="Open account settings"
-                        accessibilityRole="button"
-                    >
-                        <Ionicons name="settings-outline" size={24} color={colors.textPrimary} style={styles.menuIconGraphic} />
-                        <Text style={[styles.menuText, { color: colors.textPrimary }]}>Settings</Text>
-                        <Text style={styles.menuArrow}>→</Text>
-                    </TouchableOpacity>
+                    <ProfileAccountMenu colors={colors} membershipTier={profile?.membership_tier} />
                 </GlassCard>
 
                 {/* Sign Out Button */}
@@ -339,50 +263,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         marginBottom: 16,
-    },
-    menuItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-    },
-    menuIcon: {
-        fontSize: 24,
-        marginRight: 16,
-    },
-    menuIconGraphic: {
-        marginRight: 16,
-    },
-    menuText: {
-        flex: 1,
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    menuArrow: {
-        fontSize: 20,
-        color: '#84cc16',
-        fontWeight: 'bold',
-    },
-    signOutButton: {
-        marginTop: 24,
-        marginBottom: 24,
-    },
-    signOutGradient: {
-        height: 56,
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#E85D5D',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.3,
-        shadowRadius: 12,
-        elevation: 6,
-    },
-    signOutText: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#FFFFFF',
-        letterSpacing: 0.5,
     },
     appInfo: {
         alignItems: 'center',

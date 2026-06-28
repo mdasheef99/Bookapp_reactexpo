@@ -14,6 +14,8 @@ I'm continuing development on BookTalks Mobile, a React Native book sharing app.
 Please analyze the project status by:
 
 1. Reading these files in order:
+   - CODEBASE_INTELLIGENCE/README.md
+   - relevant files under CODEBASE_INTELLIGENCE/ for the area being worked on
    - docs/README.md
    - docs/strategic-planning/STRATEGIC_PLAN_TECHNICAL.md
    - docs/architecture/architecture_react_expo.md
@@ -141,6 +143,7 @@ Ask the AI to help with:
 
 ## 💾 Files to Keep Updated
 
+- `CODEBASE_INTELLIGENCE/` - Update when routes, feature ownership, Supabase contracts, tests, or marketplace status change
 - `docs/README.md` - Update with new folder structure
 - `docs/strategic-planning/STRATEGIC_PLAN_TECHNICAL.md` - Mark tasks as complete
 - `docs/architecture/architecture_react_expo.md` - Update status markers

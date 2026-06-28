@@ -178,6 +178,19 @@ describe('ProfileScreen', () => {
         queryClient.clear();
     });
 
+    it('opens the Store Owner gate from the account menu', async () => {
+        const { getByText, queryClient, unmount } = renderWithQueryClient();
+
+        await waitFor(() => expect(getByText('Priya Sharma')).toBeOnTheScreen());
+
+        fireEvent.press(getByText('Store Owner Console'));
+
+        expect(mockPush).toHaveBeenCalledWith('/(store-owner)');
+
+        unmount();
+        queryClient.clear();
+    });
+
     it('opens the profile addresses route from the account menu', async () => {
         const { getByText, queryClient, unmount } = renderWithQueryClient();
 

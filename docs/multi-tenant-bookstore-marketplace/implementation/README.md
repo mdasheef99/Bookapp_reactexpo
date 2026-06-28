@@ -14,13 +14,14 @@ If you are a new agent, do this before changing files:
 4. Read [`../DOC-12-build-strategy-and-implementation-sequence.md`](../DOC-12-build-strategy-and-implementation-sequence.md) for phase order, risk gates, and coding-agent rules.
 5. Read the source docs referenced by the active phase tracker.
 
-Current handoff as of 2026-05-22:
+Current handoff as of 2026-06-24:
 
-- [`PHASE-0-codebase-db-audit.md`](./PHASE-0-codebase-db-audit.md) is marked `needs_review`.
-- [`PHASE-1-foundation-schema-security-plan.md`](./PHASE-1-foundation-schema-security-plan.md) is drafted and marked `needs_review`.
-- No marketplace migrations or app code have started.
-- The next expected work is review of the Phase 1 plan, not immediate coding.
-- Do not create marketplace migrations until the Phase 1 plan is reviewed.
+- Phase 1 foundation schema/security migrations are applied to the live Supabase project and refreshed through Supabase MCP.
+- Phase 2 Store Onboarding and Verification is the active planning target.
+- Store Owner routes, onboarding screens, and platform review UI have not been implemented yet.
+- The live private seller document bucket is `seller-verification-docs`.
+- The next expected work is review of a Phase 2 implementation plan before feature coding.
+- Do not build inventory, orders, payments, delivery, or image-to-LLM workflows until their later phase trackers are active.
 
 ## Before Coding
 

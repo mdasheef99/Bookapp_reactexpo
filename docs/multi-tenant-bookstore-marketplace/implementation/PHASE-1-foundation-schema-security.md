@@ -1,7 +1,7 @@
 # PHASE-1: Foundation Schema and Security
 
 **Status:** `needs_review`
-**Last updated:** 2026-05-22
+**Last updated:** 2026-06-24
 **Phase goal:** Create the separate bookstore marketplace foundation with strict tenant security.
 
 ---
@@ -32,51 +32,51 @@
 
 | Unit | Status | Notes |
 |---|---|---|
-| Marketplace migration plan | `needs_review` | [Phase 1 plan](./PHASE-1-foundation-schema-security-plan.md) created; review before migration. |
-| `stores` and `store_administrators` | `not_started` | Separate from existing P2P domain. |
-| Store status/verification fields | `not_started` | Align with DOC-1 and DOC-2. |
-| Policy configuration foundation | `not_started` | SLA/payment/delivery/commission/limit values. |
-| Audit/event foundation | `not_started` | Append-only event/audit shape. |
-| Platform role/admin primitive | `not_started` | Separate platform roles from Store Owner roles. |
-| Support/refund/reconciliation queue primitive | `not_started` | Minimal operational queue foundation only. |
-| Storage buckets/policies | `not_started` | Seller docs private; public assets no broad listing. |
-| RLS policies | `not_started` | Store scoped, consumer public projections only. |
-| RLS/security tests | `not_started` | Cross-store access denial is required. |
+| Marketplace migration plan | `complete` | [Phase 1 plan](./PHASE-1-foundation-schema-security-plan.md) was converted into split live migrations. |
+| `stores` and `store_administrators` | `complete` | Separate from existing P2P domain and present in live Supabase. |
+| Store status/verification fields | `complete` | Live constraints include `draft`, `pending_verification`, `approved_pending_setup`, `active`, `selling_restricted`, `suspended`, `closed`, and `rejected`. |
+| Policy configuration foundation | `complete` | `marketplace_policy_config` and `marketplace_localities` are present. |
+| Audit/event foundation | `complete` | `marketplace_events`, `marketplace_notifications`, `marketplace_audit_logs`, and `commerce_idempotency_keys` are present. |
+| Platform role/admin primitive | `complete` | `platform_user_roles` and `platform_admin_actions` are present. |
+| Support/refund/reconciliation queue primitive | `complete` | Support, refund, finance reconciliation, settlement, moderation, and delivery ops queue primitives are present. |
+| Storage buckets/policies | `complete` | `seller-verification-docs` is private; marketplace storage policies use first-folder store isolation. |
+| RLS policies | `complete` | Phase 1 marketplace foundation tables have RLS enabled. |
+| RLS/security tests | `needs_review` | Post-deployment audit and Supabase MCP refresh confirmed foundation state; Phase 2 privileged functions still need cross-tenant denial tests. |
 
 ---
 
 ## Verification Log
 
 - 2026-05-22: Created reviewable [Phase 1 foundation schema/security implementation plan](./PHASE-1-foundation-schema-security-plan.md).
-- No migrations, schema changes, RLS policies, storage buckets, or app code have been created yet.
+- 2026-06-19: Phase 1 foundation migrations applied to live Supabase project and post-deployment audit recorded in DOC-13.
+- 2026-06-24: Supabase MCP refresh confirmed Phase 1 migrations, RLS-enabled marketplace foundation tables, `seller-verification-docs` bucket, storage path isolation, and store/onboarding status constraints.
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] Marketplace foundation tables are separate from P2P tables.
-- [ ] Store tenant boundary is enforced by RLS.
-- [ ] Consumers cannot read private store data.
-- [ ] Store applicant cannot sell before approval.
-- [ ] Platform roles and admin primitives are separate from Store Owner roles.
-- [ ] Append-only event/audit foundation exists for later commerce transitions.
-- [ ] Storage policies avoid broad listing and cross-store leaks.
-- [ ] Security/RLS tests are documented and passing.
-- [ ] `DOC-13` is updated.
+- [x] Marketplace foundation tables are separate from P2P tables.
+- [x] Store tenant boundary is enforced by RLS.
+- [x] Consumers cannot read private store data through marketplace foundation projections.
+- [x] Store applicant cannot sell before approval because public projection requires `active`, `approved`, complete setup, and allowed selling status.
+- [x] Platform roles and admin primitives are separate from Store Owner roles.
+- [x] Append-only event/audit foundation exists for later commerce transitions.
+- [x] Storage policies avoid broad marketplace bucket listing and cross-store leaks.
+- [x] Security/RLS checks are documented in DOC-13 and refreshed through Supabase MCP.
+- [x] `DOC-13` is updated.
 
 ---
 
 ## Blockers
 
-- Phase 0 findings and Phase 1 plan must be reviewed before migrations.
 - Existing Supabase advisor issues must be remediated separately or explicitly isolated before marketplace production launch.
 
 ---
 
 ## Decisions Made During Implementation
 
-- Phase 1 will start with a reviewed migration/security plan before any database changes.
-- Phase 1 remains foundation-only: no Store Owner UI, consumer marketplace UI, inventory screens, payment, or delivery integration.
+- Phase 1 remained foundation-only: no Store Owner UI, consumer marketplace UI, inventory screens, payment, or delivery integration.
+- The private seller document bucket is `seller-verification-docs`.
 
 ---
 
@@ -88,4 +88,4 @@
 
 ## Handoff Notes
 
-Review the [Phase 1 plan](./PHASE-1-foundation-schema-security-plan.md). If accepted, convert it into migrations and RLS/security tests in small steps. Do not build Store Owner UI until foundation schema/RLS is implemented and reviewed.
+Phase 1 foundation is applied and audited. Phase 2 may proceed after a reviewed implementation plan. Do not build inventory, payments, delivery, or image-to-LLM workflows from this tracker.
