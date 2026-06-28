@@ -68,3 +68,92 @@ export interface StoreSetupChecklist {
     subscriptionStatus: 'trialing' | 'active' | 'past_due' | 'grace_period' | 'restricted' | 'cancelled' | 'not_started' | string;
     checklist: StoreSetupChecklistItem[];
 }
+
+export type MarketplaceBookCondition = 'new' | 'like_new' | 'good' | 'fair' | 'damaged';
+export type InventoryVisibilityStatus = 'draft' | 'needs_review' | 'published' | 'paused' | 'out_of_stock' | 'blocked';
+export type ListingQualityStatus = 'ready' | 'missing_price' | 'missing_condition' | 'missing_metadata' | 'low_confidence_match' | 'needs_photo' | 'blocked';
+
+export interface ManualInventoryInput {
+    storeId: string;
+    title: string;
+    authors?: string[];
+    isbn10?: string | null;
+    isbn13?: string | null;
+    publisher?: string | null;
+    publishedDate?: string | null;
+    coverUrl?: string | null;
+    condition: MarketplaceBookCondition;
+    conditionNotes?: string | null;
+    quantityAvailable: number;
+    sellingPriceMinor: number;
+    publicNotes?: string | null;
+    shelfLocation?: string | null;
+    acquisitionCostMinor?: number | null;
+    internalNotes?: string | null;
+    visibilityStatus?: InventoryVisibilityStatus;
+}
+
+export interface StoreInventoryItem {
+    id: string;
+    store_id: string;
+    title: string;
+    authors: string[] | null;
+    isbn_10: string | null;
+    isbn_13: string | null;
+    condition: MarketplaceBookCondition;
+    quantity_available: number;
+    selling_price_minor: number;
+    visibility_status: InventoryVisibilityStatus;
+    listing_quality_status: ListingQualityStatus;
+    created_at?: string | null;
+    updated_at?: string | null;
+}
+
+export interface InventoryItemMutationInput {
+    storeId: string;
+    inventoryId: string;
+}
+
+export type InventoryItemUpdateInput = InventoryItemMutationInput & {
+    sellingPriceMinor?: number;
+    quantityAvailable?: number;
+    condition?: MarketplaceBookCondition;
+    publicNotes?: string | null;
+};
+
+export interface DuplicateInventorySearchInput {
+    storeId: string;
+    isbn13?: string | null;
+    provider?: string | null;
+    providerBookId?: string | null;
+    title?: string | null;
+    authors?: string[];
+}
+
+export interface PublicMarketplaceListing {
+    id: string;
+    store_id: string;
+    canonical_edition_id: string | null;
+    public_title: string;
+    public_authors: string[] | null;
+    public_cover_url: string | null;
+    isbn_10: string | null;
+    isbn_13: string | null;
+    condition: MarketplaceBookCondition;
+    public_condition_notes: string | null;
+    selling_price_minor: number;
+    availability_status: 'available' | 'low_stock' | 'confirmation_required' | 'unavailable';
+    status: 'active' | 'paused' | 'out_of_stock' | 'blocked';
+    moderation_status: 'approved' | 'pending' | 'blocked' | 'prohibited';
+}
+
+export interface PublicMarketplaceBookResult {
+    groupingKey: string;
+    title: string;
+    authors: string[] | null;
+    isbn13: string | null;
+    coverUrl: string | null;
+    offerCount: number;
+    lowestPriceMinor: number;
+    offers: PublicMarketplaceListing[];
+}

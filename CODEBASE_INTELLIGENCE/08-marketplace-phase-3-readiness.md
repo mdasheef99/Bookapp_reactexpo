@@ -10,7 +10,7 @@ As of 2026-06-28:
 - Phase 2C platform review/setup entitlements is implemented and deployed.
 - `store-review` has only unauthenticated live smoke (`401`) so far; authenticated platform-review smoke is intentionally pending/skipped unless a platform-role test user is explicitly approved.
 
-Phase 3 is now in progress locally because the pending Phase 2C smoke gate was accepted as pending for this slice.
+Phase 3 manual inventory/projection slice is implemented and live-applied because the pending Phase 2C smoke gate was accepted as pending for this slice.
 
 ## Read First
 
@@ -105,7 +105,7 @@ Supabase patterns:
 
 ## 2026-06-28 Local Phase 3 Start
 
-Added locally:
+Added and verified:
 
 - `supabase/migrations/20260628000003_marketplace_phase3_inventory_canonical_listings.sql`
 - `supabase/migrations/__tests__/marketplacePhase3InventoryCanonicalListings.test.ts`
@@ -126,17 +126,19 @@ Current behavior:
 - active owners route to `/(store-owner)/inventory`
 - the first UI saves manual inventory as draft, supports condition selection, shows condition/price/quantity, and can publish/pause ready rows
 - `storeInventoryService` validates publishable rows, supports owner-scoped publish, pause, limited edit, duplicate lookup, wildcard-escaped public listing search, and grouped public book results by canonical edition/ISBN with cover URL
+- live Supabase MCP project `ahntbtktjjmvfosgkmgn` has migration `20260628181842 marketplace_phase3_inventory_canonical_listings` applied
+- remote checks confirmed RLS enabled on all six Phase 3 tables, owner/private inventory policies, public listing store-status read gate, and enabled listing sync trigger
 
 Still pending:
 
-- live Supabase migration application and runtime RLS verification
-- richer owner edit UI
+- authenticated store-owner smoke against an explicitly approved active/approved/setup-complete/selling-allowed store owner
+- richer owner edit UI beyond the minimal price/quantity edit controls
 - consumer marketplace discovery UI beyond projection service tests
 
 ## Phase 3 First Slice Recommendation
 
 Start with schema and server boundary, not UI polish:
 
-1. Apply and verify the Phase 3 migration in Supabase when deployment is approved.
+1. Run authenticated Phase 3 store-owner smoke with an approved owner/store fixture.
 2. Add richer owner edit UI and consumer discovery UI on top of the projection service.
 3. Keep Phase 2C authenticated reviewer smoke pending unless a platform-role test user is explicitly approved.

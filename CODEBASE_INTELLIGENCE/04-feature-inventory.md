@@ -218,6 +218,7 @@ Owns:
 - Manual inventory draft entry for active owners.
 - Public listing projection reads through `marketplace_book_listings`, including grouped book results by canonical edition/ISBN.
 - Minimal owner-scoped publish/pause/edit service methods for store inventory, with publish validation and basic screen controls.
+- Phase 3 inventory/canonical/listing migration is live-applied on Supabase MCP project `ahntbtktjjmvfosgkmgn` as `20260628181842 marketplace_phase3_inventory_canonical_listings`.
 
 Marketplace boundary:
 
