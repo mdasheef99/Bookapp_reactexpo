@@ -21,15 +21,36 @@ jest.mock('@/hooks/useTheme', () => ({
         colors: {
             accent: '#84cc16',
             bgCard: '#ffffff',
+            bgSecondary: '#f1f5f9',
             border: '#e5e7eb',
             error: '#b91c1c',
             textPrimary: '#111827',
             textSecondary: '#4b5563',
+            textTertiary: '#94a3b8',
         },
     }),
 }));
 jest.mock('@/components/ui/ScreenBackground', () => ({ ScreenBackground: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 jest.mock('@/components/ui/GlassCard', () => ({ GlassCard: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+
+const MOCK_INVENTORY_ITEM = {
+    id: 'inventory-1',
+    store_id: 'store-1',
+    title: 'The Bookshop',
+    isbn_13: '9780006543541',
+    isbn_10: null,
+    authors: null,
+    condition: 'good',
+    quantity_available: 2,
+    selling_price_minor: 35000,
+    visibility_status: 'draft',
+    listing_quality_status: 'ready',
+    public_notes: 'Clean copy',
+    shelf_location: 'A3',
+    entry_method: 'manual',
+    created_at: '2026-06-28T00:00:00Z',
+    updated_at: '2026-06-28T00:00:00Z',
+};
 
 describe('StoreInventoryScreen', () => {
     beforeEach(() => {
@@ -105,21 +126,7 @@ describe('StoreInventoryScreen', () => {
     });
 
     it('publishes a ready draft inventory row from the verified store context', async () => {
-        (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([
-            {
-                id: 'inventory-1',
-                store_id: 'store-1',
-                title: 'The Bookshop',
-                isbn_13: '9780006543541',
-                condition: 'good',
-                quantity_available: 2,
-                selling_price_minor: 35000,
-                visibility_status: 'draft',
-                listing_quality_status: 'ready',
-                created_at: '2026-06-28T00:00:00Z',
-                updated_at: '2026-06-28T00:00:00Z',
-            },
-        ]);
+        (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([MOCK_INVENTORY_ITEM]);
 
         const screen = render(<StoreInventoryScreen />);
 
@@ -135,17 +142,7 @@ describe('StoreInventoryScreen', () => {
 
     it('shows a recoverable message when publishing fails', async () => {
         (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([
-            {
-                id: 'inventory-1',
-                store_id: 'store-1',
-                title: 'The Bookshop',
-                isbn_13: '9780006543541',
-                condition: 'good',
-                quantity_available: 0,
-                selling_price_minor: 35000,
-                visibility_status: 'draft',
-                listing_quality_status: 'ready',
-            },
+            { ...MOCK_INVENTORY_ITEM, quantity_available: 0 },
         ]);
         (storeInventoryService.publishInventoryItem as jest.Mock).mockRejectedValue(new Error('Quantity required'));
 
@@ -159,16 +156,7 @@ describe('StoreInventoryScreen', () => {
 
     it('pauses a published inventory row from the list', async () => {
         (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([
-            {
-                id: 'inventory-1',
-                store_id: 'store-1',
-                title: 'The Bookshop',
-                condition: 'good',
-                quantity_available: 2,
-                selling_price_minor: 35000,
-                visibility_status: 'published',
-                listing_quality_status: 'ready',
-            },
+            { ...MOCK_INVENTORY_ITEM, visibility_status: 'published' },
         ]);
         (storeInventoryService.pauseInventoryItem as jest.Mock).mockResolvedValue(undefined);
 
@@ -184,18 +172,7 @@ describe('StoreInventoryScreen', () => {
     });
 
     it('saves minimal price and quantity edits from the list', async () => {
-        (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([
-            {
-                id: 'inventory-1',
-                store_id: 'store-1',
-                title: 'The Bookshop',
-                condition: 'good',
-                quantity_available: 2,
-                selling_price_minor: 35000,
-                visibility_status: 'draft',
-                listing_quality_status: 'ready',
-            },
-        ]);
+        (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([MOCK_INVENTORY_ITEM]);
         (storeInventoryService.updateInventoryItem as jest.Mock).mockResolvedValue(undefined);
 
         const screen = render(<StoreInventoryScreen />);
@@ -211,5 +188,136 @@ describe('StoreInventoryScreen', () => {
             sellingPriceMinor: 42500,
             quantityAvailable: 3,
         }));
+    });
+
+    it('shows low stock badge for quantity of 1', async () => {
+        (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([
+            { ...MOCK_INVENTORY_ITEM, quantity_available: 1 },
+        ]);
+
+        const screen = render(<StoreInventoryScreen />);
+
+        await waitFor(() => expect(screen.getAllByText('Low stock').length).toBeGreaterThanOrEqual(2));
+    });
+
+    it('shows out of stock badge for quantity of 0', async () => {
+        (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([
+            { ...MOCK_INVENTORY_ITEM, quantity_available: 0 },
+        ]);
+
+        const screen = render(<StoreInventoryScreen />);
+
+        await waitFor(() => expect(screen.getByText('Out of stock')).toBeTruthy());
+    });
+
+    it('filters inventory by search query', async () => {
+        (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([
+            MOCK_INVENTORY_ITEM,
+            { ...MOCK_INVENTORY_ITEM, id: 'inventory-2', title: 'Another Book' },
+        ]);
+
+        const screen = render(<StoreInventoryScreen />);
+
+        await waitFor(() => expect(screen.getByText('The Bookshop')).toBeTruthy());
+        expect(screen.getByText('Another Book')).toBeTruthy();
+
+        fireEvent.changeText(screen.getByTestId('inventory-search'), 'Bookshop');
+
+        await waitFor(() => expect(screen.queryByText('Another Book')).toBeNull());
+        expect(screen.getByText('The Bookshop')).toBeTruthy();
+    });
+
+    it('opens edit modal when edit button is pressed', async () => {
+        (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([MOCK_INVENTORY_ITEM]);
+
+        const screen = render(<StoreInventoryScreen />);
+
+        await waitFor(() => expect(screen.getByText('The Bookshop')).toBeTruthy());
+        fireEvent.press(screen.getByTestId('edit-modal-inventory-1'));
+
+        await waitFor(() => expect(screen.getByText('Edit Inventory')).toBeTruthy());
+    });
+
+    it('opens edit modal with current condition notes and shelf location', async () => {
+        (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([
+            { ...MOCK_INVENTORY_ITEM, condition: 'like_new', public_notes: 'Signed copy', shelf_location: 'B2' },
+        ]);
+
+        const screen = render(<StoreInventoryScreen />);
+
+        await waitFor(() => expect(screen.getByText('The Bookshop')).toBeTruthy());
+        fireEvent.press(screen.getByTestId('edit-modal-inventory-1'));
+
+        await waitFor(() => expect(screen.getByDisplayValue('Signed copy')).toBeTruthy());
+        expect(screen.getByDisplayValue('B2')).toBeTruthy();
+        fireEvent.press(screen.getByTestId('edit-modal-save'));
+
+        await waitFor(() => expect(storeInventoryService.updateInventoryItem).toHaveBeenCalledWith({
+            storeId: 'store-1',
+            inventoryId: 'inventory-1',
+            condition: 'like_new',
+            publicNotes: 'Signed copy',
+            shelfLocation: 'B2',
+        }));
+    });
+
+    it('filters inventory by condition status quantity and source', async () => {
+        (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([
+            { ...MOCK_INVENTORY_ITEM, id: 'inventory-1', title: 'Manual Published', condition: 'good', visibility_status: 'published', quantity_available: 1, entry_method: 'manual' },
+            { ...MOCK_INVENTORY_ITEM, id: 'inventory-2', title: 'Image Draft', condition: 'fair', visibility_status: 'draft', quantity_available: 4, entry_method: 'image_extraction' },
+        ]);
+
+        const screen = render(<StoreInventoryScreen />);
+
+        await waitFor(() => expect(screen.getByText('Manual Published')).toBeTruthy());
+        expect(screen.getByText('Image Draft')).toBeTruthy();
+
+        fireEvent.press(screen.getByTestId('filter-condition-fair'));
+        await waitFor(() => expect(screen.queryByText('Manual Published')).toBeNull());
+        expect(screen.getByText('Image Draft')).toBeTruthy();
+
+        fireEvent.press(screen.getByTestId('filter-status-published'));
+        await waitFor(() => expect(screen.queryByText('Image Draft')).toBeNull());
+
+        fireEvent.press(screen.getByTestId('filter-condition-all'));
+        await waitFor(() => expect(screen.getByText('Manual Published')).toBeTruthy());
+
+        fireEvent.press(screen.getByTestId('filter-quantity-low_stock'));
+        expect(screen.getByText('Manual Published')).toBeTruthy();
+
+        fireEvent.press(screen.getByTestId('filter-source-image_extraction'));
+        await waitFor(() => expect(screen.queryByText('Manual Published')).toBeNull());
+    });
+
+    it('bulk publishes and pauses selected rows', async () => {
+        (storeInventoryService.listStoreInventory as jest.Mock)
+            .mockResolvedValueOnce([MOCK_INVENTORY_ITEM])
+            .mockResolvedValueOnce([{ ...MOCK_INVENTORY_ITEM, visibility_status: 'published' }]);
+
+        const screen = render(<StoreInventoryScreen />);
+
+        await waitFor(() => expect(screen.getByText('The Bookshop')).toBeTruthy());
+        fireEvent.press(screen.getByTestId('select-inventory-1'));
+        fireEvent.press(screen.getByTestId('bulk-publish'));
+
+        await waitFor(() => expect(storeInventoryService.publishInventoryItem).toHaveBeenCalledWith({
+            storeId: 'store-1',
+            inventoryId: 'inventory-1',
+        }));
+
+        fireEvent.press(screen.getByTestId('select-inventory-1'));
+        fireEvent.press(screen.getByTestId('bulk-pause'));
+
+        await waitFor(() => expect(storeInventoryService.pauseInventoryItem).toHaveBeenCalledWith({
+            storeId: 'store-1',
+            inventoryId: 'inventory-1',
+        }));
+    });
+
+    it('shows image-to-LLM placeholder button', async () => {
+        const screen = render(<StoreInventoryScreen />);
+
+        await waitFor(() => expect(storeInventoryService.listStoreInventory).toHaveBeenCalledWith('store-1'));
+        expect(screen.getByText(/Image-to-LLM/i)).toBeTruthy();
     });
 });

@@ -89,4 +89,12 @@ describe('StoreOwnerGateScreen', () => {
 
         await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(store-owner)/setup'));
     });
+
+    it('routes active owner to dashboard', async () => {
+        mockGate({ state: 'active_owner', storeId: 'store-1', storeName: 'Reader Lane Books' });
+
+        render(<StoreOwnerGateScreen />);
+
+        await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(store-owner)/dashboard'));
+    });
 });

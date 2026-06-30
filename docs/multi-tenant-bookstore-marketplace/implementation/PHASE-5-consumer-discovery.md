@@ -1,7 +1,7 @@
 # PHASE-5: Consumer Discovery
 
 **Status:** `not_started`
-**Last updated:** 2026-05-22
+**Last updated:** 2026-06-30
 **Phase goal:** Add a consumer marketplace section for bookstore listings inside the current app.
 
 ---
@@ -48,6 +48,12 @@
 
 No verification run yet.
 
+Phase 5 planning readiness note, 2026-06-30:
+
+- Phase 4 Store Owner Console is locally complete and can supply active owner inventory/listing management.
+- Phase 3 public listing projection exists and trigger smoke passed, but anonymous public-read smoke remains blocked by the RLS helper execute-permission issue recorded in `DOC-13` and `CODEBASE_INTELLIGENCE/08-marketplace-phase-3-readiness.md`.
+- Consumer discovery must use public projections such as `marketplace_book_listings`, not raw `store_inventory` or P2P `listings`.
+
 ---
 
 ## Acceptance Criteria
@@ -66,6 +72,7 @@ No verification run yet.
 ## Blockers
 
 - Phase 3 public listing projection must exist.
+- Phase 3 anonymous public listing RLS remediation must be resolved before Phase 5 can be smoke-tested as a public/anonymous consumer surface.
 
 ---
 
@@ -84,3 +91,11 @@ No verification run yet.
 ## Handoff Notes
 
 Do not implement payment in this phase.
+
+Recommended implementation shape:
+
+1. Resolve Phase 3 anonymous public-read RLS and rerun public listing smoke.
+2. Build search/listing discovery against public projections only.
+3. Add grouped book results, store availability cards, and public store pages.
+4. Add disclosure copy and single-store cart replacement guardrail only if a cart skeleton is introduced.
+5. Keep order request submission, payment, fulfillment, delivery, and settlement out of Phase 5.

@@ -187,18 +187,31 @@ Routes:
 - `app/(store-owner)/onboarding.tsx`
 - `app/(store-owner)/status.tsx`
 - `app/(store-owner)/setup.tsx`
+- `app/(store-owner)/dashboard.tsx`
 - `app/(store-owner)/inventory.tsx`
+- `app/(store-owner)/storefront.tsx`
+- `app/(store-owner)/subscription.tsx`
 
 Services/hooks/screens:
 
+- `src/features/stores/services/storeDashboardService.ts`
 - `src/features/stores/services/storeOwnerService.ts`
 - `src/features/stores/services/storeInventoryService.ts`
+- `src/features/stores/services/storeProfileService.ts`
+- `src/features/stores/services/storeSubscriptionService.ts`
+- `src/features/stores/hooks/useStoreInventory.ts`
 - `src/features/stores/hooks/useStoreOwnerGate.ts`
+- `src/features/stores/screens/StoreDashboardScreen.tsx`
 - `src/features/stores/screens/StoreOwnerGateScreen.tsx`
 - `src/features/stores/screens/StoreOnboardingScreen.tsx`
 - `src/features/stores/screens/StoreReviewStatusScreen.tsx`
 - `src/features/stores/screens/StoreSetupChecklistScreen.tsx`
 - `src/features/stores/screens/StoreInventoryScreen.tsx`
+- `src/features/stores/screens/StoreProfileScreen.tsx`
+- `src/features/stores/screens/SubscriptionStatusScreen.tsx`
+- `src/features/stores/components/AddInventoryForm.tsx`
+- `src/features/stores/components/EditModal.tsx`
+- `src/features/stores/components/InventoryItem.tsx`
 - `src/features/stores/types.ts`
 
 Edge Functions:
@@ -217,7 +230,10 @@ Owns:
 - Basic founding-trial subscription/entitlement assignment on approval.
 - Manual inventory draft entry for active owners.
 - Public listing projection reads through `marketplace_book_listings`, including grouped book results by canonical edition/ISBN.
-- Minimal owner-scoped publish/pause/edit service methods for store inventory, with publish validation and basic screen controls.
+- Owner-scoped publish/pause/edit service methods for store inventory, with publish validation, manual draft entry, duplicate check, search/filter chips, edit modal, low/out-of-stock badges, and bulk publish/pause.
+- Store Owner dashboard aggregation for inventory health, entitlement/usage quotas, subscription status, operational placeholders, and compliance blockers.
+- Storefront/profile settings for public name/description, weekly operating hours, temporary closure, return policy, pickup, delivery, and minimum delivery order value.
+- Subscription/quota screen that shows the store's own subscription, entitlement limits, usage counters, feature locks, and null-plan fallback.
 - Phase 3 inventory/canonical/listing migration is live-applied on Supabase MCP project `ahntbtktjjmvfosgkmgn` as `20260628181842 marketplace_phase3_inventory_canonical_listings`.
 
 Marketplace boundary:
@@ -226,3 +242,4 @@ Marketplace boundary:
 - Do not trust route params, local storage, request body actor IDs, or `user_profiles.account_type`.
 - Approval does not make stores sellable; it keeps `setup_status = incomplete` and `selling_status = not_allowed`.
 - Inventory/listing code must stay separate from P2P `listings`; Phase 3 uses `store_inventory` and `marketplace_book_listings`.
+- Consumer discovery must use public projection/service boundaries, not raw `store_inventory`; private fields such as acquisition cost, internal notes, shelf location, and verification documents must stay out of Phase 5 UI/services.

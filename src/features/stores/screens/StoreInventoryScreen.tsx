@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
@@ -6,26 +5,63 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useStoreOwnerGate } from '../hooks/useStoreOwnerGate';
-import { storeInventoryService } from '../services/storeInventoryService';
-import type { MarketplaceBookCondition, StoreInventoryItem } from '../types';
-const DEFAULT_CONDITION: MarketplaceBookCondition = 'good';
-const CONDITION_OPTIONS: MarketplaceBookCondition[] = ['new', 'like_new', 'good', 'fair', 'damaged'];
+import { useStoreInventory } from '../hooks/useStoreInventory';
+import AddInventoryForm from '../components/AddInventoryForm';
+import InventoryItem from '../components/InventoryItem';
+import EditModal from '../components/EditModal';
 
-function toMinorUnits(value: string) {
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return 0;
-    return Math.round(parsed * 100);
-}
-
-function toQuantity(value: string) {
-    const parsed = Number.parseInt(value, 10);
-    if (!Number.isFinite(parsed)) return 0;
-    return parsed;
-}
-
-function rupeesFromMinor(value: number) {
-    return Math.round(value / 100);
-}
+const FILTER_GROUPS = [
+    {
+        label: 'Condition',
+        testPrefix: 'filter-condition',
+        options: [
+            ['all', 'All'],
+            ['new', 'New'],
+            ['like_new', 'Like new'],
+            ['good', 'Good'],
+            ['fair', 'Fair'],
+            ['damaged', 'Damaged'],
+        ],
+    },
+    {
+        label: 'Status',
+        testPrefix: 'filter-status',
+        options: [
+            ['all', 'All'],
+            ['draft', 'Draft'],
+            ['published', 'Published'],
+            ['paused', 'Paused'],
+        ],
+    },
+    {
+        label: 'Quantity',
+        testPrefix: 'filter-quantity',
+        options: [
+            ['all', 'All'],
+            ['available', 'Available'],
+            ['low_stock', 'Low stock'],
+            ['out_of_stock', 'Out'],
+        ],
+    },
+    {
+        label: 'Source',
+        testPrefix: 'filter-source',
+        options: [
+            ['all', 'All'],
+            ['manual', 'Manual'],
+            ['image_extraction', 'Image'],
+        ],
+    },
+    {
+        label: 'Date',
+        testPrefix: 'filter-date',
+        options: [
+            ['all', 'All'],
+            ['last_7_days', '7 days'],
+            ['last_30_days', '30 days'],
+        ],
+    },
+] as const;
 
 export default function StoreInventoryScreen() {
     const { user } = useAuth();
@@ -34,128 +70,8 @@ export default function StoreInventoryScreen() {
     const gateState = gateQuery.data;
     const isActiveOwner = gateState?.state === 'active_owner';
     const storeId = isActiveOwner ? gateState.storeId : null;
-    const [title, setTitle] = useState('');
-    const [author, setAuthor] = useState('');
-    const [isbn13, setIsbn13] = useState('');
-    const [price, setPrice] = useState('');
-    const [quantity, setQuantity] = useState('1');
-    const [condition, setCondition] = useState<MarketplaceBookCondition>(DEFAULT_CONDITION);
-    const [publicNotes, setPublicNotes] = useState('');
-    const [shelfLocation, setShelfLocation] = useState('');
-    const [inventoryItems, setInventoryItems] = useState<StoreInventoryItem[]>([]);
-    const [editValues, setEditValues] = useState<Record<string, { price: string; quantity: string }>>({});
-    const [duplicates, setDuplicates] = useState<StoreInventoryItem[]>([]);
-    const [message, setMessage] = useState<string | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
 
-    useEffect(() => {
-        if (!storeId) return;
-        storeInventoryService.listStoreInventory(storeId)
-            .then(setInventoryItems)
-            .catch(() => undefined);
-    }, [storeId]);
-
-    async function checkDuplicates() {
-        if (!storeId) return;
-        const matches = await storeInventoryService.findPotentialDuplicates({
-            storeId,
-            isbn13,
-            title,
-            authors: author ? [author] : [],
-        });
-        setDuplicates(matches);
-    }
-
-    async function saveDraft() {
-        if (!storeId) return;
-        setIsSaving(true);
-        setMessage(null);
-        try {
-            await storeInventoryService.createManualInventoryItem({
-                storeId,
-                title,
-                authors: author ? [author] : [],
-                isbn13: isbn13 || null,
-                condition,
-                quantityAvailable: toQuantity(quantity),
-                sellingPriceMinor: toMinorUnits(price),
-                publicNotes: publicNotes || null,
-                shelfLocation: shelfLocation || null,
-                visibilityStatus: 'draft',
-            });
-            setMessage('Inventory draft saved.');
-            storeInventoryService.listStoreInventory(storeId).then(setInventoryItems).catch(() => undefined);
-            setTitle('');
-            setAuthor('');
-            setIsbn13('');
-            setPrice('');
-            setQuantity('1');
-            setCondition(DEFAULT_CONDITION);
-            setPublicNotes('');
-            setShelfLocation('');
-            setDuplicates([]);
-        } catch {
-            setMessage('Could not save inventory draft.');
-        } finally {
-            setIsSaving(false);
-        }
-    }
-
-    async function publishItem(inventoryId: string) {
-        if (!storeId) return;
-        setMessage(null);
-        try {
-            await storeInventoryService.publishInventoryItem({ storeId, inventoryId });
-            setMessage('Inventory published.');
-            storeInventoryService.listStoreInventory(storeId).then(setInventoryItems).catch(() => undefined);
-        } catch {
-            setMessage('Could not publish inventory item.');
-        }
-    }
-
-    async function pauseItem(inventoryId: string) {
-        if (!storeId) return;
-        setMessage(null);
-        try {
-            await storeInventoryService.pauseInventoryItem({ storeId, inventoryId });
-            setMessage('Inventory paused.');
-            storeInventoryService.listStoreInventory(storeId).then(setInventoryItems).catch(() => undefined);
-        } catch {
-            setMessage('Could not pause inventory item.');
-        }
-    }
-
-    async function saveItemEdits(item: StoreInventoryItem) {
-        if (!storeId) return;
-        const edits = editValues[item.id] ?? {
-            price: String(rupeesFromMinor(item.selling_price_minor)),
-            quantity: String(item.quantity_available),
-        };
-        setMessage(null);
-        try {
-            await storeInventoryService.updateInventoryItem({
-                storeId,
-                inventoryId: item.id,
-                sellingPriceMinor: toMinorUnits(edits.price),
-                quantityAvailable: toQuantity(edits.quantity),
-            });
-            setMessage('Inventory updated.');
-            storeInventoryService.listStoreInventory(storeId).then(setInventoryItems).catch(() => undefined);
-        } catch {
-            setMessage('Could not update inventory item.');
-        }
-    }
-
-    function updateEditValue(item: StoreInventoryItem, key: 'price' | 'quantity', value: string) {
-        setEditValues((current) => ({
-            ...current,
-            [item.id]: {
-                price: current[item.id]?.price ?? String(rupeesFromMinor(item.selling_price_minor)),
-                quantity: current[item.id]?.quantity ?? String(item.quantity_available),
-                [key]: value,
-            },
-        }));
-    }
+    const inventory = useStoreInventory(storeId);
 
     if (gateQuery.isLoading) {
         return (
@@ -188,131 +104,188 @@ export default function StoreInventoryScreen() {
                 <Text style={[styles.eyebrow, { color: colors.textSecondary }]}>Store inventory</Text>
                 <Text style={[styles.title, { color: colors.textPrimary }]}>{gateState.storeName}</Text>
 
-                <GlassCard padding={18} borderRadius={16}>
-                    <View style={styles.sectionHeader}>
-                        <Ionicons name="book-outline" size={22} color={colors.accent} />
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Manual book entry</Text>
-                    </View>
-                    <TextInput style={[styles.input, { borderColor: colors.border, color: colors.textPrimary }]} placeholder="Title" value={title} onChangeText={setTitle} />
-                    <TextInput style={[styles.input, { borderColor: colors.border, color: colors.textPrimary }]} placeholder="Author" value={author} onChangeText={setAuthor} />
-                    <TextInput style={[styles.input, { borderColor: colors.border, color: colors.textPrimary }]} placeholder="ISBN-13" value={isbn13} onChangeText={setIsbn13} keyboardType="number-pad" />
-                    <View style={styles.conditionRow}>
-                        {CONDITION_OPTIONS.map((option) => (
-                            <TouchableOpacity
-                                key={option}
-                                testID={`condition-${option}`}
-                                style={[
-                                    styles.conditionChip,
-                                    {
-                                        borderColor: condition === option ? colors.accent : colors.border,
-                                        backgroundColor: condition === option ? colors.accent : '#FFFFFF',
-                                    },
-                                ]}
-                                onPress={() => setCondition(option)}
-                            >
-                                <Text style={[
-                                    styles.conditionText,
-                                    { color: condition === option ? '#FFFFFF' : colors.textPrimary },
-                                ]}>
-                                    {option.replace('_', ' ')}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                    <View style={styles.row}>
-                        <TextInput style={[styles.input, styles.rowInput, { borderColor: colors.border, color: colors.textPrimary }]} placeholder="Price in rupees" value={price} onChangeText={setPrice} keyboardType="decimal-pad" />
-                        <TextInput style={[styles.input, styles.rowInput, { borderColor: colors.border, color: colors.textPrimary }]} placeholder="Quantity" value={quantity} onChangeText={setQuantity} keyboardType="number-pad" />
-                    </View>
-                    <TextInput style={[styles.input, { borderColor: colors.border, color: colors.textPrimary }]} placeholder="Public notes" value={publicNotes} onChangeText={setPublicNotes} />
-                    <TextInput style={[styles.input, { borderColor: colors.border, color: colors.textPrimary }]} placeholder="Shelf location" value={shelfLocation} onChangeText={setShelfLocation} />
+                <AddInventoryForm
+                    onSaveDraft={inventory.saveDraft}
+                    onCheckDuplicates={inventory.checkDuplicates}
+                    duplicates={inventory.duplicates}
+                    isSaving={inventory.isSaving}
+                    message={inventory.message}
+                    onImageToLLM={() => {
+                        // Image-to-LLM placeholder - disabled per spec
+                    }}
+                />
 
-                    <TouchableOpacity
-                        testID="check-duplicates"
-                        style={[styles.secondaryAction, { borderColor: colors.border }]}
-                        onPress={checkDuplicates}
-                    >
-                        <Text style={[styles.secondaryText, { color: colors.textPrimary }]}>Check duplicates</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        testID="save-inventory-draft"
-                        style={[styles.primaryAction, { backgroundColor: colors.accent }]}
-                        onPress={saveDraft}
-                        disabled={isSaving}
-                    >
-                        <Text style={styles.primaryText}>{isSaving ? 'Saving...' : 'Save draft'}</Text>
-                    </TouchableOpacity>
-                    {message ? <Text style={[styles.body, { color: colors.textSecondary }]}>{message}</Text> : null}
-                </GlassCard>
-
-                {duplicates.length > 0 ? (
-                    <View style={styles.duplicates}>
-                        {duplicates.map((item) => (
-                            <Text key={item.id} style={[styles.duplicateText, { color: colors.textPrimary }]}>
-                                Potential duplicate: {item.title}
-                            </Text>
-                        ))}
-                    </View>
-                ) : null}
-
-                {inventoryItems.length > 0 ? (
+                {inventory.items.length > 0 ? (
                     <View style={styles.inventoryList}>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Inventory drafts</Text>
-                        {inventoryItems.map((item) => (
-                            <View key={item.id} style={[styles.inventoryRow, { borderColor: colors.border }]}>
-                                <View style={styles.inventoryText}>
-                                    <Text style={[styles.duplicateText, { color: colors.textPrimary }]}>{item.title}</Text>
-                                    <Text style={[styles.body, { color: colors.textSecondary }]}>
-                                        {item.visibility_status} - {item.listing_quality_status}
+                        <View style={styles.listHeader}>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                                Inventory ({inventory.filteredItems.length})
+                            </Text>
+                            {inventory.selectedIds.size > 0 ? (
+                                <TouchableOpacity
+                                    testID="clear-selection"
+                                    onPress={inventory.clearSelection}
+                                >
+                                    <Text style={[styles.linkText, { color: colors.accent }]}>
+                                        Clear ({inventory.selectedIds.size})
                                     </Text>
-                                    <Text style={[styles.body, { color: colors.textSecondary }]}>
-                                        {item.condition} - Rs {rupeesFromMinor(item.selling_price_minor)} - Qty {item.quantity_available}
+                                </TouchableOpacity>
+                            ) : (
+                                <TouchableOpacity
+                                    testID="select-all"
+                                    onPress={inventory.selectAll}
+                                >
+                                    <Text style={[styles.linkText, { color: colors.accent }]}>Select all</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+
+                        <TextInput
+                            testID="inventory-search"
+                            style={[styles.searchInput, { borderColor: colors.border, color: colors.textPrimary }]}
+                            placeholder="Search title, author, ISBN..."
+                            value={inventory.searchQuery}
+                            onChangeText={inventory.setSearchQuery}
+                        />
+                        <View style={styles.filterPanel}>
+                            <FilterGroup
+                                label={FILTER_GROUPS[0].label}
+                                testPrefix={FILTER_GROUPS[0].testPrefix}
+                                options={FILTER_GROUPS[0].options}
+                                value={inventory.conditionFilter}
+                                onChange={inventory.setConditionFilter}
+                                colors={colors}
+                            />
+                            <FilterGroup
+                                label={FILTER_GROUPS[1].label}
+                                testPrefix={FILTER_GROUPS[1].testPrefix}
+                                options={FILTER_GROUPS[1].options}
+                                value={inventory.statusFilter}
+                                onChange={inventory.setStatusFilter}
+                                colors={colors}
+                            />
+                            <FilterGroup
+                                label={FILTER_GROUPS[2].label}
+                                testPrefix={FILTER_GROUPS[2].testPrefix}
+                                options={FILTER_GROUPS[2].options}
+                                value={inventory.quantityFilter}
+                                onChange={inventory.setQuantityFilter}
+                                colors={colors}
+                            />
+                            <FilterGroup
+                                label={FILTER_GROUPS[3].label}
+                                testPrefix={FILTER_GROUPS[3].testPrefix}
+                                options={FILTER_GROUPS[3].options}
+                                value={inventory.sourceFilter}
+                                onChange={inventory.setSourceFilter}
+                                colors={colors}
+                            />
+                            <FilterGroup
+                                label={FILTER_GROUPS[4].label}
+                                testPrefix={FILTER_GROUPS[4].testPrefix}
+                                options={FILTER_GROUPS[4].options}
+                                value={inventory.dateFilter}
+                                onChange={inventory.setDateFilter}
+                                colors={colors}
+                            />
+                        </View>
+
+                        {inventory.selectedIds.size > 0 ? (
+                            <View style={styles.bulkActions}>
+                                <TouchableOpacity
+                                    testID="bulk-publish"
+                                    style={[styles.bulkAction, { backgroundColor: colors.accent }]}
+                                    onPress={inventory.bulkPublish}
+                                >
+                                    <Text style={styles.bulkActionText}>Publish selected</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    testID="bulk-pause"
+                                    style={[styles.bulkActionSecondary, { borderColor: colors.border }]}
+                                    onPress={inventory.bulkPause}
+                                >
+                                    <Text style={[styles.bulkActionText, { color: colors.textPrimary }]}>
+                                        Pause selected
                                     </Text>
-                                    <View style={styles.row}>
-                                        <TextInput
-                                            testID={`edit-price-${item.id}`}
-                                            style={[styles.input, styles.rowInput, { borderColor: colors.border, color: colors.textPrimary }]}
-                                            value={editValues[item.id]?.price ?? String(rupeesFromMinor(item.selling_price_minor))}
-                                            onChangeText={(value) => updateEditValue(item, 'price', value)}
-                                            keyboardType="decimal-pad"
-                                        />
-                                        <TextInput
-                                            testID={`edit-quantity-${item.id}`}
-                                            style={[styles.input, styles.rowInput, { borderColor: colors.border, color: colors.textPrimary }]}
-                                            value={editValues[item.id]?.quantity ?? String(item.quantity_available)}
-                                            onChangeText={(value) => updateEditValue(item, 'quantity', value)}
-                                            keyboardType="number-pad"
-                                        />
-                                    </View>
-                                </View>
-                                <View style={styles.rowActions}>
-                                    <TouchableOpacity
-                                        testID={`save-edit-${item.id}`}
-                                        style={[styles.inlineSecondaryAction, { borderColor: colors.border }]}
-                                        onPress={() => saveItemEdits(item)}
-                                    >
-                                        <Text style={[styles.inlineSecondaryText, { color: colors.textPrimary }]}>Save</Text>
-                                    </TouchableOpacity>
-                                    {item.visibility_status === 'published' ? (
-                                        <TouchableOpacity
-                                            testID={`pause-${item.id}`}
-                                            style={[styles.inlineSecondaryAction, { borderColor: colors.border }]}
-                                            onPress={() => pauseItem(item.id)}
-                                        >
-                                            <Text style={[styles.inlineSecondaryText, { color: colors.textPrimary }]}>Pause</Text>
-                                        </TouchableOpacity>
-                                    ) : null}
-                                    {item.visibility_status !== 'published' && item.listing_quality_status === 'ready' ? (
-                                        <TouchableOpacity testID={`publish-${item.id}`} style={[styles.inlineAction, { backgroundColor: colors.accent }]} onPress={() => publishItem(item.id)}>
-                                            <Text style={styles.inlineActionText}>Publish</Text>
-                                        </TouchableOpacity>
-                                    ) : null}
-                                </View>
+                                </TouchableOpacity>
                             </View>
+                        ) : null}
+
+                        {inventory.filteredItems.map((item) => (
+                            <InventoryItem
+                                key={item.id}
+                                item={item}
+                                selected={inventory.selectedIds.has(item.id)}
+                                onSelect={inventory.toggleSelection}
+                                onPublish={inventory.publishItem}
+                                onPause={inventory.pauseItem}
+                                onEdit={inventory.openEditModal}
+                                onSaveEdits={inventory.saveItemEdits}
+                                editPrice={inventory.editValues[item.id]?.price}
+                                editQuantity={inventory.editValues[item.id]?.quantity}
+                                onEditPriceChange={(i, v) => inventory.updateEditValue(i, 'price', v)}
+                                onEditQuantityChange={(i, v) => inventory.updateEditValue(i, 'quantity', v)}
+                            />
                         ))}
                     </View>
                 ) : null}
             </ScrollView>
+
+            <EditModal
+                visible={inventory.editingItem !== null}
+                item={inventory.editingItem}
+                onClose={inventory.closeEditModal}
+                onSave={inventory.saveModalEdits}
+            />
         </ScreenBackground>
+    );
+}
+
+function FilterGroup({
+    label,
+    testPrefix,
+    options,
+    value,
+    onChange,
+    colors,
+}: {
+    label: string;
+    testPrefix: string;
+    options: readonly (readonly [string, string])[];
+    value: string;
+    onChange: (value: string) => void;
+    colors: ReturnType<typeof useTheme>['colors'];
+}) {
+    return (
+        <View style={styles.filterGroup}>
+            <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>{label}</Text>
+            <View style={styles.filterOptions}>
+                {options.map(([optionValue, optionLabel]) => {
+                    const isActive = value === optionValue;
+                    return (
+                        <TouchableOpacity
+                            key={optionValue}
+                            testID={`${testPrefix}-${optionValue}`}
+                            style={[
+                                styles.filterChip,
+                                {
+                                    borderColor: isActive ? colors.accent : colors.border,
+                                    backgroundColor: isActive ? colors.accent : '#FFFFFF',
+                                },
+                            ]}
+                            onPress={() => onChange(optionValue)}
+                        >
+                            <Text style={[
+                                styles.filterChipText,
+                                { color: isActive ? '#FFFFFF' : colors.textPrimary },
+                            ]}>
+                                {optionLabel}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
+            </View>
+        </View>
     );
 }
 
@@ -321,27 +294,47 @@ const styles = StyleSheet.create({
     container: { padding: 24, paddingBottom: 40 },
     eyebrow: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', marginBottom: 6 },
     title: { fontSize: 26, fontWeight: '800', marginBottom: 16 },
-    sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
     sectionTitle: { fontSize: 18, fontWeight: '800' },
     body: { fontSize: 14, lineHeight: 20, marginTop: 10 },
-    row: { flexDirection: 'row', gap: 10 },
-    conditionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
-    conditionChip: { minHeight: 34, borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center' },
-    conditionText: { fontSize: 12, fontWeight: '700', textTransform: 'capitalize' },
-    rowInput: { flex: 1 },
-    input: { minHeight: 48, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, marginBottom: 10, backgroundColor: '#FFFFFF' },
-    primaryAction: { minHeight: 50, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
-    primaryText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
-    secondaryAction: { minHeight: 46, borderWidth: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
-    secondaryText: { fontSize: 15, fontWeight: '700' },
-    duplicates: { marginTop: 16, gap: 8 },
-    duplicateText: { fontSize: 14, fontWeight: '700' },
     inventoryList: { marginTop: 20, gap: 10 },
-    inventoryRow: { minHeight: 62, borderWidth: 1, borderRadius: 8, padding: 12, gap: 10 },
-    inventoryText: { flex: 1 },
-    rowActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-    inlineAction: { minHeight: 36, borderRadius: 8, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center' },
-    inlineActionText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
-    inlineSecondaryAction: { minHeight: 36, borderRadius: 8, borderWidth: 1, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center' },
-    inlineSecondaryText: { fontSize: 13, fontWeight: '800' },
+    listHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    linkText: { fontSize: 14, fontWeight: '600' },
+    searchInput: {
+        minHeight: 44,
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        marginBottom: 10,
+        backgroundColor: '#FFFFFF',
+    },
+    filterPanel: { gap: 10, marginBottom: 10 },
+    filterGroup: { gap: 6 },
+    filterLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase' },
+    filterOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    filterChip: {
+        minHeight: 34,
+        borderRadius: 8,
+        borderWidth: 1,
+        paddingHorizontal: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    filterChipText: { fontSize: 12, fontWeight: '700' },
+    bulkActions: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+    bulkAction: {
+        minHeight: 40,
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    bulkActionSecondary: {
+        minHeight: 40,
+        borderRadius: 8,
+        borderWidth: 1,
+        paddingHorizontal: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    bulkActionText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
 });

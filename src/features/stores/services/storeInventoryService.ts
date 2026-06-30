@@ -169,7 +169,7 @@ export const storeInventoryService = {
     async listStoreInventory(storeId: string): Promise<StoreInventoryItem[]> {
         const { data, error } = await supabase
             .from('store_inventory')
-            .select('id, store_id, title, authors, isbn_10, isbn_13, condition, quantity_available, selling_price_minor, visibility_status, listing_quality_status, created_at, updated_at')
+            .select('id, store_id, title, authors, isbn_10, isbn_13, condition, quantity_available, selling_price_minor, visibility_status, listing_quality_status, public_notes, shelf_location, entry_method, created_at, updated_at')
             .eq('store_id', storeId)
             .order('created_at', { ascending: false });
 
@@ -210,6 +210,7 @@ export const storeInventoryService = {
         }
         if (input.condition) updates.condition = input.condition;
         if (input.publicNotes !== undefined) updates.public_notes = cleanText(input.publicNotes);
+        if (input.shelfLocation !== undefined) updates.shelf_location = cleanText(input.shelfLocation);
 
         await updateInventoryByStore(input, updates);
     },

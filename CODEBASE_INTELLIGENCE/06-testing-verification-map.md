@@ -82,12 +82,28 @@ Phase 3 tests started:
 - `src/features/stores/screens/__tests__/StoreInventoryScreen.test.tsx`
 - `app/(store-owner)/__tests__/inventory.test.tsx`
 
+Phase 4 tests:
+
+- `src/features/stores/services/__tests__/storeDashboardService.test.ts`
+- `src/features/stores/services/__tests__/storeProfileService.test.ts`
+- `src/features/stores/services/__tests__/storeSubscriptionService.test.ts`
+- `src/features/stores/screens/__tests__/StoreDashboardScreen.test.tsx`
+- `src/features/stores/screens/__tests__/StoreProfileScreen.test.tsx`
+- `src/features/stores/screens/__tests__/SubscriptionStatusScreen.test.tsx`
+- `src/features/stores/screens/__tests__/StoreInventoryScreen.test.tsx`
+- `app/(store-owner)/__tests__/_layout.test.tsx`
+- `app/(store-owner)/__tests__/dashboard.test.tsx`
+- `app/(store-owner)/__tests__/storefront.test.tsx`
+- `app/(store-owner)/__tests__/subscription.test.tsx`
+
 Useful focused commands:
 
 ```powershell
 npm.cmd test -- --runInBand src/features/stores supabase/functions/__tests__/store_application_function.test.ts supabase/functions/__tests__/store_review_function.test.ts
 npm.cmd test -- --runInBand --runTestsByPath "C:\Users\user\Documents\augment-projects\Bookconnect_expo\app\(auth)\__tests__\login.test.tsx" "C:\Users\user\Documents\augment-projects\Bookconnect_expo\app\(tabs)\profile\__tests__\profile.test.tsx"
 npm.cmd test -- --runInBand supabase/migrations/__tests__/marketplacePhase3InventoryCanonicalListings.test.ts src/features/stores/services/__tests__/storeInventoryService.test.ts
+npm.cmd test -- --runInBand "src/features/stores"
+npm.cmd test -- --runInBand --runTestsByPath "app/(store-owner)/__tests__/_layout.test.tsx" "app/(store-owner)/__tests__/dashboard.test.tsx" "app/(store-owner)/__tests__/index.test.tsx" "app/(store-owner)/__tests__/inventory.test.tsx" "app/(store-owner)/__tests__/storefront.test.tsx" "app/(store-owner)/__tests__/subscription.test.tsx"
 ```
 
 When Expo route groups contain parentheses, regex path matching can fail on Windows. Use `--runTestsByPath` with absolute paths for route tests.

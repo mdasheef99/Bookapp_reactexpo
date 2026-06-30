@@ -105,6 +105,9 @@ export interface StoreInventoryItem {
     selling_price_minor: number;
     visibility_status: InventoryVisibilityStatus;
     listing_quality_status: ListingQualityStatus;
+    public_notes?: string | null;
+    shelf_location?: string | null;
+    entry_method?: 'manual' | 'image_extraction' | string | null;
     created_at?: string | null;
     updated_at?: string | null;
 }
@@ -119,6 +122,7 @@ export type InventoryItemUpdateInput = InventoryItemMutationInput & {
     quantityAvailable?: number;
     condition?: MarketplaceBookCondition;
     publicNotes?: string | null;
+    shelfLocation?: string | null;
 };
 
 export interface DuplicateInventorySearchInput {
@@ -156,4 +160,83 @@ export interface PublicMarketplaceBookResult {
     offerCount: number;
     lowestPriceMinor: number;
     offers: PublicMarketplaceListing[];
+}
+
+export interface DashboardInventoryCounts {
+    total: number;
+    published: number;
+    draft: number;
+    paused: number;
+    lowStock: number;
+    outOfStock: number;
+}
+
+export interface DashboardQuotaUsage {
+    inventoryItemLimit: number | null;
+    inventoryItemUsed: number;
+    monthlyImageExtractionLimit: number | null;
+    monthlyImageExtractionUsed: number;
+    activeListingLimit: number | null;
+    activeListingUsed: number;
+}
+
+export interface DashboardSubscriptionStatus {
+    status: string;
+    planName: string | null;
+    currentPeriodStart: string | null;
+    currentPeriodEnd: string | null;
+}
+
+export interface DashboardComplianceBlocker {
+    key: 'payout' | 'seller_agreement' | 'prohibited_items_policy' | 'support_policy';
+    label: string;
+    isBlocked: boolean;
+}
+
+export interface StoreDashboardData {
+    storeId: string;
+    inventoryCounts: DashboardInventoryCounts;
+    quotaUsage: DashboardQuotaUsage;
+    subscriptionStatus: DashboardSubscriptionStatus;
+    complianceBlockers: DashboardComplianceBlocker[];
+}
+
+export interface StoreProfile {
+    storeId: string;
+    displayName: string;
+    description: string | null;
+    logoUrl: string | null;
+    coverUrl: string | null;
+    operatingHours: Record<string, unknown>;
+    pickupEnabled: boolean;
+    deliveryEnabled: boolean;
+    minimumDeliveryOrderValueMinor: number | null;
+    returnPolicyType: string;
+    payoutAccountStatus: string;
+}
+
+export type StoreProfileInput = {
+    displayName?: string;
+    description?: string | null;
+    logoUrl?: string | null;
+    coverUrl?: string | null;
+    operatingHours?: Record<string, unknown>;
+    pickupEnabled?: boolean;
+    deliveryEnabled?: boolean;
+    minimumDeliveryOrderValueMinor?: number | null;
+    returnPolicyType?: string;
+};
+
+export interface StoreSubscriptionStatus {
+    storeId: string;
+    status: string;
+    planName: string | null;
+    currentPeriodStart: string | null;
+    currentPeriodEnd: string | null;
+    entitlements: Array<{
+        featureKey: string;
+        limitValue: number | null;
+        isEnabled: boolean;
+        usedValue: number;
+    }>;
 }

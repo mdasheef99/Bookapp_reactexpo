@@ -10,7 +10,7 @@ Key files:
 - `app/index.tsx` - root redirect. Authenticated users go to `/(tabs)/library`; unauthenticated users go to `/(auth)/login`.
 - `app/(auth)/_layout.tsx` - auth stack layout.
 - `app/(tabs)/_layout.tsx` - authenticated tab layout.
-- `app/(store-owner)/_layout.tsx` - Store Owner route stack.
+- `app/(store-owner)/_layout.tsx` - Store Owner route tabs/shell.
 - `src/lib/supabase.ts` - Supabase client.
 - `src/lib/mmkv.ts` - MMKV storage and Supabase storage adapter.
 - `src/lib/sentry.ts` - Sentry init and capture helpers.
@@ -35,7 +35,7 @@ Top-level route groups:
 
 - `app/(auth)` - login, OTP verification, profile setup.
 - `app/(tabs)` - signed-in consumer app.
-- `app/(store-owner)` - Store Owner gate, onboarding, review status, and setup checklist.
+- `app/(store-owner)` - Store Owner gate, onboarding, review status, setup checklist, dashboard, inventory, storefront/profile settings, and subscription/quota view.
 
 Tabs:
 
@@ -57,21 +57,23 @@ Nested layouts:
 
 Current Store Owner routes:
 
-- `app/(store-owner)/_layout.tsx` - hidden Stack layout for Store Owner routes.
+- `app/(store-owner)/_layout.tsx` - Store Owner tab layout; onboarding/status/setup helper routes are hidden.
 - `app/(store-owner)/index.tsx` - gate route; resolves Store Owner state server-side through store ownership/application records.
 - `app/(store-owner)/onboarding.tsx` - Phase 2B store application screen.
 - `app/(store-owner)/status.tsx` - Phase 2C review/rejected/restricted/suspended status screen.
 - `app/(store-owner)/setup.tsx` - Phase 2C setup checklist and subscription/trial status screen.
+- `app/(store-owner)/dashboard.tsx` - Phase 4 Store Owner dashboard wrapper.
+- `app/(store-owner)/inventory.tsx` - Phase 3/4 inventory management wrapper.
+- `app/(store-owner)/storefront.tsx` - Phase 4 storefront/profile settings wrapper.
+- `app/(store-owner)/subscription.tsx` - Phase 4 subscription/quota wrapper.
 
 Still missing product surfaces:
 
 - `marketplace`
-- `seller`
-- `inventory`
 - bookstore orders
 - platform admin review
 
-This matters for marketplace Phase 3: manual inventory should extend the Store Owner product surface without reusing P2P exchange routes or tables. Platform review remains an Edge Function/API concern; there is no platform admin UI yet.
+This matters for marketplace Phase 5: consumer discovery should become a consumer marketplace surface and read public projections such as `marketplace_book_listings`, without reusing P2P exchange routes or tables. Platform review remains an Edge Function/API concern; there is no platform admin UI yet.
 
 ## Dev Bypass
 

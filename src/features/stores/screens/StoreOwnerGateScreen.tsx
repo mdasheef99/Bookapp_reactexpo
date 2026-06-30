@@ -23,7 +23,7 @@ function routeForGateState(gateState: StoreOwnerGateState) {
         case 'approved_pending_setup':
             return '/(store-owner)/setup';
         case 'active_owner':
-            return '/(store-owner)/inventory';
+            return '/(store-owner)/dashboard';
         default:
             return null;
     }
