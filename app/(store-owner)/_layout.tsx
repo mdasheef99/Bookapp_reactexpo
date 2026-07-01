@@ -64,12 +64,6 @@ export default function StoreOwnerLayout() {
                     ),
                 }}
             />
-            <Tabs.Screen
-                name="__tests__"
-                options={{
-                    href: null,
-                }}
-            />
         </Tabs>
     );
 }

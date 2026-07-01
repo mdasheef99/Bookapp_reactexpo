@@ -19,18 +19,21 @@ describe('TabsLayout', () => {
         tabScreens.length = 0;
     });
 
-    it('registers primary tab sections and hides legacy profile route shims', () => {
+    it('registers primary tab sections and hides non-tab route shims', () => {
         render(<TabsLayout />);
 
         expect(tabScreens.map(screen => screen.name)).toEqual([
             'library',
             'exchange',
+            'marketplace/index',
             'clubs',
             'profile',
             'credit-history',
             'addresses',
+            'marketplace/store/[storeId]',
         ]);
         expect(tabScreens.find(screen => screen.name === 'credit-history')?.options?.href).toBeNull();
         expect(tabScreens.find(screen => screen.name === 'addresses')?.options?.href).toBeNull();
+        expect(tabScreens.find(screen => screen.name === 'marketplace/store/[storeId]')?.options?.href).toBeNull();
     });
 });
