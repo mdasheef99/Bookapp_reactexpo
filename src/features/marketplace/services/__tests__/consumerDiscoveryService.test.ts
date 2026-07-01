@@ -31,6 +31,7 @@ function createBuilder(response: { data: unknown; error: Error | null }) {
 describe('consumerDiscoveryService.searchMarketplaceBooks', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        (supabase.rpc as jest.Mock).mockResolvedValue({ data: null, error: null });
     });
 
     it('reads from marketplace_book_listings, never store_inventory', async () => {
@@ -100,13 +101,26 @@ describe('consumerDiscoveryService.searchMarketplaceBooks', () => {
         expect(listingsBuilder.ilike).not.toHaveBeenCalled();
     });
 
-    it('uses ilike for title search with escaped wildcards', async () => {
+    it('uses title or author text search with escaped wildcards', async () => {
         const listingsBuilder = createBuilder({ data: [], error: null });
         (supabase.from as jest.Mock).mockReturnValueOnce(listingsBuilder);
 
         await consumerDiscoveryService.searchMarketplaceBooks('100%_book');
 
-        expect(listingsBuilder.ilike).toHaveBeenCalledWith('public_title', '%100\\%\\_book%');
+        expect(listingsBuilder.or).toHaveBeenCalledWith(
+            'public_title.ilike.%100\\%\\_book%,authors_text.ilike.%100\\%\\_book%',
+        );
+    });
+
+    it('uses authors_text for author partial search', async () => {
+        const listingsBuilder = createBuilder({ data: [], error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(listingsBuilder);
+
+        await consumerDiscoveryService.searchMarketplaceBooks('Penelope Fitzgerald');
+
+        expect(listingsBuilder.or).toHaveBeenCalledWith(
+            'public_title.ilike.%Penelope Fitzgerald%,authors_text.ilike.%Penelope Fitzgerald%',
+        );
     });
 
     it('groups same canonical edition across stores without collapsing offers', async () => {
@@ -282,6 +296,31 @@ describe('consumerDiscoveryService.searchMarketplaceBooks', () => {
         // No auth.uid or user-identifying writes
         expect(listingsBuilder.insert).not.toHaveBeenCalled();
         expect(listingsBuilder.update).not.toHaveBeenCalled();
+        expect(supabase.rpc).not.toHaveBeenCalled();
+    });
+
+    it('records an unavailable demand signal when a non-empty search has no results', async () => {
+        const listingsBuilder = createBuilder({ data: [], error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(listingsBuilder);
+
+        const results = await consumerDiscoveryService.searchMarketplaceBooks('missing book');
+
+        expect(results).toEqual([]);
+        expect(supabase.rpc).toHaveBeenCalledWith('record_marketplace_unavailable_search', {
+            p_query: 'missing book',
+            p_result_count: 0,
+        });
+    });
+
+    it('does not fail search when unavailable demand capture fails', async () => {
+        const listingsBuilder = createBuilder({ data: [], error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(listingsBuilder);
+        (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+            data: null,
+            error: new Error('capture failed'),
+        });
+
+        await expect(consumerDiscoveryService.searchMarketplaceBooks('missing book')).resolves.toEqual([]);
     });
 
     it('batch-loads public_store_profiles for store display names, not stores table', async () => {
@@ -372,6 +411,7 @@ describe('consumerDiscoveryService.getPublicStoreProfile', () => {
                 operating_hours: {},
                 pickup_enabled: true,
                 delivery_enabled: false,
+                return_policy_type: 'returns_within_7_days',
             },
             error: null,
         });
@@ -385,9 +425,10 @@ describe('consumerDiscoveryService.getPublicStoreProfile', () => {
         expect(profile.displayName).toBe('Bookstore A');
         expect(profile.pickupEnabled).toBe(true);
         expect(profile.deliveryEnabled).toBe(false);
+        expect(profile.returnPolicyType).toBe('returns_within_7_days');
     });
 
-    it('select list excludes private store fields', async () => {
+    it('select list includes public return policy and excludes private store fields', async () => {
         const builder = createBuilder({
             data: { store_id: 'store-1', display_name: 'Bookstore A' },
             error: null,
@@ -401,12 +442,12 @@ describe('consumerDiscoveryService.getPublicStoreProfile', () => {
         expect(selectArg).toContain('display_name');
         expect(selectArg).toContain('pickup_enabled');
         expect(selectArg).toContain('delivery_enabled');
+        expect(selectArg).toContain('return_policy_type');
         // Private fields must NOT be present
         expect(selectArg).not.toContain('pincode');
         expect(selectArg).not.toContain('legal_name');
         expect(selectArg).not.toContain('legal_seller_name');
         expect(selectArg).not.toContain('minimum_delivery_order_value_minor');
-        expect(selectArg).not.toContain('return_policy_type');
         expect(selectArg).not.toContain('payout_account_status');
         expect(selectArg).not.toContain('suspension_reason');
     });

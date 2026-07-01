@@ -84,14 +84,14 @@ Recommended implementation slices:
 3. Build a marketplace discovery service around `storeInventoryService.searchPublicListings` or a dedicated consumer service wrapper.
 4. Render grouped book results by canonical edition/ISBN with store availability cards.
 5. Add public store pages using only public store/listing fields.
-6. Add unavailable-search capture if a safe table/API already exists; otherwise keep a local/no-op MVP placeholder and document the gap.
+6. Add unavailable-search capture only behind a safe private table/API boundary; stores must not receive customer identity or raw search rows by default.
 7. Add focused tests for private-field exclusion, hidden suspended/unverified stores, search grouping, disclosure copy, and cart replacement guardrail if cart skeleton appears.
 
 ## Refactor Note
 
 `src/features/stores/screens/StoreInventoryScreen.tsx` is currently 340 lines, inside the 300-350 line project limit but close to the ceiling. Do not add more inventory UI behavior directly to that file. If inventory work continues before Phase 9, extract the filter panel and bulk action bar first.
 
-## Phase 5: Consumer Discovery - App-Side Implementation (2026-07-01)
+## Phase 5: Consumer Discovery - App And Schema Implementation (2026-07-01)
 
 ### New Module: src/features/marketplace/
 
@@ -99,7 +99,7 @@ Created dedicated consumer marketplace module (separate from src/features/stores
 
 - types.ts - Consumer-facing types (MarketplaceListingOffer, GroupedBookResult, PublicStoreProfile)
 - services/consumerDiscoveryService.ts - Reads ONLY marketplace_book_listings and public_store_profiles
-- services/__tests__/consumerDiscoveryService.test.ts - 18 tests (all passing)
+- services/__tests__/consumerDiscoveryService.test.ts - marketplace search/profile/demand-capture tests
 - hooks/useMarketplaceSearch.ts - Debounced search hook
 - hooks/__tests__/useMarketplaceSearch.test.ts - stale response guard coverage
 - hooks/usePublicStoreProfile.ts - Public store profile + listings hook
@@ -128,13 +128,15 @@ consumerDiscoveryService.searchMarketplaceBooks(query: string): Promise<GroupedB
 - Reads marketplace_book_listings with status=active, moderation_status=approved
 - ISBN search: exact eq on isbn_10 or isbn_13, including ISBN-10 values with `X` check digit
 - Title search: escaped ilike on public_title
-- Author search: NOT implemented (schema gap - text[] partial match not practical)
+- Author search: escaped ilike on generated public projection column authors_text
 - Grouping: canonical_edition_id -> isbn_13 -> normalized title/authors with trimmed/collapsed whitespace
 - Batch-loads store display names from public_store_profiles
+- Records non-empty zero-result searches through record_marketplace_unavailable_search and ignores capture failure
 
 consumerDiscoveryService.getPublicStoreProfile(storeId: string): Promise<PublicStoreProfile>
 - Reads public_store_profiles only (not stores)
-- Excludes: pincode, legal_name, legal_seller_name, minimum_delivery_order_value_minor, return_policy_type, payout_account_status, suspension_reason
+- Includes public return_policy_type
+- Excludes: pincode, legal_name, legal_seller_name, minimum_delivery_order_value_minor, payout_account_status, suspension_reason
 
 consumerDiscoveryService.getStoreListings(storeId: string): Promise<MarketplaceListingOffer[]>
 - Reads marketplace_book_listings filtered by store_id, status=active, moderation_status=approved
@@ -151,12 +153,21 @@ Never reads: store_inventory, stores, P2P listings, P2P transactions, seller doc
 
 - consumerDiscoveryService.test.ts: 14/14 passed
 - consumerDiscoveryService.test.ts after review fixes: 18/18 passed
+- marketplacePhase5ConsumerDiscoverySchema.test.ts: passed
 - useMarketplaceSearch.test.ts: passed
 - MarketplaceComponents.test.tsx: passed
 - MarketplaceSearchScreen.test.tsx: passed
 - _layout.test.tsx: 1/1 passed (marketplace tab registered)
 - tsc --noEmit: clean (no errors)
 - npm run export:web: success (2006 modules bundled, exported to dist)
+
+2026-07-01 Supabase MCP schema follow-up:
+- Live migration `20260701062905 marketplace_phase5_consumer_discovery_schema` applied to project `ahntbtktjjmvfosgkmgn`.
+- marketplace_book_listings now has generated authors_text plus GIN trigram index for author partial search.
+- public_store_profiles now projects return_policy_type from stores.
+- Private marketplace_search_events and book_demand_signals tables are RLS-enabled with no broad table grants.
+- record_marketplace_unavailable_search is SECURITY DEFINER and executable by anon/authenticated.
+- Rollback smoke confirmed the RPC can capture zero-result demand without persisting smoke data after rollback.
 
 2026-07-01 review follow-up verification:
 - `npm.cmd test -- --runInBand src/features/marketplace/services/__tests__/consumerDiscoveryService.test.ts src/features/marketplace/hooks/__tests__/useMarketplaceSearch.test.ts src/features/marketplace/components/__tests__/MarketplaceComponents.test.tsx src/features/marketplace/screens/__tests__/MarketplaceSearchScreen.test.tsx`: 4 suites, 24 tests passed.
@@ -167,5 +178,4 @@ Never reads: store_inventory, stores, P2P listings, P2P transactions, seller doc
 ### Pending Blockers (for Codex/owner)
 
 1. Phase 3 anonymous public-read RLS blocker must be resolved before live smoke testing
-2. Author partial search requires schema migration (generated authors_text column or GIN index)
-3. public_store_profiles does not include return_policy_type - projection gap
+2. Anonymous Phase 5 public-read smoke must run after the Phase 3 RLS blocker is resolved

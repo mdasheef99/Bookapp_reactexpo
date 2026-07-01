@@ -4,6 +4,7 @@ import type {
     MarketplaceBookCondition,
     MarketplaceListingOffer,
     PublicStoreProfile,
+    StoreReturnPolicyType,
 } from '../types';
 
 /**
@@ -54,6 +55,13 @@ const AVAILABILITY_STATUSES = new Set<MarketplaceListingOffer['availabilityStatu
     'unavailable',
 ]);
 
+const RETURN_POLICY_TYPES = new Set<StoreReturnPolicyType>([
+    'no_returns',
+    'no_returns_except_wrong_item',
+    'returns_within_3_days',
+    'returns_within_7_days',
+]);
+
 function toAvailabilityStatus(value?: string | null): MarketplaceListingOffer['availabilityStatus'] {
     return value && AVAILABILITY_STATUSES.has(value as MarketplaceListingOffer['availabilityStatus'])
         ? (value as MarketplaceListingOffer['availabilityStatus'])
@@ -64,6 +72,12 @@ function toRecord(value: unknown): Record<string, unknown> {
     return value && typeof value === 'object' && !Array.isArray(value)
         ? value as Record<string, unknown>
         : {};
+}
+
+function toReturnPolicyType(value?: string | null): StoreReturnPolicyType {
+    return value && RETURN_POLICY_TYPES.has(value as StoreReturnPolicyType)
+        ? (value as StoreReturnPolicyType)
+        : 'no_returns';
 }
 
 // --- DB row types (snake_case, match column names) ---
@@ -100,6 +114,7 @@ type PublicStoreProfileRow = {
     operating_hours: unknown;
     pickup_enabled: boolean;
     delivery_enabled: boolean;
+    return_policy_type: string | null;
 };
 
 // --- Select lists (explicit, excludes private fields) ---
@@ -136,6 +151,7 @@ const PUBLIC_STORE_PROFILE_SELECT = [
     'operating_hours',
     'pickup_enabled',
     'delivery_enabled',
+    'return_policy_type',
 ].join(', ');
 
 // --- Sanitization / mapping ---
@@ -179,6 +195,7 @@ function mapPublicStoreProfile(row: PublicStoreProfileRow): PublicStoreProfile {
         operatingHours: toRecord(row.operating_hours),
         pickupEnabled: row.pickup_enabled ?? false,
         deliveryEnabled: row.delivery_enabled ?? false,
+        returnPolicyType: toReturnPolicyType(row.return_policy_type),
     };
 }
 
@@ -236,6 +253,17 @@ async function batchLoadStoreDisplayNames(storeIds: string[]): Promise<Map<strin
     return map;
 }
 
+async function recordUnavailableSearch(query: string, resultCount: number): Promise<void> {
+    const { error } = await supabase.rpc('record_marketplace_unavailable_search', {
+        p_query: query,
+        p_result_count: resultCount,
+    });
+
+    if (error) {
+        return;
+    }
+}
+
 // --- Service ---
 
 export const consumerDiscoveryService = {
@@ -245,12 +273,8 @@ export const consumerDiscoveryService = {
      * Search behavior:
      * - If query looks like an ISBN, uses exact `eq` match on `isbn_10` or
      *   `isbn_13` depending on normalized query length.
-     * - Otherwise uses `ilike` on `public_title` with escaped wildcards.
-     *
-     * Author partial search is NOT implemented because text[] array partial
-     * matching is not practical through current Supabase filters without a
-     * schema change (e.g., a generated `authors_text` column or GIN index).
-     * This gap is documented for Codex/Supabase MCP migration work.
+     * - Otherwise uses escaped partial match across `public_title` and the
+     *   indexed `authors_text` public projection.
      *
      * Grouping: canonical_edition_id → isbn_13 → normalized title/authors fallback.
      * Each grouped result contains ALL eligible store offers (not collapsed).
@@ -274,8 +298,10 @@ export const consumerDiscoveryService = {
                     ? queryBuilder.eq('isbn_10', normalized)
                     : queryBuilder.eq('isbn_13', normalized);
             } else {
-                // Title search with escaped wildcards
-                queryBuilder = queryBuilder.ilike('public_title', `%${escapeIlikeTerm(term)}%`);
+                const escapedTerm = escapeIlikeTerm(term);
+                queryBuilder = queryBuilder.or(
+                    `public_title.ilike.%${escapedTerm}%,authors_text.ilike.%${escapedTerm}%`,
+                );
             }
         }
 
@@ -292,7 +318,13 @@ export const consumerDiscoveryService = {
             sanitizeListing(row, row.store_id ? (displayNameMap.get(row.store_id) ?? null) : null),
         );
 
-        return groupOffers(offers);
+        const grouped = groupOffers(offers);
+
+        if (term && grouped.length === 0) {
+            await recordUnavailableSearch(term, 0);
+        }
+
+        return grouped;
     },
 
     /**

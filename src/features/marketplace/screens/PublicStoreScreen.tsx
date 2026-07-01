@@ -37,6 +37,19 @@ function formatOperatingHours(hours: Record<string, unknown>): string[] {
         .filter((row): row is string => Boolean(row));
 }
 
+function formatReturnPolicy(policy: string): string {
+    switch (policy) {
+        case 'no_returns_except_wrong_item':
+            return 'Returns only for wrong item';
+        case 'returns_within_3_days':
+            return 'Returns within 3 days';
+        case 'returns_within_7_days':
+            return 'Returns within 7 days';
+        default:
+            return 'No returns';
+    }
+}
+
 export default function PublicStoreScreen({ storeId }: PublicStoreScreenProps) {
     const { colors } = useTheme();
     const { profile, listings, isLoading, error } = usePublicStoreProfile(storeId);
@@ -127,6 +140,13 @@ export default function PublicStoreScreen({ storeId }: PublicStoreScreenProps) {
                             <Text style={[styles.fulfillmentText, { color: colors.accent }]}>Delivery</Text>
                         </View>
                     ) : null}
+                </View>
+
+                <View style={styles.policyBlock}>
+                    <Ionicons name="receipt-outline" size={14} color={colors.accent} />
+                    <Text style={[styles.policyText, { color: colors.textSecondary }]}>
+                        {formatReturnPolicy(profile.returnPolicyType)}
+                    </Text>
                 </View>
 
                 {operatingHours.length > 0 ? (
@@ -223,6 +243,15 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     fulfillmentText: {
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    policyBlock: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    policyText: {
         fontSize: 12,
         fontWeight: '600',
     },

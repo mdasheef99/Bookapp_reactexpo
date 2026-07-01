@@ -19,6 +19,12 @@ export type ListingStatus = 'active' | 'paused' | 'out_of_stock' | 'blocked';
 
 export type ModerationStatus = 'approved' | 'pending' | 'blocked' | 'prohibited';
 
+export type StoreReturnPolicyType =
+    | 'no_returns'
+    | 'no_returns_except_wrong_item'
+    | 'returns_within_3_days'
+    | 'returns_within_7_days';
+
 /**
  * A single public marketplace listing offer from one bookstore.
  * Maps to a row in `marketplace_book_listings` (public projection only).
@@ -66,7 +72,7 @@ export interface GroupedBookResult {
 /**
  * Public store profile from `public_store_profiles` projection only.
  * Excludes private fields: pincode, legal_name, legal_seller_name,
- * minimum_delivery_order_value_minor, return_policy_type, payout_account_status,
+ * minimum_delivery_order_value_minor, payout_account_status,
  * suspension_reason, seller docs, etc.
  */
 export interface PublicStoreProfile {
@@ -81,6 +87,7 @@ export interface PublicStoreProfile {
     operatingHours: Record<string, unknown>;
     pickupEnabled: boolean;
     deliveryEnabled: boolean;
+    returnPolicyType: StoreReturnPolicyType;
 }
 
 /**
