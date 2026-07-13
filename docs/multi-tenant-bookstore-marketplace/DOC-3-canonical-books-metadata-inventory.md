@@ -169,8 +169,8 @@ store_inventory
   quantity_available
   quantity_reserved
   quantity_sold
-  selling_price_inr
-  acquisition_cost_inr private
+  selling_price_minor
+  acquisition_cost_minor private
   shelf_location private
   internal_notes private
   public_notes
@@ -462,8 +462,8 @@ store_inventory
   condition_notes
   quantity_available
   quantity_reserved
-  selling_price_inr
-  acquisition_cost_inr
+  selling_price_minor
+  acquisition_cost_minor
   shelf_location
   internal_notes
   public_notes
@@ -484,7 +484,7 @@ marketplace_book_listings
   public_authors
   public_cover_url
   condition
-  selling_price_inr
+  selling_price_minor
   availability_status
   fulfillment_options
   status

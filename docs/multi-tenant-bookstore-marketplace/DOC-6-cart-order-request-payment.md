@@ -67,12 +67,14 @@ Cart item snapshot must include:
 - title
 - author(s)
 - condition
-- displayed price
+- displayed price as integer `price_snapshot_minor` (paise)
 - quantity requested
 - pickup/delivery eligibility at time of add
 - return policy summary at time of checkout
 
 The snapshot prevents silent changes from confusing the customer during checkout.
+
+**Price-drift rule between add-to-cart and order request:** At request submission, the server re-reads the current listing price. If the current price is lower than `price_snapshot_minor`, the lower price binds and the snapshot is updated. If the current price is higher, the request is accepted at the snapshot price only within a platform-configurable `price_drift_tolerance_minor` (e.g., 500 paise). Beyond that tolerance the item is flagged `price_changed` and routed to `needs_clarification` for explicit customer re-confirmation. This avoids bait-and-switch behavior while preserving customer trust when benign price drift occurs.
 
 ### 3.2 Submit Order Request
 
@@ -131,7 +133,7 @@ After successful payment:
 - confirmed inventory is reserved or decremented according to inventory policy
 - store fulfillment workflow starts
 - commission liability is recorded
-- settlement ledger entries are created
+- finance ledger entries are created
 
 Payment provider selection is intentionally separate from this spec and requires payment, accounting, and legal review before implementation.
 
@@ -210,21 +212,33 @@ Reason: the store has not confirmed that the uploaded quantity is still real.
 
 ### 6.2 After Store Confirmation
 
-Create a short-lived inventory hold for confirmed items.
+Create a short-lived inventory hold for confirmed items using a **two-tier hold model**:
 
-Recommended payment window:
+- **Soft hold (`hold_type='soft'`)** is created atomically at store confirmation in the same transaction as the item confirmation state change. It closes the oversell race for used books before the customer has accepted or paid.
+- **Firm hold (`hold_type='firm'`)** is created when the customer explicitly accepts the confirmed result (or immediately for fully confirmed requests that skip the decision step). At this point `payment_expires_at` starts.
 
-- default: 60 minutes
-- configurable by platform: 30 to 120 minutes
+Recommended windows:
 
-If customer pays before expiry:
+| Window | Default | Configurable range |
+|---|---|---|
+| Acceptance window (`acceptance_expires_at`) | 30 minutes | 15 to 60 minutes |
+| Payment window (`payment_expires_at`) | 60 minutes | 30 to 120 minutes |
 
-- convert hold into sold/reserved inventory
+If the customer accepts before the acceptance window expires:
 
-If customer does not pay:
+- promote soft holds to firm holds
+- start `payment_expires_at`
 
-- release hold
-- mark request payment window expired
+If the customer pays before the payment window expires:
+
+- convert firm hold into sold/reserved inventory
+
+If the customer does not accept or pay:
+
+- release the relevant holds (soft or firm)
+- mark the request payment window or acceptance window expired
+
+For very small stores, the soft hold protects against a confirmed book being sold elsewhere while the customer is still deciding; the firm hold protects against the same risk during payment.
 
 For very small stores, this protects against a confirmed book being sold elsewhere while the customer is paying.
 
@@ -343,13 +357,22 @@ This section is a summary. DOC-14 is the authoritative source for transition mat
 |---|---|
 | `submitted` | Customer submitted request; store not yet acting. |
 | `store_reviewing` | Store opened or started reviewing request. |
-| `confirmed` | Store confirmed all requested items. |
-| `partially_confirmed` | Store confirmed only some requested quantity/items. |
+| `awaiting_clarification` | At least one item is in `needs_clarification`; confirmation SLA clock is paused until the customer responds. |
+| `awaiting_customer_decision` | Store partially confirmed or changed delivery/pickup; customer must explicitly accept before the payment window starts. |
+| `adjusted` | Customer accepted a reduced quantity or switched to pickup; ready to start payment. |
+| `confirmed` | Store confirmed all requested items and customer accepted (or no acceptance needed). |
+| `partially_confirmed` | Store confirmed only some requested quantity/items and customer accepted. |
 | `unavailable` | Store rejected all items as unavailable. |
 | `customer_cancelled` | Customer cancelled before payment. |
-| `expired` | Store did not confirm within allowed window. |
+| `expired` | Store did not confirm within allowed window, or clarification timeout elapsed. |
 | `payment_expired` | Store confirmed, but customer did not pay in time. |
 | `converted_to_order` | Payment succeeded and paid order was created. |
+
+Additional state semantics:
+
+- `awaiting_clarification`: entered when any item enters `needs_clarification`; the confirmation SLA clock pauses while in this state and resumes on `clarification_provided`. The total clarification time is bounded by `clarification_timeout` policy.
+- `awaiting_customer_decision`: entered from `partially_confirmed` or a below-minimum-delivery re-quote; `acceptance_expires_at` starts. Soft holds exist from confirmation. The payment window and firm holds start only on transition to `payment_pending`.
+- `adjusted`: a transient state for quantity reduction or pickup switch before payment.
 
 ### 11.2 Payment States
 
@@ -388,7 +411,8 @@ marketplace_cart_items
   listing_id
   store_id
   requested_quantity
-  price_snapshot_inr
+  price_snapshot_minor
+  price_drift_tolerance_minor
   condition_snapshot
   title_snapshot
   created_at
@@ -404,10 +428,11 @@ store_order_requests
   status
   confirmation_due_at
   open_hours_due_at
+  acceptance_expires_at nullable
   payment_expires_at nullable
-  subtotal_requested_inr
-  subtotal_confirmed_inr nullable
-  delivery_quote_inr nullable
+  subtotal_requested_minor
+  subtotal_confirmed_minor nullable
+  delivery_quote_minor nullable
   return_policy_snapshot
   seller_policy_snapshot
   tax_snapshot nullable
@@ -423,8 +448,10 @@ store_order_request_items
   requested_quantity
   confirmed_quantity
   unavailable_reason nullable
-  price_snapshot_inr
+  price_snapshot_minor
+  price_bound_minor nullable
   confirmation_status
+  needs_clarification_reason nullable
   created_at
   updated_at
 
@@ -433,6 +460,9 @@ inventory_holds
   store_id
   inventory_id
   order_request_id
+  order_request_item_id
+  hold_type TEXT NOT NULL DEFAULT 'soft'
+    CHECK (hold_type IN ('soft', 'firm'))
   quantity
   status
   expires_at
@@ -447,25 +477,30 @@ payments
   store_id
   provider
   provider_payment_id nullable
-  amount_inr
+  amount_minor
   status
   idempotency_key
   reconciliation_status
   created_at
   updated_at
 
-settlement_ledger_entries
+finance_ledger_entries
   id
   store_id
-  store_order_id
-  payment_id
-  entry_type
-  amount_inr
-  currency
+  user_id nullable
+  store_order_id nullable
+  payment_id nullable
+  refund_id nullable
   settlement_batch_id nullable
-  tax_component nullable
-  reference_type
-  reference_id
+  transaction_group_id UUID NOT NULL
+  entry_type
+  amount_minor
+  currency
+  direction
+  source_type
+  source_id
+  idempotency_key
+  metadata private
   created_at
 
 invoice_snapshots

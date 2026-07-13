@@ -27,6 +27,45 @@ function expectExplicitSelect(builder: any, expectedColumn: string) {
 beforeEach(() => { jest.clearAllMocks(); });
 
 describe('clubsService', () => {
+    it('links an approved venue to a club', async () => {
+        const insertBuilder = mockQuery({ data: { club_id: 'club-1', venue_id: 'venue-1', is_primary: false }, error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(insertBuilder);
+
+        const result = await clubsService.addClubVenueLink('club-1', 'venue-1');
+
+        expect(supabase.from).toHaveBeenCalledWith('club_venues');
+        expect(insertBuilder.insert).toHaveBeenCalledWith({ club_id: 'club-1', venue_id: 'venue-1', is_primary: false });
+        expect(result.venue_id).toBe('venue-1');
+    });
+
+    it('removes a venue link from a club', async () => {
+        const deleteBuilder = mockQuery({ data: null, error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(deleteBuilder);
+
+        await clubsService.removeClubVenueLink('club-1', 'venue-1');
+
+        expect(supabase.from).toHaveBeenCalledWith('club_venues');
+        expect(deleteBuilder.delete).toHaveBeenCalled();
+        expect(deleteBuilder.eq).toHaveBeenCalledWith('club_id', 'club-1');
+        expect(deleteBuilder.eq).toHaveBeenCalledWith('venue_id', 'venue-1');
+    });
+
+    it('marks one linked venue as primary for a club', async () => {
+        (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+            data: { club_id: 'club-1', venue_id: 'venue-1', is_primary: true },
+            error: null,
+        });
+
+        const result = await clubsService.setPrimaryClubVenue('club-1', 'venue-1');
+
+        expect(supabase.rpc).toHaveBeenCalledTimes(1);
+        expect(supabase.rpc).toHaveBeenCalledWith('set_primary_club_venue', {
+            p_club_id: 'club-1',
+            p_venue_id: 'venue-1',
+        });
+        expect(result.is_primary).toBe(true);
+    });
+
     it('includes reply-level votes and reactions when reading discussion topics', async () => {
         const topicsBuilder = mockQuery({
             data: [{

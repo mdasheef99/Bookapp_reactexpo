@@ -2,8 +2,8 @@
 
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
-**Version:** 0.1
-**Date:** 2026-05-22
+**Version:** 0.2
+**Date:** 2026-06-19
 **Status:** Planning draft; requires legal/accounting/payment-provider review before production payments
 **Depends On:** DOC-0, DOC-1, DOC-2, DOC-6, DOC-9, DOC-14
 **Owns:** Seller-of-record decision, payment-provider boundaries, ledger semantics, refunds, settlement, reserves, payout failures, tax/GST/TCS review, and finance operations.
@@ -94,11 +94,14 @@ Rules:
 - ledger entries are append-only in normal application code
 - corrections use reversal/adjustment entries
 - each entry references source entity and idempotency key
-- money amounts are stored in integer paise or INR minor units where practical
+- all monetary amounts are stored as non-negative integer paise (magnitude only); direction/sign is expressed by a separate `direction` column (`debit`/`credit`), never by the magnitude itself; no floating-point currency is permitted
+- the signed value of an entry is `CASE direction WHEN 'credit' THEN amount_minor ELSE -amount_minor END`
+- the balancing invariant is net-zero per `transaction_group_id`, not per order `source_id`; every balanced group must sum to zero and must include explicit platform clearing/expense accounts when a loss is borne by the platform (e.g., non-refundable gateway fees)
 - every paid order has balanced financial interpretation
 - every refund has a corresponding reversal/adjustment
 - settlement batches are generated from ledger entries, not from order status alone
 - provider reconciliation compares provider report, payment table, and ledger entries
+- rounding, if any, happens only at tax/commission computation and is recorded as explicit adjustment entries; reconciliation tolerance is zero paise for ledger sums
 
 Suggested ledger entry types:
 
@@ -107,6 +110,7 @@ Suggested ledger entry types:
 - `delivery_fee_collected`
 - `platform_commission`
 - `payment_gateway_fee`
+- `gateway_fee_non_refundable_loss` (platform-borne loss on refund; paired with a platform clearing/expense account)
 - `tax_collected_or_payable`
 - `seller_receivable`
 - `refund_principal`
@@ -131,6 +135,8 @@ An order should become settlement-eligible only after:
 - no active dispute or chargeback hold blocks payout
 - delivery provider exception does not require reserve
 - seller account/payout status is ready
+
+Settlement eligibility must also respect the order's return-window snapshot. If the settlement cadence (e.g., weekly) would pay out before the return window closes (`returns_within_3_days` or `returns_within_7_days` per the policy snapshot), the refundable amount must be included as a `settlement_holdback` ledger entry until the window closes. This prevents negative-balance churn from orders that settle before they can still be returned.
 
 Weekly settlement is default, but eligibility should be policy-driven.
 
@@ -230,7 +236,7 @@ Required review topics:
 - seller statement and accounting exports
 - PAN/GSTIN/payout data required during seller onboarding
 
-Engineering must preserve structured fields so accounting/legal decisions can be applied without data migration pain.
+Engineering must preserve structured fields so accounting/legal decisions can be applied without data migration pain. The following structural fields are reserved from the first settlement migration even though their values remain unset until legal/accounting review: `settlement_batches.tcs_deduction_minor`, `settlement_batches.gst_on_commission_minor`, `settlement_batches.tax_adjustments_minor`, and `settlement_batches.tax_treatment_version`. These fields are tied to `finance_ledger_entries` entries of type `tax_collected_or_payable` and `gateway_fee_non_refundable_loss`.
 
 ---
 
@@ -245,6 +251,7 @@ finance_ledger_entries
   payment_id nullable
   refund_id nullable
   settlement_batch_id nullable
+  transaction_group_id UUID NOT NULL
   entry_type
   amount_minor
   currency
@@ -267,6 +274,10 @@ settlement_batches
   refund_adjustments_minor
   holdback_minor
   net_payout_minor
+  tcs_deduction_minor nullable
+  gst_on_commission_minor nullable
+  tax_adjustments_minor nullable
+  tax_treatment_version nullable
   payout_reference nullable
   created_at
   reviewed_at nullable
@@ -280,7 +291,7 @@ seller_statements
   statement_url nullable
   created_at
 
-payout_accounts
+seller_payout_accounts
   id
   store_id
   provider
@@ -296,6 +307,7 @@ finance_reconciliation_cases
   status
   payment_id nullable
   settlement_batch_id nullable
+  transaction_group_id nullable
   expected_amount_minor nullable
   observed_amount_minor nullable
   notes private

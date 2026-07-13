@@ -43,6 +43,7 @@ const transaction: TransactionWithListing = {
     is_signed_copy: false,
     tracking_url: null,
     delivery_service: null,
+    pickup_venue_id: null,
     created_at: '2026-05-10T10:00:00.000Z',
     updated_at: '2026-05-10T10:00:00.000Z',
     listing: {

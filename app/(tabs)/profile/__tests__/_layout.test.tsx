@@ -28,6 +28,8 @@ describe('ProfileLayout', () => {
             'edit',
             'credit-history',
             'addresses',
+            'notifications',
+            'notification-settings',
         ]);
     });
 });

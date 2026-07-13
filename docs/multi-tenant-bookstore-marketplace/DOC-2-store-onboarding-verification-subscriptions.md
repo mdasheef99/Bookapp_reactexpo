@@ -401,7 +401,7 @@ stores
   operating_hours jsonb
   pickup_enabled
   delivery_enabled
-  minimum_delivery_order_value
+  minimum_delivery_order_value_minor
   return_policy_type
   bookclub_hosting_interest
   created_at
@@ -443,7 +443,7 @@ store_subscription_plans
   name
   status
   billing_period
-  base_price
+  price_minor
   entitlements jsonb
 
 store_subscriptions

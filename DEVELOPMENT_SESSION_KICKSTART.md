@@ -9,7 +9,7 @@
 You are helping develop **BookTalks Mobile**, a peer-to-peer book sharing app for the Indian market. Please follow these steps:
 
 ### START HERE: Use Context Tools First
-If the `codebase-retrieval` MCP tool is available, use it first to gather a high-level understanding of the project structure, key feature areas, and the most relevant files for this session before doing manual file-by-file exploration. Then read the documentation below in order and use those docs to guide the rest of your analysis.
+First read `CODEBASE_INTELLIGENCE/README.md` and the relevant files in `CODEBASE_INTELLIGENCE/` for durable project orientation. If the `codebase-retrieval` MCP tool is available, use it to refresh the specific area you are working on before doing manual file-by-file exploration. Then read the documentation below in order and use those docs to guide the rest of your analysis.
 
 ### STEP 1: Read & Analyze Key Documentation (in order)
 1. Read `docs/README.md` - Project overview and navigation guide

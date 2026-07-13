@@ -58,7 +58,7 @@ The **meetup delivery path is fully functional** end-to-end:
 - ✅ Borrower confirms delivery; lender marks complete
 - ✅ `complete_transaction()` RPC atomically releases hold, debits borrower, credits lender
 - ✅ Credit balance visible on Profile screen (available + held/earned/spent grid)
-- ✅ Dedicated address management surface available from Profile (`app/(tabs)/addresses.tsx`)
+- ✅ Dedicated address management surface available from Profile (`app/(tabs)/profile/addresses.tsx`, route `/(tabs)/profile/addresses`)
 - ✅ Delivery/payment capability gating centralized in `src/features/exchange/config/exchangeConfig.ts`
 - ⚠️ Porter/Dunzo are currently hidden from browse/create request surfaces until shipping and payment integrations are complete
 
@@ -117,7 +117,7 @@ Steps 4–5 require external API keys not yet available:
 | Component | Path | Purpose |
 |-----------|------|---------|
 | `AddressPicker` | `src/components/exchange/AddressPicker.tsx` | Address selection + creation modal. Radio list, 7-field form, default badge. Available for future shipping/address management surfaces; not currently rendered in Listing Detail while Porter/Dunzo are disabled. |
-| `AddressesScreen` | `app/(tabs)/addresses.tsx` | Profile-linked address management surface for listing, adding, editing, deleting, and setting a default saved address. |
+| `AddressesScreen` | `app/(tabs)/profile/addresses.tsx` | Profile-linked address management surface for listing, adding, editing, deleting, and setting a default saved address. Legacy `/(tabs)/addresses` deep links redirect here. |
 | `ListingCard` | Inline in `exchange/index.tsx` | Book cover, title, condition badge, delivery option chips |
 | `TransactionCard` | `src/components/exchange/TransactionCard.tsx` | Role-aware card — status badge (10 states), role badge, timestamp, and detail navigation |
 | `TransactionRatingPrompt` | `src/components/exchange/TransactionRatingPrompt.tsx` | Completed-exchange rating form with stars, quick tags, optional review, and submitted-rating state |

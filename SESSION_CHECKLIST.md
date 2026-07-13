@@ -6,6 +6,8 @@ Use this checklist at the start of each development session.
 
 ## ✅ Pre-Session Setup (5 minutes)
 
+- [ ] Open `CODEBASE_INTELLIGENCE/README.md`
+- [ ] Read the relevant `CODEBASE_INTELLIGENCE/` map for the feature or area being touched
 - [ ] Open `DEVELOPMENT_SESSION_KICKSTART.md`
 - [ ] Copy the prompt from "PROMPT TO COPY-PASTE" section
 - [ ] Paste it into your AI assistant
@@ -73,6 +75,7 @@ For each task:
 ## 📋 Quick Reference: Key Files
 
 **Documentation:**
+- `CODEBASE_INTELLIGENCE/README.md` - Durable codebase map and future-agent starting point
 - `docs/README.md` - Project overview
 - `docs/strategic-planning/STRATEGIC_PLAN_TECHNICAL.md` - Tasks & timeline
 - `docs/architecture/architecture_react_expo.md` - Architecture & status

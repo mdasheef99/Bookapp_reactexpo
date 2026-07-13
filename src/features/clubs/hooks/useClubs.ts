@@ -144,6 +144,36 @@ export function useClubEventVenues(clubId: string | null, enabled = true) {
     });
 }
 
+export function useAddClubVenueLink() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ clubId, venueId }: { clubId: string; venueId: string }) => clubsService.addClubVenueLink(clubId, venueId),
+        onSuccess: (_data, vars) => {
+            queryClient.invalidateQueries({ queryKey: clubKeys.eventVenues(vars.clubId) });
+        },
+    });
+}
+
+export function useRemoveClubVenueLink() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ clubId, venueId }: { clubId: string; venueId: string }) => clubsService.removeClubVenueLink(clubId, venueId),
+        onSuccess: (_data, vars) => {
+            queryClient.invalidateQueries({ queryKey: clubKeys.eventVenues(vars.clubId) });
+        },
+    });
+}
+
+export function useSetPrimaryClubVenue() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ clubId, venueId }: { clubId: string; venueId: string }) => clubsService.setPrimaryClubVenue(clubId, venueId),
+        onSuccess: (_data, vars) => {
+            queryClient.invalidateQueries({ queryKey: clubKeys.eventVenues(vars.clubId) });
+        },
+    });
+}
+
 export function useClubEvents(clubId: string | null, userId?: string | null, enabled = true) {
     return useQuery({
         queryKey: clubKeys.events(clubId ?? '', userId),

@@ -1,6 +1,8 @@
+let mockSearchParams: Record<string, string> = { phone: '9876543210' };
+
 jest.mock('expo-router', () => ({
     router: { replace: jest.fn(), back: jest.fn() },
-    useLocalSearchParams: () => ({ phone: '9876543210' }),
+    useLocalSearchParams: () => mockSearchParams,
 }));
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
@@ -14,6 +16,7 @@ jest.mock('@/features/auth/services/profileService', () => ({ profileService: { 
 
 beforeEach(() => {
     jest.clearAllMocks();
+    mockSearchParams = { phone: '9876543210' };
     (authService.verifyOtp as jest.Mock).mockResolvedValue({ user: { id: 'user-1' }, session: { user: { id: 'user-1' } } });
 });
 
@@ -26,9 +29,9 @@ describe('VerifyOtpScreen', () => {
         fireEvent.changeText(getByTestId('verify-otp-input'), '123456');
         fireEvent.press(getByTestId('verify-otp-button'));
 
-        await waitFor(() => expect(authService.verifyOtp).toHaveBeenCalledWith('9876543210', '123456'));
-        await waitFor(() => expect(profileService.hasProfile).toHaveBeenCalledWith('user-1'));
         await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/(tabs)/library'));
+        expect(authService.verifyOtp).toHaveBeenCalledWith('9876543210', '123456');
+        expect(profileService.hasProfile).toHaveBeenCalledWith('user-1');
     });
 
     it('routes new users to setup-profile only when no user_profiles row exists', async () => {
@@ -41,5 +44,32 @@ describe('VerifyOtpScreen', () => {
 
         await waitFor(() => expect(profileService.hasProfile).toHaveBeenCalledWith('user-1'));
         await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/(auth)/setup-profile'));
+    });
+
+    it('routes returning Store Owner intent users into the Store Owner gate', async () => {
+        mockSearchParams = { phone: '9876543210', intent: 'store_owner' };
+        (profileService.hasProfile as jest.Mock).mockResolvedValueOnce(true);
+
+        const { getByTestId } = render(<VerifyOtpScreen />);
+
+        fireEvent.changeText(getByTestId('verify-otp-input'), '123456');
+        fireEvent.press(getByTestId('verify-otp-button'));
+
+        await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/(store-owner)'));
+    });
+
+    it('preserves Store Owner intent while routing new users to setup-profile', async () => {
+        mockSearchParams = { phone: '9876543210', intent: 'store_owner' };
+        (profileService.hasProfile as jest.Mock).mockResolvedValueOnce(false);
+
+        const { getByTestId } = render(<VerifyOtpScreen />);
+
+        fireEvent.changeText(getByTestId('verify-otp-input'), '123456');
+        fireEvent.press(getByTestId('verify-otp-button'));
+
+        await waitFor(() => expect(router.replace).toHaveBeenCalledWith({
+            pathname: '/(auth)/setup-profile',
+            params: { intent: 'store_owner' },
+        }));
     });
 });

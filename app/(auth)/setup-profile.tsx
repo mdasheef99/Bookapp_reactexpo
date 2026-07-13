@@ -1,6 +1,6 @@
 import { View, Text, Alert, StyleSheet, ScrollView } from 'react-native';
 import { useState } from 'react';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -17,6 +17,7 @@ export default function SetupProfileScreen() {
     const [loading, setLoading] = useState(false);
     const { user } = useAuth();
     const { colors } = useTheme();
+    const { intent } = useLocalSearchParams();
 
     // Input sanitization: only allow letters and spaces
     const handleNameChange = (text: string) => {
@@ -56,7 +57,7 @@ export default function SetupProfileScreen() {
 
             if (error) throw error;
 
-            router.replace('/(tabs)/library');
+            router.replace(intent === 'store_owner' ? '/(store-owner)' : '/(tabs)/library');
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Failed to create profile. Please try again.';
             Alert.alert('Error', message);

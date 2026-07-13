@@ -33,4 +33,19 @@ describe('LoginScreen', () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/(auth)/verify-otp', params: { phone: '1234567890' } });
     expect(mockReplace).not.toHaveBeenCalled();
   });
+
+  it('sends OTP and preserves Store Owner intent from the bookstore entry', async () => {
+    const { getByText, getByTestId } = render(<LoginScreen />);
+
+    fireEvent.changeText(getByTestId('login-phone-input'), '1234567890');
+    fireEvent.press(getByText('Apply as a bookstore'));
+
+    await waitFor(() => {
+      expect(mockSignInWithOtp).toHaveBeenCalledWith('1234567890');
+    });
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/(auth)/verify-otp',
+      params: { phone: '1234567890', intent: 'store_owner' },
+    });
+  });
 });

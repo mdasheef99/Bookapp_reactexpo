@@ -76,12 +76,27 @@ const createQueryBuilder = () => {
   return builder;
 };
 
+const storageBuckets: Record<string, any> = {};
+
+const getStorageBucket = (bucket: string) => {
+  if (!storageBuckets[bucket]) {
+    storageBuckets[bucket] = {
+      upload: jest.fn(() => Promise.resolve({ data: { path: 'test-path' }, error: null })),
+      getPublicUrl: jest.fn(() => ({ data: { publicUrl: 'https://example.test/test-path' } })),
+    };
+  }
+  return storageBuckets[bucket];
+};
+
 export const supabase = {
   auth: mockAuth,
   from: jest.fn((_table: string) => createQueryBuilder()),
   rpc: jest.fn(() => Promise.resolve({ data: null, error: null })),
   functions: {
     invoke: jest.fn(() => Promise.resolve({ data: null, error: null })),
+  },
+  storage: {
+    from: jest.fn((bucket: string) => getStorageBucket(bucket)),
   },
   channel: jest.fn(() => ({
     on: jest.fn().mockReturnThis(),

@@ -23,8 +23,8 @@ The marketplace should not launch city-wide before it has local inventory densit
 | Area | Decision |
 |---|---|
 | Pilot city | Bangalore. |
-| Initial geography | Start with one or two dense localities, not all of Bangalore. |
-| Store rollout | Friendly/verified stores only, through allowlist. |
+| Initial geography | Start with one or two dense localities, not all of Bangalore. Locality gating is enforced via `marketplace_localities.is_pilot_enabled`; only rows where this flag is `true` are included in discovery and store onboarding. |
+| Store rollout | Friendly/verified stores only, through allowlist. Store eligibility is scoped to an enabled `marketplace_localities` row; a store in a non-pilot locality cannot be approved for public listing. |
 | Payments | Pilot may use live payments only after DOC-15 gates pass. |
 | Fulfillment | Pickup-first, delivery later through provider adapter. |
 | Support | BookConnect owns customer support and dispute resolution. |
@@ -81,6 +81,8 @@ Live payment must not be enabled until there is a reliable completion path for p
 ---
 
 ## 5. Locality and Liquidity Thresholds
+
+Localities are controlled via the `marketplace_localities` table. A locality must have `is_pilot_enabled = true` before it appears in discovery, store onboarding, or consumer search. Platform operators toggle this flag using their admin privileges. `scope_type='locality'` policy config entries reference `marketplace_localities.id` as `scope_value`.
 
 Before consumer launch in a locality, target:
 

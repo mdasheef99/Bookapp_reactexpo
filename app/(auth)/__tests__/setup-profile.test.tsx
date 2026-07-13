@@ -3,10 +3,14 @@ import SetupProfileScreen from '../setup-profile';
 
 const mockReplace = jest.fn();
 const mockRpc = jest.fn();
+let mockSearchParams: Record<string, string> = {};
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
-jest.mock('expo-router', () => ({ router: { replace: (...args: unknown[]) => mockReplace(...args) } }));
+jest.mock('expo-router', () => ({
+    router: { replace: (...args: unknown[]) => mockReplace(...args) },
+    useLocalSearchParams: () => mockSearchParams,
+}));
 jest.mock('@/features/auth/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'user-1' } }) }));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
@@ -33,6 +37,7 @@ jest.mock('@/lib/supabase', () => ({ supabase: { rpc: (...args: unknown[]) => mo
 describe('SetupProfileScreen', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockSearchParams = {};
         mockRpc.mockResolvedValue({
             data: { id: 'profile-1', user_id: 'user-1', display_name: 'Reader One', city: 'Mumbai' },
             error: null,
@@ -53,5 +58,17 @@ describe('SetupProfileScreen', () => {
             p_referral_code: 'ABCD1234',
         }));
         expect(mockReplace).toHaveBeenCalledWith('/(tabs)/library');
+    });
+
+    it('routes Store Owner intent users to the Store Owner gate after setup', async () => {
+        mockSearchParams = { intent: 'store_owner' };
+        const { getByLabelText } = render(<SetupProfileScreen />);
+
+        fireEvent.changeText(getByLabelText('Display name input'), 'Reader One');
+        fireEvent.changeText(getByLabelText('City input'), 'Mumbai');
+        fireEvent.press(getByLabelText('Complete profile setup'));
+
+        await waitFor(() => expect(mockRpc).toHaveBeenCalled());
+        expect(mockReplace).toHaveBeenCalledWith('/(store-owner)');
     });
 });

@@ -21,7 +21,7 @@ export default function LoginScreen() {
         setPhone(sanitized);
     };
 
-    const handleSendOtp = async () => {
+    const handleSendOtp = async (intent?: 'store_owner') => {
         if (phone.length !== 10) {
             Alert.alert('Error', 'Please enter a valid 10-digit phone number');
             return;
@@ -30,7 +30,10 @@ export default function LoginScreen() {
         setLoading(true);
         try {
             await authService.signInWithOtp(phone);
-            router.push({ pathname: '/(auth)/verify-otp', params: { phone } });
+            router.push({
+                pathname: '/(auth)/verify-otp',
+                params: intent ? { phone, intent } : { phone },
+            });
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Failed to send OTP. Please try again.';
             Alert.alert('Error', message);
@@ -106,13 +109,23 @@ export default function LoginScreen() {
                         {/* Continue Button */}
                         <Button
                             title="Continue"
-                            onPress={handleSendOtp}
+                            onPress={() => handleSendOtp()}
                             variant="primary"
                             size="lg"
                             disabled={!isButtonEnabled}
                             loading={loading}
                             testID="login-continue-button"
                             accessibilityLabel="Continue to OTP verification"
+                        />
+                        <Button
+                            title="Apply as a bookstore"
+                            onPress={() => handleSendOtp('store_owner')}
+                            variant="secondary"
+                            size="md"
+                            disabled={!isButtonEnabled}
+                            loading={loading}
+                            accessibilityLabel="Apply as a bookstore"
+                            style={styles.storeOwnerButton}
                         />
 
                         {/* Footer */}
@@ -292,6 +305,9 @@ const styles = StyleSheet.create({
     },
     footer: {
         alignItems: 'center',
+    },
+    storeOwnerButton: {
+        marginTop: 12,
     },
     footerText: {
         fontSize: 12,

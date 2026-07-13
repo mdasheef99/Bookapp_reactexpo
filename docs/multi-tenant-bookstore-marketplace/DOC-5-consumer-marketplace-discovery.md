@@ -290,7 +290,7 @@ marketplace_book_listings
   cover_url
   condition
   public_condition_notes
-  price_inr
+  price_minor
   available_quantity
   listing_status
   pickup_available

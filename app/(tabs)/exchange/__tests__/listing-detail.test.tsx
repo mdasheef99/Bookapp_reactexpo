@@ -1,9 +1,10 @@
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import ListingDetailScreen from '../[listingId]';
 
 const mockReplace = jest.fn();
 const mockUseListingDetails = jest.fn();
 const mockUseRequestTransaction = jest.fn();
+const mockUseApprovedVenues = jest.fn();
 const mockMutate = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
@@ -25,10 +26,20 @@ jest.mock('@/features/exchange/hooks/useListings', () => ({
 jest.mock('@/features/exchange/hooks/useTransactions', () => ({
     useRequestTransaction: (...args: unknown[]) => mockUseRequestTransaction(...args),
 }));
+jest.mock('@/features/venues/hooks/useVenues', () => ({
+    useApprovedVenues: (...args: unknown[]) => mockUseApprovedVenues(...args),
+}));
 
 beforeEach(() => {
     jest.clearAllMocks();
     mockUseRequestTransaction.mockReturnValue({ mutate: mockMutate, isPending: false });
+    mockUseApprovedVenues.mockReturnValue({
+        data: [
+            { id: 'venue-1', name: 'Chapter Cafe', venue_type: 'cafe', city: 'Delhi', address_line1: '12 Market Road', verification_status: 'approved', is_exchange_partner: true },
+        ],
+        isLoading: false,
+        isError: false,
+    });
     mockUseListingDetails.mockReturnValue({
         data: {
             id: 'listing-1',
@@ -47,7 +58,7 @@ beforeEach(() => {
 });
 
 describe('ListingDetailScreen', () => {
-    it('limits requests to meetup and hides unsupported delivery options', () => {
+    it('requires a pickup venue for meetup requests and sends it with the request', () => {
         const { getByText, queryByText, getByTestId } = render(<ListingDetailScreen />);
 
         expect(getByText('🤝 Meetup')).toBeOnTheScreen();
@@ -56,9 +67,13 @@ describe('ListingDetailScreen', () => {
         expect(getByText(/same-city meetup handoffs only/i)).toBeOnTheScreen();
 
         fireEvent.press(getByTestId('exchange-request-cta'));
+        expect(mockMutate).not.toHaveBeenCalled();
+
+        fireEvent.press(getByTestId('venue-card-venue-1'));
+        fireEvent.press(getByTestId('exchange-request-cta'));
 
         expect(mockMutate).toHaveBeenCalledWith(expect.objectContaining({
-            listingId: 'listing-1', borrowerId: 'borrower-1', deliveryType: 'meetup',
+            listingId: 'listing-1', borrowerId: 'borrower-1', deliveryType: 'meetup', pickupVenueId: 'venue-1',
         }), expect.any(Object));
     });
 
@@ -87,5 +102,24 @@ describe('ListingDetailScreen', () => {
         fireEvent.press(getByTestId('exchange-request-cta'));
 
         expect(mockMutate).not.toHaveBeenCalled();
+    });
+
+    it('clears a selected pickup venue when delivery changes away from meetup', async () => {
+        const meetupListing = mockUseListingDetails();
+        const { getByTestId, rerender } = render(<ListingDetailScreen />);
+
+        fireEvent.press(getByTestId('venue-card-venue-1'));
+
+        mockUseListingDetails.mockReturnValue({
+            ...meetupListing,
+            data: { ...meetupListing.data, delivery_options: ['porter'] },
+        });
+        rerender(<ListingDetailScreen />);
+
+        mockUseListingDetails.mockReturnValue(meetupListing);
+        rerender(<ListingDetailScreen />);
+        fireEvent.press(getByTestId('exchange-request-cta'));
+
+        await waitFor(() => expect(mockMutate).not.toHaveBeenCalled());
     });
 });

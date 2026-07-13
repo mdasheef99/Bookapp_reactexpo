@@ -248,33 +248,40 @@ NEW listing record from listings table
 - Check against tier limits: Free=0, Pro=5, Pro+=15
 - Return allowed status
 
-**Status:** ❌ Not implemented (mentioned in update summary)
+**Status:** Deployed; live project `ahntbtktjjmvfosgkmgn` has version 1 ACTIVE with `verify_jwt: true`.
 
 ---
 
-### 7. `handle-downgrade-grace-period`
-**Path:** `supabase/functions/handle-downgrade-grace-period/index.ts`
+### 7. `handle-club-downgrade-grace-period`
+**Path:** `supabase/functions/handle-club-downgrade-grace-period/index.ts`
 
-**Purpose:** Scheduled job (runs daily) to manage membership downgrade grace period. Sends warnings on Day 7, 14, 21, 29 and auto-archives clubs on Day 30.
+**Purpose:** Service-role Edge Function wrapper for the live downgrade grace-period RPC. It can run a dry run or scoped user check, while the live scheduled maintenance path calls the RPC directly through `pg_cron`.
 
 **Dependencies:**
 - Supabase service role key
-- FCM for push notifications
-- Access to `user_profiles`, `book_clubs`, `club_members` tables
+- Access to `user_profiles`, `book_clubs`, `club_downgrade_grace_events` tables
+- Live RPC `process_club_downgrade_grace_period(uuid, integer, boolean)`
 
-**Input (Scheduled):**
+**Input:**
 ```typescript
-// Runs daily via pg_cron or external scheduler
+{
+  user_id?: string | null,
+  grace_days?: number,
+  dry_run?: boolean | string
+}
 ```
 
 **Key Logic:**
-- Find users in downgrade grace period (tier changed in last 30 days)
-- Calculate days remaining
-- Send warnings on Day 7, 14, 21, 29
-- On Day 30: Archive excess clubs (user choice or chronology)
-- Update `book_clubs.is_archived` and `archived_at`
+- Validates POST requests and required Supabase service env vars
+- Optionally checks `CLUB_DOWNGRADE_CRON_SECRET` when configured
+- Calls `process_club_downgrade_grace_period(...)`
+- Returns `{ processed, results }`
 
-**Status:** ❌ Not implemented (mentioned in update summary)
+**Live Scheduling:** `pg_cron` job `club-downgrade-grace-period` runs daily at `0 2 * * *` and calls `process_club_downgrade_grace_period(null, 14, false)` directly.
+
+**Current Limits:** Warning notifications and user-selected club keep lists are still pending notification/governance work.
+
+**Status:** Deployed 2026-06-05 to Supabase project `ahntbtktjjmvfosgkmgn`; version 1, status ACTIVE, `verify_jwt: true`.
 
 ---
 
@@ -384,7 +391,7 @@ NEW listing record from listings table
 7. `check-membership-limits` ✓
 
 **Week 7-8 (Scheduled Jobs):**
-8. `handle-downgrade-grace-period` ✓
+8. `handle-club-downgrade-grace-period` ✓
 9. `cleanup-expired-holds` ✓
 10. `send-batch-notifications` ✓
 

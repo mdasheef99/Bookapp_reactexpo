@@ -32,6 +32,10 @@ const mockUseClubInvitations = jest.fn();
 const mockUseCreateClubInvitation = jest.fn();
 const mockUseRevokeClubInvitation = jest.fn();
 const mockUseClubEvents = jest.fn();
+const mockUseClubEventVenues = jest.fn();
+const mockUseAddClubVenueLink = jest.fn();
+const mockUseRemoveClubVenueLink = jest.fn();
+const mockUseSetPrimaryClubVenue = jest.fn();
 const mockUseCancelClubEvent = jest.fn();
 const mockUseDeleteClubEvent = jest.fn();
 const mockUseUpdateClubMemberStatus = jest.fn();
@@ -105,6 +109,10 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useCreateClubInvitation: (...args: unknown[]) => mockUseCreateClubInvitation(...args),
     useRevokeClubInvitation: (...args: unknown[]) => mockUseRevokeClubInvitation(...args),
     useClubEvents: (...args: unknown[]) => mockUseClubEvents(...args),
+    useClubEventVenues: (...args: unknown[]) => mockUseClubEventVenues(...args),
+    useAddClubVenueLink: (...args: unknown[]) => mockUseAddClubVenueLink(...args),
+    useRemoveClubVenueLink: (...args: unknown[]) => mockUseRemoveClubVenueLink(...args),
+    useSetPrimaryClubVenue: (...args: unknown[]) => mockUseSetPrimaryClubVenue(...args),
     useCancelClubEvent: (...args: unknown[]) => mockUseCancelClubEvent(...args),
     useDeleteClubEvent: (...args: unknown[]) => mockUseDeleteClubEvent(...args),
     useUpdateClubMemberStatus: (...args: unknown[]) => mockUseUpdateClubMemberStatus(...args),
@@ -195,6 +203,10 @@ beforeEach(() => {
     mockUseCreateClubInvitation.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseRevokeClubInvitation.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseClubEvents.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
+    mockUseClubEventVenues.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
+    mockUseAddClubVenueLink.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseRemoveClubVenueLink.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseSetPrimaryClubVenue.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseCancelClubEvent.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseDeleteClubEvent.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseUpdateClubMemberStatus.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'member-1' }), isPending: false });
@@ -213,12 +225,32 @@ describe('ClubManageScreen', () => {
         expect(getByText('Schedule')).toBeOnTheScreen();
         expect(getByText('Analytics')).toBeOnTheScreen();
         expect(getByText('Events')).toBeOnTheScreen();
+        expect(getByText('Venues')).toBeOnTheScreen();
         expect(getByText('Settings')).toBeOnTheScreen();
         expect(getByText('Members')).toBeOnTheScreen();
         expect(getByText('Join Questions')).toBeOnTheScreen();
         expect(getByText('Lifecycle')).toBeOnTheScreen();
         // Default active tab is Current Book
         expect(getByText('Current book')).toBeOnTheScreen();
+    });
+
+    it('shows a venue management tab for admins and can open venue linking', async () => {
+        mockUseClubEventVenues.mockReturnValue({
+            data: [{ club_id: 'club-1', venue_id: 'venue-1', is_primary: true, venue: { id: 'venue-1', name: 'Central Library', address_line1: '12 Main St', city: 'Bengaluru', verification_status: 'approved' } }],
+            isLoading: false,
+            refetch: jest.fn(),
+        });
+
+        const { getByText, getByTestId } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Venues'));
+
+        await waitFor(() => expect(getByText('Central Library')).toBeOnTheScreen());
+        expect(getByText('Primary')).toBeOnTheScreen();
+
+        fireEvent.press(getByTestId('manage-venues-add'));
+
+        expect(mockRouterPush).toHaveBeenCalledWith('/clubs/club-1/venues?returnTo=manage-venues');
     });
 
     it('shows platform complaints in Reports and resolves them', async () => {

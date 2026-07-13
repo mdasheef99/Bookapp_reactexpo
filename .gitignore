@@ -55,3 +55,6 @@ playwright/.cache/
 .e2e-serve.log
 .worktrees/
 supabase/.temp/
+
+# IDE/tooling artifacts
+.codex/

@@ -2,8 +2,8 @@
 
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
-**Version:** 0.1
-**Date:** 2026-05-19
+**Version:** 0.2
+**Date:** 2026-06-19
 **Status:** Planning draft
 **Depends On:** DOC-1, DOC-2, DOC-3
 **Owns:** Image capture, LLM book extraction, metadata enrichment, owner review, duplicate resolution, inventory publishing, quota accounting, and workflow recovery.
@@ -368,7 +368,7 @@ image_extraction_candidates
   matched_canonical_edition_id
   duplicate_status
   owner_action
-  owner_price_inr
+  owner_price_minor
   owner_quantity
   owner_condition
   owner_location

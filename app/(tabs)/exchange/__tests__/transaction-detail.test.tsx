@@ -53,6 +53,23 @@ beforeEach(() => {
 });
 
 describe('TransactionDetailScreen', () => {
+    it('shows the selected pickup venue for meetup exchanges', () => {
+        mockUseTransactionDetails.mockReturnValue({
+            data: {
+                id: 'txn-1', lender_id: 'lender-1', borrower_id: 'borrower-1', status: 'requested', delivery_type: 'meetup', message: null, awb_number: null, delivery_service: null,
+                pickup_venue: { id: 'venue-1', name: 'Chapter Cafe', address_line1: '12 Market Road', city: 'Delhi', venue_type: 'cafe' },
+                listing: { photos: [], book: { title: 'Atomic Habits', authors: ['James Clear'] } }, lender: { display_name: 'Lender', city: 'Delhi' }, borrower: { display_name: 'Borrower', city: 'Delhi' },
+            },
+            isLoading: false, isError: false, refetch: jest.fn(),
+        });
+
+        const { getByText } = render(<TransactionDetailScreen />);
+
+        expect(getByText('Pickup venue')).toBeOnTheScreen();
+        expect(getByText('Chapter Cafe')).toBeOnTheScreen();
+        expect(getByText('12 Market Road, Delhi')).toBeOnTheScreen();
+    });
+
     it('keeps the meetup confirmation action for approved meetup exchanges', () => {
         mockUseTransactionDetails.mockReturnValue({
             data: {

@@ -146,6 +146,38 @@ export async function getClubEventVenues(clubId: string): Promise<ClubVenueLink[
     }));
 }
 
+export async function addClubVenueLink(clubId: string, venueId: string): Promise<ClubVenueLink> {
+    const { data, error } = await supabase
+        .from('club_venues')
+        .insert({ club_id: clubId, venue_id: venueId, is_primary: false })
+        .select(CLUB_VENUE_SELECT)
+        .single();
+
+    if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to link this venue right now.'));
+    const row = data as unknown as ClubVenueLinkRow;
+    return { ...row, venue: normalizeRelatedOne(row.venue) };
+}
+
+export async function removeClubVenueLink(clubId: string, venueId: string): Promise<void> {
+    const { error } = await supabase
+        .from('club_venues')
+        .delete()
+        .eq('club_id', clubId)
+        .eq('venue_id', venueId);
+
+    if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to unlink this venue right now.'));
+}
+
+export async function setPrimaryClubVenue(clubId: string, venueId: string): Promise<ClubVenueLink> {
+    const { data, error } = await supabase.rpc('set_primary_club_venue', {
+        p_club_id: clubId,
+        p_venue_id: venueId,
+    });
+
+    if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to update the primary venue right now.'));
+    return { ...(data as Omit<ClubVenueLink, 'venue'>), venue: null };
+}
+
 export async function getClubEvents(clubId: string, userId?: string | null): Promise<ClubEventWithDetails[]> {
     const { data, error } = await supabase
         .from('club_events')
