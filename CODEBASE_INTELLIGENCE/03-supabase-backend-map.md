@@ -50,7 +50,8 @@ Important recent marketplace migrations:
 - `supabase/migrations/20260627000001_marketplace_phase2_onboarding_hardening.sql`
 - `supabase/migrations/20260628000001_marketplace_phase2b_application_metadata.sql`
 - `supabase/migrations/20260628000002_marketplace_phase2c_review_metadata.sql`
-- `supabase/migrations/20260628000003_marketplace_phase3_inventory_canonical_listings.sql` - local Phase 3 canonical metadata, private inventory, public listing projection, RLS, and projection trigger. Not yet documented as live-applied.
+- `supabase/migrations/20260628000003_marketplace_phase3_inventory_canonical_listings.sql` - Phase 3 canonical metadata, private inventory, public listing projection, RLS, and projection trigger. Applied live as `20260628181842 marketplace_phase3_inventory_canonical_listings`.
+- `supabase/migrations/20260713000001_marketplace_phase3_public_listing_policy_split.sql` - local least-privilege remediation that separates anonymous public reads from authenticated owner/operator access without granting `anon` access to private helpers. Not live-applied.
 
 Important hardening examples:
 
@@ -100,7 +101,8 @@ Marketplace docs may contain an older typo, `store_verification-docs`; live buck
 - As of 2026-06-28, live migrations include `20260628102752 marketplace_phase2c_review_metadata`.
 - As of 2026-06-28, live Edge Functions include `store-application` version 1 and `store-review` version 1, both with `verify_jwt=true`.
 - Phase 2C authenticated platform-review smoke is pending/skipped until a platform-role test user is intentionally provided.
-- Phase 3 local implementation has started. Do not assume the Phase 3 migration is live until deployment is explicitly recorded.
+- As of 2026-06-29, Phase 3 migration `20260628181842 marketplace_phase3_inventory_canonical_listings` is live and verified. Trigger projection smoke passed, but anonymous public-read smoke is blocked because `marketplace_book_listings` public RLS references `marketplace_sec` helper functions that `anon` cannot execute.
+- The superseded anonymous helper-grant draft was not retained. The local policy-split migration preserves private helper grants and still requires explicit approval before any live application.
 - Supabase advisory at pack creation time reported `public.spatial_ref_sys` has RLS disabled. Do not auto-fix without deciding policies and impact.
 
 ## Security Patterns To Preserve

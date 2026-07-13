@@ -2,7 +2,7 @@
 
 ## Current Marketplace Status
 
-As of 2026-06-28:
+As of 2026-06-29:
 
 - Phase 1 marketplace foundation is live.
 - Phase 2A Store Owner gate/auth hardening is live.
@@ -10,7 +10,7 @@ As of 2026-06-28:
 - Phase 2C platform review/setup entitlements is implemented and deployed.
 - `store-review` has only unauthenticated live smoke (`401`) so far; authenticated platform-review smoke is intentionally pending/skipped unless a platform-role test user is explicitly approved.
 
-Phase 3 manual inventory/projection slice is implemented and live-applied because the pending Phase 2C smoke gate was accepted as pending for this slice.
+Phase 3 manual inventory/projection slice is implemented and live-applied because the pending Phase 2C smoke gate was accepted as pending for this slice. A 2026-06-29 Supabase MCP smoke confirmed the inventory-to-listing trigger projects a publishable row into `marketplace_book_listings`, but anonymous public-read smoke is blocked by an RLS helper execute-permission issue.
 
 ## Read First
 
@@ -128,10 +128,12 @@ Current behavior:
 - `storeInventoryService` validates publishable rows, supports owner-scoped publish, pause, limited edit, duplicate lookup, wildcard-escaped public listing search, and grouped public book results by canonical edition/ISBN with cover URL
 - live Supabase MCP project `ahntbtktjjmvfosgkmgn` has migration `20260628181842 marketplace_phase3_inventory_canonical_listings` applied
 - remote checks confirmed RLS enabled on all six Phase 3 tables, owner/private inventory policies, public listing store-status read gate, and enabled listing sync trigger
+- 2026-06-29 smoke reused store `68b0c1c9-7f70-4388-bd87-298df3a2ded4`, temporarily moved it to active/approved/setup-complete/selling-allowed, inserted inventory row `74690587-c532-4f2c-928f-436bed5602cd`, verified projected listing `9badc801-29ae-4dad-97a8-9e2f7b008026`, then deleted the smoke inventory/listing and restored the store to pending verification/incomplete/not allowed
+- local least-privilege remediation migration `20260713000001_marketplace_phase3_public_listing_policy_split.sql` and its static test split anonymous public reads from authenticated owner/operator access; it does not grant `anon` access to private helper functions and has not been live-applied
 
 Still pending:
 
-- authenticated store-owner smoke against an explicitly approved active/approved/setup-complete/selling-allowed store owner
+- anonymous public-read smoke for `marketplace_book_listings` after resolving the Phase 3 RLS helper permission issue
 - richer owner edit UI beyond the minimal price/quantity edit controls
 - consumer marketplace discovery UI beyond projection service tests
 
@@ -139,6 +141,7 @@ Still pending:
 
 Start with schema and server boundary, not UI polish:
 
-1. Run authenticated Phase 3 store-owner smoke with an approved owner/store fixture.
-2. Add richer owner edit UI and consumer discovery UI on top of the projection service.
-3. Keep Phase 2C authenticated reviewer smoke pending unless a platform-role test user is explicitly approved.
+1. Review and explicitly approve the policy-split migration before live application, then verify the `anon` branch never calls owner/operator helpers.
+2. Rerun Phase 3 smoke end to end with a disposable approved/setup-complete/selling-allowed store, one inventory row, trigger projection, anonymous public read, and cleanup.
+3. Add richer owner edit UI and consumer discovery UI on top of the projection service.
+4. Keep Phase 2C authenticated reviewer smoke pending unless a platform-role test user is explicitly approved.
