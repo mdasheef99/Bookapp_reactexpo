@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View, Text, ScrollView, Image, TouchableOpacity,
     ActivityIndicator, Alert, StyleSheet, Dimensions,
@@ -58,6 +58,12 @@ export default function ListingDetailScreen() {
     );
     const canRequest = !isOwner && isActive && requestDeliveryAvailable && pickupVenueReady && !requestMutation.isPending;
 
+    useEffect(() => {
+        if (selectedDelivery !== 'meetup') {
+            setSelectedPickupVenueId(null);
+        }
+    }, [selectedDelivery]);
+
     const handleRequest = () => {
         if (!currentUserId || !listing || !selectedDelivery) return;
         requestMutation.mutate(
@@ -65,7 +71,9 @@ export default function ListingDetailScreen() {
                 listingId: listing.id,
                 borrowerId: currentUserId,
                 deliveryType: selectedDelivery,
-                pickupVenueId: selectedPickupVenueId ?? undefined,
+                ...(selectedDelivery === 'meetup' && selectedPickupVenueId
+                    ? { pickupVenueId: selectedPickupVenueId }
+                    : {}),
             },
             {
                 onSuccess: (txn) => {

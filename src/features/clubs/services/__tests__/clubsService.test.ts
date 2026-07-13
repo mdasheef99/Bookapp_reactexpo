@@ -51,17 +51,18 @@ describe('clubsService', () => {
     });
 
     it('marks one linked venue as primary for a club', async () => {
-        const clearBuilder = mockQuery({ data: null, error: null });
-        const primaryBuilder = mockQuery({ data: { club_id: 'club-1', venue_id: 'venue-1', is_primary: true }, error: null });
-        (supabase.from as jest.Mock).mockReturnValueOnce(clearBuilder).mockReturnValueOnce(primaryBuilder);
+        (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+            data: { club_id: 'club-1', venue_id: 'venue-1', is_primary: true },
+            error: null,
+        });
 
         const result = await clubsService.setPrimaryClubVenue('club-1', 'venue-1');
 
-        expect(clearBuilder.update).toHaveBeenCalledWith({ is_primary: false });
-        expect(clearBuilder.eq).toHaveBeenCalledWith('club_id', 'club-1');
-        expect(primaryBuilder.update).toHaveBeenCalledWith({ is_primary: true });
-        expect(primaryBuilder.eq).toHaveBeenCalledWith('club_id', 'club-1');
-        expect(primaryBuilder.eq).toHaveBeenCalledWith('venue_id', 'venue-1');
+        expect(supabase.rpc).toHaveBeenCalledTimes(1);
+        expect(supabase.rpc).toHaveBeenCalledWith('set_primary_club_venue', {
+            p_club_id: 'club-1',
+            p_venue_id: 'venue-1',
+        });
         expect(result.is_primary).toBe(true);
     });
 

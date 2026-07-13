@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import ListingDetailScreen from '../[listingId]';
 
 const mockReplace = jest.fn();
@@ -102,5 +102,24 @@ describe('ListingDetailScreen', () => {
         fireEvent.press(getByTestId('exchange-request-cta'));
 
         expect(mockMutate).not.toHaveBeenCalled();
+    });
+
+    it('clears a selected pickup venue when delivery changes away from meetup', async () => {
+        const meetupListing = mockUseListingDetails();
+        const { getByTestId, rerender } = render(<ListingDetailScreen />);
+
+        fireEvent.press(getByTestId('venue-card-venue-1'));
+
+        mockUseListingDetails.mockReturnValue({
+            ...meetupListing,
+            data: { ...meetupListing.data, delivery_options: ['porter'] },
+        });
+        rerender(<ListingDetailScreen />);
+
+        mockUseListingDetails.mockReturnValue(meetupListing);
+        rerender(<ListingDetailScreen />);
+        fireEvent.press(getByTestId('exchange-request-cta'));
+
+        await waitFor(() => expect(mockMutate).not.toHaveBeenCalled());
     });
 });

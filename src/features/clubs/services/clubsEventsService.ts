@@ -169,24 +169,13 @@ export async function removeClubVenueLink(clubId: string, venueId: string): Prom
 }
 
 export async function setPrimaryClubVenue(clubId: string, venueId: string): Promise<ClubVenueLink> {
-    const { error: clearError } = await supabase
-        .from('club_venues')
-        .update({ is_primary: false })
-        .eq('club_id', clubId);
-
-    if (clearError) throw new Error(getClubsEntitlementErrorMessage(clearError, 'Unable to update the primary venue right now.'));
-
-    const { data, error } = await supabase
-        .from('club_venues')
-        .update({ is_primary: true })
-        .eq('club_id', clubId)
-        .eq('venue_id', venueId)
-        .select(CLUB_VENUE_SELECT)
-        .single();
+    const { data, error } = await supabase.rpc('set_primary_club_venue', {
+        p_club_id: clubId,
+        p_venue_id: venueId,
+    });
 
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to update the primary venue right now.'));
-    const row = data as unknown as ClubVenueLinkRow;
-    return { ...row, venue: normalizeRelatedOne(row.venue) };
+    return { ...(data as Omit<ClubVenueLink, 'venue'>), venue: null };
 }
 
 export async function getClubEvents(clubId: string, userId?: string | null): Promise<ClubEventWithDetails[]> {
