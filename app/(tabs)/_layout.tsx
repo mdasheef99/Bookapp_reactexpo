@@ -11,8 +11,6 @@ export default function TabsLayout() {
             <Tabs.Screen name="marketplace/index" options={{ title: 'Marketplace' }} />
             <Tabs.Screen name="clubs" options={{ title: 'Clubs' }} />
             <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
-            <Tabs.Screen name="credit-history" options={{ href: null }} />
-            <Tabs.Screen name="addresses" options={{ href: null }} />
             <Tabs.Screen name="marketplace/store/[storeId]" options={{ href: null }} />
         </Tabs>
     );
