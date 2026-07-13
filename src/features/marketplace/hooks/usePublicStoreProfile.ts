@@ -52,4 +52,4 @@ export function usePublicStoreProfile(storeId: string | null) {
     }, [storeId]);
 
     return { profile, listings, isLoading, error };
-}
+}
