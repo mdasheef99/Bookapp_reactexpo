@@ -1,6 +1,6 @@
 # PHASE-5: Consumer Discovery
 
-**Status:** `in_progress`
+**Status:** `complete`
 **Last updated:** 2026-07-15
 **Phase goal:** Add a consumer marketplace section for bookstore listings inside the current app.
 
@@ -35,15 +35,15 @@
 
 | Unit | Status | Notes |
 |---|---|---|
-| Marketplace route/section | `locally_complete` | Marketplace tab plus nested public-store and public-book availability routes. |
-| Search service/query | `locally_complete` | Reads only `marketplace_book_listings` and `public_store_profiles`; supports ISBN/title/author/store-name search, safe quoted filters, runtime validation, paging, retry, and stale-query protection. |
-| Book result grouping | `locally_complete` | `canonical_edition_id` -> `isbn_13` -> normalized title/authors fallback. All store offers are shown and link to book availability detail. |
-| Store availability cards | `in_progress` | Price, condition, condition notes, availability status, pickup/delivery, locality/city, confirmation message, and public-store navigation. |
-| Public store page | `in_progress` | Reads `public_store_profiles` only. Shows public logo/cover/state/hours/return policy when projected. Excludes private fields. |
-| Consumer disclosures | `in_progress` | Availability disclaimer, confirmation-before-payment, seller/store policy, support positioning. |
-| Lightweight demand capture | `in_progress` | Live private `marketplace_search_events` and `book_demand_signals` tables plus SECURITY DEFINER RPC. No customer identity is exposed to stores. |
-| Single-store cart guardrail | `not_started` | Not needed; no cart skeleton introduced in Phase 5. |
-| Tests | `locally_complete` | Marketplace service, hook, component, screen, route, and schema migration tests pass; TypeScript and production web export pass. |
+| Marketplace route/section | `complete` | Marketplace tab plus nested public-store and public-book availability routes. |
+| Search service/query | `complete` | Reads only `marketplace_book_listings` and `public_store_profiles`; supports ISBN/title/author/store-name search, safe quoted filters, runtime validation, paging, retry, and stale-query protection. |
+| Book result grouping | `complete` | `canonical_edition_id` -> `isbn_13` -> normalized title/authors fallback. All eligible store offers are shown and link to book availability detail. |
+| Store availability cards | `complete` | Price, condition, condition notes, availability status, pickup/delivery, locality/city, confirmation message, and public-store navigation. |
+| Public store page | `complete` | Reads `public_store_profiles` only. Shows public logo/cover/state/hours/return policy when projected. Excludes private fields. |
+| Consumer disclosures | `complete` | Availability disclaimer, confirmation-before-payment, seller/store policy, support positioning. |
+| Lightweight demand capture | `complete` | Live private `marketplace_search_events` and `book_demand_signals` tables plus constrained SECURITY DEFINER RPC. No customer identity is exposed to stores. |
+| Single-store cart guardrail | `complete` (`not_applicable`) | No cart skeleton was introduced in Phase 5. |
+| Tests | `complete` | Marketplace and migration regressions, TypeScript, production web export, and live anonymous/authenticated acceptance smoke pass. |
 
 ---
 
@@ -122,9 +122,21 @@
 - Security advisor findings for the three private demand tables are intentional `RLS enabled with no policy` informational notices; the anonymous-callable SECURITY DEFINER warning is expected for the deliberately public, constrained capture RPC.
 - Live listing, public-profile, search-event, and demand-signal row counts remain zero. No RPC smoke call or disposable fixture was created.
 
-### Pending
+### 2026-07-15: Corrective public-policy migration and live acceptance smoke
 
-- Anonymous/authenticated positive live discovery and demand-RPC smoke require an approved disposable public listing fixture; the migrations and read-only structural verification are complete.
+- The first approved disposable-fixture smoke created a profile/listing projection successfully but both `anon` and `authenticated` returned zero rows. Root cause: the public policy evaluated eligibility through private `stores` RLS.
+- Added red-first regression coverage and migration `20260715000003_marketplace_phase5_public_policy_projection_fix.sql`; the migration replaces private-store policy reads with the trigger-maintained `public_store_profiles` projection plus `marketplace_localities.is_pilot_enabled`.
+- Applied the correction live as `20260715174111 marketplace_phase5_public_policy_projection_fix`. It changes only the three public SELECT policies and adds no table, function, schema, helper, inventory, or analytics grants.
+- Verified the profile projection trigger is enabled for every store INSERT/UPDATE/DELETE. Its blank-search-path SECURITY DEFINER function upserts profiles only for active/approved/setup-complete/selling-allowed stores and deletes them otherwise.
+- Live anonymous and authenticated consumer smoke passed title, author, ISBN-10, ISBN-13, store-name, public-profile, book-detail, canonical grouping, two-store offer comparison, and disabled-locality exclusion checks.
+- Direct private-access checks passed: both roles saw zero private `stores` rows; anonymous inventory access was permission-denied; authenticated non-owner inventory returned zero; both roles were denied raw search/demand tables; anonymous helper-schema access was permission-denied; authenticated non-owner owner/operator checks returned false.
+- Demand RPC smoke passed: valid calls returned boolean true, blank returned false, 201-character input returned SQLSTATE `22023`, the retired two-argument form was absent, identical calls produced two private search events and one demand signal with `signal_count=2`, and the bounded rate counter advanced only to 2. Fixed source, null location, and 90-day expiry were verified.
+- Disabling the enabled fixture locality immediately reduced visible profiles and listings to zero for both roles.
+- Cleanup proof: all fixed-ID fixture localities, stores, profiles, canonical rows, inventory, listings, smoke search/demand rows, and rate rows were zero; total live listing/profile/search/demand/rate rows returned to the zero-row baseline.
+- Post-smoke verification: targeted marketplace and migration Jest passed 8 suites/52 tests; `npx.cmd tsc --noEmit --pretty false` passed; `git diff --check` passed.
+
+### Deferred beyond Phase 5
+
 - Store-facing demand dashboards/aggregate insight surfaces remain later demand-signal work; Phase 5 only captures private zero-result demand safely.
 
 ---
@@ -149,7 +161,7 @@
 
 ## Blockers
 
-- Positive anonymous/authenticated discovery smoke is operationally pending because the live marketplace currently has zero public listing/profile rows; creating a disposable fixture requires separate authorization.
+- None for Phase 5. Existing global payment, delivery, compliance, and unrelated Supabase advisor work remain outside this phase.
 
 ---
 
@@ -173,8 +185,8 @@
 
 Do not implement payment in this phase.
 
-Phase 5 is locally complete and its hardening migrations are live, but it remains `in_progress` overall until anonymous/authenticated positive consumer smoke passes.
+Phase 5 is complete and accepted: implementation, live policy correction, anonymous/authenticated discovery, demand capture, locality-disable behavior, private-boundary denials, and fixture cleanup all pass.
 
 Recommended next steps for Codex/owner:
-1. With separately approved disposable data, run anonymous and authenticated public discovery plus bounded demand-capture smoke, then clean up.
+1. Do not begin Phase 6 without a separate explicit request and plan review.
 2. Keep payment-gated selling, orders, fulfillment, delivery, and Phase 7 commerce out of Phase 5 scope.

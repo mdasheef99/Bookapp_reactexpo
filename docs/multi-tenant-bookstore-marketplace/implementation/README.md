@@ -17,11 +17,11 @@ If you are a new agent, do this before changing files:
 Current handoff as of 2026-07-15:
 
 - Phase 1 foundation and the approved Phase 2/3 migrations are applied to live Supabase project `ahntbtktjjmvfosgkmgn`; Store Owner onboarding and platform review functions are deployed.
-- Phase 5 Consumer Discovery is locally complete and live-hardened after review remediation but remains active until positive public smoke. Phase 4 is locally complete after security/workflow review remediation.
-- Phase 3 anonymous public-read policy split and Phase 5 discovery hardening are deployed and structurally verified. Phase 4 trigger-function EXECUTE hardening and controlled `store-profile` version 1 are also deployed and verified; positive authenticated owner-write smoke remains credential-gated.
+- Phase 5 Consumer Discovery is complete and accepted after live anonymous/authenticated discovery, private-boundary, demand-RPC, locality-disable, and zero-residue cleanup smoke. Phase 6 has not started.
+- Phase 3 anonymous public-read policy split, Phase 5 discovery hardening, and corrective projection-based RLS migration `20260715174111` are deployed and verified. Phase 4 trigger-function EXECUTE hardening and controlled `store-profile` version 1 are also deployed and verified; positive authenticated owner-write smoke remains credential-gated.
 - Local Phase 4 verification passes 13 Store suites/118 tests, TypeScript, and production web export. Authenticated live profile/setup smoke has not run because an approved disposable owner credential is unavailable.
-- Local Phase 5 verification passes 8 relevant suites/54 tests, TypeScript, production web export, and diff check. Live anonymous/authenticated positive discovery smoke is fixture-gated; no disposable data or RPC smoke write has been authorized or created.
-- Continue Phase 5 only on public projections. Keep orders, payments, delivery, settlement, and image-to-LLM work in their designated later phases.
+- Final Phase 5 verification passes targeted marketplace/migration Jest 8 suites/52 tests, TypeScript, prior production web export, live role-level smoke, and cleanup verification. No disposable rows remain.
+- Do not begin Phase 6 without a separate explicit request and plan review. Keep payments, delivery, settlement, and image-to-LLM work in their designated later phases.
 
 ## Before Coding
 
