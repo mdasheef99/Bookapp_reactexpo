@@ -63,29 +63,6 @@ function toCamelCase(row: DbProfileRow): StoreProfile {
     };
 }
 
-function toSnakeCasePayload(input: StoreProfileInput): Record<string, unknown> {
-    const payload: Record<string, unknown> = {};
-    const mapping: Record<string, string> = {
-        displayName: 'display_name',
-        description: 'description',
-        logoUrl: 'logo_url',
-        coverUrl: 'cover_url',
-        operatingHours: 'operating_hours',
-        pickupEnabled: 'pickup_enabled',
-        deliveryEnabled: 'delivery_enabled',
-        minimumDeliveryOrderValueMinor: 'minimum_delivery_order_value_minor',
-        returnPolicyType: 'return_policy_type',
-    };
-
-    for (const [camel, snake] of Object.entries(mapping)) {
-        if (camel in input) {
-            payload[snake] = (input as Record<string, unknown>)[camel];
-        }
-    }
-
-    return payload;
-}
-
 function validateReturnPolicyType(value: string): void {
     if (!RETURN_POLICY_TYPES.includes(value as typeof RETURN_POLICY_TYPES[number])) {
         throw new Error('Invalid return_policy_type');
@@ -159,15 +136,21 @@ export const storeProfileService = {
             validateOperatingHours(input.operatingHours as Record<string, unknown>);
         }
 
-        const payload = toSnakeCasePayload(input);
-
-        const { error } = await supabase
-            .from('stores')
-            .update(payload)
-            .eq('id', storeId);
+        const { data, error } = await supabase.functions.invoke('store-profile', {
+            body: { type: 'update_profile', storeId, payload: input },
+        });
 
         if (error) throw error;
+        if (!data?.profile) throw new Error('Store profile update returned no profile');
 
-        return storeProfileService.getProfile(storeId);
+        return toCamelCase(data.profile as DbProfileRow);
+    },
+
+    async completeSetup(storeId: string): Promise<void> {
+        const { error } = await supabase.functions.invoke('store-profile', {
+            body: { type: 'complete_setup', storeId },
+        });
+
+        if (error) throw error;
     },
 };

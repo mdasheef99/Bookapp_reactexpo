@@ -232,3 +232,28 @@ describe('storeOwnerService application actions', () => {
         });
     });
 });
+
+describe('storeOwnerService.getSetupChecklist', () => {
+    beforeEach(() => jest.clearAllMocks());
+
+    it('does not mark non-ready payout or restricted subscription states complete', async () => {
+        const storeBuilder = createBuilder({
+            data: {
+                id: 'store-1', display_name: 'Reader Lane Books', status: 'approved_pending_setup',
+                verification_status: 'approved', setup_status: 'incomplete', selling_status: 'not_allowed',
+                operating_hours: { monday: {} }, pickup_enabled: true, delivery_enabled: false,
+                return_policy_type: 'returns_within_7_days', payout_account_status: 'not_started',
+                seller_agreement_accepted_at: '2026-06-28T00:00:00Z',
+                prohibited_items_policy_accepted_at: '2026-06-28T00:00:00Z',
+            },
+            error: null,
+        });
+        const subscriptionBuilder = createBuilder({ data: { status: 'restricted' }, error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(storeBuilder).mockReturnValueOnce(subscriptionBuilder);
+
+        const result = await storeOwnerService.getSetupChecklist('store-1');
+
+        expect(result.checklist.find((item) => item.key === 'payout')?.isComplete).toBe(false);
+        expect(result.checklist.find((item) => item.key === 'subscription')?.isComplete).toBe(false);
+    });
+});

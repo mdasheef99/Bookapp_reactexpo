@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useStoreOwnerGate } from '../hooks/useStoreOwnerGate';
 import { storeOwnerService } from '../services/storeOwnerService';
+import { storeProfileService } from '../services/storeProfileService';
 import type { StoreSetupChecklist } from '../types';
 
 function titleCase(value: string) {
@@ -26,6 +28,7 @@ export default function StoreSetupChecklistScreen() {
     const storeId = gateState && 'storeId' in gateState ? gateState.storeId : null;
     const [setup, setSetup] = useState<StoreSetupChecklist | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [isCompleting, setIsCompleting] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -47,6 +50,23 @@ export default function StoreSetupChecklistScreen() {
     const isBlocked = useMemo(() => {
         return setup?.storeStatus === 'suspended' || setup?.storeStatus === 'selling_restricted';
     }, [setup?.storeStatus]);
+    const isApprovedSetup = setup?.storeStatus === 'approved_pending_setup';
+    const canComplete = Boolean(setup?.checklist.every((item) => item.isComplete));
+
+    async function handleCompleteSetup() {
+        if (!storeId) return;
+        setIsCompleting(true);
+        setError(null);
+        try {
+            await storeProfileService.completeSetup(storeId);
+            await gateQuery.refetch?.();
+            router.replace('/(store-owner)/dashboard');
+        } catch {
+            setError('Setup could not be completed. Review the remaining requirements and try again.');
+        } finally {
+            setIsCompleting(false);
+        }
+    }
 
     if (gateQuery.isLoading || (!setup && !error)) {
         return (
@@ -102,6 +122,26 @@ export default function StoreSetupChecklistScreen() {
                                 </View>
                             ))}
                         </View>
+                        {isApprovedSetup ? (
+                            <View style={styles.actions}>
+                                <TouchableOpacity
+                                    style={[styles.secondaryAction, { borderColor: colors.border }]}
+                                    onPress={() => router.push('/(store-owner)/storefront')}
+                                >
+                                    <Text style={[styles.actionText, { color: colors.textPrimary }]}>Edit store settings</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    accessibilityState={{ disabled: !canComplete || isCompleting }}
+                                    disabled={!canComplete || isCompleting}
+                                    style={[styles.primaryAction, { backgroundColor: colors.accent, opacity: canComplete ? 1 : 0.5 }]}
+                                    onPress={handleCompleteSetup}
+                                >
+                                    <Text style={[styles.actionText, { color: '#FFFFFF' }]}>
+                                        {isCompleting ? 'Completing...' : 'Complete setup'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        ) : null}
                     </>
                 ) : null}
             </ScrollView>
@@ -173,5 +213,26 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '700',
         marginBottom: 16,
+    },
+    actions: {
+        marginTop: 18,
+        gap: 10,
+    },
+    primaryAction: {
+        minHeight: 48,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    secondaryAction: {
+        minHeight: 48,
+        borderRadius: 10,
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    actionText: {
+        fontSize: 14,
+        fontWeight: '800',
     },
 });

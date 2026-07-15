@@ -1,7 +1,9 @@
-import { render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { router } from 'expo-router';
 import StoreSetupChecklistScreen from '../StoreSetupChecklistScreen';
 import { useStoreOwnerGate } from '../../hooks/useStoreOwnerGate';
 import { storeOwnerService } from '../../services/storeOwnerService';
+import { storeProfileService } from '../../services/storeProfileService';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('@/features/auth/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'user-1' } }) }));
@@ -10,6 +12,12 @@ jest.mock('../../services/storeOwnerService', () => ({
     storeOwnerService: {
         getSetupChecklist: jest.fn(),
     },
+}));
+jest.mock('../../services/storeProfileService', () => ({
+    storeProfileService: { completeSetup: jest.fn() },
+}));
+jest.mock('expo-router', () => ({
+    router: { push: jest.fn(), replace: jest.fn() },
 }));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
@@ -52,6 +60,7 @@ describe('StoreSetupChecklistScreen', () => {
             isLoading: false,
         });
         (storeOwnerService.getSetupChecklist as jest.Mock).mockResolvedValue(baseSetup);
+        (storeProfileService.completeSetup as jest.Mock).mockResolvedValue(undefined);
     });
 
     it('shows approved pending setup without selling enabled', async () => {
@@ -86,5 +95,23 @@ describe('StoreSetupChecklistScreen', () => {
         await waitFor(() => expect(screen.getByText('Subscription: Trialing')).toBeTruthy());
         expect(screen.queryByText('Manage platform subscriptions')).toBeNull();
         expect(screen.queryByText('Create plan')).toBeNull();
+    });
+
+    it('links approved owners to setup settings and completes setup through the controlled boundary', async () => {
+        const readySetup = {
+            ...baseSetup,
+            payoutAccountStatus: 'verified',
+            checklist: baseSetup.checklist.map((item) => ({ ...item, isComplete: true })),
+        };
+        (storeOwnerService.getSetupChecklist as jest.Mock).mockResolvedValue(readySetup);
+        const screen = render(<StoreSetupChecklistScreen />);
+
+        await waitFor(() => expect(screen.getByText('Edit store settings')).toBeTruthy());
+        fireEvent.press(screen.getByText('Edit store settings'));
+        expect(router.push).toHaveBeenCalledWith('/(store-owner)/storefront');
+
+        fireEvent.press(screen.getByText('Complete setup'));
+        await waitFor(() => expect(storeProfileService.completeSetup).toHaveBeenCalledWith('store-1'));
+        expect(router.replace).toHaveBeenCalledWith('/(store-owner)/dashboard');
     });
 });

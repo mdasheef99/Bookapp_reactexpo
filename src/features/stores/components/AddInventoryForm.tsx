@@ -18,7 +18,7 @@ export interface AddInventoryFormProps {
         condition: MarketplaceBookCondition;
         publicNotes: string;
         shelfLocation: string;
-    }) => Promise<void>;
+    }) => Promise<boolean>;
     onCheckDuplicates: (isbn13: string, title: string, author: string) => Promise<void>;
     duplicates: StoreInventoryItem[];
     isSaving: boolean;
@@ -45,7 +45,7 @@ export default function AddInventoryForm({
     const [shelfLocation, setShelfLocation] = useState('');
 
     async function handleSaveDraft() {
-        await onSaveDraft({
+        const didSave = await onSaveDraft({
             title,
             author,
             isbn13,
@@ -55,6 +55,7 @@ export default function AddInventoryForm({
             publicNotes,
             shelfLocation,
         });
+        if (!didSave) return;
         setTitle('');
         setAuthor('');
         setIsbn13('');

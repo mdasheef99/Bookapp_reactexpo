@@ -37,7 +37,7 @@ export default function InventoryItem({
     const { colors } = useTheme();
     const isLowStock = item.quantity_available === 1;
     const isOutOfStock = item.quantity_available === 0;
-    const canPublish = item.visibility_status !== 'published' && item.listing_quality_status === 'ready';
+    const canPublish = item.visibility_status !== 'published' && item.visibility_status !== 'blocked';
     const canPause = item.visibility_status === 'published';
 
     return (

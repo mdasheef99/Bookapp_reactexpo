@@ -38,6 +38,7 @@ type StoreSetupRow = StoreRow & {
     payout_account_status?: string | null;
     seller_agreement_accepted_at?: string | null;
     prohibited_items_policy_accepted_at?: string | null;
+    support_policy_accepted_at?: string | null;
 };
 
 type SubscriptionRow = {
@@ -197,6 +198,7 @@ export const storeOwnerService = {
                 'payout_account_status',
                 'seller_agreement_accepted_at',
                 'prohibited_items_policy_accepted_at',
+                'support_policy_accepted_at',
             ].join(', '))
             .eq('id', storeId)
             .maybeSingle();
@@ -216,6 +218,9 @@ export const storeOwnerService = {
         const operatingHours = row.operating_hours ?? {};
         const hasOperatingHours = Object.keys(operatingHours).length > 0;
         const hasReturnPolicy = Boolean(row.return_policy_type && row.return_policy_type !== 'no_returns');
+        const hasReadyPayout = row.payout_account_status === 'ready' || row.payout_account_status === 'verified';
+        const subscriptionStatus = (subscription as SubscriptionRow | null)?.status ?? 'not_started';
+        const hasEligibleSubscription = ['trialing', 'active', 'grace_period'].includes(subscriptionStatus);
 
         return {
             storeId,
@@ -225,21 +230,22 @@ export const storeOwnerService = {
             setupStatus: row.setup_status ?? 'incomplete',
             sellingStatus: row.selling_status ?? 'not_allowed',
             payoutAccountStatus: row.payout_account_status ?? 'not_started',
-            subscriptionStatus: (subscription as SubscriptionRow | null)?.status ?? 'not_started',
+            subscriptionStatus,
             checklist: [
                 { key: 'verification', label: 'Verification approved', isComplete: row.verification_status === 'approved' },
                 { key: 'profile', label: 'Public profile basics', isComplete: Boolean(row.display_name) },
                 { key: 'hours', label: 'Operating hours', isComplete: hasOperatingHours },
                 { key: 'fulfillment', label: 'Pickup or delivery setting', isComplete: Boolean(row.pickup_enabled || row.delivery_enabled) },
                 { key: 'return_policy', label: 'Return policy chosen', isComplete: hasReturnPolicy },
-                { key: 'payout', label: 'Payout status shown', isComplete: Boolean(row.payout_account_status) },
-                { key: 'subscription', label: 'Subscription or trial status', isComplete: Boolean((subscription as SubscriptionRow | null)?.status) },
+                { key: 'payout', label: 'Payout account ready', isComplete: hasReadyPayout },
+                { key: 'subscription', label: 'Subscription or trial active', isComplete: hasEligibleSubscription },
                 { key: 'seller_agreement', label: 'Seller agreement accepted', isComplete: Boolean(row.seller_agreement_accepted_at) },
                 {
                     key: 'prohibited_policy',
                     label: 'Prohibited-items policy accepted',
                     isComplete: Boolean(row.prohibited_items_policy_accepted_at),
                 },
+                { key: 'support_policy', label: 'Support policy accepted', isComplete: Boolean(row.support_policy_accepted_at) },
             ],
         };
     },

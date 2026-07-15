@@ -51,30 +51,54 @@ describe('MarketplaceSearchScreen', () => {
             results: [],
             isLoading: false,
             error: null,
-            search: jest.fn(),
+            searchNow: jest.fn(),
+            retry: jest.fn(),
         });
     });
 
     it('shows an initial browse guidance state before the user searches', () => {
         const screen = render(<MarketplaceSearchScreen />);
 
-        expect(screen.getByText(/Search by title or ISBN to compare local bookstore availability/i)).toBeOnTheScreen();
+        expect(screen.getByText(/Search by title, author, or ISBN to compare local bookstore availability/i)).toBeOnTheScreen();
         expect(screen.getByTestId('marketplace-search-input').props['data-autofocus']).toBe('false');
     });
 
     it('runs an immediate search when the keyboard submit action fires', () => {
-        const search = jest.fn();
+        const searchNow = jest.fn();
         (useMarketplaceSearch as jest.Mock).mockReturnValue({
             results: [],
             isLoading: false,
             error: null,
-            search,
+            searchNow,
+            retry: jest.fn(),
         });
         const screen = render(<MarketplaceSearchScreen />);
 
         fireEvent.changeText(screen.getByLabelText('marketplace-search'), 'The Bookshop');
         fireEvent.press(screen.getByLabelText('submit-search'));
 
-        expect(search).toHaveBeenCalledWith('The Bookshop');
+        expect(searchNow).toHaveBeenCalledWith('The Bookshop');
+    });
+
+    it('advertises author search in initial and empty-result guidance', () => {
+        const screen = render(<MarketplaceSearchScreen />);
+
+        expect(screen.getByText(/title, author, or ISBN/i)).toBeOnTheScreen();
+        expect(screen.queryByText(/Author search is not yet available/i)).not.toBeOnTheScreen();
+    });
+
+    it('offers retry after a search failure', () => {
+        const retry = jest.fn();
+        (useMarketplaceSearch as jest.Mock).mockReturnValue({
+            results: [],
+            isLoading: false,
+            error: 'Search failed.',
+            searchNow: jest.fn(),
+            retry,
+        });
+        const screen = render(<MarketplaceSearchScreen />);
+
+        fireEvent.press(screen.getByLabelText('Retry marketplace search'));
+        expect(retry).toHaveBeenCalledTimes(1);
     });
 });

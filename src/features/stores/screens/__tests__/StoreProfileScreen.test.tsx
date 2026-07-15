@@ -81,10 +81,6 @@ describe('StoreProfileScreen', () => {
         return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
     }
 
-    afterEach(() => {
-        queryClient.clear();
-    });
-
     it('shows the store display name and description in the profile section', async () => {
         const { findByText } = renderWithProviders(<StoreProfileScreen />);
 
@@ -123,7 +119,7 @@ describe('StoreProfileScreen', () => {
     });
 
     it('saves profile basics independently', async () => {
-        const { findByDisplayValue, getByTestId } = renderWithProviders(<StoreProfileScreen />);
+        const { findByDisplayValue, findByText, getByTestId } = renderWithProviders(<StoreProfileScreen />);
 
         const nameInput = await findByDisplayValue('My Bookstore');
         fireEvent.changeText(nameInput, 'Updated Books');
@@ -135,6 +131,7 @@ describe('StoreProfileScreen', () => {
                 description: 'A cozy independent bookstore',
             }));
         });
+        await expect(findByText('Store settings saved.')).resolves.toBeTruthy();
     });
 
     it('saves policies with the agreed return policy values', async () => {
@@ -149,6 +146,7 @@ describe('StoreProfileScreen', () => {
                 returnPolicyType: 'no_returns_except_wrong_item',
             }));
         });
+        await expect(findByText('Store settings saved.')).resolves.toBeTruthy();
     });
 
     it('saves fulfillment settings independently', async () => {
@@ -165,6 +163,19 @@ describe('StoreProfileScreen', () => {
                 minimumDeliveryOrderValueMinor: 45000,
             }));
         });
+        await expect(findByText('Store settings saved.')).resolves.toBeTruthy();
+    });
+
+    it('shows a recoverable error without discarding profile edits', async () => {
+        (storeProfileService.updateProfile as jest.Mock).mockRejectedValue(new Error('Write failed'));
+        const { findByDisplayValue, findByText, getByTestId } = renderWithProviders(<StoreProfileScreen />);
+
+        const nameInput = await findByDisplayValue('My Bookstore');
+        fireEvent.changeText(nameInput, 'Keep this store name');
+        fireEvent.press(getByTestId('save-profile-section'));
+
+        await expect(findByText('Could not save store settings. Please try again.')).resolves.toBeTruthy();
+        expect(getByTestId('profile-display-name').props.value).toBe('Keep this store name');
     });
 
     it('blocks access when gate state is not active_owner', async () => {
@@ -178,6 +189,18 @@ describe('StoreProfileScreen', () => {
         await waitFor(() => {
             expect(queryByText('My Bookstore')).toBeNull();
         });
+    });
+
+    it('allows an approved owner to edit the profile needed to complete setup', async () => {
+        (useStoreOwnerGate as jest.Mock).mockReturnValue({
+            data: { state: 'approved_pending_setup', storeId: 'test-store-1', storeName: 'My Bookstore' },
+            isLoading: false,
+        });
+
+        const { findByText } = renderWithProviders(<StoreProfileScreen />);
+
+        await expect(findByText('Operating Hours')).resolves.toBeTruthy();
+        await expect(findByText('Fulfillment')).resolves.toBeTruthy();
     });
 
     it('shows a loading indicator while profile is loading', async () => {

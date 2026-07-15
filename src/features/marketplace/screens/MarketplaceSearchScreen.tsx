@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { SearchBar } from '@/components/search/SearchBar';
 import { useTheme } from '@/hooks/useTheme';
@@ -10,12 +11,12 @@ import { MarketplaceDisclosure } from '../components/MarketplaceDisclosure';
 export default function MarketplaceSearchScreen() {
     const { colors } = useTheme();
     const [query, setQuery] = useState('');
-    const { results, isLoading, error, search } = useMarketplaceSearch(query);
+    const { results, storeResults = [], isLoading, error, searchNow, retry } = useMarketplaceSearch(query);
 
     const handleSubmit = () => {
         const trimmed = query.trim();
         if (trimmed) {
-            void search(trimmed);
+            void searchNow(trimmed);
         }
     };
 
@@ -36,15 +37,22 @@ export default function MarketplaceSearchScreen() {
                     onClear={() => setQuery('')}
                     loading={isLoading}
                     autoFocus={false}
-                    placeholder="Search by title or ISBN..."
+                    placeholder="Search by title, author, or ISBN..."
                 />
 
                 <MarketplaceDisclosure />
 
                 {error ? (
-                    <Text style={[styles.error, { color: colors.error }]}>
-                        {error}
-                    </Text>
+                    <View style={styles.errorBlock}>
+                        <Text style={[styles.error, { color: colors.error }]}>{error}</Text>
+                        <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Retry marketplace search"
+                            onPress={() => void retry()}
+                        >
+                            <Text style={[styles.retry, { color: colors.accent }]}>Retry</Text>
+                        </Pressable>
+                    </View>
                 ) : null}
 
                 {isLoading ? (
@@ -56,19 +64,44 @@ export default function MarketplaceSearchScreen() {
                 {!isLoading && !query.trim() && !error ? (
                     <View style={styles.emptyContainer}>
                         <Text style={[styles.emptyBody, { color: colors.textSecondary }]}>
-                            Search by title or ISBN to compare local bookstore availability.
+                            Search by title, author, or ISBN to compare local bookstore availability.
                         </Text>
                     </View>
                 ) : null}
 
-                {!isLoading && query.trim() && results.length === 0 && !error ? (
+                {!isLoading && query.trim() && results.length === 0 && storeResults.length === 0 && !error ? (
                     <View style={styles.emptyContainer}>
                         <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
                             No results found
                         </Text>
                         <Text style={[styles.emptyBody, { color: colors.textSecondary }]}>
-                            Try a different title or ISBN. Author search is not yet available.
+                            Try a different title, author, or ISBN.
                         </Text>
+                    </View>
+                ) : null}
+
+                {!isLoading && storeResults.length > 0 ? (
+                    <View style={styles.resultsList}>
+                        <Text style={[styles.resultsCount, { color: colors.textSecondary }]}>Bookstores</Text>
+                        {storeResults.map((store) => (
+                            <Pressable
+                                key={store.storeId}
+                                accessibilityRole="button"
+                                accessibilityLabel={`View ${store.displayName} public store page`}
+                                onPress={() => router.push({
+                                    pathname: '/marketplace/store/[storeId]',
+                                    params: { storeId: store.storeId },
+                                })}
+                                style={[styles.storeResult, { borderColor: colors.border }]}
+                            >
+                                <Text style={[styles.storeResultName, { color: colors.textPrimary }]}>
+                                    {store.displayName}
+                                </Text>
+                                <Text style={[styles.emptyBody, { color: colors.textSecondary }]}>
+                                    {[store.localityName, store.city].filter(Boolean).join(', ')}
+                                </Text>
+                            </Pressable>
+                        ))}
                     </View>
                 ) : null}
 
@@ -109,6 +142,13 @@ const styles = StyleSheet.create({
     error: {
         fontSize: 13,
     },
+    errorBlock: {
+        gap: 6,
+    },
+    retry: {
+        fontSize: 13,
+        fontWeight: '700',
+    },
     emptyContainer: {
         paddingVertical: 30,
         alignItems: 'center',
@@ -127,5 +167,15 @@ const styles = StyleSheet.create({
     },
     resultsCount: {
         fontSize: 12,
+    },
+    storeResult: {
+        borderWidth: 1,
+        borderRadius: 10,
+        padding: 12,
+        gap: 2,
+    },
+    storeResultName: {
+        fontSize: 14,
+        fontWeight: '700',
     },
 });

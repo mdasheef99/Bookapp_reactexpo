@@ -1,7 +1,7 @@
 # PHASE-3: Inventory, Canonical Books, and Listings
 
 **Status:** `in_progress`
-**Last updated:** 2026-06-29
+**Last updated:** 2026-07-15
 **Phase goal:** Build manual inventory and public listing projection before image-to-LLM automation.
 
 ---
@@ -51,6 +51,7 @@
 - 2026-06-28: Supabase MCP project `ahntbtktjjmvfosgkmgn` confirmed as the configured BookConnect Expo backend. Migration applied live as `20260628181842 marketplace_phase3_inventory_canonical_listings`; remote SQL verification confirmed all six Phase 3 tables have RLS enabled, the owner/private and public listing policies exist, and `sync_marketplace_listing_from_inventory_trg` is enabled.
 - 2026-06-29: Supabase MCP re-check confirmed Phase 3 migration remains live as `20260628181842 marketplace_phase3_inventory_canonical_listings`; all six Phase 3 tables have RLS enabled and the listing projection trigger is enabled. Reused disposable owner fixture `test@example.com` / store `68b0c1c9-7f70-4388-bd87-298df3a2ded4`, temporarily moved it to `active` / `approved` / `complete` / `allowed`, inserted inventory row `74690587-c532-4f2c-928f-436bed5602cd` for `The Hobbit` ISBN `9780547928227`, and verified trigger-created listing `9badc801-29ae-4dad-97a8-9e2f7b008026` in `marketplace_book_listings`. Cleanup deleted the smoke inventory/listing rows and restored the store to `pending_verification` / `pending` / `incomplete` / `not_allowed`; final store inventory/listing counts were both 0.
 - 2026-06-29: Anonymous public-read smoke with `SET LOCAL ROLE anon` failed with `permission denied for function is_store_admin`. Root cause: the Phase 3 public listing RLS policy is `TO anon, authenticated` but includes owner/operator helper branches (`marketplace_sec.is_store_admin`, `marketplace_sec.is_platform_operator`) whose execute permissions were intentionally revoked from `anon` in Phase 1. The helper-grant draft was rejected because it broadened anonymous access to private SECURITY DEFINER helpers. Local least-privilege migration `20260713000001_marketplace_phase3_public_listing_policy_split.sql` instead separates the anonymous public-only policy from authenticated public/owner/operator access and has focused static coverage. It has not been live-applied.
+- 2026-07-15: Supabase advisor review found `public.sync_marketplace_listing_from_inventory()` remained executable by client roles even though it is a SECURITY DEFINER trigger helper. Local migration `20260715000001_marketplace_phase4_security_hardening.sql` revokes EXECUTE from `PUBLIC`, `anon`, and `authenticated`, retains `service_role`, and has static coverage. It has not been live-applied.
 
 ---
 
@@ -70,6 +71,7 @@
 
 - Phase 2C authenticated platform-review smoke remains intentionally pending; Phase 3 proceeded per 2026-06-28 handoff without granting platform roles.
 - Live anonymous public listing reads are blocked until the Phase 3 listing RLS policy is remediated. The local policy-split migration avoids granting `anon` access to owner/operator helpers, but still requires explicit security approval before live application.
+- The listing projection trigger helper EXECUTE hardening was applied live on 2026-07-15. Verification confirms `anon` and `authenticated` cannot execute it while `service_role` can.
 
 ---
 

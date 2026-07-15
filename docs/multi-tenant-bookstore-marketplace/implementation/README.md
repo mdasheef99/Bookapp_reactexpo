@@ -14,14 +14,14 @@ If you are a new agent, do this before changing files:
 4. Read [`../DOC-12-build-strategy-and-implementation-sequence.md`](../DOC-12-build-strategy-and-implementation-sequence.md) for phase order, risk gates, and coding-agent rules.
 5. Read the source docs referenced by the active phase tracker.
 
-Current handoff as of 2026-06-24:
+Current handoff as of 2026-07-15:
 
-- Phase 1 foundation schema/security migrations are applied to the live Supabase project and refreshed through Supabase MCP.
-- Phase 2 Store Onboarding and Verification is the active planning target.
-- Store Owner routes, onboarding screens, and platform review UI have not been implemented yet.
-- The live private seller document bucket is `seller-verification-docs`.
-- The next expected work is review of a Phase 2 implementation plan before feature coding.
-- Do not build inventory, orders, payments, delivery, or image-to-LLM workflows until their later phase trackers are active.
+- Phase 1 foundation and the approved Phase 2/3 migrations are applied to live Supabase project `ahntbtktjjmvfosgkmgn`; Store Owner onboarding and platform review functions are deployed.
+- Phase 5 Consumer Discovery is locally complete after review remediation but remains active until live hardening and public smoke. Phase 4 is locally complete after security/workflow review remediation.
+- Phase 3 anonymous public-read policy split and Phase 5 discovery hardening remain local-only. Phase 4 trigger-function EXECUTE hardening and controlled `store-profile` version 1 are deployed and verified; positive authenticated owner-write smoke remains credential-gated.
+- Local Phase 4 verification passes 13 Store suites/118 tests, TypeScript, and production web export. Authenticated live profile/setup smoke has not run because an approved disposable owner credential is unavailable.
+- Local Phase 5 verification passes 8 relevant suites/54 tests, TypeScript, production web export, and diff check. Live anonymous/authenticated discovery smoke is migration- and fixture-gated.
+- Continue Phase 5 only on public projections. Keep orders, payments, delivery, settlement, and image-to-LLM work in their designated later phases.
 
 ## Before Coding
 

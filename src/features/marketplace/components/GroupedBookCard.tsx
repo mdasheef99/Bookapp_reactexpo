@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
 import type { GroupedBookResult } from '../types';
 import { StoreOfferCard } from './StoreOfferCard';
@@ -72,6 +73,17 @@ export function GroupedBookCard({ result }: GroupedBookCardProps) {
                     ))}
                 </View>
             ) : null}
+            <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`View availability for ${result.title}`}
+                onPress={() => router.push({
+                    pathname: '/marketplace/book/[listingId]',
+                    params: { listingId: result.offers[0].id },
+                })}
+                style={styles.detailsLink}
+            >
+                <Text style={[styles.detailsLinkText, { color: colors.accent }]}>View availability</Text>
+            </Pressable>
         </View>
     );
 }
@@ -124,5 +136,13 @@ const styles = StyleSheet.create({
     },
     offersList: {
         gap: 8,
+    },
+    detailsLink: {
+        alignSelf: 'flex-start',
+        paddingVertical: 4,
+    },
+    detailsLinkText: {
+        fontSize: 12,
+        fontWeight: '700',
     },
 });

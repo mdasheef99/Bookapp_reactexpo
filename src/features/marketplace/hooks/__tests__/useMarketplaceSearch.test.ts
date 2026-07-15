@@ -6,6 +6,7 @@ import type { GroupedBookResult } from '../../types';
 jest.mock('../../services/consumerDiscoveryService', () => ({
     consumerDiscoveryService: {
         searchMarketplaceBooks: jest.fn(),
+        searchPublicStores: jest.fn(),
     },
 }));
 
@@ -49,6 +50,7 @@ describe('useMarketplaceSearch', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         jest.useFakeTimers();
+        (consumerDiscoveryService.searchPublicStores as jest.Mock).mockResolvedValue([]);
     });
 
     afterEach(() => {
@@ -93,5 +95,19 @@ describe('useMarketplaceSearch', () => {
         });
 
         expect(result.current.results[0]?.title).toBe('New Result');
+    });
+
+    it('cancels the pending debounce when an immediate search is submitted', async () => {
+        (consumerDiscoveryService.searchMarketplaceBooks as jest.Mock).mockResolvedValue([]);
+        const { result } = renderHook(() => useMarketplaceSearch('The Bookshop', 400));
+
+        await act(async () => {
+            await result.current.searchNow('The Bookshop');
+        });
+        act(() => {
+            jest.advanceTimersByTime(400);
+        });
+
+        expect(consumerDiscoveryService.searchMarketplaceBooks).toHaveBeenCalledTimes(1);
     });
 });

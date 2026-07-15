@@ -95,7 +95,7 @@ export function useStoreInventory(storeId: string | null) {
             publicNotes: string;
             shelfLocation: string;
         }) => {
-            if (!storeId) return;
+            if (!storeId) return false;
             setIsSaving(true);
             setMessage(null);
             try {
@@ -114,8 +114,10 @@ export function useStoreInventory(storeId: string | null) {
                 setMessage('Inventory draft saved.');
                 await loadItems();
                 setDuplicates([]);
+                return true;
             } catch {
                 setMessage('Could not save inventory draft.');
+                return false;
             } finally {
                 setIsSaving(false);
             }
@@ -232,8 +234,8 @@ export function useStoreInventory(storeId: string | null) {
     }, []);
 
     const selectAll = useCallback(() => {
-        setSelectedIds(new Set(items.map((item) => item.id)));
-    }, [items]);
+        setSelectedIds(new Set(filteredItems.map((item) => item.id)));
+    }, [filteredItems]);
 
     const clearSelection = useCallback(() => {
         setSelectedIds(new Set());

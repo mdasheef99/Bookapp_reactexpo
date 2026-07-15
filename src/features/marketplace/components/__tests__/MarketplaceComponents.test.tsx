@@ -88,4 +88,15 @@ describe('GroupedBookCard', () => {
 
         expect(screen.getByTestId('marketplace-book-cover')).toBeOnTheScreen();
     });
+
+    it('navigates to public book availability details', () => {
+        const screen = render(<GroupedBookCard result={grouped} />);
+
+        fireEvent.press(screen.getByLabelText('View availability for The Bookshop'));
+
+        expect(router.push).toHaveBeenCalledWith({
+            pathname: '/marketplace/book/[listingId]',
+            params: { listingId: 'listing-1' },
+        });
+    });
 });

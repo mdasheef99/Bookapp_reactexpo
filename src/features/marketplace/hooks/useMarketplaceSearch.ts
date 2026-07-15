@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GroupedBookResult } from '../types';
+import type { PublicStoreProfile } from '../types';
 import { consumerDiscoveryService } from '../services/consumerDiscoveryService';
 
 /**
@@ -11,6 +12,7 @@ import { consumerDiscoveryService } from '../services/consumerDiscoveryService';
  */
 export function useMarketplaceSearch(query: string, debounceMs = 400) {
     const [results, setResults] = useState<GroupedBookResult[]>([]);
+    const [storeResults, setStoreResults] = useState<PublicStoreProfile[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -23,15 +25,20 @@ export function useMarketplaceSearch(query: string, debounceMs = 400) {
             setIsLoading(true);
             setError(null);
             try {
-                const grouped = await consumerDiscoveryService.searchMarketplaceBooks(searchQuery);
+                const [grouped, stores] = await Promise.all([
+                    consumerDiscoveryService.searchMarketplaceBooks(searchQuery),
+                    consumerDiscoveryService.searchPublicStores(searchQuery),
+                ]);
                 if (requestId === requestIdRef.current) {
                     setResults(grouped);
+                    setStoreResults(stores);
                 }
             } catch (err) {
                 if (requestId === requestIdRef.current) {
                     const message = err instanceof Error ? err.message : 'Search failed.';
                     setError(message);
                     setResults([]);
+                    setStoreResults([]);
                 }
             } finally {
                 if (requestId === requestIdRef.current) {
@@ -42,6 +49,22 @@ export function useMarketplaceSearch(query: string, debounceMs = 400) {
         [],
     );
 
+    const searchNow = useCallback(
+        async (searchQuery: string) => {
+            if (debounceRef.current) {
+                clearTimeout(debounceRef.current);
+                debounceRef.current = null;
+            }
+            await search(searchQuery.trim());
+        },
+        [search],
+    );
+
+    const retry = useCallback(async () => {
+        const trimmed = query.trim();
+        if (trimmed) await searchNow(trimmed);
+    }, [query, searchNow]);
+
     useEffect(() => {
         if (debounceRef.current) {
             clearTimeout(debounceRef.current);
@@ -51,6 +74,7 @@ export function useMarketplaceSearch(query: string, debounceMs = 400) {
         if (!trimmed) {
             requestIdRef.current += 1;
             setResults([]);
+            setStoreResults([]);
             setError(null);
             setIsLoading(false);
             return;
@@ -67,5 +91,5 @@ export function useMarketplaceSearch(query: string, debounceMs = 400) {
         };
     }, [query, debounceMs, search]);
 
-    return { results, isLoading, error, search };
+    return { results, storeResults, isLoading, error, searchNow, retry };
 }

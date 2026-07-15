@@ -68,8 +68,8 @@ export default function StoreProfileScreen() {
     const queryClient = useQueryClient();
     const gateQuery = useStoreOwnerGate(user?.id ?? null);
     const gateState = gateQuery.data;
-    const isActiveOwner = gateState?.state === 'active_owner';
-    const storeId = isActiveOwner ? gateState.storeId : null;
+    const canEditProfile = gateState?.state === 'active_owner' || gateState?.state === 'approved_pending_setup';
+    const storeId = canEditProfile ? gateState.storeId : null;
 
     const { data: profile, isLoading: profileLoading } = useQuery({
         queryKey: ['storeProfile', storeId],
@@ -85,6 +85,8 @@ export default function StoreProfileScreen() {
     const [pickupEnabled, setPickupEnabled] = useState(false);
     const [deliveryEnabled, setDeliveryEnabled] = useState(false);
     const [minimumOrder, setMinimumOrder] = useState('');
+    const [saveMessage, setSaveMessage] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (!profile) return;
@@ -108,7 +110,7 @@ export default function StoreProfileScreen() {
         );
     }
 
-    if (!isActiveOwner || !profile) {
+    if (!canEditProfile || !profile) {
         return (
             <ScreenBackground>
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -120,24 +122,33 @@ export default function StoreProfileScreen() {
 
     async function saveSection(input: StoreProfileInput) {
         if (!storeId) return;
-        const updated = await storeProfileService.updateProfile(storeId, input);
-        queryClient.setQueryData(['storeProfile', storeId], updated);
+        setIsSaving(true);
+        setSaveMessage(null);
+        try {
+            const updated = await storeProfileService.updateProfile(storeId, input);
+            queryClient.setQueryData(['storeProfile', storeId], updated);
+            setSaveMessage('Store settings saved.');
+        } catch {
+            setSaveMessage('Could not save store settings. Please try again.');
+        } finally {
+            setIsSaving(false);
+        }
     }
 
     function saveProfile() {
-        void saveSection({ displayName, description: description || null });
+        return saveSection({ displayName, description: description || null });
     }
 
     function saveHours() {
-        void saveSection({ operatingHours: hours });
+        return saveSection({ operatingHours: hours });
     }
 
     function savePolicy() {
-        void saveSection({ returnPolicyType });
+        return saveSection({ returnPolicyType });
     }
 
     function saveFulfillment() {
-        void saveSection({
+        return saveSection({
             pickupEnabled,
             deliveryEnabled,
             minimumDeliveryOrderValueMinor: minimumOrder ? toMinor(minimumOrder) : null,
@@ -155,6 +166,12 @@ export default function StoreProfileScreen() {
     return (
         <ScreenBackground>
             <ScrollView style={{ flex: 1, padding: 16 }}>
+                {saveMessage ? (
+                    <Text testID="store-profile-save-message" style={{ color: colors.textSecondary, marginBottom: 10 }}>
+                        {saveMessage}
+                    </Text>
+                ) : null}
+                {isSaving ? <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>Saving...</Text> : null}
                 <GlassCard padding={16} borderRadius={16}>
                     <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 10 }}>Profile</Text>
                     <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '800', marginBottom: 4 }}>{profile.displayName}</Text>

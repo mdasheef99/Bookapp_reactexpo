@@ -1,7 +1,7 @@
 # PHASE-5: Consumer Discovery
 
 **Status:** `in_progress`
-**Last updated:** 2026-07-01
+**Last updated:** 2026-07-15
 **Phase goal:** Add a consumer marketplace section for bookstore listings inside the current app.
 
 ---
@@ -20,7 +20,9 @@
 
 - Consumer marketplace entry point.
 - Search by title, author, ISBN-10, and ISBN-13.
+- Search public bookstores by store name.
 - Book result grouping across stores.
+- Public book-detail availability across stores.
 - Store availability cards.
 - Public store pages.
 - Policy/seller disclosure display.
@@ -33,15 +35,15 @@
 
 | Unit | Status | Notes |
 |---|---|---|
-| Marketplace route/section | `in_progress` | Added `app/(tabs)/marketplace` tab and hidden nested public-store route. |
-| Search service/query | `in_progress` | `consumerDiscoveryService` reads `marketplace_book_listings` only. ISBN-10/ISBN-13 exact search plus title/author partial search through public projection fields. |
-| Book result grouping | `in_progress` | `canonical_edition_id` -> `isbn_13` -> normalized title/authors fallback. All store offers are shown when the same book is available at multiple stores. |
+| Marketplace route/section | `locally_complete` | Marketplace tab plus nested public-store and public-book availability routes. |
+| Search service/query | `locally_complete` | Reads only `marketplace_book_listings` and `public_store_profiles`; supports ISBN/title/author/store-name search, safe quoted filters, runtime validation, paging, retry, and stale-query protection. |
+| Book result grouping | `locally_complete` | `canonical_edition_id` -> `isbn_13` -> normalized title/authors fallback. All store offers are shown and link to book availability detail. |
 | Store availability cards | `in_progress` | Price, condition, condition notes, availability status, pickup/delivery, locality/city, confirmation message, and public-store navigation. |
 | Public store page | `in_progress` | Reads `public_store_profiles` only. Shows public logo/cover/state/hours/return policy when projected. Excludes private fields. |
 | Consumer disclosures | `in_progress` | Availability disclaimer, confirmation-before-payment, seller/store policy, support positioning. |
 | Lightweight demand capture | `in_progress` | Live private `marketplace_search_events` and `book_demand_signals` tables plus SECURITY DEFINER RPC. No customer identity is exposed to stores. |
 | Single-store cart guardrail | `not_started` | Not needed; no cart skeleton introduced in Phase 5. |
-| Tests | `in_progress` | Marketplace service, hook, component, screen, route, and schema migration tests passing. |
+| Tests | `locally_complete` | Marketplace service, hook, component, screen, route, and schema migration tests pass; TypeScript and production web export pass. |
 
 ---
 
@@ -98,9 +100,21 @@
 - `npm.cmd run export:web`: previously passed after filesystem approval for Expo/Node access outside the workspace sandbox. Current schema follow-up rerun hit sandbox `EPERM` on `C:\Users\user`, and the elevated retry was blocked by the approval system usage limit.
 - Local web route check against `http://localhost:8081` found no Expo Router warnings/page errors for `/marketplace`, `/marketplace/store/test-store`, `/dashboard`, `/inventory`, `/storefront`, or `/subscription`; the normal `.env` build redirects those unauthenticated routes to `/login`.
 
+### 2026-07-15: Phase 5 review remediation
+
+- Added red tests before production changes for PostgREST filter grammar, malformed projection rows, explicit pagination, submit/debounce duplication, retry/copy, book-detail navigation, anonymous policy separation, pilot-locality gating, and demand RPC hardening.
+- Split the 368-line discovery service into typed query/orchestration, schema/mapping, and deterministic helper modules; all production Phase 5 files are below 300 lines.
+- Added Zod runtime validation for public listing and store-profile responses.
+- Added store-name search through `public_store_profiles` only and public book-offer detail through `marketplace_book_listings` only.
+- Added explicit page ranges, retry actions, safe quoted `or` filters, and immediate-submit debounce cancellation.
+- Added local migration `20260715000002_marketplace_phase5_discovery_hardening.sql`: narrow anonymous/authenticated public policies, pilot-locality gates, explicit anon private-inventory SELECT revoke, 90-day search/demand expiry metadata, and a bounded fixed-context rate-limited demand RPC returning only boolean success.
+- Verification: relevant Jest 8 suites/54 tests passed; `npx.cmd tsc --noEmit --pretty false` passed; `npm.cmd run export:web` passed; `git diff --check` passed.
+- No migration was applied live, no function was deployed, no fixture was created, and no Git state was changed.
+
 ### Pending
 
-- Phase 3 anonymous public-read RLS blocker must be resolved by Codex/owner before live smoke testing as anonymous consumer.
+- Local discovery hardening migrations remain unapplied live; anonymous reads are still blocked by the old live Phase 3 policy.
+- Anonymous/authenticated live discovery and demand-RPC smoke require separate migration approval and an approved disposable public listing fixture.
 - Store-facing demand dashboards/aggregate insight surfaces remain later demand-signal work; Phase 5 only captures private zero-result demand safely.
 
 ---
@@ -108,6 +122,8 @@
 ## Acceptance Criteria
 
 - [x] Customer can search marketplace books by title, author, ISBN-10, and ISBN-13.
+- [x] Customer can find public bookstores by store name.
+- [x] Customer can open public book-detail availability across eligible stores.
 - [x] Search groups copies of the same book across bookstores and displays every store offer with price and relevant availability details.
 - [x] Customer sees price, condition, public condition notes, availability status, pickup, delivery, and confirmation requirement.
 - [x] Customer sees public store return policy when opening a public store page.
@@ -115,15 +131,16 @@
 - [x] Private inventory fields are not exposed.
 - [x] Customer sees required marketplace disclosures before checkout/payment, including availability disclaimer.
 - [x] Unavailable searches can be captured for pilot learning without exposing customer identity to stores by default.
+- [x] Public reads enforce pilot-locality eligibility in the prepared local hardening migration.
+- [x] Public projection responses are runtime-validated and search input cannot alter PostgREST filter grammar.
 - [x] `DOC-13` is updated.
 
 ---
 
 ## Blockers
 
-- Phase 3 anonymous public listing RLS remediation must be resolved before Phase 5 can be smoke-tested as a public/anonymous consumer surface. Owner/Codex must either:
-  1. Apply `supabase/migrations/20260629000001_marketplace_phase3_public_listing_anon_helper_grants.sql`, or
-  2. Implement a narrower policy split so the `anon` branch of `marketplace_book_listings` SELECT does not call owner/operator helper functions.
+- Live project `ahntbtktjjmvfosgkmgn` still has the old combined Phase 3 public listing policy. Local migrations `20260713000001_marketplace_phase3_public_listing_policy_split.sql` and `20260715000002_marketplace_phase5_discovery_hardening.sql` are prepared and tested but require separate authorization before live application.
+- Positive anonymous/authenticated discovery smoke is operationally pending because the live marketplace currently has zero public listing/profile rows; creating a disposable fixture requires separate authorization.
 
 ---
 
@@ -147,9 +164,9 @@
 
 Do not implement payment in this phase.
 
-Phase 5 app and schema implementation is covered by focused marketplace tests and live Supabase MCP schema verification, but remains `in_progress` pending the Phase 3 anonymous public-read RLS blocker and a final anonymous consumer smoke.
+Phase 5 is locally complete after review remediation but remains `in_progress` overall until the prepared hardening migration is applied and anonymous/authenticated consumer smoke passes.
 
 Recommended next steps for Codex/owner:
-1. Resolve Phase 3 anonymous public-read RLS blocker.
-2. Run anonymous public-read smoke after the RLS blocker is resolved.
+1. Request approval to apply the prepared local discovery hardening migrations.
+2. With separately approved disposable data, run anonymous and authenticated public discovery plus bounded demand-capture smoke, then clean up.
 3. Keep payment-gated selling, orders, fulfillment, delivery, and Phase 7 commerce out of Phase 5 scope.

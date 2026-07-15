@@ -108,8 +108,29 @@ describe('consumerDiscoveryService.searchMarketplaceBooks', () => {
         await consumerDiscoveryService.searchMarketplaceBooks('100%_book');
 
         expect(listingsBuilder.or).toHaveBeenCalledWith(
-            'public_title.ilike.%100\\%\\_book%,authors_text.ilike.%100\\%\\_book%',
+            'public_title.ilike."%100\\%\\_book%",authors_text.ilike."%100\\%\\_book%"',
         );
+    });
+
+    it('quotes PostgREST filter grammar characters instead of allowing filter injection', async () => {
+        const listingsBuilder = createBuilder({ data: [], error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(listingsBuilder);
+
+        await consumerDiscoveryService.searchMarketplaceBooks('Dune),moderation_status.eq.pending');
+
+        expect(listingsBuilder.or).toHaveBeenCalledWith(
+            'public_title.ilike."%Dune),moderation\\_status.eq.pending%",authors_text.ilike."%Dune),moderation\\_status.eq.pending%"',
+        );
+    });
+
+    it('uses an explicit page range instead of a silent fixed limit', async () => {
+        const listingsBuilder = createBuilder({ data: [], error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(listingsBuilder);
+
+        await consumerDiscoveryService.searchMarketplaceBooks('bookshop', { page: 2, pageSize: 20 });
+
+        expect(listingsBuilder.range).toHaveBeenCalledWith(20, 39);
+        expect(listingsBuilder.limit).not.toHaveBeenCalled();
     });
 
     it('uses authors_text for author partial search', async () => {
@@ -119,7 +140,7 @@ describe('consumerDiscoveryService.searchMarketplaceBooks', () => {
         await consumerDiscoveryService.searchMarketplaceBooks('Penelope Fitzgerald');
 
         expect(listingsBuilder.or).toHaveBeenCalledWith(
-            'public_title.ilike.%Penelope Fitzgerald%,authors_text.ilike.%Penelope Fitzgerald%',
+            'public_title.ilike."%Penelope Fitzgerald%",authors_text.ilike."%Penelope Fitzgerald%"',
         );
     });
 
@@ -308,7 +329,6 @@ describe('consumerDiscoveryService.searchMarketplaceBooks', () => {
         expect(results).toEqual([]);
         expect(supabase.rpc).toHaveBeenCalledWith('record_marketplace_unavailable_search', {
             p_query: 'missing book',
-            p_result_count: 0,
         });
     });
 
@@ -390,6 +410,18 @@ describe('consumerDiscoveryService.searchMarketplaceBooks', () => {
 
         await expect(consumerDiscoveryService.searchMarketplaceBooks('bookshop')).rejects.toThrow('profile lookup failed');
     });
+
+    it('rejects malformed public listing rows instead of manufacturing default values', async () => {
+        const listingsBuilder = createBuilder({
+            data: [{ store_id: 'store-1', public_title: 'Missing required fields' }],
+            error: null,
+        });
+        (supabase.from as jest.Mock).mockReturnValueOnce(listingsBuilder);
+
+        await expect(consumerDiscoveryService.searchMarketplaceBooks('broken')).rejects.toThrow(
+            'Invalid marketplace listing response',
+        );
+    });
 });
 
 describe('consumerDiscoveryService.getPublicStoreProfile', () => {
@@ -458,6 +490,15 @@ describe('consumerDiscoveryService.getPublicStoreProfile', () => {
 
         await expect(consumerDiscoveryService.getPublicStoreProfile('missing-store')).rejects.toThrow();
     });
+
+    it('rejects malformed public store profile rows', async () => {
+        const builder = createBuilder({ data: { store_id: 'store-1' }, error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(builder);
+
+        await expect(consumerDiscoveryService.getPublicStoreProfile('store-1')).rejects.toThrow(
+            'Invalid public store profile response',
+        );
+    });
 });
 
 describe('consumerDiscoveryService.getStoreListings', () => {
@@ -482,5 +523,57 @@ describe('consumerDiscoveryService.getStoreListings', () => {
         (supabase.from as jest.Mock).mockReturnValueOnce(builder);
 
         await expect(consumerDiscoveryService.getStoreListings('store-1')).rejects.toThrow('store listings failed');
+    });
+});
+
+describe('consumerDiscoveryService.searchPublicStores', () => {
+    beforeEach(() => jest.clearAllMocks());
+
+    it('searches store names through public_store_profiles only', async () => {
+        const builder = createBuilder({
+            data: [{
+                store_id: 'store-1',
+                display_name: 'Reader Lane Books',
+                pickup_enabled: true,
+                delivery_enabled: false,
+            }],
+            error: null,
+        });
+        (supabase.from as jest.Mock).mockReturnValueOnce(builder);
+
+        const stores = await consumerDiscoveryService.searchPublicStores('Reader Lane');
+
+        expect(supabase.from).toHaveBeenCalledWith('public_store_profiles');
+        expect(supabase.from).not.toHaveBeenCalledWith('stores');
+        expect(builder.ilike).toHaveBeenCalledWith('display_name', '%Reader Lane%');
+        expect(stores[0].displayName).toBe('Reader Lane Books');
+    });
+});
+
+describe('consumerDiscoveryService.getBookOffers', () => {
+    beforeEach(() => jest.clearAllMocks());
+
+    it('loads all public offers for the seed listing canonical edition', async () => {
+        const seed = {
+            id: 'listing-1', store_id: 'store-1', canonical_edition_id: 'edition-1',
+            public_title: 'The Bookshop', condition: 'good', selling_price_minor: 35000,
+            availability_status: 'confirmation_required', pickup_available: true,
+            delivery_available: false,
+        };
+        const seedBuilder = createBuilder({ data: seed, error: null });
+        const offersBuilder = createBuilder({ data: [seed], error: null });
+        const profilesBuilder = createBuilder({
+            data: [{ store_id: 'store-1', display_name: 'Reader Lane Books' }],
+            error: null,
+        });
+        (supabase.from as jest.Mock)
+            .mockReturnValueOnce(seedBuilder)
+            .mockReturnValueOnce(offersBuilder)
+            .mockReturnValueOnce(profilesBuilder);
+
+        const result = await consumerDiscoveryService.getBookOffers('listing-1');
+
+        expect(offersBuilder.eq).toHaveBeenCalledWith('canonical_edition_id', 'edition-1');
+        expect(result.offerCount).toBe(1);
     });
 });

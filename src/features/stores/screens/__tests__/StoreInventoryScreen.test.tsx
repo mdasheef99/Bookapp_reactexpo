@@ -140,6 +140,22 @@ describe('StoreInventoryScreen', () => {
         }));
     });
 
+    it('offers publish for a valid manual draft that still has the database default quality status', async () => {
+        (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([
+            { ...MOCK_INVENTORY_ITEM, listing_quality_status: 'missing_metadata' },
+        ]);
+
+        const screen = render(<StoreInventoryScreen />);
+
+        await waitFor(() => expect(screen.getByText('The Bookshop')).toBeTruthy());
+        fireEvent.press(screen.getByTestId('publish-inventory-1'));
+
+        await waitFor(() => expect(storeInventoryService.publishInventoryItem).toHaveBeenCalledWith({
+            storeId: 'store-1',
+            inventoryId: 'inventory-1',
+        }));
+    });
+
     it('shows a recoverable message when publishing fails', async () => {
         (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([
             { ...MOCK_INVENTORY_ITEM, quantity_available: 0 },
@@ -312,6 +328,38 @@ describe('StoreInventoryScreen', () => {
             storeId: 'store-1',
             inventoryId: 'inventory-1',
         }));
+    });
+
+    it('select all applies only to currently filtered inventory rows', async () => {
+        (storeInventoryService.listStoreInventory as jest.Mock).mockResolvedValue([
+            { ...MOCK_INVENTORY_ITEM, id: 'inventory-1', title: 'Visible Draft' },
+            { ...MOCK_INVENTORY_ITEM, id: 'inventory-2', title: 'Hidden Published', visibility_status: 'published' },
+        ]);
+
+        const screen = render(<StoreInventoryScreen />);
+
+        await waitFor(() => expect(screen.getByText('Visible Draft')).toBeTruthy());
+        fireEvent.press(screen.getByTestId('filter-status-draft'));
+        await waitFor(() => expect(screen.queryByText('Hidden Published')).toBeNull());
+        fireEvent.press(screen.getByTestId('select-all'));
+        fireEvent.press(screen.getByTestId('bulk-publish'));
+
+        await waitFor(() => expect(storeInventoryService.publishInventoryItem).toHaveBeenCalledTimes(1));
+        expect(storeInventoryService.publishInventoryItem).toHaveBeenCalledWith({
+            storeId: 'store-1',
+            inventoryId: 'inventory-1',
+        });
+    });
+
+    it('preserves manual-entry form values when saving a draft fails', async () => {
+        (storeInventoryService.createManualInventoryItem as jest.Mock).mockRejectedValue(new Error('Write failed'));
+        const screen = render(<StoreInventoryScreen />);
+
+        fireEvent.changeText(screen.getByPlaceholderText('Title'), 'Keep this title');
+        fireEvent.press(screen.getByTestId('save-inventory-draft'));
+
+        await waitFor(() => expect(screen.getByText('Could not save inventory draft.')).toBeTruthy());
+        expect(screen.getByDisplayValue('Keep this title')).toBeTruthy();
     });
 
     it('shows image-to-LLM placeholder button', async () => {

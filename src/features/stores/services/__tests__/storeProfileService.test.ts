@@ -104,24 +104,28 @@ describe('storeProfileService', () => {
     });
 
     describe('updateProfile', () => {
-        it('updates stores table with provided fields and returns updated profile', async () => {
-            const updateBuilder = createBuilder({ data: null, error: null });
-            const getBuilder = createBuilder({ data: MOCK_DB_PROFILE, error: null });
-
-            (supabase.from as jest.Mock)
-                .mockReturnValueOnce(updateBuilder)
-                .mockReturnValueOnce(getBuilder);
+        it('updates through the authenticated store-profile boundary and returns updated profile', async () => {
+            (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+                data: { profile: MOCK_DB_PROFILE },
+                error: null,
+            });
 
             const result = await storeProfileService.updateProfile(MOCK_STORE_ID, {
                 displayName: 'My Bookstore',
                 description: 'A cozy bookstore',
             });
 
-            expect(updateBuilder.update).toHaveBeenCalledWith({
-                display_name: 'My Bookstore',
-                description: 'A cozy bookstore',
+            expect(supabase.functions.invoke).toHaveBeenCalledWith('store-profile', {
+                body: {
+                    type: 'update_profile',
+                    storeId: MOCK_STORE_ID,
+                    payload: {
+                        displayName: 'My Bookstore',
+                        description: 'A cozy bookstore',
+                    },
+                },
             });
-            expect(updateBuilder.eq).toHaveBeenCalledWith('id', MOCK_STORE_ID);
+            expect(supabase.from).not.toHaveBeenCalled();
             expect(result).toEqual(EXPECTED_CAMEL_PROFILE);
         });
 
@@ -185,12 +189,9 @@ describe('storeProfileService', () => {
         });
 
         it('accepts valid operating_hours with closed days using null times', async () => {
-            const updateBuilder = createBuilder({ data: null, error: null });
-            const getBuilder = createBuilder({ data: MOCK_DB_PROFILE, error: null });
-
-            (supabase.from as jest.Mock)
-                .mockReturnValueOnce(updateBuilder)
-                .mockReturnValueOnce(getBuilder);
+            (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+                data: { profile: MOCK_DB_PROFILE }, error: null,
+            });
 
             const result = await storeProfileService.updateProfile(MOCK_STORE_ID, {
                 operatingHours: MOCK_DB_PROFILE.operating_hours,
@@ -200,12 +201,9 @@ describe('storeProfileService', () => {
         });
 
         it('accepts valid return_policy_type values', async () => {
-            const updateBuilder = createBuilder({ data: null, error: null });
-            const getBuilder = createBuilder({ data: MOCK_DB_PROFILE, error: null });
-
-            (supabase.from as jest.Mock)
-                .mockReturnValueOnce(updateBuilder)
-                .mockReturnValueOnce(getBuilder);
+            (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+                data: { profile: MOCK_DB_PROFILE }, error: null,
+            });
 
             const result = await storeProfileService.updateProfile(MOCK_STORE_ID, {
                 returnPolicyType: 'no_returns_except_wrong_item',
@@ -214,13 +212,10 @@ describe('storeProfileService', () => {
             expect(result).toEqual(EXPECTED_CAMEL_PROFILE);
         });
 
-        it('converts camelCase input to snake_case for the DB update', async () => {
-            const updateBuilder = createBuilder({ data: null, error: null });
-            const getBuilder = createBuilder({ data: MOCK_DB_PROFILE, error: null });
-
-            (supabase.from as jest.Mock)
-                .mockReturnValueOnce(updateBuilder)
-                .mockReturnValueOnce(getBuilder);
+        it('passes camelCase allowlisted input to the controlled boundary', async () => {
+            (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+                data: { profile: MOCK_DB_PROFILE }, error: null,
+            });
 
             await storeProfileService.updateProfile(MOCK_STORE_ID, {
                 displayName: 'Updated Name',
@@ -228,21 +223,36 @@ describe('storeProfileService', () => {
                 deliveryEnabled: true,
             });
 
-            expect(updateBuilder.update).toHaveBeenCalledWith({
-                display_name: 'Updated Name',
-                pickup_enabled: true,
-                delivery_enabled: true,
+            expect(supabase.functions.invoke).toHaveBeenCalledWith('store-profile', {
+                body: {
+                    type: 'update_profile',
+                    storeId: MOCK_STORE_ID,
+                    payload: {
+                        displayName: 'Updated Name',
+                        pickupEnabled: true,
+                        deliveryEnabled: true,
+                    },
+                },
             });
         });
 
-        it('throws on database update error', async () => {
-            const dbError = new Error('Update failed');
-            const builder = createBuilder({ data: null, error: dbError });
-            (supabase.from as jest.Mock).mockReturnValue(builder);
+        it('throws on controlled profile update error', async () => {
+            const updateError = new Error('Update failed');
+            (supabase.functions.invoke as jest.Mock).mockResolvedValue({ data: null, error: updateError });
 
             await expect(storeProfileService.updateProfile(MOCK_STORE_ID, {
                 displayName: 'Updated',
             })).rejects.toThrow('Update failed');
+        });
+
+        it('completes setup through the same authenticated boundary', async () => {
+            (supabase.functions.invoke as jest.Mock).mockResolvedValue({ data: { ok: true }, error: null });
+
+            await storeProfileService.completeSetup(MOCK_STORE_ID);
+
+            expect(supabase.functions.invoke).toHaveBeenCalledWith('store-profile', {
+                body: { type: 'complete_setup', storeId: MOCK_STORE_ID },
+            });
         });
     });
 

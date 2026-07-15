@@ -1,7 +1,7 @@
 # PHASE-4: Store Owner Console
 
 **Status:** `locally_complete`
-**Last updated:** 2026-06-30
+**Last updated:** 2026-07-15
 **Phase goal:** Build the minimal operating console for approved bookstores.
 
 ---
@@ -42,6 +42,8 @@
 | Compliance blocker UI | `complete` | Dashboard shows payout and policy acceptance blockers from store readiness fields. |
 | Tests | `complete` | Focused service, screen, and route tests cover owner-scoped data, null/missing rows, validation, private-field boundaries, profile saves, dashboard compliance, subscription quotas, inventory filters, edit preservation, and bulk actions. |
 
+2026-07-15 review remediation closed three implementation gaps: profile/setup writes now use a JWT-authenticated, ownership-checked `store-profile` Edge Function instead of a client-side `stores` update; approved stores can edit and complete the required setup checklist; and inventory publish/select/draft-failure behavior now matches the documented workflow. A least-privilege migration also revokes client execution of the SECURITY DEFINER listing-projection trigger function.
+
 ---
 
 ## Verification Log
@@ -72,6 +74,26 @@ npm.cmd run export:web
 
 Result: passed after filesystem approval for Expo/Node access outside the workspace sandbox.
 
+2026-07-15 local review verification:
+
+```powershell
+npm.cmd test -- --runInBand "src/features/stores"
+```
+
+Result: 13 suites passed, 118 tests passed.
+
+```powershell
+npx.cmd tsc --noEmit --pretty false
+```
+
+Result: passed. The Store Owner route/auth/function/migration suites also passed; one unrelated Profile test exceeded its fixed five-second timeout only in the combined-load run and passed 7/7 when rerun alone.
+
+```powershell
+npm.cmd run export:web
+```
+
+Result: passed; Expo exported the production web bundle to `dist`.
+
 ---
 
 ## Acceptance Criteria
@@ -90,7 +112,8 @@ Result: passed after filesystem approval for Expo/Node access outside the worksp
 ## Blockers
 
 - No Phase 4 local implementation blocker remains.
-- Live Supabase/RLS smoke for the Phase 4 console was not run in this pass; existing Phase 3 public listing anonymous-read remediation remains a separate pre-Phase-5 backend blocker.
+- `store-profile` version 1 is deployed ACTIVE with `verify_jwt=true`, and migration `marketplace_phase4_security_hardening` is live. Unauthenticated smoke returned `401` and is present in Edge Function logs. Positive authenticated owner-write smoke remains pending because no approved disposable user password is configured locally.
+- Existing Phase 3 public listing anonymous-read remediation remains a separate pre-Phase-5 backend blocker.
 
 ---
 
@@ -108,16 +131,16 @@ Result: passed after filesystem approval for Expo/Node access outside the worksp
 
 - Order request, paid fulfillment, demand signals, insights, and settlement statement cards remain placeholder/not implemented because DOC-8 depends on later order, fulfillment, demand, and finance phases.
 - Image-to-LLM add-books remains a disabled placeholder in inventory because full extraction is Phase 9 scope.
-- Phase 4 did not add migrations or Edge Functions; it consumes existing Phase 1-3 tables, policies, and services.
+- The 2026-07-15 security review added and deployed the controlled `store-profile` Edge Function and narrow trigger-function EXECUTE hardening migration.
 
 ---
 
 ## Handoff Notes
 
-Phase 4 is locally complete for the MVP console surface. Do not add manager delegation, advanced marketing modules, order management, fulfillment, payment, settlement, or full image-to-LLM extraction under Phase 4.
+Phase 4 is implemented and deployed for the MVP console surface, including review remediation. Grant verification passed (`anon=false`, `authenticated=false`, `service_role=true`) and unauthenticated function smoke returned `401`; only positive authenticated owner-write smoke remains pending an approved disposable credential. Do not add manager delegation, advanced marketing modules, order management, fulfillment, payment, settlement, or full image-to-LLM extraction under Phase 4.
 
 Recommended next work:
 
-1. Resolve the existing Phase 3 anonymous public listing RLS issue before Phase 5 consumer discovery relies on public listing reads.
-2. Start Phase 5 with consumer-facing discovery/search on `marketplace_book_listings`, not `store_inventory` or P2P `listings`.
-3. Optionally refactor `StoreInventoryScreen.tsx` into a dedicated filter component before adding more inventory UI behavior; the file is currently within the 300-350 line limit but close to the ceiling.
+1. Run positive authenticated profile/setup smoke when an approved disposable Store Owner credential is available.
+2. Apply the separately reviewed Phase 3 anonymous policy split before Phase 5 consumer discovery relies on public listing reads.
+3. Continue Phase 5 using `marketplace_book_listings` and `public_store_profiles`, never `store_inventory` or P2P `listings`.
