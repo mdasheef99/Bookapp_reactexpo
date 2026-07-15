@@ -17,10 +17,10 @@ If you are a new agent, do this before changing files:
 Current handoff as of 2026-07-15:
 
 - Phase 1 foundation and the approved Phase 2/3 migrations are applied to live Supabase project `ahntbtktjjmvfosgkmgn`; Store Owner onboarding and platform review functions are deployed.
-- Phase 5 Consumer Discovery is locally complete after review remediation but remains active until live hardening and public smoke. Phase 4 is locally complete after security/workflow review remediation.
-- Phase 3 anonymous public-read policy split and Phase 5 discovery hardening remain local-only. Phase 4 trigger-function EXECUTE hardening and controlled `store-profile` version 1 are deployed and verified; positive authenticated owner-write smoke remains credential-gated.
+- Phase 5 Consumer Discovery is locally complete and live-hardened after review remediation but remains active until positive public smoke. Phase 4 is locally complete after security/workflow review remediation.
+- Phase 3 anonymous public-read policy split and Phase 5 discovery hardening are deployed and structurally verified. Phase 4 trigger-function EXECUTE hardening and controlled `store-profile` version 1 are also deployed and verified; positive authenticated owner-write smoke remains credential-gated.
 - Local Phase 4 verification passes 13 Store suites/118 tests, TypeScript, and production web export. Authenticated live profile/setup smoke has not run because an approved disposable owner credential is unavailable.
-- Local Phase 5 verification passes 8 relevant suites/54 tests, TypeScript, production web export, and diff check. Live anonymous/authenticated discovery smoke is migration- and fixture-gated.
+- Local Phase 5 verification passes 8 relevant suites/54 tests, TypeScript, production web export, and diff check. Live anonymous/authenticated positive discovery smoke is fixture-gated; no disposable data or RPC smoke write has been authorized or created.
 - Continue Phase 5 only on public projections. Keep orders, payments, delivery, settlement, and image-to-LLM work in their designated later phases.
 
 ## Before Coding

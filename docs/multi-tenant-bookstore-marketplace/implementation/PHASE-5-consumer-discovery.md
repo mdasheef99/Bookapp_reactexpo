@@ -107,14 +107,24 @@
 - Added Zod runtime validation for public listing and store-profile responses.
 - Added store-name search through `public_store_profiles` only and public book-offer detail through `marketplace_book_listings` only.
 - Added explicit page ranges, retry actions, safe quoted `or` filters, and immediate-submit debounce cancellation.
-- Added local migration `20260715000002_marketplace_phase5_discovery_hardening.sql`: narrow anonymous/authenticated public policies, pilot-locality gates, explicit anon private-inventory SELECT revoke, 90-day search/demand expiry metadata, and a bounded fixed-context rate-limited demand RPC returning only boolean success.
+- Added migration `20260715000002_marketplace_phase5_discovery_hardening.sql`: narrow anonymous/authenticated public policies, pilot-locality gates, explicit anon private-inventory SELECT revoke, 90-day search/demand expiry metadata, and a bounded fixed-context rate-limited demand RPC returning only boolean success.
 - Verification: relevant Jest 8 suites/54 tests passed; `npx.cmd tsc --noEmit --pretty false` passed; `npm.cmd run export:web` passed; `git diff --check` passed.
-- No migration was applied live, no function was deployed, no fixture was created, and no Git state was changed.
+- This remediation was committed and pushed to `main` in commit `3ff5c3d7c3676094ab05dee708dbbd6b6590fb43`.
+
+### 2026-07-15: Live discovery hardening deployment
+
+- Applied `20260713000001_marketplace_phase3_public_listing_policy_split.sql` live as `20260715155047 marketplace_phase3_public_listing_policy_split`.
+- Applied `20260715000002_marketplace_phase5_discovery_hardening.sql` live as `20260715155103 marketplace_phase5_discovery_hardening`.
+- Verified the anonymous listing policy contains only public eligibility and pilot-locality checks; private `marketplace_sec` owner/operator helpers occur only in the authenticated policy.
+- Verified anonymous and authenticated public-profile reads require an eligible store in a pilot-enabled locality.
+- Verified `anon` can select public listings/profiles but cannot select `store_inventory`, access `marketplace_sec`, or read/write the private search/demand tables.
+- Verified the only live demand-capture overload is `record_marketplace_unavailable_search(text) returns boolean`, with `SECURITY DEFINER`, blank `search_path`, bounded input, fixed source/no location, rate limiting, deduplication, and 90-day retention.
+- Security advisor findings for the three private demand tables are intentional `RLS enabled with no policy` informational notices; the anonymous-callable SECURITY DEFINER warning is expected for the deliberately public, constrained capture RPC.
+- Live listing, public-profile, search-event, and demand-signal row counts remain zero. No RPC smoke call or disposable fixture was created.
 
 ### Pending
 
-- Local discovery hardening migrations remain unapplied live; anonymous reads are still blocked by the old live Phase 3 policy.
-- Anonymous/authenticated live discovery and demand-RPC smoke require separate migration approval and an approved disposable public listing fixture.
+- Anonymous/authenticated positive live discovery and demand-RPC smoke require an approved disposable public listing fixture; the migrations and read-only structural verification are complete.
 - Store-facing demand dashboards/aggregate insight surfaces remain later demand-signal work; Phase 5 only captures private zero-result demand safely.
 
 ---
@@ -139,7 +149,6 @@
 
 ## Blockers
 
-- Live project `ahntbtktjjmvfosgkmgn` still has the old combined Phase 3 public listing policy. Local migrations `20260713000001_marketplace_phase3_public_listing_policy_split.sql` and `20260715000002_marketplace_phase5_discovery_hardening.sql` are prepared and tested but require separate authorization before live application.
 - Positive anonymous/authenticated discovery smoke is operationally pending because the live marketplace currently has zero public listing/profile rows; creating a disposable fixture requires separate authorization.
 
 ---
@@ -164,9 +173,8 @@
 
 Do not implement payment in this phase.
 
-Phase 5 is locally complete after review remediation but remains `in_progress` overall until the prepared hardening migration is applied and anonymous/authenticated consumer smoke passes.
+Phase 5 is locally complete and its hardening migrations are live, but it remains `in_progress` overall until anonymous/authenticated positive consumer smoke passes.
 
 Recommended next steps for Codex/owner:
-1. Request approval to apply the prepared local discovery hardening migrations.
-2. With separately approved disposable data, run anonymous and authenticated public discovery plus bounded demand-capture smoke, then clean up.
-3. Keep payment-gated selling, orders, fulfillment, delivery, and Phase 7 commerce out of Phase 5 scope.
+1. With separately approved disposable data, run anonymous and authenticated public discovery plus bounded demand-capture smoke, then clean up.
+2. Keep payment-gated selling, orders, fulfillment, delivery, and Phase 7 commerce out of Phase 5 scope.
