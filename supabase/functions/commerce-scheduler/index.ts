@@ -43,6 +43,7 @@ serve(async (request) => {
   const dispatched = await Promise.all(groups.map((batch) => Promise.race([
     client.functions.invoke('commerce-task-worker', {
       body: { schedulerRunId, leaseOwner: schedulerRunId, tasks: batch },
+      headers: { Authorization: `Bearer ${serviceKey}` },
     }),
     new Promise<{ error: Error }>((resolve) => setTimeout(
       () => resolve({ error: new Error('worker_timeout') }), WORKER_TIMEOUT_MS,
