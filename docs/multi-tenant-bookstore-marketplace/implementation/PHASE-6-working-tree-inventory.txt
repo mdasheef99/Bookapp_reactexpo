@@ -1,0 +1,140 @@
+Phase 6 local working-tree inventory
+Captured: 2026-07-17 checkpoint review
+Branch: codex/phase4-5-remediation
+Baseline HEAD/origin-main: 57d13ea4e8c68da043e565b2c5897c1ee4d0596d
+No files are staged or committed.
+
+Excluded after manual review:
+ M _serve.js (tracked local preview helper with line-ending-only worktree noise; not Phase 6 implementation)
+
+ M app/(store-owner)/_layout.tsx
+ M app/(tabs)/profile/__tests__/notifications.test.tsx
+ M app/(tabs)/profile/notifications.tsx
+ M app/_layout.tsx
+ M docs/multi-tenant-bookstore-marketplace/DOC-0-product-architecture.md
+ M docs/multi-tenant-bookstore-marketplace/DOC-10-notifications-events-realtime.md
+ M docs/multi-tenant-bookstore-marketplace/DOC-12-build-strategy-and-implementation-sequence.md
+ M docs/multi-tenant-bookstore-marketplace/DOC-13-implementation-tracker.md
+ M docs/multi-tenant-bookstore-marketplace/DOC-14-commerce-state-machines.md
+ M docs/multi-tenant-bookstore-marketplace/DOC-15-finance-tax-settlement-operating-model.md
+ M docs/multi-tenant-bookstore-marketplace/DOC-16-pilot-and-unit-economics.md
+ M docs/multi-tenant-bookstore-marketplace/DOC-6-cart-order-request-payment.md
+ M docs/multi-tenant-bookstore-marketplace/DOC-7-fulfillment-delivery.md
+ M docs/multi-tenant-bookstore-marketplace/implementation/PHASE-6-order-request-confirmation.md
+ M src/features/auth/hooks/useAuth.ts
+ M src/features/marketplace/components/StoreOfferCard.tsx
+ M src/features/marketplace/screens/MarketplaceSearchScreen.tsx
+ M src/features/notifications/hooks/__tests__/useNotifications.test.tsx
+ M src/features/notifications/hooks/useNotifications.ts
+ M src/features/notifications/services/__tests__/notificationsService.test.ts
+ M src/features/notifications/services/notificationsService.ts
+ M src/features/notifications/types.ts
+ M supabase/config.toml
+ M supabase/functions/send-notification/index.ts
+?? app/(store-owner)/orders/[requestId].tsx
+?? app/(store-owner)/orders/index.tsx
+?? app/(tabs)/marketplace/cart.tsx
+?? app/(tabs)/marketplace/requests/[requestId].tsx
+?? app/(tabs)/marketplace/requests/index.tsx
+?? docs/multi-tenant-bookstore-marketplace/implementation/PHASE-6-order-request-confirmation-SDD.md
+?? docs/multi-tenant-bookstore-marketplace/implementation/PHASE-6-verification-and-traceability.md
+?? docs/multi-tenant-bookstore-marketplace/implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md
+?? src/features/marketplace/commerce/__tests__/CustomerCartScreen.test.tsx
+?? src/features/marketplace/commerce/__tests__/CustomerRequestDetailScreen.test.tsx
+?? src/features/marketplace/commerce/__tests__/OwnerOrderDetailScreen.test.tsx
+?? src/features/marketplace/commerce/__tests__/OwnerOrdersScreen.test.tsx
+?? src/features/marketplace/commerce/__tests__/commerceSession.test.ts
+?? src/features/marketplace/commerce/__tests__/customerUi.test.ts
+?? src/features/marketplace/commerce/__tests__/eligibility.test.ts
+?? src/features/marketplace/commerce/__tests__/ownerUi.test.ts
+?? src/features/marketplace/commerce/__tests__/timeEngine.test.ts
+?? src/features/marketplace/commerce/__tests__/vocabulary.test.ts
+?? src/features/marketplace/commerce/components/AddToCartButton.tsx
+?? src/features/marketplace/commerce/eligibility.ts
+?? src/features/marketplace/commerce/hooks/useCustomerCommerce.ts
+?? src/features/marketplace/commerce/hooks/useOwnerCommerce.ts
+?? src/features/marketplace/commerce/schemas.ts
+?? src/features/marketplace/commerce/screens/CustomerCartScreen.tsx
+?? src/features/marketplace/commerce/screens/CustomerRequestDetailScreen.tsx
+?? src/features/marketplace/commerce/screens/CustomerRequestsScreen.tsx
+?? src/features/marketplace/commerce/screens/OwnerOrderDetailScreen.tsx
+?? src/features/marketplace/commerce/screens/OwnerOrdersScreen.tsx
+?? src/features/marketplace/commerce/services/commandIdentity.ts
+?? src/features/marketplace/commerce/services/commerceSession.ts
+?? src/features/marketplace/commerce/services/customerCommerceService.ts
+?? src/features/marketplace/commerce/services/ownerCommerceService.ts
+?? src/features/marketplace/commerce/store/commerceStore.ts
+?? src/features/marketplace/commerce/timeEngine.ts
+?? src/features/marketplace/commerce/ui/ownerPresentation.ts
+?? src/features/marketplace/commerce/ui/ownerTypes.ts
+?? src/features/marketplace/commerce/ui/presentation.ts
+?? src/features/marketplace/commerce/ui/types.ts
+?? src/features/marketplace/commerce/vocabulary.ts
+?? src/lib/queryClient.ts
+?? supabase/functions/commerce-scheduler/index.ts
+?? supabase/functions/commerce-task-worker/index.ts
+?? supabase/migrations/20260716000001_marketplace_phase6_order_request_core.sql
+?? supabase/migrations/20260716000002_marketplace_phase6_order_request_evidence.sql
+?? supabase/migrations/20260716000003_marketplace_phase6_infrastructure_extensions.sql
+?? supabase/migrations/20260716000004_marketplace_phase6_authorization_safe_reads.sql
+?? supabase/migrations/20260716000005_marketplace_phase6_eligibility_resolver.sql
+?? supabase/migrations/20260716000006_marketplace_phase6_cart_command_foundation.sql
+?? supabase/migrations/20260716000007_marketplace_phase6_cart_commands.sql
+?? supabase/migrations/20260716000008_marketplace_phase6_cart_replacement.sql
+?? supabase/migrations/20260716000009_marketplace_phase6_submission_helpers.sql
+?? supabase/migrations/20260716000010_marketplace_phase6_submit_order_request.sql
+?? supabase/migrations/20260716000011_marketplace_phase6_hold_helpers.sql
+?? supabase/migrations/20260716000012_marketplace_phase6_owner_review_outcomes.sql
+?? supabase/migrations/20260716000013_marketplace_phase6_clarification_support_schema.sql
+?? supabase/migrations/20260716000014_marketplace_phase6_clarification_commands.sql
+?? supabase/migrations/20260716000015_marketplace_phase6_owner_support_request.sql
+?? supabase/migrations/20260716000016_marketplace_phase6_support_interventions.sql
+?? supabase/migrations/20260716000017_marketplace_phase6_payment_ready_helpers.sql
+?? supabase/migrations/20260716000018_marketplace_phase6_customer_decision_commands.sql
+?? supabase/migrations/20260716000019_marketplace_phase6_terminal_expiry_commands.sql
+?? supabase/migrations/20260716000020_marketplace_phase6_schedule_engine.sql
+?? supabase/migrations/20260716000021_marketplace_phase6_deadline_integration.sql
+?? supabase/migrations/20260716000022_marketplace_phase6_clarification_timeout.sql
+?? supabase/migrations/20260716000023_marketplace_phase6_closure_commands.sql
+?? supabase/migrations/20260716000024_marketplace_phase6_event_notification_contract.sql
+?? supabase/migrations/20260716000025_marketplace_phase6_notification_transport.sql
+?? supabase/migrations/20260716000026_marketplace_phase6_task_claim_retry.sql
+?? supabase/migrations/20260716000027_marketplace_phase6_task_commands.sql
+?? supabase/migrations/20260716000028_marketplace_phase6_scheduler_contract.sql
+?? supabase/migrations/20260716000029_marketplace_phase6_ui_safe_projections.sql
+?? supabase/migrations/20260716000030_marketplace_phase6_owner_ui_safe_projections.sql
+?? supabase/migrations/20260716000031_marketplace_phase6_reconciliation_foundation.sql
+?? supabase/migrations/20260716000032_marketplace_phase6_reconciliation_scans.sql
+?? supabase/migrations/20260716000033_marketplace_phase6_observability.sql
+?? supabase/migrations/20260716000034_marketplace_phase6_support_task_provenance_fix.sql
+?? supabase/migrations/20260716000035_marketplace_phase6_support_event_source_fix.sql
+?? supabase/migrations/20260716000036_marketplace_phase6_support_deadline_task_fix.sql
+?? supabase/migrations/20260716000037_marketplace_phase6_listing_evidence_projection_fix.sql
+?? supabase/migrations/20260716000038_marketplace_phase6_emergency_pause_remainder_fix.sql
+?? supabase/migrations/20260716000039_marketplace_phase6_emergency_resume_zero_fix.sql
+?? supabase/migrations/__tests__/marketplacePhase6AuthorizationSafeReads.test.ts
+?? supabase/migrations/__tests__/marketplacePhase6CartCommands.test.ts
+?? supabase/migrations/__tests__/marketplacePhase6ClarificationSupport.test.ts
+?? supabase/migrations/__tests__/marketplacePhase6CustomerDecisionExpiry.test.ts
+?? supabase/migrations/__tests__/marketplacePhase6CustomerUiProjection.test.ts
+?? supabase/migrations/__tests__/marketplacePhase6EligibilityResolver.test.ts
+?? supabase/migrations/__tests__/marketplacePhase6EventNotification.test.ts
+?? supabase/migrations/__tests__/marketplacePhase6OrderRequestFoundation.test.ts
+?? supabase/migrations/__tests__/marketplacePhase6OwnerOutcomes.test.ts
+?? supabase/migrations/__tests__/marketplacePhase6OwnerUiProjection.test.ts
+?? supabase/migrations/__tests__/marketplacePhase6ReconciliationObservability.test.ts
+?? supabase/migrations/__tests__/marketplacePhase6RequestSubmission.test.ts
+?? supabase/migrations/__tests__/marketplacePhase6ScheduleClosure.test.ts
+?? supabase/migrations/__tests__/marketplacePhase6SchedulerTasks.test.ts
+?? supabase/tests/phase6_unit10_cleanup.sql
+?? supabase/tests/phase6_unit10_concurrency.ps1
+?? supabase/tests/phase6_unit10_integration.sql
+?? supabase/tests/phase6_unit11_integration.sql
+?? supabase/tests/phase6_unit12_concurrency.ps1
+?? supabase/tests/phase6_unit12_integration.sql
+?? supabase/tests/phase6_unit15_integration.sql
+?? supabase/tests/phase6_unit8_integration.sql
+?? supabase/tests/phase6_unit9_cleanup.sql
+?? supabase/tests/phase6_unit9_concurrency.ps1
+?? supabase/tests/phase6_unit9_integration.sql
+?? docs/multi-tenant-bookstore-marketplace/implementation/PHASE-6-working-tree-inventory.txt

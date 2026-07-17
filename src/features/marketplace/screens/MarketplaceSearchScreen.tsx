@@ -29,6 +29,14 @@ export default function MarketplaceSearchScreen() {
                 <Text style={[styles.title, { color: colors.textPrimary }]}>
                     Find books from local bookstores
                 </Text>
+                <View style={styles.commerceLinks}>
+                    <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/marketplace/cart' as never)}>
+                        <Text style={[styles.retry, { color: colors.accent }]}>Cart</Text>
+                    </Pressable>
+                    <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/marketplace/requests' as never)}>
+                        <Text style={[styles.retry, { color: colors.accent }]}>Order requests</Text>
+                    </Pressable>
+                </View>
 
                 <SearchBar
                     query={query}
@@ -142,6 +150,7 @@ const styles = StyleSheet.create({
     error: {
         fontSize: 13,
     },
+    commerceLinks: { flexDirection: 'row', gap: 18 },
     errorBlock: {
         gap: 6,
     },

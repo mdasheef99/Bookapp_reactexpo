@@ -22,7 +22,7 @@ The flow is:
 Customer builds single-store cart
   -> customer submits order request
   -> store confirms full or partial availability during open hours
-  -> customer reviews confirmed items, delivery/pickup quote, and return policy
+  -> customer reviews confirmed items, exact policy-based delivery charge or pickup, and return policy
   -> customer pays
   -> paid order is created
   -> fulfillment begins
@@ -37,10 +37,13 @@ Customer builds single-store cart
 | Cart scope | MVP supports one store per cart. |
 | Cross-store add | Adding from another store replaces the current cart after customer confirmation. |
 | Payment timing | No customer payment is taken until the store confirms availability. |
+| Phase 6/7 seam | Phase 6 ends at provider-independent `payment_ready`; Phase 7 creates the provider object and enters `payment_pending`. |
 | Partial availability | Store may confirm some items and reject others. |
+| Full-request rejection | Store rejection is a distinct non-stock outcome (`store_rejected`), not an alias for item/request unavailability. |
 | Confirmation timer | Counted during store open hours only. |
 | Confirmation window | Target 6 open-hours; maximum 1 business day unless platform policy changes. |
-| Delivery quote | Final delivery quote is shown before payment. |
+| Customer delivery charge | Phase 6 calculates an exact customer-facing delivery charge through a deterministic, versioned BookConnect policy tariff. It does not call or depend on a delivery provider. |
+| Provider delivery cost | A later delivery phase may obtain a provider operational quote for assignment and fulfilment. That cost does not silently change the accepted customer payable amount. |
 | Pickup | Pickup remains a supported fulfillment option. |
 | Returns | Store-specific return policy is shown before payment. |
 | Settlement | Store payout settlement is weekly by default. |
@@ -74,11 +77,13 @@ Cart item snapshot must include:
 
 The snapshot prevents silent changes from confusing the customer during checkout.
 
-**Price-drift rule between add-to-cart and order request:** At request submission, the server re-reads the current listing price. If the current price is lower than `price_snapshot_minor`, the lower price binds and the snapshot is updated. If the current price is higher, the request is accepted at the snapshot price only within a platform-configurable `price_drift_tolerance_minor` (e.g., 500 paise). Beyond that tolerance the item is flagged `price_changed` and routed to `needs_clarification` for explicit customer re-confirmation. This avoids bait-and-switch behavior while preserving customer trust when benign price drift occurs.
+**Price-drift rule between add-to-cart and order request:** At request submission, the server re-reads the current listing price. If the current price is lower than `price_snapshot_minor`, the lower price becomes the immutable server-established bound. If the current price is equal to or higher, the cart snapshot remains the immutable bound. A platform-configurable `price_drift_tolerance_minor` classifies whether upward drift is normal store absorption or requires Store Owner attention; it never raises the customer bound. Beyond tolerance, the unpaid request may still be submitted at the bound with a `price_drift_review_required` flag. The store may honour the bound, lower it, mark the item unavailable, or request platform support. Customer clarification or acceptance cannot authorize the Store Owner to exceed the bound. A higher-price platform-correction path is not part of the Phase 6 MVP and requires separate approval.
 
 ### 3.2 Submit Order Request
 
 On checkout, customer submits an order request, not a paid order.
+
+The request is created directly in `submitted`; no prior request state exists. In the same atomic command the cart separately transitions `active -> submitted`. Request creation and cart transition use separate evidence records, event names (`order_request.submitted` and `marketplace_cart.submitted`), and derived idempotency identities.
 
 Customer must select:
 
@@ -86,6 +91,8 @@ Customer must select:
 - delivery address if delivery
 - contact phone number if required for delivery
 - acceptance of store return policy
+
+For delivery, the server validates policy-based eligibility and calculates the provisional exact customer delivery charge from the resolved BookConnect tariff. The request snapshots the charge, tariff version, resolved policy inputs, and governing policy evidence. No delivery-provider serviceability or quote call occurs during submission.
 
 The app must show:
 
@@ -101,8 +108,10 @@ The store receives the request and confirms line items:
 - partial quantity available
 - unavailable
 - needs customer clarification
+- reject the full request for a bounded non-stock reason
+- request platform support without changing request status
 
-The store cannot increase item price during confirmation. If price is wrong, the store must mark the item unavailable or request platform-supported correction. This avoids bait-and-switch behavior.
+The store cannot increase item price above the immutable server-established bound during confirmation, even with customer acceptance. If the price is wrong, the store must honour/lower the bound, mark the item unavailable, or request platform support. Phase 6 support review does not itself authorize a higher price.
 
 ### 3.4 Customer Payment Review
 
@@ -127,10 +136,12 @@ Customer options:
 
 Payment is requested only after confirmation.
 
+Phase 6 stops at provider-independent `payment_ready`, with final accepted quantities, amount, currency, firm holds, and `payment_expires_at`. It does not create a payment-provider object. Phase 7 creates the provider object, enters `payment_pending`, and owns all payment-provider behavior below.
+
 After successful payment:
 
 - paid store order is created
-- confirmed inventory is reserved or decremented according to inventory policy
+- firm reserved inventory moves transactionally to sold
 - store fulfillment workflow starts
 - commission liability is recorded
 - finance ledger entries are created
@@ -172,8 +183,9 @@ Rules:
 
 - customer must explicitly accept the partial result before payment
 - unavailable items are not charged
-- delivery quote must be recalculated after partial confirmation
+- policy-based delivery eligibility and the exact customer delivery charge must be recalculated after partial confirmation
 - discounts, minimum delivery order value, and free-delivery thresholds must be recalculated
+- a material change to the separately governed customer delivery charge requires explicit customer acceptance
 
 ---
 
@@ -228,10 +240,11 @@ If the customer accepts before the acceptance window expires:
 
 - promote soft holds to firm holds
 - start `payment_expires_at`
+- enter provider-independent `payment_ready`
 
-If the customer pays before the payment window expires:
+If Phase 7 payment succeeds before the payment window expires:
 
-- convert firm hold into sold/reserved inventory
+- convert firm reserved quantity into sold inventory
 
 If the customer does not accept or pay:
 
@@ -244,28 +257,35 @@ For very small stores, this protects against a confirmed book being sold elsewhe
 
 ---
 
-## 7. Delivery Minimums and Quote Timing
+## 7. Delivery Minimums and Customer Tariff Timing
 
-Delivery eligibility is determined twice:
+Phase 6 delivery eligibility and customer-facing charges are determined by a deterministic, versioned BookConnect policy tariff. Phase 6 must not call or depend on a delivery provider.
 
-1. estimate before request submission
-2. final quote after store confirmation
+The tariff is resolved twice:
 
-The final quote must account for:
+1. at request submission, validate eligibility and snapshot the provisional exact customer delivery charge and governing tariff policy;
+2. after confirmation or any material result, recalculate using confirmed quantities and subtotal, then snapshot the exact final charge accepted for `payment_ready`.
+
+Approved tariff inputs may include:
 
 - confirmed subtotal
-- delivery address
-- store location
-- delivery provider availability
+- fulfilment method
+- store, city, or locality
+- supported delivery zone or distance band
 - minimum order value
-- package size/weight if available
-- store open hours and pickup readiness
+- free-delivery threshold
+- fixed delivery charge
+
+Provider availability, provider quote, provider billing weight, and provider operational cost are not Phase 6 tariff inputs. At `payment_ready`, final quantities, item subtotal, discounts, customer delivery charge, currency, and total are exact and immutable for the payment window. The request carries the tariff version and resolved policy snapshot.
 
 If partial availability causes the order to fall below minimum delivery value:
 
 - customer may switch to pickup
 - customer may cancel
-- platform may allow delivery with extra fee if business policy permits
+
+Phase 6 does not introduce a revised provider-backed delivery fee for this case.
+
+Phase 7 may collect the exact accepted `payment_ready` total, but it must not replace it with a higher provider quote. A later delivery phase may obtain a provider-backed operational quote for assignment and fulfilment. Any difference between provider cost and the accepted customer charge is an operational/finance concern and cannot change the customer payable amount unless a future separately approved product flow explicitly permits it.
 
 ---
 
@@ -276,7 +296,7 @@ If partial availability causes the order to fall below minimum delivery value:
 | Cart | Allowed. | No payment. |
 | Request submitted before store confirmation | Allowed. | No payment. |
 | Store confirmed before payment | Allowed. | No payment; inventory hold released. |
-| Payment window expired | Automatic. | No payment; inventory hold released. |
+| `payment_ready` window expired | Automatic. | No payment; firm inventory hold released. |
 | Paid before fulfillment starts | Policy-controlled cancellation. | Refund may apply. |
 | Fulfillment in progress | Platform/store review required. | Refund depends on status and policy. |
 | Delivered or picked up | Store return policy applies. | Refund depends on policy and dispute review. |
@@ -359,20 +379,23 @@ This section is a summary. DOC-14 is the authoritative source for transition mat
 | `store_reviewing` | Store opened or started reviewing request. |
 | `awaiting_clarification` | At least one item is in `needs_clarification`; confirmation SLA clock is paused until the customer responds. |
 | `awaiting_customer_decision` | Store partially confirmed or changed delivery/pickup; customer must explicitly accept before the payment window starts. |
-| `adjusted` | Customer accepted a reduced quantity or switched to pickup; ready to start payment. |
-| `confirmed` | Store confirmed all requested items and customer accepted (or no acceptance needed). |
-| `partially_confirmed` | Store confirmed only some requested quantity/items and customer accepted. |
-| `unavailable` | Store rejected all items as unavailable. |
+| `paused_for_emergency_closure` | A bounded emergency closure paused an eligible review/decision state; prior state and remaining timers are preserved. |
+| `payment_ready` | Final accepted result, immutable INR amount, firm holds, and payment expiry exist; no provider object exists yet. |
+| `unavailable` | Requested stock/items cannot be fulfilled. |
+| `store_rejected` | Store declined the full request for a bounded non-stock reason. |
 | `customer_cancelled` | Customer cancelled before payment. |
+| `platform_cancelled` | Authorized system/platform action closed an ineligible or exceptional pre-payment request. |
 | `expired` | Store did not confirm within allowed window, or clarification timeout elapsed. |
-| `payment_expired` | Store confirmed, but customer did not pay in time. |
-| `converted_to_order` | Payment succeeded and paid order was created. |
+| `payment_ready_expired` | Customer did not begin Phase 7 payment before the provider-independent window expired. |
 
 Additional state semantics:
 
 - `awaiting_clarification`: entered when any item enters `needs_clarification`; the confirmation SLA clock pauses while in this state and resumes on `clarification_provided`. The total clarification time is bounded by `clarification_timeout` policy.
-- `awaiting_customer_decision`: entered from `partially_confirmed` or a below-minimum-delivery re-quote; `acceptance_expires_at` starts. Soft holds exist from confirmation. The payment window and firm holds start only on transition to `payment_pending`.
-- `adjusted`: a transient state for quantity reduction or pickup switch before payment.
+- Full materially unchanged confirmation enters `payment_ready` directly and creates firm holds without a second customer acceptance.
+- Partial/material confirmation enters `awaiting_customer_decision` directly; `acceptance_expires_at` starts and soft holds exist. Explicit acceptance promotes them and enters `payment_ready`.
+- `confirmed`, `partially_confirmed`, `adjusted`, and `clarification_provided` are transition outcomes/events rather than durable request states.
+- Full-request rejection uses `store_rejected` and `order_request.rejected`; it is not represented as unavailability.
+- `request_platform_support` creates an internal event, audit row, and operational task without changing commerce status.
 
 ### 11.2 Payment States
 
@@ -430,9 +453,15 @@ store_order_requests
   open_hours_due_at
   acceptance_expires_at nullable
   payment_expires_at nullable
+  paused_from_status nullable
+  closure_pause_expires_at nullable
   subtotal_requested_minor
   subtotal_confirmed_minor nullable
-  delivery_quote_minor nullable
+  provisional_customer_delivery_charge_minor nullable
+  final_customer_delivery_charge_minor nullable
+  delivery_tariff_version nullable
+  delivery_tariff_policy_snapshot nullable
+  final_total_minor nullable
   return_policy_snapshot
   seller_policy_snapshot
   tax_snapshot nullable
@@ -449,7 +478,8 @@ store_order_request_items
   confirmed_quantity
   unavailable_reason nullable
   price_snapshot_minor
-  price_bound_minor nullable
+  server_bound_unit_price_minor
+  price_drift_review_required
   confirmation_status
   needs_clarification_reason nullable
   created_at
@@ -541,15 +571,20 @@ invoice_snapshots
 | ORD-01 | Customer can maintain a cart for one store only. |
 | ORD-02 | Adding a book from another store prompts cart replacement. |
 | ORD-03 | Checkout creates an unpaid order request. |
-| ORD-04 | Store can confirm full availability, partial availability, or unavailability. |
+| ORD-04 | Store can confirm full availability, partial availability, item/request unavailability, or distinctly reject the full request for a bounded non-stock reason. |
 | ORD-05 | Customer pays only after store confirmation. |
-| ORD-06 | Partial confirmation recalculates subtotal and delivery quote before payment. |
-| ORD-07 | Payment expiry releases inventory holds. |
-| ORD-08 | Store cannot increase item price during confirmation. |
+| ORD-06 | Partial confirmation recalculates delivery eligibility and the exact policy-based customer charge; a material charge change requires explicit acceptance. |
+| ORD-07 | Acceptance/payment-ready expiry releases the applicable soft/firm inventory holds. |
+| ORD-08 | Store confirmation can never exceed the server-established bound, even with customer acceptance. |
 | ORD-09 | Customer sees return policy before payment. |
 | ORD-10 | Commission and settlement ledger entries are created after successful payment. |
 | ORD-11 | Payment provider creation, callbacks, refunds, and reconciliation are server-side and idempotent. |
 | ORD-12 | Paid orders preserve seller, policy, invoice, tax, and refund-basis snapshots for accounting/legal review. |
+| ORD-13 | Phase 6 ends at `payment_ready` and creates no payment-provider object or paid `store_order`. |
+| ORD-14 | Store rejection emits `order_request.rejected`, uses bounded non-stock reasons, releases eligible holds, and remains distinct from unavailability. |
+| ORD-15 | Store Owner can request platform support without directly changing request status. |
+| ORD-16 | Phase 6 calls no delivery provider and snapshots the tariff version, resolved policy, exact customer delivery charge, and immutable `payment_ready` total. |
+| ORD-17 | A later provider operational quote cannot silently increase the customer amount accepted at `payment_ready`. |
 
 ---
 

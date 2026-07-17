@@ -29,16 +29,17 @@ Delivery must be designed as an orchestration layer, not hardcoded to a single p
 | `store_managed_delivery` | Store delivers using its own staff. | Deferred |
 | `postal_shipping` | Store ships through courier/postal network. | Deferred |
 
-MVP should support pickup and third-party local delivery.
+The commerce MVP may offer pickup and delivery during Phase 6. Phase 6 delivery eligibility and the customer charge come from the BookConnect policy tariff; third-party provider serviceability, quoting, booking, tracking, and operational cost handling arrive in the later delivery integration phase.
 
 ---
 
 ## 3. Delivery Principles
 
-- Quote before payment; book delivery after payment and store readiness.
+- Calculate the exact customer-facing delivery charge before payment through the deterministic, versioned BookConnect policy tariff.
+- Do not call or depend on a delivery provider during Phase 6.
 - Never expose delivery provider credentials to mobile clients.
 - Do not share customer address with the store or delivery partner before it is needed.
-- Recalculate quote after partial availability.
+- Recalculate policy eligibility and the customer tariff charge after partial availability.
 - Treat delivery as a state machine with provider webhooks and internal audit events.
 - Keep provider integration behind a server-side adapter.
 - Allow pickup fallback when delivery is not serviceable.
@@ -47,19 +48,20 @@ MVP should support pickup and third-party local delivery.
 
 ---
 
-## 4. Delivery Quote Timing
+## 4. Customer Tariff and Provider Quote Timing
 
-Delivery is evaluated in three stages.
+Customer pricing and provider operations are separate domains:
 
 | Stage | Timing | Purpose |
 |---|---|---|
-| Estimate | Before order request submission. | Tell customer whether delivery may be possible. |
-| Final quote | After store confirms availability. | Show exact payable delivery fee before payment. |
-| Booking | After payment and store readiness. | Create actual shipment with delivery partner. |
+| Provisional customer tariff | Phase 6 request submission. | Validate policy delivery eligibility and snapshot the provisional exact customer charge and governing tariff policy without calling a provider. |
+| Final customer tariff | Phase 6 after confirmation/material change. | Recalculate from confirmed quantities/subtotal; snapshot the exact accepted charge and immutable `payment_ready` total. |
+| Payment collection | Phase 7. | Collect the exact valid `payment_ready` total without replacing it with a higher provider quote. |
+| Provider operational quote and booking | Later delivery integration, after payment and store readiness. | Select/book a provider and record operational cost without changing the accepted customer amount. |
 
-The final quote must include expiry time. If the customer pays after quote expiry, the system must re-quote before payment.
+The Phase 6 customer tariff may use approved policy inputs such as fulfilment method, store/city/locality, supported zone or distance band, confirmed subtotal, minimum delivery subtotal, free-delivery threshold, and fixed delivery charge. The request stores the tariff version and resolved policy snapshot.
 
-If the delivery quote changes materially after payment because of provider failure, platform operations must decide whether to absorb the difference, reassign provider, or cancel/refund.
+The later provider quote is an operational cost, not a replacement customer price. If provider cost differs from the accepted customer delivery charge, platform operations and finance decide whether to absorb, reassign, cancel, or refund according to approved policy. The customer payable amount cannot be increased unless a future separately approved product flow explicitly permits it.
 
 ---
 
@@ -70,17 +72,17 @@ Delivery minimums should be policy-driven.
 Inputs:
 
 - store location
-- customer delivery address
+- supported delivery zone or distance band derived from private location data
 - confirmed book subtotal
-- provider serviceability
-- delivery fee
+- free-delivery threshold
+- fixed customer delivery charge
 - store operating hours
 - platform campaign rules
 
 If confirmed subtotal is below minimum:
 
 - show pickup as preferred option
-- allow delivery with additional fee only if platform policy permits
+- require pickup or cancellation when the confirmed order no longer qualifies
 - do not hide the reason from the customer
 
 Minimum delivery rules should live in platform configuration, not in mobile code.
@@ -194,8 +196,8 @@ Recommended normalized shipment states:
 | State | Meaning |
 |---|---|
 | `not_required` | Pickup order; no shipment. |
-| `quote_requested` | Delivery estimate/quote is being requested. |
-| `quote_available` | Quote available for customer review. |
+| `quote_requested` | Later delivery integration is requesting a provider operational quote; not a Phase 6 customer-price state. |
+| `quote_available` | Provider operational quote is available for assignment/booking; it does not replace the accepted customer charge. |
 | `booking_pending` | Paid order waiting for provider booking. |
 | `booked` | Provider accepted shipment. |
 | `pickup_scheduled` | Provider scheduled pickup. |
@@ -228,7 +230,7 @@ Provider statuses must map into these states.
 | Package damaged | Platform dispute workflow. |
 | Package lost | Provider claim and customer refund/replacement workflow. |
 | Address invalid | Customer correction before booking where possible. |
-| Delivery fee changes | Re-quote before payment; after payment, platform ops decides. |
+| Provider operational cost differs from customer charge | Do not change the accepted customer payable amount; platform/finance absorbs, reassigns, cancels, or refunds under approved policy. |
 | Pickup failed | Reschedule pickup if store/package readiness is valid; otherwise platform review. |
 | NDR raised | Follow provider NDR workflow; notify customer/store only with needed action. |
 | RTO initiated | Track return-to-store and link to refund/dispute policy. |
@@ -246,7 +248,7 @@ Default planning matrix:
 
 | Case | Initial Customer Handling | Default Internal Owner | Required System Output |
 |---|---|---|---|
-| Provider unavailable before payment | Re-quote, pickup option, or cancel. | No charge. | Quote failure event. |
+| Policy tariff says delivery is ineligible before payment | Pickup or cancellation. | No provider cost exists. | Tariff eligibility evidence and customer decision. |
 | Provider unavailable after payment | Platform review; customer gets delay/cancel/refund path. | Platform/provider review. | Delivery exception case. |
 | Store not ready for pickup | Delay/reschedule or customer cancellation if severe. | Store fault unless provider/platform caused issue. | Store reliability event. |
 | Failed pickup due to provider | Reschedule or reassign. | Provider/platform review. | Provider escalation record. |
@@ -307,6 +309,16 @@ store_delivery_settings
   created_at
   updated_at
 
+order_request_delivery_tariff_snapshots
+  id
+  order_request_id
+  tariff_version
+  resolved_policy_snapshot
+  provisional_customer_charge_minor
+  final_customer_charge_minor nullable
+  eligibility_result
+  calculated_at
+
 delivery_quotes
   id
   order_request_id
@@ -322,6 +334,8 @@ delivery_quotes
   expires_at
   raw_provider_payload private
   created_at
+
+  # provider operational quote only; created in the later delivery phase
 
 delivery_shipments
   id
@@ -415,7 +429,7 @@ The right integration is likely provider-agnostic at first, because coverage and
 | ID | Criterion |
 |---|---|
 | FUL-01 | Customer can choose pickup or delivery where available. |
-| FUL-02 | Delivery estimate is shown before request and final quote before payment. |
+| FUL-02 | Phase 6 calculates and snapshots an exact policy-based customer delivery charge without calling a provider. |
 | FUL-03 | Delivery booking occurs only after payment and store readiness. |
 | FUL-04 | Store can mark paid order ready for pickup or delivery. |
 | FUL-05 | Pickup orders use a pickup verification code. |
@@ -425,6 +439,7 @@ The right integration is likely provider-agnostic at first, because coverage and
 | FUL-09 | Delivery exceptions produce platform-reviewable events. |
 | FUL-10 | NDR, RTO, failed pickup, lost/damaged, and weight dispute cases are modeled as first-class exceptions. |
 | FUL-11 | Delivery exception cases record initial customer handling, likely fault, and financial owner/reconciliation path. |
+| FUL-12 | Phase 7 collects the exact accepted `payment_ready` total; a later provider operational quote cannot silently increase it. |
 
 ---
 

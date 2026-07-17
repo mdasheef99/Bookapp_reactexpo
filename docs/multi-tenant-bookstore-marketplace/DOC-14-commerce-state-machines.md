@@ -33,10 +33,12 @@ Implementation must not rely on loose status updates from client screens. Commer
 | Area | Decision |
 |---|---|
 | Payment timing | Customer payment is requested only after store confirmation. |
+| Phase boundary | Phase 6 ends at provider-independent `payment_ready`; Phase 7 creates the provider object and enters `payment_pending`. |
 | Partial availability | Store can confirm some requested items and reject others. |
+| Full-request rejection | `store_rejected` is a distinct non-stock terminal outcome and event, not an alias for `unavailable`. |
 | Store confirmation SLA | Counted during store open hours, target 6 open-hours, max 1 business day by default policy. |
-| Inventory hold | Confirmed items receive a short-lived hold during the customer payment window. |
-| Price changes | Store cannot increase price during confirmation. If price is wrong, mark unavailable or escalate through platform policy. |
+| Inventory hold | Partial/materially changed confirmation creates a soft customer-decision hold; full unchanged confirmation or explicit acceptance creates/promotes a firm payment-ready hold. |
+| Price changes | Store confirmation can never exceed the immutable server-established bound, even with customer acceptance. The store may honour/lower, mark unavailable, or request support; a higher-price correction path is not in Phase 6. |
 | State authority | Server transition service is authoritative. Mobile clients request transitions; they do not write final commerce state directly. |
 | Idempotency | Payment, refund, delivery, and operator transition handlers must use idempotency keys. |
 | Events | Every state transition emits an append-only marketplace event. |
@@ -50,7 +52,7 @@ Implementation must not rely on loose status updates from client screens. Commer
 | Actor | Allowed Scope |
 |---|---|
 | Customer | Create cart/request, cancel before payment, accept partial confirmation, pay, request cancellation/refund/dispute. |
-| Store Owner | Confirm availability, mark unavailable before payment, prepare/pack order, report post-payment issue. |
+| Store Owner | Under the Phase 6 owner-only MVP capability/entitlement: review, clarify, confirm availability, mark unavailable, reject for bounded non-stock reasons, or request platform support. Manager/staff delegation remains deferred. |
 | Platform Operator | Override stuck states, approve refunds, resolve disputes, handle post-payment unavailability, reconcile providers. |
 | Payment Provider | Sends payment/refund/chargeback webhooks. |
 | Delivery Provider | Sends pickup/delivery/exception webhooks. |
@@ -90,46 +92,44 @@ transition(entity_type, entity_id, target_state, actor, reason, idempotency_key,
 
 ## 5. Order Request State Machine
 
+Request submission creates the request directly in `submitted`; there is no `draft_cart` or other prior order-request state. The same atomic HTTP command separately transitions the cart from `active` to `submitted`. Request creation and cart transition have distinct command/idempotency sub-scopes, evidence records, and events: `order_request.submitted` for request creation and `marketplace_cart.submitted` for the cart transition. Creation evidence does not invent a previous request state.
+
 | Current State | Actor | Allowed Next State | Required Guards | Side Effects |
 |---|---|---|---|---|
-| `draft_cart` | Customer | `request_submitted` | Single-store cart, valid listings, store active. | Snapshot cart, policies, prices, requested quantities. |
-| `request_submitted` | Store Owner | `store_reviewing` | Store owner owns store. | Emit review-start event. |
-| `request_submitted` | Customer | `customer_cancelled` | No store confirmation yet. | Release no holds; notify store if needed. |
-| `request_submitted` | System Job | `expired` | Confirmation SLA elapsed during open hours. | Notify customer, update internal reliability metrics. |
-| `store_reviewing` | Store Owner | `confirmed` | Every item confirmed fully. | Create soft inventory holds for confirmed quantities; start acceptance window if policy requires; otherwise start payment window and promote to firm holds. |
-| `store_reviewing` | Store Owner | `partially_confirmed` | At least one item confirmed, at least one item rejected/partial. | Create soft inventory holds for confirmed quantities; start `acceptance_expires_at`; notify customer. |
-| `store_reviewing` | Store Owner | `unavailable` | No item confirmed. | Notify customer, capture demand signal, no payment. |
-| `store_reviewing` | Store Owner | `awaiting_clarification` | Any item enters `needs_clarification`. | Pause confirmation SLA clock; notify customer; start clarification timeout. |
-| `awaiting_clarification` | Customer | `clarification_provided` | Customer responds before clarification timeout. | Resume SLA clock; return to `store_reviewing`. |
-| `awaiting_clarification` | Customer | `unavailable` | Customer withdraws item or declines clarification. | Exclude item; resume SLA clock; return to `store_reviewing` or `unavailable`. |
-| `awaiting_clarification` | System Job | `expired` | Clarification timeout elapsed. | Exclude item; resume SLA clock; notify customer/store. |
-| `store_reviewing` | Customer | `customer_cancelled` | Payment not started. | Clear review task; release no holds or any provisional holds. |
-| `store_reviewing` | System Job | `expired` | Confirmation SLA elapsed during counted open hours. | Clear review task, notify customer, update store reliability metrics. |
-| `partially_confirmed` | System Job | `awaiting_customer_decision` | Confirmation done; customer must explicitly accept. | Start `acceptance_expires_at`; soft holds remain. |
-| `partially_confirmed` | Customer | `awaiting_customer_decision` | Customer explicitly views partial result; acceptance window starts. | Start `acceptance_expires_at`; soft holds remain. |
-| `awaiting_customer_decision` | Customer | `adjusted` | Customer reduces quantity or switches to pickup. | Recalculate subtotal/quote; soft holds adjust to new quantity. |
-| `awaiting_customer_decision` | Customer | `payment_pending` | Customer explicitly accepts confirmed result; acceptance window not expired. | Promote soft holds to firm holds; start `payment_expires_at`; create provider payment order server-side. |
-| `awaiting_customer_decision` | System Job | `expired` | Acceptance window elapsed. | Release soft holds; notify store/customer. |
-| `adjusted` | Customer | `payment_pending` | Customer confirms adjusted result; quote valid. | Promote soft holds to firm holds; start `payment_expires_at`; create provider payment order server-side. |
-| `confirmed` | Customer | `customer_cancelled` | Payment not started. | Release holds, notify store, close request. |
-| `partially_confirmed` | Customer | `customer_cancelled` | Payment not started. | Release soft holds, notify store, close request. |
-| `confirmed` | Customer | `payment_pending` | Payment window active, quote valid. | Create firm holds if not already present; create provider payment order server-side. |
-| `partially_confirmed` | Customer | `payment_pending` | Customer explicitly accepts partial confirmation, payment window active, quote valid. | Promote soft holds to firm holds; create provider payment order server-side. |
-| `confirmed` | System Job | `payment_expired` | Payment window elapsed. | Release firm holds, notify store/customer. |
-| `partially_confirmed` | System Job | `payment_expired` | Payment window elapsed. | Release firm holds, notify store/customer. |
-| `payment_pending` | Payment Webhook | `converted_to_order` | Payment success verified and amount matches canonical state. | Create paid order, finalize holds, ledger entries, notify store/customer. |
-| `payment_pending` | Payment Webhook/System | `payment_failed` | Provider failure or timeout. | Keep or release holds based on retry policy; notify customer. |
-| `payment_pending` | Payment Webhook/System | `reconciliation_required` | Amount/status mismatch, duplicate, missing order conversion. | Create platform ops case. |
+| `submitted` | Store Owner | `store_reviewing` | Active owner capability/entitlement for server-derived store; current version and eligibility. | Emit review-start event. |
+| `submitted` | Store Owner | `store_rejected` | Bounded non-stock rejection reason; owner capability/version. | Mark unresolved items rejected; release eligible holds; notify/audit. |
+| `submitted` | System Job | `expired` | Open-hours confirmation deadline elapsed. | Notify both; update internal metrics. |
+| `store_reviewing` | Store Owner | `payment_ready` | Every item fully/materially unchanged; inventory locked; confirmed price at/below bound; live eligibility. | Create firm holds directly; final INR total; start `payment_expires_at`; no provider object. |
+| `store_reviewing` | Store Owner | `awaiting_customer_decision` | At least one confirmed quantity plus material change. | Create soft holds; start acceptance window; notify. |
+| `store_reviewing` | Store Owner | `unavailable` | No item is fulfilable; bounded item stock reasons. | Release eligible holds; notify/audit. |
+| `store_reviewing` | Store Owner | `store_rejected` | Bounded full-request non-stock reason. | Mark unresolved items rejected; release; notify/audit. |
+| `store_reviewing` | Store Owner | `awaiting_clarification` | Any item needs bounded clarification. | Pause SLA; start clarification timeout; notify customer. |
+| `awaiting_clarification` | Customer | `store_reviewing` | Customer responds before timeout. | Resume remaining open-hours SLA; notify store. |
+| `awaiting_clarification` | Store Owner | `store_rejected` | Bounded non-stock reason. | Release eligible holds; notify/audit. |
+| `awaiting_clarification` | System Job | `expired` | Clarification timeout elapsed. | Release eligible holds; notify both. |
+| `awaiting_customer_decision` | Customer | `payment_ready` | Explicit acceptance, valid version/window/live eligibility; pickup selected if below delivery minimum. | Promote soft to firm without moving buckets; final INR total; start payment expiry; no provider object. |
+| `awaiting_customer_decision` | System Job | `expired` | Acceptance window elapsed. | Release soft holds; notify. |
+| Any nonterminal Phase 6 request | Customer | `customer_cancelled` | `auth.uid()` owns request; current version; Phase 7 payment has not started. | Cancel tasks; release active soft/firm holds idempotently; notify store. |
+| `payment_ready` | System Job | `payment_ready_expired` | Payment-ready deadline elapsed. | Release firm holds; notify. |
+| Eligible review/decision states | System/Platform | `paused_for_emergency_closure` | Bounded emergency closure policy; pause quota/version. | Preserve source state/remaining timers; preserve eligible holds only through pause cap; create ops task. |
+| `paused_for_emergency_closure` | System/Platform | saved prior state | Closure ended; eligibility/holds valid; cap not expired. | Restore remaining timers; notify/audit. |
+| `paused_for_emergency_closure` | System Job | `expired` or `platform_cancelled` | Pause cap elapsed. | Release soft holds where present; notify/escalate. |
+| Active non-payment-ready state | System/Platform | `platform_cancelled` | Suspension/prohibition/loss of selling eligibility. | Fail closed; release eligible soft holds; notify/audit/task. |
 
 Terminal request states:
 
 - `customer_cancelled`
+- `platform_cancelled`
 - `expired`
 - `unavailable`
-- `payment_expired`
-- `converted_to_order`
+- `store_rejected`
+- `payment_ready_expired`
 
-Terminal means no further customer payment may be created from that request.
+Terminal means no Phase 7 payment may be created from that request. `payment_ready` is the Phase 6 handoff and is not terminal for the wider commerce lifecycle.
+
+Non-transitioning Store Owner command: `request_platform_support` is allowed on any nonterminal request, including `payment_ready`. It creates a deduplicated operational task, internal `order_request.support_requested` event, and owner audit record without changing request status, price, quantity, holds, or deadlines. Only a separately authorized support command may later transition the request.
+
+Owner-only commands are an explicit Phase 6 MVP capability/entitlement restriction. They must not be implemented by assuming every active `store_administrators` row is an owner; manager/staff delegation remains deferred.
 
 ---
 
@@ -140,46 +140,41 @@ Terminal means no further customer payment may be created from that request.
 | `requested` | Store Owner | `confirmed_full` | Available quantity >= requested quantity. | Include in confirmed subtotal. |
 | `requested` | Store Owner | `confirmed_partial` | Available quantity > 0 and less than requested. | Include confirmed quantity only. |
 | `requested` | Store Owner | `unavailable` | Reason selected. | Exclude from payable amount; may create demand signal. |
+| `requested` | Store Owner | `rejected` | Full request is rejected for a bounded non-stock reason. | Exclude from payable amount; request enters `store_rejected`. |
 | `requested` | Store Owner | `needs_clarification` | Policy allows customer clarification before payment. | Notify customer; pause request SLA by policy; start clarification timeout. |
-| `needs_clarification` | Customer | `clarification_provided` | Customer responds before clarification timeout. | Notify store, resume review path. |
+| `needs_clarification` | Customer | `requested` | Customer responds before clarification timeout. | Record immutable clarification evidence, notify store, resume review path. |
 | `needs_clarification` | Customer | `unavailable` | Customer withdraws the item or declines clarification. | Exclude from payable amount; update request summary. |
 | `needs_clarification` | System Job | `unavailable` | Clarification timeout elapsed. | Exclude from payable amount, notify customer/store. |
-| `clarification_provided` | Store Owner | `confirmed_full` | Clarification resolves item and full quantity is available. | Include in confirmed subtotal. |
-| `clarification_provided` | Store Owner | `confirmed_partial` | Clarification resolves item but only partial quantity is available. | Include confirmed quantity only. |
-| `clarification_provided` | Store Owner | `unavailable` | Clarification confirms item cannot be fulfilled. | Exclude from payable amount; may create demand signal. |
-| `confirmed_full` | System | `soft_hold_created` | Confirmation done. | Create soft hold for requested quantity; decrement effective availability. |
-| `confirmed_partial` | System | `soft_hold_created` | Confirmation done. | Create soft hold for confirmed quantity; decrement effective availability. |
-| `soft_hold_created` | Customer/System | `firm_hold_created` | Customer accepts confirmed/adjusted result; payment window starts. | Promote soft hold to firm hold. |
-| `firm_hold_created` | Payment Webhook | `sold` | Payment successful and paid order created. | Convert firm hold to sold/reserved. |
-| `soft_hold_created` | System | `hold_released` | Customer rejects/cancels before acceptance, or acceptance window expires. | Release soft quantity. |
-| `firm_hold_created` | System | `hold_released` | Payment expired/cancelled/failed final. | Release firm quantity. |
+
+Hold lifecycle is not encoded as an item confirmation state. Fully confirmed unchanged items receive firm holds in the same transaction that enters `payment_ready`; partial/materially changed confirmed items receive soft holds in the same transaction that enters `awaiting_customer_decision`. Hold promotion/release is governed by §7.
 
 ---
 
 ## 7. Inventory Hold State Machine
 
-Hold semantics:
+Hold semantics use an orthogonal type and status:
 
-- `soft_hold`: created atomically at store confirmation in the same transaction as the item confirmation state change. It prevents oversell for used books while the customer is still deciding. It is released if the customer rejects, cancels, or the acceptance window expires.
-- `firm_hold`: created when the customer explicitly accepts the confirmed result (or immediately for fully confirmed requests that skip the decision step). It is tied to `payment_expires_at` and is converted to a sale on payment success or released on payment expiry/cancellation.
+- `hold_type='soft', status='active'`: created atomically at partial/material store confirmation. It prevents oversell while the customer decides and releases on cancellation/acceptance expiry.
+- `hold_type='firm', status='active'`: created for full unchanged confirmation or promoted on explicit acceptance. It is tied to `payment_expires_at`; Phase 7 converts it to sale or Phase 6 releases it on expiry/cancellation.
 
 | Current State | Actor | Allowed Next State | Required Guards | Side Effects |
 |---|---|---|---|---|
-| `soft_active` | Customer/System | `released` | Customer rejects/cancels before acceptance, or acceptance window expires. | Restore sellable quantity. |
-| `soft_active` | Customer/System | `firm_active` | Customer explicitly accepts confirmed/adjusted result. | Hold type promoted to `firm`; `payment_expires_at` starts. |
-| `firm_active` | Payment Webhook | `converted_to_sale` | Payment succeeded, order created. | Decrement sellable quantity or reserve to paid order. |
-| `firm_active` | Customer/System | `released` | Customer cancelled or payment expired. | Restore sellable quantity. |
-| `firm_active` | Platform Operator | `released` | Operator reason required. | Audit reason; notify if customer-impacting. |
+| `soft` / `active` | Customer/System | `soft` / `released` | Customer cancels before acceptance, or acceptance window expires. | Restore sellable quantity. |
+| `soft` / `active` | Customer/System | `firm` / `active` | Customer explicitly accepts the partial/materially changed result. | Promote type only; move no inventory bucket; start payment expiry and enter `payment_ready`. |
+| `firm` / `active` | Phase 7 Payment Service | `firm` / `converted_to_sale` | Payment succeeded and paid order created. | Move reserved quantity to sold; create paid-order/ledger effects. |
+| `firm` / `active` | Customer/System | `firm` / `released` | Customer cancelled or payment-ready expired. | Restore sellable quantity. |
+| `firm` / `active` | Platform Operator | `firm` / `released` | Named authorized command and reason. | Audit reason; notify if customer-impacting. |
 | `converted_to_sale` | Platform Operator | `reversed` | Refund/cancellation policy allows stock restoration. | Restore or mark item unavailable depending condition. |
 
 Hold availability guard:
 
 ```text
-effective_available = available_quantity - sum(active soft and firm holds)
-confirmation must fail if effective_available < requested_quantity
+sellable_available = quantity_available
+quantity_reserved = sum(active soft and firm holds)
+confirmation must fail if quantity_available < confirmed_quantity
 ```
 
-The guard and the hold creation must be evaluated under row-level locking on the inventory row to prevent race-condition oversell.
+The repository uses bucket-transfer accounting: creating a hold atomically decrements `quantity_available` and increments `quantity_reserved`; releasing reverses that transfer; promotion moves no bucket. Active holds explain the reserved aggregate and are never subtracted from `quantity_available` again. The guard, bucket transfer, and hold creation must be evaluated under row-level locking on the inventory row to prevent oversell and double subtraction.
 
 Hold expiry must be enforced by a backend job. Client timers are display only.
 
@@ -283,10 +278,15 @@ Refund decisions must reference the policy snapshot shown before payment.
 
 Required idempotency domains:
 
-- cart-to-request creation
+- request creation and cart `active -> submitted` transition as separate derived identities
 - store confirmation submission
+- full-request rejection
+- Store Owner support request/task creation
+- customer acceptance/cancellation
+- request/clarification/acceptance/payment-ready expiry
 - inventory hold creation
-- payment provider order creation
+- inventory hold promotion/release
+- payment provider order creation (Phase 7)
 - payment success webhook
 - paid order creation
 - refund request creation
@@ -301,6 +301,8 @@ Concurrency controls:
 - same payment webhook must not create duplicate paid orders
 - late payment success after expiry must create reconciliation, not silent fulfillment
 - store confirmation must fail if request already expired/cancelled
+- store confirmation must fail above the server-established item price bound
+- state progression must fail if server feature/locality/allowlist/store eligibility guards fail
 - platform override must include reason and current-state check
 
 ---
@@ -312,13 +314,24 @@ State machines must emit events defined in DOC-10.
 Minimum event requirements:
 
 - `order_request.submitted`
+- `marketplace_cart.submitted`
 - `order_request.confirmation_due_soon`
+- `order_request.review_started`
+- `order_request.clarification_requested`
+- `order_request.clarification_provided`
 - `order_request.confirmed`
 - `order_request.partially_confirmed`
 - `order_request.unavailable`
+- `order_request.rejected`
+- `order_request.changes_accepted`
+- `order_request.support_requested`
+- `order_request.cancelled`
+- `order_request.emergency_closure_paused`
+- `order_request.emergency_closure_resumed`
+- `order_request.store_ineligible`
+- `order_request.support_intervened`
 - `order_request.expired`
-- `order_request.payment_window_started`
-- `order_request.payment_expired`
+- `order_request.payment_ready_expired`
 - `order.paid`
 - `order.post_payment_issue_reported`
 - `order.cancelled`
@@ -345,6 +358,13 @@ commerce_transition_log
   reason nullable
   metadata private
   created_at
+
+marketplace_events additions
+  schema_version
+  command_id
+  correlation_id
+  causation_event_id nullable
+  privacy_classification
 
 order_post_payment_issues
   id
@@ -394,8 +414,8 @@ Exact table names may change during implementation, but these concepts must exis
 | ID | Criterion |
 |---|---|
 | STM-01 | Every commerce state transition has an allowed actor and allowed previous state. |
-| STM-02 | Customer payment cannot start unless request is confirmed or partially confirmed and payment window is active. |
-| STM-03 | Store confirmation cannot increase the confirmed unit price above the price bound at request submission. |
+| STM-02 | Phase 6 enters provider-independent `payment_ready` only with final INR amount and firm holds; Phase 7 alone creates a provider object and `payment_pending`. |
+| STM-03 | Store confirmation cannot increase the confirmed unit price above the server-established bound, even with customer acceptance. |
 | STM-04 | Soft inventory holds are created atomically at store confirmation and promoted to firm holds on customer acceptance; both are released on expiry/cancellation. |
 | STM-05 | Payment success webhook is idempotent and cannot create duplicate orders or ledger entries. |
 | STM-06 | Late/mismatched payment events create reconciliation cases. |
@@ -403,6 +423,11 @@ Exact table names may change during implementation, but these concepts must exis
 | STM-08 | Refund and partial refund decisions reference checkout policy snapshots. |
 | STM-09 | All transitions emit marketplace events and audit logs where appropriate. |
 | STM-10 | Cross-tenant transition attempts are denied in tests. |
+| STM-11 | Bucket-transfer accounting decrements available/increments reserved once; active holds are never subtracted from available again. |
+| STM-12 | Full-request rejection uses `store_rejected`, bounded non-stock reasons, `order_request.rejected`, audit/notification, and idempotent hold release. |
+| STM-13 | `request_platform_support` creates a deduplicated task/event/audit without changing commerce status. |
+| STM-14 | Planned closure, bounded emergency pause, and compliance/selling suspension have distinct fail-safe behavior; valid payment-ready holds keep their original expiry unless audited cancellation occurs. |
+| STM-15 | Store commands are owner-only through an explicit Phase 6 MVP capability/entitlement; manager/staff delegation remains deferred. |
 
 ---
 

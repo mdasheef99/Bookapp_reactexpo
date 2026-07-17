@@ -17,6 +17,7 @@ jest.mock('../../services/notificationsService', () => ({
         getNotifications: jest.fn(),
         getPreferences: jest.fn(),
         markRead: jest.fn(),
+        subscribeToCommerceInbox: jest.fn(() => jest.fn()),
         upsertPreference: jest.fn(),
     },
 }));
@@ -64,6 +65,29 @@ describe('useNotifications hooks', () => {
 
         await waitFor(() => expect(result.current.data).toEqual(rows));
         expect(notificationsService.getNotifications).toHaveBeenCalledWith('user-1');
+        expect(notificationsService.subscribeToCommerceInbox).toHaveBeenCalledWith(
+            'user-1', expect.any(Function),
+        );
+    });
+
+    it('invalidates and refetches rather than trusting realtime payload state', async () => {
+        const queryClient = createQueryClient();
+        const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
+        let refresh: (() => void) | undefined;
+        (notificationsService.subscribeToCommerceInbox as jest.Mock)
+            .mockImplementationOnce((_userId, callback) => {
+                refresh = callback;
+                return jest.fn();
+            });
+        (notificationsService.getNotifications as jest.Mock).mockResolvedValue([]);
+
+        renderHook(() => useNotifications('user-1'), { wrapper: createWrapper(queryClient) });
+        await waitFor(() => expect(refresh).toBeDefined());
+        act(() => refresh?.());
+
+        expect(invalidateQueries).toHaveBeenCalledWith({
+            queryKey: notificationKeys.inbox('user-1'),
+        });
     });
 
     it('does not fetch notifications without a user id', () => {
@@ -99,10 +123,10 @@ describe('useNotifications hooks', () => {
         });
 
         await act(async () => {
-            await result.current.mutateAsync('delivery-1');
+            await result.current.mutateAsync({ id: 'delivery-1', source: 'legacy' });
         });
 
-        expect(notificationsService.markRead).toHaveBeenCalledWith('delivery-1');
+        expect(notificationsService.markRead).toHaveBeenCalledWith('delivery-1', 'legacy');
         expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: notificationKeys.inbox('user-1') });
     });
 

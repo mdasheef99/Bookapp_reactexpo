@@ -56,6 +56,19 @@ export default function StoreOwnerLayout() {
                 }}
             />
             <Tabs.Screen
+                name="orders"
+                options={{
+                    title: 'Orders',
+                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+                        <Ionicons name="receipt-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="orders/[requestId]"
+                options={{ href: null }}
+            />
+            <Tabs.Screen
                 name="subscription"
                 options={{
                     title: 'Subscription',

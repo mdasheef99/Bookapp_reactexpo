@@ -66,6 +66,7 @@ serve(async (req) => {
       .select('id, recipient_user_id, title, body, deep_link, category')
       .eq('channel', 'push')
       .eq('status', 'pending')
+      .is('marketplace_notification_id', null)
       .order('created_at', { ascending: true })
       .limit(asLimit(body.limit))
 

@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import type { MarketplaceListingOffer } from '../types';
 import { CONFIRMATION_BEFORE_PAYMENT_MESSAGE } from '../constants/disclosures';
+import { AddToCartButton } from '../commerce/components/AddToCartButton';
 
 interface StoreOfferCardProps {
     offer: MarketplaceListingOffer;
@@ -90,6 +91,7 @@ export function StoreOfferCard({ offer }: StoreOfferCardProps) {
             <Text style={[styles.confirmation, { color: colors.textTertiary }]}>
                 {CONFIRMATION_BEFORE_PAYMENT_MESSAGE}
             </Text>
+            <AddToCartButton listingId={offer.id} title={offer.publicTitle} />
         </Pressable>
     );
 }

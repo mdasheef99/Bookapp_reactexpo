@@ -9,3 +9,13 @@ entrypoint = "./functions/send-notification/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/send-notification/*.html" ]
+
+[functions.commerce-scheduler]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/commerce-scheduler/index.ts"
+
+[functions.commerce-task-worker]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/commerce-task-worker/index.ts"

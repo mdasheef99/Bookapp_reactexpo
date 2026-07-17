@@ -191,7 +191,7 @@ Requires:
 - provider adapter chosen
 - delivery cost ownership matrix approved
 - delivery exception ops tooling available
-- customer quote shown before payment
+- exact BookConnect customer tariff shown before payment; provider operational quoting remains a later delivery concern
 
 ---
 

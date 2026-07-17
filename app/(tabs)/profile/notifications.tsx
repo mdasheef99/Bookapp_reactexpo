@@ -9,7 +9,7 @@ import {
     useMarkNotificationRead,
     useNotifications,
 } from '@/features/notifications/hooks/useNotifications';
-import type { NotificationDelivery } from '@/features/notifications/types';
+import type { CommerceNotification, InboxNotification } from '@/features/notifications/types';
 import { useTheme } from '@/hooks/useTheme';
 
 function formatNotificationTime(value: string) {
@@ -26,17 +26,27 @@ export default function NotificationsScreen() {
     const markRead = useMarkNotificationRead(userId ?? 'anonymous');
     const archive = useArchiveNotification(userId ?? 'anonymous');
 
-    const openNotification = async (item: NotificationDelivery) => {
+    const isCommerce = (item: InboxNotification): item is CommerceNotification => 'source' in item && item.source === 'commerce';
+
+    const openNotification = async (item: InboxNotification) => {
         if (!item.read_at) {
-            await markRead.mutateAsync(item.id);
+            await markRead.mutateAsync({ id: item.id, source: isCommerce(item) ? 'commerce' : 'legacy' });
         }
-        if (item.deep_link) {
+        if (isCommerce(item)) {
+            const requestId = item.deep_link_data.requestId;
+            if (item.deep_link_route === 'customer_order_request') {
+                router.push(`/(tabs)/marketplace/requests/${requestId}` as never);
+            } else if (item.deep_link_route === 'owner_order_request') {
+                router.push(`/(store-owner)/orders/${requestId}` as never);
+            }
+        } else if (item.deep_link) {
             router.push(item.deep_link as never);
         }
     };
 
-    const renderItem = ({ item }: { item: NotificationDelivery }) => {
+    const renderItem = ({ item }: { item: InboxNotification }) => {
         const isUnread = !item.read_at;
+        const category = isCommerce(item) ? item.notification_type : item.category;
 
         return (
             <TouchableOpacity
@@ -51,16 +61,18 @@ export default function NotificationsScreen() {
                         <Text style={[styles.notificationTime, { color: colors.textTertiary }]}>{formatNotificationTime(item.created_at)}</Text>
                     </View>
                     <Text style={[styles.notificationBody, { color: colors.textSecondary }]}>{item.body}</Text>
-                    <Text style={[styles.notificationCategory, { color: colors.textTertiary }]}>{item.category}</Text>
+                    <Text style={[styles.notificationCategory, { color: colors.textTertiary }]}>{category}</Text>
                 </View>
-                <TouchableOpacity
-                    onPress={() => archive.mutate(item.id)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Archive ${item.title}`}
-                    style={styles.archiveButton}
-                >
-                    <Ionicons name="archive-outline" size={18} color={colors.textTertiary} />
-                </TouchableOpacity>
+                {!isCommerce(item) && (
+                    <TouchableOpacity
+                        onPress={() => archive.mutate(item.id)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Archive ${item.title}`}
+                        style={styles.archiveButton}
+                    >
+                        <Ionicons name="archive-outline" size={18} color={colors.textTertiary} />
+                    </TouchableOpacity>
+                )}
             </TouchableOpacity>
         );
     };

@@ -75,7 +75,10 @@ describe('NotificationsScreen', () => {
 
         fireEvent.press(getByText('Exchange approved'));
 
-        await waitFor(() => expect(mockMarkRead).toHaveBeenCalledWith('delivery-1'));
+        await waitFor(() => expect(mockMarkRead).toHaveBeenCalledWith({
+            id: 'delivery-1',
+            source: 'legacy',
+        }));
         expect(mockPush).toHaveBeenCalledWith('/(tabs)/exchange/transaction/txn-1');
     });
 });

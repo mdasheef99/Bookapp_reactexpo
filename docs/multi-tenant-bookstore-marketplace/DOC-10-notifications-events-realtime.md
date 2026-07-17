@@ -57,18 +57,23 @@ Recommended event shape:
 marketplace_events
   id
   event_type
+  schema_version
   entity_type
   entity_id
   store_id nullable
   user_id nullable
   actor_user_id nullable
   source
+  command_id
   idempotency_key
+  correlation_id
+  causation_event_id nullable
+  privacy_classification
   payload private
   created_at
 ```
 
-`payload` is private. Public or client-visible notification text should be generated separately with minimum necessary data.
+`payload` is private. Public or client-visible notification text should be generated separately with minimum necessary data. Event producers must validate `(event_type, schema_version)` against a server registry. Correlation and causation IDs link commands, reminders, expiries, support work, and notification projections without copying PII. Privacy classification is explicit (`public`, `internal`, `confidential`, or `restricted`).
 
 ---
 
@@ -103,14 +108,26 @@ marketplace_events
 
 | Event | Trigger |
 |---|---|
+| `marketplace_cart.submitted` | Cart separately transitions `active -> submitted` in the request-submission transaction. |
+| `marketplace_cart.replaced` | Customer confirms cross-store cart replacement. |
 | `order_request.submitted` | Customer submits unpaid request. |
 | `order_request.confirmation_due_soon` | Store confirmation window nearing expiry. |
-| `order_request.confirmed` | Store confirms all items. |
+| `order_request.review_started` | Store Owner starts reviewing the request. |
+| `order_request.clarification_requested` | Store requests bounded customer clarification. |
+| `order_request.clarification_provided` | Customer supplies clarification and review resumes. |
+| `order_request.confirmed` | Store confirms all items and the unchanged request enters provider-independent `payment_ready`. |
 | `order_request.partially_confirmed` | Store confirms some items. |
-| `order_request.unavailable` | Store rejects all items. |
+| `order_request.changes_accepted` | Customer explicitly accepts a partial/materially changed result and the request enters `payment_ready`. |
+| `order_request.unavailable` | Requested stock/items cannot be fulfilled. |
+| `order_request.rejected` | Store rejects the full request for a bounded non-stock reason. |
+| `order_request.support_requested` | Store Owner requests platform help without changing commerce status. |
+| `order_request.cancelled` | Customer or authorized platform action closes an unpaid request. |
+| `order_request.emergency_closure_paused` | A bounded emergency closure pauses an eligible pre-payment state. |
+| `order_request.emergency_closure_resumed` | A paused request safely resumes its prior state/timers. |
+| `order_request.store_ineligible` | Suspension/prohibition/selling ineligibility blocks progression. |
+| `order_request.support_intervened` | An authorized support command changes request behavior/state. |
 | `order_request.expired` | Store missed confirmation window. |
-| `order_request.payment_window_started` | Customer can pay. |
-| `order_request.payment_expired` | Customer missed payment window. |
+| `order_request.payment_ready_expired` | Customer missed the provider-independent payment-ready window. |
 | `order.paid` | Payment succeeds and paid order is created. |
 | `order.post_payment_issue_reported` | Store reports confirmed paid item cannot be fulfilled. |
 | `order.cancelled` | Paid order cancelled. |
@@ -178,6 +195,8 @@ Store owners should receive:
 - new order request
 - request nearing confirmation deadline
 - request expired
+- full request rejected for a non-stock reason
+- owner support request acknowledged
 - customer paid after confirmation
 - pickup order ready-to-pack
 - delivery order ready-to-pack
@@ -201,9 +220,10 @@ Customers should receive:
 - store confirmed full availability
 - store confirmed partial availability
 - store marked unavailable
+- store rejected the request for a bounded non-stock reason
 - request expired
-- payment window started
-- payment reminder before expiry
+- payment ready
+- payment-ready reminder before expiry
 - payment successful
 - order ready for pickup
 - delivery booked
@@ -314,21 +334,42 @@ Transactional order and safety notifications should remain enabled as required f
 marketplace_events
   id
   event_type
+  schema_version
   entity_type
   entity_id
   store_id nullable
   user_id nullable
   actor_user_id nullable
   source
+  command_id
   idempotency_key
+  correlation_id
+  causation_event_id nullable
+  privacy_classification
   severity
   requires_action
   payload private
   created_at
 
-notification_deliveries
+marketplace_notifications
   id
   event_id
+  store_id nullable
+  user_id recipient
+  notification_type
+  title
+  body nullable
+  entity_type
+  entity_id
+  deep_link nullable
+  privacy_classification
+  read_at nullable
+  created_at
+
+notification_deliveries
+  id
+  event_id nullable legacy source
+  marketplace_notification_id nullable commerce source
   recipient_user_id
   channel
   title
@@ -338,6 +379,12 @@ notification_deliveries
   provider_message_id nullable
   sent_at nullable
   read_at nullable
+  attempt_count
+  max_attempts
+  next_attempt_at nullable
+  locked_at nullable
+  locked_by nullable
+  dead_lettered_at nullable
   created_at
 
 notification_preferences
@@ -367,6 +414,13 @@ event_action_tasks
   assigned_user_id nullable
   status
   due_at nullable
+  attempt_count
+  max_attempts
+  next_attempt_at nullable
+  locked_at nullable
+  locked_by nullable
+  last_error_code nullable
+  dead_lettered_at nullable
   resolved_at nullable
   created_at
 ```
@@ -383,6 +437,8 @@ event_action_tasks
 - Provider secrets and webhook verification keys are server-only.
 - Realtime tables must have RLS and narrow publications.
 - Logout must clear local notification state that may expose private store/customer data.
+- `marketplace_notifications` is the canonical PII-safe commerce inbox projection. Commerce `notification_deliveries` rows represent transport attempts and must not form a competing in-app commerce inbox.
+- Store notification fan-out resolves every distinct active recipient with the relevant capability, owner-only in the Phase 6 MVP, and deduplicates by event, recipient, and notification type.
 - Settlement, payment reconciliation, grievance, moderation, and private delivery exception payloads must be available only to authorized platform roles.
 
 ---
@@ -401,6 +457,9 @@ event_action_tasks
 | EVT-08 | Notification text avoids customer PII and payment details. |
 | EVT-09 | NDR, RTO, failed pickup, weight dispute, settlement, grievance, and reconciliation events produce platform-actionable tasks. |
 | EVT-10 | Event foundation exists before payment implementation; payment and refund flows do not depend on screen-level side effects for notifications or audit. |
+| EVT-11 | Marketplace events carry schema version, command, correlation, causation, and privacy classification. |
+| EVT-12 | `order_request.rejected` and `order_request.support_requested` remain distinct from stock unavailability and commerce transitions respectively. |
+| EVT-13 | Store notification fan-out is capability-scoped and deduplicated, and every deep link reauthorizes its target entity. |
 
 ---
 

@@ -26,6 +26,7 @@ function mockQuery(response: Record<string, unknown>) {
 
 beforeEach(() => {
     jest.clearAllMocks();
+    (supabase.rpc as jest.Mock).mockResolvedValue({ data: [], error: null });
 });
 
 describe('notificationsService', () => {
@@ -50,6 +51,48 @@ describe('notificationsService', () => {
         expect(builder.is).toHaveBeenCalledWith('archived_at', null);
         expect(builder.order).toHaveBeenCalledWith('created_at', { ascending: false });
         expect(result).toEqual(notifications);
+    });
+
+    it('merges canonical commerce inbox rows with legacy non-commerce deliveries', async () => {
+        const commerce = [{
+            id: 'commerce-1',
+            notification_type: 'commerce.order_request.submitted.customer',
+            title: 'Request sent',
+            created_at: '2026-07-16T10:00:00.000Z',
+        }];
+        const legacy = [{
+            id: 'legacy-1',
+            category: 'clubs',
+            title: 'Club update',
+            created_at: '2026-07-16T09:00:00.000Z',
+        }];
+        (supabase.rpc as jest.Mock).mockResolvedValueOnce({ data: commerce, error: null });
+        const builder = mockQuery({ data: legacy, error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(builder);
+
+        const result = await notificationsService.getNotifications('user-1');
+
+        expect(supabase.rpc).toHaveBeenCalledWith('marketplace_list_commerce_notifications');
+        expect(builder.is).toHaveBeenCalledWith('marketplace_notification_id', null);
+        expect(result.map((row) => row.id)).toEqual(['commerce-1', 'legacy-1']);
+    });
+
+    it('marks canonical commerce inbox rows through their dedicated safe RPC', async () => {
+        const saved = { id: 'commerce-1', read_at: '2026-07-16T10:00:00.000Z' };
+        (supabase.rpc as jest.Mock).mockResolvedValueOnce({ data: saved, error: null });
+
+        const result = await notificationsService.markRead('commerce-1', 'commerce');
+
+        expect(supabase.rpc).toHaveBeenCalledWith('marketplace_mark_commerce_notification_read', {
+            p_notification_id: 'commerce-1',
+        });
+        expect(result).toEqual(saved);
+    });
+
+    it('subscribes only to recipient-safe commerce inbox changes and refetches canonically', () => {
+        const unsubscribe = notificationsService.subscribeToCommerceInbox('user-1', jest.fn());
+        expect(supabase.channel).toHaveBeenCalledWith('commerce-inbox:user-1');
+        expect(unsubscribe).toEqual(expect.any(Function));
     });
 
     it('marks one notification read through the RPC', async () => {

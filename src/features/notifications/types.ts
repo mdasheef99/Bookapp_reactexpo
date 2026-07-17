@@ -30,6 +30,24 @@ export interface NotificationDelivery {
     updated_at: string;
 }
 
+export interface CommerceNotification {
+    id: string;
+    notification_type: string;
+    title: string;
+    body: string | null;
+    entity_type: string;
+    entity_id: string;
+    deep_link_route: 'customer_order_request' | 'owner_order_request' | 'ops_order_request';
+    deep_link_data: { requestId: string };
+    is_read: boolean;
+    read_at: string | null;
+    privacy_classification: 'internal' | 'confidential' | 'restricted';
+    created_at: string;
+    source: 'commerce';
+}
+
+export type InboxNotification = NotificationDelivery | CommerceNotification;
+
 export interface NotificationPreference {
     id: string;
     user_id: string;

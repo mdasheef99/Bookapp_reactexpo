@@ -1,6 +1,11 @@
 import * as ExpoNotifications from 'expo-notifications';
 import { supabase } from '@/lib/supabase';
-import type { NotificationDelivery, NotificationPreference } from '../types';
+import type {
+    CommerceNotification,
+    InboxNotification,
+    NotificationDelivery,
+    NotificationPreference,
+} from '../types';
 
 function notificationPermissionGranted(permission: unknown) {
     if (typeof permission !== 'object' || permission === null) return false;
@@ -9,25 +14,51 @@ function notificationPermissionGranted(permission: unknown) {
 }
 
 export const notificationsService = {
-    async getNotifications(userId: string): Promise<NotificationDelivery[]> {
-        const { data, error } = await supabase
+    async getNotifications(userId: string): Promise<InboxNotification[]> {
+        const [commerceResult, legacyResult] = await Promise.all([
+            supabase.rpc('marketplace_list_commerce_notifications'),
+            supabase
             .from('notification_deliveries')
             .select('*')
             .eq('recipient_user_id', userId)
+            .is('marketplace_notification_id', null)
             .is('archived_at', null)
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false }),
+        ]);
 
-        if (error) throw error;
-        return (data ?? []) as NotificationDelivery[];
+        if (commerceResult.error) throw commerceResult.error;
+        if (legacyResult.error) throw legacyResult.error;
+        return [
+            ...((commerceResult.data ?? []) as CommerceNotification[]),
+            ...((legacyResult.data ?? []) as NotificationDelivery[]),
+        ].sort((left, right) => right.created_at.localeCompare(left.created_at));
     },
 
-    async markRead(deliveryId: string): Promise<NotificationDelivery> {
-        const { data, error } = await supabase.rpc('mark_notification_read', {
-            p_delivery_id: deliveryId,
-        });
+    async markRead(
+        notificationId: string,
+        source: 'legacy' | 'commerce' = 'legacy',
+    ): Promise<InboxNotification> {
+        const { data, error } = source === 'commerce'
+            ? await supabase.rpc('marketplace_mark_commerce_notification_read', {
+                p_notification_id: notificationId,
+            })
+            : await supabase.rpc('mark_notification_read', { p_delivery_id: notificationId });
 
         if (error) throw error;
-        return data as NotificationDelivery;
+        return data as InboxNotification;
+    },
+
+    subscribeToCommerceInbox(userId: string, onRefresh: () => void) {
+        const channel = supabase
+            .channel(`commerce-inbox:${userId}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'marketplace_notifications',
+                filter: `user_id=eq.${userId}`,
+            }, () => onRefresh())
+            .subscribe();
+        return () => { void supabase.removeChannel(channel); };
     },
 
     async markAllRead(): Promise<number> {

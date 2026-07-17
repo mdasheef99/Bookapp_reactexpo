@@ -206,7 +206,7 @@ Default planning assumptions:
 | Case | Default Owner | Notes |
 |---|---|---|
 | Customer pays normal delivery fee | Customer | Fee shown before payment. |
-| Delivery quote changes before payment | Customer chooses updated quote or pickup/cancel | Re-quote before payment. |
+| Phase 6 BookConnect tariff changes after partial confirmation | Customer chooses the recalculated policy tariff, pickup, or cancellation | No provider quote occurs; accepted `payment_ready` total is immutable. |
 | Provider cost increases after payment without store/customer fault | Platform review | Platform may absorb, reassign, or cancel/refund. |
 | Store not ready at pickup | Store fault unless platform/provider caused issue | May affect reliability and settlement adjustment. |
 | Failed pickup due to provider issue | Provider/platform review | Provider claim or reattempt. |

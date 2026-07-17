@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { notificationsService } from '../services/notificationsService';
 import type { NotificationPreference } from '../types';
@@ -9,11 +10,19 @@ export const notificationKeys = {
 };
 
 export function useNotifications(userId?: string | null) {
-    return useQuery({
+    const queryClient = useQueryClient();
+    const query = useQuery({
         queryKey: notificationKeys.inbox(userId ?? 'anonymous'),
         queryFn: () => notificationsService.getNotifications(userId as string),
         enabled: Boolean(userId),
     });
+    useEffect(() => {
+        if (!userId) return undefined;
+        return notificationsService.subscribeToCommerceInbox(userId, () => {
+            void queryClient.invalidateQueries({ queryKey: notificationKeys.inbox(userId) });
+        });
+    }, [queryClient, userId]);
+    return query;
 }
 
 export function useNotificationPreferences(userId?: string | null) {
@@ -28,7 +37,9 @@ export function useMarkNotificationRead(userId: string) {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (deliveryId: string) => notificationsService.markRead(deliveryId),
+        mutationFn: ({ id, source }: { id: string; source: 'legacy' | 'commerce' }) => (
+            notificationsService.markRead(id, source)
+        ),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: notificationKeys.inbox(userId) }),
     });
 }

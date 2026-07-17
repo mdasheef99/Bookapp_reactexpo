@@ -1,5 +1,5 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -9,10 +9,9 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { AtmosphericBackground } from '@/components/ui/AtmosphericBackground';
 import { initSentry, syncSentryUser, trackSentryRoute, maybeSendSentryVerificationEvent, Sentry } from '@/lib/sentry';
 import '../global.css';
+import { appQueryClient } from '@/lib/queryClient';
 
 initSentry();
-
-const queryClient = new QueryClient();
 
 function InitialLayout() {
     const { session, isLoading, initialize } = useAuth();
@@ -88,7 +87,7 @@ function RootLayout() {
         <Sentry.ErrorBoundary fallback={ErrorFallback}>
             <GestureHandlerRootView style={{ flex: 1 }}>
                 <SafeAreaProvider>
-                    <QueryClientProvider client={queryClient}>
+                    <QueryClientProvider client={appQueryClient}>
                         <AtmosphericBackground>
                             <InitialLayout />
                         </AtmosphericBackground>

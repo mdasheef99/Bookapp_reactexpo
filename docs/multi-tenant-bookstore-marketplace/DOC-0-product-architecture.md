@@ -406,7 +406,8 @@ BookConnect facilitates delivery through third-party partners.
 MVP principles:
 
 - pickup is always supported when the store enables it
-- delivery serviceability and estimated quote are checked before payment
+- Phase 6 calculates the exact customer-facing BookConnect tariff before `payment_ready` without a delivery-provider call
+- provider operational serviceability/quote is deferred to the later delivery integration phase and cannot silently increase the accepted customer total
 - final delivery assignment happens after payment and store readiness
 - delivery integrations must use provider adapters
 - delivery provider webhooks are processed server-side

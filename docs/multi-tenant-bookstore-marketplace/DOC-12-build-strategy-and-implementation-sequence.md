@@ -286,19 +286,24 @@ Build:
 - partial availability
 - unavailable items
 - confirmation SLA during open hours
-- payment window state without live payment provider
+- deterministic, versioned BookConnect delivery tariff for eligibility and exact customer-facing charges, with no provider call
+- provisional tariff snapshot at submission and recalculation after partial/material confirmation
+- provider-independent `payment_ready` state with no payment-provider object
 - inventory holds after confirmation
-- critical request/reminder/payment-window notifications
+- critical request/reminder/payment-ready notifications
 - transition logs/events for request and hold states
 
 Risk gate:
 
 - no payment is taken at request submission
 - store cannot increase price during confirmation
-- partial confirmation recalculates subtotal and delivery eligibility
+- partial confirmation recalculates subtotal, policy delivery eligibility, and the exact customer delivery charge; a material charge change requires explicit acceptance
+- `payment_ready` snapshots immutable quantities, item subtotal, discounts, customer delivery charge, total, tariff version, and resolved policy
+- Phase 6 does not call or depend on a delivery provider
 - expired requests take no payment and release holds
 - confirmation deadline notifications and expiry jobs are server-driven
 - transition behavior matches DOC-14
+- Phase 6 creates no provider payment object or paid `store_order`; Phase 7 creates the provider object and enters `payment_pending`
 
 ### Phase 7: Payment, Ledger, Refund Foundation, and Settlement
 
@@ -307,7 +312,7 @@ Goal: enable money safely.
 Build:
 
 - server-side payment provider integration
-- server-side amount calculation
+- collection of the exact, unexpired Phase 6 `payment_ready` total
 - verified/idempotent payment webhooks
 - ledger entries
 - invoice/tax/policy snapshots
@@ -319,6 +324,7 @@ Build:
 Risk gate:
 
 - mobile client cannot set payable amount
+- Phase 7 cannot replace the accepted customer delivery charge or total with a higher provider quote
 - payment provider secrets are server-only
 - duplicate webhook does not duplicate order/ledger state
 - full and partial refunds are platform-controlled
@@ -382,7 +388,7 @@ Build:
 
 - delivery provider adapter
 - serviceability check
-- quote
+- provider operational serviceability and quote for assignment/fulfilment
 - shipment booking after payment and store readiness
 - provider webhook ingestion
 - normalized shipment state
@@ -392,7 +398,7 @@ Build:
 Risk gate:
 
 - delivery booking does not happen before payment and store readiness
-- customer sees final delivery quote before payment
+- provider quote/cost is operational and does not silently change the customer amount accepted at `payment_ready`
 - webhooks are verified and idempotent
 - NDR/RTO/failed pickup/lost/damaged cases are visible to platform ops
 
@@ -472,7 +478,8 @@ The following must be platform-configurable, not hardcoded in mobile clients:
 - payment window expiry
 - **acceptance_window** — the partial-acceptance decision window (separate from the payment window); starts when a request enters `awaiting_customer_decision` and expires at `acceptance_expires_at`. Default range and minimum/maximum values must be specified in `marketplace_policy_config`. The confirmation SLA clock is distinct from this window.
 - delivery minimum value
-- delivery fee subsidy/free delivery rules
+- versioned customer delivery tariff: eligible fulfilment method, store/city/locality, supported zone or distance band, minimum subtotal, free-delivery threshold, fixed charge, and material-change rule
+- delivery fee subsidy/free-delivery rules
 - commission rate
 - subscription limits
 - image extraction quota

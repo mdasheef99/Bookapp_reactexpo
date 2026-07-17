@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { captureAppException } from '@/lib/sentry';
+import { clearCommerceSession } from '@/features/marketplace/commerce/services/commerceSession';
 
 // Simple React hooks-based auth state (replacing zustand)
 let globalSession: Session | null = null;
@@ -98,6 +99,7 @@ export function useAuth() {
     };
 
     const signOut = async () => {
+        await clearCommerceSession();
         await supabase.auth.signOut();
         globalSession = null;
         globalUser = null;
