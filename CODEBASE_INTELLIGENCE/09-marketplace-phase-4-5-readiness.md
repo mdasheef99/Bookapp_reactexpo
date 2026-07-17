@@ -2,6 +2,8 @@
 
 ## Current Marketplace Status
 
+Phase 6 development rollout note (2026-07-17): `commerce-scheduler` v5 and `commerce-task-worker` v2 are active in the development Supabase project. Scheduler access uses the configured custom secret and its internal worker dispatch explicitly forwards the server-side service-role bearer token; the worker retains strict service-role authorization. Cron job 5 runs every minute. Its first scheduled empty-queue run and tagged synthetic dispatch, retry, and dead-letter paths passed. Real timed commerce-command verification and comprehensive browser E2E remain deferred. Phase 6 stops at `payment_ready`; no Phase 7 behavior was added.
+
 As of 2026-06-30:
 
 - Phase 4 Store Owner Console is locally complete.

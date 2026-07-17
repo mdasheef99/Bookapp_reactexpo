@@ -166,3 +166,4 @@ Migrations:
 - Do not treat dev auth bypass as authorization verification.
 - When path matching is awkward for Expo route tests, use `--runTestsByPath`.
 - For Supabase Edge Functions that use service-role keys, add static tests for auth source, platform/store role checks, no request-body actor trust, audit/event writes, and forbidden client authority sources.
+- Phase 6 scheduler/worker regression: `npm.cmd test -- --runInBand supabase/functions/__tests__/commerce_task_worker_auth.test.ts` passed 4/4. It covers exact service-key acceptance, a gateway-validated service-role JWT, rejection of authenticated/malformed/missing credentials, and explicit scheduler bearer forwarding. This is focused source coverage; real timed commerce-command verification and comprehensive browser E2E remain deferred.

@@ -91,8 +91,8 @@
 - Phase 5 remains complete. Phase 6 Units 1-15 are source-complete and migrations M01-M39 are applied to the development Supabase project. M34-M39 are forward-only corrective migrations; no applied M01-M33 migration was replaced for correction.
 - Persisted database command and authorization verification completed through provider-independent `payment_ready`, including corrective migration/security suites. The prior full repository checkpoint passed 908/908 tests; TypeScript and production web export passed at the source-complete checkpoint.
 - Initial browser smoke passed for preview launch, authentication, Marketplace, Cart and Order Requests controls, and empty-cart routing, with no console errors. Controlled `phase6_browser_*` development fixtures remain available.
-- Comprehensive browser customer/Store Owner E2E, browser-created persisted-effect verification, full responsive/accessibility review, scheduler/task-worker deployment, cron activation, and timed reminder/expiry verification are deferred.
-- Checkpoint verdict: `PHASE 6 SOURCE AND DATABASE CHECKPOINT — COMPREHENSIVE BROWSER E2E DEFERRED`. Phase 6 remains `in_progress`; workers are not deployed, cron is inactive, Phase 7 is not started, and this phase ends at `payment_ready`.
+- The development scheduler rollout is active: scheduler v5 uses custom-secret authentication, worker v2 retains strict service-role authorization, and the scheduler explicitly forwards its server-side service-role bearer token to the worker. Cron job 5 runs every minute; its first scheduled empty-queue run and tagged synthetic dispatch, retry, and dead-letter paths passed. Focused authorization regression passed 4/4. No secret, bearer value, or Vault content is recorded.
+- Comprehensive customer/Store Owner browser E2E, browser-created persisted-effect verification, full responsive/accessibility review, and real timed commerce-command reminder/expiry verification remain deferred. Checkpoint verdict: `PHASE 6 SOURCE AND DATABASE CHECKPOINT — COMPREHENSIVE BROWSER E2E DEFERRED`. Phase 6 remains `in_progress`; this development rollout is not a production-readiness declaration, Phase 7 is not started, and this phase ends at `payment_ready`.
 
 ### 2026-07-16: Stage 1 reconciliation and Stage 2 SDD
 
@@ -257,4 +257,4 @@
 
 ## Handoff Notes
 
-The corrected monolithic SDD is the sole normative Phase 6 design. Units 1-15 are source-complete and development database verification is complete through forward migration M39 and provider-independent `payment_ready`. Resume comprehensive customer/Store Owner browser E2E before final Phase 6 acceptance. Keep scheduler/task-worker deployment, cron activation, and Phase 7 payment work separately gated.
+The corrected monolithic SDD is the sole normative Phase 6 design. Units 1-15 are source-complete and development database verification is complete through forward migration M39 and provider-independent `payment_ready`. Scheduler v5 and worker v2 are active only in development; cron job 5 runs every minute after passing empty-queue and tagged synthetic dispatch/retry/dead-letter gates. Resume comprehensive customer/Store Owner browser E2E and real timed commerce-command verification before final Phase 6 acceptance. Keep production rollout and Phase 7 payment work separately gated.

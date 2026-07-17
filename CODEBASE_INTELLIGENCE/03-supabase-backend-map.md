@@ -76,6 +76,8 @@ Known functions include:
 - `complete-transaction`
 - `transfer-credits`
 - `handle-club-downgrade-grace-period`
+- `commerce-scheduler` - Phase 6 development scheduler (version 5). It accepts only the configured custom scheduler secret, acquires the single scheduler lease, claims bounded task batches, and dispatches workers.
+- `commerce-task-worker` - Phase 6 development worker (version 2). It requires service-role authorization; the scheduler explicitly forwards its server-side service-role bearer token for internal dispatch.
 
 Historical architecture docs mention payment and delivery functions. Verify actual folder contents and live deployment before relying on those names.
 
@@ -102,6 +104,7 @@ Marketplace docs may contain an older typo, `store_verification-docs`; live buck
 - As of 2026-06-28, live Edge Functions include `store-application` version 1 and `store-review` version 1, both with `verify_jwt=true`.
 - Phase 2C authenticated platform-review smoke is pending/skipped until a platform-role test user is intentionally provided.
 - As of 2026-06-29, Phase 3 migration `20260628181842 marketplace_phase3_inventory_canonical_listings` is live and verified. Trigger projection smoke passed, but anonymous public-read smoke is blocked because `marketplace_book_listings` public RLS references `marketplace_sec` helper functions that `anon` cannot execute.
+- As of 2026-07-17, the Phase 6 development rollout has `commerce-scheduler` v5 and `commerce-task-worker` v2 active. Cron job 5 invokes the scheduler every minute; its first scheduled empty-queue run succeeded. Synthetic tagged dispatch, retry, and dead-letter paths passed. Real timed commerce-command verification remains pending; do not treat this development rollout as production readiness.
 - The superseded anonymous helper-grant draft was not retained. The local policy-split migration preserves private helper grants and still requires explicit approval before any live application.
 - Supabase advisory at pack creation time reported `public.spatial_ref_sys` has RLS disabled. Do not auto-fix without deciding policies and impact.
 
