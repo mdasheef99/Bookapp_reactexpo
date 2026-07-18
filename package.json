@@ -76,7 +76,7 @@
     "testPathIgnorePatterns": [
       "\\\\node_modules\\\\",
       "<rootDir>/.worktrees",
-      "<rootDir>/e2e/"
+      "[\\\\/]e2e[\\\\/]"
     ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"

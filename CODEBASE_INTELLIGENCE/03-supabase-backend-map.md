@@ -51,7 +51,9 @@ Important recent marketplace migrations:
 - `supabase/migrations/20260628000001_marketplace_phase2b_application_metadata.sql`
 - `supabase/migrations/20260628000002_marketplace_phase2c_review_metadata.sql`
 - `supabase/migrations/20260628000003_marketplace_phase3_inventory_canonical_listings.sql` - Phase 3 canonical metadata, private inventory, public listing projection, RLS, and projection trigger. Applied live as `20260628181842 marketplace_phase3_inventory_canonical_listings`.
-- `supabase/migrations/20260713000001_marketplace_phase3_public_listing_policy_split.sql` - local least-privilege remediation that separates anonymous public reads from authenticated owner/operator access without granting `anon` access to private helpers. Not live-applied.
+- `supabase/migrations/20260713000001_marketplace_phase3_public_listing_policy_split.sql` - live least-privilege split for anonymous public reads versus authenticated owner/operator access.
+- `supabase/migrations/20260715000002_marketplace_phase5_discovery_hardening.sql` and `20260715000003_marketplace_phase5_public_policy_projection_fix.sql` - live discovery/privacy/locality hardening and public projection correction.
+- `supabase/migrations/20260716000001_marketplace_phase6_order_request_core.sql` through `20260716000039_marketplace_phase6_emergency_resume_zero_fix.sql` - Phase 6 carts, requests, snapshots, holds, safe reads, commands, deadlines, events, tasks, scheduler, reconciliation, observations, UI projections, and forward-only corrections. All M01-M39 are applied in development.
 
 Important hardening examples:
 
@@ -77,7 +79,7 @@ Known functions include:
 - `transfer-credits`
 - `handle-club-downgrade-grace-period`
 - `commerce-scheduler` - Phase 6 development scheduler (version 5). It accepts only the configured custom scheduler secret, acquires the single scheduler lease, claims bounded task batches, and dispatches workers.
-- `commerce-task-worker` - Phase 6 development worker (version 2). It requires service-role authorization; the scheduler explicitly forwards its server-side service-role bearer token for internal dispatch.
+- `commerce-task-worker` - Phase 6 development worker (live version 3 as of 2026-07-18). It requires service-role authorization; the scheduler explicitly forwards its server-side service-role bearer token for internal dispatch.
 
 Historical architecture docs mention payment and delivery functions. Verify actual folder contents and live deployment before relying on those names.
 
@@ -101,12 +103,14 @@ Marketplace docs may contain an older typo, `store_verification-docs`; live buck
 - Docs can be stale. Confirm live DB state through Supabase MCP before security-sensitive or migration work.
 - `docs/multi-tenant-bookstore-marketplace/DOC-13-implementation-tracker.md` is the marketplace status handoff.
 - As of 2026-06-28, live migrations include `20260628102752 marketplace_phase2c_review_metadata`.
-- As of 2026-06-28, live Edge Functions include `store-application` version 1 and `store-review` version 1, both with `verify_jwt=true`.
+- As of 2026-07-18, live Edge Functions include `store-application` v3, `store-review` v3, and `store-profile` v3 with `verify_jwt=true`.
 - Phase 2C authenticated platform-review smoke is pending/skipped until a platform-role test user is intentionally provided.
-- As of 2026-06-29, Phase 3 migration `20260628181842 marketplace_phase3_inventory_canonical_listings` is live and verified. Trigger projection smoke passed, but anonymous public-read smoke is blocked because `marketplace_book_listings` public RLS references `marketplace_sec` helper functions that `anon` cannot execute.
-- As of 2026-07-17, the Phase 6 development rollout has `commerce-scheduler` v5 and `commerce-task-worker` v2 active. Cron job 5 invokes the scheduler every minute; its first scheduled empty-queue run succeeded. Synthetic tagged dispatch, retry, and dead-letter paths passed. Real timed commerce-command verification remains pending; do not treat this development rollout as production readiness.
-- The superseded anonymous helper-grant draft was not retained. The local policy-split migration preserves private helper grants and still requires explicit approval before any live application.
-- Supabase advisory at pack creation time reported `public.spatial_ref_sys` has RLS disabled. Do not auto-fix without deciding policies and impact.
+- Phase 3 public listing policy split and Phase 5 projection correction are live; anonymous/authenticated discovery and private-boundary smokes passed.
+- Phase 6 is complete through provider-independent `payment_ready`. All M01-M39 migrations are live in development.
+- As of 2026-07-18, `commerce-scheduler` v5 and `commerce-task-worker` v3 are active. Cron job 5 invokes the scheduler every minute and its latest queried runs succeeded. Comprehensive browser and real timed commerce-command E2E remain deferred; this is not production readiness.
+- Authoritative Phase 6 tables have RLS enabled. The event-schema and notification-type registries have no RLS but direct grant inspection shows service-role-only access; do not change this from the generic advisor alone.
+- `store_inventory_quantity_balance` has zero current violations but remains `NOT VALID`; validate it with a forward migration before production readiness.
+- Supabase also reports standard `public.spatial_ref_sys` no-RLS and existing project-wide advisor items. Do not auto-fix without scoped policy and impact review.
 
 ## Security Patterns To Preserve
 

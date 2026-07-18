@@ -1,7 +1,7 @@
 # PHASE-9: Image-to-LLM Inventory
 
-**Status:** `not_started`
-**Last updated:** 2026-05-22
+**Status:** `planning_authorized`
+**Last updated:** 2026-07-18
 **Phase goal:** Add image-based inventory extraction after manual inventory and listings are stable.
 
 ---
@@ -45,7 +45,8 @@
 
 ## Verification Log
 
-No verification run yet.
+No Phase 9 implementation verification has run. Planning was authorized on 2026-07-18 after
+Phase 6 source/database completion, with comprehensive Phase 6 browser E2E deferred.
 
 ---
 
@@ -65,13 +66,17 @@ No verification run yet.
 ## Blockers
 
 - Phase 3 inventory/listing model must be stable.
+- Phase 9 writes must preserve the Phase 6 quantity-bucket equality, active-hold semantics,
+  controlled server-side inventory write boundary, and reconciliation expectations.
 - LLM/provider choice may require cost and privacy review.
 
 ---
 
 ## Decisions Made During Implementation
 
-- None yet.
+- 2026-07-18: Phase 9 may proceed while Phases 7 and 8 remain deferred. It must remain
+  independent of payment-provider objects, paid orders, pickup, refunds, ledger, and settlement.
+- 2026-07-18: Begin with a reviewed `single_cover` vertical slice before `spine_stack`.
 
 ---
 

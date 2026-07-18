@@ -1,5 +1,8 @@
 # 08 - Marketplace Phase 3 Readiness
 
+> Historical implementation map, refreshed 2026-07-18. Phase 3 is now a stable dependency for
+> Phase 9; use the sections below for architecture and file history, not current blockers.
+
 ## Current Marketplace Status
 
 As of 2026-06-29:
@@ -10,7 +13,9 @@ As of 2026-06-29:
 - Phase 2C platform review/setup entitlements is implemented and deployed.
 - `store-review` has only unauthenticated live smoke (`401`) so far; authenticated platform-review smoke is intentionally pending/skipped unless a platform-role test user is explicitly approved.
 
-Phase 3 manual inventory/projection slice is implemented and live-applied because the pending Phase 2C smoke gate was accepted as pending for this slice. A 2026-06-29 Supabase MCP smoke confirmed the inventory-to-listing trigger projects a publishable row into `marketplace_book_listings`, but anonymous public-read smoke is blocked by an RLS helper execute-permission issue.
+Phase 3 manual inventory/projection is implemented and live. The 2026-07-15 policy split and
+projection correction resolved the anonymous helper issue; anonymous/authenticated discovery,
+canonical grouping, offer comparison, private-boundary denials, and cleanup passed.
 
 ## Read First
 
@@ -129,19 +134,17 @@ Current behavior:
 - live Supabase MCP project `ahntbtktjjmvfosgkmgn` has migration `20260628181842 marketplace_phase3_inventory_canonical_listings` applied
 - remote checks confirmed RLS enabled on all six Phase 3 tables, owner/private inventory policies, public listing store-status read gate, and enabled listing sync trigger
 - 2026-06-29 smoke reused store `68b0c1c9-7f70-4388-bd87-298df3a2ded4`, temporarily moved it to active/approved/setup-complete/selling-allowed, inserted inventory row `74690587-c532-4f2c-928f-436bed5602cd`, verified projected listing `9badc801-29ae-4dad-97a8-9e2f7b008026`, then deleted the smoke inventory/listing and restored the store to pending verification/incomplete/not allowed
-- local least-privilege remediation migration `20260713000001_marketplace_phase3_public_listing_policy_split.sql` and its static test split anonymous public reads from authenticated owner/operator access; it does not grant `anon` access to private helper functions and has not been live-applied
+- least-privilege migration `20260713000001_marketplace_phase3_public_listing_policy_split.sql` is live and separates anonymous public reads from authenticated owner/operator access without granting `anon` private-helper execution
 
-Still pending:
+Later work completed:
 
-- anonymous public-read smoke for `marketplace_book_listings` after resolving the Phase 3 RLS helper permission issue
-- richer owner edit UI beyond the minimal price/quantity edit controls
-- consumer marketplace discovery UI beyond projection service tests
+- Phase 5 delivered and accepted consumer discovery UI and live public-read verification.
+- Phase 4 delivered richer Owner inventory controls.
+- Phase 6 added quantity-bucket/hold semantics and revoked direct authenticated inventory updates.
 
-## Phase 3 First Slice Recommendation
+## Phase 9 Reuse Guidance
 
-Start with schema and server boundary, not UI polish:
-
-1. Review and explicitly approve the policy-split migration before live application, then verify the `anon` branch never calls owner/operator helpers.
-2. Rerun Phase 3 smoke end to end with a disposable approved/setup-complete/selling-allowed store, one inventory row, trigger projection, anonymous public read, and cleanup.
-3. Add richer owner edit UI and consumer discovery UI on top of the projection service.
-4. Keep Phase 2C authenticated reviewer smoke pending unless a platform-role test user is explicitly approved.
+1. Reuse canonical edition/source matching and the private `store_inventory` to public-listing projection.
+2. Preserve the Phase 6 controlled-write and quantity-bucket boundary; do not mutate reserved/sold quantities from extraction review.
+3. Keep raw extraction images/payloads private and require Owner review before inventory write or publish.
+4. Keep the pending authenticated Phase 2C reviewer smoke separate unless an approved platform-role test user is provided.

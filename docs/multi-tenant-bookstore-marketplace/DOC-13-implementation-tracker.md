@@ -46,14 +46,16 @@ If implementation changes product or architecture behavior, update the relevant 
 
 > 2026-07-17 Phase 6 checkpoint refresh: Phase 5 remains complete. Phase 6 Units 1-15 are source-complete, migrations M01-M39 were applied to the development Supabase project, and persisted command/authorization behavior was verified through provider-independent `payment_ready`. M34-M39 are forward-only corrective migrations added after the initial M01-M33 apply. The prior complete repository checkpoint passed 908/908 tests, TypeScript, and production web export. Initial browser authentication/navigation/Marketplace/cart-empty smoke passed without console errors and controlled `phase6_browser_*` development fixtures remain available. The development scheduler rollout is active: scheduler v5 uses custom-secret authentication, worker v2 keeps strict service-role authorization, and scheduler dispatch explicitly forwards its server-side service-role bearer token. Cron job 5 runs each minute; the first scheduled empty-queue run and tagged synthetic dispatch/retry/dead-letter paths passed, with focused regression 4/4. Comprehensive customer/Store Owner browser E2E, browser-created persisted-effect verification, full responsive/accessibility review, and real timed commerce-command verification remain deferred. This is not a production-readiness declaration; Phase 7 is not started.
 
+> 2026-07-18 Phase 6 completion and roadmap decision: Supabase MCP readback reconfirmed the healthy `Bookconnect_reactexpo` development project, all M01-M39 Phase 6 migrations, RLS on authoritative Phase 6 tables, active scheduler v5/worker v3, and successful one-minute cron job 5 executions. Existing inventory has zero quantity-balance violations; the equality constraint remains `NOT VALID` and must be validated by a forward migration before production. Phase 6 is recorded as complete with comprehensive browser E2E, responsive/accessibility review, browser-created persisted-effect review, and real timed commerce-command E2E deliberately deferred. Phases 7 and 8 are deferred by product decision. Phase 9 planning is now the active milestone and must remain independent of payment, paid-order, pickup, ledger, refund, and settlement behavior.
+
 | Field | Value |
 |---|---|
-| Current phase | Phase 6: Order Request and Confirmation - **source and database checkpoint complete; comprehensive browser E2E deferred** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **planning authorized; implementation not started** |
 | Overall status | `in_progress` |
-| Last updated | 2026-07-17 |
-| Latest handoff | `PHASE 6 SOURCE AND DATABASE CHECKPOINT — COMPREHENSIVE BROWSER E2E DEFERRED`. M01-M39 are applied and database-verified in development; initial browser smoke passed. Scheduler v5, worker v2, and one-minute cron job 5 are active only in development after focused 4/4 regression, empty-queue, and tagged synthetic dispatch/retry/dead-letter gates. |
-| Current risk level | Medium - source, persisted database, and development scheduler rollout gates are complete through `payment_ready`; comprehensive browser acceptance and real timed commerce-command verification remain deliberately deferred. Payment/provider/legal/accounting risks remain Phase 7 gates. |
-| Next recommended task | Resume the controlled browser customer-to-Owner flow, persisted-effect verification, and real timed commerce-command verification before final Phase 6 acceptance; keep production rollout and Phase 7 separately authorized. |
+| Last updated | 2026-07-18 |
+| Latest handoff | `PHASE 6 COMPLETE — COMPREHENSIVE BROWSER E2E DEFERRED`. M01-M39 are applied and database-verified in development; scheduler v5, worker v3, and cron job 5 are active. Phases 7 and 8 are deferred. |
+| Current risk level | Medium - Phase 9 requires LLM/provider privacy, cost, retention, quota, and extraction-quality decisions. Phase 6 E2E remains a recorded deferred gate; production payment/provider/legal/accounting risks remain isolated behind deferred Phase 7. |
+| Next recommended task | Create and approve the Phase 9 implementation plan from DOC-3, DOC-4, and DOC-8, starting with the `single_cover` vertical slice. Do not introduce Phase 7 or Phase 8 behavior. |
 
 ---
 
@@ -67,10 +69,10 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 3: Inventory, Canonical Books, and Listings | `in_progress` | [PHASE-3](./implementation/PHASE-3-inventory-canonical-listings.md) | Manual inventory/projection slice implemented, tested, exported, and live-applied; trigger projection and anonymous/authenticated public-read smoke passed and cleaned up. Remaining phase status should be reconciled separately against its tracker. |
 | Phase 4: Store Owner Console | `locally_complete` | [PHASE-4](./implementation/PHASE-4-store-owner-console.md) | Dashboard, inventory console, storefront/profile settings, subscription/quota view, compliance blockers, route tabs, tests, TypeScript, and web export complete locally. Security hardening and `store-profile` are deployed; positive authenticated owner-write smoke remains credential-gated. |
 | Phase 5: Consumer Discovery | `complete` | [PHASE-5](./implementation/PHASE-5-consumer-discovery.md) | Implementation, live projection-based RLS correction, anonymous/authenticated discovery, canonical offer comparison, disabled-locality exclusion, private-access denials, constrained demand RPC, regression tests, TypeScript, and zero-residue cleanup all pass. Accepted 2026-07-15. |
-| Phase 6: Order Request and Confirmation | `in_progress` (source/database/development scheduler checkpoint; browser E2E deferred) | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | Units 1-15 source-complete; M01-M39 applied and persisted behavior verified through `payment_ready`. Scheduler v5/worker v2 and cron job 5 are active in development; custom-secret scheduler authentication, strict worker authorization, focused 4/4 regression, empty-queue, and tagged synthetic dispatch/retry/dead-letter gates pass. Comprehensive browser E2E and real timed commerce-command verification remain acceptance gates. |
-| Phase 7: Payment, Ledger, and Settlement | `not_started` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Requires legal/accounting/payment review before production. |
-| Phase 8: Pickup Fulfillment | `not_started` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Pickup before third-party delivery. |
-| Phase 9: Image-to-LLM Inventory | `not_started` | [PHASE-9](./implementation/PHASE-9-image-to-llm-inventory.md) | Depends on stable inventory/listing model. |
+| Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
+| Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
+| Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
+| Phase 9: Image-to-LLM Inventory | `planning_authorized` | [PHASE-9](./implementation/PHASE-9-image-to-llm-inventory.md) | Approved to proceed before deferred Phases 7/8; depends on the stable inventory/listing and Phase 6 quantity/hold boundary. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -92,6 +94,8 @@ If implementation changes product or architecture behavior, update the relevant 
 ---
 
 ## 5. Global Decisions Made During Implementation
+
+- 2026-07-18: Phase 6 is complete with comprehensive browser E2E explicitly deferred. Phases 7 and 8 are deferred by product decision, and Phase 9 planning is authorized next. This sequencing decision changes roadmap order only; DOC-14 payment/paid-order/pickup transition guards remain authoritative and no Phase 7/8 behavior may be folded into Phase 9.
 
 - 2026-06-19: Architecture Remediation Plan executed (v0.2 sweep).
   - Money fields standardized to integer `_minor` (paise) across DOC-2, DOC-3, DOC-4, DOC-5, DOC-6, DOC-7, DOC-8, DOC-9, DOC-15, README, and PHASE-1 plan.
@@ -120,7 +124,7 @@ If implementation changes product or architecture behavior, update the relevant 
 
 ## 6. Source Spec Deviations
 
-None yet.
+- 2026-07-18 sequencing deviation: DOC-12 originally placed Phase 7 payment and Phase 8 pickup before Phase 9 image inventory. Product direction defers Phases 7/8 and advances Phase 9 after the completed Phase 6 inventory/hold boundary. DOC-12 and the Phase 7/8/9 trackers were updated; DOC-14 requires no behavioral change.
 
 When adding a deviation, include:
 
@@ -163,7 +167,8 @@ Documentation milestones completed:
 - Phase 6 Units 13-14 UI pass (2026-07-16): customer cart/request and Store Owner Orders routes, typed services/hooks, safe versioned projections, explicit replacement, clarification/decision/cancellation, review/outcome/support actions, deep-link refetch, and complete logout/cache cleanup are locally implemented. Focused Units 1-14 tests pass 250/250, migration/security contracts 134/134, TypeScript and production web export pass; migrations 1-30 remain local/unapplied and the PostgreSQL gate remains pending.
 - Phase 6 Unit 15 and Unit 16 source gate (2026-07-16): forward migrations 31-33 add service-only reconciliation cases, deterministic stale-task cleanup, PII-safe structured observations, and operational metrics. Red-first Unit 15 passes 24/24; the complete source gate passes 274/274 and migration/security/reconciliation contracts 158/158. TypeScript, web export, Phase 5/notification compatibility, privacy/boundary scans, and diff hygiene pass. The [verification/traceability record](./implementation/PHASE-6-verification-and-traceability.md) gives the source-complete/database-pending matrix and rollout/rollback plan. No local Docker/PostgreSQL daemon exists, so Phase 6 is not locally database-verified.
 - Unit 15 final static review caught and fixed invalid transition/task column references before handoff; regression contracts now assert derived request/cart store scope and valid lease-only cleanup columns.
-- Phase 6 source/database checkpoint (2026-07-17): development Supabase has M01-M39, including forward-only corrective M34-M39; persisted command/authorization verification reaches `payment_ready`. Initial browser auth/navigation/Marketplace/cart-empty smoke passed with no console errors and controlled development fixtures remain. Comprehensive browser customer/Owner E2E, responsive/accessibility review, scheduler/task-worker deployment, cron activation, and timed worker checks are deferred; Phase 7 remains not started.
+- Phase 6 source/database checkpoint (2026-07-17): development Supabase has M01-M39, including forward-only corrective M34-M39; persisted command/authorization verification reaches `payment_ready`. Initial browser auth/navigation/Marketplace/cart-empty smoke passed with no console errors and controlled development fixtures remain. Scheduler v5/worker v2 and cron job 5 are active; comprehensive browser customer/Owner E2E, responsive/accessibility review, and real timed commerce-command checks remain deferred.
+- Phase 6 completion/readback (2026-07-18): Supabase MCP reconfirmed M01-M39, authoritative-table RLS, active scheduler v5/worker v3, successful cron job 5 runs, and zero existing inventory quantity-balance violations. Comprehensive browser E2E remains explicitly deferred. Phases 7/8 are deferred and Phase 9 planning is authorized.
 - Expert review findings incorporated: platform support/disputes are core ops, founding-store trial model added, Bangalore locality pilot added, seller-of-record decision added, post-payment unavailable flow clarified, minors/school users marked out of pilot scope.
 - DOC-14 Commerce State Machines created.
 - DOC-15 Finance, Tax, and Settlement Operating Model created.
@@ -173,7 +178,7 @@ Documentation milestones completed:
 
 ## 8. Next Recommended Task
 
-**Phase 5 is complete. Phase 6 source and database work is checkpointed through M39 and provider-independent `payment_ready`; comprehensive browser E2E and worker rollout remain deferred acceptance gates.**
+**Phase 6 is complete through M39 and provider-independent `payment_ready`; comprehensive browser E2E remains explicitly deferred. Phases 7 and 8 are deferred, and Phase 9 planning is authorized.**
 
 The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The following tables are live and ready for feature implementation:
 
@@ -184,8 +189,8 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Resume the controlled browser customer-to-Owner request flow and verify its persisted effects before final Phase 6 acceptance.
-2. Run authenticated `store-review` live smoke with a platform-role test user (`platform_admin` or `store_reviewer`) when explicitly approved credentials are available.
-3. Review or clean up Phase 2B/2C live smoke fixture rows if desired before production pilot.
-4. Keep provider objects, `payment_pending`, paid orders, ledger, fulfillment, delivery, and settlement out of Phase 6.
-5. Keep scheduler/task workers and cron undeployed until their separately authorized rollout and timed verification gate.
+1. Produce the Phase 9 implementation plan and threat/privacy/cost review from DOC-3, DOC-4, and DOC-8.
+2. Start with the `single_cover` path; retain mandatory Owner review and manual fallback.
+3. Preserve the Phase 6 quantity-bucket and controlled-write boundary when creating or incrementing inventory.
+4. Keep provider payments, `payment_pending`, paid orders, ledger, pickup, refunds, and settlement deferred with Phases 7/8.
+5. Track comprehensive Phase 6 browser E2E and validation of the existing `NOT VALID` inventory equality constraint as deferred follow-up work before production readiness.

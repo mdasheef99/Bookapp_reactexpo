@@ -9,7 +9,7 @@ const migrationNames = [
 ];
 
 const readSql = () => migrationNames
-    .map((name) => fs.readFileSync(path.join(process.cwd(), 'supabase', 'migrations', name), 'utf8'))
+    .map((name) => fs.readFileSync(path.join(process.cwd(), 'supabase', 'migrations', name), 'utf8').replace(/\r\n/g, '\n'))
     .join('\n');
 
 describe('Phase 6 transactional cart commands', () => {

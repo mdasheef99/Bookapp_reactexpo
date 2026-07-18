@@ -1,7 +1,7 @@
 # PHASE-7: Payment, Ledger, and Settlement
 
-**Status:** `not_started`
-**Last updated:** 2026-05-22
+**Status:** `deferred`
+**Last updated:** 2026-07-18
 **Phase goal:** Enable payment only after store confirmation, with ledger-first finance and reconciliation.
 
 ---
@@ -50,7 +50,8 @@
 
 ## Verification Log
 
-No verification run yet.
+No Phase 7 implementation or verification has started. Deferred by product decision on
+2026-07-18 while Phase 9 image inventory is prioritized.
 
 ---
 
@@ -81,7 +82,9 @@ No verification run yet.
 
 ## Decisions Made During Implementation
 
-- None yet.
+- 2026-07-18: Phase 7 is deferred until separately resumed. The deferral does not authorize
+  client-calculated amounts, provider work, paid orders, ledger writes, refunds, or settlement
+  behavior elsewhere. DOC-14 and DOC-15 remain mandatory when work resumes.
 
 ---
 
@@ -93,4 +96,5 @@ No verification run yet.
 
 ## Handoff Notes
 
-Do not enable production payments without platform ops refund/reconciliation readiness.
+Do not begin Phase 7 without separate authorization. Do not enable production payments without
+platform ops refund/reconciliation readiness and the required provider/legal/accounting reviews.

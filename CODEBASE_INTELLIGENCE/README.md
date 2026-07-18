@@ -16,8 +16,9 @@ Recommended order:
 5. `05-marketplace-phase-2-readiness.md` - Store Owner onboarding status, review/setup surfaces, and remaining Phase 2C smoke gate.
 6. `08-marketplace-phase-3-readiness.md` - manual inventory, canonical book/listing boundary, and next files to inspect.
 7. `09-marketplace-phase-4-5-readiness.md` - Store Owner console completion state and Phase 5 consumer discovery starting points.
-8. `06-testing-verification-map.md` - Jest, Playwright, commands, mocks, and focused test patterns.
-9. `07-augment-query-log.md` - the targeted Augment questions used to create this pack.
+8. `10-marketplace-phase-6-and-9-readiness.md` - completed Phase 6 commerce boundary, deferred Phases 7/8, and the active Phase 9 planning seam.
+9. `06-testing-verification-map.md` - Jest, Playwright, commands, mocks, and focused test patterns.
+10. `07-augment-query-log.md` - the targeted Augment questions used to create and refresh this pack.
 
 ## How To Use This Pack
 
@@ -44,8 +45,13 @@ This is not a full source dump. The repo itself is the source dump. This folder 
 - Store Owner route group exists at `app/(store-owner)` with gate, onboarding, status, setup, dashboard, inventory, storefront, and subscription routes.
 - Phase 1 marketplace foundation, Phase 2A hardening, Phase 2B application metadata, and Phase 2C review metadata migrations are present locally and applied live.
 - Phase 2 Store Onboarding and Verification is implemented/deployed through Phase 2C, with authenticated platform-review smoke intentionally skipped/pending.
-- Phase 3 Inventory, Canonical Books, and Listings is implemented and live-applied; 2026-06-29 Supabase MCP smoke verified inventory-to-listing trigger projection and cleanup. Anonymous public listing read smoke remains blocked by the Phase 3 RLS helper execute-permission issue documented in `08-marketplace-phase-3-readiness.md`.
-- Phase 4 Store Owner Console is locally complete as of 2026-06-30: dashboard, inventory management, storefront/profile settings, subscription/quota view, compliance blockers, route tests, focused store tests, TypeScript, and web export all pass locally.
+- Phase 3 Inventory, Canonical Books, and Listings is implemented and live. The least-privilege anonymous/authenticated policy split and the Phase 5 projection correction are live; public discovery smoke passed.
+- Phase 4 Store Owner Console is locally complete and its controlled profile/setup hardening is deployed.
+- Phase 5 Consumer Discovery is complete and accepted. Public title/author/ISBN/store/profile/detail/grouping/offer flows and private-boundary denials passed live verification.
+- Phase 6 Order Request and Confirmation is complete through provider-independent `payment_ready`; all M01-M39 migrations are applied in development. Comprehensive browser E2E, responsive/accessibility review, browser-created persisted-effect review, and real timed commerce-command E2E are deferred.
+- `commerce-scheduler` v5 and `commerce-task-worker` v3 are active in development; cron job 5 runs every minute and recent queried runs succeeded.
+- Phases 7 Payment/Ledger and 8 Pickup Fulfillment are deferred by product decision. Their DOC-14/DOC-15 guards remain authoritative.
+- Phase 9 Image-to-LLM Inventory is the active planning milestone. Start with `single_cover`, mandatory Owner review, controlled server-side inventory writes, quota/cost/privacy controls, and manual fallback.
 - P2P exchange tables/services are not bookstore commerce primitives.
 
 ## Maintenance Rule

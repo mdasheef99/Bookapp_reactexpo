@@ -1,5 +1,8 @@
 # 05 - Marketplace Phase 2 Readiness
 
+> Historical readiness map. Phase 2 remains useful context, but current sequencing and status
+> live in `DOC-13` and `10-marketplace-phase-6-and-9-readiness.md`.
+
 ## Current Marketplace Status
 
 At pack creation time:
@@ -13,14 +16,14 @@ At pack creation time:
 
 - Phase 2A Store Owner gate/auth hardening is implemented and live.
 - Phase 2B store application/document flow is implemented, deployed, and authenticated-smoke-verified.
-- Phase 2C platform review/setup entitlements is implemented and deployed: `store-review` version 1 is live with `verify_jwt=true`, review metadata migration `20260628102752 marketplace_phase2c_review_metadata` is live, and Store Owner status/setup checklist screens exist.
+- Phase 2C platform review/setup entitlements is implemented and deployed: `store-review` version 3 is live with `verify_jwt=true`, review metadata migration `20260628102752 marketplace_phase2c_review_metadata` is live, and Store Owner status/setup checklist screens exist.
 - Phase 2C authenticated platform-review smoke remains pending a platform-role test user.
 
 Current handoff:
 
 - Treat Phase 2 as implemented/deployed but `needs_review` until authenticated `store-review` smoke is either run or explicitly waived.
 - Do not create or grant a platform role casually in live Supabase. If a smoke test is required later, use an explicitly approved test user and record the role grant/cleanup.
-- Phase 3 may start if the team accepts skipping authenticated Phase 2C smoke for now; keep the pending smoke gate documented in DOC-13.
+- The pending authenticated Phase 2C reviewer smoke was accepted as non-blocking for later marketplace phases and remains separately tracked.
 
 ## Read First
 

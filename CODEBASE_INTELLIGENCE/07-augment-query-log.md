@@ -93,8 +93,25 @@ What has changed since CODEBASE_INTELLIGENCE was created for [area]? Identify fi
 
 ## Phase 3 Refresh Prompt
 
+This prompt is historical; Phase 3 is implemented and live.
+
 Before starting Phase 3, ask codebase-retrieval:
 
 ```text
 Refresh BookConnect marketplace Phase 3 context. Locate current Store Owner routes/screens/services/hooks/tests, Phase 2 Edge Functions and auth helpers, existing book/library metadata services, P2P exchange listing code that must not be reused directly, Supabase migration/RLS test patterns, and any existing inventory/listing/table references. Summarize exact file paths, reusable patterns, and forbidden reuse boundaries for implementing manual store inventory and public marketplace listing projection.
+
+## Phase 9 Refresh Prompt
+
+Before implementing Phase 9, ask codebase retrieval or perform the equivalent targeted `rg` audit:
+
+```text
+Refresh BookConnect Phase 9 image-to-LLM inventory context from the completed Phase 6 baseline.
+Locate the Store Owner inventory routes/screens/components/services, controlled inventory mutation
+boundary, quantity bucket and active-hold invariants, canonical edition/source matching, public
+listing projection, private storage patterns, quota/usage counters, logout/session cleanup,
+Edge Function authorization patterns, reconciliation/observability hooks, and relevant tests.
+Identify exact files to reuse, files near the 300-350 line limit, prohibited direct table writes,
+and every boundary that prevents OCR/LLM output from publishing without Owner review. Treat
+Phases 7 and 8 as deferred and exclude payment, paid-order, pickup, ledger, refund, and settlement.
+```
 ```

@@ -1,8 +1,13 @@
 # 09 - Marketplace Phase 4 And Phase 5 Readiness
 
+> Historical implementation map, refreshed 2026-07-18. Phases 4 and 5 are complete; current
+> Phase 6/9 boundaries live in `10-marketplace-phase-6-and-9-readiness.md`.
+
 ## Current Marketplace Status
 
-Phase 6 development rollout note (2026-07-17): `commerce-scheduler` v5 and `commerce-task-worker` v2 are active in the development Supabase project. Scheduler access uses the configured custom secret and its internal worker dispatch explicitly forwards the server-side service-role bearer token; the worker retains strict service-role authorization. Cron job 5 runs every minute. Its first scheduled empty-queue run and tagged synthetic dispatch, retry, and dead-letter paths passed. Real timed commerce-command verification and comprehensive browser E2E remain deferred. Phase 6 stops at `payment_ready`; no Phase 7 behavior was added.
+Current handoff: Phase 5 is complete and accepted. Phase 6 is complete through `payment_ready`
+with comprehensive browser E2E deferred. Scheduler v5 and worker v3 are active in development;
+cron job 5 runs every minute. Phases 7/8 are deferred and Phase 9 planning is authorized.
 
 As of 2026-06-30:
 
@@ -13,7 +18,7 @@ As of 2026-06-30:
   - Store Owner route tests via `--runTestsByPath`: 6 suites, 7 tests.
   - `npx.cmd tsc --noEmit --pretty false`.
   - `npm.cmd run export:web`, after filesystem approval for Expo/Node access outside the workspace sandbox.
-- Phase 3 anonymous public listing read is still blocked by the RLS helper execute-permission issue documented in `08-marketplace-phase-3-readiness.md`.
+- Phase 3/5 public listing policy and projection corrections are live; public discovery smoke passed.
 
 ## Phase 4 Files To Know
 
@@ -51,8 +56,8 @@ Screens/hooks/components:
 - Inventory supports manual draft entry, duplicate checks, search, condition/status/quantity/source/date filter chips, edit modal, publish/pause, low/out-of-stock badges, and bulk publish/pause.
 - Storefront/profile settings support public name/description, weekly operating hours, temporary closure, return policy, pickup, delivery, and minimum delivery order value.
 - Subscription screen reads own subscription/entitlement/usage status and handles a missing plan row gracefully.
-- Image-to-LLM inventory remains a disabled placeholder for Phase 9.
-- Order requests, paid fulfillment, demand signals, insights, and settlement statements remain out of scope until later phases.
+- Image-to-LLM inventory remains a disabled UI placeholder, but Phase 9 planning is authorized.
+- Unpaid order requests are implemented by Phase 6. Paid fulfillment and settlement remain deferred with Phases 7/8.
 
 ## Phase 5 Starting Point
 
@@ -177,7 +182,8 @@ Never reads: store_inventory, stores, P2P listings, P2P transactions, seller doc
 - `npm.cmd run export:web`: passed after filesystem approval for Expo/Node access outside the workspace sandbox.
 - Local web route check against `http://localhost:8081` found no Expo Router warnings/page errors for Phase 4/5 routes. With the normal `.env` build, unauthenticated access redirects `/marketplace`, `/marketplace/store/test-store`, `/dashboard`, `/inventory`, `/storefront`, and `/subscription` to `/login`.
 
-### Pending Blockers (for Codex/owner)
+### Completion Status
 
-1. Phase 3 anonymous public-read RLS blocker must be resolved before live smoke testing
-2. Anonymous Phase 5 public-read smoke must run after the Phase 3 RLS blocker is resolved
+1. Phase 3 public-read blocker is resolved by the live policy split and projection correction.
+2. Phase 5 anonymous/authenticated public-read and private-boundary smokes passed.
+3. Phase 6 now owns carts and unpaid requests; do not extend the Phase 5 service layer with payment or pickup behavior.

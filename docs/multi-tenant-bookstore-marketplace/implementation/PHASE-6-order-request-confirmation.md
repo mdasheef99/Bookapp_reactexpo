@@ -1,8 +1,8 @@
 # PHASE-6: Order Request and Confirmation
 
-**Status:** `in_progress`
+**Status:** `complete_e2e_deferred`
 **SDD status:** `approved_for_local_implementation`
-**Last updated:** 2026-07-17
+**Last updated:** 2026-07-18
 **Phase goal:** Build the unpaid order request and store confirmation flow before payment.
 
 ---
@@ -56,31 +56,31 @@
 | Unit | Status | Notes |
 |---|---|---|
 | Canonical vocabulary/runtime validation | `complete` | Shared typed constants and Zod schemas; focused Jest 15/15 and TypeScript pass. |
-| Additive database foundation | `locally_complete` | Three local-only migrations plus 5/5 contract tests; SQL execution/migration apply remains a later local verification gate. |
-| Authorization, RLS, grants, and safe reads | `locally_complete` | Owner role plus entitlement capability, deny-by-default authoritative tables, recipient-own notifications, and customer/Owner/support safe RPC projections; 5/5 contract tests pass. |
-| Policy and eligibility resolver | `locally_complete` | Deterministic operation-level resolver and private server-authoritative policy resolver cover store/subscription/entitlement/rollout/listing/inventory/Owner/fulfilment/tariff gates; 13/13 focused tests pass. |
-| Transactional cart commands | `locally_complete` | Authenticated single-store get/create/add/update/remove, opaque confirmed replacement, lazy expiry, idempotency, deterministic locks, and no holds; 7/7 contract tests pass. |
-| Atomic request submission | `locally_complete` | Direct submitted request, immutable item/private/seller/policy snapshots, lower price bound/tariff, separate request/cart evidence/events, notifications/tasks, idempotency, and zero-effects Owner/cross-table guards; 7/7 tests pass. |
-| Owner outcomes and inventory holds | `source_complete_db_verification_pending` | Begin review, full/partial confirmation, unavailable and rejection commands plus bucket-transfer helpers; 8/8 contracts pass, but real PostgreSQL hold-row/counter race execution is unavailable locally. |
-| Clarification and platform support | `source_complete_db_verification_pending` | Owner clarification, customer response, non-transitioning support request, and four narrow support interventions; 15/15 contracts pass. The disposable PostgreSQL integration gate is written but not executed because no local daemon is available. |
-| Customer decision, cancellation, and expiry | `source_complete_db_verification_pending` | Partial acceptance, soft-to-firm promotion, customer/rollout cancellation, provider-independent payment-ready progression, decision expiry, and payment-ready expiry; 25/25 contracts pass. Integration and multi-session race gates are written but not executed. |
-| Canonical events, audit, and notifications | `source_complete_db_verification_pending` | Unit 11 adds schema/version registries, append-only and privacy enforcement, structured audit lineage, recipient-safe canonical inbox RPCs, and transport-independent delivery state; 10/10 contracts pass. PostgreSQL execution remains pending. |
-| Scheduler, task worker, retry, and dead letter | `source_complete_db_verification_pending` | Unit 12 adds bounded `SKIP LOCKED` claims, five-minute leases, named idempotent commands, canonical retry/dead-letter/manual-replay controls, a one-minute pg_cron contract, and bounded Edge scheduler/worker dispatch; 14/14 contracts pass. Cron activation and PostgreSQL concurrency execution remain gated. |
-| Reconciliation and observability | `source_complete_db_verification_pending` | Unit 15 adds service-only, idempotent mismatch/evidence/task/notification/policy/Owner/deadline/PII detection; restricted operational cases; deterministic stale-lease and superseded-task cleanup only; structured non-PII observations and aggregate metrics. Red-first contracts pass 24/24; PostgreSQL execution remains pending. |
-| Full Phase 6 verification | `source_complete_database_verification_required` | Unit 16 source/build/security/privacy/traceability gates pass. Supabase CLI 2.20.12 is installed, but Docker/PostgreSQL is unavailable, so migration apply, persisted RLS/grants, integration, and real concurrency cannot be claimed. See the [verification and traceability record](./PHASE-6-verification-and-traceability.md). |
-| Customer UI | `locally_complete` | Unit 13 adds cart/add/update/remove/explicit replacement, submission, request list/detail, clarification, partial pickup-or-cancel, cancellation, terminal/payment-ready presentation, safe deep-link refetch, and logout/cache cleanup. No provider payment command exists. |
-| Store Owner UI | `locally_complete` | Unit 14 adds the Owner Orders tab, capability-gated inbox/detail, review/full/partial/unavailable/rejection/clarification/support actions, deadline/closure presentation, safe deep-link refetch, and no manager/staff command override. |
-| Phase 6 normative monolithic SDD | `approved_for_local_implementation` | Corrected monolith is the sole Phase 6 normative SDD; the exact v0.1 source is archived immutably. The deleted three-document split must not be restored. No production implementation at documentation freeze. |
-| Single-store cart model | `locally_complete` | One active cart/customer with server-derived store and versioned transactional mutation RPCs. |
-| Cart replacement UX | `locally_complete` | Two-step opaque replacement token plus explicit mobile replace/keep-existing confirmation; cancellation preserves the active cart. |
-| Order request model | `locally_complete` | Atomic unpaid submission plus customer cart, history, detail, decision, cancellation, clarification, and payment-ready presentation. |
-| Store confirmation UI/API | `locally_complete_db_verification_pending` | Unit 7/8 commands and Unit 14 capability-gated Owner inbox/detail/actions are locally complete; persisted command/RLS verification remains pending. |
-| Open-hours SLA engine | `source_complete_db_verification_pending` | Unit 10 implements policy-configurable timezone, overnight, holiday, clarification, planned/emergency closure handling; persisted PostgreSQL verification remains pending. |
-| Inventory holds | `source_complete_db_verification_pending` | Firm/soft creation and exactly-once release use available/reserved bucket transfers; executable PostgreSQL row/race verification remains blocked by missing local daemon. |
-| Payment-ready state | `backend_locally_complete` | Exact server-owned subtotal/snapshot tariff/total, firm-hold guard, immutable payment-ready commercial fields, timestamp/policy reference, and expiry task; no provider resource or `payment_pending`. PostgreSQL execution remains pending. |
-| Request events/notifications | `source_complete_db_verification_pending` | Unit 11 normalizes transactional event/audit/inbox seams and Unit 12 supplies transport delivery/retry without mutating canonical inbox state; PostgreSQL verification remains pending. |
-| Commerce transition tests | `source_complete_db_verification_pending` | Source contracts and rollback/concurrency gates cover DOC-14 actors, guards, versions, and evidence; database execution is pending. |
-| Tests | `source_complete_db_verification_pending` | Focused Units 1-15 source tests pass 274/274 across 26 suites; migration/security/reconciliation contracts pass 158/158 across 14 suites. Isolated PostgreSQL integration and concurrency gates are written but not executed. |
+| Additive database foundation | `complete` | Phase 6 migrations M01-M39 are applied to the development Supabase project. |
+| Authorization, RLS, grants, and safe reads | `complete` | Owner capability, deny-by-default authoritative tables, and safe RPC projections are deployed and database-verified. |
+| Policy and eligibility resolver | `complete` | Deterministic application and private database resolvers are deployed and verified through `payment_ready`. |
+| Transactional cart commands | `complete` | Versioned, idempotent cart commands and replacement flow are deployed and persisted behavior is verified. |
+| Atomic request submission | `complete` | Atomic request, snapshots, evidence, events, notifications, tasks, and authority guards are deployed and verified. |
+| Owner outcomes and inventory holds | `complete` | Source contracts and persisted development database behavior are verified; comprehensive browser E2E remains deferred. |
+| Clarification and platform support | `complete` | Source contracts and persisted development database behavior are verified; comprehensive browser E2E remains deferred. |
+| Customer decision, cancellation, and expiry | `complete` | Persisted progression through provider-independent `payment_ready` is verified; real timed browser E2E remains deferred. |
+| Canonical events, audit, and notifications | `complete` | Registries, append-only evidence, safe inbox projections, and transport separation are deployed and database-verified. |
+| Scheduler, task worker, retry, and dead letter | `complete` | Scheduler v5, worker v3, and one-minute cron job 5 are active in development; synthetic dispatch/retry/dead-letter gates passed. |
+| Reconciliation and observability | `complete` | Development database reconciliation and observation structures are deployed and verified. |
+| Full Phase 6 verification | `complete_e2e_deferred` | Source and development database gates are complete. Comprehensive browser E2E, responsive/accessibility review, and real timed commerce-command E2E remain explicitly deferred. See the [verification and traceability record](./PHASE-6-verification-and-traceability.md). |
+| Customer UI | `complete_e2e_deferred` | Customer flows are implemented; comprehensive browser, responsive, and accessibility E2E are deferred. No provider payment command exists. |
+| Store Owner UI | `complete_e2e_deferred` | Owner flows are implemented; comprehensive browser, responsive, and accessibility E2E are deferred. |
+| Phase 6 normative monolithic SDD | `complete` | Corrected monolith remains the sole normative Phase 6 SDD; the exact v0.1 source remains archived immutably. |
+| Single-store cart model | `complete` | One active cart/customer with server-derived store and versioned transactional mutation RPCs is deployed and verified. |
+| Cart replacement UX | `complete_e2e_deferred` | Two-step replacement behavior is implemented and database-verified; comprehensive browser E2E is deferred. |
+| Order request model | `complete` | Atomic unpaid submission and the customer request lifecycle are deployed and verified through `payment_ready`. |
+| Store confirmation UI/API | `complete_e2e_deferred` | Persisted command/RLS behavior is verified; comprehensive customer/Owner browser E2E is deferred. |
+| Open-hours SLA engine | `complete_e2e_deferred` | Schedule/deadline behavior is deployed; real timed browser commerce-command E2E is deferred. |
+| Inventory holds | `complete` | Firm/soft bucket transfers and release behavior are deployed and database-verified. |
+| Payment-ready state | `complete` | Exact immutable commercial fields and firm-hold guard are verified through provider-independent `payment_ready`; no Phase 7 object exists. |
+| Request events/notifications | `complete` | Transactional evidence, canonical inbox, and transport retry boundaries are deployed and verified. |
+| Commerce transition tests | `complete` | Source and persisted database gates cover DOC-14 Phase 6 actors, guards, versions, and evidence. |
+| Tests | `complete_e2e_deferred` | Repository/source/database gates pass; comprehensive browser, responsive/accessibility, and real timed E2E remain deferred. |
 
 ---
 
@@ -91,8 +91,8 @@
 - Phase 5 remains complete. Phase 6 Units 1-15 are source-complete and migrations M01-M39 are applied to the development Supabase project. M34-M39 are forward-only corrective migrations; no applied M01-M33 migration was replaced for correction.
 - Persisted database command and authorization verification completed through provider-independent `payment_ready`, including corrective migration/security suites. The prior full repository checkpoint passed 908/908 tests; TypeScript and production web export passed at the source-complete checkpoint.
 - Initial browser smoke passed for preview launch, authentication, Marketplace, Cart and Order Requests controls, and empty-cart routing, with no console errors. Controlled `phase6_browser_*` development fixtures remain available.
-- The development scheduler rollout is active: scheduler v5 uses custom-secret authentication, worker v2 retains strict service-role authorization, and the scheduler explicitly forwards its server-side service-role bearer token to the worker. Cron job 5 runs every minute; its first scheduled empty-queue run and tagged synthetic dispatch, retry, and dead-letter paths passed. Focused authorization regression passed 4/4. No secret, bearer value, or Vault content is recorded.
-- Comprehensive customer/Store Owner browser E2E, browser-created persisted-effect verification, full responsive/accessibility review, and real timed commerce-command reminder/expiry verification remain deferred. Checkpoint verdict: `PHASE 6 SOURCE AND DATABASE CHECKPOINT — COMPREHENSIVE BROWSER E2E DEFERRED`. Phase 6 remains `in_progress`; this development rollout is not a production-readiness declaration, Phase 7 is not started, and this phase ends at `payment_ready`.
+- The development scheduler rollout is active: scheduler v5 uses custom-secret authentication, worker v3 retains strict service-role authorization, and the scheduler explicitly forwards its server-side service-role bearer token to the worker. Cron job 5 runs every minute; its first scheduled empty-queue run and tagged synthetic dispatch, retry, and dead-letter paths passed. Focused authorization regression passed 4/4. No secret, bearer value, or Vault content is recorded.
+- Comprehensive customer/Store Owner browser E2E, browser-created persisted-effect verification, full responsive/accessibility review, and real timed commerce-command reminder/expiry verification remain deferred. Verdict: `PHASE 6 COMPLETE — COMPREHENSIVE BROWSER E2E DEFERRED`. This development rollout is not a production-readiness declaration, Phases 7 and 8 are deferred, and Phase 6 ends at `payment_ready`.
 
 ### 2026-07-16: Stage 1 reconciliation and Stage 2 SDD
 
@@ -214,28 +214,31 @@
 
 ## Acceptance Criteria
 
-- [ ] Checkout creates unpaid order request.
-- [ ] Customer payment is not requested before store confirmation.
-- [ ] Store can confirm full, partial, unavailable, or distinctly reject a full request.
-- [ ] Store confirmation cannot exceed the server-established price bound, even with customer acceptance.
-- [ ] Store Owner can request platform support without changing commerce status.
-- [ ] Partial confirmation recalculates subtotal/delivery eligibility.
-- [ ] Expired requests take no payment and release holds.
-- [ ] Request and hold transitions emit events and preserve transition logs.
-- [ ] Confirmation reminder and expiry behavior is server-driven.
-- [ ] Planned closure, bounded emergency closure, and compliance/selling suspension follow the approved differentiated rules.
-- [ ] Owner-only commands are enforced as an MVP capability/entitlement without collapsing manager/staff schema roles.
-- [ ] Phase 6 ends at `payment_ready` and creates no provider object or paid order.
-- [ ] DOC-14 transition rules are satisfied for order request and hold states.
+- [x] Checkout creates unpaid order request.
+- [x] Customer payment is not requested before store confirmation.
+- [x] Store can confirm full, partial, unavailable, or distinctly reject a full request.
+- [x] Store confirmation cannot exceed the server-established price bound, even with customer acceptance.
+- [x] Store Owner can request platform support without changing commerce status.
+- [x] Partial confirmation recalculates subtotal/delivery eligibility.
+- [x] Expired requests take no payment and release holds.
+- [x] Request and hold transitions emit events and preserve transition logs.
+- [x] Confirmation reminder and expiry behavior is server-driven.
+- [x] Planned closure, bounded emergency closure, and compliance/selling suspension follow the approved differentiated rules.
+- [x] Owner-only commands are enforced as an MVP capability/entitlement without collapsing manager/staff schema roles.
+- [x] Phase 6 ends at `payment_ready` and creates no provider object or paid order.
+- [x] DOC-14 transition rules are satisfied for order request and hold states.
 - [x] The corrected monolithic SDD is the sole normative Phase 6 design and is approved for local implementation.
 - [x] `DOC-13` links the corrected monolith and immutable archive; deleted split documents are not referenced.
 
 ---
 
-## Blockers
+## Deferred Follow-up
 
-- Local source implementation is complete through Unit 14. Remote migrations, deployments, cron enablement, fixtures, and live smoke remain separately gated.
-- Phase 5 consumer discovery is complete and Phase 4 owner-console basics exist; they are no longer Phase 6 entry blockers.
+- Comprehensive customer/Store Owner browser E2E, browser-created persisted-effect review,
+  responsive/accessibility review, and real timed commerce-command E2E are deferred.
+- `store_inventory_quantity_balance` has zero current violations but remains `NOT VALID`;
+  validate it with a forward migration before production readiness.
+- Production rollout remains separately authorized.
 
 ---
 
@@ -257,4 +260,8 @@
 
 ## Handoff Notes
 
-The corrected monolithic SDD is the sole normative Phase 6 design. Units 1-15 are source-complete and development database verification is complete through forward migration M39 and provider-independent `payment_ready`. Scheduler v5 and worker v2 are active only in development; cron job 5 runs every minute after passing empty-queue and tagged synthetic dispatch/retry/dead-letter gates. Resume comprehensive customer/Store Owner browser E2E and real timed commerce-command verification before final Phase 6 acceptance. Keep production rollout and Phase 7 payment work separately gated.
+The corrected monolithic SDD is the sole normative Phase 6 design. Phase 6 is complete through
+forward migration M39 and provider-independent `payment_ready`. Scheduler v5 and worker v3 are
+active only in development; cron job 5 runs every minute. Comprehensive browser and real timed
+commerce-command E2E are deliberately deferred. Production rollout remains separate; Phases 7
+and 8 are deferred, and Phase 9 planning is authorized without payment or pickup behavior.

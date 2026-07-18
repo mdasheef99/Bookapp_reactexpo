@@ -9,7 +9,7 @@ const migrationPath = path.join(
 );
 
 describe('marketplace Phase 6 authorization and safe reads', () => {
-    const readSql = () => fs.readFileSync(migrationPath, 'utf8');
+    const readSql = () => fs.readFileSync(migrationPath, 'utf8').replace(/\r\n/g, '\n');
 
     it('requires an active owner and the capability-specific enabled entitlement', () => {
         const sql = readSql();

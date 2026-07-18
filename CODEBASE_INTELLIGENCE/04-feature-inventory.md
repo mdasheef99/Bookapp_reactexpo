@@ -140,7 +140,8 @@ Services/hooks:
 - `src/features/notifications/hooks/useNotifications.ts`
 - `src/features/notifications/types.ts`
 - `supabase/functions/send-notification/index.ts`
-- notification migrations under `supabase/migrations/20260606...`
+- notification migrations `20260606103405_enterprise_notifications.sql` through
+  `20260606143000_wishlist_notify_rpc.sql` under `supabase/migrations/`
 
 Owns:
 
@@ -191,6 +192,12 @@ Routes:
 - `app/(store-owner)/inventory.tsx`
 - `app/(store-owner)/storefront.tsx`
 - `app/(store-owner)/subscription.tsx`
+- `app/(store-owner)/orders/index.tsx`
+- `app/(store-owner)/orders/[requestId].tsx`
+- `app/(tabs)/marketplace/index.tsx`
+- `app/(tabs)/marketplace/cart.tsx`
+- `app/(tabs)/marketplace/requests/index.tsx`
+- `app/(tabs)/marketplace/requests/[requestId].tsx`
 
 Services/hooks/screens:
 
@@ -213,6 +220,9 @@ Services/hooks/screens:
 - `src/features/stores/components/EditModal.tsx`
 - `src/features/stores/components/InventoryItem.tsx`
 - `src/features/stores/types.ts`
+- `src/features/marketplace/commerce/`
+- `src/features/marketplace/services/consumerDiscoveryService.ts`
+- `src/features/notifications/services/notificationsService.ts`
 
 Edge Functions:
 
@@ -235,6 +245,9 @@ Owns:
 - Storefront/profile settings for public name/description, weekly operating hours, temporary closure, return policy, pickup, delivery, and minimum delivery order value.
 - Subscription/quota screen that shows the store's own subscription, entitlement limits, usage counters, feature locks, and null-plan fallback.
 - Phase 3 inventory/canonical/listing migration is live-applied on Supabase MCP project `ahntbtktjjmvfosgkmgn` as `20260628181842 marketplace_phase3_inventory_canonical_listings`.
+- Phase 5 public discovery, profiles, canonical grouping, offer comparison, and unavailable-search capture are complete and accepted.
+- Phase 6 provides a single-store cart, atomic unpaid request submission, full/partial/unavailable/rejection outcomes, clarification/support, soft/firm holds, cancellation/expiry, provider-independent `payment_ready`, canonical events/inbox, scheduler/task worker, and reconciliation/observability.
+- Phase 6 ends before provider payment, paid order, ledger, pickup, refund, or settlement.
 
 Marketplace boundary:
 
@@ -243,3 +256,5 @@ Marketplace boundary:
 - Approval does not make stores sellable; it keeps `setup_status = incomplete` and `selling_status = not_allowed`.
 - Inventory/listing code must stay separate from P2P `listings`; Phase 3 uses `store_inventory` and `marketplace_book_listings`.
 - Consumer discovery must use public projection/service boundaries, not raw `store_inventory`; private fields such as acquisition cost, internal notes, shelf location, and verification documents must stay out of Phase 5 UI/services.
+- Phase 9 inventory writes must use controlled server-side commands and preserve `quantity_total = quantity_available + quantity_reserved + quantity_sold + quantity_removed`; never overwrite reserved/sold buckets from OCR review UI.
+- Phases 7 and 8 are deferred. Phase 9 must not create provider objects, paid orders, pickup codes, ledger entries, refunds, or settlement state.

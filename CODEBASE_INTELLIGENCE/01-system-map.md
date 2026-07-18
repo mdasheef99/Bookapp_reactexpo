@@ -36,6 +36,7 @@ Top-level route groups:
 - `app/(auth)` - login, OTP verification, profile setup.
 - `app/(tabs)` - signed-in consumer app.
 - `app/(store-owner)` - Store Owner gate, onboarding, review status, setup checklist, dashboard, inventory, storefront/profile settings, and subscription/quota view.
+- `app/(tabs)/marketplace` - consumer discovery, cart, and unpaid order-request routes.
 
 Tabs:
 
@@ -66,14 +67,20 @@ Current Store Owner routes:
 - `app/(store-owner)/inventory.tsx` - Phase 3/4 inventory management wrapper.
 - `app/(store-owner)/storefront.tsx` - Phase 4 storefront/profile settings wrapper.
 - `app/(store-owner)/subscription.tsx` - Phase 4 subscription/quota wrapper.
+- `app/(store-owner)/orders/index.tsx` - Phase 6 Owner request inbox.
+- `app/(store-owner)/orders/[requestId].tsx` - Phase 6 Owner request review/detail.
+- `app/(tabs)/marketplace/index.tsx` - Phase 5 public marketplace discovery.
+- `app/(tabs)/marketplace/cart.tsx` - Phase 6 customer cart.
+- `app/(tabs)/marketplace/requests/index.tsx` - Phase 6 customer request history.
+- `app/(tabs)/marketplace/requests/[requestId].tsx` - Phase 6 customer request detail/decision.
 
-Still missing product surfaces:
+Still missing product surfaces include platform-admin review UI, Phase 7 payment/ledger UI, and
+Phase 8 paid-pickup fulfillment UI. Phase 9 image inventory is still a disabled Store Owner
+placeholder pending its implementation plan.
 
-- `marketplace`
-- bookstore orders
-- platform admin review
-
-This matters for marketplace Phase 5: consumer discovery should become a consumer marketplace surface and read public projections such as `marketplace_book_listings`, without reusing P2P exchange routes or tables. Platform review remains an Edge Function/API concern; there is no platform admin UI yet.
+Consumer discovery reads public projections. Phase 6 commerce uses dedicated marketplace routes,
+services, safe RPC projections, and server-owned commands; it does not reuse P2P exchange routes,
+tables, transactions, or credits.
 
 ## Dev Bypass
 

@@ -7,7 +7,7 @@ const migrationPath = path.join(
 );
 
 describe('marketplace Phase 6 server eligibility resolver', () => {
-    const readSql = () => fs.readFileSync(migrationPath, 'utf8');
+    const readSql = () => fs.readFileSync(migrationPath, 'utf8').replace(/\r\n/g, '\n');
 
     it('resolves active typed policy by store, locality, city, then global scope', () => {
         const sql = readSql();

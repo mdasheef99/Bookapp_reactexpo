@@ -1,7 +1,7 @@
 # PHASE-8: Pickup Fulfillment
 
-**Status:** `not_started`
-**Last updated:** 2026-05-22
+**Status:** `deferred`
+**Last updated:** 2026-07-18
 **Phase goal:** Complete paid order fulfillment through bookstore pickup before third-party delivery.
 
 ---
@@ -42,7 +42,8 @@
 
 ## Verification Log
 
-No verification run yet.
+No Phase 8 implementation or verification has started. Deferred by product decision on
+2026-07-18 together with Phase 7.
 
 ---
 
@@ -65,7 +66,9 @@ No verification run yet.
 
 ## Decisions Made During Implementation
 
-- None yet.
+- 2026-07-18: Phase 8 is deferred because its paid-order prerequisite is owned by deferred
+  Phase 7. No pickup-ready state, pickup code, or completion event may be attached to an unpaid
+  Phase 6 request or implemented inside Phase 9.
 
 ---
 
@@ -77,4 +80,5 @@ No verification run yet.
 
 ## Handoff Notes
 
-Pickup fulfillment is the proof point before delivery aggregator integration.
+Do not begin Phase 8 until Phase 7 is explicitly resumed and verified paid-order creation exists.
+Pickup fulfillment remains the proof point before delivery aggregator integration.

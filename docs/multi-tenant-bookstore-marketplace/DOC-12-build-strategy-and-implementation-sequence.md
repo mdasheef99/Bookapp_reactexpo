@@ -305,7 +305,10 @@ Risk gate:
 - transition behavior matches DOC-14
 - Phase 6 creates no provider payment object or paid `store_order`; Phase 7 creates the provider object and enters `payment_pending`
 
-### Phase 7: Payment, Ledger, Refund Foundation, and Settlement
+### Phase 7: Payment, Ledger, Refund Foundation, and Settlement (Deferred)
+
+**Roadmap status (2026-07-18):** Deferred until separately resumed after payment-provider,
+legal, accounting, and product review. Deferral does not relax the DOC-14 or DOC-15 gates.
 
 Goal: enable money safely.
 
@@ -332,7 +335,10 @@ Risk gate:
 - legal/accounting review has approved payment/tax assumptions
 - DOC-14 and DOC-15 acceptance criteria are satisfied before production payments
 
-### Phase 8: Pickup Fulfillment
+### Phase 8: Pickup Fulfillment (Deferred)
+
+**Roadmap status (2026-07-18):** Deferred with Phase 7 because pickup requires a verified
+paid order. Phase 8 must not be implemented against mocked or client-asserted payment state.
 
 Goal: complete the simplest paid fulfillment loop before delivery complexity.
 
@@ -352,6 +358,11 @@ Risk gate:
 - pickup completion creates auditable event
 
 ### Phase 9: Image-to-LLM Inventory Workflow
+
+**Approved sequencing override (2026-07-18):** Phase 9 may proceed while Phases 7 and 8
+remain deferred. This is a roadmap reorder, not a dependency waiver: Phase 9 must build on
+the Phase 6 inventory quantity/hold boundary, preserve DOC-3 private/public separation, and
+remain independent of provider payments, paid orders, pickup, ledger, and settlement.
 
 Goal: add the unique inventory digitization advantage after inventory/listing is stable.
 
@@ -607,7 +618,9 @@ For any future implementation session:
 7. Prefer server-side transition functions or Edge Functions for privileged commerce actions.
 8. **Every service-role Edge Function or private-schema RPC that performs a privileged commerce or store action must have a passing cross-tenant denial test (acceptance criterion SEC-16).** Each function requires tests proving: (a) `auth.uid()` is resolved server-side; (b) store relationship is independently verified against `store_administrators`; (c) a Store A actor targeting a Store B entity is denied; (d) platform-role actions require a `platform_user_roles` row.
 9. Never expose service role keys, payment secrets, delivery provider secrets, or raw webhooks to mobile clients.
-10. Build manual inventory and pickup before image-to-LLM and delivery.
+10. Build manual inventory and the Phase 6 inventory/hold boundary before image-to-LLM.
+    Pickup remains required before third-party delivery, but the approved 2026-07-18 roadmap
+    override allows Phase 9 while Phases 7 and 8 are deferred.
 11. Stop and ask for review before enabling payment or delivery provider integration.
 
 ---

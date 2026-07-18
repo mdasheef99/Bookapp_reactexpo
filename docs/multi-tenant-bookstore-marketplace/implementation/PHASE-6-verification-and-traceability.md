@@ -2,12 +2,12 @@
 
 **Artifact type:** non-normative implementation verification record
 **Authority:** corrected monolithic Phase 6 SDD remains the sole normative design
-**Status:** `source_database_development_scheduler_rollout_browser_e2e_deferred`
-**Date:** 2026-07-17
+**Status:** `complete_browser_e2e_deferred`
+**Date:** 2026-07-18
 
 ## 0. Superseding Checkpoint
 
-Verdict: `PHASE 6 SOURCE AND DATABASE CHECKPOINT — COMPREHENSIVE BROWSER E2E DEFERRED`.
+Verdict: `PHASE 6 COMPLETE — COMPREHENSIVE BROWSER E2E DEFERRED`.
 
 - Phase 5 is complete and Phase 6 Units 1-15 are source-complete.
 - Development Supabase migrations M01-M33 were applied, followed only by forward corrective migrations M34-M39. Persisted command, authorization, hold/counter, task-contract, and transition behavior was verified through provider-independent `payment_ready`.
@@ -15,9 +15,18 @@ Verdict: `PHASE 6 SOURCE AND DATABASE CHECKPOINT — COMPREHENSIVE BROWSER E2E D
 - Initial browser smoke passed: preview launch, authentication, Marketplace rendering, Cart and Order Requests controls, and empty-cart routing showed no console errors. Controlled `phase6_browser_*` development fixtures remain available.
 - The development rollout is active: `commerce-scheduler` v5 uses the configured custom scheduler secret; `commerce-task-worker` v2 retains strict service-role authorization. Scheduler internal dispatch explicitly forwards its server-side service-role bearer token. No secret, bearer value, or Vault content is recorded here.
 - Cron job 5 runs the scheduler every minute. Its first scheduled empty-queue run succeeded, and clearly tagged synthetic dispatch, retry, and dead-letter paths passed. Focused scheduler/worker authorization regression passed 4/4.
-- Comprehensive customer and Store Owner browser E2E, browser-created persisted-effect verification, full responsive/accessibility review, and real timed commerce-command reminder/expiry verification remain deferred. This development rollout is not a production-readiness declaration. Phase 7 is not started and Phase 6 ends at `payment_ready`.
+- Comprehensive customer and Store Owner browser E2E, browser-created persisted-effect verification, full responsive/accessibility review, and real timed commerce-command reminder/expiry verification remain deferred. This development rollout is not a production-readiness declaration. Phases 7 and 8 are deferred and Phase 6 ends at `payment_ready`.
 
 The original source-gate matrix below is retained as historical evidence of the state before the development database gate. Its `DB pending` entries are superseded by this checkpoint and must not be read as the current verdict.
+
+### 2026-07-18 Supabase MCP readback
+
+- Project `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`) is `ACTIVE_HEALTHY`.
+- All 39 Phase 6 migrations are present in the development migration history.
+- Authoritative Phase 6 tables have RLS enabled; the two schema/type registries are service-role-only by grants despite the generic no-RLS advisor warning.
+- Scheduler v5 and worker v3 are active. Cron job 5 is active every minute and its latest queried runs succeeded.
+- All five current `store_inventory` rows satisfy quantity-bucket equality. The constraint remains `NOT VALID`; validate it with a forward migration before production readiness.
+- This readback did not execute comprehensive browser E2E and does not declare production readiness.
 
 ## 1. Verification Baseline
 
@@ -30,7 +39,7 @@ The original source-gate matrix below is retained as historical evidence of the 
 | Isolated DB tooling | Supabase CLI 2.20.12 found; Docker engine, `psql`, and `pg_isready` unavailable. |
 | Persisted migration/RLS/grant result | Not run; database verification required. |
 | Real concurrency result | Not run; database verification required. |
-| Remote/live state | Development migrations M01-M39 are applied. Scheduler v5 and worker v2 are active; cron job 5 runs each minute. First scheduled empty-queue run and tagged synthetic dispatch/retry/dead-letter checks passed; real timed commerce-command verification remains pending. |
+| Remote/live state | Development migrations M01-M39 are applied. Scheduler v5 and worker v3 are active; cron job 5 runs each minute. First scheduled empty-queue run and tagged synthetic dispatch/retry/dead-letter checks passed; real timed commerce-command verification remains pending. |
 
 Status terms below are `complete` only for deterministic source/UI work, and
 `source-complete/database-pending` for behavior that requires PostgreSQL.
@@ -149,7 +158,7 @@ grants/RLS and cross-session behavior remain a P2 verification gap until an isol
 1. In an isolated environment, record PostgreSQL/Supabase versions; reset and apply the full migration chain through M33.
 2. Run preflight audits for inventory bucket equality, policy overlap/type/range, schedule/timezone validity, entitled Owners, existing event/notification payload keys, and `NOT VALID` constraints.
 3. Seed required global policy fallbacks, disabled rollout flags, then store/locality allowlists and owner entitlements.
-4. Development scheduler/worker rollout is complete: scheduler v5 uses custom-secret authentication, worker v2 requires service-role authorization, and cron job 5 runs each minute. Preserve those boundaries; production rollout remains separately gated.
+4. Development scheduler/worker rollout is complete: scheduler v5 uses custom-secret authentication, worker v3 requires service-role authorization, and cron job 5 runs each minute. Preserve those boundaries; production rollout remains separately gated.
 5. Run Units 8–15 rollback-only SQL gates, then all multi-session race scripts with disposable, non-PII fixtures.
 6. Verify persisted grants/RLS for anon/customer/Owner/manager/staff/support/service and Phase 5 anonymous discovery.
 7. Enable only an internal store/locality, then perform customer and Owner smoke with a `smoke_run_id` and append-only non-PII evidence.
@@ -159,7 +168,7 @@ grants/RLS and cross-session behavior remain a P2 verification gap until an isol
 
 ## 8. Release Gate
 
-Current verdict: `PHASE 6 SOURCE AND DATABASE CHECKPOINT — COMPREHENSIVE BROWSER E2E DEFERRED`.
+Current verdict: `PHASE 6 COMPLETE — COMPREHENSIVE BROWSER E2E DEFERRED`.
 
 Development database and scheduler rollout gates are complete through provider-independent
 `payment_ready`. Remaining acceptance work is comprehensive browser E2E, browser-created
