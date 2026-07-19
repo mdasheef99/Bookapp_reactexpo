@@ -28,6 +28,7 @@ Read in this order:
 6. The relevant domain SDD routed for the active work unit
 7. [Requirements traceability](./supporting/requirements-traceability.md)
 8. [Implementation and verification tracker](./trackers/02-implementation-and-verification.md) only after the planning gate is approved
+9. [Work Unit 0 plan](./work-units/00-contracts-threat-migration-plan.md) for the current contracts/threat/migration-design review
 
 ## SDD set
 
@@ -49,6 +50,7 @@ Read in this order:
 | [Database current vs target](./supporting/database-current-vs-target.md) | Live read-only evidence and the migration delta that must be designed later. |
 | [Requirements traceability](./supporting/requirements-traceability.md) | Decision-to-SDD and acceptance mapping. |
 | [Complexity and scope register](./supporting/complexity-and-scope-register.md) | Included containment choices, residual complexity, exclusions, and asymmetric benefits. |
+| [Work Unit 0 plan](./work-units/00-contracts-threat-migration-plan.md) | Versioned contract shapes, fixtures, threat tests, migration sequence, correction strategy, and stop gates. |
 
 ## Continuity tools
 
@@ -89,7 +91,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline is approved. Product implementation and migration-file creation remain gated until the following Work Unit 0 outputs are reviewed:
+The planning baseline is approved and the Work Unit 0 plan is complete pending review. Product implementation and migration-file creation remain gated until the following Work Unit 0 outputs are reviewed:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

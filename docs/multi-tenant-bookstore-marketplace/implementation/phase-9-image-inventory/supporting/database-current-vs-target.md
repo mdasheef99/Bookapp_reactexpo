@@ -5,6 +5,8 @@
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
 **Mutation status:** no changes made
 
+**WU0 refresh:** a second read-only check on 2026-07-19 reconfirmed project identity, 37 `store_id`/zero `tenant_id` public columns, the five core catalogue/inventory tables, absence of proposed Phase 9 tables/buckets, five `good` inventory rows, zero observed quantity-balance violations, the explicit listing projection trigger, and the current migration tail. No drift changed the proposed design.
+
 ## Evidence classification
 
 - **Observed** means read from the verified live database, storage catalogue, advisor output, migration list, or inspected repository source.
@@ -70,7 +72,7 @@ Proposed boundary:
 
 ## Security advisor context
 
-The 2026-07-19 security advisor snapshot contains 121 notices: 31 RLS-enabled/no-policy, 7 mutable function search paths, 1 public table without RLS, 1 public extension, 3 public bucket listing warnings, 4 anonymous and 73 authenticated executable `SECURITY DEFINER` warnings, and leaked-password protection disabled.
+The refreshed 2026-07-19 security advisor snapshot contains 121 notices: 31 RLS-enabled/no-policy, 7 mutable function search paths, 1 public table without RLS, 1 public extension, 3 public bucket listing warnings, 4 anonymous and 73 authenticated executable `SECURITY DEFINER` warnings, and leaked-password protection disabled. The error-level RLS notice names `public.spatial_ref_sys`. Table inspection also reports no RLS on `marketplace_event_schema_registry` and `marketplace_notification_type_registry`; those registry/service-only intentions require explicit grant/exposure review, not an assumed blanket remediation.
 
 These are not all Phase 9 findings; some no-policy tables are deliberately server-only and some RPCs are intentionally callable commands. They are nevertheless a launch review backlog. Phase 9 must:
 
@@ -83,6 +85,7 @@ These are not all Phase 9 findings; some no-policy tables are deliberately serve
 Advisor remediation references:
 
 - [RLS enabled with no policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)
+- [RLS disabled in public](https://supabase.com/docs/guides/database/database-linter?lint=0013_rls_disabled_in_public)
 - [Public bucket allows listing](https://supabase.com/docs/guides/database/database-linter?lint=0025_public_bucket_allows_listing)
 - [Authenticated executable SECURITY DEFINER](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)
 - [Password security](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)

@@ -22,7 +22,8 @@ $requiredPhaseFiles = @(
     'supporting/requirements-traceability.md',
     'supporting/complexity-and-scope-register.md',
     'trackers/01-planning-and-decisions.md',
-    'trackers/02-implementation-and-verification.md'
+    'trackers/02-implementation-and-verification.md',
+    'work-units/00-contracts-threat-migration-plan.md'
 )
 
 $missing = @()
@@ -78,8 +79,8 @@ if ($doc13 -notmatch '\| Current phase \| Phase 9:') {
 }
 
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if (-not $implementationTracker.Contains('**Active work unit:** `0_plan_authorized`')) {
-    Write-Error 'Implementation tracker active work unit disagrees with the authorized Work Unit 0 plan.'
+if (-not $implementationTracker.Contains('**Active work unit:** `0_plan_complete_needs_review`')) {
+    Write-Error 'Implementation tracker active work unit disagrees with the completed Work Unit 0 plan review gate.'
 }
 
 $agents = [IO.File]::ReadAllText((Join-Path $repoRoot 'AGENTS.md'))

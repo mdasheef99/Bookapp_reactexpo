@@ -1,9 +1,9 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `planning_in_progress`
+**Status:** `plan_complete_needs_review`
 **Last updated:** 2026-07-19
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `0_plan_authorized`
+**Active work unit:** `0_plan_complete_needs_review`
 
 This tracker is intentionally separate from planning decisions. It will hold implementation evidence and can grow without turning the master tracker into a worklog.
 
@@ -11,7 +11,7 @@ This tracker is intentionally separate from planning decisions. It will hold imp
 
 | Unit | Scope | Status | Required gate |
 | --- | --- | --- | --- |
-| 0 | Contract fixtures, threat tests, migration plan, rollback/forward-correction plan | `planning_in_progress` | SDD approval satisfied; plan review pending |
+| 0 | [Contract fixtures, threat tests, migration plan, rollback/forward-correction plan](../work-units/00-contracts-threat-migration-plan.md) | `plan_complete_needs_review` | User review; no implementation/migration authorization |
 | 1 | Data dictionary migration: metadata fields, aliases, condition/damage, media registry | `not_started` | fresh Supabase audit + migration review |
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `not_started` | Unit 1 verified |
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `not_started` | storage policy/security review |
@@ -99,5 +99,17 @@ Rules:
 ## Append-only implementation log
 
 No product implementation activity recorded.
+
+### 2026-07-19 — Work Unit 0 planning checkpoint
+
+- Date/session: 2026-07-19 Work Unit 0 planning
+- Authorized work unit and scope: WU0 planning only; documentation commit authorized; no product code or migration creation/application
+- Completed: approved baseline committed as `f9f6890`; versioned contracts, fixture matrix, threat tests, migration sequence, forward-correction rules, and pre-migration gates planned
+- Files/components/migrations: documentation only; no migration file, app/function code, bucket, policy, or live data change
+- Verification actually run: fresh exact-project read-only Supabase audit; continuity validator PASS (22 Markdown files, 17 required phase files); local links/350-line limit PASS; `git diff --check` PASS
+- Supabase/external mutations: none
+- Decisions/deviations/risks: no new product behavior; pre-existing RLS/public-bucket/privileged-function/password findings remain separate review gates
+- Tracker/source-doc updates: WU0 plan, Phase 9 tracker, implementation tracker, handoff/router references, DOC-13, audit refresh, validator
+- Next authorized action and gate: user review of WU0 plan; implementation, migration-file creation, and migration application remain unauthorized
 
 When implementation is authorized, append one entry per material development session using the exact closeout shape in [SESSION-START](../SESSION-START.md): authorized unit/scope, completed work, files/components/migrations, verification actually run, external mutations, decisions/deviations/risks, documentation updates, and next authorized action/gate. Never rewrite an older evidence entry to make a later result look contemporaneous.

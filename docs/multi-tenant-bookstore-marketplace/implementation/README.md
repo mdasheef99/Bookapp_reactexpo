@@ -19,8 +19,8 @@ Current handoff as of 2026-07-19:
 
 - Phase 6 is `complete_e2e_deferred`; its migrations M01-M39 and provider-independent `payment_ready` boundary are applied/verified in the development project.
 - Phases 7 Payment/Ledger/Settlement and 8 Pickup are deferred.
-- Phase 9 Image-to-LLM Inventory is `planning_approved`; Work Unit 0 planning is authorized, implementation has not started, and no Phase 9 migration/storage/function change exists.
-- The approved planning baseline is [`phase-9-image-inventory/`](./phase-9-image-inventory/README.md). Work Unit 0 must follow its session protocol, master tracker, master SDD, current-vs-target audit, and routed domain SDDs.
+- Phase 9 Image-to-LLM Inventory is `planning_approved`; the Work Unit 0 plan is complete pending review, implementation has not started, and no Phase 9 migration/storage/function change exists.
+- The approved planning baseline is [`phase-9-image-inventory/`](./phase-9-image-inventory/README.md). Review the [Work Unit 0 plan](./phase-9-image-inventory/work-units/00-contracts-threat-migration-plan.md) through its session protocol and tracker gates before authorizing implementation.
 - Phase 9 is same-language `spine_stack` first (maximum 15), not `single_cover` first, and remains independent of deferred Phase 7/8 behavior.
 - Supabase was re-verified read-only on 2026-07-19 as `ahntbtktjjmvfosgkmgn` / `Bookconnect_reactexpo`; re-verify again before any migration action.
 

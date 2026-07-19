@@ -15,6 +15,7 @@ This stable phase handoff points to the detailed planning set:
 - [Live database/storage current-vs-target audit](./phase-9-image-inventory/supporting/database-current-vs-target.md)
 - [Data dictionary](./phase-9-image-inventory/supporting/data-dictionary.md)
 - [Implementation/verification tracker](./phase-9-image-inventory/trackers/02-implementation-and-verification.md)
+- [Work Unit 0 contracts/threat/migration plan](./phase-9-image-inventory/work-units/00-contracts-threat-migration-plan.md)
 
 ## Locked phase direction
 
@@ -39,6 +40,6 @@ This stable phase handoff points to the detailed planning set:
 
 ## Next gate
 
-The planning baseline was approved on 2026-07-19. The active action is to create the TDD/security/migration-design plan for Work Unit 0 only. Creating migration files and applying them to Supabase remain unauthorized separate actions and require fresh exact-project/schema/storage verification.
+The planning baseline was approved on 2026-07-19. The Work Unit 0 TDD/security/migration-design plan is complete and awaits review. Creating product code or migration files and applying migrations to Supabase remain unauthorized separate actions and require fresh exact-project/schema/storage verification.
 
 Every material session must use the Phase 9 update matrix, append its evidence to the correct tracker, leave one exact next authorized action, and pass the continuity validator before handoff.

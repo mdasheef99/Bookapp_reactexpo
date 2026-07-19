@@ -3,19 +3,19 @@
 **Planning status:** `approved_baseline`
 **Implementation status:** `not_started`
 **Last updated:** 2026-07-19
-**Current milestone:** planning baseline approved; Work Unit 0 plan authorized
-**Active work unit:** `0_plan_authorized`
-**Last completed:** user approval of the planning package and continuity baseline
-**Next authorized action:** create and review the Work Unit 0 contracts/threat/migration-design plan; do not create migration files
+**Current milestone:** Work Unit 0 plan complete; review required
+**Active work unit:** `0_plan_complete_needs_review`
+**Last completed:** Work Unit 0 contracts/threat/migration-design plan and fresh read-only Supabase audit
+**Next authorized action:** review and approve or revise the Work Unit 0 plan; do not create migration files or product code
 **Implementation authority:** `planning_only`
 **Migration creation/application authority:** `not_granted`
-**Current gate:** Work Unit 0 plan review before product implementation or migration-file creation
+**Current gate:** explicit Work Unit 0 plan review before product implementation or migration-file creation
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
 ## Current handoff
 
-Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. The Phase 9 planning baseline was approved by the user on 2026-07-19 and Work Unit 0 planning is authorized. No Phase 9 migration, Edge Function, bucket/policy change, provider call, or application code has been created.
+Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. The Phase 9 planning baseline was approved by the user on 2026-07-19, and the completed Work Unit 0 plan now awaits review. No Phase 9 migration, Edge Function, bucket/policy change, provider call, or application code has been created.
 
 Repository `AGENTS.md`, `implementation/ACTIVE.md`, this tracker, and `SESSION-START.md` now form the durable resume chain. A future session must report this block before acting and must use the session protocol's documentation matrix at closeout.
 
@@ -56,7 +56,7 @@ The exact development project was re-verified before the live audit:
 | Documentation update and closeout protocol | `complete` |
 | Automated continuity validator | `complete` |
 | User/design approval | `complete_2026-07-19` |
-| Work Unit 0 plan | `authorized_not_yet_complete` |
+| Work Unit 0 plan | [`complete_needs_review`](./work-units/00-contracts-threat-migration-plan.md) |
 
 ## Blocking gate before implementation
 
@@ -79,4 +79,4 @@ Product implementation must not start until the Work Unit 0 plan is reviewed and
 
 ## Next approved action
 
-Create and review the Work Unit 0 plan: contract/schema fixtures, threat/security tests, migration order and forward-correction design, and verification gates. Do not create or apply migration files and do not start product implementation.
+Review [the completed Work Unit 0 plan](./work-units/00-contracts-threat-migration-plan.md). Do not create or apply migration files and do not start product implementation until a subsequent unit is explicitly authorized.
