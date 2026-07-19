@@ -79,16 +79,16 @@ if ($doc13 -notmatch '\| Current phase \| Phase 9:') {
 }
 
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if (-not $implementationTracker.Contains('**Active work unit:** `0_approved_awaiting_next_authorization`')) {
-    Write-Error 'Implementation tracker active work unit disagrees with the approved Work Unit 0 authorization gate.'
+if (-not $implementationTracker.Contains('**Active work unit:** `0a_approved_awaiting_wu0b_authorization`')) {
+    Write-Error 'Implementation tracker active work unit disagrees with the approved Work Unit 0A authorization gate.'
 }
 
 $workUnitPlan = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/00-contracts-threat-migration-plan.md'))
 if (-not $workUnitPlan.Contains('**Status:** `approved`')) {
     Write-Error 'Work Unit 0 plan is not marked approved.'
 }
-if (-not $tracker.Contains('**Active work unit:** `0_approved_awaiting_next_authorization`')) {
-    Write-Error 'TRACKER.md does not preserve the post-WU0 authorization gate.'
+if (-not $tracker.Contains('**Active work unit:** `0a_approved_awaiting_wu0b_authorization`')) {
+    Write-Error 'TRACKER.md does not preserve the post-WU0A authorization gate.'
 }
 
 $agents = [IO.File]::ReadAllText((Join-Path $repoRoot 'AGENTS.md'))

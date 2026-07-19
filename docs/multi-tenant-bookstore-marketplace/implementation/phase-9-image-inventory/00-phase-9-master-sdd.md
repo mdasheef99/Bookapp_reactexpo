@@ -4,7 +4,7 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 **Phase:** 9
-**Implementation:** not started
+**Implementation:** WU0A server contract/test foundation independently reviewed and approved; product/runtime implementation not started
 
 ## 1. Decision
 

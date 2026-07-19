@@ -1,8 +1,8 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `approved_baseline_wu0_approved`
+**Status:** `approved_baseline_wu0a_approved_complete`
 **Last updated:** 2026-07-19
-**Implementation status:** `not_started`
+**Implementation status:** `wu0a_contract_test_foundation_approved`; product/runtime implementation not started
 **Supabase mutation status:** no Phase 9 migration, function, policy, bucket, or data change has been made
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
@@ -91,7 +91,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline and corrected Work Unit 0 plan are approved. Product implementation and migration-file creation remain separately gated; WU0 approval grants neither. Before any authorized implementation unit, preserve these WU0 controls:
+The planning baseline and corrected Work Unit 0 plan are approved, and the separately authorized WU0A server contract/test foundation is complete. Product/runtime implementation and migration-file creation remain separately gated. Before any later authorized implementation unit, preserve these WU0 controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;
