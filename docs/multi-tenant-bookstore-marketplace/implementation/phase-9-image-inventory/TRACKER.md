@@ -1,21 +1,21 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `approved_baseline`
-**Implementation status:** `wu0b_definition_independently_approved_awaiting_implementation_authorization`; WU0A remains `approved_complete`; WU0B technical-design implementation is unauthorized
+**Implementation status:** `wu0b_implementation_complete_needs_independent_review`; WU0A remains `approved_complete`; WU0B remains documentation-only
 **Last updated:** 2026-07-20
-**Current milestone:** Work Unit 0B corrected definition independently reviewed and approved
-**Active work unit:** `0b_definition_approved_awaiting_implementation_authorization`
-**Last completed:** independent re-review approved the corrected WU0B definition and continuity validator with no remaining findings
-**Next authorized action:** separate authorization for bounded WU0B technical-design implementation only
-**Implementation authority:** `wu0a_approved_complete`; WU0B definition independently approved; WU0B technical-design implementation and broader product/runtime authority not granted
+**Current milestone:** Work Unit 0B documentation-only backend/API technical design complete; independent review pending
+**Active work unit:** `0b_implementation_complete_needs_independent_review`
+**Last completed:** seven bounded WU0B technical-design artifacts plus authority routing and continuity enforcement
+**Next authorized action:** independent review of the completed WU0B technical-design artifacts only
+**Implementation authority:** `wu0a_approved_complete`; WU0B documentation-only design complete; product/runtime authority not granted
 **Migration creation/application authority:** `not_granted`
-**Current gate:** separate explicit WU0B technical-design implementation authorization; migration-file creation/application remain separate later gates
+**Current gate:** separate independent WU0B technical-design review; Supabase audit and all database/migration/runtime gates remain unauthorized
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
 ## Current handoff
 
-Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. The Phase 9 baseline, corrected Work Unit 0 plan, independently reviewed WU0A server contract/test foundation, and corrected planning-only [WU0B definition](./work-units/00b-backend-api-technical-design-plan.md) are approved. WU0B definition approval grants no technical-design implementation or product/runtime authority. WU0A contains only a network-free shared server contract package, pure helpers, sanitized synthetic fixtures, and tests. No Phase 9 migration, callable Edge Function, bucket/policy change, provider call, mobile/product application code, or external mutation has been created.
+Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. The Phase 9 baseline, corrected Work Unit 0 plan, WU0A server contract/test foundation, and WU0B definition are approved. The documentation-only [WU0B technical design](./work-units/00b-backend-api-technical-design-plan.md) now routes seven completed artifacts and awaits independent review. No Phase 9 migration, callable Edge Function, bucket/policy change, provider call, mobile/product application code, Supabase query/mutation, or other runtime change was created by WU0B.
 
 Repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → `SESSION-START.md` → this tracker is the durable resume chain. A future session must report this block before acting and must use the session protocol's documentation matrix at closeout.
 
@@ -58,11 +58,11 @@ The exact development project was re-verified before the live audit:
 | User/design approval | `complete_2026-07-19` |
 | Work Unit 0 plan | [`approved_2026-07-19`](./work-units/00-contracts-threat-migration-plan.md) |
 | Work Unit 0A contracts/tests | `approved_2026-07-19` |
-| Work Unit 0B definition | [`definition_independently_approved`](./work-units/00b-backend-api-technical-design-plan.md) |
+| Work Unit 0B technical design | [`implementation_complete_needs_review`](./work-units/00b-backend-api-technical-design-plan.md) |
 
 ## Blocking gate before further implementation
 
-WU0A is approved and complete. The corrected WU0B definition is independently approved, but WU0B technical-design implementation is not authorized. No later product/runtime implementation may start until the implementation tracker is explicitly moved to a named authorized unit. Migration creation and Supabase application are separate approvals. Before database/migration design or either migration action, the agent must re-run project verification for `ahntbtktjjmvfosgkmgn` and re-audit all affected tables, policies, functions, triggers, buckets, and live migrations.
+WU0A is approved and complete. WU0B documentation-only technical design is complete but not independently approved. No Supabase audit, database/migration design, migration creation/testing/application, or product/runtime implementation may start until its own later gate is explicitly authorized. Before database design, the exact project and all affected tables, policies, functions, triggers, buckets and live migrations must be freshly audited through Supabase MCP.
 
 ## Risk summary
 
@@ -81,4 +81,4 @@ WU0A is approved and complete. The corrected WU0B definition is independently ap
 
 ## Next action gate
 
-Request separate authorization for bounded WU0B technical-design implementation only. Migration-file creation and migration application remain independent later gates.
+Authorize an independent review of the completed WU0B technical-design artifacts only.

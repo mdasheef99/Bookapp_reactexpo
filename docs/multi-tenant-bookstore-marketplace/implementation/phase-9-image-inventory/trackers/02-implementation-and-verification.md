@@ -1,13 +1,13 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `wu0b_definition_independently_approved_awaiting_implementation_authorization`
+**Status:** `wu0b_implementation_complete_needs_independent_review`
 **Last updated:** 2026-07-20
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `0b_definition_approved_awaiting_implementation_authorization`
+**Active work unit:** `0b_implementation_complete_needs_independent_review`
 
 This tracker is intentionally separate from planning decisions. It will hold implementation evidence and can grow without turning the master tracker into a worklog.
 
-WU0B uses five distinct markers: `definition_complete_needs_review`, `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, `implementation_complete_needs_review`, and `independently_approved`. Definition approval sets only the second marker; it does not authorize or complete technical-design implementation.
+WU0B uses five distinct markers: `definition_complete_needs_review`, `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, `implementation_complete_needs_review`, and `independently_approved`. This unit is at the fourth marker; completion does not imply independent approval or any database/runtime authority.
 
 ## Work units
 
@@ -15,7 +15,7 @@ WU0B uses five distinct markers: `definition_complete_needs_review`, `definition
 | --- | --- | --- | --- |
 | 0 | [Contract fixtures, threat tests, migration plan, rollback/forward-correction plan](../work-units/00-contracts-threat-migration-plan.md) | `approved` | Corrections incorporated; no implementation/migration authorization |
 | 0A | Server contracts, deterministic helpers, validation/error/provider/query/grant registers, fixtures, and red contract/security tests | `approved_complete` | independently reviewed 2026-07-19; no SQL/live writes; focused 4 suites/41 tests and all function 9 suites/53 tests pass |
-| 0B | [Backend/API technical design](../work-units/00b-backend-api-technical-design-plan.md): command/query/DTO/actor/boundary inventories, state/transaction/idempotency/worker/telemetry matrices, exact later file allowlists, and red-test mapping | `definition_independently_approved_awaiting_implementation_authorization` | corrected definition independently approved 2026-07-20; implementation remains separately unauthorized; no migration file, endpoint, live call, or external mutation |
+| 0B | [Backend/API technical design](../work-units/00b-backend-api-technical-design-plan.md): seven routed artifacts covering command/query/DTO/actor/boundary inventories, state/transaction/idempotency/worker/telemetry matrices, exact later file allowlists, and red-test mapping | `implementation_complete_needs_review` | documentation-only design completed 2026-07-20; independent review next; no Supabase query, migration, endpoint, provider/storage/UI/runtime change or external mutation |
 | 1 | Data dictionary migration: metadata fields, aliases, condition/damage, media registry | `not_started` | fresh Supabase audit + migration review |
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `not_started` | Unit 1 verified |
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `not_started` | storage policy/security review |
@@ -194,5 +194,17 @@ No product implementation activity recorded.
 - Decisions/deviations/risks: corrected WU0B definition is approved; WU0B technical-design implementation remains unauthorized and must receive a separate explicit authorization
 - Tracker/source-doc updates: WU0B definition, Phase 9 README/master/planning/implementation trackers, DOC-13, ACTIVE.md routing, and continuity validator
 - Next authorized action and gate: request separate authorization for bounded WU0B technical-design implementation only; migration creation/application remain unauthorized
+
+### 2026-07-20 — Work Unit 0B documentation-only technical-design completion
+
+- Date/session: 2026-07-20 bounded WU0B artifact implementation
+- Authorized work unit and scope: seven cohesive technical-design artifacts, authority/router alignment, status/continuity updates and validator hardening only
+- Completed: C01–C26 and Q01–Q11 catalogue; DTO/error/rate design; actor/tenant/privacy/grant matrices; state/transaction/idempotency/publication design; job/provider/media/lifecycle design; marketplace/request-photo design; red tests, audit questions, future exact proposed file map and handoff
+- Files/components/migrations: seven new Markdown artifacts plus authorized WU0B router, Phase 9 README/session/master/implementation trackers, DOC-13 and continuity validator; no component, test, migration or generated file
+- Verification actually run: continuity validator PASS (`MARKDOWN_FILES_CHECKED=30`, `REQUIRED_PHASE_FILES=25`); five in-memory missing-route/command/category, premature-approval and later-authority negative probes PASS; 14-file authorized allowlist, Markdown links, ≤350-line artifact/router limits, C01–C26/Q01–Q11 coverage, exactly one next action, audit markers, no placeholders, prohibited-path absence and `git diff --check` PASS
+- Supabase/external mutations: no Supabase query or mutation, provider call, Storage change, deployment, push or merge during this work unit
+- Decisions/deviations/risks: detailed artifacts resolve the approved single-document size conflict; database-dependent facts remain `DB_AUDIT_REQUIRED_BEFORE_DATABASE_DESIGN`; prior authorized main merge/push occurred before this work unit
+- Tracker/source-doc updates: WU0B authority/router, seven-artifact set, SESSION-START, Phase 9 README/TRACKER, this implementation tracker, DOC-13 and validator
+- Next authorized action and gate: authorize an independent review of the completed WU0B technical-design artifacts only; Supabase audit, database/migration design, migration creation/testing/application and runtime remain unauthorized
 
 When implementation is authorized, append one entry per material development session using the exact closeout shape in [SESSION-START](../SESSION-START.md): authorized unit/scope, completed work, files/components/migrations, verification actually run, external mutations, decisions/deviations/risks, documentation updates, and next authorized action/gate. Never rewrite an older evidence entry to make a later result look contemporaneous.
