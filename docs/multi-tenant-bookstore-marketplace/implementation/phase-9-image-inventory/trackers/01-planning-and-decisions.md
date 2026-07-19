@@ -105,7 +105,7 @@ Audit performed read-only on 2026-07-19 after `get_project` verification.
 - [x] User/design approval (2026-07-19).
 - [x] WU0 contracts/threat/migration-design plan approval (2026-07-19).
 - [x] WU0A contract/test foundation independent approval (2026-07-19).
-- [ ] WU0B backend/API technical-design definition independent approval; definition exists but review is pending.
+- [x] WU0B backend/API technical-design definition independent approval (2026-07-20 after corrections).
 - [ ] Overall Phase 9 implementation-sequence approval; WU0/WU0A completion and WU0B definition do not grant it.
 - [ ] Migration creation authorization.
 - [ ] Supabase application authorization and exact-project re-verification.

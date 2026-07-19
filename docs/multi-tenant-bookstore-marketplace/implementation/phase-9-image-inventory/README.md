@@ -1,8 +1,8 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `wu0b_definition_complete_needs_review`
-**Last updated:** 2026-07-19
-**Implementation status:** WU0A approved complete; WU0B definition complete and awaiting independent review; WU0B/product/runtime implementation not started
+**Status:** `wu0b_definition_independently_approved_awaiting_implementation_authorization`
+**Last updated:** 2026-07-20
+**Implementation status:** WU0A approved complete; corrected WU0B definition independently approved; WU0B/product/runtime implementation not started
 **Supabase mutation status:** no Phase 9 migration, function, policy, bucket, or data change has been made
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
@@ -92,7 +92,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline and corrected Work Unit 0 plan are approved, and the separately authorized WU0A server contract/test foundation is complete. The WU0B definition is complete but requires independent review; neither WU0B technical-design implementation nor product/runtime implementation is authorized. Migration-file creation and application remain separately gated. Before any later authorized implementation unit, preserve these WU0 controls:
+The planning baseline, corrected Work Unit 0 plan, WU0A server contract/test foundation, and corrected WU0B definition are independently approved. Neither WU0B technical-design implementation nor product/runtime implementation is authorized. Migration-file creation and application remain separately gated. Before any later authorized implementation unit, preserve these WU0 controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

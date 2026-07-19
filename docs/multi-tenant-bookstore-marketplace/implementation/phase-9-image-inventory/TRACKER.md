@@ -1,21 +1,21 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `approved_baseline`
-**Implementation status:** `wu0b_definition_complete_needs_review`; WU0A remains `approved_complete`; WU0B technical-design implementation is unauthorized
-**Last updated:** 2026-07-19
-**Current milestone:** Work Unit 0B backend/API technical-design definition completed; independent definition review pending
-**Active work unit:** `0b_definition_complete_needs_review`
-**Last completed:** planning-only WU0B definition with routed reading, design inventories, authorization/state/transaction matrices, red gates, acceptance criteria, non-goals, and later authorization gates
-**Next authorized action:** independent review of the WU0B definition documents only
-**Implementation authority:** `wu0a_approved_complete`; WU0B definition only; WU0B technical-design implementation and broader product/runtime authority not granted
+**Implementation status:** `wu0b_definition_independently_approved_awaiting_implementation_authorization`; WU0A remains `approved_complete`; WU0B technical-design implementation is unauthorized
+**Last updated:** 2026-07-20
+**Current milestone:** Work Unit 0B corrected definition independently reviewed and approved
+**Active work unit:** `0b_definition_approved_awaiting_implementation_authorization`
+**Last completed:** independent re-review approved the corrected WU0B definition and continuity validator with no remaining findings
+**Next authorized action:** separate authorization for bounded WU0B technical-design implementation only
+**Implementation authority:** `wu0a_approved_complete`; WU0B definition independently approved; WU0B technical-design implementation and broader product/runtime authority not granted
 **Migration creation/application authority:** `not_granted`
-**Current gate:** independent review of the WU0B definition, followed by separate explicit WU0B technical-design implementation authorization if approved; migration-file creation/application remain separate later gates
+**Current gate:** separate explicit WU0B technical-design implementation authorization; migration-file creation/application remain separate later gates
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
 ## Current handoff
 
-Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. The Phase 9 baseline, corrected Work Unit 0 plan, and independently reviewed WU0A server contract/test foundation are approved and complete. The planning-only [WU0B definition](./work-units/00b-backend-api-technical-design-plan.md) now defines the future backend/API technical-design unit but is not independently reviewed and grants no implementation authority. WU0A contains only a network-free shared server contract package, pure helpers, sanitized synthetic fixtures, and tests. No Phase 9 migration, callable Edge Function, bucket/policy change, provider call, mobile/product application code, or external mutation has been created.
+Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. The Phase 9 baseline, corrected Work Unit 0 plan, independently reviewed WU0A server contract/test foundation, and corrected planning-only [WU0B definition](./work-units/00b-backend-api-technical-design-plan.md) are approved. WU0B definition approval grants no technical-design implementation or product/runtime authority. WU0A contains only a network-free shared server contract package, pure helpers, sanitized synthetic fixtures, and tests. No Phase 9 migration, callable Edge Function, bucket/policy change, provider call, mobile/product application code, or external mutation has been created.
 
 Repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → `SESSION-START.md` → this tracker is the durable resume chain. A future session must report this block before acting and must use the session protocol's documentation matrix at closeout.
 
@@ -58,11 +58,11 @@ The exact development project was re-verified before the live audit:
 | User/design approval | `complete_2026-07-19` |
 | Work Unit 0 plan | [`approved_2026-07-19`](./work-units/00-contracts-threat-migration-plan.md) |
 | Work Unit 0A contracts/tests | `approved_2026-07-19` |
-| Work Unit 0B definition | [`definition_complete_needs_review`](./work-units/00b-backend-api-technical-design-plan.md) |
+| Work Unit 0B definition | [`definition_independently_approved`](./work-units/00b-backend-api-technical-design-plan.md) |
 
 ## Blocking gate before further implementation
 
-WU0A is approved and complete. The WU0B definition is complete but needs independent review. WU0B technical-design implementation is not authorized, and the plan cannot be marked implemented or approved from its existence. No later product/runtime implementation may start until the implementation tracker is explicitly moved to a named authorized unit. Migration creation and Supabase application are separate approvals. Before database/migration design or either migration action, the agent must re-run project verification for `ahntbtktjjmvfosgkmgn` and re-audit all affected tables, policies, functions, triggers, buckets, and live migrations.
+WU0A is approved and complete. The corrected WU0B definition is independently approved, but WU0B technical-design implementation is not authorized. No later product/runtime implementation may start until the implementation tracker is explicitly moved to a named authorized unit. Migration creation and Supabase application are separate approvals. Before database/migration design or either migration action, the agent must re-run project verification for `ahntbtktjjmvfosgkmgn` and re-audit all affected tables, policies, functions, triggers, buckets, and live migrations.
 
 ## Risk summary
 
@@ -81,4 +81,4 @@ WU0A is approved and complete. The WU0B definition is complete but needs indepen
 
 ## Next action gate
 
-Authorize an independent review of the WU0B definition documents only. WU0B technical-design implementation, migration-file creation, and migration application remain independent later gates.
+Request separate authorization for bounded WU0B technical-design implementation only. Migration-file creation and migration application remain independent later gates.
