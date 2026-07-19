@@ -3,19 +3,19 @@
 **Planning status:** `approved_baseline`
 **Implementation status:** `not_started`
 **Last updated:** 2026-07-19
-**Current milestone:** Work Unit 0 plan complete; review required
-**Active work unit:** `0_plan_complete_needs_review`
-**Last completed:** Work Unit 0 contracts/threat/migration-design plan and fresh read-only Supabase audit
-**Next authorized action:** review and approve or revise the Work Unit 0 plan; do not create migration files or product code
-**Implementation authority:** `planning_only`
+**Current milestone:** Work Unit 0 approved after required corrections
+**Active work unit:** `0_approved_awaiting_next_authorization`
+**Last completed:** corrected and approved Work Unit 0 contracts/threat/migration-design plan
+**Next authorized action:** none beyond documentation closeout; await explicit authorization for a named contract/test unit
+**Implementation authority:** `not_granted`
 **Migration creation/application authority:** `not_granted`
-**Current gate:** explicit Work Unit 0 plan review before product implementation or migration-file creation
+**Current gate:** explicit authorization for the next narrow unit; migration-file creation/application remain separate gates
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
 ## Current handoff
 
-Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. The Phase 9 planning baseline was approved by the user on 2026-07-19, and the completed Work Unit 0 plan now awaits review. No Phase 9 migration, Edge Function, bucket/policy change, provider call, or application code has been created.
+Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. The Phase 9 baseline and corrected Work Unit 0 plan are approved. No Phase 9 migration, Edge Function, bucket/policy change, provider call, or application code has been created.
 
 Repository `AGENTS.md`, `implementation/ACTIVE.md`, this tracker, and `SESSION-START.md` now form the durable resume chain. A future session must report this block before acting and must use the session protocol's documentation matrix at closeout.
 
@@ -56,11 +56,11 @@ The exact development project was re-verified before the live audit:
 | Documentation update and closeout protocol | `complete` |
 | Automated continuity validator | `complete` |
 | User/design approval | `complete_2026-07-19` |
-| Work Unit 0 plan | [`complete_needs_review`](./work-units/00-contracts-threat-migration-plan.md) |
+| Work Unit 0 plan | [`approved_2026-07-19`](./work-units/00-contracts-threat-migration-plan.md) |
 
 ## Blocking gate before implementation
 
-Product implementation must not start until the Work Unit 0 plan is reviewed and the implementation tracker is explicitly moved to an implementation-authorized unit. Migration creation and Supabase application are separate approvals. Before either action, the agent must re-run project verification for `ahntbtktjjmvfosgkmgn` and re-audit all affected tables, policies, functions, triggers, buckets, and live migrations.
+Product implementation must not start until the implementation tracker is explicitly moved to a named authorized unit. WU0 approval alone grants no implementation authority. Migration creation and Supabase application are separate approvals. Before either action, the agent must re-run project verification for `ahntbtktjjmvfosgkmgn` and re-audit all affected tables, policies, functions, triggers, buckets, and live migrations.
 
 ## Risk summary
 
@@ -79,4 +79,4 @@ Product implementation must not start until the Work Unit 0 plan is reviewed and
 
 ## Next approved action
 
-Review [the completed Work Unit 0 plan](./work-units/00-contracts-threat-migration-plan.md). Do not create or apply migration files and do not start product implementation until a subsequent unit is explicitly authorized.
+Await explicit authorization for a named next unit. The recommended first unit is server-owned contracts, deterministic helpers, central registers, recorded fixtures, and red contract/security tests only. Do not create or apply migration files and do not start that unit until explicitly authorized.

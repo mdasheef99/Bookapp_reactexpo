@@ -14,7 +14,7 @@ The workflow is substantial but bounded. It is not an autonomous agent: determin
 | Languages | Automatic per-spine detection/routing | Owner selects one batch language; English default; non-selected candidates skipped | no mixed-language orchestration |
 | Vision failover | Per-book ensemble/model voting | One primary and at most one whole-image fallback | bounded cost/latency |
 | Metadata | Parallel ensemble and field-level merging | Local first, then sequential primary/secondary; select one coherent edition | predictable provenance |
-| Aliases | Full multilingual catalogue localization | Up to three English search aliases; original text authoritative | search value without UI translation project |
+| Aliases | Full multilingual catalogue localization | Up to three automated proposals; bounded official/Owner-verified rows; original text authoritative | search value without UI translation project or artificial loss of legitimate names |
 | Duplicates | Image matching, auto-merge, cross-store reconciliation | Same-store advisory warning; deterministic identity/variant rules; explicit owner choice | low irreversible-risk surface |
 | Repeated spines | Attempt to infer physical identity | One visible spine remains one candidate | owner controls quantity/rows |
 | Sessions | Pause/resume/save/discard/branching state machine | Start, add images, Close with summary; invisible persistence only | simple mental model |

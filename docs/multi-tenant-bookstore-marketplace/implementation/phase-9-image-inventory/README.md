@@ -1,6 +1,6 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `approved_baseline`
+**Status:** `approved_baseline_wu0_approved`
 **Last updated:** 2026-07-19
 **Implementation status:** `not_started`
 **Supabase mutation status:** no Phase 9 migration, function, policy, bucket, or data change has been made
@@ -79,7 +79,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 - English is the default batch language. Another language must be selected before upload. Mixed-language automation is excluded.
 - The deterministic application orchestrates the workflow. The vision model extracts only; it has no database, storage, metadata-provider, or tool authority.
 - Vision and metadata integrations are adapter-based with one configured primary and one configured fallback.
-- Original-script title and author are authoritative. Up to three English search aliases may be stored with source/provenance.
+- Original-script title and author are authoritative. Each automated operation proposes at most three English aliases; bounded provider-recognized or Owner/platform-verified aliases may coexist with source/provenance.
 - Metadata stores description, ISBN-10 and ISBN-13 when available, publisher, date, language, edition, volume, format, pages, categories, cover, and provenance.
 - Owner review is mandatory before each candidate enters inventory. Store defaults reduce repeated entry.
 - Duplicates are advisory, same-store only, and never auto-merged. Image similarity is excluded.
@@ -91,7 +91,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline is approved and the Work Unit 0 plan is complete pending review. Product implementation and migration-file creation remain gated until the following Work Unit 0 outputs are reviewed:
+The planning baseline and corrected Work Unit 0 plan are approved. Product implementation and migration-file creation remain separately gated; WU0 approval grants neither. Before any authorized implementation unit, preserve these WU0 controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

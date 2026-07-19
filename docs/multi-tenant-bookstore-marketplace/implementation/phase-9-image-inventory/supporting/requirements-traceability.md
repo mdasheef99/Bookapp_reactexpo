@@ -10,9 +10,10 @@
 | Provider-agnostic local/primary/secondary metadata | 01 Data; 02 Extraction | DAT-05–DAT-09; EXT-11 |
 | Title/author priority; visible ISBN only as clue | 02 Extraction; 01 Data | EXT-12; DAT-03 |
 | Description, ISBN-10/13, rich metadata, cover | 01 Data | DAT-01–DAT-04 |
-| Original language plus up to three approved English aliases | 01 Data; 05 Marketplace | DAT-10–DAT-14; MKT-05 |
+| Original language; up to three automated English alias proposals plus bounded official/verified aliases | 01 Data; 05 Marketplace | DAT-10–DAT-14; MKT-05 |
 | Additional languages can be added later | 01 Data; 02 Extraction | DAT-15; EXT-04 |
 | Advisory duplicates; no image comparison; repeated spines retained | 01 Data; 03 Review | DAT-16–DAT-20; REV-07 |
+| Customer-request photos excluded from inventory duplicate identity | 01 Data; 06 Photo request | DAT-16–DAT-20; PHO-14 |
 | Quantity/price/location/condition before commit | 03 Review | REV-02–REV-05 |
 | Preselected defaults | 03 Review; 02 Extraction | REV-06; EXT-06 |
 | Five conditions with explanations | 01 Data; 03 Review | DAT-21; REV-08 |
@@ -28,6 +29,10 @@
 | Multi-tenant `store_id` safety | 00 Master; 04 Media; all data SDDs | MAS-03; MED-01–MED-05 |
 | Private scan/raw payloads and retention | 04 Media; 02 Extraction | MED-06–MED-10; EXT-15 |
 | Security across model, provider, upload, storage, logs, recovery | 04 Media | MED-01–MED-20 |
+| Provider field reuse rights separate from provenance | 02 Extraction; 04 Media | EXT-18; MED-22 |
+| Private commit survives publication failure with idempotent retry | 00 Master; 03 Review | MAS-11; REV-18 |
+| Initiating Owner owns session resume/mutation in pilot | 00 Master; 02 Extraction | MAS-12; EXT-06 |
+| Versioned bookstore-first query/cursor/count contract | 05 Marketplace | MKT-14 |
 | Quota/retry policy model-agnostic and configurable | 02 Extraction | EXT-13–EXT-17 |
 | Phase 7/8 independence | 00 Master; 06 Photo request | MAS-09; PHO-13 |
 

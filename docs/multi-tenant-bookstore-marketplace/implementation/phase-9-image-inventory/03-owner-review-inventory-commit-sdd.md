@@ -158,8 +158,9 @@ The server:
 4. Recomputes same-store duplicate evidence under an identity/row transaction lock.
 5. Performs `create_new`, `increment_quantity`, `manual_match`, or `skip`.
 6. Writes bounded audit/event evidence and candidate outcome.
-7. Creates/updates/retracts the safe public projection as required.
-8. Returns canonical inventory/listing/session summary; retries return the recorded result.
+7. Commits the private inventory outcome and records the requested publication intent.
+8. Creates/updates/retracts the safe public projection as required; projection failure records a retryable private outcome without repeating inventory effects.
+9. Returns canonical inventory/listing/session summary; retries return the recorded result.
 
 The model/provider cannot invoke this command.
 
@@ -185,9 +186,11 @@ The existing quantity equality is currently `NOT VALID`; Phase 9 must preserve i
 
 - A single candidate error leaves other candidates usable.
 - Error messages are stable codes plus short owner text: authorization, stale review, duplicate changed, required field, media missing, unsellable, publication blocked, quota/policy, or retryable server failure.
-- A failed public projection cannot be reported as published. The command returns private committed + projection failed/retry required, or rolls back the candidate according to the selected transactional design; the final implementation must choose and test one invariant-preserving behavior.
+- A failed public projection cannot be reported as published and does not roll back a valid private inventory commit. Return `committed_publication_failed`; keep the inventory private; record an audit event and retryable publication intent. The publication-retry command reauthorizes current eligibility and is idempotent against the original commit, so it cannot create or increment inventory again.
 - A failed request may safely retry using the same idempotency identity.
 - Needs-review candidates remain outside inventory after Close and expire by policy.
+
+The canonical API error catalogue separates adapter outcomes from domain/API failures. Every `P9_*` API error records stable code, HTTP status, retryability, safe Owner message, log severity, whether a database effect survived, and whether retry must reuse the same idempotency key. Required initial codes cover unauthorized Owner, inactive session, candidate version conflict, changed duplicate target, unapproved media, quantity invariant failure, and publication failure.
 
 ## 12. Session close summary
 
@@ -270,3 +273,5 @@ Rules:
 | REV-15 | Post-push store fields remain editable through controlled commands. |
 | REV-16 | Store edits cannot mutate canonical truth. |
 | REV-17 | ISBN/edition edits rematch and re-evaluate duplicates/public projection. |
+| REV-18 | Projection failure returns one private `committed_publication_failed` outcome and idempotent publication retry cannot repeat inventory effects. |
+| REV-19 | Stable API errors distinguish retryability, safe Owner text, surviving effects, and idempotency reuse. |

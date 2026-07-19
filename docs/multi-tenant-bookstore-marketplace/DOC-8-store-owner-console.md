@@ -135,6 +135,7 @@ MVP features:
 - condition photo upload where enabled
 - low-stock and zero-stock indicators
 - same-language 15-spine camera/gallery sessions with Start/Close summary
+- initiating-Owner resume/mutation during the Owner-only pilot, with separately authorized/audited support intervention
 - session defaults for language, condition, shelf/location, quantity, and private/publish preference
 - numbered spine review, add-missed/remove-false, attention-only field highlighting, and marketplace preview
 - five public conditions with accessible explanations and separate damage disclosure/photo flow
@@ -452,6 +453,7 @@ Activity logs should be append-only from the client perspective.
 | CON-13 | Owner review supports defaults, add-missed/remove-false, advisory duplicate choice, five conditions, damage evidence, and independent candidate commits. |
 | CON-14 | Owner can edit controlled inventory fields after commit without mutating shared canonical metadata. |
 | CON-15 | Requested-photo items require 1-3 private current-copy photos or an unavailable/unfulfilled outcome. |
+| CON-16 | Only the initiating Owner mutates/resumes a pilot scan session; support intervention is separately controlled and audited. |
 
 ---
 

@@ -321,6 +321,7 @@ Image extraction egress rules (DPDP/data processor alignment):
 - Only the minimum image data required for book extraction should be sent to the LLM vendor and metadata providers.
 - The LLM vendor and metadata providers are data processors; a data-processing agreement must be in place before production use.
 - Vendor reuse of images for model training or marketing is prohibited unless explicit platform policy and consent allow it.
+- Provider normalization must record field-level reuse policy separately from provenance: matching-only, storage allowed, public display allowed, image caching allowed, attribution required, and expiry/revalidation required. Receiving a cover, description, or other field is not itself publication permission.
 - A cross-border data residency/transfer review must be completed before production launch and documented as a payment/launch gate.
 
 Phase 9 media and AI security rules:
@@ -336,6 +337,8 @@ Phase 9 media and AI security rules:
 - lifecycle deletion, dispute/legal holds, orphan cleanup, and deletion evidence are server-managed and observable
 
 Storage policies must avoid broad object listing. Public buckets should provide object URL access without allowing clients to enumerate all objects.
+
+Every new Phase 9 table exposed through the API has RLS. Default `PUBLIC` table/function privileges and default function `EXECUTE` are revoked; `anon` and `authenticated` receive only explicit minimum grants. Raw attempts, jobs, usage/cost, and lifecycle tables remain service-only. Privileged helpers live outside `public` where practical, pin `search_path`, schema-qualify every table/function reference, and have direct-execution and search-path-poisoning denial tests. Owner/customer reads use bounded safe commands or projections rather than authoritative operational tables.
 
 ---
 
@@ -421,6 +424,8 @@ Audit logs should be append-only for normal application code.
 | SEC-19 | Scan and customer-request media cannot be retrieved through public marketplace APIs/URLs. |
 | SEC-20 | Model/provider output has no tool authority and cannot directly cause a database/storage/publication action. |
 | SEC-21 | Media retention, holds, deletion, and orphan cleanup are persisted, idempotent, and tested. |
+| SEC-22 | Phase 9 tables/functions follow an explicit least-privilege grant matrix with RLS, revoked ambient privileges, pinned `search_path`, and direct-use denial tests. |
+| SEC-23 | Provider provenance cannot grant storage/display/cache rights; field-level policy controls reuse, attribution, and revalidation. |
 
 ---
 

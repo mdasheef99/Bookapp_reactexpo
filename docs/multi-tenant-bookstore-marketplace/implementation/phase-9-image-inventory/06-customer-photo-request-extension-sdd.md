@@ -101,6 +101,8 @@ Photos use short-lived authorized access. URLs/tokens are not persisted in local
 
 ## 7. Media and authorization
 
+Customer-request photos are request-scoped evidence created after inventory identity. They never participate in duplicate matching, quantity compatibility, or inventory-row separation. Public actual-copy/damage media remains a separate copy-specific signal.
+
 - Purpose is `customer_request` and privacy class is private request evidence.
 - Upload authorization binds final `store_id`, request ID, request item ID, photo request ID, uploader, sequence, and expiry.
 - Capture time must be after the photo request; server upload time is authoritative evidence. Device capture time may be stored only as untrusted/supporting metadata after EXIF stripping.
@@ -221,6 +223,7 @@ Do not expose an unexplained public reliability score in Phase 9.
 | PHO-11 | Retention/deletion/holds follow the outcome lifecycle. |
 | PHO-12 | Repeated failures can trigger listing freshness/review/pause policy. |
 | PHO-13 | No payment-provider, paid-order, pickup, refund, ledger, or settlement implementation is introduced. |
+| PHO-14 | Private request-photo evidence never affects inventory duplicate identity, quantity compatibility, or row separation. |
 
 ## 15. Deferred
 

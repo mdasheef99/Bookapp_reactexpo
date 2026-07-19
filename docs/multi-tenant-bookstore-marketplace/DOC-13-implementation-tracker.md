@@ -56,14 +56,16 @@ If implementation changes product or architecture behavior, update the relevant 
 
 > 2026-07-19 Phase 9 Work Unit 0 checkpoint: the [contracts/threat/migration-design plan](./implementation/phase-9-image-inventory/work-units/00-contracts-threat-migration-plan.md) is complete and pending user review. It defines versioned internal adapter contracts, recorded fixtures, deterministic and cross-tenant security tests, a six-step expand/backfill/validate/switch migration sequence, forward-correction rules, and explicit pre-migration gates. A fresh exact-project read-only Supabase audit confirmed the baseline facts and pre-existing security backlog. No product code, migration file, provider call, bucket/policy, or Supabase/storage mutation occurred.
 
+> 2026-07-19 Phase 9 WU0 approval refresh: the user accepted the `approved_with_required_corrections` review and authorized documentation correction/commit only. The approved WU0 now separates automated alias proposals from bounded official/verified aliases; excludes private request photos from duplicate identity; locks initiator-only pilot session authority and terminal-input Close; preserves private inventory on publication failure; requires central validation/error/provider/query/grant registers; strengthens privilege/security gates; clarifies the `NOT VALID` quantity gate; and uses eight logical migration groups. WU0A contract/test implementation, migration-file creation/application, provider calls, storage changes, and product code remain unauthorized.
+
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **planning baseline approved; Work Unit 0 plan complete pending review; implementation not started** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **planning baseline and corrected Work Unit 0 approved; implementation not started** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-19 |
 | Latest handoff | `PHASE 6 COMPLETE — COMPREHENSIVE BROWSER E2E DEFERRED`. M01-M39 are applied and database-verified in development; scheduler v5, worker v3, and cron job 5 are active. Phases 7 and 8 are deferred. |
 | Current risk level | Medium - Phase 9 design now contains AI, tenant, media, retention, duplicate, multilingual, and marketplace risks; implementation evidence and vendor/legal selection remain pending. Phase 6 E2E stays a recorded deferred gate. |
-| Next recommended task | Review and approve or revise the Work Unit 0 contracts/threat/migration-design plan. Do not create/apply migration files, start product implementation, or introduce Phase 7/8 behavior. |
+| Next recommended task | Await explicit authorization for a named WU0A contracts/fixtures/red-tests unit. Do not create/apply migration files, start that unit, call providers, or introduce Phase 7/8 behavior. |
 
 ---
 
@@ -80,7 +82,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `planning_approved_wu0_review` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [SDD/tracker set](./implementation/phase-9-image-inventory/README.md) | Planning baseline approved 2026-07-19; Work Unit 0 plan complete pending review. Implementation/migrations not started. |
+| Phase 9: Image-to-LLM Inventory | `planning_and_wu0_approved_awaiting_authorization` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [SDD/tracker set](./implementation/phase-9-image-inventory/README.md) | Corrected Work Unit 0 approved 2026-07-19. WU0A and migrations remain unauthorized/not started. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -198,7 +200,7 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 
 Next work:
 1. Review the Phase 9 master/domain SDDs, data dictionary, live audit, traceability, complexity register, and local trackers.
-2. Review the completed Work Unit 0 plan for recorded contracts/threat fixtures, migration order, rollback/forward-correction design, and security tests.
+2. If explicitly authorized, implement only WU0A server-owned contracts, deterministic helpers, central registers, recorded fixtures, and red contract/security tests; otherwise make no implementation change.
 3. Start implementation with same-language `spine_stack` (maximum 15) plus camera/gallery and mandatory Owner review; `single_cover` is not the first slice.
 4. Preserve the Phase 6 quantity-bucket/hold and controlled-write boundary when creating or incrementing inventory.
 5. Keep provider payments, `payment_pending`, paid orders, ledger, pickup, refunds, and settlement deferred with Phases 7/8.

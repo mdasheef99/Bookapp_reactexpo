@@ -176,6 +176,8 @@ Multimodal image content can contain indirect prompt injection. The containment 
 
 Metadata-provider cover URLs are accepted only from configured HTTPS provider/host rules or through a reviewed image proxy/cache. Invalid/unsafe URLs fall back to an approved image or placeholder.
 
+Provider provenance does not imply reuse permission. The adapter policy independently marks each normalized field as matching-only, storable, publicly displayable, image-cacheable, attribution-required, and expiry/revalidation-bound. Mobile clients cannot widen those rights.
+
 ## 9. Authentication, tenancy, and grants
 
 - Verify JWT at the server boundary.
@@ -187,6 +189,10 @@ Metadata-provider cover URLs are accepted only from configured HTTPS provider/ho
 - Trigger/helpers are not executable by client roles.
 - Callable RPC/Edge commands validate the actor internally, pin `search_path`, have explicit grants, and return bounded safe data.
 - Service role remains server-only and is never accepted from the mobile client.
+- Every new API-exposed table has RLS; raw attempts/jobs/usage/cost/lifecycle tables remain service-only.
+- Revoke default `PUBLIC` privileges and default function `EXECUTE`; grant `anon`/`authenticated` only named minimum operations.
+- Place privileged helpers outside `public` where practical, schema-qualify every reference, pin `search_path`, and deny direct client execution.
+- Maintain one explicit table/function/role grant matrix; Owner/customer reads come from bounded safe commands/projections.
 
 ## 10. Privacy and vendor governance
 
@@ -268,6 +274,9 @@ Audit is append-only from normal clients and records sensitive reads/promotions/
 - signed capability expiry/final entity reauthorization;
 - retention, hold, delete replay, missing-object, orphan, CDN/revocation behavior;
 - advisor review after every DDL/storage change.
+- unknown JSON key, integer overflow, negative money/quantity, malformed BCP 47, Unicode control/bidi, stale upload authorization, and cross-purpose media-ID denial;
+- direct authoritative-table write, private-helper execution, `search_path` poisoning, and storage enumeration denial;
+- publication failure/private survival, request-photo duplicate exclusion, pagination grouping, malformed public projection, worker double-claim/lease expiry, provider cost race, and cleanup-versus-hold race.
 
 ## 16. Acceptance criteria
 
@@ -281,6 +290,8 @@ Audit is append-only from normal clients and records sensitive reads/promotions/
 | MED-18 | Raw content and capability tokens are absent from logs/telemetry/events/notifications. |
 | MED-19 | Retention/holds/deletion/orphan cleanup are persisted, idempotent, observable, and tested. |
 | MED-20 | Post-migration Supabase advisor results are reviewed and every new notice is remediated or explicitly justified. |
+| MED-21 | Phase 9 grant matrices revoke ambient privileges and prove authoritative operational tables/helpers cannot be directly used by client roles. |
+| MED-22 | Provider fields are stored/displayed/cached only when adapter policy permits, with attribution and revalidation enforced. |
 
 ## 17. Residual risk
 

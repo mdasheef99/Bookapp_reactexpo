@@ -15,6 +15,14 @@ The dictionary distinguishes canonical truth, store-owned snapshots, public proj
 - Raw images and raw payloads are private and time-bounded.
 - Original-script values are authoritative; aliases are search-only.
 
+## Contract registers required before schema implementation
+
+- Central validation matrix: field/type/nullability/min/max/normalization/rejected content/visibility/unknown-key policy.
+- Canonical API error catalogue: stable `P9_*` code, HTTP status, retryability, safe message, log severity, surviving effect, and idempotency-key reuse.
+- Provider reuse policy: matching-only, storage, public display, image caching, attribution, and expiry/revalidation rights independently of provenance.
+- Bookstore-first query contract: match/store-group identity, count semantics, safe fields, alias-match context, cursor/ranking/tie-breaker, and privacy exclusions.
+- Database grant matrix: table/function/role exposure, with raw operational structures service-only.
+
 ## Existing canonical edition additions
 
 | Field | Owner/source | Nullable | Public | Edit authority | Use |
@@ -49,7 +57,7 @@ Existing `title`, `subtitle`, `authors`, `isbn_10`, `isbn_13`, `publisher`, `pub
 | `created_by` nullable | Actor when human-created/approved. |
 | timestamps | Creation/update/approval. |
 
-Maximum three active approved English aliases per target in Phase 9. The limit is enforced by the controlled command, not by trusting the client.
+Each automated generation operation proposes at most three English aliases. Additional provider-recognized official or Owner/platform-verified aliases may remain active within configured abuse, quality, and storage limits. The controlled command enforces source-specific limits and approval; the client is never trusted.
 
 ## `store_inventory` additions
 
@@ -71,6 +79,8 @@ Maximum three active approved English aliases per target in Phase 9. The limit i
 | `printed_mrp_minor` | owner/metadata | optional public display later | no | Not a discount engine. |
 | `metadata_snapshot_version` | commit service | no | yes internally | Trace selected normalized data. |
 | `created_from_candidate_id` | commit service | no | no | One candidate commits at most once. |
+| `publication_status` | controlled projection service | safe projection only | no | `private`, `publication_pending`, `published`, or `publication_failed`; failure never repeats inventory effects. |
+| `publication_intent_version` | controlled projection service | no | no | Idempotent retry/version lineage for the requested public projection. |
 
 Existing quantity buckets remain authoritative. `photos text[]` is deprecated only after typed media links are backfilled and all readers migrate.
 
@@ -95,8 +105,8 @@ Public projection never contains shelf location, acquisition data, exact quantit
 
 | Field | Rule |
 | --- | --- |
-| `id`, `store_id`, `created_by` | Tenant/actor identity; server validates owner capability. |
-| `status` | `active`, `closing`, `closed`, `expired`; no user-visible pause state. |
+| `id`, `store_id`, `created_by` | Tenant/initiating-actor identity; during the pilot only this Owner mutates/resumes. Support intervention is separately authorized/audited. |
+| `status` | `active`, `closing`, `closed`, `expired`; `closing` begins only after inputs are terminal, rejects new inputs, and finalizes summary. No user-visible pause/early-close state. |
 | `selected_language`, `selected_script` | One batch language; English default. |
 | default fields | condition, shelf/location, quantity=1, publication preference. |
 | summary counters | input/candidate/ready/review/committed/private/published/skipped/failed counts. |
@@ -124,9 +134,9 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | observed identity | original-script title, authors, visible ISBN clue, language/script. |
 | confidence | extraction confidence only; never canonical authority. |
 | normalized selection | selected metadata snapshot, canonical match nullable, metadata source/attempt. |
-| aliases | related through `book_search_aliases`; maximum three approved. |
+| aliases | related through `book_search_aliases`; automated proposal maximum three, with bounded additional official/verified rows. |
 | review fields | owner edits/defaults, add/remove action, duplicate choice, publication choice. |
-| status | `processing`, `ready`, `needs_review`, `possible_duplicate`, `commit_in_progress`, `committed`, `failed`. |
+| status | `processing`, `ready`, `needs_review`, `possible_duplicate`, `commit_in_progress`, `committed`, `committed_publication_failed`, `failed`. |
 | commit linkage | committed inventory/listing IDs and idempotency identity. |
 | retention | unresolved candidate expiry; committed normalized evidence may reduce to audit-safe provenance. |
 
@@ -139,6 +149,7 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | result | status, provider book ID, match strength/rationale, latency, cache hit. |
 | versions | adapter/schema/normalizer version. |
 | payload lifecycle | raw payload private/delete-after; normalized selected snapshot retained by policy. |
+| field reuse policy | Per normalized field: matching-only/storage/display/cache/attribution/expiry rights. |
 
 ### `image_extraction_jobs` (or shared job table extension)
 

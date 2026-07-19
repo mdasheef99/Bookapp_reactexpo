@@ -24,7 +24,7 @@ This SDD refines DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14. T
 - Multiple images in a simple Start/Close session.
 - Persistent asynchronous extraction and enrichment.
 - Model/provider adapter contracts and bounded fallback.
-- Rich book metadata and up to three English search aliases.
+- Rich book metadata, up to three automated English alias proposals, and bounded official/Owner-verified aliases.
 - Mandatory owner review, advisory duplicates, atomic per-candidate commit.
 - Five public condition values plus separate damage disclosure.
 - Public damage/actual-copy media and lifecycle management.
@@ -57,6 +57,8 @@ This SDD refines DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14. T
 | MAS-08 | Scan, public-copy, and customer-request media are different security/lifecycle classes and cannot be repurposed by path reuse. |
 | MAS-09 | Phase 9 can reach private inventory/public listing and request-photo acceptance only; it cannot create payment-provider or paid-order effects. |
 | MAS-10 | Quota/cost failure never disables manual inventory entry. |
+| MAS-11 | A valid private inventory commit survives public-projection failure; publication retries cannot create or increment inventory again. |
+| MAS-12 | During the Owner-only pilot, the initiating Owner owns session mutation/resume; support intervention is separate, least-privilege, and audited. |
 
 ## 4. Target architecture
 
@@ -92,7 +94,7 @@ flowchart LR
 6. A persistent job invokes the primary vision adapter with only the sanitized image, selected language, strict task/schema, and opaque correlation ID.
 7. Output is schema-validated and bounded. A technical/schema/broad unusable failure may invoke one whole-image fallback. Valid empty/wrong-language results do not create retry loops.
 8. Each observed candidate is looked up locally, then through sequential configured metadata providers if necessary. One coherent edition snapshot is selected.
-9. Up to three source-bearing English aliases may be proposed after metadata selection.
+9. One automated operation may propose up to three source-bearing English aliases after metadata selection; bounded provider-recognized or Owner/platform-verified aliases may coexist.
 10. Owner reviews candidates, applies defaults, corrects only highlighted fields, adds a missed candidate/removes a false candidate, and chooses duplicate action and private/publish outcome.
 11. Each candidate commit command re-authorizes the Owner/store, rechecks candidate/version/idempotency/duplicate/quantity/eligibility, then creates a new row or increments a compatible row and updates the safe projection.
 12. Owner closes the session only when every input is terminal. The summary separates committed, published, private, needs-review, failed, and skipped candidates.
@@ -118,9 +120,10 @@ State labels shown in the UI may be simpler, but persisted values are versioned.
 
 - The session is not one giant transaction. External calls and owner review are persistent staged work.
 - A candidate commit is the atomic business boundary.
-- `create_new` writes inventory, audit/event, alias/media links, candidate commit linkage, and eligible projection as one controlled outcome where database boundaries permit.
+- `create_new` atomically writes the private inventory, audit/event, alias/media links, and candidate commit linkage. Eligible publication is a separately idempotent projection step so its failure cannot erase or repeat the inventory effect.
 - `increment_quantity` locks the compatible inventory identity and transfers only the intended quantity into `quantity_total` and `quantity_available`; existing reserved/sold/removed buckets remain unchanged.
 - Duplicate check is repeated inside the commit transaction. The UI warning is not the concurrency guard.
+- Projection failure returns `committed_publication_failed`, leaves inventory private, and retries publication idempotently without repeating the inventory write.
 - Projection failure is explicit and recoverable; the API cannot report “published” while the public projection failed.
 - A committed candidate cannot commit twice under a new client retry. Its stable candidate/action idempotency identity returns the recorded canonical result.
 
@@ -205,6 +208,8 @@ The normative unit order is in [the implementation tracker](./trackers/02-implem
 | MAS-AC06 | Public discovery uses only eligible safe projections and returns every eligible matching store. |
 | MAS-AC07 | Retention/hold/deletion/orphan jobs are idempotent and observable. |
 | MAS-AC08 | No Phase 7/8 behavior appears in migration, function, app, event, or test scope. |
+| MAS-AC09 | Initiator-only session mutation/resume and separately audited support intervention are enforced. |
+| MAS-AC10 | Publication failure retains one private inventory effect and no public listing until idempotent retry succeeds. |
 
 ## 15. Open review items
 

@@ -1,9 +1,9 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `plan_complete_needs_review`
+**Status:** `wu0_approved_awaiting_authorization`
 **Last updated:** 2026-07-19
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `0_plan_complete_needs_review`
+**Active work unit:** `0_approved_awaiting_next_authorization`
 
 This tracker is intentionally separate from planning decisions. It will hold implementation evidence and can grow without turning the master tracker into a worklog.
 
@@ -11,7 +11,8 @@ This tracker is intentionally separate from planning decisions. It will hold imp
 
 | Unit | Scope | Status | Required gate |
 | --- | --- | --- | --- |
-| 0 | [Contract fixtures, threat tests, migration plan, rollback/forward-correction plan](../work-units/00-contracts-threat-migration-plan.md) | `plan_complete_needs_review` | User review; no implementation/migration authorization |
+| 0 | [Contract fixtures, threat tests, migration plan, rollback/forward-correction plan](../work-units/00-contracts-threat-migration-plan.md) | `approved` | Corrections incorporated; no implementation/migration authorization |
+| 0A | Server contracts, deterministic helpers, validation/error/provider/query/grant registers, fixtures, and red contract/security tests | `not_started` | explicit user authorization; no SQL/live writes |
 | 1 | Data dictionary migration: metadata fields, aliases, condition/damage, media registry | `not_started` | fresh Supabase audit + migration review |
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `not_started` | Unit 1 verified |
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `not_started` | storage policy/security review |
@@ -47,8 +48,10 @@ Rules:
 - [ ] Every store-owned Phase 9 row has `store_id`.
 - [ ] Store A cannot read, write, sign, promote, commit, or delete Store B data/media.
 - [ ] Client-supplied `store_id` never establishes authority.
+- [ ] Only the initiating Owner mutates/resumes a pilot session; support intervention is separately authorized/audited.
 - [ ] Canonical tables cannot be mutated by Store Owner commands.
 - [ ] RLS/grants and function `search_path`/EXECUTE are verified live.
+- [ ] Grant matrix proves API-exposed tables have RLS and raw attempts/jobs/usage/cost/lifecycle structures plus private helpers are not directly callable by client roles.
 - [ ] Inventory equality and active-hold semantics survive increment/new-row/partial failure races.
 - [ ] Duplicate check and commit are concurrency-safe and idempotent.
 
@@ -56,9 +59,11 @@ Rules:
 
 - [ ] Prompt-injection text embedded in an image cannot cause tools, URLs, queries, or writes.
 - [ ] Model output is rejected unless it satisfies the versioned schema and limits.
+- [ ] Central validation matrix and API error catalogue generate/trace every contract limit and safe error behavior.
 - [ ] A valid empty/no-book result does not trigger expensive retry loops.
 - [ ] Primary failure triggers at most one allowed vision fallback.
 - [ ] Metadata provider fallback is sequential and field conflicts are visible in provenance.
+- [ ] Provider storage/display/cache/attribution/expiry permissions are enforced independently of provenance.
 - [ ] ISBN checksums/conversion, title/author normalization, and alias rules have deterministic fixtures.
 - [ ] CI uses recorded model/provider fixtures; no exact natural-language output assertion.
 
@@ -77,15 +82,18 @@ Rules:
 - [ ] Camera and gallery uploads support one selected language and enforce the 15-spine cap.
 - [ ] Minimal review fields, defaults, add-missed/remove-false, duplicate warning, condition explanations, and preview are keyboard/screen-reader accessible.
 - [ ] A failed candidate does not block successful candidate commits.
+- [ ] Projection failure retains one private `committed_publication_failed` inventory effect and idempotent retry cannot repeat it.
 - [ ] Session summary accurately reports committed/private/published/needs-review/failed/skipped counts.
 
 ### Marketplace and customer photos
 
 - [ ] Search returns each eligible matching bookstore once and all eligible stores across pagination.
+- [ ] Versioned store-group cursor/ranking contract survives ties, context changes, multiple offers, and page boundaries.
 - [ ] Storefront shows the complete active public catalogue and distinct title count.
 - [ ] Original-script and approved alias searches return the same eligible listing without changing displayed identity.
 - [ ] Exact inventory quantity, shelf, cost, raw payload, private notes, and request photos never appear publicly.
 - [ ] Requested photo item cannot reach `payment_ready` without provided and accepted current-copy photos.
+- [ ] Request-photo evidence never affects duplicate identity, quantity compatibility, or row separation.
 - [ ] Store inability to provide requested photos marks the item unfulfilled/unavailable and releases eligible holds.
 
 ### Operational readiness
@@ -111,5 +119,17 @@ No product implementation activity recorded.
 - Decisions/deviations/risks: no new product behavior; pre-existing RLS/public-bucket/privileged-function/password findings remain separate review gates
 - Tracker/source-doc updates: WU0 plan, Phase 9 tracker, implementation tracker, handoff/router references, DOC-13, audit refresh, validator
 - Next authorized action and gate: user review of WU0 plan; implementation, migration-file creation, and migration application remain unauthorized
+
+### 2026-07-19 — Work Unit 0 correction and approval checkpoint
+
+- Date/session: 2026-07-19 WU0 required-corrections incorporation
+- Authorized work unit and scope: authoritative documentation corrections and commit only
+- Completed: alias, validation/error, publication failure, request-photo duplicate, session ownership/Close, privilege, quantity, marketplace query, provider reuse, security-test, and migration-sequence corrections
+- Files/components/migrations: documentation only; no migration, contract code, endpoint, app, bucket, policy, provider, or live data change
+- Verification actually run: continuity validator PASS (22 Markdown files, 17 required phase files); local links/350-line limit PASS; 134 Phase 9 acceptance IDs unique; `git diff --check` PASS; no product/function/migration/app file changed
+- Supabase/external mutations: none
+- Decisions/deviations/risks: terminal-input Close retained; quantity validation stays a separately reviewed production gate; WU0 approved without authorizing WU0A
+- Tracker/source-doc updates: root source specs, all affected Phase 9 SDDs/supporting records, trackers, handoffs, and validator
+- Next authorized action and gate: none; await explicit authorization for named WU0A contract/test scope, with migrations still separately gated
 
 When implementation is authorized, append one entry per material development session using the exact closeout shape in [SESSION-START](../SESSION-START.md): authorized unit/scope, completed work, files/components/migrations, verification actually run, external mutations, decisions/deviations/risks, documentation updates, and next authorized action/gate. Never rewrite an older evidence entry to make a later result look contemporaneous.

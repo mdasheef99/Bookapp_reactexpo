@@ -17,7 +17,7 @@ The user-visible session has only:
 3. Review/commit candidates as results arrive.
 4. Close session and see summary.
 
-There is no pause/save/discard command. Server persistence provides recovery when the app backgrounds, disconnects, or closes. Logout clears local cached workflow state but does not delete authoritative server state; the next authorized Owner may resume the same active session policy permits.
+There is no pause/save/discard command. Server persistence provides recovery when the app backgrounds, disconnects, or closes. Logout clears local cached workflow state but does not delete authoritative server state. During the Owner-only pilot, only the initiating Owner may mutate or resume the session; action-specific platform support intervention is separately authorized and audited.
 
 Session defaults:
 
@@ -112,7 +112,7 @@ For every usable candidate:
 5. If technical failure/no acceptable coherent match meets fallback policy, call the secondary adapter.
 6. Rank exact identifiers before normalized text; reject contradictory language/edition evidence.
 7. Persist attempts/provenance and select one coherent edition snapshot.
-8. Generate/select up to three English aliases after metadata selection.
+8. Generate/select at most three English aliases per automated operation after metadata selection; bounded provider-recognized or Owner/platform-verified aliases may coexist.
 9. Mark ready or needs-review. Provider failure can still produce a manually completable candidate.
 
 Metadata provider requests contain only normalized bibliographic clues, not the scan image or store/customer context.
@@ -127,6 +127,7 @@ Each adapter supports:
 - timeout/cancellation;
 - typed error classification;
 - usage/cost metadata where provided;
+- field-level reuse policy: matching-only, storage allowed, public display allowed, image caching allowed, attribution required, and expiry/revalidation required;
 - raw response retention policy;
 - rate-limit/circuit-breaker signals.
 
@@ -174,6 +175,8 @@ The implementation should reuse the repository's proven Postgres job/worker patt
 | Quota exhausted | Block new cost work; preserve existing results; manual entry works. |
 | Session close during processing | Return nonterminal summary/retry instruction; session stays active. |
 
+The internal transition is `active -> closing -> closed`. `closing` begins only after all submitted inputs are terminal, rejects new inputs, and atomically finalizes the summary. It is not a user-visible pause or early-close workflow; uncommitted candidates remain `needs_review` and are never silently committed or deleted.
+
 ## 13. Retention
 
 - Sanitized scan input: delete within 24 hours after session close; failed/unattached staging within 24 hours.
@@ -209,7 +212,7 @@ CI uses recorded fixtures and validates schemas/behavior, never exact generative
 | EXT-03 | More than 15 triggers reject/rescan, not truncation. |
 | EXT-04 | One selected language is enforced; English defaults; new languages are adapter/config additions. |
 | EXT-05 | Mixed-language/per-spine model routing is absent. |
-| EXT-06 | Start/Close-only session recovers across background/network/app closure and ends with accurate summary. |
+| EXT-06 | Start/Close-only session recovers for the initiating Owner across background/network/app closure and ends with an accurate terminal-input summary. |
 | EXT-07 | Vision provider is hidden behind a versioned adapter. |
 | EXT-08 | One whole-image fallback maximum is enforced. |
 | EXT-09 | The model has no tools or data authority. |
@@ -221,3 +224,4 @@ CI uses recorded fixtures and validates schemas/behavior, never exact generative
 | EXT-15 | Scan/raw/candidate retention follows the agreed lifecycle. |
 | EXT-16 | Manual entry works while extraction/provider/quota is unavailable. |
 | EXT-17 | Metrics identify adapter version, outcome, latency, fallback, cache, and cost without raw content leakage. |
+| EXT-18 | Provider provenance and field-level storage/display/cache/attribution/expiry rights are independently enforced. |

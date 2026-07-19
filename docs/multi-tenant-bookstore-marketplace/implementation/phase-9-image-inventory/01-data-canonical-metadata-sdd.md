@@ -60,12 +60,12 @@ The selector chooses one coherent edition response. A secondary provider may cor
 ## 6. Multilingual authoritative data and aliases
 
 - Original-script title/author from selected metadata or owner correction is authoritative and displayed.
-- Up to three active English search aliases per edition/inventory target are allowed:
+- One automated alias-generation operation proposes at most three English/Latin-script aliases:
   - transliteration;
   - English translation;
   - common spelling or recognized English title.
 - Authors are transliterated, not semantically translated.
-- Provider aliases are preferred. Model-generated aliases require schema validation, source/version, confidence, and owner/platform correction capability.
+- The relational target may retain additional provider-recognized official or Owner/platform-verified aliases within configured abuse, quality, and storage limits. Model-generated aliases require schema validation, source/version, confidence, and owner/platform correction capability.
 - Alias creation happens after metadata selection so it cannot distort canonical lookup.
 - Only `approved` aliases enter public search. Alias hits return the original authoritative title.
 - Alias text is never duplicate evidence, canonical uniqueness evidence, or automatic display replacement.
@@ -99,9 +99,9 @@ A duplicate warning is same-store only. One visible spine remains one candidate,
 
 | Existing vs candidate | Recommendation |
 | --- | --- |
-| Same validated edition/ISBN, language, format, base condition, price; no damage/copy note/public or request photo | Offer `increment_quantity` first. |
+| Same validated edition/ISBN, language, format, base condition, price; no damage/copy note/approved public actual-copy or damage photo | Offer `increment_quantity` first. |
 | Same edition but different condition, price, language, format, edition/volume | Create separate row. |
-| Any copy-specific damage, annotation, signature, collectible note, public actual-copy photo, or request evidence | Create separate row. |
+| Any copy-specific damage, annotation, signature, collectible note, or approved public actual-copy/damage photo | Create separate row. |
 | No ISBN, strong original title/author/language match | Warn; owner chooses separate or manually matches. No automatic increment. |
 | Only fuzzy title or alias match | Do not call it a duplicate; show optional possible-match review. |
 | Different store | Never inventory-merge; group only as public offers under the same edition. |
@@ -109,6 +109,8 @@ A duplicate warning is same-store only. One visible spine remains one candidate,
 Shelf/location alone does not force a separate row. The owner may still choose `keep_separate` after the warning.
 
 Image bytes, hashes, crops, covers, and visual similarity are excluded from duplicate identity. The image SHA-256 is used only to prevent exact upload replay/double charging, not to merge books.
+
+Private customer-request photos are request-scoped evidence created after inventory identity. They never influence duplicate matching, compatibility, quantity increment, or row separation.
 
 ## 9. Concurrency and commit evidence
 
@@ -158,7 +160,7 @@ Current live conditions are `new`, `like_new`, `good`, `fair`, `damaged`; all cu
 | DAT-08 | Store correction cannot mutate shared canonical truth. |
 | DAT-09 | No automatic canonical refresh runs in the first release. |
 | DAT-10 | Original-script title/author remain authoritative. |
-| DAT-11 | At most three approved English aliases exist per target. |
+| DAT-11 | Each automated operation proposes at most three English aliases; additional official/Owner-verified aliases are bounded, provenance-bearing rows. |
 | DAT-12 | Author aliases transliterate rather than translate names. |
 | DAT-13 | Alias provenance/status is stored and only approved aliases enter search. |
 | DAT-14 | Aliases never influence identity or duplicate decisions. |

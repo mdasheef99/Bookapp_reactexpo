@@ -285,6 +285,7 @@ Recommended inventory visibility:
 |---|---|
 | `draft` | Inventory exists but is not public. |
 | `needs_review` | Missing required listing data or low confidence. |
+| `publication_failed` | Private inventory commit succeeded but public projection failed; retry publication idempotently without repeating inventory effects. |
 | `published` | Publicly searchable and orderable. |
 | `paused` | Temporarily hidden by store owner. |
 | `out_of_stock` | Quantity unavailable. |
@@ -307,12 +308,17 @@ Duplicates can occur when:
 Resolution rules:
 
 1. Warnings are same-store advisory only; never auto-merge.
-2. Quantity increment is recommended only for the same validated edition/ISBN, language, format, condition, and price, with no copy-specific damage, notes, collectible distinction, or actual-copy/request photo.
+2. Quantity increment is recommended only for the same validated edition/ISBN, language, format, condition, and price, with no copy-specific damage, notes, collectible distinction, or approved public actual-copy/damage photo.
 3. Any different condition/price/language/format/edition or copy-specific damage/note/photo creates a separate row.
 4. Same store + no ISBN + strong original title/author/language match prompts explicit owner choice; fuzzy or alias-only evidence is not a duplicate.
 5. Shelf/location alone does not require a separate row, but the owner may keep it separate after warning.
 6. Different stores with the same edition never merge inventory; they become separate offers.
 7. Image/photo comparison is explicitly excluded from duplicate detection. Exact image hash is only replay/double-charge protection.
+8. Private customer-request photos are request-scoped evidence created after inventory identity; they never influence duplicate matching or quantity compatibility.
+
+### 9.1 Search Alias Limits
+
+The automated Phase 9 alias-generation operation proposes at most three English/Latin-script aliases after metadata selection. The relational alias model may retain additional provider-recognized official aliases or Owner/platform-verified aliases within configured abuse, quality, and storage limits. Every alias is a provenance-bearing row with approval status; only approved aliases enter search, and no alias establishes canonical identity or duplicate evidence.
 
 ---
 
@@ -459,6 +465,7 @@ book_metadata_sources
   raw_payload jsonb
   normalized_payload jsonb
   confidence
+  reuse_policy
   fetched_at
 
 book_search_aliases
@@ -566,6 +573,9 @@ listing_moderation_flags
 | INV-07 | Inventory supports `new`, `like_new`, `very_good`, `good`, `acceptable`, with damage stored separately. |
 | INV-08 | Private fields are not exposed in public listing responses. |
 | INV-09 | Suspended, blocked, counterfeit, or prohibited listings are excluded from consumer discovery. |
+| INV-10 | Automated alias generation proposes at most three rows while bounded official/Owner-verified aliases may coexist without affecting identity. |
+| INV-11 | Private customer-request photos never affect duplicate identity or quantity compatibility. |
+| INV-12 | Publication failure preserves private inventory and an idempotent retry cannot repeat the inventory effect. |
 
 ---
 

@@ -42,7 +42,7 @@
 | --- | --- | --- |
 | Conditions | `new`, `like_new`, `good`, `fair`, `damaged`. | Replace with `new`, `like_new`, `very_good`, `good`, `acceptable`. Move damage to separate fields. Map `fair -> acceptable`; review any `damaged` row instead of blindly mapping. |
 | Current rows | Five inventory rows and five public projections; all are `good`. | Today no live `fair`/`damaged` adjudication is needed, but the migration must still be safe if data changes before application. Re-query immediately before migration. |
-| Quantity equality | `quantity_total = available + reserved + sold + removed` exists `NOT VALID`; existing rows were previously audited as non-violating. | All commits/increments use the controlled bucket-transfer boundary. Validate constraint only in a separately reviewed forward migration after a fresh violation query. |
+| Quantity equality | `quantity_total = available + reserved + sold + removed` exists `NOT VALID`; existing rows were previously audited as non-violating. PostgreSQL still enforces the CHECK for new/updated rows while historical validation remains pending. | All commits/increments use the controlled bucket-transfer boundary. Freshly audit/repair with approval and validate in a separately reviewed forward migration before production enablement unless documented evidence makes validation unsafe/unnecessary; contract/test work is not blocked. |
 | Provider values | Provider CHECK embeds concrete vendors. | Migrate without losing provenance; adapter keys become data/config, not schema releases. |
 | Listing cardinality | Unique `marketplace_book_listings.inventory_id`. | Keep row identity separate; aggregate offers and stores at read time. |
 | Canonical uniqueness | Unique ISBNs; unique work title/authors without language. | Normalize/check ISBNs before write. Audit work uniqueness before adding language-aware semantics; do not loosen blindly. |
@@ -94,7 +94,7 @@ Advisor remediation references:
 
 1. Re-verify project, live rows, migrations, policies, functions, triggers, indexes, buckets, and advisors.
 2. Add new types/tables/columns in backward-compatible form without changing public behavior.
-3. Add indexes, constraints `NOT VALID` where appropriate, RLS, grants, and controlled commands.
+3. Add indexes, constraints `NOT VALID` where appropriate, RLS, explicit grant matrices, and controlled commands; revoke ambient table/function privileges.
 4. Backfill deterministic fields and create an adjudication queue for non-deterministic rows.
 5. Switch application writers/readers behind feature flags.
 6. Extend safe public projection and search.

@@ -1,6 +1,6 @@
 # Work Unit 0: Contracts, Threat Tests, and Migration Design Plan
 
-**Status:** `plan_complete_needs_review`
+**Status:** `approved`
 **Date:** 2026-07-19
 **Authority:** approved Phase 9 planning baseline; planning only
 **Implementation:** not started
@@ -12,7 +12,7 @@ Work Unit 0 converts the approved SDDs into a bounded implementation blueprint. 
 
 This plan traces to Master SDD §§3, 7–9, 12, and 14; Data SDD §§4–6, 9, 11–12; Extraction SDD §§3–14; and Media/Security SDD §§3, 6–9, 15–16. It does not change any behavior or live system.
 
-WU0 exits planning only when this document is reviewed and the tracker records a separately authorized next unit. Completion of this plan is not implementation approval.
+WU0 was approved after required corrections on 2026-07-19. Approval of this plan is not implementation, migration-file, or migration-application authorization; the tracker must name a separately authorized next unit before work begins.
 
 ## 2. Evidence basis
 
@@ -46,6 +46,11 @@ The following paths are proposed for later authorized work; they are not created
 | Edge Function contract/security tests | `supabase/functions/__tests__/` | Executable schema/domain tests plus necessary static boundary tests. |
 | Migration contract tests | `supabase/migrations/__tests__/` | RLS, grants, constraints, functions, triggers, and forbidden-pattern assertions. |
 | Mobile owner-safe DTO schemas | `src/features/stores/inventoryExtraction/` | Only server projections; never duplicate provider contracts or accept authority fields. |
+| Authoritative validation matrix | server contract package plus generated/readable register | Field type/nullability, min/max, normalization, rejected content, visibility class, and unknown-key policy. |
+| Canonical API error catalogue | server contract package plus generated/readable register | Stable `P9_*` code, HTTP status, retryability, safe message, severity, surviving effect, and idempotency reuse. |
+| Bookstore-first query contract | server contract package and public DTO schema | Group/count identity, fields, cursor, ranking stages, privacy exclusions, and alias-match context. |
+| Provider reuse policy | adapter configuration/normalized contract | Field-level storage/display/cache/attribution/expiry rights, separate from provenance. |
+| Database grant matrix | migration design evidence | Every table/function/role exposure and intentional service-only boundary. |
 
 Provider payloads are translated into internal contracts at the server adapter boundary. The mobile app never receives raw prompts, raw provider responses, credentials, signed reusable capabilities, or privileged fields.
 
@@ -55,7 +60,9 @@ Provider payloads are translated into internal contracts at the server adapter b
 
 Every request/result records `contract_version`, `schema_version`, `adapter_key`, `adapter_version`, `correlation_id`, `attempt_id`, timestamps, and a typed outcome. The server generates identity, store scope, retryability, and state transitions. Provider/model prose cannot set them.
 
-Errors use a closed taxonomy such as `technical_failure`, `schema_invalid`, `broadly_unusable`, `no_books`, `wrong_language`, `over_candidate_limit`, `quality_rejected`, `quota_denied`, `provider_no_match`, and `manual_review_required`. Deterministic policy—not vendor text—owns retryability and fallback eligibility.
+Adapter outcomes use a closed taxonomy such as `technical_failure`, `schema_invalid`, `broadly_unusable`, `no_books`, `wrong_language`, `over_candidate_limit`, `quality_rejected`, and `provider_no_match`. They are distinct from workflow states, policy denials, and public API errors. Deterministic policy—not vendor text—owns retryability and fallback eligibility.
+
+The API error catalogue uses stable `P9_*` codes. Initial coverage includes `P9_OWNER_NOT_AUTHORIZED`, `P9_SESSION_NOT_ACTIVE`, `P9_CANDIDATE_VERSION_CONFLICT`, `P9_DUPLICATE_TARGET_CHANGED`, `P9_MEDIA_NOT_APPROVED`, `P9_QUANTITY_INVARIANT_FAILED`, and `P9_PUBLICATION_FAILED`. Each entry defines HTTP status, retryability, safe Owner message, log severity, surviving database effect, and required idempotency-key reuse.
 
 ### 5.2 Vision request
 
@@ -71,11 +78,25 @@ The schema rejects URLs, paths, SQL, HTML/active content, tool calls, commands, 
 
 The internal lookup request prefers normalized original title and authors, includes the selected language, and may include a checksum-valid visible ISBN clue. Resolution is local canonical first, then configured primary and secondary adapters sequentially.
 
-Each adapter returns zero or more coherent edition candidates with provenance. Selection stores one coherent edition snapshot rather than field-stitching conflicting editions. The normalized result may contain description, ISBN-10/13, title/subtitle, authors, publisher/date, language, edition statement, volume, format/binding, pages, categories, cover reference, match rationale, confidence, and provider/version provenance. ISBNs must pass deterministic normalization/checksum/conversion rules before authority. This covers DAT-01–DAT-09 and EXT-11–EXT-12.
+Each adapter returns zero or more coherent edition candidates with provenance. Selection stores one coherent edition snapshot rather than field-stitching conflicting editions. The normalized result may contain description, ISBN-10/13, title/subtitle, authors, publisher/date, language, edition statement, volume, format/binding, pages, categories, cover reference, match rationale, confidence, and provider/version provenance. ISBNs must pass deterministic normalization/checksum/conversion rules before authority. Field-level policy separately identifies matching-only, storage, public-display, image-cache, attribution, and expiry/revalidation rights. This covers DAT-01–DAT-09, EXT-11–EXT-12, and MED-22.
 
 ### 5.5 Search alias result
 
-Alias generation returns at most three English/Latin-script title aliases typed as transliteration, translation, common title, or recognized title, with source, version, confidence, and approval state. Author aliases transliterate names; they do not translate them. Original-script data remains authoritative, and aliases cannot drive identity, canonical matching, or duplicate decisions. This covers MAS-04 and DAT-10–DAT-15.
+Each automated alias-generation operation proposes at most three English/Latin-script title aliases typed as transliteration, translation, common title, or recognized title. The relational model may retain additional provider-recognized official or Owner/platform-verified aliases within configured abuse, quality, and storage limits. Every row has source, version, confidence where applicable, and approval state. Author aliases transliterate names; they do not translate them. Original-script data remains authoritative, and aliases cannot drive identity, canonical matching, or duplicate decisions. This covers MAS-04 and DAT-10–DAT-15.
+
+### 5.6 Central validation matrix
+
+Before contract implementation is accepted, one authoritative matrix defines field name, type, required/nullability, minimum, maximum, normalization, rejected characters/content, public/private/internal class, and unknown-key rejection. It covers title, subtitle, authors/count, description, ISBN clue, BCP 47 language, candidate count, aliases, provider categories, page count, geometry, damage note, quantity, money in paise, idempotency key, command ID, and raw payload size. Zod/types/database checks trace back to this register rather than inventing independent limits.
+
+### 5.7 Session, duplicate, and publication outcomes
+
+The initiating Owner is recorded and is the only Owner who may mutate/resume the session during the pilot; support intervention is separately authorized and audited. Close remains terminal-input-only. Internally, `active -> closing -> closed`; `closing` rejects new inputs and finalizes the summary, while Close during processing leaves the session active. Uncommitted candidates remain `needs_review` and are neither committed nor deleted.
+
+Private customer-request photos are later request-scoped evidence and never affect inventory duplicate identity or quantity compatibility. A valid inventory commit survives projection failure as `committed_publication_failed`; it remains private, records audit/retry intent, and publication retries idempotently without creating or incrementing inventory again.
+
+### 5.8 Marketplace query contract
+
+The versioned query contract defines match-result identity, store-group identity, `bookstore_count`, `offer_count`, `title_count`, public fields/privacy exclusions, alias-match indication, store-catalogue context, cursor shape, ranking stages, and deterministic final tie-breaker. Pagination operates on store groups and binds the cursor to query/filter/ranking version so grouping after pagination cannot omit stores.
 
 ## 6. Recorded-fixture and deterministic-test matrix
 
@@ -94,7 +115,7 @@ Alias generation returns at most three English/Latin-script title aliases typed 
 | Provider no-match | Store-local/manual candidate remains possible with nullable canonical link. |
 | Primary technical/schema failure | At most one whole-image fallback; success/charge is idempotent. |
 | Valid primary empty result | No fallback. |
-| Alias variants | Maximum three, provenance-bearing, search-only; author names transliterated. |
+| Alias variants | Automated output maximum three; bounded official/verified rows coexist; all remain provenance-bearing and search-only. |
 | Replay by content/idempotency hash | No duplicate external charge, state advance, or inventory write. |
 | Pilot Indian-script samples | Consented/sanitized language-specific fixtures; no unsupported broad accuracy claim. |
 
@@ -116,24 +137,30 @@ Model/provider assertions validate structure and deterministic policy, never exa
 | Duplicate/quantity race | Advisory-only duplicate outcome; atomic idempotent commit preserves Phase 6 quantity/hold equality. | MAS-05–MAS-06, DAT-16–DAT-20 |
 | Telemetry leakage | Static/runtime checks exclude images, raw payloads, prompts, signed URLs, and secrets from logs/events. | MED-09, MED-18 |
 | Lifecycle replay | Deletion/orphan work is idempotent, hold-aware, observable, and leaves non-content evidence. | MAS-AC07, MED-10, MED-19 |
+| Contract edge cases | Unknown keys, integer overflow, negative money/quantity, malformed BCP 47, Unicode control/bidi, and oversized raw payloads fail deterministically. | MAS-02, EXT-10, MED-08 |
+| Database privilege abuse | Direct authoritative writes/helper execution, `search_path` poisoning, ambient EXECUTE, and storage enumeration are denied. | MAS-03, MED-20–MED-21 |
+| Publication and pagination races | Projection failure preserves one private commit; store-group pagination neither omits nor duplicates stores. | MAS-11, MAS-AC06, MKT-02 |
+| Worker/cost/lifecycle races | Lease expiry/double claim, cost reservation replay, and cleanup versus active hold are deterministic and idempotent. | EXT-13–EXT-17, MED-19 |
 
 ## 8. Future migration sequence
 
 No filenames or timestamped migrations are created in this work unit. Later migration work follows expand → backfill/adjudicate → validate → switch → contract, with a separate authorization at creation and application.
 
-1. **P9-M01 — metadata/alias foundations:** additive edition/inventory snapshot fields; provider registry/adapter keys; provenance-bearing aliases; no public-search switch.
-2. **P9-M02 — condition, damage, and media registry foundations:** additive five-condition target, separate damage fields, typed media registry/links, and retention state. Preserve existing readers while data is mapped.
-3. **P9-M03 — extraction persistence:** store-scoped sessions, inputs, candidates, enrichment attempts, jobs, usage/cost, idempotency, lifecycle fields, indexes, RLS, grants, and controlled commands.
-4. **P9-M04 — media boundaries:** reviewed private staging/request boundaries, purpose-scoped storage policies, sanitization/promotion metadata, and denial tests. Bucket operations remain separately reviewable.
-5. **P9-M05 — projection and search switch:** extend the explicit inventory-to-listing projection, safe public fields, alias search, eligibility, and compatibility readers only after backfill/security evidence.
-6. **P9-M06 — request-photo seam:** item-level photo request/link/gate integration after core extraction/media contracts are stable; no payment implementation.
+1. **P9-M01 — registries and additive metadata:** provider registry/reuse policy, edition/inventory snapshot fields, provenance-bearing aliases; no writer/search switch.
+2. **P9-M02 — extraction and operational persistence:** store/initiator-scoped sessions, inputs, candidates, attempts, jobs, usage/cost, idempotency, lifecycle, RLS, grants, and indexes.
+3. **P9-M03 — typed media registry:** media assets, purpose links, sanitization lineage, retention/holds, and service-only lifecycle state; no bucket-policy switch.
+4. **P9-M04 — condition and damage transition:** additive vocabulary/damage fields, backfill/adjudication, compatibility readers, and constraint sequencing.
+5. **P9-M05 — controlled inventory commands:** candidate commit, duplicate recomputation, quantity locking, publication outcome/retry, post-commit commands, and compatibility-safe direct-write remediation.
+6. **P9-M06 — storage boundary policies:** private staging, approved public promotion, private request storage, grant/policy matrix, and denial tests.
+7. **P9-M07 — public projection and marketplace search:** safe fields, aliases, bookstore-first grouped query, indexes, cursor/ranking contract, and compatibility switch.
+8. **P9-M08 — customer request-photo seam:** request/item links, customer acceptance gate, and Phase 6 guard integration; no payment implementation.
 
 Required migration notes:
 
 - Replace the hard-coded provider CHECK without losing existing provenance or requiring a schema release per vendor.
 - Map `fair` to `acceptable`. Re-query live rows immediately before creation and application. Any then-existing `damaged` row requires adjudication; do not map it blindly. The current audit found none.
 - Update the explicit listing projection trigger/function atomically with compatible projected fields. Preserve unique `inventory_id` listing identity.
-- Preserve `quantity_total = available + reserved + sold + removed`. Do not casually validate the existing unrelated `NOT VALID` constraint; that remains a separately reviewed forward migration.
+- Preserve `quantity_total = available + reserved + sold + removed`. The `NOT VALID` constraint is directly relevant and still enforces new/updated rows, but historical certification remains pending. Re-audit rows, record/approve any repair, and validate through a separately reviewed forward migration before production enablement unless documented evidence shows validation is unsafe or unnecessary; this does not block contract/test work.
 - Keep legacy columns/checks/readers until dual-read/write and backfill verification pass. Do not rewrite applied migration history; use `apply_migration` only after explicit live-application authorization.
 
 ## 9. Rollback and forward-correction strategy
@@ -152,10 +179,11 @@ All of the following are required, followed by explicit user authorization:
 - [ ] Re-verify the exact Supabase project identity.
 - [ ] Freshly query affected tables, columns, rows, constraints, indexes, RLS policies, grants, functions, triggers, buckets, storage policies, live migrations, and advisors.
 - [ ] Approve versioned contracts, error taxonomy, bounds, and sanitized recorded fixtures.
+- [ ] Approve the central validation matrix, API error catalogue, provider reuse policy, grant matrix, and marketplace query contract.
 - [ ] Make deterministic contract/security tests red for the intended behavior before production implementation.
 - [ ] Approve Store A/B and forged-store denial tests across database, function, and storage boundaries.
 - [ ] Record data mapping counts and an adjudication plan for non-deterministic condition/damage rows.
-- [ ] Review query/index plans for owner session recovery, job claiming, duplicate advice, alias search, and lifecycle cleanup.
+- [ ] Review query/index plans for initiator-only session recovery, job claiming, duplicate advice, alias search/store-group pagination, publication retry, and lifecycle cleanup.
 - [ ] Review provider/check and projection-trigger compatibility sequencing.
 - [ ] Record pre-existing advisor findings separately from any new Phase 9 notice.
 - [ ] Confirm no Phase 7/8 behavior and no public/raw-media boundary regression.
@@ -179,8 +207,9 @@ The following remain configuration/legal/operations gates rather than schema blo
 - [x] Migration order, compatibility, and forward-correction rules are defined.
 - [x] Pre-migration verification and explicit-authorization gates are defined.
 - [x] Pre-existing security findings are separated from Phase 9 work.
+- [x] Validation, errors, privileges, provider reuse, publication failure, session ownership, duplicate-photo, and marketplace-query semantics are locked.
 - [x] No code, DDL, migration file, provider call, or Supabase/storage mutation was performed.
 
 ## 14. Next gate
 
-Review this WU0 plan. If accepted, the next authorization should name a narrow implementation unit and separately state whether contract/fixture code and migration-file creation are permitted. Migration application remains a later independent authorization with fresh exact-project readback.
+WU0 is approved. The next authorization should name a narrow implementation unit and separately state whether contract/fixture code and migration-file creation are permitted. No next implementation unit is authorized by this approval. Migration application remains a later independent authorization with fresh exact-project readback.

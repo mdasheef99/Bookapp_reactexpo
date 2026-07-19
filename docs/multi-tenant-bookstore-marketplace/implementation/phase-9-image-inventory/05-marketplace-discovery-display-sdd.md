@@ -170,6 +170,8 @@ Eligibility must be evaluated through safe projections/controlled functions with
 
 ## 12. Query and pagination behavior
 
+Before projection/search migration design, one versioned bookstore-first query contract defines match-result identity, store-group identity, count semantics, public fields/privacy exclusions, alias-match indication, store-catalogue query context, cursor shape, ranking stages, and deterministic final tie-breaker.
+
 - Explicit page size/range and stable tie-breaker.
 - No missing stores caused by grouping after a too-small listing page. The query design must paginate store groups correctly, potentially through a controlled SQL/RPC/public projection rather than client-side grouping alone.
 - Runtime validate all public rows.
@@ -177,6 +179,7 @@ Eligibility must be evaluated through safe projections/controlled functions with
 - Stale in-flight results cannot overwrite a newer query.
 - Empty query/home and no-result behavior are distinct.
 - Search errors do not leak provider/database internals.
+- The cursor binds query/filter/ranking version and the last stable store-group sort identity; changing context invalidates rather than reusing the cursor.
 
 ## 13. Marketplace preview from owner review
 
@@ -201,6 +204,7 @@ Before commit, the owner can see a non-authoritative preview of the future card/
 - malicious query grammar and malformed projection data;
 - accessibility, narrow widths, large text, and broken image fallback;
 - existing confirmation/cart disclosures remain.
+- pagination-boundary grouping does not omit or duplicate stores, including tied ranks and multiple offers per store.
 
 ## 15. Acceptance criteria
 
@@ -219,6 +223,7 @@ Before commit, the owner can see a non-authoritative preview of the future card/
 | MKT-11 | `bookstore_count`, `offer_count`, and `title_count` have distinct tested definitions. |
 | MKT-12 | Exact physical quantity remains private. |
 | MKT-13 | Multiple rows group visually without inventory merge. |
+| MKT-14 | A versioned store-group query/cursor contract preserves deterministic ranking and complete pagination. |
 
 ## 16. Deferred
 

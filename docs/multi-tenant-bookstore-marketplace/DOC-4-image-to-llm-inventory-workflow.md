@@ -4,7 +4,7 @@
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
 **Date:** 2026-07-19
-**Status:** Planning draft; Phase 9 SDD set drafted for review
+**Status:** Approved Phase 9 planning source; corrected WU0 approved
 **Depends On:** DOC-1, DOC-2, DOC-3
 **Owns:** Image capture, model extraction, metadata enrichment, owner review, duplicate choice, inventory commit, quota/cost, recovery, and scan retention.
 
@@ -29,7 +29,7 @@ Owner starts simple session and selects defaults/language
   -> primary vision adapter extracts title/author/optional ISBN clue
   -> at most one whole-image fallback for technical/schema/broad failure
   -> local canonical lookup, then configured primary/secondary metadata adapters
-  -> selected coherent metadata and up to three English aliases are staged
+  -> selected coherent metadata and up to three generated English aliases are staged; bounded official/verified aliases may coexist
   -> same-store advisory duplicate check
   -> owner reviews/corrects required fields
   -> each candidate independently creates/increments private inventory
@@ -63,7 +63,7 @@ Phase 9 first slice is `spine_stack`.
 - Mixed-language automatic routing is excluded.
 - Candidates inconsistent with the selected language are skipped/reported rather than sent through per-spine model selection.
 - Original-script title/author remain authoritative.
-- Up to three English search aliases may be stored after metadata selection: transliteration, translation, and common spelling/recognized title.
+- Each automated generation operation proposes at most three English search aliases after metadata selection: transliteration, translation, and common spelling/recognized title. Additional provider-recognized official or Owner/platform-verified aliases may be retained within configured abuse/storage limits.
 - Author names are transliterated, not semantically translated.
 - Aliases are search-only and never canonical/duplicate evidence.
 - The adapter/schema supports additional languages later without changing identity rules or translating the whole app UI.
@@ -82,7 +82,7 @@ Before Start, preselect:
 - quantity 1;
 - Save private or Publish after review.
 
-First-session publication defaults private; a prior explicit preference may be reused. Server persistence recovers from backgrounding/network/app closure. Close succeeds only after every submitted input is ready, failed, or skipped. Logout clears local cached state.
+First-session publication defaults private; a prior explicit preference may be reused. Server persistence recovers from backgrounding/network/app closure. The initiating Owner may mutate/resume the session during the Owner-only pilot; support intervention is separately authorized and audited. Close succeeds only after every submitted input is ready, failed, or skipped. A short internal `closing` transition seals new inputs and finalizes the summary, but Close while processing leaves the session active with an actionable message. Logout clears local cached state.
 
 ---
 
@@ -145,7 +145,7 @@ Metadata includes:
 - page count/categories/cover;
 - provider ID, match strength/rationale, source and adapter/schema version.
 
-Select one coherent edition response; do not silently stitch conflicting provider editions. Raw/normalized provider attempts are private and retained only by policy. Provider names and retry/quota values remain configuration, not UI/schema assumptions.
+Select one coherent edition response; do not silently stitch conflicting provider editions. Raw/normalized provider attempts are private and retained only by policy. Provider normalization separately records whether each field is matching-only, storable, publicly displayable, image-cacheable, attribution-bearing, or expiry/revalidation-bound. Provider names and retry/quota values remain configuration, not UI/schema assumptions.
 
 ---
 
@@ -174,7 +174,7 @@ Conditions are New, Like New, Very Good, Good, and Acceptable, with an accessibl
 
 Duplicate detection is same-store, advisory, and recomputed during commit.
 
-Recommend quantity increment only for the same validated edition/ISBN, language, format, condition, and price with no copy-specific damage, notes, collectible distinction, or actual-copy/request photo. Otherwise recommend a separate row. No ISBN + strong original title/author/language match is an explicit owner decision, not an auto-merge. Aliases and image/photo similarity are excluded.
+Recommend quantity increment only for the same validated edition/ISBN, language, format, condition, and price with no copy-specific damage, notes, collectible distinction, or approved public actual-copy/damage photo. Private customer-request photos are later request-scoped evidence and never affect duplicate identity. Otherwise recommend a separate row. No ISBN + strong original title/author/language match is an explicit owner decision, not an auto-merge. Aliases and image/photo similarity are excluded.
 
 Different stores always remain separate inventory/offers.
 
@@ -192,6 +192,8 @@ Every candidate commit:
 - writes bounded audit/event evidence and idempotent outcome;
 - updates/retracts eligible public projection;
 - never lets one candidate failure block other candidates.
+
+A valid private inventory commit survives public-projection failure. The result is `committed_publication_failed`; inventory remains private, and an idempotent publication-retry command may create the projection without creating or incrementing inventory again.
 
 Mobile does not insert model output directly. Post-push price, quantity, condition, damage, location, notes, photos, and visibility remain editable through controlled commands; store edits do not mutate shared canonical truth.
 
@@ -251,7 +253,7 @@ Required concepts:
 | IMG-03 | More than 15 rejects/rescans and never truncates. |
 | IMG-04 | One primary and at most one whole-image fallback use a strict schema and no tools. |
 | IMG-05 | Local-first, primary/secondary metadata enrichment is provider-agnostic and coherent. |
-| IMG-06 | Original-script data and up to three approved English aliases follow authority/search-only rules. |
+| IMG-06 | Original-script data remains authoritative; automated generation proposes at most three English aliases while bounded official/verified aliases remain provenance-bearing and search-only. |
 | IMG-07 | Owner review confirms required inventory fields before every create/increment. |
 | IMG-08 | Duplicate warnings are advisory, explicit, same-store, concurrency-safe, and contain no image comparison. |
 | IMG-09 | Each candidate commit is atomic/idempotent and preserves Phase 6 quantities/holds. |
@@ -261,6 +263,10 @@ Required concepts:
 | IMG-13 | Session recovery and Start/Close summary work without complex visible states. |
 | IMG-14 | Scan/raw/staged data follows private access and retention/deletion rules. |
 | IMG-15 | No Phase 7/8 payment/paid-order/pickup/refund/ledger/settlement behavior is introduced. |
+| IMG-16 | Only the initiating Owner mutates/resumes a pilot session; terminal-input Close uses an internal race-safe finalization state. |
+| IMG-17 | Publication failure preserves one private inventory effect and retries only publication idempotently. |
+| IMG-18 | Provider field reuse rights are enforced separately from provenance. |
+| IMG-19 | Private customer-request photos never affect duplicate identity or quantity compatibility. |
 
 ---
 

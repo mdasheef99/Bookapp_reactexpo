@@ -1,6 +1,6 @@
 # PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `planning_approved`
+**Status:** `planning_and_wu0_approved`
 **Planning set:** `approved_baseline`
 **Implementation:** `not_started`
 **Last updated:** 2026-07-19
@@ -23,7 +23,7 @@ This stable phase handoff points to the detailed planning set:
 - Camera and gallery/manual upload; multiple images per simple Start/Close session.
 - English default; owner selects another language before upload; mixed-language/per-spine routing excluded.
 - Model/provider adapters with one primary and bounded fallback; model has no tools/data authority.
-- Local canonical lookup then configured metadata providers; description and rich edition metadata; up to three approved English search aliases.
+- Local canonical lookup then configured metadata providers; description and rich edition metadata; up to three automated English alias proposals plus bounded official/Owner-verified aliases.
 - Mandatory owner review, advisory same-store duplicates, no image comparison/auto-merge, independent idempotent candidate commits.
 - Five public conditions plus separate damage; damaged sellable copies require note and 1-3 approved public photos.
 - Bookstore-first marketplace results and complete public store catalogue.
@@ -40,6 +40,6 @@ This stable phase handoff points to the detailed planning set:
 
 ## Next gate
 
-The planning baseline was approved on 2026-07-19. The Work Unit 0 TDD/security/migration-design plan is complete and awaits review. Creating product code or migration files and applying migrations to Supabase remain unauthorized separate actions and require fresh exact-project/schema/storage verification.
+The planning baseline and corrected Work Unit 0 TDD/security/migration-design plan were approved on 2026-07-19. No next implementation unit is authorized. Creating contract/product code or migration files and applying migrations to Supabase remain unauthorized separate actions and require their named gates plus fresh exact-project/schema/storage verification.
 
 Every material session must use the Phase 9 update matrix, append its evidence to the correct tracker, leave one exact next authorized action, and pass the continuity validator before handoff.

@@ -83,6 +83,8 @@ Search results should support two primary result types:
 
 Canonical book/edition matching resolves a title/author/ISBN/original-script/approved-alias query, but the primary presentation is bookstore-first. Return every eligible matching store once through correct store-level pagination, not an arbitrary top-three subset.
 
+The server-owned search contract must version the match-result identity, `store_id` group identity, `bookstore_count`, `offer_count`, `title_count`, public fields/privacy exclusions, alias-match indicator, store-catalogue query context, stable cursor, ranking stages, and final deterministic tie-breaker. Pagination occurs over store groups—not a prematurely limited listing page—so grouping never omits an eligible bookstore.
+
 ### 4.3 Public Storefront
 
 Each verified active store should have a public storefront with:
@@ -372,6 +374,7 @@ customer_book_alerts
 | DISC-11 | Original-script and approved alias searches preserve authoritative original-language display. |
 | DISC-12 | Bookstore, offer, and title counts have distinct definitions; exact physical quantity remains private. |
 | DISC-13 | Scan and private request media are absent from public responses. |
+| DISC-14 | A versioned store-group query/cursor/count contract prevents missing or duplicated bookstores across pagination. |
 
 ---
 

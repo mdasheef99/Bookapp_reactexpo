@@ -17,7 +17,7 @@
 | P9-D07 | Owner-only pilot. Manager/staff concurrent scanning is deferred. | locked by design delegation |
 | P9-D08 | One selected language per image/batch; English default. Non-selected-language candidates are skipped and reported. | locked |
 | P9-D09 | Mixed-language detection/routing and automatic per-spine model switching are excluded. | locked |
-| P9-D10 | Original-script title/author are authoritative. Up to three English aliases are search-only and provenance-bearing. | locked |
+| P9-D10 | Original-script title/author are authoritative. Each automated operation proposes at most three English aliases; bounded provider-recognized or Owner/platform-verified aliases may coexist. All remain search-only and provenance-bearing. | locked; amended 2026-07-19 |
 | P9-D11 | Author names are transliterated, not translated. Alias text never determines identity or duplication. | locked |
 | P9-D12 | Vision and metadata providers are adapters with configured primary/fallback choices. | locked |
 | P9-D13 | At most one whole-image vision fallback occurs, only for technical, schema, or broadly unusable output. No per-candidate vision fallback. | locked by design delegation |
@@ -27,7 +27,7 @@
 | P9-D17 | No background canonical metadata refresh in the first release. Selected metadata is frozen until a controlled rematch/correction. | locked by design delegation |
 | P9-D18 | Uncertain/manual inventory may remain unmatched with `canonical_edition_id = null`; it cannot create shared canonical truth. | locked by design delegation |
 | P9-D19 | Duplicate detection is advisory, same-store only, and excludes image/photo similarity. It never auto-merges. | locked |
-| P9-D20 | Quantity increment is recommended only for the same validated edition, language, format, condition, and price with no copy-specific damage, notes, or photos. Otherwise create a separate row. | locked |
+| P9-D20 | Quantity increment is recommended only for the same validated edition, language, format, condition, and price with no copy-specific damage, notes, or approved public actual-copy/damage photos. Private customer-request photos never affect duplicate identity. | locked; clarified 2026-07-19 |
 | P9-D21 | Shelf/location alone does not require a separate row, but the owner may keep it separate after warning. | locked |
 | P9-D22 | Public conditions are `new`, `like_new`, `very_good`, `good`, `acceptable`; all except New have an accessible explanation marker. | locked |
 | P9-D23 | Damage is a separate disclosure, not a base condition. Sellable damaged copies require public notes and 1–3 actual-copy photos; unsafe/unreadable copies remain private. | locked |
@@ -46,6 +46,11 @@
 | P9-D36 | Additional numerical quotas/timeouts/retry values remain policy-configurable. Hard safety envelopes are 15 books/image and 3 public/request photos. | locked |
 | P9-D37 | Optional acquisition type, acquisition cost, cost-basis method, and printed MRP are collapsed private fields, not required review fields. | locked by design delegation |
 | P9-D38 | Phase 9 does not implement payment, paid orders, pickup, refunds, ledger, settlement, translation UI, promotions, or image-based duplicate matching. | locked |
+| P9-D39 | A valid inventory commit survives public-projection failure as private `committed_publication_failed`; publication retry is idempotent and cannot repeat inventory effects. | locked 2026-07-19 |
+| P9-D40 | The initiating Owner alone mutates/resumes a pilot extraction session; support intervention is separately authorized and audited. | locked 2026-07-19 |
+| P9-D41 | Close remains available only after inputs are terminal; internal `closing` seals inputs/finalizes summary and is not an early-close workflow. | locked 2026-07-19 |
+| P9-D42 | Provider provenance and field reuse rights are separate; storage/display/cache/attribution/expiry are adapter policy, not mobile discretion. | locked 2026-07-19 |
+| P9-D43 | WU0 owns central validation, API error, grant, provider-policy, and bookstore-first query contract registers before migration design. | locked 2026-07-19 |
 
 ## Source reconciliation
 
@@ -127,3 +132,10 @@ Audit performed read-only on 2026-07-19 after `get_project` verification.
 - No new product decision was introduced; unresolved model/provider/quota/bucket/retention values remain explicit implementation-time configuration or legal gates.
 - No product code, migration file, provider call, Supabase object, storage object, or data was changed.
 - Next authorized action is user review of the WU0 plan. Implementation and both migration permissions remain ungranted.
+
+### 2026-07-19 — Work Unit 0 approved with corrections incorporated
+
+- User accepted the review recommendation and authorized the documentation correction/commit only.
+- Amended alias limits, request-photo duplicate exclusion, publication-failure survival, initiator-only session authority, provider reuse rights, central validation/error/grant/query registers, privilege requirements, quantity-validation wording, security tests, and eight logical migration groups.
+- Retained terminal-input-only Close behavior; internal `closing` is race-safe finalization, not an early-close UI state.
+- WU0 is approved. Contract/test implementation, migration-file creation, migration application, live provider calls, storage changes, and product code remain separately unauthorized.

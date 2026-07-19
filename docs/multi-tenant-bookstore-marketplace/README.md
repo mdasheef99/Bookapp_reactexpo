@@ -24,7 +24,7 @@ Current handoff as of 2026-07-19:
 
 - Phase 6 is `complete_e2e_deferred`; Phases 7 and 8 are deferred by product decision.
 - Phase 9 Image-to-LLM Inventory is the active planning milestone; implementation has not started.
-- The Phase 9 SDD/supporting/tracker set under [`implementation/phase-9-image-inventory/`](./implementation/phase-9-image-inventory/README.md) is the approved planning baseline; Work Unit 0 planning is authorized, but product implementation and migration creation/application are not.
+- The Phase 9 SDD/supporting/tracker set and corrected Work Unit 0 plan under [`implementation/phase-9-image-inventory/`](./implementation/phase-9-image-inventory/README.md) are approved; no contract/product implementation or migration creation/application is authorized.
 - Phase 9 begins with same-language spine-stack images, maximum 15 books/image, camera/gallery input, mandatory owner review, and controlled per-candidate inventory commits.
 - Exact Supabase project and all affected schema/storage state must be re-verified through Supabase MCP before migrations. No Phase 9 migration exists yet.
 - Do not fold deferred payment, paid-order, pickup, refund, ledger, or settlement behavior into Phase 9.
