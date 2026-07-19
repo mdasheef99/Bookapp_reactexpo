@@ -1,13 +1,13 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `approved_baseline_wu0a_approved_complete`
+**Status:** `wu0b_definition_complete_needs_review`
 **Last updated:** 2026-07-19
-**Implementation status:** `wu0a_contract_test_foundation_approved`; product/runtime implementation not started
+**Implementation status:** WU0A approved complete; WU0B definition complete and awaiting independent review; WU0B/product/runtime implementation not started
 **Supabase mutation status:** no Phase 9 migration, function, policy, bucket, or data change has been made
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 
-Every new development session starts with [SESSION-START.md](./SESSION-START.md). It defines the resume brief, work-unit reading router, Supabase gate, documentation update matrix, and mandatory closeout transaction.
+Every new development session starts at repository `AGENTS.md`, then follows `implementation/ACTIVE.md` → DOC-13 → [SESSION-START.md](./SESSION-START.md) → [TRACKER.md](./TRACKER.md). `SESSION-START.md` defines the Phase 9 resume brief, work-unit reading router, Supabase gate, documentation update matrix, and mandatory closeout transaction.
 
 ## Authority and reading order
 
@@ -18,17 +18,17 @@ When documents conflict, use this order:
 3. The owning domain SDD for detailed behavior.
 4. Supporting registers and trackers for evidence, status, and implementation handoff.
 
-Read in this order:
+After the repository entrypoint, read in this order:
 
-1. [Development-session protocol](./SESSION-START.md)
-2. [Master tracker](./TRACKER.md)
-3. [Master SDD](./00-phase-9-master-sdd.md)
-4. [Current-vs-target database audit](./supporting/database-current-vs-target.md)
-5. [Data dictionary](./supporting/data-dictionary.md)
-6. The relevant domain SDD routed for the active work unit
-7. [Requirements traceability](./supporting/requirements-traceability.md)
-8. [Implementation and verification tracker](./trackers/02-implementation-and-verification.md) only after the planning gate is approved
-9. [Work Unit 0 plan](./work-units/00-contracts-threat-migration-plan.md) for the current contracts/threat/migration-design review
+1. Repository `AGENTS.md`
+2. [Active marketplace router](../ACTIVE.md)
+3. [DOC-13](../../DOC-13-implementation-tracker.md)
+4. [Development-session protocol](./SESSION-START.md)
+5. [Master tracker](./TRACKER.md)
+6. [Master SDD](./00-phase-9-master-sdd.md)
+7. The relevant domain/supporting documents routed for the active work unit
+8. [Implementation and verification tracker](./trackers/02-implementation-and-verification.md)
+9. The current work-unit plan: [WU0B definition](./work-units/00b-backend-api-technical-design-plan.md)
 
 ## SDD set
 
@@ -51,6 +51,7 @@ Read in this order:
 | [Requirements traceability](./supporting/requirements-traceability.md) | Decision-to-SDD and acceptance mapping. |
 | [Complexity and scope register](./supporting/complexity-and-scope-register.md) | Included containment choices, residual complexity, exclusions, and asymmetric benefits. |
 | [Work Unit 0 plan](./work-units/00-contracts-threat-migration-plan.md) | Versioned contract shapes, fixtures, threat tests, migration sequence, correction strategy, and stop gates. |
+| [Work Unit 0B definition](./work-units/00b-backend-api-technical-design-plan.md) | Future backend/API design inventories, actor/authorization/state/transaction boundaries, red-test mapping, exact later file allowlists, acceptance criteria, and independent gates. |
 
 ## Continuity tools
 
@@ -91,7 +92,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline and corrected Work Unit 0 plan are approved, and the separately authorized WU0A server contract/test foundation is complete. Product/runtime implementation and migration-file creation remain separately gated. Before any later authorized implementation unit, preserve these WU0 controls:
+The planning baseline and corrected Work Unit 0 plan are approved, and the separately authorized WU0A server contract/test foundation is complete. The WU0B definition is complete but requires independent review; neither WU0B technical-design implementation nor product/runtime implementation is authorized. Migration-file creation and application remain separately gated. Before any later authorized implementation unit, preserve these WU0 controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

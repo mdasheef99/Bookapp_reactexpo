@@ -1,11 +1,13 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `wu0a_approved_awaiting_wu0b_authorization`
+**Status:** `wu0b_definition_complete_needs_review`
 **Last updated:** 2026-07-19
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `0a_approved_awaiting_wu0b_authorization`
+**Active work unit:** `0b_definition_complete_needs_review`
 
 This tracker is intentionally separate from planning decisions. It will hold implementation evidence and can grow without turning the master tracker into a worklog.
+
+WU0B uses four distinct markers: `definition_complete_needs_review`, `implementation_authorized`, `implementation_complete_needs_review`, and `independently_approved`. Creating its plan sets only the first marker; it does not authorize or complete technical-design implementation.
 
 ## Work units
 
@@ -13,7 +15,7 @@ This tracker is intentionally separate from planning decisions. It will hold imp
 | --- | --- | --- | --- |
 | 0 | [Contract fixtures, threat tests, migration plan, rollback/forward-correction plan](../work-units/00-contracts-threat-migration-plan.md) | `approved` | Corrections incorporated; no implementation/migration authorization |
 | 0A | Server contracts, deterministic helpers, validation/error/provider/query/grant registers, fixtures, and red contract/security tests | `approved_complete` | independently reviewed 2026-07-19; no SQL/live writes; focused 4 suites/41 tests and all function 9 suites/53 tests pass |
-| 0B | Backend/API technical design only: command/query boundaries, DTO flow, authorization seams, idempotency/state orchestration, and migration-unit interfaces | `not_started` | separate explicit authorization; design only; no migration file, endpoint, live call, or external mutation |
+| 0B | [Backend/API technical design](../work-units/00b-backend-api-technical-design-plan.md): command/query/DTO/actor/boundary inventories, state/transaction/idempotency/worker/telemetry matrices, exact later file allowlists, and red-test mapping | `definition_complete_needs_review` | independent definition review next; implementation remains separately unauthorized; no migration file, endpoint, live call, or external mutation |
 | 1 | Data dictionary migration: metadata fields, aliases, condition/damage, media registry | `not_started` | fresh Supabase audit + migration review |
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `not_started` | Unit 1 verified |
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `not_started` | storage policy/security review |
@@ -156,5 +158,17 @@ No product implementation activity recorded.
 - Decisions/deviations/risks: review outcome `approved_with_required_corrections`, corrected to final `approved`; configured provider hosts remain per-adapter policy data; future runtime/database gates remain typed red and unimplemented
 - Tracker/source-doc updates: master tracker, implementation tracker, Master SDD implementation marker, Phase 9 README, package README, DOC-13, and continuity validator
 - Next authorized action and gate: none; WU0B backend/API technical design is next eligible but requires separate explicit authorization; migration creation/application remain unauthorized
+
+### 2026-07-19 — Work Unit 0B definition correction
+
+- Date/session: 2026-07-19 planning-only WU0B definition correction
+- Authorized work unit and scope: create the dedicated WU0B planning document and update only the named continuity/status documents; no runtime/test/migration/external work
+- Completed: normalized the repository-to-Phase-9 startup chain; routed WU0 → WU0A → WU0B → Unit 1; defined command/query, actor/auth, transport/service/repository, DTO/privacy, state/transaction/idempotency, worker/provider, marketplace, telemetry/rate-limit, red-test, acceptance, non-goal, file-allowlist, and later-gate requirements
+- Files/components/migrations: documentation allowlist only; no migration, endpoint, function, app, fixture, dependency, generated file, bucket, policy, provider, or live data change
+- Verification actually run: continuity validator PASS (23 Markdown files, 18 required phase files); `git diff --check`, Markdown links, Phase 9 document size, WU0B routing, single-next-action, eight-file allowlist, and prohibited-path checks passed
+- Supabase/external mutations: none; no live database fact was uncertain for this planning-only correction
+- Decisions/deviations/risks: no product behavior changed; WU0A remains authoritative; WU0B plan existence is not implementation or approval
+- Tracker/source-doc updates: WU0B definition, SESSION-START, master/detailed trackers, Phase 9 README, DOC-13, and the planning-approval checklist clarification
+- Next authorized action and gate: independent review of the committed WU0B definition and updated continuity validator only; WU0B implementation and migration creation/application remain unauthorized
 
 When implementation is authorized, append one entry per material development session using the exact closeout shape in [SESSION-START](../SESSION-START.md): authorized unit/scope, completed work, files/components/migrations, verification actually run, external mutations, decisions/deviations/risks, documentation updates, and next authorized action/gate. Never rewrite an older evidence entry to make a later result look contemporaneous.

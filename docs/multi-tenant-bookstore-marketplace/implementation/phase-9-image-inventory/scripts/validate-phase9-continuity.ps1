@@ -23,7 +23,8 @@ $requiredPhaseFiles = @(
     'supporting/complexity-and-scope-register.md',
     'trackers/01-planning-and-decisions.md',
     'trackers/02-implementation-and-verification.md',
-    'work-units/00-contracts-threat-migration-plan.md'
+    'work-units/00-contracts-threat-migration-plan.md',
+    'work-units/00b-backend-api-technical-design-plan.md'
 )
 
 $missing = @()
@@ -77,18 +78,60 @@ $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementati
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') {
     Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.'
 }
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `wu0b_definition_complete_needs_review`')) {
+    Write-Error 'DOC-13 does not identify the WU0B definition-review milestone.'
+}
+if (-not $doc13.Contains('Authorize an independent review of the WU0B definition documents only.')) {
+    Write-Error 'DOC-13 does not preserve independent WU0B-definition review as the next action.'
+}
 
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if (-not $implementationTracker.Contains('**Active work unit:** `0a_approved_awaiting_wu0b_authorization`')) {
-    Write-Error 'Implementation tracker active work unit disagrees with the approved Work Unit 0A authorization gate.'
+if (-not $implementationTracker.Contains('**Status:** `wu0b_definition_complete_needs_review`') -or
+    -not $implementationTracker.Contains('**Active work unit:** `0b_definition_complete_needs_review`')) {
+    Write-Error 'Implementation tracker does not identify the WU0B definition-review milestone.'
+}
+if ($implementationTracker -notmatch '(?m)^\| 0A \|.*\| `approved_complete` \|') {
+    Write-Error 'Implementation tracker no longer preserves WU0A approved-complete evidence.'
+}
+if ($implementationTracker -notmatch '(?m)^\| 0B \|.*\| `definition_complete_needs_review` \|.*implementation remains separately unauthorized') {
+    Write-Error 'Implementation tracker does not keep WU0B definition completion separate from implementation authority.'
+}
+$wu0aIndex = $implementationTracker.IndexOf('| 0A |')
+$wu0bIndex = $implementationTracker.IndexOf('| 0B |')
+$unit1Index = $implementationTracker.IndexOf('| 1 |')
+if ($wu0aIndex -lt 0 -or $wu0bIndex -le $wu0aIndex -or $unit1Index -le $wu0bIndex) {
+    Write-Error 'Implementation tracker must route WU0A to WU0B to Unit 1 in order.'
 }
 
 $workUnitPlan = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/00-contracts-threat-migration-plan.md'))
 if (-not $workUnitPlan.Contains('**Status:** `approved`')) {
     Write-Error 'Work Unit 0 plan is not marked approved.'
 }
-if (-not $tracker.Contains('**Active work unit:** `0a_approved_awaiting_wu0b_authorization`')) {
-    Write-Error 'TRACKER.md does not preserve the post-WU0A authorization gate.'
+$wu0bPlan = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/00b-backend-api-technical-design-plan.md'))
+if (-not $wu0bPlan.Contains('**Definition status:** `definition_complete_needs_review`') -or
+    -not $wu0bPlan.Contains('**Authority:** planning document only; WU0B technical-design implementation is not authorized') -or
+    -not $wu0bPlan.Contains('**Runtime/migration/external authority:** none')) {
+    Write-Error 'WU0B definition status or non-authority boundary is missing.'
+}
+if (-not $tracker.Contains('**Implementation status:** `wu0b_definition_complete_needs_review`') -or
+    -not $tracker.Contains('**Active work unit:** `0b_definition_complete_needs_review`') -or
+    -not $tracker.Contains('**Next authorized action:** independent review of the WU0B definition documents only') -or
+    -not $tracker.Contains('**Migration creation/application authority:** `not_granted`')) {
+    Write-Error 'TRACKER.md does not preserve the WU0B definition-review and migration authorization gates.'
+}
+if (-not $tracker.Contains('WU0B technical-design implementation is unauthorized') -or
+    $tracker.Contains('WU0B technical-design implementation is complete') -or
+    $tracker.Contains('WU0B independently approved')) {
+    Write-Error 'TRACKER.md incorrectly represents WU0B implementation or independent-review status.'
+}
+$nextActionCount = [regex]::Matches($tracker, '(?m)^\*\*Next authorized action:\*\*').Count
+if ($nextActionCount -ne 1) {
+    Write-Error "TRACKER.md must contain exactly one next-action marker; found $nextActionCount."
+}
+if (-not $wu0bPlan.Contains('5. Migration-file creation.') -or
+    -not $wu0bPlan.Contains('7. Live migration application after another exact-project readback.') -or
+    -not $wu0bPlan.Contains('Migration-file creation and live application must never share one authorization.')) {
+    Write-Error 'WU0B definition does not keep migration creation and application separately gated.'
 }
 
 $agents = [IO.File]::ReadAllText((Join-Path $repoRoot 'AGENTS.md'))
@@ -100,6 +143,17 @@ $sessionStart = [IO.File]::ReadAllText((Join-Path $phaseRoot 'SESSION-START.md')
 if (-not $sessionStart.Contains('## 6. Documentation update matrix') -or
     -not $sessionStart.Contains('## 8. Mandatory closeout transaction')) {
     Write-Error 'SESSION-START.md is missing its update matrix or closeout transaction.'
+}
+if (-not $sessionStart.Contains('| 0B Backend/API technical design (only if authorized)') -or
+    -not $sessionStart.Contains('00b-backend-api-technical-design-plan.md')) {
+    Write-Error 'SESSION-START.md does not route the WU0B definition.'
+}
+
+$phaseReadme = [IO.File]::ReadAllText((Join-Path $phaseRoot 'README.md'))
+if (-not $phaseReadme.Contains('**Status:** `wu0b_definition_complete_needs_review`') -or
+    -not $phaseReadme.Contains('WU0B definition complete and awaiting independent review') -or
+    -not $phaseReadme.Contains('WU0B/product/runtime implementation not started')) {
+    Write-Error 'Phase 9 README disagrees with the WU0B definition-review milestone.'
 }
 
 $master = [IO.File]::ReadAllText((Join-Path $phaseRoot '00-phase-9-master-sdd.md'))

@@ -6,9 +6,11 @@
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
+The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
+
 ## 1. Canonical status source
 
-Read [TRACKER.md](./TRACKER.md) first and extract these fields:
+After entering through repository `AGENTS.md`, the active router, DOC-13, and this protocol, read [TRACKER.md](./TRACKER.md) and extract these fields:
 
 - planning status;
 - implementation status;
@@ -23,13 +25,16 @@ DOC-13 must agree on the active phase. `implementation/ACTIVE.md` must route her
 ## 2. Mandatory startup sequence
 
 1. Run `git branch --show-current`, `git rev-parse --show-toplevel`, and `git status --short`.
-2. Read [DOC-13](../../DOC-13-implementation-tracker.md), [ACTIVE.md](../ACTIVE.md), and [TRACKER.md](./TRACKER.md).
-3. Read [the master SDD](./00-phase-9-master-sdd.md), especially invariants, work-unit order, and continuity contract.
-4. Read [the implementation tracker](./trackers/02-implementation-and-verification.md) to learn whether a work unit is authorized and what evidence already exists.
-5. Use the work-unit routing table below to read only the relevant domain SDDs and supporting files.
-6. Inspect current code/migrations/tests in the affected area. Planned target tables are not evidence that they exist.
-7. For database/storage uncertainty, use Supabase MCP and verify the exact project before relying on results.
-8. Give the user the resume brief below before editing or acting.
+2. Read repository [`AGENTS.md`](../../../../AGENTS.md).
+3. Read [`implementation/ACTIVE.md`](../ACTIVE.md).
+4. Read [DOC-13](../../DOC-13-implementation-tracker.md).
+5. Read this `SESSION-START.md`, then [TRACKER.md](./TRACKER.md).
+6. Read [the master SDD](./00-phase-9-master-sdd.md), especially invariants, work-unit order, and continuity contract.
+7. Read [the implementation tracker](./trackers/02-implementation-and-verification.md) to learn whether a work unit is authorized and what evidence already exists.
+8. Use the work-unit routing table below to read only the relevant domain SDDs and supporting files.
+9. Inspect current code/migrations/tests in the affected area. Planned target tables are not evidence that they exist.
+10. For database/storage uncertainty, use Supabase MCP and verify the exact project before relying on results.
+11. Give the user the resume brief below before editing or acting.
 
 ## 3. Required resume brief
 
@@ -55,6 +60,7 @@ Do not describe an action as authorized merely because it is listed as a future 
 | Planning/review | Master SDD and all changed domain SDDs | decisions tracker, traceability, complexity register |
 | 0 Contracts/threat/migration plan | 00 Master; 01 Data; 02 Pipeline; 04 Security | data dictionary, current-vs-target audit, traceability |
 | 0A Contracts/tests (only if authorized) | 00 Master; 01 Data; 02 Pipeline; 03 Review; 04 Security; 05 Marketplace | approved WU0 plan, data dictionary, traceability, implementation tracker |
+| 0B Backend/API technical design (only if authorized) | 00 Master; 01 Data; 02 Pipeline; 03 Review; 04 Security; 05 Marketplace; 06 Photo Request | [WU0B definition](./work-units/00b-backend-api-technical-design-plan.md), approved WU0 plan, both detailed trackers, data dictionary, current-vs-target audit, traceability, complexity register, WU0A package README/registers/red gates, current boundary source listed by the WU0B definition |
 | 1 Data/metadata migration | 01 Data; 03 Review; 05 Marketplace | data dictionary, current-vs-target audit, migration ledger |
 | 2 Session/job schema | 02 Pipeline; 03 Review; 04 Security | data dictionary, current-vs-target audit |
 | 3 Media boundary | 04 Security; 02 Pipeline; 03 Review | data dictionary, live storage audit, DOC-1 |
@@ -92,7 +98,8 @@ Before migration planning or any database/storage work:
 | Code/test completion | implementation tracker work-unit row, verification checklist, append-only log; master tracker milestone |
 | Migration created/applied | migration ledger; implementation log; current-vs-target audit; master tracker; DOC-13 if milestone/risk changed |
 | New decision/deviation/blocker | decision tracker or implementation log; owning SDD; master tracker; DOC-13 when globally material |
-| Phase/work-unit transition | phase tracker; implementation tracker; DOC-13; ACTIVE.md; README/handoff files when phase changes |
+| Work-unit transition within Phase 9 | phase tracker; implementation tracker; DOC-13; Phase 9 README when routing/handoff changes |
+| Active phase transition | phase tracker; implementation tracker; DOC-13; ACTIVE.md; repository AGENTS pointer; README/handoff files |
 
 Updating only a tracker is insufficient when behavior, security, schema, or acceptance criteria changed.
 

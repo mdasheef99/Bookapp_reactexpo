@@ -62,14 +62,16 @@ If implementation changes product or architecture behavior, update the relevant 
 
 > 2026-07-19 Phase 9 WU0A independent approval: an authorized independent review classified every working-tree file and found correctable contract/test gaps, with no unrelated or sensitive change. Corrections centralized limits, required configured HTTPS cover hosts, completed server-owned adapter envelopes and session/publication semantics, strengthened grant/query/privacy registers, and expanded adversarial/no-match/alias fixtures. Final focused Jest passed 4 suites/41 tests, all Edge Function tests passed 9 suites/53 tests, and strict standalone TypeScript passed. WU0A is approved complete. Migration creation/application, callable endpoints, providers, storage, UI/product writes, and external mutations remain unauthorized. WU0B backend/API technical design is next eligible but requires separate authorization.
 
+> 2026-07-19 Phase 9 WU0B definition checkpoint: a planning-only WU0B document now defines the future command/query/DTO inventories, actor and authorization matrix, state/transaction/idempotency boundaries, worker/provider/marketplace/privacy design requirements, red-test mapping, acceptance/non-goal criteria, exact later file-allowlist requirement, and separately ordered review/audit/migration gates. The repository startup chain is normalized as `AGENTS.md` → `ACTIVE.md` → DOC-13 → Phase 9 `SESSION-START.md` → Phase 9 `TRACKER.md`. The definition is not independently reviewed and grants no WU0B implementation authority. No runtime, test, migration, Supabase/Storage, provider, dependency, GitHub, or other external mutation occurred.
+
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **WU0A server contract/test foundation independently approved; product/runtime implementation not started** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **WU0A independently approved; WU0B definition complete and awaiting independent review; product/runtime implementation not started** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-19 |
 | Latest handoff | `PHASE 6 COMPLETE — COMPREHENSIVE BROWSER E2E DEFERRED`. M01-M39 are applied and database-verified in development; scheduler v5, worker v3, and cron job 5 are active. Phases 7 and 8 are deferred. |
 | Current risk level | Medium - Phase 9 design now contains AI, tenant, media, retention, duplicate, multilingual, and marketplace risks; implementation evidence and vendor/legal selection remain pending. Phase 6 E2E stays a recorded deferred gate. |
-| Next recommended task | Request separate authorization for WU0B backend/API technical design only. Migration-file creation/application, provider calls, storage changes, product/runtime endpoints, and Phase 7/8 behavior remain unauthorized. |
+| Next recommended task | Authorize an independent review of the WU0B definition documents only. WU0B implementation, migration-file creation/application, provider calls, storage changes, product/runtime endpoints, and Phase 7/8 behavior remain unauthorized. |
 
 ---
 
@@ -86,7 +88,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `wu0a_contract_test_foundation_approved` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [SDD/tracker set](./implementation/phase-9-image-inventory/README.md) | Corrected WU0 and independently approved WU0A complete 2026-07-19. WU0B and migrations remain unauthorized. |
+| Phase 9: Image-to-LLM Inventory | `wu0b_definition_complete_needs_review` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [SDD/tracker set](./implementation/phase-9-image-inventory/README.md) | Corrected WU0 and independently approved WU0A are complete. WU0B is defined but not reviewed, implemented, or authorized; migrations remain unauthorized. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -204,7 +206,7 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 
 Next work:
 1. Review the Phase 9 master/domain SDDs, data dictionary, live audit, traceability, complexity register, and local trackers.
-2. If desired, authorize WU0B backend/API technical design only as one separate named unit; otherwise make no implementation change.
+2. Authorize an independent review of the WU0B definition documents only; WU0B technical-design implementation remains a later separate authorization.
 3. Start implementation with same-language `spine_stack` (maximum 15) plus camera/gallery and mandatory Owner review; `single_cover` is not the first slice.
 4. Preserve the Phase 6 quantity-bucket/hold and controlled-write boundary when creating or incrementing inventory.
 5. Keep provider payments, `payment_pending`, paid orders, ledger, pickup, refunds, and settlement deferred with Phases 7/8.
