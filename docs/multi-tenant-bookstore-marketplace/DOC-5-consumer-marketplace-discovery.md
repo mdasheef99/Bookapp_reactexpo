@@ -2,8 +2,8 @@
 
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
-**Version:** 0.1
-**Date:** 2026-05-19
+**Version:** 0.3
+**Date:** 2026-07-19
 **Status:** Planning draft
 **Depends On:** DOC-0, DOC-1, DOC-2, DOC-3
 **Owns:** Consumer-facing bookstore discovery, book search, store availability comparison, public store pages, marketplace entry points, search ranking, and listing visibility.
@@ -65,7 +65,7 @@ The Profile section may also expose a Store Owner Console / Apply as Bookstore e
 The marketplace home should include:
 
 - search bar for title, author, ISBN, or store name
-- nearby bookstores
+- bookstore-first nearby/eligible store results
 - recently added books
 - popular categories
 - pickup-friendly stores
@@ -78,10 +78,10 @@ Search results should support two primary result types:
 
 | Result Type | Meaning |
 |---|---|
-| Book result | A canonical book or edition with copies available at one or more stores. |
-| Store result | A verified bookstore matching the search or location intent. |
+| Book-matched bookstore | A distinct eligible bookstore carrying a matched book/edition, with matching-offer summary. |
+| Store-name result | A verified bookstore matching the store-name or location intent. |
 
-Book results should lead with the book and then show store availability options.
+Canonical book/edition matching resolves a title/author/ISBN/original-script/approved-alias query, but the primary presentation is bookstore-first. Return every eligible matching store once through correct store-level pagination, not an arbitrary top-three subset.
 
 ### 4.3 Public Storefront
 
@@ -99,6 +99,8 @@ Each verified active store should have a public storefront with:
 - optional bookclub/place hosting interest
 
 The storefront must not expose private shelf location, internal inventory notes, acquisition cost, or owner contact details not approved for public display.
+
+When opened from a book search, the storefront highlights/pins the matched book and still provides its complete active public catalogue and distinct public title count. The customer can clear the search to browse all books.
 
 ---
 
@@ -133,9 +135,11 @@ This avoids taking payment for stale used-book inventory while still allowing di
 Search should support:
 
 - exact ISBN
-- title
-- author
+- original-script title
+- original-script author
 - title plus author
+- approved transliteration/translation/common-spelling aliases
+- language
 - category
 - store name
 - nearby stores
@@ -152,7 +156,7 @@ MVP search priority:
 5. fuzzy title match
 6. store name match
 
-Search must use the canonical book model from DOC-3 so the same book across multiple bookstores can be grouped and compared.
+Search must use the canonical book model from DOC-3 to resolve editions without merging store inventory. An alias hit displays the original authoritative title/author. Different-language editions remain separate.
 
 ---
 
@@ -220,16 +224,24 @@ Multi-store cart is deferred because it requires split confirmation, split deliv
 
 ## 10. Used-Book Images and Condition Confidence
 
-Used-book photos are optional in MVP, but the discovery model must support them.
-
 Customer-visible behavior:
 
-- show cover image from metadata provider when no condition photo exists
-- show store-uploaded condition photo when available
-- allow customer to request used-book images before ordering as a planned optional workflow
-- clearly label `damaged` condition and require condition notes
+- show a validated metadata/provider cover first
+- use an approved public actual-copy image as fallback when the cover is absent, then a placeholder
+- show approved public damage/copy photos as a gallery/evidence
+- label damage separately from the five base conditions and show the required public damage note
+- allow a customer to request 1-3 new private current-copy photos for an unpaid request item
+- once requested, the item cannot be confirmed/payment-ready until the store provides the photos and the customer accepts them; if the store cannot provide them, the item is unavailable for that request
 
-Used-book image request workflow is planned in DOC-6 and may be implemented after the core order flow.
+Scan inputs and private request photos never appear in public discovery.
+
+### 10.1 Count Definitions
+
+- `bookstore_count`: distinct eligible stores carrying the matched edition.
+- `offer_count`: distinct public price/condition/damage offers.
+- `title_count`: distinct active public editions/titles in one storefront.
+
+Exact physical inventory quantity remains private.
 
 ---
 
@@ -356,6 +368,10 @@ customer_book_alerts
 | DISC-07 | Suspended or unverified stores do not appear in marketplace discovery. |
 | DISC-08 | Location permission is requested only when needed for nearby or delivery behavior. |
 | DISC-09 | Customer sees seller/store, policy, support/grievance, and confirmation-before-payment disclosures before payment. |
+| DISC-10 | Book search returns every eligible matching bookstore once and selecting it opens the complete active public catalogue. |
+| DISC-11 | Original-script and approved alias searches preserve authoritative original-language display. |
+| DISC-12 | Bookstore, offer, and title counts have distinct definitions; exact physical quantity remains private. |
+| DISC-13 | Scan and private request media are absent from public responses. |
 
 ---
 

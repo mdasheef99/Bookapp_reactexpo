@@ -2,8 +2,8 @@
 
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
-**Version:** 0.1
-**Date:** 2026-05-19
+**Version:** 0.3
+**Date:** 2026-07-19
 **Status:** Planning draft
 **Depends On:** DOC-1, DOC-2, DOC-3, DOC-4, DOC-6, DOC-7
 **Owns:** Store Owner product surface, operating dashboard, inventory tools, order request management, fulfillment actions, store settings, subscription visibility, and MVP/deferred console modules.
@@ -134,6 +134,10 @@ MVP features:
 - save draft listing
 - condition photo upload where enabled
 - low-stock and zero-stock indicators
+- same-language 15-spine camera/gallery sessions with Start/Close summary
+- session defaults for language, condition, shelf/location, quantity, and private/publish preference
+- numbered spine review, add-missed/remove-false, attention-only field highlighting, and marketplace preview
+- five public conditions with accessible explanations and separate damage disclosure/photo flow
 
 Required filters:
 
@@ -189,7 +193,7 @@ Allowed actions:
 
 The store cannot increase item price during confirmation.
 
-If the customer has requested used-book images, the store may upload condition photos or respond that photos are unavailable. This workflow is optional for MVP and should not block the core request flow unless product later chooses to require it for specific conditions.
+If the customer requested current-copy photos, the store must upload 1-3 new validated private photos before confirming that item. If the store cannot provide them, the item is unfulfilled/unavailable; there is no “photos unavailable but continue” action. The customer must accept the photos/result before the request can become `payment_ready`.
 
 ---
 
@@ -420,6 +424,7 @@ Activity logs should be append-only from the client perspective.
 - Payment details are not managed by the store console.
 - Store documents from onboarding are not shown in daily console flows.
 - Inventory private fields must not leak to public storefront or consumer search.
+- Scan images and customer-request photos must not leak into public inventory media; only approved sanitized actual-copy/damage derivatives are public.
 - Store owner actions on order requests and fulfillment must be audited.
 - Store statement data is store-scoped and must not expose platform-wide revenue or other stores' settlement data.
 - Trust metrics shown to stores should be operational and explanatory, not a public ranking unless product explicitly launches reliability scores.
@@ -443,6 +448,10 @@ Activity logs should be append-only from the client perspective.
 | CON-09 | Console does not expose platform-wide subscription management or cross-store data. |
 | CON-10 | Owner can view own settlement summaries and policy/compliance blockers. |
 | CON-11 | Owner can see operational trust metrics needed to improve confirmation and fulfillment. |
+| CON-12 | Owner can run a simple Start/Close same-language session for camera/gallery images with at most 15 spines each. |
+| CON-13 | Owner review supports defaults, add-missed/remove-false, advisory duplicate choice, five conditions, damage evidence, and independent candidate commits. |
+| CON-14 | Owner can edit controlled inventory fields after commit without mutating shared canonical metadata. |
+| CON-15 | Requested-photo items require 1-3 private current-copy photos or an unavailable/unfulfilled outcome. |
 
 ---
 

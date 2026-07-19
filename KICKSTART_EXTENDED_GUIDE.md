@@ -2,6 +2,8 @@
 
 ## 🎯 Quick Reference: What to Ask the AI
 
+> **Current marketplace work:** Do not use this older prompt for status or next-action decisions. Start with repository [`AGENTS.md`](./AGENTS.md) and the [active marketplace phase router](./docs/multi-tenant-bookstore-marketplace/implementation/ACTIVE.md).
+
 When starting a new session, copy and paste this prompt to your AI assistant:
 
 ---

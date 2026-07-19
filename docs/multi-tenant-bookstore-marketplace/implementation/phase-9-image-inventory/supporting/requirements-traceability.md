@@ -1,0 +1,60 @@
+# Phase 9 Requirements Traceability
+
+**Last updated:** 2026-07-19
+
+| Requirement | Owning SDD | Primary acceptance IDs |
+| --- | --- | --- |
+| Same-language spine stack, maximum 15, camera/gallery | 02 Extraction | EXT-01–EXT-05 |
+| Simple Start/Close session and summary | 02 Extraction; 03 Review | EXT-06; REV-01 |
+| Model-agnostic primary/fallback vision | 02 Extraction | EXT-07–EXT-10 |
+| Provider-agnostic local/primary/secondary metadata | 01 Data; 02 Extraction | DAT-05–DAT-09; EXT-11 |
+| Title/author priority; visible ISBN only as clue | 02 Extraction; 01 Data | EXT-12; DAT-03 |
+| Description, ISBN-10/13, rich metadata, cover | 01 Data | DAT-01–DAT-04 |
+| Original language plus up to three approved English aliases | 01 Data; 05 Marketplace | DAT-10–DAT-14; MKT-05 |
+| Additional languages can be added later | 01 Data; 02 Extraction | DAT-15; EXT-04 |
+| Advisory duplicates; no image comparison; repeated spines retained | 01 Data; 03 Review | DAT-16–DAT-20; REV-07 |
+| Quantity/price/location/condition before commit | 03 Review | REV-02–REV-05 |
+| Preselected defaults | 03 Review; 02 Extraction | REV-06; EXT-06 |
+| Five conditions with explanations | 01 Data; 03 Review | DAT-21; REV-08 |
+| Damage separate; discount by price; photos 1–3 | 01 Data; 04 Media | DAT-22–DAT-25; MED-11 |
+| Unsellable damaged item remains private | 01 Data; 03 Review | DAT-24; REV-11 |
+| Owner review and partial per-candidate commit | 03 Review | REV-01–REV-14 |
+| Owner post-push edits | 03 Review | REV-15–REV-17 |
+| Bookstore-first marketplace and complete store catalogue | 05 Marketplace | MKT-01–MKT-04 |
+| Search/display metadata and cover/placeholder | 05 Marketplace | MKT-05–MKT-10 |
+| Distinct store/offer/title counts; exact quantity private | 05 Marketplace | MKT-11–MKT-13 |
+| Requested current-copy photo is mandatory | 06 Photo request | PHO-01–PHO-08 |
+| Maximum three request photos and lifecycle deletion | 06 Photo request; 04 Media | PHO-03; PHO-09–PHO-12; MED-12 |
+| Multi-tenant `store_id` safety | 00 Master; 04 Media; all data SDDs | MAS-03; MED-01–MED-05 |
+| Private scan/raw payloads and retention | 04 Media; 02 Extraction | MED-06–MED-10; EXT-15 |
+| Security across model, provider, upload, storage, logs, recovery | 04 Media | MED-01–MED-20 |
+| Quota/retry policy model-agnostic and configurable | 02 Extraction | EXT-13–EXT-17 |
+| Phase 7/8 independence | 00 Master; 06 Photo request | MAS-09; PHO-13 |
+
+## Root specification mapping
+
+| Root source | Phase 9 responsibility |
+| --- | --- |
+| DOC-0 | Storefront/product surface and bookstore-first discovery. |
+| DOC-1 | Identity, tenant, privacy, media, vendor, and public/private boundaries. |
+| DOC-3 | Canonical/edition identity, metadata, inventory, condition/damage, duplicates, listing projection. |
+| DOC-4 | Session/capture/model/provider/review/recovery/quota workflow. |
+| DOC-5 | Consumer search, store results, catalogue, counts, book detail. |
+| DOC-6 | Request-photo gate before payment readiness. |
+| DOC-8 | Store Owner capture/review/edit/request-response UX. |
+| DOC-13 | Global status and handoff. |
+| DOC-14 | Existing request state machine seam and photo acceptance guard. |
+
+## Non-requirements explicitly excluded
+
+- automatic mixed-language spine routing;
+- model tools or model-driven database/provider calls;
+- image similarity/cover comparison for duplicate detection;
+- automatic duplicate merge;
+- automatic publishing without owner review;
+- exact physical quantity in public discovery;
+- translation of the entire application UI;
+- a promotions/coupon engine;
+- payment, paid order, pickup, refund, ledger, or settlement implementation;
+- manager/staff scanning in the pilot;
+- continuous canonical metadata refresh.

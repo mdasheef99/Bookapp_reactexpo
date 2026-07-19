@@ -2,8 +2,8 @@
 
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
-**Version:** 0.2
-**Date:** 2026-05-22
+**Version:** 0.3
+**Date:** 2026-07-19
 **Status:** Planning draft
 **Depends On:** DOC-0
 **Owns:** Authentication model, Store Owner access, tenant isolation, RLS principles, privacy boundaries, DPDP-sensitive handling, and security acceptance criteria.
@@ -228,7 +228,9 @@ Rules:
 | Payment data | gateway order ID, payment ID | Server-side only except non-sensitive checkout references |
 | Seller verification | documents, bank details, GST docs | Server-side only; never public |
 | Settlement data | payout account, ledger, adjustments | Server-side and platform ops only |
-| Image extraction state | session ID, candidate books, owner edits | MMKV allowed up to defined retention if no customer PII |
+| Image extraction state | session ID and minimal UI cursor | Local cache only; authoritative candidate/session state is server-side and cleared locally on logout |
+| Scan images/raw AI payloads | spine images, model/provider responses | Never persist in normal client storage, logs, analytics, events, or notifications |
+| Customer-requested copy photos | current-copy request evidence | Private request-scoped access only; never public or stored as a reusable local URL/token |
 
 ---
 
@@ -306,10 +308,12 @@ Required storage buckets:
 | Bucket | Public? | Purpose |
 |---|---|---|
 | `storefront-assets` | Public read by URL, no broad listing | Store logos, banners, public storefront images. |
-| `inventory-photos` | Public read by URL for published listing images, no broad listing | Optional used-book condition photos. |
+| `inventory-photos` | Public read by URL for approved sanitized listing images, no broad listing | Public actual-copy/damage derivatives only; never raw client uploads. |
 | `seller-verification-docs` | Private | Seller KYC/business verification documents. |
 | `order-dispute-evidence` | Private | Support/dispute images and attachments. |
 | `image-extraction-inputs` | Private or short-lived signed URL | Images uploaded for LLM extraction. |
+
+Phase 9 also requires a private short-lived media-staging boundary and a private request-item photo boundary. Final names must be collision-checked during migration review; the planning names are `marketplace-media-staging` and `order-request-photos`.
 
 Image extraction egress rules (DPDP/data processor alignment):
 
@@ -318,6 +322,18 @@ Image extraction egress rules (DPDP/data processor alignment):
 - The LLM vendor and metadata providers are data processors; a data-processing agreement must be in place before production use.
 - Vendor reuse of images for model training or marketing is prohibited unless explicit platform policy and consent allow it.
 - A cross-border data residency/transfer review must be completed before production launch and documented as a payment/launch gate.
+
+Phase 9 media and AI security rules:
+
+- clients request a purpose- and entity-bound upload authorization; the server generates the final object path
+- validate file signature, detected MIME, decode, byte/dimension/pixel limits, then re-encode and strip EXIF/GPS before model egress or public promotion
+- scan images, public copy/damage media, and customer-request photos are separate purposes with separate access and retention
+- no scan image becomes public automatically; only an approved sanitized derivative may enter `inventory-photos`
+- the vision model receives no tools, credentials, signed URLs, customer PII, store authority, or database/provider access
+- model/provider output is untrusted, must satisfy a strict versioned schema, and must never directly construct a database query, storage path, URL, or rendered active content
+- customer-request photos are private to the relevant request customer, store, and action-specific platform support role
+- signed URLs/tokens, raw images, raw payloads, and prompts must not appear in logs, Sentry, analytics, events, notifications, or audit metadata
+- lifecycle deletion, dispute/legal holds, orphan cleanup, and deletion evidence are server-managed and observable
 
 Storage policies must avoid broad object listing. Public buckets should provide object URL access without allowing clients to enumerate all objects.
 
@@ -400,6 +416,11 @@ Audit logs should be append-only for normal application code.
 | SEC-14 | Payment, delivery, and dispute evidence is retained server-side and not exposed to unauthorized clients. |
 | SEC-15 | Store Owner console cannot process formal customer erasure or grievance requests directly. |
 | SEC-16 | Every service-role function has a passing cross-tenant denial test. |
+| SEC-17 | Unvalidated media cannot reach a model or public bucket. |
+| SEC-18 | Store A cannot upload, read, promote, link, or delete Store B media. |
+| SEC-19 | Scan and customer-request media cannot be retrieved through public marketplace APIs/URLs. |
+| SEC-20 | Model/provider output has no tool authority and cannot directly cause a database/storage/publication action. |
+| SEC-21 | Media retention, holds, deletion, and orphan cleanup are persisted, idempotent, and tested. |
 
 ---
 

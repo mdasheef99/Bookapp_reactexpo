@@ -8,30 +8,33 @@ These files are not source specifications. Source behavior lives in `DOC-0` thro
 
 If you are a new agent, do this before changing files:
 
-1. Read [`../README.md`](../README.md) for the suite overview and stable guardrails.
-2. Read [`../DOC-13-implementation-tracker.md`](../DOC-13-implementation-tracker.md) for the current phase, blockers, latest handoff, and next recommended task.
-3. Read the active phase tracker in this folder.
-4. Read [`../DOC-12-build-strategy-and-implementation-sequence.md`](../DOC-12-build-strategy-and-implementation-sequence.md) for phase order, risk gates, and coding-agent rules.
-5. Read the source docs referenced by the active phase tracker.
+1. Read repository [`AGENTS.md`](../../../AGENTS.md).
+2. Read [`ACTIVE.md`](./ACTIVE.md); it is the only active-phase routing file.
+3. Read [`../DOC-13-implementation-tracker.md`](../DOC-13-implementation-tracker.md) for global status and confirm it agrees with the router.
+4. Follow the active phase session-start file and master tracker.
+5. Read [`../README.md`](../README.md) and [`../DOC-12-build-strategy-and-implementation-sequence.md`](../DOC-12-build-strategy-and-implementation-sequence.md) for stable guardrails and phase gates.
+6. Read the source/domain documents routed for the active work unit and inspect current code/live evidence before acting.
 
-Current handoff as of 2026-07-15:
+Current handoff as of 2026-07-19:
 
-- Phase 1 foundation and the approved Phase 2/3 migrations are applied to live Supabase project `ahntbtktjjmvfosgkmgn`; Store Owner onboarding and platform review functions are deployed.
-- Phase 5 Consumer Discovery is complete and accepted after live anonymous/authenticated discovery, private-boundary, demand-RPC, locality-disable, and zero-residue cleanup smoke. Phase 6 has not started.
-- Phase 3 anonymous public-read policy split, Phase 5 discovery hardening, and corrective projection-based RLS migration `20260715174111` are deployed and verified. Phase 4 trigger-function EXECUTE hardening and controlled `store-profile` version 1 are also deployed and verified; positive authenticated owner-write smoke remains credential-gated.
-- Local Phase 4 verification passes 13 Store suites/118 tests, TypeScript, and production web export. Authenticated live profile/setup smoke has not run because an approved disposable owner credential is unavailable.
-- Final Phase 5 verification passes targeted marketplace/migration Jest 8 suites/52 tests, TypeScript, prior production web export, live role-level smoke, and cleanup verification. No disposable rows remain.
-- Do not begin Phase 6 without a separate explicit request and plan review. Keep payments, delivery, settlement, and image-to-LLM work in their designated later phases.
+- Phase 6 is `complete_e2e_deferred`; its migrations M01-M39 and provider-independent `payment_ready` boundary are applied/verified in the development project.
+- Phases 7 Payment/Ledger/Settlement and 8 Pickup are deferred.
+- Phase 9 Image-to-LLM Inventory is `planning_approved`; Work Unit 0 planning is authorized, implementation has not started, and no Phase 9 migration/storage/function change exists.
+- The approved planning baseline is [`phase-9-image-inventory/`](./phase-9-image-inventory/README.md). Work Unit 0 must follow its session protocol, master tracker, master SDD, current-vs-target audit, and routed domain SDDs.
+- Phase 9 is same-language `spine_stack` first (maximum 15), not `single_cover` first, and remains independent of deferred Phase 7/8 behavior.
+- Supabase was re-verified read-only on 2026-07-19 as `ahntbtktjjmvfosgkmgn` / `Bookconnect_reactexpo`; re-verify again before any migration action.
 
 ## Before Coding
 
 Read:
 
-1. [`../README.md`](../README.md)
-2. [`../DOC-13-implementation-tracker.md`](../DOC-13-implementation-tracker.md)
-3. the active phase tracker in this folder
-4. [`../DOC-12-build-strategy-and-implementation-sequence.md`](../DOC-12-build-strategy-and-implementation-sequence.md)
-5. the source docs referenced by the active phase tracker
+1. [`../../../AGENTS.md`](../../../AGENTS.md)
+2. [`ACTIVE.md`](./ACTIVE.md)
+3. [`../DOC-13-implementation-tracker.md`](../DOC-13-implementation-tracker.md)
+4. the active phase session-start file and tracker
+5. [`../README.md`](../README.md)
+6. [`../DOC-12-build-strategy-and-implementation-sequence.md`](../DOC-12-build-strategy-and-implementation-sequence.md)
+7. the source/domain docs routed for the active work unit
 
 Before schema, RLS, storage, or migration work, use Supabase MCP to verify live database state.
 
@@ -43,7 +46,9 @@ Update:
 
 1. the active phase tracker
 2. `../DOC-13-implementation-tracker.md` if phase status, blockers, risks, latest milestone, next task, or handoff changed
-3. the relevant source spec only if product or architecture behavior changed
+3. the active implementation/verification log with tests, migrations, external effects, and exact next action
+4. every source/SDD/data/security/traceability document required by the active session-start update matrix
+5. `ACTIVE.md`, both README handoffs, DOC-13, and repository `AGENTS.md` together if the active phase changed
 
 Do not mark a phase `complete` unless acceptance criteria, verification evidence, deviations, and handoff notes are recorded.
 

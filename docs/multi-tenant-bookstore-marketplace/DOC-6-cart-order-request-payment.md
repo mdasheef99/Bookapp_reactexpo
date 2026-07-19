@@ -2,8 +2,8 @@
 
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
-**Version:** 0.2
-**Date:** 2026-05-22
+**Version:** 0.3
+**Date:** 2026-07-19
 **Status:** Planning draft
 **Depends On:** DOC-0, DOC-1, DOC-2, DOC-3, DOC-5, DOC-14, DOC-15
 **Owns:** Single-store cart, order request creation, store confirmation, partial availability, payment timing, cancellation, refunds, commission accounting, and conversion from request to paid order.
@@ -111,6 +111,8 @@ The store receives the request and confirms line items:
 - reject the full request for a bounded non-stock reason
 - request platform support without changing request status
 
+If a customer requested current-copy photos for an item, the store must upload and provide 1-3 newly captured, validated private photos before confirming that item. The store cannot respond “photos unavailable but continue.” If it cannot provide the photos, the item is unfulfilled/unavailable for the request.
+
 The store cannot increase item price above the immutable server-established bound during confirmation, even with customer acceptance. If the price is wrong, the store must honour/lower the bound, mark the item unavailable, or request platform support. Phase 6 support review does not itself authorize a higher price.
 
 ### 3.4 Customer Payment Review
@@ -125,12 +127,15 @@ After store confirmation, customer sees:
 - taxes if applicable
 - refund/return policy
 - payment expiry timer
+- any requested current-copy photos and the confirmed condition/damage details
 
 Customer options:
 
 - pay for confirmed items
 - cancel request
 - adjust to confirmed quantities if partial availability exists
+
+Any provided-photo item requires explicit customer photo/result acceptance. The request uses `awaiting_customer_decision`; it cannot enter `payment_ready` while an included requested-photo item is unprovided or unaccepted.
 
 ### 3.5 Payment
 
@@ -186,6 +191,18 @@ Rules:
 - policy-based delivery eligibility and the exact customer delivery charge must be recalculated after partial confirmation
 - discounts, minimum delivery order value, and free-delivery thresholds must be recalculated
 - a material change to the separately governed customer delivery charge requires explicit customer acceptance
+
+Requested-photo unfulfillment/decline removes the affected item from the payable result and triggers the same hold, subtotal, tariff, and customer-decision recalculation rules.
+
+### 4.1 Current-Copy Photo Request Gate
+
+- Customer requests photos per item before/as part of unpaid request submission.
+- Existing public cover/damage photos and scan images do not automatically satisfy a current-copy request.
+- Photo state is orthogonal to item confirmation: `none`, `requested`, `uploading`, `provided`, `accepted`, `declined`, `unfulfilled`, or `expired`.
+- Store confirmation requires `provided`; `payment_ready` inclusion requires `accepted`.
+- Customer decline/unfulfilled/expiry excludes the item and releases/recalculates eligible holds and totals.
+- Request photos are private to the request customer/store/authorized support role and never embedded in notifications or public listings.
+- The Phase 9 photo extension adds no payment-provider or paid-order behavior.
 
 ---
 
@@ -312,7 +329,7 @@ Minimum platform requirements:
 - store must define whether returns are accepted
 - policy must specify return window if accepted
 - policy must specify whether used books are returnable
-- `damaged` condition must have explicit condition notes
+- a sellable damaged copy must retain its public damage note/types and 1-3 approved actual-copy photos
 - customer must accept policy before payment
 
 Refund triggers:
@@ -585,6 +602,10 @@ invoice_snapshots
 | ORD-15 | Store Owner can request platform support without directly changing request status. |
 | ORD-16 | Phase 6 calls no delivery provider and snapshots the tariff version, resolved policy, exact customer delivery charge, and immutable `payment_ready` total. |
 | ORD-17 | A later provider operational quote cannot silently increase the customer amount accepted at `payment_ready`. |
+| ORD-18 | A requested-photo item cannot be confirmed before 1-3 new validated photos are provided. |
+| ORD-19 | A requested-photo item cannot enter the `payment_ready` payable set until the customer accepts the photos/result. |
+| ORD-20 | Store inability to provide requested photos makes the item unavailable/unfulfilled; no proceed-without-photo path exists. |
+| ORD-21 | Request photos are private request-item evidence with purpose-specific retention and no public/notification leakage. |
 
 ---
 

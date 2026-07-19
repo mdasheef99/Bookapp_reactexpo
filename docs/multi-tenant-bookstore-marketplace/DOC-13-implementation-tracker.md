@@ -2,8 +2,8 @@
 
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
-**Version:** 0.2
-**Date:** 2026-05-22
+**Version:** 0.3
+**Date:** 2026-07-19
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -16,6 +16,8 @@ This file is the master status board. It should stay concise.
 
 Detailed implementation notes belong in the relevant phase tracker under [`implementation/`](./implementation/).
 
+Every new session must start from repository `AGENTS.md`, [`implementation/ACTIVE.md`](./implementation/ACTIVE.md), this tracker, and the active phase session-start/tracker. Chat history and old root kickstart documents are not status authority.
+
 Every coding session must update tracking before ending if it changes any of the following:
 
 - phase status
@@ -27,6 +29,8 @@ Every coding session must update tracking before ending if it changes any of the
 - source-spec deviations
 - next recommended task
 - handoff notes
+
+Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
 
 If implementation changes product or architecture behavior, update the relevant source spec and record the reason in this tracker.
 
@@ -48,14 +52,16 @@ If implementation changes product or architecture behavior, update the relevant 
 
 > 2026-07-18 Phase 6 completion and roadmap decision: Supabase MCP readback reconfirmed the healthy `Bookconnect_reactexpo` development project, all M01-M39 Phase 6 migrations, RLS on authoritative Phase 6 tables, active scheduler v5/worker v3, and successful one-minute cron job 5 executions. Existing inventory has zero quantity-balance violations; the equality constraint remains `NOT VALID` and must be validated by a forward migration before production. Phase 6 is recorded as complete with comprehensive browser E2E, responsive/accessibility review, browser-created persisted-effect review, and real timed commerce-command E2E deliberately deferred. Phases 7 and 8 are deferred by product decision. Phase 9 planning is now the active milestone and must remain independent of payment, paid-order, pickup, ledger, refund, and settlement behavior.
 
+> 2026-07-19 Phase 9 planning refresh: the complete Phase 9 planning set was drafted under `implementation/phase-9-image-inventory/` with a master SDD, six domain SDDs, data dictionary, live database/storage current-vs-target audit, requirements traceability, complexity register, and three-level local tracker split. Supabase was re-verified read-only as project `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`); `store_id` is canonical (37 public-schema columns, zero `tenant_id`). Phase 9 begins with camera/gallery same-language spine stacks capped at 15, provider/model adapters, mandatory owner review, advisory duplicates without image comparison, multilingual search aliases, separate damage/media, bookstore-first discovery, and mandatory customer-requested current-copy photos. Repository `AGENTS.md`, `implementation/ACTIVE.md`, Phase 9 `SESSION-START.md`, tracker markers, update matrix, and a read-only continuity validator now provide deterministic new-session resume/closeout. The user approved this planning baseline on 2026-07-19 and authorized the Work Unit 0 plan only. No Phase 9 migration, code, function, bucket/policy, or data mutation occurred.
+
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **planning authorized; implementation not started** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **planning baseline approved; Work Unit 0 plan active; implementation not started** |
 | Overall status | `in_progress` |
-| Last updated | 2026-07-18 |
+| Last updated | 2026-07-19 |
 | Latest handoff | `PHASE 6 COMPLETE — COMPREHENSIVE BROWSER E2E DEFERRED`. M01-M39 are applied and database-verified in development; scheduler v5, worker v3, and cron job 5 are active. Phases 7 and 8 are deferred. |
-| Current risk level | Medium - Phase 9 requires LLM/provider privacy, cost, retention, quota, and extraction-quality decisions. Phase 6 E2E remains a recorded deferred gate; production payment/provider/legal/accounting risks remain isolated behind deferred Phase 7. |
-| Next recommended task | Create and approve the Phase 9 implementation plan from DOC-3, DOC-4, and DOC-8, starting with the `single_cover` vertical slice. Do not introduce Phase 7 or Phase 8 behavior. |
+| Current risk level | Medium - Phase 9 design now contains AI, tenant, media, retention, duplicate, multilingual, and marketplace risks; implementation evidence and vendor/legal selection remain pending. Phase 6 E2E stays a recorded deferred gate. |
+| Next recommended task | Create and review the Work Unit 0 contracts/threat/migration-design plan. Do not create/apply migration files, start product implementation, or introduce Phase 7/8 behavior. |
 
 ---
 
@@ -72,7 +78,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `planning_authorized` | [PHASE-9](./implementation/PHASE-9-image-to-llm-inventory.md) | Approved to proceed before deferred Phases 7/8; depends on the stable inventory/listing and Phase 6 quantity/hold boundary. |
+| Phase 9: Image-to-LLM Inventory | `planning_approved_wu0_active` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [SDD/tracker set](./implementation/phase-9-image-inventory/README.md) | Planning baseline approved 2026-07-19; Work Unit 0 plan authorized. Implementation/migrations not started. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -189,8 +195,9 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Produce the Phase 9 implementation plan and threat/privacy/cost review from DOC-3, DOC-4, and DOC-8.
-2. Start with the `single_cover` path; retain mandatory Owner review and manual fallback.
-3. Preserve the Phase 6 quantity-bucket and controlled-write boundary when creating or incrementing inventory.
-4. Keep provider payments, `payment_pending`, paid orders, ledger, pickup, refunds, and settlement deferred with Phases 7/8.
-5. Track comprehensive Phase 6 browser E2E and validation of the existing `NOT VALID` inventory equality constraint as deferred follow-up work before production readiness.
+1. Review the Phase 9 master/domain SDDs, data dictionary, live audit, traceability, complexity register, and local trackers.
+2. If approved, plan Work Unit 0: recorded contracts/threat fixtures, migration order, rollback/forward-correction plan, and security tests.
+3. Start implementation with same-language `spine_stack` (maximum 15) plus camera/gallery and mandatory Owner review; `single_cover` is not the first slice.
+4. Preserve the Phase 6 quantity-bucket/hold and controlled-write boundary when creating or incrementing inventory.
+5. Keep provider payments, `payment_pending`, paid orders, ledger, pickup, refunds, and settlement deferred with Phases 7/8.
+6. Re-verify exact Supabase project/schema/storage/advisors before any migration creation/application and keep the existing `NOT VALID` quantity constraint as a separately reviewed production-readiness gate.

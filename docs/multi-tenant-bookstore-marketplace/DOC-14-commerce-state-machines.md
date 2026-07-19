@@ -2,8 +2,8 @@
 
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
-**Version:** 0.2
-**Date:** 2026-05-22
+**Version:** 0.3
+**Date:** 2026-07-19
 **Status:** Planning draft
 **Depends On:** DOC-0, DOC-1, DOC-3, DOC-6, DOC-7, DOC-9, DOC-10
 **Owns:** Order request, item confirmation, inventory hold, payment, paid order, cancellation, refund, dispute, and post-payment failure state machines.
@@ -44,6 +44,7 @@ Implementation must not rely on loose status updates from client screens. Commer
 | Events | Every state transition emits an append-only marketplace event. |
 | Audit | Operator and store actions on commerce state are audited. |
 | Post-payment unavailable | Customer receives explicit options and a platform-controlled refund/partial fulfillment path. |
+| Requested current-copy photos | Item-level orthogonal state; store must provide before item confirmation and customer must accept before `payment_ready`. No proceed-without-photo outcome. |
 
 ---
 
@@ -99,15 +100,15 @@ Request submission creates the request directly in `submitted`; there is no `dra
 | `submitted` | Store Owner | `store_reviewing` | Active owner capability/entitlement for server-derived store; current version and eligibility. | Emit review-start event. |
 | `submitted` | Store Owner | `store_rejected` | Bounded non-stock rejection reason; owner capability/version. | Mark unresolved items rejected; release eligible holds; notify/audit. |
 | `submitted` | System Job | `expired` | Open-hours confirmation deadline elapsed. | Notify both; update internal metrics. |
-| `store_reviewing` | Store Owner | `payment_ready` | Every item fully/materially unchanged; inventory locked; confirmed price at/below bound; live eligibility. | Create firm holds directly; final INR total; start `payment_expires_at`; no provider object. |
-| `store_reviewing` | Store Owner | `awaiting_customer_decision` | At least one confirmed quantity plus material change. | Create soft holds; start acceptance window; notify. |
+| `store_reviewing` | Store Owner | `payment_ready` | Every item fully/materially unchanged; inventory locked; confirmed price at/below bound; live eligibility; no included requested-photo item needs customer acceptance. | Create firm holds directly; final INR total; start `payment_expires_at`; no provider object. |
+| `store_reviewing` | Store Owner | `awaiting_customer_decision` | At least one confirmed quantity plus material change or provided current-copy photos requiring customer acceptance. | Create soft holds; start acceptance window; notify. |
 | `store_reviewing` | Store Owner | `unavailable` | No item is fulfilable; bounded item stock reasons. | Release eligible holds; notify/audit. |
 | `store_reviewing` | Store Owner | `store_rejected` | Bounded full-request non-stock reason. | Mark unresolved items rejected; release; notify/audit. |
 | `store_reviewing` | Store Owner | `awaiting_clarification` | Any item needs bounded clarification. | Pause SLA; start clarification timeout; notify customer. |
 | `awaiting_clarification` | Customer | `store_reviewing` | Customer responds before timeout. | Resume remaining open-hours SLA; notify store. |
 | `awaiting_clarification` | Store Owner | `store_rejected` | Bounded non-stock reason. | Release eligible holds; notify/audit. |
 | `awaiting_clarification` | System Job | `expired` | Clarification timeout elapsed. | Release eligible holds; notify both. |
-| `awaiting_customer_decision` | Customer | `payment_ready` | Explicit acceptance, valid version/window/live eligibility; pickup selected if below delivery minimum. | Promote soft to firm without moving buckets; final INR total; start payment expiry; no provider object. |
+| `awaiting_customer_decision` | Customer | `payment_ready` | Explicit acceptance, valid version/window/live eligibility; pickup selected if below delivery minimum; every included requested-photo item is accepted. | Record photo/result acceptance; promote soft to firm without moving buckets; final INR total; start payment expiry; no provider object. |
 | `awaiting_customer_decision` | System Job | `expired` | Acceptance window elapsed. | Release soft holds; notify. |
 | Any nonterminal Phase 6 request | Customer | `customer_cancelled` | `auth.uid()` owns request; current version; Phase 7 payment has not started. | Cancel tasks; release active soft/firm holds idempotently; notify store. |
 | `payment_ready` | System Job | `payment_ready_expired` | Payment-ready deadline elapsed. | Release firm holds; notify. |
@@ -137,8 +138,8 @@ Owner-only commands are an explicit Phase 6 MVP capability/entitlement restricti
 
 | Current State | Actor | Allowed Next State | Required Guards | Side Effects |
 |---|---|---|---|---|
-| `requested` | Store Owner | `confirmed_full` | Available quantity >= requested quantity. | Include in confirmed subtotal. |
-| `requested` | Store Owner | `confirmed_partial` | Available quantity > 0 and less than requested. | Include confirmed quantity only. |
+| `requested` | Store Owner | `confirmed_full` | Available quantity >= requested quantity; photo substate is `none` or `provided`. | Include in confirmed subtotal; provided-photo item requires customer decision. |
+| `requested` | Store Owner | `confirmed_partial` | Available quantity > 0 and less than requested; photo substate is `none` or `provided`. | Include confirmed quantity only; provided-photo item requires customer decision. |
 | `requested` | Store Owner | `unavailable` | Reason selected. | Exclude from payable amount; may create demand signal. |
 | `requested` | Store Owner | `rejected` | Full request is rejected for a bounded non-stock reason. | Exclude from payable amount; request enters `store_rejected`. |
 | `requested` | Store Owner | `needs_clarification` | Policy allows customer clarification before payment. | Notify customer; pause request SLA by policy; start clarification timeout. |
@@ -147,6 +148,22 @@ Owner-only commands are an explicit Phase 6 MVP capability/entitlement restricti
 | `needs_clarification` | System Job | `unavailable` | Clarification timeout elapsed. | Exclude from payable amount, notify customer/store. |
 
 Hold lifecycle is not encoded as an item confirmation state. Fully confirmed unchanged items receive firm holds in the same transaction that enters `payment_ready`; partial/materially changed confirmed items receive soft holds in the same transaction that enters `awaiting_customer_decision`. Hold promotion/release is governed by §7.
+
+---
+
+### 6.1 Requested Current-Copy Photo Substate
+
+Photo state is orthogonal to item confirmation:
+
+`none -> requested -> uploading -> provided -> accepted`
+
+Terminal alternatives are `declined`, `unfulfilled`, and `expired`.
+
+- Store cannot transition a requested item to `confirmed_full`/`confirmed_partial` before 1-3 newly captured validated photos are `provided`.
+- A provided-photo confirmation enters/uses `awaiting_customer_decision` even when quantity/price is otherwise unchanged.
+- Customer acceptance records the photo/result decision and may enter `payment_ready` only when all other guards pass.
+- Customer decline, store unfulfilled, or expiry excludes the item and releases/recalculates applicable holds/totals.
+- Existing public/scan/other-request media cannot satisfy this state by path reuse.
 
 ---
 
@@ -294,6 +311,7 @@ Required idempotency domains:
 - delivery shipment booking
 - delivery webhook
 - settlement batch generation
+- photo request creation, upload authorization, provision, acceptance/decline, unfulfilled, and expiry
 
 Concurrency controls:
 
@@ -332,6 +350,12 @@ Minimum event requirements:
 - `order_request.support_intervened`
 - `order_request.expired`
 - `order_request.payment_ready_expired`
+- `order_request_item.photos_requested`
+- `order_request_item.photos_provided`
+- `order_request_item.photos_accepted`
+- `order_request_item.photos_declined`
+- `order_request_item.photos_unfulfilled`
+- `order_request_item.photos_expired`
 - `order.paid`
 - `order.post_payment_issue_reported`
 - `order.cancelled`
@@ -428,6 +452,8 @@ Exact table names may change during implementation, but these concepts must exis
 | STM-13 | `request_platform_support` creates a deduplicated task/event/audit without changing commerce status. |
 | STM-14 | Planned closure, bounded emergency pause, and compliance/selling suspension have distinct fail-safe behavior; valid payment-ready holds keep their original expiry unless audited cancellation occurs. |
 | STM-15 | Store commands are owner-only through an explicit Phase 6 MVP capability/entitlement; manager/staff delegation remains deferred. |
+| STM-16 | Requested-photo state is item-level and versioned; item confirmation requires provided photos and `payment_ready` inclusion requires customer acceptance. |
+| STM-17 | Photo unfulfilled/declined/expired outcomes exclude the item and preserve existing hold/total/idempotency/event/audit invariants. |
 
 ---
 
