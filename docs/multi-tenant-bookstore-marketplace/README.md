@@ -1,8 +1,8 @@
 # Multi-Tenant Bookstore Marketplace Specification
 
 **Product:** BookConnect
-**Spec Suite Version:** 0.2
-**Date:** 2026-05-22
+**Spec Suite Version:** 0.3
+**Date:** 2026-07-19
 **Status:** Planning draft
 **Scope:** Multi-tenant bookstore marketplace, Store Owner product surface, consumer discovery, direct ordering, delivery orchestration, and bookstore subscriptions.
 
@@ -12,22 +12,24 @@
 
 If you are a new coding or review agent, start here and do not write code immediately.
 
-1. Read this README to understand the locked marketplace decisions and domain separation rules.
-2. Read [DOC-13: Implementation Tracker](./DOC-13-implementation-tracker.md) to learn the current phase, latest handoff, blockers, and next recommended task.
-3. Read the active phase tracker under [`implementation/`](./implementation/). The phase tracker is the working checklist for the current implementation step.
-4. Read [DOC-12: Build Strategy and Implementation Sequence](./DOC-12-build-strategy-and-implementation-sequence.md) before creating an implementation plan or touching files.
-5. Read the source specification docs linked by the active phase tracker. Do not rely on memory or older summaries.
+1. Read repository [`AGENTS.md`](../../AGENTS.md) for the mandatory start/close and documentation-update contract.
+2. Read the [active-phase router](./implementation/ACTIVE.md); do not infer the active phase from filenames or chat history.
+3. Read this README to understand the locked marketplace decisions and domain separation rules.
+4. Read [DOC-13: Implementation Tracker](./DOC-13-implementation-tracker.md) to confirm the current phase, latest handoff, blockers, and next authorized action.
+5. Follow the active phase session-start file and tracker reading order.
+6. Read [DOC-12: Build Strategy and Implementation Sequence](./DOC-12-build-strategy-and-implementation-sequence.md) before creating an implementation plan or touching product files.
+7. Read the source specification docs routed for the active work unit. Do not rely on memory or older summaries.
 
-Current handoff as of 2026-06-24:
+Current handoff as of 2026-07-19:
 
-- Phase 1 foundation schema/security migrations are applied to the live Supabase project and post-deployment checks have been refreshed through Supabase MCP.
-- The app is still consumer/P2P/bookclub-oriented; Store Owner routes, onboarding screens, and platform review UI do not exist yet.
-- Phase 2 Store Onboarding and Verification is the active planning target.
-- The live private seller document bucket is `seller-verification-docs`.
-- The next recommended task is to review and approve a Phase 2 implementation plan before writing feature code.
-- Do not build inventory, orders, payments, delivery, or image-to-LLM workflows until their later phases.
+- Phase 6 is `complete_e2e_deferred`; Phases 7 and 8 are deferred by product decision.
+- Phase 9 Image-to-LLM Inventory is the active planning milestone; implementation has not started.
+- The Phase 9 SDD/supporting/tracker set and corrected Work Unit 0 plan under [`implementation/phase-9-image-inventory/`](./implementation/phase-9-image-inventory/README.md) are approved; no contract/product implementation or migration creation/application is authorized.
+- Phase 9 begins with same-language spine-stack images, maximum 15 books/image, camera/gallery input, mandatory owner review, and controlled per-candidate inventory commits.
+- Exact Supabase project and all affected schema/storage state must be re-verified through Supabase MCP before migrations. No Phase 9 migration exists yet.
+- Do not fold deferred payment, paid-order, pickup, refund, ledger, or settlement behavior into Phase 9.
 
-When in doubt, treat [DOC-13](./DOC-13-implementation-tracker.md) as the live source of implementation status and this README as the stable source of reading order and guardrails.
+When in doubt, [DOC-13](./DOC-13-implementation-tracker.md) owns global status, the [active router](./implementation/ACTIVE.md) owns routing, and the active phase tracker owns its local milestone/next action. This README owns stable product-suite reading guardrails.
 
 ---
 
@@ -72,7 +74,7 @@ Bookstore onboarding
 | Long-term monetization | Hybrid model: bookstore subscription for tools plus small commission on book sales. |
 | Settlement | Weekly settlement to bookstores is the default planning assumption. |
 | Returns | Store-specific return policy is shown before order confirmation. |
-| Used-book condition | Standard condition values: `new`, `like_new`, `good`, `fair`, `damaged`. |
+| Used-book condition | Base values: `new`, `like_new`, `very_good`, `good`, `acceptable`; damage is a separate disclosure with public evidence when sellable. |
 | OCR terminology | The inventory workflow is image-to-LLM extraction plus metadata enrichment, not traditional OCR-only processing. |
 | Delivery | Third-party delivery partners are integrated through a provider adapter layer. Pickup remains supported. |
 | Deferred features | Community showcase and manager delegation are deferred from MVP. |
@@ -149,10 +151,10 @@ New marketplace domain required across all phases (v0.2):
 - `marketplace_events`
 - `marketplace_notifications`
 - `marketplace_audit_logs`
-- `image_extraction_sessions`
-- `image_extraction_inputs`
-- `image_extraction_candidates`
-- `metadata_enrichment_attempts`
+- `image_extraction_sessions` (planned; not live)
+- `image_extraction_inputs` (planned; not live)
+- `image_extraction_candidates` (planned; not live)
+- `metadata_enrichment_attempts` (planned; not live)
 
 All monetary fields are integer minor units (paise). See the canonical table register in `implementation/ARCHITECTURE-REMEDIATION-PLAN.md` (DD-01) for authoritative names and rationale.
 

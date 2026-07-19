@@ -1,5 +1,7 @@
 # BookTalks Mobile - Development Session Kickstart Prompt
 
+> **Current marketplace work:** This older generic prompt is not status or sequencing authority. New sessions must follow repository [`AGENTS.md`](./AGENTS.md), [`implementation/ACTIVE.md`](./docs/multi-tenant-bookstore-marketplace/implementation/ACTIVE.md), DOC-13, and the routed phase session protocol.
+
 **Use this prompt to start a fresh development session with an AI assistant.**
 
 ---

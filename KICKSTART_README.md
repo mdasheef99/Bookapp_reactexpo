@@ -1,5 +1,7 @@
 # 🚀 BookTalks Mobile - Development Kickstart Guide
 
+> **Current marketplace work:** This guide is historical. The self-serving session chain is repository [`AGENTS.md`](./AGENTS.md) -> [`implementation/ACTIVE.md`](./docs/multi-tenant-bookstore-marketplace/implementation/ACTIVE.md) -> DOC-13 -> the active phase `SESSION-START.md` and tracker.
+
 ## What You Have
 
 I've created **3 comprehensive documents** to help you start fresh development sessions:

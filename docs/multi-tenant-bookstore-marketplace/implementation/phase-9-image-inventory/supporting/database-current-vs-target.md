@@ -1,0 +1,103 @@
+# Phase 9 Database and Storage: Current vs Target
+
+**Audit date:** 2026-07-19
+**Audit mode:** read-only through Supabase MCP
+**Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
+**Mutation status:** no changes made
+
+**WU0 refresh:** a second read-only check on 2026-07-19 reconfirmed project identity, 37 `store_id`/zero `tenant_id` public columns, the five core catalogue/inventory tables, absence of proposed Phase 9 tables/buckets, five `good` inventory rows, zero observed quantity-balance violations, the explicit listing projection trigger, and the current migration tail. No drift changed the proposed design.
+
+## Evidence classification
+
+- **Observed** means read from the verified live database, storage catalogue, advisor output, migration list, or inspected repository source.
+- **Inferred** means a consequence of the observed design.
+- **Proposed** means the target for a later reviewed migration/implementation.
+
+## Project and tenancy
+
+| Area | Observed current state | Proposed target |
+| --- | --- | --- |
+| Project identity | `ahntbtktjjmvfosgkmgn`, `Bookconnect_reactexpo`, `ACTIVE_HEALTHY`, `ap-southeast-2`, Postgres 17.6.1. | Re-verify this identity immediately before every Phase 9 migration action. |
+| Tenant key | 37 `store_id` columns and zero `tenant_id` columns in `public`. | Use `store_id` for every store-owned Phase 9 table and path. |
+| Owner authority | Store relationship is represented by `store_administrators`; existing RLS uses `marketplace_sec.is_store_admin(store_id)`. | Server resolves the final store from auth/membership. A client `store_id` is only a target hint and never authority. |
+
+## Core data model delta
+
+| Object | Observed current state | Proposed target/change |
+| --- | --- | --- |
+| `canonical_works` | Has normalized/primary title, authors, optional language. Unique on `(title_normalized, primary_authors)`. Public-readable under RLS. | Audit language-aware collision behavior. Do not use aliases as identity. Avoid automatic global work creation from uncertain entries. |
+| `canonical_editions` | Has ISBNs, title/subtitle, authors, publisher/date/language/cover/pages/categories. ISBN-10 and ISBN-13 each unique. | Add description, edition statement, volume, format/binding, and metadata verification/provenance fields or an equivalent normalized projection. Preserve separate translated/language editions. |
+| `book_metadata_sources` | Stores provider/raw/normalized/confidence. Provider CHECK hard-codes `google_books`, `open_library`, `isbn_provider`, `manual`; unique `(provider, provider_book_id)`. | Replace provider enum-like CHECK with provider registry/adapter key validation; add request/result status, match rationale, schema/adapter version, expiry/cache metadata, and payload retention. |
+| `store_inventory` | 33 fields; lacks language, description, edition, volume, format, structured damage, typed media, freshness, acquisition type/method/MRP. Canonical edition may be null. | Add store-owned metadata snapshot fields, damage/freshness/acquisition fields, commit provenance/version, and typed links. Keep canonical link nullable. |
+| `marketplace_book_listings` | One projection per `inventory_id`; lacks language, description, aliases, structured damage/media/freshness. | Extend safe projection with public metadata/damage/media/search fields. Preserve one projection per inventory row; visual grouping occurs in query/UI, not DB merging. |
+| Projection trigger | Explicitly copies current inventory fields; revoked from anon/authenticated and executable by service role. | Extend or replace with a controlled projection writer covering new public fields and eligibility. Projection failure must be observable; no silent inventory/public divergence. |
+| Image extraction tables | `image_extraction_sessions`, `image_extraction_inputs`, `image_extraction_candidates`, and `metadata_enrichment_attempts` do not exist. | Create store-scoped persistent session/input/candidate/job/attempt structures with RLS, idempotency, versioning, lifecycle fields, and indexes. |
+| Alias storage | No multilingual alias table or listing alias projection exists. | Add provenance-bearing aliases targeted to either a canonical edition or unmatched store inventory with an XOR target constraint. Only approved/eligible aliases enter public search. |
+| Media registry | Inventory has an untyped `photos text[]`; no purpose, privacy, hash, retention, or deletion metadata. | Add typed `media_assets` plus explicit inventory/request links. Deprecate direct raw path arrays after backfill. |
+| Customer request photos | No request-specific photo table/gate exists. | Add orthogonal item photo request and media link structures; integrate with existing request versions/commands and `awaiting_customer_decision`. |
+
+## Constraints and live data
+
+| Area | Observed | Migration implication |
+| --- | --- | --- |
+| Conditions | `new`, `like_new`, `good`, `fair`, `damaged`. | Replace with `new`, `like_new`, `very_good`, `good`, `acceptable`. Move damage to separate fields. Map `fair -> acceptable`; review any `damaged` row instead of blindly mapping. |
+| Current rows | Five inventory rows and five public projections; all are `good`. | Today no live `fair`/`damaged` adjudication is needed, but the migration must still be safe if data changes before application. Re-query immediately before migration. |
+| Quantity equality | `quantity_total = available + reserved + sold + removed` exists `NOT VALID`; existing rows were previously audited as non-violating. PostgreSQL still enforces the CHECK for new/updated rows while historical validation remains pending. | All commits/increments use the controlled bucket-transfer boundary. Freshly audit/repair with approval and validate in a separately reviewed forward migration before production enablement unless documented evidence makes validation unsafe/unnecessary; contract/test work is not blocked. |
+| Provider values | Provider CHECK embeds concrete vendors. | Migrate without losing provenance; adapter keys become data/config, not schema releases. |
+| Listing cardinality | Unique `marketplace_book_listings.inventory_id`. | Keep row identity separate; aggregate offers and stores at read time. |
+| Canonical uniqueness | Unique ISBNs; unique work title/authors without language. | Normalize/check ISBNs before write. Audit work uniqueness before adding language-aware semantics; do not loosen blindly. |
+
+## RLS, grants, and write boundaries
+
+Observed relevant core tables have RLS. Store inventory currently allows authenticated owner INSERT/UPDATE under `is_store_admin`; public listing rows are trigger-maintained and public-readable through safe eligibility policies. `book_metadata_sources` is platform-operator writable.
+
+Proposed boundary:
+
+1. Mobile clients may read owner-safe staged/session projections and request upload authorization.
+2. Mobile clients do not directly insert committed inventory from model output, mutate canonical rows, select raw provider/model payloads, or promote media.
+3. A controlled server command performs candidate commit, duplicate choice, quantity-bucket changes, audit/event creation, and eligible public projection atomically per candidate where possible.
+4. Service-role functions/Edge Functions derive actor/store, use fixed schemas/search paths, expose minimum commands, and have explicit grants plus cross-tenant denial tests.
+5. Model/provider workers have a narrow job capability, not a user bearer token and not general database authority.
+
+## Storage delta
+
+| Bucket/boundary | Observed | Target |
+| --- | --- | --- |
+| `image-extraction-inputs` | Private, 10 MB, JPEG/PNG/WebP; shared owner path policies allow direct owner mutation. | Retain as private scan boundary or replace in a reviewed migration. Upload via server-issued scoped authorization; validate/re-encode/strip EXIF before model egress; delete by lifecycle policy. |
+| `inventory-photos` | Public, 5 MB, JPEG/PNG/WebP; owner can write directly under shared store path policy. | Use only for approved sanitized public derivatives. Remove direct unsanitized promotion; no broad listing policy. |
+| `order-dispute-evidence` | Private, 10 MB, images/PDF; owner and broad platform roles can read by store path. | Keep for disputes. Do not use as the sole request-photo store because customer/item access and lifecycle differ. |
+| `listing-photos` | Public legacy bucket, user-ID path ownership, broad public SELECT/list policy. Advisor flags enumeration. | Exclude from Phase 9. Remediate/migrate separately before relying on it. |
+| New private staging | Absent. | Add `marketplace-media-staging` (name reviewable) for one-time uploads and sanitization. |
+| New request media | Absent. | Add `order-request-photos` (name reviewable), private, request-item/customer/store scoped. |
+
+## Security advisor context
+
+The refreshed 2026-07-19 security advisor snapshot contains 121 notices: 31 RLS-enabled/no-policy, 7 mutable function search paths, 1 public table without RLS, 1 public extension, 3 public bucket listing warnings, 4 anonymous and 73 authenticated executable `SECURITY DEFINER` warnings, and leaked-password protection disabled. The error-level RLS notice names `public.spatial_ref_sys`. Table inspection also reports no RLS on `marketplace_event_schema_registry` and `marketplace_notification_type_registry`; those registry/service-only intentions require explicit grant/exposure review, not an assumed blanket remediation.
+
+These are not all Phase 9 findings; some no-policy tables are deliberately server-only and some RPCs are intentionally callable commands. They are nevertheless a launch review backlog. Phase 9 must:
+
+- create no new table with unexplained/no-policy RLS;
+- create no broadly executable helper or trigger function;
+- document every callable command's intended role, internal auth, grants, and denial tests;
+- create no public bucket listing policy;
+- treat leaked-password protection and unrelated legacy findings as global launch/security work, not hide them inside Phase 9 completion.
+
+Advisor remediation references:
+
+- [RLS enabled with no policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)
+- [RLS disabled in public](https://supabase.com/docs/guides/database/database-linter?lint=0013_rls_disabled_in_public)
+- [Public bucket allows listing](https://supabase.com/docs/guides/database/database-linter?lint=0025_public_bucket_allows_listing)
+- [Authenticated executable SECURITY DEFINER](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)
+- [Password security](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)
+
+## Migration design order (not yet authorized)
+
+1. Re-verify project, live rows, migrations, policies, functions, triggers, indexes, buckets, and advisors.
+2. Add new types/tables/columns in backward-compatible form without changing public behavior.
+3. Add indexes, constraints `NOT VALID` where appropriate, RLS, explicit grant matrices, and controlled commands; revoke ambient table/function privileges.
+4. Backfill deterministic fields and create an adjudication queue for non-deterministic rows.
+5. Switch application writers/readers behind feature flags.
+6. Extend safe public projection and search.
+7. Validate data/constraints after evidence passes.
+8. Deprecate legacy photo arrays/direct paths only after all readers migrate.
+9. Use forward correction for any live issue; do not rewrite applied history.

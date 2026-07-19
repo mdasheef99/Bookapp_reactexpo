@@ -2,8 +2,8 @@
 
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
-**Version:** 0.2
-**Date:** 2026-05-22
+**Version:** 0.3
+**Date:** 2026-07-19
 **Status:** Planning draft
 **Depends On:** README
 **Owns:** Marketplace model, product surfaces, core loop, domain boundaries, MVP structure.
@@ -270,18 +270,18 @@ Each inventory item is matched to canonical book data:
 
 ### 7.3 Public Discovery
 
-Consumer search should show canonical book results first, with store availability nested under each result.
+Marketplace home and book search are bookstore-first. Canonical edition matching still resolves the query, but the primary results show every eligible bookstore carrying the match, each store once and paginated without an arbitrary small cap.
 
 Example:
 
 ```text
 Atomic Habits
-  Available at:
-    Store A - good - Rs. 240 - 2.1 km - delivery/pickup
-    Store B - like_new - Rs. 310 - 5.8 km - pickup
+  Bookstores carrying this edition:
+    Store A - from Rs. 240 - 2.1 km - delivery/pickup
+    Store B - from Rs. 310 - 5.8 km - pickup
 ```
 
-The consumer should not see raw store inventory internals like shelf location, store acquisition cost, OCR confidence, internal notes, or duplicate resolution metadata.
+Selecting a bookstore opens its complete active public catalogue and highlights the searched book. The consumer should not see raw store inventory internals like exact physical quantity, shelf location, store acquisition cost, extraction confidence, internal notes, or duplicate resolution metadata.
 
 ### 7.4 Commerce
 

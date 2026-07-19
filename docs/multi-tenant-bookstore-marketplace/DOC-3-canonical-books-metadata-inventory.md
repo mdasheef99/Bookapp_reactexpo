@@ -2,8 +2,8 @@
 
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
-**Version:** 0.1
-**Date:** 2026-05-19
+**Version:** 0.3
+**Date:** 2026-07-19
 **Status:** Planning draft
 **Depends On:** DOC-0, DOC-1, DOC-2
 **Owns:** Canonical book identity, metadata provider rules, store inventory, public listing projection, duplicate resolution, and inventory visibility.
@@ -33,6 +33,8 @@ Which raw inventory rows happen to match this text?
 ```
 
 The marketplace should group availability around canonical book/edition identity and then show store-specific offers.
+
+Phase 9 refines this into bookstore-first presentation: canonical identity resolves a book query, then the consumer sees every eligible bookstore carrying it. Inventory rows remain separate and are grouped visually/query-time rather than destructively merged.
 
 ---
 
@@ -116,13 +118,14 @@ MVP can begin with edition-level matching and add work-level grouping where conf
 
 Recommended enrichment order:
 
-1. ISBN exact match against existing canonical editions.
-2. Google Books API lookup.
-3. Open Library lookup.
-4. Additional ISBN/catalog provider if available.
-5. Manual owner correction.
+1. ISBN/title-author lookup against existing canonical editions.
+2. Configured primary metadata adapter.
+3. Configured secondary metadata adapter when the primary technically fails or no acceptable coherent edition is found.
+4. Manual owner correction/unmatched store inventory.
 
-Provider data should be stored as source records, not blindly overwritten into canonical truth.
+Provider names are adapter configuration, not hard-coded product/schema behavior. Select one coherent edition snapshot; do not silently stitch conflicting fields from different editions. Provider data should be stored as source records, not blindly overwritten into canonical truth.
+
+Selected metadata includes title/subtitle, authors, description, validated ISBN-10/13, publisher/date, language, edition statement, volume, format/binding, pages, categories, cover URL, and provenance. Both ISBNs are stored when validated metadata supplies them; a visible ISBN from an image is only a lookup clue.
 
 ### 5.3 Manual Correction
 
@@ -158,6 +161,8 @@ store_inventory
   source_book_id nullable
   title
   authors
+  language
+  description
   isbn_10
   isbn_13
   publisher
@@ -165,6 +170,9 @@ store_inventory
   cover_url
   condition
   condition_notes
+  has_damage
+  damage_types
+  damage_notes
   quantity_total
   quantity_available
   quantity_reserved
@@ -174,7 +182,7 @@ store_inventory
   shelf_location private
   internal_notes private
   public_notes
-  photos
+  approved_public_media via typed relation
   visibility_status
   listing_quality_status
   metadata_confidence
@@ -190,9 +198,9 @@ Allowed condition values:
 
 - `new`
 - `like_new`
+- `very_good`
 - `good`
-- `fair`
-- `damaged`
+- `acceptable`
 
 Condition descriptions:
 
@@ -200,9 +208,11 @@ Condition descriptions:
 |---|---|
 | `new` | Unused or store-new copy. |
 | `like_new` | Minimal wear; no meaningful marks or damage. |
-| `good` | Readable and clean; moderate wear acceptable. |
-| `fair` | Clearly used; may have marks or worn cover but complete/readable. |
-| `damaged` | Damaged but sellable only with clear disclosure and photos. |
+| `very_good` | Light wear; clean, complete, and fully readable. |
+| `good` | Noticeable normal wear or limited marks; complete/readable. |
+| `acceptable` | Heavy wear/marks but complete, safe, and readable. |
+
+All public conditions except New have an accessible explanation marker. Damage is separate from base condition. A sellable damaged copy requires public damage types/notes and 1-3 approved actual-copy photos and remains a separate inventory row. Missing essential pages, unreadable text, severe mould/contamination, unsafe damage, or disabling water damage is unsellable and cannot publish.
 
 ### 6.2 Quantity Semantics
 
@@ -275,6 +285,7 @@ Recommended inventory visibility:
 |---|---|
 | `draft` | Inventory exists but is not public. |
 | `needs_review` | Missing required listing data or low confidence. |
+| `publication_failed` | Private inventory commit succeeded but public projection failed; retry publication idempotently without repeating inventory effects. |
 | `published` | Publicly searchable and orderable. |
 | `paused` | Temporarily hidden by store owner. |
 | `out_of_stock` | Quantity unavailable. |
@@ -296,11 +307,18 @@ Duplicates can occur when:
 
 Resolution rules:
 
-1. Same store + same ISBN-13 + same condition can suggest quantity increment.
-2. Same store + same ISBN-13 + different condition should create separate inventory rows or variants.
-3. Same store + no ISBN + strong title/author match should prompt owner to merge or keep separate.
-4. Different stores with same ISBN should not merge inventory; they become multiple public offers under same canonical edition.
-5. Platform may merge canonical metadata, but not store inventory ownership.
+1. Warnings are same-store advisory only; never auto-merge.
+2. Quantity increment is recommended only for the same validated edition/ISBN, language, format, condition, and price, with no copy-specific damage, notes, collectible distinction, or approved public actual-copy/damage photo.
+3. Any different condition/price/language/format/edition or copy-specific damage/note/photo creates a separate row.
+4. Same store + no ISBN + strong original title/author/language match prompts explicit owner choice; fuzzy or alias-only evidence is not a duplicate.
+5. Shelf/location alone does not require a separate row, but the owner may keep it separate after warning.
+6. Different stores with the same edition never merge inventory; they become separate offers.
+7. Image/photo comparison is explicitly excluded from duplicate detection. Exact image hash is only replay/double-charge protection.
+8. Private customer-request photos are request-scoped evidence created after inventory identity; they never influence duplicate matching or quantity compatibility.
+
+### 9.1 Search Alias Limits
+
+The automated Phase 9 alias-generation operation proposes at most three English/Latin-script aliases after metadata selection. The relational alias model may retain additional provider-recognized official aliases or Owner/platform-verified aliases within configured abuse, quality, and storage limits. Every alias is a provenance-bearing row with approval status; only approved aliases enter search, and no alias establishes canonical identity or duplicate evidence.
 
 ---
 
@@ -318,7 +336,7 @@ Inputs:
 - price set
 - quantity set
 - public visibility enabled
-- condition photo present for used/damaged high-value books
+- required public damage note/types and 1-3 approved actual-copy photos present when `has_damage=true`
 - metadata confidence
 - piracy/counterfeit/moderation risk flags
 - complaint history on listing/store
@@ -338,20 +356,16 @@ This turns image extraction into a business workflow, not just data entry.
 
 ---
 
-## 11. Optional Used-Book Photos
+## 11. Used-Book and Customer-Requested Photos
 
-The customer may request images of used books before ordering. This is optional planning scope and can be implemented later.
+Public damaged/actual-copy photos and private customer-request photos are different media classes.
 
-Design implications:
-
-- inventory can have condition photos
-- order request can include `photo_requested`
-- store can attach additional photos before confirming
-- customer can decide whether to proceed after viewing photos
-
-MVP should support storing photos in the model, but the full request-before-order image workflow can be deferred.
-
-For `damaged` condition, public condition notes should be mandatory and condition photos should be strongly preferred. If dispute workflows rely on photos, uploaded photos must be retained according to evidence policy even if the listing is later unpublished.
+- A sellable damaged listing requires a public note and 1-3 approved sanitized actual-copy photos.
+- A customer may request 1-3 new current-copy photos for a specific unpaid request item.
+- Once requested, the store must provide them before confirming that item and the customer must accept them before `payment_ready`.
+- If the store cannot provide the requested photos, the item is unfulfilled/unavailable for that request; there is no proceed-without-photo option.
+- Scan images never satisfy public or customer-request photo requirements.
+- Public/request/dispute retention follows purpose-specific evidence policy.
 
 ---
 
@@ -430,9 +444,13 @@ canonical_editions
   title
   subtitle
   authors
+  description
   publisher
   published_date
   language
+  edition_statement
+  volume
+  format_binding
   cover_url
   page_count
   categories
@@ -447,7 +465,21 @@ book_metadata_sources
   raw_payload jsonb
   normalized_payload jsonb
   confidence
+  reuse_policy
   fetched_at
+
+book_search_aliases
+  id
+  canonical_edition_id nullable
+  inventory_id nullable
+  store_id nullable
+  alias_type
+  alias_language
+  alias_script
+  alias_text
+  alias_normalized
+  provenance
+  approval_status
 
 store_inventory
   id
@@ -456,10 +488,15 @@ store_inventory
   source_book_id nullable
   title
   authors
+  language
+  description
   isbn_10
   isbn_13
   condition
   condition_notes
+  has_damage
+  damage_types
+  damage_notes
   quantity_available
   quantity_reserved
   selling_price_minor
@@ -467,7 +504,7 @@ store_inventory
   shelf_location
   internal_notes
   public_notes
-  photos
+  approved_public_media via typed relation
   visibility_status
   listing_quality_status
   entry_method
@@ -483,7 +520,11 @@ marketplace_book_listings
   public_title
   public_authors
   public_cover_url
+  public_description
+  language
   condition
+  has_damage
+  public_damage_note
   selling_price_minor
   availability_status
   fulfillment_options
@@ -526,12 +567,15 @@ listing_moderation_flags
 | INV-01 | Store Owner can create inventory without publishing it. |
 | INV-02 | Store Owner can publish only inventory with required public fields. |
 | INV-03 | Consumer search reads public listing projection only. |
-| INV-04 | Same ISBN across multiple stores groups under one consumer book result. |
-| INV-05 | Same ISBN within one store suggests merge/increment flow. |
+| INV-04 | Same ISBN across stores can resolve to one edition identity while consumer results keep every eligible bookstore distinct. |
+| INV-05 | Same-store compatible copies may suggest explicit quantity increment; no duplicate auto-merge occurs. |
 | INV-06 | Low-confidence metadata match requires owner confirmation. |
-| INV-07 | Inventory supports `new`, `like_new`, `good`, `fair`, `damaged`. |
+| INV-07 | Inventory supports `new`, `like_new`, `very_good`, `good`, `acceptable`, with damage stored separately. |
 | INV-08 | Private fields are not exposed in public listing responses. |
 | INV-09 | Suspended, blocked, counterfeit, or prohibited listings are excluded from consumer discovery. |
+| INV-10 | Automated alias generation proposes at most three rows while bounded official/Owner-verified aliases may coexist without affecting identity. |
+| INV-11 | Private customer-request photos never affect duplicate identity or quantity compatibility. |
+| INV-12 | Publication failure preserves private inventory and an idempotent retry cannot repeat the inventory effect. |
 
 ---
 
@@ -542,7 +586,7 @@ listing_moderation_flags
 - public reliability score
 - dedicated external search engine
 - automated canonical merge without review
-- full image request workflow before order
+- automatic image-similarity duplicate detection
 
 ---
 

@@ -1,91 +1,45 @@
-# PHASE-9: Image-to-LLM Inventory
+# PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `planning_authorized`
-**Last updated:** 2026-07-18
-**Phase goal:** Add image-based inventory extraction after manual inventory and listings are stable.
+**Status:** `planning_and_wu0_approved`
+**Planning set:** `approved_baseline`
+**Implementation:** `not_started`
+**Last updated:** 2026-07-19
 
----
+This stable phase handoff points to the detailed planning set:
 
-## Required Reading
+- [Active-phase router](./ACTIVE.md)
+- [Mandatory development-session start](./phase-9-image-inventory/SESSION-START.md)
+- [Phase 9 README and reading order](./phase-9-image-inventory/README.md)
+- [Master tracker](./phase-9-image-inventory/TRACKER.md)
+- [Master SDD](./phase-9-image-inventory/00-phase-9-master-sdd.md)
+- [Live database/storage current-vs-target audit](./phase-9-image-inventory/supporting/database-current-vs-target.md)
+- [Data dictionary](./phase-9-image-inventory/supporting/data-dictionary.md)
+- [Implementation/verification tracker](./phase-9-image-inventory/trackers/02-implementation-and-verification.md)
+- [Work Unit 0 contracts/threat/migration plan](./phase-9-image-inventory/work-units/00-contracts-threat-migration-plan.md)
 
-- [DOC-4: Image-to-LLM Inventory Workflow](../DOC-4-image-to-llm-inventory-workflow.md)
-- [DOC-3: Canonical Books, Metadata, and Inventory](../DOC-3-canonical-books-metadata-inventory.md)
-- [DOC-8: Store Owner Console](../DOC-8-store-owner-console.md)
+## Locked phase direction
 
----
+- Same-language `spine_stack` is first, maximum 15 books/image; reject/rescan above 15.
+- Camera and gallery/manual upload; multiple images per simple Start/Close session.
+- English default; owner selects another language before upload; mixed-language/per-spine routing excluded.
+- Model/provider adapters with one primary and bounded fallback; model has no tools/data authority.
+- Local canonical lookup then configured metadata providers; description and rich edition metadata; up to three automated English alias proposals plus bounded official/Owner-verified aliases.
+- Mandatory owner review, advisory same-store duplicates, no image comparison/auto-merge, independent idempotent candidate commits.
+- Five public conditions plus separate damage; damaged sellable copies require note and 1-3 approved public photos.
+- Bookstore-first marketplace results and complete public store catalogue.
+- Customer-requested current-copy photos are mandatory before requested-item confirmation/payment readiness.
+- Store Owner post-commit edits remain available through controlled commands.
+- Phase 9 remains independent of deferred Phase 7/8 payment, paid-order, pickup, refund, ledger, and settlement behavior.
 
-## Scope
+## Current evidence
 
-- Capture/upload sessions.
-- LLM extraction.
-- Metadata enrichment.
-- Owner review.
-- Duplicate resolution.
-- Quota and cost tracking.
-- Workflow persistence/recovery.
-- Private raw payload and image retention rules.
+- Supabase project re-verified 2026-07-19: `ahntbtktjjmvfosgkmgn` / `Bookconnect_reactexpo`, `ACTIVE_HEALTHY`.
+- `store_id` is canonical: 37 public-schema columns; zero `tenant_id`.
+- Core canonical/inventory/listing tables exist; Phase 9 extraction/enrichment/media/request-photo tables do not.
+- No Phase 9 migration, function, bucket/policy, code, or data mutation has occurred.
 
----
+## Next gate
 
-## Implementation Units
+The planning baseline and corrected Work Unit 0 TDD/security/migration-design plan were approved on 2026-07-19. No next implementation unit is authorized. Creating contract/product code or migration files and applying migrations to Supabase remain unauthorized separate actions and require their named gates plus fresh exact-project/schema/storage verification.
 
-| Unit | Status | Notes |
-|---|---|---|
-| Extraction session model | `not_started` | Store-scoped. |
-| Image upload/capture | `not_started` | Private storage. |
-| LLM extraction service | `not_started` | Server-side/provider-safe. |
-| Metadata enrichment | `not_started` | Provider source records. |
-| Owner review UI | `not_started` | Required before inventory write. |
-| Duplicate resolution UI | `not_started` | Increment/variant/skip/manual match. |
-| Quota/cost tracking | `not_started` | Store-level. |
-| Session recovery | `not_started` | Local state without customer PII. |
-| Tests | `not_started` | Candidate caps, quota, owner review requirement. |
-
----
-
-## Verification Log
-
-No Phase 9 implementation verification has run. Planning was authorized on 2026-07-18 after
-Phase 6 source/database completion, with comprehensive Phase 6 browser E2E deferred.
-
----
-
-## Acceptance Criteria
-
-- [ ] Owner review is required before inventory write/publish.
-- [ ] Candidate caps are enforced by capture mode.
-- [ ] Low-confidence candidates require correction.
-- [ ] Duplicate candidates can increment quantity or create variants.
-- [ ] Quota is checked before external-cost processing.
-- [ ] Manual entry still works when image quota is exhausted.
-- [ ] Raw images/payloads follow retention/privacy rules.
-- [ ] `DOC-13` is updated.
-
----
-
-## Blockers
-
-- Phase 3 inventory/listing model must be stable.
-- Phase 9 writes must preserve the Phase 6 quantity-bucket equality, active-hold semantics,
-  controlled server-side inventory write boundary, and reconciliation expectations.
-- LLM/provider choice may require cost and privacy review.
-
----
-
-## Decisions Made During Implementation
-
-- 2026-07-18: Phase 9 may proceed while Phases 7 and 8 remain deferred. It must remain
-  independent of payment-provider objects, paid orders, pickup, refunds, ledger, and settlement.
-- 2026-07-18: Begin with a reviewed `single_cover` vertical slice before `spine_stack`.
-
----
-
-## Spec Deviations
-
-- None yet.
-
----
-
-## Handoff Notes
-
-Do not let LLM output publish directly without owner review.
+Every material session must use the Phase 9 update matrix, append its evidence to the correct tracker, leave one exact next authorized action, and pass the continuity validator before handoff.

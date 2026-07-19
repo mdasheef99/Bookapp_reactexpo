@@ -1,5 +1,7 @@
 # BookTalks Mobile - Session Checklist
 
+> **Current marketplace work:** This legacy checklist does not own phase status. Use repository [`AGENTS.md`](./AGENTS.md) and the [active marketplace phase router](./docs/multi-tenant-bookstore-marketplace/implementation/ACTIVE.md).
+
 Use this checklist at the start of each development session.
 
 ---
@@ -22,7 +24,7 @@ Use this checklist at the start of each development session.
 - [ ] Verify all required environment variables are set:
   - `EXPO_PUBLIC_SUPABASE_URL`
   - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
-  - `EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY` (if needed)
+- [ ] Confirm no service-role key or other server secret uses an `EXPO_PUBLIC_*` variable or enters the mobile bundle.
 - [ ] Run `npm install` to ensure dependencies are installed
 - [ ] Run `npm start` to verify app starts
 - [ ] Check Supabase connection works
