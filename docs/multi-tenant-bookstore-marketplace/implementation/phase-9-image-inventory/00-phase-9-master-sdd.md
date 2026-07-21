@@ -58,7 +58,7 @@ This SDD refines DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14. T
 | MAS-09 | Phase 9 can reach private inventory/public listing and request-photo acceptance only; it cannot create payment-provider or paid-order effects. |
 | MAS-10 | Quota/cost failure never disables manual inventory entry. |
 | MAS-11 | A valid private inventory commit survives public-projection failure; publication retries cannot create or increment inventory again. |
-| MAS-12 | During the Owner-only pilot, the initiating Owner owns session mutation/resume; support intervention is separate, least-privilege, and audited. |
+| MAS-12 | During the Owner-only pilot, the initiating Owner owns session mutation/resume. Phase 9 exposes no interactive support takeover or cross-store private-data access; recovery uses initiating-Owner retry, claimed-worker recovery, and reconciliation. Future support tooling requires separate design and authorization. |
 
 ## 4. Target architecture
 
@@ -208,7 +208,7 @@ The normative unit order is in [the implementation tracker](./trackers/02-implem
 | MAS-AC06 | Public discovery uses only eligible safe projections and returns every eligible matching store. |
 | MAS-AC07 | Retention/hold/deletion/orphan jobs are idempotent and observable. |
 | MAS-AC08 | No Phase 7/8 behavior appears in migration, function, app, event, or test scope. |
-| MAS-AC09 | Initiator-only session mutation/resume and separately audited support intervention are enforced. |
+| MAS-AC09 | Initiator-only session mutation/resume is enforced, interactive support intervention is absent, and worker/reconciliation recovery cannot grant cross-store private-data access. |
 | MAS-AC10 | Publication failure retains one private inventory effect and no public listing until idempotent retry succeeds. |
 
 ## 15. Open review items

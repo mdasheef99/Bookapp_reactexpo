@@ -97,8 +97,12 @@ export function parseQuantity(value: unknown): number {
   return boundedInteger(value, 'quantity', 1, PHASE9_LIMITS.quantity);
 }
 
-export function parseMoneyMinor(value: unknown): number {
-  return boundedInteger(value, 'money_minor', 1, PHASE9_LIMITS.moneyMinor);
+export function parsePrivateInventoryPrice(value: unknown): number {
+  return boundedInteger(value, 'price_paise', 0, PHASE9_LIMITS.moneyMinor);
+}
+
+export function parsePublicationPrice(value: unknown): number {
+  return boundedInteger(value, 'price_paise', 1, PHASE9_LIMITS.moneyMinor);
 }
 
 export function parseIdempotencyKey(value: unknown): string {

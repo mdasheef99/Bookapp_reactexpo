@@ -9,9 +9,12 @@ import {
   mayCloseSession,
   finalizeSessionClose,
   parseCommandId,
+  parseCandidateState,
   parseIdempotencyKey,
-  parseMoneyMinor,
+  parsePrivateInventoryPrice,
+  parsePublicationPrice,
   parseQuantity,
+  PHASE9_CANDIDATE_STATES,
   publicationRetryPlan,
   publicationRetryIdentity,
   recommendDuplicateAction,
@@ -74,6 +77,19 @@ describe('Phase 9 deterministic domain helpers', () => {
     expect(outcome).toBe('committed_publication_failed');
     expect(publicationRetryPlan({ outcome, originalCommitId: 'commit-000000000001', originalIdempotencyKey: 'owner-key-00000001' }))
       .toMatchObject({ mayWriteInventory: false, reauthorizePublication: true });
+    expect(PHASE9_CANDIDATE_STATES).toContain('committed');
+    expect(PHASE9_CANDIDATE_STATES).not.toContain(outcome);
+    expect(parseCandidateState('committed')).toBe('committed');
+    expect(() => parseCandidateState(outcome)).toThrow(/unsupported persisted candidate state/i);
+  });
+
+  it('allows zero-price private inventory but requires positive publication price', () => {
+    expect(parsePrivateInventoryPrice(0)).toBe(0);
+    expect(parsePrivateInventoryPrice(999)).toBe(999);
+    expect(parsePublicationPrice(1)).toBe(1);
+    expect(() => parsePublicationPrice(0)).toThrow(/safe integer/i);
+    expect(() => parsePrivateInventoryPrice(-1)).toThrow(/safe integer/i);
+    expect(() => parsePrivateInventoryPrice(Number.MAX_SAFE_INTEGER + 1)).toThrow(/safe integer/i);
   });
 
   it('preserves the Phase 6 quantity-bucket equality', () => {
@@ -84,11 +100,11 @@ describe('Phase 9 deterministic domain helpers', () => {
 
   it('validates quantity, integer minor money, idempotency keys, and command UUIDs centrally', () => {
     expect(parseQuantity(1)).toBe(1);
-    expect(parseMoneyMinor(999)).toBe(999);
+    expect(parsePrivateInventoryPrice(999)).toBe(999);
     expect(parseIdempotencyKey('owner-key-00000001')).toBe('owner-key-00000001');
     expect(parseCommandId('00000000-0000-4000-8000-000000000001')).toBe('00000000-0000-4000-8000-000000000001');
     expect(() => parseQuantity(-1)).toThrow(/safe integer/i);
-    expect(() => parseMoneyMinor(10.5)).toThrow(/safe integer/i);
+    expect(() => parsePrivateInventoryPrice(10.5)).toThrow(/safe integer/i);
     expect(() => parseIdempotencyKey('../short secret')).toThrow(/invalid format|16/i);
     expect(() => parseCommandId('not-a-command')).toThrow(/invalid format/i);
   });

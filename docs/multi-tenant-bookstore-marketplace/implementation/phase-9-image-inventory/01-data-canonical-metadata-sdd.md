@@ -63,11 +63,14 @@ The selector chooses one coherent edition response. A secondary provider may cor
 - One automated alias-generation operation proposes at most three English/Latin-script aliases:
   - transliteration;
   - English translation;
-  - common spelling or recognized English title.
+  - common spelling;
+  - recognized English title.
 - Authors are transliterated, not semantically translated.
 - The relational target may retain additional provider-recognized official or Owner/platform-verified aliases within configured abuse, quality, and storage limits. Model-generated aliases require schema validation, source/version, confidence, and owner/platform correction capability.
 - Alias creation happens after metadata selection so it cannot distort canonical lookup.
 - Only `approved` aliases enter public search. Alias hits return the original authoritative title.
+- Canonical alias kinds are `transliteration`, `translation`, `common_spelling`, and `recognized_title`. Canonical sources are `automated`, `provider_official`, `owner_verified`, and `platform_verified`; approval status is only `proposed`, `approved`, or `rejected`.
+- `superseded` is a bounded lifecycle/audit reason, not a persisted approval status. Superseding an alias transitions the replaced row to `rejected` and removes it from search eligibility while retaining bounded audit evidence.
 - Alias text is never duplicate evidence, canonical uniqueness evidence, or automatic display replacement.
 - The schema supports future alias languages/scripts without adding columns or changing identity rules.
 

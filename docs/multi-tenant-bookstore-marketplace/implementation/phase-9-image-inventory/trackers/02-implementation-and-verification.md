@@ -15,7 +15,7 @@ WU0B uses five distinct markers: `definition_complete_needs_review`, `definition
 | --- | --- | --- | --- |
 | 0 | [Contract fixtures, threat tests, migration plan, rollback/forward-correction plan](../work-units/00-contracts-threat-migration-plan.md) | `approved` | Corrections incorporated; no implementation/migration authorization |
 | 0A | Server contracts, deterministic helpers, validation/error/provider/query/grant registers, fixtures, and red contract/security tests | `approved_complete` | independently reviewed 2026-07-19; no SQL/live writes; focused 4 suites/41 tests and all function 9 suites/53 tests pass |
-| 0B | [Backend/API technical design](../work-units/00b-backend-api-technical-design-plan.md): seven routed artifacts covering command/query/DTO/actor/boundary inventories, state/transaction/idempotency/worker/telemetry matrices, exact later file allowlists, and red-test mapping | `independently_approved` | final verdict `approved` 2026-07-22; consolidated Risk-Based Phase 9 SDD analysis next; no Supabase query, migration, endpoint, provider/storage/UI/runtime change or external mutation |
+| 0B | [Backend/API technical design](../work-units/00b-backend-api-technical-design-plan.md): seven routed artifacts covering command/query/DTO/actor/boundary inventories, state/transaction/idempotency/worker/telemetry matrices, exact later file allowlists, and red-test mapping | `independently_approved` | original and bounded correction verdicts `approved` 2026-07-22; consolidated Risk-Based Phase 9 SDD analysis next; no Supabase query, migration, endpoint, provider/storage/UI/runtime change or external mutation |
 | 1 | Data dictionary migration: metadata fields, aliases, condition/damage, media registry | `not_started` | fresh Supabase audit + migration review |
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `not_started` | Unit 1 verified |
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `not_started` | storage policy/security review |
@@ -51,7 +51,7 @@ Rules:
 - [ ] Every store-owned Phase 9 row has `store_id`.
 - [ ] Store A cannot read, write, sign, promote, commit, or delete Store B data/media.
 - [ ] Client-supplied `store_id` never establishes authority.
-- [ ] Only the initiating Owner mutates/resumes a pilot session; support intervention is separately authorized/audited.
+- [ ] Only the initiating Owner mutates/resumes a pilot session; Phase 9 has no support takeover or cross-store private-data scope, and recovery is Owner retry, claimed-worker recovery, or reconciliation.
 - [ ] Canonical tables cannot be mutated by Store Owner commands.
 - [ ] RLS/grants and function `search_path`/EXECUTE are verified live.
 - [ ] Grant matrix proves API-exposed tables have RLS and raw attempts/jobs/usage/cost/lifecycle structures plus private helpers are not directly callable by client roles.
@@ -85,7 +85,7 @@ Rules:
 - [ ] Camera and gallery uploads support one selected language and enforce the 15-spine cap.
 - [ ] Minimal review fields, defaults, add-missed/remove-false, duplicate warning, condition explanations, and preview are keyboard/screen-reader accessible.
 - [ ] A failed candidate does not block successful candidate commits.
-- [ ] Projection failure retains one private `committed_publication_failed` inventory effect and idempotent retry cannot repeat it.
+- [ ] Projection failure leaves candidate `committed`, publication `publication_failed`, and returns command/API outcome `committed_publication_failed`; idempotent retry cannot repeat inventory effects.
 - [ ] Session summary accurately reports committed/private/published/needs-review/failed/skipped counts.
 
 ### Marketplace and customer photos
@@ -263,5 +263,17 @@ No product implementation activity recorded.
 - Decisions/deviations/risks: exact live database facts remain `DB_AUDIT_REQUIRED_BEFORE_DATABASE_DESIGN`; independent approval grants no migration or runtime authority
 - Tracker/source-doc updates: WU0B router/artifacts, Phase 9 README/TRACKER, this implementation tracker, DOC-13 and continuity validator
 - Next authorized action and gate: consolidated Risk-Based Phase 9 SDD analysis in a new session; Supabase audit, migration and runtime remain unauthorized
+
+### 2026-07-22 — WU0A/WU0B bounded contract correction
+
+- Date/session: 2026-07-22 bounded SDD/contract correction and fresh correction-only review
+- Authorized work unit and scope: reconcile alias vocabulary, price boundaries, publication outcome versus persisted state, complete stable-error mappings, exclude interactive support intervention, and add the nine named contract/design verification cases only
+- Completed: canonical alias kinds/sources/statuses now round-trip with `common_spelling` and lifecycle-only supersession; private zero price and positive publication gates are separate; candidate/publication/API outcome vocabularies are closed; every C01–C30/Q01–Q11 error maps to registered metadata-complete `P9_*` codes; support takeover/cross-store private access is excluded; later runtime/release test ownership remains deferred
+- Files/components/migrations: Phase 9 SDD/supporting/WU0/WU0B/tracker documents plus existing WU0A shared contract/domain files, fixtures, and tests; no migration, callable endpoint, product/mobile runtime, dependency, generated file, or Supabase artifact
+- Verification actually run: focused WU0A Jest PASS 4 suites/45 tests; `npx.cmd tsc --noEmit` PASS; continuity validator PASS with 107 semantic cases, two C12 probes, 30 Markdown/link files, 25 required files, size checks, and embedded `git diff --check`; final standalone `git diff --check` PASS; fresh correction-only reviewer verdict `approved`
+- Supabase/external mutations: no Supabase access/query/mutation, migration creation/application, Storage/provider call, deployment, or runtime action; Git commit/push evidence is reported after success
+- Decisions/deviations/risks: P9-D39/P9-D40 corrected and P9-D44–P9-D46 added; no live-schema claim was made; interactive support tooling requires future separate design and authorization
+- Tracker/source-doc updates: Master/Data/Extraction/Review/Media SDDs, data dictionary, traceability, WU0/WU0B artifacts, planning and implementation trackers, Phase 9 README/TRACKER, and DOC-13
+- Next authorized action and gate: consolidated Risk-Based Phase 9 SDD analysis in a new session; Supabase audit, database/migration design, migration creation/testing/application, and runtime remain unauthorized
 
 When implementation is authorized, append one entry per material development session using the exact closeout shape in [SESSION-START](../SESSION-START.md): authorized unit/scope, completed work, files/components/migrations, verification actually run, external mutations, decisions/deviations/risks, documentation updates, and next authorized action/gate. Never rewrite an older evidence entry to make a later result look contemporaneous.

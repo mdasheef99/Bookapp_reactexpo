@@ -1,7 +1,8 @@
 # WU0B Red Tests, Acceptance, Audit Questions, and Handoff
 
 **Status:** `independently_approved`
-**Independent review:** not yet performed
+**Original WU0B independent review:** `approved` 2026-07-22
+**Bounded correction review:** `approved` 2026-07-22
 
 ## 1. Red-test mapping
 
@@ -19,6 +20,12 @@ These tests are future failing evidence before their production unit. WU0B creat
 | RT-STATE-02 | manual candidate bounded; REV-12 | C06; OE→RPC; contract/integration | over cap/invalid session → add missed | 409/422; no candidate | rejection category only | U7 |
 | RT-STATE-03 | false-detection disposition; REV-12/14 | C07; OE→RPC; database | stale/committed candidate → record skip disposition | 409 version/state; unchanged | bounded conflict | U7 |
 | RT-STATE-04 | needs-review integrity; REV-14 | C13; OE→RPC; database | stale candidate → mark review | 409 version; unchanged | bounded conflict | U7 |
+| RT-OUTCOME-01 | candidate/publication/outcome separation; MAS-11, REV-18 | C08–C12,Q06; contract/database | projection fails after private commit → attempt to persist `committed_publication_failed` as candidate/publication state | candidate `committed`, publication `publication_failed`, API outcome `committed_publication_failed`; invalid state rejected | one bounded publication-failed event | U1/U7 |
+| RT-ALIAS-01 | canonical search-only aliases; DAT-11/13/14 | alias parser/storage contract; contract/database | round-trip every kind/source/status; submit `common_title`, legacy source, or persisted `superseded` status | canonical values round-trip; legacy/unknown values rejected; supersession records rejected+audit reason | provenance/status only, never alias text | U1/U5 |
+| RT-PRICE-01 | private/public price boundary; REV-02/05 | C08,C10,C11,C24,C26; contract/database | save private at zero; publish zero; submit negative/fractional/unsafe integer | zero private succeeds; publish zero and invalid integers fail without public effect | bounded validation/publication code | U1/U7 |
+| RT-ERROR-01 | exact stable errors; REV-19 | C01–C30,Q01–Q11; contract/unit | remove operation mapping, use unknown code, or omit required error metadata | contract fails; every operation error resolves to one registered `P9_*` definition | code/operation only | U1 |
+| RT-INPUT-CAP-01 | reject more than 15 without truncation; MAS-01, EXT-02/03 | C03/input worker; contract/integration | submit/parse 16 visible candidates | entire input rejected; no candidate rows, truncation, or external-cost replay | observed count and bounded rejection only | U2/U4 |
+| RT-LANGUAGE-01 | one selected language; EXT-04/05 | C01,C03/input worker; contract/integration | accepted output contains mismatched/mixed language candidates | selected-language policy rejects/skips as specified; no auto-route or fallback loop | language policy/version and bounded outcome only | U2/U4 |
 | RT-REVIEW-01 | mandatory Owner review/model cannot bypass; MAS-02/05, REV-01 | C05,C08-C10; OE/RPC; contract/integration | provider/model output without Owner snapshot → commit | 409/422; no inventory | validation denial, no raw output | U7 |
 | RT-COMMIT-01 | one atomic idempotent commit; MAS-06, REV-05 | C08/C09; RPC; database/concurrency | replay same candidate/key concurrently | canonical one result; one inventory effect | one commit event | U7 |
 | RT-COMMIT-02 | explicit separate copy; DAT-16/19 | C10; RPC; database | stale duplicate advice → separate commit | 409 duplicate/version; none | bounded conflict | U7 |
@@ -58,11 +65,13 @@ These tests are future failing evidence before their production unit. WU0B creat
 | RT-MARKET-04 | complete storefront; MKT-03/04 | Q09; PE/projection; integration | selected store after match → catalogue | complete active catalogue, pinned context optional | counts only | U8 |
 | RT-WORKER-01 | claim/lease authority; EXT-13/14, MED-19 | C27/C29/jobs; WH/RPC; worker/concurrency | double claim/stale worker finish | one claim/result; stale denied | attempt/lease outcome only | U4/U9/U10 |
 | RT-LIFECYCLE-01 | hold-aware cleanup; MAS-AC07, MED-10/19 | lifecycle jobs; WH/RPC; worker/storage | legal hold or relink races deletion | no delete; evidence/hold preserved | lifecycle outcome only | U10 |
+| RT-WORKER-02 | bounded retry/dead-letter recovery; EXT-13/14, MED-19 | all Phase 9 jobs; WH/RPC; worker/reconciliation | transient failures exhaust five attempts; crash after external success; retry permanent failure | no duplicate cost/effect; bounded dead-letter outcome; reconciliation/Owner-safe projection available; no support takeover | attempt/error/version/dead-letter counts only | U4/U5/U9/U10 |
+| RT-SUPPORT-01 | interactive support excluded; MAS-12, MAS-AC09, MED-04/19 | all C/Q and recovery paths; boundary/security | support/finance/reviewer principal attempts takeover, arbitrary claim, or cross-store private read | 403/no rows; no state/data effect; initiating-Owner/worker/reconciliation paths remain available | bounded denial only, no target content | U2/U4/U10/U11 |
 | RT-SCOPE-01 | no Phase 7/8 behavior; MAS-09, MAS-AC08, PHO-13 | all WU0B/future diff; validator/E2E | introduce payment-provider/paid-order/ledger/pickup code | scope check fails; no allowed DB effect | no Phase 7/8 event | U11 |
 
 ## 2. Operation coverage
 
-The catalogue contains 30 commands (C01–C30) and 11 queries (Q01–Q11). Every command identifies actor/trust boundary, strict request DTO, server-derived authority, preconditions, transaction, expected version, idempotency, surviving effect, stable error/HTTP mapping, events, telemetry/forbidden data, rate class and red references. Every query identifies actor/boundary, authority, projection, ordering/cursor/version/cache, failure effects, errors, rate and red references. The per-operation boundary table assigns exactly one primary boundary, governing SDD/WU0A references, red IDs and implementation unit. Common envelope rules are normative and must not be bypassed by a transport-specific shortcut.
+The catalogue contains 30 commands (C01–C30) and 11 queries (Q01–Q11), with 58 detailed red-test rows. Every command identifies actor/trust boundary, strict request DTO, server-derived authority, preconditions, transaction, expected version, idempotency, surviving effect, stable error/HTTP mapping, events, telemetry/forbidden data, rate class and red references. Every query identifies actor/boundary, authority, projection, ordering/cursor/version/cache, failure effects, errors, rate and red references. The per-operation boundary table assigns exactly one primary boundary, governing SDD/WU0A references, red IDs and implementation unit. Common envelope rules are normative and must not be bypassed by a transport-specific shortcut.
 
 ## 3. Acceptance checklist
 
@@ -106,6 +115,8 @@ All are `DB_AUDIT_REQUIRED_BEFORE_DATABASE_DESIGN`:
 ## 6. Unresolved non-database configuration gates
 
 Concrete providers/models, vendor terms, supported-language rollout, prompt/model versions, quotas, timeouts, capability TTL, byte/pixel limits, circuit thresholds, retention/legal policy and pilot accuracy thresholds remain later configuration/legal/operations decisions. Locked bounds remain: 15 candidates, one vision fallback, 1–3 request/public-copy photos and WU0A validation limits.
+
+Mobile accessibility, Android/iOS camera/gallery device evidence, poor-network/background behavior, and operational launch drills remain assigned to later runtime Unit 6 and pilot/release Unit 11. This documentation/contract correction does not claim or perform those runtime/release checks.
 
 ## 7. Handoff
 

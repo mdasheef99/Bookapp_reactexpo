@@ -12,6 +12,19 @@ export type AdapterOutcome =
 
 export type SessionState = 'active' | 'closing' | 'closed' | 'expired';
 
+export const PHASE9_CANDIDATE_STATES = [
+  'processing', 'ready', 'needs_review', 'possible_duplicate', 'failed', 'commit_in_progress', 'committed',
+] as const;
+
+export type CandidateState = typeof PHASE9_CANDIDATE_STATES[number];
+
+export function parseCandidateState(value: unknown): CandidateState {
+  if (typeof value !== 'string' || !(PHASE9_CANDIDATE_STATES as readonly string[]).includes(value)) {
+    throw new Phase9ContractError('candidate.state', 'unsupported persisted candidate state');
+  }
+  return value as CandidateState;
+}
+
 export function authorizeInitiatingOwnerSessionMutation(input: {
   actorId: string;
   initiatingOwnerId: string;

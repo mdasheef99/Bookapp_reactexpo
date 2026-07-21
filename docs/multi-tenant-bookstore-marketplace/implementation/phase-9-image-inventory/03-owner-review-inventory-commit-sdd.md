@@ -112,7 +112,7 @@ Required before private inventory commit:
 - non-empty title;
 - language;
 - quantity greater than zero;
-- non-negative price (positive price required to publish);
+- integer `price_paise >= 0` for private inventory (`price_paise > 0` required to publish); negative, fractional, and unsafe integer values are rejected;
 - valid base condition;
 - shelf/location according to store policy;
 - explicit duplicate action when warned;
@@ -186,7 +186,7 @@ The existing quantity equality is currently `NOT VALID`; Phase 9 must preserve i
 
 - A single candidate error leaves other candidates usable.
 - Error messages are stable codes plus short owner text: authorization, stale review, duplicate changed, required field, media missing, unsellable, publication blocked, quota/policy, or retryable server failure.
-- A failed public projection cannot be reported as published and does not roll back a valid private inventory commit. Return `committed_publication_failed`; keep the inventory private; record an audit event and retryable publication intent. The publication-retry command reauthorizes current eligibility and is idempotent against the original commit, so it cannot create or increment inventory again.
+- A failed public projection cannot be reported as published and does not roll back a valid private inventory commit. The candidate remains persisted as `committed`, publication becomes `publication_failed`, and the API returns command outcome `committed_publication_failed`; record an audit event and retryable publication intent. The publication-retry command reauthorizes current eligibility and is idempotent against the original commit, so it cannot create or increment inventory again.
 - A failed request may safely retry using the same idempotency identity.
 - Needs-review candidates remain outside inventory after Close and expire by policy.
 

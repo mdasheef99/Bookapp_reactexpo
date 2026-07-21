@@ -6,6 +6,7 @@
 **Definition review:** `approved` on 2026-07-20 after correction verification
 **Technical-design completion:** 2026-07-20; independently approved 2026-07-22
 **Semantic-review correction:** 2026-07-22; dedicated C12 endpoint ownership and closed workflow/lifecycle/transition state validation verified by final context-isolated review (`approved`)
+**Bounded contract correction:** 2026-07-22; alias, price, outcome/state, stable-error, support-exclusion, and verification coverage corrected and fresh correction-only review returned `approved`
 **Authority:** documentation-only technical design; no runtime or database authority
 **Runtime/migration/Supabase/provider/storage/UI authority:** none
 
@@ -37,7 +38,8 @@ The artifacts are one design set. Common command/query envelope rules in artifac
 - C08–C10 share one closed commit action contract while retaining separate transaction/decision semantics.
 - C22–C26 may share one closed edit transport but remain separate authorization, transaction, event and red-test actions.
 - Q07 internal book matching is not client-facing. Q08 groups eligible results by store before pagination and uses a context-bound store cursor.
-- Private inventory commit is authoritative; publication is separate. `committed_publication_failed` preserves one private commit and retry cannot mutate inventory.
+- Private inventory commit is authoritative; publication is separate. On projection failure the candidate remains `committed`, publication becomes `publication_failed`, and command outcome `committed_publication_failed` preserves one private commit; retry cannot mutate inventory.
+- Phase 9 defines no interactive support takeover or cross-store private-data access. Recovery is initiating-Owner retry, claimed-worker recovery, and reconciliation; future support tooling requires separate design and authorization.
 - Jobs use Postgres `FOR UPDATE SKIP LOCKED` claim semantics after later database authorization; service authority is claim/action scoped.
 - Public, Owner and customer DTOs use positive allowlists; media content, raw provider/model data, credentials, paths, tokens, PII and private operational fields are forbidden.
 - Customer request photos remain private/request-scoped and cannot influence duplicate identity. Validated `provided` media must be followed by a current Owner quantity/price/terms confirmation and atomic bounded soft hold before customer acceptance through existing Phase 6 pre-payment seams.

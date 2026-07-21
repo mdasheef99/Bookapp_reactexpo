@@ -3,7 +3,7 @@ import { PHASE9_ALIAS_SCHEMA_VERSION, PHASE9_CONTRACT_VERSION, PHASE9_MAX_AUTOMA
 import { PHASE9_LIMITS } from './registers';
 
 const ALIAS_KEYS = ['text', 'language', 'kind', 'source', 'source_version', 'confidence', 'approval_status'] as const;
-const KINDS = ['transliteration', 'translation', 'common_title', 'recognized_title'] as const;
+const KINDS = ['transliteration', 'translation', 'common_spelling', 'recognized_title'] as const;
 const STATUSES = ['proposed', 'approved', 'rejected'] as const;
 const SOURCE_TYPES = ['automated', 'provider_official', 'owner_verified', 'platform_verified'] as const;
 

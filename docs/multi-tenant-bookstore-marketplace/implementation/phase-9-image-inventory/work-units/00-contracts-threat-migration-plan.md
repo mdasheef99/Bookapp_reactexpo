@@ -90,9 +90,9 @@ Before contract implementation is accepted, one authoritative matrix defines fie
 
 ### 5.7 Session, duplicate, and publication outcomes
 
-The initiating Owner is recorded and is the only Owner who may mutate/resume the session during the pilot; support intervention is separately authorized and audited. Close remains terminal-input-only. Internally, `active -> closing -> closed`; `closing` rejects new inputs and finalizes the summary, while Close during processing leaves the session active. Uncommitted candidates remain `needs_review` and are neither committed nor deleted.
+The initiating Owner is recorded and is the only Owner who may mutate/resume the session during the pilot. Phase 9 has no interactive support takeover or cross-store private-data access; recovery uses initiating-Owner retry, claimed-worker recovery, and reconciliation. Future support tooling requires separate design and authorization. Close remains terminal-input-only. Internally, `active -> closing -> closed`; `closing` rejects new inputs and finalizes the summary, while Close during processing leaves the session active. Uncommitted candidates remain `needs_review` and are neither committed nor deleted.
 
-Private customer-request photos are later request-scoped evidence and never affect inventory duplicate identity or quantity compatibility. A valid inventory commit survives projection failure as `committed_publication_failed`; it remains private, records audit/retry intent, and publication retries idempotently without creating or incrementing inventory again.
+Private customer-request photos are later request-scoped evidence and never affect inventory duplicate identity or quantity compatibility. On projection failure the candidate remains persisted as `committed`, publication becomes `publication_failed`, and the command outcome is `committed_publication_failed`; inventory remains private, records audit/retry intent, and publication retries idempotently without creating or incrementing inventory again.
 
 ### 5.8 Marketplace query contract
 

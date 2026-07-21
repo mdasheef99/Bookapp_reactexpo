@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-07-19
+**Date:** 2026-07-22
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -82,6 +82,8 @@ If implementation changes product or architecture behavior, update the relevant 
 
 > 2026-07-22 Phase 9 WU0B final independent approval: the final context-isolated review returned exact verdict `approved`. The existing continuity evidence passes 107 semantic cases plus two C12 ownership/duplication probes, and the bounded set remains documentation/validator-only. WU0B is `independently_approved`. The next action is a consolidated Risk-Based Phase 9 SDD analysis in a new session; Supabase audit, migrations, runtime implementation and merge to `main` remain unauthorized.
 
+> 2026-07-22 Phase 9 bounded contract correction: the authorized correction aligned canonical alias vocabulary and lifecycle-only supersession, separated zero-price private save from positive-price publication, removed `committed_publication_failed` from persisted state vocabularies, completed exact C01–C30/Q01–Q11 stable-error mappings and metadata, excluded interactive support takeover/cross-store private access, and added the missing contract/design verification rows while preserving later runtime/release gates. Focused WU0A Jest passed 4 suites/45 tests; TypeScript, continuity/link/size checks, 107 semantic cases, two C12 probes, and `git diff --check` passed. A fresh correction-only review returned exact verdict `approved`. No Supabase access, migration, provider/storage action, runtime implementation, or deployment occurred.
+
 | Field | Value |
 |---|---|
 | Current phase | Phase 9: Image-to-LLM Inventory - **WU0A and WU0B independently approved; WU0B remains documentation-only; product/runtime implementation not started** |
@@ -106,7 +108,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `wu0b_independently_approved` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [SDD/tracker set](./implementation/phase-9-image-inventory/README.md) | WU0B documentation-only technical design is independently approved. Consolidated Risk-Based Phase 9 SDD analysis is next; Supabase, migration and runtime gates remain unauthorized. |
+| Phase 9: Image-to-LLM Inventory | `wu0b_independently_approved` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [SDD/tracker set](./implementation/phase-9-image-inventory/README.md) | WU0B documentation-only technical design and bounded six-area contract correction are independently approved. Consolidated Risk-Based Phase 9 SDD analysis is next; Supabase, migration and runtime gates remain unauthorized. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

@@ -185,7 +185,7 @@ Provider provenance does not imply reuse permission. The adapter policy independ
 - Resolve final media/session/candidate/inventory/request ownership in the same command.
 - Every store-owned media/table row contains `store_id` and RLS.
 - Customer request reads additionally bind `auth.uid()` to the order request/item.
-- Platform role checks come from `platform_user_roles` and are action-specific.
+- Phase 9 grants no interactive support takeover or cross-store private-data read. Recovery is initiating-Owner retry, claimed-worker recovery, and reconciliation; future support tooling requires separate action-specific design and authorization.
 - Trigger/helpers are not executable by client roles.
 - Callable RPC/Edge commands validate the actor internally, pin `search_path`, have explicit grants, and return bounded safe data.
 - Service role remains server-only and is never accepted from the mobile client.
@@ -248,7 +248,7 @@ Forbidden:
 - unrestricted title/description in error telemetry;
 - EXIF/location data.
 
-Audit is append-only from normal clients and records sensitive reads/promotions/deletes/holds/platform overrides.
+Audit is append-only from normal clients and records sensitive reads/promotions/deletes/holds. Phase 9 defines no interactive platform override.
 
 ## 14. Abuse, moderation, and incident controls
 

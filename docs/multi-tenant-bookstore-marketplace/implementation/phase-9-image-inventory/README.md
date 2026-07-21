@@ -2,7 +2,7 @@
 
 **Status:** `wu0b_independently_approved`
 **Last updated:** 2026-07-22
-**Implementation status:** WU0A approved complete; WU0B documentation-only technical design independently approved; product/runtime implementation not started
+**Implementation status:** WU0A approved complete; WU0B documentation-only technical design independently approved; bounded six-area contract correction independently approved; product/runtime implementation not started
 **Supabase mutation status:** no Phase 9 migration, function, policy, bucket, or data change has been made
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.

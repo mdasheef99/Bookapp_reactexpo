@@ -1,7 +1,7 @@
 # Phase 9 Planning and Decision Tracker
 
 **Status:** `approved_baseline`
-**Last updated:** 2026-07-19
+**Last updated:** 2026-07-22
 **Purpose:** retain detailed product decisions, audit evidence, reconciliations, and deferred choices without inflating the master tracker
 
 ## Decision register
@@ -46,11 +46,14 @@
 | P9-D36 | Additional numerical quotas/timeouts/retry values remain policy-configurable. Hard safety envelopes are 15 books/image and 3 public/request photos. | locked |
 | P9-D37 | Optional acquisition type, acquisition cost, cost-basis method, and printed MRP are collapsed private fields, not required review fields. | locked by design delegation |
 | P9-D38 | Phase 9 does not implement payment, paid orders, pickup, refunds, ledger, settlement, translation UI, promotions, or image-based duplicate matching. | locked |
-| P9-D39 | A valid inventory commit survives public-projection failure as private `committed_publication_failed`; publication retry is idempotent and cannot repeat inventory effects. | locked 2026-07-19 |
-| P9-D40 | The initiating Owner alone mutates/resumes a pilot extraction session; support intervention is separately authorized and audited. | locked 2026-07-19 |
+| P9-D39 | A valid inventory commit survives public-projection failure: candidate state remains `committed`, publication status becomes `publication_failed`, and `committed_publication_failed` is command/API outcome only. Publication retry is idempotent and cannot repeat inventory effects. | corrected 2026-07-22 |
+| P9-D40 | Interactive support takeover and cross-store private-data access are excluded from Phase 9. Recovery uses initiating-Owner retry, lease-scoped worker recovery, and deterministic reconciliation; future support tooling requires separate design and authorization. | corrected 2026-07-22 |
 | P9-D41 | Close remains available only after inputs are terminal; internal `closing` seals inputs/finalizes summary and is not an early-close workflow. | locked 2026-07-19 |
 | P9-D42 | Provider provenance and field reuse rights are separate; storage/display/cache/attribution/expiry are adapter policy, not mobile discretion. | locked 2026-07-19 |
 | P9-D43 | WU0 owns central validation, API error, grant, provider-policy, and bookstore-first query contract registers before migration design. | locked 2026-07-19 |
+| P9-D44 | Canonical alias vocabulary is kinds `transliteration`, `translation`, `common_spelling`, `recognized_title`; sources `automated`, `provider_official`, `owner_verified`, `platform_verified`; approval statuses `proposed`, `approved`, `rejected`. `superseded` is a lifecycle/audit reason that resolves the persisted status to `rejected`, not a persisted approval status. | locked 2026-07-22 |
+| P9-D45 | Private inventory accepts integer `price_paise >= 0`; publication requires integer `price_paise > 0`; negative, fractional, and unsafe integers fail closed. | locked 2026-07-22 |
+| P9-D46 | The WU0A stable-error register is authoritative for C01–C30 and Q01–Q11; every operation maps only to registered `P9_*` codes carrying HTTP status, retryability, safe message, severity, surviving effects, and idempotency-key reuse semantics. | locked 2026-07-22 |
 
 ## Source reconciliation
 

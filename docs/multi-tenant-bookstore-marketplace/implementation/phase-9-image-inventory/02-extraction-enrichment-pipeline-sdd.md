@@ -17,7 +17,7 @@ The user-visible session has only:
 3. Review/commit candidates as results arrive.
 4. Close session and see summary.
 
-There is no pause/save/discard command. Server persistence provides recovery when the app backgrounds, disconnects, or closes. Logout clears local cached workflow state but does not delete authoritative server state. During the Owner-only pilot, only the initiating Owner may mutate or resume the session; action-specific platform support intervention is separately authorized and audited.
+There is no pause/save/discard command. Server persistence provides recovery when the app backgrounds, disconnects, or closes. Logout clears local cached workflow state but does not delete authoritative server state. During the Owner-only pilot, only the initiating Owner may mutate or resume the session. Phase 9 has no interactive support takeover; recovery is limited to initiating-Owner retry, claimed-worker recovery, and reconciliation. Future support tooling requires separate design and authorization.
 
 Session defaults:
 

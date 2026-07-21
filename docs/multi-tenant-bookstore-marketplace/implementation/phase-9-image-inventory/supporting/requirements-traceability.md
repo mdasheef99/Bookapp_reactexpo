@@ -11,10 +11,12 @@
 | Title/author priority; visible ISBN only as clue | 02 Extraction; 01 Data | EXT-12; DAT-03 |
 | Description, ISBN-10/13, rich metadata, cover | 01 Data | DAT-01–DAT-04 |
 | Original language; up to three automated English alias proposals plus bounded official/verified aliases | 01 Data; 05 Marketplace | DAT-10–DAT-14; MKT-05 |
+| Canonical alias kinds/sources/statuses and supersession lifecycle | 01 Data | DAT-11–DAT-14 |
 | Additional languages can be added later | 01 Data; 02 Extraction | DAT-15; EXT-04 |
 | Advisory duplicates; no image comparison; repeated spines retained | 01 Data; 03 Review | DAT-16–DAT-20; REV-07 |
 | Customer-request photos excluded from inventory duplicate identity | 01 Data; 06 Photo request | DAT-16–DAT-20; PHO-14 |
 | Quantity/price/location/condition before commit | 03 Review | REV-02–REV-05 |
+| Zero-price private inventory; positive-price publication | 03 Review | REV-02; REV-05 |
 | Preselected defaults | 03 Review; 02 Extraction | REV-06; EXT-06 |
 | Five conditions with explanations | 01 Data; 03 Review | DAT-21; REV-08 |
 | Damage separate; discount by price; photos 1–3 | 01 Data; 04 Media | DAT-22–DAT-25; MED-11 |
@@ -31,7 +33,9 @@
 | Security across model, provider, upload, storage, logs, recovery | 04 Media | MED-01–MED-20 |
 | Provider field reuse rights separate from provenance | 02 Extraction; 04 Media | EXT-18; MED-22 |
 | Private commit survives publication failure with idempotent retry | 00 Master; 03 Review | MAS-11; REV-18 |
+| Candidate remains `committed`; publication failure is a separate status/outcome | 00 Master; 03 Review | MAS-11; REV-18 |
 | Initiating Owner owns session resume/mutation in pilot | 00 Master; 02 Extraction | MAS-12; EXT-06 |
+| Interactive support takeover excluded; worker/reconciliation recovery only | 00 Master; 02 Extraction; 04 Media | MAS-12; MAS-AC09; EXT-06; MED-04/MED-19 |
 | Versioned bookstore-first query/cursor/count contract | 05 Marketplace | MKT-14 |
 | Quota/retry policy model-agnostic and configurable | 02 Extraction | EXT-13–EXT-17 |
 | Phase 7/8 independence | 00 Master; 06 Photo request | MAS-09; PHO-13 |

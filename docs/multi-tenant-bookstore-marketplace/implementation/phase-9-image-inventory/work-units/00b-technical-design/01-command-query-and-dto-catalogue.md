@@ -139,7 +139,7 @@ WU0A references: `V` validation matrix/limits; `E` error catalogue; `G` grant co
 
 ## 7. Stable error-to-HTTP catalogue
 
-WU0A’s seven `P9_*` entries remain unchanged. Before runtime implementation, its catalogue must add the following closed entries with the same fields and idempotency-reuse semantics: `P9_AUTH_REQUIRED`401, `P9_REQUEST_INVALID`400, `P9_NOT_FOUND`404, `P9_STATE_CONFLICT`409, `P9_VERSION_CONFLICT`409, `P9_IDEMPOTENCY_MISMATCH`409, `P9_LIMIT_EXCEEDED`422, `P9_QUOTA_EXCEEDED`429, `P9_RATE_LIMITED`429, `P9_CURSOR_INVALID`400, `P9_SOFT_HOLD_REQUIRED`409, `P9_INSUFFICIENT_AVAILABLE_QUANTITY`409, and `P9_POLICY_CONFIGURATION_INVALID`500. Table shorthand maps `AUTHZ` to `P9_OWNER_NOT_AUTHORIZED`, `MEDIA` to `P9_MEDIA_NOT_APPROVED`, `HOLD`, `QUANTITY`, and `POLICY` to the three corresponding additions, and remaining labels to the other required additions. Unexpected errors return `P9_INTERNAL_ERROR`500 with no internal detail and require a catalogue addition before runtime.
+WU0A's authoritative register now contains the original seven errors plus `P9_AUTH_REQUIRED`401, `P9_REQUEST_INVALID`400, `P9_NOT_FOUND`404, `P9_STATE_CONFLICT`409, `P9_VERSION_CONFLICT`409, `P9_IDEMPOTENCY_MISMATCH`409, `P9_LIMIT_EXCEEDED`422, `P9_QUOTA_EXCEEDED`429, `P9_RATE_LIMITED`429, `P9_CURSOR_INVALID`400, `P9_SOFT_HOLD_REQUIRED`409, `P9_INSUFFICIENT_AVAILABLE_QUANTITY`409, `P9_POLICY_CONFIGURATION_INVALID`500, and `P9_INTERNAL_ERROR`500. `PHASE9_OPERATION_ERROR_CODES` maps every C01–C30 and Q01–Q11 operation to exact registered codes; every definition includes retryability, safe message, severity, surviving effect, and idempotency-key reuse. Table shorthand is explanatory only and cannot override that register.
 
 ## 8. Rate and abuse classes
 

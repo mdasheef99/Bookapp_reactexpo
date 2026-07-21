@@ -20,9 +20,11 @@ Worker boundaries require a gateway-verified service-role JWT, a claimed job ID,
 | Owning-store Owner | C15, C16, C19, C28 and Owner Q11 | user → store administration → request item/store/inventory and current proposal | Other store/request/customer content; request-photo reuse as listing media; customer acceptance; direct hold mutation |
 | Public/anonymous | Q08–Q10 only | eligible safe public projections, never private base tables | Sessions, inventory buckets, request/media/job/telemetry data |
 | Worker/service | One claimed job/action; C12 publication retry, C27 media validation, C29 hold expiry; C30 only inside C28 transaction | service JWT → claimed job or internal definer call → kind/entity/store/purpose/lease | Client bearer, arbitrary operation/table, cross-purpose action, unclaimed work, ambient C30 execution |
-| Platform support | No ambient WU0B scope | Future explicit support command and audited entitlement | Finance/reviewer/media/database administration; no implied bypass |
+| Platform support | No Phase 9 command/query or private-data scope | None; interactive support tooling is deferred and requires separate design/authorization | Session takeover, cross-store private data, finance/reviewer/media/database administration, or implied bypass |
 
 C12 exists only at `supabase/functions/image-inventory-publication-retry/index.ts`: the boundary classifies exactly one Owner or claimed-worker principal, derives store scope from inventory/job ownership, selects caller-specific grant/result rules, and calls one projection-only service with caller-kind+identity replay scope. Owner and worker boundaries must not duplicate C12. Q11 remains owned by the request-photo boundary, which selects exactly one customer or Owner projection.
+
+Recovery inside Phase 9 is limited to initiating-Owner retry, lease-scoped worker recovery, and deterministic reconciliation. No support principal may resume/mutate a session, claim arbitrary work, or read cross-store sessions, candidates, raw payloads, media, jobs, costs, or request-photo data. Future interactive support tooling is a separate phase/design authorization, not a hidden C01–C30 or Q01–Q11 path.
 
 ## 3. Capability matrix
 

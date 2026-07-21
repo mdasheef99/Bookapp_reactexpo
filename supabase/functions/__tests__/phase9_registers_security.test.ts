@@ -13,6 +13,7 @@ import {
   PHASE9_GRANT_MATRIX,
   PHASE9_GRANT_CONTROLS,
   PHASE9_MARKETPLACE_QUERY_REGISTER,
+  PHASE9_OPERATION_ERROR_CODES,
   PHASE9_PROVIDER_REUSE_FIELDS,
   PHASE9_RED_IMPLEMENTATION_GATES,
   PHASE9_VALIDATION_MATRIX,
@@ -23,13 +24,13 @@ import {
 
 describe('Phase 9 central registers and security boundaries', () => {
   it('covers every mandatory validation field with fail-closed metadata', () => {
-    const required = ['title', 'subtitle', 'authors', 'description', 'isbn_clue', 'language', 'candidate_count', 'automated_aliases', 'categories', 'page_count', 'geometry', 'damage_note', 'quantity', 'money_paise', 'idempotency_key', 'command_id', 'raw_payload_bytes'];
+    const required = ['title', 'subtitle', 'authors', 'description', 'isbn_clue', 'language', 'candidate_count', 'automated_aliases', 'categories', 'page_count', 'geometry', 'damage_note', 'quantity', 'price_paise', 'idempotency_key', 'command_id', 'raw_payload_bytes'];
     expect(required.every((field) => field in PHASE9_VALIDATION_MATRIX)).toBe(true);
     expect(Object.values(PHASE9_VALIDATION_MATRIX).every((rule) => rule.rejects.length > 0 && rule.visibility)).toBe(true);
   });
 
   it('defines stable safe API errors separately from adapter outcomes', () => {
-    expect(Object.keys(PHASE9_ERROR_CATALOGUE)).toEqual([
+    expect(Object.keys(PHASE9_ERROR_CATALOGUE)).toEqual(expect.arrayContaining([
       'P9_OWNER_NOT_AUTHORIZED',
       'P9_SESSION_NOT_ACTIVE',
       'P9_CANDIDATE_VERSION_CONFLICT',
@@ -37,15 +38,44 @@ describe('Phase 9 central registers and security boundaries', () => {
       'P9_MEDIA_NOT_APPROVED',
       'P9_QUANTITY_INVARIANT_FAILED',
       'P9_PUBLICATION_FAILED',
-    ]);
+      'P9_AUTH_REQUIRED',
+      'P9_REQUEST_INVALID',
+      'P9_NOT_FOUND',
+      'P9_STATE_CONFLICT',
+      'P9_VERSION_CONFLICT',
+      'P9_IDEMPOTENCY_MISMATCH',
+      'P9_LIMIT_EXCEEDED',
+      'P9_QUOTA_EXCEEDED',
+      'P9_RATE_LIMITED',
+      'P9_CURSOR_INVALID',
+      'P9_SOFT_HOLD_REQUIRED',
+      'P9_INSUFFICIENT_AVAILABLE_QUANTITY',
+      'P9_POLICY_CONFIGURATION_INVALID',
+      'P9_INTERNAL_ERROR',
+    ]));
     expect(PHASE9_ERROR_CATALOGUE.P9_PUBLICATION_FAILED.survivingEffect).toBe('private_inventory_committed');
     expect(PHASE9_ERROR_CATALOGUE.P9_PUBLICATION_FAILED.reuseIdempotencyKey).toBe(true);
     expect(Object.values(PHASE9_ERROR_CATALOGUE).every((error) =>
       Number.isInteger(error.httpStatus)
       && typeof error.retryable === 'boolean'
       && error.safeOwnerMessage.length > 0
+      && ['info', 'warning', 'error', 'critical'].includes(error.severity)
+      && ['none', 'private_inventory_committed'].includes(error.survivingEffect)
       && typeof error.reuseIdempotencyKey === 'boolean')).toBe(true);
     expect([...VISION_OUTCOMES, ...METADATA_OUTCOMES].some((outcome) => outcome.startsWith('P9_'))).toBe(false);
+  });
+
+  it('maps all C01-C30 and Q01-Q11 errors to exact registered codes', () => {
+    const expectedOperations = [
+      ...Array.from({ length: 30 }, (_, index) => `C${String(index + 1).padStart(2, '0')}`),
+      ...Array.from({ length: 11 }, (_, index) => `Q${String(index + 1).padStart(2, '0')}`),
+    ];
+    expect(Object.keys(PHASE9_OPERATION_ERROR_CODES)).toEqual(expectedOperations);
+    for (const codes of Object.values(PHASE9_OPERATION_ERROR_CODES)) {
+      expect(codes.length).toBeGreaterThan(0);
+      expect(new Set(codes).size).toBe(codes.length);
+      expect(codes.every((code) => code in PHASE9_ERROR_CATALOGUE)).toBe(true);
+    }
   });
 
   it('centrally forbids adapter authority, identity, retry, command, path, tool, and capability fields', () => {
@@ -141,6 +171,18 @@ describe('Phase 9 central registers and security boundaries', () => {
       const full = path.join(process.cwd(), relative);
       if (relative.includes('inventoryExtraction')) expect(fs.existsSync(full)).toBe(false);
     }
+  });
+
+  it('keeps interactive support takeover outside the Phase 9 command and query surface', () => {
+    const design = fs.readFileSync(path.join(
+      process.cwd(), 'docs', 'multi-tenant-bookstore-marketplace', 'implementation',
+      'phase-9-image-inventory', 'work-units', '00b-technical-design',
+      '02-authorization-tenancy-and-privacy.md',
+    ), 'utf8');
+    expect(design).toContain('No Phase 9 command/query or private-data scope');
+    expect(design).toContain('initiating-Owner retry, lease-scoped worker recovery, and deterministic reconciliation');
+    expect(design).toContain('No support principal may resume/mutate a session');
+    expect(Object.keys(PHASE9_OPERATION_ERROR_CODES)).toHaveLength(41);
   });
 
   it('keeps the WU0A server package network- and credential-free', () => {

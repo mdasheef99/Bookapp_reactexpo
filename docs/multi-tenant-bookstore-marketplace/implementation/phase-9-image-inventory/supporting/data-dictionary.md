@@ -49,11 +49,11 @@ Existing `title`, `subtitle`, `authors`, `isbn_10`, `isbn_13`, `publisher`, `pub
 | `alias_normalized` | Deterministic normalized value for index/deduplication. |
 | `alias_language` | Normally `en` for Phase 9 English search aliases. |
 | `alias_script` | Normally `Latn`; preserved for future expansion. |
-| `alias_type` | `transliteration`, `translation`, `common_spelling`, or `recognized_title`. |
-| `source_type` | `metadata_provider`, `vision_model`, `alias_model`, `owner`, `platform`. |
+| `alias_type` | `transliteration`, `translation`, `common_spelling`, or `recognized_title`. `common_title` is not accepted. |
+| `source_type` | `automated`, `provider_official`, `owner_verified`, or `platform_verified`. |
 | `source_ref` | Provider/model/attempt reference without secret/payload. |
 | `confidence` nullable | Source confidence; never identity evidence. |
-| `approval_status` | `proposed`, `approved`, `rejected`, `superseded`. Only approved aliases are public-search eligible. |
+| `approval_status` | `proposed`, `approved`, or `rejected`. Only approved aliases are public-search eligible. `superseded` is a lifecycle/audit reason that transitions the replaced row to `rejected`; it is not persisted as an approval status. |
 | `created_by` nullable | Actor when human-created/approved. |
 | timestamps | Creation/update/approval. |
 
@@ -79,7 +79,7 @@ Each automated generation operation proposes at most three English aliases. Addi
 | `printed_mrp_minor` | owner/metadata | optional public display later | no | Not a discount engine. |
 | `metadata_snapshot_version` | commit service | no | yes internally | Trace selected normalized data. |
 | `created_from_candidate_id` | commit service | no | no | One candidate commits at most once. |
-| `publication_status` | controlled projection service | safe projection only | no | `private`, `publication_pending`, `published`, or `publication_failed`; failure never repeats inventory effects. |
+| `publication_status` | controlled projection service | safe projection only | no | `private`, `publication_pending`, `published`, or `publication_failed`; failure never repeats inventory effects. `committed_publication_failed` is an API outcome, not this persisted status. |
 | `publication_intent_version` | controlled projection service | no | no | Idempotent retry/version lineage for the requested public projection. |
 
 Existing quantity buckets remain authoritative. `photos text[]` is deprecated only after typed media links are backfilled and all readers migrate.
@@ -136,7 +136,7 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | normalized selection | selected metadata snapshot, canonical match nullable, metadata source/attempt. |
 | aliases | related through `book_search_aliases`; automated proposal maximum three, with bounded additional official/verified rows. |
 | review fields | owner edits/defaults, add/remove action, duplicate choice, publication choice. |
-| status | `processing`, `ready`, `needs_review`, `possible_duplicate`, `commit_in_progress`, `committed`, `committed_publication_failed`, `failed`. |
+| status | `processing`, `ready`, `needs_review`, `possible_duplicate`, `commit_in_progress`, `committed`, `failed`. A projection failure leaves this value `committed`, sets inventory publication status to `publication_failed`, and returns API outcome `committed_publication_failed`. |
 | commit linkage | committed inventory/listing IDs and idempotency identity. |
 | retention | unresolved candidate expiry; committed normalized evidence may reduce to audit-safe provenance. |
 

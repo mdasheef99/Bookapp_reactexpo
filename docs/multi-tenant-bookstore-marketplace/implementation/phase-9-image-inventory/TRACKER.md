@@ -3,9 +3,9 @@
 **Planning status:** `approved_baseline`
 **Implementation status:** `wu0b_independently_approved`; WU0A remains `approved_complete`; WU0B remains documentation-only
 **Last updated:** 2026-07-22
-**Current milestone:** Work Unit 0B documentation-only technical design independently approved
+**Current milestone:** Work Unit 0B documentation-only technical design and bounded contract correction independently approved
 **Active work unit:** `0b_independently_approved`
-**Last completed:** Final context-isolated WU0B review returned exact verdict `approved`; 107 semantic cases and two C12 ownership probes passed
+**Last completed:** Fresh correction-only review returned exact verdict `approved`; WU0A 4 suites/45 tests, TypeScript, continuity/link/size checks, 107 semantic cases, two C12 ownership probes, and `git diff --check` passed
 **Next authorized action:** consolidated Risk-Based Phase 9 SDD analysis in a new session
 **Implementation authority:** `wu0a_approved_complete`; WU0B documentation-only design complete; product/runtime authority not granted
 **Migration creation/application authority:** `not_granted`
@@ -15,7 +15,7 @@
 
 ## Current handoff
 
-Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. The Phase 9 baseline, corrected Work Unit 0 plan, WU0A server contract/test foundation, and WU0B definition are approved. The documentation-only [WU0B technical design](./work-units/00b-backend-api-technical-design-plan.md) routes seven completed artifacts and is independently approved. No Phase 9 migration, callable Edge Function, bucket/policy change, provider call, mobile/product application code, Supabase query/mutation, or other runtime change was created by WU0B.
+Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. The Phase 9 baseline, corrected Work Unit 0 plan, WU0A server contract/test foundation, and WU0B definition are approved. The documentation-only [WU0B technical design](./work-units/00b-backend-api-technical-design-plan.md) routes seven completed artifacts and is independently approved. Its bounded 2026-07-22 vocabulary, price, outcome/state, stable-error, support-exclusion, and verification correction also passed a fresh correction-only review. No Phase 9 migration, callable Edge Function, bucket/policy change, provider call, mobile/product application code, Supabase query/mutation, or other runtime change was created by this correction.
 
 Repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → `SESSION-START.md` → this tracker is the durable resume chain. A future session must report this block before acting and must use the session protocol's documentation matrix at closeout.
 
@@ -62,7 +62,7 @@ The exact development project was re-verified before the live audit:
 
 ## Blocking gate before further implementation
 
-WU0A is approved and complete. WU0B documentation-only technical design is independently approved after a final context-isolated verdict of `approved`. C12 has one dedicated future endpoint used by both caller paths, Q11 remains request-photo-owned, and artifact-wide validation rejects lifecycle/workflow/terminal/direct-persisted-as/from-to/direct-arrow variants, including punctuation-prefixed arrows. The next action is a consolidated Risk-Based Phase 9 SDD analysis in a new session. Supabase audit, database/migration design, migration creation/testing/application, and product/runtime implementation remain unauthorized.
+WU0A is approved and complete. WU0B documentation-only technical design and the bounded six-area contract correction are independently approved with exact verdict `approved`. C12 has one dedicated future endpoint used by both caller paths, Q11 remains request-photo-owned, and artifact-wide validation rejects lifecycle/workflow/terminal/direct-persisted-as/from-to/direct-arrow variants, including punctuation-prefixed arrows. The next action is a consolidated Risk-Based Phase 9 SDD analysis in a new session. Supabase audit, database/migration design, migration creation/testing/application, and product/runtime implementation remain unauthorized.
 
 ## Risk summary
 

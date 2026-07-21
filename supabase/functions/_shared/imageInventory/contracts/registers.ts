@@ -68,7 +68,7 @@ export const PHASE9_VALIDATION_MATRIX = {
   geometry: { field: 'geometry', type: 'object', nullable: true, normalization: 'none', rejects: ['unknown keys', 'non-finite coordinates', 'coordinates outside 0..1'], visibility: 'service_internal', unknownKeys: 'reject' },
   damage_note: { field: 'damage_note', type: 'string', nullable: true, min: 1, max: PHASE9_LIMITS.damageNoteChars, normalization: 'trim_nfc', rejects: textRejects, visibility: 'public', unknownKeys: 'not_applicable' },
   quantity: { field: 'quantity', type: 'integer', nullable: false, min: 1, max: PHASE9_LIMITS.quantity, normalization: 'none', rejects: ['unsafe integer', 'zero', 'negative value'], visibility: 'owner_private', unknownKeys: 'not_applicable' },
-  money_paise: { field: 'money_paise', type: 'integer', nullable: false, min: 1, max: PHASE9_LIMITS.moneyMinor, normalization: 'none', rejects: ['unsafe integer', 'zero', 'negative value', 'floating point'], visibility: 'owner_private', unknownKeys: 'not_applicable' },
+  price_paise: { field: 'price_paise', type: 'integer', nullable: false, min: 0, max: PHASE9_LIMITS.moneyMinor, normalization: 'none', rejects: ['unsafe integer', 'negative value', 'floating point'], visibility: 'owner_private', unknownKeys: 'not_applicable' },
   idempotency_key: { field: 'idempotency_key', type: 'string', nullable: false, min: 16, max: PHASE9_LIMITS.idempotencyKeyChars, normalization: 'none', rejects: ['whitespace', 'path separators', ...textRejects], visibility: 'service_internal', unknownKeys: 'not_applicable' },
   command_id: { field: 'command_id', type: 'string', nullable: false, min: PHASE9_LIMITS.commandIdChars, max: PHASE9_LIMITS.commandIdChars, normalization: 'uuid', rejects: ['non UUID'], visibility: 'service_internal', unknownKeys: 'not_applicable' },
   raw_payload_bytes: { field: 'raw_payload_bytes', type: 'integer', nullable: false, min: 0, max: PHASE9_LIMITS.rawPayloadBytes, normalization: 'none', rejects: ['oversized payload', 'unsafe integer'], visibility: 'service_internal', unknownKeys: 'not_applicable' },
@@ -82,7 +82,21 @@ export type Phase9ErrorCode =
   | 'P9_DUPLICATE_TARGET_CHANGED'
   | 'P9_MEDIA_NOT_APPROVED'
   | 'P9_QUANTITY_INVARIANT_FAILED'
-  | 'P9_PUBLICATION_FAILED';
+  | 'P9_PUBLICATION_FAILED'
+  | 'P9_AUTH_REQUIRED'
+  | 'P9_REQUEST_INVALID'
+  | 'P9_NOT_FOUND'
+  | 'P9_STATE_CONFLICT'
+  | 'P9_VERSION_CONFLICT'
+  | 'P9_IDEMPOTENCY_MISMATCH'
+  | 'P9_LIMIT_EXCEEDED'
+  | 'P9_QUOTA_EXCEEDED'
+  | 'P9_RATE_LIMITED'
+  | 'P9_CURSOR_INVALID'
+  | 'P9_SOFT_HOLD_REQUIRED'
+  | 'P9_INSUFFICIENT_AVAILABLE_QUANTITY'
+  | 'P9_POLICY_CONFIGURATION_INVALID'
+  | 'P9_INTERNAL_ERROR';
 
 export type ErrorDefinition = Readonly<{
   code: Phase9ErrorCode;
@@ -102,7 +116,65 @@ export const PHASE9_ERROR_CATALOGUE: Record<Phase9ErrorCode, ErrorDefinition> = 
   P9_MEDIA_NOT_APPROVED: { code: 'P9_MEDIA_NOT_APPROVED', httpStatus: 422, retryable: false, safeOwnerMessage: 'Approve the required book photos before publishing.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: true },
   P9_QUANTITY_INVARIANT_FAILED: { code: 'P9_QUANTITY_INVARIANT_FAILED', httpStatus: 409, retryable: false, safeOwnerMessage: 'The quantity could not be updated safely. Please contact support.', severity: 'critical', survivingEffect: 'none', reuseIdempotencyKey: true },
   P9_PUBLICATION_FAILED: { code: 'P9_PUBLICATION_FAILED', httpStatus: 202, retryable: true, safeOwnerMessage: 'The book was saved privately, but publishing is still pending.', severity: 'error', survivingEffect: 'private_inventory_committed', reuseIdempotencyKey: true },
+  P9_AUTH_REQUIRED: { code: 'P9_AUTH_REQUIRED', httpStatus: 401, retryable: false, safeOwnerMessage: 'Sign in again before continuing.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_REQUEST_INVALID: { code: 'P9_REQUEST_INVALID', httpStatus: 400, retryable: false, safeOwnerMessage: 'Some submitted information is invalid.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_NOT_FOUND: { code: 'P9_NOT_FOUND', httpStatus: 404, retryable: false, safeOwnerMessage: 'The requested item is unavailable.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_STATE_CONFLICT: { code: 'P9_STATE_CONFLICT', httpStatus: 409, retryable: true, safeOwnerMessage: 'This item is no longer in the expected state. Refresh and try again.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_VERSION_CONFLICT: { code: 'P9_VERSION_CONFLICT', httpStatus: 409, retryable: true, safeOwnerMessage: 'This item changed. Refresh before trying again.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_IDEMPOTENCY_MISMATCH: { code: 'P9_IDEMPOTENCY_MISMATCH', httpStatus: 409, retryable: false, safeOwnerMessage: 'This retry does not match the original request.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: false },
+  P9_LIMIT_EXCEEDED: { code: 'P9_LIMIT_EXCEEDED', httpStatus: 422, retryable: false, safeOwnerMessage: 'The submitted value exceeds the allowed limit.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_QUOTA_EXCEEDED: { code: 'P9_QUOTA_EXCEEDED', httpStatus: 429, retryable: false, safeOwnerMessage: 'The current extraction allowance has been reached. Manual entry remains available.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_RATE_LIMITED: { code: 'P9_RATE_LIMITED', httpStatus: 429, retryable: true, safeOwnerMessage: 'Too many requests were made. Try again shortly.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_CURSOR_INVALID: { code: 'P9_CURSOR_INVALID', httpStatus: 400, retryable: false, safeOwnerMessage: 'These results changed. Start again from the first page.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_SOFT_HOLD_REQUIRED: { code: 'P9_SOFT_HOLD_REQUIRED', httpStatus: 409, retryable: true, safeOwnerMessage: 'The confirmed item is no longer reserved. Refresh before continuing.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_INSUFFICIENT_AVAILABLE_QUANTITY: { code: 'P9_INSUFFICIENT_AVAILABLE_QUANTITY', httpStatus: 409, retryable: true, safeOwnerMessage: 'The requested quantity is no longer available.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_POLICY_CONFIGURATION_INVALID: { code: 'P9_POLICY_CONFIGURATION_INVALID', httpStatus: 500, retryable: false, safeOwnerMessage: 'This action is temporarily unavailable.', severity: 'critical', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_INTERNAL_ERROR: { code: 'P9_INTERNAL_ERROR', httpStatus: 500, retryable: true, safeOwnerMessage: 'Something went wrong. Try again using the same request.', severity: 'error', survivingEffect: 'none', reuseIdempotencyKey: true },
 };
+
+export const PHASE9_OPERATION_ERROR_CODES = {
+  C01: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_QUOTA_EXCEEDED'],
+  C02: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_MEDIA_NOT_APPROVED', 'P9_QUOTA_EXCEEDED'],
+  C03: ['P9_MEDIA_NOT_APPROVED', 'P9_STATE_CONFLICT', 'P9_IDEMPOTENCY_MISMATCH', 'P9_QUOTA_EXCEEDED'],
+  C04: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT'],
+  C05: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_CANDIDATE_VERSION_CONFLICT', 'P9_REQUEST_INVALID'],
+  C06: ['P9_STATE_CONFLICT', 'P9_LIMIT_EXCEEDED', 'P9_REQUEST_INVALID'],
+  C07: ['P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_CANDIDATE_VERSION_CONFLICT'],
+  C08: ['P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_CANDIDATE_VERSION_CONFLICT', 'P9_DUPLICATE_TARGET_CHANGED', 'P9_QUANTITY_INVARIANT_FAILED', 'P9_REQUEST_INVALID'],
+  C09: ['P9_OWNER_NOT_AUTHORIZED', 'P9_CANDIDATE_VERSION_CONFLICT', 'P9_DUPLICATE_TARGET_CHANGED', 'P9_QUANTITY_INVARIANT_FAILED'],
+  C10: ['P9_OWNER_NOT_AUTHORIZED', 'P9_VERSION_CONFLICT', 'P9_REQUEST_INVALID', 'P9_QUANTITY_INVARIANT_FAILED'],
+  C11: ['P9_OWNER_NOT_AUTHORIZED', 'P9_MEDIA_NOT_APPROVED', 'P9_PUBLICATION_FAILED', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT'],
+  C12: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT', 'P9_PUBLICATION_FAILED'],
+  C13: ['P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_CANDIDATE_VERSION_CONFLICT'],
+  C14: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_LIMIT_EXCEEDED'],
+  C15: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_MEDIA_NOT_APPROVED', 'P9_LIMIT_EXCEEDED'],
+  C16: ['P9_OWNER_NOT_AUTHORIZED', 'P9_MEDIA_NOT_APPROVED', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT'],
+  C17: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT', 'P9_SOFT_HOLD_REQUIRED'],
+  C18: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT'],
+  C19: ['P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT'],
+  C20: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_MEDIA_NOT_APPROVED', 'P9_LIMIT_EXCEEDED'],
+  C21: ['P9_OWNER_NOT_AUTHORIZED', 'P9_MEDIA_NOT_APPROVED', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT'],
+  C22: ['P9_OWNER_NOT_AUTHORIZED', 'P9_VERSION_CONFLICT', 'P9_REQUEST_INVALID'],
+  C23: ['P9_OWNER_NOT_AUTHORIZED', 'P9_QUANTITY_INVARIANT_FAILED', 'P9_VERSION_CONFLICT'],
+  C24: ['P9_OWNER_NOT_AUTHORIZED', 'P9_VERSION_CONFLICT', 'P9_REQUEST_INVALID'],
+  C25: ['P9_OWNER_NOT_AUTHORIZED', 'P9_MEDIA_NOT_APPROVED', 'P9_REQUEST_INVALID', 'P9_VERSION_CONFLICT'],
+  C26: ['P9_OWNER_NOT_AUTHORIZED', 'P9_MEDIA_NOT_APPROVED', 'P9_PUBLICATION_FAILED', 'P9_VERSION_CONFLICT'],
+  C27: ['P9_AUTH_REQUIRED', 'P9_MEDIA_NOT_APPROVED', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT'],
+  C28: ['P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT', 'P9_INSUFFICIENT_AVAILABLE_QUANTITY'],
+  C29: ['P9_AUTH_REQUIRED', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT'],
+  C30: ['P9_AUTH_REQUIRED', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT', 'P9_INSUFFICIENT_AVAILABLE_QUANTITY', 'P9_POLICY_CONFIGURATION_INVALID'],
+  Q01: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND'],
+  Q02: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_CURSOR_INVALID'],
+  Q03: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_CURSOR_INVALID'],
+  Q04: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND'],
+  Q05: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND'],
+  Q06: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND'],
+  Q07: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_REQUEST_INVALID'],
+  Q08: ['P9_REQUEST_INVALID', 'P9_CURSOR_INVALID', 'P9_RATE_LIMITED'],
+  Q09: ['P9_NOT_FOUND', 'P9_CURSOR_INVALID'],
+  Q10: ['P9_NOT_FOUND'],
+  Q11: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND'],
+} as const satisfies Record<string, readonly Phase9ErrorCode[]>;
 
 export const PHASE9_PROVIDER_REUSE_FIELDS = [
   'title', 'subtitle', 'authors', 'description', 'isbn10', 'isbn13', 'publisher',

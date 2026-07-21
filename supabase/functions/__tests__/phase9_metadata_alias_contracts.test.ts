@@ -51,7 +51,33 @@ describe('Phase 9 metadata and alias contracts', () => {
   it('allows bounded official and Owner-verified aliases to coexist as search-only provenance', () => {
     const retained = parseRetainedAliasRows(retainedAliasRows);
     expect(retained.map((alias) => alias.sourceType)).toEqual(['automated', 'provider_official', 'owner_verified']);
+    expect(retained.map((alias) => alias.kind)).toEqual(['transliteration', 'recognized_title', 'common_spelling']);
     expect(retained.every((alias) => alias.searchOnly)).toBe(true);
+  });
+
+  it('uses one closed alias vocabulary and keeps superseded as a lifecycle outcome', () => {
+    const canonicalRows = [
+      { ...retainedAliasRows[0], kind: 'transliteration', source_type: 'automated', approval_status: 'proposed' },
+      { ...retainedAliasRows[1], kind: 'translation', source_type: 'provider_official', approval_status: 'approved' },
+      { ...retainedAliasRows[2], kind: 'common_spelling', source_type: 'owner_verified', approval_status: 'rejected' },
+      { ...retainedAliasRows[1], text: 'Platform title', kind: 'recognized_title', source_type: 'platform_verified', approval_status: 'approved' },
+    ];
+    const parsed = parseRetainedAliasRows(canonicalRows);
+    expect(parsed.map(({ kind, sourceType, approvalStatus }) => ({ kind, sourceType, approvalStatus }))).toEqual([
+      { kind: 'transliteration', sourceType: 'automated', approvalStatus: 'proposed' },
+      { kind: 'translation', sourceType: 'provider_official', approvalStatus: 'approved' },
+      { kind: 'common_spelling', sourceType: 'owner_verified', approvalStatus: 'rejected' },
+      { kind: 'recognized_title', sourceType: 'platform_verified', approvalStatus: 'approved' },
+    ]);
+    expect(() => parseRetainedAliasRows([
+      { ...retainedAliasRows[0], kind: 'common_title' },
+    ])).toThrow(/unsupported alias kind/i);
+    expect(() => parseRetainedAliasRows([
+      { ...retainedAliasRows[0], source_type: 'alias_model' },
+    ])).toThrow(/unsupported source type/i);
+    expect(() => parseRetainedAliasRows([
+      { ...retainedAliasRows[0], approval_status: 'superseded' },
+    ])).toThrow(/unsupported approval status/i);
   });
 
   it('represents provider no-match without canonical pollution', () => {
