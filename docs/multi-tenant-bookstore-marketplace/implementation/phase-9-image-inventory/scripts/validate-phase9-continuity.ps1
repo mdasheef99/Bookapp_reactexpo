@@ -201,7 +201,7 @@ $boundarySection = $catalogue.Substring($boundaryStart, $boundaryEnd - $boundary
 $boundaryCodes = 'OE|CE|AE|PE|IE|RPC|WH|MQ'
 foreach ($id in @($commandIds + $queryIds)) {
     $escapedId = [regex]::Escape($id)
-    $row = [regex]::Match($boundarySection, "(?m)^\| $escapedId .*\|$").Value
+    $row = [regex]::Match($boundarySection, "(?m)^\| $escapedId .*\|\r?$").Value
     $primaryBoundaryCount = @([regex]::Matches($row, "\| (?:$boundaryCodes);")).Count
     if ([string]::IsNullOrWhiteSpace($row) -or $primaryBoundaryCount -ne 1 -or
         $row -notmatch '(MAS|DAT|EXT|REV|MED|MKT|PHO)-' -or
@@ -209,8 +209,8 @@ foreach ($id in @($commandIds + $queryIds)) {
         Write-Error "WU0B operation $id lacks a selected boundary, SDD/WU0A trace, red test, or future unit."
     }
 }
-$c12BoundaryRow = [regex]::Match($boundarySection, '(?m)^\| C12 .*\|$').Value
-$q11BoundaryRow = [regex]::Match($boundarySection, '(?m)^\| Q11 .*\|$').Value
+$c12BoundaryRow = [regex]::Match($boundarySection, '(?m)^\| C12 .*\|\r?$').Value
+$q11BoundaryRow = [regex]::Match($boundarySection, '(?m)^\| Q11 .*\|\r?$').Value
 if ($c12BoundaryRow -notmatch '\| AE;' -or $c12BoundaryRow -notmatch 'Owner path:' -or
     $c12BoundaryRow -notmatch 'worker path:' -or $c12BoundaryRow -notmatch 'mixed/unknown denied' -or
     $c12BoundaryRow -notmatch 'image-inventory-publication-retry/index\.ts' -or $c12BoundaryRow -notmatch 'one shared publication-retry service') {
@@ -231,10 +231,10 @@ if ($RunSemanticNegativeProbes) {
     Write-Output 'BOUNDARY_NEGATIVE_PROBE_C12_EXACT_OWNER=PASS'; Write-Output 'BOUNDARY_NEGATIVE_PROBE_C12_NO_DUPLICATION=PASS'
 }
 $redDesign = $artifactBodies['00b-technical-design/06-red-tests-acceptance-and-handoff.md']
-$redRows = @([regex]::Matches($redDesign, '(?m)^\| RT-[A-Z0-9-]+ \|.*\|$') | ForEach-Object Value)
+$redRows = @([regex]::Matches($redDesign, '(?m)^\| RT-[A-Z0-9-]+ \|.*\|\r?$') | ForEach-Object Value)
 foreach ($row in $redRows) {
     if ($row -notmatch '(MAS|DAT|EXT|REV|MED|MKT|PHO)-|DOC-6 §' -or
-        $row -notmatch '\| U(?:[1-9]|10|11)(?:/U(?:[1-9]|10|11))* \|$') {
+        $row -notmatch '\| U(?:[1-9]|10|11)(?:/U(?:[1-9]|10|11))* \|\r?$') {
         Write-Error "WU0B red-test row lacks an owning SDD requirement or future implementation unit: $row"
     }
 }
