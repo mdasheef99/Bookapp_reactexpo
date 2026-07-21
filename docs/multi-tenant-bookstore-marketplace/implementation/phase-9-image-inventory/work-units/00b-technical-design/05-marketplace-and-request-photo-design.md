@@ -1,6 +1,6 @@
 # WU0B Marketplace and Customer Request-Photo Design
 
-**Status:** `implementation_complete_needs_review`
+**Status:** `independently_approved`
 **Commerce boundary:** pre-payment Phase 6 seams only; Phase 7/8 excluded
 
 ## 1. Two-stage marketplace query
@@ -37,19 +37,24 @@ Public cache keys include query/ranking/projection policy versions and normalize
 
 | State | Authorized action | Preconditions and result |
 | --- | --- | --- |
-| `not_requested` | C14 customer request | owning customer, eligible request item, count 1–3 → `requested` |
-| `requested|uploading` | C15 Owner capability; C16 provide | owning-store Owner, fresh purpose-bound media → `provided`; upload alone stays `uploading` |
-| `provided` | C17 accept or C18 decline | owning customer, approved evidence, expected request version → terminal item decision |
-| `requested|uploading|provided` | C19 unfulfilled | owning-store Owner, bounded reason → `unfulfilled` and Phase 6 recalculation/release seam |
+| `none` | C14 customer request | owning customer, eligible request item, count 1–3 → `requested` |
+| `requested|uploading` | C15 Owner capability; C16 supply; C27 validate | owning-store Owner supplies fresh purpose-bound media; worker validation completes all links → `provided`; upload/supply alone stays `uploading` |
+| `provided` | C28 Owner confirms item; C30 creates/refreshes soft hold | Owner confirms current availability, sellable quantity, price and applicable terms; atomic Phase 6 transaction records proposal, creates bounded soft hold and enters `awaiting_customer_decision` |
+| `provided` with current confirmation and active soft hold | C17 accept or C18 decline | owning customer accepts current proposal or declines; acceptance promotes soft→firm through Phase 6, decline releases/recalculates |
+| any nonterminal | C19 unfulfilled or C29 hold expiry | Owner inability marks unfulfilled; system expiry releases soft hold and expires/recalculates through Phase 6 |
 | any nonterminal | approved system expiry/lifecycle only | later policy; no implicit customer decision or payment effect |
 
-The request-photo aggregate belongs to a specific Phase 6 request item and customer/store pair. Media are newly captured, request-purpose, private, 1–3, and delivered through a short-lived customer capability. Scan/public-copy media cannot satisfy the request, and request media cannot affect duplicate identity, listing display or public media eligibility.
+The request-photo aggregate belongs to a specific Phase 6 request item and customer/store pair. Media are newly captured, request-purpose, private, 1–3, and delivered through a short-lived customer capability. Scan/public-copy media cannot satisfy the request, and request media cannot affect duplicate identity, listing display or public media eligibility. `provided` means media evidence is validated; it is not customer-acceptable until C28 records a current Owner confirmation and C30 creates an active soft hold.
 
 ## 6. Phase 6 seam contract
 
-C14 only creates photo state and has no hold/amount effect. C17, C18 and C19 invoke existing named Phase 6 pre-payment commands/RPC seams rather than editing commerce tables directly. The seam must re-resolve request/customer/store scope, expected request version, current item status, hold state and amount calculation. Acceptance may permit `payment_ready` only when every existing Phase 6 guard passes; it does not create payment-provider intent, a paid order, ledger entry, settlement, pickup or refund.
+C14 only creates photo state and has no hold/amount effect. After C27 completes media validation, C28 must invoke the existing Phase 6 Owner-confirmation seam with confirmed quantity and unit price; C30 is the internal transaction-owning hold operation used inside that same transaction. It locks the request item and inventory, validates quantity against current available stock, validates price against the server-bound listing terms, records `confirmed_full|confirmed_partial`, creates or refreshes a `soft` hold, sets `acceptance_expires_at` from the Phase 6 `commerce.acceptance_window_seconds` policy, and moves the request to `awaiting_customer_decision`.
 
-Decline/unfulfilled withdraws or marks affected items and releases/recalculates eligible holds/amounts through the existing command semantics. Partial item decisions return truthful remaining request state. Exact current RPC/function names, version predicates, event types and task interactions are `DB_AUDIT_REQUIRED_BEFORE_DATABASE_DESIGN` and must be verified against live M01–M39 before database design.
+The customer projection includes the validated photos plus the exact confirmed quantity, unit price, applicable fulfillment/terms, proposal/request version and acceptance expiry. C17 is invalid before this projection and an active unexpired matching soft hold exist. It invokes the existing Phase 6 customer-acceptance seam, promotes soft holds to firm, and may enter `payment_ready` only when every existing guard passes. It does not create provider payment, a paid order, ledger entry, settlement, pickup or refund.
+
+If price or quantity changes after photo supply but before Owner confirmation, C28 snapshots the current authorized values. If the Owner changes either after confirmation, a new expected-version confirmation must atomically release/replace the prior soft hold and issue a new proposal/version; prior customer acceptance becomes stale. If another sale consumes stock before C30 locks it, confirmation fails with insufficient available quantity or the Owner confirms a smaller quantity. Once the soft hold commits, ordinary sales must respect reserved quantity. Expiry C29 or decline/unfulfilled C18/C19 releases the hold and recalculates request totals.
+
+Decline/unfulfilled withdraws or marks affected items and releases/recalculates eligible holds/amounts through the existing command semantics. Partial item decisions return truthful remaining request state. The soft hold is an unpaid, bounded anti-oversell reservation only; it is not payment authorization, an order, settlement or completed sale. Exact live RPC/function compatibility, version predicates, event types and task interactions remain `DB_AUDIT_REQUIRED_BEFORE_DATABASE_DESIGN` and must be verified against live M01–M39 before database design.
 
 ## 7. Authorization and privacy
 
@@ -59,7 +64,7 @@ Store A/B, Customer A/B, forged request/store/item, expired/replayed capability,
 
 ## 8. Failure semantics and freshness
 
-Invalid or missing media leaves the request in its prior state with a stable code. A successful upload that fails linking leaves only private staged media eligible for lifecycle cleanup. Customer acceptance/decline is idempotent; stale opposite decisions conflict. Owner unfulfilled races with customer acceptance under the request-item version/lock, so exactly one wins.
+Invalid or missing media leaves the request nonprovided with a stable code. A successful upload that fails validation/linking leaves only private staged media eligible for lifecycle cleanup. Customer acceptance before Owner confirmation, without an active soft hold, after expiry, or against a stale price/quantity proposal fails closed. Acceptance/decline is idempotent; stale opposite decisions conflict. Owner unfulfilled or hold expiry races with customer acceptance under request/item/hold locks, so exactly one wins.
 
 Repeated Owner inability to provide current-copy evidence emits bounded freshness/review signals for the listing. It does not automatically accuse the store, publish customer details, mutate quantity, or execute paid-order behavior. Exact thresholds and operational review policy remain later configuration/product gates.
 

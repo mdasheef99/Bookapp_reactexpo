@@ -1,6 +1,6 @@
 # WU0B Jobs, Providers, Cost, Media, and Lifecycle Design
 
-**Status:** `implementation_complete_needs_review`
+**Status:** `independently_approved`
 **Provider/storage authority:** none
 
 ## 1. Persistent job contract
@@ -16,7 +16,8 @@ Each job payload contains only job/aggregate/media/provider-policy IDs, store/pu
 | `publication_retry` | publication intent identity+inventory version | published/retracted / transient retry / permanent failed status | `mayWriteInventory=false`; reauthorize eligibility each attempt |
 | `retention_delete` | media/entity+retention policy+eligibility version | non-content deletion evidence / transient object failure / hold or relink cancels eligibility | recheck links and legal/dispute/security holds immediately before delete |
 | `orphan_reconcile` | scan partition+policy version | classified linked/staged/orphan / retry scan / ambiguous item quarantined | classification precedes delete; never bypass hold |
-| `request_photo_lifecycle` | request item+photo version+policy | approved expiry/reminder/cleanup state / transient retry / state changed no-op | cannot accept/decline, alter payment, or use another request/store |
+| `request_photo_media_validation` | C27; request item+photo/media versions+purpose policy | all valid links yield `provided` / transient retry / invalid media leaves `uploading` | cannot Owner-confirm, accept/decline, create holds, or use another request/store |
+| `request_photo_hold_expiry` | C29; request/request-item/soft-hold version+Phase 6 expiry task | release/recalculate/expire / transient retry / state changed no-op | cannot accept/decline, create firm hold/payment, or use another request/store |
 
 Exact table/queue/function names and compatibility with current Phase 6 tasks are `DB_AUDIT_REQUIRED_BEFORE_DATABASE_DESIGN`.
 

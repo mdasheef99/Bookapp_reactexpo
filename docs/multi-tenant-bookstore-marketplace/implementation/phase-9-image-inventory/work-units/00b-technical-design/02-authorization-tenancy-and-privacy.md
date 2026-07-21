@@ -1,6 +1,6 @@
 # WU0B Authorization, Tenancy, Privacy, and Observability Design
 
-**Status:** `implementation_complete_needs_review`
+**Status:** `independently_approved`
 **Database facts:** `DB_AUDIT_REQUIRED_BEFORE_DATABASE_DESIGN`
 
 ## 1. Authorization sequence
@@ -17,10 +17,12 @@ Worker boundaries require a gateway-verified service-role JWT, a claimed job ID,
 | Same-store non-initiating Owner | C11–C12, C20–C26, Q03/Q05/Q06 when current store policy permits | user → current store administration → target inventory/store | Active session resume/mutation/close; silent takeover; support powers |
 | Other-store Owner | None for target store/session/media/request | target entity store differs from membership | All read/write/sign/link/delete; forged-ID and cross-purpose denials |
 | Owning request customer | C14, C17, C18 and customer Q11 for their request items | user → request customer → request item → store | Other customer/request, direct paths, Owner projection, exact private inventory |
-| Owning-store Owner | C15, C16, C19 and Owner Q11 | user → store administration → request item store | Other store/request/customer content; request-photo reuse as listing media |
+| Owning-store Owner | C15, C16, C19, C28 and Owner Q11 | user → store administration → request item/store/inventory and current proposal | Other store/request/customer content; request-photo reuse as listing media; customer acceptance; direct hold mutation |
 | Public/anonymous | Q08–Q10 only | eligible safe public projections, never private base tables | Sessions, inventory buckets, request/media/job/telemetry data |
-| Worker/service | One claimed job/action; C12 only for publication job | service JWT → claimed job → kind/entity/store/purpose/lease | Client bearer, arbitrary operation/table, cross-purpose action, unclaimed work |
+| Worker/service | One claimed job/action; C12 publication retry, C27 media validation, C29 hold expiry; C30 only inside C28 transaction | service JWT → claimed job or internal definer call → kind/entity/store/purpose/lease | Client bearer, arbitrary operation/table, cross-purpose action, unclaimed work, ambient C30 execution |
 | Platform support | No ambient WU0B scope | Future explicit support command and audited entitlement | Finance/reviewer/media/database administration; no implied bypass |
+
+C12 exists only at `supabase/functions/image-inventory-publication-retry/index.ts`: the boundary classifies exactly one Owner or claimed-worker principal, derives store scope from inventory/job ownership, selects caller-specific grant/result rules, and calls one projection-only service with caller-kind+identity replay scope. Owner and worker boundaries must not duplicate C12. Q11 remains owned by the request-photo boundary, which selects exactly one customer or Owner projection.
 
 ## 3. Capability matrix
 

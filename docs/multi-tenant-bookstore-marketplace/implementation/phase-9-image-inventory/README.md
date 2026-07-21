@@ -1,8 +1,8 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `wu0b_implementation_complete_needs_independent_review`
-**Last updated:** 2026-07-20
-**Implementation status:** WU0A approved complete; WU0B documentation-only technical design complete and awaiting independent review; product/runtime implementation not started
+**Status:** `wu0b_independently_approved`
+**Last updated:** 2026-07-22
+**Implementation status:** WU0A approved complete; WU0B documentation-only technical design independently approved; product/runtime implementation not started
 **Supabase mutation status:** no Phase 9 migration, function, policy, bucket, or data change has been made
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
@@ -92,7 +92,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, corrected Work Unit 0 plan, WU0A server contract/test foundation, and corrected WU0B definition are independently approved. WU0B documentation-only technical design is complete and needs independent review; it grants no product/runtime authority. Supabase audit, database/migration design, migration-file creation/application, and fixture-backed runtime remain separately gated. Before any later authorized unit, preserve these WU0 controls:
+The planning baseline, corrected Work Unit 0 plan, WU0A server contract/test foundation, corrected WU0B definition, and WU0B documentation-only technical design are independently approved; they grant no product/runtime authority. The next action is a consolidated Risk-Based Phase 9 SDD analysis in a new session. Supabase audit, database/migration design, migration-file creation/application, and fixture-backed runtime remain separately gated. Before any later authorized unit, preserve these WU0 controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

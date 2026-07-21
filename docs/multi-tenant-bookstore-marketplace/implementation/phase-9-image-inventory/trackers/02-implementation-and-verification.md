@@ -1,13 +1,13 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `wu0b_implementation_complete_needs_independent_review`
-**Last updated:** 2026-07-20
+**Status:** `wu0b_independently_approved`
+**Last updated:** 2026-07-22
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `0b_implementation_complete_needs_independent_review`
+**Active work unit:** `0b_independently_approved`
 
 This tracker is intentionally separate from planning decisions. It will hold implementation evidence and can grow without turning the master tracker into a worklog.
 
-WU0B uses five distinct markers: `definition_complete_needs_review`, `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, `implementation_complete_needs_review`, and `independently_approved`. This unit is at the fourth marker; completion does not imply independent approval or any database/runtime authority.
+WU0B uses five distinct markers: `definition_complete_needs_review`, `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, `implementation_complete_needs_review`, and `independently_approved`. This unit is at the fifth marker after a separate review; approval grants no database/runtime authority.
 
 ## Work units
 
@@ -15,7 +15,7 @@ WU0B uses five distinct markers: `definition_complete_needs_review`, `definition
 | --- | --- | --- | --- |
 | 0 | [Contract fixtures, threat tests, migration plan, rollback/forward-correction plan](../work-units/00-contracts-threat-migration-plan.md) | `approved` | Corrections incorporated; no implementation/migration authorization |
 | 0A | Server contracts, deterministic helpers, validation/error/provider/query/grant registers, fixtures, and red contract/security tests | `approved_complete` | independently reviewed 2026-07-19; no SQL/live writes; focused 4 suites/41 tests and all function 9 suites/53 tests pass |
-| 0B | [Backend/API technical design](../work-units/00b-backend-api-technical-design-plan.md): seven routed artifacts covering command/query/DTO/actor/boundary inventories, state/transaction/idempotency/worker/telemetry matrices, exact later file allowlists, and red-test mapping | `implementation_complete_needs_review` | documentation-only design completed 2026-07-20; independent review next; no Supabase query, migration, endpoint, provider/storage/UI/runtime change or external mutation |
+| 0B | [Backend/API technical design](../work-units/00b-backend-api-technical-design-plan.md): seven routed artifacts covering command/query/DTO/actor/boundary inventories, state/transaction/idempotency/worker/telemetry matrices, exact later file allowlists, and red-test mapping | `independently_approved` | final verdict `approved` 2026-07-22; consolidated Risk-Based Phase 9 SDD analysis next; no Supabase query, migration, endpoint, provider/storage/UI/runtime change or external mutation |
 | 1 | Data dictionary migration: metadata fields, aliases, condition/damage, media registry | `not_started` | fresh Supabase audit + migration review |
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `not_started` | Unit 1 verified |
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `not_started` | storage policy/security review |
@@ -206,5 +206,62 @@ No product implementation activity recorded.
 - Decisions/deviations/risks: detailed artifacts resolve the approved single-document size conflict; database-dependent facts remain `DB_AUDIT_REQUIRED_BEFORE_DATABASE_DESIGN`; prior authorized main merge/push occurred before this work unit
 - Tracker/source-doc updates: WU0B authority/router, seven-artifact set, SESSION-START, Phase 9 README/TRACKER, this implementation tracker, DOC-13 and validator
 - Next authorized action and gate: authorize an independent review of the completed WU0B technical-design artifacts only; Supabase audit, database/migration design, migration creation/testing/application and runtime remain unauthorized
+
+### 2026-07-20 — Work Unit 0B semantic-review corrections
+
+- Date/session: 2026-07-20 bounded response to independent verdict `rejected_needs_redesign`
+- Authorized work unit and scope: correct only request-photo confirmation/soft holds, persisted-state vocabulary, per-operation boundary/traceability, and red-test acceptance/unit ownership
+- Original findings: customer acceptance incorrectly followed media provision without Owner quantity/price confirmation and soft hold; input/candidate states diverged from Master SDD §6; operations lacked exact primary boundaries and SDD/WU0A traces; red tests lacked acceptance IDs and future units
+- Completed: added C27 media-validation, C28 Owner-confirmation, C29 hold-expiry and internal C30 soft-hold operations; acceptance now requires a current proposal and active hold; mapped exact Master/photo/Phase 6 persisted states and transitions; assigned C01–C30/Q01–Q11 boundaries/traces/units; expanded every red row with setup, denial/effect, observability, layer and owner; hardened semantic validator checks
+- Files/components/migrations: WU0B router/artifacts, Phase 9 TRACKER, this tracker, DOC-13 and continuity validator only; no runtime/test/migration/config/generated file
+- Verification actually run: pre-review continuity validator PASS (`MARKDOWN_FILES_CHECKED=30`, `REQUIRED_PHASE_FILES=25`); C01–C30/Q01–Q11 boundary/trace coverage and 50 owned red rows pass; six in-memory Owner-confirmation, hold-order, command-boundary, query-trace, red-owner and persisted-state negative probes pass; 12-file documentation/validator scope, links, size limits, prohibited paths and `git diff --check` pass; focused reviewer verdict pending
+- Supabase/external mutations: none; Stage 2 remains blocked until focused reviewer approval
+- Decisions/deviations/risks: exact live RPC/schema compatibility remains `DB_AUDIT_REQUIRED_BEFORE_DATABASE_DESIGN`; no SDD change was required because the governing sources were consistent
+- Next authorized action and gate: focused independent review of the four corrected findings only; do not start Supabase audit unless verdict is `approved`
+
+### 2026-07-20 — Work Unit 0B focused-review state-vocabulary corrections
+
+- Date/session: 2026-07-20 bounded response to focused verdict `approved_with_required_corrections`
+- Authorized work unit and scope: correct the three remaining persisted-state vocabulary conflicts and direct-contradiction validator coverage only
+- Completed: request-photo initial state is `none`; `skipped_false_detection` is a review disposition while the candidate retains a Master §6 state; Phase 6 hold statuses are `active`, `released`, and `converted_to_sale`, with expiry modeled as release; the validator rejects all three former contradictory forms and requires the exact hold marker
+- Files/components/migrations: existing WU0B documentation/validator correction set only; no runtime/test/migration/config/generated file
+- Verification actually run: continuity validator PASS (`MARKDOWN_FILES_CHECKED=30`, `REQUIRED_PHASE_FILES=25`); three new in-memory contradiction probes PASS; `git diff --check` and the 12-file documentation/validator scope pass
+- Supabase/external mutations: none; Stage 2 remains blocked until the new context-isolated reviewer returns exactly `approved`
+- Decisions/deviations/risks: no SDD change was required; the owning SDDs already fixed the correct values
+- Next authorized action and gate: new context-isolated review of the corrected WU0B design; do not start Supabase audit unless verdict is exactly `approved`
+
+### 2026-07-22 — Work Unit 0B actor-dispatch and semantic-validator corrections
+
+- Date/session: 2026-07-22 bounded response to isolated verdict `approved_with_required_corrections`
+- Authorized work unit and scope: resolve only C12/Q11 multi-actor primary-boundary ambiguity and artifact-wide semantic state-contradiction coverage
+- Completed: added primary boundary `AE` for a shared authenticated dispatcher with closed caller-specific authorization/projection branches; C12 separates same-store Owner from claimed worker authority and results; Q11 separates customer from owning-store Owner projections; validator requires exactly one primary boundary, checks both branch contracts, scans all seven artifacts against closed state vocabularies and rejects semantic contradiction variants
+- Files/components/migrations: existing 12-file WU0B documentation/validator correction set only; no runtime/test/migration/config/generated file
+- Verification actually run: semantic negative probes for `unrequested`, candidate terminal `skipped_false_detection`, and expired hold status PASS; C12/Q11 shared-boundary probes PASS; continuity validator PASS (`MARKDOWN_FILES_CHECKED=30`, `REQUIRED_PHASE_FILES=25`); `git diff --check`, exact 12-file allowlist, prohibited-path scan and ≤350-line artifact/validator limits PASS (validator 349 lines)
+- Supabase/external mutations: none; Stage 2 remains blocked until the final context-isolated reviewer returns exactly `approved`
+- Decisions/deviations/risks: shared AE dispatch preserves one operation identity while making caller authorization explicit; no SDD or WU0A behavior changed
+- Next authorized action and gate: final context-isolated review of the complete corrected WU0B diff; do not commit, push or start Supabase unless verdict is exactly `approved`
+
+### 2026-07-22 — Work Unit 0B exact C12 ownership and semantic-closure corrections
+
+- Date/session: 2026-07-22 bounded response to the next isolated verdict `approved_with_required_corrections`
+- Authorized work unit and scope: name one exact shared C12 implementation boundary and reject lifecycle/workflow/terminal/persisted-as/transition/arrow state contradictions
+- Completed: proposed `supabase/functions/image-inventory-publication-retry/index.ts` is the sole C12 boundary, both valid callers route to one projection-only service, Owner/worker endpoints may not duplicate C12, Q11 stays request-photo-owned; state validation now parses the reviewer’s broader semantic forms across all seven artifacts
+- Files/components/migrations: existing 12-file WU0B documentation/validator correction set only; no runtime/test/migration/config/generated file
+- Verification actually run: generated 105-case state matrix across five domains/twenty-one claim forms plus two special state/disposition probes and two C12 ownership/duplication probes PASS; continuity validator PASS (`MARKDOWN_FILES_CHECKED=30`, `REQUIRED_PHASE_FILES=25`); validator remains ≤350 lines and `git diff --check` passes
+- Supabase/external mutations: none; Stage 2 remains blocked until another context-isolated reviewer returns exactly `approved`
+- Decisions/deviations/risks: dedicated C12 endpoint removes implementation ownership ambiguity without splitting the approved operation ID; valid request-photo `expired` remains distinct from released hold status
+- Next authorized action and gate: another context-isolated review of the complete corrected WU0B diff; do not commit, push or start Supabase unless verdict is exactly `approved`
+
+### 2026-07-22 — Work Unit 0B final independent approval
+
+- Date/session: 2026-07-22 final context-isolated review and documentation-only approval closeout
+- Authorized work unit and scope: record the existing exact verdict `approved`, update the required 13-file handoff set, validate once, commit and push
+- Completed: WU0B transitioned separately from implementation-complete to independently-approved
+- Files/components/migrations: WU0B documentation, Phase 9 status/handoff documents and continuity validator only; no runtime/test/migration/config/dependency/generated file
+- Verification actually run: final continuity validator and `git diff --check`; commit/push evidence reported after success
+- Supabase/external mutations: none; no database, Storage, provider, deployment or live application action occurred
+- Decisions/deviations/risks: exact live database facts remain `DB_AUDIT_REQUIRED_BEFORE_DATABASE_DESIGN`; independent approval grants no migration or runtime authority
+- Tracker/source-doc updates: WU0B router/artifacts, Phase 9 README/TRACKER, this implementation tracker, DOC-13 and continuity validator
+- Next authorized action and gate: consolidated Risk-Based Phase 9 SDD analysis in a new session; Supabase audit, migration and runtime remain unauthorized
 
 When implementation is authorized, append one entry per material development session using the exact closeout shape in [SESSION-START](../SESSION-START.md): authorized unit/scope, completed work, files/components/migrations, verification actually run, external mutations, decisions/deviations/risks, documentation updates, and next authorized action/gate. Never rewrite an older evidence entry to make a later result look contemporaneous.

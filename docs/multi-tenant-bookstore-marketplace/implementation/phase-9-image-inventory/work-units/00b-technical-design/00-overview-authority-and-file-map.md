@@ -1,6 +1,6 @@
 # WU0B Technical Design: Authority, Architecture, and File Map
 
-**Status:** `implementation_complete_needs_review`
+**Status:** `independently_approved`
 **Scope:** documentation-only backend/API technical design
 **Runtime/database authority:** none
 
@@ -28,7 +28,7 @@ Inspection is evidence of repository conventions, not reuse authority. Live sche
 | Artifact | Owns |
 | --- | --- |
 | This file | Authority, component map, exact proposed later-file allowlist, non-goals, gates |
-| [Command/query/DTO catalogue](./01-command-query-and-dto-catalogue.md) | C01-C26, Q01-Q11, DTOs, errors, HTTP, rate and abuse classes |
+| [Command/query/DTO catalogue](./01-command-query-and-dto-catalogue.md) | C01-C30, Q01-Q11, DTOs, boundaries, traceability, errors, HTTP, rate and abuse classes |
 | [Authorization, tenancy, privacy](./02-authorization-tenancy-and-privacy.md) | Actors, server-derived scope, denials, grants, telemetry and forbidden fields |
 | [State, transactions, idempotency](./03-state-transactions-idempotency-and-publication.md) | State machines, atomicity, concurrency, commit/publication and post-commit edits |
 | [Jobs, providers, media](./04-jobs-providers-and-media-boundaries.md) | Job/lease contracts, adapter boundaries, cost, recovery, media capabilities and lifecycle |
@@ -40,6 +40,7 @@ Inspection is evidence of repository conventions, not reuse authority. Live sche
 | Component | May do | Must not do |
 | --- | --- | --- |
 | Edge router | Method/content checks, correlation ID, strict DTO parse, invoke one service | SQL, authorization decisions, workflow transitions |
+| Authenticated actor-dispatch boundary | For C12 only, accept Owner or service JWT, reject mixed/unknown authority, derive the caller-specific scope/claim and invoke one shared projection-retry service | Duplicate dispatch across Owner/worker boundaries; trust supplied caller/store; mutate inventory/quantity |
 | Actor resolver | Validate JWT; resolve user, membership, target ownership and final `store_id` | Trust supplied `store_id`; expose service credentials |
 | Capability resolver | Issue/verify short-lived purpose/entity/store/actor capabilities after final auth | Persist tokens; accept cross-purpose media |
 | Orchestration service | Sequence policies, transactions, jobs and truthful outcomes | Hold DB transaction over provider/storage calls |
@@ -63,6 +64,7 @@ These paths are proposals, not authority. Migration names and database-facing fi
 | Public query boundary | `supabase/functions/image-inventory-marketplace/index.ts`; `supabase/functions/__tests__/phase9_marketplace_boundary.test.ts` |
 | Request-photo boundary | `supabase/functions/image-inventory-request-photos/index.ts`; `supabase/functions/__tests__/phase9_request_photo_boundary.test.ts` |
 | Worker boundary | `supabase/functions/image-inventory-worker/index.ts`; `supabase/functions/__tests__/phase9_worker_auth.test.ts` |
+| C12 shared publication-retry boundary | `supabase/functions/image-inventory-publication-retry/index.ts`; `supabase/functions/__tests__/phase9_publication_retry_boundary.test.ts`; the Owner and worker boundaries do not implement C12 |
 | Domain/services | `supabase/functions/_shared/imageInventory/domain/states.ts`<br>`supabase/functions/_shared/imageInventory/domain/idempotency.ts`<br>`supabase/functions/_shared/imageInventory/domain/authorization.ts`<br>`supabase/functions/_shared/imageInventory/domain/publication.ts`<br>`supabase/functions/_shared/imageInventory/domain/jobs.ts`<br>`supabase/functions/_shared/imageInventory/domain/media.ts`<br>`supabase/functions/_shared/imageInventory/domain/marketplace.ts` |
 | Repository adapters | `supabase/functions/_shared/imageInventory/repositories/sessions.ts`<br>`supabase/functions/_shared/imageInventory/repositories/candidates.ts`<br>`supabase/functions/_shared/imageInventory/repositories/inventory.ts`<br>`supabase/functions/_shared/imageInventory/repositories/media.ts`<br>`supabase/functions/_shared/imageInventory/repositories/jobs.ts`<br>`supabase/functions/_shared/imageInventory/repositories/marketplace.ts`<br>`supabase/functions/_shared/imageInventory/repositories/requestPhotos.ts` |
 | Provider adapters | `supabase/functions/_shared/imageInventory/adapters/vision.ts`<br>`supabase/functions/_shared/imageInventory/adapters/metadata.ts`<br>`supabase/functions/_shared/imageInventory/adapters/aliases.ts`; fixture-backed tests only until live-provider authority |
