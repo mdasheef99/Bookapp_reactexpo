@@ -1,11 +1,15 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-07-19
+**Audit date:** 2026-07-22
 **Audit mode:** read-only through Supabase MCP
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
 **Mutation status:** no changes made
 
 **WU0 refresh:** a second read-only check on 2026-07-19 reconfirmed project identity, 37 `store_id`/zero `tenant_id` public columns, the five core catalogue/inventory tables, absence of proposed Phase 9 tables/buckets, five `good` inventory rows, zero observed quantity-balance violations, the explicit listing projection trigger, and the current migration tail. No drift changed the proposed design.
+
+**Package 1 refresh:** a fresh read-only audit on 2026-07-22 reconfirmed the exact healthy project, live history through Phase 6 M39, 37 `store_id`/zero `tenant_id` columns, one canonical work/edition, zero metadata-source rows, five `good` inventory/listing rows, zero quantity violations, and the still-`NOT VALID` balance CHECK. It additionally captured exact columns/constraints/indexes, role grants, RLS policies, relevant function/trigger privileges, eight Storage buckets/object policies, proposed-name collision checks, and 121 security/314 performance advisor notices. The complete evidence and exact proposed grouping are in [Package 1 live audit](../work-units/01-package1-live-audit.md) and [database design](../work-units/01-package1-database-design.md). No Supabase or Storage mutation occurred.
+
+**Package 1 correction:** the six required review corrections are documentation-only: executable condition compatibility ordering; persisted single-use upload authority; named-only private query/command access; exact cost-reservation uniqueness; first-possible deferred FKs; and eight additive groups plus separately authorized M09 quantity validation. No second live query was required because no corrected exact-current-state claim changed.
 
 ## Evidence classification
 
@@ -34,15 +38,17 @@
 | Image extraction tables | `image_extraction_sessions`, `image_extraction_inputs`, `image_extraction_candidates`, and `metadata_enrichment_attempts` do not exist. | Create store-scoped persistent session/input/candidate/job/attempt structures with RLS, idempotency, versioning, lifecycle fields, and indexes. |
 | Alias storage | No multilingual alias table or listing alias projection exists. | Add provenance-bearing aliases targeted to either a canonical edition or unmatched store inventory with an XOR target constraint. Only approved/eligible aliases enter public search. |
 | Media registry | Inventory has an untyped `photos text[]`; no purpose, privacy, hash, retention, or deletion metadata. | Add typed `media_assets` plus explicit inventory/request links. Deprecate direct raw path arrays after backfill. |
+| Upload capabilities | Storage path membership is the current upload authority; no persisted one-use relation exists. | Persist server-derived store/Owner/purpose/entity/path/envelope binding with issued/expiry/consumed/revoked/failed state and atomic replay denial. |
+| Cost reservation | No Phase 9 reservation relation exists. | Enforce unique `(store_id, job_id, cost_kind, policy_version)` reservations. |
 | Customer request photos | No request-specific photo table/gate exists. | Add orthogonal item photo request and media link structures; integrate with existing request versions/commands and `awaiting_customer_decision`. |
 
 ## Constraints and live data
 
 | Area | Observed | Migration implication |
 | --- | --- | --- |
-| Conditions | `new`, `like_new`, `good`, `fair`, `damaged`. | Replace with `new`, `like_new`, `very_good`, `good`, `acceptable`. Move damage to separate fields. Map `fair -> acceptable`; review any `damaged` row instead of blindly mapping. |
+| Conditions | `new`, `like_new`, `good`, `fair`, `damaged`. | Install a temporary union CHECK and update legacy validators/triggers before mapping `fair -> acceptable`; adjudicate `damaged` into a base condition plus separate damage data; then validate an exact five-value final CHECK. |
 | Current rows | Five inventory rows and five public projections; all are `good`. | Today no live `fair`/`damaged` adjudication is needed, but the migration must still be safe if data changes before application. Re-query immediately before migration. |
-| Quantity equality | `quantity_total = available + reserved + sold + removed` exists `NOT VALID`; existing rows were previously audited as non-violating. PostgreSQL still enforces the CHECK for new/updated rows while historical validation remains pending. | All commits/increments use the controlled bucket-transfer boundary. Freshly audit/repair with approval and validate in a separately reviewed forward migration before production enablement unless documented evidence makes validation unsafe/unnecessary; contract/test work is not blocked. |
+| Quantity equality | `quantity_total = available + reserved + sold + removed` exists `NOT VALID`; existing rows were previously audited as non-violating. PostgreSQL still enforces the CHECK for new/updated rows while historical validation remains pending. | All commits/increments use the controlled bucket-transfer boundary. Keep validation out of M01-M08; M09 requires a fresh violation preflight, separate review/application authorization, validation, and `convalidated=true` readback. |
 | Provider values | Provider CHECK embeds concrete vendors. | Migrate without losing provenance; adapter keys become data/config, not schema releases. |
 | Listing cardinality | Unique `marketplace_book_listings.inventory_id`. | Keep row identity separate; aggregate offers and stores at read time. |
 | Canonical uniqueness | Unique ISBNs; unique work title/authors without language. | Normalize/check ISBNs before write. Audit work uniqueness before adding language-aware semantics; do not loosen blindly. |
@@ -53,10 +59,10 @@ Observed relevant core tables have RLS. Store inventory currently allows authent
 
 Proposed boundary:
 
-1. Mobile clients may read owner-safe staged/session projections and request upload authorization.
+1. Mobile clients use named Q01-Q06/Q11 RPCs or dedicated positive-allowlist views for owner-safe projections and named commands for upload authorization; they receive no direct private base-table SELECT grant.
 2. Mobile clients do not directly insert committed inventory from model output, mutate canonical rows, select raw provider/model payloads, or promote media.
 3. A controlled server command performs candidate commit, duplicate choice, quantity-bucket changes, audit/event creation, and eligible public projection atomically per candidate where possible.
-4. Service-role functions/Edge Functions derive actor/store, use fixed schemas/search paths, expose minimum commands, and have explicit grants plus cross-tenant denial tests.
+4. Service-role functions/Edge Functions derive actor/store, use fixed schemas/search paths, expose minimum commands, and have explicit grants plus cross-tenant denial tests; worker/service access is separately enumerated from authenticated access.
 5. Model/provider workers have a narrow job capability, not a user bearer token and not general database authority.
 
 ## Storage delta

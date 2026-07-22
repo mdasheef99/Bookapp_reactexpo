@@ -84,14 +84,20 @@ If implementation changes product or architecture behavior, update the relevant 
 
 > 2026-07-22 Phase 9 bounded contract correction: the authorized correction aligned canonical alias vocabulary and lifecycle-only supersession, separated zero-price private save from positive-price publication, removed `committed_publication_failed` from persisted state vocabularies, completed exact C01–C30/Q01–Q11 stable-error mappings and metadata, excluded interactive support takeover/cross-store private access, and added the missing contract/design verification rows while preserving later runtime/release gates. Focused WU0A Jest passed 4 suites/45 tests; TypeScript, continuity/link/size checks, 107 semantic cases, two C12 probes, and `git diff --check` passed. A fresh correction-only review returned exact verdict `approved`. No Supabase access, migration, provider/storage action, runtime implementation, or deployment occurred.
 
+> 2026-07-22 Phase 9 Package 1 audit checkpoint: user-authorized exact-project read-only Supabase audit verified project `ahntbtktjjmvfosgkmgn`, live history through Phase 6 M39, canonical `store_id` tenancy, catalogue/inventory/listing/quantity/condition/provider compatibility, RLS/grants/functions/triggers, Storage, reusable Phase 6 infrastructure, and advisor findings. Two bounded artifacts now record current evidence, the gap matrix, exact proposed schema/RLS/function/index/storage changes, eight migration groups, failing security tests, and genuine blockers. No migration/runtime file was created and no database, Storage, provider, deployment, or external mutation occurred. Package 1 is `audit_complete_needs_review`; migration tests, file creation, and live application remain separately gated.
+
+> 2026-07-22 Phase 9 Package 1 review correction: the six required findings are corrected documentation-only. The design now gives an executable legacy-condition compatibility sequence; persisted purpose/path/entity-bound single-use capabilities for C02/C03, C15/C16 and C20/C21; named-only private access with separate worker/service grants; unique cost reservations on `(store_id, job_id, cost_kind, policy_version)`; exact deferred-FK addition groups; and eight additive Phase 9 groups plus separately reviewed/authorized M09 quantity validation with preflight. Package 1 is `corrections_complete_needs_review`; no Supabase re-query/mutation or migration/runtime file occurred.
+
+> 2026-07-22 Phase 9 Package 1 independent approval: the correction-only reviewer returned exact verdict `approved` and verified all six findings, the 107 existing semantic negative cases, both C12 probes, and unchanged WU0A/WU0B validation strength. Package 1 is `independently_approved`. Failing tests, migration-file creation, M09/live application and runtime remain separately unauthorized. No reviewer edit or Supabase query/mutation occurred.
+
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **WU0A and WU0B independently approved; WU0B remains documentation-only; product/runtime implementation not started** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Package 1 corrected audit/database design independently approved; no migration/runtime implementation started** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-22 |
 | Latest handoff | `PHASE 6 COMPLETE — COMPREHENSIVE BROWSER E2E DEFERRED`. M01-M39 are applied and database-verified in development; scheduler v5, worker v3, and cron job 5 are active. Phases 7 and 8 are deferred. |
 | Current risk level | Medium - Phase 9 design now contains AI, tenant, media, retention, duplicate, multilingual, and marketplace risks; implementation evidence and vendor/legal selection remain pending. Phase 6 E2E stays a recorded deferred gate. |
-| Next recommended task | Perform the consolidated Risk-Based Phase 9 SDD analysis in a new session. Supabase audit, database/migration design, migration creation/testing/application, providers, Storage, runtime/UI, and Phase 7/8 behavior remain unauthorized. |
+| Next recommended task | Separately authorize failing database/security tests or migration-file creation when ready. M09/live application, providers, runtime/UI, and Phase 7/8 behavior remain unauthorized. |
 
 ---
 
@@ -108,7 +114,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `wu0b_independently_approved` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [SDD/tracker set](./implementation/phase-9-image-inventory/README.md) | WU0B documentation-only technical design and bounded six-area contract correction are independently approved. Consolidated Risk-Based Phase 9 SDD analysis is next; Supabase, migration and runtime gates remain unauthorized. |
+| Phase 9: Image-to-LLM Inventory | `package1_independently_approved` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [SDD/tracker set](./implementation/phase-9-image-inventory/README.md) | WU0A/WU0B and corrected Package 1 audit/database design are independently approved; no migration/runtime file or external mutation exists. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -226,8 +232,8 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 
 Next work:
 1. Review the Phase 9 master/domain SDDs, data dictionary, live audit, traceability, complexity register, and local trackers.
-2. Perform the consolidated Risk-Based Phase 9 SDD analysis in a new session; Supabase audit, database/migration design, migration creation/testing/application and runtime remain later separate authorizations.
+2. Separately authorize failing database/security tests or migration-file creation when ready; M09/live migration application and runtime remain later independent authorizations.
 3. Start implementation with same-language `spine_stack` (maximum 15) plus camera/gallery and mandatory Owner review; `single_cover` is not the first slice.
 4. Preserve the Phase 6 quantity-bucket/hold and controlled-write boundary when creating or incrementing inventory.
 5. Keep provider payments, `payment_pending`, paid orders, ledger, pickup, refunds, and settlement deferred with Phases 7/8.
-6. Re-verify exact Supabase project/schema/storage/advisors before any migration creation/application and keep the existing `NOT VALID` quantity constraint as a separately reviewed production-readiness gate.
+6. Re-verify exact Supabase project/schema/storage/advisors before any migration creation/application and keep the existing `NOT VALID` quantity constraint for separately reviewed M09, with a fresh violation preflight and separate live-application authorization.

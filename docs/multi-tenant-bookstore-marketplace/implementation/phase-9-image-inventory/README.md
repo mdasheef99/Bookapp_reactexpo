@@ -1,8 +1,8 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `wu0b_independently_approved`
+**Status:** `package1_independently_approved`
 **Last updated:** 2026-07-22
-**Implementation status:** WU0A approved complete; WU0B documentation-only technical design independently approved; bounded six-area contract correction independently approved; product/runtime implementation not started
+**Implementation status:** WU0A/WU0B and Package 1 audit/design independently approved; product/runtime and migration implementation not started
 **Supabase mutation status:** no Phase 9 migration, function, policy, bucket, or data change has been made
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
@@ -28,7 +28,7 @@ After the repository entrypoint, read in this order:
 6. [Master SDD](./00-phase-9-master-sdd.md)
 7. The relevant domain/supporting documents routed for the active work unit
 8. [Implementation and verification tracker](./trackers/02-implementation-and-verification.md)
-9. The current work-unit authority/router: [WU0B technical design](./work-units/00b-backend-api-technical-design-plan.md), followed by its seven linked artifacts
+9. The current Package 1 evidence: [live audit](./work-units/01-package1-live-audit.md) and [proposed database design](./work-units/01-package1-database-design.md); WU0B remains the owning technical-design router
 
 ## SDD set
 
@@ -92,7 +92,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, corrected Work Unit 0 plan, WU0A server contract/test foundation, corrected WU0B definition, and WU0B documentation-only technical design are independently approved; they grant no product/runtime authority. The next action is a consolidated Risk-Based Phase 9 SDD analysis in a new session. Supabase audit, database/migration design, migration-file creation/application, and fixture-backed runtime remain separately gated. Before any later authorized unit, preserve these WU0 controls:
+The planning baseline, WU0 plan, WU0A server contract/test foundation, WU0B documentation-only technical design, and corrected Package 1 audit/database design are independently approved. Failing test creation, migration-file creation/application, and fixture-backed runtime remain separately gated and require new authorization. Before any later authorized unit, preserve these WU0 controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

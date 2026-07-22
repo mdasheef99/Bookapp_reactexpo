@@ -1,9 +1,9 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `wu0b_independently_approved`
+**Status:** `package1_independently_approved`
 **Last updated:** 2026-07-22
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `0b_independently_approved`
+**Active work unit:** `package1_independently_approved`
 
 This tracker is intentionally separate from planning decisions. It will hold implementation evidence and can grow without turning the master tracker into a worklog.
 
@@ -16,7 +16,7 @@ WU0B uses five distinct markers: `definition_complete_needs_review`, `definition
 | 0 | [Contract fixtures, threat tests, migration plan, rollback/forward-correction plan](../work-units/00-contracts-threat-migration-plan.md) | `approved` | Corrections incorporated; no implementation/migration authorization |
 | 0A | Server contracts, deterministic helpers, validation/error/provider/query/grant registers, fixtures, and red contract/security tests | `approved_complete` | independently reviewed 2026-07-19; no SQL/live writes; focused 4 suites/41 tests and all function 9 suites/53 tests pass |
 | 0B | [Backend/API technical design](../work-units/00b-backend-api-technical-design-plan.md): seven routed artifacts covering command/query/DTO/actor/boundary inventories, state/transaction/idempotency/worker/telemetry matrices, exact later file allowlists, and red-test mapping | `independently_approved` | original and bounded correction verdicts `approved` 2026-07-22; consolidated Risk-Based Phase 9 SDD analysis next; no Supabase query, migration, endpoint, provider/storage/UI/runtime change or external mutation |
-| 1 | Data dictionary migration: metadata fields, aliases, condition/damage, media registry | `not_started` | fresh Supabase audit + migration review |
+| 1 | [Package 1 live audit](../work-units/01-package1-live-audit.md) and [database design](../work-units/01-package1-database-design.md): metadata, aliases, condition/damage, pipeline/media/request-photo persistence, RLS/grants/functions/indexes/storage, and migration grouping | `independently_approved` | exact correction-only verdict `approved`; separately authorize red tests and migration-file creation |
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `not_started` | Unit 1 verified |
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `not_started` | storage policy/security review |
 | 4 | Vision adapter contract, primary/fallback orchestration, strict output validation | `not_started` | recorded fixtures; no live model in CI |
@@ -55,6 +55,9 @@ Rules:
 - [ ] Canonical tables cannot be mutated by Store Owner commands.
 - [ ] RLS/grants and function `search_path`/EXECUTE are verified live.
 - [ ] Grant matrix proves API-exposed tables have RLS and raw attempts/jobs/usage/cost/lifecycle structures plus private helpers are not directly callable by client roles.
+- [ ] Authenticated clients cannot directly SELECT private Phase 9 base tables; named Q/RPC or positive-allowlist views are the only read surfaces, and worker/service grants are tested separately.
+- [ ] Upload capabilities are persisted, server-derived, actor/purpose/entity/path bound, expiring, revocable/failable and atomically single-use for C02/C03, C15/C16 and C20/C21.
+- [ ] Cost reservations enforce exactly one `(store_id, job_id, cost_kind, policy_version)` row under retries and concurrent inserts.
 - [ ] Inventory equality and active-hold semantics survive increment/new-row/partial failure races.
 - [ ] Duplicate check and commit are concurrency-safe and idempotent.
 
@@ -110,6 +113,31 @@ Rules:
 ## Append-only implementation log
 
 No product implementation activity recorded.
+
+### 2026-07-22 — Package 1 six-finding correction
+
+- Date/session: 2026-07-22 Package 1 review correction
+- Authorized work unit and scope: correct only the six required audit/design findings and related status/validator expectations; no new Supabase query unless needed, migration/runtime file, or external mutation
+- Completed: executable condition compatibility/backfill/final-CHECK order; persisted single-use upload capability relation and C01-C07/C20-C21 boundary coverage; named-only private reads and separate worker/service grants; exact cost-reservation uniqueness; first-possible deferred-FK additions; eight additive groups plus separately reviewed M09 quantity-validation gate
+- Files/components/migrations: Package 1 documentation, required current-vs-target/status records, and continuity validator only; no migration or runtime file
+- Verification actually run: continuity validator and `git diff --check` at correction closeout; no second live audit required
+- Supabase/external mutations: none
+- Decisions/deviations/risks: no settled SDD decision reopened; `damage` remains separate data; existing advisor backlog remains non-blocking unless a Phase 9 change copies/worsens it
+- Next authorized action and gate: one correction-only review limited to these six findings; red tests, migration creation, M09/live application and runtime remain separately gated
+- Independent review verdict: exact `approved`; all six findings fully covered; validator preservation verified; reviewer made no edits and performed no Supabase query/mutation
+- Next authorized action and gate after approval: await separate authorization for failing tests or migration-file creation; M09/live application and runtime remain independently gated
+
+### 2026-07-22 — Package 1 read-only database/storage audit
+
+- Date/session: 2026-07-22 Package 1 database foundation audit
+- Authorized work unit and scope: exact-project read-only Supabase audit and proposed database/migration design only; no migration creation/application or runtime/storage mutation
+- Completed: current-state evidence, current-to-target matrix, exact proposed schema/RLS/function/index/storage changes, eight-group safe order, failing migration/RLS/security plan, and blocker classification
+- Files/components/migrations: two Package 1 documentation artifacts plus required current-vs-target/continuity/tracker updates; no migration or runtime file
+- Verification actually run: Supabase project/table/catalog/policy/grant/function/trigger/storage/migration/advisor queries; continuity validator, link/size/diff checks at closeout
+- Supabase/external mutations: none; all SQL was SELECT/catalog readback and all Supabase MCP operations were read-only
+- Decisions/deviations/risks: no settled SDD decision reopened; dedicated Phase 9 job table proposed while reusing Phase 6 claim mechanics; quantity validation stays a separate forward gate
+- Tracker/source-doc updates: Package 1 audit/design, database-current-vs-target, master/implementation trackers, ACTIVE.md, DOC-13
+- Next authorized action and gate: review Package 1 design and separately authorize failing tests or migration-file creation; live application remains independently gated
 
 ### 2026-07-19 — Work Unit 0 planning checkpoint
 

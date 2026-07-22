@@ -52,7 +52,8 @@ $requiredPhaseFiles = @(
     'work-units/00b-technical-design/00-overview-authority-and-file-map.md', 'work-units/00b-technical-design/01-command-query-and-dto-catalogue.md',
     'work-units/00b-technical-design/02-authorization-tenancy-and-privacy.md', 'work-units/00b-technical-design/03-state-transactions-idempotency-and-publication.md',
     'work-units/00b-technical-design/04-jobs-providers-and-media-boundaries.md', 'work-units/00b-technical-design/05-marketplace-and-request-photo-design.md',
-    'work-units/00b-technical-design/06-red-tests-acceptance-and-handoff.md'
+    'work-units/00b-technical-design/06-red-tests-acceptance-and-handoff.md',
+    'work-units/01-package1-live-audit.md', 'work-units/01-package1-database-design.md'
 )
 $missing = @()
 foreach ($relative in $requiredPhaseFiles) {
@@ -83,15 +84,16 @@ foreach ($marker in $trackerMarkers) {
 $active = [IO.File]::ReadAllText((Join-Path $implementationRoot 'ACTIVE.md'))
 if (-not $active.Contains('phase-9-image-inventory/SESSION-START.md')) { Write-Error 'ACTIVE.md does not route to the Phase 9 session entrypoint.' }
 if (-not $active.Contains('DOC-13-implementation-tracker.md')) { Write-Error 'ACTIVE.md does not route to DOC-13.' }
-if (-not $active.Contains('**Current work-unit plan:** [Work Unit 0B backend/API technical-design definition](./phase-9-image-inventory/work-units/00b-backend-api-technical-design-plan.md)')) { Write-Error 'ACTIVE.md does not route to the current WU0B definition.' }
+if (-not $active.Contains('phase-9-image-inventory/work-units/01-package1-live-audit.md') -or
+    -not $active.Contains('phase-9-image-inventory/work-units/01-package1-database-design.md')) { Write-Error 'ACTIVE.md does not route to the current Package 1 audit/design.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `wu0b_independently_approved`')) { Write-Error 'DOC-13 does not identify the approved WU0B technical-design milestone.' }
-if (-not $doc13.Contains('| Next recommended task | Perform the consolidated Risk-Based Phase 9 SDD analysis in a new session. Supabase audit, database/migration design, migration creation/testing/application, providers, Storage, runtime/UI, and Phase 7/8 behavior remain unauthorized. |')) { Write-Error 'DOC-13 does not preserve the risk analysis as the sole next action.' }
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `package1_independently_approved`')) { Write-Error 'DOC-13 does not identify the approved Package 1 milestone.' }
+if (-not $doc13.Contains('| Next recommended task | Separately authorize failing database/security tests or migration-file creation when ready. M09/live application, providers, runtime/UI, and Phase 7/8 behavior remain unauthorized. |')) { Write-Error 'DOC-13 does not preserve later authorization gates.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `wu0b_independently_approved`\r?$' -or
-    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `0b_independently_approved`\r?$') {
-    Write-Error 'Implementation tracker does not identify the approved WU0B technical-design milestone.'
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `package1_independently_approved`\r?$' -or
+    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `package1_independently_approved`\r?$') {
+    Write-Error 'Implementation tracker does not identify the approved Package 1 milestone.'
 }
 if ($implementationTracker -notmatch '(?m)^\| 0A \|.*\| `approved_complete` \|') { Write-Error 'Implementation tracker no longer preserves WU0A approved-complete evidence.' }
 if ($implementationTracker -notmatch '(?m)^\| 0B \|.*\| `independently_approved` \|.*Risk-Based Phase 9 SDD analysis next;.*no Supabase query') { Write-Error 'Implementation tracker does not preserve WU0B approval and later-authority separation.' }
@@ -129,11 +131,26 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `wu0b_independently_approved`;.*documentation-only\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `0b_independently_approved`\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* consolidated Risk-Based Phase 9 SDD analysis in a new session\r?$' -or
+if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `package1_independently_approved`;.*documentation-only\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `package1_independently_approved`\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* await separate authorization for failing migration/security tests or migration-file creation; M09/live application remains independently gated\r?$' -or
     $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* `not_granted`\r?$') {
-    Write-Error 'TRACKER.md does not preserve WU0B approval, next action and migration gates.'
+    Write-Error 'TRACKER.md does not preserve Package 1 review, next action and migration gates.'
+}
+$packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
+$packageDesign = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-database-design.md'))
+if (-not $packageDesign.Contains('temporary compatibility CHECKs accepting the union') -or
+    -not $packageDesign.Contains('phase9_upload_capabilities') -or
+    -not $packageDesign.Contains('no direct base-table SELECT or DML') -or
+    -not $packageDesign.Contains('unique constraint `(store_id, job_id, cost_kind, policy_version)`') -or
+    -not $packageDesign.Contains('Add `image_extraction_inputs.media_asset_id -> media_assets(id)`') -or
+    -not $packageDesign.Contains('Separately reviewed gate, not one of the eight additive Phase 9 groups:')) {
+    Write-Error 'Package 1 design is missing one or more required six-finding correction markers.'
+}
+if (-not $packageAudit.Contains('C02/C03, C15/C16 and C20/C21') -or
+    -not $packageAudit.Contains('M09 preflight fails on any violating row') -or
+    -not $packageAudit.Contains('cannot directly read or mutate private Phase 9 base tables')) {
+    Write-Error 'Package 1 audit gap/test plan is missing required correction coverage.'
 }
 if ($tracker -match '(?i)\b(?:Supabase audit|migration-file creation|live migration application|product/runtime implementation) (?:is|are) authorized\b') {
     Write-Error 'TRACKER.md incorrectly represents a later authorization.'
@@ -284,10 +301,10 @@ if (-not $sessionStart.Contains('| 0B Backend/API technical design or review (on
     Write-Error 'SESSION-START.md does not route the WU0B authority and artifact set.'
 }
 $phaseReadme = [IO.File]::ReadAllText((Join-Path $phaseRoot 'README.md'))
-if (-not $phaseReadme.Contains('**Status:** `wu0b_independently_approved`') -or
-    -not $phaseReadme.Contains('WU0B documentation-only technical design independently approved') -or
-    -not $phaseReadme.Contains('product/runtime implementation not started')) {
-    Write-Error 'Phase 9 README disagrees with the approved WU0B technical-design milestone.'
+if (-not $phaseReadme.Contains('**Status:** `package1_independently_approved`') -or
+    -not $phaseReadme.Contains('Package 1 audit/design independently approved') -or
+    -not $phaseReadme.Contains('product/runtime and migration implementation not started')) {
+    Write-Error 'Phase 9 README disagrees with the Package 1 audit milestone.'
 }
 $master = [IO.File]::ReadAllText((Join-Path $phaseRoot '00-phase-9-master-sdd.md'))
 if (-not $master.Contains('Documentation and development-session continuity')) { Write-Error 'Master SDD is missing the continuity contract.' }
