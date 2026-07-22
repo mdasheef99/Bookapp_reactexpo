@@ -11,6 +11,7 @@ export const phase9MigrationNames = [
   '20260722000006_marketplace_phase9_storage_boundaries.sql',
   '20260722000007_marketplace_phase9_public_projection_search.sql',
   '20260722000008_marketplace_phase9_request_photo_seam.sql',
+  '20260722000010_marketplace_phase9_public_boundary_security_correction.sql',
 ];
 
 const root = process.cwd();

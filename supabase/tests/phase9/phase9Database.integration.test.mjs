@@ -32,7 +32,7 @@ afterEach(async () => {
 after(async () => db.close());
 
 test('clean Phase 6 migration creates all relations and deferred foreign keys', async () => {
-  assert.equal(phase9MigrationNames.length, 8);
+  assert.equal(phase9MigrationNames.length, 9);
   const count = await scalar(db, `SELECT count(*)::int FROM information_schema.tables
     WHERE table_schema='public' AND table_name IN ('phase9_provider_registry','book_search_aliases',
     'image_extraction_sessions','image_extraction_inputs','image_extraction_candidates',
@@ -258,6 +258,46 @@ test('typed media rejects privacy crossing and public projection excludes privat
     WHERE table_schema='public' AND table_name='phase9_public_listing_projection'`)).rows.map((row) => row.column_name);
   for (const field of ['quantity_total','quantity_available','shelf_location','object_path','customer_user_id'])
     assert.equal(columns.includes(field), false);
+});
+
+test('public discovery allowlist is exact and the projection remains an internal invoker-safe source', async () => {
+  await resetActor(db);
+  const viewOptions = await scalar(db, `SELECT reloptions::text FROM pg_class
+    WHERE oid='public.phase9_public_listing_projection'::regclass`);
+  assert.match(viewOptions, /security_barrier=true/);
+  assert.match(viewOptions, /security_invoker=true/);
+  for (const role of ['anon','authenticated','service_role']) {
+    assert.equal(await scalar(db, `SELECT has_table_privilege('${role}',
+      'public.phase9_public_listing_projection','SELECT')`), false);
+  }
+
+  const publicSignatures = [
+    'public.phase9_marketplace_store_search(text,integer,jsonb)',
+    'public.phase9_storefront_catalogue(uuid,integer,jsonb)',
+    'public.phase9_listing_detail(uuid)',
+  ];
+  for (const signature of publicSignatures)
+    assert.equal(await scalar(db, `SELECT has_function_privilege('anon','${signature}','EXECUTE')`), true);
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM pg_proc p
+    JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname='public' AND p.proname LIKE 'phase9_%'
+      AND has_function_privilege('anon',p.oid,'EXECUTE')
+      AND p.oid::regprocedure::text NOT IN
+        ('phase9_marketplace_store_search(text,integer,jsonb)',
+         'phase9_storefront_catalogue(uuid,integer,jsonb)','phase9_listing_detail(uuid)')`), 0);
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM pg_proc p
+    JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname='public' AND p.proname LIKE 'phase9_%request%photo%'
+      AND has_function_privilege('anon',p.oid,'EXECUTE')`), 0);
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM pg_proc p
+    JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname='marketplace_sec' AND p.proname LIKE 'phase9_%'
+      AND (has_function_privilege('anon',p.oid,'EXECUTE')
+        OR has_function_privilege('authenticated',p.oid,'EXECUTE'))`), 0);
+
+  await setActor(db, CUSTOMER_A, 'anon');
+  await assert.rejects(db.query('SELECT * FROM public.phase9_public_listing_projection'));
+  assert.equal((await db.query(`SELECT * FROM public.phase9_listing_detail(gen_random_uuid())`)).rows.length, 0);
 });
 
 test('storage buckets preserve private/public boundaries with no authenticated object policy', async () => {
