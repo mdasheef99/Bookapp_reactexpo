@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { logoutCurrentDevice } from '@/application/auth/logout';
 
 export const authService = {
     async signInWithOtp(phone: string) {
@@ -23,8 +24,7 @@ export const authService = {
     },
 
     async signOut() {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
+        await logoutCurrentDevice();
     },
 
     async getSession() {

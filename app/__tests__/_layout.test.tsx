@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import RootLayout from '../_layout';
 
 jest.mock('../../global.css', () => ({}));
@@ -12,6 +12,8 @@ let mockAuthState = {
     isLoading: false,
     initialize: mockInitialize,
 };
+let mockAuthStatus = 'unauthenticated';
+let mockInitializationError: { message: string } | null = null;
 
 jest.mock('expo-router', () => ({
     Slot: () => null,
@@ -21,6 +23,13 @@ jest.mock('expo-router', () => ({
 
 jest.mock('@/features/auth/hooks/useAuth', () => ({
     useAuth: () => mockAuthState,
+}));
+jest.mock('@/features/auth/store/authStore', () => ({
+    useAuthStatus: () => mockAuthStatus,
+    useAuthInitializationError: () => mockInitializationError,
+}));
+jest.mock('@/application/auth/AuthBootstrapOwner', () => ({
+    AuthBootstrapOwner: () => null,
 }));
 
 jest.mock('@/components/ui/AtmosphericBackground', () => ({
@@ -47,6 +56,8 @@ describe('Root auth routing', () => {
             isLoading: false,
             initialize: mockInitialize,
         };
+        mockAuthStatus = 'unauthenticated';
+        mockInitializationError = null;
         delete process.env.EXPO_PUBLIC_DEV_SKIP_AUTH;
     });
 
@@ -60,7 +71,6 @@ describe('Root auth routing', () => {
 
         render(<RootLayout />);
 
-        await waitFor(() => expect(mockInitialize).toHaveBeenCalled());
         expect(mockReplace).not.toHaveBeenCalled();
     });
 
@@ -87,7 +97,18 @@ describe('Root auth routing', () => {
 
         render(<RootLayout />);
 
-        await waitFor(() => expect(mockInitialize).toHaveBeenCalled());
         expect(mockReplace).not.toHaveBeenCalled();
+    });
+
+    it('shows a recoverable initialization error instead of routing as a guest', async () => {
+        mockAuthStatus = 'initialization-error';
+        mockInitializationError = { message: 'Unable to restore your session. Please try again.' };
+
+        const { getByText } = render(<RootLayout />);
+        expect(getByText('We could not restore your session')).toBeOnTheScreen();
+        expect(mockReplace).not.toHaveBeenCalled();
+
+        fireEvent.press(getByText('Try again'));
+        await waitFor(() => expect(mockInitialize).toHaveBeenCalled());
     });
 });

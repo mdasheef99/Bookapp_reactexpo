@@ -4,8 +4,10 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from 'react';
-import { View, ActivityIndicator, Text } from 'react-native';
+import { View, ActivityIndicator, Pressable, Text } from 'react-native';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useAuthInitializationError, useAuthStatus } from '@/features/auth/store/authStore';
+import { AuthBootstrapOwner } from '@/application/auth/AuthBootstrapOwner';
 import { AtmosphericBackground } from '@/components/ui/AtmosphericBackground';
 import { initSentry, syncSentryUser, trackSentryRoute, maybeSendSentryVerificationEvent, Sentry } from '@/lib/sentry';
 import '../global.css';
@@ -16,12 +18,10 @@ initSentry();
 
 function InitialLayout() {
     const { session, isLoading, initialize } = useAuth();
+    const authStatus = useAuthStatus();
+    const initializationError = useAuthInitializationError();
     const segments = useSegments();
     const router = useRouter();
-
-    useEffect(() => {
-        initialize();
-    }, []);
 
     useEffect(() => {
         syncSentryUser(session?.user?.id ?? null);
@@ -37,7 +37,7 @@ function InitialLayout() {
     }, []);
 
     useEffect(() => {
-        if (isLoading) return;
+        if (isLoading || authStatus === 'initialization-error') return;
 
         // Development bypass is handled in render
         if (isAuthBypassEnabled) {
@@ -54,10 +54,31 @@ function InitialLayout() {
             // Redirect to tabs if authenticated
             router.replace('/(tabs)/library');
         }
-    }, [session, segments, isLoading]);
+    }, [session, segments, isLoading, authStatus]);
 
     // Development bypass: Check this flag even if loading is true
     const isDevBypass = isAuthBypassEnabled;
+
+    if (authStatus === 'initialization-error' && !isDevBypass) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+                <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 8 }}>
+                    We could not restore your session
+                </Text>
+                <Text style={{ textAlign: 'center', marginBottom: 16 }}>
+                    {initializationError?.message ?? 'Please try again.'}
+                </Text>
+                <Pressable
+                    onPress={() => void initialize()}
+                    accessibilityRole="button"
+                    accessibilityLabel="Retry session initialization"
+                    style={{ paddingHorizontal: 20, paddingVertical: 12 }}
+                >
+                    <Text style={{ fontWeight: '600' }}>Try again</Text>
+                </Pressable>
+            </View>
+        );
+    }
 
     if (isLoading && !isDevBypass) {
         return (
@@ -89,6 +110,7 @@ function RootLayout() {
             <GestureHandlerRootView style={{ flex: 1 }}>
                 <SafeAreaProvider>
                     <QueryClientProvider client={appQueryClient}>
+                        <AuthBootstrapOwner />
                         <AtmosphericBackground>
                             <InitialLayout />
                         </AtmosphericBackground>

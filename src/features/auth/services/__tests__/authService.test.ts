@@ -5,9 +5,13 @@
  * and error propagation for each method.
  */
 import { authService } from '../authService';
+import { logoutCurrentDevice } from '@/application/auth/logout';
 
 // Activate co-located mock (src/lib/__mocks__/supabase.ts)
 jest.mock('@/lib/supabase');
+jest.mock('@/application/auth/logout', () => ({
+  logoutCurrentDevice: jest.fn(() => Promise.resolve()),
+}));
 
 // Import AFTER jest.mock so we get the mocked version
 import { supabase } from '@/lib/supabase';
@@ -88,14 +92,14 @@ describe('authService', () => {
   });
 
   describe('signOut', () => {
-    it('calls supabase.auth.signOut', async () => {
+    it('delegates to the authoritative current-device logout path', async () => {
       await authService.signOut();
-      expect(mockAuth.signOut).toHaveBeenCalled();
+      expect(logoutCurrentDevice).toHaveBeenCalled();
     });
 
-    it('throws when supabase returns an error', async () => {
-      const authError = { message: 'Network error' };
-      (mockAuth.signOut as jest.Mock).mockResolvedValueOnce({ error: authError });
+    it('propagates an unexpected logout-controller failure', async () => {
+      const authError = new Error('Local cleanup failed');
+      (logoutCurrentDevice as jest.Mock).mockRejectedValueOnce(authError);
 
       await expect(authService.signOut()).rejects.toEqual(authError);
     });

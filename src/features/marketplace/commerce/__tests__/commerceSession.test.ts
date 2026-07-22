@@ -28,4 +28,17 @@ describe('Phase 6 commerce logout and persistence boundary', () => {
             .map((name) => fs.readFileSync(path.join(root, String(name)), 'utf8')).join('\n');
         expect(sources).not.toMatch(/AsyncStorage|MMKV|persist\s*\(/);
     });
+    it('continues remaining privacy cleanup when cancellation fails', async () => {
+        const cancel = jest.spyOn(appQueryClient, 'cancelQueries').mockRejectedValueOnce(new Error('cancel failed'));
+        const clearQueries = jest.spyOn(appQueryClient, 'clear');
+        const reset = jest.spyOn(useCommerceStore.getState(), 'reset');
+
+        await expect(clearCommerceSession()).rejects.toThrow('1 step');
+
+        expect(clearQueries).toHaveBeenCalled();
+        expect(reset).toHaveBeenCalled();
+        cancel.mockRestore();
+        clearQueries.mockRestore();
+        reset.mockRestore();
+    });
 });

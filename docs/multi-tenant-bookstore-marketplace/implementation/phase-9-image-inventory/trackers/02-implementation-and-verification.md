@@ -120,7 +120,7 @@ Rules:
 
 ## Append-only implementation log
 
-No product/runtime implementation activity recorded. Local database migration implementation is recorded below.
+Phase 9 product/runtime implementation has not started. The separately authorized core-auth evidence is recorded in [03-auth-hardening-verification.md](./03-auth-hardening-verification.md).
 
 ### 2026-07-22 — Owner-safe M06 continuation and M10 live acceptance
 

@@ -1,15 +1,16 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `approved_baseline`
-**Implementation status:** `package1_m01_m08_m10_live_verified`; WU0A remains `approved_complete`; WU0B remains independently approved/documentation-only
+**Implementation status:** `package1_m01_m08_m10_live_verified`; auth hardening WU1/WU2 `locally_complete`; WU0A remains `approved_complete`; WU0B remains independently approved/documentation-only
 **Last updated:** 2026-07-22
 **Current milestone:** Package 1 M01-M08 plus forward security correction M10 live-verified
 **Active work unit:** `package1_m01_m08_m10_live_verified`
-**Last completed:** reviewed M10 correction, ordered live application, exact grant/privacy readback, and advisor disposition
+**Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
+**Last completed:** production bypass hardening plus canonical auth state, root bootstrap, identity-transition cleanup, and current-device logout correctness
 **Next authorized action:** none; await separate authorization for M09 or a later auth/runtime work unit
-**Implementation authority:** `package1_database_checkpoint_verified`; product/runtime authority not granted
+**Implementation authority:** `auth_hardening_core_wu1_wu2_locally_complete`; Phase 9 product/runtime authority not granted
 **Migration creation/application authority:** `m01_m08_m10_live_verified`; M09 application not granted
-**Current gate:** M09 quantity validation and auth/runtime remain separately gated
+**Current gate:** M09, secure auth persistence, profile routing, OTP UX, Android backup, and Phase 9 runtime remain separately gated
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -17,7 +18,7 @@
 
 Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Package 1 M01-M08 and forward correction M10 are live exactly once on the verified development project. M10 restores `anon` execution to exactly the three discovery RPCs, makes the internal projection invoker-safe, and removes direct role access. Request-photo/internal/private boundaries passed readback, and the Phase 9 `security_definer_view` advisor error is gone. M09 was not created or applied. No Edge Function, provider, mobile/product runtime, or auth code changed.
 
-Auth hardening is deferred to a fresh session and separate branch. It must precede Phase 9 mobile/private-ingestion runtime integration and cover auth state ownership, one root-owned subscription, centralized transitions/logout, secure token persistence, production-safe development bypasses, and removal of auth-to-marketplace dependency. No auth code changed in this database-application work unit.
+Auth hardening WU1/WU2 is locally complete on `codex/auth-hardening-core`: production bypass policy is centralized and fail-closed; Zustand owns canonical session/status; one root bootstrap owns subscription/restoration; an application coordinator serializes identity cleanup; and current-device logout has a single-key SDK fallback. Auth no longer directly imports marketplace. Secure token persistence, Android backup, authoritative profile routing, OTP UX, native/offline testing, and remote EAS verification remain separately gated before Phase 9 mobile/private-ingestion runtime integration.
 
 Repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → `SESSION-START.md` → this tracker is the durable resume chain. A future session must report this block before acting and must use the session protocol's documentation matrix at closeout.
 
@@ -64,7 +65,7 @@ The exact development project was re-verified read-only on 2026-07-22 before the
 
 ## Blocking gate before further implementation
 
-WU0A, WU0B, and the Package 1 design remain approved. M01-M08 are live and immutable; forward correction M10 is live-verified. M06 Storage, M07 projection/discovery, M08 request-photo, and M10 grant/view boundaries pass readback. M09, auth hardening, and product/runtime implementation remain gated.
+WU0A, WU0B, and the Package 1 design remain approved. M01-M08 are live and immutable; forward correction M10 is live-verified. M06 Storage, M07 projection/discovery, M08 request-photo, and M10 grant/view boundaries pass readback. Core auth WU1/WU2 is locally complete; M09, remaining auth/security work, and product/runtime implementation remain gated.
 
 ## Risk summary
 
@@ -83,4 +84,4 @@ WU0A, WU0B, and the Package 1 design remain approved. M01-M08 are live and immut
 
 ## Next action gate
 
-No next work unit is authorized. Do not rewrite M01-M08/M10 or create/apply M09, auth, or runtime changes without new authorization.
+No next work unit is authorized. Do not rewrite M01-M08/M10 or create/apply M09, remaining auth/security work, or runtime changes without new authorization.

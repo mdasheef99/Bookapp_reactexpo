@@ -203,4 +203,15 @@ describe('ProfileScreen', () => {
         unmount();
         queryClient.clear();
     });
+
+    it('uses the authoritative auth facade for logout', async () => {
+        const { getByText, queryClient, unmount } = renderWithQueryClient();
+        await waitFor(() => expect(getByText('Priya Sharma')).toBeOnTheScreen());
+
+        fireEvent.press(getByText('Sign Out'));
+        expect(mockSignOut).toHaveBeenCalledTimes(1);
+
+        unmount();
+        queryClient.clear();
+    });
 });
