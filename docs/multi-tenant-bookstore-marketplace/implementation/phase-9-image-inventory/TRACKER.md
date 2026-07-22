@@ -6,7 +6,7 @@
 **Current milestone:** Package 1 M01-M08 plus forward security correction M10 live-verified
 **Active work unit:** `package1_m01_m08_m10_live_verified`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** production bypass hardening plus canonical auth state, root bootstrap, identity-transition cleanup, and current-device logout correctness
+**Last completed:** independently approved core-auth final gate, including retryable logout deletion and fail-closed identity-switch cleanup
 **Next authorized action:** none; await separate authorization for M09 or a later auth/runtime work unit
 **Implementation authority:** `auth_hardening_core_wu1_wu2_locally_complete`; Phase 9 product/runtime authority not granted
 **Migration creation/application authority:** `m01_m08_m10_live_verified`; M09 application not granted
@@ -18,7 +18,7 @@
 
 Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Package 1 M01-M08 and forward correction M10 are live exactly once on the verified development project. M10 restores `anon` execution to exactly the three discovery RPCs, makes the internal projection invoker-safe, and removes direct role access. Request-photo/internal/private boundaries passed readback, and the Phase 9 `security_definer_view` advisor error is gone. M09 was not created or applied. No Edge Function, provider, mobile/product runtime, or auth code changed.
 
-Auth hardening WU1/WU2 is locally complete on `codex/auth-hardening-core`: production bypass policy is centralized and fail-closed; Zustand owns canonical session/status; one root bootstrap owns subscription/restoration; an application coordinator serializes identity cleanup; and current-device logout has a single-key SDK fallback. Auth no longer directly imports marketplace. Secure token persistence, Android backup, authoritative profile routing, OTP UX, native/offline testing, and remote EAS verification remain separately gated before Phase 9 mobile/private-ingestion runtime integration.
+Auth hardening WU1/WU2 is locally complete and independently approved on `codex/auth-hardening-core`: production bypass policy is centralized and fail-closed; Zustand owns canonical session/status; one root bootstrap owns subscription/restoration; identity replacement remains blocked through cleanup failure and explicit retry; and current-device logout persists a non-secret deletion-intent guard until SDK or exact-key fallback removal succeeds. Auth no longer directly imports marketplace. Secure token persistence, Android backup, authoritative profile routing, OTP UX, native/offline testing, and remote EAS verification remain separately gated before Phase 9 mobile/private-ingestion runtime integration.
 
 Repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → `SESSION-START.md` → this tracker is the durable resume chain. A future session must report this block before acting and must use the session protocol's documentation matrix at closeout.
 

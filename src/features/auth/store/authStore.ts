@@ -5,7 +5,9 @@ export type AuthStatus =
   | 'initializing'
   | 'authenticated'
   | 'unauthenticated'
-  | 'initialization-error';
+  | 'initialization-error'
+  | 'logout-error'
+  | 'session-cleanup-error';
 
 export interface SanitizedAuthError {
   message: string;

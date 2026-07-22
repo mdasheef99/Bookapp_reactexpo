@@ -2,9 +2,19 @@ jest.mock('@/lib/supabase');
 jest.mock('@/features/marketplace/commerce/services/commerceSession', () => ({
   clearCommerceSession: jest.fn(() => Promise.resolve()),
 }));
+jest.mock('@/features/auth/services/authStorage', () => ({
+  clearPendingLogoutIntent: jest.fn(() => Promise.resolve()),
+  clearPersistedSupabaseSession: jest.fn(() => Promise.resolve()),
+  hasPendingLogoutIntent: jest.fn(() => false),
+}));
 
 import { supabase } from '@/lib/supabase';
 import { clearCommerceSession } from '@/features/marketplace/commerce/services/commerceSession';
+import {
+  clearPendingLogoutIntent,
+  clearPersistedSupabaseSession,
+  hasPendingLogoutIntent,
+} from '@/features/auth/services/authStorage';
 import { resetAuthStoreForTests, useAuthStore } from '@/features/auth/store/authStore';
 import {
   initializeAuth,
@@ -149,5 +159,32 @@ describe('root auth bootstrap', () => {
 
     expect(clearCommerceSession).toHaveBeenCalled();
     expect(mockAuth.signOut).not.toHaveBeenCalled();
+  });
+
+  it('does not restore a persisted session after a pending logout survives restart', async () => {
+    (hasPendingLogoutIntent as jest.Mock).mockReturnValue(true);
+    (mockAuth.getSession as jest.Mock).mockResolvedValue({
+      data: { session: makeSession('logged-out-user') }, error: null,
+    });
+
+    await initializeAuth();
+
+    expect(clearPersistedSupabaseSession).toHaveBeenCalledTimes(1);
+    expect(clearPendingLogoutIntent).toHaveBeenCalledTimes(1);
+    expect(mockAuth.getSession).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().session).toBeNull();
+    expect(useAuthStore.getState().status).toBe('unauthenticated');
+  });
+
+  it('keeps restart blocked when pending logout deletion still fails', async () => {
+    (hasPendingLogoutIntent as jest.Mock).mockReturnValue(true);
+    (clearPersistedSupabaseSession as jest.Mock).mockRejectedValueOnce(new Error('storage failed'));
+
+    await initializeAuth();
+
+    expect(clearPendingLogoutIntent).not.toHaveBeenCalled();
+    expect(mockAuth.getSession).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().session).toBeNull();
+    expect(useAuthStore.getState().status).toBe('logout-error');
   });
 });

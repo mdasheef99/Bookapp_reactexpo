@@ -13,8 +13,22 @@ const storageUrl = authRuntimeConfiguration.supabaseUrl
   ?? 'https://dev-bypass-placeholder.supabase.co';
 
 export const supabaseAuthStorageKey = deriveSupabaseAuthStorageKey(storageUrl);
+const pendingLogoutStorageKey = `${supabaseAuthStorageKey}-logout-pending`;
 
 /** SDK fallback for explicit current-device logout only. */
 export async function clearPersistedSupabaseSession(): Promise<void> {
   await Promise.resolve(mmkvSupabaseStorage.removeItem(supabaseAuthStorageKey));
+}
+
+/** Non-secret crash/restart guard; token deletion must complete before this marker is cleared. */
+export async function markPendingLogoutIntent(): Promise<void> {
+  await Promise.resolve(mmkvSupabaseStorage.setItem(pendingLogoutStorageKey, '1'));
+}
+
+export function hasPendingLogoutIntent(): boolean {
+  return mmkvSupabaseStorage.getItem(pendingLogoutStorageKey) === '1';
+}
+
+export async function clearPendingLogoutIntent(): Promise<void> {
+  await Promise.resolve(mmkvSupabaseStorage.removeItem(pendingLogoutStorageKey));
 }

@@ -13,11 +13,12 @@ import { initSentry, syncSentryUser, trackSentryRoute, maybeSendSentryVerificati
 import '../global.css';
 import { appQueryClient } from '@/lib/queryClient';
 import { isAuthBypassEnabled } from '@/features/auth/config/authRuntimeConfig';
+import { retryBlockedSessionTransition } from '@/application/auth/sessionCoordinator';
 
 initSentry();
 
 function InitialLayout() {
-    const { session, isLoading, initialize } = useAuth();
+    const { session, isLoading, initialize, signOut } = useAuth();
     const authStatus = useAuthStatus();
     const initializationError = useAuthInitializationError();
     const segments = useSegments();
@@ -37,7 +38,12 @@ function InitialLayout() {
     }, []);
 
     useEffect(() => {
-        if (isLoading || authStatus === 'initialization-error') return;
+        if (
+            isLoading
+            || authStatus === 'initialization-error'
+            || authStatus === 'logout-error'
+            || authStatus === 'session-cleanup-error'
+        ) return;
 
         // Development bypass is handled in render
         if (isAuthBypassEnabled) {
@@ -59,17 +65,38 @@ function InitialLayout() {
     // Development bypass: Check this flag even if loading is true
     const isDevBypass = isAuthBypassEnabled;
 
-    if (authStatus === 'initialization-error' && !isDevBypass) {
+    const isRecoverableAuthError = authStatus === 'initialization-error'
+        || authStatus === 'logout-error'
+        || authStatus === 'session-cleanup-error';
+
+    if (isRecoverableAuthError && !isDevBypass) {
+        const title = authStatus === 'logout-error'
+            ? 'We could not finish signing out'
+            : authStatus === 'session-cleanup-error'
+                ? 'We could not safely switch accounts'
+                : 'We could not restore your session';
+        const retry = authStatus === 'logout-error'
+            ? signOut
+            : authStatus === 'session-cleanup-error'
+                ? retryBlockedSessionTransition
+                : initialize;
+        const handleRetry = () => {
+            try {
+                void Promise.resolve(retry()).catch(() => undefined);
+            } catch {
+                // The canonical auth error state remains visible for another retry.
+            }
+        };
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
                 <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 8 }}>
-                    We could not restore your session
+                    {title}
                 </Text>
                 <Text style={{ textAlign: 'center', marginBottom: 16 }}>
                     {initializationError?.message ?? 'Please try again.'}
                 </Text>
                 <Pressable
-                    onPress={() => void initialize()}
+                    onPress={handleRetry}
                     accessibilityRole="button"
                     accessibilityLabel="Retry session initialization"
                     style={{ paddingHorizontal: 20, paddingVertical: 12 }}

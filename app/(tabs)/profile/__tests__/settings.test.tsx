@@ -1,5 +1,6 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { Alert } from 'react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import SettingsScreen from '../settings';
 
 const mockBack = jest.fn();
@@ -51,6 +52,10 @@ describe('SettingsScreen', () => {
         mockCanGoBack.mockReturnValue(false);
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('renders account settings without theme controls and signs out', () => {
         const { getByText, queryByText } = render(<SettingsScreen />);
 
@@ -82,5 +87,18 @@ describe('SettingsScreen', () => {
 
         expect(mockPush).toHaveBeenNthCalledWith(1, '/(tabs)/profile/notifications');
         expect(mockPush).toHaveBeenNthCalledWith(2, '/(tabs)/profile/notification-settings');
+    });
+
+    it('handles a rejected logout without exposing internal error details', async () => {
+        const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+        mockSignOut.mockRejectedValueOnce(new Error('sensitive storage detail'));
+        const { getByText } = render(<SettingsScreen />);
+
+        fireEvent.press(getByText('Sign Out'));
+
+        await waitFor(() => expect(alert).toHaveBeenCalledWith(
+            'Sign out incomplete',
+            'Please try again to finish removing this session from your device.',
+        ));
     });
 });

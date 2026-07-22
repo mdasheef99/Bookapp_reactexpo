@@ -7,7 +7,8 @@ let observedUserId: string | null = null;
 let transitionRevision = 0;
 let transitionQueue: Promise<void> = Promise.resolve();
 let blockedLoggedOutUserId: string | null = null;
-let pendingCleanupCount = 0;
+let pendingTransitionCount = 0;
+let blockedTransition: { event: AuthChangeEvent | string; session: Session } | null = null;
 
 function nextAuthState(session: Session | null) {
   return {
@@ -26,6 +27,7 @@ async function cleanPreviousUserState(): Promise<void> {
       action: 'user_session_cleanup_failed',
       tags: { feature: 'auth', coordinator: 'application-session' },
     });
+    throw error;
   }
 }
 
@@ -46,21 +48,12 @@ export function applySessionTransition(
     blockedLoggedOutUserId = null;
   }
 
-  const previousUserId = observedUserId;
-  observedUserId = nextUserId;
   const revision = ++transitionRevision;
-  const requiresCleanup = previousUserId !== null && previousUserId !== nextUserId;
+  const requiresCleanup = observedUserId !== null && observedUserId !== nextUserId;
 
-  if (!requiresCleanup) {
-    if (pendingCleanupCount > 0 && nextUserId !== null) {
-      setAuthState({ session: null, status: 'initializing', initializationError: null });
-      transitionQueue = transitionQueue.then(() => {
-        if (revision === transitionRevision) {
-          setAuthState(nextAuthState(session));
-        }
-      });
-      return transitionQueue;
-    }
+  if (!requiresCleanup && pendingTransitionCount === 0) {
+    observedUserId = nextUserId;
+    blockedTransition = null;
     setAuthState(nextAuthState(session));
     return transitionQueue;
   }
@@ -71,19 +64,45 @@ export function applySessionTransition(
     initializationError: null,
   });
 
-  pendingCleanupCount += 1;
-  transitionQueue = transitionQueue
-    .then(cleanPreviousUserState)
-    .then(() => {
+  pendingTransitionCount += 1;
+  const transition = transitionQueue
+    .catch(() => undefined)
+    .then(async () => {
+      const previousUserId = observedUserId;
+      if (previousUserId !== null && previousUserId !== nextUserId) {
+        await cleanPreviousUserState();
+      }
+      observedUserId = nextUserId;
       if (revision === transitionRevision) {
+        blockedTransition = null;
         setAuthState(nextAuthState(session));
       }
     })
+    .catch((error) => {
+      if (revision === transitionRevision) {
+        blockedTransition = nextUserId && session ? { event, session } : null;
+        setAuthState({
+          session: null,
+          status: nextUserId ? 'session-cleanup-error' : 'unauthenticated',
+          initializationError: nextUserId
+            ? { message: 'Unable to safely switch accounts. Please try again.' }
+            : null,
+        });
+      }
+      throw error;
+    })
     .finally(() => {
-      pendingCleanupCount -= 1;
+      pendingTransitionCount -= 1;
     });
+  transitionQueue = transition;
 
-  return transitionQueue;
+  return nextUserId === null ? transition.catch(() => undefined) : transition;
+}
+
+export function retryBlockedSessionTransition(): Promise<void> {
+  if (!blockedTransition) return Promise.resolve();
+  const { event, session } = blockedTransition;
+  return applySessionTransition(event, session);
 }
 
 export function markUserLoggedOut(userId: string | null) {
@@ -95,5 +114,6 @@ export function resetSessionCoordinatorForTests(userId: string | null = null) {
   transitionRevision = 0;
   transitionQueue = Promise.resolve();
   blockedLoggedOutUserId = null;
-  pendingCleanupCount = 0;
+  pendingTransitionCount = 0;
+  blockedTransition = null;
 }

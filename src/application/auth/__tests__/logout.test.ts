@@ -4,12 +4,18 @@ jest.mock('@/features/marketplace/commerce/services/commerceSession', () => ({
 }));
 jest.mock('@/features/auth/services/authStorage', () => ({
   clearPersistedSupabaseSession: jest.fn(() => Promise.resolve()),
+  clearPendingLogoutIntent: jest.fn(() => Promise.resolve()),
+  markPendingLogoutIntent: jest.fn(() => Promise.resolve()),
   supabaseAuthStorageKey: 'sb-test-auth-token',
 }));
 
 import { supabase } from '@/lib/supabase';
 import { clearCommerceSession } from '@/features/marketplace/commerce/services/commerceSession';
-import { clearPersistedSupabaseSession } from '@/features/auth/services/authStorage';
+import {
+  clearPendingLogoutIntent,
+  clearPersistedSupabaseSession,
+  markPendingLogoutIntent,
+} from '@/features/auth/services/authStorage';
 import { resetAuthStoreForTests, setAuthState, useAuthStore } from '@/features/auth/store/authStore';
 import { logoutCurrentDevice, resetLogoutForTests } from '../logout';
 import { applySessionTransition, resetSessionCoordinatorForTests } from '../sessionCoordinator';
@@ -57,6 +63,7 @@ describe('current-device logout', () => {
 
     const first = logoutCurrentDevice();
     const second = logoutCurrentDevice();
+    await Promise.resolve();
     expect(supabase.auth.signOut).toHaveBeenCalledTimes(1);
     finish?.({ error: null });
     await Promise.all([first, second]);
@@ -85,5 +92,33 @@ describe('current-device logout', () => {
     );
     expect(clearCommerceSession).toHaveBeenCalled();
     expect(useAuthStore.getState().session).toBeNull();
+    expect(useAuthStore.getState().status).toBe('logout-error');
+    expect(clearPendingLogoutIntent).not.toHaveBeenCalled();
+  });
+
+  it('retries targeted deletion after a failed logout even with no in-memory session', async () => {
+    (supabase.auth.signOut as jest.Mock).mockResolvedValue({ error: new Error('offline') });
+    (clearPersistedSupabaseSession as jest.Mock)
+      .mockRejectedValueOnce(new Error('storage failed'))
+      .mockResolvedValueOnce(undefined);
+
+    await expect(logoutCurrentDevice()).rejects.toThrow();
+    await expect(logoutCurrentDevice()).resolves.toBeUndefined();
+
+    expect(supabase.auth.signOut).toHaveBeenCalledTimes(1);
+    expect(clearPersistedSupabaseSession).toHaveBeenCalledTimes(2);
+    expect(clearPendingLogoutIntent).toHaveBeenCalledTimes(1);
+    expect(useAuthStore.getState().status).toBe('unauthenticated');
+  });
+
+  it('records logout intent before attempting SDK session removal', async () => {
+    (supabase.auth.signOut as jest.Mock).mockResolvedValue({ error: null });
+
+    await logoutCurrentDevice();
+
+    expect(markPendingLogoutIntent).toHaveBeenCalledTimes(1);
+    expect((markPendingLogoutIntent as jest.Mock).mock.invocationCallOrder[0])
+      .toBeLessThan((supabase.auth.signOut as jest.Mock).mock.invocationCallOrder[0]);
+    expect(clearPendingLogoutIntent).toHaveBeenCalledTimes(1);
   });
 });

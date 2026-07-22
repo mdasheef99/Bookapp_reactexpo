@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
@@ -12,6 +12,19 @@ export default function SettingsScreen() {
     const { signOut, session } = useAuth();
     const { colors } = useTheme();
     const userPhone = session?.user?.phone ?? 'Not available';
+    const handleSignOut = () => {
+        const showLogoutFailure = () => {
+            Alert.alert(
+                'Sign out incomplete',
+                'Please try again to finish removing this session from your device.',
+            );
+        };
+        try {
+            void Promise.resolve(signOut()).catch(showLogoutFailure);
+        } catch {
+            showLogoutFailure();
+        }
+    };
 
     return (
         <ScreenBackground>
@@ -64,7 +77,7 @@ export default function SettingsScreen() {
 
                 <Button
                     title="Sign Out"
-                    onPress={signOut}
+                    onPress={handleSignOut}
                     variant="danger"
                     size="lg"
                     accessibilityLabel="Sign out of your account"

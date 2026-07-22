@@ -7,6 +7,7 @@ import { resetAuthStoreForTests, setAuthState, useAuthStore } from '@/features/a
 import {
   applySessionTransition,
   resetSessionCoordinatorForTests,
+  retryBlockedSessionTransition,
 } from '../sessionCoordinator';
 
 const makeSession = (userId: string, token = `${userId}-token`) => ({
@@ -63,6 +64,7 @@ describe('application session coordinator', () => {
     expect(useAuthStore.getState().status).toBe('initializing');
 
     await Promise.resolve();
+    await Promise.resolve();
     finishCleanup?.();
     await transition;
     expect(useAuthStore.getState().session?.user.id).toBe('user-b');
@@ -82,6 +84,7 @@ describe('application session coordinator', () => {
     expect(useAuthStore.getState().status).toBe('initializing');
 
     await Promise.resolve();
+    await Promise.resolve();
     finishCleanup?.();
     await Promise.all([signedOut, signedIn]);
     expect(useAuthStore.getState().session?.user.id).toBe('user-b');
@@ -94,5 +97,24 @@ describe('application session coordinator', () => {
 
     await expect(applySessionTransition('SIGNED_OUT', null)).resolves.toBeUndefined();
     expect(useAuthStore.getState().status).toBe('unauthenticated');
+  });
+
+  it('keeps User B hidden after cleanup failure and exposes B only after a successful retry', async () => {
+    (clearCommerceSession as jest.Mock)
+      .mockRejectedValueOnce(new Error('cleanup failed'))
+      .mockResolvedValueOnce(undefined);
+    setAuthState({ session: makeSession('user-a'), status: 'authenticated', initializationError: null });
+    resetSessionCoordinatorForTests('user-a');
+
+    await expect(applySessionTransition('SIGNED_IN', makeSession('user-b')))
+      .rejects.toThrow('cleanup failed');
+
+    expect(useAuthStore.getState().session).toBeNull();
+    expect(useAuthStore.getState().status).toBe('session-cleanup-error');
+
+    await expect(retryBlockedSessionTransition())
+      .resolves.toBeUndefined();
+    expect(clearCommerceSession).toHaveBeenCalledTimes(2);
+    expect(useAuthStore.getState().session?.user.id).toBe('user-b');
   });
 });

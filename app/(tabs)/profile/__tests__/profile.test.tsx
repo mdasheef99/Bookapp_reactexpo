@@ -1,4 +1,5 @@
 import React from 'react';
+import { Alert } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import ProfileScreen from '../index';
@@ -204,12 +205,32 @@ describe('ProfileScreen', () => {
         queryClient.clear();
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('uses the authoritative auth facade for logout', async () => {
         const { getByText, queryClient, unmount } = renderWithQueryClient();
         await waitFor(() => expect(getByText('Priya Sharma')).toBeOnTheScreen());
 
         fireEvent.press(getByText('Sign Out'));
         expect(mockSignOut).toHaveBeenCalledTimes(1);
+
+        unmount();
+        queryClient.clear();
+    });
+
+    it('handles a rejected logout without an unhandled promise', async () => {
+        const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+        mockSignOut.mockRejectedValueOnce(new Error('sensitive storage detail'));
+        const { getByText, queryClient, unmount } = renderWithQueryClient();
+        await waitFor(() => expect(getByText('Priya Sharma')).toBeOnTheScreen());
+
+        fireEvent.press(getByText('Sign Out'));
+        await waitFor(() => expect(alert).toHaveBeenCalledWith(
+            'Sign out incomplete',
+            'Please try again to finish removing this session from your device.',
+        ));
 
         unmount();
         queryClient.clear();

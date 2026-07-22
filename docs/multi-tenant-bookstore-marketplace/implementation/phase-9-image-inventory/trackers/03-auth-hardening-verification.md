@@ -37,3 +37,12 @@ Existing unencrypted MMKV persistence and the no-op auth lock remain unchanged. 
 No database, Supabase, Storage, migration, provider, deployment, or other external mutation occurred. Supabase MCP was not required; SDK behavior was verified from the installed package source.
 
 No next work unit is authorized. Separate authorization is required for M09, remaining auth/security work, or Phase 9 runtime.
+
+## Core final-gate corrections
+
+The independent final gate found and the authorized correction pass resolved two core issues:
+
+- Logout now records a non-secret pending-deletion marker before SDK sign-out, retries the exact Supabase token-key deletion after a double failure, blocks restart restoration until deletion succeeds, and exposes sanitized retry handling at both profile logout surfaces and the root recovery screen.
+- Identity replacement now fails closed when prior-user cleanup reports failure, retains the blocked replacement session for an explicit root retry, and never exposes the replacement identity before a successful cleanup pass.
+
+Correction verification passed 11 focused suites/84 tests, isolated TypeScript, and `git diff --check`. A correction-only independent review ran 7 suites/52 tests and returned `APPROVED`. No secure-persistence, OTP, profile-routing, Phase 9 runtime, migration, database, Supabase, Storage, provider, or deployment work occurred.
