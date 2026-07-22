@@ -92,14 +92,16 @@ If implementation changes product or architecture behavior, update the relevant 
 
 > 2026-07-22 Phase 9 Package 1 M01-M08 implementation checkpoint: the initial contract suite failed 17/17 with the files absent; M01-M08 now pass 12/12 focused static contracts, 19/19 isolated database/security checks, 26 migration suites/206 tests, and 9 Edge Function suites/57 tests. TypeScript, continuity, and whitespace checks pass. A focused independent database/security review and correction-only follow-ups returned exact verdict `approved`. M09 was not created or validated. No migration was applied to connected Supabase and no Storage, function deployment, provider, UI, or runtime mutation occurred. Status is `package1_m01_m08_independently_approved_not_applied`.
 
+> 2026-07-22 Phase 9 Package 1 live application: repository preparation fast-forwarded and pushed `main` at `69edd90`, then created `phase9-db-live-application`. Exact-project preflight on `ahntbtktjjmvfosgkmgn` was clean. M01-M05 applied and were readback-verified. M06 failed atomically with PostgreSQL `42501 must be owner of table objects` because `storage.objects` is owned by `supabase_storage_admin`; it has no history row and left no bucket/policy residue. M07-M08 were not attempted. M09 was not created/applied. Auth hardening/runtime work was untouched and is deferred to a separate session/branch before private-ingestion mobile integration.
+
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Package 1 M01-M08 independently approved locally; not applied** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **M01-M05 live; M06 blocked atomically on Storage ownership** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-22 |
 | Latest handoff | `PHASE 6 COMPLETE — COMPREHENSIVE BROWSER E2E DEFERRED`. M01-M39 are applied and database-verified in development; scheduler v5, worker v3, and cron job 5 are active. Phases 7 and 8 are deferred. |
-| Current risk level | Medium - Phase 9 design now contains AI, tenant, media, retention, duplicate, multilingual, and marketplace risks; implementation evidence and vendor/legal selection remain pending. Phase 6 E2E stays a recorded deferred gate. |
-| Next recommended task | Await separate authorization for exact-project M01-M08 live preflight/application. M09 remains a separately reviewed live-data gate; providers, runtime/UI, and Phase 7/8 behavior remain unauthorized. |
+| Current risk level | High - M01-M05 are live while M06-M08 are incomplete; M06 requires an owner-safe reviewed response before the sequence can resume. Phase 6 E2E stays a recorded deferred gate. |
+| Next recommended task | Separately review and authorize an owner-safe M06 response; do not retry M06 or apply M07-M09 meanwhile. Auth hardening remains a separate pre-runtime work unit. |
 
 ---
 
@@ -116,7 +118,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `package1_m01_m08_independently_approved_not_applied` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [SDD/tracker set](./implementation/phase-9-image-inventory/README.md) | M01-M08 are locally green and independently approved; M09/live application/runtime remain prohibited without separate authorization. |
+| Phase 9: Image-to-LLM Inventory | `package1_live_application_blocked_at_m06` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [SDD/tracker set](./implementation/phase-9-image-inventory/README.md) | M01-M05 live/verified; M06 atomically blocked on `storage.objects` ownership; M07-M09 and runtime remain gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

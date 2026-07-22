@@ -13,6 +13,8 @@
 
 **Local implementation checkpoint:** M01-M08 now implement the approved additive target in repository SQL. An executable snapshot of the Phase 9-relevant Phase 6 surface migrated cleanly and the isolated security/behavior suite passed 19/19. During correction, a strictly read-only exact-project schema readback reconciled live column names (`display_name`, `setup_status`, `selling_status`, `source_book_id`, `selling_price_minor`, `visibility_status`, `public_title`, `public_authors`, `user_id`, `actor_user_id`, and the Phase 6 hold version/release/command columns) with the fixture and SQL. No connected Supabase or Storage mutation occurred. The existing quantity-balance constraint remains intentionally `NOT VALID` pending a separately reviewed M09.
 
+**Live application checkpoint:** fresh preflight was clean, then M01-M05 applied once and in order. M06 failed atomically with `42501 must be owner of table objects` because `storage.objects` is owned by `supabase_storage_admin`. M06 has no history row; `marketplace-media-staging` and `order-request-photos` remain absent; the four mixed legacy Storage policies retain their preflight branches; M07-M08 were not attempted. M01-M05 readback confirms private RLS/no broad table grants, named RPC/internal-worker separation, final condition checks, five valid inventory/listing rows, zero quantity violations, and the quantity equality CHECK still `NOT VALID`. Applied history is immutable; M06 requires a separately reviewed owner-safe response.
+
 ## Evidence classification
 
 - **Observed** means read from the verified live database, storage catalogue, advisor output, migration list, or inspected repository source.

@@ -1,21 +1,23 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `approved_baseline`
-**Implementation status:** `package1_m01_m08_independently_approved_not_applied`; WU0A remains `approved_complete`; WU0B remains independently approved/documentation-only
+**Implementation status:** `package1_live_application_blocked_at_m06`; WU0A remains `approved_complete`; WU0B remains independently approved/documentation-only
 **Last updated:** 2026-07-22
-**Current milestone:** Package 1 M01-M08 local implementation independently approved and not applied
-**Active work unit:** `package1_m01_m08_independently_approved_not_applied`
-**Last completed:** Red-first migration harness, eight additive migrations, isolated Phase 6-to-Phase 9 verification, and focused independent database/security review
-**Next authorized action:** none; await separate authorization for exact-project M01-M08 live preflight/application; M09 remains independently gated
-**Implementation authority:** `package1_m01_m08_local_only`; product/runtime authority not granted
-**Migration creation/application authority:** `m01_m08_created_local_only`; live application and M09 not granted
-**Current gate:** connected Supabase application and M09 remain prohibited without separate authorization
+**Current milestone:** Package 1 live application stopped after verified M01-M05; M06 ownership blocker
+**Active work unit:** `package1_live_application_blocked_at_m06`
+**Last completed:** exact-project preflight, M01-M05 live application/readback, and atomic M06 rollback verification
+**Next authorized action:** none; require a separately reviewed owner-safe M06 response before retrying M06 or applying M07-M08; M09 remains independently gated
+**Implementation authority:** `package1_live_application_stopped`; product/runtime authority not granted
+**Migration creation/application authority:** `m01_m05_live_m06_blocked`; M06 retry, M07-M09 application not granted
+**Current gate:** PostgreSQL `42501` on owner-only `storage.objects` DDL in M06
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
 ## Current handoff
 
-Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Package 1's approved design is now implemented locally as M01-M08 with a disposable Phase 6 baseline and embedded PostgreSQL-compatible execution harness. Static migration contracts pass 11/11 and isolated database/security behavior passes 15/15. M09 was not created or validated; no migration was applied to connected Supabase and no callable Edge Function, provider call, mobile/product application code, deployment, or external database/Storage mutation occurred.
+Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Package 1 M01-M05 are live on the verified development project. M06 failed atomically because the migration runner does not own `storage.objects`; M07-M08 were not attempted. M09 was not created or applied. No Edge Function, provider, mobile/product runtime, auth code, or Storage object/bucket/policy mutation from the failed M06 transaction survived.
+
+Auth hardening is deferred to a fresh session and separate branch. It must precede Phase 9 mobile/private-ingestion runtime integration and cover auth state ownership, one root-owned subscription, centralized transitions/logout, secure token persistence, production-safe development bypasses, and removal of auth-to-marketplace dependency. No auth code changed in this database-application work unit.
 
 Repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → `SESSION-START.md` → this tracker is the durable resume chain. A future session must report this block before acting and must use the session protocol's documentation matrix at closeout.
 
@@ -62,7 +64,7 @@ The exact development project was re-verified read-only on 2026-07-22 before the
 
 ## Blocking gate before further implementation
 
-WU0A, WU0B, and the Package 1 design remain approved. M01-M08 are implemented and isolated-test green but require the focused independent review authorized for this checkpoint. C12 remains one dedicated future endpoint used by both caller paths, and Q11 remains request-photo-owned. M09, live application, and product/runtime implementation remain separately gated.
+WU0A, WU0B, and the Package 1 design remain approved. M01-M05 are live and readback-verified. M06 needs a separately reviewed owner-safe response; applied history must not be rewritten. M07-M08, M09, auth hardening, and product/runtime implementation remain gated.
 
 ## Risk summary
 
@@ -81,4 +83,4 @@ WU0A, WU0B, and the Package 1 design remain approved. M01-M08 are implemented an
 
 ## Next action gate
 
-Await separate authorization for exact-project M01-M08 live preflight/application. M09 quantity validation remains a separately reviewed gate.
+Resolve the M06 `storage.objects` ownership blocker through a separately reviewed owner-safe response. Do not retry M06 or apply M07-M09 without new authorization.

@@ -1,9 +1,9 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `package1_m01_m08_independently_approved_not_applied`
+**Status:** `package1_live_application_blocked_at_m06`
 **Last updated:** 2026-07-22
-**Implementation status:** M01-M08 and their isolated database/security harness are locally complete and independently approved; product/runtime implementation is not started
-**Supabase mutation status:** M01-M08 exist only as local files; none was applied to connected Supabase, and M09 does not exist
+**Implementation status:** M01-M05 are live and verified; M06 failed atomically on `storage.objects` ownership; M07-M08 were not attempted; product/runtime implementation is not started
+**Supabase mutation status:** M01-M05 applied to `ahntbtktjjmvfosgkmgn`; failed M06 left no bucket/policy residue; M09 does not exist
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 

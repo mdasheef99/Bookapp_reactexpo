@@ -1,9 +1,9 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `package1_m01_m08_independently_approved_not_applied`
+**Status:** `package1_live_application_blocked_at_m06`
 **Last updated:** 2026-07-22
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `package1_m01_m08_independently_approved_not_applied`
+**Active work unit:** `package1_live_application_blocked_at_m06`
 
 This tracker is intentionally separate from planning decisions. It will hold implementation evidence and can grow without turning the master tracker into a worklog.
 
@@ -16,7 +16,7 @@ WU0B uses five distinct markers: `definition_complete_needs_review`, `definition
 | 0 | [Contract fixtures, threat tests, migration plan, rollback/forward-correction plan](../work-units/00-contracts-threat-migration-plan.md) | `approved` | Corrections incorporated; no implementation/migration authorization |
 | 0A | Server contracts, deterministic helpers, validation/error/provider/query/grant registers, fixtures, and red contract/security tests | `approved_complete` | independently reviewed 2026-07-19; no SQL/live writes; focused 4 suites/41 tests and all function 9 suites/53 tests pass |
 | 0B | [Backend/API technical design](../work-units/00b-backend-api-technical-design-plan.md): seven routed artifacts covering command/query/DTO/actor/boundary inventories, state/transaction/idempotency/worker/telemetry matrices, exact later file allowlists, and red-test mapping | `independently_approved` | original and bounded correction verdicts `approved` 2026-07-22; consolidated Risk-Based Phase 9 SDD analysis next; no Supabase query, migration, endpoint, provider/storage/UI/runtime change or external mutation |
-| 1 | [Package 1 live audit](../work-units/01-package1-live-audit.md) and [database design](../work-units/01-package1-database-design.md): metadata, aliases, condition/damage, pipeline/media/request-photo persistence, RLS/grants/functions/indexes/storage, and migration grouping | `m01_m08_implementation_complete_needs_review` | red-first local implementation and isolated DB verification complete; focused review next; M09/live application prohibited |
+| 1 | [Package 1 live audit](../work-units/01-package1-live-audit.md) and [database design](../work-units/01-package1-database-design.md): metadata, aliases, condition/damage, pipeline/media/request-photo persistence, RLS/grants/functions/indexes/storage, and migration grouping | `live_partial_m01_m05_m06_blocked` | M01-M05 live and verified; M06 failed atomically on `storage.objects` ownership; M07-M08 not attempted |
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `not_started` | Unit 1 verified |
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `not_started` | storage policy/security review |
 | 4 | Vision adapter contract, primary/fallback orchestration, strict output validation | `not_started` | recorded fixtures; no live model in CI |
@@ -30,18 +30,18 @@ WU0B uses five distinct markers: `definition_complete_needs_review`, `definition
 
 ## Migration ledger
 
-M01-M08 exist locally and are not applied. The prior Package 1 audit verified project `ahntbtktjjmvfosgkmgn`; this local-only implementation did not re-query or mutate it.
+Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M05 applied in order. M06 failed atomically because the migration runner is not owner `supabase_storage_admin` of `storage.objects`; M07-M08 were not attempted.
 
 | Local filename | Live version/name | Project verified | Applied by | Rollback/forward fix | Verification | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| `20260722000001_marketplace_phase9_catalogue_metadata_expand.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | additive/forward correction | static + isolated apply | `local_green_needs_review` |
-| `20260722000002_marketplace_phase9_extraction_persistence.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | additive/forward-disable providers | static + isolated behavior | `local_green_needs_review` |
-| `20260722000003_marketplace_phase9_media_registry.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | additive/forward correction | static + isolated behavior | `local_green_needs_review` |
-| `20260722000004_marketplace_phase9_condition_damage_transition.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | compatibility/backfill/final check | static + isolated transition | `local_green_needs_review` |
-| `20260722000005_marketplace_phase9_controlled_inventory_commands.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | revoke/forward-disable boundary | static + isolated RPC/security | `local_green_needs_review` |
-| `20260722000006_marketplace_phase9_storage_boundaries.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | server-mediated/no client policies | static + isolated catalogue | `local_green_needs_review` |
-| `20260722000007_marketplace_phase9_public_projection_search.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | safe projection/forward correction | static + isolated privacy/query | `local_green_needs_review` |
-| `20260722000008_marketplace_phase9_request_photo_seam.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | additive/forward-disable boundary | static + isolated behavior | `local_green_needs_review` |
+| `20260722000001_marketplace_phase9_catalogue_metadata_expand.sql` | `20260722090236 marketplace_phase9_catalogue_metadata_expand` | MCP exact project 2026-07-22 | authorized live application | additive/forward correction | history/schema/RLS/grants/data readback | `live_verified` |
+| `20260722000002_marketplace_phase9_extraction_persistence.sql` | `20260722090256 marketplace_phase9_extraction_persistence` | MCP exact project 2026-07-22 | authorized live application | additive/forward-disable providers | tables/FKs/jobs/capabilities/RLS readback | `live_verified` |
+| `20260722000003_marketplace_phase9_media_registry.sql` | `20260722090321 marketplace_phase9_media_registry` | MCP exact project 2026-07-22 | authorized live application | additive/forward correction | media tables/FKs/privacy/RLS readback | `live_verified` |
+| `20260722000004_marketplace_phase9_condition_damage_transition.sql` | `20260722090341 marketplace_phase9_condition_damage_transition` | MCP exact project 2026-07-22 | authorized live application | compatibility/backfill/final check | five inventory/five listing rows remain `good`; final checks live | `live_verified` |
+| `20260722000005_marketplace_phase9_controlled_inventory_commands.sql` | `20260722090407 marketplace_phase9_controlled_inventory_commands` | MCP exact project 2026-07-22 | authorized live application | revoke/forward-disable boundary | 24 named public RPCs; zero anon execute; internal authenticated execute zero | `live_verified` |
+| `20260722000006_marketplace_phase9_storage_boundaries.sql` | _not recorded; `42501 must be owner of table objects`_ | MCP exact project 2026-07-22 | attempted then stopped | requires reviewed owner-safe forward response | transaction rollback: both new buckets absent; all four legacy policies unchanged | `blocked_atomic_rollback` |
+| `20260722000007_marketplace_phase9_public_projection_search.sql` | _not attempted_ | MCP exact project 2026-07-22 | _none_ | safe projection/forward correction | view remains absent | `blocked_by_m06` |
+| `20260722000008_marketplace_phase9_request_photo_seam.sql` | _not attempted_ | MCP exact project 2026-07-22 | _none_ | additive/forward-disable boundary | request-photo relation remains absent | `blocked_by_m06` |
 
 M09 is intentionally absent. It remains the separately reviewed live-data preflight and `VALIDATE CONSTRAINT store_inventory_quantity_balance` gate.
 
@@ -122,6 +122,21 @@ Rules:
 ## Append-only implementation log
 
 No product/runtime implementation activity recorded. Local database migration implementation is recorded below.
+
+### 2026-07-22 — Package 1 live application stopped at M06
+
+- Authorized scope: merge approved `69edd90` to `main`; create `phase9-db-live-application`; exact-project preflight; apply only M01-M08 in order; verify and record; no M09/auth/runtime work
+- Repository: clean fast-forward `main` from `a398adb` to `69edd90`, pushed; live-application branch created from updated `main`
+- Preflight: project `ahntbtktjjmvfosgkmgn` was `ACTIVE_HEALTHY`; history ended at Phase 6 M39; no M01-M08 collisions; referenced schema/functions/extensions and Storage branches matched; five inventory/five listings were `good`; damaged/invalid/quantity violations were zero; quantity equality remained `NOT VALID`
+- Applied: M01-M05 succeeded and are recorded once in order as versions `20260722090236`, `20260722090256`, `20260722090321`, `20260722090341`, and `20260722090407`
+- Blocker: M06 failed with PostgreSQL `42501 must be owner of table objects` because `storage.objects` is owned by `supabase_storage_admin`; the approved migration includes `ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY`
+- Stop/rollback evidence: M06 has no migration-history row; its transaction rolled back; both new buckets are absent and all four mixed legacy Storage policies retain their preflight branches; M07-M08 were not attempted
+- Partial verification: M01-M03 tables/FKs and private RLS/grants are live; M04 final condition checks are live; M05 has 24 named public Phase 9 RPCs with zero anonymous execution and zero authenticated execution on internal helpers; quantity violations remain zero and the equality CHECK remains unvalidated
+- Repository validation after the stop: isolated Phase 9 database tests 19/19; migration regressions 26 suites/206 tests; focused Edge Function/security suites 9 suites/57 tests; `npx tsc --noEmit` passed; Phase 9 continuity and `git diff --check` passed
+- Advisor comparison: security `121 -> 158` and performance `314 -> 343`; no new ERROR and no new performance WARN. Added Phase 9 notices are 13 intentional service-only RLS/no-policy INFO entries, 24 named authenticated `SECURITY DEFINER` RPC WARN entries, and FK/unused-index INFO entries. Legacy findings remain separately classified.
+- Required response: do not edit applied history or silently alter M06. A separately reviewed owner-safe M06 forward/application response is required before M06 retry or M07-M08 application.
+- Auth deferral: no auth code changed. A new session and separate branch must complete auth state ownership, one root-owned subscription, centralized transitions/logout, secure token persistence, production-safe development bypasses, and removal of auth-to-marketplace dependency before Phase 9 mobile/private-ingestion runtime integration.
+- M09/runtime: M09 was neither created nor applied; providers, Edge/runtime endpoints, mobile UI, and auth implementation were untouched
 
 ### 2026-07-22 — Package 1 M01-M08 local implementation
 
