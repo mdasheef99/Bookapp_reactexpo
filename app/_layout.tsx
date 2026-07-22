@@ -10,6 +10,7 @@ import { AtmosphericBackground } from '@/components/ui/AtmosphericBackground';
 import { initSentry, syncSentryUser, trackSentryRoute, maybeSendSentryVerificationEvent, Sentry } from '@/lib/sentry';
 import '../global.css';
 import { appQueryClient } from '@/lib/queryClient';
+import { isAuthBypassEnabled } from '@/features/auth/config/authRuntimeConfig';
 
 initSentry();
 
@@ -39,7 +40,7 @@ function InitialLayout() {
         if (isLoading) return;
 
         // Development bypass is handled in render
-        if (process.env.EXPO_PUBLIC_DEV_SKIP_AUTH === 'true') {
+        if (isAuthBypassEnabled) {
             return;
         }
 
@@ -56,7 +57,7 @@ function InitialLayout() {
     }, [session, segments, isLoading]);
 
     // Development bypass: Check this flag even if loading is true
-    const isDevBypass = process.env.EXPO_PUBLIC_DEV_SKIP_AUTH === 'true';
+    const isDevBypass = isAuthBypassEnabled;
 
     if (isLoading && !isDevBypass) {
         return (

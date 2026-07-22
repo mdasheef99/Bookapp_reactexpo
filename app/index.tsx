@@ -1,12 +1,13 @@
 import { Redirect } from 'expo-router';
 import { Text, View, ActivityIndicator } from 'react-native';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { isAuthBypassEnabled } from '@/features/auth/config/authRuntimeConfig';
 
 export default function Index() {
     const { session, isLoading } = useAuth();
 
     // In dev bypass mode with mock session, redirect immediately
-    if (process.env.EXPO_PUBLIC_DEV_SKIP_AUTH === 'true') {
+    if (isAuthBypassEnabled) {
         return <Redirect href="/(tabs)/library" />;
     }
 

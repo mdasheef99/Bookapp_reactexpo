@@ -21,9 +21,9 @@ jest.mock('react-native-reanimated', () => {
 // Set test environment variables so supabase.ts doesn't throw
 process.env.EXPO_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
 process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
-process.env.EXPO_PUBLIC_DEV_SKIP_AUTH = 'true';
+process.env.EXPO_PUBLIC_DEV_SKIP_AUTH = 'false';
 process.env.EXPO_PUBLIC_SENTRY_DSN = 'https://examplePublicKey@o0.ingest.sentry.io/0';
-process.env.EXPO_PUBLIC_APP_ENV = 'test';
+process.env.EXPO_PUBLIC_APP_ENV = 'development';
 
 jest.mock('@sentry/react-native', () => ({
   init: jest.fn(),
