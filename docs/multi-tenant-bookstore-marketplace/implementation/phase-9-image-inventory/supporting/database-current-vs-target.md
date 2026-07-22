@@ -1,9 +1,9 @@
 # Phase 9 Database and Storage: Current vs Target
 
 **Audit date:** 2026-07-22
-**Audit mode:** read-only through Supabase MCP
+**Audit mode:** read-only preflight/readback through Supabase MCP plus separately authorized migration application
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** no changes made
+**Mutation status:** M01-M08 applied once; verification blocked after M08; M09/auth/runtime untouched
 
 **WU0 refresh:** a second read-only check on 2026-07-19 reconfirmed project identity, 37 `store_id`/zero `tenant_id` public columns, the five core catalogue/inventory tables, absence of proposed Phase 9 tables/buckets, five `good` inventory rows, zero observed quantity-balance violations, the explicit listing projection trigger, and the current migration tail. No drift changed the proposed design.
 
@@ -13,7 +13,7 @@
 
 **Local implementation checkpoint:** M01-M08 now implement the approved additive target in repository SQL. An executable snapshot of the Phase 9-relevant Phase 6 surface migrated cleanly and the isolated security/behavior suite passed 19/19. During correction, a strictly read-only exact-project schema readback reconciled live column names (`display_name`, `setup_status`, `selling_status`, `source_book_id`, `selling_price_minor`, `visibility_status`, `public_title`, `public_authors`, `user_id`, `actor_user_id`, and the Phase 6 hold version/release/command columns) with the fixture and SQL. No connected Supabase or Storage mutation occurred. The existing quantity-balance constraint remains intentionally `NOT VALID` pending a separately reviewed M09.
 
-**Live application checkpoint:** fresh preflight was clean, then M01-M05 applied once and in order. M06 failed atomically with `42501 must be owner of table objects` because `storage.objects` is owned by `supabase_storage_admin`. M06 has no history row; `marketplace-media-staging` and `order-request-photos` remain absent; the four mixed legacy Storage policies retain their preflight branches; M07-M08 were not attempted. M01-M05 readback confirms private RLS/no broad table grants, named RPC/internal-worker separation, final condition checks, five valid inventory/listing rows, zero quantity violations, and the quantity equality CHECK still `NOT VALID`. Applied history is immutable; M06 requires a separately reviewed owner-safe response.
+**Live application checkpoint:** M01-M05 applied once. Live readback then proved `storage.objects` RLS was already enabled and owned by `supabase_storage_admin`; reviewed correction `e07efa1` removed only the redundant owner-only M06 RLS statement. Fresh preflight passed and M06-M08 applied once as `20260722095443`, `20260722095545`, and `20260722095729`. M06 readback confirmed four exact bucket boundaries, zero direct authenticated Phase 9 object policies, 19 total Storage policies, and preservation of all unrelated mixed branches. M07 readback confirmed a 24-column positive projection with zero private fields, three valid indexes, pinned functions, and initial named grants. M08 request tables/FK/trigger/indexes/RLS, zero client table grants, request RPCs, worker-only helpers, holds/expiry paths, and quantity invariants passed. Final verification stopped because M08's broad public-function loop revoked `anon` execution from the three M07 discovery RPCs. Advisors are security 172 (`INFO 46/WARN 124/ERROR 2`) and performance 350 (`INFO 199/WARN 151`); the new M07 `security_definer_view` ERROR requires explicit resolution or justification. M09 remains absent and the quantity CHECK remains `NOT VALID` with zero violations.
 
 ## Evidence classification
 

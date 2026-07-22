@@ -1,9 +1,9 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `package1_live_application_blocked_at_m06`
+**Status:** `package1_live_application_blocked_at_m08_grant_verification`
 **Last updated:** 2026-07-22
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `package1_live_application_blocked_at_m06`
+**Active work unit:** `package1_live_application_blocked_at_m08_grant_verification`
 
 This tracker is intentionally separate from planning decisions. It will hold implementation evidence and can grow without turning the master tracker into a worklog.
 
@@ -16,7 +16,7 @@ WU0B uses five distinct markers: `definition_complete_needs_review`, `definition
 | 0 | [Contract fixtures, threat tests, migration plan, rollback/forward-correction plan](../work-units/00-contracts-threat-migration-plan.md) | `approved` | Corrections incorporated; no implementation/migration authorization |
 | 0A | Server contracts, deterministic helpers, validation/error/provider/query/grant registers, fixtures, and red contract/security tests | `approved_complete` | independently reviewed 2026-07-19; no SQL/live writes; focused 4 suites/41 tests and all function 9 suites/53 tests pass |
 | 0B | [Backend/API technical design](../work-units/00b-backend-api-technical-design-plan.md): seven routed artifacts covering command/query/DTO/actor/boundary inventories, state/transaction/idempotency/worker/telemetry matrices, exact later file allowlists, and red-test mapping | `independently_approved` | original and bounded correction verdicts `approved` 2026-07-22; consolidated Risk-Based Phase 9 SDD analysis next; no Supabase query, migration, endpoint, provider/storage/UI/runtime change or external mutation |
-| 1 | [Package 1 live audit](../work-units/01-package1-live-audit.md) and [database design](../work-units/01-package1-database-design.md): metadata, aliases, condition/damage, pipeline/media/request-photo persistence, RLS/grants/functions/indexes/storage, and migration grouping | `live_partial_m01_m05_m06_blocked` | M01-M05 live and verified; M06 failed atomically on `storage.objects` ownership; M07-M08 not attempted |
+| 1 | [Package 1 live audit](../work-units/01-package1-live-audit.md) and [database design](../work-units/01-package1-database-design.md): metadata, aliases, condition/damage, pipeline/media/request-photo persistence, RLS/grants/functions/indexes/storage, and migration grouping | `live_m01_m08_verification_blocked` | M01-M08 live once; M06-M08 structural/privacy readback passed, but M08 revoked M07 anonymous discovery execution |
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `not_started` | Unit 1 verified |
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `not_started` | storage policy/security review |
 | 4 | Vision adapter contract, primary/fallback orchestration, strict output validation | `not_started` | recorded fixtures; no live model in CI |
@@ -30,7 +30,7 @@ WU0B uses five distinct markers: `definition_complete_needs_review`, `definition
 
 ## Migration ledger
 
-Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M05 applied in order. M06 failed atomically because the migration runner is not owner `supabase_storage_admin` of `storage.objects`; M07-M08 were not attempted.
+Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M05 applied in order. The first M06 attempt failed atomically; reviewed correction `e07efa1` removed only the redundant owner-only RLS statement. Fresh preflight passed, then M06-M08 applied in order. Verification stopped on M08's regression of the M07 anonymous discovery grants.
 
 | Local filename | Live version/name | Project verified | Applied by | Rollback/forward fix | Verification | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -39,10 +39,9 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M05 applied in ord
 | `20260722000003_marketplace_phase9_media_registry.sql` | `20260722090321 marketplace_phase9_media_registry` | MCP exact project 2026-07-22 | authorized live application | additive/forward correction | media tables/FKs/privacy/RLS readback | `live_verified` |
 | `20260722000004_marketplace_phase9_condition_damage_transition.sql` | `20260722090341 marketplace_phase9_condition_damage_transition` | MCP exact project 2026-07-22 | authorized live application | compatibility/backfill/final check | five inventory/five listing rows remain `good`; final checks live | `live_verified` |
 | `20260722000005_marketplace_phase9_controlled_inventory_commands.sql` | `20260722090407 marketplace_phase9_controlled_inventory_commands` | MCP exact project 2026-07-22 | authorized live application | revoke/forward-disable boundary | 24 named public RPCs; zero anon execute; internal authenticated execute zero | `live_verified` |
-| `20260722000006_marketplace_phase9_storage_boundaries.sql` | _not recorded; `42501 must be owner of table objects`_ | MCP exact project 2026-07-22 | attempted then stopped | requires reviewed owner-safe forward response | transaction rollback: both new buckets absent; all four legacy policies unchanged | `blocked_atomic_rollback` |
-| `20260722000007_marketplace_phase9_public_projection_search.sql` | _not attempted_ | MCP exact project 2026-07-22 | _none_ | safe projection/forward correction | view remains absent | `blocked_by_m06` |
-| `20260722000008_marketplace_phase9_request_photo_seam.sql` | _not attempted_ | MCP exact project 2026-07-22 | _none_ | additive/forward-disable boundary | request-photo relation remains absent | `blocked_by_m06` |
-
+| `20260722000006_marketplace_phase9_storage_boundaries.sql` | `20260722095443 marketplace_phase9_storage_boundaries` | MCP exact project 2026-07-22 | authorized live continuation | reviewed owner-safe correction before first successful apply | four bucket boundaries; zero direct Phase 9 client policies; unrelated branches preserved | `live_verified` |
+| `20260722000007_marketplace_phase9_public_projection_search.sql` | `20260722095545 marketplace_phase9_public_projection_search` | MCP exact project 2026-07-22 | authorized live continuation | safe projection/forward correction | 24 allowlisted/zero private columns; three indexes; pinned/named functions; later anon grants regressed by M08 | `live_structure_verified_grant_regressed` |
+| `20260722000008_marketplace_phase9_request_photo_seam.sql` | `20260722095729 marketplace_phase9_request_photo_seam` | MCP exact project 2026-07-22 | authorized live continuation | requires separately reviewed forward grant correction | tables/FK/trigger/RLS/worker/hold/expiry verified; revoked three M07 anon grants | `live_verification_blocked` |
 M09 is intentionally absent. It remains the separately reviewed live-data preflight and `VALIDATE CONSTRAINT store_inventory_quantity_balance` gate.
 
 Rules:
@@ -122,6 +121,11 @@ Rules:
 ## Append-only implementation log
 
 No product/runtime implementation activity recorded. Local database migration implementation is recorded below.
+
+### 2026-07-22 — Owner-safe M06 continuation stopped at M08 grant verification
+
+- Evidence/correction/application: `storage.objects` is owned by `supabase_storage_admin`, already has RLS, and `postgres` is not an owner member but has grantable privileges; all 19 policies/mixed branches matched. A red ownership/preservation contract failed 11/12, then only the redundant RLS `ALTER TABLE` was removed. Focused 12/12, isolated 19/19, migrations 206/206, Edge/security 57/57, TypeScript, continuity and whitespace passed; independent verdict was `approved`; commit `e07efa1` was pushed. Fresh preflight passed, then M06 `20260722095443`, M07 `20260722095545`, and M08 `20260722095729` applied, leaving M01-M08 exactly once. M06's four buckets, zero direct Phase 9 client object policies, and unrelated branches passed; M07's 24 allowlisted/zero private columns, three indexes, pinned functions and initial grants passed; M08's two RLS tables/zero client CRUD, FK, trigger, two indexes, eight request RPCs, worker separation, 12 pinned hold/expiry functions, and zero quantity violations passed.
+- Stop/gates: M08's broad `public.phase9_%` loop revoked `anon` execution from all three M07 discovery RPCs, so no corrective SQL followed. Advisors changed security `158 -> 172` (`INFO 46/WARN 124/ERROR 2`) and performance `343 -> 350` (`INFO 199/WARN 151`); expected additions are service-only RLS INFO and named-RPC WARN, while M07's new `security_definer_view` ERROR needs explicit resolution/justification. M09 remains absent/unvalidated; auth/providers/mobile/Edge/runtime were untouched. Next gate is separately reviewed/tested/authorized forward correction plus advisor disposition; never rewrite M01-M08.
 
 ### 2026-07-22 — Package 1 live application stopped at M06
 
