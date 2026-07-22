@@ -4,6 +4,8 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
+**Implementation checkpoint (2026-07-22):** the approved schema/condition/alias/inventory contracts are implemented locally in M01, M04, M05, and M07 and pass isolated migration tests. Nothing was applied live; M09 quantity validation remains separate.
+
 ## 1. Decision
 
 Extend the existing edition-first canonical catalogue without making uncertain scans global truth. Store a coherent selected metadata snapshot on inventory, retain provider provenance privately, keep the canonical link nullable, and add source-bearing search aliases. Use advisory duplicate detection with explicit owner choice; never use image similarity or automatic merge.

@@ -1,9 +1,9 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `package1_independently_approved`
+**Status:** `package1_m01_m08_independently_approved_not_applied`
 **Last updated:** 2026-07-22
-**Implementation status:** WU0A/WU0B and Package 1 audit/design independently approved; product/runtime and migration implementation not started
-**Supabase mutation status:** no Phase 9 migration, function, policy, bucket, or data change has been made
+**Implementation status:** M01-M08 and their isolated database/security harness are locally complete and independently approved; product/runtime implementation is not started
+**Supabase mutation status:** M01-M08 exist only as local files; none was applied to connected Supabase, and M09 does not exist
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 
@@ -92,7 +92,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, WU0 plan, WU0A server contract/test foundation, WU0B documentation-only technical design, and corrected Package 1 audit/database design are independently approved. Failing test creation, migration-file creation/application, and fixture-backed runtime remain separately gated and require new authorization. Before any later authorized unit, preserve these WU0 controls:
+The planning baseline, WU0A/WU0B, corrected Package 1 design, and local M01-M08 implementation are independently approved. M09, connected-project application, and fixture-backed runtime remain separately gated. Preserve these WU0 controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

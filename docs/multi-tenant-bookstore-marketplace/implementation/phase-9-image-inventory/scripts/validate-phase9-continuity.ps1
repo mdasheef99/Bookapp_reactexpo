@@ -84,16 +84,16 @@ foreach ($marker in $trackerMarkers) {
 $active = [IO.File]::ReadAllText((Join-Path $implementationRoot 'ACTIVE.md'))
 if (-not $active.Contains('phase-9-image-inventory/SESSION-START.md')) { Write-Error 'ACTIVE.md does not route to the Phase 9 session entrypoint.' }
 if (-not $active.Contains('DOC-13-implementation-tracker.md')) { Write-Error 'ACTIVE.md does not route to DOC-13.' }
-if (-not $active.Contains('phase-9-image-inventory/work-units/01-package1-live-audit.md') -or
-    -not $active.Contains('phase-9-image-inventory/work-units/01-package1-database-design.md')) { Write-Error 'ACTIVE.md does not route to the current Package 1 audit/design.' }
+if (-not $active.Contains('phase-9-image-inventory/work-units/01-package1-database-design.md') -or
+    -not $active.Contains('implemented locally as independently approved M01-M08 and not applied')) { Write-Error 'ACTIVE.md does not route to the approved, unapplied Package 1 checkpoint.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `package1_independently_approved`')) { Write-Error 'DOC-13 does not identify the approved Package 1 milestone.' }
-if (-not $doc13.Contains('| Next recommended task | Separately authorize failing database/security tests or migration-file creation when ready. M09/live application, providers, runtime/UI, and Phase 7/8 behavior remain unauthorized. |')) { Write-Error 'DOC-13 does not preserve later authorization gates.' }
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `package1_m01_m08_independently_approved_not_applied`')) { Write-Error 'DOC-13 does not identify the independently approved, unapplied M01-M08 milestone.' }
+if (-not $doc13.Contains('| Next recommended task | Await separate authorization for exact-project M01-M08 live preflight/application. M09 remains a separately reviewed live-data gate; providers, runtime/UI, and Phase 7/8 behavior remain unauthorized. |')) { Write-Error 'DOC-13 does not preserve the separate live-application and M09 authorization gates.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `package1_independently_approved`\r?$' -or
-    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `package1_independently_approved`\r?$') {
-    Write-Error 'Implementation tracker does not identify the approved Package 1 milestone.'
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `package1_m01_m08_independently_approved_not_applied`\r?$' -or
+    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `package1_m01_m08_independently_approved_not_applied`\r?$') {
+    Write-Error 'Implementation tracker does not identify the independently approved, unapplied M01-M08 milestone.'
 }
 if ($implementationTracker -notmatch '(?m)^\| 0A \|.*\| `approved_complete` \|') { Write-Error 'Implementation tracker no longer preserves WU0A approved-complete evidence.' }
 if ($implementationTracker -notmatch '(?m)^\| 0B \|.*\| `independently_approved` \|.*Risk-Based Phase 9 SDD analysis next;.*no Supabase query') { Write-Error 'Implementation tracker does not preserve WU0B approval and later-authority separation.' }
@@ -131,11 +131,11 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `package1_independently_approved`;.*documentation-only\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `package1_independently_approved`\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* await separate authorization for failing migration/security tests or migration-file creation; M09/live application remains independently gated\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* `not_granted`\r?$') {
-    Write-Error 'TRACKER.md does not preserve Package 1 review, next action and migration gates.'
+if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `package1_m01_m08_independently_approved_not_applied`;.*documentation-only\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `package1_m01_m08_independently_approved_not_applied`\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* none; await separate authorization for exact-project M01-M08 live preflight/application; M09 remains independently gated\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* `m01_m08_created_local_only`; live application and M09 not granted\r?$') {
+    Write-Error 'TRACKER.md does not preserve the M01-M08 review and live-application gates.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
 $packageDesign = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-database-design.md'))
@@ -152,6 +152,27 @@ if (-not $packageAudit.Contains('C02/C03, C15/C16 and C20/C21') -or
     -not $packageAudit.Contains('cannot directly read or mutate private Phase 9 base tables')) {
     Write-Error 'Package 1 audit gap/test plan is missing required correction coverage.'
 }
+$migrationNames = @(
+    '20260722000001_marketplace_phase9_catalogue_metadata_expand.sql',
+    '20260722000002_marketplace_phase9_extraction_persistence.sql',
+    '20260722000003_marketplace_phase9_media_registry.sql',
+    '20260722000004_marketplace_phase9_condition_damage_transition.sql',
+    '20260722000005_marketplace_phase9_controlled_inventory_commands.sql',
+    '20260722000006_marketplace_phase9_storage_boundaries.sql',
+    '20260722000007_marketplace_phase9_public_projection_search.sql',
+    '20260722000008_marketplace_phase9_request_photo_seam.sql'
+)
+foreach ($name in $migrationNames) {
+    if (-not (Test-Path -LiteralPath (Join-Path $repoRoot "supabase/migrations/$name"))) { Write-Error "Missing approved Phase 9 migration: $name" }
+}
+$phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
+if ($phase9Migrations.Count -ne 8 -or $phase9Migrations.Name -match '000009|quantity.*validat') { Write-Error 'Phase 9 migration set must contain exactly M01-M08 and no M09.' }
+foreach ($relative in @('supabase/tests/phase9/phase6_baseline.sql','supabase/tests/phase9/databaseHarness.mjs',
+    'supabase/tests/phase9/phase9Database.integration.test.mjs','supabase/migrations/__tests__/marketplacePhase9DatabaseFoundation.test.ts')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $repoRoot $relative))) { Write-Error "Missing Phase 9 migration test harness file: $relative" }
+}
+$packageJson = [IO.File]::ReadAllText((Join-Path $repoRoot 'package.json'))
+if (-not $packageJson.Contains('"test:phase9:db"')) { Write-Error 'package.json does not expose the isolated Phase 9 database suite.' }
 if ($tracker -match '(?i)\b(?:Supabase audit|migration-file creation|live migration application|product/runtime implementation) (?:is|are) authorized\b') {
     Write-Error 'TRACKER.md incorrectly represents a later authorization.'
 }
@@ -301,10 +322,10 @@ if (-not $sessionStart.Contains('| 0B Backend/API technical design or review (on
     Write-Error 'SESSION-START.md does not route the WU0B authority and artifact set.'
 }
 $phaseReadme = [IO.File]::ReadAllText((Join-Path $phaseRoot 'README.md'))
-if (-not $phaseReadme.Contains('**Status:** `package1_independently_approved`') -or
-    -not $phaseReadme.Contains('Package 1 audit/design independently approved') -or
-    -not $phaseReadme.Contains('product/runtime and migration implementation not started')) {
-    Write-Error 'Phase 9 README disagrees with the Package 1 audit milestone.'
+if (-not $phaseReadme.Contains('**Status:** `package1_m01_m08_independently_approved_not_applied`') -or
+    -not $phaseReadme.Contains('M01-M08 and their isolated database/security harness are locally complete') -or
+    -not $phaseReadme.Contains('none was applied to connected Supabase')) {
+    Write-Error 'Phase 9 README disagrees with the independently approved, unapplied M01-M08 milestone.'
 }
 $master = [IO.File]::ReadAllText((Join-Path $phaseRoot '00-phase-9-master-sdd.md'))
 if (-not $master.Contains('Documentation and development-session continuity')) { Write-Error 'Master SDD is missing the continuity contract.' }

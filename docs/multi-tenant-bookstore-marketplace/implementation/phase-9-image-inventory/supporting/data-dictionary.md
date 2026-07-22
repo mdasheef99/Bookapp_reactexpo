@@ -1,7 +1,9 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** target design; exact SQL types/names require migration review
-**Last updated:** 2026-07-19
+**Status:** approved target implemented locally by independently approved M01-M08; not applied
+**Last updated:** 2026-07-22
+
+M01-M08 implement this approved dictionary in local migration files and are verified against a disposable Phase 6 baseline. They have not been applied to connected Supabase; M09 quantity-constraint validation remains a separate live-data gate.
 
 The dictionary distinguishes canonical truth, store-owned snapshots, public projections, staged AI output, and media/evidence. A field must not be added to several layers merely because it is convenient; each copy needs a named owner and synchronization rule.
 

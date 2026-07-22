@@ -11,6 +11,8 @@
 
 **Package 1 correction:** the six required review corrections are documentation-only: executable condition compatibility ordering; persisted single-use upload authority; named-only private query/command access; exact cost-reservation uniqueness; first-possible deferred FKs; and eight additive groups plus separately authorized M09 quantity validation. No second live query was required because no corrected exact-current-state claim changed.
 
+**Local implementation checkpoint:** M01-M08 now implement the approved additive target in repository SQL. An executable snapshot of the Phase 9-relevant Phase 6 surface migrated cleanly and the isolated security/behavior suite passed 19/19. During correction, a strictly read-only exact-project schema readback reconciled live column names (`display_name`, `setup_status`, `selling_status`, `source_book_id`, `selling_price_minor`, `visibility_status`, `public_title`, `public_authors`, `user_id`, `actor_user_id`, and the Phase 6 hold version/release/command columns) with the fixture and SQL. No connected Supabase or Storage mutation occurred. The existing quantity-balance constraint remains intentionally `NOT VALID` pending a separately reviewed M09.
+
 ## Evidence classification
 
 - **Observed** means read from the verified live database, storage catalogue, advisor output, migration list, or inspected repository source.

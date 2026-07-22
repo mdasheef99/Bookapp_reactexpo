@@ -4,6 +4,8 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
+**Implementation checkpoint (2026-07-22):** the approved private-table, named-boundary, upload-capability, media-registry, and Storage boundary contracts are implemented locally in M02, M03, M05, M06, and M08 and pass isolated security tests. No connected Supabase or Storage mutation occurred.
+
 ## 1. Decision and evidence basis
 
 Use a server-mediated media boundary: private staging and scan processing, approved-only public derivatives, and a separate private customer-request-photo domain. Treat every image, model response, metadata response, path, and signed URL as untrusted or capability-bearing data. Enforce authorization against the final store/entity identity and make deletion/hold behavior a persisted lifecycle, not a best-effort client cleanup.

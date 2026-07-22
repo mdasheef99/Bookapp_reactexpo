@@ -1,9 +1,9 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `package1_independently_approved`
+**Status:** `package1_m01_m08_independently_approved_not_applied`
 **Last updated:** 2026-07-22
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `package1_independently_approved`
+**Active work unit:** `package1_m01_m08_independently_approved_not_applied`
 
 This tracker is intentionally separate from planning decisions. It will hold implementation evidence and can grow without turning the master tracker into a worklog.
 
@@ -16,7 +16,7 @@ WU0B uses five distinct markers: `definition_complete_needs_review`, `definition
 | 0 | [Contract fixtures, threat tests, migration plan, rollback/forward-correction plan](../work-units/00-contracts-threat-migration-plan.md) | `approved` | Corrections incorporated; no implementation/migration authorization |
 | 0A | Server contracts, deterministic helpers, validation/error/provider/query/grant registers, fixtures, and red contract/security tests | `approved_complete` | independently reviewed 2026-07-19; no SQL/live writes; focused 4 suites/41 tests and all function 9 suites/53 tests pass |
 | 0B | [Backend/API technical design](../work-units/00b-backend-api-technical-design-plan.md): seven routed artifacts covering command/query/DTO/actor/boundary inventories, state/transaction/idempotency/worker/telemetry matrices, exact later file allowlists, and red-test mapping | `independently_approved` | original and bounded correction verdicts `approved` 2026-07-22; consolidated Risk-Based Phase 9 SDD analysis next; no Supabase query, migration, endpoint, provider/storage/UI/runtime change or external mutation |
-| 1 | [Package 1 live audit](../work-units/01-package1-live-audit.md) and [database design](../work-units/01-package1-database-design.md): metadata, aliases, condition/damage, pipeline/media/request-photo persistence, RLS/grants/functions/indexes/storage, and migration grouping | `independently_approved` | exact correction-only verdict `approved`; separately authorize red tests and migration-file creation |
+| 1 | [Package 1 live audit](../work-units/01-package1-live-audit.md) and [database design](../work-units/01-package1-database-design.md): metadata, aliases, condition/damage, pipeline/media/request-photo persistence, RLS/grants/functions/indexes/storage, and migration grouping | `m01_m08_implementation_complete_needs_review` | red-first local implementation and isolated DB verification complete; focused review next; M09/live application prohibited |
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `not_started` | Unit 1 verified |
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `not_started` | storage policy/security review |
 | 4 | Vision adapter contract, primary/fallback orchestration, strict output validation | `not_started` | recorded fixtures; no live model in CI |
@@ -30,11 +30,20 @@ WU0B uses five distinct markers: `definition_complete_needs_review`, `definition
 
 ## Migration ledger
 
-No Phase 9 migrations exist. Every future entry must record:
+M01-M08 exist locally and are not applied. The prior Package 1 audit verified project `ahntbtktjjmvfosgkmgn`; this local-only implementation did not re-query or mutate it.
 
 | Local filename | Live version/name | Project verified | Applied by | Rollback/forward fix | Verification | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| _none_ | _none_ | _n/a_ | _n/a_ | _n/a_ | _n/a_ | `not_started` |
+| `20260722000001_marketplace_phase9_catalogue_metadata_expand.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | additive/forward correction | static + isolated apply | `local_green_needs_review` |
+| `20260722000002_marketplace_phase9_extraction_persistence.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | additive/forward-disable providers | static + isolated behavior | `local_green_needs_review` |
+| `20260722000003_marketplace_phase9_media_registry.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | additive/forward correction | static + isolated behavior | `local_green_needs_review` |
+| `20260722000004_marketplace_phase9_condition_damage_transition.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | compatibility/backfill/final check | static + isolated transition | `local_green_needs_review` |
+| `20260722000005_marketplace_phase9_controlled_inventory_commands.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | revoke/forward-disable boundary | static + isolated RPC/security | `local_green_needs_review` |
+| `20260722000006_marketplace_phase9_storage_boundaries.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | server-mediated/no client policies | static + isolated catalogue | `local_green_needs_review` |
+| `20260722000007_marketplace_phase9_public_projection_search.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | safe projection/forward correction | static + isolated privacy/query | `local_green_needs_review` |
+| `20260722000008_marketplace_phase9_request_photo_seam.sql` | _not applied_ | prior read-only audit 2026-07-22 | _none_ | additive/forward-disable boundary | static + isolated behavior | `local_green_needs_review` |
+
+M09 is intentionally absent. It remains the separately reviewed live-data preflight and `VALIDATE CONSTRAINT store_inventory_quantity_balance` gate.
 
 Rules:
 
@@ -112,7 +121,22 @@ Rules:
 
 ## Append-only implementation log
 
-No product implementation activity recorded.
+No product/runtime implementation activity recorded. Local database migration implementation is recorded below.
+
+### 2026-07-22 — Package 1 M01-M08 local implementation
+
+- Authorized scope: red-first migration harness, approved M01-M08, isolated/local execution, focused review, commit/push; no connected-project mutation and no M09/runtime work
+- Red evidence: initial focused migration contract run failed 17/17 because all eight approved files were absent
+- Green evidence: static migration contracts 12/12; isolated Phase 6-to-M01-M08 execution and database/security behavior 19/19; all migration regressions 26 suites/206 tests; actual Edge Function suites 9/9 and 57/57 tests
+- Other validation: `npx tsc --noEmit`, Phase 9 continuity (32 Markdown files/27 required phase files), and `git diff --check` pass
+- Harness: `supabase/tests/phase9/phase6_baseline.sql`, `databaseHarness.mjs`, `phase9Database.integration.test.mjs`, and `phase9RequestExpiry.integration.test.mjs` using embedded PGlite; the fixture is an executable Phase 9-relevant snapshot, while the repository ledger check preserves the complete ordered Phase 6 M01-M39 chain
+- Coverage: ordered schema/FKs, aliases/providers, capabilities, private grants/named boundaries, cross-store/initiator denial, claim/lease/retry/dead-letter, concurrent cost uniqueness, commit/publication separation, condition/damage, quantity buckets with the existing NOT VALID constraint untouched, media/Storage, store grouping, and request-photo persistence
+- Exact-project verification: strictly read-only schema/status evidence reconciled live Phase 6 column and hold-contract names with the fixture and M01-M08 after review exposed a fidelity risk
+- Supabase/external mutations: none; the connected project was queried read-only and was not mutated
+- Legacy advisor evidence: RLS remains disabled on `public.spatial_ref_sys`, `public.marketplace_event_schema_registry`, and `public.marketplace_notification_type_registry`; this pre-existing backlog is not a Phase 9 M01-M08 blocker and was not remediated here
+- Independent review: initial focused verdict required corrections; correction-only follow-ups ended with exact verdict `approved`. No reviewer edits or Supabase access occurred.
+- Review corrections: atomic C03; exact Owner and private/worker boundaries; race-safe command fingerprints; claimed store/entity/intent-bound C12/C27/C29; reviewed-only commit; single-media validation; truthful pending/provided progression; soft-hold refresh/accept/expiry; policy-preserving Storage changes; stable cursors; and alias store consistency
+- Remaining gate: exact-project M01-M08 live preflight/application requires separate authorization and fresh readback; M09 remains a distinct, separately reviewed live-data gate
 
 ### 2026-07-22 — Package 1 six-finding correction
 

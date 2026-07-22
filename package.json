@@ -14,6 +14,7 @@
     "sentry:upload-sourcemaps": "node node_modules/@sentry/react-native/scripts/expo-upload-sourcemaps.js dist",
     "sentry:upload-sourcemaps:web": "npm run export:web && npm run sentry:upload-sourcemaps",
     "test": "jest",
+    "test:phase9:db": "node --experimental-vm-modules --test supabase/tests/phase9/*.integration.test.mjs",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
@@ -56,6 +57,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4",
     "@playwright/test": "^1.59.1",
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "29.5.14",

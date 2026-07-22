@@ -1,21 +1,21 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `approved_baseline`
-**Implementation status:** `package1_independently_approved`; WU0A remains `approved_complete`; WU0B remains independently approved/documentation-only
+**Implementation status:** `package1_m01_m08_independently_approved_not_applied`; WU0A remains `approved_complete`; WU0B remains independently approved/documentation-only
 **Last updated:** 2026-07-22
-**Current milestone:** Package 1 corrected audit/database design independently approved
-**Active work unit:** `package1_independently_approved`
-**Last completed:** Correction-only independent review returned exact verdict `approved`; all six findings and validator preservation verified
-**Next authorized action:** await separate authorization for failing migration/security tests or migration-file creation; M09/live application remains independently gated
-**Implementation authority:** `wu0a_approved_complete`; WU0B documentation-only design complete; product/runtime authority not granted
-**Migration creation/application authority:** `not_granted`
-**Current gate:** Package 1 approved checkpoint; migration tests, migration-file creation, live application, and runtime remain separately gated
+**Current milestone:** Package 1 M01-M08 local implementation independently approved and not applied
+**Active work unit:** `package1_m01_m08_independently_approved_not_applied`
+**Last completed:** Red-first migration harness, eight additive migrations, isolated Phase 6-to-Phase 9 verification, and focused independent database/security review
+**Next authorized action:** none; await separate authorization for exact-project M01-M08 live preflight/application; M09 remains independently gated
+**Implementation authority:** `package1_m01_m08_local_only`; product/runtime authority not granted
+**Migration creation/application authority:** `m01_m08_created_local_only`; live application and M09 not granted
+**Current gate:** connected Supabase application and M09 remain prohibited without separate authorization
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
 ## Current handoff
 
-Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. The Phase 9 baseline, corrected Work Unit 0 plan, WU0A server contract/test foundation, and WU0B definition are approved. The documentation-only [WU0B technical design](./work-units/00b-backend-api-technical-design-plan.md) routes seven completed artifacts and is independently approved. Package 1 then performed the authorized read-only Supabase audit and recorded its [evidence](./work-units/01-package1-live-audit.md) and [proposed database design](./work-units/01-package1-database-design.md). The six required review corrections are now incorporated. No Phase 9 migration, callable Edge Function, bucket/policy change, provider call, mobile/product application code, database/storage mutation, or other runtime change occurred.
+Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Package 1's approved design is now implemented locally as M01-M08 with a disposable Phase 6 baseline and embedded PostgreSQL-compatible execution harness. Static migration contracts pass 11/11 and isolated database/security behavior passes 15/15. M09 was not created or validated; no migration was applied to connected Supabase and no callable Edge Function, provider call, mobile/product application code, deployment, or external database/Storage mutation occurred.
 
 Repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → `SESSION-START.md` → this tracker is the durable resume chain. A future session must report this block before acting and must use the session protocol's documentation matrix at closeout.
 
@@ -62,7 +62,7 @@ The exact development project was re-verified read-only on 2026-07-22 before the
 
 ## Blocking gate before further implementation
 
-WU0A is approved and complete. WU0B documentation-only technical design and the bounded six-area contract correction are independently approved with exact verdict `approved`. Package 1's fresh exact-project read-only audit and corrected database design are independently approved with exact verdict `approved`. C12 remains one dedicated future endpoint used by both caller paths, and Q11 remains request-photo-owned. Failing database/security tests, migration-file creation, live application, and product/runtime implementation remain separately gated.
+WU0A, WU0B, and the Package 1 design remain approved. M01-M08 are implemented and isolated-test green but require the focused independent review authorized for this checkpoint. C12 remains one dedicated future endpoint used by both caller paths, and Q11 remains request-photo-owned. M09, live application, and product/runtime implementation remain separately gated.
 
 ## Risk summary
 
@@ -81,4 +81,4 @@ WU0A is approved and complete. WU0B documentation-only technical design and the 
 
 ## Next action gate
 
-Await separate authorization for failing test creation or migration-file creation. M09 quantity validation and all live application remain independently gated.
+Await separate authorization for exact-project M01-M08 live preflight/application. M09 quantity validation remains a separately reviewed gate.
