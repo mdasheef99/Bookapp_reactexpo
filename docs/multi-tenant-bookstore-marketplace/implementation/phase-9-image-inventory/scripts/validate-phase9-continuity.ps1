@@ -85,15 +85,15 @@ $active = [IO.File]::ReadAllText((Join-Path $implementationRoot 'ACTIVE.md'))
 if (-not $active.Contains('phase-9-image-inventory/SESSION-START.md')) { Write-Error 'ACTIVE.md does not route to the Phase 9 session entrypoint.' }
 if (-not $active.Contains('DOC-13-implementation-tracker.md')) { Write-Error 'ACTIVE.md does not route to DOC-13.' }
 if (-not $active.Contains('phase-9-image-inventory/work-units/01-package1-database-design.md') -or
-    -not $active.Contains('M01-M08 live once, verification blocked because M08 revoked anonymous execution from the three M07 discovery RPCs')) { Write-Error 'ACTIVE.md does not route to the M08 grant-verification blocker.' }
+    -not $active.Contains('M01-M08 and forward security correction M10 are live-verified')) { Write-Error 'ACTIVE.md does not route to the accepted M01-M08/M10 checkpoint.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `package1_live_application_blocked_at_m08_grant_verification`')) { Write-Error 'DOC-13 does not identify the M08 grant-verification blocker.' }
-if (-not $doc13.Contains('| Next recommended task | Separately design, review, test, and authorize a forward-only correction for the M08 public-discovery grant regression and M07 advisor finding; do not create/apply M09. Auth hardening remains a separate pre-runtime work unit. |')) { Write-Error 'DOC-13 does not preserve the forward-correction, M09, and auth gates.' }
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `package1_m01_m08_m10_live_verified`')) { Write-Error 'DOC-13 does not identify the accepted M01-M08/M10 checkpoint.' }
+if (-not $doc13.Contains('| Next recommended task | None authorized. Select and separately authorize either the reserved M09 live-data gate or a later auth/runtime work unit; do not infer either from this checkpoint. |')) { Write-Error 'DOC-13 does not preserve the M09 and auth/runtime gates.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `package1_live_application_blocked_at_m08_grant_verification`\r?$' -or
-    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `package1_live_application_blocked_at_m08_grant_verification`\r?$') {
-    Write-Error 'Implementation tracker does not identify the M08 grant-verification blocker.'
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `package1_m01_m08_m10_live_verified`\r?$' -or
+    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `package1_m01_m08_m10_live_verified`\r?$') {
+    Write-Error 'Implementation tracker does not identify the accepted M01-M08/M10 checkpoint.'
 }
 if ($implementationTracker -notmatch '(?m)^\| 0A \|.*\| `approved_complete` \|') { Write-Error 'Implementation tracker no longer preserves WU0A approved-complete evidence.' }
 if ($implementationTracker -notmatch '(?m)^\| 0B \|.*\| `independently_approved` \|.*Risk-Based Phase 9 SDD analysis next;.*no Supabase query') { Write-Error 'Implementation tracker does not preserve WU0B approval and later-authority separation.' }
@@ -131,11 +131,11 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `package1_live_application_blocked_at_m08_grant_verification`;.*documentation-only\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `package1_live_application_blocked_at_m08_grant_verification`\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* none; require a separately reviewed forward correction for M08''s M07 anonymous-discovery grant regression and explicit M07 advisor disposition; M09 remains independently gated\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* `m01_m08_live_verification_blocked`; no forward correction or M09 application granted\r?$') {
-    Write-Error 'TRACKER.md does not preserve the M08 grant blocker and M09 gate.'
+if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `package1_m01_m08_m10_live_verified`;.*documentation-only\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `package1_m01_m08_m10_live_verified`\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* none; await separate authorization for M09 or a later auth/runtime work unit\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* `m01_m08_m10_live_verified`; M09 application not granted\r?$') {
+    Write-Error 'TRACKER.md does not preserve the accepted M01-M08/M10 checkpoint and M09 gate.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
 $packageDesign = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-database-design.md'))
@@ -324,10 +324,10 @@ if (-not $sessionStart.Contains('| 0B Backend/API technical design or review (on
     Write-Error 'SESSION-START.md does not route the WU0B authority and artifact set.'
 }
 $phaseReadme = [IO.File]::ReadAllText((Join-Path $phaseRoot 'README.md'))
-if (-not $phaseReadme.Contains('**Status:** `package1_live_application_blocked_at_m08_grant_verification`') -or
-    -not $phaseReadme.Contains('M01-M08 are live once') -or
-    -not $phaseReadme.Contains('M08 revoked the three M07 anonymous discovery grants')) {
-    Write-Error 'Phase 9 README disagrees with the M08 grant-verification blocker.'
+if (-not $phaseReadme.Contains('**Status:** `package1_m01_m08_m10_live_verified`') -or
+    -not $phaseReadme.Contains('M01-M08 plus M10 applied once') -or
+    -not $phaseReadme.Contains('forward public-boundary correction M10 are live-verified')) {
+    Write-Error 'Phase 9 README disagrees with the accepted M01-M08/M10 checkpoint.'
 }
 $master = [IO.File]::ReadAllText((Join-Path $phaseRoot '00-phase-9-master-sdd.md'))
 if (-not $master.Contains('Documentation and development-session continuity')) { Write-Error 'Master SDD is missing the continuity contract.' }

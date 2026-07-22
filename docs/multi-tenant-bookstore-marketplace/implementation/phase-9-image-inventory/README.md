@@ -1,9 +1,9 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `package1_live_application_blocked_at_m08_grant_verification`
+**Status:** `package1_m01_m08_m10_live_verified`
 **Last updated:** 2026-07-22
-**Implementation status:** M01-M08 are live once; M06 ownership remediation and M06-M07 readback passed, but M08 revoked the three M07 anonymous discovery grants; product/runtime implementation is not started
-**Supabase mutation status:** M01-M08 applied to `ahntbtktjjmvfosgkmgn`; M09 does not exist and auth/providers/mobile/runtime remain untouched
+**Implementation status:** M01-M08 and forward public-boundary correction M10 are live-verified; product/runtime implementation is not started
+**Supabase mutation status:** M01-M08 plus M10 applied once to `ahntbtktjjmvfosgkmgn`; M09 does not exist and auth/providers/mobile/runtime remain untouched
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 
@@ -92,7 +92,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, WU0A/WU0B, corrected Package 1 design, and local M01-M08 implementation are independently approved. M09, connected-project application, and fixture-backed runtime remain separately gated. Preserve these WU0 controls:
+The planning baseline, WU0A/WU0B, corrected Package 1 design, and live-verified M01-M08/M10 database checkpoint are independently approved. M09 and fixture-backed runtime remain separately gated. Preserve these WU0 controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

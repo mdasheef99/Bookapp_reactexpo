@@ -1,21 +1,21 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `approved_baseline`
-**Implementation status:** `package1_live_application_blocked_at_m08_grant_verification`; WU0A remains `approved_complete`; WU0B remains independently approved/documentation-only
+**Implementation status:** `package1_m01_m08_m10_live_verified`; WU0A remains `approved_complete`; WU0B remains independently approved/documentation-only
 **Last updated:** 2026-07-22
-**Current milestone:** Package 1 M01-M08 live; verification stopped on M08 public-discovery grant regression
-**Active work unit:** `package1_live_application_blocked_at_m08_grant_verification`
-**Last completed:** owner-safe M06 correction/review, M06-M08 ordered live application, and stop-condition readback
-**Next authorized action:** none; require a separately reviewed forward correction for M08's M07 anonymous-discovery grant regression and explicit M07 advisor disposition; M09 remains independently gated
-**Implementation authority:** `package1_live_application_stopped`; product/runtime authority not granted
-**Migration creation/application authority:** `m01_m08_live_verification_blocked`; no forward correction or M09 application granted
-**Current gate:** M08 revoked `anon` execution from the three M07 public discovery RPCs
+**Current milestone:** Package 1 M01-M08 plus forward security correction M10 live-verified
+**Active work unit:** `package1_m01_m08_m10_live_verified`
+**Last completed:** reviewed M10 correction, ordered live application, exact grant/privacy readback, and advisor disposition
+**Next authorized action:** none; await separate authorization for M09 or a later auth/runtime work unit
+**Implementation authority:** `package1_database_checkpoint_verified`; product/runtime authority not granted
+**Migration creation/application authority:** `m01_m08_m10_live_verified`; M09 application not granted
+**Current gate:** M09 quantity validation and auth/runtime remain separately gated
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
 ## Current handoff
 
-Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Package 1 M01-M08 are live exactly once on the verified development project. The reviewed M06 owner-safe correction applied cleanly, Storage policy branches were preserved, and M07 structure/grants initially verified. M08 then applied, but its broad public `phase9_%` grant loop revoked `anon` execution from M07's three discovery RPCs. Verification stopped immediately. M09 was not created or applied. No Edge Function, provider, mobile/product runtime, or auth code changed.
+Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Package 1 M01-M08 and forward correction M10 are live exactly once on the verified development project. M10 restores `anon` execution to exactly the three discovery RPCs, makes the internal projection invoker-safe, and removes direct role access. Request-photo/internal/private boundaries passed readback, and the Phase 9 `security_definer_view` advisor error is gone. M09 was not created or applied. No Edge Function, provider, mobile/product runtime, or auth code changed.
 
 Auth hardening is deferred to a fresh session and separate branch. It must precede Phase 9 mobile/private-ingestion runtime integration and cover auth state ownership, one root-owned subscription, centralized transitions/logout, secure token persistence, production-safe development bypasses, and removal of auth-to-marketplace dependency. No auth code changed in this database-application work unit.
 
@@ -64,7 +64,7 @@ The exact development project was re-verified read-only on 2026-07-22 before the
 
 ## Blocking gate before further implementation
 
-WU0A, WU0B, and the Package 1 design remain approved. M01-M08 are live and immutable. M06 Storage boundaries and M07 projection structure passed readback; M08 request-photo structures passed, but its grant loop regressed M07 anonymous discovery execution. The new M07 `security_definer_view` advisor ERROR also needs explicit resolution or justification. A separately reviewed forward-only correction is required; M09, auth hardening, and product/runtime implementation remain gated.
+WU0A, WU0B, and the Package 1 design remain approved. M01-M08 are live and immutable; forward correction M10 is live-verified. M06 Storage, M07 projection/discovery, M08 request-photo, and M10 grant/view boundaries pass readback. M09, auth hardening, and product/runtime implementation remain gated.
 
 ## Risk summary
 
@@ -83,4 +83,4 @@ WU0A, WU0B, and the Package 1 design remain approved. M01-M08 are live and immut
 
 ## Next action gate
 
-Design and separately review a forward-only correction for the M08 grant regression and M07 advisor disposition. Do not rewrite M01-M08 or create/apply M09 without new authorization.
+No next work unit is authorized. Do not rewrite M01-M08/M10 or create/apply M09, auth, or runtime changes without new authorization.

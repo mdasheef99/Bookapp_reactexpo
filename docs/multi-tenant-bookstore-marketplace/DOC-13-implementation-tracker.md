@@ -96,14 +96,16 @@ If implementation changes product or architecture behavior, update the relevant 
 
 > 2026-07-22 Phase 9 Package 1 live continuation: live readback proved `storage.objects` RLS was already enabled. Correction commit `e07efa1` removed only the redundant owner-only RLS statement from unapplied M06, added policy-preservation contracts, passed focused/full validation, and received independent correction-only approval. M06-M08 then applied once as `20260722095443`, `20260722095545`, and `20260722095729`. Verification stopped because M08's broad public-function grant loop revoked anonymous execution from the three M07 discovery RPCs. M01-M08 remain live and immutable; a separately reviewed forward grant correction is required. M09, auth, providers, mobile, and runtime remain untouched.
 
+> 2026-07-22 Phase 9 Package 1 live verification accepted: red-first forward migration M10 restored `anon` execution to exactly the three public discovery RPCs, made the 24-field projection `security_invoker=true`, and removed all direct client/service view grants without exposing underlying tables. Focused contracts passed 3/3, isolated database/security 20/20, migration regressions 27 suites/209 tests, Edge/security 9 suites/57 tests, TypeScript, continuity, and whitespace checks; independent correction-only review was `approved`. Commit `31253ad` was pushed before M10 applied once as `20260722125256 marketplace_phase9_public_boundary_security_correction`. Live readback proves zero other anonymous Phase 9 RPCs, authenticated-only request-photo RPCs, service-only helpers, zero private client table grants, and removal of the Phase 9 `security_definer_view` advisor error. M09 remains absent and the quantity CHECK remains `NOT VALID`; auth/providers/mobile/runtime remain untouched.
+
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **M01-M08 live; verification blocked on M08 public-discovery grants** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Package 1 M01-M08 plus M10 live-verified** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-22 |
 | Latest handoff | `PHASE 6 COMPLETE — COMPREHENSIVE BROWSER E2E DEFERRED`. M01-M39 are applied and database-verified in development; scheduler v5, worker v3, and cron job 5 are active. Phases 7 and 8 are deferred. |
-| Current risk level | High - M01-M08 are live, but M08 revoked anonymous execution from the three M07 discovery RPCs; the new M07 `security_definer_view` advisor ERROR also needs explicit resolution or justification. Phase 6 E2E stays a recorded deferred gate. |
-| Next recommended task | Separately design, review, test, and authorize a forward-only correction for the M08 public-discovery grant regression and M07 advisor finding; do not create/apply M09. Auth hardening remains a separate pre-runtime work unit. |
+| Current risk level | Medium - Package 1 additive migrations and the forward public-boundary correction are live-verified; M09 quantity validation and all auth/runtime work remain separately gated. Legacy advisor findings and Phase 6 E2E remain recorded deferred work. |
+| Next recommended task | None authorized. Select and separately authorize either the reserved M09 live-data gate or a later auth/runtime work unit; do not infer either from this checkpoint. |
 
 ---
 
@@ -120,7 +122,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `package1_live_application_blocked_at_m08_grant_verification` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [SDD/tracker set](./implementation/phase-9-image-inventory/README.md) | M01-M08 live once; M06-M07 readback passed, but M08 revoked M07 anonymous discovery execution; M09/auth/runtime remain gated. |
+| Phase 9: Image-to-LLM Inventory | `package1_m01_m08_m10_live_verified` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [SDD/tracker set](./implementation/phase-9-image-inventory/README.md) | M01-M08 and forward boundary correction M10 are live-verified; M09/auth/runtime remain gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

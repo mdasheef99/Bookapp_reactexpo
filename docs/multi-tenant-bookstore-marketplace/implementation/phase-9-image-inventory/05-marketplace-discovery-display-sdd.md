@@ -4,6 +4,8 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
+**Implementation checkpoint (2026-07-22):** M07's 24-field public projection and three named discovery RPCs are live. Forward M10 restores anonymous execution only to those RPCs, sets the internal projection to `security_invoker=true`, and revokes direct view access; live checks show no private fields or underlying-table grants and the prior advisor error is resolved.
+
 ## 1. Decision
 
 Make marketplace discovery bookstore-first while preserving edition-aware book matching. A book query returns every eligible bookstore carrying a matching edition, each store once. Selecting a bookstore opens its complete active public catalogue, with the searched book highlighted. Original-language metadata is displayed; approved aliases expand search only.

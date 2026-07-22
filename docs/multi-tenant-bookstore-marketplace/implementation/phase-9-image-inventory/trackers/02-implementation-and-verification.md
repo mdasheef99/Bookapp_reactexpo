@@ -1,12 +1,11 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `package1_live_application_blocked_at_m08_grant_verification`
+**Status:** `package1_m01_m08_m10_live_verified`
 **Last updated:** 2026-07-22
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `package1_live_application_blocked_at_m08_grant_verification`
+**Active work unit:** `package1_m01_m08_m10_live_verified`
 
 This tracker is intentionally separate from planning decisions. It will hold implementation evidence and can grow without turning the master tracker into a worklog.
-
 WU0B uses five distinct markers: `definition_complete_needs_review`, `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, `implementation_complete_needs_review`, and `independently_approved`. This unit is at the fifth marker after a separate review; approval grants no database/runtime authority.
 
 ## Work units
@@ -16,7 +15,7 @@ WU0B uses five distinct markers: `definition_complete_needs_review`, `definition
 | 0 | [Contract fixtures, threat tests, migration plan, rollback/forward-correction plan](../work-units/00-contracts-threat-migration-plan.md) | `approved` | Corrections incorporated; no implementation/migration authorization |
 | 0A | Server contracts, deterministic helpers, validation/error/provider/query/grant registers, fixtures, and red contract/security tests | `approved_complete` | independently reviewed 2026-07-19; no SQL/live writes; focused 4 suites/41 tests and all function 9 suites/53 tests pass |
 | 0B | [Backend/API technical design](../work-units/00b-backend-api-technical-design-plan.md): seven routed artifacts covering command/query/DTO/actor/boundary inventories, state/transaction/idempotency/worker/telemetry matrices, exact later file allowlists, and red-test mapping | `independently_approved` | original and bounded correction verdicts `approved` 2026-07-22; consolidated Risk-Based Phase 9 SDD analysis next; no Supabase query, migration, endpoint, provider/storage/UI/runtime change or external mutation |
-| 1 | [Package 1 live audit](../work-units/01-package1-live-audit.md) and [database design](../work-units/01-package1-database-design.md): metadata, aliases, condition/damage, pipeline/media/request-photo persistence, RLS/grants/functions/indexes/storage, and migration grouping | `live_m01_m08_verification_blocked` | M01-M08 live once; M06-M08 structural/privacy readback passed, but M08 revoked M07 anonymous discovery execution |
+| 1 | [Package 1 live audit](../work-units/01-package1-live-audit.md) and [database design](../work-units/01-package1-database-design.md): metadata, aliases, condition/damage, pipeline/media/request-photo persistence, RLS/grants/functions/indexes/storage, and migration grouping | `m01_m08_m10_live_verified` | M01-M08 plus forward M10 live once; exact discovery/request/internal/private boundaries and advisor correction pass |
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `not_started` | Unit 1 verified |
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `not_started` | storage policy/security review |
 | 4 | Vision adapter contract, primary/fallback orchestration, strict output validation | `not_started` | recorded fixtures; no live model in CI |
@@ -30,7 +29,7 @@ WU0B uses five distinct markers: `definition_complete_needs_review`, `definition
 
 ## Migration ledger
 
-Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M05 applied in order. The first M06 attempt failed atomically; reviewed correction `e07efa1` removed only the redundant owner-only RLS statement. Fresh preflight passed, then M06-M08 applied in order. Verification stopped on M08's regression of the M07 anonymous discovery grants.
+Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M05 applied in order. The first M06 attempt failed atomically; reviewed correction `e07efa1` removed only the redundant owner-only RLS statement. M06-M08 then applied in order. Reviewed forward correction M10 resolved the M08 grant regression and M07 view advisor error.
 
 | Local filename | Live version/name | Project verified | Applied by | Rollback/forward fix | Verification | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -40,8 +39,9 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M05 applied in ord
 | `20260722000004_marketplace_phase9_condition_damage_transition.sql` | `20260722090341 marketplace_phase9_condition_damage_transition` | MCP exact project 2026-07-22 | authorized live application | compatibility/backfill/final check | five inventory/five listing rows remain `good`; final checks live | `live_verified` |
 | `20260722000005_marketplace_phase9_controlled_inventory_commands.sql` | `20260722090407 marketplace_phase9_controlled_inventory_commands` | MCP exact project 2026-07-22 | authorized live application | revoke/forward-disable boundary | 24 named public RPCs; zero anon execute; internal authenticated execute zero | `live_verified` |
 | `20260722000006_marketplace_phase9_storage_boundaries.sql` | `20260722095443 marketplace_phase9_storage_boundaries` | MCP exact project 2026-07-22 | authorized live continuation | reviewed owner-safe correction before first successful apply | four bucket boundaries; zero direct Phase 9 client policies; unrelated branches preserved | `live_verified` |
-| `20260722000007_marketplace_phase9_public_projection_search.sql` | `20260722095545 marketplace_phase9_public_projection_search` | MCP exact project 2026-07-22 | authorized live continuation | safe projection/forward correction | 24 allowlisted/zero private columns; three indexes; pinned/named functions; later anon grants regressed by M08 | `live_structure_verified_grant_regressed` |
-| `20260722000008_marketplace_phase9_request_photo_seam.sql` | `20260722095729 marketplace_phase9_request_photo_seam` | MCP exact project 2026-07-22 | authorized live continuation | requires separately reviewed forward grant correction | tables/FK/trigger/RLS/worker/hold/expiry verified; revoked three M07 anon grants | `live_verification_blocked` |
+| `20260722000007_marketplace_phase9_public_projection_search.sql` | `20260722095545 marketplace_phase9_public_projection_search` | MCP exact project 2026-07-22 | authorized live continuation | safe projection plus forward M10 | 24 allowlisted/zero private columns; three indexes; pinned/named functions; grants/view corrected by M10 | `live_verified_with_m10` |
+| `20260722000008_marketplace_phase9_request_photo_seam.sql` | `20260722095729 marketplace_phase9_request_photo_seam` | MCP exact project 2026-07-22 | authorized live continuation | forward M10 repairs only grant regression | tables/FK/trigger/RLS/worker/hold/expiry verified; request grants preserved by M10 | `live_verified_with_m10` |
+| `20260722000010_marketplace_phase9_public_boundary_security_correction.sql` | `20260722125256 marketplace_phase9_public_boundary_security_correction` | MCP exact project 2026-07-22 | authorized bounded live correction | forward-only; M01-M08 immutable | exact three anon RPCs; invoker-safe 24-field view; zero direct view/private access; advisor error gone | `live_verified` |
 M09 is intentionally absent. It remains the separately reviewed live-data preflight and `VALIDATE CONSTRAINT store_inventory_quantity_balance` gate.
 
 Rules:
@@ -122,10 +122,10 @@ Rules:
 
 No product/runtime implementation activity recorded. Local database migration implementation is recorded below.
 
-### 2026-07-22 — Owner-safe M06 continuation stopped at M08 grant verification
+### 2026-07-22 — Owner-safe M06 continuation and M10 live acceptance
 
-- Evidence/correction/application: `storage.objects` is owned by `supabase_storage_admin`, already has RLS, and `postgres` is not an owner member but has grantable privileges; all 19 policies/mixed branches matched. A red ownership/preservation contract failed 11/12, then only the redundant RLS `ALTER TABLE` was removed. Focused 12/12, isolated 19/19, migrations 206/206, Edge/security 57/57, TypeScript, continuity and whitespace passed; independent verdict was `approved`; commit `e07efa1` was pushed. Fresh preflight passed, then M06 `20260722095443`, M07 `20260722095545`, and M08 `20260722095729` applied, leaving M01-M08 exactly once. M06's four buckets, zero direct Phase 9 client object policies, and unrelated branches passed; M07's 24 allowlisted/zero private columns, three indexes, pinned functions and initial grants passed; M08's two RLS tables/zero client CRUD, FK, trigger, two indexes, eight request RPCs, worker separation, 12 pinned hold/expiry functions, and zero quantity violations passed.
-- Stop/gates: M08's broad `public.phase9_%` loop revoked `anon` execution from all three M07 discovery RPCs, so no corrective SQL followed. Advisors changed security `158 -> 172` (`INFO 46/WARN 124/ERROR 2`) and performance `343 -> 350` (`INFO 199/WARN 151`); expected additions are service-only RLS INFO and named-RPC WARN, while M07's new `security_definer_view` ERROR needs explicit resolution/justification. M09 remains absent/unvalidated; auth/providers/mobile/Edge/runtime were untouched. Next gate is separately reviewed/tested/authorized forward correction plus advisor disposition; never rewrite M01-M08.
+- Evidence/correction/application: `storage.objects` ownership/RLS and all 19 policy branches matched; reviewed M06 correction `e07efa1` removed only the redundant owner-only statement before M06-M08 applied. M08 then revoked the three M07 anonymous discovery grants. M10 red contracts failed 3/3 absent, then passed 3/3; isolated database/security passed 20/20, migrations 27 suites/209 tests, Edge/security 9 suites/57 tests, TypeScript, continuity, and whitespace. Independent verdict was `approved`; commit `31253ad` was pushed before M10 applied as `20260722125256`.
+- Live acceptance/gates: M01-M08/M10 are recorded once. Exactly the three discovery RPCs allow anon; no other Phase 9 RPC does; eight request-photo RPCs remain authenticated-only; eight internal helpers remain service-only; private client table grants are zero. The 24-field projection is barrier/invoker-safe with no direct role access, and `security_definer_view` findings are zero. Security advisors are 174 (`INFO 46/WARN 127/ERROR 1`) versus 172 before M10; the three intentional public query RPC WARNs replace the resolved view ERROR, while the remaining ERROR is legacy `public.spatial_ref_sys` RLS. Performance remains 350 (`INFO 199/WARN 151`). M09 is absent, quantity CHECK is `NOT VALID` with zero violations, and auth/providers/mobile/Edge/runtime were untouched.
 
 ### 2026-07-22 — Package 1 live application stopped at M06
 
