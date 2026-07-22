@@ -96,13 +96,20 @@ describe('Phase 9 M01-M08 migration contracts', () => {
   });
 
   it('uses typed media and server-only storage policies', () => {
-    const sql = `${read(names[2])}\n${read(names[5])}`;
+    const storageSql = read(names[5]);
+    const sql = `${read(names[2])}\n${storageSql}`;
     expect(sql).toContain('media_assets_purpose_privacy_check');
     expect(sql).toContain("'marketplace-media-staging'");
     expect(sql).toContain("'order-request-photos'");
+    expect(storageSql).not.toContain('ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY');
+    expect(storageSql).not.toMatch(/ALTER\s+(?:TABLE|OWNER)[\s\S]*storage\.(?:objects|buckets)/i);
     expect(sql).not.toContain('REVOKE ALL ON storage.objects FROM PUBLIC,anon,authenticated');
     expect(sql).not.toContain('REVOKE ALL ON storage.buckets FROM PUBLIC,anon,authenticated');
     expect(sql).toContain('CREATE POLICY "mkt owner upload"');
+    expect(storageSql).toContain("bucket_id IN ('storefront-assets','seller-verification-docs','order-dispute-evidence')");
+    expect(storageSql).toContain("bucket_id IN ('seller-verification-docs','order-dispute-evidence')");
+    ['club_banners_owner_insert','listing_photos_owner_insert','profile_avatars_owner_insert']
+      .forEach((policy) => expect(storageSql).not.toContain(`DROP POLICY IF EXISTS "${policy}"`));
     expect(sql).not.toMatch(/bucket_id IN \([^)]*'(?:image-extraction-inputs|inventory-photos)'/);
   });
 

@@ -41,7 +41,6 @@ CREATE POLICY "mkt private read" ON storage.objects FOR SELECT TO authenticated 
       AND sa.store_id::text=(storage.foldername(name))[1]) OR marketplace_sec.has_platform_role(
         ARRAY['platform_admin','store_reviewer','finance_ops'])));
 
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 GRANT SELECT,INSERT,UPDATE,DELETE ON storage.objects TO service_role;
 GRANT SELECT ON storage.buckets TO service_role;
 
