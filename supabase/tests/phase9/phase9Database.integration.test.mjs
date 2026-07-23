@@ -32,7 +32,7 @@ afterEach(async () => {
 after(async () => db.close());
 
 test('clean Phase 6 migration creates all relations and deferred foreign keys', async () => {
-  assert.equal(phase9MigrationNames.length, 9);
+  assert.equal(phase9MigrationNames.length, 10);
   const count = await scalar(db, `SELECT count(*)::int FROM information_schema.tables
     WHERE table_schema='public' AND table_name IN ('phase9_provider_registry','book_search_aliases',
     'image_extraction_sessions','image_extraction_inputs','image_extraction_candidates',
@@ -91,43 +91,19 @@ test('forged store is denied and initiating Owner owns session access', async ()
   await assert.rejects(db.query(`SELECT * FROM public.phase9_owner_session_summary('${sessionId}')`));
 });
 
-test('upload capability is actor/path/purpose bound, expiring, consumed once, and replay denied', async () => {
+test('legacy authenticated upload path authority is revoked', async () => {
   await setActor(db, OWNER_A);
   const sessionId = await scalar(db, `SELECT public.phase9_start_session(NULL,'en',NULL,'good','A1',1,
     'private','start-capability-0001',gen_random_uuid())`);
   const objectPath = `${STORE_A}/scan_input/${sessionId}/one.webp`;
-  const capId = await scalar(db, `SELECT public.phase9_authorize_upload('${sessionId}','scan_input',
+  await assert.rejects(db.query(`SELECT public.phase9_authorize_upload('${sessionId}','scan_input',
     'marketplace-media-staging','${objectPath}','hash-a',1,transaction_timestamp()+interval '5 minutes',
-    'capability-issue-0001',gen_random_uuid())`);
+    'capability-issue-0001',gen_random_uuid())`));
   await resetActor(db);
-  const mediaId = await scalar(db, `INSERT INTO public.media_assets(store_id,uploaded_by,purpose,privacy_class,
-    bucket_id,object_path,sha256,detected_mime,bytes,width,height,retention_class,lifecycle_status,session_id)
-    VALUES('${STORE_A}','${OWNER_A}','scan_input','private_scan','marketplace-media-staging','${objectPath}',
-    'hash-a','image/webp',100,10,10,'scan','validated','${sessionId}') RETURNING id::text`);
-  await setActor(db, OWNER_A);
-  const inputId = await scalar(db, `SELECT public.phase9_accept_scan_input('${sessionId}','${capId}','${mediaId}',
-    'camera','phase9-v1','capability-consume-0001',gen_random_uuid())`);
-  assert.equal(await scalar(db, `SELECT public.phase9_accept_scan_input('${sessionId}','${capId}','${mediaId}',
-    'camera','phase9-v1','capability-consume-0001',gen_random_uuid())`), inputId);
-  await resetActor(db);
-  assert.equal(await scalar(db, `SELECT count(*)::int FROM public.image_extraction_inputs WHERE id='${inputId}'`), 1);
-  assert.equal(await scalar(db, `SELECT count(*)::int FROM public.image_extraction_jobs WHERE entity_id='${inputId}'`), 1);
-  assert.equal(await scalar(db, `SELECT count(*)::int FROM public.phase9_usage_reservations r JOIN
-    public.image_extraction_jobs j ON j.id=r.job_id WHERE j.entity_id='${inputId}'`), 1);
-
-  await resetActor(db);
-  const expiredId = await scalar(db, `INSERT INTO public.phase9_upload_capabilities(store_id,issued_to_user_id,
-    initiating_owner_user_id,purpose,bound_entity_type,bound_entity_id,bound_session_id,bound_ordinal,
-    bucket_id,object_path,envelope_sha256,nonce_hash,expires_at)
-    VALUES('${STORE_A}','${OWNER_A}','${OWNER_A}','scan_input','session','${sessionId}','${sessionId}',2,
-      'marketplace-media-staging','${STORE_A}/scan_input/${sessionId}/expired.webp','hash-expired',
-      'capability-expired-0001',transaction_timestamp()-interval '1 minute') RETURNING id::text`);
-  await db.exec("SET ROLE service_role; SELECT set_config('request.jwt.claim.role','service_role',false)");
-  assert.equal(await scalar(db, 'SELECT marketplace_sec.expire_phase9_upload_capabilities()'), 1);
-  await db.exec('RESET ROLE');
-  assert.equal(await scalar(db, `SELECT status FROM public.phase9_upload_capabilities WHERE id='${expiredId}'`), 'expired');
   assert.equal(await scalar(db, `SELECT has_function_privilege('authenticated',
-    'marketplace_sec.phase9_consume_upload_capability(uuid,text,uuid,text,text,text,uuid)','EXECUTE')`), false);
+    'public.phase9_authorize_upload(uuid,text,text,text,text,integer,timestamptz,text,uuid)','EXECUTE')`), false);
+  assert.equal(await scalar(db, `SELECT has_function_privilege('authenticated',
+    'public.phase9_accept_scan_input(uuid,uuid,uuid,text,text,text,uuid)','EXECUTE')`), false);
 });
 
 test('private base tables deny authenticated direct access and worker functions are separated', async () => {

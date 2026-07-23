@@ -4,6 +4,8 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
+**Local implementation checkpoint (2026-07-23):** the pre-model ingestion slice is implemented as an uncommitted candidate through `uploaded -> validating -> queued|failed`, with exactly one validation job and at most one later vision job. No model call exists. Completion persists one immutable canonical response and a content hash. A token-and-attempt-fenced dedicated worker creates or reuses a service-only immutable source snapshot, verifies its hash, and performs sanitation at the 10 MiB/16 MP envelope; this checkpoint does not authorize deployment.
+
 ## 1. Decision
 
 Use a persistent, asynchronous, provider-agnostic pipeline for same-language spine images. One primary multimodal vision adapter and at most one whole-image fallback extract observed identity clues. Deterministic code then performs local canonical lookup and sequential metadata-provider enrichment. The mobile request does not wait synchronously for the complete pipeline.
@@ -47,6 +49,8 @@ The server issues a scoped upload authorization and owns the final media asset/p
 5. Compute SHA-256 over the sanitized image and check store-scoped replay policy.
 6. Evaluate decodability, resolution, blur, glare, framing, and likely spine count.
 7. Reject policy/quality/cap failures with a short actionable reason and no model cost.
+
+The approved local candidate envelope is 10 MiB, 8,192 pixels per dimension, and 16,000,000 decoded pixels. Images over any bound fail with a stable media error and are never silently resized. Animated or multi-frame PNG/WebP inputs fail with `P9_MEDIA_MULTIFRAME_UNSUPPORTED`. ImageMagick's 64 MP `area` resource allowance is only an internal working/cache bound; it does not raise the product ceiling, which is checked before decode when headers permit and again after decode. Authoritative decode, orientation normalization, metadata stripping, WebP re-encode, and sanitized hashing run only in the dedicated claimed worker, not the Owner Edge request handler.
 
 Exact image replay returns the existing input/job result when safe; it does not create duplicate cost or infer duplicate books.
 

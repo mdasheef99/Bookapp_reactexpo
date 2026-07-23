@@ -1,9 +1,10 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
 **Status:** `package1_m01_m08_m10_live_verified`
-**Last updated:** 2026-07-22
-**Implementation status:** M01-M08 and forward public-boundary correction M10 are live-verified; product/runtime implementation is not started
-**Supabase mutation status:** M01-M08 plus M10 applied once to `ahntbtktjjmvfosgkmgn`; M09 does not exist and auth/providers/mobile/runtime remain untouched
+**Last updated:** 2026-07-23
+**Implementation status:** M01-M08/M10 are live-verified; corrected dedicated-worker ingestion-runtime candidate is ready for independent review
+**Supabase mutation status:** M01-M08 plus M10 applied once to `ahntbtktjjmvfosgkmgn`; local M11 was not applied, M09 is absent, and no function was deployed
+**Database checkpoint:** M01-M08 and forward public-boundary correction M10 are live-verified.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 

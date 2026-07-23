@@ -4,6 +4,8 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
+**Local implementation checkpoint (2026-07-23):** forward M11, Owner Edge intake, and the dedicated service-authenticated claimed-worker candidate enforce server paths, content-hashed completion, an immutable service-only source snapshot, initiating-Owner/store/purpose/session/source binding, opaque token plus attempt fencing, pre-snapshot/pre-output/pre-finalization lease revalidation, re-encode/strip/hash, and failed-staging cleanup. Completion replay returns its persisted canonical result after either success or failure. The 10 MiB/16 MP design is locally feasible but remains un-applied and undeployed pending independent review and host sizing.
+
 **Implementation checkpoint (2026-07-22):** the approved private-table, named-boundary, upload-capability, media-registry, and Storage boundary contracts are implemented in M02, M03, M05, M06, and M08 and pass isolated/live security checks. Forward M10 restores only the three anonymous discovery RPCs, makes the allowlisted projection invoker-safe, and removes direct role access; request-photo, internal-helper, and private-table boundaries remain closed. M01-M08/M10 are live-verified; M09/auth/runtime remain untouched.
 
 ## 1. Decision and evidence basis
@@ -131,6 +133,7 @@ Server-side controls, following the [OWASP File Upload Cheat Sheet](https://chea
 - reject multiple/hidden formats and malformed decoders;
 - re-encode to a known-safe derivative;
 - strip EXIF, GPS, thumbnails, comments, and unnecessary metadata;
+- reject animated/multi-frame PNG or WebP rather than selecting a frame implicitly;
 - compute SHA-256 and record detected MIME/dimensions/bytes;
 - enforce per-store/session/request image-count and rate limits;
 - quarantine/delete failed inputs by policy and never publish them.

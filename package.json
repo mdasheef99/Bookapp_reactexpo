@@ -16,6 +16,7 @@
     "sentry:upload-sourcemaps:web": "npm run export:web && npm run sentry:upload-sourcemaps",
     "test": "jest",
     "test:phase9:db": "node --experimental-vm-modules --test supabase/tests/phase9/*.integration.test.mjs",
+    "benchmark:phase9:sanitizer": "node scripts/benchmark-phase9-sanitizer.mjs",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
@@ -23,6 +24,7 @@
     "@expo/metro-runtime": "~6.1.2",
     "@expo/vector-icons": "~15.0.3",
     "@hookform/resolvers": "^5.2.2",
+    "@imagemagick/magick-wasm": "0.0.41",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "^8.6.0",
     "@react-native-community/netinfo": "11.4.1",

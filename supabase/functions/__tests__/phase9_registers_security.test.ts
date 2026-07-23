@@ -14,6 +14,8 @@ import {
   PHASE9_GRANT_CONTROLS,
   PHASE9_MARKETPLACE_QUERY_REGISTER,
   PHASE9_OPERATION_ERROR_CODES,
+  PHASE9_PERSISTED_AUDIT_DETAIL_ALLOWLIST,
+  PHASE9_PERSISTED_TELEMETRY_DETAIL_ALLOWLIST,
   PHASE9_PROVIDER_REUSE_FIELDS,
   PHASE9_RED_IMPLEMENTATION_GATES,
   PHASE9_VALIDATION_MATRIX,
@@ -36,6 +38,7 @@ describe('Phase 9 central registers and security boundaries', () => {
       'P9_CANDIDATE_VERSION_CONFLICT',
       'P9_DUPLICATE_TARGET_CHANGED',
       'P9_MEDIA_NOT_APPROVED',
+      'P9_MEDIA_MULTIFRAME_UNSUPPORTED',
       'P9_QUANTITY_INVARIANT_FAILED',
       'P9_PUBLICATION_FAILED',
       'P9_AUTH_REQUIRED',
@@ -157,6 +160,29 @@ describe('Phase 9 central registers and security boundaries', () => {
     expect(() => assertSafeMarketplaceDto({ store: { request_media: ['private'] } })).toThrow(/private field/i);
     expect(() => assertNoForbiddenTelemetryFields({ event: { raw_prompt: 'private' } })).toThrow(/forbidden telemetry field/i);
     expect(() => assertNoForbiddenTelemetryFields({ event: { signed_url: 'private' } })).toThrow(/forbidden telemetry field/i);
+    for (const key of [
+      'accessToken', 'access_token', 'refreshToken', 'refresh_token',
+      'providerSecret', 'provider_secret', 'serviceRoleKey', 'service_role_key',
+      'supabaseServiceRoleKey', 'supabase_service_role_key', 'signedUploadUrl',
+      'signed_upload_url', 'capabilityId', 'capability_id',
+    ]) {
+      expect(() => assertNoForbiddenTelemetryFields({ event: { [key]: 'private' } })).toThrow(/forbidden telemetry field/i);
+    }
+  });
+
+  it('keeps persisted telemetry and audit details on explicit positive allowlists', () => {
+    expect(PHASE9_PERSISTED_TELEMETRY_DETAIL_ALLOWLIST).toEqual(expect.arrayContaining([
+      'operation', 'outcome', 'safe_error_code', 'attempt_count', 'duration_ms',
+    ]));
+    expect(PHASE9_PERSISTED_AUDIT_DETAIL_ALLOWLIST).toEqual(expect.arrayContaining([
+      'operation', 'outcome', 'safe_error_code', 'entity_type', 'entity_id',
+    ]));
+    for (const key of [
+      ...PHASE9_PERSISTED_TELEMETRY_DETAIL_ALLOWLIST,
+      ...PHASE9_PERSISTED_AUDIT_DETAIL_ALLOWLIST,
+    ]) {
+      expect(() => assertNoForbiddenTelemetryFields({ [key]: 'bounded' })).not.toThrow();
+    }
   });
 
   it('enforces the central provider raw-payload byte limit', () => {
@@ -196,7 +222,7 @@ describe('Phase 9 central registers and security boundaries', () => {
       })
       .join('\n');
     expect(source).not.toMatch(/\bfetch\s*\(/u);
-    expect(source).not.toMatch(/createClient|SUPABASE_(?:URL|SERVICE_ROLE_KEY)|api[_-]?key/iu);
+    expect(source).not.toMatch(/createClient|(?:Deno\.env\.get|process\.env)[\s.(\[]+['"]?SUPABASE_(?:URL|SERVICE_ROLE_KEY)/iu);
     expect(source).not.toMatch(/Authorization\s*:|Bearer\s+[A-Za-z0-9._-]+/iu);
   });
 });

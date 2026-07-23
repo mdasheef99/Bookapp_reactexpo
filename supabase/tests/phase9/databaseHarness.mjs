@@ -12,6 +12,7 @@ export const phase9MigrationNames = [
   '20260722000007_marketplace_phase9_public_projection_search.sql',
   '20260722000008_marketplace_phase9_request_photo_seam.sql',
   '20260722000010_marketplace_phase9_public_boundary_security_correction.sql',
+  '20260723000011_marketplace_phase9_ingestion_runtime_foundation.sql',
 ];
 
 const root = process.cwd();
@@ -21,6 +22,9 @@ export async function createPhase9Database() {
   const db = new PGlite();
   await db.waitReady;
   await db.exec(fs.readFileSync(path.join(root, 'supabase', 'tests', 'phase9', 'phase6_baseline.sql'), 'utf8'));
+  await db.exec(`CREATE SCHEMA IF NOT EXISTS extensions;
+    CREATE FUNCTION extensions.digest(value text, algorithm text) RETURNS bytea
+    LANGUAGE sql IMMUTABLE AS $$ SELECT decode(md5(value)||md5(value||algorithm),'hex') $$;`);
   for (const name of phase9MigrationNames) await db.exec(fs.readFileSync(migrationPath(name), 'utf8'));
   return db;
 }

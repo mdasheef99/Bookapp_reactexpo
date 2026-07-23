@@ -1,12 +1,11 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `package1_m01_m08_m10_live_verified`
-**Last updated:** 2026-07-22
+**Status:** `ingestion_runtime_foundation_independently_reviewed_uncommitted`
+**Last updated:** 2026-07-23
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `package1_m01_m08_m10_live_verified`
+**Active work unit:** `ingestion_runtime_foundation_independently_reviewed_uncommitted`
 
-This tracker is intentionally separate from planning decisions. It will hold implementation evidence and can grow without turning the master tracker into a worklog.
-WU0B uses five distinct markers: `definition_complete_needs_review`, `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, `implementation_complete_needs_review`, and `independently_approved`. This unit is at the fifth marker after a separate review; approval grants no database/runtime authority.
+This tracker is separate from planning decisions; WU0B remains independently approved after `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review, without granting later database/runtime authority.
 
 ## Work units
 
@@ -17,7 +16,7 @@ WU0B uses five distinct markers: `definition_complete_needs_review`, `definition
 | 0B | [Backend/API technical design](../work-units/00b-backend-api-technical-design-plan.md): seven routed artifacts covering command/query/DTO/actor/boundary inventories, state/transaction/idempotency/worker/telemetry matrices, exact later file allowlists, and red-test mapping | `independently_approved` | original and bounded correction verdicts `approved` 2026-07-22; consolidated Risk-Based Phase 9 SDD analysis next; no Supabase query, migration, endpoint, provider/storage/UI/runtime change or external mutation |
 | 1 | [Package 1 live audit](../work-units/01-package1-live-audit.md) and [database design](../work-units/01-package1-database-design.md): metadata, aliases, condition/damage, pipeline/media/request-photo persistence, RLS/grants/functions/indexes/storage, and migration grouping | `m01_m08_m10_live_verified` | M01-M08 plus forward M10 live once; exact discovery/request/internal/private boundaries and advisor correction pass |
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `not_started` | Unit 1 verified |
-| 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `not_started` | storage policy/security review |
+| 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `independently_reviewed_uncommitted` | separate stage/commit authorization; M11 application/deployment remain separately gated |
 | 4 | Vision adapter contract, primary/fallback orchestration, strict output validation | `not_started` | recorded fixtures; no live model in CI |
 | 5 | Canonical-first metadata adapter/cache, ISBN validation, provider selection, aliases | `not_started` | provider fixtures and cost tests |
 | 6 | Owner session/defaults/capture/review UI with accessibility and recovery | `not_started` | Units 2–5 verified |
@@ -29,7 +28,7 @@ WU0B uses five distinct markers: `definition_complete_needs_review`, `definition
 
 ## Migration ledger
 
-Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M05 applied in order. The first M06 attempt failed atomically; reviewed correction `e07efa1` removed only the redundant owner-only RLS statement. M06-M08 then applied in order. Reviewed forward correction M10 resolved the M08 grant regression and M07 view advisor error.
+Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in order after the reviewed M06 owner-safe correction. M09 remains the separate live-data preflight and constraint-validation gate.
 
 | Local filename | Live version/name | Project verified | Applied by | Rollback/forward fix | Verification | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -42,15 +41,11 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M05 applied in ord
 | `20260722000007_marketplace_phase9_public_projection_search.sql` | `20260722095545 marketplace_phase9_public_projection_search` | MCP exact project 2026-07-22 | authorized live continuation | safe projection plus forward M10 | 24 allowlisted/zero private columns; three indexes; pinned/named functions; grants/view corrected by M10 | `live_verified_with_m10` |
 | `20260722000008_marketplace_phase9_request_photo_seam.sql` | `20260722095729 marketplace_phase9_request_photo_seam` | MCP exact project 2026-07-22 | authorized live continuation | forward M10 repairs only grant regression | tables/FK/trigger/RLS/worker/hold/expiry verified; request grants preserved by M10 | `live_verified_with_m10` |
 | `20260722000010_marketplace_phase9_public_boundary_security_correction.sql` | `20260722125256 marketplace_phase9_public_boundary_security_correction` | MCP exact project 2026-07-22 | authorized bounded live correction | forward-only; M01-M08 immutable | exact three anon RPCs; invoker-safe 24-field view; zero direct view/private access; advisor error gone | `live_verified` |
-M09 is intentionally absent. It remains the separately reviewed live-data preflight and `VALIDATE CONSTRAINT store_inventory_quantity_balance` gate.
-
+| `20260723000011_marketplace_phase9_ingestion_runtime_foundation.sql` | not applied | MCP exact project read-only 2026-07-23 | local file creation only | forward-only; revoke legacy authenticated path RPCs | canonical completion, immutable source snapshot, token/attempt lease, retry/idempotency static and PGlite behavior; no live readback | `local_unapplied_blocked` |
 Rules:
 
-- Re-run Supabase `get_project` immediately before creating a live migration plan and again immediately before applying it.
-- Use `apply_migration` for DDL; never use raw `execute_sql` for DDL.
-- Never hard-code generated fixture IDs into data migrations.
-- Prefer forward corrective migrations after application; do not rewrite live history.
-- Record all bucket, policy, function, grant, trigger, constraint, index, and data-backfill effects.
+- Re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
+- Use forward corrections and record every schema, grant, Storage, data, and verification effect.
 
 ## Required verification matrix
 
@@ -120,7 +115,12 @@ Rules:
 
 ## Append-only implementation log
 
-Phase 9 product/runtime implementation has not started. The separately authorized core-auth evidence is recorded in [03-auth-hardening-verification.md](./03-auth-hardening-verification.md).
+The bounded ingestion-runtime foundation has a corrected local, uncommitted candidate independently reviewed with no remaining merge blocker. The separately authorized core-auth evidence is recorded in [03-auth-hardening-verification.md](./03-auth-hardening-verification.md).
+
+### 2026-07-23 — ingestion-runtime foundation corrected for dedicated-worker review
+
+- Scope/evidence: local M11 plus Owner Edge intake, dedicated worker entrypoint/shared contracts/real pinned sanitizer implement only Owner intake through one vision-job queue; excluded scope and M09 are absent. The correction pass persists immutable completion responses and source hashes, creates service-only immutable source snapshots, fences every worker transition with opaque claim token plus attempt, retries Storage transport failures, recovers ambiguous post-upload completion failures without duplicate media/vision effects, enforces strong distinct ingress secrets, normalizes privacy-key denial, rejects multi-frame PNG/WebP, and keeps the 64 MP ImageMagick working allowance subordinate to the 16 MP source ceiling. Final commands: focused Jest 9 suites/74 tests; `npm run test:phase9:db` 26/26; repository and dedicated-worker TypeScript passed. A read-only review of the current unstaged candidate confirmed the security/runtime guarantees, found three stale M06 Storage rows, and after their correction found no remaining merge blocker with recommendation `READY_FOR_INDEPENDENT_REVIEW`.
+- Benchmark/closeout: Node 22.13/Windows x64, three iterations each at 8/12/16 MP had median 11,767/11,397/14,269 ms and ending RSS 169/191/225 MB; all produced correct metadata-free WebP with stable hashes. WASM/package are 14,593,449/15,435,239 bytes. This is dedicated-worker sizing evidence only; representative-camera deployment load testing remains required. Final continuity passed 33 Markdown files/27 required files and `git diff --check` passed. No migration was applied, no service deployed, no Supabase/Storage data mutated, and nothing was staged, committed, pushed, or merged. Await separate user authorization to stage and commit; M11 application and deployment remain separately unauthorized.
 
 ### 2026-07-22 — Owner-safe M06 continuation and M10 live acceptance
 

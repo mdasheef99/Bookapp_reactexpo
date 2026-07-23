@@ -1,9 +1,11 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-07-22
+**Audit date:** 2026-07-23
 **Audit mode:** read-only preflight/readback through Supabase MCP plus separately authorized migration application
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08 and forward security correction M10 applied once and live-verified; M09/auth/runtime untouched
+**Mutation status:** M01-M08/M10 live-verified; local forward M11 exists but was not applied; no live data/Storage/function mutation
+
+**Ingestion foundation checkpoint:** fresh read-only project verification on 2026-07-23 reconfirmed project `ahntbtktjjmvfosgkmgn`, both private 10 MiB JPEG/PNG/WebP buckets, and the existing M01-M08/M10 relations/RPCs. Local M11 revokes authenticated execution of path-taking legacy intake RPCs; adds declared source/content identity, persisted canonical completion, capability linkage, immutable private source snapshots, opaque claim-token and attempt fencing, 16 MP enforcement, and service-only issue/register/claim/context/revalidate/snapshot-bind/complete/fail functions. It is un-applied and awaiting independent review; no runtime is deployed.
 
 **WU0 refresh:** a second read-only check on 2026-07-19 reconfirmed project identity, 37 `store_id`/zero `tenant_id` public columns, the five core catalogue/inventory tables, absence of proposed Phase 9 tables/buckets, five `good` inventory rows, zero observed quantity-balance violations, the explicit listing projection trigger, and the current migration tail. No drift changed the proposed design.
 
@@ -39,10 +41,10 @@
 | `store_inventory` | 33 fields; lacks language, description, edition, volume, format, structured damage, typed media, freshness, acquisition type/method/MRP. Canonical edition may be null. | Add store-owned metadata snapshot fields, damage/freshness/acquisition fields, commit provenance/version, and typed links. Keep canonical link nullable. |
 | `marketplace_book_listings` | One projection per `inventory_id`; lacks language, description, aliases, structured damage/media/freshness. | Extend safe projection with public metadata/damage/media/search fields. Preserve one projection per inventory row; visual grouping occurs in query/UI, not DB merging. |
 | Projection trigger | Explicitly copies current inventory fields; revoked from anon/authenticated and executable by service role. | Extend or replace with a controlled projection writer covering new public fields and eligibility. Projection failure must be observable; no silent inventory/public divergence. |
-| Image extraction tables | `image_extraction_sessions`, `image_extraction_inputs`, `image_extraction_candidates`, and `metadata_enrichment_attempts` do not exist. | Create store-scoped persistent session/input/candidate/job/attempt structures with RLS, idempotency, versioning, lifecycle fields, and indexes. |
+| Image extraction tables | M02 is live through the verified M01-M08/M10 package: `image_extraction_sessions`, `image_extraction_inputs`, `image_extraction_candidates`, `image_extraction_jobs`, and `metadata_enrichment_attempts` exist with private grants/RLS. Local unapplied M11 extends only ingestion identity, canonical completion, immutable snapshot, and lease-token fields/functions. | Apply M11 only after separate review/application authorization; runtime remains undeployed. |
 | Alias storage | No multilingual alias table or listing alias projection exists. | Add provenance-bearing aliases targeted to either a canonical edition or unmatched store inventory with an XOR target constraint. Only approved/eligible aliases enter public search. |
-| Media registry | Inventory has an untyped `photos text[]`; no purpose, privacy, hash, retention, or deletion metadata. | Add typed `media_assets` plus explicit inventory/request links. Deprecate direct raw path arrays after backfill. |
-| Upload capabilities | Storage path membership is the current upload authority; no persisted one-use relation exists. | Persist server-derived store/Owner/purpose/entity/path/envelope binding with issued/expiry/consumed/revoked/failed state and atomic replay denial. |
+| Media registry | M03 is live and provides typed `media_assets` plus private/public/request link structures; legacy inventory `photos text[]` remains for compatibility. Local M11 adds no public promotion and links only validated private scan media. | Preserve typed purpose/privacy/hash/retention boundaries and defer legacy-field retirement/public promotion to separately authorized work. |
+| Upload capabilities | M02/M05 capability rows exist live, but the legacy authenticated RPC accepts the final path. | Local M11 removes authenticated path authority and adds server-generated exact paths plus declared/observed object identity. Not applied. |
 | Cost reservation | No Phase 9 reservation relation exists. | Enforce unique `(store_id, job_id, cost_kind, policy_version)` reservations. |
 | Customer request photos | No request-specific photo table/gate exists. | Add orthogonal item photo request and media link structures; integrate with existing request versions/commands and `awaiting_customer_decision`. |
 
@@ -73,12 +75,12 @@ Proposed boundary:
 
 | Bucket/boundary | Observed | Target |
 | --- | --- | --- |
-| `image-extraction-inputs` | Private, 10 MB, JPEG/PNG/WebP; shared owner path policies allow direct owner mutation. | Retain as private scan boundary or replace in a reviewed migration. Upload via server-issued scoped authorization; validate/re-encode/strip EXIF before model egress; delete by lifecycle policy. |
+| `image-extraction-inputs` | Live M06: private, 10 MB, JPEG/PNG/WebP; direct authenticated-owner mutation policy removed and object writes are service-mediated. | Local unapplied M11 retains it as the private, service-only immutable-snapshot and sanitized-output boundary; validate/re-encode/strip metadata before future model egress and delete by lifecycle policy. |
 | `inventory-photos` | Public, 5 MB, JPEG/PNG/WebP; owner can write directly under shared store path policy. | Use only for approved sanitized public derivatives. Remove direct unsanitized promotion; no broad listing policy. |
 | `order-dispute-evidence` | Private, 10 MB, images/PDF; owner and broad platform roles can read by store path. | Keep for disputes. Do not use as the sole request-photo store because customer/item access and lifecycle differ. |
 | `listing-photos` | Public legacy bucket, user-ID path ownership, broad public SELECT/list policy. Advisor flags enumeration. | Exclude from Phase 9. Remediate/migrate separately before relying on it. |
-| New private staging | Absent. | Add `marketplace-media-staging` (name reviewable) for one-time uploads and sanitization. |
-| New request media | Absent. | Add `order-request-photos` (name reviewable), private, request-item/customer/store scoped. |
+| `marketplace-media-staging` | Live M06: private, 10 MB, JPEG/PNG/WebP; no direct authenticated-client object policy. | Local unapplied M11 uses this live bucket for exact server-generated, capability-bound one-time uploads and failed-staging cleanup; runtime remains undeployed. |
+| `order-request-photos` | Live M06: private, 5 MB, JPEG/PNG/WebP; server-mediated object writes. M08 added the request-photo command seam. | Retain as the separate request-item/customer/store-scoped boundary; customer-request-photo runtime remains outside this ingestion slice. |
 
 ## Security advisor context
 

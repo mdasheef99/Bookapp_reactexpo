@@ -1,6 +1,6 @@
 # Phase 9 Requirements Traceability
 
-**Last updated:** 2026-07-19
+**Last updated:** 2026-07-23
 
 | Requirement | Owning SDD | Primary acceptance IDs |
 | --- | --- | --- |
@@ -39,6 +39,10 @@
 | Versioned bookstore-first query/cursor/count contract | 05 Marketplace | MKT-14 |
 | Quota/retry policy model-agnostic and configurable | 02 Extraction | EXT-13–EXT-17 |
 | Phase 7/8 independence | 00 Master; 06 Photo request | MAS-09; PHO-13 |
+
+## Local ingestion-runtime trace (2026-07-23)
+
+Server-generated upload paths, content-hashed canonical completion, immutable service-only source snapshots, opaque token-and-attempt validation leases, sanitized private linking, and one vision-job identity trace to 02 Extraction EXT-01 through EXT-06 and 04 Media MED-01 through MED-10. Local M11, Jest, PGlite, and 8/12/16 MP benchmark evidence remain candidate-only. Sanitation is owned by the dedicated service-authenticated worker; Owner Edge hashes completion bytes but never decodes or sanitizes media. Animated/multi-frame PNG/WebP is rejected, and ImageMagick's 64 MP internal working allowance remains subordinate to the 16 MP source ceiling.
 
 ## Root specification mapping
 

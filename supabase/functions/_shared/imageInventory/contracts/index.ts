@@ -1,4 +1,6 @@
 export * from './aliases';
+export * from './ingestion';
+export * from './privacy';
 export * from './marketplace';
 export * from './metadata';
 export * from './providerReuse';

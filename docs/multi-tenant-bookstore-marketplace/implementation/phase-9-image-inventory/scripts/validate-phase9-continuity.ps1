@@ -88,12 +88,13 @@ if (-not $active.Contains('phase-9-image-inventory/work-units/01-package1-databa
     -not $active.Contains('M01-M08 and forward security correction M10 are live-verified')) { Write-Error 'ACTIVE.md does not route to the accepted M01-M08/M10 checkpoint.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `package1_m01_m08_m10_live_verified`')) { Write-Error 'DOC-13 does not identify the accepted M01-M08/M10 checkpoint.' }
-if (-not $doc13.Contains('| Next recommended task | None authorized. Select and separately authorize either the reserved M09 live-data gate or a later auth/runtime work unit; do not infer either from this checkpoint. |')) { Write-Error 'DOC-13 does not preserve the M09 and auth/runtime gates.' }
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `ingestion_runtime_foundation_independently_reviewed_uncommitted`') -or
+    -not $doc13.Contains('`package1_m01_m08_m10_live_verified`')) { Write-Error 'DOC-13 does not preserve the database checkpoint and independently reviewed ingestion gate.' }
+if (-not $doc13.Contains('| Next recommended task | With separate user authorization, stage and commit the independently reviewed candidate. Do not apply M11 or deploy either service. |')) { Write-Error 'DOC-13 does not preserve the reviewed candidate commit gate.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `package1_m01_m08_m10_live_verified`\r?$' -or
-    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `package1_m01_m08_m10_live_verified`\r?$') {
-    Write-Error 'Implementation tracker does not identify the accepted M01-M08/M10 checkpoint.'
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `ingestion_runtime_foundation_independently_reviewed_uncommitted`\r?$' -or
+    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `ingestion_runtime_foundation_independently_reviewed_uncommitted`\r?$') {
+    Write-Error 'Implementation tracker does not identify the independently reviewed uncommitted ingestion-runtime work unit.'
 }
 if ($implementationTracker -notmatch '(?m)^\| 0A \|.*\| `approved_complete` \|') { Write-Error 'Implementation tracker no longer preserves WU0A approved-complete evidence.' }
 if ($implementationTracker -notmatch '(?m)^\| 0B \|.*\| `independently_approved` \|.*Risk-Based Phase 9 SDD analysis next;.*no Supabase query') { Write-Error 'Implementation tracker does not preserve WU0B approval and later-authority separation.' }
@@ -131,11 +132,11 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `package1_m01_m08_m10_live_verified`;.*documentation-only\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `package1_m01_m08_m10_live_verified`\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* none; await separate authorization for M09 or a later auth/runtime work unit\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* `m01_m08_m10_live_verified`; M09 application not granted\r?$') {
-    Write-Error 'TRACKER.md does not preserve the accepted M01-M08/M10 checkpoint and M09 gate.'
+if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* ingestion-runtime foundation `independently_reviewed_uncommitted`.*\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `ingestion_runtime_foundation_independently_reviewed_uncommitted`\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* await separate user authorization to stage and commit the independently reviewed candidate.*\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* local forward M11 created; live application not authorized; M09 remains absent\r?$') {
+    Write-Error 'TRACKER.md does not preserve the independently reviewed commit and migration gates.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
 $packageDesign = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-database-design.md'))
@@ -161,15 +162,16 @@ $migrationNames = @(
     '20260722000006_marketplace_phase9_storage_boundaries.sql',
     '20260722000007_marketplace_phase9_public_projection_search.sql',
     '20260722000008_marketplace_phase9_request_photo_seam.sql',
-    '20260722000010_marketplace_phase9_public_boundary_security_correction.sql'
+    '20260722000010_marketplace_phase9_public_boundary_security_correction.sql',
+    '20260723000011_marketplace_phase9_ingestion_runtime_foundation.sql'
 )
 foreach ($name in $migrationNames) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot "supabase/migrations/$name"))) { Write-Error "Missing approved Phase 9 migration: $name" }
 }
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
-if ($phase9Migrations.Count -ne 9 -or $phase9Migrations.Name -match '000009|quantity.*validat') { Write-Error 'Phase 9 migration set must contain M01-M08 plus the forward M10 security correction, and no M09.' }
+if ($phase9Migrations.Count -ne 10 -or $phase9Migrations.Name -match '000009|quantity.*validat') { Write-Error 'Phase 9 migration set must contain M01-M08 plus forward M10/M11, and no M09.' }
 foreach ($relative in @('supabase/tests/phase9/phase6_baseline.sql','supabase/tests/phase9/databaseHarness.mjs',
-    'supabase/tests/phase9/phase9Database.integration.test.mjs','supabase/migrations/__tests__/marketplacePhase9DatabaseFoundation.test.ts',
+    'supabase/tests/phase9/phase9Database.integration.test.mjs','supabase/tests/phase9/phase9IngestionRuntime.integration.test.mjs','supabase/migrations/__tests__/marketplacePhase9DatabaseFoundation.test.ts',
     'supabase/migrations/__tests__/marketplacePhase9PublicBoundarySecurityCorrection.test.ts')) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot $relative))) { Write-Error "Missing Phase 9 migration test harness file: $relative" }
 }

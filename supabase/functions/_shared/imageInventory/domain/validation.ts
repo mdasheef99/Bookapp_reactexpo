@@ -122,10 +122,11 @@ export function parseCommandId(value: unknown): string {
 export function assertNoForbiddenTelemetryFields(value: unknown, field = 'telemetry'): void {
   if (!value || typeof value !== 'object') return;
   for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
-    if ((PHASE9_FORBIDDEN_TELEMETRY_FIELDS as readonly string[]).includes(key)) {
+    if ((PHASE9_FORBIDDEN_TELEMETRY_FIELDS as readonly string[]).includes(key) || isPrivacySensitiveKey(key)) {
       throw new Phase9ContractError(`${field}.${key}`, 'forbidden telemetry field');
     }
     assertNoForbiddenTelemetryFields(nested, `${field}.${key}`);
   }
 }
 import { PHASE9_FORBIDDEN_TELEMETRY_FIELDS, PHASE9_LIMITS } from '../contracts/registers';
+import { isPrivacySensitiveKey } from '../contracts/privacy';

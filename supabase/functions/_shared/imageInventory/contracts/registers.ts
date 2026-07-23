@@ -81,6 +81,15 @@ export type Phase9ErrorCode =
   | 'P9_CANDIDATE_VERSION_CONFLICT'
   | 'P9_DUPLICATE_TARGET_CHANGED'
   | 'P9_MEDIA_NOT_APPROVED'
+  | 'P9_MEDIA_SIGNATURE_INVALID'
+  | 'P9_MEDIA_MIME_MISMATCH'
+  | 'P9_MEDIA_TOO_LARGE'
+  | 'P9_MEDIA_DECODE_FAILED'
+  | 'P9_MEDIA_DIMENSIONS_EXCEEDED'
+  | 'P9_MEDIA_PIXEL_LIMIT'
+  | 'P9_MEDIA_MULTIFRAME_UNSUPPORTED'
+  | 'P9_MEDIA_OBJECT_CHANGED'
+  | 'P9_MEDIA_PROCESSING_RETRYABLE'
   | 'P9_QUANTITY_INVARIANT_FAILED'
   | 'P9_PUBLICATION_FAILED'
   | 'P9_AUTH_REQUIRED'
@@ -114,6 +123,15 @@ export const PHASE9_ERROR_CATALOGUE: Record<Phase9ErrorCode, ErrorDefinition> = 
   P9_CANDIDATE_VERSION_CONFLICT: { code: 'P9_CANDIDATE_VERSION_CONFLICT', httpStatus: 409, retryable: true, safeOwnerMessage: 'This book changed. Refresh it before trying again.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
   P9_DUPLICATE_TARGET_CHANGED: { code: 'P9_DUPLICATE_TARGET_CHANGED', httpStatus: 409, retryable: true, safeOwnerMessage: 'The matching inventory item changed. Review the duplicate options again.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
   P9_MEDIA_NOT_APPROVED: { code: 'P9_MEDIA_NOT_APPROVED', httpStatus: 422, retryable: false, safeOwnerMessage: 'Approve the required book photos before publishing.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_MEDIA_SIGNATURE_INVALID: { code: 'P9_MEDIA_SIGNATURE_INVALID', httpStatus: 422, retryable: false, safeOwnerMessage: 'This image format could not be verified.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_MEDIA_MIME_MISMATCH: { code: 'P9_MEDIA_MIME_MISMATCH', httpStatus: 422, retryable: false, safeOwnerMessage: 'This image does not match its declared format.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_MEDIA_TOO_LARGE: { code: 'P9_MEDIA_TOO_LARGE', httpStatus: 422, retryable: false, safeOwnerMessage: 'This image exceeds the upload limit.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_MEDIA_DECODE_FAILED: { code: 'P9_MEDIA_DECODE_FAILED', httpStatus: 422, retryable: false, safeOwnerMessage: 'This image could not be decoded safely.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_MEDIA_DIMENSIONS_EXCEEDED: { code: 'P9_MEDIA_DIMENSIONS_EXCEEDED', httpStatus: 422, retryable: false, safeOwnerMessage: 'This image is too wide or tall.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_MEDIA_PIXEL_LIMIT: { code: 'P9_MEDIA_PIXEL_LIMIT', httpStatus: 422, retryable: false, safeOwnerMessage: 'This image has too many pixels.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_MEDIA_MULTIFRAME_UNSUPPORTED: { code: 'P9_MEDIA_MULTIFRAME_UNSUPPORTED', httpStatus: 422, retryable: false, safeOwnerMessage: 'Animated or multi-frame images are not supported.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_MEDIA_OBJECT_CHANGED: { code: 'P9_MEDIA_OBJECT_CHANGED', httpStatus: 409, retryable: false, safeOwnerMessage: 'The uploaded image changed; request a new upload.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: false },
+  P9_MEDIA_PROCESSING_RETRYABLE: { code: 'P9_MEDIA_PROCESSING_RETRYABLE', httpStatus: 503, retryable: true, safeOwnerMessage: 'Image validation will retry.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: true },
   P9_QUANTITY_INVARIANT_FAILED: { code: 'P9_QUANTITY_INVARIANT_FAILED', httpStatus: 409, retryable: false, safeOwnerMessage: 'The quantity could not be updated safely. Please contact support.', severity: 'critical', survivingEffect: 'none', reuseIdempotencyKey: true },
   P9_PUBLICATION_FAILED: { code: 'P9_PUBLICATION_FAILED', httpStatus: 202, retryable: true, safeOwnerMessage: 'The book was saved privately, but publishing is still pending.', severity: 'error', survivingEffect: 'private_inventory_committed', reuseIdempotencyKey: true },
   P9_AUTH_REQUIRED: { code: 'P9_AUTH_REQUIRED', httpStatus: 401, retryable: false, safeOwnerMessage: 'Sign in again before continuing.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
@@ -134,8 +152,8 @@ export const PHASE9_ERROR_CATALOGUE: Record<Phase9ErrorCode, ErrorDefinition> = 
 
 export const PHASE9_OPERATION_ERROR_CODES = {
   C01: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_QUOTA_EXCEEDED'],
-  C02: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_MEDIA_NOT_APPROVED', 'P9_QUOTA_EXCEEDED'],
-  C03: ['P9_MEDIA_NOT_APPROVED', 'P9_STATE_CONFLICT', 'P9_IDEMPOTENCY_MISMATCH', 'P9_QUOTA_EXCEEDED'],
+  C02: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_MEDIA_NOT_APPROVED', 'P9_MEDIA_TOO_LARGE', 'P9_QUOTA_EXCEEDED'],
+  C03: ['P9_MEDIA_NOT_APPROVED', 'P9_MEDIA_SIGNATURE_INVALID', 'P9_MEDIA_MIME_MISMATCH', 'P9_MEDIA_TOO_LARGE', 'P9_MEDIA_DECODE_FAILED', 'P9_MEDIA_DIMENSIONS_EXCEEDED', 'P9_MEDIA_PIXEL_LIMIT', 'P9_MEDIA_MULTIFRAME_UNSUPPORTED', 'P9_MEDIA_OBJECT_CHANGED', 'P9_STATE_CONFLICT', 'P9_IDEMPOTENCY_MISMATCH', 'P9_QUOTA_EXCEEDED'],
   C04: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT'],
   C05: ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_CANDIDATE_VERSION_CONFLICT', 'P9_REQUEST_INVALID'],
   C06: ['P9_STATE_CONFLICT', 'P9_LIMIT_EXCEEDED', 'P9_REQUEST_INVALID'],
@@ -237,8 +255,22 @@ export const PHASE9_MARKETPLACE_QUERY_REGISTER = {
 
 export const PHASE9_FORBIDDEN_TELEMETRY_FIELDS = [
   'image', 'image_bytes', 'base64', 'raw_payload', 'raw_prompt', 'prompt', 'signed_url',
-  'signedUrl', 'authorization', 'access_token', 'refresh_token', 'provider_secret',
-  'customer_phone', 'customer_address', 'shelf_location',
+  'signedUrl', 'signedUploadUrl', 'signed_upload_url', 'authorization',
+  'access_token', 'accessToken', 'refresh_token', 'refreshToken',
+  'provider_secret', 'providerSecret', 'service_role_key', 'serviceRoleKey',
+  'supabase_service_role_key', 'supabaseServiceRoleKey',
+  'customer_phone', 'customer_address', 'shelf_location', 'object_path', 'objectPath',
+  'storage_path', 'capability', 'capability_id', 'capabilityId', 'upload_token', 'uploadToken', 'exif', 'gps', 'raw_media',
+] as const;
+
+export const PHASE9_PERSISTED_TELEMETRY_DETAIL_ALLOWLIST = [
+  'operation', 'outcome', 'safe_error_code', 'retryable', 'attempt_count',
+  'duration_ms', 'input_bytes', 'output_bytes', 'width', 'height', 'detected_mime',
+] as const;
+
+export const PHASE9_PERSISTED_AUDIT_DETAIL_ALLOWLIST = [
+  'operation', 'outcome', 'safe_error_code', 'entity_type', 'entity_id',
+  'store_id', 'actor_id', 'command_id', 'idempotency_key',
 ] as const;
 
 export const PHASE9_FORBIDDEN_ADAPTER_AUTHORITY_FIELDS = [
