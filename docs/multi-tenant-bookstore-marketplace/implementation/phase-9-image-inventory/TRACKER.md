@@ -1,22 +1,22 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `deployment_runtime_scaffolding_sdd_implemented`
-**Implementation status:** `deployment_runtime_scaffolding_integrated`; M11/M12 unapplied and all ingestion/vision services undeployed; Package 1 M01-M08/M10 live-verified
+**Implementation status:** `m11_m12_live_verified_services_undeployed`; M01-M08/M10/M11/M12 live-verified and all ingestion/vision services undeployed
 **Last updated:** 2026-07-26
-**Current milestone:** Unit 4A local and synthetic cloud container gates passed; deployment-runtime scaffolding integrated
-**Active work unit:** `deployment_runtime_scaffolding_integrated`
+**Current milestone:** M11/M12 sequential live application and exact-project verification complete
+**Active work unit:** `m11_m12_live_verified_services_undeployed`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** provider-neutral sanitation/fixture-vision service hosts, strict environment loading, dynamic fixtures, manual invoker, deterministic builds/containers, Owner function configuration, deployment validation, tests, and evidence
-**Next authorized action:** none within Unit 4A; await separate authorization for a named live preflight, migration application, deployment, or later work unit
-**Implementation authority:** Unit 4A correction and Git integration are complete; live application, deployment, secret configuration, and later units remain unauthorized
-**Migration creation/application authority:** local M11/M12 exist and are unapplied; M09 remains absent; no live application is authorized
-**Current gate:** Unit 4A local and synthetic GitHub Actions image build/start verification passed; M11/M12 application, deployment, live secrets, real providers, metadata, UI, inventory, publication, and later work remain prohibited
+**Last completed:** M11 `20260726182238` and M12 `20260726182539` applied once and live-verified with service-only grants, unchanged data/Storage, and expected advisor deltas
+**Next authorized action:** await separate authorization for ordered Owner-ingestion, sanitation-worker, and fixture-vision-worker deployment, infrastructure/service secret configuration, and live fixture-path verification
+**Implementation authority:** M11/M12 application is complete; deployment, secret configuration, provider calls, Storage-object mutation, and later units remain unauthorized
+**Migration creation/application authority:** M11/M12 are live-verified; M09 remains absent and separately gated; no further migration application is authorized
+**Current gate:** deploy nothing until the separate service-deployment authorization; real providers, metadata, UI, inventory, publication, and later work remain prohibited
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
 ## Current handoff
 
-Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Package 1 M01-M08/M10 remain live exactly once. The bounded ingestion foundation—forward M11, Owner Edge intake, immutable source snapshots, token/attempt media leases, dedicated sanitizer worker, and tests—is committed on `main` at `0a8e57a`; M11 remains unapplied and both services remain undeployed. M09 remains absent.
+Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Phase 9 M01-M08/M10/M11/M12 are live exactly once. M11 provides the bounded ingestion schema, immutable source snapshots, and token/attempt media leases; M12 provides immutable fixture-vision evidence, candidate lineage, and token/attempt vision RPCs. M09 remains absent and all ingestion/vision services remain undeployed.
 
 The [Unit 4 design](./work-units/04-fixture-vision-analysis-runtime-design.md) and M12 are integrated on `main` at `e9ba2d9`. [Unit 4A](./work-units/04a-deployment-runtime-scaffolding-sdd.md) adds provider-neutral sanitation/fixture-vision HTTP services, strict environment and secret-separation checks, allowlisted request-bound fixtures, bounded observability, deterministic builds/containers, a sanitized manual invoker, and JWT-enabled local Owner Edge configuration. Final verification passed 14 Phase 9 Jest suites/131 tests, PGlite 57/57, repository TypeScript, both strict worker builds, the executable deployment validator, and the synthetic GitHub Actions container smoke. No migration was applied, service deployed, secret configured, provider called, or Supabase/Storage state mutated in Unit 4A.
 
@@ -69,7 +69,7 @@ The exact development project was re-verified read-only on 2026-07-26 for the Un
 
 ## Blocking gate before further implementation
 
-WU0A, WU0B, Package 1, and Unit 4 are ready at their recorded levels. M01-M08/M10 are live and immutable. M11/M12 are committed but unapplied and services remain undeployed. Core auth WU1/WU2 is locally complete. All five Unit 4A review corrections, the complete local gate, and the synthetic GitHub Actions container gate are verified; Unit 4A is integrated. M09, migration application, deployment, secret configuration, and later work remain separately gated.
+WU0A, WU0B, Package 1, Unit 4, and Unit 4A are ready at their recorded levels. M01-M08/M10/M11/M12 are live-verified and immutable; services remain undeployed. Core auth WU1/WU2 is locally complete. M09, deployment, secret configuration, and later work remain separately gated.
 
 ## Risk summary
 
@@ -89,4 +89,4 @@ WU0A, WU0B, Package 1, and Unit 4 are ready at their recorded levels. M01-M08/M1
 
 ## Next action gate
 
-Unit 4A is complete and integrated. Await separate authorization for a named live preflight, migration application, deployment, or later work unit. Do not apply M11/M12, deploy services, configure live secrets, call real vision/metadata providers, build UI, mutate inventory/publication, create/apply M09, or begin another unit.
+M11/M12 live application is complete. Await separate authorization for ordered Owner-ingestion, sanitation-worker, and fixture-vision-worker deployment, required infrastructure/service secrets, and live fixture-path verification. Do not deploy, configure secrets, call real vision/metadata providers, mutate Storage objects or inventory/publication, create/apply M09, or begin another unit.

@@ -11,7 +11,7 @@ This file answers only “where does a new development session start?” DOC-13 
 - **Stable handoff:** [PHASE-9-image-to-LLM-inventory.md](./PHASE-9-image-to-llm-inventory.md)
 - **Session entrypoint:** [Phase 9 SESSION-START](./phase-9-image-inventory/SESSION-START.md)
 - **Local current-state authority:** [Phase 9 master tracker](./phase-9-image-inventory/TRACKER.md)
-- **Current work-unit plan:** [Unit 4A deployment-runtime scaffolding](./phase-9-image-inventory/work-units/04a-deployment-runtime-scaffolding-sdd.md); Unit 4 is integrated on `main` at `e9ba2d9`, all five Unit 4A review corrections and the synthetic GitHub Actions container gate are verified and Unit 4A is integrated, M01-M08/M10 are live-verified, and M11/M12 remain unapplied/undeployed
+- **Current work-unit plan:** Phase 9 M11/M12 are live-verified after integrated [Unit 4A deployment-runtime scaffolding](./phase-9-image-inventory/work-units/04a-deployment-runtime-scaffolding-sdd.md); all ingestion/vision services remain undeployed and require separate deployment authorization
 - **Global status authority:** [DOC-13](../DOC-13-implementation-tracker.md)
 
 ## Required reading order
