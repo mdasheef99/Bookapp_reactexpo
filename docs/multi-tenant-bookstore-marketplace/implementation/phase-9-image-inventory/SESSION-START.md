@@ -64,7 +64,7 @@ Do not describe an action as authorized merely because it is listed as a future 
 | 1 Data/metadata migration | 01 Data; 03 Review; 05 Marketplace | data dictionary, current-vs-target audit, migration ledger |
 | 2 Session/job schema | 02 Pipeline; 03 Review; 04 Security | data dictionary, current-vs-target audit |
 | 3 Media boundary | 04 Security; 02 Pipeline; 03 Review | data dictionary, live storage audit, DOC-1 |
-| 4 Vision adapter | 02 Pipeline; 04 Security | fixture/schema requirements, complexity register |
+| 4 Vision adapter | 02 Pipeline; 04 Security | [Unit 4 fixture vision-analysis design](./work-units/04-fixture-vision-analysis-runtime-design.md), current vision contracts, exact-project schema/grant evidence |
 | 5 Metadata/aliases | 01 Data; 02 Pipeline; 05 Marketplace | data dictionary, provider audit/fixtures |
 | 6 Owner UX | 03 Review; 02 Pipeline | DOC-8, accessibility/verification matrix |
 | 7 Commit/duplicates/projection | 01 Data; 03 Review; 05 Marketplace | quantity/hold invariants, current trigger audit |

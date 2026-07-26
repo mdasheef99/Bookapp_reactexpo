@@ -1,88 +1,133 @@
-import { createVisionRequest, parseVisionResult, shouldUseVisionFallback } from '../_shared/imageInventory/contracts';
 import {
-  visionAcceptedWrongLanguage,
+  createSpineAnalysisRequest,
+  parseSpineAnalysisResult,
+} from '../_shared/imageInventory/contracts';
+import {
+  observation,
   visionActiveContent,
+  visionEnvelope,
   visionFifteen,
-  visionInvalidIsbnClue,
-  visionMalformedGeometry,
   visionNoBooks,
   visionOne,
-  visionOversizedAuthors,
-  visionOversizedTitle,
   visionPromptInjection,
-  visionRepeatedSpines,
-  visionSixteen,
-  visionUnknownAuthorityField,
-  visionWrongLanguage,
+  visionQualityRejected,
+  visionRequestInput,
+  visionTooMany,
 } from './fixtures/phase9/visionFixtures';
 
-describe('Phase 9 vision contract', () => {
-  it('accepts one and fifteen ordered spine candidates', () => {
-    expect(parseVisionResult(visionOne).candidates).toHaveLength(1);
-    expect(parseVisionResult(visionFifteen).candidates).toHaveLength(15);
-  });
-
-  it('builds a server-owned spine-stack request with English default and no authority fields', () => {
-    const request = createVisionRequest({
-      adapterKey: 'fixture_adapter',
-      adapterVersion: '1.0.0',
-      correlationId: 'fixture-correlation-0001',
-      attemptId: 'fixture-attempt-0001',
-      requestedAt: '2026-07-19T00:00:00.000Z',
-      sanitizedMediaReference: 'media_fixture_reference_0001',
-      taskVersion: 'fixture-task-v1',
+describe('Phase 9 p9-vision-v2 canonical contract', () => {
+  it('V4-C01/C02/C03 accepts coherent zero, one, fifteen, and over-limit envelopes', () => {
+    expect(parseSpineAnalysisResult(visionNoBooks).detectedVisibleBookCount).toBe(0);
+    expect(parseSpineAnalysisResult(visionOne).observations).toHaveLength(1);
+    expect(parseSpineAnalysisResult(visionFifteen).observations).toHaveLength(15);
+    expect(parseSpineAnalysisResult(visionTooMany)).toMatchObject({
+      imageOutcome: 'too_many_books',
+      detectedVisibleBookCount: 16,
+      observations: [],
     });
-    expect(request).toMatchObject({ selectedLanguage: 'en', batchType: 'spine_stack', maxCandidates: 15 });
-    expect(request).not.toHaveProperty('store_id');
-    expect(request).not.toHaveProperty('actor_id');
-    expect(request).not.toHaveProperty('storage_path');
+    expect(parseSpineAnalysisResult(visionQualityRejected).detectedVisibleBookCount).toBeNull();
   });
 
-  it('rejects the entire 16-candidate result without truncation', () => {
-    expect(() => parseVisionResult(visionSixteen)).toThrow(/over candidate limit/i);
+  it('creates an authority-free request using only the opaque sanitized media reference', () => {
+    const request = createSpineAnalysisRequest(visionRequestInput);
+    expect(request).toMatchObject({
+      contractVersion: 'p9-contract-v1',
+      schemaVersion: 'p9-vision-v2',
+      maxVisibleBooks: 15,
+      expectedLanguage: 'en',
+    });
+    expect(request).not.toHaveProperty('storeId');
+    expect(request).not.toHaveProperty('storagePath');
+    expect(request).not.toHaveProperty('signedUrl');
   });
 
-  it('keeps repeated observed spines as separate candidates', () => {
-    const parsed = parseVisionResult(visionRepeatedSpines);
-    expect(parsed.candidates).toHaveLength(2);
-    expect(parsed.candidates[0].title).toBe(parsed.candidates[1].title);
+  it('V4-C04 rejects count/coherence mismatches and unknown outcomes or keys', () => {
+    expect(() => parseSpineAnalysisResult({
+      ...visionOne, detected_visible_book_count: 2,
+    })).toThrow(/observation length/i);
+    expect(() => parseSpineAnalysisResult({
+      ...visionOne, image_outcome: 'accepted',
+    })).toThrow(/unsupported image outcome/i);
+    expect(() => parseSpineAnalysisResult({
+      ...visionOne, provider_request_id: 'secret',
+    })).toThrow(/unknown keys/i);
   });
 
-  it('treats no-books as terminal and never fallback eligible', () => {
-    expect(parseVisionResult(visionNoBooks).outcome).toBe('no_books');
-    expect(shouldUseVisionFallback('no_books', 0)).toBe(false);
+  it('V4-C05 rejects missing, duplicate, unordered, or noncontiguous ordinals', () => {
+    expect(() => parseSpineAnalysisResult(visionEnvelope([
+      observation(2),
+    ]))).toThrow(/ordered from 1/i);
+    expect(() => parseSpineAnalysisResult(visionEnvelope([
+      observation(1), observation(1),
+    ]))).toThrow(/ordered from 1/i);
+    expect(() => parseSpineAnalysisResult(visionEnvelope([
+      observation(2), observation(1),
+    ]))).toThrow(/ordered from 1/i);
   });
 
-  it('represents wrong selected language as terminal and rejects mixed accepted output', () => {
-    expect(parseVisionResult(visionWrongLanguage).outcome).toBe('wrong_language');
-    expect(() => parseVisionResult(visionAcceptedWrongLanguage)).toThrow(/selected language batch/i);
+  it('V4-C06 rejects non-finite/out-of-range confidence and geometry', () => {
+    expect(() => parseSpineAnalysisResult(visionEnvelope([
+      observation(1, { confidence: Number.NaN }),
+    ]))).toThrow(/finite number/i);
+    expect(() => parseSpineAnalysisResult(visionEnvelope([
+      observation(1, { geometry: { x: 0.9, y: 0, width: 0.2, height: 1, rotation: 0 } }),
+    ]))).toThrow(/outside the normalized image/i);
   });
 
-  it('allows only one whole-image fallback for typed technical outcomes', () => {
-    expect(shouldUseVisionFallback('technical_failure', 0)).toBe(true);
-    expect(shouldUseVisionFallback('schema_invalid', 1)).toBe(false);
-    expect(shouldUseVisionFallback('wrong_language', 0)).toBe(false);
+  it.each(visionActiveContent)('V4-C07 rejects active content throughout evidence', (fixture) => {
+    expect(() => parseSpineAnalysisResult(fixture)).toThrow(/active or operational content/i);
   });
 
-  it('rejects image-borne active instructions and authority fields', () => {
-    expect(() => parseVisionResult(visionPromptInjection)).toThrow(/active or operational content/i);
-    expect(() => parseVisionResult(visionUnknownAuthorityField)).toThrow(/unknown keys: store_id/i);
+  it.each([
+    { field: 'title', value: { title_guess: '/private/scan.webp' } },
+    { field: 'author', value: { author_guesses: ['\\\\server\\share\\scan.webp'] } },
+    { field: 'publisher', value: { publisher_clue: 'C:\\private\\scan.webp' } },
+    { field: 'traversal', value: { title_guess: '../../private/scan.webp' } },
+  ])('rejects $field path-shaped canonical evidence', ({ value }) => {
+    expect(() => parseSpineAnalysisResult(visionEnvelope([
+      observation(1, value),
+    ]))).toThrow(/active or operational content/i);
   });
 
-  it.each(visionActiveContent)('rejects URL, Markdown, SQL, HTML, path, or command-shaped active content', (fixture) => {
-    expect(() => parseVisionResult(fixture)).toThrow(/active or operational content/i);
+  it('accepts ordinary punctuation and slash prose that is not path-shaped', () => {
+    expect(parseSpineAnalysisResult(visionEnvelope([
+      observation(1, {
+        title_guess: 'War/Peace: Notes & Essays',
+        author_guesses: ['A/B Collective'],
+        publisher_clue: 'Books/Ideas Press',
+      }),
+    ])).observations[0].titleGuess).toBe('War/Peace: Notes & Essays');
   });
 
-  it('rejects oversized arrays/strings, malformed geometry, and invalid ISBN clues', () => {
-    expect(() => parseVisionResult(visionOversizedTitle)).toThrow(/exceeds 512/i);
-    expect(() => parseVisionResult(visionOversizedAuthors)).toThrow(/at most 20/i);
-    expect(() => parseVisionResult(visionMalformedGeometry)).toThrow(/outside the normalized image/i);
-    expect(() => parseVisionResult(visionInvalidIsbnClue)).toThrow(/non-ISBN clue/i);
+  it('rejects authority/tool/provider fields recursively and the full payload above 256 KiB', () => {
+    expect(() => parseSpineAnalysisResult({
+      ...visionOne,
+      observations: [{ ...visionOne.observations[0], tool_call: { name: 'write_inventory' } }],
+    })).toThrow(/unknown keys/i);
+    expect(() => parseSpineAnalysisResult({
+      ...visionOne, store_id: '92000000-0000-0000-0000-000000000001',
+    })).toThrow(/unknown keys/i);
+    expect(() => parseSpineAnalysisResult({
+      ...visionOne, warning_codes: ['x'.repeat(262145)],
+    })).toThrow(/exceeds 262144 bytes/i);
+    expect(() => parseSpineAnalysisResult(visionPromptInjection)).toThrow(/active or operational content/i);
   });
 
-  it('rejects nested tool/command authority keys and oversized raw output', () => {
-    const withTool = { ...visionOne, candidates: [{ ...visionOne.candidates[0], tool_call: { name: 'write_inventory' } }] };
-    expect(() => parseVisionResult(withTool)).toThrow(/unknown keys: tool_call/i);
-    expect(() => parseVisionResult({ ...visionOne, warnings: ['x'.repeat(262145)] })).toThrow(/exceeds 262144 bytes/i);
+  it('accepts publisher clues, nullable titles, und language, and closed warnings only', () => {
+    const parsed = parseSpineAnalysisResult(visionEnvelope([
+      observation(1, {
+        title_guess: null,
+        detected_language: 'und',
+        warning_codes: ['low_contrast'],
+      }),
+    ]));
+    expect(parsed.observations[0]).toMatchObject({
+      titleGuess: null,
+      publisherClue: 'Fixture Publisher 1',
+      detectedLanguage: 'und',
+    });
+    expect(() => parseSpineAnalysisResult(visionEnvelope([
+      observation(1, { warning_codes: ['provider said maybe'] }),
+    ]))).toThrow(/unsupported warning/i);
   });
 });

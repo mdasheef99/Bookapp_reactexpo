@@ -4,7 +4,7 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
-**Implementation checkpoint (2026-07-22):** the approved schema/condition/alias/inventory contracts are implemented locally in M01, M04, M05, and M07 and pass isolated migration tests. Nothing was applied live; M09 quantity validation remains separate.
+**Implementation checkpoint (2026-07-26):** M01-M08/M10 are live-verified. Committed local M11 remains unapplied/undeployed. The fixture-backed vision-analysis design adds only private immutable analysis evidence and candidate lineage; metadata selection, canonical identity, aliases, inventory, and publication remain separate later stages.
 
 ## 1. Decision
 
@@ -50,6 +50,8 @@ Selected metadata supports:
 - provider/record ID, fetch time, match strength/rationale, adapter/schema/normalizer version.
 
 The selector chooses one coherent edition response. A secondary provider may corroborate or replace an insufficient/failed primary result, but fields from conflicting editions are not silently combined. Raw/normalized provider evidence remains private and time-bounded according to SDD 04.
+
+Vision evidence is not a metadata selection. The image-level canonical analysis result and each ordered observation are immutable private evidence. A review candidate copies only normalized observed clues and links back to one observation; `selected_snapshot` remains owned by later coherent metadata selection, and `owner_review_snapshot` remains owned by later Owner edits. Model/provider confidence, publisher/ISBN clues, or image evidence never establish canonical identity.
 
 ## 5. ISBN rules
 
@@ -180,6 +182,8 @@ Current live conditions are `new`, `like_new`, `good`, `fair`, `damaged`; all cu
 | DAT-23 | Sellable damaged copies require note and 1–3 approved photos. |
 | DAT-24 | Unsellable damaged copies cannot publish. |
 | DAT-25 | Lower price works without a promotion/discount engine. |
+| DAT-26 | Immutable vision evidence, later metadata selection, and later Owner edits remain separate persisted layers. |
+| DAT-27 | Every model-created candidate traces to one job/schema/observation identity; repeated positions remain distinct and model clues never establish canonical identity. |
 
 ## 13. Deferred
 

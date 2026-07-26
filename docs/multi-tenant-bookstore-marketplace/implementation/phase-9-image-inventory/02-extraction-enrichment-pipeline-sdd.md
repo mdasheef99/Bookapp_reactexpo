@@ -4,7 +4,7 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
-**Local implementation checkpoint (2026-07-23):** the pre-model ingestion slice is implemented as an uncommitted candidate through `uploaded -> validating -> queued|failed`, with exactly one validation job and at most one later vision job. No model call exists. Completion persists one immutable canonical response and a content hash. A token-and-attempt-fenced dedicated worker creates or reuses a service-only immutable source snapshot, verifies its hash, and performs sanitation at the 10 MiB/16 MP envelope; this checkpoint does not authorize deployment.
+**Local implementation checkpoint (2026-07-26):** the pre-model ingestion slice is committed to `main` through `uploaded -> validating -> queued|failed`, with exactly one validation job and one later `vision_extract` job. The fixture-backed Unit 4 runtime and local M12 now exist; all bounded review findings for fencing, canonical hashing/validation, database-owned retryability, typed RPC transport, path rejection, relationship reconciliation, and executable boundaries are corrected and verified for final Git integration. M11/M12 remain unapplied, services remain undeployed, and no real multimodal or metadata provider integration exists.
 
 ## 1. Decision
 
@@ -58,29 +58,30 @@ Exact image replay returns the existing input/job result when safe; it does not 
 
 ### Input
 
-- sanitized image bytes/reference;
-- selected BCP 47 language and optional script;
-- maximum candidates = 15;
-- extraction schema version and task instruction;
-- opaque request/correlation identifier;
-- no store name, customer data, shelf location, database IDs, signed URLs, credentials, or tools.
+- opaque sanitized-media reference;
+- session-selected canonical BCP 47 expected language;
+- literal maximum visible books = 15;
+- opaque job, attempt, and correlation identities;
+- contract, analysis-schema, pipeline, prompt, adapter, and adapter-version identifiers;
+- no store/session/input/user authority, customer data, shelf/defaults, path/URL/capability, credentials, provider policy, database command, metadata query, or tools.
 
 ### Output
 
 Strict versioned JSON:
 
-- `schema_version`;
-- `image_result`: accepted/empty/wrong_language/too_many/quality_failure;
-- ordered candidates with index;
-- observed original-script title;
-- observed original-script authors;
-- optional visible ISBN clue;
-- selected/detected language/script;
-- confidence per identity field or candidate;
-- optional bounded bounding box/position;
-- bounded warnings.
+- complete request/version identity and sanitized provider/model provenance;
+- `image_outcome`: `analyzed`, `no_books`, `too_many_books`, or `quality_rejected`;
+- detected visible-book count, including an explicit count over 15 with zero returned observations;
+- ordered observations with unique contiguous ordinals;
+- nullable title guess; bounded author guesses; optional publisher and visible ISBN clues;
+- detected BCP 47 language or explicit `und`;
+- finite normalized confidence;
+- optional normalized in-bounds geometry;
+- closed bounded warning codes.
 
 Unknown values are null, not invented placeholders. The model cannot return executable instructions, URLs, SQL, Markdown/HTML, provider queries, or database actions. All strings are length/Unicode/control-character validated and rendered as plain text.
+
+The exact `p9-vision-v2` request/result coherence, field bounds, provenance, and unsupported-field policy are normative in the Unit 4 design. Provider-specific payloads remain inside the adapter. The application revalidates the adapter result as untrusted data.
 
 ## 6. Fallback policy
 
@@ -101,9 +102,11 @@ Deterministic normalization:
 - trim/collapse whitespace and normalize Unicode without destroying original script;
 - normalize author lists separately;
 - normalize visible ISBN clue but mark it unvalidated;
-- clamp candidate count and reject any schema output beyond 15 rather than silently ignore it;
+- preserve the detected count and reject the complete image beyond 15 rather than clamp or truncate it;
 - assign stable candidate indices and persist optional geometry;
 - reject strings with unsafe control/bidi patterns from direct UI rendering or normalize/display safely with script-aware rules.
+
+Structurally malformed output fails as one permanent contract result; individual malformed observations are never salvaged. Structurally valid mixed-language observations remain immutable evidence, but only usable observations matching the expected primary language become candidates. `und` is skipped. If all observations mismatch or are unknown, the input is a successful zero-candidate language-mismatch result. Repeated identical observations at different ordinals remain separate.
 
 ## 8. Metadata enrichment
 
@@ -229,3 +232,10 @@ CI uses recorded fixtures and validates schemas/behavior, never exact generative
 | EXT-16 | Manual entry works while extraction/provider/quota is unavailable. |
 | EXT-17 | Metrics identify adapter version, outcome, latency, fallback, cache, and cost without raw content leakage. |
 | EXT-18 | Provider provenance and field-level storage/display/cache/attribution/expiry rights are independently enforced. |
+| EXT-19 | `p9-vision-v2` records detected count, ordered observations, normalized confidence/geometry, publisher/ISBN clues, and sanitized provenance while rejecting unknown/provider-specific fields. |
+| EXT-20 | Mixed-language and `und` observations are explicitly skipped without changing the selected language; all-mismatch is a successful zero-candidate result. |
+| EXT-21 | Repeated identical books at separate ordinals produce separate immutable observations and separate candidates. |
+| EXT-22 | One token/attempt-fenced transaction persists authoritative analysis evidence and candidates before completing the job; replay cannot duplicate effects. |
+| EXT-23 | Stale attempts, including the same worker ID after reclaim, cannot read context, persist, fail, complete, or replay another attempt. |
+| EXT-24 | Image result, per-observation evidence, metadata selection, and Owner edits remain separate persisted layers. |
+| EXT-25 | Fixture-backed analysis creates no metadata-provider, canonical, inventory, listing, publication, or Storage effect. |

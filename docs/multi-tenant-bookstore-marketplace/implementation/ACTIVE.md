@@ -1,6 +1,6 @@
 # Active Marketplace Phase Router
 
-**Last updated:** 2026-07-22
+**Last updated:** 2026-07-26
 **Routing status:** authoritative
 
 This file answers only “where does a new development session start?” DOC-13 owns global status; the active phase tracker owns the detailed current milestone and next authorized action.
@@ -11,7 +11,7 @@ This file answers only “where does a new development session start?” DOC-13 
 - **Stable handoff:** [PHASE-9-image-to-LLM-inventory.md](./PHASE-9-image-to-llm-inventory.md)
 - **Session entrypoint:** [Phase 9 SESSION-START](./phase-9-image-inventory/SESSION-START.md)
 - **Local current-state authority:** [Phase 9 master tracker](./phase-9-image-inventory/TRACKER.md)
-- **Current work-unit plan:** [Package 1 approved database design](./phase-9-image-inventory/work-units/01-package1-database-design.md); M01-M08 and forward security correction M10 are live-verified, while M09/auth/runtime remain separately gated
+- **Current work-unit plan:** [Unit 4 fixture vision-analysis runtime](./phase-9-image-inventory/work-units/04-fixture-vision-analysis-runtime-design.md); all bounded Unit 4 review blockers are corrected and verified, final Git integration is authorized, M01-M08/M10 are live-verified, and M11/M12 remain unapplied/undeployed
 - **Global status authority:** [DOC-13](../DOC-13-implementation-tracker.md)
 
 ## Required reading order

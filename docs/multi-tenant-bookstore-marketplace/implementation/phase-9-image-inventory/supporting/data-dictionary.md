@@ -1,9 +1,9 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** approved target; M01-M08 live once, verification blocked on M08 public-discovery grants; M09 absent
-**Last updated:** 2026-07-22
+**Status:** approved target; M01-M08/M10 live-verified; local M11/M12 unapplied; Unit 4 locally complete; M09 absent
+**Last updated:** 2026-07-26
 
-M01-M08 implement this approved dictionary in local migration files and are verified against a disposable Phase 6 baseline. They have not been applied to connected Supabase; M09 quantity-constraint validation remains a separate live-data gate.
+M01-M08/M10 are live-verified. Committed local M11 and unstaged forward M12 remain unapplied and services remain undeployed. M12 implements the Unit 4 evidence/lease target locally; its application remains unauthorized. M09 quantity-constraint validation remains a separate live-data gate.
 
 The dictionary distinguishes canonical truth, store-owned snapshots, public projections, staged AI output, and media/evidence. A field must not be added to several layers merely because it is convenient; each copy needs a named owner and synchronization rule.
 
@@ -107,7 +107,7 @@ Public projection never contains shelf location, acquisition data, exact quantit
 
 | Field | Rule |
 | --- | --- |
-| `id`, `store_id`, `created_by` | Tenant/initiating-actor identity; during the pilot only this Owner mutates/resumes. Support intervention is separately authorized/audited. |
+| `id`, `store_id`, `created_by` | Tenant/initiating-actor identity; during the pilot only this Owner mutates/resumes. Interactive support intervention is excluded. |
 | `status` | `active`, `closing`, `closed`, `expired`; `closing` begins only after inputs are terminal, rejects new inputs, and finalizes summary. No user-visible pause/early-close state. |
 | `selected_language`, `selected_script` | One batch language; English default. |
 | default fields | condition, shelf/location, quantity=1, publication preference. |
@@ -124,18 +124,40 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | `status` | `uploaded`, `validating`, `queued`, `processing`, `ready`, `failed`, `skipped`. |
 | `sha256` | Exact-image replay/cost protection inside store/policy scope. |
 | quality fields | blur/glare/resolution/decodability result and owner-facing reason. |
-| count fields | detected count; reject if greater than 15. |
+| count fields | detected visible-book count `0..100`; deterministic policy rejects the complete image above 15. |
 | version/attempt fields | orchestration attempt and selected vision adapter. |
 | lifecycle | created/processed/delete-after/deleted. |
+
+### `image_analysis_results` (local M12, unapplied)
+
+| Field | Rule |
+| --- | --- |
+| scope | store/session/input/vision-job FKs derived by the persistence RPC. |
+| uniqueness | one authoritative row per `(vision_job_id, analysis_schema_version)`. |
+| result | authoritative outcome, detected/accepted/skipped counts, bounded canonical `p9-vision-v2` snapshot, and database-computed SHA-256 over UTF-8 PostgreSQL normalized `jsonb::text`. |
+| provenance | contract/pipeline/prompt/adapter/provider/model/schema versions and opaque correlation identity; never provider-specific payload. |
+| completing claim | attempt, worker, and lease-token hash for exact ambiguous-response replay; raw token absent. |
+| lifecycle | immutable private evidence; created/completed timestamps and later explicit lifecycle-redaction policy only. |
+
+### `image_analysis_observations` (local M12, unapplied)
+
+| Field | Rule |
+| --- | --- |
+| scope/position | result/store/input, stable ordinal, unique `(analysis_result_id,observation_ordinal)`. |
+| disposition | `candidate`, `language_mismatch`, `unknown_language`, or `identity_insufficient`. |
+| immutable clues | title/authors/publisher/ISBN, detected language, confidence, normalized geometry, closed warning codes. |
+| evidence | bounded canonical observation snapshot only; no raw provider response, prompt, URL/path/token, or arbitrary metadata. |
+| candidate link | nullable one-to-one link for accepted observations; skipped evidence has no candidate. |
 
 ### `image_extraction_candidates`
 
 | Field | Rule |
 | --- | --- |
-| scope/position | session/input/store, stable candidate index, optional bounding box. |
-| observed identity | original-script title, authors, visible ISBN clue, language/script. |
+| scope/position | session/input/store, vision job/schema/analysis-observation lineage, stable candidate index, optional bounding box. |
+| observed identity | original-script title, authors, publisher clue, visible ISBN clue, language/script. |
 | confidence | extraction confidence only; never canonical authority. |
-| normalized selection | selected metadata snapshot, canonical match nullable, metadata source/attempt. |
+| immutable evidence | owned by linked analysis observation; it is not stored in `selected_snapshot` or `owner_review_snapshot`. |
+| normalized selection | later selected metadata snapshot, canonical match nullable, metadata source/attempt. |
 | aliases | related through `book_search_aliases`; automated proposal maximum three, with bounded additional official/verified rows. |
 | review fields | owner edits/defaults, add/remove action, duplicate choice, publication choice. |
 | status | `processing`, `ready`, `needs_review`, `possible_duplicate`, `commit_in_progress`, `committed`, `failed`. A projection failure leaves this value `committed`, sets inventory publication status to `publication_failed`, and returns API outcome `committed_publication_failed`. |
@@ -153,9 +175,9 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | payload lifecycle | raw payload private/delete-after; normalized selected snapshot retained by policy. |
 | field reuse policy | Per normalized field: matching-only/storage/display/cache/attribution/expiry rights. |
 
-### `image_extraction_jobs` (or shared job table extension)
+### `image_extraction_jobs`
 
-Persistent async work with bounded attempts, lease/claim timestamps, idempotency key, job kind, status, error class/code, next attempt, and dead-letter/escalation. The implementation should reuse the proven Postgres job pattern where compatible rather than create an unrelated queue.
+Persistent async work uses existing states `open`, `in_progress`, `retry_scheduled`, `resolved`, `resolved_noop`, `cancelled`, and `dead_letter`, with attempts `0..5`, due/lease timestamps, dedupe identity, adapter/operation versions, safe errors, and correlation ID. M11 adds the token hash; local M12 reuses it through vision-specific claim/context/persist/fail functions without creating another queue. M12 also adds nullable vision-reconciliation attempt/worker/token-hash/summary fields. They are populated only when an exactly fenced current claim discovers an invalid authoritative relationship, and constrain that job to terminal `resolved` with `P9_VISION_RELATIONSHIP_RECONCILIATION_REQUIRED`; no unverified related row changes.
 
 ## Media structures
 

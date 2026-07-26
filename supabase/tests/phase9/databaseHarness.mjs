@@ -13,6 +13,7 @@ export const phase9MigrationNames = [
   '20260722000008_marketplace_phase9_request_photo_seam.sql',
   '20260722000010_marketplace_phase9_public_boundary_security_correction.sql',
   '20260723000011_marketplace_phase9_ingestion_runtime_foundation.sql',
+  '20260726000012_marketplace_phase9_vision_analysis_runtime.sql',
 ];
 
 const root = process.cwd();

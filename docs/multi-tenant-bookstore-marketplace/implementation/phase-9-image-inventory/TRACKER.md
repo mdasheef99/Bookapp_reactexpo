@@ -1,30 +1,30 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `approved_baseline`
-**Implementation status:** ingestion-runtime foundation `independently_reviewed_uncommitted`; Package 1 M01-M08/M10 remains live-verified; auth WU1/WU2 remains locally complete
-**Last updated:** 2026-07-23
-**Current milestone:** corrected ingestion-runtime candidate independently reviewed with no remaining merge blocker
-**Active work unit:** `ingestion_runtime_foundation_independently_reviewed_uncommitted`
+**Planning status:** `unit4_fixture_vision_analysis_sdd_ready`
+**Implementation status:** `unit4_final_corrections_verified_git_integration_authorized`; M11/M12 unapplied and all ingestion/vision services undeployed; Package 1 M01-M08/M10 live-verified
+**Last updated:** 2026-07-26
+**Current milestone:** fixture-backed multimodal vision-analysis runtime fully corrected and verified
+**Active work unit:** `unit4_final_corrections_verified_git_integration_authorized`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** read-only independent review of the current unstaged candidate; one stale M06 storage-table contradiction corrected and re-reviewed
-**Next authorized action:** await separate user authorization to stage and commit the independently reviewed candidate; no live application/deployment
-**Implementation authority:** bounded ingestion-runtime foundation only; no OCR/model/candidate/UI/inventory/publication scope
-**Migration creation/application authority:** local forward M11 created; live application not authorized; M09 remains absent
-**Current gate:** separate commit authorization, dedicated-worker deployment sizing, and separately authorized M11/application deployment; all remain local-only
+**Last completed:** final bounded corrections for database-owned retryability, closed RPC transport classification, absolute/UNC path rejection, and exhaustive executable boundary coverage
+**Next authorized action:** complete the authorized stage/commit/push/fast-forward integration of this exact verified Unit 4 candidate, then stop
+**Implementation authority:** Unit 4 correction implementation and final verification are complete; only this exact Git integration is authorized, while later units require separate authorization
+**Migration creation/application authority:** local M11/M12 exist and are unapplied; M09 remains absent; no live application is authorized
+**Current gate:** final Git integration is authorized after all recorded gates passed; M11/M12 application, deployment, real providers, metadata, UI, inventory, publication, and later work remain prohibited
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
 ## Current handoff
 
-Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Package 1 M01-M08/M10 remain live exactly once. The bounded ingestion foundation now exists only as an uncommitted local candidate: forward M11, Owner Edge upload/completion endpoint, canonical content-hashed completion replay, service-only immutable source snapshots, opaque token-and-attempt worker leases, a dedicated service-authenticated claimed worker, strict privacy contracts, the real pinned ImageMagick WASM sanitizer, and PGlite/fixture tests. Nothing was applied, deployed, staged, committed, pushed, or merged; M09 remains absent.
+Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Package 1 M01-M08/M10 remain live exactly once. The bounded ingestion foundation—forward M11, Owner Edge intake, immutable source snapshots, token/attempt media leases, dedicated sanitizer worker, and tests—is committed on `main` at `0a8e57a`; M11 remains unapplied and both services remain undeployed. M09 remains absent.
 
-The approved correction caps uploads at 10 MiB and decoded images at 16,000,000 pixels without server resizing, rejects animated/multi-frame PNG/WebP, and moves sanitation out of Supabase Edge. ImageMagick's 64 MP internal `area` allowance is only working/cache headroom and cannot bypass the 16 MP checks. On Node 22.13/Windows x64, three pinned-WASM iterations each at 8/12/16 MP took median 11.77/11.40/14.27 seconds; ending RSS was 169/191/225 MB (peak RSS unavailable), and all WebP dimensions, metadata-removal, and hash-stability checks passed. This is dedicated-worker sizing evidence only, not deployed-runtime proof.
+The [Unit 4 design](./work-units/04-fixture-vision-analysis-runtime-design.md) is implemented locally with strict `p9-vision-v2`, a deterministic fixture analyzer, platform policy, a dedicated service-authenticated worker, forward M12 immutable evidence/RPCs, and the complete red-first matrix. The first independent review returned `CHANGES_REQUIRED`; its confirmed fencing, canonical-hash/validation, runtime-classification, relationship-reconciliation, and status corrections are locally implemented. Final corrected verification evidence is recorded in the Unit 4 evidence tracker. Nothing was applied, deployed, staged, committed, pushed, or merged.
 
 Auth hardening WU1/WU2 is locally complete and independently approved on `codex/auth-hardening-core`: production bypass policy is centralized and fail-closed; Zustand owns canonical session/status; one root bootstrap owns subscription/restoration; identity replacement remains blocked through cleanup failure and explicit retry; and current-device logout persists a non-secret deletion-intent guard until SDK or exact-key fallback removal succeeds. Auth no longer directly imports marketplace. Secure token persistence, Android backup, authoritative profile routing, OTP UX, native/offline testing, and remote EAS verification remain separately gated before Phase 9 mobile/private-ingestion runtime integration.
 
 Repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → `SESSION-START.md` → this tracker is the durable resume chain. A future session must report this block before acting and must use the session protocol's documentation matrix at closeout.
 
-The exact development project was re-verified read-only on 2026-07-22 before the Package 1 audit:
+The exact development project was re-verified read-only on 2026-07-26 for the Unit 4 audit:
 
 | Field | Verified value |
 | --- | --- |
@@ -64,10 +64,11 @@ The exact development project was re-verified read-only on 2026-07-22 before the
 | Work Unit 0 plan | [`approved_2026-07-19`](./work-units/00-contracts-threat-migration-plan.md) |
 | Work Unit 0A contracts/tests | `approved_2026-07-19` |
 | Work Unit 0B technical design | [`independently_approved`](./work-units/00b-backend-api-technical-design-plan.md) |
+| Work Unit 4 fixture vision-analysis runtime | [`final_corrections_verified_git_integration_authorized`](./work-units/04-fixture-vision-analysis-runtime-design.md) |
 
 ## Blocking gate before further implementation
 
-WU0A, WU0B, and the Package 1 design remain approved. M01-M08 are live and immutable; forward correction M10 is live-verified. M06 Storage, M07 projection/discovery, M08 request-photo, and M10 grant/view boundaries pass readback. Core auth WU1/WU2 is locally complete; M09, remaining auth/security work, and product/runtime implementation remain gated.
+WU0A, WU0B, Package 1, and Unit 4 are ready at their recorded levels. M01-M08/M10 are live and immutable. M11 is committed and M12 is an unstaged forward migration; both are unapplied and services remain undeployed. Core auth WU1/WU2 is locally complete; correction-only Unit 4 independent re-review is next, while M09, migration application, deployment, and later work remain separately gated.
 
 ## Risk summary
 
@@ -87,4 +88,4 @@ WU0A, WU0B, and the Package 1 design remain approved. M01-M08 are live and immut
 
 ## Next action gate
 
-Only a separately authorized stage-and-commit action is next. Do not apply M11, deploy the Owner Edge function or dedicated worker, rewrite M01-M08/M10, create/apply M09, or begin another work unit.
+Only the authorized stage/commit/push/fast-forward integration of the exact verified Unit 4 diff remains in this session. After integration, stop. Do not apply M11/M12, deploy services, call real vision/metadata providers, build UI, mutate inventory/publication, create/apply M09, or begin another unit.

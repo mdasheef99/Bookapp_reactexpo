@@ -1,9 +1,9 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `package1_m01_m08_m10_live_verified`
-**Last updated:** 2026-07-23
-**Implementation status:** M01-M08/M10 are live-verified; corrected dedicated-worker ingestion-runtime candidate is ready for independent review
-**Supabase mutation status:** M01-M08 plus M10 applied once to `ahntbtktjjmvfosgkmgn`; local M11 was not applied, M09 is absent, and no function was deployed
+**Status:** `unit4_final_corrections_verified_git_integration_authorized`
+**Last updated:** 2026-07-26
+**Implementation status:** M01-M08/M10 are live-verified; M11/ingestion runtime is committed at `0a8e57a`; all Unit 4 review blockers are corrected and fully verified for final Git integration; M11/M12 remain unapplied and all services remain undeployed
+**Supabase mutation status:** M01-M08 plus M10 applied once to `ahntbtktjjmvfosgkmgn`; M11/M12 were not applied, M09 is absent, and no ingestion/vision function was deployed
 **Database checkpoint:** M01-M08 and forward public-boundary correction M10 are live-verified.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
@@ -53,6 +53,7 @@ After the repository entrypoint, read in this order:
 | [Complexity and scope register](./supporting/complexity-and-scope-register.md) | Included containment choices, residual complexity, exclusions, and asymmetric benefits. |
 | [Work Unit 0 plan](./work-units/00-contracts-threat-migration-plan.md) | Versioned contract shapes, fixtures, threat tests, migration sequence, correction strategy, and stop gates. |
 | [Work Unit 0B technical design](./work-units/00b-backend-api-technical-design-plan.md) | Router for seven completed backend/API design artifacts covering commands, queries, DTOs, authorization, state, jobs, media, marketplace, request photos, red tests, exact later file allowlists, and independent gates. |
+| [Unit 4 fixture vision-analysis runtime](./work-units/04-fixture-vision-analysis-runtime-design.md) | Locally complete `p9-vision-v2`, fixture analyzer, product policy, dedicated worker, token/attempt state machine, forward M12 persistence/RPCs, privacy, and red-first evidence. |
 
 ## Continuity tools
 
@@ -93,7 +94,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, WU0A/WU0B, corrected Package 1 design, and live-verified M01-M08/M10 database checkpoint are independently approved. M09 and fixture-backed runtime remain separately gated. Preserve these WU0 controls:
+The planning baseline, WU0A/WU0B, corrected Package 1 design, and live-verified M01-M08/M10 checkpoint are independently approved. M11 is committed but unapplied; all bounded Unit 4 runtime/M12 review blockers are corrected and verified, and only the authorized final Git integration remains in this session. M09, M11/M12 application, deployment, real providers, metadata, inventory/publication implementation, and later units remain separately gated. Preserve these controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

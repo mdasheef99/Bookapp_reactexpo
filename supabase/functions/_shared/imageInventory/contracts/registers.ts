@@ -90,6 +90,19 @@ export type Phase9ErrorCode =
   | 'P9_MEDIA_MULTIFRAME_UNSUPPORTED'
   | 'P9_MEDIA_OBJECT_CHANGED'
   | 'P9_MEDIA_PROCESSING_RETRYABLE'
+  | 'P9_VISION_NO_BOOKS'
+  | 'P9_VISION_LANGUAGE_MISMATCH'
+  | 'P9_VISION_OVER_LIMIT'
+  | 'P9_VISION_QUALITY_REJECTED'
+  | 'P9_VISION_SCHEMA_INVALID'
+  | 'P9_VISION_ANALYZER_TIMEOUT'
+  | 'P9_VISION_ANALYZER_UNAVAILABLE'
+  | 'P9_VISION_MEDIA_UNAVAILABLE'
+  | 'P9_VISION_DATABASE_RETRYABLE'
+  | 'P9_VISION_INTERNAL_PERMANENT'
+  | 'P9_VISION_STALE_ATTEMPT'
+  | 'P9_VISION_PERSISTENCE_CONFLICT'
+  | 'P9_VISION_RELATIONSHIP_RECONCILIATION_REQUIRED'
   | 'P9_QUANTITY_INVARIANT_FAILED'
   | 'P9_PUBLICATION_FAILED'
   | 'P9_AUTH_REQUIRED'
@@ -132,6 +145,19 @@ export const PHASE9_ERROR_CATALOGUE: Record<Phase9ErrorCode, ErrorDefinition> = 
   P9_MEDIA_MULTIFRAME_UNSUPPORTED: { code: 'P9_MEDIA_MULTIFRAME_UNSUPPORTED', httpStatus: 422, retryable: false, safeOwnerMessage: 'Animated or multi-frame images are not supported.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
   P9_MEDIA_OBJECT_CHANGED: { code: 'P9_MEDIA_OBJECT_CHANGED', httpStatus: 409, retryable: false, safeOwnerMessage: 'The uploaded image changed; request a new upload.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: false },
   P9_MEDIA_PROCESSING_RETRYABLE: { code: 'P9_MEDIA_PROCESSING_RETRYABLE', httpStatus: 503, retryable: true, safeOwnerMessage: 'Image validation will retry.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_VISION_NO_BOOKS: { code: 'P9_VISION_NO_BOOKS', httpStatus: 200, retryable: false, safeOwnerMessage: 'No books were detected in this image.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_VISION_LANGUAGE_MISMATCH: { code: 'P9_VISION_LANGUAGE_MISMATCH', httpStatus: 200, retryable: false, safeOwnerMessage: 'No books matched the selected language.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_VISION_OVER_LIMIT: { code: 'P9_VISION_OVER_LIMIT', httpStatus: 422, retryable: false, safeOwnerMessage: 'This image contains more than 15 visible books.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_VISION_QUALITY_REJECTED: { code: 'P9_VISION_QUALITY_REJECTED', httpStatus: 422, retryable: false, safeOwnerMessage: 'This image could not be analyzed clearly.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_VISION_SCHEMA_INVALID: { code: 'P9_VISION_SCHEMA_INVALID', httpStatus: 502, retryable: false, safeOwnerMessage: 'The image result could not be validated.', severity: 'error', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_VISION_ANALYZER_TIMEOUT: { code: 'P9_VISION_ANALYZER_TIMEOUT', httpStatus: 503, retryable: true, safeOwnerMessage: 'Image analysis will retry.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_VISION_ANALYZER_UNAVAILABLE: { code: 'P9_VISION_ANALYZER_UNAVAILABLE', httpStatus: 503, retryable: true, safeOwnerMessage: 'Image analysis will retry.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_VISION_MEDIA_UNAVAILABLE: { code: 'P9_VISION_MEDIA_UNAVAILABLE', httpStatus: 422, retryable: false, safeOwnerMessage: 'The prepared image is unavailable for analysis.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_VISION_DATABASE_RETRYABLE: { code: 'P9_VISION_DATABASE_RETRYABLE', httpStatus: 503, retryable: true, safeOwnerMessage: 'Image analysis will retry.', severity: 'error', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_VISION_INTERNAL_PERMANENT: { code: 'P9_VISION_INTERNAL_PERMANENT', httpStatus: 500, retryable: false, safeOwnerMessage: 'Image analysis stopped because of an internal validation failure.', severity: 'critical', survivingEffect: 'none', reuseIdempotencyKey: false },
+  P9_VISION_STALE_ATTEMPT: { code: 'P9_VISION_STALE_ATTEMPT', httpStatus: 409, retryable: false, safeOwnerMessage: 'This image-analysis attempt is no longer active.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
+  P9_VISION_PERSISTENCE_CONFLICT: { code: 'P9_VISION_PERSISTENCE_CONFLICT', httpStatus: 409, retryable: false, safeOwnerMessage: 'The image result conflicts with a completed attempt.', severity: 'critical', survivingEffect: 'none', reuseIdempotencyKey: false },
+  P9_VISION_RELATIONSHIP_RECONCILIATION_REQUIRED: { code: 'P9_VISION_RELATIONSHIP_RECONCILIATION_REQUIRED', httpStatus: 409, retryable: false, safeOwnerMessage: 'Image analysis stopped because its prepared input requires reconciliation.', severity: 'critical', survivingEffect: 'none', reuseIdempotencyKey: false },
   P9_QUANTITY_INVARIANT_FAILED: { code: 'P9_QUANTITY_INVARIANT_FAILED', httpStatus: 409, retryable: false, safeOwnerMessage: 'The quantity could not be updated safely. Please contact support.', severity: 'critical', survivingEffect: 'none', reuseIdempotencyKey: true },
   P9_PUBLICATION_FAILED: { code: 'P9_PUBLICATION_FAILED', httpStatus: 202, retryable: true, safeOwnerMessage: 'The book was saved privately, but publishing is still pending.', severity: 'error', survivingEffect: 'private_inventory_committed', reuseIdempotencyKey: true },
   P9_AUTH_REQUIRED: { code: 'P9_AUTH_REQUIRED', httpStatus: 401, retryable: false, safeOwnerMessage: 'Sign in again before continuing.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
@@ -266,6 +292,9 @@ export const PHASE9_FORBIDDEN_TELEMETRY_FIELDS = [
 export const PHASE9_PERSISTED_TELEMETRY_DETAIL_ALLOWLIST = [
   'operation', 'outcome', 'safe_error_code', 'retryable', 'attempt_count',
   'duration_ms', 'input_bytes', 'output_bytes', 'width', 'height', 'detected_mime',
+  'detected_visible_book_count', 'candidate_count', 'pipeline_version',
+  'prompt_version', 'adapter_key', 'adapter_version', 'schema_version',
+  'provider_key', 'model_key', 'model_version',
 ] as const;
 
 export const PHASE9_PERSISTED_AUDIT_DETAIL_ALLOWLIST = [

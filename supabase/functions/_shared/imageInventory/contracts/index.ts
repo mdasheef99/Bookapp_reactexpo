@@ -11,3 +11,4 @@ export * from './vision';
 export * from '../domain/isbn';
 export * from '../domain/policies';
 export * from '../domain/validation';
+export * from '../domain/visionPolicy';

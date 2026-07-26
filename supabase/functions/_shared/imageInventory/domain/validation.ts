@@ -9,7 +9,7 @@ export class Phase9ContractError extends Error {
 }
 
 const CONTROL_OR_BIDI = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/u;
-const ACTIVE_CONTENT = /(?:https?:\/\/|file:\/\/|javascript:|data:text\/html|<\/?[a-z][^>]*>|\[[^\]]+\]\([^)]*\)|(?:^|\s)(?:\.\.?[/\\]|[A-Za-z]:\\)|\b(?:SELECT\s+.+\s+FROM|INSERT\s+INTO|UPDATE\s+.+\s+SET|DELETE\s+FROM|DROP\s+(?:TABLE|SCHEMA|DATABASE)|ALTER\s+(?:TABLE|SCHEMA)|TRUNCATE\s+TABLE)\b|\b(?:curl|wget|powershell|cmd\.exe|bash|sh)\s+[-/]|\brm\s+-rf\b)/iu;
+const ACTIVE_CONTENT = /(?:https?:\/\/|file:\/\/|javascript:|data:text\/html|<\/?[a-z][^>]*>|\[[^\]]+\]\([^)]*\)|(?:^|\s)(?:\.\.?[/\\]|[A-Za-z]:\\|\\\\[^\s\\]+\\[^\s\\]+|\/(?:[^/\s]+\/)+[^/\s]+)|\b(?:SELECT\s+.+\s+FROM|INSERT\s+INTO|UPDATE\s+.+\s+SET|DELETE\s+FROM|DROP\s+(?:TABLE|SCHEMA|DATABASE)|ALTER\s+(?:TABLE|SCHEMA)|TRUNCATE\s+TABLE)\b|\b(?:curl|wget|powershell|cmd\.exe|bash|sh)\s+[-/]|\brm\s+-rf\b)/iu;
 
 export function asRecord(value: unknown, field: string): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {

@@ -54,6 +54,13 @@
 | P9-D44 | Canonical alias vocabulary is kinds `transliteration`, `translation`, `common_spelling`, `recognized_title`; sources `automated`, `provider_official`, `owner_verified`, `platform_verified`; approval statuses `proposed`, `approved`, `rejected`. `superseded` is a lifecycle/audit reason that resolves the persisted status to `rejected`, not a persisted approval status. | locked 2026-07-22 |
 | P9-D45 | Private inventory accepts integer `price_paise >= 0`; publication requires integer `price_paise > 0`; negative, fractional, and unsafe integers fail closed. | locked 2026-07-22 |
 | P9-D46 | The WU0A stable-error register is authoritative for C01–C30 and Q01–Q11; every operation maps only to registered `P9_*` codes carrying HTTP status, retryability, safe message, severity, surviving effects, and idempotency-key reuse semantics. | locked 2026-07-22 |
+| P9-D47 | `p9-vision-v2` separates provider-normalized multimodal observations from application-owned product policy; provider-specific fields never escape the adapter. | locked 2026-07-26 |
+| P9-D48 | Detected count over 15 is represented with zero observations and rejects the complete image; mixed-language/`und` observations remain immutable evidence but do not become candidates. | locked 2026-07-26 |
+| P9-D49 | Any structural observation/envelope defect rejects the whole result; structurally valid identity-insufficient observations may be retained without a candidate. | locked 2026-07-26 |
+| P9-D50 | Repeated visible copies remain separate by ordinal. Vision evidence, metadata selection, and Owner edits are separate persisted layers. | locked 2026-07-26 |
+| P9-D51 | One token/attempt-fenced transaction owns analysis evidence, accepted candidates, input terminal state, and job completion; exact completion replay uses canonical hash plus completing-claim fingerprint. | locked 2026-07-26 |
+| P9-D52 | Unit 4 requires forward M12 after unapplied M11: two immutable analysis tables, candidate lineage/publisher clue, widened detected count, and four service-only vision RPCs. | design-ready 2026-07-26 |
+| P9-D53 | Unit 4 is fixture-only and has no fallback, metadata, inventory, publication, UI, migration-application, deployment, or real-provider authority. | locked 2026-07-26 |
 
 ## Source reconciliation
 
@@ -145,3 +152,11 @@ Audit performed read-only on 2026-07-19 after `get_project` verification.
 - Amended alias limits, request-photo duplicate exclusion, publication-failure survival, initiator-only session authority, provider reuse rights, central validation/error/grant/query registers, privilege requirements, quantity-validation wording, security tests, and eight logical migration groups.
 - Retained terminal-input-only Close behavior; internal `closing` is race-safe finalization, not an early-close UI state.
 - WU0 is approved. Contract/test implementation, migration-file creation, migration application, live provider calls, storage changes, and product code remain separately unauthorized.
+
+### 2026-07-26 — Work Unit 4 fixture vision-analysis SDD readiness
+
+- Reconciled the clean branch at `0a8e57a` and corrected the durable handoff from “uncommitted ingestion candidate” to committed local M11/runtime, still unapplied and undeployed.
+- Re-verified exact project `ahntbtktjjmvfosgkmgn` read-only: M01-M08/M10 are live, M11/ingestion functions are absent, generic live jobs are worker-ID-fenced, private extraction tables remain client-inaccessible, and no ingestion/vision function is deployed.
+- Finalized `p9-vision-v2`, count/language/repeated-position decisions, exact token/attempt job transitions, one persistence/replay transaction, minimum forward M12, stable errors, privacy boundaries, and 31 red-first cases.
+- No production/test/migration file, provider call, Supabase/Storage mutation, deployment, stage, commit, or push occurred.
+- Exact next gate: separate authorization for red-first local Unit 4 implementation including forward M12 creation/testing, with live application and all external/provider effects still prohibited.

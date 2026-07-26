@@ -1,5 +1,5 @@
 export const PHASE9_CONTRACT_VERSION = 'p9-contract-v1' as const;
-export const PHASE9_VISION_SCHEMA_VERSION = 'p9-vision-v1' as const;
+export const PHASE9_VISION_SCHEMA_VERSION = 'p9-vision-v2' as const;
 export const PHASE9_METADATA_SCHEMA_VERSION = 'p9-metadata-v1' as const;
 export const PHASE9_ALIAS_SCHEMA_VERSION = 'p9-alias-v1' as const;
 export const PHASE9_MARKETPLACE_QUERY_VERSION = 'p9-marketplace-query-v1' as const;

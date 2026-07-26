@@ -32,7 +32,7 @@ afterEach(async () => {
 after(async () => db.close());
 
 test('clean Phase 6 migration creates all relations and deferred foreign keys', async () => {
-  assert.equal(phase9MigrationNames.length, 10);
+  assert.equal(phase9MigrationNames.length, 11);
   const count = await scalar(db, `SELECT count(*)::int FROM information_schema.tables
     WHERE table_schema='public' AND table_name IN ('phase9_provider_registry','book_search_aliases',
     'image_extraction_sessions','image_extraction_inputs','image_extraction_candidates',
@@ -64,7 +64,7 @@ test('provider provenance and canonical search-only alias constraints reject inv
       '${OWNER_A}','approved')`));
 });
 
-test('language policy persists and >15 candidate counts reject', async () => {
+test('language policy persists and detected counts widen for over-limit evidence', async () => {
   await setActor(db, OWNER_A);
   const sessionId = await scalar(db, `SELECT public.phase9_start_session(NULL,'hi','Deva','good','A1',1,
     'private','start-language-0001',gen_random_uuid())`);
@@ -72,9 +72,12 @@ test('language policy persists and >15 candidate counts reject', async () => {
   await assert.rejects(db.query(`SELECT public.phase9_start_session(NULL,'en',NULL,'good','A1',1,
     'private','start-language-0001',gen_random_uuid())`));
   await resetActor(db);
+  await db.exec(`INSERT INTO public.image_extraction_inputs(id,session_id,store_id,source_kind,
+    state,sha256,detected_candidate_count,orchestration_version) VALUES(gen_random_uuid(),'${sessionId}',
+    '${STORE_A}','camera','failed','abc',16,'v1')`);
   await assert.rejects(db.exec(`INSERT INTO public.image_extraction_inputs(id,session_id,store_id,source_kind,
     state,sha256,detected_candidate_count,orchestration_version) VALUES(gen_random_uuid(),'${sessionId}',
-    '${STORE_A}','camera','failed','abc',16,'v1')`));
+    '${STORE_A}','camera','failed','def',101,'v1')`));
 });
 
 test('forged store is denied and initiating Owner owns session access', async () => {

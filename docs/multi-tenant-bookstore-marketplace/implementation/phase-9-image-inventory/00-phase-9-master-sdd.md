@@ -4,7 +4,7 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 **Phase:** 9
-**Implementation:** WU0A server contract/test foundation independently reviewed and approved; product/runtime implementation not started
+**Implementation:** WU0A contracts and the committed ingestion foundation reach one queued `vision_extract` job; the fixture-backed Unit 4 runtime and local M12 are fully corrected and verified for Git integration, while M11/M12 remain unapplied and all ingestion/vision services remain undeployed
 
 ## 1. Decision
 
@@ -92,7 +92,7 @@ flowchart LR
 4. Server creates a private media asset, validates signature/MIME/decode/size/pixels, re-encodes, strips metadata, hashes it, and checks replay/quota policy.
 5. Quality gate checks blur, glare, resolution, framing, and count envelope. An image with more than 15 spines is rejected; it is never truncated silently.
 6. A persistent job invokes the primary vision adapter with only the sanitized image, selected language, strict task/schema, and opaque correlation ID.
-7. Output is schema-validated and bounded. A technical/schema/broad unusable failure may invoke one whole-image fallback. Valid empty/wrong-language results do not create retry loops.
+7. Output is schema-validated and bounded. A technical/schema/broad unusable failure may invoke one whole-image fallback. Valid empty/wrong-language results do not create retry loops. The fixture-backed first runtime persists immutable image/observation evidence and creates review candidates only for structurally valid observations matching the session-selected language. Mixed-language and unknown-language observations are retained as private evidence but skipped; more than 15 rejects the complete image.
 8. Each observed candidate is looked up locally, then through sequential configured metadata providers if necessary. One coherent edition snapshot is selected.
 9. One automated operation may propose up to three source-bearing English aliases after metadata selection; bounded provider-recognized or Owner/platform-verified aliases may coexist.
 10. Owner reviews candidates, applies defaults, corrects only highlighted fields, adds a missed candidate/removes a false candidate, and chooses duplicate action and private/publish outcome.
@@ -210,6 +210,7 @@ The normative unit order is in [the implementation tracker](./trackers/02-implem
 | MAS-AC08 | No Phase 7/8 behavior appears in migration, function, app, event, or test scope. |
 | MAS-AC09 | Initiator-only session mutation/resume is enforced, interactive support intervention is absent, and worker/reconciliation recovery cannot grant cross-store private-data access. |
 | MAS-AC10 | Publication failure retains one private inventory effect and no public listing until idempotent retry succeeds. |
+| MAS-AC11 | Vision completion transactionally persists one immutable analysis result, preserves repeated positions, creates only expected-language review candidates, and cannot mutate metadata, inventory, or publication. |
 
 ## 15. Open review items
 

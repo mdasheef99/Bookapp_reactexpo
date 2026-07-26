@@ -1,12 +1,16 @@
 # Phase 9 Requirements Traceability
 
-**Last updated:** 2026-07-23
+**Last updated:** 2026-07-26
 
 | Requirement | Owning SDD | Primary acceptance IDs |
 | --- | --- | --- |
 | Same-language spine stack, maximum 15, camera/gallery | 02 Extraction | EXT-01–EXT-05 |
 | Simple Start/Close session and summary | 02 Extraction; 03 Review | EXT-06; REV-01 |
-| Model-agnostic primary/fallback vision | 02 Extraction | EXT-07–EXT-10 |
+| Model-agnostic primary/fallback vision | 02 Extraction; Unit 4 design | EXT-07–EXT-10; EXT-19 |
+| Vision count/language/repeated-position policy | 00 Master; 01 Data; 02 Extraction; Unit 4 design | MAS-01/02; DAT-26/27; EXT-19–EXT-21 |
+| Attempt-token-fenced vision persistence and replay | 02 Extraction; 04 Media; Unit 4 design | EXT-22/23; MED-23 |
+| Immutable analysis evidence separate from metadata/Owner edits | 01 Data; 02 Extraction; 04 Media; Unit 4 design | DAT-26/27; EXT-24; MED-24 |
+| Fixture vision runtime has zero metadata/inventory/publication effect | 00 Master; 02 Extraction; Unit 4 design | MAS-05/07; MAS-AC11; EXT-25 |
 | Provider-agnostic local/primary/secondary metadata | 01 Data; 02 Extraction | DAT-05–DAT-09; EXT-11 |
 | Title/author priority; visible ISBN only as clue | 02 Extraction; 01 Data | EXT-12; DAT-03 |
 | Description, ISBN-10/13, rich metadata, cover | 01 Data | DAT-01–DAT-04 |
@@ -40,9 +44,11 @@
 | Quota/retry policy model-agnostic and configurable | 02 Extraction | EXT-13–EXT-17 |
 | Phase 7/8 independence | 00 Master; 06 Photo request | MAS-09; PHO-13 |
 
-## Local ingestion-runtime trace (2026-07-23)
+## Local ingestion-runtime and Unit 4 trace (2026-07-26)
 
-Server-generated upload paths, content-hashed canonical completion, immutable service-only source snapshots, opaque token-and-attempt validation leases, sanitized private linking, and one vision-job identity trace to 02 Extraction EXT-01 through EXT-06 and 04 Media MED-01 through MED-10. Local M11, Jest, PGlite, and 8/12/16 MP benchmark evidence remain candidate-only. Sanitation is owned by the dedicated service-authenticated worker; Owner Edge hashes completion bytes but never decodes or sanitizes media. Animated/multi-frame PNG/WebP is rejected, and ImageMagick's 64 MP internal working allowance remains subordinate to the 16 MP source ceiling.
+Server-generated upload paths, content-hashed canonical completion, immutable service-only source snapshots, opaque token-and-attempt validation leases, sanitized private linking, and one vision-job identity trace to 02 Extraction EXT-01 through EXT-06 and 04 Media MED-01 through MED-10. M11 and the ingestion runtime are committed at `0a8e57a` but remain unapplied/undeployed. Sanitation is owned by the dedicated service-authenticated worker; Owner Edge hashes completion bytes but never decodes or sanitizes media. Animated/multi-frame PNG/WebP is rejected, and ImageMagick's 64 MP internal working allowance remains subordinate to the 16 MP source ceiling.
+
+The [Unit 4 design](../work-units/04-fixture-vision-analysis-runtime-design.md) traces `p9-vision-v2`, count/language/repeated-position policy, exact lease fencing, transactional evidence/candidate persistence, forward M12 schema/grants, privacy allowlists, stable errors, and the red-first matrix to MAS-01/02/05/07, MAS-AC11, DAT-16/26/27, EXT-02-10/19-25, and MED-08/09/21/23/24. The final corrected contract/analyzer/policy/worker/M12 implementation supplies executable evidence: Phase 9 Jest 132/132 and PGlite 57/57, including authoritative job-row claim validation, stale-safe job-only relationship reconciliation, database-owned retryability and canonical hashing/recursive validation, rejected-promise and permanent-error transport, path-shaped evidence rejection, exact UTF-8 byte boundaries, and explicit no-metadata/no-inventory/no-publication checks. No provider call or external mutation occurred.
 
 ## Root specification mapping
 
