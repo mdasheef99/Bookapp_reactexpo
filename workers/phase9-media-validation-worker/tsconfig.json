@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "rootDir": "../..",
+    "outDir": "../../.phase9-dist",
+    "noEmitOnError": true
+  },
+  "include": [
+    "server.ts",
+    "bootstrap.ts",
+    "index.ts",
+    "../phase9-runtime/**/*.ts",
+    "../../supabase/functions/_shared/imageInventory/contracts/**/*.ts",
+    "../../supabase/functions/_shared/imageInventory/media/**/*.ts",
+    "../../supabase/functions/_shared/imageInventory/runtime/mediaValidationWorker.ts"
+  ]
+}

@@ -1,8 +1,8 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit4_final_corrections_verified_git_integration_authorized`
+**Status:** `deployment_runtime_scaffolding_integrated`
 **Last updated:** 2026-07-26
-**Implementation status:** M01-M08/M10 are live-verified; M11/ingestion runtime is committed at `0a8e57a`; all Unit 4 review blockers are corrected and fully verified for final Git integration; M11/M12 remain unapplied and all services remain undeployed
+**Implementation status:** M01-M08/M10 are live-verified; Unit 4/M12 is integrated at `e9ba2d9`; all five Unit 4A review corrections and the synthetic GitHub Actions container gate passed and Unit 4A is integrated; M11/M12 remain unapplied and all services remain undeployed
 **Supabase mutation status:** M01-M08 plus M10 applied once to `ahntbtktjjmvfosgkmgn`; M11/M12 were not applied, M09 is absent, and no ingestion/vision function was deployed
 **Database checkpoint:** M01-M08 and forward public-boundary correction M10 are live-verified.
 
@@ -54,6 +54,7 @@ After the repository entrypoint, read in this order:
 | [Work Unit 0 plan](./work-units/00-contracts-threat-migration-plan.md) | Versioned contract shapes, fixtures, threat tests, migration sequence, correction strategy, and stop gates. |
 | [Work Unit 0B technical design](./work-units/00b-backend-api-technical-design-plan.md) | Router for seven completed backend/API design artifacts covering commands, queries, DTOs, authorization, state, jobs, media, marketplace, request photos, red tests, exact later file allowlists, and independent gates. |
 | [Unit 4 fixture vision-analysis runtime](./work-units/04-fixture-vision-analysis-runtime-design.md) | Locally complete `p9-vision-v2`, fixture analyzer, product policy, dedicated worker, token/attempt state machine, forward M12 persistence/RPCs, privacy, and red-first evidence. |
+| [Unit 4A deployment-runtime scaffolding](./work-units/04a-deployment-runtime-scaffolding-sdd.md) | Provider-neutral sanitation/fixture-vision service hosts, strict environment loading, dynamic fixtures, safe observability, manual invocation, deterministic builds/containers, and deployment validation. |
 
 ## Continuity tools
 
@@ -94,7 +95,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, WU0A/WU0B, corrected Package 1 design, and live-verified M01-M08/M10 checkpoint are independently approved. M11 is committed but unapplied; all bounded Unit 4 runtime/M12 review blockers are corrected and verified, and only the authorized final Git integration remains in this session. M09, M11/M12 application, deployment, real providers, metadata, inventory/publication implementation, and later units remain separately gated. Preserve these controls:
+The planning baseline, WU0A/WU0B, corrected Package 1 design, and live-verified M01-M08/M10 checkpoint are independently approved. Unit 4/M12 is integrated at `e9ba2d9`; M11/M12 are committed but unapplied. All five Unit 4A review corrections, final local verification, and the synthetic GitHub Actions container gate passed; Unit 4A is integrated. M09, M11/M12 application, deployment, live secret configuration, real providers, metadata, inventory/publication implementation, and later units remain separately gated. Preserve these controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

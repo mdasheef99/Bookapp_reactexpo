@@ -20,3 +20,14 @@ The worker rejects animated/multi-frame PNG and WebP. ImageMagick's 64 MP `area`
 resource policy is an internal decode/cache working allowance, not the source-image
 limit. The processor independently enforces the 16,000,000-pixel ceiling before
 decode when headers permit and again after decode.
+
+## Deployment scaffold
+
+Build with `npm run build:phase9:media-worker` and start with
+`npm run start:phase9:media-worker`. `server.ts` exposes non-mutating
+`GET /health`, local-only `GET /ready`, and authenticated `POST /run`. It accepts
+one processing request at a time and handles `SIGINT`/`SIGTERM` gracefully.
+
+The exact environment table and retained fixture-evidence policy are in
+`work-units/04a-deployment-runtime-scaffolding-sdd.md`. The provider-neutral
+Dockerfile copies the pinned ImageMagick WASM into `/app/runtime/magick.wasm`.

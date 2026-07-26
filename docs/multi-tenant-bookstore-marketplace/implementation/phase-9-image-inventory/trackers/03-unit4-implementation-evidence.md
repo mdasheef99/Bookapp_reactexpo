@@ -1,8 +1,8 @@
 # Phase 9 Unit 4 Implementation Evidence
 
-**Status:** `final_corrections_verified_git_integration_authorized`
+**Status:** `integrated_main_e9ba2d9`
 **Date/session:** 2026-07-26
-**Branch/baseline:** `codex/phase9-vision-analysis-runtime` at `0a8e57a7fc019263ecbd474b3875f00f9748c80c`
+**Branch/baseline:** integrated on `main` at `e9ba2d9be93e54c43e6b55a86eb5a168fe30b5ed`
 
 ## Authorized scope
 
@@ -60,7 +60,7 @@ Implement the accepted fixture-backed multimodal vision-analysis work unit red-f
 - Rejected claim/context/persist/fail promises map to bounded retryable transport outcomes. Unknown resolved database/domain errors map to bounded permanent internal failure; explicit stale alone maps to stale, and persistence conflicts remain permanent reconciliation-required outcomes.
 - TypeScript and SQL reject POSIX absolute, UNC, drive-letter, and traversal path-shaped evidence while accepting ordinary slash prose.
 - Executable PGlite coverage now spans omitted/NULL arguments, NULL/nonexistent job IDs, every authoritative RPC, directly expired unreclaimed leases, database-owned retry classification, and exact canonical sizes of 262,143 accepted bytes and 262,145 rejected bytes.
-- Git integration status: all local gates passed and this exact candidate is authorized for the requested stage/commit/push/fast-forward integration. Final commit and remote equality are recorded in the session closeout.
+- Git integration status: completed on `main` at `e9ba2d9be93e54c43e6b55a86eb5a168fe30b5ed`; `origin/main` matched at the Unit 4A session baseline.
 
 ## External state and limitations
 
@@ -72,4 +72,4 @@ No accepted product decision was reopened. M12 keeps existing job/input/candidat
 
 ## Next authorized action
 
-Complete the authorized Git integration of this exact verified Unit 4 candidate, then stop. Do not apply M11/M12, deploy, call real providers, mutate Supabase/Storage, or begin another work unit.
+Unit 4 is complete and integrated. Unit 4A deployment-runtime scaffolding is tracked separately and awaits independent review. Do not apply M11/M12, deploy, configure secrets, call real providers, mutate Supabase/Storage, or begin another work unit without separate authorization.

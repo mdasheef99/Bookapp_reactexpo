@@ -1,16 +1,16 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `unit4_fixture_vision_analysis_sdd_ready`
-**Implementation status:** `unit4_final_corrections_verified_git_integration_authorized`; M11/M12 unapplied and all ingestion/vision services undeployed; Package 1 M01-M08/M10 live-verified
+**Planning status:** `deployment_runtime_scaffolding_sdd_implemented`
+**Implementation status:** `deployment_runtime_scaffolding_integrated`; M11/M12 unapplied and all ingestion/vision services undeployed; Package 1 M01-M08/M10 live-verified
 **Last updated:** 2026-07-26
-**Current milestone:** fixture-backed multimodal vision-analysis runtime fully corrected and verified
-**Active work unit:** `unit4_final_corrections_verified_git_integration_authorized`
+**Current milestone:** Unit 4A local and synthetic cloud container gates passed; deployment-runtime scaffolding integrated
+**Active work unit:** `deployment_runtime_scaffolding_integrated`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** final bounded corrections for database-owned retryability, closed RPC transport classification, absolute/UNC path rejection, and exhaustive executable boundary coverage
-**Next authorized action:** complete the authorized stage/commit/push/fast-forward integration of this exact verified Unit 4 candidate, then stop
-**Implementation authority:** Unit 4 correction implementation and final verification are complete; only this exact Git integration is authorized, while later units require separate authorization
+**Last completed:** provider-neutral sanitation/fixture-vision service hosts, strict environment loading, dynamic fixtures, manual invoker, deterministic builds/containers, Owner function configuration, deployment validation, tests, and evidence
+**Next authorized action:** none within Unit 4A; await separate authorization for a named live preflight, migration application, deployment, or later work unit
+**Implementation authority:** Unit 4A correction and Git integration are complete; live application, deployment, secret configuration, and later units remain unauthorized
 **Migration creation/application authority:** local M11/M12 exist and are unapplied; M09 remains absent; no live application is authorized
-**Current gate:** final Git integration is authorized after all recorded gates passed; M11/M12 application, deployment, real providers, metadata, UI, inventory, publication, and later work remain prohibited
+**Current gate:** Unit 4A local and synthetic GitHub Actions image build/start verification passed; M11/M12 application, deployment, live secrets, real providers, metadata, UI, inventory, publication, and later work remain prohibited
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -18,7 +18,7 @@
 
 Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Package 1 M01-M08/M10 remain live exactly once. The bounded ingestion foundation—forward M11, Owner Edge intake, immutable source snapshots, token/attempt media leases, dedicated sanitizer worker, and tests—is committed on `main` at `0a8e57a`; M11 remains unapplied and both services remain undeployed. M09 remains absent.
 
-The [Unit 4 design](./work-units/04-fixture-vision-analysis-runtime-design.md) is implemented locally with strict `p9-vision-v2`, a deterministic fixture analyzer, platform policy, a dedicated service-authenticated worker, forward M12 immutable evidence/RPCs, and the complete red-first matrix. The first independent review returned `CHANGES_REQUIRED`; its confirmed fencing, canonical-hash/validation, runtime-classification, relationship-reconciliation, and status corrections are locally implemented. Final corrected verification evidence is recorded in the Unit 4 evidence tracker. Nothing was applied, deployed, staged, committed, pushed, or merged.
+The [Unit 4 design](./work-units/04-fixture-vision-analysis-runtime-design.md) and M12 are integrated on `main` at `e9ba2d9`. [Unit 4A](./work-units/04a-deployment-runtime-scaffolding-sdd.md) adds provider-neutral sanitation/fixture-vision HTTP services, strict environment and secret-separation checks, allowlisted request-bound fixtures, bounded observability, deterministic builds/containers, a sanitized manual invoker, and JWT-enabled local Owner Edge configuration. Final verification passed 14 Phase 9 Jest suites/131 tests, PGlite 57/57, repository TypeScript, both strict worker builds, the executable deployment validator, and the synthetic GitHub Actions container smoke. No migration was applied, service deployed, secret configured, provider called, or Supabase/Storage state mutated in Unit 4A.
 
 Auth hardening WU1/WU2 is locally complete and independently approved on `codex/auth-hardening-core`: production bypass policy is centralized and fail-closed; Zustand owns canonical session/status; one root bootstrap owns subscription/restoration; identity replacement remains blocked through cleanup failure and explicit retry; and current-device logout persists a non-secret deletion-intent guard until SDK or exact-key fallback removal succeeds. Auth no longer directly imports marketplace. Secure token persistence, Android backup, authoritative profile routing, OTP UX, native/offline testing, and remote EAS verification remain separately gated before Phase 9 mobile/private-ingestion runtime integration.
 
@@ -64,11 +64,12 @@ The exact development project was re-verified read-only on 2026-07-26 for the Un
 | Work Unit 0 plan | [`approved_2026-07-19`](./work-units/00-contracts-threat-migration-plan.md) |
 | Work Unit 0A contracts/tests | `approved_2026-07-19` |
 | Work Unit 0B technical design | [`independently_approved`](./work-units/00b-backend-api-technical-design-plan.md) |
-| Work Unit 4 fixture vision-analysis runtime | [`final_corrections_verified_git_integration_authorized`](./work-units/04-fixture-vision-analysis-runtime-design.md) |
+| Work Unit 4 fixture vision-analysis runtime | [`integrated_main_e9ba2d9`](./work-units/04-fixture-vision-analysis-runtime-design.md) |
+| Work Unit 4A deployment-runtime scaffolding | [`integrated_local_and_cloud_verified`](./work-units/04a-deployment-runtime-scaffolding-sdd.md) |
 
 ## Blocking gate before further implementation
 
-WU0A, WU0B, Package 1, and Unit 4 are ready at their recorded levels. M01-M08/M10 are live and immutable. M11 is committed and M12 is an unstaged forward migration; both are unapplied and services remain undeployed. Core auth WU1/WU2 is locally complete; correction-only Unit 4 independent re-review is next, while M09, migration application, deployment, and later work remain separately gated.
+WU0A, WU0B, Package 1, and Unit 4 are ready at their recorded levels. M01-M08/M10 are live and immutable. M11/M12 are committed but unapplied and services remain undeployed. Core auth WU1/WU2 is locally complete. All five Unit 4A review corrections, the complete local gate, and the synthetic GitHub Actions container gate are verified; Unit 4A is integrated. M09, migration application, deployment, secret configuration, and later work remain separately gated.
 
 ## Risk summary
 
@@ -88,4 +89,4 @@ WU0A, WU0B, Package 1, and Unit 4 are ready at their recorded levels. M01-M08/M1
 
 ## Next action gate
 
-Only the authorized stage/commit/push/fast-forward integration of the exact verified Unit 4 diff remains in this session. After integration, stop. Do not apply M11/M12, deploy services, call real vision/metadata providers, build UI, mutate inventory/publication, create/apply M09, or begin another unit.
+Unit 4A is complete and integrated. Await separate authorization for a named live preflight, migration application, deployment, or later work unit. Do not apply M11/M12, deploy services, configure live secrets, call real vision/metadata providers, build UI, mutate inventory/publication, create/apply M09, or begin another unit.

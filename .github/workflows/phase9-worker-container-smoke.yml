@@ -1,0 +1,49 @@
+name: Phase 9 worker container smoke
+
+on:
+  push:
+    branches:
+      - codex/phase9-deployment-runtime-scaffolding
+    paths:
+      - ".dockerignore"
+      - ".github/workflows/phase9-worker-container-smoke.yml"
+      - "package.json"
+      - "package-lock.json"
+      - "scripts/smoke-phase9-worker-containers.js"
+      - "supabase/functions/_shared/imageInventory/**"
+      - "workers/phase9-runtime/**"
+      - "workers/phase9-media-validation-worker/**"
+      - "workers/phase9-vision-analysis-worker/**"
+      - "docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/04-deployment-runtime-scaffolding-evidence.md"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".dockerignore"
+      - ".github/workflows/phase9-worker-container-smoke.yml"
+      - "package.json"
+      - "package-lock.json"
+      - "scripts/smoke-phase9-worker-containers.js"
+      - "supabase/functions/_shared/imageInventory/**"
+      - "workers/phase9-runtime/**"
+      - "workers/phase9-media-validation-worker/**"
+      - "workers/phase9-vision-analysis-worker/**"
+      - "docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/04-deployment-runtime-scaffolding-evidence.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase9-worker-container-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  container-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out candidate
+        uses: actions/checkout@v4
+      - name: Build and smoke both worker images
+        run: npm run smoke:phase9:worker-containers

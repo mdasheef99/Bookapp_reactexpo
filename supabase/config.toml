@@ -19,3 +19,8 @@ entrypoint = "./functions/commerce-scheduler/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/commerce-task-worker/index.ts"
+
+[functions.phase9-owner-ingestion]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/phase9-owner-ingestion/index.ts"

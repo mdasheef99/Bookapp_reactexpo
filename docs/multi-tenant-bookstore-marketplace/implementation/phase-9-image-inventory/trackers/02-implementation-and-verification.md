@@ -1,9 +1,9 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `unit4_final_corrections_verified_git_integration_authorized`
+**Status:** `deployment_runtime_scaffolding_integrated`
 **Last updated:** 2026-07-26
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `unit4_final_corrections_verified_git_integration_authorized`
+**Active work unit:** `deployment_runtime_scaffolding_integrated`
 
 This tracker is separate from planning decisions; WU0B remains independently approved after `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review, without granting later database/runtime authority.
 
@@ -17,7 +17,8 @@ This tracker is separate from planning decisions; WU0B remains independently app
 | 1 | [Package 1 live audit](../work-units/01-package1-live-audit.md) and [database design](../work-units/01-package1-database-design.md): metadata, aliases, condition/damage, pipeline/media/request-photo persistence, RLS/grants/functions/indexes/storage, and migration grouping | `m01_m08_m10_live_verified` | M01-M08 plus forward M10 live once; exact discovery/request/internal/private boundaries and advisor correction pass |
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `m02_live_verified` | M02 live through M10; Unit 4 needs forward evidence/lease delta |
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `committed_main_unapplied_undeployed` | M11/application/deployment remain separately gated |
-| 4 | [Fixture vision-analysis runtime](../work-units/04-fixture-vision-analysis-runtime-design.md): `p9-vision-v2`, analyzer, job orchestration, immutable evidence/candidates | `final_corrections_verified_git_integration_authorized` | 132/132 Phase 9 Jest, 57/57 PGlite, both TypeScript checks; no real provider or live application |
+| 4 | [Fixture vision-analysis runtime](../work-units/04-fixture-vision-analysis-runtime-design.md): `p9-vision-v2`, analyzer, job orchestration, immutable evidence/candidates | `integrated_main_e9ba2d9` | 132/132 Phase 9 Jest, 57/57 PGlite, both TypeScript checks; no real provider or live application |
+| 4A | [Deployment-runtime scaffolding](../work-units/04a-deployment-runtime-scaffolding-sdd.md): executable sanitation/fixture-vision hosts, strict environment, builds/containers, invocation and validation | `integrated_local_and_cloud_verified` | complete; no live application/deployment/secrets/providers |
 | 5 | Canonical-first metadata adapter/cache, ISBN validation, provider selection, aliases | `not_started` | provider fixtures and cost tests |
 | 6 | Owner session/defaults/capture/review UI with accessibility and recovery | `not_started` | Units 2–5 verified |
 | 7 | Controlled per-candidate commit, advisory duplicates, idempotency, projection changes | `not_started` | quantity/hold concurrency tests |
@@ -42,7 +43,7 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260722000008_marketplace_phase9_request_photo_seam.sql` | `20260722095729 marketplace_phase9_request_photo_seam` | MCP exact project 2026-07-22 | authorized live continuation | forward M10 repairs only grant regression | tables/FK/trigger/RLS/worker/hold/expiry verified; request grants preserved by M10 | `live_verified_with_m10` |
 | `20260722000010_marketplace_phase9_public_boundary_security_correction.sql` | `20260722125256 marketplace_phase9_public_boundary_security_correction` | MCP exact project 2026-07-22 | authorized bounded live correction | forward-only; M01-M08 immutable | exact three anon RPCs; invoker-safe 24-field view; zero direct view/private access; advisor error gone | `live_verified` |
 | `20260723000011_marketplace_phase9_ingestion_runtime_foundation.sql` | not applied | MCP exact project read-only 2026-07-26 | committed locally at `0a8e57a`; no application | forward-only; revoke legacy authenticated path RPCs | canonical completion, immutable source snapshot, token/attempt media lease, retry/idempotency static and PGlite behavior; no live readback | `local_committed_unapplied` |
-| `20260726000012_marketplace_phase9_vision_analysis_runtime.sql` | not applied | MCP exact project read-only 2026-07-26 | authorized local creation only; no application | forward-only after M11 | immutable evidence/candidate lineage, service-only token/attempt RPCs, database-owned retryability, job-only relationship reconciliation, rollback/replay/isolation/dead-letter; PGlite 57/57 | `local_verified_unapplied_git_integration_authorized` |
+| `20260726000012_marketplace_phase9_vision_analysis_runtime.sql` | not applied | MCP exact project read-only 2026-07-26 | committed on `main` at `e9ba2d9`; no application | forward-only after M11 | immutable evidence/candidate lineage, service-only token/attempt RPCs, database-owned retryability, job-only relationship reconciliation, rollback/replay/isolation/dead-letter; PGlite 57/57 | `local_verified_committed_unapplied` |
 Rules:
 
 - Re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
@@ -115,8 +116,7 @@ Rules:
 
 ## Append-only implementation log
 
-The bounded ingestion-runtime foundation is committed on `main` at `0a8e57a` and remains unapplied/undeployed. Unit 4 and local forward M12 now exist. The complete bounded review corrections implement fail-closed authoritative claims, database-owned retryability and canonical hashing/recursive validation, rejected-promise versus permanent-domain classification, path-shaped evidence rejection, exhaustive RPC boundaries, and stale-safe job-only relationship reconciliation. Final verification is 132/132 Phase 9 Jest and 57/57 PGlite plus both TypeScript checks, continuity, and diff hygiene. Final Git integration is authorized in this session; M11/M12 remain unapplied and services undeployed. Core-auth evidence remains in [03-auth-hardening-verification.md](./03-auth-hardening-verification.md).
-
+The bounded ingestion foundation and Unit 4/M12 are integrated on `main` at `e9ba2d9`; M11/M12 remain unapplied and all services remain undeployed. Unit 4A deployment-runtime scaffolding is integrated after independent correction review, the complete local gate, and the synthetic GitHub Actions container gate passed. It provides provider-neutral executable sanitation/fixture-vision hosts, strict environment and secret separation, request-bound allowlisted fixtures, bounded observability, deterministic builds/containers, sanitized manual invocation, and JWT-enabled local Owner function configuration. Its append-only evidence is in [04-deployment-runtime-scaffolding-evidence.md](./04-deployment-runtime-scaffolding-evidence.md). Core-auth evidence remains in [03-auth-hardening-verification.md](./03-auth-hardening-verification.md).
 ### 2026-07-23 — ingestion-runtime foundation corrected for dedicated-worker review
 
 - Scope/evidence: local M11 plus Owner Edge intake, dedicated worker entrypoint/shared contracts/real pinned sanitizer implement only Owner intake through one vision-job queue; excluded scope and M09 are absent. The correction pass persists immutable completion responses and source hashes, creates service-only immutable source snapshots, fences every worker transition with opaque claim token plus attempt, retries Storage transport failures, recovers ambiguous post-upload completion failures without duplicate media/vision effects, enforces strong distinct ingress secrets, normalizes privacy-key denial, rejects multi-frame PNG/WebP, and keeps the 64 MP ImageMagick working allowance subordinate to the 16 MP source ceiling. Final commands: focused Jest 9 suites/74 tests; `npm run test:phase9:db` 26/26; repository and dedicated-worker TypeScript passed. A read-only review of the current unstaged candidate confirmed the security/runtime guarantees, found three stale M06 Storage rows, and after their correction found no remaining merge blocker with recommendation `READY_FOR_INDEPENDENT_REVIEW`.

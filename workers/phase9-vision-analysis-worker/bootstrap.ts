@@ -1,8 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
-import {
-  FixtureSpineImageAnalyzer,
-} from '../../supabase/functions/_shared/imageInventory/analysis/fixtureSpineImageAnalyzer';
 import { handlePhase9VisionAnalysisWorker } from './index';
+import {
+  createDeploymentFixtureAnalyzer,
+  DeploymentFixtureCase,
+  parseDeploymentFixtureCase,
+} from './deploymentFixtures';
 
 export type VisionWorkerConfiguration = Readonly<{
   supabaseUrl: string;
@@ -10,7 +12,7 @@ export type VisionWorkerConfiguration = Readonly<{
   workerId: string;
   workerAuthToken: string;
   privilegedSecrets?: readonly string[];
-  fixtureRegistry: Readonly<Record<string, unknown>>;
+  fixtureCase: DeploymentFixtureCase;
 }>;
 
 export function assertVisionWorkerConfiguration(
@@ -27,6 +29,7 @@ export function assertVisionWorkerConfiguration(
     && privileged.every((secret) => token !== secret)
     && /^[A-Za-z0-9._:-]{16,128}$/u.test(configuration.workerId);
   if (!valid) throw new Error('P9_WORKER_CONFIGURATION_INVALID');
+  parseDeploymentFixtureCase(configuration.fixtureCase);
 }
 
 export function createPhase9VisionAnalysisService(
@@ -44,7 +47,7 @@ export function createPhase9VisionAnalysisService(
       },
     },
   );
-  const analyzer = new FixtureSpineImageAnalyzer(configuration.fixtureRegistry);
+  const analyzer = createDeploymentFixtureAnalyzer(configuration.fixtureCase);
   return (request: Request) => handlePhase9VisionAnalysisWorker(request, {
     workerId: configuration.workerId,
     workerAuthToken: configuration.workerAuthToken,
