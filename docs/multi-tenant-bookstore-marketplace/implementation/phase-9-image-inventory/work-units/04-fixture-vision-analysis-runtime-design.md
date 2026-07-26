@@ -1,9 +1,11 @@
 # Work Unit 4: Fixture-Backed Vision-Analysis Runtime Design
 
-**Status:** `final_corrections_verified_git_integration_authorized`
+**Status:** `integrated_m12_live_verified_service_undeployed`
 **Date:** 2026-07-26
-**Authority:** accepted Unit 4 specification and local implementation boundary; no migration application, deployment, real-provider, metadata, UI, inventory/publication, or Git publication authority
-**Depends on:** M01-M08/M10 live; committed local M11 must be applied before local M12; SDD 00 MAS-01-MAS-12; SDD 02 EXT-02-EXT-10; SDD 04 MED-06-MED-10/MED-17-MED-22
+**Authority:** accepted Unit 4 specification and implementation evidence; M11/M12 live application was completed under later separate authorization; deployment, real-provider, metadata, UI, and inventory/publication remain separately gated
+**Depends on:** M01-M08/M10/M11/M12 live; SDD 00 MAS-01-MAS-12; SDD 02 EXT-02-EXT-10; SDD 04 MED-06-MED-10/MED-17-MED-22
+
+**Current supersession (2026-07-27):** the design-time baseline below is preserved as historical evidence. M11 is live as `20260726182238`, M12 is live as `20260726182539`, and the fixture vision worker remains undeployed.
 
 ## 1. Scope and exclusions
 
@@ -30,7 +32,7 @@ Excluded:
 
 The analyzer performs multimodal image analysis, not a traditional OCR pipeline. It has no tools or authority.
 
-## 2. Verified current state
+## 2. Verified design-time state
 
 ### Live project, 2026-07-26 read-only
 
@@ -44,7 +46,7 @@ The analyzer performs multimodal image analysis, not a traditional OCR pipeline.
 
 ### Committed local M11
 
-- `0a8e57a` contains M11, Owner intake, and the media-validation worker; M11 remains unapplied and services remain undeployed.
+- At this design-time checkpoint, `0a8e57a` contained M11, Owner intake, and the media-validation worker; M11 was unapplied and services were undeployed.
 - M11 adds `lease_token_hash` and token/attempt-fenced claim, context, revalidate, snapshot-bind, complete, and fail functions only for `media_validate_sanitize`.
 - Successful media completion links one sanitized private media asset and queues exactly one deduplicated `vision_extract` job.
 - M11 supplies no vision claim/context/persist/fail/complete functions and no immutable vision-result persistence.
@@ -197,7 +199,7 @@ Zero-candidate outcomes have an analysis-result row and no observation/candidate
 
 ## 7. Minimum forward migration plan
 
-Future local M12, ordered after unapplied M11:
+Design-time proposed M12, ordered after then-unapplied M11:
 
 1. widen `image_extraction_inputs.detected_candidate_count` to permit recorded `0..100`; the product cap remains deterministic at 15;
 2. create service-only, RLS-enabled `image_analysis_results` with store/session/input/job FKs, authoritative outcome/counts, versions/provenance, bounded canonical snapshot/hash, completing claim fingerprint, safe error, and timestamps;

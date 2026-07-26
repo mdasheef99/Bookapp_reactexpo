@@ -4,6 +4,8 @@
 **Date/session:** 2026-07-26
 **Branch/baseline:** `codex/phase9-deployment-runtime-scaffolding` from `e9ba2d9be93e54c43e6b55a86eb5a168fe30b5ed`
 
+**Current supersession (2026-07-27):** this file preserves Unit 4A's historical scaffolding evidence. M11/M12 were subsequently applied and live-verified; all three services remain undeployed. Current application evidence is in [05-m11-m12-live-application-evidence.md](./05-m11-m12-live-application-evidence.md).
+
 ## Authorized scope
 
 Implement local-only SDD and red-first deployment scaffolding for the existing Owner ingestion boundary, sanitation worker, and fixture vision worker. M11/M12 application, deployment, secret configuration, Supabase/Storage mutation, real multimodal or metadata providers, lifecycle/scheduler work, Library UI work, and Git staging/integration remained prohibited.
@@ -62,8 +64,8 @@ Fixture-mode evidence is retained canonical evidence written through the same M1
 
 ## External state and limitations
 
-No migration was applied, service deployed, secret configured, provider called, or Supabase/Storage state mutated. M11/M12 remain committed but unapplied, and all three services remain undeployed. Hosting selection, representative-camera resource validation, live health/readiness/log validation, ingress scheduling, lifecycle cleanup, and real provider integration remain later separately authorized gates.
+During Unit 4A, no migration was applied, service deployed, secret configured, provider called, or Supabase/Storage state mutated. M11/M12 were then committed but unapplied, and all three services were undeployed. Hosting selection, representative-camera resource validation, live health/readiness/log validation, ingress scheduling, lifecycle cleanup, and real provider integration remain later separately authorized gates.
 
-## Next authorized action
+## Historical next authorized action
 
-None within Unit 4A. Await separate authorization for a named live preflight, migration application, deployment, or later work unit. Do not apply migrations, deploy, configure secrets, mutate Supabase/Storage, call providers, touch the Library UI branch, or begin another work unit.
+At Unit 4A closeout there was no further authority within that unit; the recorded next gate was separate authorization for live preflight, migration application, deployment, or later work. That historical gate prohibited migrations, deployment, secrets, Supabase/Storage mutation, provider calls, Library UI changes, and another work unit.

@@ -4,7 +4,7 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
-**Implementation checkpoint (2026-07-26):** M01-M08/M10 are live-verified. Committed local M11 remains unapplied/undeployed. The fixture-backed vision-analysis design adds only private immutable analysis evidence and candidate lineage; metadata selection, canonical identity, aliases, inventory, and publication remain separate later stages.
+**Implementation checkpoint (2026-07-27):** M01-M08/M10/M11/M12 are live-verified. M11/M12 add only the bounded ingestion foundation, private immutable analysis evidence, and candidate lineage; all services remain undeployed. Metadata selection, canonical identity, aliases, inventory, and publication remain separate later stages.
 
 ## 1. Decision
 

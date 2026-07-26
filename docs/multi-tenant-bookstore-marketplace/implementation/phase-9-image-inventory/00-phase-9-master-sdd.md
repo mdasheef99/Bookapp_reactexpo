@@ -4,7 +4,7 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 **Phase:** 9
-**Implementation:** WU0A contracts and the committed ingestion foundation reach one queued `vision_extract` job; the fixture-backed Unit 4 runtime and local M12 are fully corrected and verified for Git integration, while M11/M12 remain unapplied and all ingestion/vision services remain undeployed
+**Implementation checkpoint (2026-07-27):** WU0A/WU0B, the ingestion foundation, fixture-backed Unit 4 runtime, and Unit 4A deployment scaffolding are integrated. M01-M08/M10/M11/M12 are live-verified; all ingestion/vision services remain undeployed, and no real multimodal or metadata provider is implemented.
 
 ## 1. Decision
 

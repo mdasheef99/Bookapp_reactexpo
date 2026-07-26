@@ -15,14 +15,15 @@ If you are a new agent, do this before changing files:
 5. Read [`../README.md`](../README.md) and [`../DOC-12-build-strategy-and-implementation-sequence.md`](../DOC-12-build-strategy-and-implementation-sequence.md) for stable guardrails and phase gates.
 6. Read the source/domain documents routed for the active work unit and inspect current code/live evidence before acting.
 
-Current handoff as of 2026-07-19:
+Current handoff as of 2026-07-27:
 
 - Phase 6 is `complete_e2e_deferred`; its migrations M01-M39 and provider-independent `payment_ready` boundary are applied/verified in the development project.
 - Phases 7 Payment/Ledger/Settlement and 8 Pickup are deferred.
-- Phase 9 Image-to-LLM Inventory has an approved planning baseline and approved corrected Work Unit 0 plan; implementation has not started, and no Phase 9 migration/storage/function change exists.
-- The approved planning set is [`phase-9-image-inventory/`](./phase-9-image-inventory/README.md). Its [Work Unit 0 plan](./phase-9-image-inventory/work-units/00-contracts-threat-migration-plan.md) does not authorize WU0A contracts/tests or either migration permission.
+- Phase 9 Image-to-LLM Inventory has M01-M08/M10/M11/M12 live-verified on `ahntbtktjjmvfosgkmgn`; M09 remains absent.
+- The active set is [`phase-9-image-inventory/`](./phase-9-image-inventory/README.md). Unit 4A deployment scaffolding is integrated and locally/cloud verified, but Owner ingestion, sanitation-worker, and fixture vision-worker services remain undeployed.
 - Phase 9 is same-language `spine_stack` first (maximum 15), not `single_cover` first, and remains independent of deferred Phase 7/8 behavior.
-- Supabase was re-verified read-only on 2026-07-19 as `ahntbtktjjmvfosgkmgn` / `Bookconnect_reactexpo`; re-verify again before any migration action.
+- No service secrets or real multimodal/metadata provider credentials are configured. Ordered service deployment and live fixture-path verification are the next separately authorized work unit.
+- Supabase was re-verified read-only at M11/M12 closeout as `ahntbtktjjmvfosgkmgn` / `Bookconnect_reactexpo`; re-verify again before any further migration or deployment action.
 
 ## Before Coding
 

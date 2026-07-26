@@ -20,13 +20,14 @@ If you are a new coding or review agent, start here and do not write code immedi
 6. Read [DOC-12: Build Strategy and Implementation Sequence](./DOC-12-build-strategy-and-implementation-sequence.md) before creating an implementation plan or touching product files.
 7. Read the source specification docs routed for the active work unit. Do not rely on memory or older summaries.
 
-Current handoff as of 2026-07-19:
+Current handoff as of 2026-07-27:
 
 - Phase 6 is `complete_e2e_deferred`; Phases 7 and 8 are deferred by product decision.
-- Phase 9 Image-to-LLM Inventory is the active planning milestone; implementation has not started.
-- The Phase 9 SDD/supporting/tracker set and corrected Work Unit 0 plan under [`implementation/phase-9-image-inventory/`](./implementation/phase-9-image-inventory/README.md) are approved; no contract/product implementation or migration creation/application is authorized.
+- Phase 9 Image-to-LLM Inventory is active. M01-M08/M10/M11/M12 are live-verified on development project `ahntbtktjjmvfosgkmgn`; M09 remains absent.
+- The Phase 9 SDD/supporting/tracker set, WU0A/WU0B, ingestion runtime, fixture-vision runtime, and Unit 4A deployment scaffolding under [`implementation/phase-9-image-inventory/`](./implementation/phase-9-image-inventory/README.md) are implemented at their recorded levels.
 - Phase 9 begins with same-language spine-stack images, maximum 15 books/image, camera/gallery input, mandatory owner review, and controlled per-candidate inventory commits.
-- Exact Supabase project and all affected schema/storage state must be re-verified through Supabase MCP before migrations. No Phase 9 migration exists yet.
+- Owner ingestion, sanitation-worker, and fixture vision-worker services remain undeployed; no live service secrets or real model/metadata credentials are configured. Their ordered deployment and live fixture-path verification require separate authorization.
+- Exact Supabase project and affected live state must be re-verified through Supabase MCP before any further migration or deployment action.
 - Do not fold deferred payment, paid-order, pickup, refund, ledger, or settlement behavior into Phase 9.
 
 When in doubt, [DOC-13](./DOC-13-implementation-tracker.md) owns global status, the [active router](./implementation/ACTIVE.md) owns routing, and the active phase tracker owns its local milestone/next action. This README owns stable product-suite reading guardrails.

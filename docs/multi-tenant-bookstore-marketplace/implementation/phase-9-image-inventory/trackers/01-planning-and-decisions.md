@@ -1,7 +1,7 @@
 # Phase 9 Planning and Decision Tracker
 
 **Status:** `approved_baseline`
-**Last updated:** 2026-07-22
+**Last updated:** 2026-07-27
 **Purpose:** retain detailed product decisions, audit evidence, reconciliations, and deferred choices without inflating the master tracker
 
 ## Decision register
@@ -59,7 +59,7 @@
 | P9-D49 | Any structural observation/envelope defect rejects the whole result; structurally valid identity-insufficient observations may be retained without a candidate. | locked 2026-07-26 |
 | P9-D50 | Repeated visible copies remain separate by ordinal. Vision evidence, metadata selection, and Owner edits are separate persisted layers. | locked 2026-07-26 |
 | P9-D51 | One token/attempt-fenced transaction owns analysis evidence, accepted candidates, input terminal state, and job completion; exact completion replay uses canonical hash plus completing-claim fingerprint. | locked 2026-07-26 |
-| P9-D52 | Unit 4 requires forward M12 after unapplied M11: two immutable analysis tables, candidate lineage/publisher clue, widened detected count, and four service-only vision RPCs. | design-ready 2026-07-26 |
+| P9-D52 | Unit 4 uses forward M12 after M11: two immutable analysis tables, candidate lineage/publisher clue, widened detected count, and four service-only vision RPCs. | implemented and live-verified 2026-07-26 |
 | P9-D53 | Unit 4 is fixture-only and has no fallback, metadata, inventory, publication, UI, migration-application, deployment, or real-provider authority. | locked 2026-07-26 |
 
 ## Source reconciliation

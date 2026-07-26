@@ -2,11 +2,11 @@
 
 **Planning status:** `deployment_runtime_scaffolding_sdd_implemented`
 **Implementation status:** `m11_m12_live_verified_services_undeployed`; M01-M08/M10/M11/M12 live-verified and all ingestion/vision services undeployed
-**Last updated:** 2026-07-26
-**Current milestone:** M11/M12 sequential live application and exact-project verification complete
+**Last updated:** 2026-07-27
+**Current milestone:** M11/M12 live-application work unit closed and documentation integrated on `main` at `4abeef8`
 **Active work unit:** `m11_m12_live_verified_services_undeployed`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** M11 `20260726182238` and M12 `20260726182539` applied once and live-verified with service-only grants, unchanged data/Storage, and expected advisor deltas
+**Last completed:** M11 `20260726182238` and M12 `20260726182539` applied once and live-verified; eight-file closeout evidence committed and merged at `4abeef89ecebdb7a74a8ece3a1bdc0d5cfe6c8c5`
 **Next authorized action:** await separate authorization for ordered Owner-ingestion, sanitation-worker, and fixture-vision-worker deployment, infrastructure/service secret configuration, and live fixture-path verification
 **Implementation authority:** M11/M12 application is complete; deployment, secret configuration, provider calls, Storage-object mutation, and later units remain unauthorized
 **Migration creation/application authority:** M11/M12 are live-verified; M09 remains absent and separately gated; no further migration application is authorized
@@ -24,7 +24,7 @@ Auth hardening WU1/WU2 is locally complete and independently approved on `codex/
 
 Repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → `SESSION-START.md` → this tracker is the durable resume chain. A future session must report this block before acting and must use the session protocol's documentation matrix at closeout.
 
-The exact development project was re-verified read-only on 2026-07-26 for the Unit 4 audit:
+The exact development project was re-verified read-only at M11/M12 closeout:
 
 | Field | Verified value |
 | --- | --- |

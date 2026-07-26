@@ -1,7 +1,7 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
 **Status:** `m11_m12_live_verified_services_undeployed`
-**Last updated:** 2026-07-26
+**Last updated:** 2026-07-27
 **Implementation status:** M01-M08/M10/M11/M12 are live-verified; Unit 4A local and synthetic cloud gates passed; all ingestion/vision services remain undeployed
 **Supabase mutation status:** M01-M08/M10/M11/M12 applied once to `ahntbtktjjmvfosgkmgn`; M09 is absent, no Storage object changed, and no ingestion/vision service was deployed
 **Database checkpoint:** M01-M08 and forward corrections M10-M12 are live-verified.
@@ -95,7 +95,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, WU0A/WU0B, corrected Package 1 design, and live-verified M01-M08/M10 checkpoint are independently approved. Unit 4/M12 is integrated at `e9ba2d9`; M11/M12 are committed but unapplied. All five Unit 4A review corrections, final local verification, and the synthetic GitHub Actions container gate passed; Unit 4A is integrated. M09, M11/M12 application, deployment, live secret configuration, real providers, metadata, inventory/publication implementation, and later units remain separately gated. Preserve these controls:
+The planning baseline, WU0A/WU0B, corrected Package 1 design, and Unit 4/4A implementation are integrated at their recorded checkpoints. M01-M08/M10/M11/M12 are live-verified; the M11/M12 closeout evidence is integrated on `main` at `4abeef8`. All ingestion/vision services remain undeployed, and no service secrets or real provider credentials are configured. M09, ordered service deployment/live fixture verification, real providers, metadata, inventory/publication implementation, and later units remain separately gated. Preserve these controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

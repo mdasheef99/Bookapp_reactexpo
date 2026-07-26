@@ -1,9 +1,9 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-07-26
-**Audit mode:** authorized M11/M12 application plus exact-project Supabase MCP readback
+**Audit date:** 2026-07-27
+**Audit mode:** authorized M11/M12 application plus exact-project application and documentation-closeout Supabase MCP readback
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10/M11/M12 live-verified; no data row, Storage object, service, secret, or provider mutation
+**Mutation status:** M01-M08/M10/M11/M12 live-verified; closeout reconfirmed no further database, data-row, Storage-object, service, secret, or provider mutation
 
 **Unit 4 vision-analysis refresh:** M11/M12 applied sequentially on 2026-07-26 as `20260726182238` and `20260726182539`. Live jobs now have token/attempt fencing and vision reconciliation fields; immutable result/observation tables, candidate lineage, exact uniqueness, immutable triggers, and four service-only vision RPCs are live. Client table/RPC access remains denied. The Edge Function list still contains neither Owner ingestion nor vision analysis, and no data/Storage object changed.
 

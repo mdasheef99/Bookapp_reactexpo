@@ -8,6 +8,10 @@ worker, Git publication, or Library-branch change
 **Depends on:** committed Unit 3 ingestion runtime/M11 and Unit 4 fixture vision
 runtime/M12 at repository checkpoint `e9ba2d9`
 
+**Current deployment state (2026-07-27):** M11/M12 are live-verified; Owner ingestion,
+sanitation worker, and fixture vision worker remain undeployed. No service secret or
+real multimodal/metadata provider credential is configured.
+
 ## 1. Trace and scope
 
 This work unit makes the existing dedicated sanitation and fixture-vision handlers

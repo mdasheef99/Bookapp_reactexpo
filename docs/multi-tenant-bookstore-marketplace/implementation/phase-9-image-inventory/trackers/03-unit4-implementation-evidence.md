@@ -4,6 +4,8 @@
 **Date/session:** 2026-07-26
 **Branch/baseline:** integrated on `main` at `e9ba2d9be93e54c43e6b55a86eb5a168fe30b5ed`
 
+**Current supersession (2026-07-27):** this file preserves Unit 4's historical local-implementation evidence. M11/M12 were subsequently applied and live-verified; the fixture vision worker remains undeployed. Current application evidence is in [05-m11-m12-live-application-evidence.md](./05-m11-m12-live-application-evidence.md).
+
 ## Authorized scope
 
 Implement the accepted fixture-backed multimodal vision-analysis work unit red-first, including one forward-only local M12. M11/M12 application, deployment, real vision/metadata APIs, Owner/mobile UI, inventory/publication mutation, and Git stage/commit/push/merge remained prohibited.
@@ -64,12 +66,12 @@ Implement the accepted fixture-backed multimodal vision-analysis work unit red-f
 
 ## External state and limitations
 
-Supabase project `ahntbtktjjmvfosgkmgn` was used only for the accepted pre-implementation read-only evidence. This implementation performed no Supabase SQL/RPC/Storage mutation and no deployment or provider call. M11/M12 are unapplied; services are undeployed; tests use PGlite and recorded fixtures, not a live Postgres readback or real model.
+At Unit 4 implementation closeout, Supabase project `ahntbtktjjmvfosgkmgn` had been used only for the accepted pre-implementation read-only evidence. That implementation performed no Supabase SQL/RPC/Storage mutation and no deployment or provider call. M11/M12 were then unapplied; services were undeployed; tests used PGlite and recorded fixtures, not a live Postgres readback or real model.
 
 ## Decisions, deviations, and residual risk
 
 No accepted product decision was reopened. M12 keeps existing job/input/candidate states and M11 fencing. The fixture registry is deterministic and provider-free; real provider selection/fallback, representative-camera sizing, migration application, and deployment remain later gates. Independent review may require correction-only changes before any staging or commit authorization.
 
-## Next authorized action
+## Historical next authorized action
 
 Unit 4 is complete and integrated. Unit 4A deployment-runtime scaffolding is tracked separately and awaits independent review. Do not apply M11/M12, deploy, configure secrets, call real providers, mutate Supabase/Storage, or begin another work unit without separate authorization.

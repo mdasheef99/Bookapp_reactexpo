@@ -334,7 +334,8 @@ if (-not $phaseReadme.Contains('**Status:** `m11_m12_live_verified_services_unde
     Write-Error 'Phase 9 README disagrees with the M11/M12 live checkpoint.'
 }
 $pipeline = [IO.File]::ReadAllText((Join-Path $phaseRoot '02-extraction-enrichment-pipeline-sdd.md'))
-if (-not $pipeline.Contains('Unit 4 runtime and local M12 now exist') -or
+if (-not $pipeline.Contains('M11 `20260726182238` and M12 `20260726182539` are live-verified') -or
+    -not $pipeline.Contains('Services remain undeployed') -or
     $pipeline -match '(?i)no (?:runtime )?code, tests?, or migration(?: file)? (?:exists|yet)') {
     Write-Error 'Extraction pipeline SDD contains stale Unit 4 implementation status.'
 }

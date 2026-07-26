@@ -1,7 +1,7 @@
 # Phase 9 Implementation and Verification Tracker
 
 **Status:** `m11_m12_live_verified_services_undeployed`
-**Last updated:** 2026-07-26
+**Last updated:** 2026-07-27
 **Use:** only after the Phase 9 planning set is approved
 **Active work unit:** `m11_m12_live_verified_services_undeployed`
 
@@ -18,7 +18,7 @@ This tracker is separate from planning decisions; WU0B remains independently app
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `m02_live_verified` | M02 live through M10; Unit 4 needs forward evidence/lease delta |
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `m11_live_verified_service_undeployed` | M11 live as `20260726182238`; deployment separately gated |
 | 4 | [Fixture vision-analysis runtime](../work-units/04-fixture-vision-analysis-runtime-design.md): `p9-vision-v2`, analyzer, job orchestration, immutable evidence/candidates | `m12_live_verified_service_undeployed` | M12 live as `20260726182539`; no real provider; deployment separately gated |
-| 4A | [Deployment-runtime scaffolding](../work-units/04a-deployment-runtime-scaffolding-sdd.md): executable sanitation/fixture-vision hosts, strict environment, builds/containers, invocation and validation | `integrated_local_and_cloud_verified` | complete; no live application/deployment/secrets/providers |
+| 4A | [Deployment-runtime scaffolding](../work-units/04a-deployment-runtime-scaffolding-sdd.md): executable sanitation/fixture-vision hosts, strict environment, builds/containers, invocation and validation | `integrated_local_and_cloud_verified` | scaffolding complete; M11/M12 separately live-verified; services/secrets/providers remain undeployed/unconfigured |
 | 5 | Canonical-first metadata adapter/cache, ISBN validation, provider selection, aliases | `not_started` | provider fixtures and cost tests |
 | 6 | Owner session/defaults/capture/review UI with accessibility and recovery | `not_started` | Units 2–5 verified |
 | 7 | Controlled per-candidate commit, advisory duplicates, idempotency, projection changes | `not_started` | quantity/hold concurrency tests |
@@ -116,7 +116,7 @@ Rules:
 
 ## Append-only implementation log
 ### 2026-07-26 — M11/M12 live application and verification
-- Exact application, rollback, readback, advisor, mutation, and authorization evidence is recorded in [05-m11-m12-live-application-evidence.md](./05-m11-m12-live-application-evidence.md).
+- Exact application, rollback, readback, advisor, mutation, and authorization evidence is recorded in [05-m11-m12-live-application-evidence.md](./05-m11-m12-live-application-evidence.md). 2026-07-27 follow-up: `main`/`origin/main` closed at `4abeef89ecebdb7a74a8ece3a1bdc0d5cfe6c8c5`; routed documentation reconciliation and continuity/diff-hygiene checks passed, with no deployment, secret, Storage object, provider, or operational-data mutation afterward.
 ### 2026-07-23 — ingestion-runtime foundation corrected for dedicated-worker review
 
 - Scope/evidence: local M11 plus Owner Edge intake, dedicated worker entrypoint/shared contracts/real pinned sanitizer implement only Owner intake through one vision-job queue; excluded scope and M09 are absent. The correction pass persists immutable completion responses and source hashes, creates service-only immutable source snapshots, fences every worker transition with opaque claim token plus attempt, retries Storage transport failures, recovers ambiguous post-upload completion failures without duplicate media/vision effects, enforces strong distinct ingress secrets, normalizes privacy-key denial, rejects multi-frame PNG/WebP, and keeps the 64 MP ImageMagick working allowance subordinate to the 16 MP source ceiling. Final commands: focused Jest 9 suites/74 tests; `npm run test:phase9:db` 26/26; repository and dedicated-worker TypeScript passed. A read-only review of the current unstaged candidate confirmed the security/runtime guarantees, found three stale M06 Storage rows, and after their correction found no remaining merge blocker with recommendation `READY_FOR_INDEPENDENT_REVIEW`.

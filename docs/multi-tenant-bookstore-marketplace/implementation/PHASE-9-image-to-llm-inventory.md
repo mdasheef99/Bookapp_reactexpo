@@ -1,9 +1,9 @@
 # PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `planning_and_wu0_approved`
+**Status:** `m11_m12_live_verified_services_undeployed`
 **Planning set:** `approved_baseline`
-**Implementation:** `not_started`
-**Last updated:** 2026-07-19
+**Implementation:** M01-M08/M10/M11/M12 live-verified; Unit 4A integrated; services undeployed
+**Last updated:** 2026-07-27
 
 This stable phase handoff points to the detailed planning set:
 
@@ -33,13 +33,15 @@ This stable phase handoff points to the detailed planning set:
 
 ## Current evidence
 
-- Supabase project re-verified 2026-07-19: `ahntbtktjjmvfosgkmgn` / `Bookconnect_reactexpo`, `ACTIVE_HEALTHY`.
+- Supabase project re-verified at M11/M12 closeout: `ahntbtktjjmvfosgkmgn` / `Bookconnect_reactexpo`, `ACTIVE_HEALTHY`.
 - `store_id` is canonical: 37 public-schema columns; zero `tenant_id`.
-- Core canonical/inventory/listing tables exist; Phase 9 extraction/enrichment/media/request-photo tables do not.
-- No Phase 9 migration, function, bucket/policy, code, or data mutation has occurred.
+- M01-M08/M10/M11/M12 are live exactly once. M11 is `20260726182238`; M12 is `20260726182539`; M09 is absent.
+- M11/M12 live verification confirmed hardened service-only RPCs, immutable analysis evidence, unchanged inventory/listings/events at 5/5/14, and zero objects in both relevant private buckets.
+- Unit 4A deployment scaffolding is integrated. Owner ingestion, sanitation-worker, and fixture vision-worker services remain undeployed; no service secrets or real provider credentials are configured.
+- The documentation-only live-application closeout is integrated on `main` at `4abeef89ecebdb7a74a8ece3a1bdc0d5cfe6c8c5`.
 
 ## Next gate
 
-The planning baseline and corrected Work Unit 0 TDD/security/migration-design plan were approved on 2026-07-19. No next implementation unit is authorized. Creating contract/product code or migration files and applying migrations to Supabase remain unauthorized separate actions and require their named gates plus fresh exact-project/schema/storage verification.
+M11/M12 live application is complete. The next eligible work unit requires separate authorization for ordered Owner-ingestion, sanitation-worker, and fixture-vision-worker deployment, infrastructure/service secret configuration, and live fixture-path verification. M09, real providers, metadata, UI, inventory/publication, lifecycle work, and any further migration remain separately gated.
 
 Every material session must use the Phase 9 update matrix, append its evidence to the correct tracker, leave one exact next authorized action, and pass the continuity validator before handoff.

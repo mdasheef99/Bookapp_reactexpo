@@ -4,7 +4,7 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
-**Local implementation checkpoint (2026-07-26):** the pre-model ingestion slice is committed to `main` through `uploaded -> validating -> queued|failed`, with exactly one validation job and one later `vision_extract` job. The fixture-backed Unit 4 runtime and local M12 now exist; all bounded review findings for fencing, canonical hashing/validation, database-owned retryability, typed RPC transport, path rejection, relationship reconciliation, and executable boundaries are corrected and verified for final Git integration. M11/M12 remain unapplied, services remain undeployed, and no real multimodal or metadata provider integration exists.
+**Implementation checkpoint (2026-07-27):** the pre-model ingestion slice and fixture-backed Unit 4 runtime are integrated. M11 `20260726182238` and M12 `20260726182539` are live-verified with fencing, canonical hashing/validation, database-owned retryability, typed RPC transport, path rejection, relationship reconciliation, and executable boundaries. Services remain undeployed, and no real multimodal or metadata provider integration exists.
 
 ## 1. Decision
 

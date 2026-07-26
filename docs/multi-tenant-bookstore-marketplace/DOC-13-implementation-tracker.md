@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-07-26
+**Date:** 2026-07-27
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -114,13 +114,15 @@ If implementation changes product or architecture behavior, update the relevant 
 
 > 2026-07-26 Phase 9 M11/M12 live-application checkpoint: exact project `ahntbtktjjmvfosgkmgn` was healthy and the clean repository baseline was `cc98901`. M11 applied once as `20260726182238`; M12 applied once after it as `20260726182539`. Live readback verified the ingestion columns/constraints/indexes, immutable analysis tables and triggers, candidate lineage, reconciliation constraints, and service-only hardened RPCs. Inventory/listings/events stayed 5/5/14, quantity violations stayed zero, both private buckets stayed unchanged with zero objects, and no service, secret, or provider was deployed/configured/called. M12's first truncated MCP transport submission failed atomically with no history row or partial object before the unchanged SQL was resubmitted losslessly. Security advisors ended at 174 (`INFO 48/WARN 125/ERROR 1`), with the only M12 delta being two expected service-only RLS/no-policy INFO notices.
 
+> 2026-07-27 Phase 9 M11/M12 closeout checkpoint: the eight-file documentation-only ledger/live-state/handoff/evidence update was committed and fast-forwarded to `main` as `4abeef89ecebdb7a74a8ece3a1bdc0d5cfe6c8c5`; local and remote refs matched and the worktree was clean. Final read-only Supabase confirmation found the exact project healthy, M11/M12 still present exactly once at their recorded versions, and no Phase 9 ingestion/vision Edge Function. No deployment, secret configuration, Storage-object operation, provider call, or further Supabase mutation occurred.
+
 > 2026-07-26 Phase 9 Unit 4A review-correction checkpoint: the independent review returned `CHANGES_REQUIRED` for unsafe Docker context, pre-authentication slot starvation/read deadlines, nondeterministic shutdown evidence, source-string-only deployment claims, and identity-only fixture tests. All five corrections plus bounded invoker responses are locally focused-green. A deny-by-default Docker context, pre-admission constant-time authentication, fixed body deadline, deterministic shutdown test, real compiled-entrypoint smoke, per-fixture semantic matrix, synthetic-only container script, and minimal-permission pull-request workflow now exist. The mandatory GitHub Actions image build/start gate is next; no live credential, image push, deployment, migration, provider, Supabase, or Storage operation is authorized.
 
 | Field | Value |
 |---|---|
 | Current phase | Phase 9: Image-to-LLM Inventory - **M11/M12 live-verified; services undeployed** |
 | Overall status | `in_progress` |
-| Last updated | 2026-07-26 |
+| Last updated | 2026-07-27 |
 | Latest handoff | `PHASE 6 COMPLETE — COMPREHENSIVE BROWSER E2E DEFERRED`. M01-M39 are applied and database-verified in development; scheduler v5, worker v3, and cron job 5 are active. Phases 7 and 8 are deferred. |
 | Current risk level | High for live ingestion/vision deployment - M11/M12 are live-verified, but services and secrets remain undeployed, hosting selection and representative-camera sizing remain, and no real provider is implemented. |
 | Next recommended task | Await separate authorization for the ordered Owner-ingestion, sanitation-worker, and fixture-vision-worker deployment work unit, including infrastructure/service secret configuration and live fixture-path verification. Do not deploy, configure secrets, mutate Storage objects, or call providers without that authorization. |

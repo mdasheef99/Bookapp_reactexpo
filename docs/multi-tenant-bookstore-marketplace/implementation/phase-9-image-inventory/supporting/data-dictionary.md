@@ -1,9 +1,9 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** approved target; M01-M08/M10 live-verified; local M11/M12 unapplied; Unit 4 locally complete; M09 absent
-**Last updated:** 2026-07-26
+**Status:** approved target; M01-M08/M10/M11/M12 live-verified; services undeployed; M09 absent
+**Last updated:** 2026-07-27
 
-M01-M08/M10 are live-verified. Committed local M11 and unstaged forward M12 remain unapplied and services remain undeployed. M12 implements the Unit 4 evidence/lease target locally; its application remains unauthorized. M09 quantity-constraint validation remains a separate live-data gate.
+M01-M08/M10/M11/M12 are live-verified. M11 provides the bounded ingestion and media-lease foundation; M12 implements the Unit 4 immutable evidence, lineage, reconciliation, and service-only vision RPC target. All ingestion/vision services remain undeployed. M09 quantity-constraint validation remains a separate live-data gate.
 
 The dictionary distinguishes canonical truth, store-owned snapshots, public projections, staged AI output, and media/evidence. A field must not be added to several layers merely because it is convenient; each copy needs a named owner and synchronization rule.
 
@@ -128,7 +128,7 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | version/attempt fields | orchestration attempt and selected vision adapter. |
 | lifecycle | created/processed/delete-after/deleted. |
 
-### `image_analysis_results` (local M12, unapplied)
+### `image_analysis_results` (live M12; service-only)
 
 | Field | Rule |
 | --- | --- |
@@ -139,7 +139,7 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | completing claim | attempt, worker, and lease-token hash for exact ambiguous-response replay; raw token absent. |
 | lifecycle | immutable private evidence; created/completed timestamps and later explicit lifecycle-redaction policy only. |
 
-### `image_analysis_observations` (local M12, unapplied)
+### `image_analysis_observations` (live M12; service-only)
 
 | Field | Rule |
 | --- | --- |
