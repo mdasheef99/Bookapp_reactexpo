@@ -1,6 +1,6 @@
 # Phase 9 Requirements Traceability
 
-**Last updated:** 2026-07-26
+**Last updated:** 2026-07-27
 
 | Requirement | Owning SDD | Primary acceptance IDs |
 | --- | --- | --- |
@@ -10,14 +10,14 @@
 | Vision count/language/repeated-position policy | 00 Master; 01 Data; 02 Extraction; Unit 4 design | MAS-01/02; DAT-26/27; EXT-19–EXT-21 |
 | Attempt-token-fenced vision persistence and replay | 02 Extraction; 04 Media; Unit 4 design | EXT-22/23; MED-23 |
 | Immutable analysis evidence separate from metadata/Owner edits | 01 Data; 02 Extraction; 04 Media; Unit 4 design | DAT-26/27; EXT-24; MED-24 |
-| Fixture vision runtime has zero metadata/inventory/publication effect | 00 Master; 02 Extraction; Unit 4 design | MAS-05/07; MAS-AC11; EXT-25 |
+| Fixture vision runtime has zero metadata/inventory/publication effect | 00 Master; 02 Extraction; Unit 4 design | MAS-05/07; MAS-AC02/03/11; EXT-25 |
 | Provider-agnostic local/primary/secondary metadata | 01 Data; 02 Extraction | DAT-05–DAT-09; EXT-11 |
 | Replaceable provider-neutral metadata boundary and downstream independence | 00 Master; 01 Data; 02 Extraction; 05 Marketplace | MAS-13; MAS-AC12; DAT-31/33; EXT-28; MKT-15 |
 | Exactly one primary, optional secondary, and at most two sequential attempts | 00 Master; 02 Extraction | MAS-14; MAS-AC13; EXT-26/27 |
 | Coherent single-provider selection; no provider canonical authority or field stitching | 00 Master; 01 Data | MAS-15; DAT-06/33 |
 | Provider-independent query identity and provider/version cache isolation | 01 Data; 02 Extraction | DAT-28/29; EXT-26–28 |
 | Attempt role/routing/capability/cache/coalescing/cost lineage | 01 Data; 02 Extraction | DAT-30; EXT-28/30 |
-| Complete provider outage preserves manual reviewed inventory | 00 Master; 02 Extraction; 03 Review | MAS-16; EXT-16/29; REV-20 |
+| Complete provider outage preserves manual reviewed inventory | 00 Master; 02 Extraction; 03 Review | MAS-10/16; MAS-AC05; EXT-16/29; REV-20 |
 | Provider licensing/publication allowlist, shadow-evaluation gate, and coalescing privacy | 04 Media; 01 Data | MED-22/25/26/27; DAT-31 |
 | Availability/quality/correction scorecards and promotion gate | 01 Data; 02 Extraction; 03 Review | DAT-32; EXT-38/39; REV-21 |
 | Horizontally safe claims, graceful shutdown, spend reconciliation and capacity admission | 00 Master; 02 Extraction | MAS-17; MAS-AC14/15; EXT-30–37 |
@@ -25,7 +25,7 @@
 | Autoscaling disabled until fixed multi-replica evidence | 00 Master; 02 Extraction | MAS-AC14; EXT-36 |
 | Title/author priority; visible ISBN only as clue | 02 Extraction; 01 Data | EXT-12; DAT-03 |
 | Description, ISBN-10/13, rich metadata, cover | 01 Data | DAT-01–DAT-04 |
-| Original language; up to three automated English alias proposals plus bounded official/verified aliases | 01 Data; 05 Marketplace | DAT-10–DAT-14; MKT-05 |
+| Original language; up to three automated English alias proposals plus bounded official/verified aliases | 00 Master; 01 Data; 05 Marketplace | MAS-04; DAT-10–DAT-14; MKT-05 |
 | Canonical alias kinds/sources/statuses and supersession lifecycle | 01 Data | DAT-11–DAT-14 |
 | Additional languages can be added later | 01 Data; 02 Extraction | DAT-15; EXT-04 |
 | Advisory duplicates; no image comparison; repeated spines retained | 01 Data; 03 Review | DAT-16–DAT-20; REV-07 |
@@ -36,24 +36,25 @@
 | Five conditions with explanations | 01 Data; 03 Review | DAT-21; REV-08 |
 | Damage separate; discount by price; photos 1–3 | 01 Data; 04 Media | DAT-22–DAT-25; MED-11 |
 | Unsellable damaged item remains private | 01 Data; 03 Review | DAT-24; REV-11 |
-| Owner review and partial per-candidate commit | 03 Review | REV-01–REV-14 |
+| Owner review and partial per-candidate commit | 00 Master; 03 Review | MAS-06; REV-01–REV-14 |
 | Owner post-push edits | 03 Review | REV-15–REV-17 |
-| Bookstore-first marketplace and complete store catalogue | 05 Marketplace | MKT-01–MKT-04 |
+| Bookstore-first marketplace and complete store catalogue | 00 Master; 05 Marketplace | MAS-AC06; MKT-01–MKT-04 |
 | Search/display metadata and cover/placeholder | 05 Marketplace | MKT-05–MKT-10 |
 | Distinct store/offer/title counts; exact quantity private | 05 Marketplace | MKT-11–MKT-13 |
 | Requested current-copy photo is mandatory | 06 Photo request | PHO-01–PHO-08 |
-| Maximum three request photos and lifecycle deletion | 06 Photo request; 04 Media | PHO-03; PHO-09–PHO-12; MED-12 |
-| Multi-tenant `store_id` safety | 00 Master; 04 Media; all data SDDs | MAS-03; MED-01–MED-05 |
+| Maximum three request photos and lifecycle deletion | 00 Master; 06 Photo request; 04 Media | MAS-AC07; PHO-03; PHO-09–PHO-12; MED-12 |
+| Multi-tenant `store_id` safety | 00 Master; 04 Media; all data SDDs | MAS-03; MAS-AC04; MED-01–MED-05 |
 | Private scan/raw payloads and retention | 04 Media; 02 Extraction | MED-06–MED-10; EXT-15 |
-| Security across model, provider, upload, storage, logs, recovery | 04 Media | MED-01–MED-20 |
+| Security across model, provider, upload, storage, logs, recovery | 00 Master; 04 Media | MAS-AC01; MED-01–MED-20 |
 | Provider field reuse rights separate from provenance | 02 Extraction; 04 Media | EXT-18; MED-22 |
-| Private commit survives publication failure with idempotent retry | 00 Master; 03 Review | MAS-11; REV-18 |
-| Candidate remains `committed`; publication failure is a separate status/outcome | 00 Master; 03 Review | MAS-11; REV-18 |
+| Private commit survives publication failure with idempotent retry | 00 Master; 03 Review | MAS-11; MAS-AC10; REV-18/19 |
+| Candidate remains `committed`; publication failure is a separate status/outcome | 00 Master; 03 Review | MAS-11; MAS-AC10; REV-18/19 |
 | Initiating Owner owns session resume/mutation in pilot | 00 Master; 02 Extraction | MAS-12; EXT-06 |
 | Interactive support takeover excluded; worker/reconciliation recovery only | 00 Master; 02 Extraction; 04 Media | MAS-12; MAS-AC09; EXT-06; MED-04/MED-19 |
 | Versioned bookstore-first query/cursor/count contract | 05 Marketplace | MKT-14 |
 | Quota/retry policy model-agnostic and configurable | 02 Extraction | EXT-13–EXT-17 |
-| Phase 7/8 independence | 00 Master; 06 Photo request | MAS-09; PHO-13 |
+| Distinct scan, public-copy, and request-photo media classes | 00 Master; 04 Media; 06 Photo request | MAS-08; MED-06–MED-12; PHO-09–PHO-12 |
+| Phase 7/8 independence | 00 Master; 06 Photo request | MAS-09; MAS-AC08; PHO-13 |
 
 ## Local ingestion-runtime and Unit 4 trace (2026-07-26)
 

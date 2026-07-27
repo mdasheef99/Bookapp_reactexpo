@@ -154,21 +154,24 @@ foreach ($match in [regex]::Matches($traceability, $tracePattern)) {
         [void]$traceableIds.Add(("$prefix-{0:D2}" -f $number).Replace('MAS-AC-', 'MAS-AC'))
     }
 }
-$reconciliationRequirementIds = @(
-    28..33 | ForEach-Object { 'DAT-{0:D2}' -f $_ }
-    26..39 | ForEach-Object { 'EXT-{0:D2}' -f $_ }
-    13..17 | ForEach-Object { 'MAS-{0:D2}' -f $_ }
-    12..15 | ForEach-Object { 'MAS-AC{0:D2}' -f $_ }
-    25..29 | ForEach-Object { 'MED-{0:D2}' -f $_ }
-    'MKT-15', 'REV-20', 'REV-21'
-)
-$missingTraceability = @($reconciliationRequirementIds | Where-Object { -not $traceableIds.Contains($_) })
+$missingTraceability = @($requirementIds | Where-Object { -not $traceableIds.Contains($_) })
 if ($missingTraceability.Count -gt 0) {
     Write-Error "Requirement definitions missing traceability: $($missingTraceability -join ', ')"
+}
+$duplicateDefinitionProbe = @($requirementIds + $requirementIds[0])
+$duplicateDefinitionProbeMatches = @($duplicateDefinitionProbe | Group-Object | Where-Object Count -gt 1)
+if ($duplicateDefinitionProbeMatches.Count -ne 1 -or $duplicateDefinitionProbeMatches[0].Name -ne $requirementIds[0]) {
+    Write-Error 'Duplicate requirement-definition negative probe failed.'
+}
+$missingMappingProbe = [System.Collections.Generic.HashSet[string]]::new($traceableIds)
+if (-not $missingMappingProbe.Remove($requirementIds[0]) -or
+    @($requirementIds | Where-Object { -not $missingMappingProbe.Contains($_) }).Count -ne 1) {
+    Write-Error 'Missing requirement-mapping negative probe failed.'
 }
 Write-Output "REQUIREMENT_DEFINITIONS=$($requirementIds.Count)"
 Write-Output "REQUIREMENT_DEFINITION_DUPLICATES=$($duplicateRequirementIds.Count)"
 Write-Output "REQUIREMENT_TRACEABILITY_MISSING=$($missingTraceability.Count)"
+Write-Output 'REQUIREMENT_VALIDATOR_REGRESSION_PROBES=PASS'
 if (-not $implementationTracker.Contains('| 4B | Prospective real-Gemini provider-contract design') -or
     -not $implementationTracker.Contains('| 5 | Metadata/aliases:')) {
     Write-Error 'Implementation routing must keep real Gemini design separate from Unit 5 Metadata/aliases.'
