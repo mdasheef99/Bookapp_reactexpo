@@ -45,3 +45,11 @@ Separately authorize a forward-only migration that revokes all direct
 service-role privileges on the three M15 tables, restores SELECT only, adds
 live-default-privilege regression evidence, receives focused independent review,
 and is applied and verified before Unit 5B. M09 and Units 5B/5C remain untouched.
+
+## Forward-correction handoff
+
+M16 is now created, locally effective-privilege verified, and independently
+approved, but not applied. It covers the three M15 tables and the contractually
+RPC-only M14 `vision_provider_attempts` table. Historical M15 application
+evidence above is unchanged; the live defect remains until separately authorized
+M16 application/readback. See [M16 evidence](./09-m16-acl-correction-evidence.md).

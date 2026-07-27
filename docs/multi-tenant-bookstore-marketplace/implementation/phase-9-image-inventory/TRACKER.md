@@ -1,16 +1,16 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `provider_scale_sdd_reconciliation_needs_independent_review`
-**Implementation status:** `m15_live_security_correction_required`; M15 is live once, but service-role direct-table grants failed the approved read-only boundary
+**Implementation status:** `m16_created_locally_verified_not_applied`; correction is independently approved, but the live ACL is unchanged
 **Last updated:** 2026-07-28
-**Current milestone:** M15 applied once with structural/RPC verification complete; grant correction pending
-**Active work unit:** `unit5a_m15_live_security_correction`
+**Current milestone:** M16 created, locally effective-privilege verified, and independently approved; live application pending
+**Active work unit:** `unit5a_m16_acl_application_gate`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** M15 exact-file application as `20260727222159` and bounded live catalogue/RPC verification; detailed handoff is [05A](./work-units/05a-metadata-foundation-handoff.md)
-**Next authorized action:** separately authorize a forward-only correction that revokes direct service-role mutation on the three M15 tables, preserves SELECT/RPC execution, tests live default privileges, and is independently reviewed before application
+**Last completed:** M16 local implementation, effective-privilege verification, and focused independent approval; detailed evidence is [tracker 09](./trackers/09-m16-acl-correction-evidence.md)
+**Next authorized action:** review and merge the M16 correction branch, then separately authorize exact-file application and live readback on project `ahntbtktjjmvfosgkmgn`
 **Implementation authority:** Unit 5A foundation only; Google Books, secondary providers, aliases, Owner UI, inventory commit, publication, credentials, provider calls, and deployment remain unauthorized
-**Migration creation/application authority:** M15 is live once as `20260727222159`; no follow-up migration or live grant mutation is authorized; M01-M08/M10-M15 remain live exactly once and M09 remains absent
-**Current gate:** correct and verify the live service-role ACL through a separately authorized forward-only migration; do not begin Unit 5B/5C
+**Migration creation/application authority:** M16 creation/testing is complete; M16 application is not authorized. M01-M08/M10-M15 remain live exactly once and M09 remains absent
+**Current gate:** merge, separately authorize, apply, and live-verify M16 before Unit 5B/5C
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -116,10 +116,12 @@ Unit 5A now supplies strict ISBN normalization, versioned provider-neutral
 lookup/contracts, local-canonical-first planning, cache and identical-query reuse
 identity, bounded routing primitives, metadata attempt/cost lineage, and immutable
 selected-snapshot/manual-review persistence. M15 is live once, but Supabase
-default privileges retained direct service-role DML on its three new tables.
+default privileges retained direct service-role DML on its three new tables and
+the same inherited ACL was confirmed on M14 `vision_provider_attempts`. M16
+corrects all four RPC-only tables locally and is not applied.
 
 No later work unit is automatically authorized. Unit 5B Google Books and Unit 5C
-aliases remain not started. Do not create/apply a grant correction without separate
-authorization; do not apply M09; configure, deploy, or call providers; select/enable
+aliases remain not started. Do not apply M16 without separate authorization; do
+not apply M09; configure, deploy, or call providers; select/enable
 a secondary; schedule/autoscale workers; change mobile UI; commit inventory; publish
 listings; or implement Library behavior.

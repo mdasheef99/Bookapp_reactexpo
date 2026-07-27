@@ -135,3 +135,14 @@ unauthorized live grant correction was made. Unit 5A remains blocked on a
 separately authorized forward-only ACL correction; Units 5B/5C, Google Books,
 metadata credentials/provider calls, Gemini deployment/calls, Storage, inventory,
 and publication remain untouched.
+
+## M16 local ACL correction checkpoint — 2026-07-28
+
+M16 explicitly revokes all six direct mutation privileges from `service_role`
+on the three M15 tables and M14 `vision_provider_attempts`, while preserving
+SELECT, RLS, postgres ownership, and hardened service-only RPCs. M14 is included
+because direct attempt-table DML bypasses its atomic egress, claim, reservation,
+cost, and fencing contract. Effective-privilege tests and focused M14/M15
+regressions pass; independent review returned `APPROVED`. M16 is created and
+locally verified, not applied. The live defect remains and Unit 5B stays gated.
+See [M16 evidence](../trackers/09-m16-acl-correction-evidence.md).

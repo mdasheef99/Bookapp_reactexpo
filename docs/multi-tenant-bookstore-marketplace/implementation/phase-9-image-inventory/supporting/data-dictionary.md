@@ -206,6 +206,12 @@ and positive cache entries. M15 is live once as `20260727222159`; these structur
 are live, while the intended read-only direct service-role boundary remains blocked
 on the forward ACL correction recorded in the current-vs-target audit.
 
+Direct table authority for `vision_provider_attempts`,
+`phase9_metadata_lookups`, `phase9_metadata_cache_entries`, and
+`phase9_selected_metadata_snapshots` is SELECT-only for `service_role`; mutation
+belongs exclusively to hardened RPCs. M16 encodes this target and is locally
+verified but not applied, so live Supabase still has the broader inherited ACL.
+
 ### Provider registry and routing target
 
 Each adapter has a versioned capability declaration covering query forms, identifiers, languages, normalized outcomes, cover behavior, and reuse-policy dependencies. Role/order, enabled state, breaker/kill-switch policy, cache namespace, rate/concurrency policy, and promotion state are configuration or policy references, never credentials. Exactly one primary and zero or one secondary may be configured for an enabled metadata rollout scope.

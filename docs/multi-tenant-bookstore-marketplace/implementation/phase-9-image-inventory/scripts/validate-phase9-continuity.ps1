@@ -88,21 +88,19 @@ foreach ($marker in $trackerMarkers) {
 $active = [IO.File]::ReadAllText((Join-Path $implementationRoot 'ACTIVE.md'))
 if (-not $active.Contains('phase-9-image-inventory/SESSION-START.md')) { Write-Error 'ACTIVE.md does not route to the Phase 9 session entrypoint.' }
 if (-not $active.Contains('DOC-13-implementation-tracker.md')) { Write-Error 'ACTIVE.md does not route to DOC-13.' }
-if (-not $active.Contains('phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md') -or
-    -not $active.Contains('phase-9-image-inventory/work-units/04b-gemini-vision-adapter-handoff.md') -or
-    -not $active.Contains('M15 is live once as `20260727222159`') -or
-    -not $active.Contains('forward-only grant correction is required before Unit 5B')) { Write-Error 'ACTIVE.md does not route to the M15 live security-correction gate.' }
+if (-not $active.Contains('M16 is created, locally verified, and independently approved') -or
+    -not $active.Contains('trackers/09-m16-acl-correction-evidence.md')) { Write-Error 'ACTIVE.md does not route to the M16 application gate.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `m15_live_security_correction_required`') -or
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `m16_created_locally_verified_not_applied`') -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
-    -not $doc13.Contains('service_role=arwdDxtm/postgres')) { Write-Error 'DOC-13 does not preserve the M15 live security-correction state.' }
-if (-not $doc13.Contains('| Next recommended task | Separately authorize a forward-only grant correction')) { Write-Error 'DOC-13 does not preserve the Unit 5A ACL-correction boundary.' }
+    -not $doc13.Contains('M16 is not live')) { Write-Error 'DOC-13 does not preserve the M16 application gate.' }
+if (-not $doc13.Contains('| Next recommended task | Review and merge M16')) { Write-Error 'DOC-13 does not preserve the M16 next action.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `m15_live_security_correction_required`\r?$' -or
-    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5a_m15_live_security_correction`\r?$' -or
-    -not $implementationTracker.Contains('20260727222159 marketplace_phase9_metadata_foundation')) {
-    Write-Error 'Implementation tracker does not preserve the M15 live security-correction gate.'
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `m16_created_locally_verified_not_applied`\r?$' -or
+    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5a_m16_acl_application_gate`\r?$' -or
+    -not $implementationTracker.Contains('20260728000016_marketplace_phase9_sensitive_table_acl_correction.sql')) {
+    Write-Error 'Implementation tracker does not preserve the M16 application gate.'
 }
 $providerScaleMarkers = @{
     '00-phase-9-master-sdd.md' = @('MAS-13', 'MAS-17', 'MAS-AC14')
@@ -219,11 +217,11 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if (-not $tracker.Contains('**Implementation status:** `m15_live_security_correction_required`') -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5a_m15_live_security_correction`\r?$' -or
-    -not $tracker.Contains('**Next authorized action:** separately authorize a forward-only correction') -or
-    -not $tracker.Contains('M15 is live once as `20260727222159`')) {
-    Write-Error 'TRACKER.md does not preserve the M15 live security-correction gate.'
+if (-not $tracker.Contains('**Implementation status:** `m16_created_locally_verified_not_applied`') -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5a_m16_acl_application_gate`\r?$' -or
+    -not $tracker.Contains('**Next authorized action:** review and merge the M16 correction branch') -or
+    -not $tracker.Contains('M16 creation/testing is complete; M16 application is not authorized')) {
+    Write-Error 'TRACKER.md does not preserve the M16 application gate.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
 $packageDesign = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-database-design.md'))
@@ -254,20 +252,23 @@ $migrationNames = @(
     '20260726000012_marketplace_phase9_vision_analysis_runtime.sql',
     '20260727000013_marketplace_phase9_service_rpc_wrappers.sql',
     '20260727000014_marketplace_phase9_vision_provider_attempts.sql',
-    '20260728000015_marketplace_phase9_metadata_foundation.sql'
+    '20260728000015_marketplace_phase9_metadata_foundation.sql',
+    '20260728000016_marketplace_phase9_sensitive_table_acl_correction.sql'
 )
 foreach ($name in $migrationNames) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot "supabase/migrations/$name"))) { Write-Error "Missing approved Phase 9 migration: $name" }
 }
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
-if ($phase9Migrations.Count -ne 14 -or $phase9Migrations.Name -match '000009|quantity.*validat') { Write-Error 'Phase 9 migration set must contain M01-M08 plus forward M10-M15, and no M09.' }
+if ($phase9Migrations.Count -ne 15 -or $phase9Migrations.Name -match '000009|quantity.*validat') { Write-Error 'Phase 9 migration set must contain M01-M08 plus forward M10-M16, and no M09.' }
 foreach ($relative in @('supabase/tests/phase9/phase6_baseline.sql','supabase/tests/phase9/databaseHarness.mjs',
     'supabase/tests/phase9/phase9Database.integration.test.mjs','supabase/tests/phase9/phase9IngestionRuntime.integration.test.mjs','supabase/tests/phase9/phase9VisionRuntime.integration.test.mjs','supabase/migrations/__tests__/marketplacePhase9DatabaseFoundation.test.ts',
     'supabase/migrations/__tests__/marketplacePhase9PublicBoundarySecurityCorrection.test.ts','supabase/migrations/__tests__/marketplacePhase9VisionAnalysisRuntime.test.ts',
     'supabase/migrations/__tests__/marketplacePhase9ServiceRpcWrappers.test.ts',
     'supabase/tests/phase9/phase9VisionProviderAttempts.integration.test.mjs',
     'supabase/tests/phase9/phase9MetadataFoundation.integration.test.mjs',
-    'supabase/migrations/__tests__/marketplacePhase9MetadataFoundation.test.ts')) {
+    'supabase/migrations/__tests__/marketplacePhase9MetadataFoundation.test.ts',
+    'supabase/tests/phase9/phase9SensitiveTableAclCorrection.integration.test.mjs',
+    'supabase/migrations/__tests__/marketplacePhase9SensitiveTableAclCorrection.test.ts')) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot $relative))) { Write-Error "Missing Phase 9 migration test harness file: $relative" }
 }
 $packageJson = [IO.File]::ReadAllText((Join-Path $repoRoot 'package.json'))

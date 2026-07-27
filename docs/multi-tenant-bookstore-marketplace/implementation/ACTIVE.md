@@ -11,7 +11,7 @@ This file answers only “where does a new development session start?” DOC-13 
 - **Stable handoff:** [PHASE-9-image-to-LLM-inventory.md](./PHASE-9-image-to-llm-inventory.md)
 - **Session entrypoint:** [Phase 9 SESSION-START](./phase-9-image-inventory/SESSION-START.md)
 - **Local current-state authority:** [Phase 9 master tracker](./phase-9-image-inventory/TRACKER.md)
-- **Current work-unit plan:** M15 is live once as `20260727222159`, but Unit 5A closeout is blocked because Supabase default privileges left direct `service_role` DML on the three new metadata tables; a separately authorized forward-only grant correction is required before Unit 5B. The [Phase 9 fixture pipeline](./phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md), [Unit 4B](./phase-9-image-inventory/work-units/04b-gemini-vision-adapter-handoff.md), and M14 remain live-verified; Gemini and metadata providers remain unconfigured, undeployed, and uncalled.
+- **Current work-unit plan:** M16 is created, locally verified, and independently approved on the dedicated correction branch, but is not applied. It explicitly removes inherited direct `service_role` mutation from the M14 provider-attempt table and three M15 metadata tables while preserving SELECT and hardened RPC execution. M15 remains live once as `20260727222159`; Unit 5B stays gated until M16 is merged, separately authorized, applied, and live-verified. See [M16 evidence](./phase-9-image-inventory/trackers/09-m16-acl-correction-evidence.md).
 - **Global status authority:** [DOC-13](../DOC-13-implementation-tracker.md)
 
 ## Required reading order

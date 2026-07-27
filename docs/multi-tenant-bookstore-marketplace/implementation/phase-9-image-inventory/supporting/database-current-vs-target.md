@@ -1,9 +1,9 @@
 # Phase 9 Database and Storage: Current vs Target
 
 **Audit date:** 2026-07-28
-**Audit mode:** exact-project M15 application and live catalogue/security readback
+**Audit mode:** exact-project M15 live readback plus M16 local ACL correction
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10-M15 live exactly once; M09 absent; M15 applied as `20260727222159`; no Storage/provider/deployment/product-data mutation
+**Mutation status:** M01-M08/M10-M15 live exactly once; M09 absent; M16 created/locally verified but not applied; no Storage/provider/deployment/product-data mutation
 
 **Provider/scale SDD reconciliation evidence:** the 2026-07-27 bounded read-only provider audit reconfirmed the exact healthy project and migration tail with M09 absent. Live counts were five extraction candidates, one canonical edition, and zero provider-registry rows, metadata attempts, metadata sources, aliases, or usage reservations. The existing metadata-attempt table already records candidate, adapter, attempt sequence, normalized clues, status, provider record, match strength, latency, cache status, versions, reuse policy, payload lifecycle, and timestamps; it does not explicitly represent role, provider-independent query identity, capability/routing-policy version, predecessor outcome, coalescing lineage, or cost-reservation linkage. These are proposed Unit 5 design targets only. No database or Storage mutation occurred.
 
@@ -46,6 +46,16 @@ Security verification did not close: project default privileges produced
 `service_role=arwdDxtm/postgres` on each new table. M15 revoked client roles but did
 not first revoke `service_role`, so its later `GRANT SELECT` did not narrow the
 inherited ACL. A forward-only grant correction is required before Unit 5B.
+
+**M16 local target:** read-only MCP inspection confirmed the same effective
+`service_role` SELECT plus INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER on
+M14 `vision_provider_attempts`; all four tables have RLS and no anon/authenticated
+authority. M16 explicitly revokes those six service mutation privileges per
+table, restores SELECT, and repeats client denial without changing default
+privileges, functions, data, constraints, or behavior. Local PostgreSQL
+before/after inspection proves SELECT-only service access after M16, and all 13
+M14/M15 public RPCs remain service-executable, client-denied, and fixed-search-path.
+M16 is not live; the preceding paragraph remains the actual Supabase state.
 
 **Ingestion foundation checkpoint:** project `ahntbtktjjmvfosgkmgn` remains healthy; both private 10 MiB JPEG/PNG/WebP buckets remain unchanged. Live M11 revokes authenticated execution of path-taking legacy intake RPCs and adds declared source/content identity, persisted canonical completion, capability linkage, immutable private source snapshots, opaque claim-token and attempt fencing, 16 MP enforcement, and service-only issue/register/claim/context/revalidate/snapshot-bind/complete/fail functions. No runtime is deployed.
 
