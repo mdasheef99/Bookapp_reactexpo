@@ -149,17 +149,27 @@ If implementation changes product or architecture behavior, update the relevant 
 > M14 apply the same bounded semantic pricing allowlist, and the Phase 9 migration
 > test names the exact ordered M01-M08/M10-M14 set. M14 remains unapplied; no live
 > provider, credential, database, Storage, deployment, or product mutation occurred.
+>
+> 2026-07-28 Phase 9 M14 application: exact-project preflight confirmed M14 absent,
+> M01-M08/M10-M13 each once, M09 absent, and every dependent relation, constraint,
+> function, grant, and RLS assumption. M14 then applied once as
+> `20260727183546 marketplace_phase9_vision_provider_attempts`. Live readback proves
+> the empty 34-column provider-attempt table, approved constraints/indexes, exact
+> private/public RPC signatures, RLS, and zero anon/authenticated authority; M12/M13
+> fixture seams remain intact and Phase 9 PGlite passed 67/67. No Storage, Edge
+> Function, credential, Gemini, Render, autoscaling, metadata, or product mutation
+> occurred. Gemini deployment and live verification remain deferred.
 
 > 2026-07-26 Phase 9 Unit 4A review-correction checkpoint: the independent review returned `CHANGES_REQUIRED` for unsafe Docker context, pre-authentication slot starvation/read deadlines, nondeterministic shutdown evidence, source-string-only deployment claims, and identity-only fixture tests. All five corrections plus bounded invoker responses are locally focused-green. A deny-by-default Docker context, pre-admission constant-time authentication, fixed body deadline, deterministic shutdown test, real compiled-entrypoint smoke, per-fixture semantic matrix, synthetic-only container script, and minimal-permission pull-request workflow now exist. The mandatory GitHub Actions image build/start gate is next; no live credential, image push, deployment, migration, provider, Supabase, or Storage operation is authorized.
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 4B persistence correction locally complete; independent review pending** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 4B and M14 live-verified; Gemini deployment/live verification deferred** |
 | Overall status | `in_progress` |
-| Last updated | 2026-07-27 |
-| Latest handoff | Unit 4B correction and local unapplied M14 are ready for correction-only review; fixture pipeline remains live-verified at `96991a9`. |
-| Current risk level | M14 is local/unapplied and Unit 4B has mocked evidence only; live provider configuration/calls and product integration remain separately gated. |
-| Next recommended task | One correction-only independent review of Unit 4B; Unit 5 Metadata/aliases and M14 application remain separately gated. |
+| Last updated | 2026-07-28 |
+| Latest handoff | Unit 4B is merged and M14 is live once as `20260727183546`; fixture pipeline remains live-verified at `96991a9`. |
+| Current risk level | Gemini remains unconfigured, undeployed, and mock-tested only; live provider calls and product integration remain separately gated. |
+| Next recommended task | Await explicit authorization; Gemini deployment/live verification, M09, and Unit 5 Metadata/aliases remain separately gated. |
 
 ---
 
@@ -176,7 +186,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit4b_persistence_correction_needs_independent_review` | [Unit 4B handoff](./implementation/phase-9-image-inventory/work-units/04b-gemini-vision-adapter-handoff.md) · [deployment evidence](./implementation/phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md) | Gemini correction and M14 local-only; M01-M08/M10-M13 remain live; no Unit 4B external mutation. |
+| Phase 9: Image-to-LLM Inventory | `unit4b_m14_live_verified_provider_deferred` | [Unit 4B handoff](./implementation/phase-9-image-inventory/work-units/04b-gemini-vision-adapter-handoff.md) · [deployment evidence](./implementation/phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md) | Unit 4B merged; M01-M08/M10-M14 live once; M09 and Gemini deployment/live-provider verification remain deferred. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

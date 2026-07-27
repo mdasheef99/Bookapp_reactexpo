@@ -1,9 +1,9 @@
 # PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `unit4b_gemini_adapter_needs_independent_review`
+**Status:** `unit4b_m14_live_verified_provider_deferred`
 **Planning set:** `approved_baseline`
-**Implementation:** Unit 4B local-only; M01-M08/M10-M13 and the fixture pipeline remain live-verified
-**Last updated:** 2026-07-27
+**Implementation:** Unit 4B is merged; M01-M08/M10-M14 and the fixture pipeline are live-verified; M09 and Gemini deployment/live verification remain deferred
+**Last updated:** 2026-07-28
 
 This stable phase handoff points to the detailed planning set:
 

@@ -1,7 +1,7 @@
 # Phase 9 Unit 4B: Gemini Vision Adapter Handoff
 
-**Status:** `persistence_correction_ready_for_independent_review`
-**Date/session:** 2026-07-27
+**Status:** `m14_live_verified_provider_deferred`
+**Date/session:** 2026-07-27/28
 **Branch/baseline:** `codex/phase9-unit4b-gemini-adapter` from
 `510627d94f49eb6ed32c4c7e545488c269ffa98b`
 
@@ -70,9 +70,13 @@ is capped at seven known fields and 1,024 serialized bytes; unknown fields, URLs
 arbitrary strings, wrong JSON types, unsafe characters, and out-of-range values are
 rejected.
 
-M14 was created and tested locally but was not applied. No Gemini call, API-key
-request/configuration, Supabase/database/Storage mutation, deployment, Render
-change, scheduling, autoscaling,
+M14 applied once to verified project `ahntbtktjjmvfosgkmgn` as
+`20260727183546 marketplace_phase9_vision_provider_attempts`. Live readback
+confirmed the empty 34-column relation, approved constraints/five indexes, exact
+private/public RPC signatures, RLS, service-only RPC execution, and zero
+anon/authenticated table or function authority. M12/M13 fixture seams and evidence
+remain intact; M09 remains absent. No Gemini call, API-key request/configuration,
+Storage mutation, deployment, Render change, scheduling, autoscaling,
 metadata/alias work, mobile UI, inventory commit, publication, or Library work
 occurred.
 
@@ -106,19 +110,21 @@ occurred.
   Strict vision-worker and repository TypeScript checks and executable
   deployment-runtime validation passed. Continuity/link validation, diff hygiene,
   and scoped secret scanning are the closeout gates.
+- M14 live-application closeout reran Phase 9 PGlite 67/67 and the focused
+  fixture analyzer/worker/bootstrap regression 23/23.
 
 ## Independent-review focus
 
-Review only the Unit 4B correction: M14 table/RPC/grant bounds, final egress claim
+M14 live verification covered the Unit 4B correction: table/RPC/grant bounds, final egress claim
 validation, accepted/stale/unknown attempt transitions, duplicate-spend
 reconciliation, provider request/usage/cost lineage, opaque-media resolution,
 error/retry mapping, configuration fail-closed behavior,
 credential/log boundaries, official dependency footprint, and unchanged fixture
-behavior. Do not configure or call Gemini, select a fallback, apply M14 or another
+behavior. Do not configure or call Gemini, select a fallback, apply another
 migration, deploy, schedule/autoscale, begin Unit 5, or change product/mobile
 behavior.
 
 ## Next authorized action
 
-One correction-only independent review of this Unit 4B branch. M14 application and
-merge remain unauthorized.
+Await explicit user authorization. Gemini configuration/deployment/live
+verification, M09, Unit 5, and all later implementation remain separately gated.

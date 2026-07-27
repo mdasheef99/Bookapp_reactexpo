@@ -1,9 +1,9 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** approved target; M01-M08/M10-M13 live; local M14 unapplied; M09 absent
-**Last updated:** 2026-07-27
+**Status:** approved target; M01-M08/M10-M14 live exactly once; M09 absent
+**Last updated:** 2026-07-28
 
-M01-M08/M10-M13 are live-verified. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. Local M14 proposes dedicated vision-provider attempts and is not applied. Owner/media/fixture-vision services are deployed. M09 quantity validation remains a separate live-data gate.
+M01-M08/M10-M14 are live-verified. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. M14 adds dedicated service-only vision-provider attempts and is live once as `20260727183546`. Owner/media/fixture-vision services remain deployed. M09 quantity validation remains a separate live-data gate.
 
 The dictionary distinguishes canonical truth, store-owned snapshots, public projections, staged AI output, and media/evidence. A field must not be added to several layers merely because it is convenient; each copy needs a named owner and synchronization rule.
 
@@ -149,7 +149,7 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | evidence | bounded canonical observation snapshot only; no raw provider response, prompt, URL/path/token, or arbitrary metadata. |
 | candidate link | nullable one-to-one link for accepted observations; skipped evidence has no candidate. |
 
-### `vision_provider_attempts` (local M14 target; service-only; not live)
+### `vision_provider_attempts` (live M14; service-only)
 
 | Field | Rule |
 | --- | --- |
