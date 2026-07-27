@@ -16,6 +16,7 @@ const REQUIRED_FILES = [
   'scripts/smoke-phase9-worker-entrypoints.js',
   'scripts/smoke-phase9-worker-containers.js',
   '.github/workflows/phase9-worker-container-smoke.yml',
+  'supabase/functions/phase9-owner-ingestion/deno.json',
   'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/04a-deployment-runtime-scaffolding-sdd.md',
 ];
 
@@ -74,8 +75,15 @@ function validatePhase9DeploymentRuntime(root = process.cwd()) {
   }
 
   const config = read(root, 'supabase/config.toml');
-  if (!/\[functions\.phase9-owner-ingestion\][\s\S]*?enabled\s*=\s*true[\s\S]*?verify_jwt\s*=\s*true[\s\S]*?entrypoint\s*=\s*"\.\/functions\/phase9-owner-ingestion\/index\.ts"/u.test(config)) {
+  if (!/\[functions\.phase9-owner-ingestion\][\s\S]*?enabled\s*=\s*true[\s\S]*?verify_jwt\s*=\s*true[\s\S]*?import_map\s*=\s*"\.\/functions\/phase9-owner-ingestion\/deno\.json"[\s\S]*?entrypoint\s*=\s*"\.\/functions\/phase9-owner-ingestion\/index\.ts"/u.test(config)) {
     errors.push('owner-ingestion-jwt-config');
+  }
+  const ownerImportMap = JSON.parse(read(
+    root,
+    'supabase/functions/phase9-owner-ingestion/deno.json',
+  ));
+  if (ownerImportMap.imports?.zod !== 'npm:zod@4.2.1') {
+    errors.push('owner-ingestion-import-map');
   }
 
   for (const worker of ['phase9-media-validation-worker', 'phase9-vision-analysis-worker']) {

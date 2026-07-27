@@ -23,4 +23,5 @@ entrypoint = "./functions/commerce-task-worker/index.ts"
 [functions.phase9-owner-ingestion]
 enabled = true
 verify_jwt = true
+import_map = "./functions/phase9-owner-ingestion/deno.json"
 entrypoint = "./functions/phase9-owner-ingestion/index.ts"
