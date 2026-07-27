@@ -61,6 +61,9 @@
 | P9-D51 | One token/attempt-fenced transaction owns analysis evidence, accepted candidates, input terminal state, and job completion; exact completion replay uses canonical hash plus completing-claim fingerprint. | locked 2026-07-26 |
 | P9-D52 | Unit 4 uses forward M12 after M11: two immutable analysis tables, candidate lineage/publisher clue, widened detected count, and four service-only vision RPCs. | implemented and live-verified 2026-07-26 |
 | P9-D53 | Unit 4 is fixture-only and has no fallback, metadata, inventory, publication, UI, migration-application, deployment, or real-provider authority. | locked 2026-07-26 |
+| P9-D54 | The future real vision model is Gemini 3.5 Flash with stable model id `gemini-3.5-flash`; this is a handoff decision and grants no current integration/configuration/call authority. | future implementation decision 2026-07-27 |
+| P9-D55 | The initial future metadata provider is Google Books API; provider policy, credentials, adapter implementation, and calls remain separately gated. | future implementation decision 2026-07-27 |
+| P9-D56 | Metadata-provider expansion beyond the initial Google Books API integration remains deferred. | future implementation decision 2026-07-27 |
 
 ## Source reconciliation
 

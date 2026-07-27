@@ -1,9 +1,9 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** approved target; M01-M08/M10/M11/M12 live-verified; services undeployed; M09 absent
+**Status:** approved target; M01-M08/M10-M13 and fixture services live-verified; M09 absent
 **Last updated:** 2026-07-27
 
-M01-M08/M10/M11/M12 are live-verified. M11 provides the bounded ingestion and media-lease foundation; M12 implements the Unit 4 immutable evidence, lineage, reconciliation, and service-only vision RPC target. All ingestion/vision services remain undeployed. M09 quantity-constraint validation remains a separate live-data gate.
+M01-M08/M10-M13 are live-verified. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. Owner/media/fixture-vision services are deployed. M09 quantity validation remains a separate live-data gate.
 
 The dictionary distinguishes canonical truth, store-owned snapshots, public projections, staged AI output, and media/evidence. A field must not be added to several layers merely because it is convenient; each copy needs a named owner and synchronization rule.
 

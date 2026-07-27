@@ -1,9 +1,9 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `m11_m12_live_verified_services_undeployed`
+**Status:** `fixture_pipeline_deployed_and_live_verified`
 **Last updated:** 2026-07-27
-**Implementation status:** M01-M08/M10/M11/M12 are live-verified; Unit 4A local and synthetic cloud gates passed; all ingestion/vision services remain undeployed
-**Supabase mutation status:** M01-M08/M10/M11/M12 applied once to `ahntbtktjjmvfosgkmgn`; M09 is absent, no Storage object changed, and no ingestion/vision service was deployed
+**Implementation status:** M01-M08/M10-M13 and Unit 4A are live-verified; Owner Edge and separate free-plan media/fixture-vision services are deployed
+**Supabase mutation status:** M01-M08/M10-M13 applied once to `ahntbtktjjmvfosgkmgn`; M09 is absent; tagged fixture rows/private objects are retained with zero commerce effect
 **Database checkpoint:** M01-M08 and forward corrections M10-M12 are live-verified.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
@@ -55,6 +55,7 @@ After the repository entrypoint, read in this order:
 | [Work Unit 0B technical design](./work-units/00b-backend-api-technical-design-plan.md) | Router for seven completed backend/API design artifacts covering commands, queries, DTOs, authorization, state, jobs, media, marketplace, request photos, red tests, exact later file allowlists, and independent gates. |
 | [Unit 4 fixture vision-analysis runtime](./work-units/04-fixture-vision-analysis-runtime-design.md) | Locally complete `p9-vision-v2`, fixture analyzer, product policy, dedicated worker, token/attempt state machine, forward M12 persistence/RPCs, privacy, and red-first evidence. |
 | [Unit 4A deployment-runtime scaffolding](./work-units/04a-deployment-runtime-scaffolding-sdd.md) | Provider-neutral sanitation/fixture-vision service hosts, strict environment loading, dynamic fixtures, safe observability, manual invocation, deterministic builds/containers, and deployment validation. |
+| [Fixture-pipeline deployment evidence](./trackers/06-fixture-pipeline-deployment-evidence.md) | M13 invoker boundary, Owner/Render identities, exact SHA/deployments, nine live fixtures, fencing/security/log/privacy and zero-commerce evidence. |
 
 ## Continuity tools
 
@@ -95,7 +96,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, WU0A/WU0B, corrected Package 1 design, and Unit 4/4A implementation are integrated at their recorded checkpoints. M01-M08/M10/M11/M12 are live-verified; the M11/M12 closeout evidence is integrated on `main` at `4abeef8`. All ingestion/vision services remain undeployed, and no service secrets or real provider credentials are configured. M09, ordered service deployment/live fixture verification, real providers, metadata, inventory/publication implementation, and later units remain separately gated. Preserve these controls:
+The planning baseline, WU0A/WU0B, corrected Package 1 design, and Unit 4/4A implementation are integrated at their recorded checkpoints. M01-M08/M10-M13, Owner ingestion, and both separate fixture workers are live-verified at the identities in tracker 06. No real provider credential is configured. M09, Gemini/Google Books integration, scheduling/autoscaling, metadata, UI, inventory/publication, Library, and later units remain separately gated. Preserve these controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

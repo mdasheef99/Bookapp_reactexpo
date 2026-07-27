@@ -1,6 +1,6 @@
 # Work Unit 4A: Deployment-Runtime Scaffolding
 
-**Status:** `integrated_local_and_cloud_verified`
+**Status:** `deployed_and_live_fixture_verified`
 **Date:** 2026-07-26
 **Authority:** local SDD+TDD scaffolding only; no migration application, deployment,
 secret configuration, Supabase/Storage mutation, provider call, scheduler, lifecycle
@@ -8,9 +8,11 @@ worker, Git publication, or Library-branch change
 **Depends on:** committed Unit 3 ingestion runtime/M11 and Unit 4 fixture vision
 runtime/M12 at repository checkpoint `e9ba2d9`
 
-**Current deployment state (2026-07-27):** M11/M12 are live-verified; Owner ingestion,
-sanitation worker, and fixture vision worker remain undeployed. No service secret or
-real multimodal/metadata provider credential is configured.
+**Current deployment state (2026-07-27):** M11/M12/M13 are live-verified. Owner
+ingestion and the separate free-plan sanitation/fixture-vision services are deployed
+and fixture-verified at Render SHA `96991a9`; see
+[deployment evidence](../trackers/06-fixture-pipeline-deployment-evidence.md). No real
+multimodal or metadata-provider credential is configured.
 
 ## 1. Trace and scope
 

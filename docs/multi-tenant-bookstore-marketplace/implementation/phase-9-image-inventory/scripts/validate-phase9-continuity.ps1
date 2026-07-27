@@ -48,7 +48,8 @@ $requiredPhaseFiles = @(
     'supporting/data-dictionary.md', 'supporting/database-current-vs-target.md',
     'supporting/requirements-traceability.md', 'supporting/complexity-and-scope-register.md',
     'trackers/01-planning-and-decisions.md', 'trackers/02-implementation-and-verification.md', 'trackers/03-unit4-implementation-evidence.md',
-    'trackers/04-deployment-runtime-scaffolding-evidence.md',
+    'trackers/04-deployment-runtime-scaffolding-evidence.md', 'trackers/05-m11-m12-live-application-evidence.md',
+    'trackers/06-fixture-pipeline-deployment-evidence.md',
     'work-units/00-contracts-threat-migration-plan.md', 'work-units/00b-backend-api-technical-design-plan.md',
     'work-units/00b-technical-design/00-overview-authority-and-file-map.md', 'work-units/00b-technical-design/01-command-query-and-dto-catalogue.md',
     'work-units/00b-technical-design/02-authorization-tenancy-and-privacy.md', 'work-units/00b-technical-design/03-state-transactions-idempotency-and-publication.md',
@@ -86,17 +87,17 @@ foreach ($marker in $trackerMarkers) {
 $active = [IO.File]::ReadAllText((Join-Path $implementationRoot 'ACTIVE.md'))
 if (-not $active.Contains('phase-9-image-inventory/SESSION-START.md')) { Write-Error 'ACTIVE.md does not route to the Phase 9 session entrypoint.' }
 if (-not $active.Contains('DOC-13-implementation-tracker.md')) { Write-Error 'ACTIVE.md does not route to DOC-13.' }
-if (-not $active.Contains('phase-9-image-inventory/work-units/04a-deployment-runtime-scaffolding-sdd.md') -or
-    -not $active.Contains('M11/M12 are live-verified')) { Write-Error 'ACTIVE.md does not route to the accepted M11/M12 live checkpoint.' }
+if (-not $active.Contains('phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md') -or
+    -not $active.Contains('no next work unit is authorized')) { Write-Error 'ACTIVE.md does not route to the completed fixture-pipeline checkpoint.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `m11_m12_live_verified_services_undeployed`') -or
-    -not $doc13.Contains('M01-M08/M10/M11/M12 live-verified; Unit 4A local and synthetic cloud gates passed; all ingestion/vision services remain undeployed')) { Write-Error 'DOC-13 does not preserve the M11/M12 live checkpoint.' }
-if (-not $doc13.Contains('| Next recommended task | Await separate authorization for the ordered Owner-ingestion, sanitation-worker, and fixture-vision-worker deployment work unit')) { Write-Error 'DOC-13 does not preserve the post-M12 deployment authorization boundary.' }
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `fixture_pipeline_deployed_and_live_verified`') -or
+    -not $doc13.Contains('M01-M08/M10-M13 live-verified; Owner Edge and separate free-plan media/fixture-vision services deployed')) { Write-Error 'DOC-13 does not preserve the fixture-pipeline live checkpoint.' }
+if (-not $doc13.Contains('| Next recommended task | None is authorized.')) { Write-Error 'DOC-13 does not preserve the post-deployment authorization boundary.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `m11_m12_live_verified_services_undeployed`\r?$' -or
-    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `m11_m12_live_verified_services_undeployed`\r?$') {
-    Write-Error 'Implementation tracker does not identify the M11/M12 live checkpoint.'
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `fixture_pipeline_deployed_and_live_verified`\r?$' -or
+    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `fixture_pipeline_deployment_closeout`\r?$') {
+    Write-Error 'Implementation tracker does not identify the fixture-pipeline live checkpoint.'
 }
 if ($implementationTracker -notmatch '(?m)^\| 0A \|.*\| `approved_complete` \|') { Write-Error 'Implementation tracker no longer preserves WU0A approved-complete evidence.' }
 if ($implementationTracker -notmatch '(?m)^\| 0B \|.*\| `independently_approved` \|.*Risk-Based Phase 9 SDD analysis next;.*no Supabase query') { Write-Error 'Implementation tracker does not preserve WU0B approval and later-authority separation.' }
@@ -134,11 +135,11 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `m11_m12_live_verified_services_undeployed`; M01-M08/M10/M11/M12 live-verified and all ingestion/vision services undeployed\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `m11_m12_live_verified_services_undeployed`\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* await separate authorization for ordered Owner-ingestion, sanitation-worker, and fixture-vision-worker deployment, infrastructure/service secret configuration, and live fixture-path verification\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* M11/M12 are live-verified; M09 remains absent and separately gated; no further migration application is authorized\r?$') {
-    Write-Error 'TRACKER.md does not preserve the M11/M12 live and deployment gates.'
+if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `fixture_pipeline_deployed_and_live_verified`; M01-M08/M10-M13 live-verified, Owner ingestion and two separate free-tier Render workers deployed\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `fixture_pipeline_deployment_closeout`\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* none; await separate authorization for a later Phase 9 work unit\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* M01-M08/M10-M13 are live-verified; M09 remains absent and separately gated; no further migration application is authorized\r?$') {
+    Write-Error 'TRACKER.md does not preserve the fixture-pipeline deployment closeout gates.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
 $packageDesign = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-database-design.md'))
@@ -331,14 +332,14 @@ if (-not $sessionStart.Contains('| 0B Backend/API technical design or review (on
     Write-Error 'SESSION-START.md does not route the WU0B authority and artifact set.'
 }
 $phaseReadme = [IO.File]::ReadAllText((Join-Path $phaseRoot 'README.md'))
-if (-not $phaseReadme.Contains('**Status:** `m11_m12_live_verified_services_undeployed`') -or
-    -not $phaseReadme.Contains('M01-M08/M10/M11/M12 applied once') -or
-    -not $phaseReadme.Contains('forward corrections M10-M12 are live-verified')) {
-    Write-Error 'Phase 9 README disagrees with the M11/M12 live checkpoint.'
+if (-not $phaseReadme.Contains('**Status:** `fixture_pipeline_deployed_and_live_verified`') -or
+    -not $phaseReadme.Contains('M01-M08/M10-M13 applied once') -or
+    -not $phaseReadme.Contains('separate free-plan media/fixture-vision services are deployed')) {
+    Write-Error 'Phase 9 README disagrees with the fixture-pipeline deployment checkpoint.'
 }
 $pipeline = [IO.File]::ReadAllText((Join-Path $phaseRoot '02-extraction-enrichment-pipeline-sdd.md'))
-if (-not $pipeline.Contains('M11 `20260726182238` and M12 `20260726182539` are live-verified') -or
-    -not $pipeline.Contains('Services remain undeployed') -or
+if (-not $pipeline.Contains('M11 `20260726182238`, M12 `20260726182539`, and M13 `20260727025046` are live') -or
+    -not $pipeline.Contains('All nine recorded fixture cases passed') -or
     $pipeline -match '(?i)no (?:runtime )?code, tests?, or migration(?: file)? (?:exists|yet)') {
     Write-Error 'Extraction pipeline SDD contains stale Unit 4 implementation status.'
 }

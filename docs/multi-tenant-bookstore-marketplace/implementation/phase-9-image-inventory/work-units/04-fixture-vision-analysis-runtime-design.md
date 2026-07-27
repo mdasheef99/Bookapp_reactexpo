@@ -5,7 +5,7 @@
 **Authority:** accepted Unit 4 specification and implementation evidence; M11/M12 live application was completed under later separate authorization; deployment, real-provider, metadata, UI, and inventory/publication remain separately gated
 **Depends on:** M01-M08/M10/M11/M12 live; SDD 00 MAS-01-MAS-12; SDD 02 EXT-02-EXT-10; SDD 04 MED-06-MED-10/MED-17-MED-22
 
-**Current supersession (2026-07-27):** the design-time baseline below is preserved as historical evidence. M11 is live as `20260726182238`, M12 is live as `20260726182539`, and the fixture vision worker remains undeployed.
+**Current supersession (2026-07-27):** the design-time baseline below is preserved as historical evidence. M11 is live as `20260726182238`, M12 as `20260726182539`, M13 as `20260727025046`, and the separate fixture vision worker is [deployed and live-verified](../trackers/06-fixture-pipeline-deployment-evidence.md) with recorded fixtures only.
 
 ## 1. Scope and exclusions
 

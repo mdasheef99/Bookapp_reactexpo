@@ -1,24 +1,24 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `deployment_runtime_scaffolding_sdd_implemented`
-**Implementation status:** `m11_m12_live_verified_services_undeployed`; M01-M08/M10/M11/M12 live-verified and all ingestion/vision services undeployed
+**Planning status:** `fixture_pipeline_deployment_complete`
+**Implementation status:** `fixture_pipeline_deployed_and_live_verified`; M01-M08/M10-M13 live-verified, Owner ingestion and two separate free-tier Render workers deployed
 **Last updated:** 2026-07-27
-**Current milestone:** M11/M12 live-application work unit closed and documentation integrated on `main` at `4abeef8`
-**Active work unit:** `m11_m12_live_verified_services_undeployed`
+**Current milestone:** bounded Phase 9 fixture-pipeline deployment and live verification complete
+**Active work unit:** `fixture_pipeline_deployment_closeout`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** M11 `20260726182238` and M12 `20260726182539` applied once and live-verified; eight-file closeout evidence committed and merged at `4abeef89ecebdb7a74a8ece3a1bdc0d5cfe6c8c5`
-**Next authorized action:** await separate authorization for ordered Owner-ingestion, sanitation-worker, and fixture-vision-worker deployment, infrastructure/service secret configuration, and live fixture-path verification
-**Implementation authority:** M11/M12 application is complete; deployment, secret configuration, provider calls, Storage-object mutation, and later units remain unauthorized
-**Migration creation/application authority:** M11/M12 are live-verified; M09 remains absent and separately gated; no further migration application is authorized
-**Current gate:** deploy nothing until the separate service-deployment authorization; real providers, metadata, UI, inventory, publication, and later work remain prohibited
+**Last completed:** M13 `20260727025046`, Owner Edge version 1, Render media/vision deployments at `96991a9`, and all nine fixture cases live-verified; detailed evidence is [tracker 06](./trackers/06-fixture-pipeline-deployment-evidence.md)
+**Next authorized action:** none; await separate authorization for a later Phase 9 work unit
+**Implementation authority:** fixture deployment is complete; real providers, metadata enrichment, scheduling/autoscaling, UI, inventory commit, publication, Library, and later units remain unauthorized
+**Migration creation/application authority:** M01-M08/M10-M13 are live-verified; M09 remains absent and separately gated; no further migration application is authorized
+**Current gate:** do not configure/call Gemini or Google Books or begin another unit without separate authorization
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
 ## Current handoff
 
-Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Phase 9 M01-M08/M10/M11/M12 are live exactly once. M11 provides the bounded ingestion schema, immutable source snapshots, and token/attempt media leases; M12 provides immutable fixture-vision evidence, candidate lineage, and token/attempt vision RPCs. M09 remains absent and all ingestion/vision services remain undeployed.
+Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Phase 9 M01-M08/M10-M13 are live exactly once and M09 remains absent. M13 exposes only minimum `SECURITY INVOKER` public wrappers for the authoritative private service RPCs. Owner ingestion is active with JWT verification; `phase9-media-sanitation` and `phase9-fixture-vision` are separate free-plan Render services at `96991a9`.
 
-The [Unit 4 design](./work-units/04-fixture-vision-analysis-runtime-design.md) and M12 are integrated on `main` at `e9ba2d9`. [Unit 4A](./work-units/04a-deployment-runtime-scaffolding-sdd.md) adds provider-neutral sanitation/fixture-vision HTTP services, strict environment and secret-separation checks, allowlisted request-bound fixtures, bounded observability, deterministic builds/containers, a sanitized manual invoker, and JWT-enabled local Owner Edge configuration. Final verification passed 14 Phase 9 Jest suites/131 tests, PGlite 57/57, repository TypeScript, both strict worker builds, the executable deployment validator, and the synthetic GitHub Actions container smoke. No migration was applied, service deployed, secret configured, provider called, or Supabase/Storage state mutated in Unit 4A.
+The [Unit 4 design](./work-units/04-fixture-vision-analysis-runtime-design.md) and [Unit 4A deployment runtime](./work-units/04a-deployment-runtime-scaffolding-sdd.md) are now live-verified through the [fixture deployment evidence](./trackers/06-fixture-pipeline-deployment-evidence.md). The deployed `one_book` path and eight fresh-process operator cases used recorded fixtures only, `batchSize: 1`, normal claim/fencing/persistence/failure paths, and produced zero inventory/listing/publication effects. Future decisions are Gemini 3.5 Flash (`gemini-3.5-flash`) and initial Google Books API metadata, but neither is implemented, configured, or called.
 
 Auth hardening WU1/WU2 is locally complete and independently approved on `codex/auth-hardening-core`: production bypass policy is centralized and fail-closed; Zustand owns canonical session/status; one root bootstrap owns subscription/restoration; identity replacement remains blocked through cleanup failure and explicit retry; and current-device logout persists a non-secret deletion-intent guard until SDK or exact-key fallback removal succeeds. Auth no longer directly imports marketplace. Secure token persistence, Android backup, authoritative profile routing, OTP UX, native/offline testing, and remote EAS verification remain separately gated before Phase 9 mobile/private-ingestion runtime integration.
 
@@ -65,11 +65,11 @@ The exact development project was re-verified read-only at M11/M12 closeout:
 | Work Unit 0A contracts/tests | `approved_2026-07-19` |
 | Work Unit 0B technical design | [`independently_approved`](./work-units/00b-backend-api-technical-design-plan.md) |
 | Work Unit 4 fixture vision-analysis runtime | [`integrated_main_e9ba2d9`](./work-units/04-fixture-vision-analysis-runtime-design.md) |
-| Work Unit 4A deployment-runtime scaffolding | [`integrated_local_and_cloud_verified`](./work-units/04a-deployment-runtime-scaffolding-sdd.md) |
+| Work Unit 4A deployment-runtime scaffolding | [`deployed_and_live_fixture_verified`](./trackers/06-fixture-pipeline-deployment-evidence.md) |
 
 ## Blocking gate before further implementation
 
-WU0A, WU0B, Package 1, Unit 4, and Unit 4A are ready at their recorded levels. M01-M08/M10/M11/M12 are live-verified and immutable; services remain undeployed. Core auth WU1/WU2 is locally complete. M09, deployment, secret configuration, and later work remain separately gated.
+WU0A, WU0B, Package 1, Unit 4, and Unit 4A are complete at their recorded levels. M01-M08/M10-M13, the Owner boundary, and both separate fixture workers are live-verified. Core auth WU1/WU2 is locally complete. M09 and every later product/provider work unit remain separately gated.
 
 ## Risk summary
 
@@ -89,4 +89,4 @@ WU0A, WU0B, Package 1, Unit 4, and Unit 4A are ready at their recorded levels. M
 
 ## Next action gate
 
-M11/M12 live application is complete. Await separate authorization for ordered Owner-ingestion, sanitation-worker, and fixture-vision-worker deployment, required infrastructure/service secrets, and live fixture-path verification. Do not deploy, configure secrets, call real vision/metadata providers, mutate Storage objects or inventory/publication, create/apply M09, or begin another unit.
+The fixture-pipeline deployment is complete. Await a separately authorized next work unit. Do not configure or call Gemini 3.5 Flash or Google Books API, schedule/autoscale workers, enrich metadata, change mobile UI, commit inventory, publish listings, implement Library behavior, create/apply M09, or infer authority from this deployment.

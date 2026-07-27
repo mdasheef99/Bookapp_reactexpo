@@ -116,16 +116,18 @@ If implementation changes product or architecture behavior, update the relevant 
 
 > 2026-07-27 Phase 9 M11/M12 closeout checkpoint: the eight-file documentation-only ledger/live-state/handoff/evidence update was committed and fast-forwarded to `main` as `4abeef89ecebdb7a74a8ece3a1bdc0d5cfe6c8c5`; local and remote refs matched and the worktree was clean. Final read-only Supabase confirmation found the exact project healthy, M11/M12 still present exactly once at their recorded versions, and no Phase 9 ingestion/vision Edge Function. No deployment, secret configuration, Storage-object operation, provider call, or further Supabase mutation occurred.
 
+> 2026-07-27 Phase 9 fixture-pipeline deployment checkpoint: the JWT-verified Owner Edge Function and separate free-plan `phase9-media-sanitation` / `phase9-fixture-vision` Render services are live. M13 is live once as `20260727025046` with 13 minimum postgres-owned, empty-`search_path` `SECURITY INVOKER` wrappers; existing `service_role` grants proved sufficient and the private schema remains unexposed. Both Render services are live at `96991a99a8e24146db709653ebc287b8c2404430`, auto deploy is off, and health/readiness/auth/log-privacy checks pass. Deployed `one_book` plus eight fresh-process fixture cases passed normal claim/fencing/persistence/failure paths with `batchSize: 1`; commerce stayed 5 inventory/5 listings/5 published. No real provider, metadata, UI, inventory, publication, scheduling, autoscaling, or Library work occurred. [Detailed evidence](./implementation/phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md).
+
 > 2026-07-26 Phase 9 Unit 4A review-correction checkpoint: the independent review returned `CHANGES_REQUIRED` for unsafe Docker context, pre-authentication slot starvation/read deadlines, nondeterministic shutdown evidence, source-string-only deployment claims, and identity-only fixture tests. All five corrections plus bounded invoker responses are locally focused-green. A deny-by-default Docker context, pre-admission constant-time authentication, fixed body deadline, deterministic shutdown test, real compiled-entrypoint smoke, per-fixture semantic matrix, synthetic-only container script, and minimal-permission pull-request workflow now exist. The mandatory GitHub Actions image build/start gate is next; no live credential, image push, deployment, migration, provider, Supabase, or Storage operation is authorized.
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **M11/M12 live-verified; services undeployed** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **fixture pipeline deployed and live-verified** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-27 |
-| Latest handoff | `PHASE 6 COMPLETE — COMPREHENSIVE BROWSER E2E DEFERRED`. M01-M39 are applied and database-verified in development; scheduler v5, worker v3, and cron job 5 are active. Phases 7 and 8 are deferred. |
-| Current risk level | High for live ingestion/vision deployment - M11/M12 are live-verified, but services and secrets remain undeployed, hosting selection and representative-camera sizing remain, and no real provider is implemented. |
-| Next recommended task | Await separate authorization for the ordered Owner-ingestion, sanitation-worker, and fixture-vision-worker deployment work unit, including infrastructure/service secret configuration and live fixture-path verification. Do not deploy, configure secrets, mutate Storage objects, or call providers without that authorization. |
+| Latest handoff | Phase 9 fixture pipeline deployed and live-verified at `96991a9`; M13 live once; retained synthetic evidence produced zero commerce effects. |
+| Current risk level | Fixture deployment risk is contained; real-provider, lifecycle/scheduling, representative-camera sizing, and product integration remain separately gated. |
+| Next recommended task | None is authorized. Await a separately scoped Phase 9 work unit; do not configure/call Gemini 3.5 Flash or Google Books API or begin scheduling, metadata, UI, inventory/publication, or Library work. |
 
 ---
 
@@ -142,7 +144,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `m11_m12_live_verified_services_undeployed` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [Unit 4A deployment runtime](./implementation/phase-9-image-inventory/work-units/04a-deployment-runtime-scaffolding-sdd.md) | M01-M08/M10/M11/M12 live-verified; Unit 4A local and synthetic cloud gates passed; all ingestion/vision services remain undeployed. |
+| Phase 9: Image-to-LLM Inventory | `fixture_pipeline_deployed_and_live_verified` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [deployment evidence](./implementation/phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md) | M01-M08/M10-M13 live-verified; Owner Edge and separate free-plan media/fixture-vision services deployed; all recorded fixture cases verified with zero commerce effect. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -248,7 +250,7 @@ Documentation milestones completed:
 
 ## 8. Next Recommended Task
 
-**Phase 6 is complete through M39 and provider-independent `payment_ready`; comprehensive browser E2E remains explicitly deferred. Phases 7 and 8 are deferred, and Phase 9 planning is authorized.**
+**Phase 6 remains complete with comprehensive browser E2E deferred; Phases 7 and 8 remain deferred; the bounded Phase 9 fixture pipeline is deployed and live-verified.**
 
 The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The following tables are live and ready for feature implementation:
 
@@ -259,9 +261,7 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Review the Phase 9 master/domain SDDs, data dictionary, live audit, traceability, complexity register, and local trackers.
-2. Separately authorize failing database/security tests or migration-file creation when ready; M09/live migration application and runtime remain later independent authorizations.
-3. Start implementation with same-language `spine_stack` (maximum 15) plus camera/gallery and mandatory Owner review; `single_cover` is not the first slice.
-4. Preserve the Phase 6 quantity-bucket/hold and controlled-write boundary when creating or incrementing inventory.
-5. Keep provider payments, `payment_pending`, paid orders, ledger, pickup, refunds, and settlement deferred with Phases 7/8.
-6. Re-verify exact Supabase project/schema/storage/advisors before any migration creation/application and keep the existing `NOT VALID` quantity constraint for separately reviewed M09, with a fresh violation preflight and separate live-application authorization.
+1. Await a separately authorized Phase 9 work unit; none follows automatically from deployment.
+2. Treat Gemini 3.5 Flash (`gemini-3.5-flash`) and Google Books API as future handoff decisions only; metadata-provider expansion remains deferred.
+3. Keep M09, scheduling/autoscaling, metadata enrichment, mobile UI, inventory commit, publication, Library, and Phases 7/8 separately gated.
+4. Re-verify the exact project, migrations, schema, Storage, services, and advisors before any later mutation.

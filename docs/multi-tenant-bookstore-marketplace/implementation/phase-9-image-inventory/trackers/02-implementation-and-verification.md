@@ -1,12 +1,11 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `m11_m12_live_verified_services_undeployed`
+**Status:** `fixture_pipeline_deployed_and_live_verified`
 **Last updated:** 2026-07-27
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `m11_m12_live_verified_services_undeployed`
+**Active work unit:** `fixture_pipeline_deployment_closeout`
 
 This tracker is separate from planning decisions; WU0B remains independently approved after `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review, without granting later database/runtime authority.
-
 ## Work units
 
 | Unit | Scope | Status | Required gate |
@@ -16,9 +15,9 @@ This tracker is separate from planning decisions; WU0B remains independently app
 | 0B | [Backend/API technical design](../work-units/00b-backend-api-technical-design-plan.md): seven routed artifacts covering command/query/DTO/actor/boundary inventories, state/transaction/idempotency/worker/telemetry matrices, exact later file allowlists, and red-test mapping | `independently_approved` | original and bounded correction verdicts `approved` 2026-07-22; consolidated Risk-Based Phase 9 SDD analysis next; no Supabase query, migration, endpoint, provider/storage/UI/runtime change or external mutation |
 | 1 | [Package 1 live audit](../work-units/01-package1-live-audit.md) and [database design](../work-units/01-package1-database-design.md): metadata, aliases, condition/damage, pipeline/media/request-photo persistence, RLS/grants/functions/indexes/storage, and migration grouping | `m01_m08_m10_live_verified` | M01-M08 plus forward M10 live once; exact discovery/request/internal/private boundaries and advisor correction pass |
 | 2 | Extraction session/input/candidate/enrichment/job tables, RLS, indexes, retention fields | `m02_live_verified` | M02 live through M10; Unit 4 needs forward evidence/lease delta |
-| 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `m11_live_verified_service_undeployed` | M11 live as `20260726182238`; deployment separately gated |
-| 4 | [Fixture vision-analysis runtime](../work-units/04-fixture-vision-analysis-runtime-design.md): `p9-vision-v2`, analyzer, job orchestration, immutable evidence/candidates | `m12_live_verified_service_undeployed` | M12 live as `20260726182539`; no real provider; deployment separately gated |
-| 4A | [Deployment-runtime scaffolding](../work-units/04a-deployment-runtime-scaffolding-sdd.md): executable sanitation/fixture-vision hosts, strict environment, builds/containers, invocation and validation | `integrated_local_and_cloud_verified` | scaffolding complete; M11/M12 separately live-verified; services/secrets/providers remain undeployed/unconfigured |
+| 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `deployed_and_live_verified` | M11 live as `20260726182238`; Owner Edge and separate media service verified |
+| 4 | [Fixture vision-analysis runtime](../work-units/04-fixture-vision-analysis-runtime-design.md): `p9-vision-v2`, analyzer, job orchestration, immutable evidence/candidates | `fixture_deployed_and_live_verified` | M12 live as `20260726182539`; all nine fixture cases verified; no real provider |
+| 4A | [Deployment-runtime scaffolding](../work-units/04a-deployment-runtime-scaffolding-sdd.md): executable sanitation/fixture-vision hosts, strict environment, builds/containers, invocation and validation | [`deployed_and_live_fixture_verified`](./06-fixture-pipeline-deployment-evidence.md) | separate free Render services live at `96991a9`; M13 invoker boundary live |
 | 5 | Canonical-first metadata adapter/cache, ISBN validation, provider selection, aliases | `not_started` | provider fixtures and cost tests |
 | 6 | Owner session/defaults/capture/review UI with accessibility and recovery | `not_started` | Units 2–5 verified |
 | 7 | Controlled per-candidate commit, advisory duplicates, idempotency, projection changes | `not_started` | quantity/hold concurrency tests |
@@ -44,10 +43,11 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260722000010_marketplace_phase9_public_boundary_security_correction.sql` | `20260722125256 marketplace_phase9_public_boundary_security_correction` | MCP exact project 2026-07-22 | authorized bounded live correction | forward-only; M01-M08 immutable | exact three anon RPCs; invoker-safe 24-field view; zero direct view/private access; advisor error gone | `live_verified` |
 | `20260723000011_marketplace_phase9_ingestion_runtime_foundation.sql` | `20260726182238 marketplace_phase9_ingestion_runtime_foundation` | MCP exact project 2026-07-26 | authorized M11/M12 live application | forward-only; revoked legacy authenticated path RPCs | 20 columns, 11 constraints, unique capability index, 12 hardened service-only functions, unchanged 5/5/14 inventory/listing/event counts and zero Storage objects; security 172 after M11 | `live_verified` |
 | `20260726000012_marketplace_phase9_vision_analysis_runtime.sql` | `20260726182539 marketplace_phase9_vision_analysis_runtime` | MCP exact project 2026-07-26 | authorized M11/M12 live application | forward-only after M11; initial truncated transport submission failed atomically and was absent before lossless retry | RLS/private immutable tables, eight lineage/reconciliation columns, exact uniqueness/constraints/triggers/index, four hardened service-only RPCs, unchanged data/Storage; security 174 with only two expected INFO notices | `live_verified` |
+| `20260727000013_marketplace_phase9_service_rpc_wrappers.sql` | `20260727025046 marketplace_phase9_service_rpc_wrappers` | MCP exact project 2026-07-27 | authorized M13 boundary correction | forward-only; private functions/schema unchanged | 13 postgres-owned, empty-search-path `SECURITY INVOKER` wrappers; service-role only; anon/auth denied; private schema still `PGRST106` | `live_verified` |
 Rules:
 
 - Re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
-- Use forward corrections and record every schema, grant, Storage, data, and verification effect.
+- Use forward corrections; record every schema, grant, Storage, data, and verification effect.
 ## Required verification matrix
 
 ### Database and tenancy
@@ -347,4 +347,4 @@ Rules:
 - Tracker/source-doc updates: Master/Data/Extraction/Review/Media SDDs, data dictionary, traceability, WU0/WU0B artifacts, planning and implementation trackers, Phase 9 README/TRACKER, and DOC-13
 - Next authorized action and gate: consolidated Risk-Based Phase 9 SDD analysis in a new session; Supabase audit, database/migration design, migration creation/testing/application, and runtime remain unauthorized
 
-Unit 4 implementation evidence continues in [03-unit4-implementation-evidence.md](./03-unit4-implementation-evidence.md); older entries above remain append-only evidence.
+Unit 4 evidence continues in [03](./03-unit4-implementation-evidence.md), [04](./04-deployment-runtime-scaffolding-evidence.md), [05](./05-m11-m12-live-application-evidence.md), and [06 fixture deployment](./06-fixture-pipeline-deployment-evidence.md); older entries above remain append-only evidence.

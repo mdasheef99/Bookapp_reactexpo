@@ -11,7 +11,7 @@ This file answers only “where does a new development session start?” DOC-13 
 - **Stable handoff:** [PHASE-9-image-to-LLM-inventory.md](./PHASE-9-image-to-llm-inventory.md)
 - **Session entrypoint:** [Phase 9 SESSION-START](./phase-9-image-inventory/SESSION-START.md)
 - **Local current-state authority:** [Phase 9 master tracker](./phase-9-image-inventory/TRACKER.md)
-- **Current work-unit plan:** Phase 9 M11/M12 are live-verified and their documentation closeout is integrated at `4abeef8`; after integrated [Unit 4A deployment-runtime scaffolding](./phase-9-image-inventory/work-units/04a-deployment-runtime-scaffolding-sdd.md), the next separately authorized unit is ordered Owner-ingestion, sanitation-worker, and fixture-vision-worker deployment plus live fixture-path verification
+- **Current work-unit plan:** the [Phase 9 fixture pipeline](./phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md) is deployed and live-verified with M13 and both separate free-plan workers; no next work unit is authorized
 - **Global status authority:** [DOC-13](../DOC-13-implementation-tracker.md)
 
 ## Required reading order

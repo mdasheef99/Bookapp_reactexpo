@@ -1,9 +1,19 @@
 # Phase 9 Database and Storage: Current vs Target
 
 **Audit date:** 2026-07-27
-**Audit mode:** authorized M11/M12 application plus exact-project application and documentation-closeout Supabase MCP readback
+**Audit mode:** authorized M13 boundary application, service deployment, and bounded live fixture verification
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10/M11/M12 live-verified; closeout reconfirmed no further database, data-row, Storage-object, service, secret, or provider mutation
+**Mutation status:** M01-M08/M10-M13 live-verified; tagged fixture rows/private objects retained; zero inventory/listing/publication/provider effect
+
+**Deployment refresh:** M13 is live once as `20260727025046`. Its 13
+postgres-owned, empty-`search_path` public wrappers are `SECURITY INVOKER`,
+fully qualified, static single-call delegations with execute only for
+`service_role`; no definer wrapper was necessary. The private schema remains
+unavailable through PostgREST. Owner ingestion and separate free-plan Render
+media/fixture-vision services are live; all nine recorded fixture cases passed
+through the normal claim/fencing/persistence/failure lifecycle. Detailed
+non-secret evidence and retained synthetic deviations are in
+[tracker 06](../trackers/06-fixture-pipeline-deployment-evidence.md).
 
 **Unit 4 vision-analysis refresh:** M11/M12 applied sequentially on 2026-07-26 as `20260726182238` and `20260726182539`. Live jobs now have token/attempt fencing and vision reconciliation fields; immutable result/observation tables, candidate lineage, exact uniqueness, immutable triggers, and four service-only vision RPCs are live. Client table/RPC access remains denied. The Edge Function list still contains neither Owner ingestion nor vision analysis, and no data/Storage object changed.
 
@@ -43,7 +53,7 @@
 | `store_inventory` | 33 fields; lacks language, description, edition, volume, format, structured damage, typed media, freshness, acquisition type/method/MRP. Canonical edition may be null. | Add store-owned metadata snapshot fields, damage/freshness/acquisition fields, commit provenance/version, and typed links. Keep canonical link nullable. |
 | `marketplace_book_listings` | One projection per `inventory_id`; lacks language, description, aliases, structured damage/media/freshness. | Extend safe projection with public metadata/damage/media/search fields. Preserve one projection per inventory row; visual grouping occurs in query/UI, not DB merging. |
 | Projection trigger | Explicitly copies current inventory fields; revoked from anon/authenticated and executable by service role. | Extend or replace with a controlled projection writer covering new public fields and eligibility. Projection failure must be observable; no silent inventory/public divergence. |
-| Image extraction tables | M02/M11/M12 are live through the verified M12 tail: token-fenced jobs, private immutable analysis evidence, candidate lineage, and vision-specific service-only RPCs exist. | Fixture runtime remains undeployed; preserve the service-only boundary during deployment. |
+| Image extraction tables | M02/M11/M12/M13 are live: token-fenced jobs, private immutable evidence, candidate lineage, and minimum service-only invoker wrappers exist. Fixture runtime is deployed and live-verified. | Preserve the service-only boundary; later real-provider and product units remain separately gated. |
 | Alias storage | No multilingual alias table or listing alias projection exists. | Add provenance-bearing aliases targeted to either a canonical edition or unmatched store inventory with an XOR target constraint. Only approved/eligible aliases enter public search. |
 | Media registry | M03/M11 are live and provide typed `media_assets` plus private/public/request link structures; legacy inventory `photos text[]` remains for compatibility. M11 adds no public promotion and links only validated private scan media. | Preserve typed purpose/privacy/hash/retention boundaries and defer legacy-field retirement/public promotion to separately authorized work. |
 | Upload capabilities | M11 is live: authenticated execution of legacy path-taking RPCs is revoked and server-generated exact paths plus declared/observed object identity are present. | Preserve the service-only boundary during deployment. |
@@ -73,17 +83,17 @@ Proposed boundary:
 4. Service-role functions/Edge Functions derive actor/store, use fixed schemas/search paths, expose minimum commands, and have explicit grants plus cross-tenant denial tests; worker/service access is separately enumerated from authenticated access.
 5. Model/provider workers have a narrow job capability, not a user bearer token and not general database authority.
 
-Live M12 implements `claim_phase9_vision_jobs`, `phase9_vision_job_context`, `phase9_persist_vision_analysis`, and `phase9_fail_vision_job`. Each function is service-only, pins `search_path`, rejects NULL security/transition arguments, proves row existence, and validates job kind, attempt, owner, token hash, expiry, and complete store/session/input/media relationships. Invalid relationships use the approved exact-claim job-only reconciliation result and never mutate unverified related rows. One persistence transaction recursively validates the canonical positive allowlist, computes the UTF-8 normalized-`jsonb` hash, inserts immutable image/observation evidence and accepted candidates, and then performs terminal input/job updates. It cannot call metadata, inventory, listing, publication, or Storage operations.
+Live M12 implements `claim_phase9_vision_jobs`, `phase9_vision_job_context`, `phase9_persist_vision_analysis`, and `phase9_fail_vision_job`. M13 exposes only the minimum public invoker wrappers required by PostgREST while leaving the authoritative functions in `marketplace_sec`. Each function is service-only, pins `search_path`, rejects NULL security/transition arguments, proves row existence, and validates job kind, attempt, owner, token hash, expiry, and complete store/session/input/media relationships. Invalid relationships use the approved exact-claim job-only reconciliation result and never mutate unverified related rows. One persistence transaction recursively validates the canonical positive allowlist, computes the UTF-8 normalized-`jsonb` hash, inserts immutable image/observation evidence and accepted candidates, and then performs terminal input/job updates. It cannot call metadata, inventory, listing, publication, or Storage operations.
 
 ## Storage delta
 
 | Bucket/boundary | Observed | Target |
 | --- | --- | --- |
-| `image-extraction-inputs` | Live M06/M11: private, 10 MB, JPEG/PNG/WebP; direct authenticated-owner mutation policy removed; service-mediated immutable-snapshot fields are live; zero objects at M12 closeout. | Validate/re-encode/strip metadata before future model egress and delete by lifecycle policy. |
+| `image-extraction-inputs` | Live M06/M11: private, 10 MB, JPEG/PNG/WebP; direct authenticated-owner mutation policy removed; tagged fixture verification retained 23 private snapshot/sanitized objects. | Delete only through a separately authorized lifecycle policy; do not treat retained evidence as disposable. |
 | `inventory-photos` | Public, 5 MB, JPEG/PNG/WebP; owner can write directly under shared store path policy. | Use only for approved sanitized public derivatives. Remove direct unsanitized promotion; no broad listing policy. |
 | `order-dispute-evidence` | Private, 10 MB, images/PDF; owner and broad platform roles can read by store path. | Keep for disputes. Do not use as the sole request-photo store because customer/item access and lifecycle differ. |
 | `listing-photos` | Public legacy bucket, user-ID path ownership, broad public SELECT/list policy. Advisor flags enumeration. | Exclude from Phase 9. Remediate/migrate separately before relying on it. |
-| `marketplace-media-staging` | Live M06/M11: private, 10 MB, JPEG/PNG/WebP; no direct authenticated-client object policy; exact capability-bound path schema is live; zero objects at M12 closeout. | Runtime and failed-staging cleanup remain undeployed. |
+| `marketplace-media-staging` | Live M06/M11: private, 10 MB, JPEG/PNG/WebP; no direct authenticated-client object policy; exact capability-bound paths; tagged fixture verification retained 10 objects. | Cleanup remains a separately authorized lifecycle unit. |
 | `order-request-photos` | Live M06: private, 5 MB, JPEG/PNG/WebP; server-mediated object writes. M08 added the request-photo command seam. | Retain as the separate request-item/customer/store-scoped boundary; customer-request-photo runtime remains outside this ingestion slice. |
 
 ## Security advisor context

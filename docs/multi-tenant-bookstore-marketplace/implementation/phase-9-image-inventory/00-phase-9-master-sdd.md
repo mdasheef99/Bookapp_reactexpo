@@ -4,7 +4,7 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 **Phase:** 9
-**Implementation checkpoint (2026-07-27):** WU0A/WU0B, the ingestion foundation, fixture-backed Unit 4 runtime, and Unit 4A deployment scaffolding are integrated. M01-M08/M10/M11/M12 are live-verified; all ingestion/vision services remain undeployed, and no real multimodal or metadata provider is implemented.
+**Implementation checkpoint (2026-07-27):** WU0A/WU0B, ingestion, fixture-backed Unit 4, and Unit 4A are integrated and live-verified. M01-M08/M10-M13, the JWT Owner boundary, and separate free-plan media/fixture-vision services are live; all nine recorded fixtures passed with zero commerce effect. No real multimodal or metadata provider is implemented.
 
 ## 1. Decision
 

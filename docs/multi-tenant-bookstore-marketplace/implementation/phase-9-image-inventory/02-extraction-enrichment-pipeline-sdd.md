@@ -4,11 +4,15 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
-**Implementation checkpoint (2026-07-27):** the pre-model ingestion slice and fixture-backed Unit 4 runtime are integrated. M11 `20260726182238` and M12 `20260726182539` are live-verified with fencing, canonical hashing/validation, database-owned retryability, typed RPC transport, path rejection, relationship reconciliation, and executable boundaries. Services remain undeployed, and no real multimodal or metadata provider integration exists.
+**Implementation checkpoint (2026-07-27):** the pre-model ingestion slice and fixture-backed Unit 4 runtime are deployed and live-verified. M11 `20260726182238`, M12 `20260726182539`, and M13 `20260727025046` are live with fencing, canonical hashing/validation, database-owned retryability, typed RPC transport, path rejection, relationship reconciliation, and minimum invoker wrappers. All nine recorded fixture cases passed; no real multimodal or metadata provider integration exists.
 
 ## 1. Decision
 
 Use a persistent, asynchronous, provider-agnostic pipeline for same-language spine images. One primary multimodal vision adapter and at most one whole-image fallback extract observed identity clues. Deterministic code then performs local canonical lookup and sequential metadata-provider enrichment. The mobile request does not wait synchronously for the complete pipeline.
+
+Future implementation decisions select Gemini 3.5 Flash (`gemini-3.5-flash`) for
+vision and Google Books API as the initial metadata provider. Metadata-provider
+expansion is deferred. These decisions do not authorize configuration or calls.
 
 ## 2. Session experience
 
