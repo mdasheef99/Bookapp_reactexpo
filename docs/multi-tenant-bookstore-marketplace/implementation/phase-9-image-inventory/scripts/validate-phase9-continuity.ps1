@@ -90,18 +90,19 @@ if (-not $active.Contains('phase-9-image-inventory/SESSION-START.md')) { Write-E
 if (-not $active.Contains('DOC-13-implementation-tracker.md')) { Write-Error 'ACTIVE.md does not route to DOC-13.' }
 if (-not $active.Contains('phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md') -or
     -not $active.Contains('phase-9-image-inventory/work-units/04b-gemini-vision-adapter-handoff.md') -or
-    -not $active.Contains('no later work unit is authorized')) { Write-Error 'ACTIVE.md does not route to the fixture checkpoint and Unit 4B live gate.' }
+    -not $active.Contains('M15 is live once as `20260727222159`') -or
+    -not $active.Contains('forward-only grant correction is required before Unit 5B')) { Write-Error 'ACTIVE.md does not route to the M15 live security-correction gate.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5a_metadata_foundation_independently_approved_unapplied`') -or
-    -not $doc13.Contains('M01-M08/M10-M14 live once;') -or
-    -not $doc13.Contains('M15 unapplied')) { Write-Error 'DOC-13 does not preserve Unit 5A independent approval and the live/unapplied distinction.' }
-if (-not $doc13.Contains('| Next recommended task | User review and separate authorization for M15 preflight/application;')) { Write-Error 'DOC-13 does not preserve the Unit 5A post-approval boundary.' }
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `m15_live_security_correction_required`') -or
+    -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
+    -not $doc13.Contains('service_role=arwdDxtm/postgres')) { Write-Error 'DOC-13 does not preserve the M15 live security-correction state.' }
+if (-not $doc13.Contains('| Next recommended task | Separately authorize a forward-only grant correction')) { Write-Error 'DOC-13 does not preserve the Unit 5A ACL-correction boundary.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit5a_metadata_foundation_independently_approved_unapplied`\r?$' -or
-    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5a_closeout_complete`\r?$' -or
-    -not $implementationTracker.Contains('20260728000015_marketplace_phase9_metadata_foundation.sql')) {
-    Write-Error 'Implementation tracker does not preserve the Unit 5A approved/unapplied gate.'
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `m15_live_security_correction_required`\r?$' -or
+    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5a_m15_live_security_correction`\r?$' -or
+    -not $implementationTracker.Contains('20260727222159 marketplace_phase9_metadata_foundation')) {
+    Write-Error 'Implementation tracker does not preserve the M15 live security-correction gate.'
 }
 $providerScaleMarkers = @{
     '00-phase-9-master-sdd.md' = @('MAS-13', 'MAS-17', 'MAS-AC14')
@@ -218,11 +219,11 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `unit5a_metadata_foundation_independently_approved_unapplied`; M15 is created and locally verified but not applied\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5a_closeout_complete`\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* user review and separate authorization for M15 preflight/application; Unit 5B/5C remain not started and separately gated\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* M15 creation and local testing are complete; M15 is not live and is not authorized for application; M01-M08/M10-M14 remain live exactly once and M09 remains absent\r?$') {
-    Write-Error 'TRACKER.md does not preserve the Unit 5A approved and M15-unapplied gate.'
+if (-not $tracker.Contains('**Implementation status:** `m15_live_security_correction_required`') -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5a_m15_live_security_correction`\r?$' -or
+    -not $tracker.Contains('**Next authorized action:** separately authorize a forward-only correction') -or
+    -not $tracker.Contains('M15 is live once as `20260727222159`')) {
+    Write-Error 'TRACKER.md does not preserve the M15 live security-correction gate.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
 $packageDesign = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-database-design.md'))

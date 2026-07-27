@@ -202,8 +202,9 @@ version to the provider registry. Selected snapshots retain a separate terminal
 outcome-source attempt so negative/ambiguous cache records preserve exact adapter
 provenance without misrepresenting that attempt as an accepted selection.
 `storage_allowed=false` prevents retained normalized payload, selected snapshots,
-and positive cache entries. M15 is not applied, so these remain target structures
-rather than live fields.
+and positive cache entries. M15 is live once as `20260727222159`; these structures
+are live, while the intended read-only direct service-role boundary remains blocked
+on the forward ACL correction recorded in the current-vs-target audit.
 
 ### Provider registry and routing target
 

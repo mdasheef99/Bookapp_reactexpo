@@ -159,17 +159,30 @@ If implementation changes product or architecture behavior, update the relevant 
 > fixture seams remain intact and Phase 9 PGlite passed 67/67. No Storage, Edge
 > Function, credential, Gemini, Render, autoscaling, metadata, or product mutation
 > occurred. Gemini deployment and live verification remain deferred.
+>
+> 2026-07-28 Phase 9 M15 application and security stop: correction commit
+> `1168655` was fast-forwarded to `main`; the complete checked-in 60,915-byte
+> M15 payload (SHA-256 `21c298e77e1008f2fd0fd50b33ede9ec1f74479779cf53679f5bb638dc69d9f4`,
+> Git blob `573c11dbe073c31b2729874a011e11413e6969d1`) was submitted once to
+> project `ahntbtktjjmvfosgkmgn` and applied as
+> `20260727222159 marketplace_phase9_metadata_foundation`. Schema, constraints,
+> indexes, immutable trigger, RPC signatures, fixed search paths, client denials,
+> fencing, lineage, cost, and no-inventory/publication checks passed. Closeout
+> stopped because Supabase default privileges left
+> `service_role=arwdDxtm/postgres` on all three new metadata tables despite M15's
+> intended read-only grant. M15 remains live once and M09 absent; a separately
+> authorized forward-only grant correction is required before Unit 5B.
 
 > 2026-07-26 Phase 9 Unit 4A review-correction checkpoint: the independent review returned `CHANGES_REQUIRED` for unsafe Docker context, pre-authentication slot starvation/read deadlines, nondeterministic shutdown evidence, source-string-only deployment claims, and identity-only fixture tests. All five corrections plus bounded invoker responses are locally focused-green. A deny-by-default Docker context, pre-admission constant-time authentication, fixed body deadline, deterministic shutdown test, real compiled-entrypoint smoke, per-fixture semantic matrix, synthetic-only container script, and minimal-permission pull-request workflow now exist. The mandatory GitHub Actions image build/start gate is next; no live credential, image push, deployment, migration, provider, Supabase, or Storage operation is authorized.
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5A metadata foundation independently approved; M15 unapplied** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **M15 live; Unit 5A security correction required** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-28 |
-| Latest handoff | Unit 5A is locally implemented, verified, and independently approved; M15 is created but not applied. M01-M08/M10-M14 remain live once and M09 remains absent. |
-| Current risk level | Google Books is not implemented; the secondary remains unselected/disabled; no metadata credential or live provider call exists. |
-| Next recommended task | User review and separate authorization for M15 preflight/application; Units 5B/5C remain not started and separately gated. |
+| Latest handoff | M15 applied once as `20260727222159`; structural/RPC checks passed, but direct `service_role` DML inherited from live default privileges blocks security verification. M09 remains absent. |
+| Current risk level | The three M15 tables have unintended direct service-role mutation grants. Google Books remains unimplemented; no metadata credential or provider call exists. |
+| Next recommended task | Separately authorize a forward-only grant correction and live verification; do not start Unit 5B/5C first. |
 
 ---
 
@@ -186,7 +199,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit5a_metadata_foundation_independently_approved_unapplied` | [Unit 5A handoff](./implementation/phase-9-image-inventory/work-units/05a-metadata-foundation-handoff.md) · [deployment evidence](./implementation/phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md) | Unit 5A independently approved; M15 unapplied; M01-M08/M10-M14 live once; M09, providers, Units 5B/5C deferred. |
+| Phase 9: Image-to-LLM Inventory | `m15_live_security_correction_required` | [Unit 5A handoff](./implementation/phase-9-image-inventory/work-units/05a-metadata-foundation-handoff.md) · [deployment evidence](./implementation/phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md) | M15 live once as `20260727222159`; structural/RPC verification passed, but direct service-role DML requires a forward grant correction. M09, providers, Units 5B/5C remain deferred. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

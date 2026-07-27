@@ -114,3 +114,24 @@ No live database, Storage, provider, credential, or deployment mutation occurred
 The independent correction review returned `APPROVED`. The exact next gate is
 user review and separate authorization for M15 preflight/application. Units 5B/5C
 remain not started and require separate authorization.
+
+## Live application checkpoint — 2026-07-28
+
+Correction commit `1168655` was merged to `main`. The complete checked-in M15
+file (60,915 bytes; SHA-256
+`21c298e77e1008f2fd0fd50b33ede9ec1f74479779cf53679f5bb638dc69d9f4`;
+Git blob `573c11dbe073c31b2729874a011e11413e6969d1`) was submitted once and
+applied to `ahntbtktjjmvfosgkmgn` as
+`20260727222159 marketplace_phase9_metadata_foundation`. M15 is present exactly
+once and M09 remains absent.
+
+Live schema, constraint, index, trigger, function, fixed-search-path, client
+denial, fencing, lineage, cost, storage/reuse, coherent-snapshot, and
+no-inventory/publication checks passed. The final security gate did not pass:
+Supabase default privileges left direct `service_role` DML on all three new
+tables (`service_role=arwdDxtm/postgres`). This supersedes the earlier expectation
+that granting SELECT alone would narrow service-role table authority. No
+unauthorized live grant correction was made. Unit 5A remains blocked on a
+separately authorized forward-only ACL correction; Units 5B/5C, Google Books,
+metadata credentials/provider calls, Gemini deployment/calls, Storage, inventory,
+and publication remain untouched.

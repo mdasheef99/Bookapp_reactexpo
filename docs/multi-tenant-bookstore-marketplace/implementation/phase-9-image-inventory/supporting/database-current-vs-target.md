@@ -1,9 +1,9 @@
 # Phase 9 Database and Storage: Current vs Target
 
 **Audit date:** 2026-07-28
-**Audit mode:** exact-project M14 live readback plus Unit 5A read-only gap audit
+**Audit mode:** exact-project M15 application and live catalogue/security readback
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10-M14 live exactly once; M09 absent; Unit 5A M15 exists locally and is not applied; no Unit 5A live/Storage/provider/deployment mutation
+**Mutation status:** M01-M08/M10-M15 live exactly once; M09 absent; M15 applied as `20260727222159`; no Storage/provider/deployment/product-data mutation
 
 **Provider/scale SDD reconciliation evidence:** the 2026-07-27 bounded read-only provider audit reconfirmed the exact healthy project and migration tail with M09 absent. Live counts were five extraction candidates, one canonical edition, and zero provider-registry rows, metadata attempts, metadata sources, aliases, or usage reservations. The existing metadata-attempt table already records candidate, adapter, attempt sequence, normalized clues, status, provider record, match strength, latency, cache status, versions, reuse policy, payload lifecycle, and timestamps; it does not explicitly represent role, provider-independent query identity, capability/routing-policy version, predecessor outcome, coalescing lineage, or cost-reservation linkage. These are proposed Unit 5 design targets only. No database or Storage mutation occurred.
 
@@ -34,17 +34,18 @@ performance advisors report three unindexed-FK and two unused-empty-index INFOs
 [unused-index reference](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index)).
 No new security WARN/ERROR is attributable to M14.
 
-**Unit 5A target delta (local, not live):** live M14 still has the original M02
-`metadata_enrichment_attempts` shape and mutable candidate `selected_snapshot`;
-there are no live metadata lookup, provider-cache, or immutable selected-metadata
-relations. Local M15 proposes additive `phase9_metadata_lookups`,
-`phase9_metadata_cache_entries`, and `phase9_selected_metadata_snapshots`, extends
-metadata-specific attempts with routing/query/capability/reservation/pricing/
-disposition lineage, distinct cache-policy/namespace versions, terminal
-outcome-source provenance, provider-registry reuse/storage enforcement, and a
-provider-independent local-canonical completion RPC with no attempt/reservation
-dependency, and adds service-only token-fenced RPCs. This paragraph is
-target evidence only; none of these M15 structures is documented as live.
+**Unit 5A live delta:** M15 is live once as
+`20260727222159 marketplace_phase9_metadata_foundation`. Live readback confirms
+`phase9_metadata_lookups`, `phase9_metadata_cache_entries`, and
+`phase9_selected_metadata_snapshots`; all planned attempt-lineage and candidate
+snapshot-link columns; approved checks, foreign keys, unique identities, indexes,
+and immutable trigger; eleven private helpers and eight invoker wrappers with fixed
+search paths; zero anon/authenticated table or RPC authority; and the approved
+claim/local/coalescing/routing/cost/storage/coherence/no-product-effect definitions.
+Security verification did not close: project default privileges produced
+`service_role=arwdDxtm/postgres` on each new table. M15 revoked client roles but did
+not first revoke `service_role`, so its later `GRANT SELECT` did not narrow the
+inherited ACL. A forward-only grant correction is required before Unit 5B.
 
 **Ingestion foundation checkpoint:** project `ahntbtktjjmvfosgkmgn` remains healthy; both private 10 MiB JPEG/PNG/WebP buckets remain unchanged. Live M11 revokes authenticated execution of path-taking legacy intake RPCs and adds declared source/content identity, persisted canonical completion, capability linkage, immutable private source snapshots, opaque claim-token and attempt fencing, 16 MP enforcement, and service-only issue/register/claim/context/revalidate/snapshot-bind/complete/fail functions. No runtime is deployed.
 

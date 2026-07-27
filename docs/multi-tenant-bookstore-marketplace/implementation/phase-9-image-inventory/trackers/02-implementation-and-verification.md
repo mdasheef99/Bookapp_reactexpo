@@ -1,9 +1,9 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `unit5a_metadata_foundation_independently_approved_unapplied`
+**Status:** `m15_live_security_correction_required`
 **Last updated:** 2026-07-28
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `unit5a_closeout_complete`
+**Active work unit:** `unit5a_m15_live_security_correction`
 
 This tracker is separate from planning decisions; WU0B remains independently approved after `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review, without granting later database/runtime authority.
 ## Work units
@@ -18,7 +18,7 @@ This tracker is separate from planning decisions; WU0B remains independently app
 | 4 | [Fixture vision-analysis runtime](../work-units/04-fixture-vision-analysis-runtime-design.md): `p9-vision-v2`, analyzer, job orchestration, immutable evidence/candidates | `fixture_deployed_and_live_verified` | M12 live as `20260726182539`; all nine fixture cases verified; no real provider |
 | 4A | [Deployment-runtime scaffolding](../work-units/04a-deployment-runtime-scaffolding-sdd.md): executable sanitation/fixture-vision hosts, strict environment, builds/containers, invocation and validation | [`deployed_and_live_fixture_verified`](./06-fixture-pipeline-deployment-evidence.md) | separate free Render services live at `96991a9`; M13 invoker boundary live |
 | 4B | [Gemini vision adapter](../work-units/04b-gemini-vision-adapter-handoff.md) for configured `gemini-3.5-flash-lite`; optional whole-image fallback remains unselected/disabled | `m14_live_verified_provider_deferred` | M14 live once; no live call, credential configuration, Gemini deployment, Storage mutation, or fallback selection |
-| 5A | [Metadata foundation](../work-units/05a-metadata-foundation-handoff.md): provider-neutral local-first routing/cache/coalescing, ISBN validation, coherent selection, and attempt/cost lineage | `independently_approved_unapplied` | M15 created/PGlite verified but unapplied; separate application authorization next |
+| 5A | [Metadata foundation](../work-units/05a-metadata-foundation-handoff.md): provider-neutral local-first routing/cache/coalescing, ISBN validation, coherent selection, and attempt/cost lineage | `m15_live_security_correction_required` | M15 live once as `20260727222159`; forward-only service-role ACL correction and independent verification required before Unit 5B |
 | 5B/5C | Google Books primary adapter / metadata aliases | `not_started` | Unit 5A approval and separate authorization; no credentials/calls |
 | 6 | Owner session/defaults/capture/review UI with accessibility and recovery | `not_started` | Units 2–5 verified |
 | 7 | Controlled per-candidate commit, advisory duplicates, idempotency, projection changes | `not_started` | quantity/hold concurrency tests |
@@ -44,7 +44,7 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260726000012_marketplace_phase9_vision_analysis_runtime.sql` | `20260726182539 marketplace_phase9_vision_analysis_runtime` | MCP exact project 2026-07-26 | authorized M11/M12 live application | forward-only after M11; initial truncated transport submission failed atomically and was absent before lossless retry | RLS/private immutable tables, eight lineage/reconciliation columns, exact uniqueness/constraints/triggers/index, four hardened service-only RPCs, unchanged data/Storage; security 174 with only two expected INFO notices | `live_verified` |
 | `20260727000013_marketplace_phase9_service_rpc_wrappers.sql` | `20260727025046 marketplace_phase9_service_rpc_wrappers` | MCP exact project 2026-07-27 | authorized M13 boundary correction | forward-only; private functions/schema unchanged | 13 postgres-owned, empty-search-path `SECURITY INVOKER` wrappers; service-role only; anon/auth denied; private schema still `PGRST106` | `live_verified` |
 | `20260727000014_marketplace_phase9_vision_provider_attempts.sql` | `20260727183546 marketplace_phase9_vision_provider_attempts` | MCP exact project 2026-07-28 | authorized M14-only application | forward-only additive; no Storage/provider/deployment effect | dedicated empty 34-column attempt table, approved constraints/five indexes, retry-stable spend identity, semantic pricing allowlist, exact service-only RPC signatures, zero client grants; PGlite 67/67 and fixture regression 23/23 | `live_verified` |
-| `20260728000015_marketplace_phase9_metadata_foundation.sql` | not applied | MCP exact project read-only 2026-07-28 | creation/testing only; application unauthorized | forward-only additive after M14; never reuse M09 | lookup/cache/snapshot tables, extended metadata attempts, token-fenced service RPCs, immutable trigger, zero client grants; Phase 9 PGlite 76/76 | `local_verified_unapplied` |
+| `20260728000015_marketplace_phase9_metadata_foundation.sql` | `20260727222159 marketplace_phase9_metadata_foundation` | MCP exact project 2026-07-28 | authorized exact-file M15 application | forward-only additive after M14; grant correction required; never reuse M09 | complete 60,915-byte checked-in file applied once; schema/RPC/client-denial/invariant checks pass; live default privileges left direct service-role DML on all three new tables; focused 7/7, metadata PGlite 10/10, full Phase 9 PGlite 77/77 | [`live_security_correction_required`](./08-m15-application-evidence.md) |
 Rules:
 
 - Re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.

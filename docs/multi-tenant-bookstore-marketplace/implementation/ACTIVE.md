@@ -11,7 +11,7 @@ This file answers only “where does a new development session start?” DOC-13 
 - **Stable handoff:** [PHASE-9-image-to-LLM-inventory.md](./PHASE-9-image-to-llm-inventory.md)
 - **Session entrypoint:** [Phase 9 SESSION-START](./phase-9-image-inventory/SESSION-START.md)
 - **Local current-state authority:** [Phase 9 master tracker](./phase-9-image-inventory/TRACKER.md)
-- **Current work-unit plan:** the [Phase 9 fixture pipeline](./phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md) remains live-verified; [Unit 4B](./phase-9-image-inventory/work-units/04b-gemini-vision-adapter-handoff.md) and M14 are live-verified, while Gemini configuration, deployment, and live-provider verification remain deferred; no later work unit is authorized
+- **Current work-unit plan:** M15 is live once as `20260727222159`, but Unit 5A closeout is blocked because Supabase default privileges left direct `service_role` DML on the three new metadata tables; a separately authorized forward-only grant correction is required before Unit 5B. The [Phase 9 fixture pipeline](./phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md), [Unit 4B](./phase-9-image-inventory/work-units/04b-gemini-vision-adapter-handoff.md), and M14 remain live-verified; Gemini and metadata providers remain unconfigured, undeployed, and uncalled.
 - **Global status authority:** [DOC-13](../DOC-13-implementation-tracker.md)
 
 ## Required reading order

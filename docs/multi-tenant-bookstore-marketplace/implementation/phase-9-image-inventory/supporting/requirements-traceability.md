@@ -35,7 +35,9 @@
 | MAS-10/16, MAS-AC05, REV-20 | closed manual outcomes and immutable nullable-canonical selected snapshot; no inventory/publication side effect |
 | MED-22/25/26/27, DAT-31 | privacy-scoped coalescing/cache namespaces, reuse-policy isolation, service-only RLS/grants, no raw payload input |
 
-M15 is local and unapplied; this mapping is implementation evidence, not live-schema evidence.
+M15 is live once as `20260727222159`; this mapping now has live schema/function
+evidence, with service-role direct-table ACL verification still blocked pending the
+forward correction recorded in the implementation tracker.
 | Original language; up to three automated English alias proposals plus bounded official/verified aliases | 00 Master; 01 Data; 05 Marketplace | MAS-04; DAT-10–DAT-14; MKT-05 |
 | Canonical alias kinds/sources/statuses and supersession lifecycle | 01 Data | DAT-11–DAT-14 |
 | Additional languages can be added later | 01 Data; 02 Extraction | DAT-15; EXT-04 |
