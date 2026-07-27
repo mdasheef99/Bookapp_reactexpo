@@ -12,13 +12,13 @@
 | Immutable analysis evidence separate from metadata/Owner edits | 01 Data; 02 Extraction; 04 Media; Unit 4 design | DAT-26/27; EXT-24; MED-24 |
 | Fixture vision runtime has zero metadata/inventory/publication effect | 00 Master; 02 Extraction; Unit 4 design | MAS-05/07; MAS-AC11; EXT-25 |
 | Provider-agnostic local/primary/secondary metadata | 01 Data; 02 Extraction | DAT-05–DAT-09; EXT-11 |
-| Replaceable provider-neutral metadata boundary and downstream independence | 00 Master; 01 Data; 02 Extraction; 05 Marketplace | MAS-13; DAT-31/33; EXT-28; MKT-15 |
+| Replaceable provider-neutral metadata boundary and downstream independence | 00 Master; 01 Data; 02 Extraction; 05 Marketplace | MAS-13; MAS-AC12; DAT-31/33; EXT-28; MKT-15 |
 | Exactly one primary, optional secondary, and at most two sequential attempts | 00 Master; 02 Extraction | MAS-14; MAS-AC13; EXT-26/27 |
 | Coherent single-provider selection; no provider canonical authority or field stitching | 00 Master; 01 Data | MAS-15; DAT-06/33 |
 | Provider-independent query identity and provider/version cache isolation | 01 Data; 02 Extraction | DAT-28/29; EXT-26–28 |
 | Attempt role/routing/capability/cache/coalescing/cost lineage | 01 Data; 02 Extraction | DAT-30; EXT-28/30 |
 | Complete provider outage preserves manual reviewed inventory | 00 Master; 02 Extraction; 03 Review | MAS-16; EXT-16/29; REV-20 |
-| Provider licensing/publication allowlist and coalescing privacy | 04 Media; 01 Data | MED-22/25/26; DAT-31 |
+| Provider licensing/publication allowlist, shadow-evaluation gate, and coalescing privacy | 04 Media; 01 Data | MED-22/25/26/27; DAT-31 |
 | Availability/quality/correction scorecards and promotion gate | 01 Data; 02 Extraction; 03 Review | DAT-32; EXT-38/39; REV-21 |
 | Horizontally safe claims, graceful shutdown, spend reconciliation and capacity admission | 00 Master; 02 Extraction | MAS-17; MAS-AC14/15; EXT-30–37 |
 | Raw provider payload disabled by default and credentials excluded from every unsafe surface | 02 Extraction; 04 Media; P9 decisions | EXT-15/17; MED-09/17/18/28/29; P9-D63 |

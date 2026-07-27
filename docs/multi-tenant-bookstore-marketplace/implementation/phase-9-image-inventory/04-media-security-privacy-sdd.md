@@ -229,6 +229,10 @@ All vision transitions first prove the exact current job-row claim. If the input
 
 Retention values are policy data, not mobile constants.
 
+Provider/model credentials and secrets cannot enter client and build bundles, prompts, fixtures, notifications, logs, telemetry, errors, documentation, Git, or model context. Non-secret provider and model identifiers remain permitted as bounded provenance and incident-correlation fields.
+
+Raw provider/model payload persistence is disabled by default. Any exception requires separately approved, private, schema-bounded, positive-allowlist diagnostic capture that excludes credentials, secrets, signed URLs, reusable capabilities, PII, raw media, or unrestricted prompts/responses. Diagnostic records have a maximum seven-day deletion deadline and use idempotent deletion, bounded retries, alerts, and failed-deletion reconciliation.
+
 ## 12. Deletion, holds, and recovery
 
 - Lifecycle worker selects due assets under lease, rechecks active links/holds, deletes object, then records `deleted_at`, reason, attempt, and object result.
@@ -306,8 +310,8 @@ Audit is append-only from normal clients and records sensitive reads/promotions/
 | MED-25 | Storage, public display, image caching, attribution, and revalidation are allowlisted per field and adapter/version before persistence or projection. |
 | MED-26 | Query coalescing/cache reuse excludes secrets, raw media, PII, store-private fields, and policy-incompatible cross-store reuse. |
 | MED-27 | Provider shadow evaluation and promotion require separately approved privacy, licensing, retention, cost, and access controls. |
-| MED-28 | Provider/model credentials cannot enter mobile clients, Git, documentation, build arguments, logs, telemetry, errors, or model context. |
-| MED-29 | Raw provider/model payload persistence is disabled by default; any separately approved purpose-bound diagnostic capture is deleted within 7 days, while normalized provenance/evidence remains the ordinary path. |
+| MED-28 | Provider/model credentials and secrets cannot enter client/build bundles, prompts, fixtures, notifications, logs, telemetry, errors, documentation, Git, or model context; non-secret provider/model identifiers remain permitted. |
+| MED-29 | Raw provider/model payload persistence is disabled by default; any separately approved diagnostic capture is private, schema-bounded, positive-allowlist based, excludes credentials/secrets/signed URLs/reusable capabilities/PII/raw media/unrestricted prompts or responses, and is deleted within 7 days through idempotent deletion, retries, alerts, and failed-deletion reconciliation. |
 
 ## 17. Residual risk
 

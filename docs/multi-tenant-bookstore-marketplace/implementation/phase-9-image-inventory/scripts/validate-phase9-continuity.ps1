@@ -113,6 +113,62 @@ foreach ($relative in $providerScaleMarkers.Keys) {
         if (-not $body.Contains($marker)) { Write-Error "Provider/scale reconciliation marker missing from ${relative}: $marker" }
     }
 }
+$securitySdd = [IO.File]::ReadAllText((Join-Path $phaseRoot '04-media-security-privacy-sdd.md'))
+$securityCorrectionMarkers = @(
+    'client and build bundles, prompts, fixtures, notifications, logs, telemetry, errors, documentation, Git, or model context',
+    'Non-secret provider and model identifiers remain permitted',
+    'private, schema-bounded, positive-allowlist diagnostic capture',
+    'credentials, secrets, signed URLs, reusable capabilities, PII, raw media, or unrestricted prompts/responses',
+    'idempotent deletion, bounded retries, alerts, and failed-deletion reconciliation'
+)
+foreach ($marker in $securityCorrectionMarkers) {
+    if (-not $securitySdd.Contains($marker)) { Write-Error "F3 security correction marker missing: $marker" }
+}
+$requirementFiles = @(
+    '00-phase-9-master-sdd.md', '01-data-canonical-metadata-sdd.md', '02-extraction-enrichment-pipeline-sdd.md',
+    '03-owner-review-inventory-commit-sdd.md', '04-media-security-privacy-sdd.md',
+    '05-marketplace-discovery-display-sdd.md', '06-customer-photo-request-extension-sdd.md'
+)
+$definitionPattern = '(?m)^\| ((?:MAS-AC\d{2}|MAS-\d{2}|DAT-\d{2}|EXT-\d{2}|REV-\d{2}|MED-\d{2}|MKT-\d{2}|PHO-\d{2})) \|'
+$requirementIds = @()
+foreach ($relative in $requirementFiles) {
+    $requirementIds += [regex]::Matches([IO.File]::ReadAllText((Join-Path $phaseRoot $relative)), $definitionPattern) |
+        ForEach-Object { $_.Groups[1].Value }
+}
+$duplicateRequirementIds = @($requirementIds | Group-Object | Where-Object Count -gt 1)
+if ($duplicateRequirementIds.Count -gt 0) {
+    Write-Error "Duplicate requirement definitions: $(($duplicateRequirementIds.Name | Sort-Object) -join ', ')"
+}
+$traceability = [IO.File]::ReadAllText((Join-Path $phaseRoot 'supporting/requirements-traceability.md'))
+$traceableIds = [System.Collections.Generic.HashSet[string]]::new()
+$tracePattern = '(?<prefix>MAS-AC|MAS|DAT|EXT|REV|MED|MKT|PHO)-?(?<start>\d{2})(?:(?:-|[^\x00-\x7F]{1,4})(?:(?:MAS-AC|MAS|DAT|EXT|REV|MED|MKT|PHO)-?)?(?<end>\d{2})|(?<more>(?:/\d{2})+))?'
+foreach ($match in [regex]::Matches($traceability, $tracePattern)) {
+    $prefix = $match.Groups['prefix'].Value
+    $numbers = @([int]$match.Groups['start'].Value)
+    if ($match.Groups['end'].Success) {
+        $numbers = @($numbers[0]..[int]$match.Groups['end'].Value)
+    } elseif ($match.Groups['more'].Success) {
+        $numbers += @($match.Groups['more'].Value.Split('/', [StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object { [int]$_ })
+    }
+    foreach ($number in $numbers) {
+        [void]$traceableIds.Add(("$prefix-{0:D2}" -f $number).Replace('MAS-AC-', 'MAS-AC'))
+    }
+}
+$reconciliationRequirementIds = @(
+    28..33 | ForEach-Object { 'DAT-{0:D2}' -f $_ }
+    26..39 | ForEach-Object { 'EXT-{0:D2}' -f $_ }
+    13..17 | ForEach-Object { 'MAS-{0:D2}' -f $_ }
+    12..15 | ForEach-Object { 'MAS-AC{0:D2}' -f $_ }
+    25..29 | ForEach-Object { 'MED-{0:D2}' -f $_ }
+    'MKT-15', 'REV-20', 'REV-21'
+)
+$missingTraceability = @($reconciliationRequirementIds | Where-Object { -not $traceableIds.Contains($_) })
+if ($missingTraceability.Count -gt 0) {
+    Write-Error "Requirement definitions missing traceability: $($missingTraceability -join ', ')"
+}
+Write-Output "REQUIREMENT_DEFINITIONS=$($requirementIds.Count)"
+Write-Output "REQUIREMENT_DEFINITION_DUPLICATES=$($duplicateRequirementIds.Count)"
+Write-Output "REQUIREMENT_TRACEABILITY_MISSING=$($missingTraceability.Count)"
 if (-not $implementationTracker.Contains('| 4B | Prospective real-Gemini provider-contract design') -or
     -not $implementationTracker.Contains('| 5 | Metadata/aliases:')) {
     Write-Error 'Implementation routing must keep real Gemini design separate from Unit 5 Metadata/aliases.'
