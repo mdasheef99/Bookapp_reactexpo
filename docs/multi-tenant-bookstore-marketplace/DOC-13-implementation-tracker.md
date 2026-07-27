@@ -164,12 +164,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 4B and M14 live-verified; Gemini deployment/live verification deferred** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5A metadata foundation independently approved; M15 unapplied** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-28 |
-| Latest handoff | Unit 4B is merged and M14 is live once as `20260727183546`; fixture pipeline remains live-verified at `96991a9`. |
-| Current risk level | Gemini remains unconfigured, undeployed, and mock-tested only; live provider calls and product integration remain separately gated. |
-| Next recommended task | Await explicit authorization; Gemini deployment/live verification, M09, and Unit 5 Metadata/aliases remain separately gated. |
+| Latest handoff | Unit 5A is locally implemented, verified, and independently approved; M15 is created but not applied. M01-M08/M10-M14 remain live once and M09 remains absent. |
+| Current risk level | Google Books is not implemented; the secondary remains unselected/disabled; no metadata credential or live provider call exists. |
+| Next recommended task | User review and separate authorization for M15 preflight/application; Units 5B/5C remain not started and separately gated. |
 
 ---
 
@@ -186,7 +186,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit4b_m14_live_verified_provider_deferred` | [Unit 4B handoff](./implementation/phase-9-image-inventory/work-units/04b-gemini-vision-adapter-handoff.md) · [deployment evidence](./implementation/phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md) | Unit 4B merged; M01-M08/M10-M14 live once; M09 and Gemini deployment/live-provider verification remain deferred. |
+| Phase 9: Image-to-LLM Inventory | `unit5a_metadata_foundation_independently_approved_unapplied` | [Unit 5A handoff](./implementation/phase-9-image-inventory/work-units/05a-metadata-foundation-handoff.md) · [deployment evidence](./implementation/phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md) | Unit 5A independently approved; M15 unapplied; M01-M08/M10-M14 live once; M09, providers, Units 5B/5C deferred. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

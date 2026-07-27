@@ -17,7 +17,7 @@ import { PHASE9_LIMITS } from './registers';
 const METADATA_KEYS = [
   'contract_version', 'schema_version', 'adapter_key', 'adapter_version', 'normalizer_version', 'correlation_id', 'attempt_id', 'provider_record_id',
   'fetched_at', 'title', 'subtitle', 'authors', 'description', 'isbn10', 'isbn13',
-  'publisher', 'published_date', 'language', 'edition_statement', 'volume', 'format',
+  'publisher', 'published_date', 'language', 'script', 'edition_statement', 'series', 'volume', 'format',
   'page_count', 'categories', 'cover_reference', 'match_rationale', 'confidence',
 ] as const;
 
@@ -40,7 +40,9 @@ export type MetadataEdition = Readonly<{
   publisher: string | null;
   publishedDate: string | null;
   language: string;
+  script: string | null;
   editionStatement: string | null;
+  series: string | null;
   volume: string | null;
   format: string | null;
   pageCount: number | null;
@@ -123,7 +125,9 @@ export function parseMetadataEdition(value: unknown, hostPolicy?: ProviderHostPo
     publisher: optionalString(input.publisher, 'publisher', 256),
     publishedDate: optionalString(input.published_date, 'published_date', 32),
     language: canonicalBcp47(input.language, 'language'),
+    script: optionalString(input.script, 'script', 16),
     editionStatement: optionalString(input.edition_statement, 'edition_statement', 256),
+    series: optionalString(input.series, 'series', 256),
     volume: optionalString(input.volume, 'volume', 64),
     format: optionalString(input.format, 'format', 128),
     pageCount,

@@ -25,6 +25,17 @@
 | Autoscaling disabled until fixed multi-replica evidence | 00 Master; 02 Extraction | MAS-AC14; EXT-36 |
 | Title/author priority; visible ISBN only as clue | 02 Extraction; 01 Data | EXT-12; DAT-03 |
 | Description, ISBN-10/13, rich metadata, cover | 01 Data | DAT-01–DAT-04 |
+
+### Unit 5A implementation mapping (2026-07-28)
+
+| Requirement | Implementation evidence |
+| --- | --- |
+| DAT-01–04, DAT-28/29 | strict ISBN helpers; provider-neutral metadata/identity contracts; local-first resolution |
+| DAT-30, EXT-26–30 | routing/cache/coalescing modules; M15 lookup, cache, attempt, reservation and pricing lineage |
+| MAS-10/16, MAS-AC05, REV-20 | closed manual outcomes and immutable nullable-canonical selected snapshot; no inventory/publication side effect |
+| MED-22/25/26/27, DAT-31 | privacy-scoped coalescing/cache namespaces, reuse-policy isolation, service-only RLS/grants, no raw payload input |
+
+M15 is local and unapplied; this mapping is implementation evidence, not live-schema evidence.
 | Original language; up to three automated English alias proposals plus bounded official/verified aliases | 00 Master; 01 Data; 05 Marketplace | MAS-04; DAT-10–DAT-14; MKT-05 |
 | Canonical alias kinds/sources/statuses and supersession lifecycle | 01 Data | DAT-11–DAT-14 |
 | Additional languages can be added later | 01 Data; 02 Extraction | DAT-15; EXT-04 |

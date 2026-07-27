@@ -16,6 +16,7 @@ export const phase9MigrationNames = [
   '20260726000012_marketplace_phase9_vision_analysis_runtime.sql',
   '20260727000013_marketplace_phase9_service_rpc_wrappers.sql',
   '20260727000014_marketplace_phase9_vision_provider_attempts.sql',
+  '20260728000015_marketplace_phase9_metadata_foundation.sql',
 ];
 
 const root = process.cwd();

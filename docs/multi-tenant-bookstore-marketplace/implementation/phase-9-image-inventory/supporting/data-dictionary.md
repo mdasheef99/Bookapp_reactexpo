@@ -191,7 +191,19 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | payload lifecycle | raw payload private/delete-after; normalized selected snapshot retained by policy. |
 | field reuse policy | Per normalized field: matching-only/storage/display/cache/attribution/expiry rights. |
 
-These additional fields are a target for later Unit 5 design, not a claim about the live schema. Unit 5 must decide whether they reside on the attempt, job context, or a separate lookup/coalescing relation before any migration is proposed.
+Unit 5A resolves the target placement locally: M15 uses a separate lookup/coalescing
+relation, a provider-versioned cache relation, extensions on the metadata-specific
+attempt relation, and a separate immutable selected-snapshot relation. Lookup rows
+distinguish provider-independent `local` completion from `external` execution; the
+local mode keeps provider/cache/policy fields null and persists the canonical
+edition plus immutable snapshot with zero provider attempt or reservation. They
+keep cache-policy version distinct from cache namespace and bind reuse-policy
+version to the provider registry. Selected snapshots retain a separate terminal
+outcome-source attempt so negative/ambiguous cache records preserve exact adapter
+provenance without misrepresenting that attempt as an accepted selection.
+`storage_allowed=false` prevents retained normalized payload, selected snapshots,
+and positive cache entries. M15 is not applied, so these remain target structures
+rather than live fields.
 
 ### Provider registry and routing target
 

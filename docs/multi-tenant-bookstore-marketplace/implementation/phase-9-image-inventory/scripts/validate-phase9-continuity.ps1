@@ -93,13 +93,15 @@ if (-not $active.Contains('phase-9-image-inventory/trackers/06-fixture-pipeline-
     -not $active.Contains('no later work unit is authorized')) { Write-Error 'ACTIVE.md does not route to the fixture checkpoint and Unit 4B live gate.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit4b_m14_live_verified_provider_deferred`') -or
-    -not $doc13.Contains('M01-M08/M10-M14 live once;')) { Write-Error 'DOC-13 does not preserve the fixture checkpoint and Unit 4B status.' }
-if (-not $doc13.Contains('| Next recommended task | Await explicit authorization;')) { Write-Error 'DOC-13 does not preserve the Unit 4B post-application boundary.' }
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5a_metadata_foundation_independently_approved_unapplied`') -or
+    -not $doc13.Contains('M01-M08/M10-M14 live once;') -or
+    -not $doc13.Contains('M15 unapplied')) { Write-Error 'DOC-13 does not preserve Unit 5A independent approval and the live/unapplied distinction.' }
+if (-not $doc13.Contains('| Next recommended task | User review and separate authorization for M15 preflight/application;')) { Write-Error 'DOC-13 does not preserve the Unit 5A post-approval boundary.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit4b_m14_live_verified_provider_deferred`\r?$' -or
-    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit4b_m14_live_verified`\r?$') {
-    Write-Error 'Implementation tracker does not preserve the Unit 4B live gate.'
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit5a_metadata_foundation_independently_approved_unapplied`\r?$' -or
+    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5a_closeout_complete`\r?$' -or
+    -not $implementationTracker.Contains('20260728000015_marketplace_phase9_metadata_foundation.sql')) {
+    Write-Error 'Implementation tracker does not preserve the Unit 5A approved/unapplied gate.'
 }
 $providerScaleMarkers = @{
     '00-phase-9-master-sdd.md' = @('MAS-13', 'MAS-17', 'MAS-AC14')
@@ -176,8 +178,9 @@ Write-Output "REQUIREMENT_TRACEABILITY_MISSING=$($missingTraceability.Count)"
 Write-Output 'REQUIREMENT_VALIDATOR_REGRESSION_PROBES=PASS'
 if (-not $implementationTracker.Contains('| 4B | [Gemini vision adapter]') -or
     -not $implementationTracker.Contains('optional whole-image fallback remains unselected/disabled') -or
-    -not $implementationTracker.Contains('| 5 | Metadata/aliases:')) {
-    Write-Error 'Implementation routing must keep Unit 4B and its disabled fallback separate from Unit 5 Metadata/aliases.'
+    -not $implementationTracker.Contains('| 5A | [Metadata foundation]') -or
+    -not $implementationTracker.Contains('| 5B/5C | Google Books primary adapter / metadata aliases | `not_started`')) {
+    Write-Error 'Implementation routing must keep Unit 4B and its disabled fallback separate from Unit 5A/5B/5C.'
 }
 if ($implementationTracker -notmatch '(?m)^\| 0A \|.*\| `approved_complete` \|') { Write-Error 'Implementation tracker no longer preserves WU0A approved-complete evidence.' }
 if ($implementationTracker -notmatch '(?m)^\| 0B \|.*\| `independently_approved` \|.*Risk-Based Phase 9 SDD analysis next;.*no Supabase query') { Write-Error 'Implementation tracker does not preserve WU0B approval and later-authority separation.' }
@@ -215,11 +218,11 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `unit4b_m14_live_verified_provider_deferred`; fixture pipeline and M14 are live-verified while Gemini deployment/live verification remains deferred\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit4b_m14_live_verified`\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* await explicit user authorization; no later implementation or operational unit follows automatically\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* M01-M08/M10-M14 are live-verified exactly once; M09 remains absent; no further migration application is authorized\r?$') {
-    Write-Error 'TRACKER.md does not preserve the fixture checkpoint and Unit 4B live gate.'
+if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `unit5a_metadata_foundation_independently_approved_unapplied`; M15 is created and locally verified but not applied\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5a_closeout_complete`\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* user review and separate authorization for M15 preflight/application; Unit 5B/5C remain not started and separately gated\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* M15 creation and local testing are complete; M15 is not live and is not authorized for application; M01-M08/M10-M14 remain live exactly once and M09 remains absent\r?$') {
+    Write-Error 'TRACKER.md does not preserve the Unit 5A approved and M15-unapplied gate.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
 $packageDesign = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-database-design.md'))
@@ -249,18 +252,21 @@ $migrationNames = @(
     '20260723000011_marketplace_phase9_ingestion_runtime_foundation.sql',
     '20260726000012_marketplace_phase9_vision_analysis_runtime.sql',
     '20260727000013_marketplace_phase9_service_rpc_wrappers.sql',
-    '20260727000014_marketplace_phase9_vision_provider_attempts.sql'
+    '20260727000014_marketplace_phase9_vision_provider_attempts.sql',
+    '20260728000015_marketplace_phase9_metadata_foundation.sql'
 )
 foreach ($name in $migrationNames) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot "supabase/migrations/$name"))) { Write-Error "Missing approved Phase 9 migration: $name" }
 }
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
-if ($phase9Migrations.Count -ne 13 -or $phase9Migrations.Name -match '000009|quantity.*validat') { Write-Error 'Phase 9 migration set must contain M01-M08 plus forward M10-M14, and no M09.' }
+if ($phase9Migrations.Count -ne 14 -or $phase9Migrations.Name -match '000009|quantity.*validat') { Write-Error 'Phase 9 migration set must contain M01-M08 plus forward M10-M15, and no M09.' }
 foreach ($relative in @('supabase/tests/phase9/phase6_baseline.sql','supabase/tests/phase9/databaseHarness.mjs',
     'supabase/tests/phase9/phase9Database.integration.test.mjs','supabase/tests/phase9/phase9IngestionRuntime.integration.test.mjs','supabase/tests/phase9/phase9VisionRuntime.integration.test.mjs','supabase/migrations/__tests__/marketplacePhase9DatabaseFoundation.test.ts',
     'supabase/migrations/__tests__/marketplacePhase9PublicBoundarySecurityCorrection.test.ts','supabase/migrations/__tests__/marketplacePhase9VisionAnalysisRuntime.test.ts',
     'supabase/migrations/__tests__/marketplacePhase9ServiceRpcWrappers.test.ts',
-    'supabase/tests/phase9/phase9VisionProviderAttempts.integration.test.mjs')) {
+    'supabase/tests/phase9/phase9VisionProviderAttempts.integration.test.mjs',
+    'supabase/tests/phase9/phase9MetadataFoundation.integration.test.mjs',
+    'supabase/migrations/__tests__/marketplacePhase9MetadataFoundation.test.ts')) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot $relative))) { Write-Error "Missing Phase 9 migration test harness file: $relative" }
 }
 $packageJson = [IO.File]::ReadAllText((Join-Path $repoRoot 'package.json'))

@@ -1,16 +1,16 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `provider_scale_sdd_reconciliation_needs_independent_review`
-**Implementation status:** `unit4b_m14_live_verified_provider_deferred`; fixture pipeline and M14 are live-verified while Gemini deployment/live verification remains deferred
+**Implementation status:** `unit5a_metadata_foundation_independently_approved_unapplied`; M15 is created and locally verified but not applied
 **Last updated:** 2026-07-28
-**Current milestone:** Unit 4B merged and M14 applied/verified once; no provider deployment or live call
-**Active work unit:** `unit4b_m14_live_verified`
+**Current milestone:** Unit 5A provider-neutral metadata foundation implemented locally; no provider adapter or live mutation
+**Active work unit:** `unit5a_closeout_complete`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Unit 4B merged at `456798db74f69abcbb729868dd7071b56f788e87`; M14 applied once as `20260727183546` and live-verified; detailed handoff is [04b](./work-units/04b-gemini-vision-adapter-handoff.md)
-**Next authorized action:** await explicit user authorization; no later implementation or operational unit follows automatically
-**Implementation authority:** Unit 4B and M14 are complete/live-verified; live provider calls/configuration/deployment, metadata enrichment, scheduling/autoscaling, UI, inventory commit, publication, Library, and later units remain unauthorized
-**Migration creation/application authority:** M01-M08/M10-M14 are live-verified exactly once; M09 remains absent; no further migration application is authorized
-**Current gate:** do not configure/call/deploy Gemini or Google Books, select/enable a secondary/fallback, design/implement Unit 5, schedule/autoscale, deploy, or begin another unit
+**Last completed:** Unit 5A local implementation, verification, and independent approval; detailed handoff is [05A](./work-units/05a-metadata-foundation-handoff.md)
+**Next authorized action:** user review and separate authorization for M15 preflight/application; Unit 5B/5C remain not started and separately gated
+**Implementation authority:** Unit 5A foundation only; Google Books, secondary providers, aliases, Owner UI, inventory commit, publication, credentials, provider calls, and deployment remain unauthorized
+**Migration creation/application authority:** M15 creation and local testing are complete; M15 is not live and is not authorized for application; M01-M08/M10-M14 remain live exactly once and M09 remains absent
+**Current gate:** separately authorize M15 preflight/application after user review; do not begin Unit 5B/5C
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -112,8 +112,12 @@ work unit after Unit 4B remain separately gated.
 
 ## Next action gate
 
-No later work unit is automatically authorized. Unit 5 Metadata/aliases remains
-separately gated. Do not configure, deploy, or call providers,
-select/enable a secondary/fallback, schedule/autoscale workers, change deployment,
-enrich metadata, change mobile UI, commit inventory, publish listings, implement
-Library behavior, or create/apply M09.
+Unit 5A now supplies strict ISBN normalization, versioned provider-neutral
+lookup/contracts, local-canonical-first planning, cache and identical-query reuse
+identity, bounded routing primitives, metadata attempt/cost lineage, and immutable
+selected-snapshot/manual-review persistence. M15 is locally verified and unapplied.
+
+No later work unit is automatically authorized. Unit 5B Google Books and Unit 5C
+aliases remain not started. Do not apply M15 or M09; configure, deploy, or call
+providers; select/enable a secondary; schedule/autoscale workers; change mobile UI;
+commit inventory; publish listings; or implement Library behavior.

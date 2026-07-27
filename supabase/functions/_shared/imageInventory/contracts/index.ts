@@ -12,3 +12,4 @@ export * from '../domain/isbn';
 export * from '../domain/policies';
 export * from '../domain/validation';
 export * from '../domain/visionPolicy';
+export * from '../metadata';
