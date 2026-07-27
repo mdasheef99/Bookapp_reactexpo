@@ -88,19 +88,19 @@ foreach ($marker in $trackerMarkers) {
 $active = [IO.File]::ReadAllText((Join-Path $implementationRoot 'ACTIVE.md'))
 if (-not $active.Contains('phase-9-image-inventory/SESSION-START.md')) { Write-Error 'ACTIVE.md does not route to the Phase 9 session entrypoint.' }
 if (-not $active.Contains('DOC-13-implementation-tracker.md')) { Write-Error 'ACTIVE.md does not route to DOC-13.' }
-if (-not $active.Contains('M16 is created, locally verified, and independently approved') -or
+if (-not $active.Contains('M16 is merged and live once as `20260727231217`') -or
     -not $active.Contains('trackers/09-m16-acl-correction-evidence.md')) { Write-Error 'ACTIVE.md does not route to the M16 application gate.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `m16_created_locally_verified_not_applied`') -or
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `m16_live_pg17_maintain_correction_required`') -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
-    -not $doc13.Contains('M16 is not live')) { Write-Error 'DOC-13 does not preserve the M16 application gate.' }
-if (-not $doc13.Contains('| Next recommended task | Review and merge M16')) { Write-Error 'DOC-13 does not preserve the M16 next action.' }
+    -not $doc13.Contains('20260727231217 marketplace_phase9_sensitive_table_acl_correction')) { Write-Error 'DOC-13 does not preserve the M16 live MAINTAIN gate.' }
+if (-not $doc13.Contains('| Next recommended task | Separately authorize forward-only M17')) { Write-Error 'DOC-13 does not preserve the M17 next action.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `m16_created_locally_verified_not_applied`\r?$' -or
-    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5a_m16_acl_application_gate`\r?$' -or
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `m16_live_pg17_maintain_correction_required`\r?$' -or
+    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5a_m16_pg17_maintain_correction`\r?$' -or
     -not $implementationTracker.Contains('20260728000016_marketplace_phase9_sensitive_table_acl_correction.sql')) {
-    Write-Error 'Implementation tracker does not preserve the M16 application gate.'
+    Write-Error 'Implementation tracker does not preserve the M16 live MAINTAIN gate.'
 }
 $providerScaleMarkers = @{
     '00-phase-9-master-sdd.md' = @('MAS-13', 'MAS-17', 'MAS-AC14')
@@ -217,11 +217,11 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if (-not $tracker.Contains('**Implementation status:** `m16_created_locally_verified_not_applied`') -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5a_m16_acl_application_gate`\r?$' -or
-    -not $tracker.Contains('**Next authorized action:** review and merge the M16 correction branch') -or
-    -not $tracker.Contains('M16 creation/testing is complete; M16 application is not authorized')) {
-    Write-Error 'TRACKER.md does not preserve the M16 application gate.'
+if (-not $tracker.Contains('**Implementation status:** `m16_live_pg17_maintain_correction_required`') -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5a_m16_pg17_maintain_correction`\r?$' -or
+    -not $tracker.Contains('**Next authorized action:** separately authorize a forward-only M17') -or
+    -not $tracker.Contains('M16 is live once as `20260727231217`; no M17 creation/application is authorized')) {
+    Write-Error 'TRACKER.md does not preserve the M16 live MAINTAIN gate.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
 $packageDesign = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-database-design.md'))

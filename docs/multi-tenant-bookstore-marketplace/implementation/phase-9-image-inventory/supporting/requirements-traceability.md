@@ -37,8 +37,9 @@
 | MED-21/23 | M16 explicit four-table service SELECT-only/RPC-mutation boundary; effective-privilege and RPC-grant regression evidence |
 
 M15 is live once as `20260727222159`; this mapping now has live schema/function
-evidence. M16 supplies the locally verified direct-table ACL mapping, but remains
-unapplied; live verification is still blocked as recorded in the implementation tracker.
+evidence. M16 is live and verifies denial of its six enumerated privileges, but
+PostgreSQL 17 MAINTAIN remains; full SELECT-only verification is still blocked as
+recorded in the implementation tracker.
 | Original language; up to three automated English alias proposals plus bounded official/verified aliases | 00 Master; 01 Data; 05 Marketplace | MAS-04; DAT-10–DAT-14; MKT-05 |
 | Canonical alias kinds/sources/statuses and supersession lifecycle | 01 Data | DAT-11–DAT-14 |
 | Additional languages can be added later | 01 Data; 02 Extraction | DAT-15; EXT-04 |

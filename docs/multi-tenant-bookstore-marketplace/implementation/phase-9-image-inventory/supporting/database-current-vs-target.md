@@ -1,9 +1,9 @@
 # Phase 9 Database and Storage: Current vs Target
 
 **Audit date:** 2026-07-28
-**Audit mode:** exact-project M15 live readback plus M16 local ACL correction
+**Audit mode:** exact-project M16 application and PostgreSQL 17 ACL readback
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10-M15 live exactly once; M09 absent; M16 created/locally verified but not applied; no Storage/provider/deployment/product-data mutation
+**Mutation status:** M01-M08/M10-M16 live exactly once; M09 absent; M16 applied as `20260727231217`; no Storage/provider/deployment/product-data mutation
 
 **Provider/scale SDD reconciliation evidence:** the 2026-07-27 bounded read-only provider audit reconfirmed the exact healthy project and migration tail with M09 absent. Live counts were five extraction candidates, one canonical edition, and zero provider-registry rows, metadata attempts, metadata sources, aliases, or usage reservations. The existing metadata-attempt table already records candidate, adapter, attempt sequence, normalized clues, status, provider record, match strength, latency, cache status, versions, reuse policy, payload lifecycle, and timestamps; it does not explicitly represent role, provider-independent query identity, capability/routing-policy version, predecessor outcome, coalescing lineage, or cost-reservation linkage. These are proposed Unit 5 design targets only. No database or Storage mutation occurred.
 
@@ -55,7 +55,10 @@ table, restores SELECT, and repeats client denial without changing default
 privileges, functions, data, constraints, or behavior. Local PostgreSQL
 before/after inspection proves SELECT-only service access after M16, and all 13
 M14/M15 public RPCs remain service-executable, client-denied, and fixed-search-path.
-M16 is not live; the preceding paragraph remains the actual Supabase state.
+M16 is live once. It removes the six enumerated privileges, but PostgreSQL 17.6
+readback reports `service_role=rm/postgres` and effective MAINTAIN=true on all
+four tables. Client MAINTAIN remains false. A forward M17 must revoke MAINTAIN
+before the intended SELECT-only target is documented as live or Unit 5B begins.
 
 **Ingestion foundation checkpoint:** project `ahntbtktjjmvfosgkmgn` remains healthy; both private 10 MiB JPEG/PNG/WebP buckets remain unchanged. Live M11 revokes authenticated execution of path-taking legacy intake RPCs and adds declared source/content identity, persisted canonical completion, capability linkage, immutable private source snapshots, opaque claim-token and attempt fencing, 16 MP enforcement, and service-only issue/register/claim/context/revalidate/snapshot-bind/complete/fail functions. No runtime is deployed.
 

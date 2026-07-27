@@ -48,8 +48,9 @@ and is applied and verified before Unit 5B. M09 and Units 5B/5C remain untouched
 
 ## Forward-correction handoff
 
-M16 is now created, locally effective-privilege verified, and independently
-approved, but not applied. It covers the three M15 tables and the contractually
-RPC-only M14 `vision_provider_attempts` table. Historical M15 application
-evidence above is unchanged; the live defect remains until separately authorized
-M16 application/readback. See [M16 evidence](./09-m16-acl-correction-evidence.md).
+M16 is live once as `20260727231217` and removes the six reviewed privileges
+from the three M15 tables and contractually RPC-only M14
+`vision_provider_attempts`. Historical M15 application evidence above is
+unchanged. PostgreSQL 17.6 readback exposed residual MAINTAIN
+(`service_role=rm/postgres`), so SELECT-only remains gated on a separately
+authorized M17. See [M16 evidence](./09-m16-acl-correction-evidence.md).

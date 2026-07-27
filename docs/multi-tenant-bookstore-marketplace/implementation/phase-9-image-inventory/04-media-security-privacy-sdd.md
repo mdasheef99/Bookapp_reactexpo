@@ -24,8 +24,9 @@ responses, credentials, and raw lease tokens.
 RPC-only mutation boundaries. Supabase default privileges nevertheless gave
 `service_role` broad direct DML. M16 explicitly revokes all six mutation
 privileges per table, preserves SELECT/RLS/ownership and fixed-search-path RPCs,
-and is locally effective-privilege verified and independently approved. It is not
-applied; the live defect remains until separately authorized application/readback.
+and was independently approved. M16 is live once as `20260727231217`, but
+PostgreSQL 17.6 retained MAINTAIN (`service_role=rm/postgres`). The SELECT-only
+boundary remains gated on a separately authorized forward M17 and live readback.
 
 **Implementation checkpoint (2026-07-22):** the approved private-table, named-boundary, upload-capability, media-registry, and Storage boundary contracts are implemented in M02, M03, M05, M06, and M08 and pass isolated/live security checks. Forward M10 restores only the three anonymous discovery RPCs, makes the allowlisted projection invoker-safe, and removes direct role access; request-photo, internal-helper, and private-table boundaries remain closed. M01-M08/M10 are live-verified; M09/auth/runtime remain untouched.
 

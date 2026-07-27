@@ -3,8 +3,8 @@
 **Date:** 2026-07-28
 **Project:** `ahntbtktjjmvfosgkmgn`
 **Branch:** `codex/phase9-m16-sensitive-table-acl-correction`
-**Status:** `created_locally_verified_not_applied`
-**Commit:** this single correction/documentation change set; exact SHA is reported at branch closeout because a commit cannot contain its own hash
+**Status:** `live_pg17_maintain_correction_required`
+**Commit:** `f59d8ed7d847093d2b7638b7d7a6606e8847b722`
 
 ## Cause and scope
 
@@ -56,5 +56,30 @@ retain `search_path=""`. Focused RPC mutation regressions pass after M16.
 
 The change contains no data, constraint, function, policy, Storage, provider,
 inventory, quantity, publication, Google Books, alias, credential, or deployment
-mutation. No live database mutation occurred. Unit 5B remains gated until M16 is
-merged, separately authorized, applied, and live-verified on the exact project.
+mutation before application.
+
+## Live application and verification
+
+Commit `f59d8ed` was fast-forwarded to `main` and pushed. Exact M16 (SHA-256
+`dfd593c6d21908142700792853fc158778b5ff5450385462fafb7e58e9d7cf50`)
+applied once to `ahntbtktjjmvfosgkmgn` as
+`20260727231217 marketplace_phase9_sensitive_table_acl_correction`.
+
+Live effective checks confirm service-role SELECT and denial of
+INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER on all four tables. RLS,
+postgres ownership, anon/authenticated denial, and all 13 fixed-search-path
+service-only public RPC grants remain intact. All four corrected tables plus
+metadata attempts and usage reservations contain zero rows. Post-application
+focused tests passed 5/5.
+
+The stronger SELECT-only gate did not close. Supabase runs PostgreSQL 17.6, and
+raw ACL is `{postgres=arwdDxtm/postgres,service_role=rm/postgres}` on every
+table; explicit `has_table_privilege(...,'MAINTAIN')` is true for
+`service_role` and false for both client roles. M16 did not revoke PostgreSQL
+17 `MAINTAIN` because that privilege was absent from its reviewed list.
+
+No unreviewed live grant change was made. M17 creation/application requires
+separate authorization and must revoke MAINTAIN on the same four tables, add
+PostgreSQL 17 effective coverage, receive independent review, and pass live
+readback before Unit 5B. M09 remains absent; no data, Storage, provider,
+inventory, publication, credential, or deployment activity occurred.

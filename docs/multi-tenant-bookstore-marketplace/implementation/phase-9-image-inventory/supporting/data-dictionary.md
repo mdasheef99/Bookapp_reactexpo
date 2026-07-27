@@ -209,8 +209,9 @@ on the forward ACL correction recorded in the current-vs-target audit.
 Direct table authority for `vision_provider_attempts`,
 `phase9_metadata_lookups`, `phase9_metadata_cache_entries`, and
 `phase9_selected_metadata_snapshots` is SELECT-only for `service_role`; mutation
-belongs exclusively to hardened RPCs. M16 encodes this target and is locally
-verified but not applied, so live Supabase still has the broader inherited ACL.
+belongs exclusively to hardened RPCs. M16 is live and removes its six enumerated
+privileges, but PostgreSQL 17.6 still grants `service_role` MAINTAIN (`m`).
+Therefore the SELECT-only target remains pending a forward M17 correction.
 
 ### Provider registry and routing target
 
