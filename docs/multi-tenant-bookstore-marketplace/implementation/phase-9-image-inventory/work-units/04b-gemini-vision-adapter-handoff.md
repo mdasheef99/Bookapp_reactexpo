@@ -39,23 +39,36 @@ disabled.
   duration; credentials, authorization, image/base64, prompt, raw response,
   bibliographic content, Storage path, and provider detail are excluded.
 - Added forward-only local M14 with a dedicated service-only
-  `vision_provider_attempts` relation and four bounded RPC contracts. One row is
+  `vision_provider_attempts` relation and five bounded RPC contracts. One row is
   registered before Gemini egress, records claim/reservation/provider/version
   identity, finalizes bounded token and injected pricing/cost evidence, links the
   accepted result, or remains explicitly stale, failed, or outcome-unknown.
-- Replaced direct pre-download table lookups with the RPC-issued media
-  authorization. Registration atomically revalidates job/reference/correlation,
-  owner/token/attempt/expiry, and store/session/input/sanitized-media
-  purpose/status binding before any private download or Gemini call.
+- Replaced direct pre-download table lookups with an RPC-issued media
+  authorization. After registration, claim-bound validation checks job/reference/
+  correlation, owner/token/attempt/expiry, and store/session/input/sanitized-media
+  purpose/status immediately before private download, then repeats the complete
+  check immediately before Gemini `generateContent`.
+  A rejected validation marks the registered attempt `stale_rejected`; it is not
+  mislabeled as an unknown provider outcome because no external call occurred.
 
 ## Persistence and external state
 
 The existing Unit 4 job, analysis result, observation, candidate, reservation, and
 completion seams remain authoritative. Local M14 adds only provider-call attempt
 lineage; it does not change `p9-vision-v2`, metadata, inventory, or publication.
-Distinct external call IDs share a deterministic spend identity so duplicate
-provider spend remains detectable and reservation actual-cost reconciliation sums
-all finalized calls. No provider pricing is hard-coded.
+Each provider-attempt UUID is unique. A separate deterministic logical spend
+identity hashes the job/correlation/provider and adapter/model/prompt/schema
+lineage, but not claim-attempt/lease/retry identity, so retries remain detectable
+without collapsing actual calls. Claim attempt, worker, and lease-token hash remain
+separate lineage. Reservation actual-cost reconciliation sums all finalized calls.
+No provider pricing is hard-coded.
+
+Pricing evidence uses the same positive allowlist in TypeScript and M14:
+three-letter uppercase currency, bounded safe `input_basis` and version identifiers,
+and exact numeric, finite, non-negative unit costs capped at 1,000,000. The object
+is capped at seven known fields and 1,024 serialized bytes; unknown fields, URLs,
+arbitrary strings, wrong JSON types, unsafe characters, and out-of-range values are
+rejected.
 
 M14 was created and tested locally but was not applied. No Gemini call, API-key
 request/configuration, Supabase/database/Storage mutation, deployment, Render
@@ -87,6 +100,12 @@ occurred.
 - Final affected Unit 4/4B verification passed 11 Jest suites / 117 tests and
   three PGlite vision suites / 38 tests. Strict changed-scope TypeScript/lint,
   continuity, diff hygiene, and scoped secret scanning passed.
+- Final four-finding correction verification passed 11 affected Jest suites /
+  118 tests and the complete Phase 9 PGlite migration/RPC suite, 67/67 tests;
+  the final expanded M14 pricing matrix also passed 10/10 focused tests.
+  Strict vision-worker and repository TypeScript checks and executable
+  deployment-runtime validation passed. Continuity/link validation, diff hygiene,
+  and scoped secret scanning are the closeout gates.
 
 ## Independent-review focus
 

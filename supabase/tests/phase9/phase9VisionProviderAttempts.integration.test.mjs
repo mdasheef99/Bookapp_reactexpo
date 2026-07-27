@@ -110,6 +110,13 @@ function registerSql(claimed, callId = CALL_A, overrides = {}) {
     'gemini-3.5-flash-lite','gemini-3.5-flash-lite','gemini-spine-v1','p9-vision-v2')`;
 }
 
+function validateSql(attemptId, claimed, phase) {
+  return `SELECT public.phase9_validate_vision_provider_egress(
+    '${attemptId}','${JOB}','${WORKER}','${claimed.lease_token}',
+    ${claimed.attempt_count},'${jobReference}','${CORRELATION}',
+    '${mediaReference}','${phase}')`;
+}
+
 before(async () => {
   db = await createPhase9Database();
   await db.exec(`INSERT INTO public.stores(id,display_name) VALUES('${STORE}','Store');
@@ -134,7 +141,10 @@ test('registers before egress and durably finalizes bounded usage and injected c
       prompt_tokens: 100, output_tokens: 25, total_tokens: 125,
       cached_tokens: 5, thinking_tokens: 10,
     })}'::jsonb,'mock-pricing-v1',
-    '${json({ currency: 'cost_units', input_basis: 'mocked-provider-response' })}'::jsonb,
+    '${json({
+      currency: 'USD', input_basis: 'mocked_provider_response',
+      pricing_source_version: 'mock-v1', input_unit_cost: 0.001,
+    })}'::jsonb,
     0.125)`);
   assert.equal(finalized.disposition, 'response_received');
   const row = (await db.query(`SELECT * FROM public.vision_provider_attempts
@@ -165,6 +175,31 @@ test('detects duplicate spend identities without collapsing distinct external ca
     WHERE spend_identity='${first.spend_identity}'`), 2);
 });
 
+test('keeps logical spend identity stable across reclaimed claim attempts', async () => {
+  let claimed = await claim();
+  const first = await scalar(db, registerSql(claimed, CALL_A));
+  await db.exec(`UPDATE public.image_extraction_jobs SET lease_expires_at=
+    transaction_timestamp()-interval '1 second' WHERE id='${JOB}'`);
+  claimed = await claim();
+  const second = await scalar(db, registerSql(claimed, CALL_B));
+  assert.equal(second.spend_identity, first.spend_identity);
+  assert.notEqual(second.attempt_id, first.attempt_id);
+  assert.equal(second.duplicate_spend_count, 2);
+});
+
+test('revalidates claim/media binding after registration and at both egress phases', async () => {
+  let claimed = await claim();
+  const registered = await scalar(db, registerSql(claimed));
+  const validate = (phase) => validateSql(registered.attempt_id, claimed, phase);
+  assert.equal((await scalar(db, validate('media_download'))).media_mime, 'image/webp');
+  assert.equal((await scalar(db, validate('provider_egress'))).validated, true);
+  await db.exec(`UPDATE public.image_extraction_jobs SET lease_expires_at=
+    transaction_timestamp()-interval '1 second' WHERE id='${JOB}'`);
+  await assert.rejects(db.query(validate('provider_egress')), /P9_STATE_CONFLICT/);
+  await claim();
+  await assert.rejects(db.query(validate('media_download')), /P9_STATE_CONFLICT/);
+});
+
 test('rejects unbounded pricing keys instead of storing provider payload material', async () => {
   const claimed = await claim();
   const registered = await scalar(db, registerSql(claimed));
@@ -179,6 +214,32 @@ test('rejects unbounded pricing keys instead of storing provider payload materia
   ), /P9_OWNER_NOT_AUTHORIZED/);
   assert.equal(await scalar(db, `SELECT disposition FROM public.vision_provider_attempts
     WHERE id='${registered.attempt_id}'`), 'registered');
+});
+
+test('rejects every semantically invalid positive-allowlist pricing value', async () => {
+  const invalid = [
+    { currency: 'usd', input_basis: 'mock', pricing_source_version: 'v1' },
+    { currency: 'USDD', input_basis: 'mock', pricing_source_version: 'v1' },
+    { currency: 'USD', input_basis: 'https://pricing.invalid', pricing_source_version: 'v1' },
+    { currency: 'USD', input_basis: 'mock', pricing_source_version: 'x'.repeat(65) },
+    { currency: 'USD', input_basis: 'mock', pricing_source_version: 'v1', input_unit_cost: -1 },
+    { currency: 'USD', input_basis: 'mock', pricing_source_version: 'v1', output_unit_cost: '1' },
+    { currency: 'USD', input_basis: 'mock', pricing_source_version: 'v1', output_unit_cost: 1000001 },
+  ];
+  for (const [index, pricing] of invalid.entries()) {
+    await resetFixture();
+    const claimed = await claim();
+    const registered = await scalar(db, registerSql(claimed, CALL_A));
+    await assert.rejects(db.query(
+      `SELECT public.phase9_finalize_vision_provider_attempt(
+        '${registered.attempt_id}','${JOB}','${WORKER}','${claimed.lease_token}',
+        ${claimed.attempt_count},'response_received','analyzed',NULL,
+        '${json({
+          prompt_tokens: 1, output_tokens: 1, total_tokens: 2,
+          cached_tokens: 0, thinking_tokens: 0,
+        })}'::jsonb,'mock-pricing-v1','${json(pricing)}'::jsonb,0.002)`,
+    ), /P9_OWNER_NOT_AUTHORIZED/, `invalid pricing case ${index}`);
+  }
 });
 
 test('fails closed for stale, expired, superseded and mismatched claims without creating attempts', async () => {
@@ -235,8 +296,12 @@ test('records unknown outcomes and prevents stale attempts from becoming accepte
 
 test('keeps provider-attempt rows and RPCs service-only', async () => {
   const claimed = await claim();
+  const registered = await scalar(db, registerSql(claimed));
   await setActor(db, OWNER, 'authenticated');
   await assert.rejects(db.query(registerSql(claimed)), /permission denied/i);
+  await assert.rejects(db.query(validateSql(
+    registered.attempt_id, claimed, 'media_download',
+  )), /permission denied/i);
   await assert.rejects(db.query(
     'SELECT count(*) FROM public.vision_provider_attempts',
   ), /permission denied/i);

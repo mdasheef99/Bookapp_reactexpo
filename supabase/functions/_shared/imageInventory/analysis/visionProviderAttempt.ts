@@ -9,8 +9,8 @@ export type VisionClaimContext = Readonly<{
 }>;
 export type AttemptRegistration = Readonly<{
   attemptId: string;
-  mediaAuthorization: unknown;
 }>;
+export type VisionEgressPhase = 'media_download' | 'provider_egress';
 export type AttemptFinalization = Readonly<{
   disposition: 'response_received' | 'failed';
   normalizedOutcome: string;
@@ -28,6 +28,12 @@ export type VisionProviderAttemptGateway = Readonly<{
       modelVersion: string;
     }>,
   ): Promise<AttemptRegistration>;
+  validateEgress(
+    attemptId: string,
+    request: SpineAnalysisRequest,
+    claim: VisionClaimContext,
+    phase: VisionEgressPhase,
+  ): Promise<unknown>;
   finalize(
     attemptId: string,
     claim: VisionClaimContext,

@@ -28,11 +28,14 @@ vision model ID to configuration-driven `gemini-3.5-flash-lite`; the earlier
 independent review. The fixture adapter remains available, and no optional vision
 fallback is selected or enabled.
 
-The founder then authorized only the two review corrections. Local M14 now adds
-service-only vision-provider attempts and bounded register/finalize/associate/mark
-RPCs; Gemini registers an attempt and receives an atomically claim-validated media
-authorization before download/egress. M14 is not live, no provider was called, and
-one correction-only independent review is next.
+The founder then authorized only the review corrections. Local M14 now adds
+service-only vision-provider attempts and bounded register/validate/finalize/
+associate/mark RPCs. Gemini registers an attempt, revalidates immediately before
+private download, and revalidates again immediately before provider egress. Stable
+logical spend identity is claim-retry independent, while each registered call has
+a unique provider-attempt identity. Pricing evidence is a semantically validated
+positive allowlist in TypeScript and SQL. M14 is not live, no provider was called,
+and one correction-only independent review is next.
 
 Auth hardening WU1/WU2 is locally complete and independently approved on `codex/auth-hardening-core`: production bypass policy is centralized and fail-closed; Zustand owns canonical session/status; one root bootstrap owns subscription/restoration; identity replacement remains blocked through cleanup failure and explicit retry; and current-device logout persists a non-secret deletion-intent guard until SDK or exact-key fallback removal succeeds. Auth no longer directly imports marketplace. Secure token persistence, Android backup, authoritative profile routing, OTP UX, native/offline testing, and remote EAS verification remain separately gated before Phase 9 mobile/private-ingestion runtime integration.
 

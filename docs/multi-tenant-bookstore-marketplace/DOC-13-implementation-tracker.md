@@ -141,6 +141,14 @@ If implementation changes product or architecture behavior, update the relevant 
 > and zero download/provider calls after rejection. M14 was not applied and no
 > provider, credential, Storage, deployment, metadata, UI, or commerce mutation
 > occurred. One correction-only independent review is next.
+>
+> 2026-07-27 Phase 9 Unit 4B final correction: the egress fence now performs
+> complete claim/media validation immediately before private download and again
+> immediately before Gemini invocation. Logical spend identity is stable across
+> claim retries and separate from unique provider-attempt identity. TypeScript and
+> M14 apply the same bounded semantic pricing allowlist, and the Phase 9 migration
+> test names the exact ordered M01-M08/M10-M14 set. M14 remains unapplied; no live
+> provider, credential, database, Storage, deployment, or product mutation occurred.
 
 > 2026-07-26 Phase 9 Unit 4A review-correction checkpoint: the independent review returned `CHANGES_REQUIRED` for unsafe Docker context, pre-authentication slot starvation/read deadlines, nondeterministic shutdown evidence, source-string-only deployment claims, and identity-only fixture tests. All five corrections plus bounded invoker responses are locally focused-green. A deny-by-default Docker context, pre-admission constant-time authentication, fixed body deadline, deterministic shutdown test, real compiled-entrypoint smoke, per-fixture semantic matrix, synthetic-only container script, and minimal-permission pull-request workflow now exist. The mandatory GitHub Actions image build/start gate is next; no live credential, image push, deployment, migration, provider, Supabase, or Storage operation is authorized.
 

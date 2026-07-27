@@ -2,9 +2,42 @@
 -- Forward-only additive migration. This file is not authorization to apply it.
 BEGIN;
 
+CREATE FUNCTION marketplace_sec.phase9_valid_vision_pricing_input(p_value jsonb)
+RETURNS boolean LANGUAGE plpgsql IMMUTABLE SET search_path='' AS $$
+DECLARE v_key text; v_value jsonb; v_numeric numeric;
+BEGIN
+  IF p_value IS NULL OR jsonb_typeof(p_value)<>'object'
+    OR octet_length(p_value::text)>1024
+    OR (SELECT count(*) FROM jsonb_object_keys(p_value)) NOT BETWEEN 1 AND 7
+    OR EXISTS (SELECT 1 FROM jsonb_object_keys(p_value) k
+      WHERE k<>ALL(ARRAY['currency','input_basis','input_unit_cost',
+        'output_unit_cost','cached_unit_cost','thinking_unit_cost',
+        'pricing_source_version'])) THEN
+    RETURN false;
+  END IF;
+  FOR v_key,v_value IN SELECT * FROM jsonb_each(p_value) LOOP
+    IF v_key='currency' THEN
+      IF jsonb_typeof(v_value)<>'string'
+        OR (v_value#>>'{}') !~ '^[A-Z]{3}$' THEN RETURN false; END IF;
+    ELSIF v_key='input_basis' THEN
+      IF jsonb_typeof(v_value)<>'string'
+        OR (v_value#>>'{}') !~ '^[a-z][a-z0-9._-]{0,63}$' THEN RETURN false; END IF;
+    ELSIF v_key='pricing_source_version' THEN
+      IF jsonb_typeof(v_value)<>'string'
+        OR (v_value#>>'{}') !~ '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$'
+        THEN RETURN false; END IF;
+    ELSE
+      IF jsonb_typeof(v_value)<>'number' THEN RETURN false; END IF;
+      v_numeric:=(v_value::text)::numeric;
+      IF v_numeric<0 OR v_numeric>1000000 THEN RETURN false; END IF;
+    END IF;
+  END LOOP;
+  RETURN true;
+END$$;
+
 CREATE TABLE public.vision_provider_attempts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  external_call_id uuid NOT NULL UNIQUE,
+  provider_attempt_identity uuid NOT NULL UNIQUE,
   store_id uuid NOT NULL REFERENCES public.stores(id),
   job_id uuid NOT NULL REFERENCES public.image_extraction_jobs(id),
   correlation_id uuid NOT NULL,
@@ -50,7 +83,7 @@ CREATE TABLE public.vision_provider_attempts (
     (char_length(pricing_policy_version) BETWEEN 1 AND 64
       AND pricing_policy_version ~ '^[A-Za-z0-9][A-Za-z0-9._-]*$')),
   CHECK (pricing_input IS NULL OR
-    (jsonb_typeof(pricing_input)='object' AND octet_length(pricing_input::text)<=4096)),
+    marketplace_sec.phase9_valid_vision_pricing_input(pricing_input)),
   CHECK ((disposition='accepted')=(analysis_result_id IS NOT NULL))
 );
 CREATE INDEX vision_provider_attempts_spend_idx
@@ -63,11 +96,13 @@ CREATE UNIQUE INDEX vision_provider_attempts_accepted_job_idx
 ALTER TABLE public.vision_provider_attempts ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.vision_provider_attempts FROM PUBLIC,anon,authenticated;
 GRANT SELECT ON TABLE public.vision_provider_attempts TO service_role;
+REVOKE ALL ON FUNCTION marketplace_sec.phase9_valid_vision_pricing_input(jsonb)
+  FROM PUBLIC,anon,authenticated;
 
 CREATE FUNCTION marketplace_sec.phase9_register_vision_provider_attempt(
   p_job_id uuid,p_worker text,p_lease_token text,p_attempt_count integer,
   p_job_reference text,p_correlation_id uuid,p_sanitized_media_reference text,
-  p_external_call_id uuid,p_provider_role text,p_provider_key text,p_adapter_key text,
+  p_provider_attempt_identity uuid,p_provider_role text,p_provider_key text,p_adapter_key text,
   p_adapter_version text,p_model_key text,p_model_version text,p_prompt_version text,
   p_schema_version text
 ) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
@@ -88,7 +123,8 @@ BEGIN
     OR p_lease_token !~ '^[0-9a-f]{64}$' OR p_attempt_count NOT BETWEEN 1 AND 5
     OR p_job_reference !~ '^job_[A-Za-z0-9._:-]{16,124}$' OR p_correlation_id IS NULL
     OR p_sanitized_media_reference !~ '^media_[0-9a-f]{48}$'
-    OR p_external_call_id IS NULL OR p_provider_role NOT IN ('primary','approved_fallback')
+    OR p_provider_attempt_identity IS NULL
+    OR p_provider_role NOT IN ('primary','approved_fallback')
     OR p_provider_key !~ '^[a-z][a-z0-9._-]{1,63}$'
     OR p_adapter_key !~ '^[a-z][a-z0-9._-]{1,63}$'
     OR p_adapter_version !~ '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$'
@@ -144,9 +180,10 @@ BEGIN
       AND status IN ('reserved','consumed') ORDER BY policy_version DESC LIMIT 1 FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'P9_VISION_USAGE_RESERVATION_REQUIRED'; END IF;
   v_spend:=encode(extensions.digest(concat_ws('|',v_job.id,p_correlation_id,
-    p_attempt_count,p_provider_role,p_provider_key,p_adapter_key,p_model_key),'sha256'),'hex');
+    p_provider_role,p_provider_key,p_adapter_key,p_adapter_version,p_model_key,
+    p_model_version,p_prompt_version,p_schema_version),'sha256'),'hex');
   SELECT * INTO v_attempt FROM public.vision_provider_attempts
-    WHERE external_call_id=p_external_call_id;
+    WHERE provider_attempt_identity=p_provider_attempt_identity;
   IF FOUND THEN
     IF v_attempt.job_id IS DISTINCT FROM v_job.id
       OR v_attempt.claim_attempt_number IS DISTINCT FROM p_attempt_count
@@ -158,12 +195,12 @@ BEGIN
     END IF;
   ELSE
     INSERT INTO public.vision_provider_attempts(
-      external_call_id,store_id,job_id,correlation_id,claim_attempt_number,
+      provider_attempt_identity,store_id,job_id,correlation_id,claim_attempt_number,
       claim_worker,claim_lease_token_hash,usage_reservation_id,provider_role,
       provider_key,adapter_key,adapter_version,model_key,model_version,
       prompt_version,schema_version,spend_identity
     ) VALUES (
-      p_external_call_id,v_job.store_id,v_job.id,v_job.correlation_id,p_attempt_count,
+      p_provider_attempt_identity,v_job.store_id,v_job.id,v_job.correlation_id,p_attempt_count,
       p_worker,encode(extensions.digest(p_lease_token,'sha256'),'hex'),v_reservation.id,
       p_provider_role,p_provider_key,p_adapter_key,p_adapter_version,p_model_key,
       p_model_version,p_prompt_version,p_schema_version,v_spend
@@ -173,10 +210,86 @@ BEGIN
     FROM public.vision_provider_attempts WHERE spend_identity=v_spend;
   RETURN jsonb_build_object(
     'attempt_id',v_attempt.id,'usage_reservation_id',v_reservation.id,
-    'spend_identity',v_spend,'duplicate_spend_count',v_duplicate_count,
-    'media_bucket',v_media.bucket_id,'media_path',v_media.object_path,
-    'media_mime',v_media.detected_mime
+    'spend_identity',v_spend,'duplicate_spend_count',v_duplicate_count
   );
+END$$;
+
+CREATE FUNCTION marketplace_sec.phase9_validate_vision_provider_egress(
+  p_attempt_id uuid,p_job_id uuid,p_worker text,p_lease_token text,
+  p_attempt_count integer,p_job_reference text,p_correlation_id uuid,
+  p_sanitized_media_reference text,p_phase text
+) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE
+  v_attempt public.vision_provider_attempts;
+  v_job public.image_extraction_jobs;
+  v_input public.image_extraction_inputs;
+  v_session public.image_extraction_sessions;
+  v_media public.media_assets;
+  v_expected_job text;
+  v_expected_media text;
+BEGIN
+  IF auth.role() IS DISTINCT FROM 'service_role' OR p_attempt_id IS NULL
+    OR p_job_id IS NULL OR p_worker !~ '^[A-Za-z0-9._:-]{16,128}$'
+    OR p_lease_token !~ '^[0-9a-f]{64}$' OR p_attempt_count NOT BETWEEN 1 AND 5
+    OR p_job_reference !~ '^job_[A-Za-z0-9._:-]{16,124}$'
+    OR p_correlation_id IS NULL
+    OR p_sanitized_media_reference !~ '^media_[0-9a-f]{48}$'
+    OR p_phase NOT IN ('media_download','provider_egress') THEN
+    RAISE EXCEPTION 'P9_OWNER_NOT_AUTHORIZED';
+  END IF;
+  SELECT * INTO v_attempt FROM public.vision_provider_attempts
+    WHERE id=p_attempt_id AND job_id=p_job_id FOR UPDATE;
+  SELECT * INTO v_job FROM public.image_extraction_jobs
+    WHERE id=p_job_id FOR UPDATE;
+  IF v_attempt.id IS NULL OR v_job.id IS NULL
+    OR v_attempt.disposition IS DISTINCT FROM 'registered'
+    OR v_attempt.correlation_id IS DISTINCT FROM p_correlation_id
+    OR v_attempt.claim_attempt_number IS DISTINCT FROM p_attempt_count
+    OR v_attempt.claim_worker IS DISTINCT FROM p_worker
+    OR v_attempt.claim_lease_token_hash IS DISTINCT FROM
+      encode(extensions.digest(p_lease_token,'sha256'),'hex')
+    OR v_job.job_kind IS DISTINCT FROM 'vision_extract'
+    OR v_job.entity_type IS DISTINCT FROM 'input'
+    OR v_job.status IS DISTINCT FROM 'in_progress'
+    OR v_job.correlation_id IS DISTINCT FROM p_correlation_id
+    OR v_job.lease_owner IS DISTINCT FROM p_worker
+    OR v_job.attempt_count IS DISTINCT FROM p_attempt_count
+    OR v_job.lease_expires_at IS NULL
+    OR v_job.lease_expires_at<=transaction_timestamp()
+    OR v_job.lease_token_hash IS DISTINCT FROM
+      encode(extensions.digest(p_lease_token,'sha256'),'hex') THEN
+    RAISE EXCEPTION 'P9_STATE_CONFLICT';
+  END IF;
+  v_expected_job:='job_'||replace(v_job.correlation_id::text,'-','');
+  SELECT * INTO v_input FROM public.image_extraction_inputs WHERE id=v_job.entity_id;
+  IF FOUND THEN
+    SELECT * INTO v_session FROM public.image_extraction_sessions WHERE id=v_input.session_id;
+    SELECT * INTO v_media FROM public.media_assets WHERE id=v_input.media_asset_id;
+  END IF;
+  v_expected_media:='media_'||substr(
+    encode(extensions.digest(v_media.id::text||':'||v_job.id::text,'sha256'),'hex'),1,48);
+  IF p_job_reference IS DISTINCT FROM v_expected_job
+    OR v_input.id IS NULL OR v_session.id IS NULL OR v_media.id IS NULL
+    OR v_input.store_id IS DISTINCT FROM v_job.store_id
+    OR v_session.store_id IS DISTINCT FROM v_job.store_id
+    OR v_media.store_id IS DISTINCT FROM v_job.store_id
+    OR v_input.session_id IS DISTINCT FROM v_session.id
+    OR v_input.media_asset_id IS DISTINCT FROM v_media.id
+    OR v_media.session_id IS DISTINCT FROM v_session.id
+    OR v_input.sha256 IS DISTINCT FROM v_media.sha256
+    OR v_input.state IS DISTINCT FROM 'processing'
+    OR v_media.purpose IS DISTINCT FROM 'scan_input'
+    OR v_media.privacy_class IS DISTINCT FROM 'private_scan'
+    OR v_media.lifecycle_status IS DISTINCT FROM 'linked'
+    OR v_media.detected_mime IS DISTINCT FROM 'image/webp'
+    OR v_media.validated_at IS NULL OR v_media.reencode_version IS NULL
+    OR v_media.exif_strip_version IS NULL
+    OR p_sanitized_media_reference IS DISTINCT FROM v_expected_media THEN
+    RAISE EXCEPTION 'P9_MEDIA_NOT_APPROVED';
+  END IF;
+  RETURN jsonb_build_object('validated',true,'phase',p_phase,
+    'media_bucket',v_media.bucket_id,'media_path',v_media.object_path,
+    'media_mime',v_media.detected_mime);
 END$$;
 
 CREATE FUNCTION marketplace_sec.phase9_finalize_vision_provider_attempt(
@@ -205,14 +318,7 @@ BEGIN
     OR (p_cost_units IS NOT NULL AND
       (p_cost_units<0 OR p_cost_units>1000000000
        OR p_pricing_policy_version !~ '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$'
-       OR jsonb_typeof(p_pricing_input)<>'object' OR octet_length(p_pricing_input::text)>4096
-       OR (SELECT count(*) FROM jsonb_object_keys(p_pricing_input))>7
-       OR EXISTS (SELECT 1 FROM jsonb_object_keys(p_pricing_input) k
-         WHERE k<>ALL(ARRAY['currency','input_basis','input_unit_cost',
-           'output_unit_cost','cached_unit_cost','thinking_unit_cost',
-           'pricing_source_version']))
-       OR EXISTS (SELECT 1 FROM jsonb_each(p_pricing_input) e
-         WHERE jsonb_typeof(e.value) NOT IN ('string','number'))))
+       OR NOT marketplace_sec.phase9_valid_vision_pricing_input(p_pricing_input)))
     THEN RAISE EXCEPTION 'P9_OWNER_NOT_AUTHORIZED';
   END IF;
   SELECT * INTO v_attempt FROM public.vision_provider_attempts
@@ -307,14 +413,23 @@ END$$;
 CREATE FUNCTION public.phase9_register_vision_provider_attempt(
   p_job_id uuid,p_worker text,p_lease_token text,p_attempt_count integer,
   p_job_reference text,p_correlation_id uuid,p_sanitized_media_reference text,
-  p_external_call_id uuid,p_provider_role text,p_provider_key text,p_adapter_key text,
+  p_provider_attempt_identity uuid,p_provider_role text,p_provider_key text,p_adapter_key text,
   p_adapter_version text,p_model_key text,p_model_version text,p_prompt_version text,
   p_schema_version text
 ) RETURNS jsonb LANGUAGE sql SECURITY INVOKER SET search_path='' AS $$
   SELECT marketplace_sec.phase9_register_vision_provider_attempt(
     p_job_id,p_worker,p_lease_token,p_attempt_count,p_job_reference,p_correlation_id,
-    p_sanitized_media_reference,p_external_call_id,p_provider_role,p_provider_key,
+    p_sanitized_media_reference,p_provider_attempt_identity,p_provider_role,p_provider_key,
     p_adapter_key,p_adapter_version,p_model_key,p_model_version,p_prompt_version,p_schema_version)
+$$;
+CREATE FUNCTION public.phase9_validate_vision_provider_egress(
+  p_attempt_id uuid,p_job_id uuid,p_worker text,p_lease_token text,
+  p_attempt_count integer,p_job_reference text,p_correlation_id uuid,
+  p_sanitized_media_reference text,p_phase text
+) RETURNS jsonb LANGUAGE sql SECURITY INVOKER SET search_path='' AS $$
+  SELECT marketplace_sec.phase9_validate_vision_provider_egress(
+    p_attempt_id,p_job_id,p_worker,p_lease_token,p_attempt_count,p_job_reference,
+    p_correlation_id,p_sanitized_media_reference,p_phase)
 $$;
 CREATE FUNCTION public.phase9_finalize_vision_provider_attempt(
   p_attempt_id uuid,p_job_id uuid,p_worker text,p_lease_token text,p_attempt_count integer,
@@ -343,6 +458,8 @@ $$;
 REVOKE ALL ON FUNCTION marketplace_sec.phase9_register_vision_provider_attempt(
   uuid,text,text,integer,text,uuid,text,uuid,text,text,text,text,text,text,text,text)
   FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION marketplace_sec.phase9_validate_vision_provider_egress(
+  uuid,uuid,text,text,integer,text,uuid,text,text) FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION marketplace_sec.phase9_finalize_vision_provider_attempt(
   uuid,uuid,text,text,integer,text,text,text,jsonb,text,jsonb,numeric)
   FROM PUBLIC,anon,authenticated;
@@ -353,6 +470,8 @@ REVOKE ALL ON FUNCTION marketplace_sec.phase9_mark_vision_provider_attempt(
 REVOKE ALL ON FUNCTION public.phase9_register_vision_provider_attempt(
   uuid,text,text,integer,text,uuid,text,uuid,text,text,text,text,text,text,text,text)
   FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.phase9_validate_vision_provider_egress(
+  uuid,uuid,text,text,integer,text,uuid,text,text) FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public.phase9_finalize_vision_provider_attempt(
   uuid,uuid,text,text,integer,text,text,text,jsonb,text,jsonb,numeric)
   FROM PUBLIC,anon,authenticated;
@@ -363,6 +482,8 @@ REVOKE ALL ON FUNCTION public.phase9_mark_vision_provider_attempt(
 GRANT EXECUTE ON FUNCTION marketplace_sec.phase9_register_vision_provider_attempt(
   uuid,text,text,integer,text,uuid,text,uuid,text,text,text,text,text,text,text,text)
   TO service_role;
+GRANT EXECUTE ON FUNCTION marketplace_sec.phase9_validate_vision_provider_egress(
+  uuid,uuid,text,text,integer,text,uuid,text,text) TO service_role;
 GRANT EXECUTE ON FUNCTION marketplace_sec.phase9_finalize_vision_provider_attempt(
   uuid,uuid,text,text,integer,text,text,text,jsonb,text,jsonb,numeric) TO service_role;
 GRANT EXECUTE ON FUNCTION marketplace_sec.phase9_associate_vision_provider_attempt(
@@ -372,6 +493,8 @@ GRANT EXECUTE ON FUNCTION marketplace_sec.phase9_mark_vision_provider_attempt(
 GRANT EXECUTE ON FUNCTION public.phase9_register_vision_provider_attempt(
   uuid,text,text,integer,text,uuid,text,uuid,text,text,text,text,text,text,text,text)
   TO service_role;
+GRANT EXECUTE ON FUNCTION public.phase9_validate_vision_provider_egress(
+  uuid,uuid,text,text,integer,text,uuid,text,text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.phase9_finalize_vision_provider_attempt(
   uuid,uuid,text,text,integer,text,text,text,jsonb,text,jsonb,numeric) TO service_role;
 GRANT EXECUTE ON FUNCTION public.phase9_associate_vision_provider_attempt(

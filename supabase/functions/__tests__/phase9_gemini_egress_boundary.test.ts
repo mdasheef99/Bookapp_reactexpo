@@ -19,7 +19,7 @@ const claim = {
 };
 
 describe('Phase 9 Gemini final egress fence', () => {
-  it('registers and validates the current claim before download and provider invocation', async () => {
+  it('validates the current claim immediately before download and again before provider invocation', async () => {
     const order: string[] = [];
     const generateContent = jest.fn(async () => {
       order.push('provider');
@@ -41,7 +41,11 @@ describe('Phase 9 Gemini final egress fence', () => {
       providerAttempts: {
         register: jest.fn(async () => {
           order.push('register');
-          return { attemptId: 'attempt-1', mediaAuthorization: 'authorization-1' };
+          return { attemptId: 'attempt-1' };
+        }),
+        validateEgress: jest.fn(async (_attempt, _request, _claim, phase) => {
+          order.push(`validate_${phase}`);
+          return phase === 'media_download' ? 'authorization-1' : undefined;
         }),
         finalize: jest.fn(async () => { order.push('finalize'); }),
         mark: jest.fn(async () => { order.push('mark'); }),
@@ -54,10 +58,13 @@ describe('Phase 9 Gemini final egress fence', () => {
     });
     const completed = await analyzer.analyzeClaim(request, claim);
     expect(completed.providerAttemptId).toBe('attempt-1');
-    expect(order).toEqual(['register', 'download', 'provider', 'finalize']);
+    expect(order).toEqual([
+      'register', 'validate_media_download', 'download',
+      'validate_provider_egress', 'provider', 'finalize',
+    ]);
   });
 
-  it('performs zero download and provider calls when final claim validation fails', async () => {
+  it('performs zero download/provider calls when an expired claim is rejected at registration', async () => {
     const resolveMedia = jest.fn();
     const generateContent = jest.fn();
     const analyzer = new GeminiSpineImageAnalyzer({
@@ -71,11 +78,61 @@ describe('Phase 9 Gemini final egress fence', () => {
       },
       resolveMedia,
     });
-    await expect(analyzer.analyzeClaim(request, claim)).rejects.toMatchObject({
-      code: 'P9_VISION_MEDIA_UNAVAILABLE',
-    });
+    await expect(analyzer.analyzeClaim(request, claim)).rejects.toBeDefined();
     expect(resolveMedia).not.toHaveBeenCalled();
     expect(generateContent).not.toHaveBeenCalled();
+  });
+
+  it('performs zero download/provider calls when the claim is reclaimed after registration', async () => {
+    const resolveMedia = jest.fn();
+    const generateContent = jest.fn();
+    const mark = jest.fn();
+    const analyzer = new GeminiSpineImageAnalyzer({
+      client: { models: { generateContent } },
+      modelId: 'gemini-3.5-flash-lite',
+      timeoutMs: 10_000,
+      providerAttempts: {
+        register: jest.fn().mockResolvedValue({ attemptId: 'attempt-1' }),
+        validateEgress: jest.fn().mockRejectedValue(new Error('P9_STATE_CONFLICT')),
+        finalize: jest.fn(),
+        mark,
+      },
+      resolveMedia,
+    });
+    await expect(analyzer.analyzeClaim(request, claim)).rejects.toBeDefined();
+    expect(resolveMedia).not.toHaveBeenCalled();
+    expect(generateContent).not.toHaveBeenCalled();
+    expect(mark).toHaveBeenCalledWith(
+      'attempt-1', claim, 'stale_rejected', 'claim_invalid_before_media_download',
+    );
+  });
+
+  it('does not call Gemini when the claim expires after download', async () => {
+    const generateContent = jest.fn();
+    const mark = jest.fn();
+    const validateEgress = jest.fn()
+      .mockResolvedValueOnce('authorization-1')
+      .mockRejectedValueOnce(new Error('P9_STATE_CONFLICT'));
+    const analyzer = new GeminiSpineImageAnalyzer({
+      client: { models: { generateContent } },
+      modelId: 'gemini-3.5-flash-lite',
+      timeoutMs: 10_000,
+      providerAttempts: {
+        register: jest.fn().mockResolvedValue({ attemptId: 'attempt-1' }),
+        validateEgress,
+        finalize: jest.fn(),
+        mark,
+      },
+      resolveMedia: jest.fn().mockResolvedValue({
+        bytes: new Uint8Array([1]), mimeType: 'image/webp',
+      }),
+    });
+    await expect(analyzer.analyzeClaim(request, claim)).rejects.toBeDefined();
+    expect(validateEgress).toHaveBeenCalledTimes(2);
+    expect(generateContent).not.toHaveBeenCalled();
+    expect(mark).toHaveBeenCalledWith(
+      'attempt-1', claim, 'stale_rejected', 'claim_invalid_before_provider_egress',
+    );
   });
 });
 

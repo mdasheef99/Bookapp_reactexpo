@@ -60,8 +60,10 @@ function setup(response: unknown, overrides: Record<string, unknown> = {}) {
       costUnits: evidence.totalTokens / 1_000,
       policyVersion: 'mock-cost-policy-v1',
       pricingInput: {
-        currency: 'cost_units',
-        input_basis: 'mocked-provider-response',
+        currency: 'USD',
+        input_basis: 'mocked_provider_response',
+        pricing_source_version: 'mock-v1',
+        input_unit_cost: 0.001,
       },
     }),
     log: (event) => logs.push(event),
@@ -183,10 +185,39 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
       costUnits: 0.125,
       costPolicyVersion: 'mock-cost-policy-v1',
       pricingInput: {
-        currency: 'cost_units',
-        input_basis: 'mocked-provider-response',
+        currency: 'USD',
+        input_basis: 'mocked_provider_response',
+        pricing_source_version: 'mock-v1',
+        input_unit_cost: 0.001,
       },
     }]);
+  });
+
+  it.each([
+    [{ unknown: 'value' }],
+    [{ currency: 'usd', input_basis: 'mock', pricing_source_version: 'v1' }],
+    [{ currency: 'USD', input_basis: 'https://pricing.invalid', pricing_source_version: 'v1' }],
+    [{ currency: 'USD', input_basis: 'mock', pricing_source_version: 'v1', input_unit_cost: -1 }],
+    [{ currency: 'USD', input_basis: 'mock', pricing_source_version: 'v1', input_unit_cost: '1' }],
+    [{ currency: 'USD', input_basis: 'mock', pricing_source_version: 'v1', input_unit_cost: 1_000_001 }],
+    [{ currency: 'USD', input_basis: 'mock', pricing_source_version: 'x'.repeat(65) }],
+  ])('rejects semantically unsafe injected pricing evidence %#', async (pricingInput) => {
+    const { analyzer, usage } = setup({
+      text: JSON.stringify(output([], 'no_books', 0)),
+      usageMetadata: { totalTokenCount: 1 },
+    }, {
+      calculateCostUnits: () => ({
+        costUnits: 0.001,
+        policyVersion: 'mock-cost-policy-v1',
+        pricingInput,
+      }),
+    });
+    await analyzer.analyze(request);
+    expect(usage[0]).toMatchObject({
+      costUnits: null,
+      costPolicyVersion: null,
+      pricingInput: null,
+    });
   });
 
   it('keeps credentials, images, prompts, and raw responses outside logs and errors', async () => {

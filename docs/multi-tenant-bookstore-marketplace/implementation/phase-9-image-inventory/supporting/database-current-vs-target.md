@@ -21,11 +21,12 @@ non-secret evidence and retained synthetic deviations are in
 
 **Unit 4B local target:** read-only MCP preflight reconfirmed project
 `ahntbtktjjmvfosgkmgn` healthy and the existing job/reservation/result columns.
-Local M14 proposes one dedicated `vision_provider_attempts` row per external call,
-deterministic duplicate-spend identity, bounded usage/pricing/cost evidence, and
-service-only register/finalize/associate/mark RPCs. Registration revalidates the
-full active claim and media relationship before returning an internal download
-handle. This target is local-only and has not been applied.
+Local M14 proposes one dedicated `vision_provider_attempts` row per provider
+attempt, a claim-retry-independent logical spend identity, bounded semantic
+usage/pricing/cost evidence, and service-only register/validate/finalize/associate/
+mark RPCs. The validate RPC rechecks the full active claim and media relationship
+immediately before private download and again before provider egress. This target
+is local-only and has not been applied.
 
 **Ingestion foundation checkpoint:** project `ahntbtktjjmvfosgkmgn` remains healthy; both private 10 MiB JPEG/PNG/WebP buckets remain unchanged. Live M11 revokes authenticated execution of path-taking legacy intake RPCs and adds declared source/content identity, persisted canonical completion, capability linkage, immutable private source snapshots, opaque claim-token and attempt fencing, 16 MP enforcement, and service-only issue/register/claim/context/revalidate/snapshot-bind/complete/fail functions. No runtime is deployed.
 

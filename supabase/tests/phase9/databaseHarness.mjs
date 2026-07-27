@@ -14,6 +14,7 @@ export const phase9MigrationNames = [
   '20260722000010_marketplace_phase9_public_boundary_security_correction.sql',
   '20260723000011_marketplace_phase9_ingestion_runtime_foundation.sql',
   '20260726000012_marketplace_phase9_vision_analysis_runtime.sql',
+  '20260727000013_marketplace_phase9_service_rpc_wrappers.sql',
   '20260727000014_marketplace_phase9_vision_provider_attempts.sql',
 ];
 

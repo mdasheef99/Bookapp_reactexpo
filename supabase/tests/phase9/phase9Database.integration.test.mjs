@@ -32,7 +32,21 @@ afterEach(async () => {
 after(async () => db.close());
 
 test('clean Phase 6 migration creates all relations and deferred foreign keys', async () => {
-  assert.equal(phase9MigrationNames.length, 11);
+  assert.deepEqual(phase9MigrationNames, [
+    '20260722000001_marketplace_phase9_catalogue_metadata_expand.sql',
+    '20260722000002_marketplace_phase9_extraction_persistence.sql',
+    '20260722000003_marketplace_phase9_media_registry.sql',
+    '20260722000004_marketplace_phase9_condition_damage_transition.sql',
+    '20260722000005_marketplace_phase9_controlled_inventory_commands.sql',
+    '20260722000006_marketplace_phase9_storage_boundaries.sql',
+    '20260722000007_marketplace_phase9_public_projection_search.sql',
+    '20260722000008_marketplace_phase9_request_photo_seam.sql',
+    '20260722000010_marketplace_phase9_public_boundary_security_correction.sql',
+    '20260723000011_marketplace_phase9_ingestion_runtime_foundation.sql',
+    '20260726000012_marketplace_phase9_vision_analysis_runtime.sql',
+    '20260727000013_marketplace_phase9_service_rpc_wrappers.sql',
+    '20260727000014_marketplace_phase9_vision_provider_attempts.sql',
+  ]);
   const count = await scalar(db, `SELECT count(*)::int FROM information_schema.tables
     WHERE table_schema='public' AND table_name IN ('phase9_provider_registry','book_search_aliases',
     'image_extraction_sessions','image_extraction_inputs','image_extraction_candidates',

@@ -13,6 +13,8 @@ type ServiceClient = Readonly<{
 }>;
 type Registration = Readonly<{
   attempt_id: string;
+}>;
+type MediaAuthorization = Readonly<{
   media_bucket: string;
   media_path: string;
   media_mime: string;
@@ -39,23 +41,23 @@ async function rpc(
   }
 }
 
-function registration(value: unknown): Readonly<{
-  attemptId: string;
-  mediaAuthorization: VisionMediaAuthorization;
-}> {
+function registration(value: unknown): Readonly<{ attemptId: string }> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw databaseError();
   const input = value as Partial<Registration>;
-  if (typeof input.attempt_id !== 'string'
-    || typeof input.media_bucket !== 'string'
+  if (typeof input.attempt_id !== 'string') throw databaseError();
+  return { attemptId: input.attempt_id };
+}
+
+function mediaAuthorization(value: unknown): VisionMediaAuthorization {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw databaseError();
+  const input = value as Partial<MediaAuthorization>;
+  if (typeof input.media_bucket !== 'string'
     || typeof input.media_path !== 'string'
     || input.media_mime !== 'image/webp') throw databaseError();
   return {
-    attemptId: input.attempt_id,
-    mediaAuthorization: {
-      mediaBucket: input.media_bucket,
-      mediaPath: input.media_path,
-      mediaMime: 'image/webp',
-    },
+    mediaBucket: input.media_bucket,
+    mediaPath: input.media_path,
+    mediaMime: 'image/webp',
   };
 }
 
@@ -77,7 +79,7 @@ VisionProviderAttemptGateway & Readonly<{
         p_job_reference: request.jobReference,
         p_correlation_id: request.correlationId,
         p_sanitized_media_reference: request.sanitizedMediaReference,
-        p_external_call_id: randomUUID(),
+        p_provider_attempt_identity: randomUUID(),
         p_provider_role: lineage.providerRole,
         p_provider_key: lineage.providerKey,
         p_adapter_key: request.adapterKey,
@@ -87,6 +89,17 @@ VisionProviderAttemptGateway & Readonly<{
         p_prompt_version: request.promptVersion,
         p_schema_version: request.schemaVersion,
       }));
+    },
+    async validateEgress(attemptId, request, claim, phase) {
+      const result = await rpc(client, 'phase9_validate_vision_provider_egress', {
+        ...claimArgs(claim),
+        p_attempt_id: attemptId,
+        p_job_reference: request.jobReference,
+        p_correlation_id: request.correlationId,
+        p_sanitized_media_reference: request.sanitizedMediaReference,
+        p_phase: phase,
+      });
+      return phase === 'media_download' ? mediaAuthorization(result) : undefined;
     },
     async finalize(attemptId, claim, evidence) {
       const usage: GeminiUsageEvidence = evidence.usage;

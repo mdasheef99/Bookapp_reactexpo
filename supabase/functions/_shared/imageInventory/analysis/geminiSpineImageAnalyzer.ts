@@ -165,16 +165,32 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
     const started = this.now().getTime();
     let registration: AttemptRegistration | undefined;
     let media: MediaInput;
-    try {
-      if (claim && this.options.providerAttempts) {
-        registration = await this.options.providerAttempts.register(request, claim, {
-          providerRole: 'primary',
-          providerKey: 'google_gemini',
-          modelKey: this.options.modelId,
-          modelVersion: this.options.modelId,
-        });
+    let mediaAuthorization: unknown;
+    if (claim && this.options.providerAttempts) {
+      registration = await this.options.providerAttempts.register(request, claim, {
+        providerRole: 'primary',
+        providerKey: 'google_gemini',
+        modelKey: this.options.modelId,
+        modelVersion: this.options.modelId,
+      });
+      try {
+        mediaAuthorization = await this.options.providerAttempts.validateEgress(
+          registration.attemptId, request, claim, 'media_download',
+        );
+      } catch (error) {
+        await this.safeMark(
+          registration.attemptId, claim, 'stale_rejected',
+          'claim_invalid_before_media_download',
+        );
+        if (error instanceof SpineAnalyzerError) throw error;
+        this.failed('media_unavailable', started);
+        throw new GeminiAnalyzerError(
+          'P9_VISION_MEDIA_UNAVAILABLE', false, 'media_unavailable',
+        );
       }
-      media = await this.options.resolveMedia(request, registration?.mediaAuthorization);
+    }
+    try {
+      media = await this.options.resolveMedia(request, mediaAuthorization);
       if (!['image/jpeg', 'image/png', 'image/webp'].includes(media.mimeType)
         || media.bytes.byteLength < 1 || media.bytes.byteLength > MAX_IMAGE_BYTES) {
         throw new Error('invalid media');
@@ -191,6 +207,23 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
     }
 
     let response: GeminiResponse;
+    if (registration && claim) {
+      try {
+        await this.options.providerAttempts?.validateEgress(
+          registration.attemptId, request, claim, 'provider_egress',
+        );
+      } catch (error) {
+        await this.safeMark(
+          registration.attemptId, claim, 'stale_rejected',
+          'claim_invalid_before_provider_egress',
+        );
+        if (error instanceof SpineAnalyzerError) throw error;
+        this.failed('provider_error', started);
+        throw new GeminiAnalyzerError(
+          'P9_VISION_ANALYZER_UNAVAILABLE', true, 'provider_error',
+        );
+      }
+    }
     try {
       response = await this.options.client.models.generateContent({
         model: this.options.modelId,

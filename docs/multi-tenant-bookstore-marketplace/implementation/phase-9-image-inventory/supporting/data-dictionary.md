@@ -153,11 +153,11 @@ Public projection never contains shelf location, acquisition data, exact quantit
 
 | Field | Rule |
 | --- | --- |
-| call/claim identity | Unique external-call UUID plus job, correlation, claim attempt, worker, and lease-token hash; raw lease token absent. |
-| reservation/spend | Required vision usage-reservation FK and deterministic spend identity; multiple rows with one spend identity remain visible for duplicate reconciliation. |
+| call/claim identity | Unique provider-attempt UUID plus job, correlation, claim attempt, worker, and lease-token hash; raw lease token absent. |
+| reservation/spend | Required vision usage-reservation FK and deterministic logical spend identity independent of claim attempt; multiple provider-attempt rows with one spend identity remain visible for duplicate reconciliation. |
 | provider lineage | Primary/approved-fallback role, provider, adapter/model, prompt, and schema versions. Unit 4B configures primary only. |
 | response lineage | Optional bounded provider request ID; start/completion timestamps and normalized outcome. |
-| usage/cost | Five bounded token counters, versioned bounded pricing input, and calculated cost units injected by policy; no hard-coded provider price. |
+| usage/cost | Five bounded token counters, calculated cost units, and injected pricing input restricted to ISO currency, bounded safe identifiers, and finite non-negative bounded unit costs; unknown keys are rejected and no provider price is hard-coded. |
 | disposition | `registered`, `response_received`, `accepted`, `stale_rejected`, `failed`, or `outcome_unknown`; only one accepted attempt per job. |
 | accepted result | Nullable analysis-result FK required exactly for `accepted`; association verifies the completing attempt/worker/token hash. |
 | forbidden data | No prompt, image/base64, Storage credential, provider response, bibliographic payload, or arbitrary raw metadata. |
