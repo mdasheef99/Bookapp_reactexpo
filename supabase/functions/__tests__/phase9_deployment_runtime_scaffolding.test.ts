@@ -12,7 +12,10 @@ import {
   invokePhase9Worker,
   summarizeWorkerResponse,
 } from '../../../scripts/invoke-phase9-worker';
-import { validatePhase9DeploymentRuntime } from '../../../scripts/validate-phase9-deployment-runtime';
+import {
+  validateContainerSmokeWorkflow,
+  validatePhase9DeploymentRuntime,
+} from '../../../scripts/validate-phase9-deployment-runtime';
 
 const mediaToken = 'media-worker-ingress-A7z.49_xYp-001-strong';
 const visionToken = 'vision-worker-ingress-B8y.50_zXp-002-strong';
@@ -344,5 +347,12 @@ describe('Phase 9 manual invocation and deployment validation', () => {
 
   it('validates checked-in start commands, packaging, and Owner JWT configuration', () => {
     expect(validatePhase9DeploymentRuntime()).toEqual({ valid: true, errors: [] });
+  });
+
+  it.each([
+    ['LF', 'permissions:\n  contents: read\n- run: npm run smoke:phase9:worker-containers\n'],
+    ['CRLF', 'permissions:\r\n  contents: read\r\n- run: npm run smoke:phase9:worker-containers\r\n'],
+  ])('validates the container workflow with %s line endings', (_label, workflow) => {
+    expect(validateContainerSmokeWorkflow(workflow)).toBe(true);
   });
 });

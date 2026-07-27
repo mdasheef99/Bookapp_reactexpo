@@ -48,6 +48,14 @@ function read(root, name) {
   return fs.readFileSync(path.join(root, name), 'utf8');
 }
 
+function validateContainerSmokeWorkflow(source) {
+  const workflow = source.replace(/\r\n?/gu, '\n');
+  return workflow.includes('permissions:\n  contents: read')
+    && workflow.includes('npm run smoke:phase9:worker-containers')
+    && !/secrets\./u.test(workflow)
+    && !/docker\s+(?:push|login)/u.test(workflow);
+}
+
 function validatePhase9DeploymentRuntime(root = process.cwd()) {
   const errors = [];
   for (const name of REQUIRED_FILES) {
@@ -108,10 +116,7 @@ function validatePhase9DeploymentRuntime(root = process.cwd()) {
     errors.push('initial-concurrency');
   }
   const workflow = read(root, '.github/workflows/phase9-worker-container-smoke.yml');
-  if (!workflow.includes('permissions:\n  contents: read')
-    || !workflow.includes('npm run smoke:phase9:worker-containers')
-    || /secrets\./u.test(workflow)
-    || /docker\s+(?:push|login)/u.test(workflow)) {
+  if (!validateContainerSmokeWorkflow(workflow)) {
     errors.push('container-smoke-workflow');
   }
   return { valid: errors.length === 0, errors };
@@ -150,5 +155,6 @@ if (require.main === module) {
 
 module.exports = {
   runExecutableDeploymentValidation,
+  validateContainerSmokeWorkflow,
   validatePhase9DeploymentRuntime,
 };
