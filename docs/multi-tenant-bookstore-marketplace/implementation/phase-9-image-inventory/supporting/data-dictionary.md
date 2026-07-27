@@ -211,6 +211,13 @@ Direct table authority for `vision_provider_attempts`,
 `phase9_selected_metadata_snapshots` is SELECT-only for `service_role`; mutation
 belongs exclusively to hardened RPCs. M16 is live and removes its six enumerated
 privileges, but PostgreSQL 17.6 still grants `service_role` MAINTAIN (`m`).
+
+M17 is live once as `20260727233457` and closes that PostgreSQL 17 delta on
+`vision_provider_attempts`, `phase9_metadata_lookups`,
+`phase9_metadata_cache_entries`, and
+`phase9_selected_metadata_snapshots`. Their live service ACL is SELECT only
+(`r`); direct mutation and MAINTAIN are denied, client roles remain denied,
+and mutation remains available only through the approved hardened RPCs.
 Therefore the SELECT-only target remains pending a forward M17 correction.
 
 ### Provider registry and routing target

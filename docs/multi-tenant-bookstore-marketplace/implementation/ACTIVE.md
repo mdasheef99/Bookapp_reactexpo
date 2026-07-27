@@ -11,7 +11,7 @@ This file answers only “where does a new development session start?” DOC-13 
 - **Stable handoff:** [PHASE-9-image-to-LLM-inventory.md](./PHASE-9-image-to-llm-inventory.md)
 - **Session entrypoint:** [Phase 9 SESSION-START](./phase-9-image-inventory/SESSION-START.md)
 - **Local current-state authority:** [Phase 9 master tracker](./phase-9-image-inventory/TRACKER.md)
-- **Current work-unit plan:** M16 is merged and live once as `20260727231217`; it removed INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER from the M14 provider-attempt table and three M15 metadata tables. PostgreSQL 17.6 readback exposed inherited `MAINTAIN` (`service_role=rm/postgres`), so the approved SELECT-only boundary remains open. Unit 5B stays gated on a separately authorized forward M17 that revokes MAINTAIN and is live-verified. See [M16 evidence](./phase-9-image-inventory/trackers/09-m16-acl-correction-evidence.md).
+- **Current work-unit plan:** Unit 5A and its forward ACL corrections are merged and live-verified. M17 is live once as `20260727233457`; the M14 provider-attempt table and three M15 metadata tables now expose SELECT only to `service_role`, retain hardened RPC-only mutation, and deny client roles. Unit 5B remains not started and requires fresh explicit authorization. See [M17 evidence](./phase-9-image-inventory/trackers/10-m17-acl-correction-evidence.md).
 - **Global status authority:** [DOC-13](../DOC-13-implementation-tracker.md)
 
 ## Required reading order

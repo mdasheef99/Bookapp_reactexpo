@@ -148,3 +148,18 @@ once as `20260727231217`. The six reviewed privileges are removed, but
 PostgreSQL 17.6 retained MAINTAIN (`service_role=rm/postgres`) on all four
 tables. SELECT-only remains open; Unit 5B stays gated on separately authorized
 M17 creation/review/application. See [M16 evidence](../trackers/09-m16-acl-correction-evidence.md).
+
+## M17 live ACL closeout — 2026-07-28
+
+M17 is live once as
+`20260727233457 marketplace_phase9_maintain_acl_correction`. It uses the
+PostgreSQL-17-safe `REVOKE ALL PRIVILEGES` plus explicit `GRANT SELECT` boundary
+on M14 `vision_provider_attempts` and the three M15 tables. Live readback proves
+`service_role=r/postgres`, no MAINTAIN or direct mutation authority, client
+denial, RLS/postgres ownership, and unchanged service-only execution plus fixed
+search paths for all 13 approved RPCs. All four tables remain empty.
+
+Unit 5A is now live-verified. Google Books, a secondary provider, aliases,
+credentials, provider calls, Owner UI, inventory commit, and publication remain
+outside this completed unit. Unit 5B and Unit 5C are not started and require
+separate authorization. See [M17 evidence](../trackers/10-m17-acl-correction-evidence.md).

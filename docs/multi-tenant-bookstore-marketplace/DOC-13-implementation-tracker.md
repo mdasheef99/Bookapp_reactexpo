@@ -190,17 +190,26 @@ If implementation changes product or architecture behavior, update the relevant 
 > exposed inherited MAINTAIN (`service_role=rm/postgres`) on all four tables.
 > Unit 5B remains gated on separately authorized forward M17 correction/review/
 > application. M09 remains absent; no data, Storage, provider, or product change occurred.
+>
+> 2026-07-28 Phase 9 M17 closeout: correction commit `cbd98c7` was
+> fast-forwarded to `main`, and exact M17 applied once as
+> `20260727233457 marketplace_phase9_maintain_acl_correction`. PostgreSQL 17.6
+> readback proves `service_role=r/postgres` on the M14 provider-attempt table
+> and all three M15 metadata tables: SELECT only, including no MAINTAIN.
+> RLS/postgres ownership, client denial, and all 13 hardened RPC
+> grants/signatures/fixed search paths remain intact. Unit 5A is live-verified;
+> Units 5B/5C remain not started and separately authorized. [Evidence](./implementation/phase-9-image-inventory/trackers/10-m17-acl-correction-evidence.md).
 
 > 2026-07-26 Phase 9 Unit 4A review-correction checkpoint: the independent review returned `CHANGES_REQUIRED` for unsafe Docker context, pre-authentication slot starvation/read deadlines, nondeterministic shutdown evidence, source-string-only deployment claims, and identity-only fixture tests. All five corrections plus bounded invoker responses are locally focused-green. A deny-by-default Docker context, pre-admission constant-time authentication, fixed body deadline, deterministic shutdown test, real compiled-entrypoint smoke, per-fixture semantic matrix, synthetic-only container script, and minimal-permission pull-request workflow now exist. The mandatory GitHub Actions image build/start gate is next; no live credential, image push, deployment, migration, provider, Supabase, or Storage operation is authorized.
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **M16 live; PostgreSQL 17 MAINTAIN correction required** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5A and M17 ACL boundary live-verified** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-28 |
-| Latest handoff | M16 merged/applied once as `20260727231217`; six listed privileges are removed, but PostgreSQL 17.6 MAINTAIN remains on four RPC-only tables. |
-| Current risk level | `service_role=rm/postgres` leaves MAINTAIN beyond the approved SELECT-only boundary. Google Books remains unimplemented; no credential/provider call exists. |
-| Next recommended task | Separately authorize forward-only M17 MAINTAIN revocation, PostgreSQL 17 regression, review, application, and live verification; do not start Unit 5B/5C first. |
+| Latest handoff | M17 merged/applied once as `20260727233457`; PostgreSQL 17.6 proves SELECT-only service access and RPC-only mutation on all four sensitive tables. |
+| Current risk level | ACL correction closed. Google Books remains unimplemented; no metadata credential/provider call exists; Units 5B/5C remain separately gated. |
+| Next recommended task | Start Unit 5B only in a fresh explicitly authorized session; do not begin Unit 5C or provider activity by implication. |
 
 ---
 
@@ -217,7 +226,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `m16_live_pg17_maintain_correction_required` | [M16 evidence](./implementation/phase-9-image-inventory/trackers/09-m16-acl-correction-evidence.md) · [Unit 5A handoff](./implementation/phase-9-image-inventory/work-units/05a-metadata-foundation-handoff.md) | M16 live once; six privileges corrected, but PostgreSQL 17 MAINTAIN remains on four RPC-only tables. M09 and providers remain deferred; Units 5B/5C gated on M17. |
+| Phase 9: Image-to-LLM Inventory | `unit5a_m17_live_acl_verified` | [M17 evidence](./implementation/phase-9-image-inventory/trackers/10-m17-acl-correction-evidence.md) · [Unit 5A handoff](./implementation/phase-9-image-inventory/work-units/05a-metadata-foundation-handoff.md) | M17 live once; four sensitive tables are SELECT-only for service role with RPC-only mutation. M09 and providers remain deferred; Units 5B/5C are not started. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

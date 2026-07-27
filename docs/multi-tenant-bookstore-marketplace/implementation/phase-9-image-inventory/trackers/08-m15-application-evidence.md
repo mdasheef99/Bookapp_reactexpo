@@ -54,3 +54,12 @@ from the three M15 tables and contractually RPC-only M14
 unchanged. PostgreSQL 17.6 readback exposed residual MAINTAIN
 (`service_role=rm/postgres`), so SELECT-only remains gated on a separately
 authorized M17. See [M16 evidence](./09-m16-acl-correction-evidence.md).
+
+## Forward ACL closeout — 2026-07-28
+
+Historical M15 application evidence above remains unchanged. M17 is live once
+as `20260727233457 marketplace_phase9_maintain_acl_correction`; PostgreSQL 17.6
+now reports `service_role=r/postgres` on all three M15 tables and M14
+`vision_provider_attempts`. SELECT-only service access, RPC-only mutation, RLS,
+ownership, client denial, and all 13 RPC boundaries are live-verified. See
+[M17 evidence](./10-m17-acl-correction-evidence.md).

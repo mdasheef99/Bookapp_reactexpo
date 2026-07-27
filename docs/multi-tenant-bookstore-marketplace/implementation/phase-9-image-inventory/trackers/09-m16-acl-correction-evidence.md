@@ -83,3 +83,14 @@ separate authorization and must revoke MAINTAIN on the same four tables, add
 PostgreSQL 17 effective coverage, receive independent review, and pass live
 readback before Unit 5B. M09 remains absent; no data, Storage, provider,
 inventory, publication, credential, or deployment activity occurred.
+
+## Forward correction closeout — 2026-07-28
+
+The M16 evidence above remains historical. M17 was independently approved,
+merged, applied once as
+`20260727233457 marketplace_phase9_maintain_acl_correction`, and verified on
+PostgreSQL 17.6. The same four tables now have raw ACL
+`service_role=r/postgres`; MAINTAIN and all direct mutation privileges are
+false, while SELECT, RLS, postgres ownership, client denial, and all 13
+hardened RPC boundaries remain intact. See
+[M17 evidence](./10-m17-acl-correction-evidence.md).

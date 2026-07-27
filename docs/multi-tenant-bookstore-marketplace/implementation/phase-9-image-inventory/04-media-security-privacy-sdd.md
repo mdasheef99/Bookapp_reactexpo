@@ -28,6 +28,14 @@ and was independently approved. M16 is live once as `20260727231217`, but
 PostgreSQL 17.6 retained MAINTAIN (`service_role=rm/postgres`). The SELECT-only
 boundary remains gated on a separately authorized forward M17 and live readback.
 
+**M17 live ACL closeout (2026-07-28):** M17 is live once as
+`20260727233457 marketplace_phase9_maintain_acl_correction`. PostgreSQL 17.6
+readback proves `service_role=r/postgres` on the M14 provider-attempt table and
+three M15 metadata tables: SELECT only, no MAINTAIN or direct mutation. RLS,
+postgres ownership, client denial, and the 13 service-only, fixed-search-path
+RPC boundaries remain intact. Detailed evidence is in
+[tracker 10](./trackers/10-m17-acl-correction-evidence.md).
+
 **Implementation checkpoint (2026-07-22):** the approved private-table, named-boundary, upload-capability, media-registry, and Storage boundary contracts are implemented in M02, M03, M05, M06, and M08 and pass isolated/live security checks. Forward M10 restores only the three anonymous discovery RPCs, makes the allowlisted projection invoker-safe, and removes direct role access; request-photo, internal-helper, and private-table boundaries remain closed. M01-M08/M10 are live-verified; M09/auth/runtime remain untouched.
 
 ## 1. Decision and evidence basis
