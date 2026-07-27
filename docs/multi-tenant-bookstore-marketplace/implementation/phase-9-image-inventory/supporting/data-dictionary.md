@@ -168,16 +168,27 @@ Public projection never contains shelf location, acquisition data, exact quantit
 
 | Field | Rule |
 | --- | --- |
-| candidate/provider | Adapter key, provider request ID, sequence, query type. |
+| candidate/provider | Adapter key, provider request ID, primary/secondary role, attempt sequence, query type. |
+| lookup identity | Versioned provider-independent normalized-query identity; no secret, raw image, PII, or store authority. |
 | request inputs | normalized ISBN/title/author/language, not arbitrary raw prompt. |
-| result | status, provider book ID, match strength/rationale, latency, cache hit. |
-| versions | adapter/schema/normalizer version. |
+| result | Closed normalized outcome, provider book ID, match strength/rationale, latency, cache/coalescing state, accepted/rejected disposition. |
+| versions | adapter/schema/normalizer/capability/routing-policy/reuse-policy versions. |
+| fallback lineage | Predecessor attempt and normalized triggering outcome when role is secondary. |
+| spend lineage | Provider request identity, usage/cost reservation, accepted completion, and reconciliation status; does not promise exactly-once external invocation. |
 | payload lifecycle | raw payload private/delete-after; normalized selected snapshot retained by policy. |
 | field reuse policy | Per normalized field: matching-only/storage/display/cache/attribution/expiry rights. |
+
+These additional fields are a target for later Unit 5 design, not a claim about the live schema. Unit 5 must decide whether they reside on the attempt, job context, or a separate lookup/coalescing relation before any migration is proposed.
+
+### Provider registry and routing target
+
+Each adapter has a versioned capability declaration covering query forms, identifiers, languages, normalized outcomes, cover behavior, and reuse-policy dependencies. Role/order, enabled state, breaker/kill-switch policy, cache namespace, rate/concurrency policy, and promotion state are configuration or policy references, never credentials. Exactly one primary and zero or one secondary may be configured for an enabled metadata rollout scope.
 
 ### `image_extraction_jobs`
 
 Persistent async work uses existing states `open`, `in_progress`, `retry_scheduled`, `resolved`, `resolved_noop`, `cancelled`, and `dead_letter`, with attempts `0..5`, due/lease timestamps, dedupe identity, adapter/operation versions, safe errors, and correlation ID. M11 adds the token hash; local M12 reuses it through vision-specific claim/context/persist/fail functions without creating another queue. M12 also adds nullable vision-reconciliation attempt/worker/token-hash/summary fields. They are populated only when an exactly fenced current claim discovers an invalid authoritative relationship, and constrain that job to terminal `resolved` with `P9_VISION_RELATIONSHIP_RECONCILIATION_REQUIRED`; no unverified related row changes.
+
+Later metadata execution reuses this durable claim/lease/fencing pattern unless separately approved evidence requires another seam. Claim batch size, process concurrency, per-store admission, and database connection budget are bounded configuration. Termination stops new claims and completes, renews, or safely releases active leases; stale completion remains rejected.
 
 ## Media structures
 
@@ -205,3 +216,5 @@ Persistent async work uses existing states `open`, `in_progress`, `retry_schedul
 Audit records identify actor, store, entity, command, outcome, idempotency, and bounded structured metadata. They never contain image bytes, raw payloads, full prompts, provider credentials, shelf images, or signed URLs.
 
 Telemetry includes adapter/model/provider version, duration, outcome/error class, fallback, cache hit, token/image cost units, correction categories, candidate counts, and cleanup backlog. User-entered titles may be hashed or sampled only under an approved privacy policy; raw images are never analytics payloads.
+
+Provider scorecards separate availability, schema validity, coherent-match quality, Owner correction deltas, language/edition cohort, latency, and cost. Queue telemetry additionally covers queued count and oldest age by stage, claim latency, active leases, retry backlog, dead letters, provider rate limiting/concurrency, per-store concentration, and worker startup/readiness duration.

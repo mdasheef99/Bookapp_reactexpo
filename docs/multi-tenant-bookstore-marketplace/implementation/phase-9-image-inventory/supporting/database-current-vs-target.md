@@ -5,6 +5,8 @@
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
 **Mutation status:** M01-M08/M10-M13 live-verified; tagged fixture rows/private objects retained; zero inventory/listing/publication/provider effect
 
+**Provider/scale SDD reconciliation evidence:** the 2026-07-27 bounded read-only provider audit reconfirmed the exact healthy project and migration tail with M09 absent. Live counts were five extraction candidates, one canonical edition, and zero provider-registry rows, metadata attempts, metadata sources, aliases, or usage reservations. The existing metadata-attempt table already records candidate, adapter, attempt sequence, normalized clues, status, provider record, match strength, latency, cache status, versions, reuse policy, payload lifecycle, and timestamps; it does not explicitly represent role, provider-independent query identity, capability/routing-policy version, predecessor outcome, coalescing lineage, or cost-reservation linkage. These are proposed Unit 5 design targets only. No database or Storage mutation occurred.
+
 **Deployment refresh:** M13 is live once as `20260727025046`. Its 13
 postgres-owned, empty-`search_path` public wrappers are `SECURITY INVOKER`,
 fully qualified, static single-call delegations with execute only for
@@ -57,7 +59,9 @@ non-secret evidence and retained synthetic deviations are in
 | Alias storage | No multilingual alias table or listing alias projection exists. | Add provenance-bearing aliases targeted to either a canonical edition or unmatched store inventory with an XOR target constraint. Only approved/eligible aliases enter public search. |
 | Media registry | M03/M11 are live and provide typed `media_assets` plus private/public/request link structures; legacy inventory `photos text[]` remains for compatibility. M11 adds no public promotion and links only validated private scan media. | Preserve typed purpose/privacy/hash/retention boundaries and defer legacy-field retirement/public promotion to separately authorized work. |
 | Upload capabilities | M11 is live: authenticated execution of legacy path-taking RPCs is revoked and server-generated exact paths plus declared/observed object identity are present. | Preserve the service-only boundary during deployment. |
-| Cost reservation | No Phase 9 reservation relation exists. | Enforce unique `(store_id, job_id, cost_kind, policy_version)` reservations. |
+| Cost reservation | Live `phase9_usage_reservations` exists with unique `(store_id, job_id, cost_kind, policy_version)`; the read-only audit found zero rows. | Preserve idempotent reservation and add provider request/attempt/accepted-completion reconciliation linkage only if later Unit 5 design proves a forward migration necessary. |
+| Metadata attempt lineage | Live `metadata_enrichment_attempts` has adapter/sequence/query/status/cache/version/payload lifecycle fields and zero rows. | Proposed: role, provider-independent query identity, capability/routing-policy version, triggering outcome, coalescing and spend-reconciliation lineage. Do not claim these fields are live. |
+| Provider registry | Live `phase9_provider_registry` exists and was empty at the read-only audit. | Keep credentials out; later design may reference capability, role/order, breaker, cache namespace, rate/concurrency, kill-switch, and promotion policy through configuration/versioned policy. |
 | Customer request photos | No request-specific photo table/gate exists. | Add orthogonal item photo request and media link structures; integrate with existing request versions/commands and `awaiting_customer_decision`. |
 
 ## Constraints and live data

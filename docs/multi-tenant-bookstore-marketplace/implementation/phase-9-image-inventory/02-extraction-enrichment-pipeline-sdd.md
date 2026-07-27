@@ -216,6 +216,20 @@ CI uses recorded fixtures and validates schemas/behavior, never exact generative
 
 ## 15. Acceptance criteria
 
+### Provider routing and scale-readiness requirements
+
+- Exactly one metadata primary and zero or one secondary are selected by versioned configuration. A logical lookup makes at most one attempt per role, sequentially.
+- Secondary-eligible normalized outcomes are `no_acceptable_match`, `ambiguous_match`, `material_conflict`, `schema_invalid`, `malformed_response`, `timeout`, `rate_limited`, `provider_unavailable`, and `circuit_breaker_open`. An acceptable coherent primary result, local/cache hit, invalid query, policy denial, exhausted cost ceiling, or provider authentication/configuration failure is secondary-ineligible.
+- Each adapter exposes a versioned capability declaration for supported query forms, identifiers, languages, output/reuse behavior, and normalized outcomes. Common recorded fixtures and conformance tests apply independently of provider names.
+- Provider, fallback-role, rollout-scope, and global kill switches stop new calls but preserve manual entry. Per-provider breakers permit only separately configured probe traffic while open.
+- External API calls are not promised exactly once. Durable request/attempt/reservation lineage permits at-most-one accepted state transition and detects/reconciles duplicate spend after timeout, lease expiry, or termination.
+- Workers are horizontally compatible and stateless for correctness. Graceful shutdown stops claims and completes, renews, or safely releases active work; stale completion remains fenced.
+- Capacity admission includes provider concurrency/quota, store/provider/global cost ceilings, and database connection budget. Exhaustion queues or retry-schedules work without storms.
+- One store cannot permanently starve another eligible store; initial per-store admission limits are sufficient, while weighted scheduling is deferred.
+- Media sanitation, vision analysis, and metadata enrichment have independent capacity signals and may use separate deployment/scaling policies.
+- Autoscaling remains disabled until fixed multi-replica evidence proves safe claiming/fencing, shutdown, provider timeout/retry, cost reconciliation, connection safety, fairness, and meaningful throughput improvement.
+- Operational metrics cover queued count/oldest age by stage, claim latency, active leases, retry backlog, dead letters, duration, provider rate limiting/concurrency, per-store concentration, and startup/readiness duration.
+
 | ID | Criterion |
 | --- | --- |
 | EXT-01 | Camera and gallery uploads use the same secure server pipeline. |
@@ -243,3 +257,17 @@ CI uses recorded fixtures and validates schemas/behavior, never exact generative
 | EXT-23 | Stale attempts, including the same worker ID after reclaim, cannot read context, persist, fail, complete, or replay another attempt. |
 | EXT-24 | Image result, per-observation evidence, metadata selection, and Owner edits remain separate persisted layers. |
 | EXT-25 | Fixture-backed analysis creates no metadata-provider, canonical, inventory, listing, publication, or Storage effect. |
+| EXT-26 | Exactly one primary and zero or one secondary are configuration-driven, sequential, and bounded to two external attempts. |
+| EXT-27 | A closed normalized outcome policy deterministically permits or denies secondary invocation. |
+| EXT-28 | Every adapter supplies a versioned capability declaration and passes common provider-independent fixtures/conformance tests. |
+| EXT-29 | Provider, role, rollout, and global breakers/kill switches preserve manual degradation. |
+| EXT-30 | Durable lineage permits at-most-one accepted transition and duplicate-spend detection without promising exactly-once provider calls. |
+| EXT-31 | Multiple stateless replicas claim safely through authoritative leases, attempts, idempotency, and fencing. |
+| EXT-32 | Graceful shutdown stops claims and safely completes, renews, or releases work; stale completion is rejected. |
+| EXT-33 | Capacity admission and database connection budgets leave work durable without retry storms. |
+| EXT-34 | Store fairness prevents permanent starvation; advanced weighted scheduling remains deferred. |
+| EXT-35 | Media, vision, and metadata stages can scale independently without changing domain semantics. |
+| EXT-36 | Autoscaling stays disabled until the fixed multi-replica activation evidence gate passes. |
+| EXT-37 | Queue, lease, retry, provider-capacity, fairness, and worker-readiness metrics are bounded and operationally available. |
+| EXT-38 | Provider availability, schema validity, match quality, correction rate, language/edition cohort, latency, and cost are scored separately. |
+| EXT-39 | Provider promotion/demotion requires conformance, licensing/privacy review, authorized shadow evidence, rollback configuration, scorecard review, and explicit approval. |

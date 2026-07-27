@@ -59,6 +59,11 @@ This SDD refines DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14. T
 | MAS-10 | Quota/cost failure never disables manual inventory entry. |
 | MAS-11 | A valid private inventory commit survives public-projection failure; publication retries cannot create or increment inventory again. |
 | MAS-12 | During the Owner-only pilot, the initiating Owner owns session mutation/resume. Phase 9 exposes no interactive support takeover or cross-store private-data access; recovery uses initiating-Owner retry, claimed-worker recovery, and reconciliation. Future support tooling requires separate design and authorization. |
+| MAS-13 | Vision and metadata workflows depend only on versioned provider-neutral contracts; provider replacement cannot require changes to candidate storage, canonical rules, Owner review, duplicates, inventory commit, marketplace projection, or manual entry. |
+| MAS-14 | One logical metadata lookup resolves locally first and makes at most one configured primary plus one allowlisted sequential secondary external attempt. An acceptable coherent primary result ends routing. |
+| MAS-15 | An accepted edition snapshot comes from one coherent provider result or reviewed manual data. No provider is canonical authority and cross-provider field stitching is forbidden. |
+| MAS-16 | Provider outage, ambiguity, quota/capacity exhaustion, breaker-open state, or kill switch preserves Owner/manual unmatched inventory as a successful path. |
+| MAS-17 | Worker correctness is horizontally safe: durable jobs, leases, attempt numbers, idempotency and fencing—not process-local state—own authorization and accepted transitions. |
 
 ## 4. Target architecture
 
@@ -135,6 +140,9 @@ State labels shown in the UI may be simpler, but persisted values are versioned.
 - Metadata: local cache first; configured primary then secondary only when no acceptable coherent match exists or a technical failure permits fallback.
 - Manual correction/unmatched inventory is a successful path, not a terminal pipeline failure.
 - Exact numerical timeouts/quotas are policy-configured. Implementation baselines are reviewed with provider limits and pilot measurements rather than embedded in schema/UI.
+- Exactly-once external calls are not promised. Provider request/attempt and cost-reservation lineage must detect and reconcile duplicate spend while allowing at most one accepted state transition.
+- Capacity admission leaves work durably queued or retry-scheduled and cannot create retry storms. Open provider circuits do not cause scale-up traffic.
+- Terminating workers stop claiming, then complete, renew, or safely release active leases; stale completion remains fenced.
 
 ## 9. Security and privacy summary
 
@@ -165,6 +173,9 @@ Record bounded metrics by store/policy/adapter version:
 - cleanup backlog, deletion failures, orphan count;
 - public search alias hit and no-result rate;
 - requested-photo fulfillment time/failure/review rate.
+- queued jobs and oldest age by stage; claim latency; active leases; retry/next-attempt backlog; dead letters; processing duration;
+- provider rate limiting and concurrency utilization; per-store queue concentration; worker startup/readiness duration;
+- provider availability, schema validity, coherent-match quality, Owner correction delta, cost, and promotion/demotion evidence as separate scorecard dimensions.
 
 Do not record raw images or unbounded raw model/provider text as telemetry.
 
@@ -179,6 +190,8 @@ Do not record raw images or unbounded raw model/provider text as telemetry.
 7. Customer request-photo extension after the core Phase 9 commit path is stable.
 
 Every stage has a global kill switch, adapter kill switch, store allowlist, quota controls, and manual-entry fallback.
+
+Rollout of worker capacity proceeds from one replica to fixed multiple replicas and only then to bounded autoscaling after explicit evidence gates. Media sanitation, vision analysis, and metadata enrichment may use independent scaling policies. Autoscaling, hosting platform, replica counts, thresholds, cooldowns, pool sizes, concurrency limits, and cost ceilings remain separately authorized operational configuration.
 
 ## 12. Work-unit order
 
@@ -211,6 +224,10 @@ The normative unit order is in [the implementation tracker](./trackers/02-implem
 | MAS-AC09 | Initiator-only session mutation/resume is enforced, interactive support intervention is absent, and worker/reconciliation recovery cannot grant cross-store private-data access. |
 | MAS-AC10 | Publication failure retains one private inventory effect and no public listing until idempotent retry succeeds. |
 | MAS-AC11 | Vision completion transactionally persists one immutable analysis result, preserves repeated positions, creates only expected-language review candidates, and cannot mutate metadata, inventory, or publication. |
+| MAS-AC12 | Provider replacement and primary/secondary configuration pass common adapter conformance tests without downstream contract changes. |
+| MAS-AC13 | Metadata routing proves local-first behavior, at most two sequential external attempts, coherent single-source selection, and manual degradation. |
+| MAS-AC14 | Fixed multi-replica tests prove safe claims, fencing, graceful shutdown, cost reconciliation, database connection safety, fairness, and improved throughput before autoscaling can be enabled. |
+| MAS-AC15 | Capacity exhaustion and open circuits leave work durable without retry storms or loss of manual entry. |
 
 ## 15. Open review items
 

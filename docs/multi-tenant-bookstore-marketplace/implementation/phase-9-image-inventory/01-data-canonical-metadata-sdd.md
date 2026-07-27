@@ -155,6 +155,15 @@ Current live conditions are `new`, `like_new`, `good`, `fair`, `damaged`; all cu
 
 ## 12. Acceptance criteria
 
+### Provider architecture reconciliation
+
+- A versioned provider-independent query identity is derived from normalized bibliographic clues and contains no secret, raw image, PII, or store authority.
+- Metadata cache entries are isolated by lookup-contract, normalizer, adapter, adapter version, capability, and reuse-policy versions; positive, negative, and ambiguous outcomes have explicit expiry/invalidation.
+- Every external attempt records logical lookup, candidate/store scope, primary/secondary role, sequence, adapter/capability/schema/normalizer versions, routing-policy version, triggering and normalized outcomes, cache/coalescing status, latency, cost-reservation lineage, and accepted/rejected disposition.
+- Provider-specific fields stop at the adapter/private provenance boundary. Candidate snapshots, canonical identity, Owner review, duplicate logic, inventory, projection, and marketplace contracts remain provider-neutral.
+- Owner corrections are recorded as bounded field-category deltas against the selected normalized snapshot for quality evaluation, without unrestricted provider payload telemetry.
+- Shared lookup reuse is permitted only for provider-independent non-sensitive clues under compatible adapter/version, privacy, licensing, and policy scope.
+
 | ID | Criterion |
 | --- | --- |
 | DAT-01 | Selected metadata supports description and all agreed edition/display fields. |
@@ -184,6 +193,12 @@ Current live conditions are `new`, `like_new`, `good`, `fair`, `damaged`; all cu
 | DAT-25 | Lower price works without a promotion/discount engine. |
 | DAT-26 | Immutable vision evidence, later metadata selection, and later Owner edits remain separate persisted layers. |
 | DAT-27 | Every model-created candidate traces to one job/schema/observation identity; repeated positions remain distinct and model clues never establish canonical identity. |
+| DAT-28 | Equivalent normalized clues produce a versioned provider-independent query identity. |
+| DAT-29 | Cache entries are isolated and invalidated by contract, normalizer, adapter/version, capability, and reuse-policy namespace. |
+| DAT-30 | Every metadata attempt retains role, sequence, routing/capability versions, normalized outcome, cache/coalescing state, and cost lineage. |
+| DAT-31 | Provider-specific fields cannot escape private provenance into downstream domain or public contracts. |
+| DAT-32 | Owner correction deltas support provider-quality evaluation without raw-payload telemetry. |
+| DAT-33 | No external provider is canonical authority; accepted metadata is one coherent provider snapshot or reviewed manual data. |
 
 ## 13. Deferred
 

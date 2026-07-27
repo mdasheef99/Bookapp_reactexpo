@@ -275,3 +275,5 @@ Rules:
 | REV-17 | ISBN/edition edits rematch and re-evaluate duplicates/public projection. |
 | REV-18 | Projection failure returns one private `committed_publication_failed` outcome and idempotent publication retry cannot repeat inventory effects. |
 | REV-19 | Stable API errors distinguish retryability, safe Owner text, surviving effects, and idempotency reuse. |
+| REV-20 | Complete provider outage, ambiguity, breaker-open state, or exhausted external capacity leaves the candidate available for manual reviewed inventory. |
+| REV-21 | Owner review exposes provider-neutral provenance/attention signals and records bounded correction categories without raw provider payloads. |

@@ -118,6 +118,8 @@ If implementation changes product or architecture behavior, update the relevant 
 
 > 2026-07-27 Phase 9 fixture-pipeline deployment checkpoint: the JWT-verified Owner Edge Function and separate free-plan `phase9-media-sanitation` / `phase9-fixture-vision` Render services are live. M13 is live once as `20260727025046` with 13 minimum postgres-owned, empty-`search_path` `SECURITY INVOKER` wrappers; existing `service_role` grants proved sufficient and the private schema remains unexposed. Both Render services are live at `96991a99a8e24146db709653ebc287b8c2404430`, auto deploy is off, and health/readiness/auth/log-privacy checks pass. Deployed `one_book` plus eight fresh-process fixture cases passed normal claim/fencing/persistence/failure paths with `batchSize: 1`; commerce stayed 5 inventory/5 listings/5 published. No real provider, metadata, UI, inventory, publication, scheduling, autoscaling, or Library work occurred. [Detailed evidence](./implementation/phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md).
 
+> 2026-07-27 Phase 9 provider/scale SDD reconciliation: the documentation-only reconciliation now defines replaceable provider-neutral metadata contracts, exactly one primary and zero or one secondary, bounded sequential fallback, coherent single-source selection, cache/query/attempt/cost/capability/quality lineage, manual degradation, horizontally safe workers, graceful shutdown, capacity admission, fairness, independent stage scaling, and a fixed-multi-replica gate before autoscaling. Real Gemini design is a separately gated prospective Unit 4B; Unit 5 remains Metadata/aliases. Status is `needs_independent_review`. No runtime, migration, provider, Supabase/Storage, Render, deployment, scheduling, or autoscaling mutation occurred.
+
 > 2026-07-26 Phase 9 Unit 4A review-correction checkpoint: the independent review returned `CHANGES_REQUIRED` for unsafe Docker context, pre-authentication slot starvation/read deadlines, nondeterministic shutdown evidence, source-string-only deployment claims, and identity-only fixture tests. All five corrections plus bounded invoker responses are locally focused-green. A deny-by-default Docker context, pre-admission constant-time authentication, fixed body deadline, deterministic shutdown test, real compiled-entrypoint smoke, per-fixture semantic matrix, synthetic-only container script, and minimal-permission pull-request workflow now exist. The mandatory GitHub Actions image build/start gate is next; no live credential, image push, deployment, migration, provider, Supabase, or Storage operation is authorized.
 
 | Field | Value |
@@ -127,7 +129,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Last updated | 2026-07-27 |
 | Latest handoff | Phase 9 fixture pipeline deployed and live-verified at `96991a9`; M13 live once; retained synthetic evidence produced zero commerce effects. |
 | Current risk level | Fixture deployment risk is contained; real-provider, lifecycle/scheduling, representative-camera sizing, and product integration remain separately gated. |
-| Next recommended task | None is authorized. Await a separately scoped Phase 9 work unit; do not configure/call Gemini 3.5 Flash or Google Books API or begin scheduling, metadata, UI, inventory/publication, or Library work. |
+| Next recommended task | Independent review of the provider/scale documentation reconciliation only; Unit 4B real-Gemini design and Unit 5 Metadata/aliases remain separately gated. |
 
 ---
 
@@ -262,6 +264,6 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 
 Next work:
 1. Await a separately authorized Phase 9 work unit; none follows automatically from deployment.
-2. Treat Gemini 3.5 Flash (`gemini-3.5-flash`) and Google Books API as future handoff decisions only; metadata-provider expansion remains deferred.
+2. Treat Gemini 3.5 Flash (`gemini-3.5-flash`) and Google Books API as future handoff decisions only. The generic architecture supports an optional secondary metadata provider, but its selection, enablement, credentials, calls, and implementation remain deferred.
 3. Keep M09, scheduling/autoscaling, metadata enrichment, mobile UI, inventory commit, publication, Library, and Phases 7/8 separately gated.
 4. Re-verify the exact project, migrations, schema, Storage, services, and advisors before any later mutation.

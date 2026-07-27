@@ -303,6 +303,9 @@ Audit is append-only from normal clients and records sensitive reads/promotions/
 | MED-22 | Provider fields are stored/displayed/cached only when adapter policy permits, with attribution and revalidation enforced. |
 | MED-23 | Vision claim/context/persist/fail operations are service-only and validate job kind, store relationships, attempt, owner, token hash, and lease expiry before any effect. |
 | MED-24 | Canonical image/observation evidence contains no raw response, prompt, media path/URL/capability/token, arbitrary provider metadata, or client-visible operational identifier. |
+| MED-25 | Storage, public display, image caching, attribution, and revalidation are allowlisted per field and adapter/version before persistence or projection. |
+| MED-26 | Query coalescing/cache reuse excludes secrets, raw media, PII, store-private fields, and policy-incompatible cross-store reuse. |
+| MED-27 | Provider shadow evaluation and promotion require separately approved privacy, licensing, retention, cost, and access controls. |
 
 ## 17. Residual risk
 

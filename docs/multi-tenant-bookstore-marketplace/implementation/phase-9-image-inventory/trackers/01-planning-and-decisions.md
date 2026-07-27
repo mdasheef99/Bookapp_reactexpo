@@ -64,6 +64,12 @@
 | P9-D54 | The future real vision model is Gemini 3.5 Flash with stable model id `gemini-3.5-flash`; this is a handoff decision and grants no current integration/configuration/call authority. | future implementation decision 2026-07-27 |
 | P9-D55 | The initial future metadata provider is Google Books API; provider policy, credentials, adapter implementation, and calls remain separately gated. | future implementation decision 2026-07-27 |
 | P9-D56 | Metadata-provider expansion beyond the initial Google Books API integration remains deferred. | future implementation decision 2026-07-27 |
+| P9-D57 | Superseding P9-D56 prospectively: the architecture supports exactly one configured primary and zero or one configured secondary metadata adapter, while secondary selection, enablement, credentials, and calls remain deferred and separately approved. | founder-approved provider reconciliation 2026-07-27 |
+| P9-D58 | Metadata routing is local-first and permits at most one primary plus one allowlisted sequential secondary external attempt; an acceptable coherent primary result ends routing. | founder-approved provider reconciliation 2026-07-27 |
+| P9-D59 | No provider is canonical authority; accepted metadata is one coherent single-provider snapshot or reviewed manual data, with no cross-provider field stitching and manual degradation under complete outage. | founder-approved provider reconciliation 2026-07-27 |
+| P9-D60 | Gemini 3.5 Flash (`gemini-3.5-flash`) remains the initial future vision model, with one optional whole-image fallback seam; the fallback provider remains unselected/disabled and real-Gemini design is separate from Unit 5 Metadata/aliases. | founder-approved provider reconciliation 2026-07-27 |
+| P9-D61 | Worker correctness must support multiple replicas through durable claims, leases, attempts, idempotency, fencing, graceful shutdown, spend reconciliation, capacity admission, connection budgets, observability, and simple store fairness; no hosting platform is prescribed. | founder-approved scale reconciliation 2026-07-27 |
+| P9-D62 | Deployment capacity progresses from one replica to fixed multiple replicas and only then to bounded autoscaling after the explicit evidence gate; autoscaling, scheduling, thresholds, and deployment changes remain unauthorized. | founder-approved scale reconciliation 2026-07-27 |
 
 ## Source reconciliation
 
@@ -124,6 +130,14 @@ Audit performed read-only on 2026-07-19 after `get_project` verification.
 - [ ] Supabase application authorization and exact-project re-verification.
 
 ## Append-only planning log
+
+### 2026-07-27 — provider and scale architecture SDD reconciliation
+
+- Authorized scope: documentation-only reconciliation from the approved provider change-impact audit.
+- Completed: provider neutrality, bounded primary/secondary routing, coherent selection, cache/lineage/capability/cost/quality requirements, manual degradation, and horizontal/autoscaling-readiness requirements were reconciled prospectively.
+- Historical handling: P9-D54–P9-D56 remain unchanged; P9-D57–P9-D62 supersede or clarify them prospectively.
+- External mutations: none; no provider call, credential, Supabase/Storage/Render/deployment/scheduling/autoscaling action.
+- Status/gate: `needs_independent_review`; next action is an independent documentation review only.
 
 ### 2026-07-19 — continuity system
 

@@ -40,10 +40,10 @@ This stable phase handoff points to the detailed planning set:
 - M13 uses only minimum postgres-owned, empty-`search_path` `SECURITY INVOKER` wrappers; the private schema remains unexposed and client roles remain denied.
 - Owner ingestion is active with JWT verification. `phase9-media-sanitation` and `phase9-fixture-vision` are separate free-plan Render services at `96991a9`, with auto deploy off.
 - Deployed `one_book` and eight fresh-process fixture cases passed normal claim/fencing/persistence/failure paths. Inventory/listing/published counts remained 5/5/5.
-- Future decisions select Gemini 3.5 Flash (`gemini-3.5-flash`) and initial Google Books API metadata; expansion remains deferred and no real provider was configured or called.
+- Future decisions select Gemini 3.5 Flash (`gemini-3.5-flash`) and initial Google Books API metadata. The reconciled generic architecture supports one metadata primary and zero or one separately evaluated secondary; no secondary/fallback provider is selected or enabled and no real provider was configured or called.
 
 ## Next gate
 
-The fixture-pipeline deployment is complete. No next work unit is authorized. M09, Gemini/Google Books integration, scheduling/autoscaling, metadata enrichment, UI, inventory/publication, lifecycle work, Library behavior, and any further migration remain separately gated.
+The fixture-pipeline deployment is complete. The provider/scale SDD reconciliation now needs independent review; that review is the only next authorized action. Real Gemini provider-contract design remains a separate prospective Unit 4B, while Unit 5 remains Metadata/aliases. M09, provider implementation/calls, scheduling/autoscaling, metadata runtime, UI, inventory/publication, lifecycle work, Library behavior, and any further migration remain separately gated.
 
 Every material session must use the Phase 9 update matrix, append its evidence to the correct tracker, leave one exact next authorized action, and pass the continuity validator before handoff.

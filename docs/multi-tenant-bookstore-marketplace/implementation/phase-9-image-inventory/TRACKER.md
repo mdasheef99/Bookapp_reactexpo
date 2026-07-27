@@ -1,16 +1,16 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `fixture_pipeline_deployment_complete`
+**Planning status:** `provider_scale_sdd_reconciliation_needs_independent_review`
 **Implementation status:** `fixture_pipeline_deployed_and_live_verified`; M01-M08/M10-M13 live-verified, Owner ingestion and two separate free-tier Render workers deployed
 **Last updated:** 2026-07-27
-**Current milestone:** bounded Phase 9 fixture-pipeline deployment and live verification complete
-**Active work unit:** `fixture_pipeline_deployment_closeout`
+**Current milestone:** provider and scale architecture SDD reconciliation complete on dedicated branch; independent review pending
+**Active work unit:** `provider_scale_sdd_reconciliation_needs_independent_review`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** M13 `20260727025046`, Owner Edge version 1, Render media/vision deployments at `96991a9`, and all nine fixture cases live-verified; detailed evidence is [tracker 06](./trackers/06-fixture-pipeline-deployment-evidence.md)
-**Next authorized action:** none; await separate authorization for a later Phase 9 work unit
+**Next authorized action:** independent review of the provider/scale documentation reconciliation only
 **Implementation authority:** fixture deployment is complete; real providers, metadata enrichment, scheduling/autoscaling, UI, inventory commit, publication, Library, and later units remain unauthorized
 **Migration creation/application authority:** M01-M08/M10-M13 are live-verified; M09 remains absent and separately gated; no further migration application is authorized
-**Current gate:** do not configure/call Gemini or Google Books or begin another unit without separate authorization
+**Current gate:** review documentation only; do not configure/call Gemini or Google Books, select/enable a secondary/fallback, design/implement Unit 5, schedule/autoscale, or begin another unit
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -19,6 +19,8 @@
 Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Phase 9 M01-M08/M10-M13 are live exactly once and M09 remains absent. M13 exposes only minimum `SECURITY INVOKER` public wrappers for the authoritative private service RPCs. Owner ingestion is active with JWT verification; `phase9-media-sanitation` and `phase9-fixture-vision` are separate free-plan Render services at `96991a9`.
 
 The [Unit 4 design](./work-units/04-fixture-vision-analysis-runtime-design.md) and [Unit 4A deployment runtime](./work-units/04a-deployment-runtime-scaffolding-sdd.md) are now live-verified through the [fixture deployment evidence](./trackers/06-fixture-pipeline-deployment-evidence.md). The deployed `one_book` path and eight fresh-process operator cases used recorded fixtures only, `batchSize: 1`, normal claim/fencing/persistence/failure paths, and produced zero inventory/listing/publication effects. Future decisions are Gemini 3.5 Flash (`gemini-3.5-flash`) and initial Google Books API metadata, but neither is implemented, configured, or called.
+
+The provider/scale reconciliation keeps real Gemini provider-contract design as a separately gated prospective Unit 4B and keeps Unit 5 authoritatively named `Metadata/aliases`. The generic architecture supports one metadata primary and at most one disabled-until-approved secondary, horizontal correctness, and a fixed-multi-replica activation gate; it does not authorize provider calls, deployment changes, scheduling, or autoscaling.
 
 Auth hardening WU1/WU2 is locally complete and independently approved on `codex/auth-hardening-core`: production bypass policy is centralized and fail-closed; Zustand owns canonical session/status; one root bootstrap owns subscription/restoration; identity replacement remains blocked through cleanup failure and explicit retry; and current-device logout persists a non-secret deletion-intent guard until SDK or exact-key fallback removal succeeds. Auth no longer directly imports marketplace. Secure token persistence, Android backup, authoritative profile routing, OTP UX, native/offline testing, and remote EAS verification remain separately gated before Phase 9 mobile/private-ingestion runtime integration.
 
@@ -66,6 +68,7 @@ The exact development project was re-verified read-only at M11/M12 closeout:
 | Work Unit 0B technical design | [`independently_approved`](./work-units/00b-backend-api-technical-design-plan.md) |
 | Work Unit 4 fixture vision-analysis runtime | [`integrated_main_e9ba2d9`](./work-units/04-fixture-vision-analysis-runtime-design.md) |
 | Work Unit 4A deployment-runtime scaffolding | [`deployed_and_live_fixture_verified`](./trackers/06-fixture-pipeline-deployment-evidence.md) |
+| Provider and scale architecture SDD reconciliation | `needs_independent_review_2026-07-27` |
 
 ## Blocking gate before further implementation
 
@@ -89,4 +92,4 @@ WU0A, WU0B, Package 1, Unit 4, and Unit 4A are complete at their recorded levels
 
 ## Next action gate
 
-The fixture-pipeline deployment is complete. Await a separately authorized next work unit. Do not configure or call Gemini 3.5 Flash or Google Books API, schedule/autoscale workers, enrich metadata, change mobile UI, commit inventory, publish listings, implement Library behavior, create/apply M09, or infer authority from this deployment.
+The exact next action is an independent review of the provider/scale documentation reconciliation. Unit 5 Metadata/aliases and prospective Unit 4B real-Gemini provider-contract design remain separately gated. Do not configure or call providers, select/enable a secondary/fallback, schedule/autoscale workers, change deployment, enrich metadata, change mobile UI, commit inventory, publish listings, implement Library behavior, or create/apply M09.

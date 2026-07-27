@@ -127,6 +127,22 @@ Model/provider/prompt/schema versions, latency, error class, fallback, and cost 
 
 ## 8. Metadata enrichment
 
+Metadata routing is deterministic and provider-neutral. Local canonical/cache resolution runs first. Exactly one primary and zero or one secondary metadata adapter are configuration-driven; one logical lookup permits at most one external attempt in each role, sequentially. A coherent acceptable primary result prevents secondary invocation. Secondary eligibility is based on a closed normalized outcome allowlist, not provider prose. No provider is canonical authority and fields from different provider editions are never stitched.
+
+Each attempt preserves provider-independent query identity, role, sequence, adapter/capability/schema/normalizer versions, routing-policy version, normalized outcome, cache status, latency, cost-reservation lineage, and accepted/rejected disposition. Provider/version cache namespaces prevent results from silently crossing adapter or normalization changes. Equivalent non-sensitive bibliographic lookups may be coalesced only when privacy, licensing, adapter/version, and policy scope match.
+
+Provider failure, open circuits, exhausted external-call capacity, or both-provider ambiguity leaves the candidate available for Owner/manual review. Manual entry is not an external-provider fallback call and remains available under global/provider kill switches.
+
+### 8.1 Horizontally safe execution
+
+Worker correctness does not depend on process-local authority. Durable queues, database leases, attempt numbers, idempotency, and fencing remain authoritative when multiple replicas claim work. Scaling cannot alter authorization, candidate, canonical, inventory, publication, or retry semantics.
+
+A terminating worker stops claiming new work and completes, renews, or safely releases active leases. Stale completion is rejected. Exactly-once external API invocation is not promised: provider request identity, attempt identity, reservation lineage, and accepted completion must instead support at-most-one accepted state transition and detection/reconciliation of duplicate external spend.
+
+Admission is bounded by stage/provider concurrency, provider quota, database connection budget, and store/provider/global cost ceilings. Exhaustion leaves work durably queued or retry-scheduled without retry storms; an open provider circuit cannot create scale-up traffic. Claim batch size and process concurrency are configurable, and maximum replicas must respect connection-pool capacity.
+
+Media sanitation, vision analysis, and metadata enrichment may scale independently because their limiting resources differ. Automatic scaling remains disabled until fixed multi-replica verification proves simultaneous claims, fencing, graceful shutdown, timeout/retry behavior, cost reconciliation, connection safety, per-store fairness, and meaningful throughput improvement. Replica limits, thresholds, cooldowns, connection sizes, concurrency values, cost ceilings, and per-store active-job limits are operational configuration, not product constants.
+
 Lookup order:
 
 1. Validate visible ISBN clue when present.

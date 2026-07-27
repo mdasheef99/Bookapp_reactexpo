@@ -125,6 +125,10 @@ Recommended enrichment order:
 
 Provider names are adapter configuration, not hard-coded product/schema behavior. Select one coherent edition snapshot; do not silently stitch conflicting fields from different editions. Provider data should be stored as source records, not blindly overwritten into canonical truth.
 
+The metadata domain depends only on a versioned provider-neutral adapter contract. Exactly one primary and zero or one secondary metadata adapter may be configured for an enabled rollout scope. One logical lookup makes at most one primary and one secondary external attempt, sequentially. An acceptable coherent primary result ends routing; the secondary is eligible only for normalized allowlisted outcomes such as no acceptable match, ambiguity/material edition conflict, schema-invalid or malformed response, timeout, rate limiting, provider unavailability, or an open circuit breaker. Policy denial, exhausted cost capacity, invalid input, or provider authentication/configuration failure does not bypass policy by invoking the secondary.
+
+No provider is canonical authority. An accepted edition snapshot comes from one coherent provider result or reviewed manual data, never cross-provider field stitching. If configured providers fail or remain ambiguous, Owner correction and unmatched store-local inventory remain successful paths. Provider selection/order, thresholds, timeouts, quotas, cache TTLs, and concurrency are configuration; provider neutrality, bounded routing, coherent selection, durable lineage, and manual degradation are product invariants.
+
 Selected metadata includes title/subtitle, authors, description, validated ISBN-10/13, publisher/date, language, edition statement, volume, format/binding, pages, categories, cover URL, and provenance. Both ISBNs are stored when validated metadata supplies them; a visible ISBN from an image is only a lookup clue.
 
 ### 5.3 Manual Correction
@@ -576,6 +580,9 @@ listing_moderation_flags
 | INV-10 | Automated alias generation proposes at most three rows while bounded official/Owner-verified aliases may coexist without affecting identity. |
 | INV-11 | Private customer-request photos never affect duplicate identity or quantity compatibility. |
 | INV-12 | Publication failure preserves private inventory and an idempotent retry cannot repeat the inventory effect. |
+| INV-13 | Metadata providers are replaceable behind one provider-neutral contract without changing candidate, canonical, review, duplicate, inventory, projection, or marketplace contracts. |
+| INV-14 | One logical lookup performs at most one primary and one allowlisted sequential secondary attempt and accepts one coherent single-source edition. |
+| INV-15 | Complete metadata-provider outage or ambiguity preserves reviewed manual unmatched inventory. |
 
 ---
 

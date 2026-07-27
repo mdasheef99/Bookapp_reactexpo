@@ -3,11 +3,10 @@
 **Status:** `fixture_pipeline_deployed_and_live_verified`
 **Last updated:** 2026-07-27
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `fixture_pipeline_deployment_closeout`
+**Active work unit:** `provider_scale_sdd_reconciliation_needs_independent_review`
 
 This tracker is separate from planning decisions; WU0B remains independently approved after `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review, without granting later database/runtime authority.
 ## Work units
-
 | Unit | Scope | Status | Required gate |
 | --- | --- | --- | --- |
 | 0 | [Contract fixtures, threat tests, migration plan, rollback/forward-correction plan](../work-units/00-contracts-threat-migration-plan.md) | `approved` | Corrections incorporated; no implementation/migration authorization |
@@ -18,7 +17,8 @@ This tracker is separate from planning decisions; WU0B remains independently app
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `deployed_and_live_verified` | M11 live as `20260726182238`; Owner Edge and separate media service verified |
 | 4 | [Fixture vision-analysis runtime](../work-units/04-fixture-vision-analysis-runtime-design.md): `p9-vision-v2`, analyzer, job orchestration, immutable evidence/candidates | `fixture_deployed_and_live_verified` | M12 live as `20260726182539`; all nine fixture cases verified; no real provider |
 | 4A | [Deployment-runtime scaffolding](../work-units/04a-deployment-runtime-scaffolding-sdd.md): executable sanitation/fixture-vision hosts, strict environment, builds/containers, invocation and validation | [`deployed_and_live_fixture_verified`](./06-fixture-pipeline-deployment-evidence.md) | separate free Render services live at `96991a9`; M13 invoker boundary live |
-| 5 | Canonical-first metadata adapter/cache, ISBN validation, provider selection, aliases | `not_started` | provider fixtures and cost tests |
+| 4B | Prospective real-Gemini provider-contract design for configured `gemini-3.5-flash`; optional whole-image fallback seam remains unselected/disabled | `not_started_separately_gated` | independent SDD reconciliation approval, then separate explicit design authorization; no provider calls/credentials |
+| 5 | Metadata/aliases: provider-neutral local-first metadata routing/cache/coalescing, ISBN validation, coherent selection, attempt/cost lineage, quality evaluation, and aliases | `not_started` | independent SDD reconciliation approval, then separate Unit 5 design authorization and provider fixtures/cost tests |
 | 6 | Owner session/defaults/capture/review UI with accessibility and recovery | `not_started` | Units 2–5 verified |
 | 7 | Controlled per-candidate commit, advisory duplicates, idempotency, projection changes | `not_started` | quantity/hold concurrency tests |
 | 8 | Marketplace bookstore-first search, multilingual aliases, counts, full store catalogue | `not_started` | public/private projection tests |
@@ -27,9 +27,7 @@ This tracker is separate from planning decisions; WU0B remains independently app
 | 11 | Pilot fixtures, security/regression/E2E/accessibility/cost verification and handoff | `not_started` | all prior units complete |
 
 ## Migration ledger
-
 Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in order after the reviewed M06 owner-safe correction. M09 remains the separate live-data preflight and constraint-validation gate.
-
 | Local filename | Live version/name | Project verified | Applied by | Rollback/forward fix | Verification | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | `20260722000001_marketplace_phase9_catalogue_metadata_expand.sql` | `20260722090236 marketplace_phase9_catalogue_metadata_expand` | MCP exact project 2026-07-22 | authorized live application | additive/forward correction | history/schema/RLS/grants/data readback | `live_verified` |
@@ -49,7 +47,6 @@ Rules:
 - Re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
 - Use forward corrections; record every schema, grant, Storage, data, and verification effect.
 ## Required verification matrix
-
 ### Database and tenancy
 
 - [ ] Every store-owned Phase 9 row has `store_id`.
@@ -66,13 +63,13 @@ Rules:
 - [ ] Duplicate check and commit are concurrency-safe and idempotent.
 
 ### AI/provider contracts
-
 - [ ] Prompt-injection text embedded in an image cannot cause tools, URLs, queries, or writes.
 - [ ] Model output is rejected unless it satisfies the versioned schema and limits.
 - [ ] Central validation matrix and API error catalogue generate/trace every contract limit and safe error behavior.
 - [ ] A valid empty/no-book result does not trigger expensive retry loops.
 - [ ] Primary failure triggers at most one allowed vision fallback.
 - [ ] Metadata provider fallback is sequential and field conflicts are visible in provenance.
+- [ ] Provider-independent fixtures prove configured primary/optional-secondary bounded routing, closed fallback policy, capabilities, query/cache/attempt/cost lineage, single accepted completion, duplicate-spend reconciliation, and manual degradation.
 - [ ] Provider storage/display/cache/attribution/expiry permissions are enforced independently of provenance.
 - [ ] ISBN checksums/conversion, title/author normalization, and alias rules have deterministic fixtures.
 - [ ] CI uses recorded model/provider fixtures; no exact natural-language output assertion.
@@ -107,14 +104,17 @@ Rules:
 - [ ] Store inability to provide requested photos marks the item unfulfilled/unavailable and releases eligible holds.
 
 ### Operational readiness
-
 - [ ] Metrics cover extraction quality, owner corrections, fallback, latency, cost, quota, cleanup backlog, and repeated request-photo failures.
 - [ ] Alerts cover stuck jobs, cleanup failures, unexpected fallback/cost spikes, and cross-tenant denials.
 - [ ] Model/provider/prompt/schema versions support rollback and incident correlation.
 - [ ] Feature flag, store allowlist, locality gate, and kill switch are verified.
 - [ ] No Phase 7/8 payment, paid-order, pickup, refund, ledger, or settlement behavior is introduced.
+- [ ] Fixed multi-replica tests cover claims/fencing, shutdown, provider retries, spend reconciliation, connection safety, fairness, stage-specific scaling, queue observability, and throughput before autoscaling can be enabled.
 
 ## Append-only implementation log
+### 2026-07-27 — provider and scale SDD reconciliation
+- Documentation-only reconciliation updated source/SDD requirements, target/evidence support, routing, and review gates; historical WU0/Unit 4/4A and the migration ledger remain unchanged, with no Supabase/external mutation.
+- Real Gemini design is prospective Unit 4B, Unit 5 remains Metadata/aliases, advanced routing/autoscaling is deferred, and the next action is independent documentation review only; closeout verification is recorded in the branch handoff.
 ### 2026-07-26 — M11/M12 live application and verification
 - Exact application, rollback, readback, advisor, mutation, and authorization evidence is recorded in [05-m11-m12-live-application-evidence.md](./05-m11-m12-live-application-evidence.md). 2026-07-27 follow-up: `main`/`origin/main` closed at `4abeef89ecebdb7a74a8ece3a1bdc0d5cfe6c8c5`; routed documentation reconciliation and continuity/diff-hygiene checks passed, with no deployment, secret, Storage object, provider, or operational-data mutation afterward.
 ### 2026-07-23 — ingestion-runtime foundation corrected for dedicated-worker review

@@ -43,6 +43,12 @@ The workflow is substantial but bounded. It is not an autonomous agent: determin
 - model, prompt, adapter, schema, and provider versioning;
 - lifecycle worker alerts and deletion evidence;
 - repeated requested-photo failure review.
+- provider-independent recorded metadata fixtures and one adapter conformance suite;
+- versioned capability declarations and provider-independent lookup identity;
+- provider/version cache isolation and bounded query-coalescing identity;
+- availability-versus-quality scorecards and bounded Owner correction deltas;
+- graceful-shutdown and fixed multi-replica verification contracts;
+- at-most-one accepted transition with detectable/reconcilable duplicate provider spend.
 
 ## Necessary complexity that remains
 
@@ -72,6 +78,17 @@ The workflow is substantial but bounded. It is not an autonomous agent: determin
 - manager/staff permissions and simultaneous scanning;
 - full app translation/localization;
 - payment/provider/pickup/settlement flows.
+- selection or enablement of a secondary metadata provider or vision fallback provider;
+- bounded autoscaling until fixed multi-replica activation evidence passes;
+- Kubernetes or another mandated hosting platform;
+- predictive autoscaling, multi-region workers, and per-language worker fleets;
+- more than two metadata providers, provider-specific infrastructure per store, dynamic cost auctions, machine-learned routing, and automatic provider promotion;
+- weighted/advanced fairness beyond simple per-store admission;
+- a general provider-routing platform or distributed cache without pilot evidence.
+
+## Scale containment
+
+The minimum durable seam is horizontally safe durable claims, leases, attempts, fencing, idempotency, graceful shutdown, connection-budget admission, queue observability, simple fairness, and provider-spend reconciliation. Media sanitation, vision analysis, and metadata enrichment may scale independently. Replica counts, thresholds, cooldowns, connection-pool sizes, concurrency values, cost ceilings, and per-store active-job limits are operational configuration. This readiness does not authorize scheduling, autoscaling, new infrastructure, or deployment changes.
 
 ## Residual risks to carry into implementation
 

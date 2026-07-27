@@ -226,6 +226,7 @@ Before commit, the owner can see a non-authoritative preview of the future card/
 | MKT-12 | Exact physical quantity remains private. |
 | MKT-13 | Multiple rows group visually without inventory merge. |
 | MKT-14 | A versioned store-group query/cursor contract preserves deterministic ranking and complete pagination. |
+| MKT-15 | Metadata-provider replacement cannot change public identity, eligibility, alias approval, search grouping, or marketplace DTO semantics without a separately approved public-contract version. |
 
 ## 16. Deferred
 
