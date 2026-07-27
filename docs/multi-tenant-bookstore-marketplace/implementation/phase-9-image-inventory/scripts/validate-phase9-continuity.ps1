@@ -93,12 +93,12 @@ if (-not $active.Contains('phase-9-image-inventory/trackers/06-fixture-pipeline-
     -not $active.Contains('only one independent Unit 4B review is authorized next')) { Write-Error 'ACTIVE.md does not route to the fixture checkpoint and Unit 4B review gate.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit4b_gemini_adapter_needs_independent_review`') -or
-    -not $doc13.Contains('M01-M08/M10-M13 and fixture pipeline remain live-verified')) { Write-Error 'DOC-13 does not preserve the fixture checkpoint and Unit 4B status.' }
-if (-not $doc13.Contains('| Next recommended task | One independent review of Unit 4B only;')) { Write-Error 'DOC-13 does not preserve the Unit 4B independent-review boundary.' }
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit4b_persistence_correction_needs_independent_review`') -or
+    -not $doc13.Contains('M01-M08/M10-M13 remain live; no Unit 4B external mutation')) { Write-Error 'DOC-13 does not preserve the fixture checkpoint and Unit 4B status.' }
+if (-not $doc13.Contains('| Next recommended task | One correction-only independent review of Unit 4B;')) { Write-Error 'DOC-13 does not preserve the Unit 4B independent-review boundary.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit4b_gemini_adapter_needs_independent_review`\r?$' -or
-    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit4b_gemini_adapter_needs_independent_review`\r?$') {
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit4b_persistence_correction_needs_independent_review`\r?$' -or
+    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit4b_persistence_correction_needs_independent_review`\r?$') {
     Write-Error 'Implementation tracker does not preserve the Unit 4B review gate.'
 }
 $providerScaleMarkers = @{
@@ -215,10 +215,10 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `unit4b_gemini_adapter_needs_independent_review`; fixture pipeline remains live-verified and the Gemini adapter is local-only\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit4b_gemini_adapter_needs_independent_review`\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* one independent review of Unit 4B only\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* M01-M08/M10-M13 are live-verified; M09 remains absent and separately gated; no further migration application is authorized\r?$') {
+if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `unit4b_persistence_correction_needs_independent_review`; fixture pipeline remains live-verified and the Gemini correction is local-only\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit4b_persistence_correction_needs_independent_review`\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* one correction-only independent review of Unit 4B\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* M01-M08/M10-M13 are live-verified; local M14 is created but not applied; M09 remains absent; no migration application is authorized\r?$') {
     Write-Error 'TRACKER.md does not preserve the fixture checkpoint and Unit 4B review gate.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
@@ -248,17 +248,19 @@ $migrationNames = @(
     '20260722000010_marketplace_phase9_public_boundary_security_correction.sql',
     '20260723000011_marketplace_phase9_ingestion_runtime_foundation.sql',
     '20260726000012_marketplace_phase9_vision_analysis_runtime.sql',
-    '20260727000013_marketplace_phase9_service_rpc_wrappers.sql'
+    '20260727000013_marketplace_phase9_service_rpc_wrappers.sql',
+    '20260727000014_marketplace_phase9_vision_provider_attempts.sql'
 )
 foreach ($name in $migrationNames) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot "supabase/migrations/$name"))) { Write-Error "Missing approved Phase 9 migration: $name" }
 }
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
-if ($phase9Migrations.Count -ne 12 -or $phase9Migrations.Name -match '000009|quantity.*validat') { Write-Error 'Phase 9 migration set must contain M01-M08 plus forward M10/M11/M12/M13, and no M09.' }
+if ($phase9Migrations.Count -ne 13 -or $phase9Migrations.Name -match '000009|quantity.*validat') { Write-Error 'Phase 9 migration set must contain M01-M08 plus forward M10-M14, and no M09.' }
 foreach ($relative in @('supabase/tests/phase9/phase6_baseline.sql','supabase/tests/phase9/databaseHarness.mjs',
     'supabase/tests/phase9/phase9Database.integration.test.mjs','supabase/tests/phase9/phase9IngestionRuntime.integration.test.mjs','supabase/tests/phase9/phase9VisionRuntime.integration.test.mjs','supabase/migrations/__tests__/marketplacePhase9DatabaseFoundation.test.ts',
     'supabase/migrations/__tests__/marketplacePhase9PublicBoundarySecurityCorrection.test.ts','supabase/migrations/__tests__/marketplacePhase9VisionAnalysisRuntime.test.ts',
-    'supabase/migrations/__tests__/marketplacePhase9ServiceRpcWrappers.test.ts')) {
+    'supabase/migrations/__tests__/marketplacePhase9ServiceRpcWrappers.test.ts',
+    'supabase/tests/phase9/phase9VisionProviderAttempts.integration.test.mjs')) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot $relative))) { Write-Error "Missing Phase 9 migration test harness file: $relative" }
 }
 $packageJson = [IO.File]::ReadAllText((Join-Path $repoRoot 'package.json'))

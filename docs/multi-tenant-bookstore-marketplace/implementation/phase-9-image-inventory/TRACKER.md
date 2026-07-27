@@ -1,15 +1,15 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `provider_scale_sdd_reconciliation_needs_independent_review`
-**Implementation status:** `unit4b_gemini_adapter_needs_independent_review`; fixture pipeline remains live-verified and the Gemini adapter is local-only
+**Implementation status:** `unit4b_persistence_correction_needs_independent_review`; fixture pipeline remains live-verified and the Gemini correction is local-only
 **Last updated:** 2026-07-27
-**Current milestone:** Unit 4B Gemini vision adapter locally implemented; one independent review pending
-**Active work unit:** `unit4b_gemini_adapter_needs_independent_review`
+**Current milestone:** Unit 4B provider-attempt/egress correction locally implemented; one correction-only review pending
+**Active work unit:** `unit4b_persistence_correction_needs_independent_review`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Unit 4B local Gemini adapter implementation on `codex/phase9-unit4b-gemini-adapter`; detailed handoff is [04b](./work-units/04b-gemini-vision-adapter-handoff.md)
-**Next authorized action:** one independent review of Unit 4B only
+**Last completed:** Unit 4B local M14 provider-attempt and final-egress correction on `codex/phase9-unit4b-gemini-adapter`; detailed handoff is [04b](./work-units/04b-gemini-vision-adapter-handoff.md)
+**Next authorized action:** one correction-only independent review of Unit 4B
 **Implementation authority:** Unit 4B implementation is complete locally; live provider calls/configuration, metadata enrichment, scheduling/autoscaling, UI, inventory commit, publication, Library, and later units remain unauthorized
-**Migration creation/application authority:** M01-M08/M10-M13 are live-verified; M09 remains absent and separately gated; no further migration application is authorized
+**Migration creation/application authority:** M01-M08/M10-M13 are live-verified; local M14 is created but not applied; M09 remains absent; no migration application is authorized
 **Current gate:** review Unit 4B only; do not configure/call Gemini or Google Books, select/enable a secondary/fallback, design/implement Unit 5, schedule/autoscale, deploy, or begin another unit
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
@@ -27,6 +27,12 @@ vision model ID to configuration-driven `gemini-3.5-flash-lite`; the earlier
 `gemini-3.5-flash` handoff remains historical. Unit 4B is local-only and awaits one
 independent review. The fixture adapter remains available, and no optional vision
 fallback is selected or enabled.
+
+The founder then authorized only the two review corrections. Local M14 now adds
+service-only vision-provider attempts and bounded register/finalize/associate/mark
+RPCs; Gemini registers an attempt and receives an atomically claim-validated media
+authorization before download/egress. M14 is not live, no provider was called, and
+one correction-only independent review is next.
 
 Auth hardening WU1/WU2 is locally complete and independently approved on `codex/auth-hardening-core`: production bypass policy is centralized and fail-closed; Zustand owns canonical session/status; one root bootstrap owns subscription/restoration; identity replacement remains blocked through cleanup failure and explicit retry; and current-device logout persists a non-secret deletion-intent guard until SDK or exact-key fallback removal succeeds. Auth no longer directly imports marketplace. Secure token persistence, Android backup, authoritative profile routing, OTP UX, native/offline testing, and remote EAS verification remain separately gated before Phase 9 mobile/private-ingestion runtime integration.
 

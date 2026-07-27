@@ -1,9 +1,9 @@
 # Phase 9 Database and Storage: Current vs Target
 
 **Audit date:** 2026-07-27
-**Audit mode:** authorized M13 boundary application, service deployment, and bounded live fixture verification
+**Audit mode:** read-only exact-project Unit 4B correction preflight; no M14 application
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10-M13 live-verified; tagged fixture rows/private objects retained; zero inventory/listing/publication/provider effect
+**Mutation status:** M01-M08/M10-M13 live-verified; local M14 not applied; zero correction-session database/Storage/provider effect
 
 **Provider/scale SDD reconciliation evidence:** the 2026-07-27 bounded read-only provider audit reconfirmed the exact healthy project and migration tail with M09 absent. Live counts were five extraction candidates, one canonical edition, and zero provider-registry rows, metadata attempts, metadata sources, aliases, or usage reservations. The existing metadata-attempt table already records candidate, adapter, attempt sequence, normalized clues, status, provider record, match strength, latency, cache status, versions, reuse policy, payload lifecycle, and timestamps; it does not explicitly represent role, provider-independent query identity, capability/routing-policy version, predecessor outcome, coalescing lineage, or cost-reservation linkage. These are proposed Unit 5 design targets only. No database or Storage mutation occurred.
 
@@ -18,6 +18,14 @@ non-secret evidence and retained synthetic deviations are in
 [tracker 06](../trackers/06-fixture-pipeline-deployment-evidence.md).
 
 **Unit 4 vision-analysis refresh:** M11/M12 applied sequentially on 2026-07-26 as `20260726182238` and `20260726182539`. Live jobs now have token/attempt fencing and vision reconciliation fields; immutable result/observation tables, candidate lineage, exact uniqueness, immutable triggers, and four service-only vision RPCs are live. Client table/RPC access remains denied. The Edge Function list still contains neither Owner ingestion nor vision analysis, and no data/Storage object changed.
+
+**Unit 4B local target:** read-only MCP preflight reconfirmed project
+`ahntbtktjjmvfosgkmgn` healthy and the existing job/reservation/result columns.
+Local M14 proposes one dedicated `vision_provider_attempts` row per external call,
+deterministic duplicate-spend identity, bounded usage/pricing/cost evidence, and
+service-only register/finalize/associate/mark RPCs. Registration revalidates the
+full active claim and media relationship before returning an internal download
+handle. This target is local-only and has not been applied.
 
 **Ingestion foundation checkpoint:** project `ahntbtktjjmvfosgkmgn` remains healthy; both private 10 MiB JPEG/PNG/WebP buckets remain unchanged. Live M11 revokes authenticated execution of path-taking legacy intake RPCs and adds declared source/content identity, persisted canonical completion, capability linkage, immutable private source snapshots, opaque claim-token and attempt fencing, 16 MP enforcement, and service-only issue/register/claim/context/revalidate/snapshot-bind/complete/fail functions. No runtime is deployed.
 
@@ -55,11 +63,11 @@ non-secret evidence and retained synthetic deviations are in
 | `store_inventory` | 33 fields; lacks language, description, edition, volume, format, structured damage, typed media, freshness, acquisition type/method/MRP. Canonical edition may be null. | Add store-owned metadata snapshot fields, damage/freshness/acquisition fields, commit provenance/version, and typed links. Keep canonical link nullable. |
 | `marketplace_book_listings` | One projection per `inventory_id`; lacks language, description, aliases, structured damage/media/freshness. | Extend safe projection with public metadata/damage/media/search fields. Preserve one projection per inventory row; visual grouping occurs in query/UI, not DB merging. |
 | Projection trigger | Explicitly copies current inventory fields; revoked from anon/authenticated and executable by service role. | Extend or replace with a controlled projection writer covering new public fields and eligibility. Projection failure must be observable; no silent inventory/public divergence. |
-| Image extraction tables | M02/M11/M12/M13 are live: token-fenced jobs, private immutable evidence, candidate lineage, and minimum service-only invoker wrappers exist. Fixture runtime is deployed and live-verified. | Preserve the service-only boundary; later real-provider and product units remain separately gated. |
+| Image extraction tables | M02/M11/M12/M13 are live: token-fenced jobs, private immutable evidence, candidate lineage, and minimum service-only invoker wrappers exist. Fixture runtime is deployed and live-verified. | Local-only M14 adds dedicated provider-call lineage and final egress validation; apply only under separate authorization. |
 | Alias storage | No multilingual alias table or listing alias projection exists. | Add provenance-bearing aliases targeted to either a canonical edition or unmatched store inventory with an XOR target constraint. Only approved/eligible aliases enter public search. |
 | Media registry | M03/M11 are live and provide typed `media_assets` plus private/public/request link structures; legacy inventory `photos text[]` remains for compatibility. M11 adds no public promotion and links only validated private scan media. | Preserve typed purpose/privacy/hash/retention boundaries and defer legacy-field retirement/public promotion to separately authorized work. |
 | Upload capabilities | M11 is live: authenticated execution of legacy path-taking RPCs is revoked and server-generated exact paths plus declared/observed object identity are present. | Preserve the service-only boundary during deployment. |
-| Cost reservation | Live `phase9_usage_reservations` exists with unique `(store_id, job_id, cost_kind, policy_version)`; the read-only audit found zero rows. | Preserve idempotent reservation and add provider request/attempt/accepted-completion reconciliation linkage only if later Unit 5 design proves a forward migration necessary. |
+| Cost reservation | Live `phase9_usage_reservations` exists with unique `(store_id, job_id, cost_kind, policy_version)`; Unit 4B preflight confirmed its bounded cost fields but no provider-call lineage. | Local M14 links each vision call to its reservation and reconciles summed finalized cost without hard-coded prices. |
 | Metadata attempt lineage | Live `metadata_enrichment_attempts` has adapter/sequence/query/status/cache/version/payload lifecycle fields and zero rows. | Proposed: role, provider-independent query identity, capability/routing-policy version, triggering outcome, coalescing and spend-reconciliation lineage. Do not claim these fields are live. |
 | Provider registry | Live `phase9_provider_registry` exists and was empty at the read-only audit. | Keep credentials out; later design may reference capability, role/order, breaker, cache namespace, rate/concurrency, kill-switch, and promotion policy through configuration/versioned policy. |
 | Customer request photos | No request-specific photo table/gate exists. | Add orthogonal item photo request and media link structures; integrate with existing request versions/commands and `awaiting_customer_decision`. |

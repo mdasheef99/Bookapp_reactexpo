@@ -1,9 +1,9 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `unit4b_gemini_adapter_needs_independent_review`
+**Status:** `unit4b_persistence_correction_needs_independent_review`
 **Last updated:** 2026-07-27
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `unit4b_gemini_adapter_needs_independent_review`
+**Active work unit:** `unit4b_persistence_correction_needs_independent_review`
 
 This tracker is separate from planning decisions; WU0B remains independently approved after `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review, without granting later database/runtime authority.
 ## Work units
@@ -17,7 +17,7 @@ This tracker is separate from planning decisions; WU0B remains independently app
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `deployed_and_live_verified` | M11 live as `20260726182238`; Owner Edge and separate media service verified |
 | 4 | [Fixture vision-analysis runtime](../work-units/04-fixture-vision-analysis-runtime-design.md): `p9-vision-v2`, analyzer, job orchestration, immutable evidence/candidates | `fixture_deployed_and_live_verified` | M12 live as `20260726182539`; all nine fixture cases verified; no real provider |
 | 4A | [Deployment-runtime scaffolding](../work-units/04a-deployment-runtime-scaffolding-sdd.md): executable sanitation/fixture-vision hosts, strict environment, builds/containers, invocation and validation | [`deployed_and_live_fixture_verified`](./06-fixture-pipeline-deployment-evidence.md) | separate free Render services live at `96991a9`; M13 invoker boundary live |
-| 4B | [Gemini vision adapter](../work-units/04b-gemini-vision-adapter-handoff.md) for configured `gemini-3.5-flash-lite`; optional whole-image fallback remains unselected/disabled | `implemented_locally_needs_independent_review` | focused adapter/regression/type/security verification; no live call, credential configuration, deployment, database, Storage, or migration mutation |
+| 4B | [Gemini vision adapter](../work-units/04b-gemini-vision-adapter-handoff.md) for configured `gemini-3.5-flash-lite`; optional whole-image fallback remains unselected/disabled | `persistence_correction_needs_independent_review` | local M14 provider-attempt lineage and final egress fence; no live call, credential configuration, deployment, database, Storage, or migration application |
 | 5 | Metadata/aliases: provider-neutral local-first metadata routing/cache/coalescing, ISBN validation, coherent selection, attempt/cost lineage, quality evaluation, and aliases | `not_started` | independent SDD reconciliation approval, then separate Unit 5 design authorization and provider fixtures/cost tests |
 | 6 | Owner session/defaults/capture/review UI with accessibility and recovery | `not_started` | Units 2–5 verified |
 | 7 | Controlled per-candidate commit, advisory duplicates, idempotency, projection changes | `not_started` | quantity/hold concurrency tests |
@@ -42,6 +42,7 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260723000011_marketplace_phase9_ingestion_runtime_foundation.sql` | `20260726182238 marketplace_phase9_ingestion_runtime_foundation` | MCP exact project 2026-07-26 | authorized M11/M12 live application | forward-only; revoked legacy authenticated path RPCs | 20 columns, 11 constraints, unique capability index, 12 hardened service-only functions, unchanged 5/5/14 inventory/listing/event counts and zero Storage objects; security 172 after M11 | `live_verified` |
 | `20260726000012_marketplace_phase9_vision_analysis_runtime.sql` | `20260726182539 marketplace_phase9_vision_analysis_runtime` | MCP exact project 2026-07-26 | authorized M11/M12 live application | forward-only after M11; initial truncated transport submission failed atomically and was absent before lossless retry | RLS/private immutable tables, eight lineage/reconciliation columns, exact uniqueness/constraints/triggers/index, four hardened service-only RPCs, unchanged data/Storage; security 174 with only two expected INFO notices | `live_verified` |
 | `20260727000013_marketplace_phase9_service_rpc_wrappers.sql` | `20260727025046 marketplace_phase9_service_rpc_wrappers` | MCP exact project 2026-07-27 | authorized M13 boundary correction | forward-only; private functions/schema unchanged | 13 postgres-owned, empty-search-path `SECURITY INVOKER` wrappers; service-role only; anon/auth denied; private schema still `PGRST106` | `live_verified` |
+| `20260727000014_marketplace_phase9_vision_provider_attempts.sql` | not applied | MCP exact project 2026-07-27 | authorized Unit 4B correction; local file only | forward-only additive; do not overload analysis/metadata attempts | dedicated attempt table, spend identity/indexes, service-only register/finalize/associate/mark RPCs; focused PGlite contract evidence | `local_only_needs_independent_review` |
 Rules:
 
 - Re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
@@ -324,7 +325,6 @@ Rules:
 - Next authorized action and gate: another context-isolated review of the complete corrected WU0B diff; do not commit, push or start Supabase unless verdict is exactly `approved`
 
 ### 2026-07-22 — Work Unit 0B final independent approval
-
 - Date/session: 2026-07-22 final context-isolated review and documentation-only approval closeout
 - Authorized work unit and scope: record the existing exact verdict `approved`, update the required 13-file handoff set, validate once, commit and push
 - Completed: WU0B transitioned separately from implementation-complete to independently-approved
@@ -336,7 +336,6 @@ Rules:
 - Next authorized action and gate: consolidated Risk-Based Phase 9 SDD analysis in a new session; Supabase audit, migration and runtime remain unauthorized
 
 ### 2026-07-22 — WU0A/WU0B bounded contract correction
-
 - Date/session: 2026-07-22 bounded SDD/contract correction and fresh correction-only review
 - Authorized work unit and scope: reconcile alias vocabulary, price boundaries, publication outcome versus persisted state, complete stable-error mappings, exclude interactive support intervention, and add the nine named contract/design verification cases only
 - Completed: canonical alias kinds/sources/statuses now round-trip with `common_spelling` and lifecycle-only supersession; private zero price and positive publication gates are separate; candidate/publication/API outcome vocabularies are closed; every C01–C30/Q01–Q11 error maps to registered metadata-complete `P9_*` codes; support takeover/cross-store private access is excluded; later runtime/release test ownership remains deferred
@@ -346,5 +345,6 @@ Rules:
 - Decisions/deviations/risks: P9-D39/P9-D40 corrected and P9-D44–P9-D46 added; no live-schema claim was made; interactive support tooling requires future separate design and authorization
 - Tracker/source-doc updates: Master/Data/Extraction/Review/Media SDDs, data dictionary, traceability, WU0/WU0B artifacts, planning and implementation trackers, Phase 9 README/TRACKER, and DOC-13
 - Next authorized action and gate: consolidated Risk-Based Phase 9 SDD analysis in a new session; Supabase audit, database/migration design, migration creation/testing/application, and runtime remain unauthorized
-
+### 2026-07-27 — Unit 4B provider-attempt persistence correction
+- Authorized scope/completion/evidence: correction-only local M14 plus claim-aware Gemini closes durable provider-attempt/reservation/usage/injected-pricing/cost/duplicate-spend lineage and final claim/media egress validation; red failures proved missing M14/`analyzeClaim`; final affected Jest 11 suites/117 tests, PGlite vision 3 suites/38 tests, strict changed-scope TypeScript/no-unused, continuity, diff and scoped credential scan pass. Read-only exact-project preflight was the only external access; M14 is unapplied and no database/Storage/provider/credential/deployment/product mutation occurred. `p9-vision-v2` and fixture behavior remain unchanged; pricing is injected/allowlisted; interrupted attempts remain reconcilable. Required SDD/schema/status/handoff/ledger/validator documents were updated. One correction-only independent review is next; M14 application, merge, provider work, Unit 5 and broader scope remain unauthorized.
 Unit 4 evidence continues in [03](./03-unit4-implementation-evidence.md), [04](./04-deployment-runtime-scaffolding-evidence.md), [05](./05-m11-m12-live-application-evidence.md), and [06 fixture deployment](./06-fixture-pipeline-deployment-evidence.md); older entries above remain append-only evidence.

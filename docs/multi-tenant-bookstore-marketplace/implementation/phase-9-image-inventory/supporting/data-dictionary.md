@@ -1,9 +1,9 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** approved target; M01-M08/M10-M13 and fixture services live-verified; M09 absent
+**Status:** approved target; M01-M08/M10-M13 live; local M14 unapplied; M09 absent
 **Last updated:** 2026-07-27
 
-M01-M08/M10-M13 are live-verified. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. Owner/media/fixture-vision services are deployed. M09 quantity validation remains a separate live-data gate.
+M01-M08/M10-M13 are live-verified. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. Local M14 proposes dedicated vision-provider attempts and is not applied. Owner/media/fixture-vision services are deployed. M09 quantity validation remains a separate live-data gate.
 
 The dictionary distinguishes canonical truth, store-owned snapshots, public projections, staged AI output, and media/evidence. A field must not be added to several layers merely because it is convenient; each copy needs a named owner and synchronization rule.
 
@@ -148,6 +148,19 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | immutable clues | title/authors/publisher/ISBN, detected language, confidence, normalized geometry, closed warning codes. |
 | evidence | bounded canonical observation snapshot only; no raw provider response, prompt, URL/path/token, or arbitrary metadata. |
 | candidate link | nullable one-to-one link for accepted observations; skipped evidence has no candidate. |
+
+### `vision_provider_attempts` (local M14 target; service-only; not live)
+
+| Field | Rule |
+| --- | --- |
+| call/claim identity | Unique external-call UUID plus job, correlation, claim attempt, worker, and lease-token hash; raw lease token absent. |
+| reservation/spend | Required vision usage-reservation FK and deterministic spend identity; multiple rows with one spend identity remain visible for duplicate reconciliation. |
+| provider lineage | Primary/approved-fallback role, provider, adapter/model, prompt, and schema versions. Unit 4B configures primary only. |
+| response lineage | Optional bounded provider request ID; start/completion timestamps and normalized outcome. |
+| usage/cost | Five bounded token counters, versioned bounded pricing input, and calculated cost units injected by policy; no hard-coded provider price. |
+| disposition | `registered`, `response_received`, `accepted`, `stale_rejected`, `failed`, or `outcome_unknown`; only one accepted attempt per job. |
+| accepted result | Nullable analysis-result FK required exactly for `accepted`; association verifies the completing attempt/worker/token hash. |
+| forbidden data | No prompt, image/base64, Storage credential, provider response, bibliographic payload, or arbitrary raw metadata. |
 
 ### `image_extraction_candidates`
 

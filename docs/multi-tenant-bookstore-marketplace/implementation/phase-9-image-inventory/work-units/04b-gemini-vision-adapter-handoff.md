@@ -1,6 +1,6 @@
 # Phase 9 Unit 4B: Gemini Vision Adapter Handoff
 
-**Status:** `implemented_locally_needs_independent_review`
+**Status:** `persistence_correction_ready_for_independent_review`
 **Date/session:** 2026-07-27
 **Branch/baseline:** `codex/phase9-unit4b-gemini-adapter` from
 `510627d94f49eb6ed32c4c7e545488c269ffa98b`
@@ -38,16 +38,28 @@ disabled.
 - Restricted logs/errors to provider/model, bounded outcome/classification, and
   duration; credentials, authorization, image/base64, prompt, raw response,
   bibliographic content, Storage path, and provider detail are excluded.
+- Added forward-only local M14 with a dedicated service-only
+  `vision_provider_attempts` relation and four bounded RPC contracts. One row is
+  registered before Gemini egress, records claim/reservation/provider/version
+  identity, finalizes bounded token and injected pricing/cost evidence, links the
+  accepted result, or remains explicitly stale, failed, or outcome-unknown.
+- Replaced direct pre-download table lookups with the RPC-issued media
+  authorization. Registration atomically revalidates job/reference/correlation,
+  owner/token/attempt/expiry, and store/session/input/sanitized-media
+  purpose/status binding before any private download or Gemini call.
 
 ## Persistence and external state
 
-The existing Unit 4 job, analysis result, observation, candidate, and lineage
-persistence seams are reused unchanged. Existing `phase9_usage_reservations`
-remains the cost reservation boundary; Unit 4B adds adapter-level normalized usage
-and injected cost evidence without a table, migration, RPC, or hard-coded price.
+The existing Unit 4 job, analysis result, observation, candidate, reservation, and
+completion seams remain authoritative. Local M14 adds only provider-call attempt
+lineage; it does not change `p9-vision-v2`, metadata, inventory, or publication.
+Distinct external call IDs share a deterministic spend identity so duplicate
+provider spend remains detectable and reservation actual-cost reconciliation sums
+all finalized calls. No provider pricing is hard-coded.
 
-No Gemini call, API-key request/configuration, Supabase/database/Storage mutation,
-migration creation/application, deployment, Render change, scheduling, autoscaling,
+M14 was created and tested locally but was not applied. No Gemini call, API-key
+request/configuration, Supabase/database/Storage mutation, deployment, Render
+change, scheduling, autoscaling,
 metadata/alias work, mobile UI, inventory commit, publication, or Library work
 occurred.
 
@@ -68,17 +80,26 @@ occurred.
   `tsconfig.json` does not enable that setting.
 - Continuity, diff hygiene, scoped secret scan, and final Git-state evidence are
   recorded at closeout.
+- Correction red checkpoints failed on missing `analyzeClaim` and missing M14.
+  Focused correction tests cover registration ordering, zero egress on a rejected
+  claim, all claim/media bindings, durable usage/cost, duplicate spend,
+  accepted-versus-stale completion, and interrupted/unknown outcomes.
+- Final affected Unit 4/4B verification passed 11 Jest suites / 117 tests and
+  three PGlite vision suites / 38 tests. Strict changed-scope TypeScript/lint,
+  continuity, diff hygiene, and scoped secret scanning passed.
 
 ## Independent-review focus
 
-Review only Unit 4B: provider request/schema compatibility, opaque-media resolution,
-error/retry mapping, usage/cost evidence, configuration fail-closed behavior,
+Review only the Unit 4B correction: M14 table/RPC/grant bounds, final egress claim
+validation, accepted/stale/unknown attempt transitions, duplicate-spend
+reconciliation, provider request/usage/cost lineage, opaque-media resolution,
+error/retry mapping, configuration fail-closed behavior,
 credential/log boundaries, official dependency footprint, and unchanged fixture
-behavior. Do not configure or call Gemini, select a fallback, create/apply a
+behavior. Do not configure or call Gemini, select a fallback, apply M14 or another
 migration, deploy, schedule/autoscale, begin Unit 5, or change product/mobile
 behavior.
 
 ## Next authorized action
 
-One independent review of this Unit 4B branch only. No merge is authorized by this
-handoff.
+One correction-only independent review of this Unit 4B branch. M14 application and
+merge remain unauthorized.

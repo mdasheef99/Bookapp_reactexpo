@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import {
   GEMINI_VISION_RESPONSE_SCHEMA,
   GeminiAnalyzerError,
@@ -60,6 +59,10 @@ function setup(response: unknown, overrides: Record<string, unknown> = {}) {
     calculateCostUnits: (evidence) => ({
       costUnits: evidence.totalTokens / 1_000,
       policyVersion: 'mock-cost-policy-v1',
+      pricingInput: {
+        currency: 'cost_units',
+        input_basis: 'mocked-provider-response',
+      },
     }),
     log: (event) => logs.push(event),
     now: () => new Date('2026-07-27T12:00:00.000Z'),
@@ -179,6 +182,10 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
       thinkingTokens: 10,
       costUnits: 0.125,
       costPolicyVersion: 'mock-cost-policy-v1',
+      pricingInput: {
+        currency: 'cost_units',
+        input_basis: 'mocked-provider-response',
+      },
     }]);
   });
 
@@ -205,62 +212,25 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
 });
 
 describe('Phase 9 Gemini sanitized-media resolver', () => {
-  it('maps only a matching claimed-job opaque reference to private sanitized bytes', async () => {
-    const jobId = '92000000-0000-0000-0000-000000000401';
-    const mediaId = '92000000-0000-0000-0000-000000000402';
-    const mediaReference = `media_${createHash('sha256')
-      .update(`${mediaId}:${jobId}`).digest('hex').slice(0, 48)}`;
-    const rows: Record<string, unknown> = {
-      image_extraction_jobs: {
-        id: jobId,
-        entity_id: '92000000-0000-0000-0000-000000000403',
-        store_id: '92000000-0000-0000-0000-000000000404',
-        job_kind: 'vision_extract',
-        status: 'in_progress',
-        correlation_id: request.correlationId,
-      },
-      image_extraction_inputs: {
-        id: '92000000-0000-0000-0000-000000000403',
-        media_asset_id: mediaId,
-        store_id: '92000000-0000-0000-0000-000000000404',
-      },
-      media_assets: {
-        id: mediaId,
-        store_id: '92000000-0000-0000-0000-000000000404',
-        bucket_id: 'private-sanitized-fixture',
-        object_path: 'private/sanitized-fixture.webp',
-        detected_mime: 'image/webp',
-        purpose: 'scan_input',
-        privacy_class: 'private_scan',
-        lifecycle_status: 'linked',
-        validated_at: '2026-07-27T12:00:00.000Z',
-      },
-    };
-    let selectedTable = '';
-    const query = {
-      select: jest.fn(() => query),
-      eq: jest.fn(() => query),
-      single: jest.fn(async () => ({ data: rows[selectedTable], error: null })),
-    };
+  it('downloads only a claim-validated media authorization', async () => {
     const download = jest.fn(async () => ({
       data: new Blob([image.bytes], { type: 'image/webp' }),
       error: null,
     }));
     const client = {
-      from: jest.fn((table: string) => {
-        selectedTable = table;
-        return query;
-      }),
       storage: { from: jest.fn(() => ({ download })) },
     };
     const resolver = createSupabaseVisionMediaResolver(client);
-    const resolverRequest = createSpineAnalysisRequest({
-      ...visionRequestInput,
-      sanitizedMediaReference: mediaReference,
-    });
-
-    await expect(resolver(resolverRequest)).resolves.toEqual(image);
+    await expect(resolver(request, {
+      mediaBucket: 'private-sanitized-fixture',
+      mediaPath: 'private/sanitized-fixture.webp',
+      mediaMime: 'image/webp',
+    })).resolves.toEqual(image);
     expect(download).toHaveBeenCalledWith('private/sanitized-fixture.webp');
-    await expect(resolver(request)).rejects.toThrow('P9_VISION_MEDIA_UNAVAILABLE');
+    await expect(resolver(request, {
+      mediaBucket: 'private-sanitized-fixture',
+      mediaPath: '../private/forged.webp',
+      mediaMime: 'image/webp',
+    })).rejects.toThrow('P9_VISION_MEDIA_UNAVAILABLE');
   });
 });

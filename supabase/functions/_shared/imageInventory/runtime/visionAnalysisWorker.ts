@@ -13,6 +13,10 @@ import {
 import { FixtureAnalyzerError } from '../analysis/fixtureSpineImageAnalyzer';
 import { SpineAnalyzerError } from '../analysis/spineAnalyzerError';
 import { WorkerIngestionRequest } from '../contracts/ingestion';
+import {
+  analyzeCurrentClaim,
+  ProviderAttemptCompletion,
+} from './claimAwareVisionAnalyzer';
 
 type RpcResult = { data: any; error: { message?: string } | null };
 type Client = { rpc(name: string, args: Record<string, unknown>): Promise<RpcResult> };
@@ -265,6 +269,7 @@ async function processClaim(
   leaseOwner: string,
   clock: Clock,
 ): Promise<WorkerResult> {
+  let providerAttempt: ProviderAttemptCompletion | undefined;
   try {
     const context = unwrap(await rpcCall(
       client,
@@ -274,7 +279,9 @@ async function processClaim(
     const reconciliation = reconciliationResult(context);
     if (reconciliation) return reconciliation;
     const request = parseContext(context, job, clock.now().toISOString());
-    const untrusted = await analyzer.analyze(request);
+    const analyzed = await analyzeCurrentClaim(analyzer, request, job, leaseOwner);
+    providerAttempt = analyzed.providerAttempt;
+    const untrusted = analyzed.untrusted;
     const result = parseSpineAnalysisResult(analyzerResultSnapshot(untrusted));
     assertSpineAnalysisIdentity(request, result);
     const policy = evaluateVisionResult(result);
@@ -284,9 +291,25 @@ async function processClaim(
       p_result: snapshot,
     }));
     const completedReconciliation = reconciliationResult(completed);
-    if (completedReconciliation) return completedReconciliation;
+    if (completedReconciliation) {
+      await providerAttempt?.reject('stale_rejected', 'completion_rejected');
+      return completedReconciliation;
+    }
+    await providerAttempt?.accept();
     return { jobId: job.id, ...completionResult(completed, policy.candidates.length) };
   } catch (error) {
+    if (providerAttempt) {
+      const stale = error instanceof VisionRuntimeError
+        && error.code === 'P9_STATE_CONFLICT';
+      try {
+        await providerAttempt.reject(
+          stale ? 'stale_rejected' : 'outcome_unknown',
+          stale ? 'completion_stale' : 'completion_unresolved',
+        );
+      } catch {
+        // Durable response_received evidence remains available for reconciliation.
+      }
+    }
     if (error instanceof FixtureAnalyzerError || error instanceof SpineAnalyzerError) {
       return fail(client, job, leaseOwner, error.code);
     }

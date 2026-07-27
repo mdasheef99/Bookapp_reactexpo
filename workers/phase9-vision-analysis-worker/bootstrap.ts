@@ -10,6 +10,9 @@ import {
   parseDeploymentFixtureCase,
 } from './deploymentFixtures';
 import { createSupabaseVisionMediaResolver } from './supabaseVisionMediaResolver';
+import {
+  createSupabaseVisionProviderAttempts,
+} from './supabaseVisionProviderAttempts';
 
 type BaseVisionWorkerConfiguration = Readonly<{
   supabaseUrl: string;
@@ -72,12 +75,14 @@ export function createPhase9VisionAnalysisService(
       },
     },
   );
+  const providerAttempts = createSupabaseVisionProviderAttempts(serviceClient as any);
   const analyzer = configuration.analyzerMode === 'gemini'
     ? new GeminiSpineImageAnalyzer({
       client: new GoogleGenAI({ apiKey: configuration.apiKey }),
       modelId: configuration.modelId,
       timeoutMs: configuration.timeoutMs,
       resolveMedia: createSupabaseVisionMediaResolver(serviceClient as any),
+      providerAttempts,
       privilegedValues: [
         configuration.apiKey,
         configuration.supabaseServiceRoleKey,

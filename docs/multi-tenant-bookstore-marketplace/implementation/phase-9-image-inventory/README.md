@@ -2,8 +2,8 @@
 
 **Status:** `fixture_pipeline_deployed_and_live_verified`
 **Last updated:** 2026-07-27
-**Implementation status:** M01-M08/M10-M13 and Unit 4A are live-verified; Owner Edge and separate free-plan media/fixture-vision services are deployed
-**Supabase mutation status:** M01-M08/M10-M13 applied once to `ahntbtktjjmvfosgkmgn`; M09 is absent; tagged fixture rows/private objects are retained with zero commerce effect
+**Implementation status:** M01-M08/M10-M13 and Unit 4A are live-verified; separate free-plan media/fixture-vision services are deployed; Unit 4B persistence correction and local M14 await correction-only review
+**Supabase mutation status:** M01-M08/M10-M13 applied once to `ahntbtktjjmvfosgkmgn`; local M14 is not applied; M09 is absent; tagged fixture rows/private objects are retained with zero commerce effect
 **Database checkpoint:** M01-M08 and forward corrections M10-M12 are live-verified.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
@@ -96,7 +96,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, WU0A/WU0B, corrected Package 1 design, and Unit 4/4A implementation are integrated at their recorded checkpoints. M01-M08/M10-M13, Owner ingestion, and both separate fixture workers are live-verified at the identities in tracker 06. Unit 4B is locally implemented with configuration-driven `gemini-3.5-flash-lite` and awaits one independent review; the earlier `gemini-3.5-flash` decision remains historical. The fixture adapter remains available, no optional vision fallback is selected/enabled, and no real provider credential is configured or call made. Unit 5, M09, deployment/provider calls, scheduling/autoscaling, metadata runtime, UI, inventory/publication, Library, and later units remain separately gated. Preserve these controls:
+The planning baseline, WU0A/WU0B, corrected Package 1 design, and Unit 4/4A implementation are integrated at their recorded checkpoints. M01-M08/M10-M13, Owner ingestion, and both separate fixture workers are live-verified at the identities in tracker 06. Unit 4B uses configuration-driven `gemini-3.5-flash-lite`; its provider-attempt/final-egress correction and local unapplied M14 await one correction-only review. The earlier `gemini-3.5-flash` decision remains historical. The fixture adapter remains available, no optional vision fallback is selected/enabled, and no real provider credential is configured or call made. Unit 5, M09/M14 application, deployment/provider calls, scheduling/autoscaling, metadata runtime, UI, inventory/publication, Library, and later units remain separately gated. Preserve these controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

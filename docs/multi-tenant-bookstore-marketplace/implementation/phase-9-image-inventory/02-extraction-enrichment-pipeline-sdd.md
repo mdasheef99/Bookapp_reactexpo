@@ -6,6 +6,12 @@
 
 **Implementation checkpoint (2026-07-27):** the pre-model ingestion slice and fixture-backed Unit 4 runtime are deployed and live-verified. M11 `20260726182238`, M12 `20260726182539`, and M13 `20260727025046` are live with fencing, canonical hashing/validation, database-owned retryability, typed RPC transport, path rejection, relationship reconciliation, and minimum invoker wrappers. All nine recorded fixture cases passed; no real multimodal or metadata provider integration exists.
 
+**Unit 4B persistence correction (local, unapplied):** forward-only M14 adds one
+service-only vision-provider-attempt row per external call, reservation and
+duplicate-spend linkage, bounded usage/injected pricing evidence, and explicit
+accepted/stale/failed/unknown dispositions. Register/finalize/associate/mark RPCs
+do not alter `p9-vision-v2` or permit metadata/inventory/publication writes.
+
 ## 1. Decision
 
 Use a persistent, asynchronous, provider-agnostic pipeline for same-language spine images. One primary multimodal vision adapter and at most one whole-image fallback extract observed identity clues. Deterministic code then performs local canonical lookup and sequential metadata-provider enrichment. The mobile request does not wait synchronously for the complete pipeline.

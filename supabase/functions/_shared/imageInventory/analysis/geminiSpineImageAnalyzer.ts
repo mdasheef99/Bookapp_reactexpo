@@ -14,32 +14,33 @@ import {
   GEMINI_VISION_RESPONSE_SCHEMA,
 } from './geminiVisionSchema';
 import { SpineAnalyzerError } from './spineAnalyzerError';
+import {
+  extractGeminiUsageEvidence,
+  GeminiCostCalculator,
+  GeminiUsageEvidence,
+} from './geminiUsageEvidence';
+import {
+  AttemptRegistration,
+  VisionClaimContext,
+  VisionProviderAttemptGateway,
+} from './visionProviderAttempt';
 
 export { GEMINI_VISION_RESPONSE_SCHEMA } from './geminiVisionSchema';
+export type { GeminiUsageEvidence } from './geminiUsageEvidence';
+export type {
+  VisionClaimContext,
+  VisionProviderAttemptGateway,
+} from './visionProviderAttempt';
 
 type ImageMime = 'image/jpeg' | 'image/png' | 'image/webp';
 type MediaInput = Readonly<{ bytes: Uint8Array; mimeType: ImageMime }>;
-type GeminiResponse = Pick<GenerateContentResponse, 'text' | 'usageMetadata'>;
+type GeminiResponse = Pick<
+GenerateContentResponse, 'text' | 'usageMetadata' | 'responseId'
+>;
 export type GeminiClient = Readonly<{
   models: {
     generateContent(parameters: GenerateContentParameters): Promise<GeminiResponse>;
   };
-}>;
-
-export type GeminiUsageEvidence = Readonly<{
-  providerKey: 'google_gemini';
-  modelId: string;
-  adapterKey: string;
-  adapterVersion: string;
-  promptVersion: string;
-  schemaVersion: string;
-  promptTokens: number;
-  outputTokens: number;
-  totalTokens: number;
-  cachedTokens: number;
-  thinkingTokens: number;
-  costUnits: number | null;
-  costPolicyVersion: string | null;
 }>;
 
 type SafeLogEvent = Readonly<{
@@ -55,28 +56,21 @@ export type GeminiAnalyzerOptions = Readonly<{
   client: GeminiClient;
   modelId: string;
   timeoutMs: number;
-  resolveMedia(request: SpineAnalysisRequest): Promise<MediaInput>;
+  resolveMedia(request: SpineAnalysisRequest, authorization?: unknown): Promise<MediaInput>;
+  providerAttempts?: VisionProviderAttemptGateway;
   recordUsage?: (evidence: GeminiUsageEvidence) => void | Promise<void>;
-  calculateCostUnits?: (
-    evidence: Omit<GeminiUsageEvidence, 'costUnits' | 'costPolicyVersion'>,
-  ) => Readonly<{ costUnits: number; policyVersion: string }>;
+  calculateCostUnits?: GeminiCostCalculator;
   log?: (event: SafeLogEvent) => void;
   now?: () => Date;
   privilegedValues?: readonly string[];
 }>;
 
 const MODEL_ID = /^[a-z][a-z0-9._-]{1,63}$/u;
-const POLICY_VERSION = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/u;
-const MAX_TOKENS = 1_000_000_000;
+const PROVIDER_REQUEST_ID = /^[A-Za-z0-9._:-]{1,128}$/u;
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 export class GeminiAnalyzerError extends SpineAnalyzerError {
   override readonly name = 'GeminiAnalyzerError';
-}
-
-function boundedToken(value: unknown): number {
-  return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= MAX_TOKENS
-    ? value as number : 0;
 }
 
 function safeStatus(error: unknown): number | null {
@@ -116,37 +110,6 @@ function resultEnvelope(
   };
 }
 
-function usageEvidence(
-  request: SpineAnalysisRequest,
-  modelId: string,
-  metadata: unknown,
-  calculateCostUnits: GeminiAnalyzerOptions['calculateCostUnits'],
-): GeminiUsageEvidence | null {
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
-  const input = metadata as Record<string, unknown>;
-  const withoutCost = {
-    providerKey: 'google_gemini' as const,
-    modelId,
-    adapterKey: request.adapterKey,
-    adapterVersion: request.adapterVersion,
-    promptVersion: request.promptVersion,
-    schemaVersion: request.schemaVersion,
-    promptTokens: boundedToken(input.promptTokenCount),
-    outputTokens: boundedToken(input.candidatesTokenCount),
-    totalTokens: boundedToken(input.totalTokenCount),
-    cachedTokens: boundedToken(input.cachedContentTokenCount),
-    thinkingTokens: boundedToken(input.thoughtsTokenCount),
-  };
-  const cost = calculateCostUnits?.(withoutCost);
-  const validCost = cost && Number.isFinite(cost.costUnits) && cost.costUnits >= 0
-    && cost.costUnits <= MAX_TOKENS && POLICY_VERSION.test(cost.policyVersion);
-  return {
-    ...withoutCost,
-    costUnits: validCost ? cost.costUnits : null,
-    costPolicyVersion: validCost ? cost.policyVersion : null,
-  };
-}
-
 export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
   private readonly now: () => Date;
 
@@ -162,15 +125,65 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
   }
 
   async analyze(request: SpineAnalysisRequest): Promise<SpineAnalysisResult> {
+    return (await this.analyzeInternal(request)).result;
+  }
+
+  async analyzeClaim(
+    request: SpineAnalysisRequest,
+    claim: VisionClaimContext,
+  ): Promise<Readonly<{
+    result: SpineAnalysisResult;
+    providerAttemptId: string;
+    accept(): Promise<void>;
+    reject(disposition: 'stale_rejected' | 'outcome_unknown', outcome: string): Promise<void>;
+  }>> {
+    if (!this.options.providerAttempts) throw new Error('P9_WORKER_CONFIGURATION_INVALID');
+    const completed = await this.analyzeInternal(request, claim);
+    if (!completed.providerAttemptId) throw new Error('P9_WORKER_CONFIGURATION_INVALID');
+    const attemptId = completed.providerAttemptId;
+    return {
+      result: completed.result,
+      providerAttemptId: attemptId,
+      accept: async () => {
+        if (!this.options.providerAttempts?.associate) {
+          throw new Error('P9_WORKER_CONFIGURATION_INVALID');
+        }
+        await this.options.providerAttempts.associate(attemptId, claim);
+      },
+      reject: async (disposition, outcome) => {
+        await this.options.providerAttempts?.mark(
+          attemptId, claim, disposition, outcome,
+        );
+      },
+    };
+  }
+
+  private async analyzeInternal(
+    request: SpineAnalysisRequest,
+    claim?: VisionClaimContext,
+  ): Promise<Readonly<{ result: SpineAnalysisResult; providerAttemptId?: string }>> {
     const started = this.now().getTime();
+    let registration: AttemptRegistration | undefined;
     let media: MediaInput;
     try {
-      media = await this.options.resolveMedia(request);
+      if (claim && this.options.providerAttempts) {
+        registration = await this.options.providerAttempts.register(request, claim, {
+          providerRole: 'primary',
+          providerKey: 'google_gemini',
+          modelKey: this.options.modelId,
+          modelVersion: this.options.modelId,
+        });
+      }
+      media = await this.options.resolveMedia(request, registration?.mediaAuthorization);
       if (!['image/jpeg', 'image/png', 'image/webp'].includes(media.mimeType)
         || media.bytes.byteLength < 1 || media.bytes.byteLength > MAX_IMAGE_BYTES) {
         throw new Error('invalid media');
       }
-    } catch {
+    } catch (error) {
+      if (registration && claim) {
+        await this.safeMark(registration.attemptId, claim, 'failed', 'media_unavailable');
+      }
+      if (error instanceof SpineAnalyzerError) throw error;
       this.failed('media_unavailable', started);
       throw new GeminiAnalyzerError(
         'P9_VISION_MEDIA_UNAVAILABLE', false, 'media_unavailable',
@@ -206,6 +219,14 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
     } catch (error) {
       const classification = isTimeout(error)
         ? 'timeout' : safeStatus(error) === 429 ? 'rate_limited' : 'provider_error';
+      if (registration && claim) {
+        await this.safeMark(
+          registration.attemptId,
+          claim,
+          classification === 'rate_limited' ? 'failed' : 'outcome_unknown',
+          classification,
+        );
+      }
       this.failed(classification, started);
       throw new GeminiAnalyzerError(
         classification === 'timeout'
@@ -215,13 +236,15 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
       );
     }
 
-    const usage = usageEvidence(
+    const usage = extractGeminiUsageEvidence(
       request,
       this.options.modelId,
       response.usageMetadata,
       this.options.calculateCostUnits,
     );
-    if (usage) await this.options.recordUsage?.(usage);
+    await this.options.recordUsage?.(usage);
+    const providerRequestId = typeof response.responseId === 'string'
+      && PROVIDER_REQUEST_ID.test(response.responseId) ? response.responseId : null;
 
     let providerOutput: Record<string, unknown>;
     try {
@@ -232,33 +255,73 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
       }
       providerOutput = parsed as Record<string, unknown>;
     } catch {
+      await this.finalize(
+        registration, claim, 'failed', 'malformed_response', providerRequestId, usage,
+      );
       this.failed('malformed_response', started);
       throw new GeminiAnalyzerError(
         'P9_VISION_SCHEMA_INVALID', false, 'malformed_response',
       );
     }
 
+    let result: SpineAnalysisResult;
     try {
-      const result = parseSpineAnalysisResult(resultEnvelope(
+      result = parseSpineAnalysisResult(resultEnvelope(
         request,
         this.options.modelId,
         this.now().toISOString(),
         providerOutput,
       ));
       assertSpineAnalysisIdentity(request, result);
-      this.options.log?.({
-        event: 'gemini_analysis_completed',
-        provider: 'google_gemini',
-        modelId: this.options.modelId,
-        outcome: result.imageOutcome,
-        durationMs: Math.max(0, this.now().getTime() - started),
-      });
-      return result;
     } catch {
+      await this.finalize(
+        registration, claim, 'failed', 'schema_invalid', providerRequestId, usage,
+      );
       this.failed('schema_invalid', started);
       throw new GeminiAnalyzerError(
         'P9_VISION_SCHEMA_INVALID', false, 'schema_invalid',
       );
+    }
+    await this.finalize(
+      registration, claim, 'response_received', result.imageOutcome, providerRequestId, usage,
+    );
+    this.options.log?.({
+      event: 'gemini_analysis_completed',
+      provider: 'google_gemini',
+      modelId: this.options.modelId,
+      outcome: result.imageOutcome,
+      durationMs: Math.max(0, this.now().getTime() - started),
+    });
+    return { result, providerAttemptId: registration?.attemptId };
+  }
+
+  private async finalize(
+    registration: AttemptRegistration | undefined,
+    claim: VisionClaimContext | undefined,
+    disposition: 'response_received' | 'failed',
+    normalizedOutcome: string,
+    providerRequestId: string | null,
+    usage: GeminiUsageEvidence,
+  ): Promise<void> {
+    if (registration && claim && this.options.providerAttempts) {
+      await this.options.providerAttempts.finalize(registration.attemptId, claim, {
+        disposition, normalizedOutcome, providerRequestId, usage,
+      });
+    }
+  }
+
+  private async safeMark(
+    attemptId: string,
+    claim: VisionClaimContext,
+    disposition: 'stale_rejected' | 'failed' | 'outcome_unknown',
+    normalizedOutcome: string,
+  ): Promise<void> {
+    try {
+      await this.options.providerAttempts?.mark(
+        attemptId, claim, disposition, normalizedOutcome,
+      );
+    } catch {
+      // A still-registered row is intentionally discoverable by reconciliation.
     }
   }
 
