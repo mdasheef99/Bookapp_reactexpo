@@ -6,6 +6,11 @@
 **Phase:** 9
 **Implementation checkpoint (2026-07-27):** WU0A/WU0B, ingestion, fixture-backed Unit 4, and Unit 4A are integrated and live-verified. M01-M08/M10-M13, the JWT Owner boundary, and separate free-plan media/fixture-vision services are live; all nine recorded fixtures passed with zero commerce effect. No real multimodal or metadata provider is implemented.
 
+**Unit 4B local checkpoint (2026-07-27):** the configuration-driven
+`gemini-3.5-flash-lite` adapter is locally implemented behind the same
+`SpineImageAnalyzer` contract and awaits independent review. It has made no live
+provider call and is not configured or deployed in any environment.
+
 ## 1. Decision
 
 Build Phase 9 as an AI-assisted, human-in-the-loop, deterministic inventory ingestion pipeline. A Store Owner uploads a same-language image of at most 15 book spines, receives enriched candidates, corrects a minimal review form, and commits candidates independently to private inventory and optionally to the public marketplace.

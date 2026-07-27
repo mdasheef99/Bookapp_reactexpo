@@ -16,6 +16,11 @@ primary/optional-secondary metadata seam is required, while secondary-provider
 selection, enablement, credentials, configuration, and calls remain deferred and
 separately gated.
 
+**Narrow superseding founder decision (2026-07-27):** the initial primary vision
+model ID is `gemini-3.5-flash-lite`, selected through server configuration. The
+earlier `gemini-3.5-flash` decision above remains preserved as historical evidence.
+No optional vision fallback model is selected or enabled.
+
 ## 2. Session experience
 
 The user-visible session has only:

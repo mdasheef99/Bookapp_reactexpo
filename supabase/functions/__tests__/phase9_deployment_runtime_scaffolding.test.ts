@@ -103,7 +103,9 @@ describe('Phase 9 deployment runtime environment', () => {
       PHASE9_WORKER_CONCURRENCY: '1',
       PHASE9_VISION_FIXTURE_CASE: 'one_book',
     };
-    expect(loadVisionWorkerEnvironment(valid).fixtureCase).toBe('one_book');
+    expect(loadVisionWorkerEnvironment(valid)).toMatchObject({
+      analyzerMode: 'fixture', fixtureCase: 'one_book',
+    });
     expect(() => loadVisionWorkerEnvironment({
       ...valid,
       PHASE9_VISION_FIXTURE_CASE: 'tenant/path',
@@ -111,6 +113,39 @@ describe('Phase 9 deployment runtime environment', () => {
     expect(() => loadVisionWorkerEnvironment({
       ...valid,
       PHASE9_WORKER_CONCURRENCY: '2',
+    })).toThrow('P9_WORKER_CONFIGURATION_INVALID');
+  });
+
+  it('requires bounded Gemini configuration only when the primary adapter is selected', () => {
+    const valid = {
+      ...shared,
+      PHASE9_VISION_WORKER_ID: 'vision-worker-000000001',
+      PHASE9_VISION_WORKER_INGRESS_TOKEN: visionToken,
+      PHASE9_PEER_WORKER_INGRESS_TOKEN_SHA256: sha256(mediaToken),
+      PHASE9_WORKER_HOST: '127.0.0.1',
+      PHASE9_WORKER_PORT: '8092',
+      PHASE9_WORKER_CONCURRENCY: '1',
+      PHASE9_VISION_ANALYZER_MODE: 'gemini',
+      PHASE9_GEMINI_API_KEY: 'gemini-api-key-C9x.51_wVq-003-strong',
+      PHASE9_GEMINI_MODEL_ID: 'gemini-3.5-flash-lite',
+      PHASE9_GEMINI_TIMEOUT_MS: '30000',
+    };
+    expect(loadVisionWorkerEnvironment(valid)).toMatchObject({
+      analyzerMode: 'gemini',
+      modelId: 'gemini-3.5-flash-lite',
+      timeoutMs: 30_000,
+    });
+    expect(() => loadVisionWorkerEnvironment({
+      ...valid, PHASE9_GEMINI_API_KEY: '',
+    })).toThrow('P9_WORKER_CONFIGURATION_INVALID');
+    expect(() => loadVisionWorkerEnvironment({
+      ...valid, PHASE9_GEMINI_MODEL_ID: '../private',
+    })).toThrow('P9_WORKER_CONFIGURATION_INVALID');
+    expect(() => loadVisionWorkerEnvironment({
+      ...valid, PHASE9_GEMINI_TIMEOUT_MS: '0',
+    })).toThrow('P9_WORKER_CONFIGURATION_INVALID');
+    expect(() => loadVisionWorkerEnvironment({
+      ...valid, PHASE9_VISION_FALLBACK_MODEL_ID: 'backup-model',
     })).toThrow('P9_WORKER_CONFIGURATION_INVALID');
   });
 });

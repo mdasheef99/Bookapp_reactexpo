@@ -11,6 +11,7 @@ import {
   SpineImageAnalyzer,
 } from '../contracts';
 import { FixtureAnalyzerError } from '../analysis/fixtureSpineImageAnalyzer';
+import { SpineAnalyzerError } from '../analysis/spineAnalyzerError';
 import { WorkerIngestionRequest } from '../contracts/ingestion';
 
 type RpcResult = { data: any; error: { message?: string } | null };
@@ -286,7 +287,7 @@ async function processClaim(
     if (completedReconciliation) return completedReconciliation;
     return { jobId: job.id, ...completionResult(completed, policy.candidates.length) };
   } catch (error) {
-    if (error instanceof FixtureAnalyzerError) {
+    if (error instanceof FixtureAnalyzerError || error instanceof SpineAnalyzerError) {
       return fail(client, job, leaseOwner, error.code);
     }
     if (error instanceof Phase9ContractError) {

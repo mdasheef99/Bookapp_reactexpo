@@ -113,8 +113,23 @@ function validatePhase9DeploymentRuntime(root = process.cwd()) {
     'workers/phase9-vision-analysis-worker/deploymentFixtures.ts',
     'scripts/invoke-phase9-worker.js',
   ].map((name) => read(root, name)).join('\n');
-  if (/GEMINI_API_KEY|OPENAI_API_KEY|GOOGLE_BOOKS_API_KEY|OPEN_LIBRARY_API_KEY/u.test(runtimeSources)) {
+  if (/OPENAI_API_KEY|GOOGLE_BOOKS_API_KEY|OPEN_LIBRARY_API_KEY/u.test(runtimeSources)) {
     errors.push('provider-credential-variable');
+  }
+  const nonEnvironmentRuntimeSources = [
+    'workers/phase9-runtime/httpService.ts',
+    'workers/phase9-media-validation-worker/server.ts',
+    'workers/phase9-vision-analysis-worker/server.ts',
+    'workers/phase9-vision-analysis-worker/deploymentFixtures.ts',
+    'scripts/invoke-phase9-worker.js',
+    '.github/workflows/phase9-worker-container-smoke.yml',
+    'workers/phase9-media-validation-worker/Dockerfile',
+    'workers/phase9-vision-analysis-worker/Dockerfile',
+  ].map((name) => read(root, name)).join('\n');
+  if (/GEMINI_API_KEY/u.test(nonEnvironmentRuntimeSources)
+    || !read(root, 'workers/phase9-runtime/environment.ts')
+      .includes("'PHASE9_GEMINI_API_KEY'")) {
+    errors.push('gemini-credential-boundary');
   }
   if (!runtimeSources.includes('/health') || !runtimeSources.includes('/ready')) {
     errors.push('health-readiness');

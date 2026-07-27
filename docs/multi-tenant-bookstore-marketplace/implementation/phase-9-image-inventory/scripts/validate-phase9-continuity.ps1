@@ -56,7 +56,8 @@ $requiredPhaseFiles = @(
     'work-units/00b-technical-design/04-jobs-providers-and-media-boundaries.md', 'work-units/00b-technical-design/05-marketplace-and-request-photo-design.md',
     'work-units/00b-technical-design/06-red-tests-acceptance-and-handoff.md',
     'work-units/01-package1-live-audit.md', 'work-units/01-package1-database-design.md',
-    'work-units/04-fixture-vision-analysis-runtime-design.md', 'work-units/04a-deployment-runtime-scaffolding-sdd.md'
+    'work-units/04-fixture-vision-analysis-runtime-design.md', 'work-units/04a-deployment-runtime-scaffolding-sdd.md',
+    'work-units/04b-gemini-vision-adapter-handoff.md'
 )
 $missing = @()
 foreach ($relative in $requiredPhaseFiles) {
@@ -88,16 +89,17 @@ $active = [IO.File]::ReadAllText((Join-Path $implementationRoot 'ACTIVE.md'))
 if (-not $active.Contains('phase-9-image-inventory/SESSION-START.md')) { Write-Error 'ACTIVE.md does not route to the Phase 9 session entrypoint.' }
 if (-not $active.Contains('DOC-13-implementation-tracker.md')) { Write-Error 'ACTIVE.md does not route to DOC-13.' }
 if (-not $active.Contains('phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md') -or
-    -not $active.Contains('provider/scale SDD reconciliation is `needs_independent_review`')) { Write-Error 'ACTIVE.md does not route to the completed fixture checkpoint and provider/scale review gate.' }
+    -not $active.Contains('phase-9-image-inventory/work-units/04b-gemini-vision-adapter-handoff.md') -or
+    -not $active.Contains('only one independent Unit 4B review is authorized next')) { Write-Error 'ACTIVE.md does not route to the fixture checkpoint and Unit 4B review gate.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `fixture_pipeline_deployed_and_live_verified`') -or
-    -not $doc13.Contains('M01-M08/M10-M13 live-verified; Owner Edge and separate free-plan media/fixture-vision services deployed')) { Write-Error 'DOC-13 does not preserve the fixture-pipeline live checkpoint.' }
-if (-not $doc13.Contains('| Next recommended task | Independent review of the provider/scale documentation reconciliation only;')) { Write-Error 'DOC-13 does not preserve the provider/scale independent-review boundary.' }
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit4b_gemini_adapter_needs_independent_review`') -or
+    -not $doc13.Contains('M01-M08/M10-M13 and fixture pipeline remain live-verified')) { Write-Error 'DOC-13 does not preserve the fixture checkpoint and Unit 4B status.' }
+if (-not $doc13.Contains('| Next recommended task | One independent review of Unit 4B only;')) { Write-Error 'DOC-13 does not preserve the Unit 4B independent-review boundary.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `fixture_pipeline_deployed_and_live_verified`\r?$' -or
-    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `provider_scale_sdd_reconciliation_needs_independent_review`\r?$') {
-    Write-Error 'Implementation tracker does not preserve the fixture checkpoint and provider/scale review gate.'
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit4b_gemini_adapter_needs_independent_review`\r?$' -or
+    $implementationTracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit4b_gemini_adapter_needs_independent_review`\r?$') {
+    Write-Error 'Implementation tracker does not preserve the Unit 4B review gate.'
 }
 $providerScaleMarkers = @{
     '00-phase-9-master-sdd.md' = @('MAS-13', 'MAS-17', 'MAS-AC14')
@@ -105,7 +107,7 @@ $providerScaleMarkers = @{
     '02-extraction-enrichment-pipeline-sdd.md' = @('EXT-26', 'EXT-39', 'CPU, memory, dimensions, decoding, and re-encoding', 'persistence: disabled by default')
     '04-media-security-privacy-sdd.md' = @('MED-28', 'MED-29', 'mandatory deletion within 7 days')
     'supporting/requirements-traceability.md' = @('Exactly one primary, optional secondary', 'Autoscaling disabled until fixed multi-replica evidence', 'Raw provider payload disabled by default')
-    'trackers/01-planning-and-decisions.md' = @('P9-D57', 'P9-D63')
+    'trackers/01-planning-and-decisions.md' = @('P9-D57', 'P9-D63', 'P9-D64', 'gemini-3.5-flash-lite')
 }
 foreach ($relative in $providerScaleMarkers.Keys) {
     $body = [IO.File]::ReadAllText((Join-Path $phaseRoot $relative))
@@ -172,9 +174,10 @@ Write-Output "REQUIREMENT_DEFINITIONS=$($requirementIds.Count)"
 Write-Output "REQUIREMENT_DEFINITION_DUPLICATES=$($duplicateRequirementIds.Count)"
 Write-Output "REQUIREMENT_TRACEABILITY_MISSING=$($missingTraceability.Count)"
 Write-Output 'REQUIREMENT_VALIDATOR_REGRESSION_PROBES=PASS'
-if (-not $implementationTracker.Contains('| 4B | Prospective real-Gemini provider-contract design') -or
+if (-not $implementationTracker.Contains('| 4B | [Gemini vision adapter]') -or
+    -not $implementationTracker.Contains('optional whole-image fallback remains unselected/disabled') -or
     -not $implementationTracker.Contains('| 5 | Metadata/aliases:')) {
-    Write-Error 'Implementation routing must keep real Gemini design separate from Unit 5 Metadata/aliases.'
+    Write-Error 'Implementation routing must keep Unit 4B and its disabled fallback separate from Unit 5 Metadata/aliases.'
 }
 if ($implementationTracker -notmatch '(?m)^\| 0A \|.*\| `approved_complete` \|') { Write-Error 'Implementation tracker no longer preserves WU0A approved-complete evidence.' }
 if ($implementationTracker -notmatch '(?m)^\| 0B \|.*\| `independently_approved` \|.*Risk-Based Phase 9 SDD analysis next;.*no Supabase query') { Write-Error 'Implementation tracker does not preserve WU0B approval and later-authority separation.' }
@@ -212,11 +215,11 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `fixture_pipeline_deployed_and_live_verified`; M01-M08/M10-M13 live-verified, Owner ingestion and two separate free-tier Render workers deployed\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `provider_scale_sdd_reconciliation_needs_independent_review`\r?$' -or
-    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* independent review of the provider/scale documentation reconciliation only\r?$' -or
+if ($tracker -notmatch '(?m)^\*\*Implementation status:\*\* `unit4b_gemini_adapter_needs_independent_review`; fixture pipeline remains live-verified and the Gemini adapter is local-only\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit4b_gemini_adapter_needs_independent_review`\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Next authorized action:\*\* one independent review of Unit 4B only\r?$' -or
     $tracker -notmatch '(?m)^\*\*Migration creation/application authority:\*\* M01-M08/M10-M13 are live-verified; M09 remains absent and separately gated; no further migration application is authorized\r?$') {
-    Write-Error 'TRACKER.md does not preserve the fixture checkpoint and provider/scale review gates.'
+    Write-Error 'TRACKER.md does not preserve the fixture checkpoint and Unit 4B review gate.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
 $packageDesign = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-database-design.md'))

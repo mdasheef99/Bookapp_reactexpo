@@ -19,6 +19,7 @@
     "bootstrap.ts",
     "index.ts",
     "deploymentFixtures.ts",
+    "supabaseVisionMediaResolver.ts",
     "../phase9-runtime/**/*.ts",
     "../../supabase/functions/_shared/imageInventory/analysis/**/*.ts",
     "../../supabase/functions/_shared/imageInventory/contracts/**/*.ts",

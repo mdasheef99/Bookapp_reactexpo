@@ -20,7 +20,11 @@ export const VISION_ENVIRONMENT_NAMES = Object.freeze([
   ...SHARED_ENVIRONMENT_NAMES,
   'PHASE9_VISION_WORKER_ID',
   'PHASE9_VISION_WORKER_INGRESS_TOKEN',
+  'PHASE9_VISION_ANALYZER_MODE',
   'PHASE9_VISION_FIXTURE_CASE',
+  'PHASE9_GEMINI_API_KEY',
+  'PHASE9_GEMINI_MODEL_ID',
+  'PHASE9_GEMINI_TIMEOUT_MS',
 ] as const);
 
 type Environment = Readonly<Record<string, string | undefined>>;
@@ -39,15 +43,22 @@ export type MediaWorkerEnvironment = WorkerNetworkEnvironment & Readonly<{
   magickWasmPath: string;
 }>;
 
-export type VisionWorkerEnvironment = WorkerNetworkEnvironment & Readonly<{
-  fixtureCase: string;
-}>;
+export type VisionWorkerEnvironment = WorkerNetworkEnvironment & (
+  | Readonly<{ analyzerMode: 'fixture'; fixtureCase: string }>
+  | Readonly<{
+    analyzerMode: 'gemini';
+    apiKey: string;
+    modelId: string;
+    timeoutMs: number;
+  }>
+);
 
 const secretPattern = /^[A-Za-z0-9._~+/=-]{32,256}$/u;
 const workerIdPattern = /^[A-Za-z0-9._:-]{16,128}$/u;
 const sha256Pattern = /^[0-9a-f]{64}$/u;
 const hostPattern = /^(?:localhost|0\.0\.0\.0|127\.0\.0\.1|::|[A-Za-z0-9.-]{1,253})$/u;
 const fixturePattern = /^[a-z][a-z0-9_]{1,63}$/u;
+const modelPattern = /^[a-z][a-z0-9._-]{1,63}$/u;
 
 function invalid(): never {
   throw new Error('P9_WORKER_CONFIGURATION_INVALID');
@@ -146,7 +157,21 @@ export function loadVisionWorkerEnvironment(
     'PHASE9_VISION_WORKER_ID',
     'PHASE9_VISION_WORKER_INGRESS_TOKEN',
   );
-  const fixtureCase = required(environment, 'PHASE9_VISION_FIXTURE_CASE');
-  if (!fixturePattern.test(fixtureCase)) invalid();
-  return { ...common, fixtureCase };
+  const analyzerMode = environment.PHASE9_VISION_ANALYZER_MODE?.trim() || 'fixture';
+  if (analyzerMode === 'fixture') {
+    const fixtureCase = required(environment, 'PHASE9_VISION_FIXTURE_CASE');
+    if (!fixturePattern.test(fixtureCase)
+      || environment.PHASE9_GEMINI_API_KEY
+      || environment.PHASE9_GEMINI_MODEL_ID
+      || environment.PHASE9_GEMINI_TIMEOUT_MS) invalid();
+    return { ...common, analyzerMode, fixtureCase };
+  }
+  if (analyzerMode !== 'gemini' || environment.PHASE9_VISION_FIXTURE_CASE) invalid();
+  const apiKey = validateSecret(required(environment, 'PHASE9_GEMINI_API_KEY'));
+  const modelId = required(environment, 'PHASE9_GEMINI_MODEL_ID');
+  const timeoutText = required(environment, 'PHASE9_GEMINI_TIMEOUT_MS');
+  if (!modelPattern.test(modelId) || !/^[1-9][0-9]{2,5}$/u.test(timeoutText)) invalid();
+  const timeoutMs = Number(timeoutText);
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 300_000) invalid();
+  return { ...common, analyzerMode, apiKey, modelId, timeoutMs };
 }

@@ -1,9 +1,9 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `fixture_pipeline_deployed_and_live_verified`
+**Status:** `unit4b_gemini_adapter_needs_independent_review`
 **Last updated:** 2026-07-27
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `provider_scale_sdd_reconciliation_needs_independent_review`
+**Active work unit:** `unit4b_gemini_adapter_needs_independent_review`
 
 This tracker is separate from planning decisions; WU0B remains independently approved after `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review, without granting later database/runtime authority.
 ## Work units
@@ -17,7 +17,7 @@ This tracker is separate from planning decisions; WU0B remains independently app
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `deployed_and_live_verified` | M11 live as `20260726182238`; Owner Edge and separate media service verified |
 | 4 | [Fixture vision-analysis runtime](../work-units/04-fixture-vision-analysis-runtime-design.md): `p9-vision-v2`, analyzer, job orchestration, immutable evidence/candidates | `fixture_deployed_and_live_verified` | M12 live as `20260726182539`; all nine fixture cases verified; no real provider |
 | 4A | [Deployment-runtime scaffolding](../work-units/04a-deployment-runtime-scaffolding-sdd.md): executable sanitation/fixture-vision hosts, strict environment, builds/containers, invocation and validation | [`deployed_and_live_fixture_verified`](./06-fixture-pipeline-deployment-evidence.md) | separate free Render services live at `96991a9`; M13 invoker boundary live |
-| 4B | Prospective real-Gemini provider-contract design for configured `gemini-3.5-flash`; optional whole-image fallback seam remains unselected/disabled | `not_started_separately_gated` | independent SDD reconciliation approval, then separate explicit design authorization; no provider calls/credentials |
+| 4B | [Gemini vision adapter](../work-units/04b-gemini-vision-adapter-handoff.md) for configured `gemini-3.5-flash-lite`; optional whole-image fallback remains unselected/disabled | `implemented_locally_needs_independent_review` | focused adapter/regression/type/security verification; no live call, credential configuration, deployment, database, Storage, or migration mutation |
 | 5 | Metadata/aliases: provider-neutral local-first metadata routing/cache/coalescing, ISBN validation, coherent selection, attempt/cost lineage, quality evaluation, and aliases | `not_started` | independent SDD reconciliation approval, then separate Unit 5 design authorization and provider fixtures/cost tests |
 | 6 | Owner session/defaults/capture/review UI with accessibility and recovery | `not_started` | Units 2–5 verified |
 | 7 | Controlled per-candidate commit, advisory duplicates, idempotency, projection changes | `not_started` | quantity/hold concurrency tests |

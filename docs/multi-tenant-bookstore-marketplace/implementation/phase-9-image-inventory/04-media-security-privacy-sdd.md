@@ -6,6 +6,12 @@
 
 **Live implementation checkpoint (2026-07-27):** M11/M12/M13, Owner Edge intake, and separate free-plan media/fixture-vision workers are live-verified. They enforce server paths, content-hashed completion, immutable service-only source snapshots/evidence, initiating-Owner/store/purpose/session/source binding, opaque token plus attempt fencing, repeated lease revalidation, re-encode/strip/hash, and canonical replay. M13 required no `SECURITY DEFINER` wrapper: current `service_role` grants safely support 13 postgres-owned, empty-`search_path`, fully qualified static `SECURITY INVOKER` delegates with execute revoked from all client roles. Detailed deployment and fixture evidence is in [tracker 06](./trackers/06-fixture-pipeline-deployment-evidence.md).
 
+**Unit 4B local checkpoint (2026-07-27):** the Gemini adapter is implemented behind
+the existing provider-neutral analyzer seam with server-only configuration, strict
+structured output, bounded normalized usage/cost evidence, sanitized error classes,
+and no raw prompt/response/image/credential logging. It has made no provider call
+and is not deployed or selected in any live environment.
+
 **Implementation checkpoint (2026-07-22):** the approved private-table, named-boundary, upload-capability, media-registry, and Storage boundary contracts are implemented in M02, M03, M05, M06, and M08 and pass isolated/live security checks. Forward M10 restores only the three anonymous discovery RPCs, makes the allowlisted projection invoker-safe, and removes direct role access; request-photo, internal-helper, and private-table boundaries remain closed. M01-M08/M10 are live-verified; M09/auth/runtime remain untouched.
 
 ## 1. Decision and evidence basis

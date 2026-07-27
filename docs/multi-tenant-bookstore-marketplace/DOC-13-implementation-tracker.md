@@ -122,16 +122,26 @@ If implementation changes product or architecture behavior, update the relevant 
 
 > 2026-07-27 Phase 9 provider/scale F1–F3 correction: the bounded documentation correction preserves the required provider-neutral primary/optional-secondary seam while deferring secondary selection and activation, distinguishes media/vision/metadata capacity signals, disables raw provider/model payload persistence by default with separately approved diagnostic capture deleted within seven days, and excludes credentials from mobile, Git, documentation, build arguments, logs, telemetry, errors, and model context. Status remains `needs_independent_review`; no runtime, migration, provider, database, Storage, deployment, scheduling, or autoscaling mutation occurred.
 
+> 2026-07-27 Phase 9 Unit 4B checkpoint: the founder authorized the local Gemini
+> adapter and narrowly superseded the initial primary vision model ID from
+> `gemini-3.5-flash` to configuration-driven `gemini-3.5-flash-lite`; the earlier
+> decision remains historical. The adapter is locally implemented behind
+> `SpineImageAnalyzer` with strict schema normalization, bounded usage/cost
+> evidence, safe error classes, and server-only credential boundaries. No live
+> provider call, credential configuration, migration, database/Storage mutation,
+> deployment, scheduling, autoscaling, metadata, UI, inventory, or publication
+> change occurred. One independent Unit 4B review is next.
+
 > 2026-07-26 Phase 9 Unit 4A review-correction checkpoint: the independent review returned `CHANGES_REQUIRED` for unsafe Docker context, pre-authentication slot starvation/read deadlines, nondeterministic shutdown evidence, source-string-only deployment claims, and identity-only fixture tests. All five corrections plus bounded invoker responses are locally focused-green. A deny-by-default Docker context, pre-admission constant-time authentication, fixed body deadline, deterministic shutdown test, real compiled-entrypoint smoke, per-fixture semantic matrix, synthetic-only container script, and minimal-permission pull-request workflow now exist. The mandatory GitHub Actions image build/start gate is next; no live credential, image push, deployment, migration, provider, Supabase, or Storage operation is authorized.
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **fixture pipeline deployed and live-verified** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 4B locally implemented; independent review pending** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-27 |
-| Latest handoff | Phase 9 fixture pipeline deployed and live-verified at `96991a9`; M13 live once; retained synthetic evidence produced zero commerce effects. |
-| Current risk level | Fixture deployment risk is contained; real-provider, lifecycle/scheduling, representative-camera sizing, and product integration remain separately gated. |
-| Next recommended task | Independent review of the provider/scale documentation reconciliation only; Unit 4B real-Gemini design and Unit 5 Metadata/aliases remain separately gated. |
+| Latest handoff | Unit 4B Gemini adapter is local-only and ready for independent review; fixture pipeline remains live-verified at `96991a9`. |
+| Current risk level | Unit 4B has mocked evidence only; live provider configuration/calls, lifecycle/scheduling, representative-camera sizing, and product integration remain separately gated. |
+| Next recommended task | One independent review of Unit 4B only; Unit 5 Metadata/aliases remains separately gated. |
 
 ---
 
@@ -148,7 +158,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `fixture_pipeline_deployed_and_live_verified` | [Phase 9 handoff](./implementation/PHASE-9-image-to-llm-inventory.md) · [deployment evidence](./implementation/phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md) | M01-M08/M10-M13 live-verified; Owner Edge and separate free-plan media/fixture-vision services deployed; all recorded fixture cases verified with zero commerce effect. |
+| Phase 9: Image-to-LLM Inventory | `unit4b_gemini_adapter_needs_independent_review` | [Unit 4B handoff](./implementation/phase-9-image-inventory/work-units/04b-gemini-vision-adapter-handoff.md) · [deployment evidence](./implementation/phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md) | Gemini adapter local-only; M01-M08/M10-M13 and fixture pipeline remain live-verified; no Unit 4B external mutation. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -266,6 +276,10 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 
 Next work:
 1. Await a separately authorized Phase 9 work unit; none follows automatically from deployment.
-2. Treat Gemini 3.5 Flash (`gemini-3.5-flash`) and Google Books API as future handoff decisions only. The generic architecture supports an optional secondary metadata provider, but its selection, enablement, credentials, calls, and implementation remain deferred.
+2. Historical handoff (vision portion superseded 2026-07-27): treat Gemini 3.5 Flash (`gemini-3.5-flash`) and Google Books API as future handoff decisions only. The generic architecture supports an optional secondary metadata provider, but its selection, enablement, credentials, calls, and implementation remain deferred.
+   The current initial primary vision model ID is configuration-driven
+   `gemini-3.5-flash-lite`; its local adapter awaits independent review, while
+   provider configuration/calls and all metadata-provider implementation remain
+   deferred.
 3. Keep M09, scheduling/autoscaling, metadata enrichment, mobile UI, inventory commit, publication, Library, and Phases 7/8 separately gated.
 4. Re-verify the exact project, migrations, schema, Storage, services, and advisors before any later mutation.

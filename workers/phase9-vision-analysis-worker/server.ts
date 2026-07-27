@@ -13,13 +13,27 @@ export async function startPhase9VisionAnalysisWorker(
   environment: Readonly<Record<string, string | undefined>> = process.env,
 ) {
   const configuration = loadVisionWorkerEnvironment(environment);
-  const handler = createPhase9VisionAnalysisService({
+  const base = {
     supabaseUrl: configuration.supabaseUrl,
     supabaseServiceRoleKey: configuration.supabaseServiceRoleKey,
     workerId: configuration.workerId,
     workerAuthToken: configuration.workerAuthToken,
-    fixtureCase: parseDeploymentFixtureCase(configuration.fixtureCase),
-  });
+  };
+  const handler = createPhase9VisionAnalysisService(
+    configuration.analyzerMode === 'gemini'
+      ? {
+        ...base,
+        analyzerMode: 'gemini',
+        apiKey: configuration.apiKey,
+        modelId: configuration.modelId,
+        timeoutMs: configuration.timeoutMs,
+      }
+      : {
+        ...base,
+        analyzerMode: 'fixture',
+        fixtureCase: parseDeploymentFixtureCase(configuration.fixtureCase),
+      },
+  );
   const service = createPhase9WorkerHttpService({
     serviceName: 'phase9-vision-analysis-worker',
     host: configuration.host,

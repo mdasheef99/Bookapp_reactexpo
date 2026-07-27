@@ -96,7 +96,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, WU0A/WU0B, corrected Package 1 design, and Unit 4/4A implementation are integrated at their recorded checkpoints. M01-M08/M10-M13, Owner ingestion, and both separate fixture workers are live-verified at the identities in tracker 06. The provider/scale SDD reconciliation is `needs_independent_review`; Unit 5 remains Metadata/aliases and real Gemini design is a separate prospective Unit 4B. No real provider credential is configured. M09, provider integration/calls, scheduling/autoscaling, metadata runtime, UI, inventory/publication, Library, and later units remain separately gated. Preserve these controls:
+The planning baseline, WU0A/WU0B, corrected Package 1 design, and Unit 4/4A implementation are integrated at their recorded checkpoints. M01-M08/M10-M13, Owner ingestion, and both separate fixture workers are live-verified at the identities in tracker 06. Unit 4B is locally implemented with configuration-driven `gemini-3.5-flash-lite` and awaits one independent review; the earlier `gemini-3.5-flash` decision remains historical. The fixture adapter remains available, no optional vision fallback is selected/enabled, and no real provider credential is configured or call made. Unit 5, M09, deployment/provider calls, scheduling/autoscaling, metadata runtime, UI, inventory/publication, Library, and later units remain separately gated. Preserve these controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

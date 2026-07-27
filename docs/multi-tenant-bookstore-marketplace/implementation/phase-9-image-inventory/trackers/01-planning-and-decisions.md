@@ -71,6 +71,7 @@
 | P9-D61 | Worker correctness must support multiple replicas through durable claims, leases, attempts, idempotency, fencing, graceful shutdown, spend reconciliation, capacity admission, connection budgets, observability, and simple store fairness; no hosting platform is prescribed. | founder-approved scale reconciliation 2026-07-27 |
 | P9-D62 | Deployment capacity progresses from one replica to fixed multiple replicas and only then to bounded autoscaling after the explicit evidence gate; autoscaling, scheduling, thresholds, and deployment changes remain unauthorized. | founder-approved scale reconciliation 2026-07-27 |
 | P9-D63 | Superseding P9-D34 prospectively, raw provider/model payload persistence is disabled by default. Separately approved, purpose-bound diagnostic capture has a maximum seven-day deletion deadline; normalized provenance/evidence is the ordinary path. Provider/model credentials cannot enter mobile, Git, documentation, build arguments, logs, telemetry, errors, or model context. | F1-F3 correction 2026-07-27 |
+| P9-D64 | Superseding only the model-ID portion of P9-D54/P9-D60, the initial primary vision model is configuration-driven `gemini-3.5-flash-lite`. The earlier Gemini decisions remain historical; the optional whole-image fallback remains unselected and disabled. | founder decision 2026-07-27 |
 
 ## Source reconciliation
 
@@ -131,6 +132,18 @@ Audit performed read-only on 2026-07-19 after `get_project` verification.
 - [ ] Supabase application authorization and exact-project re-verification.
 
 ## Append-only planning log
+
+### 2026-07-27 — Unit 4B Gemini adapter
+
+- Authorized scope: local red-first Gemini adapter implementation behind the
+  existing provider-neutral vision seam.
+- Decision history: P9-D64 narrowly supersedes only the model ID in P9-D54/P9-D60;
+  those earlier entries remain unchanged.
+- External mutations: none; no provider call, credential configuration,
+  Supabase/Storage/database mutation, migration, deployment, scheduling, or
+  autoscaling action.
+- Status/gate: local implementation awaits one independent Unit 4B review; the
+  optional vision fallback remains unselected/disabled and Unit 5 remains gated.
 
 ### 2026-07-27 — provider and scale architecture SDD reconciliation
 

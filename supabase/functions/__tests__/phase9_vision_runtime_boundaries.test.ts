@@ -160,17 +160,29 @@ describe('Phase 9 vision runtime boundaries', () => {
     });
   });
 
-  it('V4-Q01 contains no metadata or real-provider boundary', () => {
-    const files = [
+  it('V4-Q01 keeps fixture and real-provider boundaries free of metadata/product effects', () => {
+    const fixtureFiles = [
       'supabase/functions/_shared/imageInventory/analysis/fixtureSpineImageAnalyzer.ts',
       'supabase/functions/_shared/imageInventory/domain/visionPolicy.ts',
       'supabase/functions/_shared/imageInventory/runtime/visionAnalysisWorker.ts',
       'workers/phase9-vision-analysis-worker/index.ts',
-      'workers/phase9-vision-analysis-worker/bootstrap.ts',
     ];
-    const source = files.map((file) => fs.readFileSync(path.join(process.cwd(), file), 'utf8')).join('\n');
-    expect(source).not.toMatch(/google_books|open_library|gemini|openai|fetch\s*\(|metadata_enrichment/i);
-    expect(source).not.toMatch(/store_inventory|marketplace_book_listings|publish(?:ing|_listing)/i);
+    const fixtureSource = fixtureFiles
+      .map((file) => fs.readFileSync(path.join(process.cwd(), file), 'utf8')).join('\n');
+    expect(fixtureSource).not.toMatch(
+      /google_books|open_library|gemini|openai|fetch\s*\(|metadata_enrichment/i,
+    );
+    const geminiFiles = [
+      'supabase/functions/_shared/imageInventory/analysis/geminiSpineImageAnalyzer.ts',
+      'workers/phase9-vision-analysis-worker/bootstrap.ts',
+      'workers/phase9-vision-analysis-worker/supabaseVisionMediaResolver.ts',
+    ];
+    const geminiSource = geminiFiles
+      .map((file) => fs.readFileSync(path.join(process.cwd(), file), 'utf8')).join('\n');
+    expect(geminiSource).not.toMatch(/google_books|open_library|openai|metadata_enrichment/i);
+    expect(`${fixtureSource}\n${geminiSource}`).not.toMatch(
+      /store_inventory|marketplace_book_listings|publish(?:ing|_listing)/i,
+    );
   });
 
   it('V4-S03 does not expose private media or provider payload fields in runtime DTOs', () => {

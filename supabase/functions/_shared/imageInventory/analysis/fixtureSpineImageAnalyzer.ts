@@ -5,18 +5,27 @@ import {
   SpineAnalysisResult,
   SpineImageAnalyzer,
 } from '../contracts/vision';
+import { SpineAnalyzerError } from './spineAnalyzerError';
 
 export type FixtureAnalyzerErrorCode =
   | 'P9_VISION_ANALYZER_TIMEOUT'
   | 'P9_VISION_ANALYZER_UNAVAILABLE'
   | 'P9_VISION_SCHEMA_INVALID';
 
-export class FixtureAnalyzerError extends Error {
+export class FixtureAnalyzerError extends SpineAnalyzerError {
   constructor(
     readonly code: FixtureAnalyzerErrorCode,
     readonly retryable: boolean,
   ) {
-    super(code);
+    super(
+      code,
+      retryable,
+      code === 'P9_VISION_ANALYZER_TIMEOUT'
+        ? 'timeout'
+        : code === 'P9_VISION_SCHEMA_INVALID'
+          ? 'schema_invalid'
+          : 'provider_error',
+    );
     this.name = 'FixtureAnalyzerError';
   }
 }
