@@ -192,7 +192,7 @@ export function createPhase9WorkerHttpService(
       const webRequest = new Request(`http://worker.local${url.pathname}`, {
         method: 'POST',
         headers: requestHeaders(request.headers),
-        body: body.slice().buffer as ArrayBuffer,
+        body: body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength) as ArrayBuffer,
       });
       const handled = await options.handler(webRequest);
       const summary = await responseSummary(handled);
