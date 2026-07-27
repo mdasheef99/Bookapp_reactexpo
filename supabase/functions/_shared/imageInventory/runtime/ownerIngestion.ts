@@ -1,8 +1,8 @@
 import {
   assertSafeIngestionResponse,
   OwnerIngestionRequest,
-} from '../contracts/ingestion';
-import { sha256Hex, StoredImageObject, storedImageEnvelope } from '../media/sourceIdentity';
+} from '../contracts/ingestion.ts';
+import { sha256Hex, StoredImageObject, storedImageEnvelope } from '../media/sourceIdentity.ts';
 
 type RpcResult = { data: any; error: { message?: string } | null };
 type Client = {

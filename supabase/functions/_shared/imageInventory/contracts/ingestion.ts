@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { assertNoPrivacySensitiveKeys } from './privacy';
+import { assertNoPrivacySensitiveKeys } from './privacy.ts';
 
 const uuid = z.string().uuid();
 const contractVersion = z.literal('phase9-v1');
