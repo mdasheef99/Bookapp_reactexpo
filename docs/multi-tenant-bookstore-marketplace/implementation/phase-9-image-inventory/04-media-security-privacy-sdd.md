@@ -219,7 +219,7 @@ All vision transitions first prove the exact current job-row claim. If the input
 | --- | --- | --- |
 | Failed/unattached staging | 24 hours | security quarantine with restricted access and explicit expiry |
 | Scan input | within 24 hours after session close | active incident/security hold only |
-| Raw model/provider payload | 7 days | bounded incident/model-quality hold approved by policy |
+| Raw model/provider payload | persistence disabled by default | separately approved, purpose-bound diagnostic capture only; mandatory deletion within 7 days |
 | Unresolved normalized candidate | 30 days | explicit owner/platform review extension |
 | Public damage/copy photo | listing active + 30 days | order/dispute/legal dependency |
 | Unpaid/cancelled/rejected/expired request photo | 30 days | dispute/security/legal hold |
@@ -306,6 +306,8 @@ Audit is append-only from normal clients and records sensitive reads/promotions/
 | MED-25 | Storage, public display, image caching, attribution, and revalidation are allowlisted per field and adapter/version before persistence or projection. |
 | MED-26 | Query coalescing/cache reuse excludes secrets, raw media, PII, store-private fields, and policy-incompatible cross-store reuse. |
 | MED-27 | Provider shadow evaluation and promotion require separately approved privacy, licensing, retention, cost, and access controls. |
+| MED-28 | Provider/model credentials cannot enter mobile clients, Git, documentation, build arguments, logs, telemetry, errors, or model context. |
+| MED-29 | Raw provider/model payload persistence is disabled by default; any separately approved purpose-bound diagnostic capture is deleted within 7 days, while normalized provenance/evidence remains the ordinary path. |
 
 ## 17. Residual risk
 

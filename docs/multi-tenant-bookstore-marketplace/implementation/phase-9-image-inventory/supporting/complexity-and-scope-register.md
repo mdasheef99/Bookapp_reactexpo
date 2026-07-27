@@ -42,7 +42,7 @@ The workflow is substantial but bounded. It is not an autonomous agent: determin
 - field-correction/fallback/cost/cleanup telemetry;
 - model, prompt, adapter, schema, and provider versioning;
 - lifecycle worker alerts and deletion evidence;
-- repeated requested-photo failure review.
+- repeated requested-photo failure review;
 - provider-independent recorded metadata fixtures and one adapter conformance suite;
 - versioned capability declarations and provider-independent lookup identity;
 - provider/version cache isolation and bounded query-coalescing identity;
@@ -77,7 +77,7 @@ The workflow is substantial but bounded. It is not an autonomous agent: determin
 - advanced search service outside Postgres;
 - manager/staff permissions and simultaneous scanning;
 - full app translation/localization;
-- payment/provider/pickup/settlement flows.
+- payment/provider/pickup/settlement flows;
 - selection or enablement of a secondary metadata provider or vision fallback provider;
 - bounded autoscaling until fixed multi-replica activation evidence passes;
 - Kubernetes or another mandated hosting platform;

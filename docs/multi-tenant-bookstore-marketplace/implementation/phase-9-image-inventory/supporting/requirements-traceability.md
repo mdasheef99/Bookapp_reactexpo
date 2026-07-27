@@ -21,6 +21,7 @@
 | Provider licensing/publication allowlist and coalescing privacy | 04 Media; 01 Data | MED-22/25/26; DAT-31 |
 | Availability/quality/correction scorecards and promotion gate | 01 Data; 02 Extraction; 03 Review | DAT-32; EXT-38/39; REV-21 |
 | Horizontally safe claims, graceful shutdown, spend reconciliation and capacity admission | 00 Master; 02 Extraction | MAS-17; MAS-AC14/15; EXT-30–37 |
+| Raw provider payload disabled by default and credentials excluded from every unsafe surface | 02 Extraction; 04 Media; P9 decisions | EXT-15/17; MED-09/17/18/28/29; P9-D63 |
 | Autoscaling disabled until fixed multi-replica evidence | 00 Master; 02 Extraction | MAS-AC14; EXT-36 |
 | Title/author priority; visible ISBN only as clue | 02 Extraction; 01 Data | EXT-12; DAT-03 |
 | Description, ISBN-10/13, rich metadata, cover | 01 Data | DAT-01–DAT-04 |

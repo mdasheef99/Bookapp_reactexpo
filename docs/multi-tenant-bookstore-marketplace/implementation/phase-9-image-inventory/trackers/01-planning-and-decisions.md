@@ -70,6 +70,7 @@
 | P9-D60 | Gemini 3.5 Flash (`gemini-3.5-flash`) remains the initial future vision model, with one optional whole-image fallback seam; the fallback provider remains unselected/disabled and real-Gemini design is separate from Unit 5 Metadata/aliases. | founder-approved provider reconciliation 2026-07-27 |
 | P9-D61 | Worker correctness must support multiple replicas through durable claims, leases, attempts, idempotency, fencing, graceful shutdown, spend reconciliation, capacity admission, connection budgets, observability, and simple store fairness; no hosting platform is prescribed. | founder-approved scale reconciliation 2026-07-27 |
 | P9-D62 | Deployment capacity progresses from one replica to fixed multiple replicas and only then to bounded autoscaling after the explicit evidence gate; autoscaling, scheduling, thresholds, and deployment changes remain unauthorized. | founder-approved scale reconciliation 2026-07-27 |
+| P9-D63 | Superseding P9-D34 prospectively, raw provider/model payload persistence is disabled by default. Separately approved, purpose-bound diagnostic capture has a maximum seven-day deletion deadline; normalized provenance/evidence is the ordinary path. Provider/model credentials cannot enter mobile, Git, documentation, build arguments, logs, telemetry, errors, or model context. | F1-F3 correction 2026-07-27 |
 
 ## Source reconciliation
 
@@ -135,7 +136,7 @@ Audit performed read-only on 2026-07-19 after `get_project` verification.
 
 - Authorized scope: documentation-only reconciliation from the approved provider change-impact audit.
 - Completed: provider neutrality, bounded primary/secondary routing, coherent selection, cache/lineage/capability/cost/quality requirements, manual degradation, and horizontal/autoscaling-readiness requirements were reconciled prospectively.
-- Historical handling: P9-D54–P9-D56 remain unchanged; P9-D57–P9-D62 supersede or clarify them prospectively.
+- Historical handling: P9-D34 and P9-D54–P9-D56 remain unchanged as decision history; P9-D57–P9-D63 supersede or clarify them prospectively.
 - External mutations: none; no provider call, credential, Supabase/Storage/Render/deployment/scheduling/autoscaling action.
 - Status/gate: `needs_independent_review`; next action is an independent documentation review only.
 

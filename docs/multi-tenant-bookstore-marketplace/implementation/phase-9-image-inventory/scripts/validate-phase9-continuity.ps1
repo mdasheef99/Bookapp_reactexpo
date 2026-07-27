@@ -102,9 +102,10 @@ if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `fixture_pipeline_dep
 $providerScaleMarkers = @{
     '00-phase-9-master-sdd.md' = @('MAS-13', 'MAS-17', 'MAS-AC14')
     '01-data-canonical-metadata-sdd.md' = @('DAT-28', 'DAT-33')
-    '02-extraction-enrichment-pipeline-sdd.md' = @('EXT-26', 'EXT-39')
-    'supporting/requirements-traceability.md' = @('Exactly one primary, optional secondary', 'Autoscaling disabled until fixed multi-replica evidence')
-    'trackers/01-planning-and-decisions.md' = @('P9-D57', 'P9-D62')
+    '02-extraction-enrichment-pipeline-sdd.md' = @('EXT-26', 'EXT-39', 'CPU, memory, dimensions, decoding, and re-encoding', 'persistence: disabled by default')
+    '04-media-security-privacy-sdd.md' = @('MED-28', 'MED-29', 'mandatory deletion within 7 days')
+    'supporting/requirements-traceability.md' = @('Exactly one primary, optional secondary', 'Autoscaling disabled until fixed multi-replica evidence', 'Raw provider payload disabled by default')
+    'trackers/01-planning-and-decisions.md' = @('P9-D57', 'P9-D63')
 }
 foreach ($relative in $providerScaleMarkers.Keys) {
     $body = [IO.File]::ReadAllText((Join-Path $phaseRoot $relative))

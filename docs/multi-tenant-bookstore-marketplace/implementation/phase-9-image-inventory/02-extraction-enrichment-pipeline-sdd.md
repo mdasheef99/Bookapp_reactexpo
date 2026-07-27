@@ -11,8 +11,10 @@
 Use a persistent, asynchronous, provider-agnostic pipeline for same-language spine images. One primary multimodal vision adapter and at most one whole-image fallback extract observed identity clues. Deterministic code then performs local canonical lookup and sequential metadata-provider enrichment. The mobile request does not wait synchronously for the complete pipeline.
 
 Future implementation decisions select Gemini 3.5 Flash (`gemini-3.5-flash`) for
-vision and Google Books API as the initial metadata provider. Metadata-provider
-expansion is deferred. These decisions do not authorize configuration or calls.
+vision and Google Books API as the initial metadata provider. The provider-neutral
+primary/optional-secondary metadata seam is required, while secondary-provider
+selection, enablement, credentials, configuration, and calls remain deferred and
+separately gated.
 
 ## 2. Session experience
 
@@ -191,7 +193,9 @@ The internal transition is `active -> closing -> closed`. `closing` begins only 
 ## 13. Retention
 
 - Sanitized scan input: delete within 24 hours after session close; failed/unattached staging within 24 hours.
-- Raw vision/provider payload: default delete after 7 days.
+- Raw vision/provider payload persistence: disabled by default. A separately approved,
+  purpose-bound diagnostic capture must delete within 7 days; normalized
+  provenance/evidence is the ordinary retained path.
 - Unresolved normalized candidate: default expire/delete after 30 days unless a reviewed owner workflow extends it.
 - Committed candidate: retain only normalized provenance/audit fields necessary to explain the commit; remove raw payload/image link by policy.
 - Logout clears local cache; server retention is authoritative.
@@ -226,7 +230,7 @@ CI uses recorded fixtures and validates schemas/behavior, never exact generative
 - Workers are horizontally compatible and stateless for correctness. Graceful shutdown stops claims and completes, renews, or safely releases active work; stale completion remains fenced.
 - Capacity admission includes provider concurrency/quota, store/provider/global cost ceilings, and database connection budget. Exhaustion queues or retry-schedules work without storms.
 - One store cannot permanently starve another eligible store; initial per-store admission limits are sufficient, while weighted scheduling is deferred.
-- Media sanitation, vision analysis, and metadata enrichment have independent capacity signals and may use separate deployment/scaling policies.
+- Media sanitation, vision analysis, and metadata enrichment have independent capacity signals and may use separate deployment/scaling policies: media is governed by CPU, memory, dimensions, decoding, and re-encoding; vision by provider/model concurrency, quota, network latency, and cost; metadata by local/cache hit rate, request coalescing, provider limits, and database access.
 - Autoscaling remains disabled until fixed multi-replica evidence proves safe claiming/fencing, shutdown, provider timeout/retry, cost reconciliation, connection safety, fairness, and meaningful throughput improvement.
 - Operational metrics cover queued count/oldest age by stage, claim latency, active leases, retry backlog, dead letters, duration, provider rate limiting/concurrency, per-store concentration, and startup/readiness duration.
 
@@ -266,7 +270,7 @@ CI uses recorded fixtures and validates schemas/behavior, never exact generative
 | EXT-32 | Graceful shutdown stops claims and safely completes, renews, or releases work; stale completion is rejected. |
 | EXT-33 | Capacity admission and database connection budgets leave work durable without retry storms. |
 | EXT-34 | Store fairness prevents permanent starvation; advanced weighted scheduling remains deferred. |
-| EXT-35 | Media, vision, and metadata stages can scale independently without changing domain semantics. |
+| EXT-35 | Media, vision, and metadata stages expose their distinct capacity signals and can scale independently without changing domain semantics. |
 | EXT-36 | Autoscaling stays disabled until the fixed multi-replica activation evidence gate passes. |
 | EXT-37 | Queue, lease, retry, provider-capacity, fairness, and worker-readiness metrics are bounded and operationally available. |
 | EXT-38 | Provider availability, schema validity, match quality, correction rate, language/edition cohort, latency, and cost are scored separately. |

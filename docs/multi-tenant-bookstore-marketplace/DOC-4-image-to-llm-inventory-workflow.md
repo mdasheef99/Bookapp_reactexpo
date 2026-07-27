@@ -236,7 +236,9 @@ Mobile does not insert model output directly. Post-push price, quantity, conditi
 - Vendor DPA/no-training-use/cross-border review is required before production.
 - Failed/unattached upload: 24 hours.
 - Scan image: delete within 24 hours after session close.
-- Raw model/provider payload: 7 days.
+- Raw model/provider payload persistence: disabled by default. Separately approved,
+  purpose-bound diagnostic capture must be deleted within 7 days; normalized
+  provenance/evidence is the ordinary retained path.
 - Unresolved normalized candidate: 30 days.
 - Lifecycle deletion, holds, orphan cleanup, and deletion evidence are server-owned.
 
