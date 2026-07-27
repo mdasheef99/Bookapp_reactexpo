@@ -3,6 +3,9 @@ import path from 'path';
 
 const migration = '20260728000015_marketplace_phase9_metadata_foundation.sql';
 const file = path.join(process.cwd(), 'supabase', 'migrations', migration);
+const postgres17Gate = path.join(
+  process.cwd(), 'scripts', 'verify-phase9-m15-postgres17.ps1',
+);
 const sql = () => fs.readFileSync(file, 'utf8');
 
 describe('Phase 9 Unit 5A metadata persistence foundation', () => {
@@ -63,6 +66,25 @@ describe('Phase 9 Unit 5A metadata persistence foundation', () => {
       /GRANT SELECT,\s*INSERT[^;]*phase9_selected_metadata_snapshots/i,
     );
     expect(text).not.toMatch(/\bEXECUTE\s+(?:format|\$|'|")/i);
+  });
+
+  it('uses the PostgreSQL 17-compatible materialized claim-token update shape', () => {
+    const text = sql();
+    expect(text).toMatch(/tokenized\s+AS\s+MATERIALIZED/i);
+    expect(text).toMatch(/updated\s+AS\s*\(\s*UPDATE\s+public\.image_extraction_jobs/is);
+    expect(text).toMatch(
+      /SELECT\s+u\.id,\s*u\.attempt_count,\s*u\.token\s+FROM\s+updated\s+u/i,
+    );
+    expect(text).not.toMatch(/\),\s*tokens\s+AS\s*\(/i);
+  });
+
+  it('keeps a rollback-only real PostgreSQL 17 application gate', () => {
+    const gate = fs.readFileSync(postgres17Gate, 'utf8');
+    expect(gate).toContain("current_setting('server_version_num')");
+    expect(gate).toContain("to_regprocedure(");
+    expect(gate).toContain('ROLLBACK;');
+    expect(gate).toContain('P9_M15_ROLLBACK_INCOMPLETE');
+    expect(gate).toContain('--no-password');
   });
 
   it('does not accept raw payloads or create inventory/publication/alias side effects', () => {

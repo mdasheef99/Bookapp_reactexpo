@@ -208,17 +208,19 @@ BEGIN
       AND (j.status<>'in_progress' OR j.lease_expires_at<=transaction_timestamp())
       AND j.attempt_count<j.max_attempts
     ORDER BY j.next_attempt_at,j.id FOR UPDATE SKIP LOCKED LIMIT p_batch_size
-  ), tokens AS (
-    SELECT claimed.id,replace(gen_random_uuid()::text,'-','')
-      ||replace(gen_random_uuid()::text,'-','') token FROM claimed
+  ), tokenized AS MATERIALIZED (
+    SELECT c.id,replace(gen_random_uuid()::text,'-','')
+      ||replace(gen_random_uuid()::text,'-','') token FROM claimed c
+  ), updated AS (
+    UPDATE public.image_extraction_jobs j SET
+      status='in_progress',lease_owner=p_worker,
+      lease_expires_at=transaction_timestamp()+interval '5 minutes',
+      lease_token_hash=encode(extensions.digest(t.token,'sha256'),'hex'),
+      attempt_count=j.attempt_count+1,updated_at=transaction_timestamp()
+    FROM tokenized t WHERE j.id=t.id
+    RETURNING j.id,j.attempt_count,t.token
   )
-  UPDATE public.image_extraction_jobs j SET
-    status='in_progress',lease_owner=p_worker,
-    lease_expires_at=transaction_timestamp()+interval '5 minutes',
-    lease_token_hash=encode(extensions.digest(tokens.token,'sha256'),'hex'),
-    attempt_count=j.attempt_count+1,updated_at=transaction_timestamp()
-  FROM tokens WHERE j.id=tokens.id
-  RETURNING j.id,j.attempt_count,tokens.token;
+  SELECT u.id,u.attempt_count,u.token FROM updated u;
 END$$;
 
 CREATE FUNCTION marketplace_sec.phase9_assert_metadata_claim(

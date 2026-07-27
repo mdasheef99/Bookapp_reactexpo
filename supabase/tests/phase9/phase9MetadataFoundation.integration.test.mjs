@@ -107,6 +107,20 @@ beforeEach(async () => {
 });
 after(async () => db.close());
 
+test('claims one metadata job with a durable fenced token and excludes a second claimant', async () => {
+  const claimed = await claim();
+  assert.equal(claimed.attempt_count, 1);
+  assert.match(claimed.lease_token, /^[0-9a-f]{64}$/);
+  await resetActor(db);
+  assert.equal(await scalar(db, `SELECT lease_token_hash =
+    encode(extensions.digest('${claimed.lease_token}','sha256'),'hex')
+    FROM public.image_extraction_jobs WHERE id='${JOB}'`), true);
+  await setActor(db, OWNER, 'service_role');
+  assert.equal((await db.query(
+    `SELECT * FROM public.claim_phase9_metadata_jobs(1,'metadata-worker-0000052')`,
+  )).rows.length, 0);
+});
+
 test('completes a strong local canonical match with no provider, attempt, reservation, or cost', async () => {
   await resetActor(db);
   await db.exec(`DELETE FROM public.phase9_usage_reservations WHERE job_id='${JOB}';
