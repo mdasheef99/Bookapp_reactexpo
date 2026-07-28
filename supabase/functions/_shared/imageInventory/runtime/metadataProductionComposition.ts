@@ -38,10 +38,12 @@ export type MetadataProductionGateway = Readonly<{
     | { outcome: 'miss' }
     | { outcome: 'hit'; normalizedOutcome: string }
   >;
+  completeCacheHit(request: Request, normalizedOutcome: string): Promise<void>;
   decideCoalescing(request: Request): Promise<
     | { mode: 'leader' }
     | { mode: 'follower'; leaderLookupId: string }
   >;
+  registerFollower(request: Request, leaderLookupId: string): Promise<void>;
   registerLookup(request: Request): Promise<{ lookupId: string }>;
   reserveUsage(input: Request & { lookupId: string }): Promise<{ reservationId: string }>;
   registerAttempt(input: Request & {
@@ -94,22 +96,27 @@ export async function runMetadataProductionComposition(
   const local = await gateway.resolveLocal(request);
   if (local.outcome === 'matched') return { outcome: 'local_canonical_match' };
 
-  const cached = await gateway.readCache(request);
-  if (cached.outcome === 'hit') {
-    if (cacheManual.has(cached.normalizedOutcome)) {
-      await gateway.completeManual({ outcome: cached.normalizedOutcome });
-    }
-    return { outcome: 'manual_metadata_required' };
-  }
-
-  const coalescing = await gateway.decideCoalescing(request);
-  if (coalescing.mode === 'follower') return { outcome: 'coalesced_follower' };
   const policy = request.providerPolicy;
   if (!policy.enabled || !policy.adapterVersionCompatible
     || !policy.capabilityVersionCompatible || !policy.matchingAllowed
-    || !policy.pricingPolicyCompatible) {
+    || !policy.reuseAllowed || !policy.pricingPolicyCompatible) {
     await gateway.completeManual({ outcome: 'policy_denied' });
     return { outcome: 'manual_metadata_required' };
+  }
+
+  const cached = await gateway.readCache(request);
+  if (cached.outcome === 'hit') {
+    await gateway.completeCacheHit(request, cached.normalizedOutcome);
+    return {
+      outcome: cacheManual.has(cached.normalizedOutcome)
+        ? 'manual_metadata_required' : 'accepted_metadata_match',
+    };
+  }
+
+  const coalescing = await gateway.decideCoalescing(request);
+  if (coalescing.mode === 'follower') {
+    await gateway.registerFollower(request, coalescing.leaderLookupId);
+    return { outcome: 'coalesced_follower' };
   }
 
   const { lookupId } = await gateway.registerLookup(request);

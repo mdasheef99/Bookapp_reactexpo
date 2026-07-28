@@ -219,4 +219,24 @@ describe('Phase 9 Unit 5B Google Books adapter', () => {
       signal: controller.signal,
     })).resolves.toMatchObject({ outcome: 'cancelled', retryable: false });
   });
+
+  it('makes zero HTTP calls when cancellation already happened', async () => {
+    const fetcher = jest.fn();
+    const controller = new AbortController();
+    controller.abort();
+    const adapter = new GoogleBooksAdapter({
+      mode: 'real',
+      apiKey: 'server-only-key',
+      fetcher,
+      timeoutMs: 1_000,
+      maxResponseBytes: 64_000,
+    });
+    await expect(adapter.lookup({
+      query: isbnQuery,
+      correlationId: 'correlation-pre-cancel',
+      attemptId: 'attempt-pre-cancel',
+      signal: controller.signal,
+    })).resolves.toMatchObject({ outcome: 'cancelled', retryable: false });
+    expect(fetcher).not.toHaveBeenCalled();
+  });
 });

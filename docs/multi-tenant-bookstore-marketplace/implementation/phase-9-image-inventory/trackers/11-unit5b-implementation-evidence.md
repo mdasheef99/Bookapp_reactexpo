@@ -34,7 +34,19 @@ DTOs.
 
 Red-first checkpoints failed on the missing adapter and production-composition
 modules. Focused green verification initially passed 3 suites / 21 tests.
-Final affected verification and hygiene are recorded in the candidate closeout.
+Final affected Unit 5A/5B Jest passed 7 suites / 70 tests; the pre-correction
+Unit 5B adapter/composition/environment verification passed 3 suites / 22 tests.
+Changed-scope TypeScript passed. The repository-wide TypeScript command emitted
+no diagnostic but exceeded its five-minute execution bound and is not recorded
+as passed. Continuity passed with 47 Markdown files / 34 required files.
+`git diff --check` and scoped credential scanning passed.
+
+The exact candidate `b8948b0` received `CHANGES_REQUIRED` for reuse-policy
+ordering, incomplete positive-cache/follower durable paths, pre-cancelled egress,
+and incomplete verification evidence. Correction red tests failed 4 cases as
+expected. The bounded correction adds policy-before-cache, explicit durable
+cache-hit and follower completion seams, pre-cancelled zero egress, and this
+exact verification record. Correction-focused Jest passed 2 suites / 21 tests.
 
 ## External and schema state
 

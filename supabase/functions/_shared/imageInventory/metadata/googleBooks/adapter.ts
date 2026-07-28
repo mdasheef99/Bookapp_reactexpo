@@ -50,6 +50,7 @@ export class GoogleBooksAdapter {
     if (this.configuration.mode !== 'real' || !this.configuration.apiKey) {
       return outcome('authentication_configuration_failure');
     }
+    if (input.signal.aborted) return outcome('cancelled');
     let request;
     try {
       request = buildGoogleBooksRequest(input.query, this.configuration.apiKey);

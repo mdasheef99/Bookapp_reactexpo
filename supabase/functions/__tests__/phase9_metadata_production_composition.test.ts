@@ -18,7 +18,9 @@ function gateway(overrides: Partial<MetadataProductionGateway> = {}) {
   const base: MetadataProductionGateway = {
     resolveLocal: jest.fn(async () => (calls.push('local'), { outcome: 'insufficient' as const })),
     readCache: jest.fn(async () => (calls.push('cache'), { outcome: 'miss' as const })),
+    completeCacheHit: jest.fn(async () => { calls.push('complete-cache'); }),
     decideCoalescing: jest.fn(async () => (calls.push('coalescing'), { mode: 'leader' as const })),
+    registerFollower: jest.fn(async () => { calls.push('follower'); }),
     registerLookup: jest.fn(async () => (calls.push('lookup'), { lookupId: 'lookup-1' })),
     reserveUsage: jest.fn(async () => (calls.push('reserve'), { reservationId: 'reservation-1' })),
     registerAttempt: jest.fn(async () => (calls.push('attempt'), { attemptId: 'attempt-1' })),
@@ -80,6 +82,7 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
     });
     await expect(runMetadataProductionComposition(request, cache.value))
       .resolves.toEqual({ outcome: 'manual_metadata_required' });
+    expect(cache.value.completeCacheHit).toHaveBeenCalled();
     expect(cache.value.reserveUsage).not.toHaveBeenCalled();
     expect(cache.value.invokePrimary).not.toHaveBeenCalled();
 
@@ -88,8 +91,35 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
     });
     await expect(runMetadataProductionComposition(request, follower.value))
       .resolves.toEqual({ outcome: 'coalesced_follower' });
+    expect(follower.value.registerFollower).toHaveBeenCalledWith(
+      request,
+      'leader-1',
+    );
     expect(follower.value.reserveUsage).not.toHaveBeenCalled();
     expect(follower.value.invokePrimary).not.toHaveBeenCalled();
+  });
+
+  it('completes a positive cache hit durably without provider work', async () => {
+    const cache = gateway({
+      readCache: jest.fn(async () => ({
+        outcome: 'hit' as const,
+        normalizedOutcome: 'coherent_match' as const,
+      })),
+    });
+    await expect(runMetadataProductionComposition(request, cache.value))
+      .resolves.toEqual({ outcome: 'accepted_metadata_match' });
+    expect(cache.value.completeCacheHit).toHaveBeenCalled();
+    expect(cache.value.invokePrimary).not.toHaveBeenCalled();
+  });
+
+  it('does not read provider cache when reuse policy is denied', async () => {
+    const fixture = gateway();
+    await expect(runMetadataProductionComposition({
+      ...request,
+      providerPolicy: { ...request.providerPolicy, reuseAllowed: false },
+    }, fixture.value)).resolves.toEqual({ outcome: 'manual_metadata_required' });
+    expect(fixture.value.readCache).not.toHaveBeenCalled();
+    expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
   });
 
   it('registers durable lineage and revalidates the fence before provider egress', async () => {
