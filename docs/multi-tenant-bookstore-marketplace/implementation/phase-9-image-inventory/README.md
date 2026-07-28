@@ -2,7 +2,9 @@
 
 **Status:** `fixture_pipeline_deployed_and_live_verified`
 **Last updated:** 2026-07-28
-**Implementation status:** M01-M08/M10-M17 are live-verified; separate free-plan media/fixture-vision services remain deployed; Unit 5B is independently approved and merged at `47f23a8` with Google Books fixture/mock verified only; Unit 5C is separately gated
+**Implementation status:** M01-M08/M10-M17 are live-verified; Unit 5B is merged
+and Google Books remains fixture/mock verified only; Unit 5C Lite target
+documentation awaits exact-tip review and implementation is not started
 **Supabase mutation status:** M01-M08/M10-M17 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; Unit 5B created no migration and caused no Supabase/Storage mutation
 **Database checkpoint:** M01-M08 and forward migrations M10-M17 are live-verified.
 
@@ -54,6 +56,7 @@ After the repository entrypoint, read in this order:
 | [Work Unit 0 plan](./work-units/00-contracts-threat-migration-plan.md) | Versioned contract shapes, fixtures, threat tests, migration sequence, correction strategy, and stop gates. |
 | [Work Unit 0B technical design](./work-units/00b-backend-api-technical-design-plan.md) | Router for seven completed backend/API design artifacts covering commands, queries, DTOs, authorization, state, jobs, media, marketplace, request photos, red tests, exact later file allowlists, and independent gates. |
 | [Unit 4 fixture vision-analysis runtime](./work-units/04-fixture-vision-analysis-runtime-design.md) | Locally complete `p9-vision-v2`, fixture analyzer, product policy, dedicated worker, token/attempt state machine, forward M12 persistence/RPCs, privacy, and red-first evidence. |
+| [Unit 5C Lite multilingual variants](./work-units/05c-lite-multilingual-search-variants-sdd.md) | Approved target-design candidate: original-first field authority, optional hints/sidecar, field reconciliation, store-scoped active-only variants; implementation not started. |
 | [Unit 4A deployment-runtime scaffolding](./work-units/04a-deployment-runtime-scaffolding-sdd.md) | Provider-neutral sanitation/fixture-vision service hosts, strict environment loading, dynamic fixtures, safe observability, manual invocation, deterministic builds/containers, and deployment validation. |
 | [Fixture-pipeline deployment evidence](./trackers/06-fixture-pipeline-deployment-evidence.md) | M13 invoker boundary, Owner/Render identities, exact SHA/deployments, nine live fixtures, fencing/security/log/privacy and zero-commerce evidence. |
 
@@ -82,12 +85,17 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Locked Phase 9 product decisions
 
-- One image contains a same-language stack of at most 15 visible book spines.
+- One image contains at most 15 visible book spines. Current runtime requires
+  selected language; approved target auto-detects with optional hints.
 - Capture supports camera and gallery/manual upload; multiple images may be processed in one simple Start/Close session.
-- English is the default batch language. Another language must be selected before upload. Mixed-language automation is excluded.
+- Current runtime defaults the required batch language to English. Unit 5C Lite
+  target instead auto-detects per field, accepts optional hints, and still
+  excludes per-spine model switching.
 - The deterministic application orchestrates the workflow. The vision model extracts only; it has no database, storage, metadata-provider, or tool authority.
 - Vision and metadata integrations are adapter-based with one configured primary and one configured fallback.
-- Original-script title and author are authoritative. Each automated operation proposes at most three English aliases; bounded provider-recognized or Owner/platform-verified aliases may coexist with source/provenance.
+- Confirmed original-language title and author are primary. Unit 5C Lite uses
+  independent field confirmation, bounded provisional Roman forms, deterministic
+  key separation, and active store-scoped search authority.
 - Metadata stores description, ISBN-10 and ISBN-13 when available, publisher, date, language, edition, volume, format, pages, categories, cover, and provenance.
 - Owner review is mandatory before each candidate enters inventory. Store defaults reduce repeated entry.
 - Duplicates are advisory, same-store only, and never auto-merged. Image similarity is excluded.

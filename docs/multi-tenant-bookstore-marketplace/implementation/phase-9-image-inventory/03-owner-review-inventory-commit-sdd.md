@@ -22,7 +22,9 @@ Make owner review the only gateway from staged AI/provider output into store inv
 
 At Start session:
 
-- selected language: English by default;
+- current runtime selected language: English by default;
+- approved Unit 5C Lite target: auto-detect, with any language control treated
+  as an optional hint;
 - default condition;
 - default shelf/location;
 - default quantity: 1;
@@ -38,9 +40,9 @@ Each candidate card contains:
 
 - candidate/spine number and optional image highlight;
 - provider cover or placeholder;
-- original title;
-- authors;
-- language;
+- confirmed original title;
+- confirmed original authors when available;
+- per-field language/script and optional overall primary language;
 - quantity;
 - selling price;
 - base condition with explanation marker;
@@ -56,12 +58,14 @@ Expandable details contain description, ISBN-10/13, publisher/date, edition, vol
 
 Owner may:
 
-- edit title/authors/language and bibliographic snapshot;
+- edit and confirm title and each author independently, including field
+  language/script;
 - select/correct metadata match;
 - keep unmatched/manual metadata;
 - add a missed book candidate;
 - remove a false detection;
-- correct proposed aliases or omit them;
+- approve/reject eligible linguistic variants by exact source field, or omit
+  them; deterministic search keys are not shown as alias approvals;
 - choose condition, price, quantity, location, damage, and notes;
 - attach deliberate public actual-copy/damage photos;
 - select private or publish-after-review.
@@ -121,7 +125,8 @@ Required before private inventory commit:
 Required before public projection:
 
 - private commit requirements;
-- author or explicit bounded unknown-author marker;
+- author when known; author absence does not block anonymous, institutional,
+  edited, dictionary, religious, school-guide, or spine-incomplete works;
 - positive selling price and available quantity;
 - store active/approved/setup-complete/selling-allowed;
 - applicable subscription/entitlement/allowlist;
@@ -131,7 +136,10 @@ Required before public projection:
 - valid public media/cover/placeholder policy;
 - no unresolved canonical/metadata conflict designated as publication-blocking.
 
-An unmatched manual edition may publish if its store-owned metadata is sufficiently complete and reviewed; it does not require pollution of the canonical catalogue.
+An unmatched manual edition may publish if its Owner-confirmed original title,
+accepted language, positive selling price, availability, and other existing
+eligibility gates pass. Its canonical link may remain null and missing metadata
+does not create shared catalogue truth. Price-on-request is excluded.
 
 ## 9. Controlled command contract
 
@@ -154,7 +162,8 @@ The server:
 
 1. Derives `auth.uid()` and resolves active Owner capability/store.
 2. Loads candidate and verifies the final `store_id`; ignores client authority claims.
-3. Validates state/version, reviewed snapshot, aliases, damage/media, and publication eligibility.
+3. Validates state/version, reviewed snapshot, field confirmations, active
+   store-scoped variants, damage/media, and publication eligibility.
 4. Recomputes same-store duplicate evidence under an identity/row transaction lock.
 5. Performs `create_new`, `increment_quantity`, `manual_match`, or `skip`.
 6. Writes bounded audit/event evidence and candidate outcome.
@@ -257,7 +266,7 @@ Rules:
 | ID | Criterion |
 | --- | --- |
 | REV-01 | Owner review is mandatory before every inventory create/increment. |
-| REV-02 | Title, language, quantity, price, condition, location, damage, duplicate, and publication requirements are validated server-side. |
+| REV-02 | Confirmed original title, accepted language, quantity, positive public price, condition, location, damage, duplicate, and publication requirements are validated server-side. |
 | REV-03 | Optional metadata is collapsed but editable. |
 | REV-04 | One candidate failure does not block other commits. |
 | REV-05 | Every commit is atomic/idempotent and returns its recorded result on retry. |
@@ -277,3 +286,5 @@ Rules:
 | REV-19 | Stable API errors distinguish retryability, safe Owner text, surviving effects, and idempotency reuse. |
 | REV-20 | Complete provider outage, ambiguity, breaker-open state, or exhausted external capacity leaves the candidate available for manual reviewed inventory. |
 | REV-21 | Owner review exposes provider-neutral provenance/attention signals and records bounded correction categories without raw provider payloads. |
+| REV-22 | Title and author confirmation/variant activation is independent; candidate approval cannot activate unrelated fields. |
+| REV-23 | Owner-confirmed unmatched records may publish with a null canonical link when existing positive-price and eligibility gates pass; author may be absent. |

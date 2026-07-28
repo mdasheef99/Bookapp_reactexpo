@@ -1,6 +1,6 @@
 # Active Marketplace Phase Router
 
-**Last updated:** 2026-07-28
+**Last updated:** 2026-07-29
 **Routing status:** authoritative
 
 This file answers only “where does a new development session start?” DOC-13 owns global status; the active phase tracker owns the detailed current milestone and next authorized action.
@@ -11,7 +11,7 @@ This file answers only “where does a new development session start?” DOC-13 
 - **Stable handoff:** [PHASE-9-image-to-LLM-inventory.md](./PHASE-9-image-to-llm-inventory.md)
 - **Session entrypoint:** [Phase 9 SESSION-START](./phase-9-image-inventory/SESSION-START.md)
 - **Local current-state authority:** [Phase 9 master tracker](./phase-9-image-inventory/TRACKER.md)
-- **Current work-unit plan:** Unit 5B is independently approved, merged to `main` at `47f23a89a4df9ae8ece85842eb3020c3f17636bc`, and fixture/mock verified only. M17 remains live once with the recorded SELECT-only/RPC-mutation boundary; Unit 5B created no migration. Credentials, live Google Books calls, deployment, and provider-registry activity remain deferred. Unit 5C is unstarted and is the next separately authorized work unit. See [Unit 5B evidence](./phase-9-image-inventory/trackers/11-unit5b-implementation-evidence.md).
+- **Current work-unit plan:** Unit 5B is independently approved/merged and fixture/mock verified only. [Unit 5C Lite](./phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md) is the approved target-design documentation candidate awaiting exact-tip independent review; implementation is unstarted and requires a new session/separate authorization after merge. Current selected-language runtime, strict `p9-vision-v2`, live M01 alias schema, and positive-price publication remain unchanged. No provider, migration, UI, index, inventory, publication, or commerce activity is authorized.
 - **Global status authority:** [DOC-13](../DOC-13-implementation-tracker.md)
 
 ## Required reading order

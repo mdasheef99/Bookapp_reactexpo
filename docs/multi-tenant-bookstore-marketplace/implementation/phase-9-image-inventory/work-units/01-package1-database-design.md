@@ -27,13 +27,24 @@ The following names were collision-checked against the live project.
 
 `book_search_aliases`: `id uuid PK`, `store_id uuid null FK stores`, `canonical_edition_id uuid null FK canonical_editions`, `inventory_id uuid null FK store_inventory`, `alias_text text`, `alias_normalized text`, `alias_language text`, `alias_script text null`, `alias_type text CHECK (transliteration|translation|common_spelling|recognized_title)`, `source_type text CHECK (automated|provider_official|owner_verified|platform_verified)`, `source_ref text`, `confidence numeric null CHECK 0..1`, `approval_status text CHECK (proposed|approved|rejected)`, `created_by uuid null`, `approved_by uuid null`, `approved_at timestamptz null`, `rejection_reason text null`, `created_at/updated_at timestamptz`. CHECK exactly one target; inventory target requires matching non-null `store_id`; canonical target requires null `store_id`.
 
+This is the implemented M01 representation and remains accurate history/current
+schema. It is not the complete Unit 5C Lite target. The later separately
+authorized Unit 5C design must map or forward-migrate field/source linkage,
+per-field language/script, sidecar provenance, stale/active semantics,
+candidate/draft association, and store-listing scope without rewriting M01.
+
 `store_inventory` additions: `language text`, `description text`, `edition_statement text`, `volume text`, `format text`, `has_damage boolean default false`, `damage_notes text`, `damage_types text[] default '{}'`, `is_sellable boolean default true`, `last_verified_at timestamptz`, `acquisition_type text`, `cost_basis_method text`, `printed_mrp_minor integer`, `metadata_snapshot_version text`, `created_from_candidate_id uuid`, `publication_status text CHECK (private|publication_pending|published|publication_failed) default private`, `publication_intent_version integer default 1`, `version integer default 1`. Keep `photos` during compatibility.
 
 `marketplace_book_listings` additions: `language text`, `public_description text`, `edition_statement text`, `volume text`, `format text`, `has_damage boolean default false`, `public_damage_notes text`, `damage_types text[] default '{}'`, `primary_public_media_id uuid null`, `public_media_count smallint default 0 CHECK 0..3`, `last_inventory_verified_bucket text`, `search_document tsvector`.
 
 ### M02 extraction and operational persistence
 
-`image_extraction_sessions`: IDs/scope (`id`, `store_id`, `created_by`); status `active|closing|closed|expired`; selected language/script; defaults for condition/location/quantity/publication; summary counters; quota/orchestration/prompt/model/provider versions; `version`; start/close/expiry timestamps. Unique partial index allows only policy-permitted active initiating-Owner session scope.
+`image_extraction_sessions`: IDs/scope (`id`, `store_id`, `created_by`); status
+`active|closing|closed|expired`; current selected language/script columns;
+defaults for condition/location/quantity/publication; summary counters;
+quota/orchestration/prompt/model/provider versions; `version`; start/close/
+expiry timestamps. Unit 5C Lite prospectively treats language values as optional
+hints and requires a later schema/runtime reconciliation.
 
 `image_extraction_inputs`: `id`, `session_id`, `store_id`, `media_asset_id`, `source_kind camera|gallery`, exact input states from Master §6, SHA-256, quality result/reason, detected candidate count, adapter/orchestration version, `version`, processed/delete/deleted timestamps. Unique replay key on `(store_id, sha256, orchestration_version)` where reusable.
 

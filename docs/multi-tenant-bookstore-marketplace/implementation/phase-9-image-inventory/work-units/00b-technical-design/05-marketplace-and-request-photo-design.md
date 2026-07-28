@@ -27,7 +27,11 @@ A store-group card exposes only WU0A public register fields: public store identi
 
 Q10 listing detail exposes approved authoritative metadata, public price, condition/damage disclosure and approved `public_copy` media. It excludes scan/request media, exact quantity, acquisition cost, shelf/location, internal notes, raw provenance/payload, customer information and worker/provider state.
 
-Approved aliases participate only in matching. The response may state bounded alias-match context, but displays the original authoritative title and author. Aliases never define canonical identity, duplicate advice, grouping or inventory compatibility.
+Only active store-scoped Unit 5C variants participate in matching.
+Deterministic normalized keys are separate representations. The response may
+state bounded variant-match context, but displays confirmed original title and
+author as primary. Variants never define canonical identity, duplicate advice,
+grouping, inventory compatibility, or global search authority.
 
 ## 4. Marketplace consistency and cache boundaries
 

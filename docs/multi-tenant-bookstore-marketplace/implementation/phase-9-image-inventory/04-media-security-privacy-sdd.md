@@ -215,6 +215,7 @@ Provider provenance does not imply reuse permission. The adapter policy independ
 
 The first fixture-backed vision runtime uses an opaque sanitized-media reference and a platform-owned resolver. Only that resolver can map the reference to private bytes; the analyzer never receives a bucket, object path, signed URL, capability, store/session/input authority, or credential. Canonical `p9-vision-v2` observations use positive allowlists and closed warning codes. Raw provider responses and prompts are not persisted; immutable evidence contains only bounded canonical fields and sanitized provider/model/version provenance.
 
+Unit 5C Lite does not widen this boundary: its optional untrusted sidecar has no URL/path/capability/tool/query field or public authority, cannot invalidate extraction, and private scans remain ineligible as marketplace images.
 All vision transitions first prove the exact current job-row claim. If the input/session/media relationship is then missing or invalid, only that claimed job is resolved non-retryably with the bounded `P9_VISION_RELATIONSHIP_RECONCILIATION_REQUIRED` code and a hashed completing-claim fingerprint. No unverified related row is changed, the lease is cleared, exact replay is bounded and idempotent, and stale/conflicting attempts have no effect.
 
 ## 9. Authentication, tenancy, and grants
@@ -341,6 +342,7 @@ Audit is append-only from normal clients and records sensitive reads/promotions/
 | MED-26 | Query coalescing/cache reuse excludes secrets, raw media, PII, store-private fields, and policy-incompatible cross-store reuse. |
 | MED-27 | Provider shadow evaluation and promotion require separately approved privacy, licensing, retention, cost, and access controls. |
 | MED-28 | Provider/model credentials and secrets cannot enter client/build bundles, prompts, fixtures, notifications, logs, telemetry, errors, documentation, Git, or model context; non-secret provider/model identifiers remain permitted. |
+| MED-30 | Unit 5C sidecar content is independently bounded/validated and has no tool, query, storage, inventory, publication, or public-media authority. |
 | MED-29 | Raw provider/model payload persistence is disabled by default; any separately approved diagnostic capture is private, schema-bounded, positive-allowlist based, excludes credentials/secrets/signed URLs/reusable capabilities/PII/raw media/unrestricted prompts or responses, and is deleted within 7 days through idempotent deletion, retries, alerts, and failed-deletion reconciliation. |
 
 ## 17. Residual risk

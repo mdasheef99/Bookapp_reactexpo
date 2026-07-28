@@ -322,7 +322,21 @@ Resolution rules:
 
 ### 9.1 Search Alias Limits
 
-The automated Phase 9 alias-generation operation proposes at most three English/Latin-script aliases after metadata selection. The relational alias model may retain additional provider-recognized official aliases or Owner/platform-verified aliases within configured abuse, quality, and storage limits. Every alias is a provenance-bearing row with approval status; only approved aliases enter search, and no alias establishes canonical identity or duplicate evidence.
+The earlier post-metadata method that generated a single bundle of up to three
+English aliases is superseded by [Unit 5C Lite](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md).
+
+Confirmed original-language title and author values remain primary. Title and
+author confirmation is independent. An optional vision-associated sidecar may
+propose one primary plain Roman form, zero to two alternative Roman spellings,
+and one separately inactive translation candidate for an eligible field.
+Proposals remain non-searchable until deterministic field-level reconciliation
+and activation.
+
+Deterministic normalization keys are not aliases and do not require approval
+rows. Linguistic variants retain source field, language, script, provenance,
+lifecycle, and store scope. Only active store-scoped variants enter search; no
+variant establishes canonical identity or duplicate evidence. Global canonical
+promotion is deferred to separate catalogue governance.
 
 ---
 

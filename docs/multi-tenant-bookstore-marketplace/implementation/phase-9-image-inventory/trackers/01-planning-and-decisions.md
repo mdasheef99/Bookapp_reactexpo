@@ -1,7 +1,7 @@
 # Phase 9 Planning and Decision Tracker
 
 **Status:** `approved_baseline`
-**Last updated:** 2026-07-27
+**Last updated:** 2026-07-29
 **Purpose:** retain detailed product decisions, audit evidence, reconciliations, and deferred choices without inflating the master tracker
 
 ## Decision register
@@ -13,12 +13,12 @@
 | P9-D03 | Camera and gallery/manual upload are both supported. | locked |
 | P9-D04 | A session has only Start and Close, may contain multiple images, and ends with a summary. No user-visible pause/save/discard state. | locked |
 | P9-D05 | Close is available only when each submitted input is terminal (`ready`, `failed`, or explicitly skipped). Leaving the app keeps the server session active. | locked by design delegation |
-| P9-D06 | Session defaults cover condition, shelf/location, publication preference, language, and quantity=1. First-session publication default is private; a prior explicit preference may be reused. | locked by design delegation |
+| P9-D06 | Session defaults cover condition, shelf/location, publication preference, language, and quantity=1. First-session publication default is private; a prior explicit preference may be reused. | language-default portion superseded by P9-D65; remaining defaults locked |
 | P9-D07 | Owner-only pilot. Manager/staff concurrent scanning is deferred. | locked by design delegation |
-| P9-D08 | One selected language per image/batch; English default. Non-selected-language candidates are skipped and reported. | locked |
-| P9-D09 | Mixed-language detection/routing and automatic per-spine model switching are excluded. | locked |
-| P9-D10 | Original-script title/author are authoritative. Each automated operation proposes at most three English aliases; bounded provider-recognized or Owner/platform-verified aliases may coexist. All remain search-only and provenance-bearing. | locked; amended 2026-07-19 |
-| P9-D11 | Author names are transliterated, not translated. Alias text never determines identity or duplication. | locked |
+| P9-D08 | One selected language per image/batch; English default. Non-selected-language candidates are skipped and reported. | historical implemented runtime; target superseded by P9-D65 |
+| P9-D09 | Mixed-language detection/routing and automatic per-spine model switching are excluded. | routing exclusion retained; field-detection portion superseded by P9-D65 |
+| P9-D10 | Original-script title/author are authoritative. Each automated operation proposes at most three English aliases; bounded provider-recognized or Owner/platform-verified aliases may coexist. All remain search-only and provenance-bearing. | original authority retained; generation method superseded by P9-D66 |
+| P9-D11 | Author names are transliterated, not translated. Alias text never determines identity or duplication. | identity rule retained; variant taxonomy superseded by P9-D66 |
 | P9-D12 | Vision and metadata providers are adapters with configured primary/fallback choices. | locked |
 | P9-D13 | At most one whole-image vision fallback occurs, only for technical, schema, or broadly unusable output. No per-candidate vision fallback. | locked by design delegation |
 | P9-D14 | Metadata lookup uses local canonical data first, then primary/secondary providers sequentially. A coherent selected edition is stored; conflicting provider fields are not silently stitched. | locked by design delegation |
@@ -72,6 +72,11 @@
 | P9-D62 | Deployment capacity progresses from one replica to fixed multiple replicas and only then to bounded autoscaling after the explicit evidence gate; autoscaling, scheduling, thresholds, and deployment changes remain unauthorized. | founder-approved scale reconciliation 2026-07-27 |
 | P9-D63 | Superseding P9-D34 prospectively, raw provider/model payload persistence is disabled by default. Separately approved, purpose-bound diagnostic capture has a maximum seven-day deletion deadline; normalized provenance/evidence is the ordinary path. Provider/model credentials cannot enter mobile, Git, documentation, build arguments, logs, telemetry, errors, or model context. | F1-F3 correction 2026-07-27 |
 | P9-D64 | Superseding only the model-ID portion of P9-D54/P9-D60, the initial primary vision model is configuration-driven `gemini-3.5-flash-lite`. The earlier Gemini decisions remain historical; the optional whole-image fallback remains unselected and disabled. | founder decision 2026-07-27 |
+| P9-D65 | Unit 5C Lite target auto-detects per-field BCP 47 language and ISO 15924 script; scan/store language values are optional hints and cannot force all fields. Current selected-language runtime remains implemented until separate authorization. | approved target 2026-07-29 |
+| P9-D66 | Confirmed original title/author remain primary; an optional `search_variant_proposals_v1` sidecar may return bounded provisional Roman forms plus a separate inactive translation candidate. `p9-vision-v2` remains strict current runtime. | approved target 2026-07-29 |
+| P9-D67 | Title and author confirmation/reconciliation is independent; deterministic keys are not variants; only active store-scoped variants search; global promotion requires future catalogue governance. | approved target 2026-07-29 |
+| P9-D68 | Metadata failure permits an Owner-confirmed nullable-canonical listing under existing gates. Public listing still requires a positive selling price; price-on-request is excluded. | approved target 2026-07-29 |
+| P9-D69 | Unit 5C makes no provider call. Roman-query Google Books fallback is a separately authorized Unit 5B extension with at most two distinct logical query plans. | approved boundary 2026-07-29 |
 
 ## Source reconciliation
 
@@ -81,11 +86,11 @@ All listed corrections were applied to the root specification suite on 2026-07-1
 | --- | --- |
 | DOC-0 | Replace book-first discovery example with bookstore-first search/storefront behavior. |
 | DOC-1 | Separate media classes, server-mediated upload/promotion, purpose-specific retention, model-output zero trust, and request-photo privacy. |
-| DOC-3 | Add metadata description/richer edition fields, multilingual aliases, five conditions, separate damage, advisory duplicate matrix, and mandatory request-photo behavior. |
-| DOC-4 | Make 15-spine same-language batch the first slice; simplify sessions; add adapters/fallback, aliases, quality gate, persistence, precise retention, and no auto-merge. |
-| DOC-5 | Make home/search bookstore-first; define store/offer/title counts, full store catalogue, multilingual search, and cover/detail fields. |
+| DOC-3 | Preserve original field authority; replace post-metadata aliases with Unit 5C Lite field-linked store-scoped variants; retain condition/damage/duplicate rules. |
+| DOC-4 | Preserve 15-spine/current runtime facts; set auto-detect/optional hints, sidecar, and reconciliation as approved target. |
+| DOC-5 | Keep bookstore-first discovery; display originals first and restrict variant search to active store scope. |
 | DOC-6 | Make requested photos mandatory, not optional, and block payment readiness until accepted/provided. |
-| DOC-8 | Add minimal batch defaults/review UX, condition explanations, damage workflow, post-push edits, and required requested-photo response. |
+| DOC-8 | Keep minimal review UX while making target language hints optional and title/author confirmation independent. |
 | DOC-13 | Replace `single_cover` next step with this SDD set and 15-spine first slice. |
 | DOC-14 | Add orthogonal item photo-request gate to the existing `awaiting_customer_decision` path without adding a parallel order-request state machine. |
 | implementation/README | Refresh active milestone from pre-Phase-6 handoff to Phase 9 planning. |
@@ -132,6 +137,20 @@ Audit performed read-only on 2026-07-19 after `get_project` verification.
 - [ ] Supabase application authorization and exact-project re-verification.
 
 ## Append-only planning log
+
+### 2026-07-29 — Unit 5C Lite documentation reconciliation
+
+- Founder confirmed positive-price publication remains unchanged and
+  price-on-request is excluded.
+- Approved Unit 5C Lite as target design: auto-detect/optional hints, per-field
+  language/script, original-first authority, optional vision-associated sidecar,
+  provisional Roman variants, deterministic-key separation, field-specific
+  reconciliation, store-scoped active-only search, and metadata-independent
+  nullable-canonical fallback.
+- Preserved current selected-language runtime, strict `p9-vision-v2`, live M01
+  alias schema, and historical Unit 4/5 evidence.
+- Authorized documentation-only reconciliation, candidate commit/push, and one
+  independent review; implementation and all external mutations remain gated.
 
 ### 2026-07-27 — Unit 4B Gemini adapter
 

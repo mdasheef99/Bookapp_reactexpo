@@ -1,9 +1,16 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-07-28
-**Audit mode:** exact-project M17 application and PostgreSQL 17 ACL readback
+**Audit date:** 2026-07-29 documentation reconciliation; live evidence remains
+the recorded 2026-07-28 M17 readback
+**Audit mode:** documentation-only current-versus-target reconciliation
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
 **Mutation status:** M01-M08/M10-M17 live exactly once; M09 absent; M17 applied as `20260727233457`; no Storage/provider/deployment/product-data mutation
+
+**Unit 5C Lite reconciliation:** Current runtime still requires selected
+language, uses strict `p9-vision-v2`, and has the live M01
+`book_search_aliases` table. The approved target changes language/field/variant
+semantics but is not implemented. No fresh live read was needed because this
+session changes no observed schema claim and applies no migration.
 
 **Provider/scale SDD reconciliation evidence:** the 2026-07-27 bounded read-only provider audit reconfirmed the exact healthy project and migration tail with M09 absent. Live counts were five extraction candidates, one canonical edition, and zero provider-registry rows, metadata attempts, metadata sources, aliases, or usage reservations. The existing metadata-attempt table already records candidate, adapter, attempt sequence, normalized clues, status, provider record, match strength, latency, cache status, versions, reuse policy, payload lifecycle, and timestamps; it does not explicitly represent role, provider-independent query identity, capability/routing-policy version, predecessor outcome, coalescing lineage, or cost-reservation linkage. These are proposed Unit 5 design targets only. No database or Storage mutation occurred.
 
@@ -106,7 +113,7 @@ table remains empty. The target SELECT-only/RPC-mutation boundary is now live.
 | `marketplace_book_listings` | One projection per `inventory_id`; lacks language, description, aliases, structured damage/media/freshness. | Extend safe projection with public metadata/damage/media/search fields. Preserve one projection per inventory row; visual grouping occurs in query/UI, not DB merging. |
 | Projection trigger | Explicitly copies current inventory fields; revoked from anon/authenticated and executable by service role. | Extend or replace with a controlled projection writer covering new public fields and eligibility. Projection failure must be observable; no silent inventory/public divergence. |
 | Image extraction tables | M02/M11/M12/M13/M14 are live: token-fenced jobs, private immutable evidence, candidate and provider-attempt lineage, service-only invoker wrappers, and final egress validation exist. Fixture runtime remains deployed and live-verified. | Gemini configuration/deployment/live-provider verification remains separately authorized. |
-| Alias storage | No multilingual alias table or listing alias projection exists. | Add provenance-bearing aliases targeted to either a canonical edition or unmatched store inventory with an XOR target constraint. Only approved/eligible aliases enter public search. |
+| Alias storage | M01 live `book_search_aliases` exists with canonical-or-inventory XOR target, four kinds/sources, `proposed|approved|rejected`, and zero rows at last audit; no Unit 5C runtime/indexing exists. | Unit 5C Lite target adds exact field/source linkage, per-field language/script, sidecar provenance, proposed/active/rejected/stale lifecycle semantics, pre-listing candidate/draft association, store-listing scope, and active-only search. Later implementation must map or forward-migrate the live schema. |
 | Media registry | M03/M11 are live and provide typed `media_assets` plus private/public/request link structures; legacy inventory `photos text[]` remains for compatibility. M11 adds no public promotion and links only validated private scan media. | Preserve typed purpose/privacy/hash/retention boundaries and defer legacy-field retirement/public promotion to separately authorized work. |
 | Upload capabilities | M11 is live: authenticated execution of legacy path-taking RPCs is revoked and server-generated exact paths plus declared/observed object identity are present. | Preserve the service-only boundary during deployment. |
 | Cost reservation | Live `phase9_usage_reservations` remains unique on `(store_id, job_id, cost_kind, policy_version)`; live M14 links each vision call to its reservation and reconciles summed finalized cost without hard-coded prices. | Populate only through a separately deployed/configured provider runtime. |

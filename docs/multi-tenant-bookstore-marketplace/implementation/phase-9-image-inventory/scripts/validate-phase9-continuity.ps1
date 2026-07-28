@@ -50,6 +50,7 @@ $requiredPhaseFiles = @(
     'trackers/01-planning-and-decisions.md', 'trackers/02-implementation-and-verification.md', 'trackers/03-unit4-implementation-evidence.md',
     'trackers/04-deployment-runtime-scaffolding-evidence.md', 'trackers/05-m11-m12-live-application-evidence.md',
     'trackers/06-fixture-pipeline-deployment-evidence.md',
+    'trackers/12-unit5c-lite-sdd-evidence.md',
     'work-units/00-contracts-threat-migration-plan.md', 'work-units/00b-backend-api-technical-design-plan.md',
     'work-units/00b-technical-design/00-overview-authority-and-file-map.md', 'work-units/00b-technical-design/01-command-query-and-dto-catalogue.md',
     'work-units/00b-technical-design/02-authorization-tenancy-and-privacy.md', 'work-units/00b-technical-design/03-state-transactions-idempotency-and-publication.md',
@@ -57,7 +58,8 @@ $requiredPhaseFiles = @(
     'work-units/00b-technical-design/06-red-tests-acceptance-and-handoff.md',
     'work-units/01-package1-live-audit.md', 'work-units/01-package1-database-design.md',
     'work-units/04-fixture-vision-analysis-runtime-design.md', 'work-units/04a-deployment-runtime-scaffolding-sdd.md',
-    'work-units/04b-gemini-vision-adapter-handoff.md'
+    'work-units/04b-gemini-vision-adapter-handoff.md',
+    'work-units/05c-lite-multilingual-search-variants-sdd.md'
 )
 $missing = @()
 foreach ($relative in $requiredPhaseFiles) {
@@ -88,19 +90,19 @@ foreach ($marker in $trackerMarkers) {
 $active = [IO.File]::ReadAllText((Join-Path $implementationRoot 'ACTIVE.md'))
 if (-not $active.Contains('phase-9-image-inventory/SESSION-START.md')) { Write-Error 'ACTIVE.md does not route to the Phase 9 session entrypoint.' }
 if (-not $active.Contains('DOC-13-implementation-tracker.md')) { Write-Error 'ACTIVE.md does not route to DOC-13.' }
-if (-not $active.Contains('Unit 5B is independently approved, merged to `main`') -or
-    -not $active.Contains('Unit 5C is unstarted and is the next separately authorized work unit') -or
-    -not $active.Contains('trackers/11-unit5b-implementation-evidence.md')) { Write-Error 'ACTIVE.md does not route to the merged Unit 5B handoff and separately gated Unit 5C.' }
+if (-not $active.Contains('Unit 5B is independently approved/merged') -or
+    -not $active.Contains('05c-lite-multilingual-search-variants-sdd.md') -or
+    -not $active.Contains('implementation is unstarted')) { Write-Error 'ACTIVE.md does not route to the Unit 5C Lite documentation candidate and preserve the implementation gate.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5b_merged_fixture_verified_provider_deferred`') -or
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5c_lite_sdd_candidate_awaiting_review`') -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
     -not $doc13.Contains('20260727231217 marketplace_phase9_sensitive_table_acl_correction') -or
     -not $doc13.Contains('20260727233457 marketplace_phase9_maintain_acl_correction')) { Write-Error 'DOC-13 does not preserve the M15-M17 live chain.' }
-if (-not $doc13.Contains('| Next recommended task | Obtain separate authorization for Unit 5C.')) { Write-Error 'DOC-13 does not preserve the Unit 5C authorization gate.' }
+if (-not $doc13.Contains('| Next recommended task | Validate, commit/push, and independently review the Unit 5C Lite documentation tip.')) { Write-Error 'DOC-13 does not preserve the Unit 5C documentation-review and implementation gates.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit5b_merged_fixture_verified_provider_deferred`\r?$' -or
-    -not $implementationTracker.Contains('**Active work unit:** `unit5c_awaiting_separate_authorization`') -or
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit5c_lite_sdd_candidate_awaiting_independent_review`\r?$' -or
+    -not $implementationTracker.Contains('**Active work unit:** `unit5c_lite_documentation_reconciliation`') -or
     -not $implementationTracker.Contains('20260728000017_marketplace_phase9_maintain_acl_correction.sql')) {
     Write-Error 'Implementation tracker does not preserve the merged Unit 5B/M17 handoff.'
 }
@@ -116,6 +118,25 @@ foreach ($relative in $providerScaleMarkers.Keys) {
     $body = [IO.File]::ReadAllText((Join-Path $phaseRoot $relative))
     foreach ($marker in $providerScaleMarkers[$relative]) {
         if (-not $body.Contains($marker)) { Write-Error "Provider/scale reconciliation marker missing from ${relative}: $marker" }
+    }
+}
+$unit5cMarkers = @{
+    'work-units/05c-lite-multilingual-search-variants-sdd.md' = @(
+        'Current runtime versus approved target', 'auto-detection is the default',
+        'search_variant_proposals_v1', 'Deterministic search keys',
+        'title and author confirmation is independent', 'store-scoped',
+        'positive selling price', 'price-on-request is excluded',
+        'Roman-query metadata fallback belongs'
+    )
+    'supporting/data-dictionary.md' = @('live current representation', 'Unit 5C Lite target concepts (not live)')
+    'supporting/database-current-vs-target.md' = @('M01 live `book_search_aliases` exists', 'Unit 5C Lite target adds')
+    'supporting/requirements-traceability.md' = @('Unit 5C Lite target reconciliation', 'MAS-AC18')
+    'trackers/01-planning-and-decisions.md' = @('P9-D65', 'P9-D69')
+}
+foreach ($relative in $unit5cMarkers.Keys) {
+    $body = [IO.File]::ReadAllText((Join-Path $phaseRoot $relative))
+    foreach ($marker in $unit5cMarkers[$relative]) {
+        if (-not $body.Contains($marker)) { Write-Error "Unit 5C Lite reconciliation marker missing from ${relative}: $marker" }
     }
 }
 $securitySdd = [IO.File]::ReadAllText((Join-Path $phaseRoot '04-media-security-privacy-sdd.md'))
@@ -180,7 +201,8 @@ Write-Output 'REQUIREMENT_VALIDATOR_REGRESSION_PROBES=PASS'
 if (-not $implementationTracker.Contains('| 4B | [Gemini vision adapter]') -or
     -not $implementationTracker.Contains('optional whole-image fallback remains unselected/disabled') -or
     -not $implementationTracker.Contains('| 5A | [Metadata foundation]') -or
-    -not $implementationTracker.Contains('| 5B/5C | Google Books primary adapter / metadata aliases | [`5B merged_fixture_verified_provider_deferred`]')) {
+    -not $implementationTracker.Contains('| 5B/5C | Google Books primary adapter / [Unit 5C Lite multilingual variants]') -or
+    -not $implementationTracker.Contains('implementation_not_started')) {
     Write-Error 'Implementation routing must keep Unit 4B and its disabled fallback separate from Unit 5A/5B/5C.'
 }
 if ($implementationTracker -notmatch '(?m)^\| 0A \|.*\| `approved_complete` \|') { Write-Error 'Implementation tracker no longer preserves WU0A approved-complete evidence.' }
@@ -219,9 +241,9 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if (-not $tracker.Contains('**Implementation status:** `unit5b_merged_fixture_verified_provider_deferred`') -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5c_awaiting_separate_authorization`\r?$' -or
-    -not $tracker.Contains('**Next authorized action:** obtain separate authorization before starting Unit 5C aliases') -or
+if (-not $tracker.Contains('**Implementation status:** `unit5b_merged_unit5c_not_started`') -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5c_lite_documentation_reconciliation`\r?$' -or
+    -not $tracker.Contains('**Next authorized action:** validate, commit/push, and independently review the exact Unit 5C Lite documentation tip') -or
     -not $tracker.Contains('M17 is live once as `20260727233457`')) {
     Write-Error 'TRACKER.md does not preserve the merged Unit 5B/M17 handoff.'
 }
@@ -429,8 +451,9 @@ if (-not $sessionStart.Contains('| 0B Backend/API technical design or review (on
 $phaseReadme = [IO.File]::ReadAllText((Join-Path $phaseRoot 'README.md'))
 if (-not $phaseReadme.Contains('**Status:** `fixture_pipeline_deployed_and_live_verified`') -or
     -not $phaseReadme.Contains('M01-M08/M10-M17 are live once') -or
-    -not $phaseReadme.Contains('separate free-plan media/fixture-vision services remain deployed') -or
-    -not $phaseReadme.Contains('Unit 5B is independently approved and merged at `47f23a8`')) {
+    -not $phaseReadme.Contains('Unit 5B is merged') -or
+    -not $phaseReadme.Contains('Unit 5C Lite target') -or
+    -not $phaseReadme.Contains('implementation is not started')) {
     Write-Error 'Phase 9 README disagrees with the fixture-pipeline deployment checkpoint.'
 }
 $pipeline = [IO.File]::ReadAllText((Join-Path $phaseRoot '02-extraction-enrichment-pipeline-sdd.md'))

@@ -12,7 +12,7 @@ Each job payload contains only job/aggregate/media/provider-policy IDs, store/pu
 | `media_validate_sanitize` | media ID+content hash+policy version; accepted staged object | sanitized derivative+validation summary / transient storage / invalid or unsafe media | input cannot advance to extraction until success; rejection terminal |
 | `vision_extract` | input ID+content hash+vision policy; sanitized scan | candidates or terminal `no_books` / one allowed whole-image fallback / schema-invalid or quality rejection | session may close only after input terminal; no work accepted after closing |
 | `metadata_enrich` | candidate+coherent lookup key+policy | selected coherent snapshot / next sequential adapter / bounded no-match | no-match keeps store-local/manual candidate reviewable |
-| `alias_propose` | reviewed coherent snapshot+language+policy | max three automated proposals / retry transient / invalid proposals discarded | cannot alter identity or block manual review/commit |
+| `variant_reconcile` | optional vision sidecar + independently confirmed title/author + language policy | validate/reconcile bounded proposals; activate eligible store-scoped fields; invalid sidecar discarded | cannot alter identity, call metadata, or block manual review/commit |
 | `publication_retry` | publication intent identity+inventory version | published/retracted / transient retry / permanent failed status | `mayWriteInventory=false`; reauthorize eligibility each attempt |
 | `retention_delete` | media/entity+retention policy+eligibility version | non-content deletion evidence / transient object failure / hold or relink cancels eligibility | recheck links and legal/dispute/security holds immediately before delete |
 | `orphan_reconcile` | scan partition+policy version | classified linked/staged/orphan / retry scan / ambiguous item quarantined | classification precedes delete; never bypass hold |
@@ -33,7 +33,13 @@ A crashed worker leaves an expiring claim. Reclaim uses the same task identity a
 
 Before a cost-bearing call, a transaction reauthorizes store/job eligibility and creates or reuses a reservation keyed by `(store, job, cost_kind, policy_version)`. The adapter records attempt start/outcome/usage against that identity. Replay/cache hit cannot reserve or charge twice. Store, language, provider and global kill switches are evaluated before reservation.
 
-Vision permits primary plus at most one whole-image fallback only for configured technical/schema/broadly-unusable outcomes. Valid `no_books`, wrong-language policy outcome, candidate-limit rejection and deterministic validation failure do not loop. Metadata is local canonical first, then configured adapters sequentially; one coherent edition snapshot is selected without field stitching. Alias generation follows coherent metadata and cannot set identity.
+Vision permits primary plus at most one whole-image fallback only for configured
+technical/schema/broadly-unusable outcomes. The current runtime retains its
+selected-language behavior and strict `p9-vision-v2`. Unit 5C Lite prospectively
+adds an optional independently validated sidecar; sidecar failure does not
+trigger vision fallback or invalidate extraction. Metadata remains local first,
+then configured adapters sequentially, with one coherent edition snapshot and
+no field stitching. Unit 5C reconciliation makes no provider call.
 
 Concrete vendors, models, costs, quotas, circuit thresholds, timeouts and credentials are later configuration/legal gates. CI and initial runtime slices remain recorded-fixture backed.
 
@@ -42,8 +48,8 @@ Concrete vendors, models, costs, quotas, circuit thresholds, timeouts and creden
 | Adapter | Input | Normalized output | Forbidden authority |
 | --- | --- | --- | --- |
 | Vision | sanitized internal media reference, selected BCP 47 language, `spine_stack`, cap 15, contract/prompt/adapter IDs, correlation/attempt | closed outcome plus ≤15 ordered bounded candidates or terminal no-books/rejection | store/actor/state/retry/path/command/tool/credentials |
-| Metadata | normalized original title/authors, selected language, checksum-valid optional ISBN clue, contract/policy IDs | zero or more coherent edition candidates with field provenance and reuse policy | database writes, canonical identity decision, mixed-edition field stitching |
-| Alias | selected coherent snapshot, original language/script, bounded policy | ≤3 automated typed proposals with provenance/confidence | authoritative display/identity/duplicate decision |
+| Metadata | normalized original title/authors, field languages/scripts, optional language hint, checksum-valid ISBN clue, contract/policy IDs | zero or more coherent edition candidates with field provenance and reuse policy | database writes, canonical identity decision, mixed-edition field stitching |
+| Variant | optional sidecar, exact confirmed source field, field language/script, benchmark/scope policy | bounded provisional Roman forms and separate translation candidate with provenance/lifecycle | authoritative display/identity/duplicate decision, global scope, provider egress |
 | Media processor | staged object internal reference and declared envelope/purpose | validation summary, sanitized derivative identity/hash/dimensions/MIME | public promotion, entity authorization, reusable URL |
 
 All adapters strictly reject unknown keys and translate vendor failures into closed internal outcomes. Raw payload retention/access is separately restricted and never enters ordinary DTOs, events or logs.

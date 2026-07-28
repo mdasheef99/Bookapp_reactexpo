@@ -1,7 +1,7 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** approved target; M01-M08/M10-M14 live exactly once; M09 absent
-**Last updated:** 2026-07-28
+**Status:** current/live and approved-target representations separated; Unit 5C Lite implementation not started
+**Last updated:** 2026-07-29
 
 M01-M08/M10-M14 are live-verified. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. M14 adds dedicated service-only vision-provider attempts and is live once as `20260727183546`. Owner/media/fixture-vision services remain deployed. M09 quantity validation remains a separate live-data gate.
 
@@ -38,7 +38,11 @@ The dictionary distinguishes canonical truth, store-owned snapshots, public proj
 
 Existing `title`, `subtitle`, `authors`, `isbn_10`, `isbn_13`, `publisher`, `published_date`, `language`, `cover_url`, `page_count`, and `categories` remain. Both ISBN values are stored when the selected validated metadata provides them; otherwise one may remain null.
 
-## `book_search_aliases` (proposed)
+## `book_search_aliases` (live current representation)
+
+M01 created this table and it is live. The last recorded audit found zero rows.
+The fields below describe the current limited schema, not the complete Unit 5C
+Lite target.
 
 | Field | Purpose and rule |
 | --- | --- |
@@ -59,7 +63,50 @@ Existing `title`, `subtitle`, `authors`, `isbn_10`, `isbn_13`, `publisher`, `pub
 | `created_by` nullable | Actor when human-created/approved. |
 | timestamps | Creation/update/approval. |
 
-Each automated generation operation proposes at most three English aliases. Additional provider-recognized official or Owner/platform-verified aliases may remain active within configured abuse, quality, and storage limits. The controlled command enforces source-specific limits and approval; the client is never trusted.
+The current schema can retain up to three automated English-alias results under
+the former design. That generation/activation method is superseded as target
+authority by Unit 5C Lite, but the table itself remains unchanged in this
+documentation session.
+
+## Unit 5C Lite target concepts (not live)
+
+### Confirmed original field
+
+| Concept | Rule |
+| --- | --- |
+| target | `title` or one exact `author` source field |
+| original text | observed and confirmed values remain separately traceable |
+| language/script | normalized BCP 47 plus ISO 15924 per field |
+| authority | source, confirmation method/actor, confirmed timestamp |
+| display | confirmed original text remains primary |
+
+### Variant proposal
+
+| Concept | Rule |
+| --- | --- |
+| target/source | exact target type, source field, and source text |
+| variant | text, variant type, language, and script |
+| provenance | generation source, model/version, prompt, sidecar schema, benchmark policy |
+| lifecycle | proposed, active, rejected, or stale target semantics |
+| approval | method/reason, actor, approved/rejected/stale timestamps |
+| scope | store listing; private candidate/draft association before later transfer |
+| search | active only; never identity or duplicate evidence |
+
+The later implementation must decide whether to extend, map, or forward-migrate
+the live M01 representation. It must not rewrite applied migration history.
+
+### Language enablement
+
+Record language/script, exact model/prompt/schema and benchmark dataset/version,
+sample count/results, vision/Romanization/automatic-activation switches,
+decision provenance, approver, and approval date. Enablement is reversible.
+
+### Owner-confirmed unlinked record
+
+Retain nullable canonical edition, metadata-resolution status, store authority,
+confirmation source, original title, author when available, field
+language/script, and later inventory/publication eligibility. Publication still
+requires a positive selling price; price-on-request is not a Unit 5C target.
 
 ## `store_inventory` additions
 
@@ -109,7 +156,7 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | --- | --- |
 | `id`, `store_id`, `created_by` | Tenant/initiating-actor identity; during the pilot only this Owner mutates/resumes. Interactive support intervention is excluded. |
 | `status` | `active`, `closing`, `closed`, `expired`; `closing` begins only after inputs are terminal, rejects new inputs, and finalizes summary. No user-visible pause/early-close state. |
-| `selected_language`, `selected_script` | One batch language; English default. |
+| `selected_language`, `selected_script` | Current runtime: required batch language, English default. Approved target: optional hints; per-field detection is authoritative. |
 | default fields | condition, shelf/location, quantity=1, publication preference. |
 | summary counters | input/candidate/ready/review/committed/private/published/skipped/failed counts. |
 | policy/version fields | quota policy, orchestration schema, prompt/model/provider selection versions. |
@@ -145,7 +192,7 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | --- | --- |
 | scope/position | result/store/input, stable ordinal, unique `(analysis_result_id,observation_ordinal)`. |
 | disposition | `candidate`, `language_mismatch`, `unknown_language`, or `identity_insufficient`. |
-| immutable clues | title/authors/publisher/ISBN, detected language, confidence, normalized geometry, closed warning codes. |
+| immutable clues | Current: title/authors/publisher/ISBN, candidate language, confidence, geometry, warnings. Target: title/each-author language and script plus separately validated optional variant sidecar. |
 | evidence | bounded canonical observation snapshot only; no raw provider response, prompt, URL/path/token, or arbitrary metadata. |
 | candidate link | nullable one-to-one link for accepted observations; skipped evidence has no candidate. |
 
@@ -167,11 +214,11 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | Field | Rule |
 | --- | --- |
 | scope/position | session/input/store, vision job/schema/analysis-observation lineage, stable candidate index, optional bounding box. |
-| observed identity | original-script title, authors, publisher clue, visible ISBN clue, language/script. |
+| observed identity | confirmed original title/authors, publisher/ISBN clues, overall language when useful, and per-field language/script target. |
 | confidence | extraction confidence only; never canonical authority. |
 | immutable evidence | owned by linked analysis observation; it is not stored in `selected_snapshot` or `owner_review_snapshot`. |
 | normalized selection | later selected metadata snapshot, canonical match nullable, metadata source/attempt. |
-| aliases | related through `book_search_aliases`; automated proposal maximum three, with bounded additional official/verified rows. |
+| variants | Current rows relate through live `book_search_aliases`; target proposals remain field-linked, provisional, store-scoped, and active-only after reconciliation. |
 | review fields | owner edits/defaults, add/remove action, duplicate choice, publication choice. |
 | status | `processing`, `ready`, `needs_review`, `possible_duplicate`, `commit_in_progress`, `committed`, `failed`. A projection failure leaves this value `committed`, sets inventory publication status to `publication_failed`, and returns API outcome `committed_publication_failed`. |
 | commit linkage | committed inventory/listing IDs and idempotency identity. |

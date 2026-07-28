@@ -1,16 +1,16 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `provider_scale_reconciliation_superseded_by_approved_runtime_evidence`
-**Implementation status:** `unit5b_merged_fixture_verified_provider_deferred`
-**Last updated:** 2026-07-28
-**Current milestone:** Unit 5B independently approved, merged, and pushed at `47f23a89a4df9ae8ece85842eb3020c3f17636bc`
-**Active work unit:** `unit5c_awaiting_separate_authorization`
+**Planning status:** `unit5c_lite_sdd_candidate_awaiting_independent_review`
+**Implementation status:** `unit5b_merged_unit5c_not_started`
+**Last updated:** 2026-07-29
+**Current milestone:** Unit 5C Lite governing documentation reconciled; exact-tip independent review pending
+**Active work unit:** `unit5c_lite_documentation_reconciliation`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** Unit 5B merge to `main` at `47f23a89a4df9ae8ece85842eb3020c3f17636bc`; independent verdict `APPROVED_FOR_MERGE`; detailed evidence is [tracker 11](./trackers/11-unit5b-implementation-evidence.md)
-**Next authorized action:** obtain separate authorization before starting Unit 5C aliases
-**Implementation authority:** no new implementation is authorized; Unit 5C, secondary providers, Owner UI, inventory commit, publication, credentials, live provider calls, configuration, and deployment remain unauthorized
+**Next authorized action:** validate, commit/push, and independently review the exact Unit 5C Lite documentation tip
+**Implementation authority:** no Unit 5C implementation is authorized; secondary providers, Owner UI, inventory commit, publication, credentials, live provider calls, configuration, and deployment remain unauthorized
 **Migration creation/application authority:** M17 is live once as `20260727233457`. M01-M08/M10-M17 remain live exactly once and M09 remains absent; no further migration is authorized
-**Current gate:** Unit 5C remains not started and requires separate authorization; Google Books production launch gates remain deferred
+**Current gate:** exact documentation tip must be independently approved; Unit 5C implementation then requires a new session and separate authorization
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -19,6 +19,15 @@
 Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Phase 9 M01-M08/M10-M14 are live exactly once and M09 remains absent. M13 exposes only minimum `SECURITY INVOKER` public wrappers for the authoritative private service RPCs; M14 adds service-only provider-attempt lineage and final egress validation. Owner ingestion is active with JWT verification; `phase9-media-sanitation` and `phase9-fixture-vision` are separate free-plan Render services at `96991a9`.
 
 The [Unit 4 design](./work-units/04-fixture-vision-analysis-runtime-design.md) and [Unit 4A deployment runtime](./work-units/04a-deployment-runtime-scaffolding-sdd.md) are now live-verified through the [fixture deployment evidence](./trackers/06-fixture-pipeline-deployment-evidence.md). The deployed `one_book` path and eight fresh-process operator cases used recorded fixtures only, `batchSize: 1`, normal claim/fencing/persistence/failure paths, and produced zero inventory/listing/publication effects. Unit 5B now implements the initial Google Books adapter behind provider-neutral contracts, but it remains fixture/mock verified only: no credential, live call, deployment, or registry mutation occurred.
+
+[Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md)
+is now the approved target specification. Current runtime remains
+selected-language with strict `p9-vision-v2`; M01 `book_search_aliases` remains
+the live limited schema. The target adds auto-detect/optional hints, per-field
+language/script, original-first authority, independent field confirmation, an
+optional variant sidecar, deterministic-key separation, field reconciliation,
+store-scoped active-only search, and Owner-confirmed nullable-canonical fallback.
+It is not implemented.
 
 The provider/scale reconciliation keeps real Gemini provider-contract design as a separately gated prospective Unit 4B and keeps Unit 5 authoritatively named `Metadata/aliases`. The generic architecture supports one metadata primary and at most one disabled-until-approved secondary, horizontal correctness, and a fixed-multi-replica activation gate; it does not authorize provider calls, deployment changes, scheduling, or autoscaling. The bounded F1–F3 correction removes the deferred-secondary contradiction, makes media/vision/metadata capacity signals explicit, and disables raw provider/model payload persistence by default while retaining the independent-review gate.
 
@@ -84,6 +93,7 @@ The exact development project was re-verified read-only at M11/M12 closeout:
 | Work Unit 4 fixture vision-analysis runtime | [`integrated_main_e9ba2d9`](./work-units/04-fixture-vision-analysis-runtime-design.md) |
 | Work Unit 4A deployment-runtime scaffolding | [`deployed_and_live_fixture_verified`](./trackers/06-fixture-pipeline-deployment-evidence.md) |
 | Work Unit 4B Gemini vision adapter | [`m14_live_verified_provider_deferred`](./work-units/04b-gemini-vision-adapter-handoff.md) |
+| Unit 5C Lite target SDD | [`candidate_awaiting_exact_tip_review`](./work-units/05c-lite-multilingual-search-variants-sdd.md); [evidence](./trackers/12-unit5c-lite-sdd-evidence.md); implementation not started |
 | Provider and scale architecture SDD reconciliation | `stale_marker_superseded_by_unit4b_m14_m17_unit5a_review_evidence_2026-07-28` |
 
 ## Blocking gate before further implementation
@@ -126,7 +136,7 @@ Unit 5B is complete at the merged fixture/mock-verified level recorded in
 [tracker 11](./trackers/11-unit5b-implementation-evidence.md). Matching, reuse,
 and storage are independently enforced, and only `coherent_match` is a positive
 reusable outcome. Unit 5B created or applied no migration; M09 remains absent.
-No later work unit is automatically authorized. Unit 5C aliases remain not
-started. Do not apply M09; configure, deploy, or call providers; select/enable
+Unit 5C Lite documentation is the current review candidate; implementation
+remains not started. Do not apply M09; configure, deploy, or call providers; select/enable
 a secondary; schedule/autoscale workers; change mobile UI; commit inventory; publish
 listings; or implement Library behavior.

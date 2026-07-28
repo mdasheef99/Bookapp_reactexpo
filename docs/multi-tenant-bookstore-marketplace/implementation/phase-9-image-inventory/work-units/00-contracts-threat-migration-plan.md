@@ -76,13 +76,24 @@ The schema rejects URLs, paths, SQL, HTML/active content, tool calls, commands, 
 
 ### 5.4 Metadata lookup and selected result
 
-The internal lookup request prefers normalized original title and authors, includes the selected language, and may include a checksum-valid visible ISBN clue. Resolution is local canonical first, then configured primary and secondary adapters sequentially.
+The current internal lookup request includes selected language. Under the
+approved Unit 5C Lite target it carries confirmed original title/authors,
+per-field language/script, and optional language hint instead. It may include a
+checksum-valid visible ISBN clue. Resolution remains local canonical first, then
+configured primary and secondary adapters sequentially.
 
 Each adapter returns zero or more coherent edition candidates with provenance. Selection stores one coherent edition snapshot rather than field-stitching conflicting editions. The normalized result may contain description, ISBN-10/13, title/subtitle, authors, publisher/date, language, edition statement, volume, format/binding, pages, categories, cover reference, match rationale, confidence, and provider/version provenance. ISBNs must pass deterministic normalization/checksum/conversion rules before authority. Field-level policy separately identifies matching-only, storage, public-display, image-cache, attribution, and expiry/revalidation rights. This covers DAT-01–DAT-09, EXT-11–EXT-12, and MED-22.
 
 ### 5.5 Search alias result
 
-Each automated alias-generation operation proposes at most three English/Latin-script title aliases typed as transliteration, translation, common title, or recognized title. The relational model may retain additional provider-recognized official or Owner/platform-verified aliases within configured abuse, quality, and storage limits. Every row has source, version, confidence where applicable, and approval state. Author aliases transliterate names; they do not translate them. Original-script data remains authoritative, and aliases cannot drive identity, canonical matching, or duplicate decisions. This covers MAS-04 and DAT-10–DAT-15.
+This plan's former post-metadata three-English-alias method is superseded as
+target authority by [Unit 5C Lite](./05c-lite-multilingual-search-variants-sdd.md).
+The live M01 vocabulary remains current schema. Target proposals are optional
+vision-associated, field-linked, provisional, bounded Roman forms with a
+separate inactive translation candidate. Deterministic keys are not variants;
+only reconciled active store-scoped variants search. Confirmed original fields
+remain primary and variants cannot drive identity, canonical matching, or
+duplicates.
 
 ### 5.6 Central validation matrix
 
@@ -105,7 +116,7 @@ The versioned query contract defines match-result identity, store-group identity
 | English 1-spine and 15-spine success | Ordered candidates validate; 15 is accepted. |
 | 16+ candidates | Entire input becomes reject/rescan; no truncation or partial commit. |
 | Valid empty image | `no_books` is terminal; no costly fallback loop. |
-| Wrong selected language | Typed skip/result; no automatic per-spine model switch. |
+| Language disagreement | Current runtime typed skip/result; target preserves per-field language/script and treats hints as non-authoritative; no per-spine model switch. |
 | Repeated spines | Candidates remain separate for owner review. |
 | Valid and invalid visible ISBN clues | Valid clue aids lookup; neither becomes authority without validation. |
 | Image-borne prompt injection | Text cannot request tools, URLs, secrets, writes, or policy changes. |

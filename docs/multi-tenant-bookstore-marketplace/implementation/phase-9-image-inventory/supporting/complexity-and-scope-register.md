@@ -1,6 +1,6 @@
 # Phase 9 Complexity and Scope Register
 
-**Last updated:** 2026-07-19
+**Last updated:** 2026-07-29
 
 ## Complexity outcome
 
@@ -10,11 +10,11 @@ The workflow is substantial but bounded. It is not an autonomous agent: determin
 
 | Area | Potential complexity | Containment decision | Result |
 | --- | --- | --- | --- |
-| Capture | Covers, shelves, mixed orientations, arbitrary book count | Same-language spine stack only; maximum 15; reject/rescan above cap | bounded image contract |
-| Languages | Automatic per-spine detection/routing | Owner selects one batch language; English default; non-selected candidates skipped | no mixed-language orchestration |
+| Capture | Covers, shelves, mixed orientations, arbitrary book count | Spine stack only; maximum 15; reject/rescan above cap | bounded image contract |
+| Languages | Detection quality and mixed fields | Auto-detect fields with optional hints; no per-spine model switching; reversible language gates | mixed-script support without routing fleet |
 | Vision failover | Per-book ensemble/model voting | One primary and at most one whole-image fallback | bounded cost/latency |
 | Metadata | Parallel ensemble and field-level merging | Local first, then sequential primary/secondary; select one coherent edition | predictable provenance |
-| Aliases | Full multilingual catalogue localization | Up to three automated proposals; bounded official/Owner-verified rows; original text authoritative | search value without UI translation project or artificial loss of legitimate names |
+| Variants | Full multilingual catalogue localization | Optional sidecar; one primary Roman form, up to two alternatives, separate inactive translation; field reconciliation and store scope | search value without global authority or UI translation |
 | Duplicates | Image matching, auto-merge, cross-store reconciliation | Same-store advisory warning; deterministic identity/variant rules; explicit owner choice | low irreversible-risk surface |
 | Repeated spines | Attempt to infer physical identity | One visible spine remains one candidate | owner controls quantity/rows |
 | Sessions | Pause/resume/save/discard/branching state machine | Start, add images, Close with summary; invisible persistence only | simple mental model |
@@ -62,10 +62,12 @@ The workflow is substantial but bounded. It is not an autonomous agent: determin
 | Lifecycle deletion | Scale makes manual cleanup unreliable; disputes can override deletion | policy fields, idempotent worker, holds, tombstone evidence, alerts |
 | Customer photo acceptance | Store must honor a customer-specific copy request before confirmation | item substate and existing customer-decision path |
 | Multilingual search | Original text and English discovery must coexist without identity corruption | source-bearing alias table and approved alias projection |
+| Unit 5C live-schema delta | M01 predates field-level target/lifecycle/scope | preserve live table; design a separately authorized forward mapping/migration | no false implementation claim |
 
 ## Deferred or separate work
 
-- automatic mixed-language images and script segmentation;
+- per-spine model switching, language-specific worker fleets, and forced
+  single-language orchestration;
 - model-per-spine dynamic routing;
 - shelf-batch/high-volume extraction above 15;
 - image-based duplicate detection;
@@ -77,6 +79,7 @@ The workflow is substantial but bounded. It is not an autonomous agent: determin
 - advanced search service outside Postgres;
 - manager/staff permissions and simultaneous scanning;
 - full app translation/localization;
+- price-on-request behavior;
 - payment/provider/pickup/settlement flows;
 - selection or enablement of a secondary metadata provider or vision fallback provider;
 - bounded autoscaling until fixed multi-replica activation evidence passes;

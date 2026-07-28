@@ -140,7 +140,8 @@ Search should support:
 - original-script title
 - original-script author
 - title plus author
-- approved transliteration/translation/common-spelling aliases
+- active store-scoped transliteration/plain-Roman/common-spelling variants
+- separately approved translation/recognized-title variants
 - language
 - category
 - store name
@@ -158,7 +159,12 @@ MVP search priority:
 5. fuzzy title match
 6. store name match
 
-Search must use the canonical book model from DOC-3 to resolve editions without merging store inventory. An alias hit displays the original authoritative title/author. Different-language editions remain separate.
+Search must use the canonical book model from DOC-3 to resolve editions without
+merging store inventory. Deterministic normalization keys are not linguistic
+variants. A variant hit applies only to its eligible store listing and displays
+confirmed original-language title/author as primary, with an approved plain
+Roman form optionally secondary. Different-language editions remain separate;
+one Store Owner cannot create platform-wide canonical search authority.
 
 ---
 

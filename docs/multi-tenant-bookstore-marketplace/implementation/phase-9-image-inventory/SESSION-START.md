@@ -1,7 +1,7 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-07-28
+**Last updated:** 2026-07-29
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
@@ -10,9 +10,9 @@ The one startup chain is repository `AGENTS.md` â†’ `implementation/ACTIVE.md` â
 
 Current routed handoff: Unit 5B is independently approved and merged to `main`
 at `47f23a89a4df9ae8ece85842eb3020c3f17636bc`. Google Books remains
-fixture/mock verified only with no credential, live call, deployment, migration,
-or Supabase/Storage mutation. Unit 5C is unstarted and requires separate
-authorization.
+fixture/mock verified only. [Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md)
+is the approved target-design documentation candidate and awaits exact-tip
+independent review; implementation remains unstarted and separately gated.
 
 ## 1. Canonical status source
 
@@ -73,7 +73,7 @@ Do not describe an action as authorized merely because it is listed as a future 
 | 4 Vision adapter | 02 Pipeline; 04 Security | [Unit 4 fixture vision-analysis design](./work-units/04-fixture-vision-analysis-runtime-design.md), current vision contracts, exact-project schema/grant evidence |
 | 4A Deployment-runtime scaffolding | 02 Pipeline; 04 Security | [Unit 4A deployment-runtime SDD](./work-units/04a-deployment-runtime-scaffolding-sdd.md), [Unit 4A evidence](./trackers/04-deployment-runtime-scaffolding-evidence.md), Unit 3/4 evidence, current worker/Owner entrypoints and deployment configuration |
 | Service deployment/live fixture verification | 02 Pipeline; 04 Security | [Unit 4A deployment-runtime SDD](./work-units/04a-deployment-runtime-scaffolding-sdd.md), [M11/M12 live-application evidence](./trackers/05-m11-m12-live-application-evidence.md), current-vs-target audit, migration ledger, current worker/Owner entrypoints, environment loaders, container/deployment validators, hosting configuration, and fresh exact-project service/function readback |
-| 5 Metadata/aliases | 01 Data; 02 Pipeline; 05 Marketplace | data dictionary, provider audit/fixtures |
+| 5 Metadata/aliases | 01 Data; 02 Pipeline; 03 Review; 04 Security; 05 Marketplace | Unit 5A/5B handoffs/evidence, [Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md), data dictionary, current-vs-target audit, requirements traceability, complexity register, provider audit/fixtures |
 | 6 Owner UX | 03 Review; 02 Pipeline | DOC-8, accessibility/verification matrix |
 | 7 Commit/duplicates/projection | 01 Data; 03 Review; 05 Marketplace | quantity/hold invariants, current trigger audit |
 | 8 Marketplace | 05 Marketplace; 01 Data | DOC-0, DOC-3, DOC-5, public/private tests |

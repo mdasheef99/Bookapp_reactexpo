@@ -8,7 +8,11 @@
 
 ## 1. Decision
 
-Make marketplace discovery bookstore-first while preserving edition-aware book matching. A book query returns every eligible bookstore carrying a matching edition, each store once. Selecting a bookstore opens its complete active public catalogue, with the searched book highlighted. Original-language metadata is displayed; approved aliases expand search only.
+Make marketplace discovery bookstore-first while preserving edition-aware book
+matching. A book query returns every eligible bookstore carrying a matching
+edition, each store once. Selecting a bookstore opens its complete active public
+catalogue, with the searched book highlighted. Confirmed original-language
+metadata is primary; active store-scoped variants expand search only.
 
 ## 2. Current-to-target change
 
@@ -85,19 +89,21 @@ Search supports:
 - ISBN-10/13 exact;
 - original title/subtitle;
 - original authors;
-- approved alias text;
+- active store-scoped linguistic variant text;
 - publisher/category where product UI exposes it;
 - language;
 - store name and locality;
 - condition, price, pickup/delivery filters.
 
-Alias rules:
+Variant rules:
 
-- alias hit resolves to the target listing/edition;
-- display original authoritative title/authors and language;
-- do not show uncertain/rejected aliases;
-- alias does not group different editions or duplicate inventory;
-- search telemetry may record that an alias matched, without exposing raw private provenance to the customer/store.
+- a variant hit resolves only to its eligible store listing;
+- display confirmed original title/authors and language as primary;
+- an approved plain Roman form may display secondarily;
+- deterministic normalized keys are not linguistic variants;
+- stale, proposed, rejected, or unapproved translation variants do not search;
+- variants do not group editions, define canonical identity, or duplicate inventory;
+- telemetry may record a bounded variant-match category without raw provenance.
 
 ## 8. Ranking
 
@@ -125,7 +131,8 @@ Sponsored ranking is excluded unless clearly labelled in a later approved featur
 - canonical/provider cover URL when valid;
 - approved owner actual-copy fallback when cover absent;
 - placeholder otherwise;
-- original title/authors;
+- confirmed original title/authors, plus approved plain Roman forms secondarily
+  when useful;
 - language;
 - price;
 - base condition and accessible explanation;
@@ -165,7 +172,8 @@ A store result/listing is visible only when:
 - listing is active, moderation approved, quality ready, sellable, and quantity available > 0;
 - price and condition are valid;
 - damaged listings contain required approved public evidence;
-- language/metadata fields meet public projection requirements;
+- confirmed original title and accepted language meet public requirements;
+- a positive selling price is present; price-on-request is excluded;
 - public media/URLs pass policy.
 
 Eligibility must be evaluated through safe projections/controlled functions without exposing private `stores` or `store_inventory` to consumers.
@@ -216,7 +224,7 @@ Before commit, the owner can see a non-authoritative preview of the future card/
 | MKT-02 | Every eligible matching store appears once through correct store-level pagination. |
 | MKT-03 | Selecting a store shows its complete active public catalogue. |
 | MKT-04 | The searched book is highlighted/pinned and can be cleared to browse all. |
-| MKT-05 | Original-script and approved alias searches resolve to the same authoritative display. |
+| MKT-05 | Original-language and active store-scoped variant searches resolve to the same authoritative original-first display. |
 | MKT-06 | Search/card/detail show the agreed metadata, language, condition, damage, and fulfillment fields. |
 | MKT-07 | Cover priority is canonical/provider, approved actual-copy fallback, placeholder. |
 | MKT-08 | Scan/request media never enter public responses. |
@@ -227,6 +235,8 @@ Before commit, the owner can see a non-authoritative preview of the future card/
 | MKT-13 | Multiple rows group visually without inventory merge. |
 | MKT-14 | A versioned store-group query/cursor contract preserves deterministic ranking and complete pagination. |
 | MKT-15 | Metadata-provider replacement cannot change public identity, eligibility, alias approval, search grouping, or marketplace DTO semantics without a separately approved public-contract version. |
+| MKT-16 | Deterministic keys are separate from linguistic variants; only active store-scoped variants search and no Store Owner changes global canonical search authority. |
+| MKT-17 | Owner-confirmed nullable-canonical listings remain discoverable when existing publication gates, including positive price, pass. |
 
 ## 16. Deferred
 

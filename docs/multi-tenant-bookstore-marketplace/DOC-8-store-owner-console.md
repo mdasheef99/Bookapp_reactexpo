@@ -134,9 +134,12 @@ MVP features:
 - save draft listing
 - condition photo upload where enabled
 - low-stock and zero-stock indicators
-- same-language 15-spine camera/gallery sessions with Start/Close summary
+- 15-spine camera/gallery sessions with Start/Close summary; current runtime
+  requires selected language, while the approved target uses optional hints and
+  per-field detection
 - initiating-Owner resume/mutation during the Owner-only pilot, with separately authorized/audited support intervention
-- session defaults for language, condition, shelf/location, quantity, and private/publish preference
+- session defaults for condition, shelf/location, quantity, and private/publish
+  preference; language is an optional target-design hint
 - numbered spine review, add-missed/remove-false, attention-only field highlighting, and marketplace preview
 - five public conditions with accessible explanations and separate damage disclosure/photo flow
 
@@ -449,7 +452,7 @@ Activity logs should be append-only from the client perspective.
 | CON-09 | Console does not expose platform-wide subscription management or cross-store data. |
 | CON-10 | Owner can view own settlement summaries and policy/compliance blockers. |
 | CON-11 | Owner can see operational trust metrics needed to improve confirmation and fulfillment. |
-| CON-12 | Owner can run a simple Start/Close same-language session for camera/gallery images with at most 15 spines each. |
+| CON-12 | Owner can run a simple Start/Close camera/gallery session with at most 15 spines; the approved target auto-detects field language/script and treats language controls as optional hints. |
 | CON-13 | Owner review supports defaults, add-missed/remove-false, advisory duplicate choice, five conditions, damage evidence, and independent candidate commits. |
 | CON-14 | Owner can edit controlled inventory fields after commit without mutating shared canonical metadata. |
 | CON-15 | Requested-photo items require 1-3 private current-copy photos or an unavailable/unfulfilled outcome. |

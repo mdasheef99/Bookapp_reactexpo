@@ -12,7 +12,11 @@
 
 ## 1. Purpose
 
-This document defines BookConnect's AI-assisted bookstore inventory ingestion workflow. A Store Owner photographs a same-language stack of book spines, BookConnect extracts and enriches candidates through provider-agnostic adapters, and the owner reviews price, quantity, condition, location, damage, and publication before any inventory write.
+This document defines BookConnect's AI-assisted bookstore inventory ingestion
+workflow. A Store Owner photographs a stack of at most 15 book spines,
+BookConnect extracts and enriches candidates through provider-agnostic adapters,
+and the owner reviews price, quantity, condition, location, damage, and
+publication before any inventory write.
 
 This is a deterministic, human-in-the-loop pipeline—not an autonomous agent. The vision model has no database, storage, metadata-provider, or tool authority.
 
@@ -23,13 +27,15 @@ Detailed implementation planning lives in [`implementation/phase-9-image-invento
 ## 2. Locked workflow
 
 ```text
-Owner starts simple session and selects defaults/language
-  -> captures or uploads one same-language image (maximum 15 spines)
+Owner starts simple session and selects defaults; language hint is optional
+  -> captures or uploads one image (maximum 15 spines)
   -> private server boundary validates, re-encodes, strips EXIF, quality-checks
-  -> primary vision adapter extracts title/author/optional ISBN clue
+  -> primary vision adapter extracts original title/author and field language/script
+  -> optional variant sidecar returns bounded provisional linguistic forms
   -> at most one whole-image fallback for technical/schema/broad failure
   -> local canonical lookup, then configured primary/secondary metadata adapters
-  -> selected coherent metadata and up to three generated English aliases are staged; bounded official/verified aliases may coexist
+  -> coherent metadata or Owner-confirmed unmatched data confirms source fields
+  -> Unit 5C validates/reconciles variants; only active store-scoped forms search
   -> same-store advisory duplicate check
   -> owner reviews/corrects required fields
   -> each candidate independently creates/increments private inventory
@@ -58,15 +64,24 @@ Phase 9 first slice is `spine_stack`.
 
 ## 4. Language behavior
 
-- Owner selects one language for an image/batch; English is the default.
-- If another language is selected, the adapter receives that language/script context.
-- Mixed-language automatic routing is excluded.
-- Candidates inconsistent with the selected language are skipped/reported rather than sent through per-spine model selection.
-- Original-script title/author remain authoritative.
-- Each automated generation operation proposes at most three English search aliases after metadata selection: transliteration, translation, and common spelling/recognized title. Additional provider-recognized official or Owner/platform-verified aliases may be retained within configured abuse/storage limits.
-- Author names are transliterated, not semantically translated.
-- Aliases are search-only and never canonical/duplicate evidence.
-- The adapter/schema supports additional languages later without changing identity rules or translating the whole app UI.
+The deployed runtime still requires one selected language, defaults to English,
+and skips mismatched/unknown-language observations. That implemented behavior is
+not changed by this specification.
+
+The approved target is [Unit 5C Lite](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md):
+
+- auto-detection is the default; scan/store language values are optional hints;
+- hints never force every spine or field into one language;
+- title and each author retain independent BCP 47 language and ISO 15924 script;
+- confirmed original-language title/author remain primary;
+- title and author confirmation and variant activation are independent;
+- `p9-vision-v2` remains the strict current result while an optional
+  `search_variant_proposals_v1` sidecar carries bounded provisional variants;
+- deterministic search keys are not linguistic variants;
+- only active store-scoped variants search, never define identity/duplicates;
+- transliteration, plain Roman search spelling, and translation remain distinct;
+- no application translation, new language-settings UI, or per-spine model
+  switching is authorized here.
 
 ---
 
@@ -76,7 +91,7 @@ User-visible controls are Start session and Close session with summary. There is
 
 Before Start, preselect:
 
-- language;
+- current runtime selected language; approved target optional language hint;
 - base condition;
 - shelf/location;
 - quantity 1;
@@ -91,7 +106,7 @@ First-session publication defaults private; a prior explicit preference may be r
 The model receives only:
 
 - sanitized image;
-- selected language/script;
+- current selected language/script or future optional hint;
 - maximum candidate count 15;
 - strict task/schema version;
 - opaque correlation ID.
@@ -101,10 +116,11 @@ It does not receive store/customer PII, shelf location, database IDs, credential
 Expected output:
 
 - ordered candidate index/optional bounding box;
-- observed original-script title;
-- observed original-script author(s);
+- observed original-language title with field language/script in the target;
+- observed original-language author(s), each with field language/script in the target;
 - optional visible ISBN clue;
-- selected/detected language/script;
+- current candidate-level selected/detected language/script;
+- optional target `search_variant_proposals_v1` sidecar;
 - bounded confidence/warnings;
 - image outcome such as accepted, empty, wrong language, over cap, or quality failure.
 
@@ -118,7 +134,9 @@ All output is untrusted, length/count/schema validated, and rendered as plain te
 - Use one primary and at most one whole-image fallback.
 - Fallback is allowed for transient technical failure, invalid schema, or broadly unusable output.
 - Do not invoke fallback per candidate.
-- Do not invoke fallback for valid empty/no-book, over-cap, wrong selected language, invalid upload, or policy denial.
+- Do not invoke fallback for valid empty/no-book, over-cap, current-runtime
+  language mismatch, invalid upload, policy denial, or a missing/invalid Unit 5C
+  sidecar.
 - Manual correction remains the final fallback.
 
 Model/provider/prompt/schema versions, latency, error class, fallback, and cost units are observable without storing raw content in telemetry.
@@ -267,11 +285,11 @@ Required concepts:
 | ID | Criterion |
 | --- | --- |
 | IMG-01 | Only an active authorized Owner can start/operate a session for the server-derived store. |
-| IMG-02 | Camera/gallery same-language spine images process 1-15 candidates. |
+| IMG-02 | Camera/gallery spine images process 1–15 candidates; current runtime selected-language behavior is explicit and target hints never force fields. |
 | IMG-03 | More than 15 rejects/rescans and never truncates. |
 | IMG-04 | One primary and at most one whole-image fallback use a strict schema and no tools. |
 | IMG-05 | Local-first, primary/secondary metadata enrichment is provider-agnostic and coherent. |
-| IMG-06 | Original-script data remains authoritative; automated generation proposes at most three English aliases while bounded official/verified aliases remain provenance-bearing and search-only. |
+| IMG-06 | Confirmed original-language fields remain primary; optional sidecar variants are bounded, field-reconciled, store-scoped, provenance-bearing, and active-only for search. |
 | IMG-07 | Owner review confirms required inventory fields before every create/increment. |
 | IMG-08 | Duplicate warnings are advisory, explicit, same-store, concurrency-safe, and contain no image comparison. |
 | IMG-09 | Each candidate commit is atomic/idempotent and preserves Phase 6 quantities/holds. |

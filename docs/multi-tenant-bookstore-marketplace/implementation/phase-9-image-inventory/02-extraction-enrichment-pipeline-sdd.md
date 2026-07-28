@@ -14,7 +14,15 @@ do not alter `p9-vision-v2` or permit metadata/inventory/publication writes.
 
 ## 1. Decision
 
-Use a persistent, asynchronous, provider-agnostic pipeline for same-language spine images. One primary multimodal vision adapter and at most one whole-image fallback extract observed identity clues. Deterministic code then performs local canonical lookup and sequential metadata-provider enrichment. The mobile request does not wait synchronously for the complete pipeline.
+Use a persistent, asynchronous, provider-agnostic pipeline for spine images.
+One primary multimodal vision adapter and at most one whole-image fallback
+extract observed identity clues. Deterministic code then performs local
+canonical lookup and sequential metadata-provider enrichment. The mobile
+request does not wait synchronously for the complete pipeline.
+
+The current runtime remains selected-language and strict `p9-vision-v2`.
+[Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md)
+prospectively replaces the language/variant target only; it is not implemented.
 
 Future implementation decisions select Gemini 3.5 Flash (`gemini-3.5-flash`) for
 vision and Google Books API as the initial metadata provider. The provider-neutral
@@ -40,7 +48,8 @@ There is no pause/save/discard command. Server persistence provides recovery whe
 
 Session defaults:
 
-- selected language: English initially;
+- current runtime selected language: English initially; approved target:
+  optional language hint with auto-detection default;
 - condition;
 - shelf/location;
 - quantity: 1;
@@ -49,10 +58,11 @@ Session defaults:
 ## 3. Capture contract
 
 - Camera and gallery/manual upload are equal supported sources.
-- Owner selects one language before upload. English is default.
-- Image should show 1–15 visible spines from that selected language.
+- Current runtime requires one language before upload and defaults to English.
+- Approved target accepts 1–15 visible spines and treats language as a hint.
 - If the model/quality service sees more than 15 spines, reject and ask for a smaller photo. Do not retain only the first 15.
-- Mixed-language processing is not attempted. Candidates inconsistent with the selected language are skipped/reported; English default means only English candidates are retained unless another language was selected.
+- Current runtime skips/reports mismatched observations. Approved target detects
+  language/script per field without per-spine model switching.
 - A framing guide, lighting prompt, and sample good/bad image reduce failure before upload.
 
 ## 4. Upload and quality gate
@@ -76,7 +86,9 @@ Exact image replay returns the existing input/job result when safe; it does not 
 ### Input
 
 - opaque sanitized-media reference;
-- session-selected canonical BCP 47 expected language;
+- current runtime: session-selected canonical BCP 47 expected language;
+- approved target: optional canonical language hint and optional store
+  common-language context, neither authoritative;
 - literal maximum visible books = 15;
 - opaque job, attempt, and correlation identities;
 - contract, analysis-schema, pipeline, prompt, adapter, and adapter-version identifiers;
@@ -98,7 +110,12 @@ Strict versioned JSON:
 
 Unknown values are null, not invented placeholders. The model cannot return executable instructions, URLs, SQL, Markdown/HTML, provider queries, or database actions. All strings are length/Unicode/control-character validated and rendered as plain text.
 
-The exact `p9-vision-v2` request/result coherence, field bounds, provenance, and unsupported-field policy are normative in the Unit 4 design. Provider-specific payloads remain inside the adapter. The application revalidates the adapter result as untrusted data.
+The exact `p9-vision-v2` request/result coherence, field bounds, provenance, and
+unsupported-field policy remain normative current runtime. The approved target
+adds per-title/per-author BCP 47 language and ISO 15924 script plus an optional
+independently versioned `search_variant_proposals_v1` sidecar associated with
+the same analysis. Missing or invalid sidecar data cannot invalidate canonical
+extraction. Provider-specific payloads remain inside the adapter.
 
 ## 6. Fallback policy
 
@@ -123,7 +140,12 @@ Deterministic normalization:
 - assign stable candidate indices and persist optional geometry;
 - reject strings with unsafe control/bidi patterns from direct UI rendering or normalize/display safely with script-aware rules.
 
-Structurally malformed output fails as one permanent contract result; individual malformed observations are never salvaged. Structurally valid mixed-language observations remain immutable evidence, but only usable observations matching the expected primary language become candidates. `und` is skipped. If all observations mismatch or are unknown, the input is a successful zero-candidate language-mismatch result. Repeated identical observations at different ordinals remain separate.
+Structurally malformed output fails as one permanent contract result; individual
+malformed observations are never salvaged. Current runtime retains mixed/
+unknown-language observations as immutable evidence but creates candidates only
+for the selected language. The approved target instead validates language and
+script per field, treating any hint as non-authoritative. Repeated identical
+observations at different ordinals remain separate.
 
 ## 8. Metadata enrichment
 
@@ -136,8 +158,11 @@ For every usable candidate:
 5. If technical failure/no acceptable coherent match meets fallback policy, call the secondary adapter.
 6. Rank exact identifiers before normalized text; reject contradictory language/edition evidence.
 7. Persist attempts/provenance and select one coherent edition snapshot.
-8. Generate/select at most three English aliases per automated operation after metadata selection; bounded provider-recognized or Owner/platform-verified aliases may coexist.
-9. Mark ready or needs-review. Provider failure can still produce a manually completable candidate.
+8. Reconcile optional bounded provisional variants against independently
+   confirmed title/author source fields; deterministic keys remain separate.
+9. Activate only eligible store-scoped variants under language/benchmark policy.
+10. Mark ready or needs-review. Provider failure can still produce an
+    Owner-confirmed, nullable-canonical candidate.
 
 Metadata provider requests contain only normalized bibliographic clues, not the scan image or store/customer context.
 
@@ -226,6 +251,9 @@ SDD 04 owns holds, deletion evidence, exceptions, and signed access.
 - replay/idempotency/concurrent worker lease/crash recovery;
 - quota reservation and manual fallback;
 - no raw media/payload/log leakage.
+- field-level mixed-language/script fixtures, already-Latin suppression,
+  independent title/author confirmation, stale-source reconciliation, optional
+  sidecar failure isolation, and store-scope denial;
 
 CI uses recorded fixtures and validates schemas/behavior, never exact generative prose.
 
@@ -250,8 +278,8 @@ CI uses recorded fixtures and validates schemas/behavior, never exact generative
 | EXT-01 | Camera and gallery uploads use the same secure server pipeline. |
 | EXT-02 | Accepted input contains no more than 15 candidates. |
 | EXT-03 | More than 15 triggers reject/rescan, not truncation. |
-| EXT-04 | One selected language is enforced; English defaults; new languages are adapter/config additions. |
-| EXT-05 | Mixed-language/per-spine model routing is absent. |
+| EXT-04 | Current runtime enforces selected language; approved target auto-detects per field and treats language inputs as optional hints. |
+| EXT-05 | Per-spine model switching remains absent; mixed-language field detection does not require separate model routing. |
 | EXT-06 | Start/Close-only session recovers for the initiating Owner across background/network/app closure and ends with an accurate terminal-input summary. |
 | EXT-07 | Vision provider is hidden behind a versioned adapter. |
 | EXT-08 | One whole-image fallback maximum is enforced. |
@@ -266,7 +294,7 @@ CI uses recorded fixtures and validates schemas/behavior, never exact generative
 | EXT-17 | Metrics identify adapter version, outcome, latency, fallback, cache, and cost without raw content leakage. |
 | EXT-18 | Provider provenance and field-level storage/display/cache/attribution/expiry rights are independently enforced. |
 | EXT-19 | `p9-vision-v2` records detected count, ordered observations, normalized confidence/geometry, publisher/ISBN clues, and sanitized provenance while rejecting unknown/provider-specific fields. |
-| EXT-20 | Mixed-language and `und` observations are explicitly skipped without changing the selected language; all-mismatch is a successful zero-candidate result. |
+| EXT-20 | Current runtime preserves and skips mixed/`und` observations as documented; target runtime retains field-level language/script without allowing hints to force classification. |
 | EXT-21 | Repeated identical books at separate ordinals produce separate immutable observations and separate candidates. |
 | EXT-22 | One token/attempt-fenced transaction persists authoritative analysis evidence and candidates before completing the job; replay cannot duplicate effects. |
 | EXT-23 | Stale attempts, including the same worker ID after reclaim, cannot read context, persist, fail, complete, or replay another attempt. |
@@ -286,3 +314,5 @@ CI uses recorded fixtures and validates schemas/behavior, never exact generative
 | EXT-37 | Queue, lease, retry, provider-capacity, fairness, and worker-readiness metrics are bounded and operationally available. |
 | EXT-38 | Provider availability, schema validity, match quality, correction rate, language/edition cohort, latency, and cost are scored separately. |
 | EXT-39 | Provider promotion/demotion requires conformance, licensing/privacy review, authorized shadow evidence, rollback configuration, scorecard review, and explicit approval. |
+| EXT-40 | `search_variant_proposals_v1` is optional, independently validated, and cannot invalidate a valid `p9-vision-v2` result. |
+| EXT-41 | Unit 5C performs no untracked provider call; any Roman-query fallback remains a separately authorized Unit 5B extension. |

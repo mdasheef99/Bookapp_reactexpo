@@ -1,10 +1,31 @@
 # Phase 9 Requirements Traceability
 
-**Last updated:** 2026-07-28
+**Last updated:** 2026-07-29
+
+## Unit 5C Lite target reconciliation (2026-07-29)
+
+Unit 5C Lite is approved design only. Current selected-language runtime,
+`p9-vision-v2`, and live M01 `book_search_aliases` remain unchanged until
+separately authorized implementation.
 
 | Requirement | Owning SDD | Primary acceptance IDs |
 | --- | --- | --- |
-| Same-language spine stack, maximum 15, camera/gallery | 02 Extraction | EXT-01–EXT-05 |
+| Original title/author preserved as primary with per-field language/script | 00 Master; 01 Data; Unit 5C Lite | MAS-04; MAS-AC16; DAT-10 |
+| Auto-detect default; optional hints; no language-forcing | 00 Master; 02 Extraction; Unit 5C Lite | MAS-01; EXT-04/05/20 |
+| Optional sidecar isolated from strict current vision result | 00 Master; 02 Extraction; 04 Media; Unit 5C Lite | MAS-19; EXT-40; MED-30 |
+| Independent title/author confirmation and activation | 00 Master; 01 Data; 03 Review; Unit 5C Lite | MAS-18; DAT-12; REV-22 |
+| Deterministic keys separate from linguistic variants | 01 Data; 05 Marketplace; Unit 5C Lite | DAT-14; MKT-16 |
+| Bounded provisional Roman forms; translation separate/inactive | 01 Data; Unit 5C Lite | DAT-11/12 |
+| Material source changes make dependent variants stale | 01 Data; Unit 5C Lite | DAT-13 |
+| Store-scoped, active-only search authority | 00 Master; 01 Data; 05 Marketplace; Unit 5C Lite | MAS-AC17; DAT-13/14; MKT-05/16 |
+| Owner-confirmed nullable-canonical listing under existing publication gates | 01 Data; 03 Review; 05 Marketplace | DAT-07; REV-23; MKT-17 |
+| Positive selling price required; price-on-request excluded | 00 Master; 03 Review; 05 Marketplace | MAS-AC18; REV-02/23; MKT-17 |
+| Roman-query provider fallback remains a future Unit 5B extension | 02 Extraction; Unit 5C Lite | EXT-41 |
+| Private spine image never becomes public media | 04 Media; 05 Marketplace | MED-15/16; MKT-08 |
+
+| Requirement | Owning SDD | Primary acceptance IDs |
+| --- | --- | --- |
+| Historical current-runtime selected-language capture; Unit 5C target is traced above | 02 Extraction | EXT-01–EXT-05 |
 | Simple Start/Close session and summary | 02 Extraction; 03 Review | EXT-06; REV-01 |
 | Model-agnostic primary/fallback vision | 02 Extraction; Unit 4 design | EXT-07–EXT-10; EXT-19 |
 | Vision count/language/repeated-position policy | 00 Master; 01 Data; 02 Extraction; Unit 4 design | MAS-01/02; DAT-26/27; EXT-19–EXT-21 |
@@ -41,7 +62,7 @@ evidence. M16 is live once as `20260727231217`, and M17 is live once as
 `20260727233457`. PostgreSQL 17.6 now verifies SELECT-only service access,
 RPC-only mutation, RLS, ownership, and client denial on the four sensitive
 tables as recorded in tracker 10.
-| Original language; up to three automated English alias proposals plus bounded official/verified aliases | 00 Master; 01 Data; 05 Marketplace | MAS-04; DAT-10–DAT-14; MKT-05 |
+| Historical alias baseline, superseded for the Unit 5C target by the reconciliation above | 00 Master; 01 Data; 05 Marketplace | MAS-04; DAT-10–DAT-14; MKT-05 |
 | Canonical alias kinds/sources/statuses and supersession lifecycle | 01 Data | DAT-11–DAT-14 |
 | Additional languages can be added later | 01 Data; 02 Extraction | DAT-15; EXT-04 |
 | Advisory duplicates; no image comparison; repeated spines retained | 01 Data; 03 Review | DAT-16–DAT-20; REV-07 |
@@ -94,7 +115,7 @@ The [Unit 4 design](../work-units/04-fixture-vision-analysis-runtime-design.md) 
 
 ## Non-requirements explicitly excluded
 
-- automatic mixed-language spine routing;
+- per-spine model switching or automatic model routing by language;
 - model tools or model-driven database/provider calls;
 - image similarity/cover comparison for duplicate detection;
 - automatic duplicate merge;

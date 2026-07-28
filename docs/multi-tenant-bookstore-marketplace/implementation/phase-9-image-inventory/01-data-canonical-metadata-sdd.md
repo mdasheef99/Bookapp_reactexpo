@@ -4,7 +4,10 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
-**Implementation checkpoint (2026-07-27):** M01-M08/M10/M11/M12 are live-verified. M11/M12 add only the bounded ingestion foundation, private immutable analysis evidence, and candidate lineage; all services remain undeployed. Metadata selection, canonical identity, aliases, inventory, and publication remain separate later stages.
+**Implementation checkpoint (2026-07-29):** `book_search_aliases` exists from
+live M01 with its limited target/source/status schema and zero recorded rows at
+the last audit. Unit 5C Lite is approved target design only; its field authority,
+sidecar, lifecycle, and store-scope delta is not implemented.
 
 ## 1. Decision
 
@@ -61,22 +64,31 @@ Vision evidence is not a metadata selection. The image-level canonical analysis 
 - Reject malformed values as identity evidence; retain the visible clue only in private candidate evidence until owner correction.
 - ISBN uniqueness conflicts stop canonical creation and route to review; they do not overwrite an existing edition.
 
-## 6. Multilingual authoritative data and aliases
+## 6. Multilingual authoritative data and search variants
 
-- Original-script title/author from selected metadata or owner correction is authoritative and displayed.
-- One automated alias-generation operation proposes at most three English/Latin-script aliases:
-  - transliteration;
-  - English translation;
-  - common spelling;
-  - recognized English title.
-- Authors are transliterated, not semantically translated.
-- The relational target may retain additional provider-recognized official or Owner/platform-verified aliases within configured abuse, quality, and storage limits. Model-generated aliases require schema validation, source/version, confidence, and owner/platform correction capability.
-- Alias creation happens after metadata selection so it cannot distort canonical lookup.
-- Only `approved` aliases enter public search. Alias hits return the original authoritative title.
-- Canonical alias kinds are `transliteration`, `translation`, `common_spelling`, and `recognized_title`. Canonical sources are `automated`, `provider_official`, `owner_verified`, and `platform_verified`; approval status is only `proposed`, `approved`, or `rejected`.
-- `superseded` is a bounded lifecycle/audit reason, not a persisted approval status. Superseding an alias transitions the replaced row to `rejected` and removes it from search eligibility while retaining bounded audit evidence.
-- Alias text is never duplicate evidence, canonical uniqueness evidence, or automatic display replacement.
-- The schema supports future alias languages/scripts without adding columns or changing identity rules.
+The earlier post-metadata English-alias method is superseded by
+[Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md).
+
+- Confirmed original-language title and author remain primary and displayed.
+- Title and author source confirmation is independent.
+- Each source field retains BCP 47 language and ISO 15924 script.
+- An optional vision-associated sidecar may propose one primary Roman form,
+  zero to two alternatives, and one separately inactive translation candidate.
+- All model proposals begin provisional and non-searchable.
+- Deterministic normalization/search keys are not linguistic variants.
+- Already-Latin source text does not receive a duplicate Romanization.
+- Each linguistic variant retains target, exact source field/text, language,
+  script, source/version provenance, status, scope, and approval evidence.
+- A material source change makes dependent variants stale and non-searchable.
+- Only active store-scoped variants enter search. Variant hits return confirmed
+  original values; no variant determines identity, uniqueness, or duplicates.
+- Global canonical promotion is deferred to catalogue governance.
+
+The live M01 table still uses canonical/inventory targets, kinds
+`transliteration|translation|common_spelling|recognized_title`, sources
+`automated|provider_official|owner_verified|platform_verified`, and statuses
+`proposed|approved|rejected`. Later Unit 5C implementation must map or migrate
+that representation explicitly; this SDD does not claim the target is live.
 
 ## 7. Condition and damage
 
@@ -175,12 +187,12 @@ Current live conditions are `new`, `like_new`, `good`, `fair`, `damaged`; all cu
 | DAT-07 | Uncertain inventory can commit with a null canonical link. |
 | DAT-08 | Store correction cannot mutate shared canonical truth. |
 | DAT-09 | No automatic canonical refresh runs in the first release. |
-| DAT-10 | Original-script title/author remain authoritative. |
-| DAT-11 | Each automated operation proposes at most three English aliases; additional official/Owner-verified aliases are bounded, provenance-bearing rows. |
-| DAT-12 | Author aliases transliterate rather than translate names. |
-| DAT-13 | Alias provenance/status is stored and only approved aliases enter search. |
-| DAT-14 | Aliases never influence identity or duplicate decisions. |
-| DAT-15 | New languages/scripts can be added without schema identity changes. |
+| DAT-10 | Confirmed original-language title/author and per-field language/script remain primary through display. |
+| DAT-11 | The optional sidecar returns bounded field-targeted provisional Roman forms and a separately inactive translation candidate; zero proposals is valid. |
+| DAT-12 | Title and author confirmation/reconciliation is independent; already-Latin fields do not receive duplicate Romanization. |
+| DAT-13 | Variant source, field, language, script, provenance, lifecycle, scope, and approval are retained; only active store-scoped variants search. |
+| DAT-14 | Deterministic keys are not variants; no variant influences identity or duplicate decisions. |
+| DAT-15 | Language capabilities are benchmarked and reversible without changing identity authority. |
 | DAT-16 | Duplicate detection is same-store and advisory. |
 | DAT-17 | Image similarity is absent from duplicate logic. |
 | DAT-18 | Compatible copies can increment quantity atomically and idempotently. |
@@ -204,6 +216,7 @@ Current live conditions are `new`, `like_new`, `good`, `fair`, `damaged`; all cu
 
 - automatic global canonical merge/refresh;
 - alias languages beyond the pilot rollout;
+- global canonical variant promotion and moderation;
 - full bibliographic authority control;
 - automatic collectible/signed-edition valuation;
 - image similarity;
