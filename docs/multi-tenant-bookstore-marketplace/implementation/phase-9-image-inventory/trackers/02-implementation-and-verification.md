@@ -1,9 +1,8 @@
 # Phase 9 Implementation and Verification Tracker
-
-**Status:** `unit5b_candidate_awaiting_independent_review`
+**Status:** `unit5b_merged_fixture_verified_provider_deferred`
 **Last updated:** 2026-07-28
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `unit5b_candidate_review`. This tracker is separate from planning decisions; WU0B preserves `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review, while Unit 5C and live provider activity remain unauthorized.
+**Active work unit:** `unit5c_awaiting_separate_authorization`. Unit 5B is independently approved and merged at `47f23a89a4df9ae8ece85842eb3020c3f17636bc`; Unit 5C and live provider activity remain unauthorized. WU0B history preserves `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review.
 ## Work units
 | Unit | Scope | Status | Required gate |
 | --- | --- | --- | --- |
@@ -16,15 +15,14 @@
 | 4 | [Fixture vision-analysis runtime](../work-units/04-fixture-vision-analysis-runtime-design.md): `p9-vision-v2`, analyzer, job orchestration, immutable evidence/candidates | `fixture_deployed_and_live_verified` | M12 live as `20260726182539`; all nine fixture cases verified; no real provider |
 | 4A | [Deployment-runtime scaffolding](../work-units/04a-deployment-runtime-scaffolding-sdd.md): executable sanitation/fixture-vision hosts, strict environment, builds/containers, invocation and validation | [`deployed_and_live_fixture_verified`](./06-fixture-pipeline-deployment-evidence.md) | separate free Render services live at `96991a9`; M13 invoker boundary live |
 | 4B | [Gemini vision adapter](../work-units/04b-gemini-vision-adapter-handoff.md) for configured `gemini-3.5-flash-lite`; optional whole-image fallback remains unselected/disabled | `m14_live_verified_provider_deferred` | M14 live once; no live call, credential configuration, Gemini deployment, Storage mutation, or fallback selection |
-| 5A | [Metadata foundation](../work-units/05a-metadata-foundation-handoff.md): provider-neutral local-first routing/cache/coalescing, ISBN validation, coherent selection, and attempt/cost lineage | `m17_live_acl_verified` | M17 live once; four sensitive tables are service SELECT-only with RPC-only mutation; Unit 5B separately gated |
-| 5B/5C | Google Books primary adapter / metadata aliases | [`5B candidate awaiting independent review`](./11-unit5b-implementation-evidence.md) / `5C not_started` | no credential, live call, deployment, registry mutation, alias implementation, or schema change |
+| 5A | [Metadata foundation](../work-units/05a-metadata-foundation-handoff.md): provider-neutral local-first routing/cache/coalescing, ISBN validation, coherent selection, and attempt/cost lineage | `m17_live_acl_verified` | M17 live once; four sensitive tables are service SELECT-only with RPC-only mutation |
+| 5B/5C | Google Books primary adapter / metadata aliases | [`5B merged_fixture_verified_provider_deferred`](./11-unit5b-implementation-evidence.md) / `5C not_started` | 5B approved and merged at `47f23a8`; no migration, credential, live call, deployment, registry mutation, inventory/publication effect, or alias implementation |
 | 6 | Owner session/defaults/capture/review UI with accessibility and recovery | `not_started` | Units 2–5 verified |
 | 7 | Controlled per-candidate commit, advisory duplicates, idempotency, projection changes | `not_started` | quantity/hold concurrency tests |
 | 8 | Marketplace bookstore-first search, multilingual aliases, counts, full store catalogue | `not_started` | public/private projection tests |
 | 9 | Damaged-book public media and mandatory customer photo-request extension | `not_started` | DOC-6/14 seam tests; no payment implementation |
 | 10 | Lifecycle worker, deletion evidence, orphan cleanup, alerts, retention holds | `not_started` | lifecycle failure/replay tests |
 | 11 | Pilot fixtures, security/regression/E2E/accessibility/cost verification and handoff | `not_started` | all prior units complete |
-
 ## Migration ledger
 Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in order after the reviewed M06 owner-safe correction. M09 remains the separate live-data preflight and constraint-validation gate.
 | Local filename | Live version/name | Project verified | Applied by | Rollback/forward fix | Verification | Status |
@@ -46,7 +44,6 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260728000016_marketplace_phase9_sensitive_table_acl_correction.sql` | `20260727231217 marketplace_phase9_sensitive_table_acl_correction` | MCP exact project 2026-07-28 | authorized M16 application | forward-only four-table ACL correction; M17 needed for PG17 MAINTAIN; never reuse M09 | six named privileges denied, SELECT/RPC/RLS/client boundaries pass; raw ACL `service_role=rm/postgres` exposes MAINTAIN; post-apply focused 5/5 | [`live_pg17_maintain_correction_required`](./09-m16-acl-correction-evidence.md) |
 | `20260728000017_marketplace_phase9_maintain_acl_correction.sql` | `20260727233457 marketplace_phase9_maintain_acl_correction` | MCP exact project 2026-07-28 | authorized M17 application | forward-only exact four-table ACL correction; never reuse M09 | PG17.6 raw ACL `service_role=r/postgres`; SELECT only, clients denied, RLS/owner and 13 RPCs unchanged; focused 25/25 | [`live_verified`](./10-m17-acl-correction-evidence.md) |
 Rules:
-
 - Re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
 - Use forward corrections; record every schema, grant, Storage, data, and verification effect.
 ## Required verification matrix
@@ -64,7 +61,6 @@ Rules:
 - [ ] Cost reservations enforce exactly one `(store_id, job_id, cost_kind, policy_version)` row under retries and concurrent inserts.
 - [ ] Inventory equality and active-hold semantics survive increment/new-row/partial failure races.
 - [ ] Duplicate check and commit are concurrency-safe and idempotent.
-
 ### AI/provider contracts
 - [ ] Prompt-injection text embedded in an image cannot cause tools, URLs, queries, or writes.
 - [ ] Model output is rejected unless it satisfies the versioned schema and limits.
@@ -76,7 +72,6 @@ Rules:
 - [ ] Provider storage/display/cache/attribution/expiry permissions are enforced independently of provenance.
 - [ ] ISBN checksums/conversion, title/author normalization, and alias rules have deterministic fixtures.
 - [ ] CI uses recorded model/provider fixtures; no exact natural-language output assertion.
-
 ### Media and privacy
 
 - [ ] MIME header, signature, decode, dimensions, byte/pixel limits, random path, re-encode, and EXIF/GPS stripping pass.
@@ -348,3 +343,8 @@ Rules:
 - Next authorized action and gate: consolidated Risk-Based Phase 9 SDD analysis in a new session; Supabase audit, database/migration design, migration creation/testing/application, and runtime remain unauthorized
 ### 2026-07-27/28 — Unit 4B provider-attempt persistence correction and M14 application
 - Authorized scope/completion/evidence: correction-only M14 plus claim-aware Gemini closes durable provider-attempt/reservation/usage/injected-pricing/cost/duplicate-spend lineage and performs full claim/media validation immediately before download and again before Gemini egress. Red failures proved the TOCTOU, claim-dependent spend hash, permissive pricing, and stale migration-set expectation. Stable logical spend identity excludes claim attempt while unique provider-attempt, claim, worker, and lease lineage remain separate; TypeScript and SQL share a bounded semantic pricing allowlist. On 2026-07-28 exact-project preflight confirmed M14 absent, M01-M08/M10-M13 once, M09 absent, and all dependencies; unchanged M14 applied as live version `20260727183546`. Readback proved the empty service-only relation, approved constraints/indexes/signatures/grants/RLS, intact M12/M13 fixture seams, PGlite 67/67, and fixture regression 23/23. No Storage/provider/credential/deployment/product mutation occurred. Gemini deployment/live verification, M09, Unit 5, and broader scope remain unauthorized.
+### 2026-07-28 — Unit 5B merge documentation closeout
+- Authorized scope/completion: documentation-only closeout after independently approved Unit 5B merged and pushed at `47f23a89a4df9ae8ece85842eb3020c3f17636bc`; current routing now points to separately authorized Unit 5C.
+- Files/components/migrations: status, routing, handoff, evidence, and continuity-validator documents only; no source, test, migration, credential, provider, deployment, Supabase, Storage, inventory, publication, or alias change.
+- Verification actually run: Phase 9 continuity and Markdown-link validation PASS (`MARKDOWN_FILES_CHECKED=47`, `REQUIRED_PHASE_FILES=34`); traceability remained complete (`183` definitions, `0` duplicates, `0` missing); final diff/secret/scope checks are recorded at commit handoff.
+- External mutations/decisions/next gate: none; Google Books remains fixture/mock verified only, M09 absent, and Unit 5C is the next work unit requiring separate authorization.

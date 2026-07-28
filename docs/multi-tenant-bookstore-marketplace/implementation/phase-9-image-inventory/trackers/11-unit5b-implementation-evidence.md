@@ -1,8 +1,9 @@
 # Phase 9 Unit 5B Google Books Adapter Evidence
 
 **Date:** 2026-07-28
-**Status:** `approved_for_merge`
+**Status:** `merged_fixture_verified_provider_deferred`
 **Branch:** `codex/phase9-unit5b-google-books-adapter`
+**Merged to main:** `47f23a89a4df9ae8ece85842eb3020c3f17636bc`
 
 ## Scope completed
 
@@ -109,7 +110,6 @@ unstarted.
 
 ## Next gate
 
-The exact next action is user review and merge authorization for final reviewed
-code tip `6bc47beeda7406f11420777ccd87657fc5d0b588`. Production configuration,
-credentials, deployment, provider calls, live smoke, and Unit 5C remain
-separately gated.
+Unit 5B is merged and pushed. The exact next action is separate authorization
+before Unit 5C begins. Production configuration, credentials, deployment,
+provider calls, and live smoke remain separately gated.

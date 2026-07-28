@@ -1,16 +1,16 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `provider_scale_reconciliation_superseded_by_approved_runtime_evidence`
-**Implementation status:** `unit5b_candidate_awaiting_independent_review`
+**Implementation status:** `unit5b_merged_fixture_verified_provider_deferred`
 **Last updated:** 2026-07-28
-**Current milestone:** Unit 5B Google Books adapter and production composition implemented locally without schema or live-provider activity
-**Active work unit:** `unit5b_candidate_review`
+**Current milestone:** Unit 5B independently approved, merged, and pushed at `47f23a89a4df9ae8ece85842eb3020c3f17636bc`
+**Active work unit:** `unit5c_awaiting_separate_authorization`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** M17 merge/application as `20260727233457` and exact-project live verification of the four-table SELECT-only/RPC-mutation boundary; detailed evidence is [tracker 10](./trackers/10-m17-acl-correction-evidence.md)
-**Next authorized action:** review the exact pushed Unit 5B candidate; merge remains user-gated
-**Implementation authority:** Unit 5B local adapter/composition only; secondary providers, aliases, Owner UI, inventory commit, publication, credentials, live provider calls, configuration, and deployment remain unauthorized
+**Last completed:** Unit 5B merge to `main` at `47f23a89a4df9ae8ece85842eb3020c3f17636bc`; independent verdict `APPROVED_FOR_MERGE`; detailed evidence is [tracker 11](./trackers/11-unit5b-implementation-evidence.md)
+**Next authorized action:** obtain separate authorization before starting Unit 5C aliases
+**Implementation authority:** no new implementation is authorized; Unit 5C, secondary providers, Owner UI, inventory commit, publication, credentials, live provider calls, configuration, and deployment remain unauthorized
 **Migration creation/application authority:** M17 is live once as `20260727233457`. M01-M08/M10-M17 remain live exactly once and M09 remains absent; no further migration is authorized
-**Current gate:** exact candidate commit, push, and independent review; Unit 5C remains not started
+**Current gate:** Unit 5C remains not started and requires separate authorization; Google Books production launch gates remain deferred
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -18,7 +18,7 @@
 
 Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Phase 9 M01-M08/M10-M14 are live exactly once and M09 remains absent. M13 exposes only minimum `SECURITY INVOKER` public wrappers for the authoritative private service RPCs; M14 adds service-only provider-attempt lineage and final egress validation. Owner ingestion is active with JWT verification; `phase9-media-sanitation` and `phase9-fixture-vision` are separate free-plan Render services at `96991a9`.
 
-The [Unit 4 design](./work-units/04-fixture-vision-analysis-runtime-design.md) and [Unit 4A deployment runtime](./work-units/04a-deployment-runtime-scaffolding-sdd.md) are now live-verified through the [fixture deployment evidence](./trackers/06-fixture-pipeline-deployment-evidence.md). The deployed `one_book` path and eight fresh-process operator cases used recorded fixtures only, `batchSize: 1`, normal claim/fencing/persistence/failure paths, and produced zero inventory/listing/publication effects. Future decisions are Gemini 3.5 Flash (`gemini-3.5-flash`) and initial Google Books API metadata, but neither is implemented, configured, or called.
+The [Unit 4 design](./work-units/04-fixture-vision-analysis-runtime-design.md) and [Unit 4A deployment runtime](./work-units/04a-deployment-runtime-scaffolding-sdd.md) are now live-verified through the [fixture deployment evidence](./trackers/06-fixture-pipeline-deployment-evidence.md). The deployed `one_book` path and eight fresh-process operator cases used recorded fixtures only, `batchSize: 1`, normal claim/fencing/persistence/failure paths, and produced zero inventory/listing/publication effects. Unit 5B now implements the initial Google Books adapter behind provider-neutral contracts, but it remains fixture/mock verified only: no credential, live call, deployment, or registry mutation occurred.
 
 The provider/scale reconciliation keeps real Gemini provider-contract design as a separately gated prospective Unit 4B and keeps Unit 5 authoritatively named `Metadata/aliases`. The generic architecture supports one metadata primary and at most one disabled-until-approved secondary, horizontal correctness, and a fixed-multi-replica activation gate; it does not authorize provider calls, deployment changes, scheduling, or autoscaling. The bounded F1–F3 correction removes the deferred-secondary contradiction, makes media/vision/metadata capacity signals explicit, and disables raw provider/model payload persistence by default while retaining the independent-review gate.
 
@@ -122,7 +122,11 @@ PostgreSQL 17 MAINTAIN from those three tables plus M14
 `service_role=r/postgres`, RLS, postgres ownership, client denial, and the 13
 hardened RPC boundaries on all four tables.
 
-No later work unit is automatically authorized. Unit 5B Google Books and Unit 5C
-aliases remain not started. Do not apply M09; configure, deploy, or call providers; select/enable
+Unit 5B is complete at the merged fixture/mock-verified level recorded in
+[tracker 11](./trackers/11-unit5b-implementation-evidence.md). Matching, reuse,
+and storage are independently enforced, and only `coherent_match` is a positive
+reusable outcome. Unit 5B created or applied no migration; M09 remains absent.
+No later work unit is automatically authorized. Unit 5C aliases remain not
+started. Do not apply M09; configure, deploy, or call providers; select/enable
 a secondary; schedule/autoscale workers; change mobile UI; commit inventory; publish
 listings; or implement Library behavior.

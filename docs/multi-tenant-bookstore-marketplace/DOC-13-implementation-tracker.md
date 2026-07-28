@@ -11,15 +11,10 @@
 ---
 
 ## 1. Tracking Rules
-
 This file is the master status board. It should stay concise.
-
 Detailed implementation notes belong in the relevant phase tracker under [`implementation/`](./implementation/).
-
 Every new session must start from repository `AGENTS.md`, [`implementation/ACTIVE.md`](./implementation/ACTIVE.md), this tracker, and the active phase session-start/tracker. Chat history and old root kickstart documents are not status authority.
-
 Every coding session must update tracking before ending if it changes any of the following:
-
 - phase status
 - current milestone
 - blockers
@@ -29,15 +24,10 @@ Every coding session must update tracking before ending if it changes any of the
 - source-spec deviations
 - next recommended task
 - handoff notes
-
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
-
 If implementation changes product or architecture behavior, update the relevant source spec and record the reason in this tracker.
-
 ---
-
 ## 2. Current Status
-
 > 2026-06-30 refresh: Phase 1 foundation remains applied in live Supabase. Phase 2A Store Owner gate/auth/security hardening is implemented locally and its write-boundary hardening migration is applied live. Phase 2B has controlled store application/document writes through the `store-application` Edge Function, app service wrappers, onboarding UI, metadata persistence, pilot locality validation, sanitized DB errors, and private document upload tests. Phase 2C platform review/setup entitlements is implemented locally and deployed: review metadata migration is live, `store-review` is deployed with JWT verification enabled, and Store Owner setup/status screens exist. Phase 2B authenticated live smoke passed; Phase 2C unauthenticated live smoke returned `401`; authenticated platform-review smoke is pending platform-operator test credentials. Phase 3 manual inventory/canonical/listing projection migration is applied live through Supabase MCP and schema/RLS verified. A 2026-06-29 Supabase MCP smoke confirmed the inventory trigger projects a publishable row into `marketplace_book_listings`, then cleaned up the disposable smoke inventory/listing and restored the store fixture. Anonymous public-read smoke is still blocked by the public listing RLS policy calling `marketplace_sec` helper functions that `anon` cannot execute. Phase 4 Store Owner Console is locally complete: dashboard, owner inventory management, storefront/profile settings, subscription/quota visibility, compliance blockers, route tabs, and focused tests are implemented with TypeScript and web export passing.
 
 > 2026-07-15 review refresh: Git is synchronized by content with the recently merged `origin/main`. Supabase MCP and `.env` both identify project `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`). Phase 4 remediation adds the controlled `store-profile` function, approved-store setup completion, stricter checklist readiness, inventory workflow fixes, and migration `20260715000001_marketplace_phase4_security_hardening.sql`. Store tests pass 13 suites/118 tests; TypeScript and production web export pass. The migration is live as `20260715115929 marketplace_phase4_security_hardening`; grants verify `anon=false`, `authenticated=false`, `service_role=true`. `store-profile` version 1 is ACTIVE with `verify_jwt=true`; unauthenticated live smoke returned `401`. Positive authenticated owner-write smoke awaits an approved disposable credential.
@@ -213,12 +203,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5B candidate awaiting independent review** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5B merged; Unit 5C separately gated** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-28 |
-| Latest handoff | Unit 5B is locally implemented without schema or live-provider activity; M17's live SELECT-only/RPC-mutation boundary is unchanged. |
-| Current risk level | ACL correction closed. Google Books remains unimplemented; no metadata credential/provider call exists; Units 5B/5C remain separately gated. |
-| Next recommended task | Review the exact pushed Unit 5B candidate; merge, Unit 5C, credentials, registry configuration, deployment, and provider smoke remain separately gated. |
+| Latest handoff | Unit 5B was independently approved and merged to `main` at `47f23a89a4df9ae8ece85842eb3020c3f17636bc`; Google Books remains fixture/mock verified only and M17 is unchanged. |
+| Current risk level | Matching, reuse, and storage are independently enforced and only `coherent_match` is positive reusable output. No credential, live call, deployment, migration, Supabase/Storage, inventory, publication, or alias mutation occurred. |
+| Next recommended task | Obtain separate authorization for Unit 5C. Credentials, registry configuration, deployment, and live provider smoke remain separately gated. |
 
 ---
 
@@ -235,7 +225,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit5b_candidate_awaiting_independent_review` | [Unit 5B evidence](./implementation/phase-9-image-inventory/trackers/11-unit5b-implementation-evidence.md) · [provider audit](./implementation/phase-9-image-inventory/work-units/05b-google-books-provider-audit.md) | Google Books adapter/composition local only; M17 unchanged; no migration/live provider/deployment; Unit 5C deferred. |
+| Phase 9: Image-to-LLM Inventory | `unit5b_merged_fixture_verified_provider_deferred` | [Unit 5B evidence](./implementation/phase-9-image-inventory/trackers/11-unit5b-implementation-evidence.md) · [provider audit](./implementation/phase-9-image-inventory/work-units/05b-google-books-provider-audit.md) | Provider-neutral Google Books adapter/composition merged at `47f23a8`; no migration/credential/live call/deployment; M09 absent; Unit 5C separately gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -352,11 +342,9 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Complete exact-commit independent review of the Unit 5B candidate; merge remains user-authorized.
-2. Historical handoff (vision portion superseded 2026-07-27): treat Gemini 3.5 Flash (`gemini-3.5-flash`) and Google Books API as future handoff decisions only. The generic architecture supports an optional secondary metadata provider, but its selection, enablement, credentials, calls, and implementation remain deferred.
+1. Obtain separate authorization before starting Unit 5C metadata aliases.
+2. Historical handoff (vision portion superseded 2026-07-27): Gemini remains configuration/deployment/live-call deferred. Google Books is implemented behind provider-neutral contracts but remains fixture/mock verified only; credentials, provider-registry enablement, deployment, and live smoke remain deferred.
    The current initial primary vision model ID is configuration-driven
-   `gemini-3.5-flash-lite`; its local adapter awaits independent review, while
-   provider configuration/calls and all metadata-provider implementation remain
-   deferred.
-3. Keep M09, scheduling/autoscaling, metadata enrichment, mobile UI, inventory commit, publication, Library, and Phases 7/8 separately gated.
+   `gemini-3.5-flash-lite`; provider configuration/calls remain deferred.
+3. Keep M09, scheduling/autoscaling, mobile UI, inventory commit, publication, Library, and Phases 7/8 separately gated.
 4. Re-verify the exact project, migrations, schema, Storage, services, and advisors before any later mutation.

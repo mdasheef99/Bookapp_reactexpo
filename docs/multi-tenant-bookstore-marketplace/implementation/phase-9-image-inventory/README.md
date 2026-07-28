@@ -2,9 +2,9 @@
 
 **Status:** `fixture_pipeline_deployed_and_live_verified`
 **Last updated:** 2026-07-28
-**Implementation status:** M01-M08/M10-M14 and Unit 4B are live-verified; separate free-plan media/fixture-vision services remain deployed; Gemini configuration/deployment/live verification is deferred
-**Supabase mutation status:** M01-M08/M10-M14 applied once to `ahntbtktjjmvfosgkmgn`; M14 is live as `20260727183546`; M09 is absent; tagged fixture rows/private objects are retained with zero commerce effect
-**Database checkpoint:** M01-M08 and forward migrations M10-M14 are live-verified.
+**Implementation status:** M01-M08/M10-M17 are live-verified; separate free-plan media/fixture-vision services remain deployed; Unit 5B is independently approved and merged at `47f23a8` with Google Books fixture/mock verified only; Unit 5C is separately gated
+**Supabase mutation status:** M01-M08/M10-M17 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; Unit 5B created no migration and caused no Supabase/Storage mutation
+**Database checkpoint:** M01-M08 and forward migrations M10-M17 are live-verified.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 
@@ -72,7 +72,7 @@ The local tracking set intentionally has three files:
 - [TRACKER.md](./TRACKER.md): concise current status and handoff.
 - [Unit 5B evidence](./trackers/11-unit5b-implementation-evidence.md) and
   [Google Books audit](./work-units/05b-google-books-provider-audit.md):
-  current local candidate and provider-specific authority.
+  merged fixture/mock-verified adapter evidence and provider-specific authority.
 - [Planning and decisions](./trackers/01-planning-and-decisions.md): decision register, source reconciliation, audit evidence, and planning review.
 - [Implementation and verification](./trackers/02-implementation-and-verification.md): future work units, migration ledger, tests, rollout, and operational evidence.
 

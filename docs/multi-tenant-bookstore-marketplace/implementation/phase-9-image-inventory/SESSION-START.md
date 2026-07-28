@@ -8,6 +8,12 @@ This is the deterministic resume procedure for Phase 9. A new session should rec
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
+Current routed handoff: Unit 5B is independently approved and merged to `main`
+at `47f23a89a4df9ae8ece85842eb3020c3f17636bc`. Google Books remains
+fixture/mock verified only with no credential, live call, deployment, migration,
+or Supabase/Storage mutation. Unit 5C is unstarted and requires separate
+authorization.
+
 ## 1. Canonical status source
 
 After entering through repository `AGENTS.md`, the active router, DOC-13, and this protocol, read [TRACKER.md](./TRACKER.md) and extract these fields:
