@@ -1,7 +1,7 @@
 # Phase 9 Unit 5B Google Books Adapter Evidence
 
 **Date:** 2026-07-28
-**Status:** `candidate_awaiting_independent_review`
+**Status:** `approved_for_merge`
 **Branch:** `codex/phase9-unit5b-google-books-adapter`
 
 ## Scope completed
@@ -48,6 +48,46 @@ expected. The bounded correction adds policy-before-cache, explicit durable
 cache-hit and follower completion seams, pre-cancelled zero egress, and this
 exact verification record. Correction-focused Jest passed 2 suites / 21 tests.
 
+## Matching, reuse, and storage policy-boundary correction
+
+The later independent review identified two additional policy contradictions:
+reuse denial incorrectly blocked an otherwise authorized fresh match, and
+positive cache/follower reuse could bypass storage denial. Commit `8dfe810`
+separates the three permissions through one explicit decision contract:
+
+- `matching_allowed` independently controls fresh provider attempts;
+- `reuse_allowed` independently controls cache reads, follower reuse, and cache
+  writes;
+- `storage_allowed` independently controls positive retained metadata and
+  immutable provider-derived snapshots.
+
+With matching and storage allowed but reuse denied, the composition skips cache
+and follower work, preserves lookup/reservation/attempt/fence/egress ordering,
+permits the immutable snapshot, and writes no reusable cache entry. Matching
+denial permits otherwise compatible cache/follower reuse but guarantees zero
+fresh provider calls. Storage denial rejects positive cache/follower
+materialization, permits an otherwise authorized fresh match, retains no
+positive cache or snapshot, and completes through the bounded manual/policy
+path. Existing negative and ambiguous cache persistence and terminal-attempt
+provenance remain unchanged.
+
+The first limited re-review found one closed-outcome regression: an incomplete
+manual-outcome set could classify a reused terminal provider failure as
+accepted. Follow-up commit `6bc47be` makes `coherent_match` the sole positive
+reusable outcome; every provider failure or unknown terminal outcome degrades
+to manual. The same Terra/high reviewer verified exact pushed tip
+`6bc47beeda7406f11420777ccd87657fc5d0b588` and returned
+`APPROVED_FOR_MERGE`.
+
+Red-first policy tests failed 8 of 16 cases before the main production change,
+and the focused cached-`timeout` regression then failed before the follow-up.
+Final correction-focused Jest passed 2 suites / 30 tests. The affected Unit
+5A/5B regression set passed 7 suites / 79 tests. Changed-scope TypeScript,
+`git diff --check`, and the scoped credential scan passed. The pre-cancelled
+adapter still produces zero fetch calls; the local-canonical path produces zero
+provider work; and no inventory, publication, alias, or canonical-authority
+mutation seam was added.
+
 ## External and schema state
 
 Read-only Supabase preflight verified project `ahntbtktjjmvfosgkmgn`,
@@ -69,6 +109,7 @@ unstarted.
 
 ## Next gate
 
-Create and push the exact candidate commit, obtain one fresh independent review
-of the committed baseline-to-tip diff, and stop for merge authorization if
-approved.
+The exact next action is user review and merge authorization for final reviewed
+code tip `6bc47beeda7406f11420777ccd87657fc5d0b588`. Production configuration,
+credentials, deployment, provider calls, live smoke, and Unit 5C remain
+separately gated.
