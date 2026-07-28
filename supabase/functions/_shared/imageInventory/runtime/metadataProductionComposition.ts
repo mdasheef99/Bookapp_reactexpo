@@ -108,10 +108,7 @@ export type MetadataCompositionResult = Readonly<{
     | 'coalesced_follower' | 'stale_claim' | 'accepted_metadata_match';
 }>;
 
-const cacheManual = new Set([
-  'no_acceptable_match', 'ambiguous_match', 'material_conflict',
-  'technical_failure', 'policy_denied', 'cost_quota_denied',
-]);
+const isPositiveOutcome = (outcome: string) => outcome === 'coherent_match';
 
 export function decideMetadataProductionPolicy(
   policy: MetadataProviderPolicy,
@@ -141,13 +138,13 @@ function resultForReuseCompletion(
   if (completion.normalizedOutcome === 'coalesced_follower') {
     return { outcome: 'coalesced_follower' };
   }
-  if (!cacheManual.has(completion.normalizedOutcome)
+  if (isPositiveOutcome(completion.normalizedOutcome)
     && !decision.allowPositiveRetention) {
     return { outcome: 'manual_metadata_required' };
   }
   return {
-    outcome: cacheManual.has(completion.normalizedOutcome)
-      ? 'manual_metadata_required' : 'accepted_metadata_match',
+    outcome: isPositiveOutcome(completion.normalizedOutcome)
+      ? 'accepted_metadata_match' : 'manual_metadata_required',
   };
 }
 
@@ -163,7 +160,7 @@ export async function runMetadataProductionComposition(
   if (policy.allowCacheRead) {
     const cached = await gateway.readCache(request);
     if (cached.outcome === 'hit') {
-      const positive = !cacheManual.has(cached.normalizedOutcome);
+      const positive = isPositiveOutcome(cached.normalizedOutcome);
       if (!positive || policy.allowPositiveRetention) {
         const completion = await gateway.completeCacheHit(
           request,

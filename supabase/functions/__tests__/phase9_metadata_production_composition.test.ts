@@ -2,10 +2,8 @@ import {
   decideMetadataProductionPolicy,
   runMetadataProductionComposition,
 } from '../_shared/imageInventory/runtime/metadataProductionComposition';
-import {
-  metadataGateway as gateway,
-  metadataRequest as request,
-} from './support/phase9MetadataComposition';
+import { metadataGateway as gateway, metadataRequest as request }
+  from './support/phase9MetadataComposition';
 
 describe('Phase 9 Unit 5B production metadata composition', () => {
   it('derives independent matching, reuse, storage, and cache-write decisions', () => {
@@ -82,7 +80,6 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
     );
     expect(follower.value.reserveUsage).not.toHaveBeenCalled();
     expect(follower.value.invokePrimary).not.toHaveBeenCalled();
-
     const positiveFollower = gateway({
       decideCoalescing: jest.fn(async () => (
         { mode: 'follower' as const, leaderLookupId: 'leader-2' }
@@ -296,17 +293,19 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
     expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
   });
 
-  it('preserves non-positive cache completion when storage is denied', async () => {
+  it.each(['ambiguous_match', 'timeout'])(
+    'degrades completed non-positive cache outcome %s when storage is denied',
+    async (normalizedOutcome) => {
     const fixture = gateway({
       readCache: jest.fn(async () => ({
         outcome: 'hit' as const,
-        normalizedOutcome: 'ambiguous_match',
+        normalizedOutcome,
       })),
       completeCacheHit: jest.fn(async () => {
         fixture.calls.push('complete-cache');
         return {
-          status: 'manual_degradation' as const,
-          normalizedOutcome: 'ambiguous_match',
+          status: 'completed' as const,
+          normalizedOutcome,
         };
       }),
     });
@@ -316,7 +315,8 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
     }, fixture.value)).resolves.toEqual({ outcome: 'manual_metadata_required' });
     expect(fixture.value.completeCacheHit).toHaveBeenCalled();
     expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
-  });
+    },
+  );
 
   it('allows a fresh call without reuse or storage but retains no positive output', async () => {
     const selected: any = { providerRecordId: 'volume-1', attemptId: 'attempt-1' };
