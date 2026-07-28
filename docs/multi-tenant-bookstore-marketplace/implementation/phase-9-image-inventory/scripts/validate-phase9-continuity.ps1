@@ -67,8 +67,14 @@ foreach ($relative in $requiredPhaseFiles) {
         $missing += $relative
     }
 }
-$requiredGlobal = @((Join-Path $repoRoot 'AGENTS.md'), (Join-Path $implementationRoot 'ACTIVE.md'),
-    (Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
+$requiredGlobal = @(
+    (Join-Path $repoRoot 'AGENTS.md'),
+    (Join-Path $marketplaceRoot 'README.md'),
+    (Join-Path $implementationRoot 'README.md'),
+    (Join-Path $implementationRoot 'ACTIVE.md'),
+    (Join-Path $implementationRoot 'PHASE-9-image-to-LLM-inventory.md'),
+    (Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md')
+)
 foreach ($path in $requiredGlobal) {
     if (-not (Test-Path -LiteralPath $path)) {
         $missing += $path
@@ -137,6 +143,41 @@ foreach ($relative in $unit5cMarkers.Keys) {
     $body = [IO.File]::ReadAllText((Join-Path $phaseRoot $relative))
     foreach ($marker in $unit5cMarkers[$relative]) {
         if (-not $body.Contains($marker)) { Write-Error "Unit 5C Lite reconciliation marker missing from ${relative}: $marker" }
+    }
+}
+$unit5cHandoffMarkers = @{
+    (Join-Path $marketplaceRoot 'README.md') = @(
+        'The current runtime uses one selected language',
+        'Unit 5C Lite target',
+        'former target requirement for up to three automated English aliases is',
+        'Unit 5C Lite is not implemented',
+        'positive selling price',
+        'price-on-request is excluded'
+    )
+    (Join-Path $implementationRoot 'README.md') = @(
+        'The current runtime uses one selected language',
+        'Unit 5C Lite target',
+        'three-English-alias target is likewise superseded',
+        'Unit 5C Lite is',
+        'not implemented',
+        'positive selling price',
+        'price-on-request is excluded'
+    )
+    (Join-Path $implementationRoot 'PHASE-9-image-to-LLM-inventory.md') = @(
+        'The implemented runtime still uses a selected language',
+        'approved Unit 5C Lite target',
+        'former target rule requiring up to three automated English aliases',
+        'superseded',
+        'None of that target is implemented yet',
+        'original-language title and author as primary values'
+    )
+}
+foreach ($path in $unit5cHandoffMarkers.Keys) {
+    $body = [IO.File]::ReadAllText($path)
+    foreach ($marker in $unit5cHandoffMarkers[$path]) {
+        if (-not $body.Contains($marker)) {
+            Write-Error "Unit 5C Lite handoff marker missing from ${path}: $marker"
+        }
     }
 }
 $securitySdd = [IO.File]::ReadAllText((Join-Path $phaseRoot '04-media-security-privacy-sdd.md'))

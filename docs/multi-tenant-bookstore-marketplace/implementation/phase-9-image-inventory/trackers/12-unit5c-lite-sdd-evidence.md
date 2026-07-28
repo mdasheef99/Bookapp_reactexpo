@@ -1,6 +1,6 @@
 # Phase 9 Unit 5C Lite Documentation Evidence
 
-**Status:** candidate awaiting exact-tip independent review
+**Status:** bounded correction in progress after independent review
 **Date:** 2026-07-29
 
 ## Authorized scope
@@ -51,5 +51,10 @@ deployment, UI, search index, inventory, publication, or commerce change.
 
 ## Gate
 
-The exact pushed documentation tip requires independent review. After merge,
-Unit 5C implementation requires a new session and separate authorization.
+Independent review of candidate `d73a9b1` found three current handoff documents
+that still stated the selected-language and three-English-alias methods without
+the required current-runtime/superseded-target qualification. This authorized
+bounded correction pass reconciles those handoffs and adds regression coverage
+to the continuity validator. The corrected exact documentation tip requires
+independent re-review. After merge, Unit 5C implementation requires a new
+session and separate authorization.

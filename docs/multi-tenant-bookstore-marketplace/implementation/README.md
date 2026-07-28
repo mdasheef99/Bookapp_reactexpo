@@ -19,11 +19,22 @@ Current handoff as of 2026-07-27:
 
 - Phase 6 is `complete_e2e_deferred`; its migrations M01-M39 and provider-independent `payment_ready` boundary are applied/verified in the development project.
 - Phases 7 Payment/Ledger/Settlement and 8 Pickup are deferred.
-- Phase 9 Image-to-LLM Inventory has M01-M08/M10/M11/M12 live-verified on `ahntbtktjjmvfosgkmgn`; M09 remains absent.
-- The active set is [`phase-9-image-inventory/`](./phase-9-image-inventory/README.md). Unit 4A deployment scaffolding is integrated and locally/cloud verified, but Owner ingestion, sanitation-worker, and fixture vision-worker services remain undeployed.
-- Phase 9 is same-language `spine_stack` first (maximum 15), not `single_cover` first, and remains independent of deferred Phase 7/8 behavior.
-- No service secrets or real multimodal/metadata provider credentials are configured. Ordered service deployment and live fixture-path verification are the next separately authorized work unit.
-- Supabase was re-verified read-only at M11/M12 closeout as `ahntbtktjjmvfosgkmgn` / `Bookconnect_reactexpo`; re-verify again before any further migration or deployment action.
+- Phase 9 Image-to-LLM Inventory has M01-M08/M10-M17 live-verified on `ahntbtktjjmvfosgkmgn`; M09 remains absent.
+- The active set is [`phase-9-image-inventory/`](./phase-9-image-inventory/README.md);
+  each component is implemented only at the level recorded by its tracker.
+- The current runtime uses one selected language per `spine_stack` and a maximum
+  of 15 books/image. The approved
+  [Unit 5C Lite target](./phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md)
+  supersedes that language method with per-field auto-detection and optional
+  hints while keeping original-language title and author primary. The former
+  three-English-alias target is likewise superseded by an optional bounded
+  proposal sidecar and store-scoped active-only reconciliation. Unit 5C Lite is
+  not implemented.
+- Owner review, the future Unit 5B Roman-query extension, inventory,
+  publication, and commerce remain separate. Public publication still requires
+  a positive selling price; price-on-request is excluded from Unit 5C Lite.
+- Phase 9 remains independent of deferred Phase 7/8 behavior. Re-verify the
+  exact Supabase project before any future migration or deployment action.
 
 ## Before Coding
 

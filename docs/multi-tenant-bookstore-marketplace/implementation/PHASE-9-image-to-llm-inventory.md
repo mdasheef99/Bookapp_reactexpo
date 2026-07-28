@@ -1,9 +1,9 @@
 # PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `unit4b_m14_live_verified_provider_deferred`
+**Status:** `unit5b_m17_live_verified_unit5c_lite_sdd_candidate`
 **Planning set:** `approved_baseline`
-**Implementation:** Unit 4B is merged; M01-M08/M10-M14 and the fixture pipeline are live-verified; M09 and Gemini deployment/live verification remain deferred
-**Last updated:** 2026-07-28
+**Implementation:** Unit 5B is merged and fixture/mock verified; M01-M08/M10-M17 are live-verified; Unit 5C Lite is approved target design only and is not implemented
+**Last updated:** 2026-07-29
 
 This stable phase handoff points to the detailed planning set:
 
@@ -17,14 +17,28 @@ This stable phase handoff points to the detailed planning set:
 - [Implementation/verification tracker](./phase-9-image-inventory/trackers/02-implementation-and-verification.md)
 - [Fixture-pipeline deployment evidence](./phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md)
 - [Work Unit 0 contracts/threat/migration plan](./phase-9-image-inventory/work-units/00-contracts-threat-migration-plan.md)
+- [Unit 5C Lite governing target decision](./phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md)
 
 ## Locked phase direction
 
-- Same-language `spine_stack` is first, maximum 15 books/image; reject/rescan above 15.
+- The implemented runtime still uses a selected language for each `spine_stack`.
+  The approved Unit 5C Lite target instead auto-detects language/script per title
+  and author field, with optional language hints. The maximum remains 15
+  books/image; reject/rescan above 15.
 - Camera and gallery/manual upload; multiple images per simple Start/Close session.
-- English default; owner selects another language before upload; mixed-language/per-spine routing excluded.
+- The implemented runtime still defaults to English and permits another selected
+  language before upload. That method is superseded as target authority by Unit
+  5C Lite; mixed-language stacks and per-field language/script are approved
+  target behavior, not current implementation.
 - Model/provider adapters with one primary and bounded fallback; model has no tools/data authority.
-- Local canonical lookup then configured metadata providers; description and rich edition metadata; up to three automated English alias proposals plus bounded official/Owner-verified aliases.
+- Local canonical lookup then configured metadata providers remain the metadata
+  path. The former target rule requiring up to three automated English aliases
+  is superseded. Unit 5C Lite instead permits an optional analysis-associated
+  `search_variant_proposals_v1` sidecar with bounded provisional Roman variants,
+  keeps deterministic search keys separate from linguistic variants, preserves
+  original-language title and author as primary values, confirms those fields
+  independently, and activates variants only through field-specific,
+  store-scoped reconciliation. None of that target is implemented yet.
 - Mandatory owner review, advisory same-store duplicates, no image comparison/auto-merge, independent idempotent candidate commits.
 - Five public conditions plus separate damage; damaged sellable copies require note and 1-3 approved public photos.
 - Bookstore-first marketplace results and complete public store catalogue.
@@ -36,7 +50,9 @@ This stable phase handoff points to the detailed planning set:
 
 - Supabase project re-verified during fixture deployment: `ahntbtktjjmvfosgkmgn` / `Bookconnect_reactexpo`, `ACTIVE_HEALTHY`.
 - `store_id` is canonical: 37 public-schema columns; zero `tenant_id`.
-- M01-M08/M10-M13 are live exactly once. M11 is `20260726182238`; M12 is `20260726182539`; M13 is `20260727025046`; M09 is absent.
+- M01-M08/M10-M17 are live exactly once; M09 is absent. Exact versions and
+  readback evidence are maintained in the implementation tracker and
+  current-versus-target audit.
 - M13 uses only minimum postgres-owned, empty-`search_path` `SECURITY INVOKER` wrappers; the private schema remains unexposed and client roles remain denied.
 - Owner ingestion is active with JWT verification. `phase9-media-sanitation` and `phase9-fixture-vision` are separate free-plan Render services at `96991a9`, with auto deploy off.
 - Deployed `one_book` and eight fresh-process fixture cases passed normal claim/fencing/persistence/failure paths. Inventory/listing/published counts remained 5/5/5.
@@ -48,10 +64,11 @@ This stable phase handoff points to the detailed planning set:
 
 ## Next gate
 
-The fixture-pipeline deployment remains complete. Unit 4B is locally implemented,
-and one independent Unit 4B review is the only next authorized action. Unit 5
-remains Metadata/aliases. M09, provider configuration/calls, deployment,
-scheduling/autoscaling, metadata runtime, UI, inventory/publication, lifecycle
-work, Library behavior, and any further migration remain separately gated.
+Unit 5B is merged and fixture/mock verified. Unit 5C Lite documentation
+reconciliation and exact-tip review are the current authorized action; Unit 5C
+implementation requires a new session and separate authorization after the
+documentation is merged. M09, further provider configuration/calls, deployment,
+scheduling/autoscaling, UI, inventory/publication, commerce, lifecycle work,
+Library behavior, and any further migration remain separately gated.
 
 Every material session must use the Phase 9 update matrix, append its evidence to the correct tracker, leave one exact next authorized action, and pass the continuity validator before handoff.
