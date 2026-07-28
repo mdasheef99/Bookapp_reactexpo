@@ -2,6 +2,16 @@ import { MetadataEdition } from '../contracts/metadata';
 import { MetadataQueryIdentity } from '../metadata';
 import { GoogleBooksOutcome } from '../metadata/googleBooks';
 
+export type MetadataProviderPolicy = Readonly<{
+  enabled: boolean;
+  adapterVersionCompatible: boolean;
+  capabilityVersionCompatible: boolean;
+  matchingAllowed: boolean;
+  storageAllowed: boolean;
+  reuseAllowed: boolean;
+  pricingPolicyCompatible: boolean;
+}>;
+
 type Request = Readonly<{
   candidateId: string;
   storeId: string;
@@ -10,15 +20,7 @@ type Request = Readonly<{
   claimWorker: string;
   claimLeaseToken: string;
   query: MetadataQueryIdentity;
-  providerPolicy: Readonly<{
-    enabled: boolean;
-    adapterVersionCompatible: boolean;
-    capabilityVersionCompatible: boolean;
-    matchingAllowed: boolean;
-    storageAllowed: boolean;
-    reuseAllowed: boolean;
-    pricingPolicyCompatible: boolean;
-  }>;
+  providerPolicy: MetadataProviderPolicy;
 }>;
 
 type Finalization = Readonly<{
@@ -29,6 +31,21 @@ type Finalization = Readonly<{
   providerRequestId: string | null;
 }>;
 
+export type MetadataPolicyDecision = Readonly<{
+  allowCacheRead: boolean;
+  allowFollowerReuse: boolean;
+  allowFreshProviderCall: boolean;
+  allowPositiveRetention: boolean;
+  allowCacheWrite: boolean;
+  requiredDegradationOutcome: 'policy_denied';
+}>;
+
+export type MetadataReuseCompletion =
+  | Readonly<{ status: 'completed'; normalizedOutcome: string }>
+  | Readonly<{ status: 'manual_degradation'; normalizedOutcome: string }>
+  | Readonly<{ status: 'policy_denied'; normalizedOutcome?: string }>
+  | Readonly<{ status: 'stale_rejected'; normalizedOutcome?: string }>;
+
 export type MetadataProductionGateway = Readonly<{
   resolveLocal(request: Request): Promise<
     | { outcome: 'matched'; canonicalEditionId: string }
@@ -38,12 +55,20 @@ export type MetadataProductionGateway = Readonly<{
     | { outcome: 'miss' }
     | { outcome: 'hit'; normalizedOutcome: string }
   >;
-  completeCacheHit(request: Request, normalizedOutcome: string): Promise<void>;
+  completeCacheHit(
+    request: Request,
+    normalizedOutcome: string,
+    decision: MetadataPolicyDecision,
+  ): Promise<MetadataReuseCompletion>;
   decideCoalescing(request: Request): Promise<
     | { mode: 'leader' }
     | { mode: 'follower'; leaderLookupId: string }
   >;
-  registerFollower(request: Request, leaderLookupId: string): Promise<void>;
+  registerFollower(
+    request: Request,
+    leaderLookupId: string,
+    decision: MetadataPolicyDecision,
+  ): Promise<MetadataReuseCompletion>;
   registerLookup(request: Request): Promise<{ lookupId: string }>;
   reserveUsage(input: Request & { lookupId: string }): Promise<{ reservationId: string }>;
   registerAttempt(input: Request & {
@@ -88,6 +113,44 @@ const cacheManual = new Set([
   'technical_failure', 'policy_denied', 'cost_quota_denied',
 ]);
 
+export function decideMetadataProductionPolicy(
+  policy: MetadataProviderPolicy,
+): MetadataPolicyDecision {
+  const compatible = policy.enabled
+    && policy.adapterVersionCompatible
+    && policy.capabilityVersionCompatible
+    && policy.pricingPolicyCompatible;
+  return {
+    allowCacheRead: compatible && policy.reuseAllowed,
+    allowFollowerReuse: compatible && policy.reuseAllowed,
+    allowFreshProviderCall: compatible && policy.matchingAllowed,
+    allowPositiveRetention: compatible && policy.storageAllowed,
+    allowCacheWrite: compatible && policy.reuseAllowed,
+    requiredDegradationOutcome: 'policy_denied',
+  };
+}
+
+function resultForReuseCompletion(
+  completion: MetadataReuseCompletion,
+  decision: MetadataPolicyDecision,
+): MetadataCompositionResult {
+  if (completion.status === 'stale_rejected') return { outcome: 'stale_claim' };
+  if (completion.status !== 'completed') {
+    return { outcome: 'manual_metadata_required' };
+  }
+  if (completion.normalizedOutcome === 'coalesced_follower') {
+    return { outcome: 'coalesced_follower' };
+  }
+  if (!cacheManual.has(completion.normalizedOutcome)
+    && !decision.allowPositiveRetention) {
+    return { outcome: 'manual_metadata_required' };
+  }
+  return {
+    outcome: cacheManual.has(completion.normalizedOutcome)
+      ? 'manual_metadata_required' : 'accepted_metadata_match',
+  };
+}
+
 export async function runMetadataProductionComposition(
   request: Request,
   gateway: MetadataProductionGateway,
@@ -96,27 +159,39 @@ export async function runMetadataProductionComposition(
   const local = await gateway.resolveLocal(request);
   if (local.outcome === 'matched') return { outcome: 'local_canonical_match' };
 
-  const policy = request.providerPolicy;
-  if (!policy.enabled || !policy.adapterVersionCompatible
-    || !policy.capabilityVersionCompatible || !policy.matchingAllowed
-    || !policy.reuseAllowed || !policy.pricingPolicyCompatible) {
-    await gateway.completeManual({ outcome: 'policy_denied' });
+  const policy = decideMetadataProductionPolicy(request.providerPolicy);
+  if (policy.allowCacheRead) {
+    const cached = await gateway.readCache(request);
+    if (cached.outcome === 'hit') {
+      const positive = !cacheManual.has(cached.normalizedOutcome);
+      if (!positive || policy.allowPositiveRetention) {
+        const completion = await gateway.completeCacheHit(
+          request,
+          cached.normalizedOutcome,
+          policy,
+        );
+        return resultForReuseCompletion(completion, policy);
+      }
+    }
+  }
+
+  if (policy.allowFollowerReuse) {
+    const coalescing = await gateway.decideCoalescing(request);
+    if (coalescing.mode === 'follower') {
+      const completion = await gateway.registerFollower(
+        request,
+        coalescing.leaderLookupId,
+        policy,
+      );
+      return resultForReuseCompletion(completion, policy);
+    }
+  }
+
+  if (!policy.allowFreshProviderCall) {
+    await gateway.completeManual({
+      outcome: policy.requiredDegradationOutcome,
+    });
     return { outcome: 'manual_metadata_required' };
-  }
-
-  const cached = await gateway.readCache(request);
-  if (cached.outcome === 'hit') {
-    await gateway.completeCacheHit(request, cached.normalizedOutcome);
-    return {
-      outcome: cacheManual.has(cached.normalizedOutcome)
-        ? 'manual_metadata_required' : 'accepted_metadata_match',
-    };
-  }
-
-  const coalescing = await gateway.decideCoalescing(request);
-  if (coalescing.mode === 'follower') {
-    await gateway.registerFollower(request, coalescing.leaderLookupId);
-    return { outcome: 'coalesced_follower' };
   }
 
   const { lookupId } = await gateway.registerLookup(request);
@@ -153,7 +228,7 @@ export async function runMetadataProductionComposition(
     disposition: accepted ? 'accepted' : 'rejected',
     providerRequestId: provider.providerRequestId,
   });
-  if (policy.reuseAllowed && (!accepted || policy.storageAllowed)) {
+  if (policy.allowCacheWrite && (!accepted || policy.allowPositiveRetention)) {
     await gateway.persistCache({
       lookupId,
       attemptId,
@@ -162,8 +237,12 @@ export async function runMetadataProductionComposition(
     });
   }
   if (accepted) {
-    if (!policy.storageAllowed) {
-      await gateway.completeManual({ lookupId, attemptId, outcome: 'policy_denied' });
+    if (!policy.allowPositiveRetention) {
+      await gateway.completeManual({
+        lookupId,
+        attemptId,
+        outcome: policy.requiredDegradationOutcome,
+      });
       return { outcome: 'manual_metadata_required' };
     }
     await gateway.persistSelection({
