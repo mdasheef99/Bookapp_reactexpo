@@ -1,6 +1,6 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** current/live and approved-target representations separated; Unit 5C Lite implementation not started
+**Status:** current/live and approved-target representations separated; Unit 5C-1 contract implemented without persistence
 **Last updated:** 2026-07-29
 
 M01-M08/M10-M14 are live-verified. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. M14 adds dedicated service-only vision-provider attempts and is live once as `20260727183546`. Owner/media/fixture-vision services remain deployed. M09 quantity validation remains a separate live-data gate.
@@ -68,7 +68,7 @@ the former design. That generation/activation method is superseded as target
 authority by Unit 5C Lite, but the table itself remains unchanged in this
 documentation session.
 
-## Unit 5C Lite target concepts (not live)
+## Unit 5C Lite target persistence concepts (not live)
 
 ### Confirmed original field
 
@@ -91,6 +91,13 @@ documentation session.
 | approval | method/reason, actor, approved/rejected/stale timestamps |
 | scope | store listing; private candidate/draft association before later transfer |
 | search | active only; never identity or duplicate evidence |
+
+The implemented Unit 5C-1 transport uses
+`search_variant_proposals_v1`, observation-qualified `source_field` values,
+source/variant text plus BCP 47 language and ISO 15924 script, bounded proposal
+types, and model/prompt/schema provenance. Its normalized handoff includes a
+deterministic comparison key but no ID, lifecycle, approval, listing, or
+publication field. No row is written.
 
 The later implementation must decide whether to extend, map, or forward-migrate
 the live M01 representation. It must not rewrite applied migration history.

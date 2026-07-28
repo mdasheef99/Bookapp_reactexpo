@@ -28,8 +28,9 @@ Current handoff as of 2026-07-27:
   supersedes that language method with per-field auto-detection and optional
   hints while keeping original-language title and author primary. The former
   three-English-alias target is likewise superseded by an optional bounded
-  proposal sidecar and store-scoped active-only reconciliation. Unit 5C Lite is
-  not implemented.
+  proposal sidecar and store-scoped active-only reconciliation. Unit 5C-1
+  implements only the provider-neutral sidecar contract and fixture-gated
+  validation; later Unit 5C Lite behavior is not implemented.
 - Owner review, the future Unit 5B Roman-query extension, inventory,
   publication, and commerce remain separate. Public publication still requires
   a positive selling price; price-on-request is excluded from Unit 5C Lite.

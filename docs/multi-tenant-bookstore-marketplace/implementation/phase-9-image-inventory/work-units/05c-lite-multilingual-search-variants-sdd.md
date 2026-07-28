@@ -1,6 +1,6 @@
 # Phase 9 Unit 5C Lite: Model-Assisted Multilingual Search Variants
 
-**Status:** approved target design; documentation reconciliation complete; implementation not started
+**Status:** approved target design; Unit 5C-1 contract/validation implemented; later slices not started
 **Decision date:** 2026-07-29
 **Scope:** Unit 5C specification only
 **Supersedes:** the previously governing selected-language and post-metadata English-alias method
@@ -25,6 +25,13 @@ vision extraction preserves observed original title/author
 
 This decision does not implement code, schema, UI, provider routing, search
 indexing, inventory, publication, or commerce behavior.
+
+**Implementation checkpoint (2026-07-29):** Unit 5C-1 now implements the
+optional provider-neutral sidecar contract, observation-qualified title/author
+source association, strict validation, deterministic comparison/deduplication,
+and sanitized fixture handoff. Active Gemini generation, `p9-vision-v2`,
+worker persistence, M01 aliases, lifecycle, activation, search, and UI remain
+unchanged.
 
 ## 2. Current runtime versus approved target
 

@@ -19,11 +19,17 @@ export type MetadataQueryIdentity = Readonly<{
   normalizedEditionClues: readonly string[];
 }>;
 
-const normalizedText = (value: string): string => value
+export const normalizeBibliographicText = (value: string): string => value
   .normalize('NFKC')
   .trim()
   .replace(/\s+/gu, ' ')
   .toLocaleLowerCase('und');
+
+export const normalizeBibliographicSearchKey = (value: string): string =>
+  normalizeBibliographicText(value)
+    .replace(/[^\p{L}\p{M}\p{N}]+/gu, ' ')
+    .trim()
+    .replace(/\s+/gu, ' ');
 
 const stableKey = (parts: readonly unknown[]): string => JSON.stringify(parts);
 
@@ -37,11 +43,11 @@ export function buildMetadataQueryIdentity(input: Readonly<{
 }>): MetadataQueryIdentity {
   const isbn = input.isbnClue === null ? null : normalizeIsbnClue(input.isbnClue);
   const normalizedIsbn13 = isbn?.status === 'valid' ? isbn.isbn13 : null;
-  const normalizedTitle = normalizedText(input.title);
-  const normalizedAuthors = input.authors.map(normalizedText).filter(Boolean);
+  const normalizedTitle = normalizeBibliographicText(input.title);
+  const normalizedAuthors = input.authors.map(normalizeBibliographicText).filter(Boolean);
   const normalizedLanguage = canonicalBcp47(input.language, 'language');
   const normalizedEditionClues = [...new Set(
-    input.editionClues.map(normalizedText).filter(Boolean),
+    input.editionClues.map(normalizeBibliographicText).filter(Boolean),
   )].sort();
   const strategy = input.strategy;
   const key = stableKey([

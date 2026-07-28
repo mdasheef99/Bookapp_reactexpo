@@ -5,9 +5,10 @@
 **Date:** 2026-07-19
 **Phase:** 9
 **Implementation checkpoint (2026-07-29):** Units 0–5B are complete at their
-recorded levels; Unit 5B is fixture/mock verified only. Unit 5C Lite is the
-approved target design but has no implementation. The current selected-language
-runtime, strict `p9-vision-v2`, and live M01 alias schema remain unchanged.
+recorded levels; Unit 5B is fixture/mock verified only. Unit 5C-1 implements the
+provider-neutral optional proposal contract and fixture-gated independent
+validation seam only. The current Gemini generation, selected-language runtime,
+strict `p9-vision-v2`, and live M01 alias schema remain unchanged.
 
 **Unit 4B local checkpoint (2026-07-27):** the configuration-driven
 `gemini-3.5-flash-lite` adapter is locally implemented behind the same

@@ -8,6 +8,14 @@ Unit 5C Lite is approved design only. Current selected-language runtime,
 `p9-vision-v2`, and live M01 `book_search_aliases` remain unchanged until
 separately authorized implementation.
 
+### Unit 5C-1 implementation mapping (2026-07-29)
+
+| Requirement | Implementation evidence |
+| --- | --- |
+| MAS-19; EXT-40; MED-30 | `search_variant_proposals_v1` parser and safe companion decoder isolate missing/rejected sidecars from valid `p9-vision-v2`. |
+| DAT-10â€“14 | Observation-qualified title/author sources, per-field BCP 47/ISO 15924, bounded proposal types, already-Latin suppression, deterministic-key separation, and field-local deduplication. |
+| EXT-41 | No provider generation/call, metadata query, persistence, activation, search, inventory, or publication seam is invoked. |
+
 | Requirement | Owning SDD | Primary acceptance IDs |
 | --- | --- | --- |
 | Original title/author preserved as primary with per-field language/script | 00 Master; 01 Data; Unit 5C Lite | MAS-04; MAS-AC16; DAT-10 |

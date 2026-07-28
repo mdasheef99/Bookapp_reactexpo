@@ -1,8 +1,8 @@
 # PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `unit5c_lite_sdd_independently_approved_ready_for_merge`
+**Status:** `unit5c1_contracts_candidate_review_gate`
 **Planning set:** `approved_baseline`
-**Implementation:** Unit 5B is merged and fixture/mock verified; M01-M08/M10-M17 are live-verified; Unit 5C Lite is approved target design only and is not implemented
+**Implementation:** Unit 5B is merged and fixture/mock verified; M01-M08/M10-M17 are live-verified; Unit 5C-1 contract/fixture validation is locally complete while later Unit 5C Lite behavior is not implemented
 **Last updated:** 2026-07-29
 
 This stable phase handoff points to the detailed planning set:
@@ -38,7 +38,9 @@ This stable phase handoff points to the detailed planning set:
   keeps deterministic search keys separate from linguistic variants, preserves
   original-language title and author as primary values, confirms those fields
   independently, and activates variants only through field-specific,
-  store-scoped reconciliation. None of that target is implemented yet.
+  store-scoped reconciliation. Only the provider-neutral sidecar contract and
+  fixture-gated validation are implemented; runtime generation, persistence,
+  reconciliation, activation, search, and UI remain unimplemented.
 - Mandatory owner review, advisory same-store duplicates, no image comparison/auto-merge, independent idempotent candidate commits.
 - Five public conditions plus separate damage; damaged sellable copies require note and 1-3 approved public photos.
 - Bookstore-first marketplace results and complete public store catalogue.

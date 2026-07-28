@@ -49,6 +49,11 @@ export const PHASE9_LIMITS = {
   marketplacePageSize: 50,
   metadataCandidateCount: 10,
   coverReferenceChars: 512,
+  searchVariantSidecarBytes: 65_536,
+  searchVariantTitleCount: PHASE9_MAX_CANDIDATES,
+  searchVariantAuthorFieldCount: 300,
+  searchVariantProposalCount: 4,
+  searchVariantAlternativeCount: 2,
 } as const;
 
 export const PHASE9_VALIDATION_MATRIX = {

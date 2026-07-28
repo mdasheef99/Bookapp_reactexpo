@@ -1,11 +1,11 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit5c_lite_sdd_independently_approved_ready_for_merge`
+**Status:** `unit5c1_contracts_candidate_review_gate`
 **Last updated:** 2026-07-29
 **Implementation status:** M01-M08/M10-M17 are live-verified; Unit 5B is merged
 and Google Books remains fixture/mock verified only; Unit 5C Lite target
-documentation is independently approved/ready for merge and implementation is
-not started
+documentation is merged and Unit 5C-1 contract/fixture validation is locally
+complete pending exact-tip independent review
 **Supabase mutation status:** M01-M08/M10-M17 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; Unit 5B created no migration and caused no Supabase/Storage mutation
 **Database checkpoint:** M01-M08 and forward migrations M10-M17 are live-verified.
 
@@ -57,7 +57,7 @@ After the repository entrypoint, read in this order:
 | [Work Unit 0 plan](./work-units/00-contracts-threat-migration-plan.md) | Versioned contract shapes, fixtures, threat tests, migration sequence, correction strategy, and stop gates. |
 | [Work Unit 0B technical design](./work-units/00b-backend-api-technical-design-plan.md) | Router for seven completed backend/API design artifacts covering commands, queries, DTOs, authorization, state, jobs, media, marketplace, request photos, red tests, exact later file allowlists, and independent gates. |
 | [Unit 4 fixture vision-analysis runtime](./work-units/04-fixture-vision-analysis-runtime-design.md) | Locally complete `p9-vision-v2`, fixture analyzer, product policy, dedicated worker, token/attempt state machine, forward M12 persistence/RPCs, privacy, and red-first evidence. |
-| [Unit 5C Lite multilingual variants](./work-units/05c-lite-multilingual-search-variants-sdd.md) | Approved target-design candidate: original-first field authority, optional hints/sidecar, field reconciliation, store-scoped active-only variants; implementation not started. |
+| [Unit 5C Lite multilingual variants](./work-units/05c-lite-multilingual-search-variants-sdd.md) | Approved target design; Unit 5C-1 implements only the provider-neutral optional sidecar contract, fixture-gated decoder, validation, and deduplication. Persistence/lifecycle/search/UI/provider generation remain unstarted. |
 | [Unit 4A deployment-runtime scaffolding](./work-units/04a-deployment-runtime-scaffolding-sdd.md) | Provider-neutral sanitation/fixture-vision service hosts, strict environment loading, dynamic fixtures, safe observability, manual invocation, deterministic builds/containers, and deployment validation. |
 | [Fixture-pipeline deployment evidence](./trackers/06-fixture-pipeline-deployment-evidence.md) | M13 invoker boundary, Owner/Render identities, exact SHA/deployments, nine live fixtures, fencing/security/log/privacy and zero-commerce evidence. |
 

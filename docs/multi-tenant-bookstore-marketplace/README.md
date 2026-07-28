@@ -33,7 +33,9 @@ Current handoff as of 2026-07-29:
   [Unit 5C Lite target](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md)
   supersedes that method as design authority with auto-detection, optional
   hints, and per-field language/script while preserving original-language title
-  and author. Unit 5C Lite is not implemented.
+  and author. Unit 5C-1 now implements only the optional provider-neutral
+  sidecar contract and fixture-gated validation; later Unit 5C Lite runtime,
+  persistence, search, and UI behavior is not implemented.
 - The former target requirement for up to three automated English aliases is
   superseded by Unit 5C Lite's optional bounded Roman-variant proposal sidecar,
   deterministic-key separation, independent title/author reconciliation, and

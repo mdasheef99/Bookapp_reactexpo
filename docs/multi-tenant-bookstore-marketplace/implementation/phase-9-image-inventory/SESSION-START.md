@@ -10,9 +10,11 @@ The one startup chain is repository `AGENTS.md` â†’ `implementation/ACTIVE.md` â
 
 Current routed handoff: Unit 5B is independently approved and merged to `main`
 at `47f23a89a4df9ae8ece85842eb3020c3f17636bc`. Google Books remains
-fixture/mock verified only. [Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md)
-is the independently approved target-design documentation candidate ready for
-push/merge; implementation remains unstarted and separately gated.
+fixture/mock verified only. [Unit 5C-1](./trackers/13-unit5c1-variant-contract-evidence.md)
+implements the provider-neutral optional sidecar contract and fixture-gated
+validation seam. Exact-tip independent review is required before merge; later
+persistence, reconciliation, activation, search, UI, and provider generation
+remain separately gated.
 
 ## 1. Canonical status source
 

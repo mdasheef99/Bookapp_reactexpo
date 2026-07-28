@@ -6,6 +6,7 @@ export * from './metadata';
 export * from './providerReuse';
 export * from './redGates';
 export * from './registers';
+export * from './searchVariants';
 export * from './versions';
 export * from './vision';
 export * from '../domain/isbn';

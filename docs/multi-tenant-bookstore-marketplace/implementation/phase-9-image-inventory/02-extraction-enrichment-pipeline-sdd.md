@@ -22,7 +22,9 @@ request does not wait synchronously for the complete pipeline.
 
 The current runtime remains selected-language and strict `p9-vision-v2`.
 [Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md)
-prospectively replaces the language/variant target only; it is not implemented.
+prospectively replaces the language/variant target. Unit 5C-1 implements only
+its provider-neutral sidecar contract, fixtures, and independent decoder;
+generation, persistence, and runtime language changes remain unimplemented.
 
 Future implementation decisions select Gemini 3.5 Flash (`gemini-3.5-flash`) for
 vision and Google Books API as the initial metadata provider. The provider-neutral
