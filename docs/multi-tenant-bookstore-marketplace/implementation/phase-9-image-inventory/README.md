@@ -1,10 +1,11 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `fixture_pipeline_deployed_and_live_verified`
-**Last updated:** 2026-07-28
+**Status:** `unit5c_lite_sdd_independently_approved_ready_for_merge`
+**Last updated:** 2026-07-29
 **Implementation status:** M01-M08/M10-M17 are live-verified; Unit 5B is merged
 and Google Books remains fixture/mock verified only; Unit 5C Lite target
-documentation awaits exact-tip review and implementation is not started
+documentation is independently approved/ready for merge and implementation is
+not started
 **Supabase mutation status:** M01-M08/M10-M17 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; Unit 5B created no migration and caused no Supabase/Storage mutation
 **Database checkpoint:** M01-M08 and forward migrations M10-M17 are live-verified.
 

@@ -101,13 +101,13 @@ if (-not $active.Contains('Unit 5B is independently approved/merged') -or
     -not $active.Contains('implementation is unstarted')) { Write-Error 'ACTIVE.md does not route to the Unit 5C Lite documentation candidate and preserve the implementation gate.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5c_lite_sdd_candidate_awaiting_review`') -or
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5c_lite_sdd_independently_approved_ready_for_merge`') -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
     -not $doc13.Contains('20260727231217 marketplace_phase9_sensitive_table_acl_correction') -or
     -not $doc13.Contains('20260727233457 marketplace_phase9_maintain_acl_correction')) { Write-Error 'DOC-13 does not preserve the M15-M17 live chain.' }
-if (-not $doc13.Contains('| Next recommended task | Validate, commit/push, and independently review the Unit 5C Lite documentation tip.')) { Write-Error 'DOC-13 does not preserve the Unit 5C documentation-review and implementation gates.' }
+if (-not $doc13.Contains('| Next recommended task | Push and merge the independently approved Unit 5C Lite documentation tip.')) { Write-Error 'DOC-13 does not preserve the Unit 5C documentation-review and implementation gates.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit5c_lite_sdd_candidate_awaiting_independent_review`\r?$' -or
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit5c_lite_sdd_independently_approved_ready_for_merge`\r?$' -or
     -not $implementationTracker.Contains('**Active work unit:** `unit5c_lite_documentation_reconciliation`') -or
     -not $implementationTracker.Contains('20260728000017_marketplace_phase9_maintain_acl_correction.sql')) {
     Write-Error 'Implementation tracker does not preserve the merged Unit 5B/M17 handoff.'
@@ -284,7 +284,7 @@ foreach ($relative in $artifactRelativePaths) {
 }
 if (-not $tracker.Contains('**Implementation status:** `unit5b_merged_unit5c_not_started`') -or
     $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5c_lite_documentation_reconciliation`\r?$' -or
-    -not $tracker.Contains('**Next authorized action:** validate, commit/push, and independently review the exact Unit 5C Lite documentation tip') -or
+    -not $tracker.Contains('**Next authorized action:** push and merge the independently approved exact Unit 5C Lite documentation tip') -or
     -not $tracker.Contains('M17 is live once as `20260727233457`')) {
     Write-Error 'TRACKER.md does not preserve the merged Unit 5B/M17 handoff.'
 }
@@ -490,12 +490,12 @@ if (-not $sessionStart.Contains('| 0B Backend/API technical design or review (on
     Write-Error 'SESSION-START.md does not route the WU0B authority and artifact set.'
 }
 $phaseReadme = [IO.File]::ReadAllText((Join-Path $phaseRoot 'README.md'))
-if (-not $phaseReadme.Contains('**Status:** `fixture_pipeline_deployed_and_live_verified`') -or
+if (-not $phaseReadme.Contains('**Status:** `unit5c_lite_sdd_independently_approved_ready_for_merge`') -or
     -not $phaseReadme.Contains('M01-M08/M10-M17 are live once') -or
     -not $phaseReadme.Contains('Unit 5B is merged') -or
     -not $phaseReadme.Contains('Unit 5C Lite target') -or
-    -not $phaseReadme.Contains('implementation is not started')) {
-    Write-Error 'Phase 9 README disagrees with the fixture-pipeline deployment checkpoint.'
+    -not $phaseReadme.Contains('not started')) {
+    Write-Error 'Phase 9 README disagrees with the Unit 5C Lite documentation checkpoint.'
 }
 $pipeline = [IO.File]::ReadAllText((Join-Path $phaseRoot '02-extraction-enrichment-pipeline-sdd.md'))
 if (-not $pipeline.Contains('M11 `20260726182238`, M12 `20260726182539`, and M13 `20260727025046` are live') -or

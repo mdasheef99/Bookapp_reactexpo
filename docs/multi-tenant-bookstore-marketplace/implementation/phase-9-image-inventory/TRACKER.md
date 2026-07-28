@@ -1,16 +1,16 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `unit5c_lite_sdd_candidate_awaiting_independent_review`
+**Planning status:** `unit5c_lite_sdd_independently_approved_ready_for_merge`
 **Implementation status:** `unit5b_merged_unit5c_not_started`
 **Last updated:** 2026-07-29
-**Current milestone:** Unit 5C Lite governing documentation reconciled; exact-tip independent review pending
+**Current milestone:** Unit 5C Lite governing documentation independently approved after one bounded correction
 **Active work unit:** `unit5c_lite_documentation_reconciliation`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** Unit 5B merge to `main` at `47f23a89a4df9ae8ece85842eb3020c3f17636bc`; independent verdict `APPROVED_FOR_MERGE`; detailed evidence is [tracker 11](./trackers/11-unit5b-implementation-evidence.md)
-**Next authorized action:** validate, commit/push, and independently review the exact Unit 5C Lite documentation tip
+**Next authorized action:** push and merge the independently approved exact Unit 5C Lite documentation tip
 **Implementation authority:** no Unit 5C implementation is authorized; secondary providers, Owner UI, inventory commit, publication, credentials, live provider calls, configuration, and deployment remain unauthorized
 **Migration creation/application authority:** M17 is live once as `20260727233457`. M01-M08/M10-M17 remain live exactly once and M09 remains absent; no further migration is authorized
-**Current gate:** exact documentation tip must be independently approved; Unit 5C implementation then requires a new session and separate authorization
+**Current gate:** merge the independently approved documentation tip; Unit 5C implementation then requires a new session and separate authorization
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -93,7 +93,7 @@ The exact development project was re-verified read-only at M11/M12 closeout:
 | Work Unit 4 fixture vision-analysis runtime | [`integrated_main_e9ba2d9`](./work-units/04-fixture-vision-analysis-runtime-design.md) |
 | Work Unit 4A deployment-runtime scaffolding | [`deployed_and_live_fixture_verified`](./trackers/06-fixture-pipeline-deployment-evidence.md) |
 | Work Unit 4B Gemini vision adapter | [`m14_live_verified_provider_deferred`](./work-units/04b-gemini-vision-adapter-handoff.md) |
-| Unit 5C Lite target SDD | [`candidate_awaiting_exact_tip_review`](./work-units/05c-lite-multilingual-search-variants-sdd.md); [evidence](./trackers/12-unit5c-lite-sdd-evidence.md); implementation not started |
+| Unit 5C Lite target SDD | [`independently_approved_ready_for_merge`](./work-units/05c-lite-multilingual-search-variants-sdd.md); [evidence](./trackers/12-unit5c-lite-sdd-evidence.md); implementation not started |
 | Provider and scale architecture SDD reconciliation | `stale_marker_superseded_by_unit4b_m14_m17_unit5a_review_evidence_2026-07-28` |
 
 ## Blocking gate before further implementation
@@ -136,7 +136,7 @@ Unit 5B is complete at the merged fixture/mock-verified level recorded in
 [tracker 11](./trackers/11-unit5b-implementation-evidence.md). Matching, reuse,
 and storage are independently enforced, and only `coherent_match` is a positive
 reusable outcome. Unit 5B created or applied no migration; M09 remains absent.
-Unit 5C Lite documentation is the current review candidate; implementation
-remains not started. Do not apply M09; configure, deploy, or call providers; select/enable
+Unit 5C Lite documentation is independently approved and ready for merge;
+implementation remains not started. Do not apply M09; configure, deploy, or call providers; select/enable
 a secondary; schedule/autoscale workers; change mobile UI; commit inventory; publish
 listings; or implement Library behavior.

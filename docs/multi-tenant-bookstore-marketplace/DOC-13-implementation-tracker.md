@@ -209,16 +209,25 @@ If implementation changes product or architecture behavior, update the relevant 
 > migration, Supabase/Storage, provider, deployment, UI, index, inventory,
 > publication, or commerce mutation occurred.
 
+> 2026-07-29 Phase 9 Unit 5C Lite documentation approval: independent review of
+> candidate `d73a9b1` required one bounded correction because three stable
+> handoffs still presented selected-language/three-English-alias wording without
+> the current-runtime/superseded-target distinction. Corrected tip `3d19ce5`
+> passed the full continuity/alignment suite and independent re-review returned
+> `APPROVED` with no findings. The candidate is ready for push/merge. Unit 5C
+> implementation, migrations, UI, provider calls, indexing, inventory,
+> publication, and commerce remain unauthorized.
+
 > 2026-07-26 Phase 9 Unit 4A review-correction checkpoint: the independent review returned `CHANGES_REQUIRED` for unsafe Docker context, pre-authentication slot starvation/read deadlines, nondeterministic shutdown evidence, source-string-only deployment claims, and identity-only fixture tests. All five corrections plus bounded invoker responses are locally focused-green. A deny-by-default Docker context, pre-admission constant-time authentication, fixed body deadline, deterministic shutdown test, real compiled-entrypoint smoke, per-fixture semantic matrix, synthetic-only container script, and minimal-permission pull-request workflow now exist. The mandatory GitHub Actions image build/start gate is next; no live credential, image push, deployment, migration, provider, Supabase, or Storage operation is authorized.
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5C Lite target docs awaiting exact-tip review; implementation not started** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5C Lite target docs independently approved and ready for merge; implementation not started** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-29 |
-| Latest handoff | Unit 5C Lite governing documentation is reconciled and awaiting exact-tip review; Unit 5B remains merged/fixture-only and M17 is unchanged. |
+| Latest handoff | Unit 5C Lite governing documentation passed one bounded correction and independent approval; Unit 5B remains merged/fixture-only and M17 is unchanged. |
 | Current risk level | Live M01 alias representation differs from the approved field-level target and must be mapped by later separately authorized implementation. No runtime or external mutation occurred. |
-| Next recommended task | Validate, commit/push, and independently review the Unit 5C Lite documentation tip. Implementation begins only in a new separately authorized session after merge. |
+| Next recommended task | Push and merge the independently approved Unit 5C Lite documentation tip. Implementation begins only in a new separately authorized session after merge. |
 
 ---
 
@@ -235,7 +244,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit5c_lite_sdd_candidate_awaiting_review` | [Unit 5C Lite](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md) · [Unit 5B evidence](./implementation/phase-9-image-inventory/trackers/11-unit5b-implementation-evidence.md) | Unit 5C target docs reconciled; implementation not started; current runtime/schema and positive-price publication unchanged. |
+| Phase 9: Image-to-LLM Inventory | `unit5c_lite_sdd_independently_approved_ready_for_merge` | [Unit 5C Lite](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md) · [Unit 5B evidence](./implementation/phase-9-image-inventory/trackers/11-unit5b-implementation-evidence.md) | Unit 5C target docs independently approved; implementation not started; current runtime/schema and positive-price publication unchanged. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -352,9 +361,9 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Complete exact-tip validation and independent review of the Unit 5C Lite
-   documentation candidate; after merge, obtain separate implementation
-   authorization in a new session.
+1. Push and merge the independently approved Unit 5C Lite documentation
+   candidate; after merge, obtain separate implementation authorization in a
+   new session.
 2. Historical handoff (vision portion superseded 2026-07-27): Gemini remains configuration/deployment/live-call deferred. Google Books is implemented behind provider-neutral contracts but remains fixture/mock verified only; credentials, provider-registry enablement, deployment, and live smoke remain deferred.
    The current initial primary vision model ID is configuration-driven
    `gemini-3.5-flash-lite`; provider configuration/calls remain deferred.

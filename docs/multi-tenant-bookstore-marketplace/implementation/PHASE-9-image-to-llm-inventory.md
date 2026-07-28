@@ -1,6 +1,6 @@
 # PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `unit5b_m17_live_verified_unit5c_lite_sdd_candidate`
+**Status:** `unit5c_lite_sdd_independently_approved_ready_for_merge`
 **Planning set:** `approved_baseline`
 **Implementation:** Unit 5B is merged and fixture/mock verified; M01-M08/M10-M17 are live-verified; Unit 5C Lite is approved target design only and is not implemented
 **Last updated:** 2026-07-29
@@ -64,10 +64,10 @@ This stable phase handoff points to the detailed planning set:
 
 ## Next gate
 
-Unit 5B is merged and fixture/mock verified. Unit 5C Lite documentation
-reconciliation and exact-tip review are the current authorized action; Unit 5C
-implementation requires a new session and separate authorization after the
-documentation is merged. M09, further provider configuration/calls, deployment,
+Unit 5B is merged and fixture/mock verified. Unit 5C Lite documentation is
+independently approved and ready for push/merge; Unit 5C implementation requires
+a new session and separate authorization after the documentation is merged.
+M09, further provider configuration/calls, deployment,
 scheduling/autoscaling, UI, inventory/publication, commerce, lifecycle work,
 Library behavior, and any further migration remain separately gated.
 

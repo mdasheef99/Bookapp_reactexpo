@@ -151,6 +151,9 @@ Audit performed read-only on 2026-07-19 after `get_project` verification.
   alias schema, and historical Unit 4/5 evidence.
 - Authorized documentation-only reconciliation, candidate commit/push, and one
   independent review; implementation and all external mutations remain gated.
+- Independent review of `d73a9b1` required one bounded handoff correction.
+  Corrected content tip `3d19ce5` received `APPROVED` with no findings; the
+  documentation candidate is ready for push/merge.
 
 ### 2026-07-27 — Unit 4B Gemini adapter
 

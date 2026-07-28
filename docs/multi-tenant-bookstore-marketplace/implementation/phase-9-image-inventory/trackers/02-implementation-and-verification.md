@@ -1,8 +1,8 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit5c_lite_sdd_candidate_awaiting_independent_review`
+**Status:** `unit5c_lite_sdd_independently_approved_ready_for_merge`
 **Last updated:** 2026-07-29
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `unit5c_lite_documentation_reconciliation`. Unit 5B is independently approved/merged. Unit 5C Lite target docs await exact-tip review; implementation/provider activity remain unauthorized. WU0B history preserves `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review.
+**Active work unit:** `unit5c_lite_documentation_reconciliation`. Unit 5B is independently approved/merged. Unit 5C Lite target docs are independently approved and ready for merge; implementation/provider activity remain unauthorized. WU0B history preserves `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review.
 ## Work units
 | Unit | Scope | Status | Required gate |
 | --- | --- | --- | --- |
@@ -16,7 +16,7 @@
 | 4A | [Deployment-runtime scaffolding](../work-units/04a-deployment-runtime-scaffolding-sdd.md): executable sanitation/fixture-vision hosts, strict environment, builds/containers, invocation and validation | [`deployed_and_live_fixture_verified`](./06-fixture-pipeline-deployment-evidence.md) | separate free Render services live at `96991a9`; M13 invoker boundary live |
 | 4B | [Gemini vision adapter](../work-units/04b-gemini-vision-adapter-handoff.md) for configured `gemini-3.5-flash-lite`; optional whole-image fallback remains unselected/disabled | `m14_live_verified_provider_deferred` | M14 live once; no live call, credential configuration, Gemini deployment, Storage mutation, or fallback selection |
 | 5A | [Metadata foundation](../work-units/05a-metadata-foundation-handoff.md): provider-neutral local-first routing/cache/coalescing, ISBN validation, coherent selection, and attempt/cost lineage | `m17_live_acl_verified` | M17 live once; four sensitive tables are service SELECT-only with RPC-only mutation |
-| 5B/5C | Google Books primary adapter / [Unit 5C Lite multilingual variants](../work-units/05c-lite-multilingual-search-variants-sdd.md) | [`5B merged_fixture_verified_provider_deferred`](./11-unit5b-implementation-evidence.md) / `5C target_docs_complete_review_pending; implementation_not_started` | 5B approved/merged at `47f23a8`; 5C documentation-only candidate requires exact-tip review; no runtime, migration, provider, UI, index, inventory, publication, or commerce effect |
+| 5B/5C | Google Books primary adapter / [Unit 5C Lite multilingual variants](../work-units/05c-lite-multilingual-search-variants-sdd.md) | [`5B merged_fixture_verified_provider_deferred`](./11-unit5b-implementation-evidence.md) / `5C target_docs_independently_approved_ready_for_merge; implementation_not_started` | 5B approved/merged at `47f23a8`; 5C corrected content tip `3d19ce5` independently approved; no runtime, migration, provider, UI, index, inventory, publication, or commerce effect |
 | 6 | Owner session/defaults/capture/review UI with accessibility and recovery | `not_started` | Units 2–5 verified |
 | 7 | Controlled per-candidate commit, advisory duplicates, idempotency, projection changes | `not_started` | quantity/hold concurrency tests |
 | 8 | Marketplace bookstore-first search, multilingual aliases, counts, full store catalogue | `not_started` | public/private projection tests |
