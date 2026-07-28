@@ -11,6 +11,7 @@ import {
 } from '../metadata/queryIdentity';
 import { PHASE9_LIMITS } from './registers';
 import {
+  assertLanguageScriptCoherence,
   assertSourceLanguageScript,
   parseSupportedSearchVariantScript,
   SupportedSearchVariantScript,
@@ -103,6 +104,7 @@ function proposal(value: unknown, field: string): SearchVariantProposal {
   const variantScript = parseSupportedSearchVariantScript(
     input.variant_script, `${field}.variant_script`,
   );
+  assertLanguageScriptCoherence(language, variantScript, field);
   if (type === 'translation_candidate') {
     if (language.split('-')[0] !== 'en' || variantScript !== 'Latn') {
       throw new Phase9ContractError(field, 'translation candidates must be English/Latin');

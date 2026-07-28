@@ -247,6 +247,7 @@ describe('Phase 9 Unit 5C-1 language and script validation', () => {
       titleField('ಗೋದಾನ', 'not_a_tag', 'Knda', []),
       titleField('ಗೋದಾನ', 'kn', 'knda', []),
       titleField('ಗೋದಾನ', 'kn', 'Taml', []),
+      titleField('ಗೋದಾನ', 'kn-Taml', 'Knda', []),
       titleField('தமிழ்', 'ta', 'Knda', []),
     ]) {
       expect(() => parseSearchVariantProposalSidecar({
@@ -255,6 +256,18 @@ describe('Phase 9 Unit 5C-1 language and script validation', () => {
         authors: [],
       })).toThrow();
     }
+  });
+
+  it('rejects proposal language tags whose explicit script conflicts with the variant', () => {
+    expect(() => parseSearchVariantProposalSidecar({
+      ...searchVariantProvenance,
+      titles: [titleField('ಗೋದಾನ', 'kn', 'Knda', [
+        proposal('translation_candidate', 'The Gift of a Cow', {
+          variant_language: 'en-Cyrl',
+        }),
+      ])],
+      authors: [],
+    })).toThrow();
   });
 
   it('keeps Urdu and Meitei Mayek proposals provisional with no activation fields', () => {

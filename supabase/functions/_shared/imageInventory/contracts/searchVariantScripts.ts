@@ -52,12 +52,25 @@ export function textUsesScript(
   return expectedLetters.length / letters.length >= 0.6;
 }
 
+export function assertLanguageScriptCoherence(
+  language: string,
+  script: SupportedSearchVariantScript,
+  field: string,
+): void {
+  const explicitScript = language.split('-').slice(1)
+    .find((part) => /^[A-Z][a-z]{3}$/u.test(part));
+  if (explicitScript && explicitScript !== script) {
+    throw new Phase9ContractError(field, 'language tag and script conflict');
+  }
+}
+
 export function assertSourceLanguageScript(
   text: string,
   language: string,
   script: SupportedSearchVariantScript,
   field: string,
 ): void {
+  assertLanguageScriptCoherence(language, script, field);
   const expected = SOURCE_LANGUAGE_SCRIPTS[language.split('-')[0]];
   if (expected && script !== expected && script !== 'Latn') {
     throw new Phase9ContractError(field, 'language and script conflict');

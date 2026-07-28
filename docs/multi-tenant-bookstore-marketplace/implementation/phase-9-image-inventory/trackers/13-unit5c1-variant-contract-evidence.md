@@ -38,8 +38,9 @@ deployment, price-on-request, or commerce behavior is included.
 - Red baseline: new suite failed 25/25 before production exports existed.
 - Source-association refinement: 18/28 failed before observation-qualified
   production support.
-- Unit 5C-1 green: 1 suite, 28/28 tests.
-- Focused regressions: 5 suites, 84/84 tests covering Unit 5C-1, unchanged
+- Review correction: explicit BCP 47 script-subtag conflicts failed 2/29 red,
+  then Unit 5C-1 passed 29/29 after bounded coherence validation.
+- Focused regressions: 5 suites, 85/85 tests covering Unit 5C-1, unchanged
   vision contracts, Gemini analyzer, alias contracts, and metadata identity.
 - Root TypeScript: initial command reached the pre-existing `.ts` import/config
   mismatch in `contracts/ingestion.ts`; rerun with
