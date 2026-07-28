@@ -70,6 +70,9 @@ After the repository entrypoint, read in this order:
 The local tracking set intentionally has three files:
 
 - [TRACKER.md](./TRACKER.md): concise current status and handoff.
+- [Unit 5B evidence](./trackers/11-unit5b-implementation-evidence.md) and
+  [Google Books audit](./work-units/05b-google-books-provider-audit.md):
+  current local candidate and provider-specific authority.
 - [Planning and decisions](./trackers/01-planning-and-decisions.md): decision register, source reconciliation, audit evidence, and planning review.
 - [Implementation and verification](./trackers/02-implementation-and-verification.md): future work units, migration ledger, tests, rollout, and operational evidence.
 

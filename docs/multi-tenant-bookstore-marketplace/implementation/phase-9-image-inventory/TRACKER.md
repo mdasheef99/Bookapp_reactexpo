@@ -1,16 +1,16 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `provider_scale_sdd_reconciliation_needs_independent_review`
-**Implementation status:** `unit5a_m17_live_acl_verified`
+**Planning status:** `provider_scale_reconciliation_superseded_by_approved_runtime_evidence`
+**Implementation status:** `unit5b_candidate_awaiting_independent_review`
 **Last updated:** 2026-07-28
-**Current milestone:** Unit 5A complete; M17 SELECT-only/RPC-mutation boundary live-verified on PostgreSQL 17.6
-**Active work unit:** `unit5b_not_started`
+**Current milestone:** Unit 5B Google Books adapter and production composition implemented locally without schema or live-provider activity
+**Active work unit:** `unit5b_candidate_review`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** M17 merge/application as `20260727233457` and exact-project live verification of the four-table SELECT-only/RPC-mutation boundary; detailed evidence is [tracker 10](./trackers/10-m17-acl-correction-evidence.md)
-**Next authorized action:** begin Unit 5B only in a fresh session after explicit authorization and its required provider-decision/preflight route
-**Implementation authority:** Unit 5A foundation only; Google Books, secondary providers, aliases, Owner UI, inventory commit, publication, credentials, provider calls, and deployment remain unauthorized
+**Next authorized action:** review the exact pushed Unit 5B candidate; merge remains user-gated
+**Implementation authority:** Unit 5B local adapter/composition only; secondary providers, aliases, Owner UI, inventory commit, publication, credentials, live provider calls, configuration, and deployment remain unauthorized
 **Migration creation/application authority:** M17 is live once as `20260727233457`. M01-M08/M10-M17 remain live exactly once and M09 remains absent; no further migration is authorized
-**Current gate:** Unit 5B/5C remain not started and require separate authorization
+**Current gate:** exact candidate commit, push, and independent review; Unit 5C remains not started
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -84,7 +84,7 @@ The exact development project was re-verified read-only at M11/M12 closeout:
 | Work Unit 4 fixture vision-analysis runtime | [`integrated_main_e9ba2d9`](./work-units/04-fixture-vision-analysis-runtime-design.md) |
 | Work Unit 4A deployment-runtime scaffolding | [`deployed_and_live_fixture_verified`](./trackers/06-fixture-pipeline-deployment-evidence.md) |
 | Work Unit 4B Gemini vision adapter | [`m14_live_verified_provider_deferred`](./work-units/04b-gemini-vision-adapter-handoff.md) |
-| Provider and scale architecture SDD reconciliation | `needs_independent_review_2026-07-27` |
+| Provider and scale architecture SDD reconciliation | `stale_marker_superseded_by_unit4b_m14_m17_unit5a_review_evidence_2026-07-28` |
 
 ## Blocking gate before further implementation
 

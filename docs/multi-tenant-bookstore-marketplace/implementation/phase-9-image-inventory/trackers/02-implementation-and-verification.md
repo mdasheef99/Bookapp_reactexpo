@@ -1,9 +1,9 @@
 # Phase 9 Implementation and Verification Tracker
 
-**Status:** `unit5a_m17_live_acl_verified`
+**Status:** `unit5b_candidate_awaiting_independent_review`
 **Last updated:** 2026-07-28
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `unit5b_not_started`. This tracker is separate from planning decisions; WU0B remains independently approved after `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review, without granting later database/runtime authority.
+**Active work unit:** `unit5b_candidate_review`. This tracker is separate from planning decisions; WU0B preserves `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review, while Unit 5C and live provider activity remain unauthorized.
 ## Work units
 | Unit | Scope | Status | Required gate |
 | --- | --- | --- | --- |
@@ -17,7 +17,7 @@
 | 4A | [Deployment-runtime scaffolding](../work-units/04a-deployment-runtime-scaffolding-sdd.md): executable sanitation/fixture-vision hosts, strict environment, builds/containers, invocation and validation | [`deployed_and_live_fixture_verified`](./06-fixture-pipeline-deployment-evidence.md) | separate free Render services live at `96991a9`; M13 invoker boundary live |
 | 4B | [Gemini vision adapter](../work-units/04b-gemini-vision-adapter-handoff.md) for configured `gemini-3.5-flash-lite`; optional whole-image fallback remains unselected/disabled | `m14_live_verified_provider_deferred` | M14 live once; no live call, credential configuration, Gemini deployment, Storage mutation, or fallback selection |
 | 5A | [Metadata foundation](../work-units/05a-metadata-foundation-handoff.md): provider-neutral local-first routing/cache/coalescing, ISBN validation, coherent selection, and attempt/cost lineage | `m17_live_acl_verified` | M17 live once; four sensitive tables are service SELECT-only with RPC-only mutation; Unit 5B separately gated |
-| 5B/5C | Google Books primary adapter / metadata aliases | `not_started` | Unit 5A approval and separate authorization; no credentials/calls |
+| 5B/5C | Google Books primary adapter / metadata aliases | [`5B candidate awaiting independent review`](./11-unit5b-implementation-evidence.md) / `5C not_started` | no credential, live call, deployment, registry mutation, alias implementation, or schema change |
 | 6 | Owner session/defaults/capture/review UI with accessibility and recovery | `not_started` | Units 2–5 verified |
 | 7 | Controlled per-candidate commit, advisory duplicates, idempotency, projection changes | `not_started` | quantity/hold concurrency tests |
 | 8 | Marketplace bookstore-first search, multilingual aliases, counts, full store catalogue | `not_started` | public/private projection tests |

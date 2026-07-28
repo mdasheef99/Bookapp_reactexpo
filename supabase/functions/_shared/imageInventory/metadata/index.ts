@@ -5,3 +5,4 @@ export * from './localResolution';
 export * from './queryIdentity';
 export * from './routing';
 export * from './snapshot';
+export * from './googleBooks';

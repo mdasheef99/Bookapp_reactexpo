@@ -11,7 +11,7 @@ This file answers only “where does a new development session start?” DOC-13 
 - **Stable handoff:** [PHASE-9-image-to-LLM-inventory.md](./PHASE-9-image-to-llm-inventory.md)
 - **Session entrypoint:** [Phase 9 SESSION-START](./phase-9-image-inventory/SESSION-START.md)
 - **Local current-state authority:** [Phase 9 master tracker](./phase-9-image-inventory/TRACKER.md)
-- **Current work-unit plan:** Unit 5A and its forward ACL corrections are merged and live-verified. M17 is live once as `20260727233457`; the M14 provider-attempt table and three M15 metadata tables now expose SELECT only to `service_role`, retain hardened RPC-only mutation, and deny client roles. Unit 5B remains not started and requires fresh explicit authorization. See [M17 evidence](./phase-9-image-inventory/trackers/10-m17-acl-correction-evidence.md).
+- **Current work-unit plan:** Unit 5B Google Books adapter and provider-neutral production composition are locally implemented without schema/live-provider activity and await exact-commit independent review. M17 remains live once with the recorded SELECT-only/RPC-mutation boundary. Unit 5C remains unstarted. See [Unit 5B evidence](./phase-9-image-inventory/trackers/11-unit5b-implementation-evidence.md).
 - **Global status authority:** [DOC-13](../DOC-13-implementation-tracker.md)
 
 ## Required reading order

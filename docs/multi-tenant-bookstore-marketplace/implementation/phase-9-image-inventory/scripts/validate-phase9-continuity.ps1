@@ -88,18 +88,18 @@ foreach ($marker in $trackerMarkers) {
 $active = [IO.File]::ReadAllText((Join-Path $implementationRoot 'ACTIVE.md'))
 if (-not $active.Contains('phase-9-image-inventory/SESSION-START.md')) { Write-Error 'ACTIVE.md does not route to the Phase 9 session entrypoint.' }
 if (-not $active.Contains('DOC-13-implementation-tracker.md')) { Write-Error 'ACTIVE.md does not route to DOC-13.' }
-if (-not $active.Contains('M17 is live once as `20260727233457`') -or
-    -not $active.Contains('trackers/10-m17-acl-correction-evidence.md')) { Write-Error 'ACTIVE.md does not route to the M17 live-verified handoff.' }
+if (-not $active.Contains('Unit 5B Google Books adapter') -or
+    -not $active.Contains('trackers/11-unit5b-implementation-evidence.md')) { Write-Error 'ACTIVE.md does not route to the Unit 5B candidate handoff.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5a_m17_live_acl_verified`') -or
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5b_candidate_awaiting_independent_review`') -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
     -not $doc13.Contains('20260727231217 marketplace_phase9_sensitive_table_acl_correction') -or
     -not $doc13.Contains('20260727233457 marketplace_phase9_maintain_acl_correction')) { Write-Error 'DOC-13 does not preserve the M15-M17 live chain.' }
-if (-not $doc13.Contains('| Next recommended task | Start Unit 5B only in a fresh explicitly authorized session')) { Write-Error 'DOC-13 does not preserve the Unit 5B gate.' }
+if (-not $doc13.Contains('| Next recommended task | Review the exact pushed Unit 5B candidate')) { Write-Error 'DOC-13 does not preserve the Unit 5B review gate.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit5a_m17_live_acl_verified`\r?$' -or
-    -not $implementationTracker.Contains('**Active work unit:** `unit5b_not_started`') -or
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit5b_candidate_awaiting_independent_review`\r?$' -or
+    -not $implementationTracker.Contains('**Active work unit:** `unit5b_candidate_review`') -or
     -not $implementationTracker.Contains('20260728000017_marketplace_phase9_maintain_acl_correction.sql')) {
     Write-Error 'Implementation tracker does not preserve the M17 live-verified handoff.'
 }
@@ -179,7 +179,7 @@ Write-Output 'REQUIREMENT_VALIDATOR_REGRESSION_PROBES=PASS'
 if (-not $implementationTracker.Contains('| 4B | [Gemini vision adapter]') -or
     -not $implementationTracker.Contains('optional whole-image fallback remains unselected/disabled') -or
     -not $implementationTracker.Contains('| 5A | [Metadata foundation]') -or
-    -not $implementationTracker.Contains('| 5B/5C | Google Books primary adapter / metadata aliases | `not_started`')) {
+    -not $implementationTracker.Contains('| 5B/5C | Google Books primary adapter / metadata aliases | [`5B candidate awaiting independent review`]')) {
     Write-Error 'Implementation routing must keep Unit 4B and its disabled fallback separate from Unit 5A/5B/5C.'
 }
 if ($implementationTracker -notmatch '(?m)^\| 0A \|.*\| `approved_complete` \|') { Write-Error 'Implementation tracker no longer preserves WU0A approved-complete evidence.' }
@@ -218,9 +218,9 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if (-not $tracker.Contains('**Implementation status:** `unit5a_m17_live_acl_verified`') -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5b_not_started`\r?$' -or
-    -not $tracker.Contains('**Next authorized action:** begin Unit 5B only in a fresh session after explicit authorization') -or
+if (-not $tracker.Contains('**Implementation status:** `unit5b_candidate_awaiting_independent_review`') -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5b_candidate_review`\r?$' -or
+    -not $tracker.Contains('**Next authorized action:** review the exact pushed Unit 5B candidate') -or
     -not $tracker.Contains('M17 is live once as `20260727233457`')) {
     Write-Error 'TRACKER.md does not preserve the M17 live-verified handoff.'
 }

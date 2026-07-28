@@ -200,16 +200,25 @@ If implementation changes product or architecture behavior, update the relevant 
 > grants/signatures/fixed search paths remain intact. Unit 5A is live-verified;
 > Units 5B/5C remain not started and separately authorized. [Evidence](./implementation/phase-9-image-inventory/trackers/10-m17-acl-correction-evidence.md).
 
+> 2026-07-28 Phase 9 Unit 5B candidate: the Google Books API v1 primary
+> metadata adapter, bounded server-only transport, coherent-edition
+> normalization/ranking, and Unit 5A-ordered production composition are locally
+> implemented with sanitized schema-derived fixtures. The official provider
+> audit records storage/reuse as registry- and legal-review-gated. No migration,
+> credential, live Google Books call, provider-registry/Supabase/Storage
+> mutation, deployment, inventory, publication, or alias effect occurred. The
+> exact pushed candidate requires independent review; Unit 5C remains unstarted.
+
 > 2026-07-26 Phase 9 Unit 4A review-correction checkpoint: the independent review returned `CHANGES_REQUIRED` for unsafe Docker context, pre-authentication slot starvation/read deadlines, nondeterministic shutdown evidence, source-string-only deployment claims, and identity-only fixture tests. All five corrections plus bounded invoker responses are locally focused-green. A deny-by-default Docker context, pre-admission constant-time authentication, fixed body deadline, deterministic shutdown test, real compiled-entrypoint smoke, per-fixture semantic matrix, synthetic-only container script, and minimal-permission pull-request workflow now exist. The mandatory GitHub Actions image build/start gate is next; no live credential, image push, deployment, migration, provider, Supabase, or Storage operation is authorized.
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5A and M17 ACL boundary live-verified** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5B candidate awaiting independent review** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-28 |
-| Latest handoff | M17 merged/applied once as `20260727233457`; PostgreSQL 17.6 proves SELECT-only service access and RPC-only mutation on all four sensitive tables. |
+| Latest handoff | Unit 5B is locally implemented without schema or live-provider activity; M17's live SELECT-only/RPC-mutation boundary is unchanged. |
 | Current risk level | ACL correction closed. Google Books remains unimplemented; no metadata credential/provider call exists; Units 5B/5C remain separately gated. |
-| Next recommended task | Start Unit 5B only in a fresh explicitly authorized session; do not begin Unit 5C or provider activity by implication. |
+| Next recommended task | Review the exact pushed Unit 5B candidate; merge, Unit 5C, credentials, registry configuration, deployment, and provider smoke remain separately gated. |
 
 ---
 
@@ -226,7 +235,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit5a_m17_live_acl_verified` | [M17 evidence](./implementation/phase-9-image-inventory/trackers/10-m17-acl-correction-evidence.md) · [Unit 5A handoff](./implementation/phase-9-image-inventory/work-units/05a-metadata-foundation-handoff.md) | M17 live once; four sensitive tables are SELECT-only for service role with RPC-only mutation. M09 and providers remain deferred; Units 5B/5C are not started. |
+| Phase 9: Image-to-LLM Inventory | `unit5b_candidate_awaiting_independent_review` | [Unit 5B evidence](./implementation/phase-9-image-inventory/trackers/11-unit5b-implementation-evidence.md) · [provider audit](./implementation/phase-9-image-inventory/work-units/05b-google-books-provider-audit.md) | Google Books adapter/composition local only; M17 unchanged; no migration/live provider/deployment; Unit 5C deferred. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -343,7 +352,7 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Await a separately authorized Phase 9 work unit; none follows automatically from deployment.
+1. Complete exact-commit independent review of the Unit 5B candidate; merge remains user-authorized.
 2. Historical handoff (vision portion superseded 2026-07-27): treat Gemini 3.5 Flash (`gemini-3.5-flash`) and Google Books API as future handoff decisions only. The generic architecture supports an optional secondary metadata provider, but its selection, enablement, credentials, calls, and implementation remain deferred.
    The current initial primary vision model ID is configuration-driven
    `gemini-3.5-flash-lite`; its local adapter awaits independent review, while
