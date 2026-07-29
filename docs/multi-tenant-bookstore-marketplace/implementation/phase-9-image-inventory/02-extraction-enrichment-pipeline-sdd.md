@@ -23,8 +23,12 @@ request does not wait synchronously for the complete pipeline.
 The current runtime remains selected-language and strict `p9-vision-v2`.
 [Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md)
 prospectively replaces the language/variant target. Unit 5C-1 implements only
-its provider-neutral sidecar contract, fixtures, and independent decoder;
-generation, persistence, and runtime language changes remain unimplemented.
+its provider-neutral sidecar contract, fixtures, and independent decoder. Unit
+5C-2 maps validated sidecars into a separate private M18 relation through the
+existing M12 token/attempt persistence fence. Forward M19 fingerprints the
+first accepted envelope so exact replay is duplicate-free and changed accepted
+replay rolls back. Invalid sidecars cannot invalidate valid vision evidence.
+Generation and runtime language changes remain unimplemented.
 
 Future implementation decisions select Gemini 3.5 Flash (`gemini-3.5-flash`) for
 vision and Google Books API as the initial metadata provider. The provider-neutral

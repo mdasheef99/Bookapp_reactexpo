@@ -49,14 +49,17 @@ test('clean Phase 6 migration creates all relations and deferred foreign keys', 
     '20260728000015_marketplace_phase9_metadata_foundation.sql',
     '20260728000016_marketplace_phase9_sensitive_table_acl_correction.sql',
     '20260728000017_marketplace_phase9_maintain_acl_correction.sql',
+    '20260729000018_marketplace_phase9_search_variant_proposals.sql',
+    '20260729000019_marketplace_phase9_search_variant_replay_fence.sql',
   ]);
   const count = await scalar(db, `SELECT count(*)::int FROM information_schema.tables
     WHERE table_schema='public' AND table_name IN ('phase9_provider_registry','book_search_aliases',
     'image_extraction_sessions','image_extraction_inputs','image_extraction_candidates',
     'metadata_enrichment_attempts','image_extraction_jobs','phase9_upload_capabilities',
     'phase9_usage_reservations','phase9_idempotency_keys','media_assets','inventory_media_links',
-    'media_lifecycle_attempts','order_request_photo_requests','order_request_media_links')`);
-  assert.equal(count, 15);
+    'media_lifecycle_attempts','order_request_photo_requests','order_request_media_links',
+    'phase9_search_variant_proposals','phase9_search_variant_proposal_sets')`);
+  assert.equal(count, 17);
   const fks = await scalar(db, `SELECT count(*)::int FROM information_schema.table_constraints
     WHERE constraint_type='FOREIGN KEY' AND constraint_name IN
     ('store_inventory_created_from_candidate_fk','listing_primary_public_media_fk','input_media_asset_fk',

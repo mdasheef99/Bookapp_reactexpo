@@ -4,9 +4,10 @@
 
 ## Unit 5C Lite target reconciliation (2026-07-29)
 
-Unit 5C Lite is approved design only. Current selected-language runtime,
-`p9-vision-v2`, and live M01 `book_search_aliases` remain unchanged until
-separately authorized implementation.
+Unit 5C Lite is the approved target. Current selected-language runtime,
+`p9-vision-v2`, and live M01 `book_search_aliases` remain unchanged. Unit 5C-2
+implements only private provisional persistence; activation/search/UI remain
+separately authorized.
 
 ### Unit 5C-1 implementation mapping (2026-07-29)
 
@@ -15,6 +16,16 @@ separately authorized implementation.
 | MAS-19; EXT-40; MED-30 | `search_variant_proposals_v1` parser and safe companion decoder isolate missing/rejected sidecars from valid `p9-vision-v2`. |
 | DAT-10â€“14 | Observation-qualified title/author sources, per-field BCP 47/ISO 15924, bounded proposal types, already-Latin suppression, deterministic-key separation, and field-local deduplication. |
 | EXT-41 | No provider generation/call, metadata query, persistence, activation, search, inventory, or publication seam is invoked. |
+
+### Unit 5C-2 implementation mapping (2026-07-29)
+
+| Requirement | Implementation evidence |
+| --- | --- |
+| MAS-19; EXT-22/23/40; MED-23/30 | M18 delegates to the M12 active-claim fence and independently validates the sidecar; M19 fingerprints the first accepted envelope and rejects changed accepted replay atomically. Stale/mismatched claims persist no proposal. |
+| DAT-10–14 | Private rows carry exact store/analysis/candidate/observation/field/author linkage, language/script, bounded type/provenance, deterministic identity, and proposed/non-searchable lifecycle defaults. |
+| MAS-AC17; MKT-05/16 | Bounded read requires store plus analysis/candidate/observation scope; M18 creates no active alias/search projection and preserves M01 unchanged. |
+| MED-21/23 | RLS, client denial, service SELECT-only/no-MAINTAIN table access, RPC-only mutation, and fixed-empty-search-path private/public functions are live-verified on PostgreSQL 17.6. |
+| REV-22; DAT-12/13 | Activation, rejection/stale commands, source-change propagation, and Owner review remain explicitly unimplemented. |
 
 | Requirement | Owning SDD | Primary acceptance IDs |
 | --- | --- | --- |

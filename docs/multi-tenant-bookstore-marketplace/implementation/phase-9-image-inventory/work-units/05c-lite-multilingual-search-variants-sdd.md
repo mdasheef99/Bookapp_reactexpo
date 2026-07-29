@@ -1,6 +1,6 @@
 # Phase 9 Unit 5C Lite: Model-Assisted Multilingual Search Variants
 
-**Status:** approved target design; Unit 5C-1 contract/validation implemented; later slices not started
+**Status:** approved target design; Unit 5C-1 merged; Unit 5C-2 persistence foundation live-verified; activation/search/UI slices not started
 **Decision date:** 2026-07-29
 **Scope:** Unit 5C specification only
 **Supersedes:** the previously governing selected-language and post-metadata English-alias method
@@ -23,15 +23,19 @@ vision extraction preserves observed original title/author
   -> later inventory/publication units retain their existing gates
 ```
 
-This decision does not implement code, schema, UI, provider routing, search
-indexing, inventory, publication, or commerce behavior.
+This decision remains the behavior authority; implementation status is recorded
+below and in the routed evidence trackers.
 
 **Implementation checkpoint (2026-07-29):** Unit 5C-1 now implements the
 optional provider-neutral sidecar contract, observation-qualified title/author
 source association, strict validation, deterministic comparison/deduplication,
-and sanitized fixture handoff. Active Gemini generation, `p9-vision-v2`,
-worker persistence, M01 aliases, lifecycle, activation, search, and UI remain
-unchanged.
+and sanitized fixture handoff. Unit 5C-2 adds private
+`phase9_search_variant_proposals` persistence plus token/attempt-fenced
+service-only read/write RPCs. M18 is live once as `20260729004216`; its bounded
+M19 accepted-envelope replay fence is live once as `20260729020008`; rows enter
+only as `proposed` and `search_eligible=false`. Active Gemini generation,
+`p9-vision-v2`, M01 aliases, activation/lifecycle commands, search, and UI
+remain unchanged.
 
 ## 2. Current runtime versus approved target
 
@@ -43,7 +47,8 @@ Current runtime remains unchanged:
 - `p9-vision-v2` is a strict closed contract;
 - `book_search_aliases` is live with its M01 target/source/status vocabulary;
 - Unit 5B is fixture/mock verified only and performs no Roman-query fallback;
-- no Unit 5C runtime exists.
+- no Unit 5C generation, activation, or search-projection runtime exists;
+  Unit 5C-2 private proposal persistence and replay fencing are live.
 
 Approved target:
 
@@ -60,8 +65,10 @@ Approved target:
   canonical link;
 - public publication continues to require a positive selling price.
 
-Implementation must be separately authorized and must explicitly reconcile the
-live contract and schema delta.
+Unit 5C-2 reconciles the provisional persistence delta through a separate
+private companion table while preserving the live M01 alias representation.
+Activation, stale propagation, alias/search projection, and UI still require
+separate authorization.
 
 ## 3. Original-field authority
 

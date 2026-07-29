@@ -62,7 +62,7 @@ The workflow is substantial but bounded. It is not an autonomous agent: determin
 | Lifecycle deletion | Scale makes manual cleanup unreliable; disputes can override deletion | policy fields, idempotent worker, holds, tombstone evidence, alerts |
 | Customer photo acceptance | Store must honor a customer-specific copy request before confirmation | item substate and existing customer-decision path |
 | Multilingual search | Original text and English discovery must coexist without identity corruption | source-bearing alias table and approved alias projection |
-| Unit 5C live-schema delta | M01 predates field-level target/lifecycle/scope | preserve live table; design a separately authorized forward mapping/migration | no false implementation claim |
+| Unit 5C live-schema delta | M01 predates field-level proposal provenance/lifecycle/scope | M18 preserves M01 and adds a private proposed-only companion table/RPC foundation; bounded M19 adds accepted-envelope replay fingerprinting; later activation/search projection remains separate | no false activation/search implementation claim and no changed-replay limit bypass |
 
 ## Deferred or separate work
 

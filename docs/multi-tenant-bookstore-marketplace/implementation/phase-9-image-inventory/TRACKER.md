@@ -1,16 +1,16 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit5c_lite_sdd_merged`
-**Implementation status:** `unit5c1_contracts_candidate_review_gate`
+**Implementation status:** `unit5c2_variant_persistence_m19_live_verified_candidate_review_gate`
 **Last updated:** 2026-07-29
-**Current milestone:** Unit 5C-1 provider-neutral contract and validation foundation locally complete
-**Active work unit:** `unit5c1_multilingual_variant_contracts`
+**Current milestone:** Unit 5C-2 private store-scoped proposal persistence and replay fence live-verified
+**Active work unit:** `unit5c2_variant_persistence`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Unit 5C Lite governing documentation merged to `main` at `b44277aa5f3965c7f02295c4ac855abc467413e1`; Unit 5C-1 implementation evidence is [tracker 13](./trackers/13-unit5c1-variant-contract-evidence.md)
-**Next authorized action:** after exact-tip independent review, stop for user merge authorization if `APPROVED`; otherwise use at most one bounded correction pass
-**Implementation authority:** Unit 5C-1 contract/fixture validation only; sidecar generation in active Gemini runtime, persistence, reconciliation, activation, secondary providers, Owner UI, inventory commit, publication, credentials, live provider calls, configuration, and deployment remain unauthorized
-**Migration creation/application authority:** M17 is live once as `20260727233457`. M01-M08/M10-M17 remain live exactly once and M09 remains absent; no further migration is authorized
-**Current gate:** exact committed Unit 5C-1 tip must receive independent approval before user merge authorization
+**Last completed:** Unit 5C-1 independently approved and merged to `main` at `8aadf178aa2b14293a7c0168f3b41e90ebf61d52`; Unit 5C-2 evidence is [tracker 14](./trackers/14-unit5c2-variant-persistence-evidence.md)
+**Next authorized action:** complete final gates, independently review the exact staged candidate, and only if `APPROVED` commit/push that identical tree and stop for user merge authorization
+**Implementation authority:** Unit 5C-2 private proposed-only persistence/read foundation and its verification only; provider generation, reconciliation/activation commands, search/index exposure, Owner UI, inventory/listing creation, publication, credentials, deployment, and commerce remain unauthorized
+**Migration creation/application authority:** M18 is live once as `20260729004216` and its bounded M19 replay-fence correction is live once as `20260729020008`. M01-M08/M10-M19 remain live exactly once and M09 remains absent; no further migration is authorized
+**Current gate:** the exact staged Unit 5C-2 tree must receive independent approval before commit/push and user merge authorization
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -21,18 +21,22 @@ Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Phase 9
 The [Unit 4 design](./work-units/04-fixture-vision-analysis-runtime-design.md) and [Unit 4A deployment runtime](./work-units/04a-deployment-runtime-scaffolding-sdd.md) are now live-verified through the [fixture deployment evidence](./trackers/06-fixture-pipeline-deployment-evidence.md). The deployed `one_book` path and eight fresh-process operator cases used recorded fixtures only, `batchSize: 1`, normal claim/fencing/persistence/failure paths, and produced zero inventory/listing/publication effects. Unit 5B now implements the initial Google Books adapter behind provider-neutral contracts, but it remains fixture/mock verified only: no credential, live call, deployment, or registry mutation occurred.
 
 [Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md)
-is the approved target specification. Unit 5C-1 now supplies its optional
+is the approved target specification. Unit 5C-1 supplies its optional
 versioned provider-neutral sidecar contract, strict field/language/script
 validation, deterministic comparison/deduplication, and a safe companion
-decoder. Current Gemini generation and worker persistence remain unchanged and
-fixture-gated. The selected-language runtime remains strict `p9-vision-v2`;
-M01 `book_search_aliases` remains
-the live limited schema. The target adds auto-detect/optional hints, per-field
+decoder. Unit 5C-2 adds private `phase9_search_variant_proposals` persistence,
+token/attempt-fenced write and store-bounded read RPCs, and proposed-only,
+non-searchable lifecycle defaults. M18 is live once as `20260729004216`;
+M19 is live once as `20260729020008` and rejects changed accepted sidecar
+replays through one immutable analysis-scoped fingerprint.
+Current Gemini generation remains unchanged and fixture-gated. The
+selected-language runtime remains strict `p9-vision-v2`; M01
+`book_search_aliases` remains unchanged. The target adds auto-detect/optional hints, per-field
 language/script, original-first authority, independent field confirmation, an
 optional variant sidecar, deterministic-key separation, field reconciliation,
 store-scoped active-only search, and Owner-confirmed nullable-canonical fallback.
-Those later persistence, reconciliation, lifecycle, search, and UI slices are
-not implemented.
+Reconciliation/activation commands, stale propagation, search projection, and
+UI remain unimplemented.
 
 The provider/scale reconciliation keeps real Gemini provider-contract design as a separately gated prospective Unit 4B and keeps Unit 5 authoritatively named `Metadata/aliases`. The generic architecture supports one metadata primary and at most one disabled-until-approved secondary, horizontal correctness, and a fixed-multi-replica activation gate; it does not authorize provider calls, deployment changes, scheduling, or autoscaling. The bounded F1–F3 correction removes the deferred-secondary contradiction, makes media/vision/metadata capacity signals explicit, and disables raw provider/model payload persistence by default while retaining the independent-review gate.
 
@@ -98,16 +102,16 @@ The exact development project was re-verified read-only at M11/M12 closeout:
 | Work Unit 4 fixture vision-analysis runtime | [`integrated_main_e9ba2d9`](./work-units/04-fixture-vision-analysis-runtime-design.md) |
 | Work Unit 4A deployment-runtime scaffolding | [`deployed_and_live_fixture_verified`](./trackers/06-fixture-pipeline-deployment-evidence.md) |
 | Work Unit 4B Gemini vision adapter | [`m14_live_verified_provider_deferred`](./work-units/04b-gemini-vision-adapter-handoff.md) |
-| Unit 5C Lite target SDD | [`merged_at_b44277a`](./work-units/05c-lite-multilingual-search-variants-sdd.md); Unit 5C-1 contract/validation [`candidate_review_gate`](./trackers/13-unit5c1-variant-contract-evidence.md) |
+| Unit 5C Lite target SDD | [`merged_at_b44277a`](./work-units/05c-lite-multilingual-search-variants-sdd.md); Unit 5C-1 merged at `8aadf178`; Unit 5C-2 persistence [`live_verified_candidate_review_gate`](./trackers/14-unit5c2-variant-persistence-evidence.md) |
 | Provider and scale architecture SDD reconciliation | `stale_marker_superseded_by_unit4b_m14_m17_unit5a_review_evidence_2026-07-28` |
 
 ## Blocking gate before further implementation
 
-WU0A, WU0B, Package 1, Unit 4, and Unit 4A are complete at their recorded
-levels. Unit 4B is merged and M14 is live-verified.
-M01-M08/M10-M14, the Owner boundary, and both separate fixture workers are
-live-verified. Core auth WU1/WU2 is locally complete. M09 and every product/provider
-work unit after Unit 4B remain separately gated.
+WU0A, WU0B, Package 1, Unit 4, Unit 4A, Unit 4B, Unit 5A, Unit 5B, and Unit
+5C-1 are complete at their recorded levels. M01-M08/M10-M19, the Owner
+boundary, and both separate fixture workers are live-verified. Unit 5C-2 is at
+the exact staged-candidate review gate. Core auth WU1/WU2 is locally complete. M09 and every
+activation/search/UI/provider work unit after Unit 5C-2 remain separately gated.
 
 ## Risk summary
 
@@ -141,8 +145,9 @@ Unit 5B is complete at the merged fixture/mock-verified level recorded in
 [tracker 11](./trackers/11-unit5b-implementation-evidence.md). Matching, reuse,
 and storage are independently enforced, and only `coherent_match` is a positive
 reusable outcome. Unit 5B created or applied no migration; M09 remains absent.
-Unit 5C-1 contract/validation is locally complete and must pass exact-tip
-independent review before merge authorization. Do not apply M09; persist or
-activate variants; change Gemini generation; configure, deploy, or call providers; select/enable
+Unit 5C-2 persistence and its M19 replay fence are live-verified and must pass
+independent review of the exact staged tree before commit/push and merge
+authorization. Do not apply M09 or another migration;
+activate/project variants; change Gemini generation; configure, deploy, or call providers; select/enable
 a secondary; schedule/autoscale workers; change mobile UI; commit inventory; publish
 listings; or implement Library behavior.

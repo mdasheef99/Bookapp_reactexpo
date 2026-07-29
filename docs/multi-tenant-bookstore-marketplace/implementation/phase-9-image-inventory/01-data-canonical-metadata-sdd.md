@@ -6,8 +6,13 @@
 
 **Implementation checkpoint (2026-07-29):** `book_search_aliases` exists from
 live M01 with its limited target/source/status schema and zero recorded rows at
-the last audit. Unit 5C Lite is approved target design only; its field authority,
-sidecar, lifecycle, and store-scope delta is not implemented.
+the M18 audit. Unit 5C-2 adds a separate private
+`phase9_search_variant_proposals` relation with exact
+analysis/candidate/observation/field/author linkage, deterministic identity,
+provenance, and proposed/non-searchable defaults. M18 is live once as
+`20260729004216`; M19 fingerprints the first accepted envelope and is live
+once as `20260729020008`; M01 remains unchanged. Activation, stale propagation, and
+active-only alias/search projection remain unimplemented.
 
 ## 1. Decision
 

@@ -68,7 +68,7 @@ the former design. That generation/activation method is superseded as target
 authority by Unit 5C Lite, but the table itself remains unchanged in this
 documentation session.
 
-## Unit 5C Lite target persistence concepts (not live)
+## Unit 5C Lite target and live Unit 5C-2 persistence foundation
 
 ### Confirmed original field
 
@@ -80,7 +80,7 @@ documentation session.
 | authority | source, confirmation method/actor, confirmed timestamp |
 | display | confirmed original text remains primary |
 
-### Variant proposal
+### `phase9_search_variant_proposals` (live M18 private foundation)
 
 | Concept | Rule |
 | --- | --- |
@@ -89,18 +89,35 @@ documentation session.
 | provenance | generation source, model/version, prompt, sidecar schema, benchmark policy |
 | lifecycle | proposed, active, rejected, or stale target semantics |
 | approval | method/reason, actor, approved/rejected/stale timestamps |
-| scope | store listing; private candidate/draft association before later transfer |
-| search | active only; never identity or duplicate evidence |
+| scope | required store, analysis result, vision job, candidate, observation, exact source field, and author position; inventory/listing/canonical links remain null in M18 |
+| search | M18 requires `search_eligible=false`; future active-only projection is not implemented |
+| identity | SHA-256 over store/analysis/candidate/observation/source field/normalized variant/script/type/schema; exact replay cannot duplicate |
+| access | RLS with no client policy; service SELECT only; mutation through token/attempt-fenced RPC only |
+| timestamps | `created_at` and `updated_at` default to transaction time; activation/rejection/stale timestamps are reserved and null for proposed rows |
 
-The implemented Unit 5C-1 transport uses
+### `phase9_search_variant_proposal_sets` (live M19 replay fence)
+
+| Field group | Rule |
+| --- | --- |
+| identity | exactly one row per `analysis_result_id`; `vision_job_id` is also unique |
+| scope | `store_id`, analysis result, and vision job are server-derived |
+| fingerprint | SHA-256 of the accepted canonical JSONB sidecar envelope |
+| replay | exact fingerprint/count replays; a changed accepted envelope raises and rolls back |
+| access | RLS/no policies; service SELECT-only; mutation remains inside the replacement definer |
+
+The Unit 5C-1 transport uses
 `search_variant_proposals_v1`, observation-qualified `source_field` values,
 source/variant text plus BCP 47 language and ISO 15924 script, bounded proposal
 types, and model/prompt/schema provenance. Its normalized handoff includes a
-deterministic comparison key but no ID, lifecycle, approval, listing, or
-publication field. No row is written.
+deterministic comparison key but no caller-supplied ID, lifecycle, approval,
+listing, or publication field.
 
-The later implementation must decide whether to extend, map, or forward-migrate
-the live M01 representation. It must not rewrite applied migration history.
+Unit 5C-2 maps that handoff into the separate private M18 relation above. M19
+fences the first accepted sidecar fingerprint without changing proposal
+lifecycle or search eligibility. The live M01 representation remains
+unchanged. Activation, stale propagation, and
+active-only alias/search projection require later forward implementation and
+must not rewrite applied migration history.
 
 ### Language enablement
 
@@ -225,7 +242,7 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | confidence | extraction confidence only; never canonical authority. |
 | immutable evidence | owned by linked analysis observation; it is not stored in `selected_snapshot` or `owner_review_snapshot`. |
 | normalized selection | later selected metadata snapshot, canonical match nullable, metadata source/attempt. |
-| variants | Current rows relate through live `book_search_aliases`; target proposals remain field-linked, provisional, store-scoped, and active-only after reconciliation. |
+| variants | M18 proposals relate through analysis/observation/candidate/source field and remain private/proposed/non-searchable; live `book_search_aliases` remains unchanged until later activation/search projection. |
 | review fields | owner edits/defaults, add/remove action, duplicate choice, publication choice. |
 | status | `processing`, `ready`, `needs_review`, `possible_duplicate`, `commit_in_progress`, `committed`, `failed`. A projection failure leaves this value `committed`, sets inventory publication status to `publication_failed`, and returns API outcome `committed_publication_failed`. |
 | commit linkage | committed inventory/listing IDs and idempotency identity. |

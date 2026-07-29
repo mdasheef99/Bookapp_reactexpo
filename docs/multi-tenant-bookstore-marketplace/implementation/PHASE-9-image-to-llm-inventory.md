@@ -1,8 +1,8 @@
 # PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `unit5c1_contracts_candidate_review_gate`
+**Status:** `unit5c2_variant_persistence_m19_live_verified_candidate_review_gate`
 **Planning set:** `approved_baseline`
-**Implementation:** Unit 5B is merged and fixture/mock verified; M01-M08/M10-M17 are live-verified; Unit 5C-1 contract/fixture validation is locally complete while later Unit 5C Lite behavior is not implemented
+**Implementation:** Unit 5C-1 is merged; M01-M08/M10-M19 are live-verified; Unit 5C-2 private proposed-only persistence and accepted-envelope replay fencing are live-verified while activation/search/UI behavior remains unimplemented
 **Last updated:** 2026-07-29
 
 This stable phase handoff points to the detailed planning set:
@@ -18,6 +18,7 @@ This stable phase handoff points to the detailed planning set:
 - [Fixture-pipeline deployment evidence](./phase-9-image-inventory/trackers/06-fixture-pipeline-deployment-evidence.md)
 - [Work Unit 0 contracts/threat/migration plan](./phase-9-image-inventory/work-units/00-contracts-threat-migration-plan.md)
 - [Unit 5C Lite governing target decision](./phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md)
+- [Unit 5C-2 persistence evidence](./phase-9-image-inventory/trackers/14-unit5c2-variant-persistence-evidence.md)
 
 ## Locked phase direction
 
@@ -38,9 +39,10 @@ This stable phase handoff points to the detailed planning set:
   keeps deterministic search keys separate from linguistic variants, preserves
   original-language title and author as primary values, confirms those fields
   independently, and activates variants only through field-specific,
-  store-scoped reconciliation. Only the provider-neutral sidecar contract and
-  fixture-gated validation are implemented; runtime generation, persistence,
-  reconciliation, activation, search, and UI remain unimplemented.
+  store-scoped reconciliation. Unit 5C-1 supplies the provider-neutral sidecar
+  contract/fixture validation, and Unit 5C-2 persists validated proposals
+  privately as proposed/non-searchable through M18. Runtime generation,
+  reconciliation/activation, search, and UI remain unimplemented.
 - Mandatory owner review, advisory same-store duplicates, no image comparison/auto-merge, independent idempotent candidate commits.
 - Five public conditions plus separate damage; damaged sellable copies require note and 1-3 approved public photos.
 - Bookstore-first marketplace results and complete public store catalogue.
@@ -52,7 +54,7 @@ This stable phase handoff points to the detailed planning set:
 
 - Supabase project re-verified during fixture deployment: `ahntbtktjjmvfosgkmgn` / `Bookconnect_reactexpo`, `ACTIVE_HEALTHY`.
 - `store_id` is canonical: 37 public-schema columns; zero `tenant_id`.
-- M01-M08/M10-M17 are live exactly once; M09 is absent. Exact versions and
+- M01-M08/M10-M19 are live exactly once; M09 is absent. Exact versions and
   readback evidence are maintained in the implementation tracker and
   current-versus-target audit.
 - M13 uses only minimum postgres-owned, empty-`search_path` `SECURITY INVOKER` wrappers; the private schema remains unexposed and client roles remain denied.
@@ -66,10 +68,10 @@ This stable phase handoff points to the detailed planning set:
 
 ## Next gate
 
-Unit 5B is merged and fixture/mock verified. Unit 5C Lite documentation is
-independently approved and ready for push/merge; Unit 5C implementation requires
-a new session and separate authorization after the documentation is merged.
-M09, further provider configuration/calls, deployment,
+Unit 5C-1 is merged and Unit 5C-2 persistence/M18 plus the bounded M19 replay
+fence are live-verified. Independently review the exact staged candidate before
+commit/push, then stop for user merge authorization.
+M09, activation/search projection, provider configuration/calls, deployment,
 scheduling/autoscaling, UI, inventory/publication, commerce, lifecycle work,
 Library behavior, and any further migration remain separately gated.
 

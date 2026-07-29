@@ -228,16 +228,35 @@ If implementation changes product or architecture behavior, update the relevant 
 > inventory, publication, deployment, and commerce remain unchanged. Exact-tip
 > independent review is required before user merge authorization.
 
+> 2026-07-29 Phase 9 Unit 5C-2 persistence candidate: Unit 5C-1 is merged to
+> `main` at `8aadf178aa2b14293a7c0168f3b41e90ebf61d52`. M18 adds a separate
+> private store/analysis/candidate/observation/field-scoped proposal table and
+> token/attempt-fenced service read/write RPCs while preserving the existing M01
+> `book_search_aliases` representation. The exact reviewed migration is live
+> once on development project `ahntbtktjjmvfosgkmgn` as
+> `20260729004216 marketplace_phase9_search_variant_proposals`. PostgreSQL 17.6
+> readback and a rollback-only synthetic smoke prove proposed/non-searchable
+> persistence, duplicate-free replay, mismatched-claim zero effects,
+> title/individual-author separation, store-bounded reads, client denial,
+> service SELECT-only/RPC mutation, no MAINTAIN, unchanged aliases, and zero
+> smoke residue. Gemini generation, activation, search exposure, Owner UI,
+> inventory/listing creation, publication, deployment, and commerce remain
+> unchanged. The first staged-tree review found an accepted-envelope replay
+> defect. The authorized forward M19 fingerprint fence is live once as
+> `20260729020008`; changed accepted replay now rolls back without appending.
+> Independent approval of the corrected exact staged tree precedes commit/push
+> and merge authorization.
+
 > 2026-07-26 Phase 9 Unit 4A review-correction checkpoint: the independent review returned `CHANGES_REQUIRED` for unsafe Docker context, pre-authentication slot starvation/read deadlines, nondeterministic shutdown evidence, source-string-only deployment claims, and identity-only fixture tests. All five corrections plus bounded invoker responses are locally focused-green. A deny-by-default Docker context, pre-admission constant-time authentication, fixed body deadline, deterministic shutdown test, real compiled-entrypoint smoke, per-fixture semantic matrix, synthetic-only container script, and minimal-permission pull-request workflow now exist. The mandatory GitHub Actions image build/start gate is next; no live credential, image push, deployment, migration, provider, Supabase, or Storage operation is authorized.
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5C-1 contract/validation locally complete; exact-tip review gate** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5C-2 proposal persistence and M19 replay fence live-verified; staged-tree review gate** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-29 |
-| Latest handoff | Unit 5C Lite docs are merged at `b44277a`; Unit 5C-1 adds only provider-neutral contract/fixture validation and leaves runtime/persistence unchanged. |
-| Current risk level | Live M01 alias representation differs from the approved field-level target and must be mapped by later separately authorized implementation. No runtime or external mutation occurred. |
-| Next recommended task | Commit/push and independently review the exact Unit 5C-1 candidate; on `APPROVED`, stop for user merge authorization. |
+| Latest handoff | Unit 5C-1 is merged at `8aadf178`; Unit 5C-2 M18 is live as `20260729004216` and bounded replay-fence M19 as `20260729020008`, with private proposed-only persistence and no search/activation effect. |
+| Current risk level | M18/M19 are live-verified and preserve M01 aliases; changed accepted replay is fenced, while activation/stale propagation/search projection remain deliberately absent. Pre-existing unrelated advisor warnings remain separately tracked. |
+| Next recommended task | Complete final local gates and independently review the exact staged Unit 5C-2 candidate; only on `APPROVED`, commit/push the identical tree and stop for user merge authorization. |
 
 ---
 
@@ -254,7 +273,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit5c1_contracts_candidate_review_gate` | [Unit 5C-1 evidence](./implementation/phase-9-image-inventory/trackers/13-unit5c1-variant-contract-evidence.md) · [Unit 5C Lite](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md) | Contract/fixture validation locally complete; runtime generation, persistence/schema, and positive-price publication unchanged. |
+| Phase 9: Image-to-LLM Inventory | `unit5c2_variant_persistence_m19_live_verified_candidate_review_gate` | [Unit 5C-2 evidence](./implementation/phase-9-image-inventory/trackers/14-unit5c2-variant-persistence-evidence.md) · [Unit 5C Lite](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md) | M18 private proposed-only persistence and M19 accepted-envelope replay fencing are live-verified; generation, activation, search/UI, inventory, and publication remain unchanged. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -371,8 +390,9 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Commit/push and independently review the exact Unit 5C-1 contract candidate;
-   on `APPROVED`, stop for user merge authorization.
+1. Complete final gates and independently review the exact staged Unit 5C-2
+   persistence candidate; only on `APPROVED`, commit/push the identical tree
+   and stop for user merge authorization.
 2. Historical handoff (vision portion superseded 2026-07-27): Gemini remains configuration/deployment/live-call deferred. Google Books is implemented behind provider-neutral contracts but remains fixture/mock verified only; credentials, provider-registry enablement, deployment, and live smoke remain deferred.
    The current initial primary vision model ID is configuration-driven
    `gemini-3.5-flash-lite`; provider configuration/calls remain deferred.

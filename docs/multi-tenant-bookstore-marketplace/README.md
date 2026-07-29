@@ -23,7 +23,7 @@ If you are a new coding or review agent, start here and do not write code immedi
 Current handoff as of 2026-07-29:
 
 - Phase 6 is `complete_e2e_deferred`; Phases 7 and 8 are deferred by product decision.
-- Phase 9 Image-to-LLM Inventory is active. M01-M08/M10-M17 are live-verified on development project `ahntbtktjjmvfosgkmgn`; M09 remains absent.
+- Phase 9 Image-to-LLM Inventory is active. M01-M08/M10-M19 are live-verified on development project `ahntbtktjjmvfosgkmgn`; M09 remains absent.
 - The Phase 9 SDD/supporting/tracker set, WU0A/WU0B, ingestion runtime,
   fixture-vision runtime, and completed units under
   [`implementation/phase-9-image-inventory/`](./implementation/phase-9-image-inventory/README.md)
@@ -33,9 +33,9 @@ Current handoff as of 2026-07-29:
   [Unit 5C Lite target](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md)
   supersedes that method as design authority with auto-detection, optional
   hints, and per-field language/script while preserving original-language title
-  and author. Unit 5C-1 now implements only the optional provider-neutral
-  sidecar contract and fixture-gated validation; later Unit 5C Lite runtime,
-  persistence, search, and UI behavior is not implemented.
+  and author. Unit 5C-1 is merged; Unit 5C-2 privately persists validated
+  proposals as proposed/non-searchable through live M18. Later generation,
+  activation, search, and UI behavior is not implemented.
 - The former target requirement for up to three automated English aliases is
   superseded by Unit 5C Lite's optional bounded Roman-variant proposal sidecar,
   deterministic-key separation, independent title/author reconciliation, and

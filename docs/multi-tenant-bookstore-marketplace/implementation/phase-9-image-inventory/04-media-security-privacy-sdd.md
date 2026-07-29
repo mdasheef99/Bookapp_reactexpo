@@ -11,14 +11,12 @@ the existing provider-neutral analyzer seam with server-only configuration, stri
 structured output, bounded normalized usage/cost evidence, sanitized error classes,
 and no raw prompt/response/image/credential logging. It has made no provider call
 and is not deployed or selected in any live environment.
-
 **Unit 4B security correction (local, unapplied):** M14 registration is a
 service-only atomic egress fence. It rejects stale/expired/superseded claims or any
 job/reference/correlation, owner/token/attempt, store/session/input/media,
 purpose/privacy/status mismatch before returning a private download handle and
 before Gemini invocation. Attempt evidence excludes prompts, images, raw provider
 responses, credentials, and raw lease tokens.
-
 **M16 ACL correction checkpoint (2026-07-28):** M14
 `vision_provider_attempts` and the three M15 persistence tables are confirmed
 RPC-only mutation boundaries. Supabase default privileges nevertheless gave
@@ -31,11 +29,13 @@ boundary remains gated on a separately authorized forward M17 and live readback.
 **M17 live ACL closeout (2026-07-28):** M17 is live once as
 `20260727233457 marketplace_phase9_maintain_acl_correction`. PostgreSQL 17.6
 readback proves `service_role=r/postgres` on the M14 provider-attempt table and
-three M15 metadata tables: SELECT only, no MAINTAIN or direct mutation. RLS,
-postgres ownership, client denial, and the 13 service-only, fixed-search-path
-RPC boundaries remain intact. Detailed evidence is in
+three M15 metadata tables: SELECT only, no MAINTAIN or direct mutation; RLS,
+ownership, client denial, and 13 fixed-search-path RPCs remain intact. See
 [tracker 10](./trackers/10-m17-acl-correction-evidence.md).
-
+**M18/M19 live security checkpoint (2026-07-29):** M18 `20260729004216` and
+M19 `20260729020008` are live once: RLS/client denial, service SELECT-only/
+no-MAINTAIN, fixed-path RPC-only mutation/read, accepted-envelope replay
+fencing, zero residue, and unchanged aliases/search passed. See [tracker 14](./trackers/14-unit5c2-variant-persistence-evidence.md).
 **Implementation checkpoint (2026-07-22):** the approved private-table, named-boundary, upload-capability, media-registry, and Storage boundary contracts are implemented in M02, M03, M05, M06, and M08 and pass isolated/live security checks. Forward M10 restores only the three anonymous discovery RPCs, makes the allowlisted projection invoker-safe, and removes direct role access; request-photo, internal-helper, and private-table boundaries remain closed. M01-M08/M10 are live-verified; M09/auth/runtime remain untouched.
 
 ## 1. Decision and evidence basis

@@ -1,13 +1,12 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit5c1_contracts_candidate_review_gate`
+**Status:** `unit5c2_variant_persistence_m19_live_verified_candidate_review_gate`
 **Last updated:** 2026-07-29
-**Implementation status:** M01-M08/M10-M17 are live-verified; Unit 5B is merged
-and Google Books remains fixture/mock verified only; Unit 5C Lite target
-documentation is merged and Unit 5C-1 contract/fixture validation is locally
-complete pending exact-tip independent review
-**Supabase mutation status:** M01-M08/M10-M17 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; Unit 5B created no migration and caused no Supabase/Storage mutation
-**Database checkpoint:** M01-M08 and forward migrations M10-M17 are live-verified.
+**Implementation status:** M01-M08/M10-M19 are live-verified; Unit 5C-1 is
+merged; Unit 5C-2 private proposed-only persistence is live-verified pending
+independent review of the exact staged candidate before commit/push
+**Supabase mutation status:** M01-M08/M10-M19 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; the M18 and M19 synthetic smokes were transaction-rolled back with zero residue
+**Database checkpoint:** M01-M08 and forward migrations M10-M19 are live-verified.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 

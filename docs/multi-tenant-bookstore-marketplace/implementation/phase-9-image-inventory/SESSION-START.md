@@ -12,9 +12,15 @@ Current routed handoff: Unit 5B is independently approved and merged to `main`
 at `47f23a89a4df9ae8ece85842eb3020c3f17636bc`. Google Books remains
 fixture/mock verified only. [Unit 5C-1](./trackers/13-unit5c1-variant-contract-evidence.md)
 implements the provider-neutral optional sidecar contract and fixture-gated
-validation seam. Exact-tip independent review is required before merge; later
-persistence, reconciliation, activation, search, UI, and provider generation
-remain separately gated.
+validation seam and is independently approved/merged to `main` at
+`8aadf178aa2b14293a7c0168f3b41e90ebf61d52`.
+[Unit 5C-2](./trackers/14-unit5c2-variant-persistence-evidence.md) is the active
+candidate: its private proposal persistence/RPC foundation is live-verified
+through M19 `20260729020008`, with independent review of the exact staged
+candidate required before commit/push.
+Provider generation, activation/reconciliation commands, search exposure,
+Owner UI, inventory/listing creation, publication, and commerce remain
+unstarted and separately gated.
 
 ## 1. Canonical status source
 

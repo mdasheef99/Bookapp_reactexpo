@@ -15,11 +15,11 @@ If you are a new agent, do this before changing files:
 5. Read [`../README.md`](../README.md) and [`../DOC-12-build-strategy-and-implementation-sequence.md`](../DOC-12-build-strategy-and-implementation-sequence.md) for stable guardrails and phase gates.
 6. Read the source/domain documents routed for the active work unit and inspect current code/live evidence before acting.
 
-Current handoff as of 2026-07-27:
+Current handoff as of 2026-07-29:
 
 - Phase 6 is `complete_e2e_deferred`; its migrations M01-M39 and provider-independent `payment_ready` boundary are applied/verified in the development project.
 - Phases 7 Payment/Ledger/Settlement and 8 Pickup are deferred.
-- Phase 9 Image-to-LLM Inventory has M01-M08/M10-M17 live-verified on `ahntbtktjjmvfosgkmgn`; M09 remains absent.
+- Phase 9 Image-to-LLM Inventory has M01-M08/M10-M19 live-verified on `ahntbtktjjmvfosgkmgn`; M09 remains absent.
 - The active set is [`phase-9-image-inventory/`](./phase-9-image-inventory/README.md);
   each component is implemented only at the level recorded by its tracker.
 - The current runtime uses one selected language per `spine_stack` and a maximum
@@ -28,9 +28,10 @@ Current handoff as of 2026-07-27:
   supersedes that language method with per-field auto-detection and optional
   hints while keeping original-language title and author primary. The former
   three-English-alias target is likewise superseded by an optional bounded
-  proposal sidecar and store-scoped active-only reconciliation. Unit 5C-1
-  implements only the provider-neutral sidecar contract and fixture-gated
-  validation; later Unit 5C Lite behavior is not implemented.
+  proposal sidecar and store-scoped active-only reconciliation. Unit 5C-1 is
+  merged; Unit 5C-2 persists validated proposals privately as proposed and
+  non-searchable through live M18. Generation, activation, search/UI, and later
+  Unit 5C Lite behavior remain unimplemented.
 - Owner review, the future Unit 5B Roman-query extension, inventory,
   publication, and commerce remain separate. Public publication still requires
   a positive selling price; price-on-request is excluded from Unit 5C Lite.
