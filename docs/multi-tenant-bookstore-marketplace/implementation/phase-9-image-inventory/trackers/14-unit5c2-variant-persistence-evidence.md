@@ -1,6 +1,6 @@
 # Phase 9 Unit 5C-2 Variant Persistence Evidence
 
-**Status:** `m19_live_verified_candidate_review_gate`
+**Status:** `merged_main_b398034`
 **Date:** 2026-07-29
 **Authority:** Unit 5C-2 store-scoped proposal persistence and lifecycle
 foundation only
@@ -182,7 +182,17 @@ Still absent and unauthorized:
 - inventory/listing creation or publication/commerce changes;
 - deployment or provider configuration.
 
-Next authorized action: complete final local verification, independently review
-the exact staged candidate, and only if `APPROVED` commit and push that
-identical tree, then stop for user merge authorization. The single authorized
-bounded correction pass has been used.
+## Independent approval and merge
+
+The corrected exact staged tree
+`f96fe3d1713a5a65ee4b858980b4d6528ac9991c` received independent verdict
+`APPROVED` with no actionable findings. It was committed as
+`b3980349d9d446fbf1820ef869f6664953d9a599`, pushed to
+`codex/phase9-unit5c2-variant-persistence`, and then fast-forward merged to
+local `main` after confirming remote `main` remained its exact parent
+`8aadf178aa2b14293a7c0168f3b41e90ebf61d52`.
+
+Next authorized action: stop and await explicit authorization for Unit 5C
+Batch 1. The single authorized bounded correction pass has been used; no
+generation, activation, search exposure, UI, or other later Unit 5C work is
+authorized by this merge.

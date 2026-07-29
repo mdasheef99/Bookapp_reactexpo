@@ -19,7 +19,7 @@ Current handoff as of 2026-07-29:
 
 - Phase 6 is `complete_e2e_deferred`; its migrations M01-M39 and provider-independent `payment_ready` boundary are applied/verified in the development project.
 - Phases 7 Payment/Ledger/Settlement and 8 Pickup are deferred.
-- Phase 9 Image-to-LLM Inventory has M01-M08/M10-M19 live-verified on `ahntbtktjjmvfosgkmgn`; M09 remains absent.
+- Phase 9 Image-to-LLM Inventory has M01-M08/M10-M19 live-verified on `ahntbtktjjmvfosgkmgn`; Unit 5C-2 is merged at `b398034`; M09 remains absent and Unit 5C Batch 1 awaits separate authorization.
 - The active set is [`phase-9-image-inventory/`](./phase-9-image-inventory/README.md);
   each component is implemented only at the level recorded by its tracker.
 - The current runtime uses one selected language per `spine_stack` and a maximum

@@ -1,10 +1,10 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit5c2_variant_persistence_m19_live_verified_candidate_review_gate`
+**Status:** `unit5c2_variant_persistence_merged_awaiting_unit5c_batch1_authorization`
 **Last updated:** 2026-07-29
 **Implementation status:** M01-M08/M10-M19 are live-verified; Unit 5C-1 is
 merged; Unit 5C-2 private proposed-only persistence is live-verified pending
-independent review of the exact staged candidate before commit/push
+merged at `b398034`; Unit 5C Batch 1 awaits separate authorization
 **Supabase mutation status:** M01-M08/M10-M19 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; the M18 and M19 synthetic smokes were transaction-rolled back with zero residue
 **Database checkpoint:** M01-M08 and forward migrations M10-M19 are live-verified.
 

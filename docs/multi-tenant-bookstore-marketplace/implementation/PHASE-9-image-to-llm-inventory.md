@@ -1,8 +1,8 @@
 # PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `unit5c2_variant_persistence_m19_live_verified_candidate_review_gate`
+**Status:** `unit5c2_variant_persistence_merged_awaiting_unit5c_batch1_authorization`
 **Planning set:** `approved_baseline`
-**Implementation:** Unit 5C-1 is merged; M01-M08/M10-M19 are live-verified; Unit 5C-2 private proposed-only persistence and accepted-envelope replay fencing are live-verified while activation/search/UI behavior remains unimplemented
+**Implementation:** Unit 5C-1 and Unit 5C-2 are merged; M01-M08/M10-M19 are live-verified; private proposed-only persistence and accepted-envelope replay fencing are live while activation/search/UI behavior remains unimplemented
 **Last updated:** 2026-07-29
 
 This stable phase handoff points to the detailed planning set:
@@ -68,9 +68,9 @@ This stable phase handoff points to the detailed planning set:
 
 ## Next gate
 
-Unit 5C-1 is merged and Unit 5C-2 persistence/M18 plus the bounded M19 replay
-fence are live-verified. Independently review the exact staged candidate before
-commit/push, then stop for user merge authorization.
+Unit 5C-1 and Unit 5C-2 are merged; Unit 5C-2 is at `b398034`, with M18 plus
+the bounded M19 replay fence live-verified. Stop and await explicit
+authorization for Unit 5C Batch 1.
 M09, activation/search projection, provider configuration/calls, deployment,
 scheduling/autoscaling, UI, inventory/publication, commerce, lifecycle work,
 Library behavior, and any further migration remain separately gated.

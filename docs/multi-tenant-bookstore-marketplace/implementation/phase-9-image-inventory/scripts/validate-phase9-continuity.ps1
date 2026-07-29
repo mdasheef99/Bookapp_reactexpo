@@ -98,24 +98,26 @@ foreach ($marker in $trackerMarkers) {
 $active = [IO.File]::ReadAllText((Join-Path $implementationRoot 'ACTIVE.md'))
 if (-not $active.Contains('phase-9-image-inventory/SESSION-START.md')) { Write-Error 'ACTIVE.md does not route to the Phase 9 session entrypoint.' }
 if (-not $active.Contains('DOC-13-implementation-tracker.md')) { Write-Error 'ACTIVE.md does not route to DOC-13.' }
-if (-not $active.Contains('Unit 5C-1 is independently approved/merged') -or
+if (-not $active.Contains('Unit 5C-1 is merged') -or
     -not $active.Contains('14-unit5c2-variant-persistence-evidence.md') -or
+    -not $active.Contains('Unit 5C-2') -or
+    -not $active.Contains('merged at `b3980349d9d446fbf1820ef869f6664953d9a599`') -or
     -not $active.Contains('M18 is live once as `20260729004216`') -or
     -not $active.Contains('M19 is live once as `20260729020008`') -or
     -not $active.Contains('Gemini generation') -or
     -not $active.Contains('search/index exposure')) { Write-Error 'ACTIVE.md does not route to Unit 5C-2 and preserve later implementation gates.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5c2_variant_persistence_m19_live_verified_candidate_review_gate`') -or
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5c2_variant_persistence_merged_awaiting_unit5c_batch1_authorization`') -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
     -not $doc13.Contains('20260727231217 marketplace_phase9_sensitive_table_acl_correction') -or
     -not $doc13.Contains('20260727233457 marketplace_phase9_maintain_acl_correction') -or
     -not $doc13.Contains('20260729004216 marketplace_phase9_search_variant_proposals') -or
     -not $doc13.Contains('20260729020008')) { Write-Error 'DOC-13 does not preserve the M15-M19 live chain.' }
-if (-not $doc13.Contains('independently review the exact staged Unit 5C-2 candidate;')) { Write-Error 'DOC-13 does not preserve the Unit 5C-2 review-before-commit gate.' }
+if (-not $doc13.Contains('Stop and await explicit Unit 5C Batch 1 authorization')) { Write-Error 'DOC-13 does not preserve the post-merge Batch 1 authorization gate.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit5c2_variant_persistence_m19_live_verified_candidate_review_gate`\r?$' -or
-    -not $implementationTracker.Contains('**Active work unit:** `unit5c2_variant_persistence`') -or
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit5c2_variant_persistence_merged_awaiting_unit5c_batch1_authorization`\r?$' -or
+    -not $implementationTracker.Contains('**Active work unit:** `none_awaiting_unit5c_batch1_authorization`') -or
     -not $implementationTracker.Contains('20260729000018_marketplace_phase9_search_variant_proposals.sql') -or
     -not $implementationTracker.Contains('20260729000019_marketplace_phase9_search_variant_replay_fence.sql')) {
     Write-Error 'Implementation tracker does not preserve the Unit 5C-2/M18-M19 handoff.'
@@ -251,7 +253,7 @@ if (-not $implementationTracker.Contains('| 4B | [Gemini vision adapter]') -or
     -not $implementationTracker.Contains('optional whole-image fallback remains unselected/disabled') -or
     -not $implementationTracker.Contains('| 5A | [Metadata foundation]') -or
     -not $implementationTracker.Contains('| 5B/5C | Google Books primary adapter / [Unit 5C Lite multilingual variants]') -or
-    -not $implementationTracker.Contains('5C-2 live_verified_candidate_review_gate')) {
+    -not $implementationTracker.Contains('5C-2 merged_main_b398034')) {
     Write-Error 'Implementation routing must keep Unit 4B and its disabled fallback separate from Unit 5A/5B/5C.'
 }
 if ($implementationTracker -notmatch '(?m)^\| 0A \|.*\| `approved_complete` \|') { Write-Error 'Implementation tracker no longer preserves WU0A approved-complete evidence.' }
@@ -290,9 +292,9 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if (-not $tracker.Contains('**Implementation status:** `unit5c2_variant_persistence_m19_live_verified_candidate_review_gate`') -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5c2_variant_persistence`\r?$' -or
-    -not $tracker.Contains('**Next authorized action:** complete final gates') -or
+if (-not $tracker.Contains('**Implementation status:** `unit5c2_variant_persistence_merged_awaiting_unit5c_batch1_authorization`') -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `none_awaiting_unit5c_batch1_authorization`\r?$' -or
+    -not $tracker.Contains('**Next authorized action:** stop and await explicit authorization for Unit 5C Batch 1') -or
     -not $tracker.Contains('M18 is live once as `20260729004216`') -or
     -not $tracker.Contains('M19 is live once as `20260729020008`')) {
     Write-Error 'TRACKER.md does not preserve the Unit 5C-2/M18-M19 handoff.'
@@ -504,7 +506,7 @@ if (-not $sessionStart.Contains('| 0B Backend/API technical design or review (on
     Write-Error 'SESSION-START.md does not route the WU0B authority and artifact set.'
 }
 $phaseReadme = [IO.File]::ReadAllText((Join-Path $phaseRoot 'README.md'))
-if (-not $phaseReadme.Contains('**Status:** `unit5c2_variant_persistence_m19_live_verified_candidate_review_gate`') -or
+if (-not $phaseReadme.Contains('**Status:** `unit5c2_variant_persistence_merged_awaiting_unit5c_batch1_authorization`') -or
     -not $phaseReadme.Contains('M01-M08/M10-M19 are live once') -or
     -not $phaseReadme.Contains('Unit 5C-1 is') -or
     -not $phaseReadme.Contains('Unit 5C-2 private') -or

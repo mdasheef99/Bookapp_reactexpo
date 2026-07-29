@@ -1,16 +1,16 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit5c_lite_sdd_merged`
-**Implementation status:** `unit5c2_variant_persistence_m19_live_verified_candidate_review_gate`
+**Implementation status:** `unit5c2_variant_persistence_merged_awaiting_unit5c_batch1_authorization`
 **Last updated:** 2026-07-29
-**Current milestone:** Unit 5C-2 private store-scoped proposal persistence and replay fence live-verified
-**Active work unit:** `unit5c2_variant_persistence`
+**Current milestone:** Unit 5C-2 private store-scoped proposal persistence and replay fence merged
+**Active work unit:** `none_awaiting_unit5c_batch1_authorization`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Unit 5C-1 independently approved and merged to `main` at `8aadf178aa2b14293a7c0168f3b41e90ebf61d52`; Unit 5C-2 evidence is [tracker 14](./trackers/14-unit5c2-variant-persistence-evidence.md)
-**Next authorized action:** complete final gates, independently review the exact staged candidate, and only if `APPROVED` commit/push that identical tree and stop for user merge authorization
-**Implementation authority:** Unit 5C-2 private proposed-only persistence/read foundation and its verification only; provider generation, reconciliation/activation commands, search/index exposure, Owner UI, inventory/listing creation, publication, credentials, deployment, and commerce remain unauthorized
+**Last completed:** Unit 5C-2 independently approved and fast-forward merged to `main` at `b3980349d9d446fbf1820ef869f6664953d9a599`; evidence is [tracker 14](./trackers/14-unit5c2-variant-persistence-evidence.md)
+**Next authorized action:** stop and await explicit authorization for Unit 5C Batch 1; do not begin generation, activation, search exposure, or UI work
+**Implementation authority:** no further Unit 5C implementation is authorized; provider generation, reconciliation/activation commands, search/index exposure, Owner UI, inventory/listing creation, publication, credentials, deployment, and commerce remain unauthorized
 **Migration creation/application authority:** M18 is live once as `20260729004216` and its bounded M19 replay-fence correction is live once as `20260729020008`. M01-M08/M10-M19 remain live exactly once and M09 remains absent; no further migration is authorized
-**Current gate:** the exact staged Unit 5C-2 tree must receive independent approval before commit/push and user merge authorization
+**Current gate:** Unit 5C-2 is merged; Unit 5C Batch 1 requires separate explicit authorization
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -102,16 +102,17 @@ The exact development project was re-verified read-only at M11/M12 closeout:
 | Work Unit 4 fixture vision-analysis runtime | [`integrated_main_e9ba2d9`](./work-units/04-fixture-vision-analysis-runtime-design.md) |
 | Work Unit 4A deployment-runtime scaffolding | [`deployed_and_live_fixture_verified`](./trackers/06-fixture-pipeline-deployment-evidence.md) |
 | Work Unit 4B Gemini vision adapter | [`m14_live_verified_provider_deferred`](./work-units/04b-gemini-vision-adapter-handoff.md) |
-| Unit 5C Lite target SDD | [`merged_at_b44277a`](./work-units/05c-lite-multilingual-search-variants-sdd.md); Unit 5C-1 merged at `8aadf178`; Unit 5C-2 persistence [`live_verified_candidate_review_gate`](./trackers/14-unit5c2-variant-persistence-evidence.md) |
+| Unit 5C Lite target SDD | [`merged_at_b44277a`](./work-units/05c-lite-multilingual-search-variants-sdd.md); Unit 5C-1 merged at `8aadf178`; Unit 5C-2 persistence [`merged_main_b398034`](./trackers/14-unit5c2-variant-persistence-evidence.md) |
 | Provider and scale architecture SDD reconciliation | `stale_marker_superseded_by_unit4b_m14_m17_unit5a_review_evidence_2026-07-28` |
 
 ## Blocking gate before further implementation
 
 WU0A, WU0B, Package 1, Unit 4, Unit 4A, Unit 4B, Unit 5A, Unit 5B, and Unit
-5C-1 are complete at their recorded levels. M01-M08/M10-M19, the Owner
-boundary, and both separate fixture workers are live-verified. Unit 5C-2 is at
-the exact staged-candidate review gate. Core auth WU1/WU2 is locally complete. M09 and every
-activation/search/UI/provider work unit after Unit 5C-2 remain separately gated.
+5C-1 and Unit 5C-2 are complete at their recorded levels. M01-M08/M10-M19,
+the Owner boundary, and both separate fixture workers are live-verified. Unit
+5C-2 is merged at `b398034`. Core auth WU1/WU2 is locally complete. M09,
+Unit 5C Batch 1, and every activation/search/UI/provider work unit remain
+separately gated.
 
 ## Risk summary
 
@@ -145,9 +146,9 @@ Unit 5B is complete at the merged fixture/mock-verified level recorded in
 [tracker 11](./trackers/11-unit5b-implementation-evidence.md). Matching, reuse,
 and storage are independently enforced, and only `coherent_match` is a positive
 reusable outcome. Unit 5B created or applied no migration; M09 remains absent.
-Unit 5C-2 persistence and its M19 replay fence are live-verified and must pass
-independent review of the exact staged tree before commit/push and merge
-authorization. Do not apply M09 or another migration;
+Unit 5C-2 persistence and its M19 replay fence are live-verified,
+independently approved, and merged at `b398034`. Stop and await explicit
+authorization for Unit 5C Batch 1. Do not apply M09 or another migration;
 activate/project variants; change Gemini generation; configure, deploy, or call providers; select/enable
 a secondary; schedule/autoscale workers; change mobile UI; commit inventory; publish
 listings; or implement Library behavior.

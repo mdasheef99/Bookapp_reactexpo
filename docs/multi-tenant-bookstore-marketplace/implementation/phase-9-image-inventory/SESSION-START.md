@@ -16,8 +16,8 @@ validation seam and is independently approved/merged to `main` at
 `8aadf178aa2b14293a7c0168f3b41e90ebf61d52`.
 [Unit 5C-2](./trackers/14-unit5c2-variant-persistence-evidence.md) is the active
 candidate: its private proposal persistence/RPC foundation is live-verified
-through M19 `20260729020008`, with independent review of the exact staged
-candidate required before commit/push.
+through M19 `20260729020008`. Unit 5C-2 is independently approved and merged
+at `b398034`; Unit 5C Batch 1 requires separate explicit authorization.
 Provider generation, activation/reconciliation commands, search exposure,
 Owner UI, inventory/listing creation, publication, and commerce remain
 unstarted and separately gated.

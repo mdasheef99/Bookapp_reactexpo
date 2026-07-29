@@ -23,7 +23,7 @@ If you are a new coding or review agent, start here and do not write code immedi
 Current handoff as of 2026-07-29:
 
 - Phase 6 is `complete_e2e_deferred`; Phases 7 and 8 are deferred by product decision.
-- Phase 9 Image-to-LLM Inventory is active. M01-M08/M10-M19 are live-verified on development project `ahntbtktjjmvfosgkmgn`; M09 remains absent.
+- Phase 9 Image-to-LLM Inventory is active. M01-M08/M10-M19 are live-verified on development project `ahntbtktjjmvfosgkmgn`; Unit 5C-2 is merged at `b398034`; M09 remains absent and Unit 5C Batch 1 is not authorized.
 - The Phase 9 SDD/supporting/tracker set, WU0A/WU0B, ingestion runtime,
   fixture-vision runtime, and completed units under
   [`implementation/phase-9-image-inventory/`](./implementation/phase-9-image-inventory/README.md)
