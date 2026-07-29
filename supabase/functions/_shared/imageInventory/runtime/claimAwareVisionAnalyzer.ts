@@ -2,11 +2,13 @@ import {
   SpineAnalysisRequest,
   SpineImageAnalyzer,
 } from '../contracts/vision';
+import { SearchVariantCompanion } from '../contracts/searchVariants';
 
 type Claim = Readonly<{ id: string; attempt_count: number; lease_token: string }>;
 export type ProviderAttemptCompletion = Readonly<{
   result: unknown;
   providerAttemptId: string;
+  searchVariantProposals?: SearchVariantCompanion;
   accept(): Promise<void>;
   reject(
     disposition: 'stale_rejected' | 'outcome_unknown',
@@ -32,6 +34,7 @@ export async function analyzeCurrentClaim(
   leaseOwner: string,
 ): Promise<Readonly<{
   untrusted: unknown;
+  searchVariantProposals?: SearchVariantCompanion;
   providerAttempt?: ProviderAttemptCompletion;
 }>> {
   if ('analyzeClaim' in analyzer
@@ -45,7 +48,11 @@ export async function analyzeCurrentClaim(
         attemptNumber: job.attempt_count,
       },
     );
-    return { untrusted: providerAttempt.result, providerAttempt };
+    return {
+      untrusted: providerAttempt.result,
+      providerAttempt,
+      searchVariantProposals: providerAttempt.searchVariantProposals,
+    };
   }
   return { untrusted: await analyzer.analyze(request) };
 }

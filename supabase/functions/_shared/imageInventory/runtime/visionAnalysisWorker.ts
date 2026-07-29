@@ -17,6 +17,10 @@ import {
   analyzeCurrentClaim,
   ProviderAttemptCompletion,
 } from './claimAwareVisionAnalyzer';
+import {
+  buildSearchVariantPersistenceEnvelope,
+} from './searchVariantPersistence';
+import { analyzerResultSnapshot } from './visionResultSnapshot';
 
 type RpcResult = { data: any; error: { message?: string } | null };
 type Client = { rpc(name: string, args: Record<string, unknown>): Promise<RpcResult> };
@@ -37,17 +41,6 @@ const RECONCILIATION_KEYS = ['outcome', 'safe_error_code'] as const;
 const COMPLETION_OUTCOMES = [
   'accepted', 'accepted_with_language_skips', 'no_books', 'language_mismatch',
   'over_visible_book_limit', 'quality_rejected',
-] as const;
-const ANALYZER_RESULT_KEYS = [
-  'contractVersion', 'schemaVersion', 'pipelineVersion', 'promptVersion',
-  'adapterKey', 'adapterVersion', 'jobReference', 'attemptNumber',
-  'correlationId', 'expectedLanguage', 'providerKey', 'modelKey',
-  'modelVersion', 'receivedAt', 'imageOutcome', 'detectedVisibleBookCount',
-  'observations', 'warningCodes',
-] as const;
-const ANALYZER_OBSERVATION_KEYS = [
-  'ordinal', 'titleGuess', 'authorGuesses', 'publisherClue', 'isbnClue',
-  'detectedLanguage', 'confidence', 'geometry', 'warningCodes',
 ] as const;
 
 type SafeRpcCode =
@@ -174,52 +167,6 @@ function reconciliationResult(value: unknown): WorkerResult | null {
   return { outcome: 'relationship_reconciliation_required' };
 }
 
-function analyzerResultSnapshot(value: unknown) {
-  const result = asRecord(value, 'analyzer_result');
-  assertKnownKeys(result, ANALYZER_RESULT_KEYS, 'analyzer_result');
-  if (!Array.isArray(result.observations)) {
-    throw new Phase9ContractError('analyzer_result.observations', 'must be an array');
-  }
-  return {
-    contract_version: result.contractVersion,
-    schema_version: result.schemaVersion,
-    pipeline_version: result.pipelineVersion,
-    prompt_version: result.promptVersion,
-    adapter_key: result.adapterKey,
-    adapter_version: result.adapterVersion,
-    job_reference: result.jobReference,
-    attempt_number: result.attemptNumber,
-    correlation_id: result.correlationId,
-    expected_language: result.expectedLanguage,
-    provider_key: result.providerKey,
-    model_key: result.modelKey,
-    model_version: result.modelVersion,
-    received_at: result.receivedAt,
-    image_outcome: result.imageOutcome,
-    detected_visible_book_count: result.detectedVisibleBookCount,
-    observations: result.observations.map((entry, index) => {
-      const observation = asRecord(entry, `analyzer_result.observations[${index}]`);
-      assertKnownKeys(
-        observation,
-        ANALYZER_OBSERVATION_KEYS,
-        `analyzer_result.observations[${index}]`,
-      );
-      return {
-        ordinal: observation.ordinal,
-        title_guess: observation.titleGuess,
-        author_guesses: observation.authorGuesses,
-        publisher_clue: observation.publisherClue,
-        isbn_clue: observation.isbnClue,
-        detected_language: observation.detectedLanguage,
-        confidence: observation.confidence,
-        geometry: observation.geometry,
-        warning_codes: observation.warningCodes,
-      };
-    }),
-    warning_codes: result.warningCodes,
-  };
-}
-
 function completionResult(value: unknown, fallbackCandidateCount: number): WorkerResult {
   const completed = asRecord(value, 'vision_completion');
   if (!COMPLETION_OUTCOMES.includes(completed.outcome as typeof COMPLETION_OUTCOMES[number])) {
@@ -286,10 +233,22 @@ async function processClaim(
     assertSpineAnalysisIdentity(request, result);
     const policy = evaluateVisionResult(result);
     const snapshot = spineAnalysisResultSnapshot(result);
-    const completed = unwrap(await rpcCall(client, 'phase9_persist_vision_analysis', {
-      ...leaseArgs(job, leaseOwner),
-      p_result: snapshot,
-    }));
+    const acceptedVariants = analyzed.searchVariantProposals?.status === 'accepted'
+      ? analyzed.searchVariantProposals.value
+      : null;
+    const completed = unwrap(await rpcCall(
+      client,
+      acceptedVariants
+        ? 'phase9_persist_vision_analysis_with_variants'
+        : 'phase9_persist_vision_analysis',
+      {
+        ...leaseArgs(job, leaseOwner),
+        p_result: snapshot,
+        ...(acceptedVariants
+          ? { p_variants: buildSearchVariantPersistenceEnvelope(acceptedVariants) }
+          : {}),
+      },
+    ));
     const completedReconciliation = reconciliationResult(completed);
     if (completedReconciliation) {
       await providerAttempt?.reject('stale_rejected', 'completion_rejected');

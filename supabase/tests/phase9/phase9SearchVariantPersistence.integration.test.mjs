@@ -342,6 +342,9 @@ test('private read model enforces store scope and bounded filters', async () => 
 test('clients cannot read, mutate, or execute proposal persistence boundaries', async () => {
   const claimed = await claim();
   await scalar(db, persistSql(claimed));
+  await resetActor(db);
+  const candidateId = await scalar(db,
+    'SELECT id::text FROM public.image_extraction_candidates LIMIT 1');
   await setActor(db, OWNER, 'authenticated');
   await assert.rejects(db.query(
     'SELECT count(*) FROM public.phase9_search_variant_proposals',
@@ -351,4 +354,135 @@ test('clients cannot read, mutate, or execute proposal persistence boundaries', 
   await assert.rejects(db.query(persistSql(claimed)), /permission denied/i);
   await assert.rejects(db.query(`SELECT * FROM public.phase9_read_search_variant_proposals(
     '${STORE_A}',NULL,NULL,NULL,NULL,NULL)`), /permission denied/i);
+  await assert.rejects(db.query(`SELECT public.phase9_reconcile_search_variants(
+    '${STORE_A}','${candidateId}','{}'::uuid[],'test_allow_v1')`),
+  /permission denied/i);
+});
+
+test('field-specific reconciliation activates only an explicitly allowed primary', async () => {
+  const claimed = await claim();
+  await scalar(db, persistSql(claimed));
+  await resetActor(db);
+  const candidateId = await scalar(db,
+    'SELECT id::text FROM public.image_extraction_candidates LIMIT 1');
+  const primaryId = await scalar(db, `SELECT id::text
+    FROM public.phase9_search_variant_proposals
+    WHERE candidate_id='${candidateId}' AND target_type='title'
+      AND variant_type='primary_roman'`);
+  const authorPrimaryId = await scalar(db, `SELECT id::text
+    FROM public.phase9_search_variant_proposals
+    WHERE candidate_id='${candidateId}' AND source_field='observation:1:author:1'
+      AND variant_type='primary_roman'`);
+  await db.exec(`UPDATE public.image_extraction_candidates
+    SET owner_review_snapshot='${json({
+      confirmed_title: {
+        confirmed: true, text: TITLE, language: 'kn', script: 'Knda',
+      },
+      confirmed_authors: [{
+        index: 1, confirmed: true, text: AUTHOR, language: 'kn', script: 'Knda',
+      }],
+    })}'::jsonb WHERE id='${candidateId}'`);
+  await setActor(db, OWNER, 'service_role');
+  const denied = await scalar(db, `SELECT public.phase9_reconcile_search_variants(
+    '${STORE_A}','${candidateId}','{}'::uuid[],'deny_all_v1')`);
+  assert.equal(denied.activated_count, 0);
+  const allowed = await scalar(db, `SELECT public.phase9_reconcile_search_variants(
+    '${STORE_A}','${candidateId}',ARRAY['${primaryId}'::uuid],'test_allow_v1')`);
+  assert.equal(allowed.activated_count, 1);
+  assert.equal(await scalar(db, `SELECT count(*)::int
+    FROM public.phase9_search_variant_proposals
+    WHERE candidate_id='${candidateId}' AND status='active'
+      AND search_eligible`), 1);
+  assert.equal(await scalar(db, `SELECT count(*)::int
+    FROM public.phase9_search_variant_proposals
+    WHERE candidate_id='${candidateId}' AND target_type='author'
+      AND status='proposed' AND NOT search_eligible`), 2);
+  const authorAllowed = await scalar(db, `SELECT public.phase9_reconcile_search_variants(
+    '${STORE_A}','${candidateId}',ARRAY['${authorPrimaryId}'::uuid],'test_allow_v1')`);
+  assert.equal(authorAllowed.activated_count, 1);
+  assert.equal(await scalar(db, `SELECT count(*)::int
+    FROM public.phase9_search_variant_proposals
+    WHERE candidate_id='${candidateId}' AND status='active'
+      AND search_eligible`), 2);
+  await resetActor(db);
+  await db.exec(`UPDATE public.image_extraction_candidates
+    SET owner_review_snapshot='${json({
+      confirmed_title: {
+        confirmed: true, text: TITLE, language: 'kn', script: 'Knda',
+      },
+      confirmed_authors: [],
+    })}'::jsonb WHERE id='${candidateId}'`);
+  assert.equal(await scalar(db, `SELECT status
+    FROM public.phase9_search_variant_proposals WHERE id='${primaryId}'`), 'active');
+  assert.equal(await scalar(db, `SELECT status
+    FROM public.phase9_search_variant_proposals WHERE id='${authorPrimaryId}'`), 'stale');
+});
+
+test('confirmed author reconciles without confirming the title', async () => {
+  const claimed = await claim();
+  await scalar(db, persistSql(claimed));
+  await resetActor(db);
+  const candidateId = await scalar(db,
+    'SELECT id::text FROM public.image_extraction_candidates LIMIT 1');
+  const titlePrimaryId = await scalar(db, `SELECT id::text
+    FROM public.phase9_search_variant_proposals
+    WHERE candidate_id='${candidateId}' AND target_type='title'
+      AND variant_type='primary_roman'`);
+  const authorPrimaryId = await scalar(db, `SELECT id::text
+    FROM public.phase9_search_variant_proposals
+    WHERE candidate_id='${candidateId}' AND source_field='observation:1:author:1'
+      AND variant_type='primary_roman'`);
+  await db.exec(`UPDATE public.image_extraction_candidates
+    SET owner_review_snapshot='${json({
+      confirmed_authors: [{
+        index: 1, confirmed: true, text: AUTHOR, language: 'kn', script: 'Knda',
+      }],
+    })}'::jsonb WHERE id='${candidateId}'`);
+  await setActor(db, OWNER, 'service_role');
+  const reconciled = await scalar(db, `SELECT public.phase9_reconcile_search_variants(
+    '${STORE_A}','${candidateId}',
+    ARRAY['${titlePrimaryId}'::uuid,'${authorPrimaryId}'::uuid],
+    'test_allow_v1')`);
+  assert.equal(reconciled.activated_count, 1);
+  assert.equal(await scalar(db, `SELECT status
+    FROM public.phase9_search_variant_proposals WHERE id='${titlePrimaryId}'`), 'proposed');
+  assert.equal(await scalar(db, `SELECT status
+    FROM public.phase9_search_variant_proposals WHERE id='${authorPrimaryId}'`), 'active');
+  await resetActor(db);
+  await db.exec(`UPDATE public.image_extraction_candidates
+    SET owner_review_snapshot='${json({
+      confirmed_authors: [{
+        index: 1, confirmed: true, text: `${AUTHOR} Changed`,
+        language: 'kn', script: 'Knda',
+      }],
+    })}'::jsonb WHERE id='${candidateId}'`);
+  assert.equal(await scalar(db, `SELECT status
+    FROM public.phase9_search_variant_proposals WHERE id='${authorPrimaryId}'`), 'stale');
+});
+
+test('wrong-store reconciliation and stale automatic reactivation are denied', async () => {
+  const claimed = await claim();
+  await scalar(db, persistSql(claimed));
+  await resetActor(db);
+  const candidateId = await scalar(db,
+    'SELECT id::text FROM public.image_extraction_candidates LIMIT 1');
+  const primaryId = await scalar(db, `SELECT id::text
+    FROM public.phase9_search_variant_proposals
+    WHERE candidate_id='${candidateId}' AND target_type='title'
+      AND variant_type='primary_roman'`);
+  await db.exec(`UPDATE public.image_extraction_candidates
+    SET owner_review_snapshot='${json({
+      confirmed_title: {
+        confirmed: true, text: `${TITLE} Changed`, language: 'kn', script: 'Knda',
+      },
+      confirmed_authors: [],
+    })}'::jsonb WHERE id='${candidateId}'`);
+  await setActor(db, OWNER, 'service_role');
+  await assert.rejects(db.query(`SELECT public.phase9_reconcile_search_variants(
+    '${STORE_B}','${candidateId}',ARRAY['${primaryId}'::uuid],'test_allow_v1')`));
+  const replay = await scalar(db, `SELECT public.phase9_reconcile_search_variants(
+    '${STORE_A}','${candidateId}',ARRAY['${primaryId}'::uuid],'test_allow_v1')`);
+  assert.equal(replay.activated_count, 0);
+  assert.equal(await scalar(db, `SELECT status
+    FROM public.phase9_search_variant_proposals WHERE id='${primaryId}'`), 'stale');
 });

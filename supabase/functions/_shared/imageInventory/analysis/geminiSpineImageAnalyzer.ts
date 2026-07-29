@@ -3,17 +3,15 @@ import type {
   GenerateContentResponse,
 } from '@google/genai';
 import {
-  assertSpineAnalysisIdentity,
-  parseSpineAnalysisResult,
   SpineAnalysisRequest,
   SpineAnalysisResult,
   SpineImageAnalyzer,
 } from '../contracts/vision';
+import { SearchVariantCompanion } from '../contracts/searchVariants';
 import {
   GEMINI_VISION_PROMPT,
   GEMINI_VISION_RESPONSE_SCHEMA,
 } from './geminiVisionSchema';
-import { SpineAnalyzerError } from './spineAnalyzerError';
 import {
   extractGeminiUsageEvidence,
   GeminiCostCalculator,
@@ -24,6 +22,19 @@ import {
   VisionClaimContext,
   VisionProviderAttemptGateway,
 } from './visionProviderAttempt';
+import {
+  decodeGeminiAnalysisResponse,
+  GeminiAnalysisWithCompanion,
+} from './geminiResponseDecoder';
+import { SpineAnalyzerError } from './spineAnalyzerError';
+import {
+  assertGeminiConfiguration,
+  classifyGeminiFailure,
+  GeminiAnalyzerError,
+  GeminiSafeLogEvent,
+  MAX_GEMINI_IMAGE_BYTES,
+  safeProviderRequestId,
+} from './geminiAnalyzerGuards';
 
 export { GEMINI_VISION_RESPONSE_SCHEMA } from './geminiVisionSchema';
 export type { GeminiUsageEvidence } from './geminiUsageEvidence';
@@ -37,19 +48,11 @@ type MediaInput = Readonly<{ bytes: Uint8Array; mimeType: ImageMime }>;
 type GeminiResponse = Pick<
 GenerateContentResponse, 'text' | 'usageMetadata' | 'responseId'
 >;
+export type { GeminiAnalysisWithCompanion } from './geminiResponseDecoder';
 export type GeminiClient = Readonly<{
   models: {
     generateContent(parameters: GenerateContentParameters): Promise<GeminiResponse>;
   };
-}>;
-
-type SafeLogEvent = Readonly<{
-  event: 'gemini_analysis_completed' | 'gemini_analysis_failed';
-  provider: 'google_gemini';
-  modelId: string;
-  outcome?: string;
-  classification?: string;
-  durationMs: number;
 }>;
 
 export type GeminiAnalyzerOptions = Readonly<{
@@ -60,71 +63,32 @@ export type GeminiAnalyzerOptions = Readonly<{
   providerAttempts?: VisionProviderAttemptGateway;
   recordUsage?: (evidence: GeminiUsageEvidence) => void | Promise<void>;
   calculateCostUnits?: GeminiCostCalculator;
-  log?: (event: SafeLogEvent) => void;
+  log?: (event: GeminiSafeLogEvent) => void;
   now?: () => Date;
   privilegedValues?: readonly string[];
 }>;
 
-const MODEL_ID = /^[a-z][a-z0-9._-]{1,63}$/u;
-const PROVIDER_REQUEST_ID = /^[A-Za-z0-9._:-]{1,128}$/u;
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
-
-export class GeminiAnalyzerError extends SpineAnalyzerError {
-  override readonly name = 'GeminiAnalyzerError';
-}
-
-function safeStatus(error: unknown): number | null {
-  if (!error || typeof error !== 'object') return null;
-  const status = (error as { status?: unknown }).status;
-  return Number.isInteger(status) ? status as number : null;
-}
-
-function isTimeout(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false;
-  const name = (error as { name?: unknown }).name;
-  return name === 'AbortError' || name === 'TimeoutError' || name === 'RequestTimeoutError';
-}
-
-function resultEnvelope(
-  request: SpineAnalysisRequest,
-  modelId: string,
-  receivedAt: string,
-  output: Record<string, unknown>,
-) {
-  return {
-    contract_version: request.contractVersion,
-    schema_version: request.schemaVersion,
-    pipeline_version: request.pipelineVersion,
-    prompt_version: request.promptVersion,
-    adapter_key: request.adapterKey,
-    adapter_version: request.adapterVersion,
-    job_reference: request.jobReference,
-    attempt_number: request.attemptNumber,
-    correlation_id: request.correlationId,
-    expected_language: request.expectedLanguage,
-    provider_key: 'google_gemini',
-    model_key: modelId,
-    model_version: modelId,
-    received_at: receivedAt,
-    ...output,
-  };
-}
+export { GeminiAnalyzerError } from './geminiAnalyzerGuards';
 
 export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
   private readonly now: () => Date;
 
   constructor(private readonly options: GeminiAnalyzerOptions) {
     this.now = options.now ?? (() => new Date());
-    if (!MODEL_ID.test(options.modelId)
-      || !Number.isInteger(options.timeoutMs)
-      || options.timeoutMs < 100
-      || options.timeoutMs > 300_000
-      || (options.privilegedValues ?? []).some((value) => !value)) {
-      throw new Error('P9_WORKER_CONFIGURATION_INVALID');
-    }
+    assertGeminiConfiguration(
+      options.modelId,
+      options.timeoutMs,
+      options.privilegedValues ?? [],
+    );
   }
 
   async analyze(request: SpineAnalysisRequest): Promise<SpineAnalysisResult> {
+    return (await this.analyzeInternal(request)).result.vision;
+  }
+
+  async analyzeWithCompanion(
+    request: SpineAnalysisRequest,
+  ): Promise<GeminiAnalysisWithCompanion> {
     return (await this.analyzeInternal(request)).result;
   }
 
@@ -134,6 +98,7 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
   ): Promise<Readonly<{
     result: SpineAnalysisResult;
     providerAttemptId: string;
+    searchVariantProposals: SearchVariantCompanion;
     accept(): Promise<void>;
     reject(disposition: 'stale_rejected' | 'outcome_unknown', outcome: string): Promise<void>;
   }>> {
@@ -142,8 +107,9 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
     if (!completed.providerAttemptId) throw new Error('P9_WORKER_CONFIGURATION_INVALID');
     const attemptId = completed.providerAttemptId;
     return {
-      result: completed.result,
+      result: completed.result.vision,
       providerAttemptId: attemptId,
+      searchVariantProposals: completed.result.searchVariantProposals,
       accept: async () => {
         if (!this.options.providerAttempts?.associate) {
           throw new Error('P9_WORKER_CONFIGURATION_INVALID');
@@ -161,7 +127,10 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
   private async analyzeInternal(
     request: SpineAnalysisRequest,
     claim?: VisionClaimContext,
-  ): Promise<Readonly<{ result: SpineAnalysisResult; providerAttemptId?: string }>> {
+  ): Promise<Readonly<{
+    result: GeminiAnalysisWithCompanion;
+    providerAttemptId?: string;
+  }>> {
     const started = this.now().getTime();
     let registration: AttemptRegistration | undefined;
     let media: MediaInput;
@@ -192,7 +161,8 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
     try {
       media = await this.options.resolveMedia(request, mediaAuthorization);
       if (!['image/jpeg', 'image/png', 'image/webp'].includes(media.mimeType)
-        || media.bytes.byteLength < 1 || media.bytes.byteLength > MAX_IMAGE_BYTES) {
+        || media.bytes.byteLength < 1
+        || media.bytes.byteLength > MAX_GEMINI_IMAGE_BYTES) {
         throw new Error('invalid media');
       }
     } catch (error) {
@@ -230,7 +200,14 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
         contents: [{
           role: 'user',
           parts: [
-            { text: GEMINI_VISION_PROMPT },
+            {
+              text: [
+                GEMINI_VISION_PROMPT,
+                `Companion analysis_reference must be ${request.correlationId}.`,
+                `Companion model_key/model_version must be ${this.options.modelId}.`,
+                `Companion prompt_version must be ${request.promptVersion}.`,
+              ].join(' '),
+            },
             {
               inlineData: {
                 mimeType: media.mimeType,
@@ -250,8 +227,7 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
         },
       });
     } catch (error) {
-      const classification = isTimeout(error)
-        ? 'timeout' : safeStatus(error) === 429 ? 'rate_limited' : 'provider_error';
+      const classification = classifyGeminiFailure(error);
       if (registration && claim) {
         await this.safeMark(
           registration.attemptId,
@@ -276,8 +252,7 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
       this.options.calculateCostUnits,
     );
     await this.options.recordUsage?.(usage);
-    const providerRequestId = typeof response.responseId === 'string'
-      && PROVIDER_REQUEST_ID.test(response.responseId) ? response.responseId : null;
+    const providerRequestId = safeProviderRequestId(response.responseId);
 
     let providerOutput: Record<string, unknown>;
     try {
@@ -297,15 +272,14 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
       );
     }
 
-    let result: SpineAnalysisResult;
+    let result: GeminiAnalysisWithCompanion;
     try {
-      result = parseSpineAnalysisResult(resultEnvelope(
+      result = decodeGeminiAnalysisResponse(
         request,
         this.options.modelId,
         this.now().toISOString(),
         providerOutput,
-      ));
-      assertSpineAnalysisIdentity(request, result);
+      );
     } catch {
       await this.finalize(
         registration, claim, 'failed', 'schema_invalid', providerRequestId, usage,
@@ -316,13 +290,13 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
       );
     }
     await this.finalize(
-      registration, claim, 'response_received', result.imageOutcome, providerRequestId, usage,
+      registration, claim, 'response_received', result.vision.imageOutcome, providerRequestId, usage,
     );
     this.options.log?.({
       event: 'gemini_analysis_completed',
       provider: 'google_gemini',
       modelId: this.options.modelId,
-      outcome: result.imageOutcome,
+      outcome: result.vision.imageOutcome,
       durationMs: Math.max(0, this.now().getTime() - started),
     });
     return { result, providerAttemptId: registration?.attemptId };

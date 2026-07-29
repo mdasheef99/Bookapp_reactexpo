@@ -21,6 +21,8 @@ export const phase9MigrationNames = [
   '20260728000017_marketplace_phase9_maintain_acl_correction.sql',
   '20260729000018_marketplace_phase9_search_variant_proposals.sql',
   '20260729000019_marketplace_phase9_search_variant_replay_fence.sql',
+  '20260729000020_marketplace_phase9_variant_runtime_search.sql',
+  '20260729000021_marketplace_phase9_defer_active_variant_search.sql',
 ];
 
 const root = process.cwd();
