@@ -1,16 +1,16 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit5c_lite_sdd_merged`
-**Implementation status:** `unit5c3_runtime_reconciliation_merged_unit5c4_active`
+**Implementation status:** `unit5c4_active_variant_search_merged_unit5c5_6_active`
 **Last updated:** 2026-07-29
-**Current milestone:** Unit 5C-3 runtime generation, reconciliation, and lifecycle merged
-**Active work unit:** `unit5c4_active_alias_materialization_and_search`
+**Current milestone:** Unit 5C-4 active store-scoped alias materialization and search consumption merged
+**Active work unit:** `unit5c5_6_owner_decisions_benchmark_rollout_backend`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Unit 5C-3 independently approved (`eabe1040b4dbe89cf5163754fd719a11673a8682`) and fast-forward merged to `main` at `f09301b76fb14714f942a98f0ceffa5d5a0c3178`; evidence is [tracker 15](./trackers/15-unit5c3-runtime-reconciliation-evidence.md)
-**Next authorized action:** implement Unit 5C-4 active store-scoped alias materialization and search consumption in a new session from merged main `f09301b76fb14714f942a98f0ceffa5d5a0c3178`
-**Implementation authority:** Unit 5C-4 only, with targeted context, red-first tests, deep self-review, and independent exact-tree review; customer display, Owner UI/actions, benchmarks, rollout controls/production enablement, inventory/listing creation, publication, commerce, Google Books Roman-query fallback, and global alias authority remain unauthorized
-**Migration creation/application authority:** M18-M21 are immutable live history; M20 is live as `20260729054842` and M21 as `20260729060238`. Unit 5C-4 must not modify M18-M21; any new migration creation/application requires its own exact-project preflight and authority
-**Current gate:** Unit 5C-3 is merged and closed; Unit 5C-4 is the only active implementation task
+**Last completed:** Unit 5C-4 independently approved (`db8ea75ed2904e8c381eec814f96804198d16b1e`) and fast-forward merged to `main` at `d092f081d95b8c551bfcadcfd58fe8c98c77dfb2`; evidence is [tracker 16](./trackers/16-unit5c4-active-variant-search-evidence.md)
+**Next authorized action:** implement the combined Unit 5C-5 exceptional Owner variant-decision backend authority and Unit 5C-6 benchmark/per-language rollout-control infrastructure in one backend session and branch after this closeout merges
+**Implementation authority:** Units 5C-5/5C-6 backend only, with UI-ready contracts but no Owner/customer/platform-admin visual UI; no live benchmark or production-language approval is required without qualifying evidence, rollout remains fail closed, and the exact staged tree requires independent approval before any new migration application
+**Migration creation/application authority:** M18-M23 are immutable live history; M22 is live as `20260729075459` and M23 as `20260729082153`. New Unit 5C-5/5C-6 migration files may be created only within the authorized batch; application requires exact-project preflight and independent approval of the exact staged tree
+**Current gate:** Unit 5C-4 is merged and closed; combined Unit 5C-5/5C-6 backend implementation begins only after this documentation closeout is merged
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -36,8 +36,11 @@ M18/M19 and reconcile title and each author independently against confirmed
 Owner snapshots using narrow deterministic normalization, material-change
 classification, default-deny activation, and trusted proposed/active/stale
 transitions. M21 removes M20's temporary 5C-4 public search/materialization
-effects, so active alias materialization and search consumption remain the
-Unit 5C-4 task.
+effects. Unit 5C-4 then reintroduces the independently reviewed active-only,
+store-scoped materialization and search boundary through immutable M22/M23.
+It preserves exact source-field authority, original/ISBN/legacy search,
+listing eligibility, and public display identity while retracting stale or
+inactive search effect fail closed.
 
 The provider/scale reconciliation keeps real Gemini provider-contract design as a separately gated prospective Unit 4B and keeps Unit 5 authoritatively named `Metadata/aliases`. The generic architecture supports one metadata primary and at most one disabled-until-approved secondary, horizontal correctness, and a fixed-multi-replica activation gate; it does not authorize provider calls, deployment changes, scheduling, or autoscaling. The bounded F1–F3 correction removes the deferred-secondary contradiction, makes media/vision/metadata capacity signals explicit, and disables raw provider/model payload persistence by default while retaining the independent-review gate.
 
@@ -103,19 +106,18 @@ The exact development project was re-verified read-only at M11/M12 closeout:
 | Work Unit 4 fixture vision-analysis runtime | [`integrated_main_e9ba2d9`](./work-units/04-fixture-vision-analysis-runtime-design.md) |
 | Work Unit 4A deployment-runtime scaffolding | [`deployed_and_live_fixture_verified`](./trackers/06-fixture-pipeline-deployment-evidence.md) |
 | Work Unit 4B Gemini vision adapter | [`m14_live_verified_provider_deferred`](./work-units/04b-gemini-vision-adapter-handoff.md) |
-| Unit 5C Lite target SDD | [`merged_at_b44277a`](./work-units/05c-lite-multilingual-search-variants-sdd.md); Unit 5C-1 merged at `8aadf178`; Unit 5C-2 persistence [`merged_main_b398034`](./trackers/14-unit5c2-variant-persistence-evidence.md); Unit 5C-3 runtime/reconciliation [`merged_main_f09301b`](./trackers/15-unit5c3-runtime-reconciliation-evidence.md) |
+| Unit 5C Lite target SDD | [`merged_at_b44277a`](./work-units/05c-lite-multilingual-search-variants-sdd.md); Unit 5C-1 merged at `8aadf178`; Unit 5C-2 persistence [`merged_main_b398034`](./trackers/14-unit5c2-variant-persistence-evidence.md); Unit 5C-3 runtime/reconciliation [`merged_main_f09301b`](./trackers/15-unit5c3-runtime-reconciliation-evidence.md); Unit 5C-4 active materialization/search [`merged_main_d092f08`](./trackers/16-unit5c4-active-variant-search-evidence.md) |
 | Provider and scale architecture SDD reconciliation | `stale_marker_superseded_by_unit4b_m14_m17_unit5a_review_evidence_2026-07-28` |
 
 ## Blocking gate before further implementation
 
 WU0A, WU0B, Package 1, Unit 4, Unit 4A, Unit 4B, Unit 5A, Unit 5B, and Unit
-5C-1 through Unit 5C-3 are complete at their recorded levels.
-M01-M08/M10-M21, the Owner boundary, and both separate fixture workers are
-live-verified; M09 remains absent. Unit 5C-3 is merged at `f09301b`.
-Unit 5C-4 active store-scoped alias materialization and search consumption is
-the only active task; UI, display, benchmark, rollout, inventory/publication,
-commerce, provider-fallback, and global-authority work remains separately
-gated.
+5C-1 through Unit 5C-4 are complete at their recorded levels.
+M01-M08/M10-M23, the Owner ingestion boundary, and both separate fixture
+workers are live-verified; M09 remains absent. Unit 5C-4 is merged at
+`d092f08`. The combined Unit 5C-5/5C-6 backend batch is next; visual UI,
+customer display changes, inventory/publication, commerce, provider fallback,
+and global alias authority remain separately gated.
 
 ## Risk summary
 
@@ -149,10 +151,13 @@ Unit 5B is complete at the merged fixture/mock-verified level recorded in
 [tracker 11](./trackers/11-unit5b-implementation-evidence.md). Matching, reuse,
 and storage are independently enforced, and only `coherent_match` is a positive
 reusable outcome. Unit 5B created or applied no migration; M09 remains absent.
-Unit 5C-3 generation, reconciliation, activation policy, and lifecycle are
-live-verified, independently approved, and merged at `f09301b`. Begin only
-Unit 5C-4 active store-scoped alias materialization and search consumption in
-a new session from that baseline. Do not modify M18-M21, apply M09, change
-customer display or Owner UI/actions, add benchmarks or rollout controls,
-enable production languages, create inventory/listings, publish, add commerce,
-add Google Books Roman-query fallback, or create global alias authority.
+Unit 5C-4 active store-scoped alias materialization and search consumption is
+live-verified, independently approved at tree `db8ea75`, and merged at
+`d092f08`; M22/M23 are immutable. After this documentation closeout merges,
+begin the combined Unit 5C-5/5C-6 backend batch in one session and branch.
+Expose UI-ready Owner-decision and rollout contracts without visual UI; do not
+assume benchmark evidence or approve a production language, and keep rollout
+fail closed by default. Do not apply M09, create inventory/listings, publish,
+add commerce, add Google Books Roman-query fallback, or create global alias
+authority. Independently approve the exact staged tree before applying new
+migrations.

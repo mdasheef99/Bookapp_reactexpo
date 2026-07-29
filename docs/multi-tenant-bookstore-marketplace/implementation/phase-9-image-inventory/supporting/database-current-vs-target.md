@@ -12,10 +12,13 @@ and reconcile confirmed Owner title and individual authors with store,
 observation, and source-field isolation, narrow deterministic normalization,
 material-change classification, default-deny activation, and trusted
 proposed/active/stale transitions. M21 removes M20's temporary public search,
-alias materialization, target linkage, and trigger/search effects. M01
-`book_search_aliases`, proposal, and proposal-set live counts were zero at
-verification. Unit 5C-4 materialization/search, Owner/customer UI, benchmarks,
-rollout, inventory/listing creation, publication, and commerce remain absent.
+alias materialization, target linkage, and trigger/search effects. Unit 5C-4
+then applied M22 as `20260729075459` and M23 as `20260729082153`; final live
+semantics materialize/search only current active, exact-store/source/eligible-
+target variants and preserve legacy approved-alias ranking. Rollback-only smoke
+left no synthetic proposal, alias, link, inventory, or listing residue. Owner
+decision authority/UI, customer display changes, benchmark/rollout records,
+inventory/listing creation, publication, and commerce remain absent.
 
 **Provider/scale SDD reconciliation evidence:** the 2026-07-27 bounded read-only provider audit reconfirmed the exact healthy project and migration tail with M09 absent. Live counts were five extraction candidates, one canonical edition, and zero provider-registry rows, metadata attempts, metadata sources, aliases, or usage reservations. The existing metadata-attempt table already records candidate, adapter, attempt sequence, normalized clues, status, provider record, match strength, latency, cache status, versions, reuse policy, payload lifecycle, and timestamps; it does not explicitly represent role, provider-independent query identity, capability/routing-policy version, predecessor outcome, coalescing lineage, or cost-reservation linkage. These are proposed Unit 5 design targets only. No database or Storage mutation occurred.
 
@@ -114,6 +117,16 @@ forward-removes those Unit 5C-4 effects. Final live semantics retain Unit
 5C-3 only. Rollback-only lifecycle smoke passed with zero synthetic residue;
 proposal, proposal-set, and alias counts were zero at verification time.
 
+**M22/M23 Unit 5C-4 closeout:** M22 is immutable applied history as
+`20260729075459 marketplace_phase9_active_variant_search` and introduces the
+active-only store-scoped title/individual-author materialization, target
+linkage, retraction, and fail-closed search boundary. Independent review found
+two bounded defects. M22 was not edited or reversed. M23 is immutable and live
+as `20260729082153 marketplace_phase9_active_variant_search_correction`; it
+forward-corrects legacy approved-alias rank preservation and stricter exact
+source-field/source-text reconciliation. Final schema semantics are M22 plus
+M23. Live rollback-only smoke passed with zero synthetic residue.
+
 **Ingestion foundation checkpoint:** project `ahntbtktjjmvfosgkmgn` remains healthy; both private 10 MiB JPEG/PNG/WebP buckets remain unchanged. Live M11 revokes authenticated execution of path-taking legacy intake RPCs and adds declared source/content identity, persisted canonical completion, capability linkage, immutable private source snapshots, opaque claim-token and attempt fencing, 16 MP enforcement, and service-only issue/register/claim/context/revalidate/snapshot-bind/complete/fail functions. No runtime is deployed.
 
 **WU0 refresh:** a second read-only check on 2026-07-19 reconfirmed project identity, 37 `store_id`/zero `tenant_id` public columns, the five core catalogue/inventory tables, absence of proposed Phase 9 tables/buckets, five `good` inventory rows, zero observed quantity-balance violations, the explicit listing projection trigger, and the current migration tail. No drift changed the proposed design.
@@ -151,7 +164,7 @@ proposal, proposal-set, and alias counts were zero at verification time.
 | `marketplace_book_listings` | One projection per `inventory_id`; lacks language, description, aliases, structured damage/media/freshness. | Extend safe projection with public metadata/damage/media/search fields. Preserve one projection per inventory row; visual grouping occurs in query/UI, not DB merging. |
 | Projection trigger | Explicitly copies current inventory fields; revoked from anon/authenticated and executable by service role. | Extend or replace with a controlled projection writer covering new public fields and eligibility. Projection failure must be observable; no silent inventory/public divergence. |
 | Image extraction tables | M02/M11/M12/M13/M14 are live: token-fenced jobs, private immutable evidence, candidate and provider-attempt lineage, service-only invoker wrappers, and final egress validation exist. Fixture runtime remains deployed and live-verified. | Gemini configuration/deployment/live-provider verification remains separately authorized. |
-| Variant/alias storage | M01 `book_search_aliases` remains unchanged with canonical-or-inventory XOR targets and zero rows. M18 adds private proposals; M19 adds immutable accepted-envelope replay fencing; M20/M21 leave Unit 5C-3 reconciliation, lifecycle, default-deny activation, and source isolation live while removing temporary public search/materialization effects. | Unit 5C-4 must add active store-scoped alias materialization and search consumption without rewriting M18-M21. Customer display, Owner actions, benchmarks/rollout, inventory/publication/commerce, Google Books fallback, and global alias authority remain separate. |
+| Variant/alias storage | M18/M19 preserve private proposals/replay fencing; M20/M21 preserve Unit 5C-3 reconciliation/lifecycle; M22/M23 add exact-store/source/eligible-target active alias materialization, one-based author linkage, stale/inactive retraction, and fail-closed Roman search while preserving original/ISBN/canonical/legacy search and display identity. | Unit 5C-5 Owner decisions and Unit 5C-6 benchmark/rollout evidence remain next. Customer display, visual UI, inventory/publication/commerce, Google Books fallback, and global alias authority remain separate. |
 | Media registry | M03/M11 are live and provide typed `media_assets` plus private/public/request link structures; legacy inventory `photos text[]` remains for compatibility. M11 adds no public promotion and links only validated private scan media. | Preserve typed purpose/privacy/hash/retention boundaries and defer legacy-field retirement/public promotion to separately authorized work. |
 | Upload capabilities | M11 is live: authenticated execution of legacy path-taking RPCs is revoked and server-generated exact paths plus declared/observed object identity are present. | Preserve the service-only boundary during deployment. |
 | Cost reservation | Live `phase9_usage_reservations` remains unique on `(store_id, job_id, cost_kind, policy_version)`; live M14 links each vision call to its reservation and reconciles summed finalized cost without hard-coded prices. | Populate only through a separately deployed/configured provider runtime. |

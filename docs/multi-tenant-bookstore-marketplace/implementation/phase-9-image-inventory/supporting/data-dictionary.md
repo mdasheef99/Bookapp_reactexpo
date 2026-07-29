@@ -1,6 +1,6 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** current/live and approved-target representations separated; Unit 5C-3 runtime/reconciliation live, Unit 5C-4 materialization/search deferred
+**Status:** current/live and approved-target representations separated; Unit 5C-4 active store-scoped materialization/search live, Unit 5C-5/5C-6 backend next
 **Last updated:** 2026-07-29
 
 M01-M08/M10-M14 are live-verified. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. M14 adds dedicated service-only vision-provider attempts and is live once as `20260727183546`. Owner/media/fixture-vision services remain deployed. M09 quantity validation remains a separate live-data gate.
@@ -122,10 +122,10 @@ automatic activation.
 M20 added the Unit 5C-3 reconciliation/lifecycle functions but temporarily also
 included Unit 5C-4 alias materialization, target linkage, public search RPC,
 and related trigger/search effects. Applied M20 is immutable. Forward M21
-removed those 5C-4 effects, leaving the live M01 `book_search_aliases`
-representation unchanged with zero rows at verification time. Final active
-alias materialization and search consumption require Unit 5C-4 and must not
-rewrite M18-M21.
+removed those 5C-4 effects. M22 then introduced the reviewed active-only, store-scoped
+materialization/search foundation, and immutable M23 forward-corrected legacy approved-alias
+rank preservation and stricter exact source-field/source-text reconciliation. Final live semantics are M18-M23;
+M22/M23 do not change public display identity or create Owner decision, benchmark, or rollout records.
 ### Unit 5C-3 reconciliation/lifecycle fields
 | Concept | Live rule after M21 |
 | --- | --- |
@@ -135,7 +135,7 @@ rewrite M18-M21.
 | materiality | proposals are classified independently per source field |
 | activation | trusted-policy allowlist only; default deny |
 | lifecycle | trusted `proposed -> active`, `proposed -> stale`, and `active -> stale`; stale rows do not auto-reactivate |
-| search effect | none after M21; alias materialization/search consumption is Unit 5C-4 |
+| search effect | active proposals only through M22/M23; exact store/source/eligible-target checks, stale/inactive retraction, and fail-closed current-state validation |
 | provider payload | raw response is never persisted |
 
 ### Language enablement

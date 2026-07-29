@@ -265,16 +265,32 @@ If implementation changes product or architecture behavior, update the relevant 
 > session; display/UI/actions, benchmarks, rollout, inventory/publication,
 > commerce, provider fallback, and global alias authority remain deferred.
 
+> 2026-07-29 Phase 9 Unit 5C-4 closeout: active Unit 5C-3 proposals now
+> materialize only within exact store/source-field and eligible existing-target
+> authority, with independent title/one-based-author linkage, idempotent
+> materialization/retraction, and fail-closed Roman title/author search that
+> preserves original, ISBN, canonical, and legacy approved-alias behavior.
+> Exact tree `db8ea75ed2904e8c381eec814f96804198d16b1e` received verdict
+> `APPROVED` and fast-forward merged at
+> `d092f081d95b8c551bfcadcfd58fe8c98c77dfb2`. M22 is live as
+> `20260729075459`; immutable M23 is live as `20260729082153` and
+> forward-corrects legacy approved-alias ranking plus stricter source
+> reconciliation. PGlite 35/35, Jest 53/53, scoped TypeScript, continuity,
+> secret/pyc checks, and zero-residue rollback smoke passed. No display schema,
+> Owner decision authority/UI, benchmark/rollout, inventory/publication,
+> commerce, provider fallback, or global alias authority was added. The next
+> active batch combines Unit 5C-5/5C-6 backend work after this closeout merges.
+
 > 2026-07-26 Phase 9 Unit 4A review-correction checkpoint: the independent review returned `CHANGES_REQUIRED` for unsafe Docker context, pre-authentication slot starvation/read deadlines, nondeterministic shutdown evidence, source-string-only deployment claims, and identity-only fixture tests. All five corrections plus bounded invoker responses are locally focused-green. A deny-by-default Docker context, pre-admission constant-time authentication, fixed body deadline, deterministic shutdown test, real compiled-entrypoint smoke, per-fixture semantic matrix, synthetic-only container script, and minimal-permission pull-request workflow now exist. The mandatory GitHub Actions image build/start gate is next; no live credential, image push, deployment, migration, provider, Supabase, or Storage operation is authorized.
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5C-3 runtime/reconciliation merged; Unit 5C-4 active** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5C-4 active variant search merged; combined Unit 5C-5/5C-6 backend active** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-29 |
-| Latest handoff | Unit 5C-3 is independently approved at tree `eabe1040` and merged at `f09301b`; M20/M21 are live, with M21 forward-correcting M20 to final Unit 5C-3-only semantics. |
-| Current risk level | Unit 5C-3 generation/reconciliation/lifecycle is verified; active alias materialization and search consumption remain absent until Unit 5C-4. Pre-existing unrelated advisor warnings remain separately tracked. |
-| Next recommended task | Unit 5C-4 — active store-scoped alias materialization and search consumption — in a new session from merged `main` `f09301b76fb14714f942a98f0ceffa5d5a0c3178`. |
+| Latest handoff | Unit 5C-4 is independently approved at tree `db8ea75` and merged at `d092f08`; M22/M23 are live and immutable, with M23 forward-correcting M22. |
+| Current risk level | Active store-scoped variant search is verified. Owner exceptional decisions and exact-evidence language rollout remain absent until Units 5C-5/5C-6; rollout remains fail closed. Pre-existing unrelated advisor warnings remain separately tracked. |
+| Next recommended task | Combined Unit 5C-5 exceptional Owner variant-decision backend authority and Unit 5C-6 benchmark/per-language rollout-control infrastructure, in one backend session and branch after this closeout merges. |
 
 ---
 
@@ -291,7 +307,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit5c3_runtime_reconciliation_merged_unit5c4_active` | [Unit 5C-3 evidence](./implementation/phase-9-image-inventory/trackers/15-unit5c3-runtime-reconciliation-evidence.md) · [Unit 5C Lite](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md) | Unit 5C-3 is merged at `f09301b`; M18-M21 are immutable/live-verified; Unit 5C-4 alias materialization/search is next. |
+| Phase 9: Image-to-LLM Inventory | `unit5c4_active_variant_search_merged_unit5c5_6_active` | [Unit 5C-4 evidence](./implementation/phase-9-image-inventory/trackers/16-unit5c4-active-variant-search-evidence.md) · [Unit 5C Lite](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md) | Unit 5C-4 is merged at `d092f08`; M18-M23 are immutable/live-verified; combined Unit 5C-5/5C-6 backend is next. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -408,9 +424,9 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Implement Unit 5C-4 active store-scoped alias materialization and search consumption in a new session from merged `main` `f09301b76fb14714f942a98f0ceffa5d5a0c3178`; use targeted context only, preserve M18-M21, work red-first, perform deep self-review, and obtain independent exact-tree review before commit.
+1. After the Unit 5C-4 documentation closeout merges, implement Unit 5C-5 exceptional Owner variant-decision backend authority and Unit 5C-6 benchmark/per-language rollout-control infrastructure together in one backend session and branch. Expose UI-ready contracts without visual UI; do not require live benchmark execution or production-language approval without qualifying evidence; keep rollout fail closed; independently approve the exact staged tree before applying new migrations.
 2. Historical handoff (vision portion superseded 2026-07-27): Gemini remains configuration/deployment/live-call deferred. Google Books is implemented behind provider-neutral contracts but remains fixture/mock verified only; credentials, provider-registry enablement, deployment, and live smoke remain deferred.
    The current initial primary vision model ID is configuration-driven
    `gemini-3.5-flash-lite`; provider configuration/calls remain deferred.
-3. Keep M09, customer display, Owner variant-review UI/actions, benchmarks, rollout/production enablement, scheduling/autoscaling, inventory commit, publication, commerce, Google Books Roman-query fallback, global alias authority, Library, and Phases 7/8 separately gated.
+3. Keep M09, customer display, Owner/customer/platform-admin visual UI, production-language approval without qualifying evidence, scheduling/autoscaling, inventory commit, publication, commerce, Google Books Roman-query fallback, global alias authority, Library, and Phases 7/8 separately gated.
 4. Re-verify the exact project, migrations, schema, Storage, services, and advisors before any later mutation.

@@ -1,12 +1,12 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit5c3_runtime_reconciliation_merged_unit5c4_active`
+**Status:** `unit5c4_active_variant_search_merged_unit5c5_6_active`
 **Last updated:** 2026-07-29
-**Implementation status:** M01-M08/M10-M21 are live-verified; Unit 5C-3 runtime
-generation, reconciliation, activation policy, and lifecycle are merged at
-`f09301b`; Unit 5C-4 active store-scoped alias materialization/search is active
-**Supabase mutation status:** M01-M08/M10-M21 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; M20 is `20260729054842`, M21 is `20260729060238`, and rollback-only smoke left zero residue
-**Database checkpoint:** M01-M08 and forward migrations M10-M21 are live-verified.
+**Implementation status:** M01-M08/M10-M23 are live-verified; Unit 5C-4 active
+store-scoped alias materialization/search is merged at `d092f08`; combined
+Unit 5C-5/5C-6 backend implementation is active after this closeout merges
+**Supabase mutation status:** M01-M08/M10-M23 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; M22 is `20260729075459`, M23 is `20260729082153`, and rollback-only smoke left zero residue
+**Database checkpoint:** M01-M08 and forward migrations M10-M23 are live-verified.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 
@@ -56,8 +56,9 @@ After the repository entrypoint, read in this order:
 | [Work Unit 0 plan](./work-units/00-contracts-threat-migration-plan.md) | Versioned contract shapes, fixtures, threat tests, migration sequence, correction strategy, and stop gates. |
 | [Work Unit 0B technical design](./work-units/00b-backend-api-technical-design-plan.md) | Router for seven completed backend/API design artifacts covering commands, queries, DTOs, authorization, state, jobs, media, marketplace, request photos, red tests, exact later file allowlists, and independent gates. |
 | [Unit 4 fixture vision-analysis runtime](./work-units/04-fixture-vision-analysis-runtime-design.md) | Locally complete `p9-vision-v2`, fixture analyzer, product policy, dedicated worker, token/attempt state machine, forward M12 persistence/RPCs, privacy, and red-first evidence. |
-| [Unit 5C Lite multilingual variants](./work-units/05c-lite-multilingual-search-variants-sdd.md) | Approved target design; Units 5C-1/2/3 implement the sidecar contract, private persistence/replay fence, optional same-call generation, reconciliation, activation policy, and lifecycle. Unit 5C-4 alias materialization/search remains next; UI/display/rollout remain deferred. |
+| [Unit 5C Lite multilingual variants](./work-units/05c-lite-multilingual-search-variants-sdd.md) | Approved target design; Units 5C-1/2/3/4 implement the sidecar contract, private persistence/replay fence, optional same-call generation, reconciliation/lifecycle, and active store-scoped alias materialization/search. Combined Unit 5C-5/5C-6 backend remains next; visual UI/display remains deferred. |
 | [Unit 5C-3 runtime and reconciliation evidence](./trackers/15-unit5c3-runtime-reconciliation-evidence.md) | Merged implementation, immutable M18-M21 history, deep-review corrections, live verification, exclusions, and Unit 5C-4 handoff. |
+| [Unit 5C-4 active variant search evidence](./trackers/16-unit5c4-active-variant-search-evidence.md) | Merged implementation, immutable M22/M23 history, active-only store-scoped search, security/verification evidence, exclusions, and combined Unit 5C-5/5C-6 handoff. |
 | [Unit 4A deployment-runtime scaffolding](./work-units/04a-deployment-runtime-scaffolding-sdd.md) | Provider-neutral sanitation/fixture-vision service hosts, strict environment loading, dynamic fixtures, safe observability, manual invocation, deterministic builds/containers, and deployment validation. |
 | [Fixture-pipeline deployment evidence](./trackers/06-fixture-pipeline-deployment-evidence.md) | M13 invoker boundary, Owner/Render identities, exact SHA/deployments, nine live fixtures, fencing/security/log/privacy and zero-commerce evidence. |
 
@@ -108,7 +109,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, WU0A/WU0B, corrected Package 1 design, and Units through 5C-3 are integrated at their recorded checkpoints. M01-M08/M10-M21, Owner ingestion, and both separate fixture workers are live-verified. Unit 5C-4 is the next bounded task and must start in a new session from `f09301b` with targeted context, immutable M18-M21, red-first tests, deep self-review, and independent exact-tree review. M09, customer display, Owner actions, benchmarks, rollout/production enablement, inventory/publication, commerce, Google Books Roman-query fallback, global alias authority, and later units remain separately gated. Preserve these controls:
+The planning baseline, WU0A/WU0B, corrected Package 1 design, and Units through 5C-4 are integrated at their recorded checkpoints. M01-M08/M10-M23, Owner ingestion, and both separate fixture workers are live-verified. After this documentation closeout merges, the next bounded task combines Unit 5C-5 Owner variant-decision backend authority and Unit 5C-6 benchmark/per-language rollout-control infrastructure in one backend session and branch. It exposes UI-ready contracts without visual UI, assumes no qualifying benchmark evidence, keeps rollout fail closed, and requires exact-tree independent approval before applying new migrations. M09, customer display, inventory/publication, commerce, Google Books Roman-query fallback, global alias authority, and later units remain separately gated. Preserve these controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

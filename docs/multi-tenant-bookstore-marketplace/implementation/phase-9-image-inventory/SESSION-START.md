@@ -8,26 +8,26 @@ This is the deterministic resume procedure for Phase 9. A new session should rec
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-Current routed handoff: [Unit 5C-3](./trackers/15-unit5c3-runtime-reconciliation-evidence.md)
-is independently approved and merged to `main` at
-`f09301b76fb14714f942a98f0ceffa5d5a0c3178`; the reviewed exact tree was
-`eabe1040b4dbe89cf5163754fd719a11673a8682`. It adds optional same-call Gemini
-companion generation, fail-closed sidecar validation, M18/M19 persistence,
-Owner-confirmed title/individual-author reconciliation, narrow deterministic
-normalization, default-deny activation, and trusted proposed/active/stale
-lifecycle transitions. M20 is live as `20260729054842`; M21 is live as
-`20260729060238` and forward-corrects M20's temporary combined 5C-3/5C-4
-schema to final Unit 5C-3-only semantics.
+Current routed handoff: [Unit 5C-4](./trackers/16-unit5c4-active-variant-search-evidence.md)
+is independently approved and fast-forward merged to `main` at
+`d092f081d95b8c551bfcadcfd58fe8c98c77dfb2`; the reviewed exact tree was
+`db8ea75ed2904e8c381eec814f96804198d16b1e`. It materializes only active,
+store-scoped title and individual-author proposals against exact eligible
+targets and makes them searchable without changing public display identity.
+M22 is live as `20260729075459`; M23 is live as `20260729082153` and
+forward-corrects legacy approved-alias rank preservation plus stricter
+source-field/source-text reconciliation. Both migrations are immutable.
 
-The active work unit is Unit 5C-4 — active store-scoped alias materialization
-and search consumption. Start it in a new session from merged `main`
-`f09301b76fb14714f942a98f0ceffa5d5a0c3178`, gather only targeted context, do
-not reread the full Unit 5C/Phase 9 hierarchy, and do not modify M18-M21. Use
-red-first tests, a deep Unit 5C-4 self-review, and independent exact-tree
-review before commit. Customer display, Owner review/actions, benchmarks,
-rollout controls/production enablement, inventory/listing creation,
-publication, commerce, Google Books Roman-query fallback, and global alias
-authority remain absent and separately gated.
+The active implementation batch combines Unit 5C-5 exceptional Owner
+variant-decision backend authority and Unit 5C-6 benchmark/per-language
+rollout-control infrastructure. Start them together only after the Unit 5C-4
+documentation closeout is merged, in one backend session and branch from that
+merged baseline. The batch exposes UI-ready backend contracts but adds no
+Owner, customer, or platform-admin visual UI. It does not require live
+benchmark execution or production-language approval without qualifying
+evidence; rollout remains fail closed by default. Use red-first tests and
+obtain independent approval of the exact staged tree before applying any new
+migration.
 
 ## 1. Canonical status source
 

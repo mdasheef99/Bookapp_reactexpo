@@ -36,11 +36,21 @@ separately authorized.
 | SEC-01/04; OBS-06 | Missing/malformed/oversized/unsupported/provenance-mismatched companions have no product effect; lifecycle smoke is rollback-only, zero-residue, and no raw provider payload enters persistence/logging. |
 
 The exact implementation evidence is [tracker 15](../trackers/15-unit5c3-runtime-reconciliation-evidence.md).
-Customer display, Owner review/actions, benchmark/rollout controls,
-inventory/publication/commerce, Google Books Roman-query fallback, and global
-alias authority remain deferred.
+
+### Unit 5C-4 implementation mapping (2026-07-29)
+
+| Requirement | Unit 5C-4 evidence |
+| --- | --- |
+| MAS-AC17; DAT-13/14; MKT-05/16 | M22/M23 consume only current active proposals, validate exact store/source/eligible-target authority, materialize independent title/one-based-author aliases, retract stale/inactive effects, and validate current lifecycle fail closed at search time. |
+| MKT-05/16 | Roman title/author search deduplicates results while preserving original title/author, ISBN, canonical/legacy approved aliases, listing eligibility, and public projection/display identity. |
+| MED-21/23; SEC-01/04 | Store isolation, private-proposal non-exposure, RLS/ACL, fixed function search paths, trusted materialization authority, no unintended `MAINTAIN`, and no unrestricted application-side service-role DML were verified. |
+
+The exact implementation evidence is [tracker 16](../trackers/16-unit5c4-active-variant-search-evidence.md).
+Owner decision authority/UI, customer display changes, benchmark/rollout
+controls, inventory/publication/commerce, Google Books Roman-query fallback,
+and global alias authority remain deferred.
 | MED-21/23 | RLS, client denial, service SELECT-only/no-MAINTAIN table access, RPC-only mutation, and fixed-empty-search-path private/public functions are live-verified on PostgreSQL 17.6. |
-| REV-22; DAT-12/13 | Activation, rejection/stale commands, source-change propagation, and Owner review remain explicitly unimplemented. |
+| REV-22; DAT-12/13 | Owner approval/rejection/manual replacement and exceptional review remain explicitly unimplemented; trusted automatic activation and stale propagation are implemented through Unit 5C-3. |
 
 | Requirement | Owning SDD | Primary acceptance IDs |
 | --- | --- | --- |

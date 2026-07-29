@@ -1,6 +1,6 @@
 # Phase 9 Unit 5C Lite: Model-Assisted Multilingual Search Variants
 
-**Status:** approved target design; Unit 5C-1 merged; Unit 5C-2 persistence foundation live-verified; activation/search/UI slices not started
+**Status:** approved target design; Units 5C-1 through 5C-4 merged/live-verified; exceptional Owner decisions and benchmark/rollout backend next; visual UI not started
 **Decision date:** 2026-07-29
 **Scope:** Unit 5C specification only
 **Supersedes:** the previously governing selected-language and post-metadata English-alias method

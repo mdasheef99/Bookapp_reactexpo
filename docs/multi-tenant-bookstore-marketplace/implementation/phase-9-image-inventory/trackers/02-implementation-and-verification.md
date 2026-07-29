@@ -1,8 +1,8 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit5c3_runtime_reconciliation_merged_unit5c4_active`
+**Status:** `unit5c4_active_variant_search_merged_unit5c5_6_active`
 **Last updated:** 2026-07-29
 **Use:** only after the Phase 9 planning set is approved
-**Active work unit:** `unit5c4_active_alias_materialization_and_search`. Unit 5C-3 is independently approved/merged at `f09301b`; M21 leaves final live Unit 5C-3-only semantics. Customer display, Owner UI/actions, benchmarks, rollout/production enablement, inventory/listing creation, publication, commerce, provider fallback, and global alias authority remain unauthorized. WU0B history preserves `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review.
+**Active work unit:** `unit5c5_6_owner_decisions_benchmark_rollout_backend`. Unit 5C-4 is independently approved at tree `db8ea75`, merged at `d092f08`, and live through immutable M22/M23. The next batch combines Unit 5C-5 Owner variant-decision backend authority with Unit 5C-6 benchmark/per-language rollout controls in one session and branch after this closeout merges. It exposes UI-ready contracts but adds no visual UI, assumes no qualifying benchmark evidence, keeps rollout fail closed, and requires exact-tree independent approval before new migration application. WU0B history preserves `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review.
 ## Work units
 | Unit | Scope | Status | Required gate |
 | --- | --- | --- | --- |
@@ -16,7 +16,7 @@
 | 4A | [Deployment-runtime scaffolding](../work-units/04a-deployment-runtime-scaffolding-sdd.md): executable sanitation/fixture-vision hosts, strict environment, builds/containers, invocation and validation | [`deployed_and_live_fixture_verified`](./06-fixture-pipeline-deployment-evidence.md) | separate free Render services live at `96991a9`; M13 invoker boundary live |
 | 4B | [Gemini vision adapter](../work-units/04b-gemini-vision-adapter-handoff.md) for configured `gemini-3.5-flash-lite`; optional whole-image fallback remains unselected/disabled | `m14_live_verified_provider_deferred` | M14 live once; no live call, credential configuration, Gemini deployment, Storage mutation, or fallback selection |
 | 5A | [Metadata foundation](../work-units/05a-metadata-foundation-handoff.md): provider-neutral local-first routing/cache/coalescing, ISBN validation, coherent selection, and attempt/cost lineage | `m17_live_acl_verified` | M17 live once; four sensitive tables are service SELECT-only with RPC-only mutation |
-| 5B/5C | Google Books primary adapter / [Unit 5C Lite multilingual variants](../work-units/05c-lite-multilingual-search-variants-sdd.md) | [`5B merged_fixture_verified_provider_deferred`](./11-unit5b-implementation-evidence.md) / [`5C-3 merged_main_f09301b`](./15-unit5c3-runtime-reconciliation-evidence.md) | 5C-1/2/3 merged; M18-M21 live once; 5C-4 alias materialization/search is active; UI/display/rollout remain deferred |
+| 5B/5C | Google Books primary adapter / [Unit 5C Lite multilingual variants](../work-units/05c-lite-multilingual-search-variants-sdd.md) | [`5B merged_fixture_verified_provider_deferred`](./11-unit5b-implementation-evidence.md) / [`5C-4 merged_main_d092f08`](./16-unit5c4-active-variant-search-evidence.md) | 5C-1/2/3/4 merged; M18-M23 live once; combined 5C-5/5C-6 backend is next; visual UI/display remains deferred |
 | 6 | Owner session/defaults/capture/review UI with accessibility and recovery | `not_started` | Units 2–5 verified |
 | 7 | Controlled per-candidate commit, advisory duplicates, idempotency, projection changes | `not_started` | quantity/hold concurrency tests |
 | 8 | Marketplace bookstore-first search, multilingual aliases, counts, full store catalogue | `not_started` | public/private projection tests |
@@ -47,6 +47,8 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260729000019_marketplace_phase9_search_variant_replay_fence.sql` | `20260729020008 marketplace_phase9_search_variant_replay_fence` | MCP exact project 2026-07-29 | one authorized bounded Unit 5C-2 correction | forward-only immutable accepted-envelope fingerprint; M18 unchanged; renamed M18 helper private to replacement definer | red reproduced changed-replay append; green structural 12/12 and PGlite 9/9; PG17.6 RLS/ACL/search-path/no-MAINTAIN readback; rollback-only exact/changed replay smoke; zero residue | [`merged_main_b398034`](./14-unit5c2-variant-persistence-evidence.md) |
 | `20260729000020_marketplace_phase9_variant_runtime_search.sql` | `20260729054842 marketplace_phase9_variant_runtime_search` | MCP exact project 2026-07-29 | authorized Unit 5C-3 migration application before scope narrowing | immutable applied migration; temporarily combined Unit 5C-3 reconciliation/lifecycle with Unit 5C-4 materialization/search; corrected forward by M21, never edited/reverted/deleted | database integration and lifecycle verification completed; final live interpretation requires M21 | [`merged_main_f09301b`](./15-unit5c3-runtime-reconciliation-evidence.md) |
 | `20260729000021_marketplace_phase9_defer_active_variant_search.sql` | `20260729060238 marketplace_phase9_defer_active_variant_search` | MCP exact project 2026-07-29 | authorized Unit 5C-3 scope correction | forward-only removal of public search RPC, alias materializer, target linkage, and trigger/search effects; preserves M18-M20 history | final affected Jest 7 suites/101; DB 12/12; TypeScript with allow-importing-TS-extensions; rollback-only lifecycle smoke, zero residue, live proposal/proposal-set/alias counts zero | [`merged_main_f09301b`](./15-unit5c3-runtime-reconciliation-evidence.md) |
+| `20260729000022_marketplace_phase9_active_variant_search.sql` | `20260729075459 marketplace_phase9_active_variant_search` | MCP exact project 2026-07-29 | authorized Unit 5C-4 application after exact-tree approval | immutable active-only store-scoped title/author alias materialization, target linkage, retraction, and fail-closed search foundation; corrected forward by M23 | PGlite 35/35, Jest 53/53, scoped TypeScript/continuity/secret/pyc checks, rollback-only smoke, zero residue | [`merged_main_d092f08`](./16-unit5c4-active-variant-search-evidence.md) |
+| `20260729000023_marketplace_phase9_active_variant_search_correction.sql` | `20260729082153 marketplace_phase9_active_variant_search_correction` | MCP exact project 2026-07-29 | authorized bounded Unit 5C-4 forward correction | preserves M22; restores legacy approved-alias rank and strengthens source-field/source-text reconciliation at protected materialization | live schema/RLS/ACL/search-path/no-MAINTAIN readback; same final affected verification and zero-residue smoke | [`merged_main_d092f08`](./16-unit5c4-active-variant-search-evidence.md) |
 Rules:
 - Re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
 - Use forward corrections; record every schema, grant, Storage, data, and verification effect.
@@ -286,7 +288,6 @@ Rules:
 - Supabase/external mutations: none; Stage 2 remains blocked until focused reviewer approval
 - Decisions/deviations/risks: exact live RPC/schema compatibility remains `DB_AUDIT_REQUIRED_BEFORE_DATABASE_DESIGN`; no SDD change was required because the governing sources were consistent
 - Next authorized action and gate: focused independent review of the four corrected findings only; do not start Supabase audit unless verdict is `approved`
-
 ### 2026-07-20 — Work Unit 0B focused-review state-vocabulary corrections
 
 - Date/session: 2026-07-20 bounded response to focused verdict `approved_with_required_corrections`
@@ -297,7 +298,6 @@ Rules:
 - Supabase/external mutations: none; Stage 2 remains blocked until the new context-isolated reviewer returns exactly `approved`
 - Decisions/deviations/risks: no SDD change was required; the owning SDDs already fixed the correct values
 - Next authorized action and gate: new context-isolated review of the corrected WU0B design; do not start Supabase audit unless verdict is exactly `approved`
-
 ### 2026-07-22 — Work Unit 0B actor-dispatch and semantic-validator corrections
 
 - Date/session: 2026-07-22 bounded response to isolated verdict `approved_with_required_corrections`
@@ -308,7 +308,6 @@ Rules:
 - Supabase/external mutations: none; Stage 2 remains blocked until the final context-isolated reviewer returns exactly `approved`
 - Decisions/deviations/risks: shared AE dispatch preserves one operation identity while making caller authorization explicit; no SDD or WU0A behavior changed
 - Next authorized action and gate: final context-isolated review of the complete corrected WU0B diff; do not commit, push or start Supabase unless verdict is exactly `approved`
-
 ### 2026-07-22 — Work Unit 0B exact C12 ownership and semantic-closure corrections
 
 - Date/session: 2026-07-22 bounded response to the next isolated verdict `approved_with_required_corrections`
@@ -319,7 +318,6 @@ Rules:
 - Supabase/external mutations: none; Stage 2 remains blocked until another context-isolated reviewer returns exactly `approved`
 - Decisions/deviations/risks: dedicated C12 endpoint removes implementation ownership ambiguity without splitting the approved operation ID; valid request-photo `expired` remains distinct from released hold status
 - Next authorized action and gate: another context-isolated review of the complete corrected WU0B diff; do not commit, push or start Supabase unless verdict is exactly `approved`
-
 ### 2026-07-22 — Work Unit 0B final independent approval
 - Date/session: 2026-07-22 final context-isolated review and documentation-only approval closeout
 - Authorized work unit and scope: record the existing exact verdict `approved`, update the required 13-file handoff set, validate once, commit and push
@@ -348,3 +346,5 @@ Rules:
 - M18 is live once as `20260729004216`; M19 is live once as `20260729020008` and fences changed accepted envelopes. Schema/ACL/RPC plus proposed-only/exact-replay/changed-replay/mismatch/store-scope/rollback-cleanup smoke passed. Final corrected focused Jest passed 15/15, six-suite PGlite passed 74/74, scoped TypeScript passed, and continuity passed 195 definitions/zero duplicates/zero missing; full TypeScript timed out. The exact tree was independently approved, committed/pushed as `b3980349d9d446fbf1820ef869f6664953d9a599`, and fast-forward merged to `main`; M18/M19 are the only Unit 5C-2 database mutations and aliases/product data remain unchanged. Full evidence and the Batch 1 authorization gate are in [tracker 14](./14-unit5c2-variant-persistence-evidence.md).
 ### 2026-07-29 — Unit 5C-3 runtime generation, reconciliation, and lifecycle
 - Optional same-call Gemini companion generation, independent fail-closed validation, M18/M19 persistence, confirmed-title/individual-author reconciliation, narrow normalization, material-change classification, default-deny activation, and trusted proposed/active/stale transitions are merged at `f09301b76fb14714f942a98f0ceffa5d5a0c3178`. Deep self-review corrected exact-confirmation removal, JavaScript/SQL symbol normalization, zero-based author indexing, and oversized/rejected fallback coverage. M20 (`20260729054842`) remains immutable applied history; M21 (`20260729060238`) forward-removed its temporary Unit 5C-4 search/materialization effects. Final affected Jest passed 7 suites/101 tests, database integration 12/12, TypeScript with `--allowImportingTsExtensions`, diff/secret/pyc checks, and rollback-only lifecycle smoke with zero residue; live proposal/proposal-set/alias counts were zero. Exact tree `eabe1040b4dbe89cf5163754fd719a11673a8682` received independent verdict `APPROVED`. Full evidence and Unit 5C-4 routing are in [tracker 15](./15-unit5c3-runtime-reconciliation-evidence.md).
+### 2026-07-29 — Unit 5C-4 active variant search closeout
+- Documentation-only closeout: recorded commit `d092f08`, approved tree `db8ea75`, immutable live M22/M23, implementation verification/security evidence, exclusions, zero external mutation, and the combined Unit 5C-5/5C-6 backend handoff. Full evidence is in [tracker 16](./16-unit5c4-active-variant-search-evidence.md); after this closeout merges, proceed red-first and independently approve the exact staged tree before applying new migrations.
