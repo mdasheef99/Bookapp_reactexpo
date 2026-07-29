@@ -15,6 +15,7 @@ const INPUT = '74000000-0000-0000-0000-000000000051';
 const MEDIA = '75000000-0000-0000-0000-000000000051';
 const JOB = '76000000-0000-0000-0000-000000000051';
 const CORRELATION = '77000000-0000-4000-8000-000000000051';
+const INVENTORY = '78000000-0000-0000-0000-000000000051';
 const WORKER = 'vision-worker-0000000051';
 const TITLE = 'ಗೋದಾನ';
 const AUTHOR = 'ಲೇಖಕ';
@@ -132,7 +133,9 @@ async function seed() {
 
 async function resetFixture() {
   await resetActor(db);
-  await db.exec(`TRUNCATE public.phase9_search_variant_proposal_sets,
+  await db.exec(`TRUNCATE public.phase9_search_variant_alias_links,
+    public.book_search_aliases,public.marketplace_book_listings,
+    public.store_inventory,public.phase9_search_variant_proposal_sets,
     public.phase9_search_variant_proposals,
     public.image_analysis_observations,public.image_analysis_results,
     public.image_extraction_candidates,public.image_extraction_jobs,
@@ -155,6 +158,51 @@ const persistSql = (claimed, envelope = variants(), vision = result) =>
   `SELECT public.phase9_persist_vision_analysis_with_variants(
     '${JOB}','${WORKER}','${claimed.lease_token}',${claimed.attempt_count},
     '${json(vision)}'::jsonb,'${json(envelope)}'::jsonb)`;
+
+async function activatePrimaryVariants() {
+  const claimed = await claim();
+  await scalar(db, persistSql(claimed));
+  await resetActor(db);
+  const candidateId = await scalar(db,
+    'SELECT id::text FROM public.image_extraction_candidates LIMIT 1');
+  await db.exec(`UPDATE public.image_extraction_candidates
+    SET owner_review_snapshot='${json({
+      confirmed_title: {
+        confirmed: true, text: TITLE, language: 'kn', script: 'Knda',
+      },
+      confirmed_authors: [
+        { index: 1, confirmed: true, text: AUTHOR, language: 'kn', script: 'Knda' },
+        { index: 2, confirmed: true, text: AUTHOR, language: 'kn', script: 'Knda' },
+      ],
+    })}'::jsonb WHERE id='${candidateId}'`);
+  const primaryIds = (await db.query(`SELECT id::text
+    FROM public.phase9_search_variant_proposals
+    WHERE candidate_id='${candidateId}'
+      AND variant_type='primary_roman' ORDER BY source_field`))
+    .rows.map((row) => row.id);
+  await setActor(db, OWNER, 'service_role');
+  const reconciled = await scalar(db, `SELECT public.phase9_reconcile_search_variants(
+    '${STORE_A}','${candidateId}',
+    ARRAY[${primaryIds.map((id) => `'${id}'::uuid`).join(',')}],
+    'test_allow_v1')`);
+  assert.equal(reconciled.activated_count, 3);
+  return { candidateId, primaryIds };
+}
+
+async function attachInventory(candidateId) {
+  await resetActor(db);
+  await db.exec(`INSERT INTO public.store_inventory(
+    id,store_id,title,authors,isbn_13,condition,quantity_total,
+    quantity_available,selling_price_minor,visibility_status
+  ) VALUES(
+    '${INVENTORY}','${STORE_A}','${TITLE}',ARRAY['${AUTHOR}'],
+    '9780006543541','good',1,1,35000,'published'
+  );
+  UPDATE public.image_extraction_candidates
+  SET committed_inventory_id='${INVENTORY}' WHERE id='${candidateId}';
+  UPDATE public.marketplace_book_listings
+  SET authors_text='${AUTHOR}' WHERE inventory_id='${INVENTORY}';`);
+}
 
 before(async () => {
   db = await createPhase9Database();
@@ -485,4 +533,166 @@ test('wrong-store reconciliation and stale automatic reactivation are denied', a
   assert.equal(replay.activated_count, 0);
   assert.equal(await scalar(db, `SELECT status
     FROM public.phase9_search_variant_proposals WHERE id='${primaryId}'`), 'stale');
+});
+
+test('materializes active title and individual-author variants onto one existing listing', async () => {
+  const { candidateId, primaryIds } = await activatePrimaryVariants();
+  assert.equal(await scalar(db,
+    'SELECT count(*)::int FROM public.store_inventory'), 0);
+  assert.equal(await scalar(db,
+    'SELECT count(*)::int FROM public.book_search_aliases'), 0);
+  await attachInventory(candidateId);
+  assert.equal(await scalar(db,
+    'SELECT count(*)::int FROM public.store_inventory'), 1);
+  assert.equal(await scalar(db,
+    'SELECT count(*)::int FROM public.marketplace_book_listings'), 1);
+  assert.equal(await scalar(db,
+    'SELECT count(*)::int FROM public.book_search_aliases'), 2);
+  assert.equal(await scalar(db,
+    'SELECT count(*)::int FROM public.phase9_search_variant_alias_links'), 3);
+  assert.equal(await scalar(db, `SELECT count(DISTINCT source_field)::int
+    FROM public.phase9_search_variant_alias_links`), 3);
+
+  for (const proposalId of primaryIds) {
+    const replay = await scalar(db, `SELECT public.phase9_materialize_search_variant(
+      '${STORE_A}','${proposalId}')`);
+    assert.equal(replay.materialized, true);
+  }
+  assert.equal(await scalar(db,
+    'SELECT count(*)::int FROM public.book_search_aliases'), 2);
+  assert.equal(await scalar(db,
+    'SELECT count(*)::int FROM public.phase9_search_variant_alias_links'), 3);
+  await assert.rejects(db.query(`SELECT public.phase9_materialize_search_variant(
+    '${STORE_B}','${primaryIds[0]}')`), /P9_CROSS_TENANT_DENIED/);
+});
+
+test('materializer rejects changed title text and wrong individual-author source index', async () => {
+  const { candidateId } = await activatePrimaryVariants();
+  await attachInventory(candidateId);
+  await resetActor(db);
+  const titleId = await scalar(db, `SELECT id::text
+    FROM public.phase9_search_variant_proposals
+    WHERE candidate_id='${candidateId}' AND target_type='title'
+      AND variant_type='primary_roman'`);
+  const authorId = await scalar(db, `SELECT id::text
+    FROM public.phase9_search_variant_proposals
+    WHERE candidate_id='${candidateId}' AND target_type='author'
+      AND author_index=1 AND variant_type='primary_roman'`);
+  await db.exec(`UPDATE public.phase9_search_variant_proposals
+    SET source_text='wrong title source' WHERE id='${titleId}'`);
+  await assert.rejects(db.query(`SELECT
+    marketplace_sec.phase9_materialize_search_variant('${titleId}')`),
+  /P9_VARIANT_SOURCE_MISMATCH/);
+  await db.exec(`UPDATE public.phase9_search_variant_proposals
+    SET source_field='observation:1:author:20',author_index=20
+    WHERE id='${authorId}'`);
+  await assert.rejects(db.query(`SELECT
+    marketplace_sec.phase9_materialize_search_variant('${authorId}')`),
+  /P9_VARIANT_SOURCE_MISMATCH/);
+});
+
+test('active aliases search once while original title and ISBN behavior remain available', async () => {
+  const { candidateId } = await activatePrimaryVariants();
+  await attachInventory(candidateId);
+  await resetActor(db);
+  await setActor(db, OWNER, 'authenticated');
+  assert.equal((await db.query(
+    "SELECT * FROM public.phase9_search_marketplace_listings('Godaan',0,19)",
+  )).rows.length, 1);
+  assert.equal((await db.query(
+    "SELECT * FROM public.phase9_search_marketplace_listings('Lekhak',0,19)",
+  )).rows.length, 1);
+  assert.equal((await db.query(
+    `SELECT * FROM public.phase9_search_marketplace_listings('${TITLE}',0,19)`,
+  )).rows.length, 1);
+  assert.equal((await db.query(
+    "SELECT * FROM public.phase9_search_marketplace_listings('!!!',0,19)",
+  )).rows.length, 0);
+  assert.equal((await db.query(`SELECT *
+    FROM public.phase9_marketplace_store_search('9780006543541',20,NULL)`))
+    .rows.length, 1);
+});
+
+test('legacy partial aliases remain eligible without receiving exact-alias rank', async () => {
+  const { candidateId } = await activatePrimaryVariants();
+  await attachInventory(candidateId);
+  await resetActor(db);
+  await db.exec(`INSERT INTO public.book_search_aliases(
+    store_id,inventory_id,alias_text,alias_normalized,alias_language,
+    alias_script,alias_type,source_type,source_ref,approval_status,
+    approved_by,approved_at
+  ) VALUES(
+    '${STORE_A}','${INVENTORY}','Legacy Exact Alias','legacy exact alias',
+    'en','Latn','common_spelling','owner_verified','rank-regression',
+    'approved','${OWNER}',transaction_timestamp()
+  )`);
+  assert.equal(await scalar(db, `SELECT rank
+    FROM marketplace_sec.phase9_internal_book_match('legacy exact alias')
+    WHERE listing_id IN (
+      SELECT id FROM public.marketplace_book_listings
+      WHERE inventory_id='${INVENTORY}'
+    )`), 3);
+  assert.equal(await scalar(db, `SELECT rank
+    FROM marketplace_sec.phase9_internal_book_match('exact')
+    WHERE listing_id IN (
+      SELECT id FROM public.marketplace_book_listings
+      WHERE inventory_id='${INVENTORY}'
+    )`), 4);
+});
+
+test('stale author links retract independently and delayed cleanup still fails closed', async () => {
+  const { candidateId } = await activatePrimaryVariants();
+  await attachInventory(candidateId);
+  await resetActor(db);
+  await db.exec(`UPDATE public.image_extraction_candidates
+    SET owner_review_snapshot='${json({
+      confirmed_title: {
+        confirmed: true, text: TITLE, language: 'kn', script: 'Knda',
+      },
+      confirmed_authors: [
+        { index: 2, confirmed: true, text: AUTHOR, language: 'kn', script: 'Knda' },
+      ],
+    })}'::jsonb WHERE id='${candidateId}'`);
+  assert.equal(await scalar(db, `SELECT count(*)::int
+    FROM public.phase9_search_variant_alias_links
+    WHERE target_type='author' AND retracted_at IS NULL`), 1);
+  assert.equal(await scalar(db, `SELECT count(*)::int
+    FROM marketplace_sec.phase9_active_variant_listing_ids('Lekhak')`), 1);
+
+  await db.exec(`UPDATE public.image_extraction_candidates
+    SET owner_review_snapshot='${json({
+      confirmed_title: {
+        confirmed: true, text: TITLE, language: 'kn', script: 'Knda',
+      },
+      confirmed_authors: [],
+    })}'::jsonb WHERE id='${candidateId}'`);
+  assert.equal(await scalar(db, `SELECT count(*)::int
+    FROM marketplace_sec.phase9_active_variant_listing_ids('Lekhak')`), 0);
+
+  await db.exec(`UPDATE public.phase9_search_variant_alias_links
+    SET retracted_at=NULL WHERE target_type='author';
+    UPDATE public.book_search_aliases SET approval_status='approved',
+      approved_at=transaction_timestamp(),rejection_reason=NULL
+    WHERE alias_normalized='lekhak';`);
+  assert.equal(await scalar(db, `SELECT count(*)::int
+    FROM marketplace_sec.phase9_active_variant_listing_ids('Lekhak')`), 0);
+  assert.equal(await scalar(db, `SELECT count(*)::int
+    FROM marketplace_sec.phase9_active_variant_listing_ids('Godaan')`), 1);
+});
+
+test('inactive listings and direct client alias-link mutation remain excluded', async () => {
+  const { candidateId } = await activatePrimaryVariants();
+  await attachInventory(candidateId);
+  await resetActor(db);
+  await db.exec(`UPDATE public.marketplace_book_listings
+    SET status='paused' WHERE inventory_id='${INVENTORY}'`);
+  assert.equal(await scalar(db, `SELECT count(*)::int
+    FROM marketplace_sec.phase9_active_variant_listing_ids('Godaan')`), 0);
+  await setActor(db, OWNER, 'authenticated');
+  await assert.rejects(db.query(
+    'SELECT count(*) FROM public.phase9_search_variant_alias_links',
+  ), /permission denied/i);
+  await assert.rejects(db.query(
+    "UPDATE public.book_search_aliases SET approval_status='approved'",
+  ), /permission denied/i);
 });

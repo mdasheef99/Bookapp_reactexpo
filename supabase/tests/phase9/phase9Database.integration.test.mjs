@@ -51,6 +51,10 @@ test('clean Phase 6 migration creates all relations and deferred foreign keys', 
     '20260728000017_marketplace_phase9_maintain_acl_correction.sql',
     '20260729000018_marketplace_phase9_search_variant_proposals.sql',
     '20260729000019_marketplace_phase9_search_variant_replay_fence.sql',
+    '20260729000020_marketplace_phase9_variant_runtime_search.sql',
+    '20260729000021_marketplace_phase9_defer_active_variant_search.sql',
+    '20260729000022_marketplace_phase9_active_variant_search.sql',
+    '20260729000023_marketplace_phase9_active_variant_search_correction.sql',
   ]);
   const count = await scalar(db, `SELECT count(*)::int FROM information_schema.tables
     WHERE table_schema='public' AND table_name IN ('phase9_provider_registry','book_search_aliases',
@@ -274,6 +278,7 @@ test('public discovery allowlist is exact and the projection remains an internal
     'public.phase9_marketplace_store_search(text,integer,jsonb)',
     'public.phase9_storefront_catalogue(uuid,integer,jsonb)',
     'public.phase9_listing_detail(uuid)',
+    'public.phase9_search_marketplace_listings(text,integer,integer)',
   ];
   for (const signature of publicSignatures)
     assert.equal(await scalar(db, `SELECT has_function_privilege('anon','${signature}','EXECUTE')`), true);
@@ -283,7 +288,8 @@ test('public discovery allowlist is exact and the projection remains an internal
       AND has_function_privilege('anon',p.oid,'EXECUTE')
       AND p.oid::regprocedure::text NOT IN
         ('phase9_marketplace_store_search(text,integer,jsonb)',
-         'phase9_storefront_catalogue(uuid,integer,jsonb)','phase9_listing_detail(uuid)')`), 0);
+         'phase9_storefront_catalogue(uuid,integer,jsonb)','phase9_listing_detail(uuid)',
+         'phase9_search_marketplace_listings(text,integer,integer)')`), 0);
   assert.equal(await scalar(db, `SELECT count(*)::int FROM pg_proc p
     JOIN pg_namespace n ON n.oid=p.pronamespace
     WHERE n.nspname='public' AND p.proname LIKE 'phase9_%request%photo%'

@@ -62,6 +62,23 @@ export const consumerDiscoveryService = {
     ): Promise<GroupedBookResult[]> {
         const term = cleanText(query);
         const { from, to } = normalizePage(options);
+        const isIsbn = term ? looksLikeIsbn(term) : false;
+
+        if (term && !isIsbn) {
+            const { data, error } = await supabase.rpc(
+                'phase9_search_marketplace_listings',
+                { p_query: term, p_from: from, p_to: to },
+            );
+            if (error) throw error;
+            if (data !== null) {
+                const grouped = groupOffers(await mapRowsWithStoreNames(data));
+                if (grouped.length === 0) {
+                    await recordUnavailableSearch(term).catch(() => undefined);
+                }
+                return grouped;
+            }
+        }
+
         let builder = supabase
             .from('marketplace_book_listings')
             .select(LISTING_SELECT)
@@ -71,7 +88,7 @@ export const consumerDiscoveryService = {
             .range(from, to);
 
         if (term) {
-            if (looksLikeIsbn(term)) {
+            if (isIsbn) {
                 const isbn = normalizeIsbn(term)!;
                 builder = isbn.length === 10
                     ? builder.eq('isbn_10', isbn)

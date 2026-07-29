@@ -338,13 +338,15 @@ $migrationNames = @(
     '20260729000018_marketplace_phase9_search_variant_proposals.sql',
     '20260729000019_marketplace_phase9_search_variant_replay_fence.sql',
     '20260729000020_marketplace_phase9_variant_runtime_search.sql',
-    '20260729000021_marketplace_phase9_defer_active_variant_search.sql'
+    '20260729000021_marketplace_phase9_defer_active_variant_search.sql',
+    '20260729000022_marketplace_phase9_active_variant_search.sql',
+    '20260729000023_marketplace_phase9_active_variant_search_correction.sql'
 )
 foreach ($name in $migrationNames) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot "supabase/migrations/$name"))) { Write-Error "Missing approved Phase 9 migration: $name" }
 }
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
-if ($phase9Migrations.Count -ne 20 -or $phase9Migrations.Name -match '000009|quantity.*validat') { Write-Error 'Phase 9 migration set must contain M01-M08 plus forward M10-M21, and no M09.' }
+if ($phase9Migrations.Count -ne 22 -or $phase9Migrations.Name -match '000009|quantity.*validat') { Write-Error 'Phase 9 migration set must contain M01-M08 plus forward M10-M23, and no M09.' }
 foreach ($relative in @('supabase/tests/phase9/phase6_baseline.sql','supabase/tests/phase9/databaseHarness.mjs',
     'supabase/tests/phase9/phase9Database.integration.test.mjs','supabase/tests/phase9/phase9IngestionRuntime.integration.test.mjs','supabase/tests/phase9/phase9VisionRuntime.integration.test.mjs','supabase/migrations/__tests__/marketplacePhase9DatabaseFoundation.test.ts',
     'supabase/migrations/__tests__/marketplacePhase9PublicBoundarySecurityCorrection.test.ts','supabase/migrations/__tests__/marketplacePhase9VisionAnalysisRuntime.test.ts',
@@ -359,7 +361,9 @@ foreach ($relative in @('supabase/tests/phase9/phase6_baseline.sql','supabase/te
     'supabase/tests/phase9/phase9SearchVariantPersistence.integration.test.mjs',
     'supabase/migrations/__tests__/marketplacePhase9SearchVariantPersistence.test.ts',
     'supabase/migrations/__tests__/marketplacePhase9SearchVariantReplayFence.test.ts',
-    'supabase/migrations/__tests__/marketplacePhase9VariantRuntimeSearch.test.ts')) {
+    'supabase/migrations/__tests__/marketplacePhase9VariantRuntimeSearch.test.ts',
+    'supabase/migrations/__tests__/marketplacePhase9ActiveVariantSearch.test.ts',
+    'supabase/migrations/__tests__/marketplacePhase9ActiveVariantSearchCorrection.test.ts')) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot $relative))) { Write-Error "Missing Phase 9 migration test harness file: $relative" }
 }
 $packageJson = [IO.File]::ReadAllText((Join-Path $repoRoot 'package.json'))

@@ -144,6 +144,45 @@ describe('consumerDiscoveryService.searchMarketplaceBooks', () => {
         );
     });
 
+    it('consumes active-variant search rows without changing display fields', async () => {
+        const row = {
+            id: 'listing-1',
+            store_id: 'store-1',
+            canonical_edition_id: 'edition-1',
+            public_title: 'ಗೋದಾನ',
+            public_authors: ['ಲೇಖಕ'],
+            condition: 'good',
+            selling_price_minor: 35000,
+            availability_status: 'confirmation_required',
+            fulfillment_options: ['pickup'],
+            pickup_available: true,
+            delivery_available: false,
+        };
+        const profilesBuilder = createBuilder({
+            data: [{ store_id: 'store-1', display_name: 'Bookstore A' }],
+            error: null,
+        });
+        (supabase.from as jest.Mock).mockReturnValueOnce(profilesBuilder);
+        (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+            data: [row],
+            error: null,
+        });
+
+        const results = await consumerDiscoveryService.searchMarketplaceBooks(
+            'Godaan',
+            { page: 2, pageSize: 20 },
+        );
+
+        expect(supabase.rpc).toHaveBeenCalledWith(
+            'phase9_search_marketplace_listings',
+            { p_query: 'Godaan', p_from: 20, p_to: 39 },
+        );
+        expect(results).toHaveLength(1);
+        expect(results[0].offers).toHaveLength(1);
+        expect(results[0].offers[0].publicTitle).toBe('ಗೋದಾನ');
+        expect(results[0].offers[0]).not.toHaveProperty('romanTitle');
+    });
+
     it('groups same canonical edition across stores without collapsing offers', async () => {
         const listingsBuilder = createBuilder({
             data: [
@@ -335,10 +374,12 @@ describe('consumerDiscoveryService.searchMarketplaceBooks', () => {
     it('does not fail search when unavailable demand capture fails', async () => {
         const listingsBuilder = createBuilder({ data: [], error: null });
         (supabase.from as jest.Mock).mockReturnValueOnce(listingsBuilder);
-        (supabase.rpc as jest.Mock).mockResolvedValueOnce({
-            data: null,
-            error: new Error('capture failed'),
-        });
+        (supabase.rpc as jest.Mock)
+            .mockResolvedValueOnce({ data: null, error: null })
+            .mockResolvedValueOnce({
+                data: null,
+                error: new Error('capture failed'),
+            });
 
         await expect(consumerDiscoveryService.searchMarketplaceBooks('missing book')).resolves.toEqual([]);
     });
