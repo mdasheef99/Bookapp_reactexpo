@@ -8,19 +8,26 @@ This is the deterministic resume procedure for Phase 9. A new session should rec
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-Current routed handoff: Unit 5B is independently approved and merged to `main`
-at `47f23a89a4df9ae8ece85842eb3020c3f17636bc`. Google Books remains
-fixture/mock verified only. [Unit 5C-1](./trackers/13-unit5c1-variant-contract-evidence.md)
-implements the provider-neutral optional sidecar contract and fixture-gated
-validation seam and is independently approved/merged to `main` at
-`8aadf178aa2b14293a7c0168f3b41e90ebf61d52`.
-[Unit 5C-2](./trackers/14-unit5c2-variant-persistence-evidence.md) is the active
-candidate: its private proposal persistence/RPC foundation is live-verified
-through M19 `20260729020008`. Unit 5C-2 is independently approved and merged
-at `b398034`; Unit 5C Batch 1 requires separate explicit authorization.
-Provider generation, activation/reconciliation commands, search exposure,
-Owner UI, inventory/listing creation, publication, and commerce remain
-unstarted and separately gated.
+Current routed handoff: [Unit 5C-3](./trackers/15-unit5c3-runtime-reconciliation-evidence.md)
+is independently approved and merged to `main` at
+`f09301b76fb14714f942a98f0ceffa5d5a0c3178`; the reviewed exact tree was
+`eabe1040b4dbe89cf5163754fd719a11673a8682`. It adds optional same-call Gemini
+companion generation, fail-closed sidecar validation, M18/M19 persistence,
+Owner-confirmed title/individual-author reconciliation, narrow deterministic
+normalization, default-deny activation, and trusted proposed/active/stale
+lifecycle transitions. M20 is live as `20260729054842`; M21 is live as
+`20260729060238` and forward-corrects M20's temporary combined 5C-3/5C-4
+schema to final Unit 5C-3-only semantics.
+
+The active work unit is Unit 5C-4 — active store-scoped alias materialization
+and search consumption. Start it in a new session from merged `main`
+`f09301b76fb14714f942a98f0ceffa5d5a0c3178`, gather only targeted context, do
+not reread the full Unit 5C/Phase 9 hierarchy, and do not modify M18-M21. Use
+red-first tests, a deep Unit 5C-4 self-review, and independent exact-tree
+review before commit. Customer display, Owner review/actions, benchmarks,
+rollout controls/production enablement, inventory/listing creation,
+publication, commerce, Google Books Roman-query fallback, and global alias
+authority remain absent and separately gated.
 
 ## 1. Canonical status source
 

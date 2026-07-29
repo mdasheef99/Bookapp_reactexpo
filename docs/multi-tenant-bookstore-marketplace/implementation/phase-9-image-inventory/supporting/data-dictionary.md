@@ -1,6 +1,6 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** current/live and approved-target representations separated; Unit 5C-1 contract implemented without persistence
+**Status:** current/live and approved-target representations separated; Unit 5C-3 runtime/reconciliation live, Unit 5C-4 materialization/search deferred
 **Last updated:** 2026-07-29
 
 M01-M08/M10-M14 are live-verified. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. M14 adds dedicated service-only vision-provider attempts and is live once as `20260727183546`. Owner/media/fixture-vision services remain deployed. M09 quantity validation remains a separate live-data gate.
@@ -68,7 +68,7 @@ the former design. That generation/activation method is superseded as target
 authority by Unit 5C Lite, but the table itself remains unchanged in this
 documentation session.
 
-## Unit 5C Lite target and live Unit 5C-2 persistence foundation
+## Unit 5C Lite target and live Unit 5C-3 reconciliation foundation
 
 ### Confirmed original field
 
@@ -113,11 +113,30 @@ deterministic comparison key but no caller-supplied ID, lifecycle, approval,
 listing, or publication field.
 
 Unit 5C-2 maps that handoff into the separate private M18 relation above. M19
-fences the first accepted sidecar fingerprint without changing proposal
-lifecycle or search eligibility. The live M01 representation remains
-unchanged. Activation, stale propagation, and
-active-only alias/search projection require later forward implementation and
-must not rewrite applied migration history.
+fences the first accepted sidecar fingerprint. Unit 5C-3 keeps strict
+canonical `p9-vision-v2` isolated from the optional companion, reconciles
+confirmed title and each author independently, and controls proposal lifecycle
+with narrow normalization, material-change classification, and default-deny
+automatic activation.
+
+M20 added the Unit 5C-3 reconciliation/lifecycle functions but temporarily also
+included Unit 5C-4 alias materialization, target linkage, public search RPC,
+and related trigger/search effects. Applied M20 is immutable. Forward M21
+removed those 5C-4 effects, leaving the live M01 `book_search_aliases`
+representation unchanged with zero rows at verification time. Final active
+alias materialization and search consumption require Unit 5C-4 and must not
+rewrite M18-M21.
+### Unit 5C-3 reconciliation/lifecycle fields
+| Concept | Live rule after M21 |
+| --- | --- |
+| confirmation input | Owner-confirmed title plus independently positioned individual authors |
+| reconciliation scope | exact store, observation, source field, and author index |
+| normalization | narrow deterministic key shared by JavaScript and SQL; symbols are handled consistently |
+| materiality | proposals are classified independently per source field |
+| activation | trusted-policy allowlist only; default deny |
+| lifecycle | trusted `proposed -> active`, `proposed -> stale`, and `active -> stale`; stale rows do not auto-reactivate |
+| search effect | none after M21; alias materialization/search consumption is Unit 5C-4 |
+| provider payload | raw response is never persisted |
 
 ### Language enablement
 

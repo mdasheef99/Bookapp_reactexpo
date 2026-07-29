@@ -1,17 +1,21 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-07-29 Unit 5C-2 M18/M19 application and live verification
+**Audit date:** 2026-07-29 Unit 5C-3 M20/M21 application and live verification
 **Audit mode:** exact-project migration, schema/security readback, and bounded rollback-only smoke
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10-M19 live exactly once; M09 absent; M18 applied as `20260729004216`, M19 as `20260729020008`; synthetic smokes rolled back; no Storage/provider/deployment/product-data mutation
+**Mutation status:** M01-M08/M10-M21 live exactly once; M09 absent; M18 `20260729004216`, M19 `20260729020008`, M20 `20260729054842`, M21 `20260729060238`; synthetic lifecycle smoke rolled back with zero residue; no Storage/provider/deployment/product-data mutation
 
-**Unit 5C-2 live reconciliation:** Current runtime still requires selected
-language and strict `p9-vision-v2`. M18 adds a separate private
-`phase9_search_variant_proposals` table and service-only token/attempt-fenced
-write plus bounded read RPCs. Rows enter only as `proposed` and
-`search_eligible=false`. M01 `book_search_aliases` remains unchanged with zero
-rows. Generation, activation, stale propagation, search projection, Owner UI,
-inventory, listing, publication, and commerce behavior remain unimplemented.
+**Unit 5C-3 live reconciliation:** The existing Gemini provider call may return
+an optional multilingual companion, but strict canonical `p9-vision-v2`
+validation remains independent. Accepted companions persist through M18/M19
+and reconcile confirmed Owner title and individual authors with store,
+observation, and source-field isolation, narrow deterministic normalization,
+material-change classification, default-deny activation, and trusted
+proposed/active/stale transitions. M21 removes M20's temporary public search,
+alias materialization, target linkage, and trigger/search effects. M01
+`book_search_aliases`, proposal, and proposal-set live counts were zero at
+verification. Unit 5C-4 materialization/search, Owner/customer UI, benchmarks,
+rollout, inventory/listing creation, publication, and commerce remain absent.
 
 **Provider/scale SDD reconciliation evidence:** the 2026-07-27 bounded read-only provider audit reconfirmed the exact healthy project and migration tail with M09 absent. Live counts were five extraction candidates, one canonical edition, and zero provider-registry rows, metadata attempts, metadata sources, aliases, or usage reservations. The existing metadata-attempt table already records candidate, adapter, attempt sequence, normalized clues, status, provider record, match strength, latency, cache status, versions, reuse policy, payload lifecycle, and timestamps; it does not explicitly represent role, provider-independent query identity, capability/routing-policy version, predecessor outcome, coalescing lineage, or cost-reservation linkage. These are proposed Unit 5 design targets only. No database or Storage mutation occurred.
 
@@ -100,6 +104,16 @@ A rollback-only synthetic smoke proved accepted proposed-only persistence,
 duplicate-free replay, mismatched-claim zero effects, title/author-position
 separation, store-bounded reads, unchanged aliases, and zero residue.
 
+**M20/M21 Unit 5C-3 closeout:** M20 is immutable applied history as
+`20260729054842 marketplace_phase9_variant_runtime_search`. It temporarily
+combined Unit 5C-3 reconciliation/lifecycle with Unit 5C-4 public search,
+alias materialization, inventory/listing target linkage, and related
+trigger/search behavior. It was not edited, reverted, or deleted. M21 is live
+as `20260729060238 marketplace_phase9_defer_active_variant_search` and
+forward-removes those Unit 5C-4 effects. Final live semantics retain Unit
+5C-3 only. Rollback-only lifecycle smoke passed with zero synthetic residue;
+proposal, proposal-set, and alias counts were zero at verification time.
+
 **Ingestion foundation checkpoint:** project `ahntbtktjjmvfosgkmgn` remains healthy; both private 10 MiB JPEG/PNG/WebP buckets remain unchanged. Live M11 revokes authenticated execution of path-taking legacy intake RPCs and adds declared source/content identity, persisted canonical completion, capability linkage, immutable private source snapshots, opaque claim-token and attempt fencing, 16 MP enforcement, and service-only issue/register/claim/context/revalidate/snapshot-bind/complete/fail functions. No runtime is deployed.
 
 **WU0 refresh:** a second read-only check on 2026-07-19 reconfirmed project identity, 37 `store_id`/zero `tenant_id` public columns, the five core catalogue/inventory tables, absence of proposed Phase 9 tables/buckets, five `good` inventory rows, zero observed quantity-balance violations, the explicit listing projection trigger, and the current migration tail. No drift changed the proposed design.
@@ -137,7 +151,7 @@ separation, store-bounded reads, unchanged aliases, and zero residue.
 | `marketplace_book_listings` | One projection per `inventory_id`; lacks language, description, aliases, structured damage/media/freshness. | Extend safe projection with public metadata/damage/media/search fields. Preserve one projection per inventory row; visual grouping occurs in query/UI, not DB merging. |
 | Projection trigger | Explicitly copies current inventory fields; revoked from anon/authenticated and executable by service role. | Extend or replace with a controlled projection writer covering new public fields and eligibility. Projection failure must be observable; no silent inventory/public divergence. |
 | Image extraction tables | M02/M11/M12/M13/M14 are live: token-fenced jobs, private immutable evidence, candidate and provider-attempt lineage, service-only invoker wrappers, and final egress validation exist. Fixture runtime remains deployed and live-verified. | Gemini configuration/deployment/live-provider verification remains separately authorized. |
-| Variant/alias storage | M01 `book_search_aliases` remains unchanged with canonical-or-inventory XOR targets and zero rows. M18 adds private `phase9_search_variant_proposals` with exact analysis/candidate/observation/field/author linkage, language/script and provenance, proposed-only/non-searchable defaults, deterministic identity, RLS, and service RPC-only mutation. M19 adds one immutable accepted-envelope fingerprint per analysis and rejects changed replay. | Later separately authorized work must add reconciliation/activation/stale propagation and active-only alias/search projection without rewriting M01, M18, or M19 history. |
+| Variant/alias storage | M01 `book_search_aliases` remains unchanged with canonical-or-inventory XOR targets and zero rows. M18 adds private proposals; M19 adds immutable accepted-envelope replay fencing; M20/M21 leave Unit 5C-3 reconciliation, lifecycle, default-deny activation, and source isolation live while removing temporary public search/materialization effects. | Unit 5C-4 must add active store-scoped alias materialization and search consumption without rewriting M18-M21. Customer display, Owner actions, benchmarks/rollout, inventory/publication/commerce, Google Books fallback, and global alias authority remain separate. |
 | Media registry | M03/M11 are live and provide typed `media_assets` plus private/public/request link structures; legacy inventory `photos text[]` remains for compatibility. M11 adds no public promotion and links only validated private scan media. | Preserve typed purpose/privacy/hash/retention boundaries and defer legacy-field retirement/public promotion to separately authorized work. |
 | Upload capabilities | M11 is live: authenticated execution of legacy path-taking RPCs is revoked and server-generated exact paths plus declared/observed object identity are present. | Preserve the service-only boundary during deployment. |
 | Cost reservation | Live `phase9_usage_reservations` remains unique on `(store_id, job_id, cost_kind, policy_version)`; live M14 links each vision call to its reservation and reconciles summed finalized cost without hard-coded prices. | Populate only through a separately deployed/configured provider runtime. |

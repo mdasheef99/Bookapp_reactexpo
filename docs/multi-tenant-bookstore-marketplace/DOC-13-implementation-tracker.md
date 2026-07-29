@@ -249,16 +249,32 @@ If implementation changes product or architecture behavior, update the relevant 
 > `b3980349d9d446fbf1820ef869f6664953d9a599`. Unit 5C Batch 1 remains
 > separately gated and unauthorized.
 
+> 2026-07-29 Phase 9 Unit 5C-3 closeout: optional multilingual companion
+> generation now shares the existing single Gemini call while canonical
+> `p9-vision-v2` remains independently strict. Accepted sidecars persist through
+> M18/M19 and reconcile confirmed Owner title and individual-author fields with
+> narrow deterministic normalization, default-deny activation, and trusted
+> proposed/active/stale lifecycle transitions. M20 is live as `20260729054842`;
+> it temporarily contained combined Unit 5C-3/5C-4 behavior. Immutable forward
+> M21 is live as `20260729060238` and removed the public search RPC, alias
+> materializer, inventory/listing linkage, and related trigger/search effects.
+> The final Unit 5C-3-only tree `eabe1040b4dbe89cf5163754fd719a11673a8682`
+> received independent verdict `APPROVED` and merged to `main` at
+> `f09301b76fb14714f942a98f0ceffa5d5a0c3178`. Unit 5C-4 active store-scoped
+> alias materialization and search consumption is the next active task in a new
+> session; display/UI/actions, benchmarks, rollout, inventory/publication,
+> commerce, provider fallback, and global alias authority remain deferred.
+
 > 2026-07-26 Phase 9 Unit 4A review-correction checkpoint: the independent review returned `CHANGES_REQUIRED` for unsafe Docker context, pre-authentication slot starvation/read deadlines, nondeterministic shutdown evidence, source-string-only deployment claims, and identity-only fixture tests. All five corrections plus bounded invoker responses are locally focused-green. A deny-by-default Docker context, pre-admission constant-time authentication, fixed body deadline, deterministic shutdown test, real compiled-entrypoint smoke, per-fixture semantic matrix, synthetic-only container script, and minimal-permission pull-request workflow now exist. The mandatory GitHub Actions image build/start gate is next; no live credential, image push, deployment, migration, provider, Supabase, or Storage operation is authorized.
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5C-2 proposal persistence and M19 replay fence merged; awaiting Unit 5C Batch 1 authorization** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5C-3 runtime/reconciliation merged; Unit 5C-4 active** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-29 |
-| Latest handoff | Unit 5C-1 is merged at `8aadf178`; Unit 5C-2 is independently approved and merged at `b398034`, with M18 live as `20260729004216`, replay-fence M19 as `20260729020008`, and no search/activation effect. |
-| Current risk level | M18/M19 are live-verified and preserve M01 aliases; changed accepted replay is fenced, while activation/stale propagation/search projection remain deliberately absent. Pre-existing unrelated advisor warnings remain separately tracked. |
-| Next recommended task | Stop and await explicit Unit 5C Batch 1 authorization; do not begin generation, activation, search exposure, or UI work. |
+| Latest handoff | Unit 5C-3 is independently approved at tree `eabe1040` and merged at `f09301b`; M20/M21 are live, with M21 forward-correcting M20 to final Unit 5C-3-only semantics. |
+| Current risk level | Unit 5C-3 generation/reconciliation/lifecycle is verified; active alias materialization and search consumption remain absent until Unit 5C-4. Pre-existing unrelated advisor warnings remain separately tracked. |
+| Next recommended task | Unit 5C-4 — active store-scoped alias materialization and search consumption — in a new session from merged `main` `f09301b76fb14714f942a98f0ceffa5d5a0c3178`. |
 
 ---
 
@@ -275,7 +291,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit5c2_variant_persistence_merged_awaiting_unit5c_batch1_authorization` | [Unit 5C-2 evidence](./implementation/phase-9-image-inventory/trackers/14-unit5c2-variant-persistence-evidence.md) · [Unit 5C Lite](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md) | Unit 5C-2 is merged at `b398034`; M18/M19 are live-verified; generation, activation, search/UI, inventory, and publication remain unchanged. |
+| Phase 9: Image-to-LLM Inventory | `unit5c3_runtime_reconciliation_merged_unit5c4_active` | [Unit 5C-3 evidence](./implementation/phase-9-image-inventory/trackers/15-unit5c3-runtime-reconciliation-evidence.md) · [Unit 5C Lite](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md) | Unit 5C-3 is merged at `f09301b`; M18-M21 are immutable/live-verified; Unit 5C-4 alias materialization/search is next. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -392,9 +408,9 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Stop and await explicit Unit 5C Batch 1 authorization; do not begin it.
+1. Implement Unit 5C-4 active store-scoped alias materialization and search consumption in a new session from merged `main` `f09301b76fb14714f942a98f0ceffa5d5a0c3178`; use targeted context only, preserve M18-M21, work red-first, perform deep self-review, and obtain independent exact-tree review before commit.
 2. Historical handoff (vision portion superseded 2026-07-27): Gemini remains configuration/deployment/live-call deferred. Google Books is implemented behind provider-neutral contracts but remains fixture/mock verified only; credentials, provider-registry enablement, deployment, and live smoke remain deferred.
    The current initial primary vision model ID is configuration-driven
    `gemini-3.5-flash-lite`; provider configuration/calls remain deferred.
-3. Keep M09, scheduling/autoscaling, mobile UI, inventory commit, publication, Library, and Phases 7/8 separately gated.
+3. Keep M09, customer display, Owner variant-review UI/actions, benchmarks, rollout/production enablement, scheduling/autoscaling, inventory commit, publication, commerce, Google Books Roman-query fallback, global alias authority, Library, and Phases 7/8 separately gated.
 4. Re-verify the exact project, migrations, schema, Storage, services, and advisors before any later mutation.

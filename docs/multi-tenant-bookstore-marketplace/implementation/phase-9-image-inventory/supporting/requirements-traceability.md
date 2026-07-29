@@ -24,6 +24,21 @@ separately authorized.
 | MAS-19; EXT-22/23/40; MED-23/30 | M18 delegates to the M12 active-claim fence and independently validates the sidecar; M19 fingerprints the first accepted envelope and rejects changed accepted replay atomically. Stale/mismatched claims persist no proposal. |
 | DAT-10–14 | Private rows carry exact store/analysis/candidate/observation/field/author linkage, language/script, bounded type/provenance, deterministic identity, and proposed/non-searchable lifecycle defaults. |
 | MAS-AC17; MKT-05/16 | Bounded read requires store plus analysis/candidate/observation scope; M18 creates no active alias/search projection and preserves M01 unchanged. |
+
+### Unit 5C-3 implementation mapping (2026-07-29)
+
+| Requirement | Unit 5C-3 evidence |
+| --- | --- |
+| MAS-19; EXT-22/23/40 | The existing single Gemini call may return an optional companion; independent bounds/schema/provenance validation fails closed while valid canonical `p9-vision-v2` remains usable. Raw provider responses are not persisted. |
+| MAS-20/21/22; MAS-AC17/18 | Accepted companions persist through M18/M19 and reconcile confirmed Owner title and each individual author independently, with store/observation/source-field isolation and narrow deterministic normalization. |
+| MAS-23/24/25 | Material-change classification, default-deny activation, no stale auto-reactivation, and trusted `proposed -> active`, `proposed -> stale`, and `active -> stale` transitions are implemented. |
+| MKT-05/16 | M21 forward-removes M20's temporary alias/search effects. Active store-scoped alias materialization and Roman-query search consumption remain Unit 5C-4, not Unit 5C-3. |
+| SEC-01/04; OBS-06 | Missing/malformed/oversized/unsupported/provenance-mismatched companions have no product effect; lifecycle smoke is rollback-only, zero-residue, and no raw provider payload enters persistence/logging. |
+
+The exact implementation evidence is [tracker 15](../trackers/15-unit5c3-runtime-reconciliation-evidence.md).
+Customer display, Owner review/actions, benchmark/rollout controls,
+inventory/publication/commerce, Google Books Roman-query fallback, and global
+alias authority remain deferred.
 | MED-21/23 | RLS, client denial, service SELECT-only/no-MAINTAIN table access, RPC-only mutation, and fixed-empty-search-path private/public functions are live-verified on PostgreSQL 17.6. |
 | REV-22; DAT-12/13 | Activation, rejection/stale commands, source-change propagation, and Owner review remain explicitly unimplemented. |
 

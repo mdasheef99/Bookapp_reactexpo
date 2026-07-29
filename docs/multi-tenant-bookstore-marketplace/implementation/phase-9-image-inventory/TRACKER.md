@@ -1,16 +1,16 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit5c_lite_sdd_merged`
-**Implementation status:** `unit5c2_variant_persistence_merged_awaiting_unit5c_batch1_authorization`
+**Implementation status:** `unit5c3_runtime_reconciliation_merged_unit5c4_active`
 **Last updated:** 2026-07-29
-**Current milestone:** Unit 5C-2 private store-scoped proposal persistence and replay fence merged
-**Active work unit:** `none_awaiting_unit5c_batch1_authorization`
+**Current milestone:** Unit 5C-3 runtime generation, reconciliation, and lifecycle merged
+**Active work unit:** `unit5c4_active_alias_materialization_and_search`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Unit 5C-2 independently approved and fast-forward merged to `main` at `b3980349d9d446fbf1820ef869f6664953d9a599`; evidence is [tracker 14](./trackers/14-unit5c2-variant-persistence-evidence.md)
-**Next authorized action:** stop and await explicit authorization for Unit 5C Batch 1; do not begin generation, activation, search exposure, or UI work
-**Implementation authority:** no further Unit 5C implementation is authorized; provider generation, reconciliation/activation commands, search/index exposure, Owner UI, inventory/listing creation, publication, credentials, deployment, and commerce remain unauthorized
-**Migration creation/application authority:** M18 is live once as `20260729004216` and its bounded M19 replay-fence correction is live once as `20260729020008`. M01-M08/M10-M19 remain live exactly once and M09 remains absent; no further migration is authorized
-**Current gate:** Unit 5C-2 is merged; Unit 5C Batch 1 requires separate explicit authorization
+**Last completed:** Unit 5C-3 independently approved (`eabe1040b4dbe89cf5163754fd719a11673a8682`) and fast-forward merged to `main` at `f09301b76fb14714f942a98f0ceffa5d5a0c3178`; evidence is [tracker 15](./trackers/15-unit5c3-runtime-reconciliation-evidence.md)
+**Next authorized action:** implement Unit 5C-4 active store-scoped alias materialization and search consumption in a new session from merged main `f09301b76fb14714f942a98f0ceffa5d5a0c3178`
+**Implementation authority:** Unit 5C-4 only, with targeted context, red-first tests, deep self-review, and independent exact-tree review; customer display, Owner UI/actions, benchmarks, rollout controls/production enablement, inventory/listing creation, publication, commerce, Google Books Roman-query fallback, and global alias authority remain unauthorized
+**Migration creation/application authority:** M18-M21 are immutable live history; M20 is live as `20260729054842` and M21 as `20260729060238`. Unit 5C-4 must not modify M18-M21; any new migration creation/application requires its own exact-project preflight and authority
+**Current gate:** Unit 5C-3 is merged and closed; Unit 5C-4 is the only active implementation task
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -29,14 +29,15 @@ token/attempt-fenced write and store-bounded read RPCs, and proposed-only,
 non-searchable lifecycle defaults. M18 is live once as `20260729004216`;
 M19 is live once as `20260729020008` and rejects changed accepted sidecar
 replays through one immutable analysis-scoped fingerprint.
-Current Gemini generation remains unchanged and fixture-gated. The
-selected-language runtime remains strict `p9-vision-v2`; M01
-`book_search_aliases` remains unchanged. The target adds auto-detect/optional hints, per-field
-language/script, original-first authority, independent field confirmation, an
-optional variant sidecar, deterministic-key separation, field reconciliation,
-store-scoped active-only search, and Owner-confirmed nullable-canonical fallback.
-Reconciliation/activation commands, stale propagation, search projection, and
-UI remain unimplemented.
+Unit 5C-3 adds the optional multilingual companion to the existing single
+Gemini call while isolating strict canonical `p9-vision-v2` output from
+independently validated sidecar failure. Accepted companions persist through
+M18/M19 and reconcile title and each author independently against confirmed
+Owner snapshots using narrow deterministic normalization, material-change
+classification, default-deny activation, and trusted proposed/active/stale
+transitions. M21 removes M20's temporary 5C-4 public search/materialization
+effects, so active alias materialization and search consumption remain the
+Unit 5C-4 task.
 
 The provider/scale reconciliation keeps real Gemini provider-contract design as a separately gated prospective Unit 4B and keeps Unit 5 authoritatively named `Metadata/aliases`. The generic architecture supports one metadata primary and at most one disabled-until-approved secondary, horizontal correctness, and a fixed-multi-replica activation gate; it does not authorize provider calls, deployment changes, scheduling, or autoscaling. The bounded F1–F3 correction removes the deferred-secondary contradiction, makes media/vision/metadata capacity signals explicit, and disables raw provider/model payload persistence by default while retaining the independent-review gate.
 
@@ -102,17 +103,19 @@ The exact development project was re-verified read-only at M11/M12 closeout:
 | Work Unit 4 fixture vision-analysis runtime | [`integrated_main_e9ba2d9`](./work-units/04-fixture-vision-analysis-runtime-design.md) |
 | Work Unit 4A deployment-runtime scaffolding | [`deployed_and_live_fixture_verified`](./trackers/06-fixture-pipeline-deployment-evidence.md) |
 | Work Unit 4B Gemini vision adapter | [`m14_live_verified_provider_deferred`](./work-units/04b-gemini-vision-adapter-handoff.md) |
-| Unit 5C Lite target SDD | [`merged_at_b44277a`](./work-units/05c-lite-multilingual-search-variants-sdd.md); Unit 5C-1 merged at `8aadf178`; Unit 5C-2 persistence [`merged_main_b398034`](./trackers/14-unit5c2-variant-persistence-evidence.md) |
+| Unit 5C Lite target SDD | [`merged_at_b44277a`](./work-units/05c-lite-multilingual-search-variants-sdd.md); Unit 5C-1 merged at `8aadf178`; Unit 5C-2 persistence [`merged_main_b398034`](./trackers/14-unit5c2-variant-persistence-evidence.md); Unit 5C-3 runtime/reconciliation [`merged_main_f09301b`](./trackers/15-unit5c3-runtime-reconciliation-evidence.md) |
 | Provider and scale architecture SDD reconciliation | `stale_marker_superseded_by_unit4b_m14_m17_unit5a_review_evidence_2026-07-28` |
 
 ## Blocking gate before further implementation
 
 WU0A, WU0B, Package 1, Unit 4, Unit 4A, Unit 4B, Unit 5A, Unit 5B, and Unit
-5C-1 and Unit 5C-2 are complete at their recorded levels. M01-M08/M10-M19,
-the Owner boundary, and both separate fixture workers are live-verified. Unit
-5C-2 is merged at `b398034`. Core auth WU1/WU2 is locally complete. M09,
-Unit 5C Batch 1, and every activation/search/UI/provider work unit remain
-separately gated.
+5C-1 through Unit 5C-3 are complete at their recorded levels.
+M01-M08/M10-M21, the Owner boundary, and both separate fixture workers are
+live-verified; M09 remains absent. Unit 5C-3 is merged at `f09301b`.
+Unit 5C-4 active store-scoped alias materialization and search consumption is
+the only active task; UI, display, benchmark, rollout, inventory/publication,
+commerce, provider-fallback, and global-authority work remains separately
+gated.
 
 ## Risk summary
 
@@ -146,9 +149,10 @@ Unit 5B is complete at the merged fixture/mock-verified level recorded in
 [tracker 11](./trackers/11-unit5b-implementation-evidence.md). Matching, reuse,
 and storage are independently enforced, and only `coherent_match` is a positive
 reusable outcome. Unit 5B created or applied no migration; M09 remains absent.
-Unit 5C-2 persistence and its M19 replay fence are live-verified,
-independently approved, and merged at `b398034`. Stop and await explicit
-authorization for Unit 5C Batch 1. Do not apply M09 or another migration;
-activate/project variants; change Gemini generation; configure, deploy, or call providers; select/enable
-a secondary; schedule/autoscale workers; change mobile UI; commit inventory; publish
-listings; or implement Library behavior.
+Unit 5C-3 generation, reconciliation, activation policy, and lifecycle are
+live-verified, independently approved, and merged at `f09301b`. Begin only
+Unit 5C-4 active store-scoped alias materialization and search consumption in
+a new session from that baseline. Do not modify M18-M21, apply M09, change
+customer display or Owner UI/actions, add benchmarks or rollout controls,
+enable production languages, create inventory/listings, publish, add commerce,
+add Google Books Roman-query fallback, or create global alias authority.
