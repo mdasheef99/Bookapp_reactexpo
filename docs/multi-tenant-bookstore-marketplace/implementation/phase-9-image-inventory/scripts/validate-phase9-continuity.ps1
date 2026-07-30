@@ -119,17 +119,19 @@ if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5c4_active_va
     -not $doc13.Contains('20260729060238') -or
     -not $doc13.Contains('20260729075459') -or
     -not $doc13.Contains('20260729082153')) { Write-Error 'DOC-13 does not preserve the M15-M23 live chain.' }
-if (-not $doc13.Contains('implement Unit 5C-5 exceptional Owner variant-decision backend authority and Unit 5C-6 benchmark/per-language rollout-control infrastructure together')) { Write-Error 'DOC-13 does not route the combined Unit 5C-5/5C-6 task.' }
+if (-not $doc13.Contains('corrected Unit 5C-5/5C-6 backend candidate is locally green')) { Write-Error 'DOC-13 does not route the corrected Unit 5C-5/5C-6 review gate.' }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit5c4_active_variant_search_merged_unit5c5_6_active`\r?$' -or
+if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit5c5_6_candidate_green_review_pending`\r?$' -or
     -not $implementationTracker.Contains('**Active work unit:** `unit5c5_6_owner_decisions_benchmark_rollout_backend`') -or
     -not $implementationTracker.Contains('20260729000018_marketplace_phase9_search_variant_proposals.sql') -or
     -not $implementationTracker.Contains('20260729000019_marketplace_phase9_search_variant_replay_fence.sql') -or
     -not $implementationTracker.Contains('20260729000020_marketplace_phase9_variant_runtime_search.sql') -or
     -not $implementationTracker.Contains('20260729000021_marketplace_phase9_defer_active_variant_search.sql') -or
     -not $implementationTracker.Contains('20260729000022_marketplace_phase9_active_variant_search.sql') -or
-    -not $implementationTracker.Contains('20260729000023_marketplace_phase9_active_variant_search_correction.sql')) {
-    Write-Error 'Implementation tracker does not preserve the Unit 5C-4/M18-M23 handoff.'
+    -not $implementationTracker.Contains('20260729000023_marketplace_phase9_active_variant_search_correction.sql') -or
+    -not $implementationTracker.Contains('20260729000024') -or
+    -not $implementationTracker.Contains('20260729000027')) {
+    Write-Error 'Implementation tracker does not preserve the Unit 5C-4/M18-M27 handoff.'
 }
 $providerScaleMarkers = @{
     '00-phase-9-master-sdd.md' = @('MAS-13', 'MAS-17', 'MAS-AC14')
@@ -262,7 +264,7 @@ if (-not $implementationTracker.Contains('| 4B | [Gemini vision adapter]') -or
     -not $implementationTracker.Contains('optional whole-image fallback remains unselected/disabled') -or
     -not $implementationTracker.Contains('| 5A | [Metadata foundation]') -or
     -not $implementationTracker.Contains('| 5B/5C | Google Books primary adapter / [Unit 5C Lite multilingual variants]') -or
-    -not $implementationTracker.Contains('5C-4 merged_main_d092f08')) {
+    -not $implementationTracker.Contains('5C-5/5C-6 normalized candidate green')) {
     Write-Error 'Implementation routing must keep Unit 4B and its disabled fallback separate from Unit 5A/5B/5C.'
 }
 if ($implementationTracker -notmatch '(?m)^\| 0A \|.*\| `approved_complete` \|') { Write-Error 'Implementation tracker no longer preserves WU0A approved-complete evidence.' }
@@ -301,9 +303,9 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if (-not $tracker.Contains('**Implementation status:** `unit5c4_active_variant_search_merged_unit5c5_6_active`') -or
+if (-not $tracker.Contains('**Implementation status:** `unit5c5_6_candidate_green_review_pending`') -or
     $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5c5_6_owner_decisions_benchmark_rollout_backend`\r?$' -or
-    -not $tracker.Contains('**Next authorized action:** implement the combined Unit 5C-5') -or
+    -not $tracker.Contains('**Next authorized action:** none until the user explicitly authorizes staging') -or
     -not $tracker.Contains('M22 is live as `20260729075459`') -or
     -not $tracker.Contains('M23 as `20260729082153`')) {
     Write-Error 'TRACKER.md does not preserve the Unit 5C-4/M22-M23 handoff.'
@@ -345,13 +347,46 @@ $migrationNames = @(
     '20260729000020_marketplace_phase9_variant_runtime_search.sql',
     '20260729000021_marketplace_phase9_defer_active_variant_search.sql',
     '20260729000022_marketplace_phase9_active_variant_search.sql',
-    '20260729000023_marketplace_phase9_active_variant_search_correction.sql'
+    '20260729000023_marketplace_phase9_active_variant_search_correction.sql',
+    '20260729000024_marketplace_phase9_owner_variant_decisions.sql',
+    '20260729000025_marketplace_phase9_owner_variant_corrections.sql',
+    '20260729000026_marketplace_phase9_variant_benchmark_rollout.sql',
+    '20260729000027_marketplace_phase9_exact_rollout_activation.sql',
+    '20260729000028_marketplace_phase9_variant_benchmark_evidence_read.sql'
 )
 foreach ($name in $migrationNames) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot "supabase/migrations/$name"))) { Write-Error "Missing approved Phase 9 migration: $name" }
 }
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
-if ($phase9Migrations.Count -ne 22 -or $phase9Migrations.Name -match '000009|quantity.*validat') { Write-Error 'Phase 9 migration set must contain M01-M08 plus forward M10-M23, and no M09.' }
+$actualMigrationNames = @($phase9Migrations.Name | Sort-Object)
+$duplicateMigrationVersions = @($phase9Migrations | Group-Object { [int]$_.Name.Substring(8,6) } | Where-Object Count -gt 1)
+$unexpectedCorrectionMigrations = @($phase9Migrations | Where-Object { [int]$_.Name.Substring(8,6) -ge 29 })
+if ($actualMigrationNames.Count -ne 27 -or
+    (Compare-Object $migrationNames $actualMigrationNames) -or
+    $duplicateMigrationVersions.Count -ne 0 -or
+    $unexpectedCorrectionMigrations.Count -ne 0 -or
+    $phase9Migrations.Name -match '000009|quantity.*validat') {
+    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M28 exactly once and in filename order, with no M09/M29-or-later correction.'
+}
+$m24 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000024_marketplace_phase9_owner_variant_decisions.sql'))
+$m25 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000025_marketplace_phase9_owner_variant_corrections.sql'))
+$m26 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000026_marketplace_phase9_variant_benchmark_rollout.sql'))
+$m27 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000027_marketplace_phase9_exact_rollout_activation.sql'))
+$m28 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000028_marketplace_phase9_variant_benchmark_evidence_read.sql'))
+if (-not $m24.Contains('phase9_owner_decide_search_variant') -or -not $m24.Contains('phase9_is_store_owner') -or
+    -not $m25.Contains('phase9_owner_replace_search_variant') -or
+    -not $m26.Contains('phase9_trusted_benchmark_result') -or -not $m26.Contains('phase9_review_search_variant_benchmark') -or
+    -not $m27.Contains('phase9_set_search_variant_language_rollout') -or -not $m27.Contains('phase9_search_variant_automatic_activation_allowed')) {
+    Write-Error 'Phase 9 M24-M27 responsibility or dependency markers are incomplete.'
+}
+if (-not $m28.Contains('phase9_platform_search_variant_benchmark_summary') -or
+    -not $m28.Contains('phase9_platform_search_variant_benchmark_evidence') -or
+    -not $m28.Contains("SECURITY DEFINER SET search_path=''") -or
+    $m28 -match '(?im)^\s*(?:INSERT\s+INTO|UPDATE\s+public\.|DELETE\s+FROM|CREATE\s+TABLE|CREATE\s+TRIGGER)\b' -or
+    $m28.Contains('phase9_review_search_variant_benchmark') -or
+    $m28.Contains('phase9_set_search_variant_language_rollout')) {
+    Write-Error 'Phase 9 M28 must remain limited to platform benchmark summary and paginated evidence reads, required indexes, authorization, fixed search_path, and ACLs.'
+}
 foreach ($relative in @('supabase/tests/phase9/phase6_baseline.sql','supabase/tests/phase9/databaseHarness.mjs',
     'supabase/tests/phase9/phase9Database.integration.test.mjs','supabase/tests/phase9/phase9IngestionRuntime.integration.test.mjs','supabase/tests/phase9/phase9VisionRuntime.integration.test.mjs','supabase/migrations/__tests__/marketplacePhase9DatabaseFoundation.test.ts',
     'supabase/migrations/__tests__/marketplacePhase9PublicBoundarySecurityCorrection.test.ts','supabase/migrations/__tests__/marketplacePhase9VisionAnalysisRuntime.test.ts',

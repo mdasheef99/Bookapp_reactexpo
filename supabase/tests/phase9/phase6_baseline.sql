@@ -40,7 +40,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.store_administrators sa
     WHERE sa.store_id=p_store_id AND sa.user_id=auth.uid()
-      AND sa.role='owner' AND sa.status='active'
+      AND sa.status='active'
   )
 $$;
 

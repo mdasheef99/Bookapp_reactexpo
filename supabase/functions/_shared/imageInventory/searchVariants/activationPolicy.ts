@@ -28,6 +28,8 @@ export type SearchVariantLifecycleProposal = Readonly<{
 export type AutomaticVariantActivationContext = Readonly<{
   proposalId: string;
   sourceLanguage: string;
+  sourceScript: string;
+  targetType: 'title' | 'author';
   modelKey?: string;
   modelVersion?: string;
   promptVersion?: string;
@@ -78,6 +80,8 @@ export async function planSearchVariantLifecycle(
   const allowed = await policy.allows({
     proposalId: proposal.id,
     sourceLanguage: proposal.source.language,
+    sourceScript: proposal.source.script,
+    targetType: proposal.targetType,
     modelKey: proposal.modelKey,
     modelVersion: proposal.modelVersion,
     promptVersion: proposal.promptVersion,

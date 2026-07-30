@@ -25,19 +25,32 @@ export const phase9MigrationNames = [
   '20260729000021_marketplace_phase9_defer_active_variant_search.sql',
   '20260729000022_marketplace_phase9_active_variant_search.sql',
   '20260729000023_marketplace_phase9_active_variant_search_correction.sql',
+  '20260729000024_marketplace_phase9_owner_variant_decisions.sql',
+  '20260729000025_marketplace_phase9_owner_variant_corrections.sql',
+  '20260729000026_marketplace_phase9_variant_benchmark_rollout.sql',
+  '20260729000027_marketplace_phase9_exact_rollout_activation.sql',
+  '20260729000028_marketplace_phase9_variant_benchmark_evidence_read.sql',
 ];
 
 const root = process.cwd();
 export const migrationPath = (name) => path.join(root, 'supabase', 'migrations', name);
 
-export async function createPhase9Database() {
+export async function createPhase9Database(options = {}) {
+  const throughMigration = options.throughMigration
+    ?? '20260729000023_marketplace_phase9_active_variant_search_correction.sql';
   const db = new PGlite();
   await db.waitReady;
   await db.exec(fs.readFileSync(path.join(root, 'supabase', 'tests', 'phase9', 'phase6_baseline.sql'), 'utf8'));
   await db.exec(`CREATE SCHEMA IF NOT EXISTS extensions;
     CREATE FUNCTION extensions.digest(value text, algorithm text) RETURNS bytea
-    LANGUAGE sql IMMUTABLE AS $$ SELECT decode(md5(value)||md5(value||algorithm),'hex') $$;`);
-  for (const name of phase9MigrationNames) await db.exec(fs.readFileSync(migrationPath(name), 'utf8'));
+    LANGUAGE sql IMMUTABLE AS $$
+      SELECT CASE WHEN algorithm='sha256'
+        THEN sha256(convert_to(value,'UTF8')) ELSE NULL END
+    $$;`);
+  for (const name of phase9MigrationNames) {
+    await db.exec(fs.readFileSync(migrationPath(name), 'utf8'));
+    if (name === throughMigration) break;
+  }
   return db;
 }
 
