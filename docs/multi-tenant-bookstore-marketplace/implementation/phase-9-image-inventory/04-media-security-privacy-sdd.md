@@ -35,7 +35,7 @@ ownership, client denial, and 13 fixed-search-path RPCs remain intact. See
 **M18/M19 live security checkpoint (2026-07-29):** M18 `20260729004216` and
 M19 `20260729020008` are live once: RLS/client denial, service SELECT-only/
 no-MAINTAIN, fixed-path RPC-only mutation/read, accepted-envelope replay
-fencing, zero residue, and unchanged aliases/search passed. See [tracker 14](./trackers/14-unit5c2-variant-persistence-evidence.md).
+fencing, zero residue, and unchanged aliases/search passed. Unit 5C-5/5C-6 extends the same private/RPC-only/SELECT-only/no-MAINTAIN pattern to Owner decisions and rollout evidence; M24-M28 are live, anonymous/Owner private evidence access is denied, and M29 remains absent.
 **Implementation checkpoint (2026-07-22):** the approved private-table, named-boundary, upload-capability, media-registry, and Storage boundary contracts are implemented in M02, M03, M05, M06, and M08 and pass isolated/live security checks. Forward M10 restores only the three anonymous discovery RPCs, makes the allowlisted projection invoker-safe, and removes direct role access; request-photo, internal-helper, and private-table boundaries remain closed. M01-M08/M10 are live-verified; M09/auth/runtime remain untouched.
 
 ## 1. Decision and evidence basis

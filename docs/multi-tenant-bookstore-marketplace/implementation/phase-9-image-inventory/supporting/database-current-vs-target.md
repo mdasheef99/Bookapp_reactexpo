@@ -127,6 +127,17 @@ forward-corrects legacy approved-alias rank preservation and stricter exact
 source-field/source-text reconciliation. Final schema semantics are M22 plus
 M23. Live rollback-only smoke passed with zero synthetic residue.
 
+**M24-M28 live audit:** on 2026-07-30 exact tree
+`66db5be740940a8c882bb7ea312817f4c33bb2db` received dual independent
+`APPROVED`, then its exact M24-M28 bytes were applied to project
+`ahntbtktjjmvfosgkmgn` as versions `20260730022442`, `20260730022524`,
+`20260730022559`, `20260730022636`, and `20260730022713`. PostgreSQL 17.6.1
+readback verified RLS, ACLs, fixed search paths, strict Owner/platform
+authorization, no unintended `MAINTAIN`, and M18-M23 unchanged. M29 is absent.
+Real two-connection replacement concurrency, benchmark/evidence/rollout
+smokes, and cleanup passed with zero synthetic residue. There are no retained
+benchmark manifests, approved languages, rollout rows, or enabled capabilities.
+
 **Ingestion foundation checkpoint:** project `ahntbtktjjmvfosgkmgn` remains healthy; both private 10 MiB JPEG/PNG/WebP buckets remain unchanged. Live M11 revokes authenticated execution of path-taking legacy intake RPCs and adds declared source/content identity, persisted canonical completion, capability linkage, immutable private source snapshots, opaque claim-token and attempt fencing, 16 MP enforcement, and service-only issue/register/claim/context/revalidate/snapshot-bind/complete/fail functions. No runtime is deployed.
 
 **WU0 refresh:** a second read-only check on 2026-07-19 reconfirmed project identity, 37 `store_id`/zero `tenant_id` public columns, the five core catalogue/inventory tables, absence of proposed Phase 9 tables/buckets, five `good` inventory rows, zero observed quantity-balance violations, the explicit listing projection trigger, and the current migration tail. No drift changed the proposed design.
@@ -164,7 +175,7 @@ M23. Live rollback-only smoke passed with zero synthetic residue.
 | `marketplace_book_listings` | One projection per `inventory_id`; lacks language, description, aliases, structured damage/media/freshness. | Extend safe projection with public metadata/damage/media/search fields. Preserve one projection per inventory row; visual grouping occurs in query/UI, not DB merging. |
 | Projection trigger | Explicitly copies current inventory fields; revoked from anon/authenticated and executable by service role. | Extend or replace with a controlled projection writer covering new public fields and eligibility. Projection failure must be observable; no silent inventory/public divergence. |
 | Image extraction tables | M02/M11/M12/M13/M14 are live: token-fenced jobs, private immutable evidence, candidate and provider-attempt lineage, service-only invoker wrappers, and final egress validation exist. Fixture runtime remains deployed and live-verified. | Gemini configuration/deployment/live-provider verification remains separately authorized. |
-| Variant/alias storage | M18/M19 preserve private proposals/replay fencing; M20/M21 preserve Unit 5C-3 reconciliation/lifecycle; M22/M23 add exact-store/source/eligible-target active alias materialization, one-based author linkage, stale/inactive retraction, and fail-closed Roman search while preserving original/ISBN/canonical/legacy search and display identity. | Unit 5C-5 Owner decisions and Unit 5C-6 benchmark/rollout evidence remain next. Customer display, visual UI, inventory/publication/commerce, Google Books fallback, and global alias authority remain separate. |
+| Variant/alias storage | M18-M28 live: Owner decisions/corrections, candidate-first replacement locking, canonical benchmark/rollout evidence, platform evidence reads, exact-evidence activation, trigger-version fencing, and truthful Owner policy reasons. | No language/capability is enabled; customer display, visual UI, inventory/publication/commerce, Google Books fallback, and global alias authority remain separate. |
 | Media registry | M03/M11 are live and provide typed `media_assets` plus private/public/request link structures; legacy inventory `photos text[]` remains for compatibility. M11 adds no public promotion and links only validated private scan media. | Preserve typed purpose/privacy/hash/retention boundaries and defer legacy-field retirement/public promotion to separately authorized work. |
 | Upload capabilities | M11 is live: authenticated execution of legacy path-taking RPCs is revoked and server-generated exact paths plus declared/observed object identity are present. | Preserve the service-only boundary during deployment. |
 | Cost reservation | Live `phase9_usage_reservations` remains unique on `(store_id, job_id, cost_kind, policy_version)`; live M14 links each vision call to its reservation and reconciles summed finalized cost without hard-coded prices. | Populate only through a separately deployed/configured provider runtime. |

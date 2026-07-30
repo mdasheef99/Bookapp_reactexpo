@@ -1,5 +1,12 @@
 # SDD 03: Owner Review, Duplicate Choice, and Inventory Commit
 
+**Unit 5C-5 backend checkpoint (2026-07-30):** the live backend defines the
+exceptional field-specific Owner variant read/decision contract with exact
+versioning, immutable audit, correction provenance, and no inventory commit or
+visual UI. M24/M25 are live after exact-tree approval and two-connection
+candidate-refresh/replacement verification; candidate-first then
+proposal-second is the canonical lock order.
+
 **Status:** `approved_baseline`
 **Version:** 1.0
 **Date:** 2026-07-19

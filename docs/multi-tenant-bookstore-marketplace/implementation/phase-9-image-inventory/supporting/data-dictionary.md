@@ -1,6 +1,6 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** current/live and approved-target representations separated; Unit 5C-4 active store-scoped materialization/search live, Unit 5C-5/5C-6 backend next
+**Status:** current/live and approved-target representations separated; Unit 5C-4 search and Unit 5C-5/5C-6 backend live through M28
 **Last updated:** 2026-07-29
 
 M01-M08/M10-M14 are live-verified. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. M14 adds dedicated service-only vision-provider attempts and is live once as `20260727183546`. Owner/media/fixture-vision services remain deployed. M09 quantity validation remains a separate live-data gate.
@@ -124,8 +124,7 @@ included Unit 5C-4 alias materialization, target linkage, public search RPC,
 and related trigger/search effects. Applied M20 is immutable. Forward M21
 removed those 5C-4 effects. M22 then introduced the reviewed active-only, store-scoped
 materialization/search foundation, and immutable M23 forward-corrected legacy approved-alias
-rank preservation and stricter exact source-field/source-text reconciliation. Final live semantics are M18-M23;
-M22/M23 do not change public display identity or create Owner decision, benchmark, or rollout records.
+rank preservation and stricter exact source-field/source-text reconciliation. Final live semantics are M18-M28. M24-M28 add lifecycle versioning, immutable Owner decisions, candidate-first locked Owner-origin replacement, canonical benchmark manifests/executions/reviews, language rollout controls/audit, exact-evidence activation, platform evidence reads, trigger-version fencing, and evidence-derived Owner denial reasons. No language is benchmarked or approved and no capability is enabled.
 ### Unit 5C-3 reconciliation/lifecycle fields
 | Concept | Live rule after M21 |
 | --- | --- |
@@ -133,7 +132,7 @@ M22/M23 do not change public display identity or create Owner decision, benchmar
 | reconciliation scope | exact store, observation, source field, and author index |
 | normalization | narrow deterministic key shared by JavaScript and SQL; symbols are handled consistently |
 | materiality | proposals are classified independently per source field |
-| activation | trusted-policy allowlist only; default deny |
+| activation | live M26/M27 requires an exact current approved language/script/model/prompt/schema/dataset/policy/execution tuple; absent evidence denies |
 | lifecycle | trusted `proposed -> active`, `proposed -> stale`, and `active -> stale`; stale rows do not auto-reactivate |
 | search effect | active proposals only through M22/M23; exact store/source/eligible-target checks, stale/inactive retraction, and fail-closed current-state validation |
 | provider payload | raw response is never persisted |
@@ -141,8 +140,9 @@ M22/M23 do not change public display identity or create Owner decision, benchmar
 ### Language enablement
 
 Record language/script, exact model/prompt/schema and benchmark dataset/version,
-sample count/results, vision/Romanization/automatic-activation switches,
-decision provenance, approver, and approval date. Enablement is reversible.
+sample count/results, vision/Romanization/automatic-activation switches, decision provenance, approver, and approval date. Live M26 stores these in private RPC-only relations and M28 exposes platform-only reconstruction; missing/revoked/superseded evidence denies.
+Structural eligibility requires at least 100 complete valid samples plus reconciled item/group/aggregate evidence; truthful failed, invalid, and
+policy-governed excluded counts may coexist. Unauthorized exclusions or inconsistent identities/totals are rejected; only explicit latest legal platform approval authorizes rollout.
 
 ### Owner-confirmed unlinked record
 

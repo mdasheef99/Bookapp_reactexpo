@@ -42,6 +42,8 @@ The exact implementation evidence is [tracker 15](../trackers/15-unit5c3-runtime
 | Requirement | Unit 5C-4 evidence |
 | --- | --- |
 | MAS-AC17; DAT-13/14; MKT-05/16 | M22/M23 consume only current active proposals, validate exact store/source/eligible-target authority, materialize independent title/one-based-author aliases, retract stale/inactive effects, and validate current lifecycle fail closed at search time. |
+| MAS-AC17; REV-21/22 | Live M24/M25 exposes private store-scoped Owner review/approve/reject/replace with exact versions, immutable decision audit, candidate-first locking, one-based authors, and preserved source/model provenance. |
+| MAS-AC17; MED-21 | Live M26-M28 keeps all rollout flags false by default, derives structural review eligibility from at least 100 complete samples plus reconciled population evidence without hiding truthful failed/invalid/governed-excluded cases, requires explicit platform approval plus one exact current evidence tuple for activation, and exposes platform-only evidence reconstruction. |
 | MKT-05/16 | Roman title/author search deduplicates results while preserving original title/author, ISBN, canonical/legacy approved aliases, listing eligibility, and public projection/display identity. |
 | MED-21/23; SEC-01/04 | Store isolation, private-proposal non-exposure, RLS/ACL, fixed function search paths, trusted materialization authority, no unintended `MAINTAIN`, and no unrestricted application-side service-role DML were verified. |
 

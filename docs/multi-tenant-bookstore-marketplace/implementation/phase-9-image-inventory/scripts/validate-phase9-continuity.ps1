@@ -109,7 +109,7 @@ if (-not $active.Contains('16-unit5c4-active-variant-search-evidence.md') -or
     -not $active.Contains('Unit 5C-6')) { Write-Error 'ACTIVE.md does not route from Unit 5C-4 to combined Unit 5C-5/5C-6.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5c4_active_variant_search_merged_unit5c5_6_active`') -or
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5c5_6_backend_complete_live_verified_ready_for_merge`') -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
     -not $doc13.Contains('20260727231217 marketplace_phase9_sensitive_table_acl_correction') -or
     -not $doc13.Contains('20260727233457 marketplace_phase9_maintain_acl_correction') -or
@@ -118,20 +118,31 @@ if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5c4_active_va
     -not $doc13.Contains('20260729054842') -or
     -not $doc13.Contains('20260729060238') -or
     -not $doc13.Contains('20260729075459') -or
-    -not $doc13.Contains('20260729082153')) { Write-Error 'DOC-13 does not preserve the M15-M23 live chain.' }
-if (-not $doc13.Contains('corrected Unit 5C-5/5C-6 backend candidate is locally green')) { Write-Error 'DOC-13 does not route the corrected Unit 5C-5/5C-6 review gate.' }
+    -not $doc13.Contains('20260729082153') -or
+    -not $doc13.Contains('20260730022442') -or
+    -not $doc13.Contains('20260730022524') -or
+    -not $doc13.Contains('20260730022559') -or
+    -not $doc13.Contains('20260730022636') -or
+    -not $doc13.Contains('20260730022713')) { Write-Error 'DOC-13 does not preserve the M15-M28 live chain.' }
+if (-not $doc13.Contains('No language is benchmarked or approved') -or
+    -not $doc13.Contains('no capability is enabled')) {
+    Write-Error 'DOC-13 does not preserve the fail-closed Unit 5C-5/5C-6 closeout.'
+}
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if ($implementationTracker -notmatch '(?m)^\*\*Status:\*\* `unit5c5_6_candidate_green_review_pending`\r?$' -or
-    -not $implementationTracker.Contains('**Active work unit:** `unit5c5_6_owner_decisions_benchmark_rollout_backend`') -or
+if (-not $implementationTracker.Contains('**Status:** `unit5c5_6_backend_complete_live_verified_ready_for_merge`') -or
+    -not $implementationTracker.Contains('**Active work unit:** `unit5c5_6_merge_gate`') -or
     -not $implementationTracker.Contains('20260729000018_marketplace_phase9_search_variant_proposals.sql') -or
     -not $implementationTracker.Contains('20260729000019_marketplace_phase9_search_variant_replay_fence.sql') -or
     -not $implementationTracker.Contains('20260729000020_marketplace_phase9_variant_runtime_search.sql') -or
     -not $implementationTracker.Contains('20260729000021_marketplace_phase9_defer_active_variant_search.sql') -or
     -not $implementationTracker.Contains('20260729000022_marketplace_phase9_active_variant_search.sql') -or
     -not $implementationTracker.Contains('20260729000023_marketplace_phase9_active_variant_search_correction.sql') -or
-    -not $implementationTracker.Contains('20260729000024') -or
-    -not $implementationTracker.Contains('20260729000027')) {
-    Write-Error 'Implementation tracker does not preserve the Unit 5C-4/M18-M27 handoff.'
+    -not $implementationTracker.Contains('20260730022442') -or
+    -not $implementationTracker.Contains('20260730022524') -or
+    -not $implementationTracker.Contains('20260730022559') -or
+    -not $implementationTracker.Contains('20260730022636') -or
+    -not $implementationTracker.Contains('20260730022713')) {
+    Write-Error 'Implementation tracker does not preserve the Unit 5C-4/M18-M28 handoff.'
 }
 $providerScaleMarkers = @{
     '00-phase-9-master-sdd.md' = @('MAS-13', 'MAS-17', 'MAS-AC14')
@@ -264,7 +275,7 @@ if (-not $implementationTracker.Contains('| 4B | [Gemini vision adapter]') -or
     -not $implementationTracker.Contains('optional whole-image fallback remains unselected/disabled') -or
     -not $implementationTracker.Contains('| 5A | [Metadata foundation]') -or
     -not $implementationTracker.Contains('| 5B/5C | Google Books primary adapter / [Unit 5C Lite multilingual variants]') -or
-    -not $implementationTracker.Contains('5C-5/5C-6 normalized candidate green')) {
+    -not $implementationTracker.Contains('5C-5/5C-6 backend live verified')) {
     Write-Error 'Implementation routing must keep Unit 4B and its disabled fallback separate from Unit 5A/5B/5C.'
 }
 if ($implementationTracker -notmatch '(?m)^\| 0A \|.*\| `approved_complete` \|') { Write-Error 'Implementation tracker no longer preserves WU0A approved-complete evidence.' }
@@ -303,12 +314,14 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if (-not $tracker.Contains('**Implementation status:** `unit5c5_6_candidate_green_review_pending`') -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5c5_6_owner_decisions_benchmark_rollout_backend`\r?$' -or
-    -not $tracker.Contains('**Next authorized action:** none until the user explicitly authorizes staging') -or
-    -not $tracker.Contains('M22 is live as `20260729075459`') -or
-    -not $tracker.Contains('M23 as `20260729082153`')) {
-    Write-Error 'TRACKER.md does not preserve the Unit 5C-4/M22-M23 handoff.'
+if (-not $tracker.Contains('**Implementation status:** `unit5c5_6_backend_complete_live_verified_ready_for_merge`') -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5c5_6_merge_gate`\r?$' -or
+    -not $tracker.Contains('**Next authorized action:** merge authorization') -or
+    -not $tracker.Contains('20260729075459') -or
+    -not $tracker.Contains('20260729082153') -or
+    -not $tracker.Contains('M18-M28 are immutable live history') -or
+    -not $tracker.Contains('M29 is absent')) {
+    Write-Error 'TRACKER.md does not preserve the Unit 5C-4/M22-M28 closeout.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
 $packageDesign = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-database-design.md'))

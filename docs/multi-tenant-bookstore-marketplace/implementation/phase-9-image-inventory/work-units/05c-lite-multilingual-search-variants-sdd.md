@@ -1,6 +1,6 @@
 # Phase 9 Unit 5C Lite: Model-Assisted Multilingual Search Variants
 
-**Status:** approved target design; Units 5C-1 through 5C-4 merged/live-verified; exceptional Owner decisions and benchmark/rollout backend next; visual UI not started
+**Status:** approved target design; Units 5C-1 through 5C-6 backend live-verified; visual UI not started
 **Decision date:** 2026-07-29
 **Scope:** Unit 5C specification only
 **Supersedes:** the previously governing selected-language and post-metadata English-alias method
@@ -69,6 +69,13 @@ Unit 5C-2 reconciles the provisional persistence delta through a separate
 private companion table while preserving the live M01 alias representation.
 Activation, stale propagation, alias/search projection, and UI still require
 separate authorization.
+
+Unit 5C-5/5C-6 backend is independently approved and live through M24-M28:
+Owner decisions remain field-specific and store-scoped; replacement locks the
+candidate before the proposal and revalidates current evidence; benchmark and
+rollout evidence is immutable and platform-controlled; and automatic
+activation is exact-tuple and fail closed. No language is benchmarked or
+approved and no capability is enabled.
 
 ## 3. Original-field authority
 
@@ -226,6 +233,17 @@ covering orientation, typography, damage, mixed scripts, multi-book images,
 occlusion, glare/blur, and ISBN presence/absence. Record model, prompt, schema,
 dataset, sample count, accuracy/usefulness, unsafe invention, correction,
 rejection, search-success results, decision, approver, and date.
+
+Structural review eligibility is distinct from platform quality approval. An
+execution becomes reviewable with at least 100 complete valid samples, exact
+identity reconciliation, unique complete population evidence, and truthful
+accounting of failed, invalid, and policy-governed excluded cases. Those
+recorded non-complete cases do not themselves block review eligibility;
+unauthorized exclusions, missing or duplicate identities, inconsistent totals,
+or fewer than 100 complete samples do. Rollout still requires an authorized
+reviewer to explicitly approve the latest legal review state after examining
+the recorded metrics and failure patterns; no universal zero-failure or
+accuracy threshold is implied.
 
 Enablement is reversible per language for vision, Romanization, and automatic
 activation independently. Monitor Owner correction/rejection, unreadable and

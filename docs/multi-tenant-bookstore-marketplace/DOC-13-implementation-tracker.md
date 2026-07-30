@@ -283,14 +283,29 @@ If implementation changes product or architecture behavior, update the relevant 
 
 > 2026-07-26 Phase 9 Unit 4A review-correction checkpoint: the independent review returned `CHANGES_REQUIRED` for unsafe Docker context, pre-authentication slot starvation/read deadlines, nondeterministic shutdown evidence, source-string-only deployment claims, and identity-only fixture tests. All five corrections plus bounded invoker responses are locally focused-green. A deny-by-default Docker context, pre-admission constant-time authentication, fixed body deadline, deterministic shutdown test, real compiled-entrypoint smoke, per-fixture semantic matrix, synthetic-only container script, and minimal-permission pull-request workflow now exist. The mandatory GitHub Actions image build/start gate is next; no live credential, image push, deployment, migration, provider, Supabase, or Storage operation is authorized.
 
+> 2026-07-30 Phase 9 Unit 5C-5/5C-6 backend closeout: exact tree
+> `66db5be740940a8c882bb7ea312817f4c33bb2db` received independent Review A
+> `APPROVED` and Review B `APPROVED`. Exact M24-M28 applied once to
+> `ahntbtktjjmvfosgkmgn` as `20260730022442`, `20260730022524`,
+> `20260730022559`, `20260730022636`, and `20260730022713`; M18-M23 remained
+> unchanged and M29 remained absent.
+> Live strict-role, RLS/ACL/search-path/no-MAINTAIN, benchmark evidence,
+> revocation, exact rollout, and real two-connection replacement concurrency
+> checks passed with zero synthetic residue. Final local verification passed
+> Jest 140/140, PGlite 53/53, scoped TypeScript, and continuity 195/0/0.
+> Implementation commit `4b667fc6674d606a8f88e2a4ee933d79bf332f53`
+> preserves the approved tree. No language is benchmarked or approved, no
+> capability is enabled, visual UI remains deferred, and no
+> inventory/publication/commerce behavior was added.
+
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5C-4 active variant search merged; combined Unit 5C-5/5C-6 backend active** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5C-5/5C-6 backend live-verified and ready for merge** |
 | Overall status | `in_progress` |
-| Last updated | 2026-07-29 |
-| Latest handoff | Unit 5C-4 is independently approved at tree `db8ea75` and merged at `d092f08`; M22/M23 are live and immutable, with M23 forward-correcting M22. |
-| Current risk level | Active store-scoped variant search is verified. Owner exceptional decisions and exact-evidence language rollout remain absent until Units 5C-5/5C-6; rollout remains fail closed. Pre-existing unrelated advisor warnings remain separately tracked. |
-| Next recommended task | Combined Unit 5C-5 exceptional Owner variant-decision backend authority and Unit 5C-6 benchmark/per-language rollout-control infrastructure, in one backend session and branch after this closeout merges. |
+| Last updated | 2026-07-30 |
+| Latest handoff | Unit 5C-5/5C-6 exact tree `66db5be7` received dual approval, is live through M24-M28, and is committed as `4b667fc`; M29 is absent. |
+| Current risk level | Backend Owner governance and exact-evidence rollout controls are verified. No language is benchmarked/approved and no capability is enabled; rollout remains fail closed. Visual Owner/platform-admin UI remains deferred. |
+| Next recommended task | Authorize merge of the Unit 5C-5/5C-6 backend branch. Unit 6 Owner UX is next eligible but requires separate authorization. |
 
 ---
 
@@ -307,7 +322,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit5c4_active_variant_search_merged_unit5c5_6_active` | [Unit 5C-4 evidence](./implementation/phase-9-image-inventory/trackers/16-unit5c4-active-variant-search-evidence.md) · [Unit 5C Lite](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md) | Unit 5C-4 is merged at `d092f08`; M18-M23 are immutable/live-verified; combined Unit 5C-5/5C-6 backend is next. |
+| Phase 9: Image-to-LLM Inventory | `unit5c5_6_backend_complete_live_verified_ready_for_merge` | [Unit 5C-5/5C-6 evidence](./implementation/phase-9-image-inventory/trackers/17-unit5c5-6-owner-rollout-backend-evidence.md) · [Unit 5C Lite](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md) | M18-M28 are immutable/live-verified; M29 is absent; merge authorization is next. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -424,7 +439,7 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. After the Unit 5C-4 documentation closeout merges, implement Unit 5C-5 exceptional Owner variant-decision backend authority and Unit 5C-6 benchmark/per-language rollout-control infrastructure together in one backend session and branch. Expose UI-ready contracts without visual UI; do not require live benchmark execution or production-language approval without qualifying evidence; keep rollout fail closed; independently approve the exact staged tree before applying new migrations.
+1. Unit 5C-5/5C-6 backend is complete at exact tree `66db5be740940a8c882bb7ea312817f4c33bb2db`, dual-approved, live through M24-M28, and committed as `4b667fc6674d606a8f88e2a4ee933d79bf332f53`. Authorize merge; do not merge automatically. It exposes no visual UI, has no benchmarked or approved language, enables no capability, and keeps rollout fail closed.
 2. Historical handoff (vision portion superseded 2026-07-27): Gemini remains configuration/deployment/live-call deferred. Google Books is implemented behind provider-neutral contracts but remains fixture/mock verified only; credentials, provider-registry enablement, deployment, and live smoke remain deferred.
    The current initial primary vision model ID is configuration-driven
    `gemini-3.5-flash-lite`; provider configuration/calls remain deferred.
