@@ -2,6 +2,11 @@ import {
   assertSafeIngestionResponse,
   OwnerIngestionRequest,
 } from '../contracts/ingestion.ts';
+import {
+  OWNER_UX_CONTRACT_VERSION,
+  OwnerUxAction,
+  parseOwnerUxResponse,
+} from '../contracts/ownerUx.ts';
 import { sha256Hex, StoredImageObject, storedImageEnvelope } from '../media/sourceIdentity.ts';
 
 type RpcResult = { data: any; error: { message?: string } | null };
@@ -24,9 +29,46 @@ type SignedUploadTransportResponse = Readonly<{
 }>;
 
 function unwrap(result: RpcResult): any {
-  if (result.error) throw new Error('P9_INTERNAL_ERROR');
+  if (result.error) {
+    const safeCode = result.error.message?.match(/\b(P9_(?:AUTH_REQUIRED|OWNER_NOT_AUTHORIZED|REQUEST_INVALID|CURSOR_INVALID|NOT_FOUND|STATE_CONFLICT|VERSION_CONFLICT|CANDIDATE_VERSION_CONFLICT|IDEMPOTENCY_MISMATCH|INTERNAL_ERROR))\b/u)?.[1];
+    throw new Error(safeCode ?? 'P9_INTERNAL_ERROR');
+  }
   return result.data;
 }
+
+const ownerUxRpc = {
+  discover_scan_session: ['phase9_owner_discover_session_v1', () => ({})],
+  read_scan_session: ['phase9_owner_session_summary_v2', (request: any) => ({
+    p_session_id: request.sessionId,
+  })],
+  list_scan_inputs: ['phase9_owner_session_inputs_v1', (request: any) => ({
+    p_session_id: request.sessionId, p_page_size: request.pageSize ?? 20,
+    p_cursor: request.cursor ?? null,
+  })],
+  list_scan_candidates: ['phase9_owner_candidates_page_v2', (request: any) => ({
+    p_scope: request.scope, p_session_id: request.sessionId ?? null,
+    p_attention: request.attention ?? 'all', p_page_size: request.pageSize ?? 20,
+    p_cursor: request.cursor ?? null,
+  })],
+  read_scan_candidate: ['phase9_owner_candidate_detail_v2', (request: any) => ({
+    p_session_id: request.sessionId, p_candidate_id: request.candidateId,
+  })],
+  update_candidate_review: ['phase9_update_candidate_review_v2', (request: any) => ({
+    p_session_id: request.sessionId, p_candidate_id: request.candidateId,
+    p_expected_candidate_version: request.expectedCandidateVersion,
+    p_expected_metadata_revision: request.expectedMetadataRevision,
+    p_review: request.review, p_idempotency_key: request.idempotencyKey,
+    p_command_id: request.commandId,
+  })],
+  read_scan_readiness: ['phase9_owner_session_readiness_v1', (request: any) => ({
+    p_session_id: request.sessionId,
+  })],
+  close_scan_session: ['phase9_close_session_v2', (request: any) => ({
+    p_session_id: request.sessionId,
+    p_expected_session_version: request.expectedSessionVersion,
+    p_idempotency_key: request.idempotencyKey, p_command_id: request.commandId,
+  })],
+} as const;
 
 function splitPath(path: string): { prefix: string; name: string } {
   const index = path.lastIndexOf('/');
@@ -52,6 +94,16 @@ export async function executeOwnerIngestion(
   userClient: Client,
   serviceClient: Client,
 ): Promise<Record<string, unknown>> {
+  if (request.contractVersion === OWNER_UX_CONTRACT_VERSION) {
+    const action = request.action as OwnerUxAction;
+    const route = ownerUxRpc[action];
+    const data = unwrap(await userClient.rpc(route[0], route[1](request)));
+    return parseOwnerUxResponse(action, {
+      contractVersion: OWNER_UX_CONTRACT_VERSION,
+      data,
+    }) as Record<string, unknown>;
+  }
+
   if (request.action === 'start_session') {
     const sessionId = unwrap(await userClient.rpc('phase9_start_session', {
       p_store_hint: request.storeHint ?? null,

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { assertNoPrivacySensitiveKeys } from './privacy.ts';
+import { OwnerUxRequest, parseOwnerUxRequest } from './ownerUx.ts';
 
 const uuid = z.string().uuid();
 const contractVersion = z.literal('phase9-v1');
@@ -48,13 +49,21 @@ const dedicatedWorkerRequest = z.object({
   batchSize: z.number().int().min(1).max(10),
 }).strict();
 
-export type OwnerIngestionRequest = z.infer<typeof ownerRequest>;
+export type OwnerIngestionRequest = z.infer<typeof ownerRequest> | OwnerUxRequest;
 export type WorkerIngestionRequest = z.infer<typeof workerRequest>;
 export type DedicatedWorkerRequest = z.infer<typeof dedicatedWorkerRequest>;
 
 export function parseOwnerIngestionRequest(value: unknown): OwnerIngestionRequest {
   const result = ownerRequest.safeParse(value);
   if (!result.success) {
+    const action = value && typeof value === 'object'
+      ? (value as { action?: unknown }).action
+      : undefined;
+    if (typeof action === 'string' && [
+      'discover_scan_session', 'read_scan_session', 'list_scan_inputs',
+      'list_scan_candidates', 'read_scan_candidate', 'update_candidate_review',
+      'read_scan_readiness', 'close_scan_session',
+    ].includes(action)) return parseOwnerUxRequest(value);
     const unknown = result.error.issues.some((issue) => issue.code === 'unrecognized_keys');
     throw new Error(unknown ? 'unknown keys in Owner ingestion request' : 'invalid Owner ingestion request');
   }

@@ -30,6 +30,7 @@ export const phase9MigrationNames = [
   '20260729000026_marketplace_phase9_variant_benchmark_rollout.sql',
   '20260729000027_marketplace_phase9_exact_rollout_activation.sql',
   '20260729000028_marketplace_phase9_variant_benchmark_evidence_read.sql',
+  '20260730000029_marketplace_phase9_owner_safe_contracts.sql',
 ];
 
 const root = process.cwd();
