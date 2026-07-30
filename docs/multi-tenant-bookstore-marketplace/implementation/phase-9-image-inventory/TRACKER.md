@@ -1,18 +1,18 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit6_owner_ux_approved_design_authority`
-**Implementation status:** `unit6a_local_implementation_closure_review_pending`
+**Implementation status:** `unit6a_live_verified_merge_ready`
 **Last updated:** 2026-07-30
 **Current milestone:** Unit 6 Owner Capture, Review, and Recovery UX implementation routing
 **Active work unit:** `unit6a_owner_safe_backend_contract_foundation`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Unit 6A local implementation and frozen-finding corrections; evidence is [tracker 19](./trackers/19-unit6a-owner-safe-backend-evidence.md)
-**Next authorized action:** one bounded Unit 6A closure review, then Git closeout if approved
-**Migration note:** local M29 exists but remains unapplied
-**Next authorized action:** Phase 9 Unit 6A — Owner-safe backend contract foundation only; start red-first in a new implementation session
-**Implementation authority:** Unit 6A only under the approved [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md) and [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md). Unit 6 implementation has not started; 6B-6F and Unit 7 remain dependency/authorization gated
-**Migration creation/application authority:** M18-M28 are immutable live history and M29 is absent. M22/M23 are `20260729075459`/`20260729082153`; M24-M28 are `20260730022442`, `20260730022524`, `20260730022559`, `20260730022636`, and `20260730022713`. No further migration is authorized by this closeout
-**Current gate:** authorize and execute Unit 6A separately; fresh migration creation/application and deployment authority are required. No runtime migration or deployment occurred in the Unit 6 design session
+**Last completed:** Unit 6A authenticated live verification with approved retained immutable synthetic audit evidence; evidence is [tracker 19](./trackers/19-unit6a-owner-safe-backend-evidence.md)
+**Next authorized action:** create the bounded Unit 6A live-verification evidence commit, push the feature branch, and fast-forward merge/push `main`
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; authenticated Owner RPC smoke passed and mutable/operational residue is zero
+**Scope boundary:** Phase 9 Unit 6A only; do not start 6B-6F or Unit 7
+**Implementation authority:** Unit 6A only under the approved [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md) and [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md). Unit 6A is live-verified and merge-ready; 6B-6F and Unit 7 remain dependency/authorization gated
+**Migration creation/application authority:** M18-M28 are immutable live history and M29 is live once as `20260730162700`; no further migration is authorized by this closeout
+**Current gate:** bounded Unit 6A evidence commit and fast-forward merge only; no further migration, deployment, Unit 6B, or Unit 7 work is authorized
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 

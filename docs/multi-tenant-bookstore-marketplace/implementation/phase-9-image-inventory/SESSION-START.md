@@ -15,14 +15,17 @@ and [contract matrix](./work-units/06-owner-capture-review-recovery-contract-mat
 are approved design authority with evidence in
 [tracker 18](./trackers/18-unit6-owner-ux-design-evidence.md). Unit 6A is
 locally implemented and test-complete; [tracker 19](./trackers/19-unit6a-owner-safe-backend-evidence.md)
-owns its receipt. M29 remains local and unapplied.
+owns its receipt. Phase 9 Unit 6A — Owner-safe backend contract foundation is
+live-verified and merge-ready. M29 is live once as `20260730162700`; authenticated live-RPC
+smoke passed using ordinary user sessions. Cleanup proves zero mutable workflow,
+inventory, listing, public-projection, commerce, and Unit 7 residue. The approved
+`retained_immutable_synthetic_audit_evidence` consists only of two immutable
+marketplace events and their minimum inert store/Auth anchors; the store is
+closed/non-selling with no public profile or memberships, and the user is banned.
 
-The next authorized work is **Phase 9 Unit 6A — Owner-safe backend contract
-foundation** only. Follow the approved 6A-6F dependency order; do not bundle
-6A backend contract/migration work with 6B navigation/query/cache work. Unit 6A
-must begin red-first and requires fresh database/migration authority before
-creating or applying a forward migration. Unit 7 remains separately gated.
-The Unit 6 design session performed no runtime migration or deployment.
+The next authorized work is the bounded Unit 6A evidence commit and
+fast-forward merge only. Do not begin 6B navigation/query/cache work or Unit 7.
+No further migration or deployment is authorized.
 
 ## 1. Canonical status source
 

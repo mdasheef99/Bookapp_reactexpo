@@ -312,14 +312,27 @@ If implementation changes product or architecture behavior, update the relevant 
 > gated. No runtime migration, deployment, Supabase, Storage, provider, or
 > other external mutation occurred in the design session.
 
+> 2026-07-30 Phase 9 Unit 6A live verification: M29 is live exactly once as
+> `20260730162700 marketplace_phase9_owner_safe_contracts`. Authenticated
+> Owner RPC smoke passed 21/21 bounded receipts through ordinary user sessions:
+> initiating Owner reads/mutations, four actor denials, non-enumeration,
+> DTO/private-table privacy, review version/replay fences, readiness, Close,
+> and Unit 7 noninterference. Post-smoke readback proves zero mutable workflow,
+> inventory, listing, public-projection, commerce, or Unit 7 residue.
+> `retained_immutable_synthetic_audit_evidence` consists only of two immutable
+> marketplace events and the minimum inert store/Auth anchors under explicit
+> authorization; the store is closed/non-selling with no public profile or
+> membership, and the user is banned. No append-only protection was changed.
+> No deployment, Unit 6B, or Unit 7 work occurred.
+
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6 design approved; Unit 6A next authorized** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6A live-verified and merge-ready** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-30 |
-| Latest handoff | Unit 5C-5/5C-6 is merged on `main`; M24-M28 are live exactly once. Unit 6 SDD/matrix are approved design authority; implementation has not started. |
-| Current risk level | No language is benchmarked/approved/enabled; rollout remains fail closed. Unit 6A requires fresh migration/security authority and red-first implementation; Unit 7 remains separately gated. |
-| Next recommended task | Phase 9 Unit 6A — Owner-safe backend contract foundation only. |
+| Latest handoff | Unit 6A is locally complete, M29 is live once, authenticated smoke passed, mutable/operational residue is zero, and approved immutable audit evidence remains inert. |
+| Current risk level | Unit 6A is merge-ready. No migration, deployment, Unit 6B, or Unit 7 work is authorized by this closeout. |
+| Next recommended task | Create the bounded Unit 6A evidence commit, push the feature branch, and fast-forward merge/push `main`. |
 
 ---
 
@@ -453,7 +466,9 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Start **Phase 9 Unit 6A — Owner-safe backend contract foundation** only under the approved Unit 6 SDD/matrix. Unit 5C-5/5C-6 is already merged; M24-M28 are live exactly once. Unit 6 implementation has not started, no language is benchmarked/approved/enabled, and Unit 7 remains separately gated.
+1. Complete the **Phase 9 Unit 6A evidence commit and fast-forward merge**.
+   M29 remains live exactly once; authenticated smoke and approved retained
+   immutable-evidence cleanup are complete. Do not begin Unit 6B.
 2. Historical handoff (vision portion superseded 2026-07-27): Gemini remains configuration/deployment/live-call deferred. Google Books is implemented behind provider-neutral contracts but remains fixture/mock verified only; credentials, provider-registry enablement, deployment, and live smoke remain deferred.
    The current initial primary vision model ID is configuration-driven
    `gemini-3.5-flash-lite`; provider configuration/calls remain deferred.

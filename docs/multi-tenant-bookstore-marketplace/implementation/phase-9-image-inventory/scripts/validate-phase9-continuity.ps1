@@ -330,13 +330,12 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if (-not $tracker.Contains('**Implementation status:** `unit6a_local_implementation_closure_review_pending`') -or
+if (-not $tracker.Contains('**Implementation status:** `unit6a_live_verified_merge_ready`') -or
     $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit6a_owner_safe_backend_contract_foundation`\r?$' -or
-    -not $tracker.Contains('**Next authorized action:** one bounded Unit 6A closure review') -or
-    -not $tracker.Contains('20260729075459') -or
-    -not $tracker.Contains('20260729082153') -or
+    -not $tracker.Contains('**Next authorized action:** create the bounded Unit 6A live-verification evidence commit') -or
     -not $tracker.Contains('M18-M28 are immutable live history') -or
-    -not $tracker.Contains('local M29 exists but remains unapplied')) {
+    -not $tracker.Contains('M29 is live once as `20260730162700`') -or
+    -not $tracker.Contains('authenticated Owner RPC smoke passed and mutable/operational residue is zero')) {
     Write-Error 'TRACKER.md does not preserve the final Unit 6A handoff.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
@@ -442,7 +441,7 @@ if ($tracker -match '(?i)\b(?:Supabase audit|migration-file creation|live migrat
     Write-Error 'TRACKER.md incorrectly represents a later authorization.'
 }
 $nextActionCount = [regex]::Matches($tracker, '(?m)^\*\*Next authorized action:\*\*').Count
-if ($nextActionCount -ne 2) { Write-Error "TRACKER.md must contain current and historical Unit 6A next-action markers; found $nextActionCount." }
+if ($nextActionCount -ne 1) { Write-Error "TRACKER.md must contain exactly one current Unit 6A next-action marker; found $nextActionCount." }
 $catalogue = $artifactBodies['00b-technical-design/01-command-query-and-dto-catalogue.md']
 $commandIds = @([regex]::Matches($catalogue, '\bC(?:0[1-9]|[12][0-9]|30)\b') | ForEach-Object Value | Sort-Object -Unique)
 $queryIds = @([regex]::Matches($catalogue, '\bQ(?:0[1-9]|1[01])\b') | ForEach-Object Value | Sort-Object -Unique)
