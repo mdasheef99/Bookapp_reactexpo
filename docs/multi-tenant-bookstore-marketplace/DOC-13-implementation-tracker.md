@@ -325,14 +325,23 @@ If implementation changes product or architecture behavior, update the relevant 
 > membership, and the user is banned. No append-only protection was changed.
 > No deployment, Unit 6B, or Unit 7 work occurred.
 
+> 2026-07-30 Phase 9 Unit 6B local completion: Unit 6A is merged on `main` and
+> live-verified through M29. Unit 6B adds the nested guarded Inventory route
+> tree, exact five-read Owner UX adapters, strict portable response/request
+> contracts, identity-complete React Query keys/defaults, and serialized
+> cancel-before-remove private-cache cleanup. Feature commit `9ef9eb3` is
+> locally verified; [tracker 20](./implementation/phase-9-image-inventory/trackers/20-unit6b-route-query-cache-evidence.md)
+> owns the detailed receipt. No migration, Supabase/Storage mutation,
+> deployment, provider call, or other external mutation occurred.
+
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6A live-verified and merge-ready** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6B locally complete** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-30 |
-| Latest handoff | Unit 6A is locally complete, M29 is live once, authenticated smoke passed, mutable/operational residue is zero, and approved immutable audit evidence remains inert. |
-| Current risk level | Unit 6A is merge-ready. No migration, deployment, Unit 6B, or Unit 7 work is authorized by this closeout. |
-| Next recommended task | Create the bounded Unit 6A evidence commit, push the feature branch, and fast-forward merge/push `main`. |
+| Latest handoff | Unit 6A is merged/live-verified; Unit 6B route/query/identity/cache foundation is locally complete at `9ef9eb3`. |
+| Current risk level | Unit 6B made no external mutation. Authenticated browser identity transition remains represented by deterministic tests because eligible Owner credentials were unavailable. |
+| Next recommended task | Complete the bounded Unit 6B evidence commit and authorized fast-forward merge, then begin Unit 6C only. |
 
 ---
 
@@ -349,7 +358,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6_design_approved_unit6a_next_authorized` | [Unit 6 SDD](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-ux-sdd.md) · [contract matrix](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-contract-matrix.md) · [tracker 18](./implementation/phase-9-image-inventory/trackers/18-unit6-owner-ux-design-evidence.md) | Unit 5C-5/5C-6 merged; M24-M28 live exactly once; Unit 6 implementation not started; 6A only is next; Unit 7 gated. |
+| Phase 9: Image-to-LLM Inventory | `unit6b_locally_complete_unit6c_next_authorized` | [Unit 6 SDD](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-ux-sdd.md) · [contract matrix](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-contract-matrix.md) · [tracker 20](./implementation/phase-9-image-inventory/trackers/20-unit6b-route-query-cache-evidence.md) | Unit 6A merged/live through M29; Unit 6B locally complete at `9ef9eb3`; Unit 6C only is next; Unit 7 gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -466,9 +475,9 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Complete the **Phase 9 Unit 6A evidence commit and fast-forward merge**.
-   M29 remains live exactly once; authenticated smoke and approved retained
-   immutable-evidence cleanup are complete. Do not begin Unit 6B.
+1. Complete the **Phase 9 Unit 6B evidence commit and authorized fast-forward
+   merge**, then begin **Unit 6C capture, preview, progress, and recovery UX**
+   only. M29 remains live exactly once. Do not begin Units 6D-6F or Unit 7.
 2. Historical handoff (vision portion superseded 2026-07-27): Gemini remains configuration/deployment/live-call deferred. Google Books is implemented behind provider-neutral contracts but remains fixture/mock verified only; credentials, provider-registry enablement, deployment, and live smoke remain deferred.
    The current initial primary vision model ID is configuration-driven
    `gemini-3.5-flash-lite`; provider configuration/calls remain deferred.

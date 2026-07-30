@@ -8,24 +8,18 @@ This is the deterministic resume procedure for Phase 9. A new session should rec
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-Current routed handoff: Unit 5C-5/5C-6 is merged on `main`; M24-M28 are
-immutable live history applied exactly once. No language is benchmarked,
-approved, or enabled. The [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md)
-and [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md)
-are approved design authority with evidence in
-[tracker 18](./trackers/18-unit6-owner-ux-design-evidence.md). Unit 6A is
-locally implemented and test-complete; [tracker 19](./trackers/19-unit6a-owner-safe-backend-evidence.md)
-owns its receipt. Phase 9 Unit 6A — Owner-safe backend contract foundation is
-live-verified and merge-ready. M29 is live once as `20260730162700`; authenticated live-RPC
-smoke passed using ordinary user sessions. Cleanup proves zero mutable workflow,
-inventory, listing, public-projection, commerce, and Unit 7 residue. The approved
-`retained_immutable_synthetic_audit_evidence` consists only of two immutable
-marketplace events and their minimum inert store/Auth anchors; the store is
-closed/non-selling with no public profile or memberships, and the user is banned.
+Current routed handoff: Unit 6A is merged on `main`, live-verified, and recorded
+in [tracker 19](./trackers/19-unit6a-owner-safe-backend-evidence.md). M29 is
+immutable live history applied exactly once as `20260730162700`. Unit 6B —
+inventory route, query, identity, and cache foundation — is locally complete at
+feature commit `9ef9eb3`; [tracker 20](./trackers/20-unit6b-route-query-cache-evidence.md)
+owns its implementation, review, verification, and bounded browser-smoke
+receipt. Unit 6B added no mutation adapter, offline persistence, migration,
+Supabase/Storage write, deployment, provider call, or other external mutation.
 
-The next authorized work is the bounded Unit 6A evidence commit and
-fast-forward merge only. Do not begin 6B navigation/query/cache work or Unit 7.
-No further migration or deployment is authorized.
+The next authorized work is Phase 9 Unit 6C — capture, preview, progress, and
+recovery UX — only. Do not begin Units 6D-6F or Unit 7. No migration,
+Supabase/Storage mutation, or deployment is authorized by this handoff.
 
 ## 1. Canonical status source
 
