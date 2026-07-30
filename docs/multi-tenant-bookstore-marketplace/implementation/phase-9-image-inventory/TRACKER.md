@@ -1,12 +1,14 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit6_owner_ux_approved_design_authority`
-**Implementation status:** `unit6_not_started_unit6a_next_authorized`
+**Implementation status:** `unit6a_local_implementation_closure_review_pending`
 **Last updated:** 2026-07-30
 **Current milestone:** Unit 6 Owner Capture, Review, and Recovery UX implementation routing
 **Active work unit:** `unit6a_owner_safe_backend_contract_foundation`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Unit 5C-5/5C-6 is merged on `main`; M24-M28 were already applied live exactly once. Unit 6 design authority received two independent zero-finding final approvals; evidence is [tracker 18](./trackers/18-unit6-owner-ux-design-evidence.md)
+**Last completed:** Unit 6A local implementation and frozen-finding corrections; evidence is [tracker 19](./trackers/19-unit6a-owner-safe-backend-evidence.md)
+**Next authorized action:** one bounded Unit 6A closure review, then Git closeout if approved
+**Migration note:** local M29 exists but remains unapplied
 **Next authorized action:** Phase 9 Unit 6A — Owner-safe backend contract foundation only; start red-first in a new implementation session
 **Implementation authority:** Unit 6A only under the approved [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md) and [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md). Unit 6 implementation has not started; 6B-6F and Unit 7 remain dependency/authorization gated
 **Migration creation/application authority:** M18-M28 are immutable live history and M29 is absent. M22/M23 are `20260729075459`/`20260729082153`; M24-M28 are `20260730022442`, `20260730022524`, `20260730022559`, `20260730022636`, and `20260730022713`. No further migration is authorized by this closeout

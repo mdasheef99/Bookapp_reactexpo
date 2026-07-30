@@ -13,8 +13,9 @@ immutable live history applied exactly once. No language is benchmarked,
 approved, or enabled. The [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md)
 and [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md)
 are approved design authority with evidence in
-[tracker 18](./trackers/18-unit6-owner-ux-design-evidence.md). Unit 6
-implementation has not started.
+[tracker 18](./trackers/18-unit6-owner-ux-design-evidence.md). Unit 6A is
+locally implemented and test-complete; [tracker 19](./trackers/19-unit6a-owner-safe-backend-evidence.md)
+owns its receipt. M29 remains local and unapplied.
 
 The next authorized work is **Phase 9 Unit 6A — Owner-safe backend contract
 foundation** only. Follow the approved 6A-6F dependency order; do not bundle

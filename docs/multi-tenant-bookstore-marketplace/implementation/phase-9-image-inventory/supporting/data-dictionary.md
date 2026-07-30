@@ -1,7 +1,9 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
 **Status:** current/live and approved-target representations separated; Unit 5C-4 search and Unit 5C-5/5C-6 backend live through M28
-**Last updated:** 2026-07-29
+**Last updated:** 2026-07-30
+
+Unit 6A adds only local, unapplied Owner UX presentation/review support; it grants no Unit 7 inventory/publication mutation authority. See [tracker 19](../trackers/19-unit6a-owner-safe-backend-evidence.md).
 
 M01-M08/M10-M14 are live-verified. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. M14 adds dedicated service-only vision-provider attempts and is live once as `20260727183546`. Owner/media/fixture-vision services remain deployed. M09 quantity validation remains a separate live-data gate.
 

@@ -330,14 +330,13 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if (-not $tracker.Contains('**Implementation status:** `unit6_not_started_unit6a_next_authorized`') -or
+if (-not $tracker.Contains('**Implementation status:** `unit6a_local_implementation_closure_review_pending`') -or
     $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit6a_owner_safe_backend_contract_foundation`\r?$' -or
-    -not $tracker.Contains('**Next authorized action:** Phase 9 Unit 6A') -or
-    -not $tracker.Contains('Owner-safe backend contract foundation only') -or
+    -not $tracker.Contains('**Next authorized action:** one bounded Unit 6A closure review') -or
     -not $tracker.Contains('20260729075459') -or
     -not $tracker.Contains('20260729082153') -or
     -not $tracker.Contains('M18-M28 are immutable live history') -or
-    -not $tracker.Contains('M29 is absent')) {
+    -not $tracker.Contains('local M29 exists but remains unapplied')) {
     Write-Error 'TRACKER.md does not preserve the final Unit 6A handoff.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
@@ -382,7 +381,8 @@ $migrationNames = @(
     '20260729000025_marketplace_phase9_owner_variant_corrections.sql',
     '20260729000026_marketplace_phase9_variant_benchmark_rollout.sql',
     '20260729000027_marketplace_phase9_exact_rollout_activation.sql',
-    '20260729000028_marketplace_phase9_variant_benchmark_evidence_read.sql'
+    '20260729000028_marketplace_phase9_variant_benchmark_evidence_read.sql',
+    '20260730000029_marketplace_phase9_owner_safe_contracts.sql'
 )
 foreach ($name in $migrationNames) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot "supabase/migrations/$name"))) { Write-Error "Missing approved Phase 9 migration: $name" }
@@ -390,13 +390,13 @@ foreach ($name in $migrationNames) {
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $actualMigrationNames = @($phase9Migrations.Name | Sort-Object)
 $duplicateMigrationVersions = @($phase9Migrations | Group-Object { [int]$_.Name.Substring(8,6) } | Where-Object Count -gt 1)
-$unexpectedCorrectionMigrations = @($phase9Migrations | Where-Object { [int]$_.Name.Substring(8,6) -ge 29 })
-if ($actualMigrationNames.Count -ne 27 -or
+$unexpectedCorrectionMigrations = @($phase9Migrations | Where-Object { [int]$_.Name.Substring(8,6) -ge 30 })
+if ($actualMigrationNames.Count -ne 28 -or
     (Compare-Object $migrationNames $actualMigrationNames) -or
     $duplicateMigrationVersions.Count -ne 0 -or
     $unexpectedCorrectionMigrations.Count -ne 0 -or
     $phase9Migrations.Name -match '000009|quantity.*validat') {
-    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M28 exactly once and in filename order, with no M09/M29-or-later correction.'
+    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M29 exactly once and in filename order, with no M09/M30-or-later correction.'
 }
 $m24 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000024_marketplace_phase9_owner_variant_decisions.sql'))
 $m25 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000025_marketplace_phase9_owner_variant_corrections.sql'))
@@ -442,7 +442,7 @@ if ($tracker -match '(?i)\b(?:Supabase audit|migration-file creation|live migrat
     Write-Error 'TRACKER.md incorrectly represents a later authorization.'
 }
 $nextActionCount = [regex]::Matches($tracker, '(?m)^\*\*Next authorized action:\*\*').Count
-if ($nextActionCount -ne 1) { Write-Error "TRACKER.md must contain exactly one next-action marker; found $nextActionCount." }
+if ($nextActionCount -ne 2) { Write-Error "TRACKER.md must contain current and historical Unit 6A next-action markers; found $nextActionCount." }
 $catalogue = $artifactBodies['00b-technical-design/01-command-query-and-dto-catalogue.md']
 $commandIds = @([regex]::Matches($catalogue, '\bC(?:0[1-9]|[12][0-9]|30)\b') | ForEach-Object Value | Sort-Object -Unique)
 $queryIds = @([regex]::Matches($catalogue, '\bQ(?:0[1-9]|1[01])\b') | ForEach-Object Value | Sort-Object -Unique)

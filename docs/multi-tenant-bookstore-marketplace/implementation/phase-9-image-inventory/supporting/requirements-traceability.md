@@ -1,6 +1,10 @@
 # Phase 9 Requirements Traceability
 
-**Last updated:** 2026-07-29
+**Last updated:** 2026-07-30
+
+## Unit 6A implementation receipt
+
+Matrix §1.1-§1.4 boundaries, decoding, stale/replay/Close fences, and Unit 7 noninterference are locally implemented and tested; [tracker 19](../trackers/19-unit6a-owner-safe-backend-evidence.md) records the evidence. M29 is unapplied.
 
 ## Unit 5C Lite target reconciliation (2026-07-29)
 
