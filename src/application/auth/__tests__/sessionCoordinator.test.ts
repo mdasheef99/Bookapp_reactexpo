@@ -1,8 +1,12 @@
 jest.mock('@/features/marketplace/commerce/services/commerceSession', () => ({
   clearCommerceSession: jest.fn(() => Promise.resolve()),
 }));
+jest.mock('@/features/imageInventory/queries/ownerUxQueries', () => ({
+  clearImageInventoryIdentityState: jest.fn(() => Promise.resolve()),
+}));
 
 import { clearCommerceSession } from '@/features/marketplace/commerce/services/commerceSession';
+import { clearImageInventoryIdentityState } from '@/features/imageInventory/queries/ownerUxQueries';
 import { resetAuthStoreForTests, setAuthState, useAuthStore } from '@/features/auth/store/authStore';
 import {
   applySessionTransition,
@@ -48,6 +52,7 @@ describe('application session coordinator', () => {
     await applySessionTransition('SIGNED_OUT', null);
 
     expect(clearCommerceSession).toHaveBeenCalledTimes(1);
+    expect(clearImageInventoryIdentityState).toHaveBeenCalledTimes(1);
     expect(useAuthStore.getState().status).toBe('unauthenticated');
   });
 
@@ -96,6 +101,7 @@ describe('application session coordinator', () => {
     resetSessionCoordinatorForTests('user-1');
 
     await expect(applySessionTransition('SIGNED_OUT', null)).resolves.toBeUndefined();
+    expect(clearImageInventoryIdentityState).toHaveBeenCalledTimes(1);
     expect(useAuthStore.getState().status).toBe('unauthenticated');
   });
 

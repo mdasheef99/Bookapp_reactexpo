@@ -1,5 +1,6 @@
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { clearCommerceSession } from '@/features/marketplace/commerce/services/commerceSession';
+import { clearImageInventoryIdentityState } from '@/features/imageInventory/queries/ownerUxQueries';
 import { setAuthState } from '@/features/auth/store/authStore';
 import { captureAppException } from '@/lib/sentry';
 
@@ -19,15 +20,20 @@ function nextAuthState(session: Session | null) {
 }
 
 async function cleanPreviousUserState(): Promise<void> {
-  try {
-    await clearCommerceSession();
-  } catch (error) {
-    captureAppException(error, {
+  const results = await Promise.allSettled([
+    clearImageInventoryIdentityState(),
+    clearCommerceSession(),
+  ]);
+  const failure = results.find(
+    (result): result is PromiseRejectedResult => result.status === 'rejected',
+  );
+  if (failure) {
+    captureAppException(failure.reason, {
       area: 'auth',
       action: 'user_session_cleanup_failed',
       tags: { feature: 'auth', coordinator: 'application-session' },
     });
-    throw error;
+    throw failure.reason;
   }
 }
 

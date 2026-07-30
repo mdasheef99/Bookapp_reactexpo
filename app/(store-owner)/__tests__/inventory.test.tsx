@@ -1,17 +1,19 @@
 import { render } from '@testing-library/react-native';
 import StoreOwnerInventoryRoute from '../inventory';
-import StoreInventoryScreen from '@/features/stores/screens/StoreInventoryScreen';
+import { InventoryHubFoundationScreen } from '@/features/imageInventory/screens/InventoryFoundationScreens';
 
-jest.mock('@/features/stores/screens/StoreInventoryScreen', () => jest.fn(() => null));
+jest.mock('@/features/imageInventory/screens/InventoryFoundationScreens', () => ({
+    InventoryHubFoundationScreen: jest.fn(() => null),
+}));
 
 describe('Store Owner inventory route', () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
-    it('renders the Store Inventory screen', () => {
+    it('renders the guarded nested Inventory hub', () => {
         render(<StoreOwnerInventoryRoute />);
 
-        expect(StoreInventoryScreen).toHaveBeenCalled();
+        expect(InventoryHubFoundationScreen).toHaveBeenCalled();
     });
 });
