@@ -1,10 +1,10 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit6c_locally_complete_merge_pending`
+**Status:** `unit6c_merged_unit6d_separately_gated`
 **Last updated:** 2026-07-31
 **Implementation status:** M01-M08/M10-M29 are live-verified at their recorded
 levels; Unit 6A is merged/live, Unit 6B is merged at `9ef9eb3`, and Unit 6C is
-locally complete at `b87469d`
+merged on `main` through `092562d` (implementation `b87469d`)
 **Supabase mutation status:** M01-M08/M10-M29 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; Unit 6C performed no Supabase/Storage mutation
 **Database checkpoint:** M01-M08 and forward migrations M10-M29 are live-verified.
 

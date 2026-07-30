@@ -129,7 +129,7 @@ if (-not $active.Contains('06-owner-capture-review-recovery-ux-sdd.md') -or
     -not $active.Contains('Unit 7 remain separately gated')) { Write-Error 'ACTIVE.md does not preserve the Unit 6C closeout and Unit 6D gate.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6c_locally_complete_unit6d_separately_gated`') -or
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6c_merged_unit6d_separately_gated`') -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
     -not $doc13.Contains('20260727231217 marketplace_phase9_sensitive_table_acl_correction') -or
     -not $doc13.Contains('20260727233457 marketplace_phase9_maintain_acl_correction') -or
@@ -149,8 +149,8 @@ if (-not $doc13.Contains('No language is benchmarked or approved') -or
     Write-Error 'DOC-13 does not preserve the fail-closed Unit 5C-5/5C-6 closeout.'
 }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if (-not $implementationTracker.Contains('**Status:** `unit6c_locally_complete_unit6d_separately_gated`') -or
-    -not $implementationTracker.Contains('**Active work unit:** `unit6c_closeout_unit6d_separately_gated`') -or
+if (-not $implementationTracker.Contains('**Status:** `unit6c_merged_unit6d_separately_gated`') -or
+    -not $implementationTracker.Contains('**Active work unit:** `unit6d_awaiting_separate_authorization`') -or
     -not $implementationTracker.Contains('20-unit6b-route-query-cache-evidence.md') -or
     -not $implementationTracker.Contains('21-unit6c-capture-upload-recovery-evidence.md') -or
     -not $implementationTracker.Contains('20260729000018_marketplace_phase9_search_variant_proposals.sql') -or
@@ -336,9 +336,9 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if (-not $tracker.Contains('**Implementation status:** `unit6c_locally_complete_merge_pending`') -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit6c_closeout_unit6d_separately_gated`\r?$' -or
-    -not $tracker.Contains('**Next authorized action:** complete the bounded Unit 6C evidence commit') -or
+if (-not $tracker.Contains('**Implementation status:** `unit6c_merged_unit6d_separately_gated`') -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit6d_awaiting_separate_authorization`\r?$' -or
+    -not $tracker.Contains('**Next authorized action:** obtain separate authorization before beginning Phase 9 Unit 6D') -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('20-unit6b-route-query-cache-evidence.md') -or
     -not $tracker.Contains('21-unit6c-capture-upload-recovery-evidence.md')) {
@@ -601,7 +601,7 @@ if (-not $sessionStart.Contains('06-owner-capture-review-recovery-ux-sdd.md') -o
     Write-Error 'SESSION-START.md does not preserve the Unit 6C closeout and Unit 6D gate.'
 }
 $phaseReadme = [IO.File]::ReadAllText((Join-Path $phaseRoot 'README.md'))
-if (-not $phaseReadme.Contains('**Status:** `unit6c_locally_complete_merge_pending`') -or
+if (-not $phaseReadme.Contains('**Status:** `unit6c_merged_unit6d_separately_gated`') -or
     -not $phaseReadme.Contains('M01-M08/M10-M29 are live once') -or
     -not $phaseReadme.Contains('Unit 6B is merged at `9ef9eb3`') -or
     -not $phaseReadme.Contains('Unit 6C is') -or

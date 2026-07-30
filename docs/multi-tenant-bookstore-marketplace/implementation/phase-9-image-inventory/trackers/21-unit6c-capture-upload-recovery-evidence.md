@@ -1,6 +1,6 @@
 # Phase 9 Unit 6C Capture, Upload, Progress, and Recovery Evidence
 
-**Status:** `locally_complete_merge_pending`
+**Status:** `merged_on_main`
 **Date:** 2026-07-31
 **Implementation commit:** `b87469d`
 **Authorized scope:** Unit 6C only
@@ -123,7 +123,7 @@ probing replacement reviewers. The temporary Expo server and logs were removed.
 
 ## Handoff
 
-After the evidence commit and authorized fast-forward merge, Unit 6C is locally
-complete. The exact next eligible action is separate authorization for Phase 9
-Unit 6D only. Units 6E-6F, Unit 7, migrations, Supabase/Storage writes,
+Unit 6C is merged on `main` through evidence commit `092562d`. The exact next
+eligible action is separate authorization for Phase 9 Unit 6D only. Units
+6E-6F, Unit 7, migrations, Supabase/Storage writes,
 deployment, and live backend verification remain separately gated.
