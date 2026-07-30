@@ -1,6 +1,6 @@
 # Active Marketplace Phase Router
 
-**Last updated:** 2026-07-29
+**Last updated:** 2026-07-30
 **Routing status:** authoritative
 
 This file answers only “where does a new development session start?” DOC-13 owns global status; the active phase tracker owns the detailed current milestone and next authorized action.
@@ -11,7 +11,7 @@ This file answers only “where does a new development session start?” DOC-13 
 - **Stable handoff:** [PHASE-9-image-to-LLM-inventory.md](./PHASE-9-image-to-llm-inventory.md)
 - **Session entrypoint:** [Phase 9 SESSION-START](./phase-9-image-inventory/SESSION-START.md)
 - **Local current-state authority:** [Phase 9 master tracker](./phase-9-image-inventory/TRACKER.md)
-- **Current work-unit plan:** [Unit 5C-4](./phase-9-image-inventory/trackers/16-unit5c4-active-variant-search-evidence.md) is independently approved at tree `db8ea75ed2904e8c381eec814f96804198d16b1e` and fast-forward merged at `d092f081d95b8c551bfcadcfd58fe8c98c77dfb2`. M22 is live as `20260729075459` and immutable forward correction M23 is live as `20260729082153` on development project `ahntbtktjjmvfosgkmgn`. The next active implementation batch combines Unit 5C-5 exceptional Owner variant-decision backend authority and Unit 5C-6 benchmark/per-language rollout-control infrastructure in one backend session and branch after this closeout merges. It exposes UI-ready contracts but includes no visual UI, assumes no qualifying benchmark evidence, keeps rollout fail closed by default, and requires exact-tree independent review before applying new migrations.
+- **Current work-unit plan:** Unit 5C-5/5C-6 is merged on `main`; M24-M28 were applied live exactly once, while no language is benchmarked, approved, or enabled. The [Unit 6 Owner Capture, Review, and Recovery UX SDD](./phase-9-image-inventory/work-units/06-owner-capture-review-recovery-ux-sdd.md) and [contract matrix](./phase-9-image-inventory/work-units/06-owner-capture-review-recovery-contract-matrix.md) are `approved_design_authority`; Unit 6 implementation has not started. The next authorized work is **Phase 9 Unit 6A — Owner-safe backend contract foundation** only, using the 6A-6F split and [tracker 18](./phase-9-image-inventory/trackers/18-unit6-owner-ux-design-evidence.md). Unit 7 remains separately gated. This design session created/applied no runtime migration and performed no deployment.
 - **Global status authority:** [DOC-13](../DOC-13-implementation-tracker.md)
 
 ## Required reading order

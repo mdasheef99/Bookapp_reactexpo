@@ -1,33 +1,27 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-07-29
+**Last updated:** 2026-07-30
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-Current routed handoff: [Unit 5C-4](./trackers/16-unit5c4-active-variant-search-evidence.md)
-is independently approved and fast-forward merged to `main` at
-`d092f081d95b8c551bfcadcfd58fe8c98c77dfb2`; the reviewed exact tree was
-`db8ea75ed2904e8c381eec814f96804198d16b1e`. It materializes only active,
-store-scoped title and individual-author proposals against exact eligible
-targets and makes them searchable without changing public display identity.
-M22 is live as `20260729075459`; M23 is live as `20260729082153` and
-forward-corrects legacy approved-alias rank preservation plus stricter
-source-field/source-text reconciliation. Both migrations are immutable.
+Current routed handoff: Unit 5C-5/5C-6 is merged on `main`; M24-M28 are
+immutable live history applied exactly once. No language is benchmarked,
+approved, or enabled. The [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md)
+and [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md)
+are approved design authority with evidence in
+[tracker 18](./trackers/18-unit6-owner-ux-design-evidence.md). Unit 6
+implementation has not started.
 
-The active implementation batch combines Unit 5C-5 exceptional Owner
-variant-decision backend authority and Unit 5C-6 benchmark/per-language
-rollout-control infrastructure. Start them together only after the Unit 5C-4
-documentation closeout is merged, in one backend session and branch from that
-merged baseline. The batch exposes UI-ready backend contracts but adds no
-Owner, customer, or platform-admin visual UI. It does not require live
-benchmark execution or production-language approval without qualifying
-evidence; rollout remains fail closed by default. Use red-first tests and
-obtain independent approval of the exact staged tree before applying any new
-migration.
+The next authorized work is **Phase 9 Unit 6A — Owner-safe backend contract
+foundation** only. Follow the approved 6A-6F dependency order; do not bundle
+6A backend contract/migration work with 6B navigation/query/cache work. Unit 6A
+must begin red-first and requires fresh database/migration authority before
+creating or applying a forward migration. Unit 7 remains separately gated.
+The Unit 6 design session performed no runtime migration or deployment.
 
 ## 1. Canonical status source
 
@@ -89,7 +83,7 @@ Do not describe an action as authorized merely because it is listed as a future 
 | 4A Deployment-runtime scaffolding | 02 Pipeline; 04 Security | [Unit 4A deployment-runtime SDD](./work-units/04a-deployment-runtime-scaffolding-sdd.md), [Unit 4A evidence](./trackers/04-deployment-runtime-scaffolding-evidence.md), Unit 3/4 evidence, current worker/Owner entrypoints and deployment configuration |
 | Service deployment/live fixture verification | 02 Pipeline; 04 Security | [Unit 4A deployment-runtime SDD](./work-units/04a-deployment-runtime-scaffolding-sdd.md), [M11/M12 live-application evidence](./trackers/05-m11-m12-live-application-evidence.md), current-vs-target audit, migration ledger, current worker/Owner entrypoints, environment loaders, container/deployment validators, hosting configuration, and fresh exact-project service/function readback |
 | 5 Metadata/aliases | 01 Data; 02 Pipeline; 03 Review; 04 Security; 05 Marketplace | Unit 5A/5B handoffs/evidence, [Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md), data dictionary, current-vs-target audit, requirements traceability, complexity register, provider audit/fixtures |
-| 6 Owner UX | 03 Review; 02 Pipeline | DOC-8, accessibility/verification matrix |
+| 6 Owner UX | [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md); [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md); 03 Review; 02 Pipeline | [tracker 18](./trackers/18-unit6-owner-ux-design-evidence.md), DOC-8, accessibility/verification matrix |
 | 7 Commit/duplicates/projection | 01 Data; 03 Review; 05 Marketplace | quantity/hold invariants, current trigger audit |
 | 8 Marketplace | 05 Marketplace; 01 Data | DOC-0, DOC-3, DOC-5, public/private tests |
 | 9 Damage/request photos | 04 Security; 06 Photo Request; 03 Review | DOC-1, DOC-6, DOC-14, retention matrix |

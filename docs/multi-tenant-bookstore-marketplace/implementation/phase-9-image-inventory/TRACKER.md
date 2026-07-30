@@ -1,16 +1,16 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `unit5c_lite_sdd_merged`
-**Implementation status:** `unit5c5_6_backend_complete_live_verified_ready_for_merge`
+**Planning status:** `unit6_owner_ux_approved_design_authority`
+**Implementation status:** `unit6_not_started_unit6a_next_authorized`
 **Last updated:** 2026-07-30
-**Current milestone:** Unit 5C-5/5C-6 backend live closeout
-**Active work unit:** `unit5c5_6_merge_gate`
+**Current milestone:** Unit 6 Owner Capture, Review, and Recovery UX implementation routing
+**Active work unit:** `unit6a_owner_safe_backend_contract_foundation`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Unit 5C-5/5C-6 backend exact tree `66db5be740940a8c882bb7ea312817f4c33bb2db` received dual `APPROVED`, M24-M28 were applied and live-verified, and implementation commit `4b667fc6674d606a8f88e2a4ee933d79bf332f53` preserves that tree; evidence is [tracker 17](./trackers/17-unit5c5-6-owner-rollout-backend-evidence.md)
-**Next authorized action:** merge authorization for the completed branch; do not merge automatically
-**Implementation authority:** Unit 5C-5/5C-6 backend is complete. UI-ready contracts add no Owner/customer/platform-admin visual UI; no benchmarked or approved production language and no enabled capability exist, so rollout remains fail closed
+**Last completed:** Unit 5C-5/5C-6 is merged on `main`; M24-M28 were already applied live exactly once. Unit 6 design authority received two independent zero-finding final approvals; evidence is [tracker 18](./trackers/18-unit6-owner-ux-design-evidence.md)
+**Next authorized action:** Phase 9 Unit 6A — Owner-safe backend contract foundation only; start red-first in a new implementation session
+**Implementation authority:** Unit 6A only under the approved [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md) and [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md). Unit 6 implementation has not started; 6B-6F and Unit 7 remain dependency/authorization gated
 **Migration creation/application authority:** M18-M28 are immutable live history and M29 is absent. M22/M23 are `20260729075459`/`20260729082153`; M24-M28 are `20260730022442`, `20260730022524`, `20260730022559`, `20260730022636`, and `20260730022713`. No further migration is authorized by this closeout
-**Current gate:** documentation commit and push, then user merge authorization
+**Current gate:** authorize and execute Unit 6A separately; fresh migration creation/application and deployment authority are required. No runtime migration or deployment occurred in the Unit 6 design session
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -46,6 +46,13 @@ strict Owner-only review/correction, candidate-first replacement locking,
 canonical private benchmark evidence, platform review/evidence reads, and
 exact approved rollout controls. No language is benchmarked or approved and
 no capability is enabled.
+
+Unit 5C-5/5C-6 is merged on `main`. The Unit 6 Owner UX SDD and supporting
+contract matrix are `approved_design_authority`: eight exact Owner-safe target
+operations, initiator-only pilot ownership, strict review fields, deterministic
+presentation mapping, 40 acceptance criteria, and independent 6A-6F merge
+boundaries. Unit 6 implementation has not started. Unit 6A is the sole next
+authorized work; Unit 7 remains separately gated.
 
 The provider/scale reconciliation keeps real Gemini provider-contract design as a separately gated prospective Unit 4B and keeps Unit 5 authoritatively named `Metadata/aliases`. The generic architecture supports one metadata primary and at most one disabled-until-approved secondary, horizontal correctness, and a fixed-multi-replica activation gate; it does not authorize provider calls, deployment changes, scheduling, or autoscaling. The bounded F1–F3 correction removes the deferred-secondary contradiction, makes media/vision/metadata capacity signals explicit, and disables raw provider/model payload persistence by default while retaining the independent-review gate.
 
@@ -111,7 +118,8 @@ The exact development project was re-verified read-only at M11/M12 closeout:
 | Work Unit 4 fixture vision-analysis runtime | [`integrated_main_e9ba2d9`](./work-units/04-fixture-vision-analysis-runtime-design.md) |
 | Work Unit 4A deployment-runtime scaffolding | [`deployed_and_live_fixture_verified`](./trackers/06-fixture-pipeline-deployment-evidence.md) |
 | Work Unit 4B Gemini vision adapter | [`m14_live_verified_provider_deferred`](./work-units/04b-gemini-vision-adapter-handoff.md) |
-| Unit 5C Lite target SDD | [`merged_at_b44277a`](./work-units/05c-lite-multilingual-search-variants-sdd.md); Units 5C-1 through 5C-4 at their linked evidence; Unit 5C-5/5C-6 backend [`live_verified_ready_for_merge`](./trackers/17-unit5c5-6-owner-rollout-backend-evidence.md) |
+| Unit 5C Lite target SDD | [`merged_at_b44277a`](./work-units/05c-lite-multilingual-search-variants-sdd.md); Units 5C-1 through 5C-6 are merged/live at their recorded levels; M24-M28 live exactly once and no language enabled |
+| Unit 6 Owner UX design authority | [`approved_design_authority`](./work-units/06-owner-capture-review-recovery-ux-sdd.md); [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md); [tracker 18](./trackers/18-unit6-owner-ux-design-evidence.md); implementation not started; split 6A-6F |
 | Provider and scale architecture SDD reconciliation | `stale_marker_superseded_by_unit4b_m14_m17_unit5a_review_evidence_2026-07-28` |
 
 ## Blocking gate before further implementation
@@ -120,7 +128,8 @@ WU0A, WU0B, Package 1, Unit 4, Unit 4A, Unit 4B, Unit 5A, Unit 5B, and Unit
 5C-1 through Unit 5C-6 backend are complete at their recorded levels.
 M01-M08/M10-M28, the Owner ingestion boundary, and both separate fixture
 workers are live-verified; M09 remains absent. Unit 5C-4 is merged at
-`d092f08`; Unit 5C-5/5C-6 awaits merge authorization. Visual UI,
+`d092f08`; Unit 5C-5/5C-6 is merged on `main`. Unit 6 design is approved, but
+implementation has not started; Unit 6A only is next. Visual UI,
 customer display changes, inventory/publication, commerce, provider fallback,
 and global alias authority remain separately gated.
 
@@ -158,9 +167,10 @@ and storage are independently enforced, and only `coherent_match` is a positive
 reusable outcome. Unit 5B created or applied no migration; M09 remains absent.
 Unit 5C-5/5C-6 backend is live-verified through M28 at approved tree
 `66db5be740940a8c882bb7ea312817f4c33bb2db` and implementation commit
-`4b667fc6674d606a8f88e2a4ee933d79bf332f53`. Obtain merge authorization;
-do not merge automatically. Unit 6 Owner UX is the next eligible Phase 9
-implementation unit, but visual Owner/platform-admin UI remains deferred and
-requires separate authorization. Keep M09/M29 absent and do not create
+`4b667fc6674d606a8f88e2a4ee933d79bf332f53`; it is merged on `main`.
+The next authorized action is **Phase 9 Unit 6A — Owner-safe backend contract
+foundation** only, following the approved SDD/matrix red-first. Do not start
+6B-6F or Unit 7, and do not create/apply a migration or deploy without the
+separate authority required by AGENTS.md. Keep M09/M29 absent and do not create
 inventory/listings, publish, add commerce, add provider fallback, or create
 global alias authority.

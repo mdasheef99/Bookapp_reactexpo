@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-07-27
+**Date:** 2026-07-30
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -298,14 +298,28 @@ If implementation changes product or architecture behavior, update the relevant 
 > capability is enabled, visual UI remains deferred, and no
 > inventory/publication/commerce behavior was added.
 
+> 2026-07-30 Phase 9 Unit 6 design-authority closeout: Unit 5C-5/5C-6 is
+> merged on `main`; M24-M28 remain immutable and were applied live exactly
+> once. No language is benchmarked, approved, or enabled; no capability is enabled. The Unit 6 Owner
+> Capture, Review, and Recovery UX SDD and contract matrix are
+> `approved_design_authority` after independent backend/security and
+> product/UX/recovery/accessibility reviews both returned zero final findings.
+> The design fixes eight exact Owner-safe contracts, strict review fields,
+> deterministic presentation mapping, initiator-only queue/session ownership,
+> 40 mapped acceptance criteria, and independent 6A-6F merge boundaries. Unit
+> 6 implementation has not started. The next authorized work is Phase 9 Unit
+> 6A — Owner-safe backend contract foundation only; Unit 7 remains separately
+> gated. No runtime migration, deployment, Supabase, Storage, provider, or
+> other external mutation occurred in the design session.
+
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 5C-5/5C-6 backend live-verified and ready for merge** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6 design approved; Unit 6A next authorized** |
 | Overall status | `in_progress` |
 | Last updated | 2026-07-30 |
-| Latest handoff | Unit 5C-5/5C-6 exact tree `66db5be7` received dual approval, is live through M24-M28, and is committed as `4b667fc`; M29 is absent. |
-| Current risk level | Backend Owner governance and exact-evidence rollout controls are verified. No language is benchmarked/approved and no capability is enabled; rollout remains fail closed. Visual Owner/platform-admin UI remains deferred. |
-| Next recommended task | Authorize merge of the Unit 5C-5/5C-6 backend branch. Unit 6 Owner UX is next eligible but requires separate authorization. |
+| Latest handoff | Unit 5C-5/5C-6 is merged on `main`; M24-M28 are live exactly once. Unit 6 SDD/matrix are approved design authority; implementation has not started. |
+| Current risk level | No language is benchmarked/approved/enabled; rollout remains fail closed. Unit 6A requires fresh migration/security authority and red-first implementation; Unit 7 remains separately gated. |
+| Next recommended task | Phase 9 Unit 6A — Owner-safe backend contract foundation only. |
 
 ---
 
@@ -322,7 +336,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit5c5_6_backend_complete_live_verified_ready_for_merge` | [Unit 5C-5/5C-6 evidence](./implementation/phase-9-image-inventory/trackers/17-unit5c5-6-owner-rollout-backend-evidence.md) · [Unit 5C Lite](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md) | M18-M28 are immutable/live-verified; M29 is absent; merge authorization is next. |
+| Phase 9: Image-to-LLM Inventory | `unit6_design_approved_unit6a_next_authorized` | [Unit 6 SDD](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-ux-sdd.md) · [contract matrix](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-contract-matrix.md) · [tracker 18](./implementation/phase-9-image-inventory/trackers/18-unit6-owner-ux-design-evidence.md) | Unit 5C-5/5C-6 merged; M24-M28 live exactly once; Unit 6 implementation not started; 6A only is next; Unit 7 gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -439,7 +453,7 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Unit 5C-5/5C-6 backend is complete at exact tree `66db5be740940a8c882bb7ea312817f4c33bb2db`, dual-approved, live through M24-M28, and committed as `4b667fc6674d606a8f88e2a4ee933d79bf332f53`. Authorize merge; do not merge automatically. It exposes no visual UI, has no benchmarked or approved language, enables no capability, and keeps rollout fail closed.
+1. Start **Phase 9 Unit 6A — Owner-safe backend contract foundation** only under the approved Unit 6 SDD/matrix. Unit 5C-5/5C-6 is already merged; M24-M28 are live exactly once. Unit 6 implementation has not started, no language is benchmarked/approved/enabled, and Unit 7 remains separately gated.
 2. Historical handoff (vision portion superseded 2026-07-27): Gemini remains configuration/deployment/live-call deferred. Google Books is implemented behind provider-neutral contracts but remains fixture/mock verified only; credentials, provider-registry enablement, deployment, and live smoke remain deferred.
    The current initial primary vision model ID is configuration-driven
    `gemini-3.5-flash-lite`; provider configuration/calls remain deferred.

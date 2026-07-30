@@ -68,6 +68,7 @@ $requiredPhaseFiles = @(
     'trackers/14-unit5c2-variant-persistence-evidence.md',
     'trackers/15-unit5c3-runtime-reconciliation-evidence.md',
     'trackers/16-unit5c4-active-variant-search-evidence.md',
+    'trackers/18-unit6-owner-ux-design-evidence.md',
     'work-units/00-contracts-threat-migration-plan.md', 'work-units/00b-backend-api-technical-design-plan.md',
     'work-units/00b-technical-design/00-overview-authority-and-file-map.md', 'work-units/00b-technical-design/01-command-query-and-dto-catalogue.md',
     'work-units/00b-technical-design/02-authorization-tenancy-and-privacy.md', 'work-units/00b-technical-design/03-state-transactions-idempotency-and-publication.md',
@@ -76,7 +77,9 @@ $requiredPhaseFiles = @(
     'work-units/01-package1-live-audit.md', 'work-units/01-package1-database-design.md',
     'work-units/04-fixture-vision-analysis-runtime-design.md', 'work-units/04a-deployment-runtime-scaffolding-sdd.md',
     'work-units/04b-gemini-vision-adapter-handoff.md',
-    'work-units/05c-lite-multilingual-search-variants-sdd.md'
+    'work-units/05c-lite-multilingual-search-variants-sdd.md',
+    'work-units/06-owner-capture-review-recovery-ux-sdd.md',
+    'work-units/06-owner-capture-review-recovery-contract-matrix.md'
 )
 $missing = @()
 foreach ($relative in $requiredPhaseFiles) {
@@ -113,16 +116,16 @@ foreach ($marker in $trackerMarkers) {
 $active = [IO.File]::ReadAllText((Join-Path $implementationRoot 'ACTIVE.md'))
 if (-not $active.Contains('phase-9-image-inventory/SESSION-START.md')) { Write-Error 'ACTIVE.md does not route to the Phase 9 session entrypoint.' }
 if (-not $active.Contains('DOC-13-implementation-tracker.md')) { Write-Error 'ACTIVE.md does not route to DOC-13.' }
-if (-not $active.Contains('16-unit5c4-active-variant-search-evidence.md') -or
-    -not $active.Contains('merged at `d092f081d95b8c551bfcadcfd58fe8c98c77dfb2`') -or
-    -not $active.Contains('tree `db8ea75ed2904e8c381eec814f96804198d16b1e`') -or
-    -not $active.Contains('M22 is live as `20260729075459`') -or
-    -not $active.Contains('M23 is live as `20260729082153`') -or
-    -not $active.Contains('Unit 5C-5') -or
-    -not $active.Contains('Unit 5C-6')) { Write-Error 'ACTIVE.md does not route from Unit 5C-4 to combined Unit 5C-5/5C-6.' }
+if (-not $active.Contains('06-owner-capture-review-recovery-ux-sdd.md') -or
+    -not $active.Contains('18-unit6-owner-ux-design-evidence.md') -or
+    -not $active.Contains('Unit 5C-5/5C-6 is merged on `main`') -or
+    -not $active.Contains('M24-M28 were applied live exactly once') -or
+    -not $active.Contains('Phase 9 Unit 6A') -or
+    -not $active.Contains('Owner-safe backend contract foundation') -or
+    -not $active.Contains('Unit 7 remains separately gated')) { Write-Error 'ACTIVE.md does not preserve the approved Unit 6A handoff.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit5c5_6_backend_complete_live_verified_ready_for_merge`') -or
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_design_approved_unit6a_next_authorized`') -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
     -not $doc13.Contains('20260727231217 marketplace_phase9_sensitive_table_acl_correction') -or
     -not $doc13.Contains('20260727233457 marketplace_phase9_maintain_acl_correction') -or
@@ -142,8 +145,8 @@ if (-not $doc13.Contains('No language is benchmarked or approved') -or
     Write-Error 'DOC-13 does not preserve the fail-closed Unit 5C-5/5C-6 closeout.'
 }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if (-not $implementationTracker.Contains('**Status:** `unit5c5_6_backend_complete_live_verified_ready_for_merge`') -or
-    -not $implementationTracker.Contains('**Active work unit:** `unit5c5_6_merge_gate`') -or
+if (-not $implementationTracker.Contains('**Status:** `unit6_design_approved_unit6a_next_authorized`') -or
+    -not $implementationTracker.Contains('**Active work unit:** `unit6a_owner_safe_backend_contract_foundation`') -or
     -not $implementationTracker.Contains('20260729000018_marketplace_phase9_search_variant_proposals.sql') -or
     -not $implementationTracker.Contains('20260729000019_marketplace_phase9_search_variant_replay_fence.sql') -or
     -not $implementationTracker.Contains('20260729000020_marketplace_phase9_variant_runtime_search.sql') -or
@@ -288,7 +291,7 @@ if (-not $implementationTracker.Contains('| 4B | [Gemini vision adapter]') -or
     -not $implementationTracker.Contains('optional whole-image fallback remains unselected/disabled') -or
     -not $implementationTracker.Contains('| 5A | [Metadata foundation]') -or
     -not $implementationTracker.Contains('| 5B/5C | Google Books primary adapter / [Unit 5C Lite multilingual variants]') -or
-    -not $implementationTracker.Contains('5C-5/5C-6 backend live verified')) {
+    -not $implementationTracker.Contains('5C-5/5C-6 merged and live')) {
     Write-Error 'Implementation routing must keep Unit 4B and its disabled fallback separate from Unit 5A/5B/5C.'
 }
 if ($implementationTracker -notmatch '(?m)^\| 0A \|.*\| `approved_complete` \|') { Write-Error 'Implementation tracker no longer preserves WU0A approved-complete evidence.' }
@@ -327,14 +330,15 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if (-not $tracker.Contains('**Implementation status:** `unit5c5_6_backend_complete_live_verified_ready_for_merge`') -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit5c5_6_merge_gate`\r?$' -or
-    -not $tracker.Contains('**Next authorized action:** merge authorization') -or
+if (-not $tracker.Contains('**Implementation status:** `unit6_not_started_unit6a_next_authorized`') -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit6a_owner_safe_backend_contract_foundation`\r?$' -or
+    -not $tracker.Contains('**Next authorized action:** Phase 9 Unit 6A') -or
+    -not $tracker.Contains('Owner-safe backend contract foundation only') -or
     -not $tracker.Contains('20260729075459') -or
     -not $tracker.Contains('20260729082153') -or
     -not $tracker.Contains('M18-M28 are immutable live history') -or
     -not $tracker.Contains('M29 is absent')) {
-    Write-Error 'TRACKER.md does not preserve the Unit 5C-4/M22-M28 closeout.'
+    Write-Error 'TRACKER.md does not preserve the final Unit 6A handoff.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
 $packageDesign = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-database-design.md'))
@@ -581,6 +585,12 @@ if (-not $sessionStart.Contains('| 0B Backend/API technical design or review (on
     -not $sessionStart.Contains('00b-backend-api-technical-design-plan.md') -or
     -not $sessionStart.Contains('all seven linked `00b-technical-design/` artifacts')) {
     Write-Error 'SESSION-START.md does not route the WU0B authority and artifact set.'
+}
+if (-not $sessionStart.Contains('06-owner-capture-review-recovery-ux-sdd.md') -or
+    -not $sessionStart.Contains('18-unit6-owner-ux-design-evidence.md') -or
+    -not $sessionStart.Contains('Phase 9 Unit 6A') -or
+    -not $sessionStart.Contains('Owner-safe backend contract')) {
+    Write-Error 'SESSION-START.md does not preserve the approved Unit 6A handoff.'
 }
 $phaseReadme = [IO.File]::ReadAllText((Join-Path $phaseRoot 'README.md'))
 if (-not $phaseReadme.Contains('**Status:** `unit5c4_active_variant_search_merged_unit5c5_6_active`') -or
