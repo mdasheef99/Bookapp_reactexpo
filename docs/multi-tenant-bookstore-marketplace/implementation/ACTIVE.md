@@ -1,6 +1,6 @@
 # Active Marketplace Phase Router
 
-**Last updated:** 2026-07-30
+**Last updated:** 2026-07-31
 **Routing status:** authoritative
 
 This file answers only “where does a new development session start?” DOC-13 owns global status; the active phase tracker owns the detailed current milestone and next authorized action.
@@ -11,7 +11,7 @@ This file answers only “where does a new development session start?” DOC-13 
 - **Stable handoff:** [PHASE-9-image-to-LLM-inventory.md](./PHASE-9-image-to-llm-inventory.md)
 - **Session entrypoint:** [Phase 9 SESSION-START](./phase-9-image-inventory/SESSION-START.md)
 - **Local current-state authority:** [Phase 9 master tracker](./phase-9-image-inventory/TRACKER.md)
-- **Current work-unit plan:** The [Unit 6 SDD](./phase-9-image-inventory/work-units/06-owner-capture-review-recovery-ux-sdd.md), [design evidence](./phase-9-image-inventory/trackers/18-unit6-owner-ux-design-evidence.md), and contract matrix remain authoritative. Unit 6A is merged on `main`, live-verified, and recorded in [tracker 19](./phase-9-image-inventory/trackers/19-unit6a-owner-safe-backend-evidence.md); M29 is live exactly once as `20260730162700 marketplace_phase9_owner_safe_contracts`. Phase 9 Unit 6B — inventory route, query, identity, and cache foundation — is locally complete at feature commit `9ef9eb3` with evidence in [tracker 20](./phase-9-image-inventory/trackers/20-unit6b-route-query-cache-evidence.md). Unit 6B made no migration, Supabase, Storage, deployment, or other external mutation. The next authorized work is Unit 6C — capture, preview, progress, and recovery UX — only; Units 6D-6F and Unit 7 remain separately gated.
+- **Current work-unit plan:** The [Unit 6 SDD](./phase-9-image-inventory/work-units/06-owner-capture-review-recovery-ux-sdd.md), [design evidence](./phase-9-image-inventory/trackers/18-unit6-owner-ux-design-evidence.md), and contract matrix remain authoritative. Unit 6A is merged/live-verified through M29, and Unit 6B is merged at `9ef9eb3` with evidence in [tracker 20](./phase-9-image-inventory/trackers/20-unit6b-route-query-cache-evidence.md). Phase 9 Unit 6C — capture, preview, progress, and recovery UX — is locally complete at implementation commit `b87469d`; [tracker 21](./phase-9-image-inventory/trackers/21-unit6c-capture-upload-recovery-evidence.md) owns its implementation, review, verification, and bounded browser receipt. Unit 6C made no migration, Supabase/Storage mutation, deployment, provider call, live upload, or other external mutation. After the authorized closeout merge, the next eligible work is Unit 6D only; Units 6E-6F and Unit 7 remain separately gated.
 - **Global status authority:** [DOC-13](../DOC-13-implementation-tracker.md)
 
 ## Required reading order

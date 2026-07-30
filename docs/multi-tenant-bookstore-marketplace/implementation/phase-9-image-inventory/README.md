@@ -1,12 +1,12 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit5c4_active_variant_search_merged_unit5c5_6_active`
-**Last updated:** 2026-07-29
-**Implementation status:** M01-M08/M10-M23 are live-verified; Unit 5C-4 active
-store-scoped alias materialization/search is merged at `d092f08`; combined
-Unit 5C-5/5C-6 backend implementation is active after this closeout merges
-**Supabase mutation status:** M01-M08/M10-M23 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; M22 is `20260729075459`, M23 is `20260729082153`, and rollback-only smoke left zero residue
-**Database checkpoint:** M01-M08 and forward migrations M10-M23 are live-verified.
+**Status:** `unit6c_locally_complete_merge_pending`
+**Last updated:** 2026-07-31
+**Implementation status:** M01-M08/M10-M29 are live-verified at their recorded
+levels; Unit 6A is merged/live, Unit 6B is merged at `9ef9eb3`, and Unit 6C is
+locally complete at `b87469d`
+**Supabase mutation status:** M01-M08/M10-M29 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; Unit 6C performed no Supabase/Storage mutation
+**Database checkpoint:** M01-M08 and forward migrations M10-M29 are live-verified.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 
@@ -78,6 +78,9 @@ The local tracking set intentionally has three files:
 - [Unit 5B evidence](./trackers/11-unit5b-implementation-evidence.md) and
   [Google Books audit](./work-units/05b-google-books-provider-audit.md):
   merged fixture/mock-verified adapter evidence and provider-specific authority.
+- [Unit 6C evidence](./trackers/21-unit6c-capture-upload-recovery-evidence.md):
+  capture, upload/registration retry, progress, recovery, review, test, browser,
+  privacy, and external-state receipt.
 - [Planning and decisions](./trackers/01-planning-and-decisions.md): decision register, source reconciliation, audit evidence, and planning review.
 - [Implementation and verification](./trackers/02-implementation-and-verification.md): future work units, migration ledger, tests, rollout, and operational evidence.
 
