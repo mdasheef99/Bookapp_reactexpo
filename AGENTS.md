@@ -70,6 +70,23 @@ Every material change must update the files named by the active phase session-st
 
 Do not mark work complete from code existence alone. Required tests, security checks, migration readback, deviations, and handoff evidence must be recorded.
 
+## Documentation size and structure
+
+Documentation line count is a maintainability signal, not an acceptance
+criterion. Correctness, completeness, cohesion, traceability, navigability, and
+implementation usefulness take precedence over line count. Crossing 350 or 400
+lines must not fail validation or cause content pruning. At approximately
+400-500 lines, assess and record whether the document remains cohesive. Above
+approximately 500 lines, validators may advise considering a semantic split,
+but a cohesive file may remain longer when splitting would fragment authority.
+
+Create supporting documents only around a stable semantic responsibility that
+can be reviewed independently and is expected to grow; never create equal-sized
+“parts” solely to satisfy a line target. Do not remove required behavior,
+security or trust rules, accessibility requirements, recovery behavior, edge
+cases, evidence, or acceptance criteria to shorten a document. Never change or
+split an already-applied migration for line-count reasons.
+
 ## Mandatory session close
 
 Before ending a session that changed files or external state:

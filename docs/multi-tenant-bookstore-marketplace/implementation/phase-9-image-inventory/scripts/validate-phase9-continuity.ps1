@@ -3,6 +3,19 @@ param(
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+function Get-DocumentSizeSignals {
+    param([hashtable]$LineCounts)
+    $signals = [System.Collections.Generic.List[object]]::new()
+    foreach ($path in $LineCounts.Keys) {
+        $count = [int]$LineCounts[$path]
+        if ($count -gt 500) {
+            $signals.Add([pscustomobject]@{ Path = $path; Lines = $count; Level = 'split_advisory' })
+        } elseif ($count -ge 400) {
+            $signals.Add([pscustomobject]@{ Path = $path; Lines = $count; Level = 'cohesion_assessment' })
+        }
+    }
+    return $signals
+}
 function Get-Wu0bSemanticStateErrors {
     param([hashtable]$Bodies)
     $errors = [System.Collections.Generic.List[string]]::new()
@@ -615,15 +628,30 @@ foreach ($file in $markdownFiles) {
 }
 if ($brokenLinks.Count -gt 0) { Write-Error ("Broken local links:`n" + ($brokenLinks -join "`n")) }
 
-$oversized = @()
+$lineCounts = @{}
 foreach ($file in (Get-ChildItem -LiteralPath $phaseRoot -Recurse -Filter '*.md')) {
-    if ([IO.File]::ReadAllLines($file.FullName).Count -gt 350) {
-        $oversized += $file.FullName
+    $lineCounts[$file.FullName] = [IO.File]::ReadAllLines($file.FullName).Count
+}
+$sizeSignals = @(Get-DocumentSizeSignals -LineCounts $lineCounts)
+foreach ($signal in $sizeSignals) {
+    if ($signal.Level -eq 'split_advisory') {
+        Write-Warning "DOCUMENT_SIZE_SPLIT_ADVISORY lines=$($signal.Lines) path=$($signal.Path)"
+    } else {
+        Write-Output "DOCUMENT_SIZE_COHESION_ASSESSMENT lines=$($signal.Lines) path=$($signal.Path)"
     }
 }
-if ($oversized.Count -gt 0) {
-    Write-Error ("Phase 9 documents over 350 lines:`n" + ($oversized -join "`n"))
+$sizeRegression = @(Get-DocumentSizeSignals -LineCounts @{
+    'cohesive-351.md' = 351
+    'cohesive-400.md' = 400
+    'cohesive-500.md' = 500
+    'consider-split-501.md' = 501
+})
+if (@($sizeRegression | Where-Object Path -eq 'cohesive-351.md').Count -ne 0 -or
+    @($sizeRegression | Where-Object { $_.Level -eq 'cohesion_assessment' }).Count -ne 2 -or
+    @($sizeRegression | Where-Object { $_.Level -eq 'split_advisory' }).Count -ne 1) {
+    Write-Error 'Documentation-size policy regression failed.'
 }
+Write-Output 'DOCUMENT_SIZE_POLICY_REGRESSION=PASS above_350_allowed=true advisory_above_500=true'
 
 Push-Location $repoRoot
 try {
