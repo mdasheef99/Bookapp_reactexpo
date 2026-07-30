@@ -9,6 +9,7 @@ import {
     type CandidatePageRequest,
 } from '../api/ownerUxService';
 import { OWNER_UX_CONTRACT_VERSION } from '../contracts/ownerUxContracts';
+import { cancelAllCaptureWork } from '../capture/captureCancellation';
 
 export type ImageInventoryIdentity = Readonly<{
     userId: string;
@@ -38,6 +39,18 @@ export const imageInventoryKeys = {
         ...imageInventoryKeys.identity(identity),
         'session',
         sessionId,
+    ] as const,
+    inputs: (
+        identity: ImageInventoryIdentity,
+        sessionId: string,
+        pageSize = 20,
+        cursor: string | null = null,
+    ) => [
+        ...imageInventoryKeys.identity(identity),
+        'inputs',
+        sessionId,
+        pageSize,
+        cursor,
     ] as const,
     candidates: (
         identity: ImageInventoryIdentity,
@@ -71,6 +84,7 @@ export const imageInventoryKeys = {
 export async function clearImageInventoryPrivateQueries(
     client: QueryClient = appQueryClient,
 ): Promise<void> {
+    cancelAllCaptureWork();
     let cancellationFailure: unknown = null;
     try {
         await client.cancelQueries({ queryKey: imageInventoryKeys.all });
@@ -137,6 +151,12 @@ const commonQueryOptions = {
     ),
 } as const;
 
+export function inputPollingInterval(
+    items: ReadonlyArray<{ polling: boolean }> | undefined,
+): number | false {
+    return items?.some((item) => item.polling) ? 3_000 : false;
+}
+
 export function useOwnerInventoryDiscovery(identity: ImageInventoryIdentity | null) {
     return useQuery({
         ...commonQueryOptions,
@@ -158,6 +178,23 @@ export function useOwnerInventorySession(
         ),
         queryFn: () => ownerUxService.readSession(sessionId as string),
         enabled: Boolean(identity && sessionId),
+    });
+}
+
+export function useOwnerInventoryInputs(
+    identity: ImageInventoryIdentity | null,
+    sessionId: string | null,
+) {
+    return useQuery({
+        ...commonQueryOptions,
+        queryKey: imageInventoryKeys.inputs(
+            identity ?? { userId: 'unresolved', storeId: 'unresolved' },
+            sessionId ?? 'unresolved',
+        ),
+        queryFn: () => ownerUxService.listInputs(sessionId as string),
+        enabled: Boolean(identity && sessionId),
+        refetchInterval: (query) => inputPollingInterval(query.state.data?.items),
+        refetchIntervalInBackground: false,
     });
 }
 

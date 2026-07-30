@@ -15,6 +15,14 @@
           "project": "javascript-react",
           "url": "https://de.sentry.io/"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow BookTalks to choose private book-spine photos for inventory processing.",
+          "cameraPermission": "Allow BookTalks to photograph book spines for private inventory processing.",
+          "microphonePermission": false
+        }
       ]
     ],
     "splash": {

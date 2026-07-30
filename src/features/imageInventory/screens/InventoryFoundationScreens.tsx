@@ -14,6 +14,14 @@ import {
 } from '../queries/ownerUxQueries';
 import { OwnerUxClientError } from '../api/ownerUxService';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
+import {
+    InventoryCapturePreviewScreen,
+    InventoryCaptureSetupScreen,
+} from './CaptureScreens';
+import {
+    InventoryHubRecoveryCard,
+    InventorySessionProgressScreen,
+} from './CaptureProgressScreens';
 
 type QueryState = {
     isLoading: boolean;
@@ -80,8 +88,7 @@ export function InventoryHubFoundationScreen() {
 }
 
 function Hub({ identity }: { identity: ImageInventoryIdentity }) {
-    useOwnerInventoryDiscovery(identity);
-    return <StoreInventoryScreen />;
+    return <StoreInventoryScreen scanHeader={<InventoryHubRecoveryCard identity={identity} />} />;
 }
 
 function ScanSetup({ identity }: { identity: ImageInventoryIdentity }) {
@@ -96,7 +103,7 @@ function ScanSetup({ identity }: { identity: ImageInventoryIdentity }) {
 }
 
 export function InventoryScanSetupFoundationScreen() {
-    return <Guarded>{(identity) => <ScanSetup identity={identity} />}</Guarded>;
+    return <InventoryCaptureSetupScreen />;
 }
 
 function Reviews({ identity }: { identity: ImageInventoryIdentity }) {
@@ -135,19 +142,11 @@ function Session({
 }
 
 export function InventorySessionFoundationScreen({ sessionId }: { sessionId: string }) {
-    return (
-        <Guarded>
-            {(identity) => <Session identity={identity} sessionId={sessionId} />}
-        </Guarded>
-    );
+    return <InventorySessionProgressScreen sessionId={sessionId} />;
 }
 
 export function InventoryPreviewFoundationScreen({ sessionId }: { sessionId: string }) {
-    return (
-        <Guarded>
-            {(identity) => <Session identity={identity} sessionId={sessionId} />}
-        </Guarded>
-    );
+    return <InventoryCapturePreviewScreen sessionId={sessionId} />;
 }
 
 export function InventoryMissedFoundationScreen({ sessionId }: { sessionId: string }) {

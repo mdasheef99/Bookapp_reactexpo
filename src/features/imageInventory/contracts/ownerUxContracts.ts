@@ -71,6 +71,33 @@ const readinessSchema = z.object({
     if (invalid) context.addIssue({ code: 'custom', message: 'readiness close state is inconsistent' });
 });
 
+const inputProgressSchema = z.object({
+    inputId: uuidSchema,
+    ordinal: z.number().int().min(1).safe(),
+    sourceKind: z.enum(['camera', 'gallery']),
+    inputState: z.enum(['uploaded', 'validating', 'queued', 'processing', 'ready', 'failed', 'skipped']),
+    inputVersion: versionSchema,
+    presentationState: z.enum(['checking_image', 'finding_books', 'ready', 'needs_attention']),
+    safeCode: z.string().regex(/^P9_[A-Z0-9_]+$/u).nullable(),
+    retryState: z.enum(['none', 'server_retrying', 'new_upload_required']),
+    terminal: z.boolean(),
+    polling: z.boolean(),
+    detectedCandidateCount: z.number().int().min(0).max(15).safe().nullable(),
+    acceptedCandidateCount: z.number().int().min(0).max(15).safe().nullable(),
+    createdAt: timestampSchema,
+    updatedAt: timestampSchema,
+}).strict().superRefine((value, context) => {
+    if (value.terminal === value.polling) {
+        context.addIssue({ code: 'custom', message: 'input terminal and polling flags conflict' });
+    }
+    if (value.inputState === 'ready' && value.presentationState !== 'ready') {
+        context.addIssue({ code: 'custom', message: 'ready input requires ready presentation' });
+    }
+    if (value.retryState === 'new_upload_required' && !value.terminal) {
+        context.addIssue({ code: 'custom', message: 'new upload retry requires terminal input' });
+    }
+});
+
 const responseSchemas = {
     discover_scan_session: z.object({
         activeSession: z.object({
@@ -87,6 +114,12 @@ const responseSchemas = {
         reviewScopeVersion: versionSchema,
     }).strict(),
     read_scan_session: sessionSummarySchema,
+    list_scan_inputs: z.object({
+        items: z.array(inputProgressSchema),
+        pageInfo: pageInfoSchema,
+        sessionVersion: versionSchema,
+        presentationRevision: versionSchema,
+    }).strict(),
     list_scan_candidates: z.object({
         items: z.array(candidateSummarySchema),
         pageInfo: pageInfoSchema,
@@ -100,6 +133,8 @@ const responseSchemas = {
 export type OwnerUxQueryAction = keyof typeof responseSchemas;
 export type OwnerDiscovery = z.infer<typeof responseSchemas.discover_scan_session>;
 export type OwnerSessionSummary = z.infer<typeof responseSchemas.read_scan_session>;
+export type OwnerInputProgress = z.infer<typeof inputProgressSchema>;
+export type OwnerInputPage = z.infer<typeof responseSchemas.list_scan_inputs>;
 export type OwnerCandidatePage = z.infer<typeof responseSchemas.list_scan_candidates>;
 export type OwnerCandidateDetail = z.infer<typeof responseSchemas.read_scan_candidate>;
 export type OwnerSessionReadiness = z.infer<typeof responseSchemas.read_scan_readiness>;

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -11,7 +12,7 @@ import EditModal from '../components/EditModal';
 import InventoryFilterPanel from '../components/InventoryFilterPanel';
 import InventoryBulkActions from '../components/InventoryBulkActions';
 
-export default function StoreInventoryScreen() {
+export default function StoreInventoryScreen({ scanHeader }: { scanHeader?: ReactNode }) {
     const { user } = useAuth();
     const { colors } = useTheme();
     const gateQuery = useStoreOwnerGate(user?.id ?? null);
@@ -51,6 +52,7 @@ export default function StoreInventoryScreen() {
             <ScrollView contentContainerStyle={styles.container}>
                 <Text style={[styles.eyebrow, { color: colors.textSecondary }]}>Store inventory</Text>
                 <Text style={[styles.title, { color: colors.textPrimary }]}>{gateState.storeName}</Text>
+                {scanHeader}
 
                 <AddInventoryForm
                     onSaveDraft={inventory.saveDraft}

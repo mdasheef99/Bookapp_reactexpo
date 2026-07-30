@@ -3,6 +3,7 @@ import {
     clearImageInventoryPrivateQueries,
     coordinateImageInventoryIdentity,
     imageInventoryKeys,
+    inputPollingInterval,
     resetImageInventoryIdentityForTests,
 } from '../queries/ownerUxQueries';
 
@@ -23,6 +24,8 @@ describe('Phase 9 Unit 6B private query identity', () => {
             imageInventoryKeys.discovery(secondStore),
             imageInventoryKeys.session(first, 'session-1'),
             imageInventoryKeys.session(first, 'session-2'),
+            imageInventoryKeys.inputs(first, 'session-1'),
+            imageInventoryKeys.inputs(first, 'session-2'),
             imageInventoryKeys.candidate(first, 'session-1', 'candidate-1'),
             imageInventoryKeys.candidate(first, 'session-1', 'candidate-2'),
             imageInventoryKeys.candidates(first, {
@@ -51,6 +54,12 @@ describe('Phase 9 Unit 6B private query identity', () => {
         for (const key of keys) {
             expect(key).toContain('phase9-owner-ux-v1');
         }
+    });
+
+    it('polls only while server-authoritative input work remains active', () => {
+        expect(inputPollingInterval(undefined)).toBe(false);
+        expect(inputPollingInterval([{ polling: false }])).toBe(false);
+        expect(inputPollingInterval([{ polling: false }, { polling: true }])).toBe(3_000);
     });
 
     it('cancels in-flight private work before removing every Unit 6 cache entry', async () => {

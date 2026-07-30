@@ -16,6 +16,13 @@ const requestSchemas = {
         contractVersion,
         sessionId: uuidSchema,
     }).strict(),
+    list_scan_inputs: z.object({
+        action: z.literal('list_scan_inputs'),
+        contractVersion,
+        sessionId: uuidSchema,
+        pageSize,
+        cursor,
+    }).strict(),
     list_scan_candidates: z.object({
         action: z.literal('list_scan_candidates'),
         contractVersion,

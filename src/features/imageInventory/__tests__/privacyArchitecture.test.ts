@@ -20,4 +20,10 @@ describe('Phase 9 Unit 6B frontend privacy architecture', () => {
             /phase9_commit_candidate|commit_candidate|publish_candidate|inventory_commit/u,
         );
     });
+
+    it('does not log or report private capture transport values', () => {
+        expect(runtimeSources()).not.toMatch(/console\.(?:log|warn|error)\s*\(/u);
+        expect(runtimeSources()).not.toMatch(/captureAppException|captureException|addBreadcrumb/u);
+        expect(runtimeSources()).not.toMatch(/params\s*:\s*\{[^}]*\b(?:uri|signedUploadUrl|uploadToken|capabilityId)\b/us);
+    });
 });

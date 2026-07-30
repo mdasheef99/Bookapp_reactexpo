@@ -6,6 +6,7 @@ import {
     type OwnerCandidateDetail,
     type OwnerCandidatePage,
     type OwnerDiscovery,
+    type OwnerInputPage,
     type OwnerSessionReadiness,
     type OwnerSessionSummary,
     type OwnerUxQueryAction,
@@ -65,6 +66,13 @@ const operationErrors: Record<OwnerUxQueryAction, ReadonlySet<OwnerUxErrorCode>>
         'P9_AUTH_REQUIRED',
         'P9_OWNER_NOT_AUTHORIZED',
         'P9_REQUEST_INVALID',
+        'P9_INTERNAL_ERROR',
+    ]),
+    list_scan_inputs: new Set([
+        'P9_AUTH_REQUIRED',
+        'P9_OWNER_NOT_AUTHORIZED',
+        'P9_REQUEST_INVALID',
+        'P9_CURSOR_INVALID',
         'P9_INTERNAL_ERROR',
     ]),
     list_scan_candidates: new Set([
@@ -171,6 +179,13 @@ export const ownerUxService = {
     },
     readSession(sessionId: string): Promise<OwnerSessionSummary> {
         return invoke('read_scan_session', { sessionId });
+    },
+    listInputs(
+        sessionId: string,
+        pageSize = 20,
+        cursor: string | null = null,
+    ): Promise<OwnerInputPage> {
+        return invoke('list_scan_inputs', { sessionId, pageSize, cursor });
     },
     listCandidates(request: CandidatePageRequest): Promise<OwnerCandidatePage> {
         return invoke('list_scan_candidates', {
