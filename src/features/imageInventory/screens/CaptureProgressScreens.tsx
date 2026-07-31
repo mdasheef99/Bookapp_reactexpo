@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { AppState, ScrollView, Text, View } from 'react-native';
+import { AppState, FlatList, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -7,6 +7,7 @@ import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useTheme } from '@/hooks/useTheme';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
+import { CandidateCard } from '../components/CandidateCard';
 import {
     type ImageInventoryIdentity,
     useOwnerInventoryCandidates,
@@ -47,32 +48,50 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
             && ['P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND'].includes(String(error.code)),
     );
     const loading = session.isLoading || inputs.isLoading;
-    const retryableError = !unavailable && (session.error || inputs.error);
+    const retryableError = !unavailable && (session.error || inputs.error || candidates.error);
     useEffect(() => {
         const subscription = AppState.addEventListener('change', (next) => {
             if (next === 'active') {
                 void session.refetch();
                 void inputs.refetch();
+                void candidates.refetch();
             }
         });
         return () => subscription.remove();
-    }, [inputs.refetch, session.refetch]);
+    }, [candidates.refetch, inputs.refetch, session.refetch]);
     const wasOffline = useRef(isOffline);
     useEffect(() => {
         if (wasOffline.current && !isOffline) {
             void session.refetch();
             void inputs.refetch();
+            void candidates.refetch();
         }
         wasOffline.current = isOffline;
-    }, [inputs.refetch, isOffline, session.refetch]);
+    }, [candidates.refetch, inputs.refetch, isOffline, session.refetch]);
     useEffect(() => {
         if (inputs.data?.presentationRevision) void candidates.refetch();
     }, [candidates.refetch, inputs.data?.presentationRevision]);
 
     return (
         <ScreenBackground>
-            <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 24 }}>
-                <GlassCard padding={20} borderRadius={16}>
+            <FlatList
+                contentInsetAdjustmentBehavior="automatic"
+                contentContainerStyle={{ padding: 24, gap: 12, flexGrow: 1 }}
+                data={!loading && !unavailable && !retryableError
+                    ? candidates.data?.items ?? []
+                    : []}
+                keyExtractor={(item) => item.candidateId}
+                renderItem={({ item }) => (
+                    <CandidateCard
+                        candidate={item}
+                        onPress={() => router.push(inventoryRoutes.candidate(
+                            sessionId,
+                            item.candidateId,
+                        ))}
+                    />
+                )}
+                ListHeaderComponent={(
+                    <GlassCard padding={20} borderRadius={16}>
                     <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800' }}>Scan session</Text>
                     {loading ? (
                         <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary, marginTop: 8 }}>Loading saved scan progress…</Text>
@@ -84,7 +103,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                     ) : retryableError ? (
                         <>
                             <Text selectable style={{ color: colors.textSecondary, marginTop: 8 }}>Saved scan progress could not be loaded.</Text>
-                            <Button title="Retry" style={{ marginTop: 16 }} onPress={() => { void session.refetch(); void inputs.refetch(); }} />
+                            <Button title="Retry" style={{ marginTop: 16 }} onPress={() => { void session.refetch(); void inputs.refetch(); void candidates.refetch(); }} />
                         </>
                     ) : (
                         <>
@@ -114,12 +133,17 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                                     ))}
                                 />
                             ) : null}
-                            {isOffline ? <Text selectable style={{ color: colors.textSecondary, marginTop: 12 }}>Reconnect to add another image.</Text> : null}
-                            <Button title="Add another image" style={{ marginTop: 18 }} onPress={() => router.push(inventoryRoutes.scan())} disabled={isOffline || (inputs.data?.items.length ?? 0) >= 15} />
                         </>
                     )}
-                </GlassCard>
-            </ScrollView>
+                    </GlassCard>
+                )}
+                ListFooterComponent={!loading && !unavailable && !retryableError ? (
+                    <View style={{ gap: 12, paddingTop: 4 }}>
+                        {isOffline ? <Text selectable style={{ color: colors.textSecondary }}>Reconnect to add another image.</Text> : null}
+                        <Button title="Add another image" onPress={() => router.push(inventoryRoutes.scan())} disabled={isOffline || (inputs.data?.items.length ?? 0) >= 15} />
+                    </View>
+                ) : null}
+            />
         </ScreenBackground>
     );
 }

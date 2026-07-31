@@ -1,6 +1,10 @@
 import { z } from 'zod';
-import { OWNER_UX_CONTRACT_VERSION, type OwnerUxQueryAction } from './ownerUxContracts';
+import {
+    OWNER_UX_CONTRACT_VERSION,
+    type OwnerUxAction,
+} from './ownerUxContracts';
 import { uuidSchema } from './ownerUxCommonSchemas';
+import { ownerCandidateReviewSchema } from './ownerUxReviewSchema';
 
 const contractVersion = z.literal(OWNER_UX_CONTRACT_VERSION);
 const pageSize = z.number().int().min(1).max(50).safe().optional();
@@ -48,6 +52,17 @@ const requestSchemas = {
         sessionId: uuidSchema,
         candidateId: uuidSchema,
     }).strict(),
+    update_candidate_review: z.object({
+        action: z.literal('update_candidate_review'),
+        contractVersion,
+        sessionId: uuidSchema,
+        candidateId: uuidSchema,
+        expectedCandidateVersion: z.number().int().positive().safe(),
+        expectedMetadataRevision: z.number().int().positive().safe(),
+        review: ownerCandidateReviewSchema,
+        idempotencyKey: z.string().min(16).max(128).regex(/^[A-Za-z0-9._:-]+$/u),
+        commandId: uuidSchema,
+    }).strict(),
     read_scan_readiness: z.object({
         action: z.literal('read_scan_readiness'),
         contractVersion,
@@ -55,7 +70,7 @@ const requestSchemas = {
     }).strict(),
 } as const;
 
-export function decodeOwnerUxRequest<Action extends OwnerUxQueryAction>(
+export function decodeOwnerUxRequest<Action extends OwnerUxAction>(
     action: Action,
     value: unknown,
 ): z.infer<(typeof requestSchemas)[Action]> | null {

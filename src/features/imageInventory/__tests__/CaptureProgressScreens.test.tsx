@@ -20,7 +20,27 @@ const mockInputs = {
     refetch: mockRefetch,
 };
 const mockCandidates = {
-    data: { items: [{ candidateId: '00000000-0000-4000-8000-000000000002' }] },
+    data: { items: [{
+        sessionId: '00000000-0000-4000-8000-000000000010',
+        sessionStartedAt: '2026-07-31T00:00:00.000Z',
+        sessionExpiresAt: '2026-08-30T00:00:00.000Z',
+        sessionStatus: 'active',
+        candidateId: '00000000-0000-4000-8000-000000000002',
+        inputId: null,
+        ordinal: 1,
+        title: 'Original book',
+        authors: ['Original author'],
+        language: 'en',
+        candidateState: 'needs_review',
+        candidateVersion: 1,
+        metadataState: 'manual',
+        reviewDisposition: null,
+        attentionCodes: ['metadata_manual_required'],
+        reviewReady: false,
+        updatedAt: '2026-07-31T00:00:00.000Z',
+    }] },
+    isLoading: false,
+    error: null as Error | null,
     refetch: mockRefetch,
 };
 
@@ -72,5 +92,17 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
         fireEvent.press(screen.getByText('Return to Inventory'));
         expect(mockRouter.replace).toHaveBeenCalledWith('/(store-owner)/inventory');
         mockSession.data.status = 'active';
+    });
+
+    it('shows a retry instead of zero books when candidate loading fails', () => {
+        mockCandidates.error = new Error('private candidate query detail');
+        const screen = render(
+            <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+        expect(screen.getByText('Saved scan progress could not be loaded.')).toBeTruthy();
+        expect(screen.queryByText('private candidate query detail')).toBeNull();
+        fireEvent.press(screen.getByText('Retry'));
+        expect(mockRefetch).toHaveBeenCalled();
+        mockCandidates.error = null;
     });
 });

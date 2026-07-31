@@ -1,14 +1,18 @@
 import {
     type QueryClient,
+    useMutation,
     useQuery,
+    useQueryClient,
 } from '@tanstack/react-query';
 import { appQueryClient } from '@/lib/queryClient';
 import {
     OwnerUxClientError,
     ownerUxService,
     type CandidatePageRequest,
+    type UpdateCandidateReviewRequest,
 } from '../api/ownerUxService';
 import { OWNER_UX_CONTRACT_VERSION } from '../contracts/ownerUxContracts';
+import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
 import { cancelAllCaptureWork } from '../capture/captureCancellation';
 
 export type ImageInventoryIdentity = Readonly<{
@@ -251,4 +255,56 @@ export function useOwnerInventoryReadiness(
         queryFn: () => ownerUxService.readReadiness(sessionId as string),
         enabled: Boolean(identity && sessionId),
     });
+}
+
+export function useUpdateOwnerCandidateReview(
+    identity: ImageInventoryIdentity,
+    sessionId: string,
+    candidateId: string,
+) {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: (request: UpdateCandidateReviewRequest) => (
+            ownerUxService.updateCandidateReview(request)
+        ),
+        retry: false,
+        onSuccess: (canonical) => synchronizeCandidateReviewSuccess(
+            client,
+            identity,
+            sessionId,
+            candidateId,
+            canonical,
+        ),
+    });
+}
+
+export async function synchronizeCandidateReviewSuccess(
+    client: QueryClient,
+    identity: ImageInventoryIdentity,
+    sessionId: string,
+    candidateId: string,
+    canonical: OwnerCandidateDetail,
+): Promise<void> {
+    const resolved = getResolvedImageInventoryIdentity();
+    if (
+        !resolved
+        || identityToken(resolved) !== identityToken(identity)
+        || canonical.sessionId !== sessionId
+        || canonical.candidateId !== candidateId
+    ) return;
+    client.setQueryData(
+        imageInventoryKeys.candidate(identity, sessionId, candidateId),
+        canonical,
+    );
+    await Promise.all([
+        client.invalidateQueries({
+            queryKey: [...imageInventoryKeys.identity(identity), 'candidates'],
+        }),
+        client.invalidateQueries({
+            queryKey: imageInventoryKeys.discovery(identity),
+        }),
+        client.invalidateQueries({
+            queryKey: imageInventoryKeys.readiness(identity, sessionId),
+        }),
+    ]);
 }

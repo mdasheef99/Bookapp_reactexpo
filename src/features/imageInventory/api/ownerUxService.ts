@@ -9,8 +9,9 @@ import {
     type OwnerInputPage,
     type OwnerSessionReadiness,
     type OwnerSessionSummary,
-    type OwnerUxQueryAction,
+    type OwnerUxAction,
 } from '../contracts/ownerUxContracts';
+import type { OwnerCandidateReview } from '../contracts/ownerUxReviewSchema';
 import { decodeOwnerUxRequest } from '../contracts/ownerUxRequestContracts';
 
 const errorCodes = z.enum([
@@ -56,7 +57,7 @@ const errorRegistry: Record<OwnerUxErrorCode, { retryable: boolean; message: str
     P9_IDEMPOTENCY_MISMATCH: { retryable: false, message: 'This retry does not match the original request.' },
     P9_INTERNAL_ERROR: { retryable: true, message: 'The request could not be completed.' },
 };
-const operationErrors: Record<OwnerUxQueryAction, ReadonlySet<OwnerUxErrorCode>> = {
+const operationErrors: Record<OwnerUxAction, ReadonlySet<OwnerUxErrorCode>> = {
     discover_scan_session: new Set([
         'P9_AUTH_REQUIRED',
         'P9_OWNER_NOT_AUTHORIZED',
@@ -89,6 +90,16 @@ const operationErrors: Record<OwnerUxQueryAction, ReadonlySet<OwnerUxErrorCode>>
         'P9_NOT_FOUND',
         'P9_INTERNAL_ERROR',
     ]),
+    update_candidate_review: new Set([
+        'P9_AUTH_REQUIRED',
+        'P9_OWNER_NOT_AUTHORIZED',
+        'P9_REQUEST_INVALID',
+        'P9_STATE_CONFLICT',
+        'P9_CANDIDATE_VERSION_CONFLICT',
+        'P9_VERSION_CONFLICT',
+        'P9_IDEMPOTENCY_MISMATCH',
+        'P9_INTERNAL_ERROR',
+    ]),
     read_scan_readiness: new Set([
         'P9_AUTH_REQUIRED',
         'P9_OWNER_NOT_AUTHORIZED',
@@ -118,7 +129,7 @@ async function errorBody(error: unknown): Promise<unknown> {
 }
 
 async function normalizeError(
-    action: OwnerUxQueryAction,
+    action: OwnerUxAction,
     error: unknown,
 ): Promise<OwnerUxClientError> {
     const parsed = safeErrorEnvelope.safeParse(await errorBody(error));
@@ -128,7 +139,7 @@ async function normalizeError(
     return registeredError(parsed.data.error);
 }
 
-async function invoke<Action extends OwnerUxQueryAction>(
+async function invoke<Action extends OwnerUxAction>(
     action: Action,
     body: Record<string, unknown>,
 ) {
@@ -173,6 +184,16 @@ export type CandidatePageRequest =
         cursor?: string | null;
     };
 
+export type UpdateCandidateReviewRequest = Readonly<{
+    sessionId: string;
+    candidateId: string;
+    expectedCandidateVersion: number;
+    expectedMetadataRevision: number;
+    review: OwnerCandidateReview;
+    idempotencyKey: string;
+    commandId: string;
+}>;
+
 export const ownerUxService = {
     discover(): Promise<OwnerDiscovery> {
         return invoke('discover_scan_session', {});
@@ -196,6 +217,9 @@ export const ownerUxService = {
     },
     readCandidate(sessionId: string, candidateId: string): Promise<OwnerCandidateDetail> {
         return invoke('read_scan_candidate', { sessionId, candidateId });
+    },
+    updateCandidateReview(request: UpdateCandidateReviewRequest): Promise<OwnerCandidateDetail> {
+        return invoke('update_candidate_review', request);
     },
     readReadiness(sessionId: string): Promise<OwnerSessionReadiness> {
         return invoke('read_scan_readiness', { sessionId });

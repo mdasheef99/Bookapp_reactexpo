@@ -87,6 +87,14 @@ export const ownerCandidateReviewSchema = z.object({
         && !value.damageDisclosure.completeReadableSafe
     ) issue('sellable books must be complete, readable and safe');
     if (
+        value.damageDisclosure.damageTypes.includes('mould_or_contamination')
+        && (
+            value.damageDisclosure.isSellable
+            || value.damageDisclosure.completeReadableSafe
+            || value.publicationIntent !== 'private'
+        )
+    ) issue('mould or contamination must be unsellable, unsafe and private');
+    if (
         (!value.damageDisclosure.isSellable || !value.damageDisclosure.completeReadableSafe)
         && value.publicationIntent !== 'private'
     ) issue('unsafe books must remain private');
@@ -111,3 +119,5 @@ export const ownerCandidateReviewSchema = z.object({
         && value.duplicateIntent.targetInventoryId
     ) issue('separate copies cannot name a target');
 });
+
+export type OwnerCandidateReview = z.infer<typeof ownerCandidateReviewSchema>;

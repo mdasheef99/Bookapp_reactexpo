@@ -22,6 +22,10 @@ import {
     InventoryHubRecoveryCard,
     InventorySessionProgressScreen,
 } from './CaptureProgressScreens';
+import {
+    InventoryCandidateReviewScreen,
+    InventoryReviewsScreen,
+} from './CandidateReviewScreens';
 
 type QueryState = {
     isLoading: boolean;
@@ -121,7 +125,7 @@ function Reviews({ identity }: { identity: ImageInventoryIdentity }) {
 }
 
 export function InventoryReviewsFoundationScreen() {
-    return <Guarded>{(identity) => <Reviews identity={identity} />}</Guarded>;
+    return <InventoryReviewsScreen />;
 }
 
 function Session({
@@ -183,17 +187,7 @@ export function InventoryCandidateFoundationScreen({
     sessionId: string;
     candidateId: string;
 }) {
-    return (
-        <Guarded>
-            {(identity) => (
-                <Candidate
-                    identity={identity}
-                    sessionId={sessionId}
-                    candidateId={candidateId}
-                />
-            )}
-        </Guarded>
-    );
+    return <InventoryCandidateReviewScreen sessionId={sessionId} candidateId={candidateId} />;
 }
 
 function Summary({

@@ -127,10 +127,12 @@ const responseSchemas = {
         sessionVersion: versionSchema.nullable(),
     }).strict(),
     read_scan_candidate: candidateDetailSchema,
+    update_candidate_review: candidateDetailSchema,
     read_scan_readiness: readinessSchema,
 } as const;
 
-export type OwnerUxQueryAction = keyof typeof responseSchemas;
+export type OwnerUxAction = keyof typeof responseSchemas;
+export type OwnerUxQueryAction = Exclude<OwnerUxAction, 'update_candidate_review'>;
 export type OwnerDiscovery = z.infer<typeof responseSchemas.discover_scan_session>;
 export type OwnerSessionSummary = z.infer<typeof responseSchemas.read_scan_session>;
 export type OwnerInputProgress = z.infer<typeof inputProgressSchema>;
@@ -196,7 +198,7 @@ function hasForbiddenKey(value: unknown): boolean {
     });
 }
 
-export function decodeOwnerUxResponse<Action extends OwnerUxQueryAction>(
+export function decodeOwnerUxResponse<Action extends OwnerUxAction>(
     action: Action,
     value: unknown,
 ): z.infer<(typeof responseSchemas)[Action]> {

@@ -5,7 +5,9 @@ import {
     imageInventoryKeys,
     inputPollingInterval,
     resetImageInventoryIdentityForTests,
+    synchronizeCandidateReviewSuccess,
 } from '../queries/ownerUxQueries';
+import { candidateDetailFixture, testUuid } from '../testing/ownerUxTestFixtures';
 
 const identity = (userId: string, storeId: string) => ({ userId, storeId });
 
@@ -127,6 +129,59 @@ describe('Phase 9 Unit 6B private query identity', () => {
         jest.spyOn(client, 'cancelQueries').mockRejectedValueOnce(new Error('cancel failed'));
 
         await expect(clearImageInventoryPrivateQueries(client)).rejects.toThrow('cancel');
+        expect(client.getQueriesData({ queryKey: imageInventoryKeys.all })).toEqual([]);
+        client.clear();
+    });
+
+    it('applies canonical review detail only to the still-active identity and candidate', async () => {
+        const client = new QueryClient();
+        const active = identity('user-1', 'store-1');
+        const canonical = candidateDetailFixture({
+            candidateVersion: 5,
+            candidateState: 'ready',
+        });
+        await coordinateImageInventoryIdentity(active, client);
+        const invalidate = jest.spyOn(client, 'invalidateQueries');
+
+        await synchronizeCandidateReviewSuccess(
+            client,
+            active,
+            testUuid(1),
+            testUuid(2),
+            canonical,
+        );
+        expect(client.getQueryData(
+            imageInventoryKeys.candidate(active, testUuid(1), testUuid(2)),
+        )).toEqual(canonical);
+        expect(invalidate).toHaveBeenCalled();
+
+        await coordinateImageInventoryIdentity(identity('user-2', 'store-2'), client);
+        await synchronizeCandidateReviewSuccess(
+            client,
+            active,
+            testUuid(1),
+            testUuid(2),
+            candidateDetailFixture({ candidateVersion: 6 }),
+        );
+        expect(client.getQueryData(
+            imageInventoryKeys.candidate(active, testUuid(1), testUuid(2)),
+        )).toBeUndefined();
+        client.clear();
+    });
+
+    it('ignores a late canonical response for a different route candidate', async () => {
+        const client = new QueryClient();
+        const active = identity('user-1', 'store-1');
+        await coordinateImageInventoryIdentity(active, client);
+
+        await synchronizeCandidateReviewSuccess(
+            client,
+            active,
+            testUuid(1),
+            testUuid(99),
+            candidateDetailFixture(),
+        );
+
         expect(client.getQueriesData({ queryKey: imageInventoryKeys.all })).toEqual([]);
         client.clear();
     });
