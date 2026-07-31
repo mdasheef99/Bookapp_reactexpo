@@ -8,18 +8,17 @@ This is the deterministic resume procedure for Phase 9. A new session should rec
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-Current routed handoff: Unit 6A is merged/live-verified through M29, and Unit
-6B is merged at feature commit `9ef9eb3` with evidence in
-[tracker 20](./trackers/20-unit6b-route-query-cache-evidence.md). Unit 6C —
-capture, preview, progress, and recovery UX — is merged on `main` through
-evidence commit `092562d` (implementation commit `b87469d`);
-[tracker 21](./trackers/21-unit6c-capture-upload-recovery-evidence.md) owns its
-implementation, review, verification, and bounded browser-smoke receipt. Unit
-6C added no migration, Supabase/Storage mutation, deployment, provider call,
-live upload, inventory commit, publication, or other external mutation.
+Current routed handoff: Unit 6A is merged/live-verified through M29, Unit 6B is
+merged at `9ef9eb3` with [tracker 20](./trackers/20-unit6b-route-query-cache-evidence.md),
+and Unit 6C is merged through `092562d`. Unit 6D — Owner
+candidate review and strict editing — is implemented at `c363b60`;
+[tracker 22](./trackers/22-unit6d-candidate-review-evidence.md) owns its
+implementation, corrections, review, verification, and bounded browser-smoke
+receipt. Unit 6D added no migration, Supabase/Storage mutation, deployment,
+provider call, inventory commit, publication, or other external mutation.
 
-The next eligible work is Phase 9 Unit 6D only and requires separate
-authorization. Do not begin Units 6E-6F or Unit 7. No migration,
+The next eligible work is Phase 9 Unit 6E only and requires separate
+authorization. Do not begin Unit 6F or Unit 7. No migration,
 Supabase/Storage mutation, or deployment is authorized by this handoff.
 
 ## 1. Canonical status source

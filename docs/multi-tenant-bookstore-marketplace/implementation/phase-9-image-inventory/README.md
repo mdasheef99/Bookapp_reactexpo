@@ -1,11 +1,11 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit6c_merged_unit6d_separately_gated`
+**Status:** `unit6d_merged_unit6e_separately_gated`
 **Last updated:** 2026-07-31
 **Implementation status:** M01-M08/M10-M29 are live-verified at their recorded
-levels; Unit 6A is merged/live, Unit 6B is merged at `9ef9eb3`, and Unit 6C is
-merged on `main` through `092562d` (implementation `b87469d`)
-**Supabase mutation status:** M01-M08/M10-M29 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; Unit 6C performed no Supabase/Storage mutation
+levels; Unit 6A is merged/live, Unit 6B is merged at `9ef9eb3`, Unit 6C is
+merged through `092562d`, and Unit 6D is implemented at `c363b60`
+**Supabase mutation status:** M01-M08/M10-M29 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; Unit 6D performed no Supabase/Storage mutation
 **Database checkpoint:** M01-M08 and forward migrations M10-M29 are live-verified.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
@@ -81,6 +81,9 @@ The local tracking set intentionally has three files:
 - [Unit 6C evidence](./trackers/21-unit6c-capture-upload-recovery-evidence.md):
   capture, upload/registration retry, progress, recovery, review, test, browser,
   privacy, and external-state receipt.
+- [Unit 6D evidence](./trackers/22-unit6d-candidate-review-evidence.md):
+  candidate review/editing, refresh authority, conflict recovery, review,
+  focused test, browser, privacy, and external-state receipt.
 - [Planning and decisions](./trackers/01-planning-and-decisions.md): decision register, source reconciliation, audit evidence, and planning review.
 - [Implementation and verification](./trackers/02-implementation-and-verification.md): future work units, migration ledger, tests, rollout, and operational evidence.
 
