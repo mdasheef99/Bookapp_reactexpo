@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { useNavigation } from 'expo-router';
 import { Button } from '@/components/ui/Button';
@@ -31,6 +31,7 @@ import {
     useOwnerInventorySession,
     useUpdateOwnerCandidateReview,
 } from '../queries/ownerUxQueries';
+import { useOwnerUxOfflineGate } from '../offline/ownerUxOfflineGate';
 
 const inaccessibleCodes = new Set(['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND']);
 const conflictCodes = new Set(['P9_CANDIDATE_VERSION_CONFLICT', 'P9_VERSION_CONFLICT']);
@@ -65,10 +66,25 @@ export function CandidateReview({
     const activeScope = useRef(scopeToken);
     useEffect(() => {
         activeScope.current = scopeToken;
-        return () => {
-            activeScope.current = '';
-        };
+        return () => { activeScope.current = ''; };
     }, [scopeToken]);
+    const refreshAuthority = useCallback(async () => {
+        const callScope = activeScope.current;
+        const [candidateResult, sessionResult] = await Promise.all([candidateQuery.refetch(), sessionQuery.refetch()]);
+        return activeScope.current === callScope
+            && !candidateResult.isError && candidateResult.error === null
+            && candidateResult.data?.sessionId === sessionId
+            && candidateResult.data.candidateId === candidateId
+            && !sessionResult.isError && sessionResult.error === null
+            && sessionResult.data?.sessionId === sessionId;
+    }, [candidateId, candidateQuery.refetch, sessionId, sessionQuery.refetch]);
+    const mutationGate = useOwnerUxOfflineGate({
+        scope: scopeToken,
+        isOffline,
+        refresh: refreshAuthority,
+        hasAuthoritativeData: Boolean(candidateQuery.data && sessionQuery.data && !candidateQuery.error && !sessionQuery.error),
+        currentAuthorityVerified: candidateQuery.isFetchedAfterMount && sessionQuery.isFetchedAfterMount,
+    });
     useEffect(() => {
         if (!draft && detail && sessionQuery.data) {
             const next = createReviewDraft(detail, sessionQuery.data.defaults);
@@ -76,10 +92,7 @@ export function CandidateReview({
             setBaseFingerprint(reviewDraftFingerprint(next));
         }
     }, [detail, draft, sessionQuery.data]);
-    const build = useMemo(
-        () => draft ? buildReviewInput(draft) : null,
-        [draft],
-    );
+    const build = useMemo(() => draft ? buildReviewInput(draft) : null, [draft]);
     const dirty = Boolean(
         draft
         && baseFingerprint
@@ -197,6 +210,7 @@ export function CandidateReview({
         offlineWas.current = isOffline;
     }, [isOffline]);
     const runCommand = async (command: UpdateCandidateReviewRequest) => {
+        if (!mutationGate.canMutate) return;
         const callScope = activeScope.current;
         setMessage(null);
         try {
@@ -233,6 +247,7 @@ export function CandidateReview({
             || !build?.success
             || mutation.isPending
             || pendingCommandRef.current
+            || !mutationGate.canMutate
         ) return;
         const command: UpdateCandidateReviewRequest = {
             sessionId,
@@ -262,7 +277,8 @@ export function CandidateReview({
         || Boolean(conflict)
         || Boolean(pendingCommand)
         || Boolean(staleRefreshBase)
-        || reconnectPending;
+        || reconnectPending
+        || !mutationGate.canMutate;
     const reapplyConflict = (currentConflict: CandidateConflictState) => {
         setDraft((current) => current
             ? rebaseReviewDraft(current, currentConflict.latest)
@@ -300,6 +316,7 @@ export function CandidateReview({
                     detail={detail}
                     refetchCandidate={candidateQuery.refetch}
                     onCanonical={setCanonicalOverride}
+                    mutationAuthority={mutationGate.canMutate}
                 />
                 <CandidateConflictPanels
                     staleRefreshBase={staleRefreshBase}

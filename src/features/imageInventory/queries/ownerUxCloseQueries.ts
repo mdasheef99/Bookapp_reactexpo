@@ -1,6 +1,8 @@
+import { useEffect, useRef } from 'react';
 import { type QueryClient, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ownerUxService, type CloseScanSessionRequest } from '../api/ownerUxService';
 import type { OwnerSessionReadiness } from '../contracts/ownerUxContracts';
+import { captureOwnerRequest } from '../identity/ownerRequestFence';
 import {
     getResolvedImageInventoryIdentity,
     imageInventoryKeys,
@@ -16,8 +18,35 @@ export function useCloseOwnerInventorySession(
     sessionId: string,
 ) {
     const client = useQueryClient();
+    const scope = `${identity.userId}:${identity.storeId}:${sessionId}`;
+    const activeScope = useRef(scope);
+    const controllers = useRef(new Set<AbortController>());
+    useEffect(() => {
+        activeScope.current = scope;
+        return () => {
+            activeScope.current = '';
+            for (const controller of controllers.current) controller.abort();
+            controllers.current.clear();
+        };
+    }, [scope]);
     return useMutation({
-        mutationFn: (request: CloseScanSessionRequest) => ownerUxService.closeSession(request),
+        mutationFn: async (request: CloseScanSessionRequest) => {
+            if (activeScope.current !== scope || request.sessionId !== sessionId) {
+                throw new Error('OWNER_CLOSE_AUTHORITY_CHANGED');
+            }
+            const lifecycle = new AbortController();
+            controllers.current.add(lifecycle);
+            const fence = captureOwnerRequest(identity, lifecycle.signal);
+            try {
+                fence.assertCurrent();
+                if (activeScope.current !== scope) throw new Error('OWNER_CLOSE_AUTHORITY_CHANGED');
+                return await ownerUxService.closeSession(request, fence.signal);
+            } finally {
+                fence.release();
+                controllers.current.delete(lifecycle);
+            }
+        },
+        networkMode: 'always',
         retry: false,
         onSuccess: (canonical) => synchronizeCloseSuccess(
             client, identity, sessionId, canonical,

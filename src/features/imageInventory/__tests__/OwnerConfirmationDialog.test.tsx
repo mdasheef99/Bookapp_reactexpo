@@ -1,6 +1,5 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
-import { Modal, TextInput } from 'react-native';
-import { createRef } from 'react';
+import { Modal, ScrollView } from 'react-native';
 import { OwnerConfirmationDialog } from '../components/OwnerConfirmationDialog';
 
 jest.mock('@/hooks/useTheme', () => ({
@@ -11,12 +10,9 @@ jest.mock('@/hooks/useTheme', () => ({
 }));
 
 describe('Phase 9 Unit 6F accessible confirmation', () => {
-    it('labels the modal, never confirms accidentally, and restores focus on cancel', async () => {
+    it('uses alert-dialog semantics, Cancel-first action order, and bounded reflow', async () => {
         const confirm = jest.fn();
         const cancel = jest.fn();
-        const restore = createRef<TextInput>();
-        const focus = jest.fn();
-        restore.current = { focus } as unknown as TextInput;
         const screen = render(<OwnerConfirmationDialog
             visible
             title="Close this scan session?"
@@ -24,14 +20,22 @@ describe('Phase 9 Unit 6F accessible confirmation', () => {
             confirmLabel="Close session"
             onConfirm={confirm}
             onCancel={cancel}
-            restoreFocusRef={restore}
         />);
         expect(screen.getByLabelText('Close this scan session?')).toBeTruthy();
+        expect(screen.getByTestId('confirmation-dialog').props.role).toBe('alertdialog');
+        expect(screen.getByTestId('confirmation-dialog').props['aria-labelledby']).toBe('owner-confirmation-title');
+        expect(screen.getByTestId('confirmation-dialog').props['aria-describedby']).toBe('owner-confirmation-description');
+        const actions = screen.getByTestId('confirmation-actions').children;
+        expect(actions[0].props.accessibilityLabel).toBe('Cancel');
+        expect(actions[1].props.accessibilityLabel).toBe('Close session');
+        expect(screen.UNSAFE_getByType(ScrollView).props.style).toEqual(expect.arrayContaining([
+            expect.objectContaining({ flexShrink: 1 }),
+        ]));
         fireEvent.press(screen.getByTestId('confirmation-backdrop'));
         expect(confirm).not.toHaveBeenCalled();
-        fireEvent(screen.UNSAFE_getByType(Modal), 'requestClose');
         expect(cancel).toHaveBeenCalledTimes(1);
-        await waitFor(() => expect(focus).toHaveBeenCalled());
+        fireEvent(screen.UNSAFE_getByType(Modal), 'requestClose');
+        expect(cancel).toHaveBeenCalledTimes(2);
     });
 
     it('announces pending state and disables both actions', () => {
@@ -39,8 +43,23 @@ describe('Phase 9 Unit 6F accessible confirmation', () => {
             visible title="Confirm action" description="Consequence" confirmLabel="Confirm"
             pending onConfirm={jest.fn()} onCancel={jest.fn()}
         />);
-        expect(screen.getByText('Confirming…')).toBeTruthy();
+        expect(screen.getByText(/Confirming/u)).toBeTruthy();
         expect(screen.getByLabelText('Confirm').props.accessibilityState.disabled).toBe(true);
         expect(screen.getByLabelText('Cancel').props.accessibilityState.disabled).toBe(true);
+    });
+
+    it('preserves long Unicode/RTL consequence text in a narrow, height-bounded layout', () => {
+        const description = '×”×¡×¨×” ××¨×•×›×” · ಕನ್ನಡ ಪಠ್ಯ · consequence '.repeat(12);
+        const screen = render(<OwnerConfirmationDialog
+            visible title="×¡×’×•×¨ ××ª ×”×”×¤×¢×œ×”?" description={description} confirmLabel="××™×©×•×¨"
+            onConfirm={jest.fn()} onCancel={jest.fn()}
+        />);
+        expect(screen.getByText(description)).toBeTruthy();
+        expect(screen.getByTestId('confirmation-dialog').props.style).toEqual(expect.objectContaining({
+            width: '100%', maxWidth: 560, maxHeight: '90%',
+        }));
+        expect(screen.getByText(description).props.style).toEqual(expect.objectContaining({
+            flexShrink: 1, writingDirection: 'auto',
+        }));
     });
 });

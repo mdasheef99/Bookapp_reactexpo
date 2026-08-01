@@ -176,6 +176,7 @@ export function VariantDecisionSheet({
     };
 
     const run = async (command: PendingVariantCommand) => {
+        if (mutationBlocked) return;
         const callScope = activeScope.current;
         setMessage(null);
         try {
@@ -208,7 +209,7 @@ export function VariantDecisionSheet({
     };
 
     const dispatch = (row: OwnerVariantReview, selectedAction: LocalAction) => {
-        if (pendingRef.current || pendingState || !row.allowedActions.includes(selectedAction)) return;
+        if (mutationBlocked || pendingRef.current || pendingState || !row.allowedActions.includes(selectedAction)) return;
         const command: PendingVariantCommand = selectedAction === 'replace'
             ? {
                 kind: 'replace', row,

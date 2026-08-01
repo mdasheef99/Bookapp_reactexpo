@@ -67,9 +67,16 @@ jest.mock('../queries/ownerUxQueries', () => ({
         session: jest.fn(() => ['session']),
         inputs: jest.fn(() => ['inputs']),
     },
-    useOwnerInventoryDiscovery: jest.fn(() => ({ data: { activeSession: null }, isLoading: false })),
+    useOwnerInventoryDiscovery: jest.fn(() => ({
+        data: { activeSession: null },
+        isLoading: false,
+        error: null,
+        isFetchedAfterMount: true,
+        refetch: jest.fn().mockResolvedValue({ data: { activeSession: null }, isError: false, error: null }),
+    })),
     useOwnerInventoryInputs: jest.fn(() => ({
-        data: { items: [] }, isLoading: false, error: null, refetch: jest.fn(),
+        data: { items: [] }, isLoading: false, error: null, isFetchedAfterMount: true,
+        refetch: jest.fn().mockResolvedValue({ data: { items: [] }, isError: false, error: null }),
     })),
     useOwnerInventorySession: jest.fn(() => ({
         data: { status: 'active' }, error: null, refetch: jest.fn(),

@@ -1,22 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const inFlightRefreshes = new Map<string, Promise<boolean>>();
+type RefreshEntry = { generation: number; promise: Promise<boolean> };
+const inFlightRefreshes = new Map<string, RefreshEntry>();
+const refreshGenerations = new Map<string, number>();
 
 export function coalesceOwnerUxRefresh(
     scope: string,
     task: () => Promise<boolean>,
 ): Promise<boolean> {
+    const generation = refreshGenerations.get(scope) ?? 0;
     const existing = inFlightRefreshes.get(scope);
-    if (existing) return existing;
+    if (existing?.generation === generation) return existing.promise;
     const pending = task().finally(() => {
-        if (inFlightRefreshes.get(scope) === pending) inFlightRefreshes.delete(scope);
+        if (inFlightRefreshes.get(scope)?.promise === pending) inFlightRefreshes.delete(scope);
     });
-    inFlightRefreshes.set(scope, pending);
+    inFlightRefreshes.set(scope, { generation, promise: pending });
     return pending;
+}
+
+export function invalidateOwnerUxRefreshScope(scope: string): void {
+    refreshGenerations.set(scope, (refreshGenerations.get(scope) ?? 0) + 1);
 }
 
 export function resetOwnerUxRefreshCoalescerForTests() {
     inFlightRefreshes.clear();
+    refreshGenerations.clear();
 }
 
 export function useOwnerUxOfflineGate({
@@ -24,55 +32,46 @@ export function useOwnerUxOfflineGate({
     isOffline,
     refresh,
     hasAuthoritativeData,
+    currentAuthorityVerified = false,
 }: {
     scope: string;
     isOffline: boolean;
     refresh: () => Promise<boolean>;
     hasAuthoritativeData: boolean;
+    currentAuthorityVerified?: boolean;
 }) {
-    const [refreshRequired, setRefreshRequired] = useState(isOffline);
+    const [authorizedScope, setAuthorizedScope] = useState<string | null>(
+        !isOffline && hasAuthoritativeData && currentAuthorityVerified ? scope : null,
+    );
+    const authorizedScopeRef = useRef(authorizedScope);
+    const setAuthority = useCallback((next: string | null) => {
+        if (authorizedScopeRef.current === next) return;
+        authorizedScopeRef.current = next;
+        setAuthorizedScope(next);
+    }, []);
     const activeScope = useRef(scope);
-    const wasOffline = useRef(isOffline);
-    const initialized = useRef(false);
 
     useEffect(() => () => { activeScope.current = ''; }, []);
 
     useEffect(() => {
         activeScope.current = scope;
-        if (!initialized.current) {
-            initialized.current = true;
-            setRefreshRequired(isOffline || !hasAuthoritativeData);
+        if (!isOffline && hasAuthoritativeData && currentAuthorityVerified) {
+            setAuthority(scope);
             return;
         }
-        setRefreshRequired(true);
+        setAuthority(null);
+        invalidateOwnerUxRefreshScope(scope);
         if (!isOffline) {
             void coalesceOwnerUxRefresh(scope, refresh).then((valid) => {
-                if (activeScope.current === scope && valid) setRefreshRequired(false);
+                if (activeScope.current === scope && valid) setAuthority(scope);
             });
         }
-    }, [scope]);
-
-    useEffect(() => {
-        if (!isOffline && hasAuthoritativeData && !wasOffline.current) {
-            setRefreshRequired(false);
-        }
-    }, [hasAuthoritativeData, isOffline]);
-
-    useEffect(() => {
-        if (isOffline) setRefreshRequired(true);
-        if (wasOffline.current && !isOffline) {
-            setRefreshRequired(true);
-            void coalesceOwnerUxRefresh(scope, refresh).then((valid) => {
-                if (activeScope.current === scope && valid) setRefreshRequired(false);
-            });
-        }
-        wasOffline.current = isOffline;
-    }, [isOffline, refresh, scope]);
+    }, [currentAuthorityVerified, hasAuthoritativeData, isOffline, refresh, scope, setAuthority]);
 
     return {
-        canMutate: !isOffline && !refreshRequired && hasAuthoritativeData,
+        canMutate: !isOffline && authorizedScope === scope && hasAuthoritativeData,
         isOffline,
-        isRefreshingAuthority: !isOffline && refreshRequired,
+        isRefreshingAuthority: !isOffline && authorizedScope !== scope,
     } as const;
 }
 
@@ -83,9 +82,10 @@ export function useOwnerQueryMutationGate({
 }: {
     scope: string;
     isOffline: boolean;
-    query: {
+        query: {
         data?: unknown;
         error?: unknown;
+        isFetchedAfterMount?: boolean;
         refetch: () => Promise<{ data?: unknown; isError: boolean; error: unknown }>;
     };
 }) {
@@ -98,5 +98,6 @@ export function useOwnerQueryMutationGate({
         isOffline,
         refresh,
         hasAuthoritativeData: Boolean(query.data && !query.error),
+        currentAuthorityVerified: Boolean(query.isFetchedAfterMount),
     });
 }

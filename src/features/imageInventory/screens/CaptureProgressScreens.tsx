@@ -54,27 +54,31 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const retryableError = !unavailable && (session.error || inputs.error || candidates.error);
     const refreshScope = `${identity.userId}:${identity.storeId}:${sessionId}:progress`;
     const refreshAll = useCallback(() => coalesceOwnerUxRefresh(refreshScope, async () => {
+        if (!isFocused) return false;
         const results = await Promise.all([session.refetch(), inputs.refetch(), candidates.refetch()]);
         return results.every((result) => !result.isError && result.error === null);
-    }), [candidates.refetch, inputs.refetch, refreshScope, session.refetch]);
+    }), [candidates.refetch, inputs.refetch, isFocused, refreshScope, session.refetch]);
     useEffect(() => {
         const subscription = AppState.addEventListener('change', (next) => {
-            if (next === 'active') {
+            if (next === 'active' && isFocused) {
                 void refreshAll();
             }
         });
         return () => subscription.remove();
-    }, [refreshAll]);
+    }, [isFocused, refreshAll]);
     const wasOffline = useRef(isOffline);
     useEffect(() => {
-        if (wasOffline.current && !isOffline) {
+        if (wasOffline.current && !isOffline && isFocused) {
             void refreshAll();
         }
         wasOffline.current = isOffline;
-    }, [isOffline, refreshAll]);
+    }, [isFocused, isOffline, refreshAll]);
     useEffect(() => {
-        if (inputs.data?.presentationRevision) void candidates.refetch();
-    }, [candidates.refetch, inputs.data?.presentationRevision]);
+        if (isFocused && inputs.data?.presentationRevision) void refreshAll();
+    }, [inputs.data?.presentationRevision, isFocused, refreshAll]);
+    const inputAnnouncement = inputs.data?.items.length
+        ? `${inputs.data.items.filter((item) => item.presentationState === 'ready').length} images processed. ${inputs.data.items.filter((item) => item.presentationState === 'needs_attention').length} need attention. ${inputs.data.items.filter((item) => ['checking_image', 'finding_books'].includes(item.presentationState)).length} processing.`
+        : null;
 
     return (
         <ScreenBackground>
@@ -110,17 +114,18 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         </>
                     ) : retryableError ? (
                         <>
-                            <Text selectable style={{ color: colors.textSecondary, marginTop: 8 }}>Saved scan progress could not be loaded.</Text>
+                            <Text selectable accessibilityLiveRegion="assertive" style={{ color: colors.textSecondary, marginTop: 8 }}>Saved scan progress could not be loaded.</Text>
                             <Button title="Retry" style={{ marginTop: 16 }} onPress={() => { void refreshAll(); }} />
                         </>
                     ) : (
                         <>
                             <Text selectable style={{ color: colors.textSecondary, marginTop: 8 }}>Saved on server. Processing continues if you leave.</Text>
                             <View style={{ gap: 10, marginTop: 16 }}>
+                                {inputAnnouncement ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{inputAnnouncement}</Text> : null}
                                 {inputs.data?.items.map((item) => (
                                     <View key={item.inputId} accessibilityLabel={`Image ${item.ordinal}. ${inputLabel(item)}`} style={{ padding: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 12 }}>
                                         <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>Image {item.ordinal}</Text>
-                                        <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary, marginTop: 4 }}>{inputLabel(item)}</Text>
+                                        <Text selectable style={{ color: colors.textSecondary, marginTop: 4 }}>{inputLabel(item)}</Text>
                                     </View>
                                 ))}
                                 {!inputs.isLoading && inputs.data?.items.length === 0

@@ -22,7 +22,7 @@ describe('Phase 9 Unit 6F privacy, media-purpose, and Unit 7 boundary', () => {
 
     it('routes Close only through the existing Owner Edge action', () => {
         const service = fs.readFileSync(path.join(root, 'api/ownerUxService.ts'), 'utf8');
-        expect(service).toContain("invoke('close_scan_session', request)");
+        expect(service).toContain("invoke('close_scan_session', request, signal)");
         expect(service).toContain("supabase.functions.invoke('phase9-owner-ingestion'");
     });
 });

@@ -19,10 +19,10 @@ import {
     type CaptureSource,
 } from '../capture/captureState';
 import { createCaptureUuid, createSemanticKey } from '../capture/captureIds';
+import { captureDefaults, hasCurrentCaptureIdentity } from '../capture/captureAuthority';
 import { useCaptureWorkflow } from '../capture/CaptureWorkflowContext';
 import { registerCaptureCancellation } from '../capture/captureCancellation';
 import type { UploadHandle } from '../capture/uploadTransport';
-import { getResolvedImageInventoryIdentity } from '../queries/ownerUxQueries';
 import {
     imageInventoryKeys,
     type ImageInventoryIdentity,
@@ -32,13 +32,6 @@ import {
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
 import { useOwnerQueryMutationGate } from '../offline/ownerUxOfflineGate';
-
-const defaults = { language: 'en', script: 'Latn', condition: 'good' as const };
-
-function sameIdentity(expected: ImageInventoryIdentity): boolean {
-    const current = getResolvedImageInventoryIdentity();
-    return current?.userId === expected.userId && current.storeId === expected.storeId;
-}
 
 function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
     const router = useRouter();
@@ -60,6 +53,8 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
         isOffline,
         query: discovery,
     });
+    const mutationAuthority = useRef(gate.canMutate);
+    mutationAuthority.current = gate.canMutate;
     useEffect(() => registerCaptureCancellation(() => {
         operationGeneration.current += 1;
         busyRef.current = false;
@@ -81,9 +76,9 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
                 ? ImagePicker.requestCameraPermissionsAsync
                 : ImagePicker.requestMediaLibraryPermissionsAsync;
             let permission = await getPermission();
-            if (attempt !== operationGeneration.current || !sameIdentity(identity)) return;
+            if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             if (!permission.granted && permission.canAskAgain) permission = await requestPermission();
-            if (attempt !== operationGeneration.current || !sameIdentity(identity)) return;
+            if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             const normalized = permissionState(permission);
             if (normalized !== 'granted') {
                 setMessage(normalized === 'settings_required'
@@ -99,21 +94,21 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
                     mediaTypes: ['images'], allowsEditing: false, quality: 1, exif: false, base64: false,
                     allowsMultipleSelection: false,
                 });
-            if (attempt !== operationGeneration.current || !sameIdentity(identity)) return;
+            if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             if (result.canceled) return;
             const validated = validateSelectedMedia(result.assets[0], source);
             if (!validated.ok) {
                 setMessage(validated.message);
                 return;
             }
-            if (attempt !== operationGeneration.current || !sameIdentity(identity)) return;
+            if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             const sessionId = discovery.data?.activeSession?.sessionId
                 ?? await captureService.startSession(
-                    defaults,
+                    captureDefaults,
                     startAttempt.current.key,
                     startAttempt.current.commandId,
                 );
-            if (attempt !== operationGeneration.current || !sameIdentity(identity)) return;
+            if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             workflow.select(validated.media);
             router.push(inventoryRoutes.preview(sessionId));
         } catch (error) {
@@ -190,6 +185,8 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
         isOffline,
         query: inputs,
     });
+    const mutationAuthority = useRef(gate.canMutate);
+    mutationAuthority.current = gate.canMutate;
 
     const cancel = () => {
         generation.current += 1;
@@ -209,7 +206,7 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
     }, [workflow.clear]);
 
     async function upload() {
-        if (!media || !gate.canMutate || running.current) return;
+        if (!media || !mutationAuthority.current || running.current) return;
         running.current = true;
         const nextGeneration = ++generation.current;
         let registrationStarted = false;
@@ -228,6 +225,7 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                     authorizeAttempt.current.key,
                     authorizeAttempt.current.commandId,
                 );
+                if (!mutationAuthority.current) return;
                 prepared.current = uploadAttempt;
                 registerAttempt.current = {
                     key: createSemanticKey('register-upload'),
@@ -239,22 +237,23 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                 true,
                 'Upload preparation is unavailable.',
             );
-            if (generation.current !== nextGeneration || !sameIdentity(identity)) return;
+            if (generation.current !== nextGeneration || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             if (!registrationReplay) {
                 dispatch({ type: 'authorized', generation: nextGeneration });
                 active.current = uploadAttempt.upload((progress) => {
                     dispatch({ type: 'progress', generation: nextGeneration, progress });
                 });
                 await active.current.promise;
-                if (generation.current !== nextGeneration || !sameIdentity(identity)) return;
+                if (generation.current !== nextGeneration || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             }
             dispatch({ type: 'register', generation: nextGeneration });
             registrationStarted = true;
+            if (!mutationAuthority.current) return;
             await uploadAttempt.register(
                 registerAttempt.current.key,
                 registerAttempt.current.commandId,
             );
-            if (generation.current !== nextGeneration || !sameIdentity(identity)) return;
+            if (generation.current !== nextGeneration || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             dispatch({ type: 'success', generation: nextGeneration });
             workflow.clear();
             prepared.current = null;

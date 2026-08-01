@@ -151,6 +151,7 @@ async function normalizeError(
 async function invoke<Action extends OwnerUxAction>(
     action: Action,
     body: Record<string, unknown>,
+    signal?: AbortSignal,
 ) {
     const request = decodeOwnerUxRequest(action, {
         action,
@@ -161,6 +162,7 @@ async function invoke<Action extends OwnerUxAction>(
     try {
         const result = await supabase.functions.invoke('phase9-owner-ingestion', {
             body: request,
+            ...(signal ? { signal } : {}),
         });
         if (result.error) throw await normalizeError(action, result.error);
         const data = decodeOwnerUxResponse(action, result.data);
@@ -240,7 +242,7 @@ export const ownerUxService = {
     readReadiness(sessionId: string): Promise<OwnerSessionReadiness> {
         return invoke('read_scan_readiness', { sessionId });
     },
-    closeSession(request: CloseScanSessionRequest): Promise<OwnerSessionReadiness> {
-        return invoke('close_scan_session', request);
+    closeSession(request: CloseScanSessionRequest, signal?: AbortSignal): Promise<OwnerSessionReadiness> {
+        return invoke('close_scan_session', request, signal);
     },
 };

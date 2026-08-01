@@ -78,6 +78,7 @@ jest.mock('../queries/ownerUxQueries', () => ({
         isLoading: false,
         error: null,
         refetch: mockSessionRefetch,
+        isFetchedAfterMount: true,
     }),
     useUpdateOwnerCandidateReview: () => ({
         mutateAsync: mockMutateAsync,
@@ -131,12 +132,14 @@ describe('Phase 9 Unit 6D candidate list and strict review screens', () => {
             isLoading: false,
             error: null,
             refetch: mockCandidateRefetch,
+            isFetchedAfterMount: true,
         };
         mockCandidateState = {
             data: mockCandidateData,
             isLoading: false,
             error: null,
             refetch: mockCandidateRefetch,
+            isFetchedAfterMount: true,
         };
         mockCandidateRefetch.mockResolvedValue({
             data: mockCandidateData,

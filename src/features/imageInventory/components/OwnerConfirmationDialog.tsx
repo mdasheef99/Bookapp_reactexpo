@@ -1,14 +1,15 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, type RefObject } from 'react';
 import {
+    AccessibilityInfo,
+    findNodeHandle,
     Modal,
+    Platform,
     Pressable,
+    ScrollView,
     Text,
     View,
-    type TextInput,
 } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
-
-type Focusable = Pick<TextInput, 'focus'>;
 
 export function OwnerConfirmationDialog({
     visible,
@@ -27,19 +28,30 @@ export function OwnerConfirmationDialog({
     pending?: boolean;
     onConfirm: () => void;
     onCancel: () => void;
-    restoreFocusRef?: RefObject<Focusable | null>;
+    restoreFocusRef?: RefObject<View | null>;
 }) {
     const { colors } = useTheme();
-    const confirmRef = useRef<View>(null);
-    const restoreFocus = () => restoreFocusRef?.current?.focus?.();
+    const webDescriptionProps: { 'aria-describedby': string } = {
+        'aria-describedby': 'owner-confirmation-description',
+    };
+    const cancelRef = useRef<View>(null);
+    const focusTarget = useCallback((target: View | null | undefined) => {
+        if (!target) return;
+        if (Platform.OS === 'web') {
+            target.focus?.();
+            return;
+        }
+        const handle = findNodeHandle(target);
+        if (handle !== null) AccessibilityInfo.setAccessibilityFocus(handle);
+    }, []);
     const cancel = () => {
         if (pending) return;
         onCancel();
-        restoreFocus();
+        queueMicrotask(() => focusTarget(restoreFocusRef?.current));
     };
     useEffect(() => {
-        if (visible) queueMicrotask(() => confirmRef.current?.focus?.());
-    }, [visible]);
+        if (visible) queueMicrotask(() => focusTarget(cancelRef.current));
+    }, [focusTarget, visible]);
 
     return (
         <Modal
@@ -52,28 +64,46 @@ export function OwnerConfirmationDialog({
             <Pressable
                 testID="confirmation-backdrop"
                 accessible={false}
-                onPress={() => undefined}
+                onPress={cancel}
                 style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', padding: 20 }}
             >
-                <View
+                <Pressable
                     testID="confirmation-dialog"
-                    accessibilityRole="alert"
+                    role="alertdialog"
                     accessibilityLabel={title}
                     accessibilityHint={description}
-                    style={{ backgroundColor: colors.bgCard, borderRadius: 18, padding: 20, gap: 14 }}
+                    aria-labelledby="owner-confirmation-title"
+                    {...webDescriptionProps}
+                    accessibilityViewIsModal
+                    onAccessibilityEscape={cancel}
+                    onPress={(event) => event.stopPropagation()}
+                    style={{ alignSelf: 'center', width: '100%', maxWidth: 560, maxHeight: '90%', backgroundColor: colors.bgCard, borderRadius: 18, padding: 20, gap: 14 }}
                 >
-                    <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 21, fontWeight: '800' }}>
-                        {title}
-                    </Text>
-                    <Text selectable style={{ color: colors.textSecondary, fontSize: 16, lineHeight: 23 }}>
-                        {description}
-                    </Text>
-                    {pending ? (
-                        <Text selectable accessibilityLiveRegion="assertive" style={{ color: colors.textSecondary }}>
-                            Confirming…
+                    <ScrollView style={[{ flexShrink: 1 }]} contentContainerStyle={{ gap: 14 }}>
+                        <Text nativeID="owner-confirmation-title" selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 21, fontWeight: '800', flexShrink: 1 }}>
+                            {title}
                         </Text>
-                    ) : null}
-                    <View style={{ gap: 10 }}>
+                        <Text nativeID="owner-confirmation-description" selectable style={{ color: colors.textSecondary, fontSize: 16, lineHeight: 23, flexShrink: 1, writingDirection: 'auto' }}>
+                            {description}
+                        </Text>
+                        {pending ? (
+                            <Text selectable accessibilityLiveRegion="assertive" style={{ color: colors.textSecondary }}>
+                                Confirmingâ€¦
+                            </Text>
+                        ) : null}
+                    </ScrollView>
+                    <View testID="confirmation-actions" style={{ gap: 10, flexShrink: 0 }}>
+                        <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Cancel"
+                            accessibilityState={{ disabled: pending }}
+                            disabled={pending}
+                            onPress={cancel}
+                            ref={cancelRef}
+                            style={{ minHeight: 48, justifyContent: 'center', alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: colors.border }}
+                        >
+                            <Text style={{ color: colors.textPrimary, fontWeight: '800' }}>Cancel</Text>
+                        </Pressable>
                         <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={confirmLabel}
@@ -81,23 +111,12 @@ export function OwnerConfirmationDialog({
                             accessibilityState={{ disabled: pending, busy: pending }}
                             disabled={pending}
                             onPress={onConfirm}
-                            ref={confirmRef}
                             style={{ minHeight: 48, justifyContent: 'center', alignItems: 'center', borderRadius: 12, backgroundColor: pending ? colors.border : colors.error }}
                         >
                             <Text style={{ color: '#fff', fontWeight: '800' }}>{confirmLabel}</Text>
                         </Pressable>
-                        <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel="Cancel"
-                            accessibilityState={{ disabled: pending }}
-                            disabled={pending}
-                            onPress={cancel}
-                            style={{ minHeight: 48, justifyContent: 'center', alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: colors.border }}
-                        >
-                            <Text style={{ color: colors.textPrimary, fontWeight: '800' }}>Cancel</Text>
-                        </Pressable>
                     </View>
-                </View>
+                </Pressable>
             </Pressable>
         </Modal>
     );

@@ -51,7 +51,13 @@ jest.mock('../queries/ownerCorrectionQueries', () => ({
     synchronizeCorrectionCandidate: jest.fn().mockResolvedValue(true),
 }));
 jest.mock('../queries/ownerUxQueries', () => ({
-    useOwnerInventorySession: () => ({ data: mockSession, isLoading: false, error: null }),
+    useOwnerInventorySession: () => ({
+        data: mockSession,
+        isLoading: false,
+        error: null,
+        isFetchedAfterMount: true,
+        refetch: jest.fn().mockResolvedValue({ data: mockSession, isError: false, error: null }),
+    }),
     getResolvedImageInventoryIdentity: () => ({ userId: mockUserId, storeId: mockStoreId }),
 }));
 
@@ -110,9 +116,9 @@ describe('Phase 9 Unit 6E false and missed-book screens', () => {
         />);
         fireEvent.press(screen.getByText('Mark false'));
         fireEvent.press(screen.getAllByText('Mark false').at(-1)!);
-        await waitFor(() => expect(screen.getByText('Retry same false action')).toBeTruthy());
+        await waitFor(() => expect(screen.getByLabelText('Retry same false action')).toBeTruthy());
         const original = mockFalse.mock.calls[0][0];
-        fireEvent.press(screen.getByText('Retry same false action'));
+        fireEvent.press(screen.getByLabelText('Retry same false action'));
         await waitFor(() => expect(mockFalse).toHaveBeenCalledTimes(2));
         expect(mockFalse.mock.calls[1][0]).toBe(original);
     });

@@ -272,6 +272,7 @@ export function useUpdateOwnerCandidateReview(
         mutationFn: (request: UpdateCandidateReviewRequest) => (
             ownerUxService.updateCandidateReview(request)
         ),
+        networkMode: 'always',
         retry: false,
         onSuccess: (canonical) => synchronizeCandidateReviewSuccess(
             client,

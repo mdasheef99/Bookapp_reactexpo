@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useTheme } from '@/hooks/useTheme';
@@ -35,11 +35,13 @@ export function CandidateCorrectionActions({
     detail,
     refetchCandidate,
     onCanonical,
+    mutationAuthority = true,
 }: {
     identity: ImageInventoryIdentity;
     detail: OwnerCandidateDetail;
     refetchCandidate: () => Promise<CandidateRefetchResult>;
     onCanonical?: (detail: OwnerCandidateDetail) => void;
+    mutationAuthority?: boolean;
 }) {
     const { colors } = useTheme();
     const { isOffline } = useNetworkStatus();
@@ -70,6 +72,7 @@ export function CandidateCorrectionActions({
     }, [detail.candidateId, detail.sessionId, refetchCandidate]);
 
     const runFalse = async (command: MarkFalseRequest) => {
+        if (!gate.canMutate) return;
         const callScope = activeScope.current;
         setMessage(null);
         try {
@@ -94,6 +97,7 @@ export function CandidateCorrectionActions({
             pendingRef.current = null;
             setPending(null);
             setLatest(null);
+            setConfirmOpen(false);
             setMessage('False detection recorded. The candidate remains in this session.');
         } catch (error) {
             if (activeScope.current !== callScope) return;
@@ -103,6 +107,7 @@ export function CandidateCorrectionActions({
             ) {
                 pendingRef.current = null;
                 setPending(null);
+                setConfirmOpen(false);
                 const canonical = await authoritativeRefresh();
                 if (canonical) setLatest(canonical);
                 else setMessage('Latest candidate details could not be loaded.');
@@ -121,18 +126,19 @@ export function CandidateCorrectionActions({
     };
 
     const confirmFalse = () => {
-        if (pendingRef.current || mutation.isPending || !canMarkCandidateFalse(detail)) return;
+        if (!gate.canMutate || pendingRef.current || mutation.isPending || !canMarkCandidateFalse(detail)) return;
         setConfirmOpen(true);
     };
     const gateRefresh = useCallback(async () => Boolean(await authoritativeRefresh()), [authoritativeRefresh]);
     const gate = useOwnerUxOfflineGate({
         scope,
-        isOffline,
+        isOffline: isOffline || !mutationAuthority,
         refresh: gateRefresh,
-        hasAuthoritativeData: true,
+        hasAuthoritativeData: mutationAuthority,
+        currentAuthorityVerified: mutationAuthority,
     });
     const submitFalse = () => {
-        if (pendingRef.current || mutation.isPending) return;
+        if (!gate.canMutate || pendingRef.current || mutation.isPending) return;
         const command: MarkFalseRequest = {
             candidateId: detail.candidateId,
             expectedCandidateVersion: detail.candidateVersion,
@@ -141,7 +147,6 @@ export function CandidateCorrectionActions({
         };
         pendingRef.current = command;
         setPending(command);
-        setConfirmOpen(false);
         void runFalse(command);
     };
 
@@ -151,22 +156,25 @@ export function CandidateCorrectionActions({
                 visible={confirmOpen}
                 title="Mark as false detection?"
                 description="This records a false detection and cannot be undone within the current scan workflow. It does not delete the candidate or create inventory."
-                confirmLabel="Mark false"
+                confirmLabel={pending && message ? 'Retry same false action' : 'Mark false'}
                 pending={mutation.isPending}
                 onCancel={() => setConfirmOpen(false)}
-                onConfirm={submitFalse}
+                onConfirm={() => pending ? void runFalse(pending) : submitFalse()}
                 restoreFocusRef={falseTriggerRef}
             />
             {canMarkCandidateFalse(detail) ? (
-                <View ref={falseTriggerRef} collapsable={false}>
-                    <Button
-                        title="Mark false"
-                        variant="secondary"
-                        disabled={!gate.canMutate || mutation.isPending || Boolean(latest)}
-                        onPress={confirmFalse}
-                        accessibilityHint="Records a false detection after confirmation. It does not delete the candidate."
-                    />
-                </View>
+                <Pressable
+                    ref={falseTriggerRef}
+                    accessibilityRole="button"
+                    accessibilityLabel="Mark false"
+                    accessibilityHint="Records a false detection after confirmation. It does not delete the candidate."
+                    accessibilityState={{ disabled: !gate.canMutate || mutation.isPending || Boolean(latest) }}
+                    disabled={!gate.canMutate || mutation.isPending || Boolean(latest)}
+                    onPress={confirmFalse}
+                    style={{ minHeight: 48, justifyContent: 'center', alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: colors.border }}
+                >
+                    <Text style={{ color: colors.textPrimary, fontWeight: '800' }}>Mark false</Text>
+                </Pressable>
             ) : null}
             {canOpenVariantReview(detail) ? (
                 <Button
@@ -175,9 +183,6 @@ export function CandidateCorrectionActions({
                     disabled={!gate.canMutate}
                     onPress={() => setVariantOpen(true)}
                 />
-            ) : null}
-            {pending && message ? (
-                <Button title="Retry same false action" onPress={() => void runFalse(pending)} disabled={!gate.canMutate || mutation.isPending} />
             ) : null}
             {latest ? (
                 <View style={{ gap: 8 }}>

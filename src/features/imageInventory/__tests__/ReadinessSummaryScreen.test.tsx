@@ -53,7 +53,7 @@ describe('Phase 9 Unit 6F readiness summary and Close', () => {
         mockOffline = false;
         mockRefetch.mockResolvedValue({ data: readiness(), isError: false, error: null });
         mockClose.mockResolvedValue({ ...readiness(), sessionStatus: 'closed', sessionVersion: 3, closeState: 'closed', closeAllowed: false });
-        mockState = { data: readiness(), isLoading: false, error: null, refetch: mockRefetch };
+        mockState = { data: readiness(), isLoading: false, error: null, refetch: mockRefetch, isFetchedAfterMount: true };
     });
 
     it('keeps zero categories visible and shows the all-zero state', async () => {
@@ -64,7 +64,7 @@ describe('Phase 9 Unit 6F readiness summary and Close', () => {
     });
 
     it('shows bounded nonterminal guidance and no enabled Close action', () => {
-        mockState = { data: readiness({ allInputsTerminal: false, closeState: 'not_closeable', closeAllowed: false }), isLoading: false, error: null, refetch: mockRefetch };
+        mockState = { data: readiness({ allInputsTerminal: false, closeState: 'not_closeable', closeAllowed: false }), isLoading: false, error: null, refetch: mockRefetch, isFetchedAfterMount: true };
         const screen = render(<InventoryReadinessSummaryScreen sessionId={testUuid(1)} />);
         expect(screen.getByText('Some images are still processing')).toBeTruthy();
         expect(screen.queryByText('Close session')).toBeNull();
@@ -77,7 +77,7 @@ describe('Phase 9 Unit 6F readiness summary and Close', () => {
         screen.unmount();
 
         mockOffline = false;
-        mockState = { data: readiness(), isLoading: false, error: new Error('private failure'), refetch: mockRefetch };
+        mockState = { data: readiness(), isLoading: false, error: new Error('private failure'), refetch: mockRefetch, isFetchedAfterMount: true };
         screen = render(<InventoryReadinessSummaryScreen sessionId={testUuid(1)} />);
         expect(screen.getByText('Close session')).toBeDisabled();
         expect(screen.queryByText('private failure')).toBeNull();

@@ -1,4 +1,8 @@
-import { coalesceOwnerUxRefresh, resetOwnerUxRefreshCoalescerForTests } from '../offline/ownerUxOfflineGate';
+import {
+    coalesceOwnerUxRefresh,
+    invalidateOwnerUxRefreshScope,
+    resetOwnerUxRefreshCoalescerForTests,
+} from '../offline/ownerUxOfflineGate';
 
 describe('Phase 9 Unit 6F authoritative reconnect refresh', () => {
     beforeEach(resetOwnerUxRefreshCoalescerForTests);
@@ -23,5 +27,18 @@ describe('Phase 9 Unit 6F authoritative reconnect refresh', () => {
             coalesceOwnerUxRefresh('owner-b:store:session', task),
         ]);
         expect(task).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not let an old in-flight generation suppress a required same-scope refetch', async () => {
+        let resolveOld!: (value: boolean) => void;
+        const oldTask = jest.fn(() => new Promise<boolean>((resolve) => { resolveOld = resolve; }));
+        const nextTask = jest.fn().mockResolvedValue(true);
+        const old = coalesceOwnerUxRefresh('owner:store:session', oldTask);
+
+        invalidateOwnerUxRefreshScope('owner:store:session');
+        await expect(coalesceOwnerUxRefresh('owner:store:session', nextTask)).resolves.toBe(true);
+        expect(nextTask).toHaveBeenCalledTimes(1);
+        resolveOld(true);
+        await expect(old).resolves.toBe(true);
     });
 });

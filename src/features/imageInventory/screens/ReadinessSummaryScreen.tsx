@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -88,10 +88,11 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
         isOffline,
         refresh,
         hasAuthoritativeData: Boolean(readiness && !query.error && readiness.sessionId === sessionId),
+        currentAuthorityVerified: query.isFetchedAfterMount,
     });
 
     const runClose = async (command: CloseScanSessionRequest) => {
-        if (inFlight.current) return;
+        if (inFlight.current || !gate.canMutate || command.sessionId !== sessionId) return;
         inFlight.current = true;
         const callScope = activeScope.current;
         setMessage(null);
@@ -100,6 +101,7 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
             if (activeScope.current !== callScope || result.sessionId !== sessionId) return;
             pending.current = null;
             setCanonical(result);
+            setConfirmOpen(false);
             setMessage('Session closed. Staged candidates were kept and no inventory was committed.');
         } catch (error) {
             if (activeScope.current !== callScope) return;
@@ -109,6 +111,7 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
             }
             pending.current = null;
             if (error instanceof OwnerUxClientError && ['P9_VERSION_CONFLICT', 'P9_STATE_CONFLICT'].includes(error.code)) {
+                setConfirmOpen(false);
                 const valid = await refresh();
                 setCanonical(null);
                 setMessage(valid
@@ -132,7 +135,6 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                 commandId: createCaptureUuid(),
             };
         pending.current = command;
-        setConfirmOpen(false);
         void runClose(command);
     };
 
@@ -189,16 +191,18 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                                 <Button title="Refresh processing status" variant="secondary" style={{ marginTop: 12 }} onPress={() => { void refresh(); }} disabled={isOffline || query.isFetching} />
                             ) : null}
                             {readiness.closeAllowed ? (
-                                <View ref={closeTriggerRef} collapsable={false}>
-                                    <Button
-                                        title="Close session"
-                                        variant="danger"
-                                        style={{ marginTop: 16 }}
-                                        onPress={() => setConfirmOpen(true)}
-                                        disabled={!gate.canMutate || closeMutation.isPending || authoritativeError}
-                                        accessibilityHint="Ends capture and review activity. Does not commit inventory or discard candidates."
-                                    />
-                                </View>
+                                <Pressable
+                                    ref={closeTriggerRef}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Close session"
+                                    accessibilityHint="Ends capture and review activity. Does not commit inventory or discard candidates."
+                                    accessibilityState={{ disabled: !gate.canMutate || closeMutation.isPending || authoritativeError }}
+                                    disabled={!gate.canMutate || closeMutation.isPending || authoritativeError}
+                                    onPress={() => setConfirmOpen(true)}
+                                    style={{ minHeight: 52, marginTop: 16, justifyContent: 'center', alignItems: 'center', borderRadius: 14, backgroundColor: colors.error }}
+                                >
+                                    <Text style={{ color: '#fff', fontWeight: '800' }}>Close session</Text>
+                                </Pressable>
                             ) : null}
                             {readiness.sessionStatus === 'closed' ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textPrimary, fontWeight: '700', marginTop: 14 }}>Session closed</Text> : null}
                         </>
@@ -206,13 +210,12 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                     {gate.isOffline ? <Text selectable style={{ color: colors.error, marginTop: 12 }}>Offline · summary is read-only and may be out of date.</Text> : null}
                     {gate.isRefreshingAuthority ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary, marginTop: 12 }}>Refreshing current readiness before actions are enabled.</Text> : null}
                     {message ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary, marginTop: 12 }}>{message}</Text> : null}
-                    {pending.current && message?.includes('unclear') ? <Button title="Retry exact Close" style={{ marginTop: 12 }} onPress={() => { void runClose(pending.current!); }} disabled={!gate.canMutate || closeMutation.isPending} /> : null}
                 </GlassCard>
                 <OwnerConfirmationDialog
                     visible={confirmOpen}
                     title="Close this scan session?"
                     description="Close ends capture and review activity. It does not commit inventory, publish books, delete candidates, or discard staged work."
-                    confirmLabel="Close session"
+                    confirmLabel={pending.current && message?.includes('unclear') ? 'Retry exact Close' : 'Close session'}
                     pending={closeMutation.isPending}
                     onCancel={() => setConfirmOpen(false)}
                     onConfirm={confirmClose}

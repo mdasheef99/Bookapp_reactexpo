@@ -86,6 +86,7 @@ function MissedBookForm({
         isOffline,
         refresh: refreshAuthority,
         hasAuthoritativeData: Boolean(sessionQuery.data && !sessionQuery.error),
+        currentAuthorityVerified: sessionQuery.isFetchedAfterMount,
     });
 
     useEffect(() => navigation.addListener('beforeRemove', (event: BeforeRemoveEvent) => {
@@ -105,6 +106,7 @@ function MissedBookForm({
     }), [draft, initialFingerprint, mutation.isPending, navigation]);
 
     const run = async (command: AddManualCandidateRequest) => {
+        if (!gate.canMutate) return;
         const callScope = activeScope.current;
         setMessage(null);
         try {
@@ -166,7 +168,7 @@ function MissedBookForm({
     };
 
     const submit = () => {
-        if (!built.success || pendingRef.current || mutation.isPending || successfulDraft) return;
+        if (!gate.canMutate || !built.success || pendingRef.current || mutation.isPending || successfulDraft) return;
         const command: AddManualCandidateRequest = {
             sessionId,
             ...built.value,
