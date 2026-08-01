@@ -23,9 +23,10 @@ import {
     InventorySessionProgressScreen,
 } from './CaptureProgressScreens';
 import {
-    InventoryCandidateReviewScreen,
     InventoryReviewsScreen,
 } from './CandidateReviewScreens';
+import { InventoryCandidateReviewScreen } from './CandidateReviewRouteScreen';
+import { InventoryMissedBookScreen } from './MissedBookScreen';
 
 type QueryState = {
     isLoading: boolean;
@@ -154,11 +155,7 @@ export function InventoryPreviewFoundationScreen({ sessionId }: { sessionId: str
 }
 
 export function InventoryMissedFoundationScreen({ sessionId }: { sessionId: string }) {
-    return (
-        <Guarded>
-            {(identity) => <Session identity={identity} sessionId={sessionId} />}
-        </Guarded>
-    );
+    return <InventoryMissedBookScreen sessionId={sessionId} />;
 }
 
 function Candidate({

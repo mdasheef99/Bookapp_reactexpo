@@ -83,6 +83,16 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
         );
     });
 
+    it('opens the real missed-book route from an accessible reviewable session', () => {
+        const screen = render(
+            <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+        fireEvent.press(screen.getByText('Add missed book'));
+        expect(mockRouter.push).toHaveBeenCalledWith(
+            '/(store-owner)/inventory/scan/00000000-0000-4000-8000-000000000010/missed',
+        );
+    });
+
     it('fails safely for an expired session', () => {
         mockSession.data.status = 'expired';
         const screen = render(

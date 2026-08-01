@@ -11,6 +11,7 @@ import { createSemanticKey, createCaptureUuid } from '../capture/captureIds';
 import { ReviewFormFields } from '../components/ReviewFormFields';
 import { CandidateReviewState } from '../components/CandidateReviewState';
 import { CandidateConflictPanels } from '../components/CandidateConflictPanels';
+import { CandidateCorrectionActions } from '../components/CandidateCorrectionActions';
 import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
 import {
     candidateConflictChanges,
@@ -30,13 +31,12 @@ import {
     useOwnerInventorySession,
     useUpdateOwnerCandidateReview,
 } from '../queries/ownerUxQueries';
-import { InventoryAccessBoundary } from './InventoryAccessBoundary';
 
 const inaccessibleCodes = new Set(['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND']);
 const conflictCodes = new Set(['P9_CANDIDATE_VERSION_CONFLICT', 'P9_VERSION_CONFLICT']);
 export { InventoryReviewsScreen } from './CandidateListScreen';
 
-function CandidateReview({
+export function CandidateReview({
     identity,
     sessionId,
     candidateId,
@@ -295,6 +295,12 @@ function CandidateReview({
                     </GlassCard>
                 )}
                 <ReviewFormFields detail={detail} draft={draft} errors={build.errors} disabled={disabled || !reviewable || isOffline} onChange={(next) => { setDraft(next); setMessage(null); }} />
+                <CandidateCorrectionActions
+                    identity={identity}
+                    detail={detail}
+                    refetchCandidate={candidateQuery.refetch}
+                    onCanonical={setCanonicalOverride}
+                />
                 <CandidateConflictPanels
                     staleRefreshBase={staleRefreshBase}
                     conflict={conflict}
@@ -323,26 +329,5 @@ function CandidateReview({
                 />
             </ScrollView>
         </ScreenBackground>
-    );
-}
-
-export function InventoryCandidateReviewScreen({
-    sessionId,
-    candidateId,
-}: {
-    sessionId: string;
-    candidateId: string;
-}) {
-    return (
-        <InventoryAccessBoundary>
-            {(identity) => (
-                <CandidateReview
-                    key={`${identity.userId}:${identity.storeId}:${sessionId}:${candidateId}`}
-                    identity={identity}
-                    sessionId={sessionId}
-                    candidateId={candidateId}
-                />
-            )}
-        </InventoryAccessBoundary>
     );
 }

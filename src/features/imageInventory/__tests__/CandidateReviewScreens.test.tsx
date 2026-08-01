@@ -6,9 +6,9 @@ import type {
     OwnerSessionSummary,
 } from '../contracts/ownerUxContracts';
 import {
-    InventoryCandidateReviewScreen,
     InventoryReviewsScreen,
 } from '../screens/CandidateReviewScreens';
+import { InventoryCandidateReviewScreen } from '../screens/CandidateReviewRouteScreen';
 import {
     candidateDetailFixture,
     sessionSummaryFixture,
@@ -83,6 +83,14 @@ jest.mock('../queries/ownerUxQueries', () => ({
         mutateAsync: mockMutateAsync,
         isPending: mockMutationPending,
     }),
+}));
+jest.mock('../queries/ownerCorrectionQueries', () => ({
+    useCorrectionQueryClient: () => ({ invalidateQueries: jest.fn(), setQueryData: jest.fn() }),
+    useMarkCandidateFalse: () => ({ mutateAsync: jest.fn(), isPending: false }),
+    useOwnerCandidateVariants: () => ({ data: [], isLoading: false, error: null, refetch: jest.fn() }),
+    useDecideOwnerVariant: () => ({ mutateAsync: jest.fn(), isPending: false }),
+    useReplaceOwnerVariant: () => ({ mutateAsync: jest.fn(), isPending: false }),
+    synchronizeCorrectionCandidate: jest.fn().mockResolvedValue(true),
 }));
 
 const summary = (digit: number, title = 'Repeated Book') => ({

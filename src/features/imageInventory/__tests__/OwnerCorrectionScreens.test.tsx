@@ -1,0 +1,161 @@
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
+import { CandidateCorrectionActions } from '../components/CandidateCorrectionActions';
+import { InventoryMissedBookScreen } from '../screens/MissedBookScreen';
+import { OwnerCorrectionClientError } from '../api/ownerCorrectionService';
+import { candidateDetailFixture, sessionSummaryFixture, testUuid } from '../testing/ownerUxTestFixtures';
+
+const mockPush = jest.fn();
+const mockAddListener = jest.fn(() => jest.fn());
+const mockFalse = jest.fn();
+const mockAdd = jest.fn();
+const mockReadCandidate = jest.fn();
+const mockCandidateRefetch = jest.fn();
+const mockUserId = '00000000-0000-4000-8000-000000000090';
+const mockStoreId = '00000000-0000-4000-8000-000000000008';
+let mockOffline = false;
+let mockSession = sessionSummaryFixture();
+
+jest.mock('expo-router', () => ({
+    useRouter: () => ({ push: mockPush }),
+    useNavigation: () => ({ addListener: mockAddListener }),
+}));
+jest.mock('@/hooks/useTheme', () => ({
+    useTheme: () => ({ colors: {
+        textPrimary: '#111', textSecondary: '#333', border: '#ccc',
+        accent: '#06f', error: '#900', bgCard: '#fff', bgSecondary: '#eee',
+    } }),
+}));
+jest.mock('@/hooks/useNetworkStatus', () => ({
+    useNetworkStatus: () => ({ isOffline: mockOffline }),
+}));
+jest.mock('@/components/ui/ScreenBackground', () => ({ ScreenBackground: ({ children }: { children: React.ReactNode }) => children }));
+jest.mock('@/components/ui/GlassCard', () => ({ GlassCard: ({ children }: { children: React.ReactNode }) => children }));
+jest.mock('../screens/InventoryAccessBoundary', () => ({
+    InventoryAccessBoundary: ({ children }: { children: (identity: { userId: string; storeId: string }) => React.ReactNode }) => (
+        children({ userId: mockUserId, storeId: mockStoreId })
+    ),
+}));
+jest.mock('../api/ownerUxService', () => ({
+    ownerUxService: { readCandidate: (...args: unknown[]) => mockReadCandidate(...args) },
+    OwnerUxClientError: class OwnerUxClientError extends Error {},
+}));
+jest.mock('../queries/ownerCorrectionQueries', () => ({
+    useAddManualCandidate: () => ({ mutateAsync: mockAdd, isPending: false }),
+    useMarkCandidateFalse: () => ({ mutateAsync: mockFalse, isPending: false }),
+    useOwnerCandidateVariants: () => ({ data: [], isLoading: false, error: null, refetch: jest.fn() }),
+    useDecideOwnerVariant: () => ({ mutateAsync: jest.fn(), isPending: false }),
+    useReplaceOwnerVariant: () => ({ mutateAsync: jest.fn(), isPending: false }),
+    useCorrectionQueryClient: () => ({ invalidateQueries: jest.fn(), setQueryData: jest.fn() }),
+    synchronizeCorrectionCandidate: jest.fn().mockResolvedValue(true),
+}));
+jest.mock('../queries/ownerUxQueries', () => ({
+    useOwnerInventorySession: () => ({ data: mockSession, isLoading: false, error: null }),
+    getResolvedImageInventoryIdentity: () => ({ userId: mockUserId, storeId: mockStoreId }),
+}));
+
+describe('Phase 9 Unit 6E false and missed-book screens', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        mockOffline = false;
+        mockSession = sessionSummaryFixture();
+        mockCandidateRefetch.mockResolvedValue({
+            data: candidateDetailFixture({ candidateVersion: 5, allowedActions: ['view_readiness'] }),
+            isError: false,
+            error: null,
+        });
+        mockReadCandidate.mockResolvedValue(candidateDetailFixture({ candidateId: testUuid(30) }));
+        mockFalse.mockResolvedValue({ candidateId: testUuid(2), authenticatedUserId: testUuid(90) });
+        mockAdd.mockResolvedValue({ candidateId: testUuid(30), authenticatedUserId: testUuid(90) });
+    });
+
+    it('requires destructive confirmation, cancel does nothing, and duplicate confirmation dispatches once', async () => {
+        const alert = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
+        const screen = render(<CandidateCorrectionActions
+            identity={{ userId: testUuid(90), storeId: testUuid(8) }}
+            detail={candidateDetailFixture()}
+            refetchCandidate={mockCandidateRefetch}
+        />);
+        fireEvent.press(screen.getByText('Mark false'));
+        expect(alert).toHaveBeenCalledWith(
+            'Mark as false detection?',
+            expect.stringContaining('cannot be undone'),
+            expect.any(Array),
+        );
+        const buttons = alert.mock.calls[0][2];
+        buttons?.[0]?.onPress?.();
+        expect(mockFalse).not.toHaveBeenCalled();
+        act(() => {
+            buttons?.[1]?.onPress?.();
+            buttons?.[1]?.onPress?.();
+        });
+        await waitFor(() => expect(mockFalse).toHaveBeenCalledTimes(1));
+    });
+
+    it('fails closed for a failed candidate even when M29 advertises mark_false', () => {
+        const screen = render(<CandidateCorrectionActions
+            identity={{ userId: testUuid(90), storeId: testUuid(8) }}
+            detail={candidateDetailFixture({ candidateState: 'failed' })}
+            refetchCandidate={mockCandidateRefetch}
+        />);
+        expect(screen.queryByText('Mark false')).toBeNull();
+    });
+
+    it('retries an ambiguous false disposition with the identical command and key', async () => {
+        const alert = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
+        mockFalse
+            .mockRejectedValueOnce(new OwnerCorrectionClientError('P9_INTERNAL_ERROR'))
+            .mockResolvedValueOnce({ candidateId: testUuid(2), authenticatedUserId: testUuid(90) });
+        const screen = render(<CandidateCorrectionActions
+            identity={{ userId: testUuid(90), storeId: testUuid(8) }}
+            detail={candidateDetailFixture()}
+            refetchCandidate={mockCandidateRefetch}
+        />);
+        fireEvent.press(screen.getByText('Mark false'));
+        act(() => alert.mock.calls[0][2]?.[1]?.onPress?.());
+        await waitFor(() => expect(screen.getByText('Retry same false action')).toBeTruthy());
+        const original = mockFalse.mock.calls[0][0];
+        fireEvent.press(screen.getByText('Retry same false action'));
+        await waitFor(() => expect(mockFalse).toHaveBeenCalledTimes(2));
+        expect(mockFalse.mock.calls[1][0]).toBe(original);
+    });
+
+    it('submits the minimal missed-book command once, refetches canonical detail, and opens Unit 6D review', async () => {
+        const screen = render(<InventoryMissedBookScreen sessionId={testUuid(1)} />);
+        fireEvent.changeText(screen.getByTestId('missed-title'), ' ಕನ್ನಡ ಪುಸ್ತಕ ');
+        fireEvent.changeText(screen.getByTestId('missed-author-0'), ' ಲೇಖಕ ');
+        fireEvent.changeText(screen.getByTestId('missed-language'), 'KN-knda');
+        fireEvent.press(screen.getByText('Add candidate'));
+        fireEvent.press(screen.getByText('Add candidate'));
+        await waitFor(() => expect(mockAdd).toHaveBeenCalledTimes(1));
+        expect(mockAdd.mock.calls[0][0]).toMatchObject({
+            sessionId: testUuid(1), title: 'ಕನ್ನಡ ಪುಸ್ತಕ', authors: ['ಲೇಖಕ'], language: 'kn-Knda',
+        });
+        expect(mockReadCandidate).toHaveBeenCalledWith(testUuid(1), testUuid(30));
+        expect(mockPush).toHaveBeenCalledWith(
+            `/(store-owner)/inventory/scan/${testUuid(1)}/candidate/${testUuid(30)}`,
+        );
+    });
+
+    it('keeps missed-book mutation disabled offline and installs a dirty guard', () => {
+        mockOffline = true;
+        const screen = render(<InventoryMissedBookScreen sessionId={testUuid(1)} />);
+        expect(screen.getByText('Add candidate')).toBeDisabled();
+        fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
+        expect(mockAddListener).toHaveBeenCalledWith('beforeRemove', expect.any(Function));
+    });
+
+    it('retries an ambiguous missed-book response with the identical semantic command', async () => {
+        mockAdd
+            .mockRejectedValueOnce(new OwnerCorrectionClientError('P9_INTERNAL_ERROR'))
+            .mockResolvedValueOnce({ candidateId: testUuid(30), authenticatedUserId: testUuid(90) });
+        const screen = render(<InventoryMissedBookScreen sessionId={testUuid(1)} />);
+        fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
+        fireEvent.press(screen.getByText('Add candidate'));
+        await waitFor(() => expect(screen.getByText('Retry same addition')).toBeTruthy());
+        const original = mockAdd.mock.calls[0][0];
+        fireEvent.press(screen.getByText('Retry same addition'));
+        await waitFor(() => expect(mockAdd).toHaveBeenCalledTimes(2));
+        expect(mockAdd.mock.calls[1][0]).toBe(original);
+    });
+});

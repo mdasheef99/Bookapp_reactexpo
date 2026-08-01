@@ -141,6 +141,13 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                     <View style={{ gap: 12, paddingTop: 4 }}>
                         {isOffline ? <Text selectable style={{ color: colors.textSecondary }}>Reconnect to add another image.</Text> : null}
                         <Button title="Add another image" onPress={() => router.push(inventoryRoutes.scan())} disabled={isOffline || (inputs.data?.items.length ?? 0) >= 15} />
+                        <Button
+                            title="Add missed book"
+                            variant="secondary"
+                            onPress={() => router.push(inventoryRoutes.missed(sessionId))}
+                            disabled={isOffline || (candidates.data?.items.length ?? 0) >= 15}
+                            accessibilityHint="Creates one staged manual candidate without running image analysis"
+                        />
                     </View>
                 ) : null}
             />
