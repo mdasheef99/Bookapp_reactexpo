@@ -3,6 +3,7 @@ import { Linking, ScrollView, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -30,6 +31,7 @@ import {
 } from '../queries/ownerUxQueries';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
+import { useOwnerQueryMutationGate } from '../offline/ownerUxOfflineGate';
 
 const defaults = { language: 'en', script: 'Latn', condition: 'good' as const };
 
@@ -53,6 +55,11 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
         key: createSemanticKey('start-session'),
         commandId: createCaptureUuid(),
     });
+    const gate = useOwnerQueryMutationGate({
+        scope: `${identity.userId}:${identity.storeId}:capture-setup`,
+        isOffline,
+        query: discovery,
+    });
     useEffect(() => registerCaptureCancellation(() => {
         operationGeneration.current += 1;
         busyRef.current = false;
@@ -61,7 +68,7 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
     }), []);
 
     async function choose(source: CaptureSource) {
-        if (busyRef.current || isOffline) return;
+        if (busyRef.current || !gate.canMutate) return;
         busyRef.current = true;
         const attempt = ++operationGeneration.current;
         setBusy(true);
@@ -139,11 +146,11 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
                     </Text>
                     <View style={{ gap: 12, marginTop: 18 }}>
                         {!sourceStep ? (
-                            <Button title="Start scanning" onPress={() => setSourceStep(true)} disabled={busy || isOffline || discovery.isLoading} testID="capture-start" />
+                            <Button title="Start scanning" onPress={() => setSourceStep(true)} disabled={busy || !gate.canMutate || discovery.isLoading} testID="capture-start" />
                         ) : (
                             <>
-                                <Button title="Open camera" onPress={() => void choose('camera')} disabled={busy || isOffline} testID="capture-camera" />
-                                <Button title="Choose from gallery" variant="secondary" onPress={() => void choose('gallery')} disabled={busy || isOffline} testID="capture-gallery" />
+                                <Button title="Open camera" onPress={() => void choose('camera')} disabled={busy || !gate.canMutate} testID="capture-camera" />
+                                <Button title="Choose from gallery" variant="secondary" onPress={() => void choose('gallery')} disabled={busy || !gate.canMutate} testID="capture-gallery" />
                             </>
                         )}
                         {message?.includes('settings') ? (
@@ -164,9 +171,10 @@ export function InventoryCaptureSetupScreen() {
 
 function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; sessionId: string }) {
     const router = useRouter();
+    const isFocused = useIsFocused();
     const queryClient = useQueryClient();
     const workflow = useCaptureWorkflow();
-    const inputs = useOwnerInventoryInputs(identity, sessionId);
+    const inputs = useOwnerInventoryInputs(identity, sessionId, isFocused);
     const { isOffline } = useNetworkStatus();
     const { colors } = useTheme();
     const [state, dispatch] = useReducer(uploadReducer, initialUploadState);
@@ -177,6 +185,11 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
     const authorizeAttempt = useRef({ key: createSemanticKey('authorize-upload'), commandId: createCaptureUuid() });
     const registerAttempt = useRef({ key: createSemanticKey('register-upload'), commandId: createCaptureUuid() });
     const media = workflow.selected;
+    const gate = useOwnerQueryMutationGate({
+        scope: `${identity.userId}:${identity.storeId}:${sessionId}:upload`,
+        isOffline,
+        query: inputs,
+    });
 
     const cancel = () => {
         generation.current += 1;
@@ -191,11 +204,12 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
         return () => {
             unregister();
             cancel();
+            workflow.clear();
         };
-    }, []);
+    }, [workflow.clear]);
 
     async function upload() {
-        if (!media || isOffline || running.current) return;
+        if (!media || !gate.canMutate || running.current) return;
         running.current = true;
         const nextGeneration = ++generation.current;
         let registrationStarted = false;
@@ -318,7 +332,7 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                                         ? 'Retry upload'
                                         : 'Upload image'}
                                 onPress={() => void upload()}
-                                disabled={isOffline || ['authorizing', 'uploading', 'registration_pending'].includes(state.stage)}
+                                disabled={!gate.canMutate || ['authorizing', 'uploading', 'registration_pending'].includes(state.stage)}
                             />
                         ) : null}
                         {['authorizing', 'uploading'].includes(state.stage) ? <Button title="Cancel upload" variant="secondary" onPress={cancel} /> : null}

@@ -9,7 +9,6 @@ import {
     useOwnerInventoryCandidate,
     useOwnerInventoryCandidates,
     useOwnerInventoryDiscovery,
-    useOwnerInventoryReadiness,
     useOwnerInventorySession,
 } from '../queries/ownerUxQueries';
 import { OwnerUxClientError } from '../api/ownerUxService';
@@ -27,6 +26,7 @@ import {
 } from './CandidateReviewScreens';
 import { InventoryCandidateReviewScreen } from './CandidateReviewRouteScreen';
 import { InventoryMissedBookScreen } from './MissedBookScreen';
+import { InventoryReadinessSummaryScreen } from './ReadinessSummaryScreen';
 
 type QueryState = {
     isLoading: boolean;
@@ -187,29 +187,8 @@ export function InventoryCandidateFoundationScreen({
     return <InventoryCandidateReviewScreen sessionId={sessionId} candidateId={candidateId} />;
 }
 
-function Summary({
-    identity,
-    sessionId,
-}: {
-    identity: ImageInventoryIdentity;
-    sessionId: string;
-}) {
-    const query = useOwnerInventoryReadiness(identity, sessionId);
-    return (
-        <FoundationCard
-            title="Session summary"
-            description="Readiness and Close controls will be added in Unit 6F."
-            state={query}
-        />
-    );
-}
-
 export function InventorySummaryFoundationScreen({ sessionId }: { sessionId: string }) {
-    return (
-        <Guarded>
-            {(identity) => <Summary identity={identity} sessionId={sessionId} />}
-        </Guarded>
-    );
+    return <InventoryReadinessSummaryScreen sessionId={sessionId} />;
 }
 
 export function InvalidInventoryRouteScreen() {

@@ -14,6 +14,7 @@ let mockCurrentIdentity = mockIdentity;
 const mockQueryClient = { invalidateQueries: jest.fn(() => Promise.resolve()) };
 
 jest.mock('expo-router', () => ({ useRouter: () => mockRouter }));
+jest.mock('@react-navigation/native', () => ({ useIsFocused: () => true }));
 jest.mock('@tanstack/react-query', () => ({ useQueryClient: () => mockQueryClient }));
 jest.mock('expo-image-picker', () => ({
     getCameraPermissionsAsync: jest.fn(),
@@ -186,6 +187,18 @@ describe('Phase 9 Unit 6C capture routes', () => {
         expect(mockWorkflow.clear).toHaveBeenCalled();
         expect(mockRouter.replace).toHaveBeenCalled();
         expect(mockQueryClient.invalidateQueries).toHaveBeenCalledTimes(3);
+    });
+
+    it('releases each selected preview reference on cancellation or unmount', () => {
+        mockWorkflow.selected = {
+            uri: 'file:///private/scan-3.jpg', mimeType: 'image/jpeg', fileSize: 1024,
+            width: 100, height: 200, source: 'camera',
+        };
+        const screen = render(
+            <InventoryCapturePreviewScreen sessionId="00000000-0000-4000-8000-000000000001" />,
+        );
+        screen.unmount();
+        expect(mockWorkflow.clear).toHaveBeenCalledTimes(1);
     });
 
     it('uses a new registration key after object-change reauthorization', async () => {

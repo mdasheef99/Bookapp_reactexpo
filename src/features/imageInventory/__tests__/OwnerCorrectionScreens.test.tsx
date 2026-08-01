@@ -71,24 +71,21 @@ describe('Phase 9 Unit 6E false and missed-book screens', () => {
     });
 
     it('requires destructive confirmation, cancel does nothing, and duplicate confirmation dispatches once', async () => {
-        const alert = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
         const screen = render(<CandidateCorrectionActions
             identity={{ userId: testUuid(90), storeId: testUuid(8) }}
             detail={candidateDetailFixture()}
             refetchCandidate={mockCandidateRefetch}
         />);
         fireEvent.press(screen.getByText('Mark false'));
-        expect(alert).toHaveBeenCalledWith(
-            'Mark as false detection?',
-            expect.stringContaining('cannot be undone'),
-            expect.any(Array),
-        );
-        const buttons = alert.mock.calls[0][2];
-        buttons?.[0]?.onPress?.();
+        expect(screen.getByText('Mark as false detection?')).toBeTruthy();
+        expect(screen.getByText(/cannot be undone/u)).toBeTruthy();
+        fireEvent.press(screen.getByText('Cancel'));
         expect(mockFalse).not.toHaveBeenCalled();
+        fireEvent.press(screen.getByText('Mark false'));
         act(() => {
-            buttons?.[1]?.onPress?.();
-            buttons?.[1]?.onPress?.();
+            const confirm = screen.getAllByText('Mark false').at(-1)!;
+            fireEvent.press(confirm);
+            fireEvent.press(confirm);
         });
         await waitFor(() => expect(mockFalse).toHaveBeenCalledTimes(1));
     });
@@ -103,7 +100,6 @@ describe('Phase 9 Unit 6E false and missed-book screens', () => {
     });
 
     it('retries an ambiguous false disposition with the identical command and key', async () => {
-        const alert = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
         mockFalse
             .mockRejectedValueOnce(new OwnerCorrectionClientError('P9_INTERNAL_ERROR'))
             .mockResolvedValueOnce({ candidateId: testUuid(2), authenticatedUserId: testUuid(90) });
@@ -113,7 +109,7 @@ describe('Phase 9 Unit 6E false and missed-book screens', () => {
             refetchCandidate={mockCandidateRefetch}
         />);
         fireEvent.press(screen.getByText('Mark false'));
-        act(() => alert.mock.calls[0][2]?.[1]?.onPress?.());
+        fireEvent.press(screen.getAllByText('Mark false').at(-1)!);
         await waitFor(() => expect(screen.getByText('Retry same false action')).toBeTruthy());
         const original = mockFalse.mock.calls[0][0];
         fireEvent.press(screen.getByText('Retry same false action'));

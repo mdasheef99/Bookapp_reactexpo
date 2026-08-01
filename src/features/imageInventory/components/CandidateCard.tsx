@@ -14,6 +14,13 @@ const metadataLabels: Record<CandidateSummary['metadataState'], string> = {
     failed: 'Review details manually',
 };
 
+export function candidateSessionCue(startedAt: string, expiresAt: string): string {
+    const format = (value: string) => new Intl.DateTimeFormat('en-US', {
+        month: 'short', day: 'numeric', timeZone: 'UTC',
+    }).format(new Date(value));
+    return `Session from ${format(startedAt)} · expires ${format(expiresAt)}`;
+}
+
 export function CandidateCard({
     candidate,
     onPress,
@@ -59,6 +66,9 @@ export function CandidateCard({
                     {metadataLabels[candidate.metadataState]} · {status}
                 </Text>
             </View>
+            <Text selectable style={{ color: colors.textSecondary }}>
+                {candidateSessionCue(candidate.sessionStartedAt, candidate.sessionExpiresAt)}
+            </Text>
         </Pressable>
     );
 }

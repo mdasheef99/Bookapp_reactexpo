@@ -129,10 +129,11 @@ const responseSchemas = {
     read_scan_candidate: candidateDetailSchema,
     update_candidate_review: candidateDetailSchema,
     read_scan_readiness: readinessSchema,
+    close_scan_session: readinessSchema,
 } as const;
 
 export type OwnerUxAction = keyof typeof responseSchemas;
-export type OwnerUxQueryAction = Exclude<OwnerUxAction, 'update_candidate_review'>;
+export type OwnerUxQueryAction = Exclude<OwnerUxAction, 'update_candidate_review' | 'close_scan_session'>;
 export type OwnerDiscovery = z.infer<typeof responseSchemas.discover_scan_session>;
 export type OwnerSessionSummary = z.infer<typeof responseSchemas.read_scan_session>;
 export type OwnerInputProgress = z.infer<typeof inputProgressSchema>;

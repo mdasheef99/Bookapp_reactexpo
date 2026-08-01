@@ -45,12 +45,14 @@ export function VariantDecisionSheet({
     refetchCandidate,
     onCanonical,
     onClose,
+    mutationAuthority = true,
 }: {
     identity: ImageInventoryIdentity;
     detail: OwnerCandidateDetail;
     refetchCandidate: () => Promise<CandidateRefetchResult>;
     onCanonical?: (detail: OwnerCandidateDetail) => void;
     onClose: () => void;
+    mutationAuthority?: boolean;
 }) {
     const { colors } = useTheme();
     const { isOffline } = useNetworkStatus();
@@ -82,6 +84,7 @@ export function VariantDecisionSheet({
     }, [scope]);
 
     const pendingState = decideMutation.isPending || replaceMutation.isPending;
+    const mutationBlocked = isOffline || !mutationAuthority;
     const replacementDirty = action === 'replace' && selected !== null && (
         replacementText !== selected.proposedText
         || replacementLanguage !== selected.variantLanguage
@@ -260,9 +263,9 @@ export function VariantDecisionSheet({
                         </Text>
                         <Text selectable style={{ color: colors.textSecondary }}>Original: {row.confirmedSourceText}</Text>
                         <Text selectable style={{ color: colors.textPrimary }}>Suggested: {row.proposedText}</Text>
-                        {row.allowedActions.includes('approve') ? <Button title="Approve" onPress={() => { selectAction(row, 'approve'); dispatch(row, 'approve'); }} disabled={isOffline || pendingState} /> : null}
-                        {row.allowedActions.includes('reject') ? <Button title="Reject" variant="secondary" onPress={() => { selectAction(row, 'reject'); dispatch(row, 'reject'); }} disabled={isOffline || pendingState} /> : null}
-                        {row.allowedActions.includes('replace') ? <Button title="Replace" variant="secondary" onPress={() => selectAction(row, 'replace')} disabled={isOffline || pendingState} /> : null}
+                        {row.allowedActions.includes('approve') ? <Button title="Approve" onPress={() => { selectAction(row, 'approve'); dispatch(row, 'approve'); }} disabled={mutationBlocked || pendingState} /> : null}
+                        {row.allowedActions.includes('reject') ? <Button title="Reject" variant="secondary" onPress={() => { selectAction(row, 'reject'); dispatch(row, 'reject'); }} disabled={mutationBlocked || pendingState} /> : null}
+                        {row.allowedActions.includes('replace') ? <Button title="Replace" variant="secondary" onPress={() => selectAction(row, 'replace')} disabled={mutationBlocked || pendingState} /> : null}
                     </View>
                 ))}
                 {selected && action === 'replace' ? (
@@ -275,7 +278,7 @@ export function VariantDecisionSheet({
                                 <Button key={type} title={type} variant="secondary" onPress={() => setReplacementType(type)} disabled={pendingState} />
                             ))}
                         </View>
-                        <Button title="Save replacement" onPress={() => dispatch(selected, 'replace')} disabled={isOffline || pendingState || !replacementText.trim()} />
+                        <Button title="Save replacement" onPress={() => dispatch(selected, 'replace')} disabled={mutationBlocked || pendingState || !replacementText.trim()} />
                     </View>
                 ) : null}
                 {conflict ? (
@@ -294,10 +297,10 @@ export function VariantDecisionSheet({
                             const savedAction = action;
                             setConflict(null);
                             if (savedAction) dispatch(latest, savedAction);
-                        }} disabled={!action || !conflict.latest.allowedActions.includes(action) || isOffline} />
+                        }} disabled={!action || !conflict.latest.allowedActions.includes(action) || mutationBlocked} />
                     </View>
                 ) : null}
-                {pending && message ? <Button title="Retry same decision" onPress={() => void run(pending)} disabled={pendingState || isOffline} /> : null}
+                {pending && message ? <Button title="Retry same decision" onPress={() => void run(pending)} disabled={pendingState || mutationBlocked} /> : null}
                 {message ? <Text selectable accessibilityLiveRegion="polite" style={{ color: message.includes('updated') ? colors.accent : colors.error }}>{message}</Text> : null}
                 <Button title="Leave unresolved" variant="secondary" onPress={closeSafely} disabled={pendingState} />
             </View>

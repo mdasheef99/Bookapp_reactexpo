@@ -150,7 +150,7 @@ export function resetImageInventoryIdentityForTests(
 const commonQueryOptions = {
     staleTime: 15_000,
     gcTime: 5 * 60_000,
-    refetchOnReconnect: true,
+    refetchOnReconnect: false,
     retry: (failureCount: number, error: Error) => (
         failureCount < 1
         && error instanceof OwnerUxClientError
@@ -160,8 +160,9 @@ const commonQueryOptions = {
 
 export function inputPollingInterval(
     items: ReadonlyArray<{ polling: boolean }> | undefined,
+    visible = true,
 ): number | false {
-    return items?.some((item) => item.polling) ? 3_000 : false;
+    return visible && items?.some((item) => item.polling) ? 3_000 : false;
 }
 
 export function useOwnerInventoryDiscovery(identity: ImageInventoryIdentity | null) {
@@ -191,6 +192,7 @@ export function useOwnerInventorySession(
 export function useOwnerInventoryInputs(
     identity: ImageInventoryIdentity | null,
     sessionId: string | null,
+    visible = true,
 ) {
     return useQuery({
         ...commonQueryOptions,
@@ -200,7 +202,7 @@ export function useOwnerInventoryInputs(
         ),
         queryFn: () => ownerUxService.listInputs(sessionId as string),
         enabled: Boolean(identity && sessionId),
-        refetchInterval: (query) => inputPollingInterval(query.state.data?.items),
+        refetchInterval: (query) => inputPollingInterval(query.state.data?.items, visible),
         refetchIntervalInBackground: false,
     });
 }

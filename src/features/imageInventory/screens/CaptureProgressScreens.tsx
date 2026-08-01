@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { AppState, FlatList, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
@@ -16,6 +17,7 @@ import {
     useOwnerInventorySession,
 } from '../queries/ownerUxQueries';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
+import { coalesceOwnerUxRefresh } from '../offline/ownerUxOfflineGate';
 
 function inputLabel(item: { presentationState: string; retryState: string; safeCode: string | null }) {
     if (item.retryState === 'server_retrying') return 'Trying again';
@@ -34,8 +36,9 @@ function inputLabel(item: { presentationState: string; retryState: string; safeC
 
 function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIdentity; sessionId: string }) {
     const router = useRouter();
+    const isFocused = useIsFocused();
     const session = useOwnerInventorySession(identity, sessionId);
-    const inputs = useOwnerInventoryInputs(identity, sessionId);
+    const inputs = useOwnerInventoryInputs(identity, sessionId, isFocused);
     const candidates = useOwnerInventoryCandidates(identity, {
         scope: 'session',
         sessionId,
@@ -49,25 +52,26 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     );
     const loading = session.isLoading || inputs.isLoading;
     const retryableError = !unavailable && (session.error || inputs.error || candidates.error);
+    const refreshScope = `${identity.userId}:${identity.storeId}:${sessionId}:progress`;
+    const refreshAll = useCallback(() => coalesceOwnerUxRefresh(refreshScope, async () => {
+        const results = await Promise.all([session.refetch(), inputs.refetch(), candidates.refetch()]);
+        return results.every((result) => !result.isError && result.error === null);
+    }), [candidates.refetch, inputs.refetch, refreshScope, session.refetch]);
     useEffect(() => {
         const subscription = AppState.addEventListener('change', (next) => {
             if (next === 'active') {
-                void session.refetch();
-                void inputs.refetch();
-                void candidates.refetch();
+                void refreshAll();
             }
         });
         return () => subscription.remove();
-    }, [candidates.refetch, inputs.refetch, session.refetch]);
+    }, [refreshAll]);
     const wasOffline = useRef(isOffline);
     useEffect(() => {
         if (wasOffline.current && !isOffline) {
-            void session.refetch();
-            void inputs.refetch();
-            void candidates.refetch();
+            void refreshAll();
         }
         wasOffline.current = isOffline;
-    }, [candidates.refetch, inputs.refetch, isOffline, session.refetch]);
+    }, [isOffline, refreshAll]);
     useEffect(() => {
         if (inputs.data?.presentationRevision) void candidates.refetch();
     }, [candidates.refetch, inputs.data?.presentationRevision]);
@@ -80,6 +84,10 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                 data={!loading && !unavailable && !retryableError
                     ? candidates.data?.items ?? []
                     : []}
+                initialNumToRender={6}
+                maxToRenderPerBatch={6}
+                windowSize={5}
+                removeClippedSubviews
                 keyExtractor={(item) => item.candidateId}
                 renderItem={({ item }) => (
                     <CandidateCard
@@ -103,7 +111,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                     ) : retryableError ? (
                         <>
                             <Text selectable style={{ color: colors.textSecondary, marginTop: 8 }}>Saved scan progress could not be loaded.</Text>
-                            <Button title="Retry" style={{ marginTop: 16 }} onPress={() => { void session.refetch(); void inputs.refetch(); void candidates.refetch(); }} />
+                            <Button title="Retry" style={{ marginTop: 16 }} onPress={() => { void refreshAll(); }} />
                         </>
                     ) : (
                         <>
@@ -141,6 +149,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                     <View style={{ gap: 12, paddingTop: 4 }}>
                         {isOffline ? <Text selectable style={{ color: colors.textSecondary }}>Reconnect to add another image.</Text> : null}
                         <Button title="Add another image" onPress={() => router.push(inventoryRoutes.scan())} disabled={isOffline || (inputs.data?.items.length ?? 0) >= 15} />
+                        <Button title="View session summary" variant="secondary" onPress={() => router.push(inventoryRoutes.summary(sessionId))} />
                         <Button
                             title="Add missed book"
                             variant="secondary"
@@ -183,6 +192,14 @@ export function InventoryHubRecoveryCard({ identity }: { identity: ImageInventor
                         style={{ marginTop: 14 }}
                         onPress={() => router.push(active ? inventoryRoutes.session(active.sessionId) : inventoryRoutes.scan())}
                         disabled={discovery.isLoading || isOffline || !discovery.data}
+                    />
+                    <Button
+                        title={`Review books (${discovery.data?.needsReviewCount ?? 0})`}
+                        variant="secondary"
+                        style={{ marginTop: 10 }}
+                        onPress={() => router.push(inventoryRoutes.reviews())}
+                        disabled={discovery.isLoading || !discovery.data}
+                        accessibilityHint="Opens the bounded needs-review queue"
                     />
                 </>
             )}

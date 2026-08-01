@@ -106,6 +106,15 @@ const operationErrors: Record<OwnerUxAction, ReadonlySet<OwnerUxErrorCode>> = {
         'P9_REQUEST_INVALID',
         'P9_INTERNAL_ERROR',
     ]),
+    close_scan_session: new Set([
+        'P9_AUTH_REQUIRED',
+        'P9_OWNER_NOT_AUTHORIZED',
+        'P9_REQUEST_INVALID',
+        'P9_STATE_CONFLICT',
+        'P9_VERSION_CONFLICT',
+        'P9_IDEMPOTENCY_MISMATCH',
+        'P9_INTERNAL_ERROR',
+    ]),
 };
 
 function registeredError(code: OwnerUxErrorCode): OwnerUxClientError {
@@ -194,6 +203,13 @@ export type UpdateCandidateReviewRequest = Readonly<{
     commandId: string;
 }>;
 
+export type CloseScanSessionRequest = Readonly<{
+    sessionId: string;
+    expectedSessionVersion: number;
+    idempotencyKey: string;
+    commandId: string;
+}>;
+
 export const ownerUxService = {
     discover(): Promise<OwnerDiscovery> {
         return invoke('discover_scan_session', {});
@@ -223,5 +239,8 @@ export const ownerUxService = {
     },
     readReadiness(sessionId: string): Promise<OwnerSessionReadiness> {
         return invoke('read_scan_readiness', { sessionId });
+    },
+    closeSession(request: CloseScanSessionRequest): Promise<OwnerSessionReadiness> {
+        return invoke('close_scan_session', request);
     },
 };

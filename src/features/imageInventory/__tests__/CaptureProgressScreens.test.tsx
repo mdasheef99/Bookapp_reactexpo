@@ -2,7 +2,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { InventorySessionProgressScreen } from '../screens/CaptureProgressScreens';
 
 const mockRouter = { push: jest.fn(), replace: jest.fn() };
-const mockRefetch = jest.fn(() => Promise.resolve());
+const mockRefetch = jest.fn(() => Promise.resolve({ isError: false, error: null }));
 const mockSession = { data: { status: 'active' }, error: null, refetch: mockRefetch };
 const mockInputs = {
     data: {
@@ -45,6 +45,7 @@ const mockCandidates = {
 };
 
 jest.mock('expo-router', () => ({ useRouter: () => mockRouter }));
+jest.mock('@react-navigation/native', () => ({ useIsFocused: () => true }));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({ colors: {
         textPrimary: '#111', textSecondary: '#333', error: '#900', border: '#ccc',
