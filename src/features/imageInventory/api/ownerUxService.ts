@@ -236,8 +236,11 @@ export const ownerUxService = {
     readCandidate(sessionId: string, candidateId: string): Promise<OwnerCandidateDetail> {
         return invoke('read_scan_candidate', { sessionId, candidateId });
     },
-    updateCandidateReview(request: UpdateCandidateReviewRequest): Promise<OwnerCandidateDetail> {
-        return invoke('update_candidate_review', request);
+    updateCandidateReview(
+        request: UpdateCandidateReviewRequest,
+        signal?: AbortSignal,
+    ): Promise<OwnerCandidateDetail> {
+        return invoke('update_candidate_review', request, signal);
     },
     readReadiness(sessionId: string): Promise<OwnerSessionReadiness> {
         return invoke('read_scan_readiness', { sessionId });

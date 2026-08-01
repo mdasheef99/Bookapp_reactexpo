@@ -88,7 +88,7 @@ export function OwnerConfirmationDialog({
                         </Text>
                         {pending ? (
                             <Text selectable accessibilityLiveRegion="assertive" style={{ color: colors.textSecondary }}>
-                                Confirmingâ€¦
+                                Confirming…
                             </Text>
                         ) : null}
                     </ScrollView>

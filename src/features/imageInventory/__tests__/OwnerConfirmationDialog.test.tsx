@@ -43,7 +43,7 @@ describe('Phase 9 Unit 6F accessible confirmation', () => {
             visible title="Confirm action" description="Consequence" confirmLabel="Confirm"
             pending onConfirm={jest.fn()} onCancel={jest.fn()}
         />);
-        expect(screen.getByText(/Confirming/u)).toBeTruthy();
+        expect(screen.getByText('Confirming…')).toBeTruthy();
         expect(screen.getByLabelText('Confirm').props.accessibilityState.disabled).toBe(true);
         expect(screen.getByLabelText('Cancel').props.accessibilityState.disabled).toBe(true);
     });

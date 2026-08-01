@@ -80,6 +80,8 @@ jest.mock('../queries/ownerUxQueries', () => ({
         refetch: mockSessionRefetch,
         isFetchedAfterMount: true,
     }),
+}));
+jest.mock('../queries/ownerUxReviewQueries', () => ({
     useUpdateOwnerCandidateReview: () => ({
         mutateAsync: mockMutateAsync,
         isPending: mockMutationPending,
@@ -487,6 +489,37 @@ describe('Phase 9 Unit 6D candidate list and strict review screens', () => {
         expect(screen.getByText('Save review')).toBeDisabled();
         expect(screen.getByTestId('review-price-minor')).toBeDisabled();
         expect(screen.getByTestId('confirm-title')).toBeDisabled();
+    });
+
+    it('uses exactly one coalesced candidate/session refresh path on reconnect', async () => {
+        let resolveCandidate!: (result: RefetchResult<OwnerCandidateDetail>) => void;
+        let resolveSession!: (result: RefetchResult<OwnerSessionSummary>) => void;
+        mockCandidateRefetch.mockImplementationOnce(() => new Promise((resolve) => {
+            resolveCandidate = resolve;
+        }));
+        mockSessionRefetch.mockImplementationOnce(() => new Promise((resolve) => {
+            resolveSession = resolve;
+        }));
+        mockOffline = true;
+        const screen = render(
+            <InventoryCandidateReviewScreen sessionId={testUuid(1)} candidateId={testUuid(2)} />,
+        );
+        expect(screen.getByText('Save review')).toBeDisabled();
+        mockOffline = false;
+        await act(async () => {
+            screen.rerender(
+                <InventoryCandidateReviewScreen sessionId={testUuid(1)} candidateId={testUuid(2)} />,
+            );
+            await Promise.resolve();
+        });
+        await waitFor(() => expect(mockCandidateRefetch).toHaveBeenCalledTimes(1));
+        expect(mockSessionRefetch).toHaveBeenCalledTimes(1);
+        await act(async () => {
+            resolveCandidate({ data: mockCandidateData, isError: false, error: null });
+            resolveSession({ data: mockSessionData, isError: false, error: null });
+            await Promise.resolve();
+        });
+        await waitFor(() => expect(screen.getByLabelText('Mark false')).not.toBeDisabled());
     });
 
     it('blocks navigation while a dirty save is in flight', () => {

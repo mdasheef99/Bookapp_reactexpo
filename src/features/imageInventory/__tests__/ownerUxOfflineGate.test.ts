@@ -2,7 +2,9 @@ import {
     coalesceOwnerUxRefresh,
     invalidateOwnerUxRefreshScope,
     resetOwnerUxRefreshCoalescerForTests,
+    useOwnerUxOfflineGate,
 } from '../offline/ownerUxOfflineGate';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 
 describe('Phase 9 Unit 6F authoritative reconnect refresh', () => {
     beforeEach(resetOwnerUxRefreshCoalescerForTests);
@@ -40,5 +42,106 @@ describe('Phase 9 Unit 6F authoritative reconnect refresh', () => {
         expect(nextTask).toHaveBeenCalledTimes(1);
         resolveOld(true);
         await expect(old).resolves.toBe(true);
+    });
+});
+
+describe('Phase 9 Unit 6F reconnect authority generations', () => {
+    beforeEach(resetOwnerUxRefreshCoalescerForTests);
+
+    it('revokes fetched authority offline and requires a successful reconnect receipt', async () => {
+        let resolveRefresh!: (value: boolean) => void;
+        const refresh = jest.fn(() => new Promise<boolean>((resolve) => { resolveRefresh = resolve; }));
+        const hook = renderHook<
+            ReturnType<typeof useOwnerUxOfflineGate>,
+            { isOffline: boolean }
+        >(
+            ({ isOffline }: { isOffline: boolean }) => useOwnerUxOfflineGate({
+                scope: 'owner:store:session:candidate', isOffline, refresh,
+                hasAuthoritativeData: true, currentAuthorityVerified: true,
+            }),
+            { initialProps: { isOffline: false } },
+        );
+        expect(hook.result.current.canMutate).toBe(true);
+        hook.rerender({ isOffline: true });
+        expect(hook.result.current.canMutate).toBe(false);
+        hook.rerender({ isOffline: false });
+        expect(hook.result.current.canMutate).toBe(false);
+        expect(hook.result.current.authorityState).toBe('REFRESHING');
+        await act(async () => resolveRefresh(true));
+        await waitFor(() => expect(hook.result.current.canMutate).toBe(true));
+        expect(hook.result.current.authorityState).toBe('AUTHORITATIVE');
+    });
+
+    it('keeps retained data read-only after reconnect failure', async () => {
+        const refresh = jest.fn().mockResolvedValue(false);
+        const hook = renderHook<
+            ReturnType<typeof useOwnerUxOfflineGate>,
+            { isOffline: boolean }
+        >(
+            ({ isOffline }: { isOffline: boolean }) => useOwnerUxOfflineGate({
+                scope: 'owner:store:session:candidate', isOffline, refresh,
+                hasAuthoritativeData: true, currentAuthorityVerified: true,
+            }),
+            { initialProps: { isOffline: true } },
+        );
+        hook.rerender({ isOffline: false });
+        await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(hook.result.current.authorityState).toBe('ERROR_READ_ONLY'));
+        expect(hook.result.current.canMutate).toBe(false);
+    });
+
+    it('does not inherit authority across a scope change and ignores an older same-scope receipt', async () => {
+        const resolvers: Array<(value: boolean) => void> = [];
+        const refresh = jest.fn(() => new Promise<boolean>((resolve) => { resolvers.push(resolve); }));
+        const hook = renderHook<
+            ReturnType<typeof useOwnerUxOfflineGate>,
+            { scope: string }
+        >(
+            ({ scope }: { scope: string }) => useOwnerUxOfflineGate({
+                scope, isOffline: false, refresh,
+                hasAuthoritativeData: true, currentAuthorityVerified: true,
+            }),
+            { initialProps: { scope: 'owner:store:session-a:candidate-a' } },
+        );
+        expect(hook.result.current.canMutate).toBe(true);
+        hook.rerender({ scope: 'owner:store:session-b:candidate-a' });
+        expect(hook.result.current.canMutate).toBe(false);
+        await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
+        hook.rerender({ scope: 'owner:store:session-a:candidate-a' });
+        await waitFor(() => expect(refresh).toHaveBeenCalledTimes(2));
+        await act(async () => resolvers[0](true));
+        expect(hook.result.current.canMutate).toBe(false);
+        await act(async () => resolvers[1](true));
+        await waitFor(() => expect(hook.result.current.canMutate).toBe(true));
+    });
+
+    it('remounts with retained cache read-only until the current fetch succeeds', async () => {
+        let resolveRefresh!: (value: boolean) => void;
+        const refresh = jest.fn(() => new Promise<boolean>((resolve) => { resolveRefresh = resolve; }));
+        const hook = renderHook(() => useOwnerUxOfflineGate({
+            scope: 'owner:store:session:candidate', isOffline: false, refresh,
+            hasAuthoritativeData: true, currentAuthorityVerified: false,
+        }));
+        expect(hook.result.current.canMutate).toBe(false);
+        await act(async () => resolveRefresh(true));
+        await waitFor(() => expect(hook.result.current.canMutate).toBe(true));
+    });
+
+    it('invalidates current authority when a current query errors with retained cache', () => {
+        const hook = renderHook<
+            ReturnType<typeof useOwnerUxOfflineGate>,
+            { hasAuthoritativeData: boolean }
+        >(
+            ({ hasAuthoritativeData }: { hasAuthoritativeData: boolean }) => useOwnerUxOfflineGate({
+                scope: 'owner:store:session:candidate', isOffline: false,
+                refresh: jest.fn().mockResolvedValue(false),
+                hasAuthoritativeData, currentAuthorityVerified: true,
+            }),
+            { initialProps: { hasAuthoritativeData: true } },
+        );
+        expect(hook.result.current.canMutate).toBe(true);
+        hook.rerender({ hasAuthoritativeData: false });
+        expect(hook.result.current.canMutate).toBe(false);
+        expect(hook.result.current.authorityState).not.toBe('AUTHORITATIVE');
     });
 });

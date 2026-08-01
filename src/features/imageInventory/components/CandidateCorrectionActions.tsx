@@ -22,7 +22,6 @@ import {
 } from '../queries/ownerUxQueries';
 import { VariantDecisionSheet } from './VariantDecisionSheet';
 import { OwnerConfirmationDialog } from './OwnerConfirmationDialog';
-import { useOwnerUxOfflineGate } from '../offline/ownerUxOfflineGate';
 
 type CandidateRefetchResult = {
     data?: OwnerCandidateDetail;
@@ -55,6 +54,7 @@ export function CandidateCorrectionActions({
     const [variantOpen, setVariantOpen] = useState(false);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const scope = `${identity.userId}:${identity.storeId}:${detail.sessionId}:${detail.candidateId}`;
+    const canMutate = !isOffline && mutationAuthority;
     const activeScope = useRef(scope);
     useEffect(() => {
         activeScope.current = scope;
@@ -72,7 +72,7 @@ export function CandidateCorrectionActions({
     }, [detail.candidateId, detail.sessionId, refetchCandidate]);
 
     const runFalse = async (command: MarkFalseRequest) => {
-        if (!gate.canMutate) return;
+        if (!canMutate) return;
         const callScope = activeScope.current;
         setMessage(null);
         try {
@@ -126,19 +126,11 @@ export function CandidateCorrectionActions({
     };
 
     const confirmFalse = () => {
-        if (!gate.canMutate || pendingRef.current || mutation.isPending || !canMarkCandidateFalse(detail)) return;
+        if (!canMutate || pendingRef.current || mutation.isPending || !canMarkCandidateFalse(detail)) return;
         setConfirmOpen(true);
     };
-    const gateRefresh = useCallback(async () => Boolean(await authoritativeRefresh()), [authoritativeRefresh]);
-    const gate = useOwnerUxOfflineGate({
-        scope,
-        isOffline: isOffline || !mutationAuthority,
-        refresh: gateRefresh,
-        hasAuthoritativeData: mutationAuthority,
-        currentAuthorityVerified: mutationAuthority,
-    });
     const submitFalse = () => {
-        if (!gate.canMutate || pendingRef.current || mutation.isPending) return;
+        if (!canMutate || pendingRef.current || mutation.isPending) return;
         const command: MarkFalseRequest = {
             candidateId: detail.candidateId,
             expectedCandidateVersion: detail.candidateVersion,
@@ -168,8 +160,8 @@ export function CandidateCorrectionActions({
                     accessibilityRole="button"
                     accessibilityLabel="Mark false"
                     accessibilityHint="Records a false detection after confirmation. It does not delete the candidate."
-                    accessibilityState={{ disabled: !gate.canMutate || mutation.isPending || Boolean(latest) }}
-                    disabled={!gate.canMutate || mutation.isPending || Boolean(latest)}
+                    accessibilityState={{ disabled: !canMutate || mutation.isPending || Boolean(latest) }}
+                    disabled={!canMutate || mutation.isPending || Boolean(latest)}
                     onPress={confirmFalse}
                     style={{ minHeight: 48, justifyContent: 'center', alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: colors.border }}
                 >
@@ -180,7 +172,7 @@ export function CandidateCorrectionActions({
                 <Button
                     title="Review search wording"
                     variant="secondary"
-                    disabled={!gate.canMutate}
+                    disabled={!canMutate}
                     onPress={() => setVariantOpen(true)}
                 />
             ) : null}
@@ -210,7 +202,7 @@ export function CandidateCorrectionActions({
                         pendingRef.current = command;
                         setPending(command);
                         void runFalse(command);
-                    }} disabled={!canMarkCandidateFalse(latest) || !gate.canMutate} />
+                    }} disabled={!canMarkCandidateFalse(latest) || !canMutate} />
                 </View>
             ) : null}
             {message ? <Text selectable accessibilityLiveRegion="polite" style={{ color: message.includes('recorded') ? colors.accent : colors.error }}>{message}</Text> : null}
@@ -221,7 +213,7 @@ export function CandidateCorrectionActions({
                     refetchCandidate={refetchCandidate}
                     onCanonical={onCanonical}
                     onClose={() => setVariantOpen(false)}
-                    mutationAuthority={gate.canMutate}
+                    mutationAuthority={canMutate}
                 />
             ) : null}
         </View>

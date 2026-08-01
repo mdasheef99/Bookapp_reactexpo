@@ -29,8 +29,8 @@ import {
     type ImageInventoryIdentity,
     useOwnerInventoryCandidate,
     useOwnerInventorySession,
-    useUpdateOwnerCandidateReview,
 } from '../queries/ownerUxQueries';
+import { useUpdateOwnerCandidateReview } from '../queries/ownerUxReviewQueries';
 import { useOwnerUxOfflineGate } from '../offline/ownerUxOfflineGate';
 
 const inaccessibleCodes = new Set(['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND']);
@@ -58,7 +58,6 @@ export function CandidateReview({
     const [baseFingerprint, setBaseFingerprint] = useState<string | null>(null);
     const [conflict, setConflict] = useState<CandidateConflictState | null>(null);
     const [staleRefreshBase, setStaleRefreshBase] = useState<OwnerCandidateDetail | null>(null);
-    const [reconnectPending, setReconnectPending] = useState(isOffline);
     const [pendingCommand, setPendingCommand] = useState<UpdateCandidateReviewRequest | null>(null);
     const pendingCommandRef = useRef<UpdateCandidateReviewRequest | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -68,23 +67,6 @@ export function CandidateReview({
         activeScope.current = scopeToken;
         return () => { activeScope.current = ''; };
     }, [scopeToken]);
-    const refreshAuthority = useCallback(async () => {
-        const callScope = activeScope.current;
-        const [candidateResult, sessionResult] = await Promise.all([candidateQuery.refetch(), sessionQuery.refetch()]);
-        return activeScope.current === callScope
-            && !candidateResult.isError && candidateResult.error === null
-            && candidateResult.data?.sessionId === sessionId
-            && candidateResult.data.candidateId === candidateId
-            && !sessionResult.isError && sessionResult.error === null
-            && sessionResult.data?.sessionId === sessionId;
-    }, [candidateId, candidateQuery.refetch, sessionId, sessionQuery.refetch]);
-    const mutationGate = useOwnerUxOfflineGate({
-        scope: scopeToken,
-        isOffline,
-        refresh: refreshAuthority,
-        hasAuthoritativeData: Boolean(candidateQuery.data && sessionQuery.data && !candidateQuery.error && !sessionQuery.error),
-        currentAuthorityVerified: candidateQuery.isFetchedAfterMount && sessionQuery.isFetchedAfterMount,
-    });
     useEffect(() => {
         if (!draft && detail && sessionQuery.data) {
             const next = createReviewDraft(detail, sessionQuery.data.defaults);
@@ -98,6 +80,60 @@ export function CandidateReview({
         && baseFingerprint
         && reviewDraftFingerprint(draft) !== baseFingerprint,
     );
+    const refreshAuthority = useCallback(async () => {
+        const callScope = activeScope.current;
+        try {
+            const [candidateResult, sessionResult] = await Promise.all([
+                candidateQuery.refetch(),
+                sessionQuery.refetch(),
+            ]);
+            if (
+                activeScope.current !== callScope
+                || !isAuthoritativeCandidateRefresh(candidateResult, sessionId, candidateId)
+                || sessionResult.isError
+                || sessionResult.error !== null
+                || sessionResult.data?.sessionId !== sessionId
+            ) {
+                if (activeScope.current === callScope) {
+                    setMessage('Latest candidate details could not be loaded after reconnect.');
+                }
+                return false;
+            }
+            if (dirty && detail) {
+                setCanonicalOverride(candidateResult.data);
+                setConflict({
+                    latest: candidateResult.data,
+                    changes: candidateConflictChanges(detail, candidateResult.data),
+                });
+            } else {
+                const next = createReviewDraft(candidateResult.data, sessionResult.data.defaults);
+                setCanonicalOverride(candidateResult.data);
+                setDraft(next);
+                setBaseFingerprint(reviewDraftFingerprint(next));
+            }
+            setMessage(null);
+            return true;
+        } catch {
+            if (activeScope.current === callScope) {
+                setMessage('Latest candidate details could not be loaded after reconnect.');
+            }
+            return false;
+        }
+    }, [
+        candidateId,
+        candidateQuery.refetch,
+        detail,
+        dirty,
+        sessionId,
+        sessionQuery.refetch,
+    ]);
+    const mutationGate = useOwnerUxOfflineGate({
+        scope: scopeToken,
+        isOffline,
+        refresh: refreshAuthority,
+        hasAuthoritativeData: Boolean(candidateQuery.data && sessionQuery.data && !candidateQuery.error && !sessionQuery.error),
+        currentAuthorityVerified: candidateQuery.isFetchedAfterMount && sessionQuery.isFetchedAfterMount,
+    });
     useEffect(() => navigation.addListener('beforeRemove', (event: any) => {
         if (!dirty) return;
         event.preventDefault();
@@ -131,7 +167,6 @@ export function CandidateReview({
         setBaseFingerprint(reviewDraftFingerprint(next));
         setConflict(null);
         setStaleRefreshBase(null);
-        setReconnectPending(false);
         setPendingCommand(null);
         pendingCommandRef.current = null;
     };
@@ -156,59 +191,6 @@ export function CandidateReview({
             setMessage('Latest candidate details could not be loaded. Retry before saving.');
         }
     };
-    const offlineWas = useRef(isOffline);
-    useEffect(() => {
-        if (isOffline) {
-            setReconnectPending(true);
-        } else if (offlineWas.current) {
-            const callScope = activeScope.current;
-            void (async () => {
-                try {
-                    const [candidateResult, sessionResult] = await Promise.all([
-                        candidateQuery.refetch(),
-                        sessionQuery.refetch(),
-                    ]);
-                    if (activeScope.current !== callScope) return;
-                    if (
-                        !isAuthoritativeCandidateRefresh(
-                            candidateResult,
-                            sessionId,
-                            candidateId,
-                        )
-                        || sessionResult.isError
-                        || sessionResult.error !== null
-                        || sessionResult.data?.sessionId !== sessionId
-                    ) {
-                        setMessage('Latest candidate details could not be loaded after reconnect.');
-                        return;
-                    }
-                    if (dirty && detail) {
-                        setCanonicalOverride(candidateResult.data);
-                        setConflict({
-                            latest: candidateResult.data,
-                            changes: candidateConflictChanges(detail, candidateResult.data),
-                        });
-                        setReconnectPending(false);
-                        setMessage(null);
-                        return;
-                    }
-                    const next = createReviewDraft(
-                        candidateResult.data,
-                        sessionResult.data.defaults,
-                    );
-                    setCanonicalOverride(candidateResult.data);
-                    setDraft(next);
-                    setBaseFingerprint(reviewDraftFingerprint(next));
-                    setReconnectPending(false);
-                    setMessage(null);
-                } catch {
-                    if (activeScope.current !== callScope) return;
-                    setMessage('Latest candidate details could not be loaded after reconnect.');
-                }
-            })();
-        }
-        offlineWas.current = isOffline;
-    }, [isOffline]);
     const runCommand = async (command: UpdateCandidateReviewRequest) => {
         if (!mutationGate.canMutate) return;
         const callScope = activeScope.current;
@@ -277,7 +259,6 @@ export function CandidateReview({
         || Boolean(conflict)
         || Boolean(pendingCommand)
         || Boolean(staleRefreshBase)
-        || reconnectPending
         || !mutationGate.canMutate;
     const reapplyConflict = (currentConflict: CandidateConflictState) => {
         setDraft((current) => current

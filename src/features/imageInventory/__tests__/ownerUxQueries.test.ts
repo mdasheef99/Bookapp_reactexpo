@@ -5,8 +5,8 @@ import {
     imageInventoryKeys,
     inputPollingInterval,
     resetImageInventoryIdentityForTests,
-    synchronizeCandidateReviewSuccess,
 } from '../queries/ownerUxQueries';
+import { synchronizeCandidateReviewSuccess } from '../queries/ownerUxReviewQueries';
 import { synchronizeCloseSuccess } from '../queries/ownerUxCloseQueries';
 import { candidateDetailFixture, testUuid } from '../testing/ownerUxTestFixtures';
 
