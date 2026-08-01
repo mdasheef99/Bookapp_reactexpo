@@ -1,13 +1,13 @@
 # Phase 9 Unit 6E False/Missed-Variant Correction Evidence
 
-**Status:** `complete_merge_handoff`
+**Status:** `verified_fixture_awaiting_final_commit`
 **Date:** 2026-08-01
 **Feature commit:** `76e14186f39914a1492cadb44e4c0e190df70605`
 **Correction checkpoint:** `8bceab260a953b4d832fd55f34f58db12fa009b1`
 **Correction tree:** `8a70bbb3b102ecda22f2904f20952852849567f1`
 **Work unit:** Phase 9 Unit 6E only
 **Next eligible unit:** Unit 6F, separately authorized
-**Database mutation authority:** M30 only, applied exactly once after exact-project preflight
+**Database mutation authority:** M30 plus one explicitly authorized direct eligibility update for the disposable development fixture
 
 ## 1. Authority and bounded scope
 
@@ -97,7 +97,7 @@ publication, provider, or commerce mutation.
 
 | Check | Result |
 | --- | --- |
-| Focused Unit 6E/affected Unit 6B/auth/access Jest command | 12 suites, 95/95 tests passed |
+| Focused Unit 6E/affected Unit 6B/auth/access Jest command | 12 suites, 98/98 tests passed in final bounded rerun |
 | Remote-backed Unit 6E integration test | 3/3 passed |
 | TypeScript | `npx.cmd tsc --noEmit --allowImportingTsExtensions` passed |
 | Phase 9 continuity validator | `REQUIREMENT_DEFINITIONS=195`; duplicates `0`; missing traceability `0`; regression probes PASS; `PHASE9_CONTINUITY_CHECK=PASS` |
@@ -136,24 +136,121 @@ Observed console output was limited to framework/configuration conditions:
 These observations are recorded as limitations, not as Unit 6E functional
 failures or passes.
 
-## 7. External-state, limitations, and next gate
+## 7. Development reviewer fixture bootstrap
 
-- Supabase M30 is the sole external mutation authorized and applied in this
-  session; no Storage, provider, deployment, inventory, listing, publication,
-  or commerce mutation occurred.
-- The supplied account lacks Active Store Owner membership. Positive Owner-only
-  false/missed-variant UI mutation, native camera/device behavior, and live
-  Owner-write smoke remain unclaimed; deterministic tests and read-only RPC
-  denial cover the available evidence.
+This addendum records the separately authorized development-only reviewer
+bootstrap. No store-review or store-profile workflow mutation has been made.
+
+| Field | Before | After |
+| --- | --- | --- |
+| Reviewer UUID | `a15e05a0-ca47-426d-a983-1fee826cde8b` exists; no platform role | one active `store_reviewer` row (`2fbe3e1f-f887-40e1-bd1b-5f954538d593`), `granted_by` NULL |
+| Reviewer login identifier | Supabase reports `test@example.com`; the supplied UUID was designated as the development reviewer | unchanged |
+| Reviewer Store Owner memberships | one pre-existing owner membership for separate smoke-test store `68b0c1c9-7f70-4388-bd87-298df3a2ded4`; no new membership authorized | unchanged; no membership created or altered |
+| Target Owner membership | `7dfa8584-6b0f-43b4-a17b-abf5858c3b60`, target store, `owner/active` | unchanged |
+| Target store | `pending_verification`, verification `pending`, setup `incomplete`, selling `not_allowed` | unchanged at reviewer-bootstrap time; direct activation is recorded in §10 |
+| Target request | `3e8a9cc1-1162-466f-8d1f-967b174f3fcd`, `submitted` | unchanged |
+| Target inventory/listing | `0 / 0` | `0 / 0` |
+
+The reviewer-bootstrap mutation was the exact `platform_user_roles` insert
+through Supabase MCP. A later, separately authorized direct fixture activation
+is recorded in §10; no `platform_admin` role, membership, RLS/grant/function/
+schema/migration, inventory, listing, publication, commerce, Storage, or other
+user/store record was changed. The reviewer role is intentionally retained as
+a reusable development fixture per the authorization.
+
+The production `store-review` and `store-profile` workflows remain separately
+unverified. The direct fixture activation was explicitly authorized only to
+permit Owner-session verification; it is not production workflow evidence.
+
+## 8. External-state, limitations, and next gate
+
+- Supabase M30 and the exact-store direct eligibility update are the only
+  external database mutations recorded here; no Storage, provider, deployment,
+  inventory, listing, publication, or commerce mutation occurred.
+- The target Owner now has an active eligible store, but the target store has
+  no disposable image-extraction session, input, candidate, or media fixture.
+  Positive false/missed/variant UI mutation paths therefore remain unclaimed;
+  the bounded browser check stops at the eligible inventory entry and records
+  those paths as unavailable rather than fabricating coverage.
 - Human visual spot-check selection, native-device smoke, production deployment,
   and provider/live-call verification remain deferred.
 - Unit 6F requires a separate user authorization. Unit 7, additional migrations,
   deployment, inventory/publication, and commerce remain gated.
 
-## 8. Closeout handoff
+## 9. Closeout handoff
 
 The single evidence/finalization commit contains this receipt, the Phase 9
 current-state updates, the DOC-13 handoff, the implementation ledger entry, and
 the continuity-validator routing update. The exact final Git branch/push/merge
 state is reported with the session's final verdict; no claim of merge or push is
 made by this tracker until Git confirms it.
+
+## 10. Explicit direct fixture activation and Owner verification
+
+The user explicitly authorized bypassing `store-review` and `store-profile` for
+this disposable development fixture only. The connected project was
+`ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`). The target was restricted to
+Owner `7dfa8584-6b0f-43b4-a17b-abf5858c3b60` and store
+`2a12639f-e011-4985-b4b0-f48f5033a701` (`books`). The pre-mutation readback
+confirmed one `owner/active` membership and one target store row.
+
+The current schema and guard readback confirmed that the canonical eligibility
+columns are `public.stores.status`, `verification_status`, `setup_status`, and
+`selling_status`. The live `marketplace_sec.phase9_is_store_owner`,
+`phase9_owner_store`, `phase9_owner_ux_assert_owner`, and
+`phase9_owner_variant_authorized` definitions require an authenticated active
+Owner membership and `status='active'`, `setup_status='complete'`, and
+`selling_status='allowed'` (with the variant guard delegating to the same
+owner check). `verification_status='approved'` is also the required canonical
+verified state.
+
+| Field | Before | After |
+| --- | --- | --- |
+| `stores.status` | `pending_verification` | `active` |
+| `stores.verification_status` | `pending` | `approved` |
+| `stores.setup_status` | `incomplete` | `complete` |
+| `stores.selling_status` | `not_allowed` | `allowed` |
+
+The sole direct SQL mutation was:
+
+```sql
+update public.stores
+set status='active', verification_status='approved', setup_status='complete', selling_status='allowed'
+where id='2a12639f-e011-4985-b4b0-f48f5033a701'
+returning id, status, verification_status, setup_status, selling_status;
+```
+
+Supabase MCP returned exactly one affected row with the intended after state.
+Post-mutation readback returned `eligibility_fields_ok=true`, one target
+`owner/active` membership, one target store row, `store_inventory=0`, and
+`marketplace_book_listings=0`. Target-scoped
+`image_extraction_sessions`, inputs, candidates, and `media_assets` counts are
+all zero. No role, membership, other store, inventory, listing, publication,
+commerce, or Storage row was created or changed.
+
+The authenticated Owner browser session was refreshed at `/storefront` and
+showed the target store `books`. Navigating to `/inventory` succeeded after
+the direct activation. Retrying scan readiness changed the prior error state
+to the normal `Capture or choose a shelf photo.` state; `Start scan` remained
+disabled because no disposable photo/session fixture exists. This is the live
+evidence that the Phase 9 Owner guard accepts the exact Owner/store pair.
+
+Bounded Unit 6E browser coverage was truthfully limited as follows:
+
+- AC24 false-candidate gating: unavailable; no target-store candidate fixture.
+- AC25 missed-book flow: unavailable; no disposable session/input/candidate and
+  no photo was supplied or uploaded.
+- AC26 variant decision flow: unavailable; no candidate-linked proposal fixture.
+- AC27 stale recovery: unavailable; no stale proposal/session fixture.
+
+No false, reject, replace, leave-unresolved, missed-book, upload, inventory,
+listing, or publication action was submitted. Browser console output contained
+only the existing React DevTools notice, deprecated `shadow*` and
+`pointerEvents` style warnings, web notification-token support warning,
+development Sentry-disabled warning, and the existing `orders` child-route
+layout warning; no browser error was observed during the eligible Owner flow.
+
+The reviewer workflow was not exercised. This direct activation verifies
+Unit 6E Owner eligibility and the available live entry surface only; the
+production `store-review` and `store-profile` workflows remain separately
+unverified.
