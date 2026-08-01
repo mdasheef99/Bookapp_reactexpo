@@ -36,7 +36,7 @@ const validReview = (overrides = {}) => ({
 
 before(async () => {
   db = await createPhase9Database({
-    throughMigration: '20260730000029_marketplace_phase9_owner_safe_contracts.sql',
+    throughMigration: '20260801000030_marketplace_phase9_unit6e_review_corrections.sql',
   });
   await db.exec(`
     INSERT INTO public.stores(id,display_name) VALUES('${STORE}','Store');

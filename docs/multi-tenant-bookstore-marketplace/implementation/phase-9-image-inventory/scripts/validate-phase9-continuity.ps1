@@ -388,7 +388,8 @@ $migrationNames = @(
     '20260729000026_marketplace_phase9_variant_benchmark_rollout.sql',
     '20260729000027_marketplace_phase9_exact_rollout_activation.sql',
     '20260729000028_marketplace_phase9_variant_benchmark_evidence_read.sql',
-    '20260730000029_marketplace_phase9_owner_safe_contracts.sql'
+    '20260730000029_marketplace_phase9_owner_safe_contracts.sql',
+    '20260801000030_marketplace_phase9_unit6e_review_corrections.sql'
 )
 foreach ($name in $migrationNames) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot "supabase/migrations/$name"))) { Write-Error "Missing approved Phase 9 migration: $name" }
@@ -396,19 +397,20 @@ foreach ($name in $migrationNames) {
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $actualMigrationNames = @($phase9Migrations.Name | Sort-Object)
 $duplicateMigrationVersions = @($phase9Migrations | Group-Object { [int]$_.Name.Substring(8,6) } | Where-Object Count -gt 1)
-$unexpectedCorrectionMigrations = @($phase9Migrations | Where-Object { [int]$_.Name.Substring(8,6) -ge 30 })
-if ($actualMigrationNames.Count -ne 28 -or
+$unexpectedCorrectionMigrations = @($phase9Migrations | Where-Object { [int]$_.Name.Substring(8,6) -ge 31 })
+if ($actualMigrationNames.Count -ne 29 -or
     (Compare-Object $migrationNames $actualMigrationNames) -or
     $duplicateMigrationVersions.Count -ne 0 -or
     $unexpectedCorrectionMigrations.Count -ne 0 -or
     $phase9Migrations.Name -match '000009|quantity.*validat') {
-    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M29 exactly once and in filename order, with no M09/M30-or-later correction.'
+    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M30 exactly once and in filename order, with no M09/M31-or-later correction.'
 }
 $m24 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000024_marketplace_phase9_owner_variant_decisions.sql'))
 $m25 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000025_marketplace_phase9_owner_variant_corrections.sql'))
 $m26 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000026_marketplace_phase9_variant_benchmark_rollout.sql'))
 $m27 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000027_marketplace_phase9_exact_rollout_activation.sql'))
 $m28 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000028_marketplace_phase9_variant_benchmark_evidence_read.sql'))
+$m30 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260801000030_marketplace_phase9_unit6e_review_corrections.sql'))
 if (-not $m24.Contains('phase9_owner_decide_search_variant') -or -not $m24.Contains('phase9_is_store_owner') -or
     -not $m25.Contains('phase9_owner_replace_search_variant') -or
     -not $m26.Contains('phase9_trusted_benchmark_result') -or -not $m26.Contains('phase9_review_search_variant_benchmark') -or
@@ -422,6 +424,13 @@ if (-not $m28.Contains('phase9_platform_search_variant_benchmark_summary') -or
     $m28.Contains('phase9_review_search_variant_benchmark') -or
     $m28.Contains('phase9_set_search_variant_language_rollout')) {
     Write-Error 'Phase 9 M28 must remain limited to platform benchmark summary and paginated evidence reads, required indexes, authorization, fixed search_path, and ACLs.'
+}
+if (-not $m30.Contains('phase9_confirmed_variant_source') -or
+    -not $m30.Contains('phase9_owner_search_variant_review') -or
+    -not $m30.Contains('phase9_owner_candidate_detail_v2') -or
+    -not $m30.Contains("SECURITY DEFINER SET search_path=''") -or
+    $m30 -match '(?im)^\s*(?:GRANT|REVOKE|ALTER\s+FUNCTION|INSERT\s+INTO|UPDATE\s+public\.|DELETE\s+FROM|CREATE\s+TABLE|CREATE\s+TRIGGER)\b') {
+    Write-Error 'Phase 9 M30 must remain an additive Unit 6E function-compatibility correction with preserved ACLs and no data, table, or trigger mutation.'
 }
 foreach ($relative in @('supabase/tests/phase9/phase6_baseline.sql','supabase/tests/phase9/databaseHarness.mjs',
     'supabase/tests/phase9/phase9Database.integration.test.mjs','supabase/tests/phase9/phase9IngestionRuntime.integration.test.mjs','supabase/tests/phase9/phase9VisionRuntime.integration.test.mjs','supabase/migrations/__tests__/marketplacePhase9DatabaseFoundation.test.ts',

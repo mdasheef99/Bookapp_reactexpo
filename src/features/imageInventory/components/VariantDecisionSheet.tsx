@@ -63,8 +63,8 @@ export function VariantDecisionSheet({
     const query = useOwnerCandidateVariants(
         identity, detail.sessionId, detail.candidateId, expected, true,
     );
-    const decideMutation = useDecideOwnerVariant();
-    const replaceMutation = useReplaceOwnerVariant();
+    const decideMutation = useDecideOwnerVariant(identity);
+    const replaceMutation = useReplaceOwnerVariant(identity);
     const [selected, setSelected] = useState<OwnerVariantReview | null>(null);
     const [action, setAction] = useState<LocalAction | null>(null);
     const [replacementText, setReplacementText] = useState('');

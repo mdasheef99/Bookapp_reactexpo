@@ -46,7 +46,9 @@ export function useOwnerCandidateVariants(
 ) {
     return useQuery({
         queryKey: ownerCorrectionKeys.variants(identity, sessionId, candidateId, expected),
-        queryFn: () => ownerCorrectionService.resolveExpectedVariants(identity.storeId, expected),
+        queryFn: ({ signal }) => ownerCorrectionService.resolveExpectedVariants(
+            identity.storeId, expected, identity, signal,
+        ),
         enabled: enabled && expected.length > 0,
         retry: false,
         staleTime: 0,
@@ -54,30 +56,36 @@ export function useOwnerCandidateVariants(
     });
 }
 
-export function useAddManualCandidate() {
+export function useAddManualCandidate(identity: ImageInventoryIdentity) {
     return useMutation({
-        mutationFn: (request: AddManualCandidateRequest) => ownerCorrectionService.addManualCandidate(request),
+        mutationFn: (request: AddManualCandidateRequest) => (
+            ownerCorrectionService.addManualCandidate(request, identity)
+        ),
+        networkMode: 'always',
         retry: false,
     });
 }
 
-export function useMarkCandidateFalse() {
+export function useMarkCandidateFalse(identity: ImageInventoryIdentity) {
     return useMutation({
-        mutationFn: (request: MarkFalseRequest) => ownerCorrectionService.markFalse(request),
+        mutationFn: (request: MarkFalseRequest) => ownerCorrectionService.markFalse(request, identity),
+        networkMode: 'always',
         retry: false,
     });
 }
 
-export function useDecideOwnerVariant() {
+export function useDecideOwnerVariant(identity: ImageInventoryIdentity) {
     return useMutation({
-        mutationFn: (request: DecideVariantRequest) => ownerCorrectionService.decideVariant(request),
+        mutationFn: (request: DecideVariantRequest) => ownerCorrectionService.decideVariant(request, identity),
+        networkMode: 'always',
         retry: false,
     });
 }
 
-export function useReplaceOwnerVariant() {
+export function useReplaceOwnerVariant(identity: ImageInventoryIdentity) {
     return useMutation({
-        mutationFn: (request: ReplaceVariantRequest) => ownerCorrectionService.replaceVariant(request),
+        mutationFn: (request: ReplaceVariantRequest) => ownerCorrectionService.replaceVariant(request, identity),
+        networkMode: 'always',
         retry: false,
     });
 }

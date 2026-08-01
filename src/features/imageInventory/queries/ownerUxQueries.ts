@@ -14,6 +14,11 @@ import {
 import { OWNER_UX_CONTRACT_VERSION } from '../contracts/ownerUxContracts';
 import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
 import { cancelAllCaptureWork } from '../capture/captureCancellation';
+import {
+    beginOwnerIdentityTransition,
+    completeOwnerIdentityTransition,
+    resetOwnerRequestFence,
+} from '../identity/ownerRequestFence';
 
 export type ImageInventoryIdentity = Readonly<{
     userId: string;
@@ -114,19 +119,16 @@ export function coordinateImageInventoryIdentity(
     next: ImageInventoryIdentity | null,
     client: QueryClient = appQueryClient,
 ): Promise<void> {
+    const transitionGeneration = beginOwnerIdentityTransition();
     identityTransitionQueue = identityTransitionQueue
         .catch(() => undefined)
         .then(async () => {
             const previous = lastResolvedIdentity;
             if (previous && identityToken(previous) !== identityToken(next)) {
-                try {
-                    await clearImageInventoryPrivateQueries(client);
-                } finally {
-                    lastResolvedIdentity = next;
-                }
-                return;
+                await clearImageInventoryPrivateQueries(client);
             }
             lastResolvedIdentity = next;
+            completeOwnerIdentityTransition(transitionGeneration, next);
         });
     return identityTransitionQueue;
 }
@@ -142,6 +144,7 @@ export function resetImageInventoryIdentityForTests(
 ) {
     lastResolvedIdentity = identity;
     identityTransitionQueue = Promise.resolve();
+    resetOwnerRequestFence(identity);
 }
 
 const commonQueryOptions = {

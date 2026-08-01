@@ -42,7 +42,7 @@ export function CandidateCorrectionActions({
     const { colors } = useTheme();
     const { isOffline } = useNetworkStatus();
     const client = useCorrectionQueryClient();
-    const mutation = useMarkCandidateFalse();
+    const mutation = useMarkCandidateFalse(identity);
     const pendingRef = useRef<MarkFalseRequest | null>(null);
     const [pending, setPending] = useState<MarkFalseRequest | null>(null);
     const [latest, setLatest] = useState<OwnerCandidateDetail | null>(null);

@@ -12,6 +12,10 @@ import {
     variantReviewRowSchema,
     type OwnerVariantReview,
 } from '../contracts/ownerCorrectionSchemas';
+import {
+    captureOwnerRequest,
+    type OwnerRequestIdentity,
+} from '../identity/ownerRequestFence';
 
 const candidateErrorCodeSchema = z.enum([
     'P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT',
@@ -80,18 +84,29 @@ async function authenticatedRpc(
     operation: CandidateOperation | VariantOperation,
     name: string,
     args: Record<string, unknown>,
+    identity: OwnerRequestIdentity,
+    externalSignal?: AbortSignal,
 ): Promise<{ result: RpcResult; userId: string }> {
-    const auth = await supabase.auth.getUser();
-    if (auth.error || !auth.data.user?.id) {
-        throw new OwnerCorrectionClientError('P9_AUTH_REQUIRED');
-    }
+    let fence;
     try {
-        const result = await supabase.rpc(name, args);
+        fence = captureOwnerRequest(identity, externalSignal);
+        const auth = await supabase.auth.getUser();
+        fence.assertCurrent();
+        if (auth.error || auth.data.user?.id !== identity.userId) {
+            throw new OwnerCorrectionClientError('P9_AUTH_REQUIRED');
+        }
+        const result = await supabase.rpc(name, args).abortSignal(fence.signal);
+        fence.assertCurrent();
         if (result.error) throw normalizeRpcError(operation, result.error);
         return { result, userId: auth.data.user.id };
     } catch (error) {
         if (error instanceof OwnerCorrectionClientError) throw error;
+        if (error instanceof Error && error.message === 'OWNER_IDENTITY_CHANGED') {
+            throw new OwnerCorrectionClientError('P9_AUTH_REQUIRED');
+        }
         throw new OwnerCorrectionClientError('P9_INTERNAL_ERROR');
+    } finally {
+        fence?.release();
     }
 }
 
@@ -117,7 +132,7 @@ const MAX_VARIANT_PAGES = 3;
 const VARIANT_PAGE_SIZE = 100;
 
 export const ownerCorrectionService = {
-    async addManualCandidate(input: AddManualCandidateRequest) {
+    async addManualCandidate(input: AddManualCandidateRequest, identity: OwnerRequestIdentity) {
         const request = parseOrThrow(addManualCandidateRequestSchema, input);
         const { result, userId } = await authenticatedRpc('add', 'phase9_add_manual_candidate', {
             p_session_id: request.sessionId,
@@ -126,14 +141,14 @@ export const ownerCorrectionService = {
             p_language: request.language,
             p_idempotency_key: request.idempotencyKey,
             p_command_id: request.commandId,
-        });
+        }, identity);
         return {
             candidateId: decodeOrInternal(candidateUuidSchema, result.data),
             authenticatedUserId: userId,
         };
     },
 
-    async markFalse(input: MarkFalseRequest) {
+    async markFalse(input: MarkFalseRequest, identity: OwnerRequestIdentity) {
         const request = parseOrThrow(markFalseRequestSchema, input);
         const { result, userId } = await authenticatedRpc('false', 'phase9_skip_candidate', {
             p_candidate_id: request.candidateId,
@@ -141,7 +156,7 @@ export const ownerCorrectionService = {
             p_reason: 'false_detection',
             p_idempotency_key: request.idempotencyKey,
             p_command_id: request.commandId,
-        });
+        }, identity);
         return {
             candidateId: decodeOrInternal(candidateUuidSchema, result.data),
             authenticatedUserId: userId,
@@ -151,6 +166,8 @@ export const ownerCorrectionService = {
     async resolveExpectedVariants(
         storeId: string,
         expected: ReadonlyArray<ExpectedVariant>,
+        identity: OwnerRequestIdentity,
+        signal?: AbortSignal,
     ): Promise<OwnerVariantReview[]> {
         const store = parseOrThrow(z.string().uuid(), storeId);
         const expectedRows = parseOrThrow(z.array(z.object({
@@ -169,7 +186,7 @@ export const ownerCorrectionService = {
                 p_cursor_created_at: cursorCreatedAt,
                 p_cursor_proposal_id: cursorProposalId,
                 p_limit: VARIANT_PAGE_SIZE,
-            });
+            }, identity, signal);
             const rows = decodeOrInternal(z.array(variantReviewRowSchema).max(VARIANT_PAGE_SIZE), result.data);
             for (const row of rows) {
                 if (expectedIds.has(row.proposal_id)) found.set(row.proposal_id, toOwnerVariantReview(row));
@@ -185,7 +202,7 @@ export const ownerCorrectionService = {
         );
     },
 
-    async decideVariant(input: DecideVariantRequest) {
+    async decideVariant(input: DecideVariantRequest, identity: OwnerRequestIdentity) {
         const request = parseOrThrow(decideVariantRequestSchema, input);
         const { result, userId } = await authenticatedRpc('decide', 'phase9_owner_decide_search_variant', {
             p_store_id: request.storeId,
@@ -195,11 +212,11 @@ export const ownerCorrectionService = {
             p_reason: request.reason,
             p_note: request.note,
             p_idempotency_key: request.idempotencyKey,
-        });
+        }, identity);
         return { ...decodeOrInternal(decideVariantResponseSchema, result.data), authenticatedUserId: userId };
     },
 
-    async replaceVariant(input: ReplaceVariantRequest) {
+    async replaceVariant(input: ReplaceVariantRequest, identity: OwnerRequestIdentity) {
         const request = parseOrThrow(replaceVariantRequestSchema, input);
         const { result, userId } = await authenticatedRpc('replace', 'phase9_owner_replace_search_variant', {
             p_store_id: request.storeId,
@@ -212,7 +229,7 @@ export const ownerCorrectionService = {
             p_reason: request.reason,
             p_note: request.note,
             p_idempotency_key: request.idempotencyKey,
-        });
+        }, identity);
         return { ...decodeOrInternal(replaceVariantResponseSchema, result.data), authenticatedUserId: userId };
     },
 };

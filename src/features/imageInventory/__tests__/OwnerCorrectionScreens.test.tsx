@@ -7,6 +7,7 @@ import { candidateDetailFixture, sessionSummaryFixture, testUuid } from '../test
 
 const mockPush = jest.fn();
 const mockAddListener = jest.fn(() => jest.fn());
+const mockDispatch = jest.fn();
 const mockFalse = jest.fn();
 const mockAdd = jest.fn();
 const mockReadCandidate = jest.fn();
@@ -18,7 +19,7 @@ let mockSession = sessionSummaryFixture();
 
 jest.mock('expo-router', () => ({
     useRouter: () => ({ push: mockPush }),
-    useNavigation: () => ({ addListener: mockAddListener }),
+    useNavigation: () => ({ addListener: mockAddListener, dispatch: mockDispatch }),
 }));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({ colors: {
@@ -135,6 +136,50 @@ describe('Phase 9 Unit 6E false and missed-book screens', () => {
         expect(mockPush).toHaveBeenCalledWith(
             `/(store-owner)/inventory/scan/${testUuid(1)}/candidate/${testUuid(30)}`,
         );
+    });
+
+    it('commits the successful draft fingerprint before navigation and requires a real edit for another command', async () => {
+        const alert = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
+        const screen = render(<InventoryMissedBookScreen sessionId={testUuid(1)} />);
+        fireEvent.changeText(screen.getByTestId('missed-title'), 'First missed book');
+        fireEvent.changeText(screen.getByTestId('missed-language'), 'en');
+        fireEvent.press(screen.getByText('Add candidate'));
+        await waitFor(() => expect(mockPush).toHaveBeenCalledTimes(1));
+
+        const listenerCalls = mockAddListener.mock.calls as unknown as Array<[
+            string,
+            (event: { preventDefault: () => void; data: { action: { type: string } } }) => void,
+        ]>;
+        const latestBeforeRemove = listenerCalls
+            .filter(([event]) => event === 'beforeRemove')
+            .at(-1)?.[1] as ((event: {
+                preventDefault: () => void;
+                data: { action: { type: string } };
+            }) => void) | undefined;
+        const preventDefault = jest.fn();
+        latestBeforeRemove?.({ preventDefault, data: { action: { type: 'GO_BACK' } } });
+        expect(preventDefault).not.toHaveBeenCalled();
+        expect(alert).not.toHaveBeenCalled();
+
+        fireEvent.press(screen.getByText('Add candidate'));
+        expect(mockAdd).toHaveBeenCalledTimes(1);
+
+        fireEvent.changeText(screen.getByTestId('missed-title'), 'Second missed book');
+        const dirtyBeforeRemove = listenerCalls
+            .filter(([event]) => event === 'beforeRemove')
+            .at(-1)?.[1] as typeof latestBeforeRemove;
+        dirtyBeforeRemove?.({ preventDefault, data: { action: { type: 'GO_BACK' } } });
+        expect(preventDefault).toHaveBeenCalledTimes(1);
+        expect(alert).toHaveBeenCalledWith(
+            'Leave without adding?',
+            expect.stringContaining('only on this screen'),
+            expect.any(Array),
+        );
+
+        fireEvent.press(screen.getByText('Add candidate'));
+        await waitFor(() => expect(mockAdd).toHaveBeenCalledTimes(2));
+        expect(mockAdd.mock.calls[1][0]).toMatchObject({ title: 'Second missed book' });
+        expect(mockAdd.mock.calls[1][0]).not.toBe(mockAdd.mock.calls[0][0]);
     });
 
     it('keeps missed-book mutation disabled offline and installs a dirty guard', () => {

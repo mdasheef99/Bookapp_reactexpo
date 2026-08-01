@@ -49,12 +49,15 @@ function MissedBookForm({
     const router = useRouter();
     const client = useCorrectionQueryClient();
     const sessionQuery = useOwnerInventorySession(identity, sessionId);
-    const mutation = useAddManualCandidate();
+    const mutation = useAddManualCandidate(identity);
     const initial = useMemo(() => ({ ...createEmptyMissedBookDraft(), authors: [''] }), []);
     const [draft, setDraft] = useState<MissedBookDraft>(initial);
     const [message, setMessage] = useState<string | null>(null);
     const [pending, setPending] = useState<AddManualCandidateRequest | null>(null);
     const pendingRef = useRef<AddManualCandidateRequest | null>(null);
+    const pendingFingerprintRef = useRef<string | null>(null);
+    const committedFingerprintRef = useRef<string | null>(null);
+    const [committedFingerprint, setCommittedFingerprint] = useState<string | null>(null);
     const scope = `${identity.userId}:${identity.storeId}:${sessionId}`;
     const activeScope = useRef(scope);
     useEffect(() => {
@@ -66,10 +69,14 @@ function MissedBookForm({
         authors: draft.authors.filter((author) => author.trim().length > 0),
     }), [draft]);
     const built = useMemo(() => buildMissedBookRequest(semanticDraft), [semanticDraft]);
-    const dirty = missedBookFingerprint(draft) !== missedBookFingerprint(initial);
+    const initialFingerprint = missedBookFingerprint(initial);
+    const currentFingerprint = missedBookFingerprint(draft);
+    const dirty = currentFingerprint !== (committedFingerprint ?? initialFingerprint);
+    const successfulDraft = committedFingerprint === currentFingerprint;
 
     useEffect(() => navigation.addListener('beforeRemove', (event: BeforeRemoveEvent) => {
-        if (!dirty) return;
+        const committed = committedFingerprintRef.current ?? initialFingerprint;
+        if (missedBookFingerprint(draft) === committed) return;
         event.preventDefault();
         if (mutation.isPending) {
             Alert.alert('Submission in progress', 'Wait for the candidate to be verified before leaving.', [
@@ -81,7 +88,7 @@ function MissedBookForm({
             { text: 'Stay', style: 'cancel' },
             { text: 'Leave unsaved', style: 'destructive', onPress: () => navigation.dispatch?.(event.data.action) },
         ]);
-    }), [dirty, mutation.isPending, navigation]);
+    }), [draft, initialFingerprint, mutation.isPending, navigation]);
 
     const run = async (command: AddManualCandidateRequest) => {
         const callScope = activeScope.current;
@@ -104,7 +111,13 @@ function MissedBookForm({
                 client, identity, sessionId, result.candidateId, canonical,
             );
             if (!synchronized) return;
+            const submittedFingerprint = pendingFingerprintRef.current;
+            if (submittedFingerprint) {
+                committedFingerprintRef.current = submittedFingerprint;
+                setCommittedFingerprint(submittedFingerprint);
+            }
             pendingRef.current = null;
+            pendingFingerprintRef.current = null;
             setPending(null);
             router.push(`/(store-owner)/inventory/scan/${sessionId}/candidate/${result.candidateId}`);
         } catch (error) {
@@ -123,6 +136,7 @@ function MissedBookForm({
                 ) setMessage('The latest scan-session state could not be verified.');
                 else setMessage(error.message);
                 pendingRef.current = null;
+                pendingFingerprintRef.current = null;
                 setPending(null);
                 return;
             }
@@ -131,13 +145,14 @@ function MissedBookForm({
                 return;
             }
             pendingRef.current = null;
+            pendingFingerprintRef.current = null;
             setPending(null);
             setMessage(error.message);
         }
     };
 
     const submit = () => {
-        if (!built.success || pendingRef.current || mutation.isPending) return;
+        if (!built.success || pendingRef.current || mutation.isPending || successfulDraft) return;
         const command: AddManualCandidateRequest = {
             sessionId,
             ...built.value,
@@ -145,6 +160,7 @@ function MissedBookForm({
             commandId: createCaptureUuid(),
         };
         pendingRef.current = command;
+        pendingFingerprintRef.current = currentFingerprint;
         setPending(command);
         void run(command);
     };
@@ -176,7 +192,7 @@ function MissedBookForm({
                 {!built.success && dirty ? <Text selectable accessibilityLiveRegion="assertive" style={{ color: colors.error }}>{Object.values(built.errors).join(' ')}</Text> : null}
                 {message ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error }}>{message}</Text> : null}
                 {pending && message ? <Button title="Retry same addition" onPress={() => void run(pending)} disabled={isOffline || mutation.isPending} /> : null}
-                <Button title="Add candidate" onPress={submit} loading={mutation.isPending} disabled={isOffline || mutation.isPending || !built.success || Boolean(pending)} />
+                <Button title="Add candidate" onPress={submit} loading={mutation.isPending} disabled={isOffline || mutation.isPending || !built.success || Boolean(pending) || successfulDraft} />
             </ScrollView>
         </ScreenBackground>
     );
