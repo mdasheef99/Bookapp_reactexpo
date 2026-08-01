@@ -72,7 +72,7 @@ $requiredPhaseFiles = @(
     'trackers/19-unit6a-owner-safe-backend-evidence.md',
     'trackers/20-unit6b-route-query-cache-evidence.md',
     'trackers/21-unit6c-capture-upload-recovery-evidence.md',
-    'trackers/22-unit6d-candidate-review-evidence.md',
+    'trackers/22-unit6d-candidate-review-evidence.md', 'trackers/23-unit6e-review-corrections-evidence.md',
     'work-units/00-contracts-threat-migration-plan.md', 'work-units/00b-backend-api-technical-design-plan.md',
     'work-units/00b-technical-design/00-overview-authority-and-file-map.md', 'work-units/00b-technical-design/01-command-query-and-dto-catalogue.md',
     'work-units/00b-technical-design/02-authorization-tenancy-and-privacy.md', 'work-units/00b-technical-design/03-state-transactions-idempotency-and-publication.md',
@@ -125,12 +125,14 @@ if (-not $active.Contains('06-owner-capture-review-recovery-ux-sdd.md') -or
     -not $active.Contains('Unit 6A is merged/live-verified through M29') -or
     -not $active.Contains('20-unit6b-route-query-cache-evidence.md') -or
     -not $active.Contains('22-unit6d-candidate-review-evidence.md') -or
-    -not $active.Contains('Phase 9 Unit 6D') -or
-    -not $active.Contains('Unit 6E only') -or
-    -not $active.Contains('Unit 7 remain separately gated')) { Write-Error 'ACTIVE.md does not preserve the Unit 6D closeout and Unit 6E gate.' }
+    -not $active.Contains('23-unit6e-review-corrections-evidence.md') -or
+    -not $active.Contains('Phase 9 Unit 6E') -or
+    -not $active.Contains('Unit 6F is the next eligible work') -or
+    -not $active.Contains('Unit 7 remains separately gated') -or
+    -not $active.Contains('20260801093048 marketplace_phase9_unit6e_review_corrections')) { Write-Error 'ACTIVE.md does not preserve the Unit 6E finalization and Unit 6F gate.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6d_merged_unit6e_separately_gated`') -or
+if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6e_finalized_unit6f_separately_gated`') -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
     -not $doc13.Contains('20260727231217 marketplace_phase9_sensitive_table_acl_correction') -or
     -not $doc13.Contains('20260727233457 marketplace_phase9_maintain_acl_correction') -or
@@ -150,10 +152,11 @@ if (-not $doc13.Contains('No language is benchmarked or approved') -or
     Write-Error 'DOC-13 does not preserve the fail-closed Unit 5C-5/5C-6 closeout.'
 }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if (-not $implementationTracker.Contains('**Status:** `unit6d_merged_unit6e_separately_gated`') -or
-    -not $implementationTracker.Contains('**Active work unit:** `unit6e_awaiting_separate_authorization`') -or
+if (-not $implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_separately_gated`') -or
+    -not $implementationTracker.Contains('**Active work unit:** `unit6f_awaiting_separate_authorization`') -or
     -not $implementationTracker.Contains('20-unit6b-route-query-cache-evidence.md') -or
     -not $implementationTracker.Contains('22-unit6d-candidate-review-evidence.md') -or
+    -not $implementationTracker.Contains('23-unit6e-review-corrections-evidence.md') -or
     -not $implementationTracker.Contains('20260729000018_marketplace_phase9_search_variant_proposals.sql') -or
     -not $implementationTracker.Contains('20260729000019_marketplace_phase9_search_variant_replay_fence.sql') -or
     -not $implementationTracker.Contains('20260729000020_marketplace_phase9_variant_runtime_search.sql') -or
@@ -164,8 +167,9 @@ if (-not $implementationTracker.Contains('**Status:** `unit6d_merged_unit6e_sepa
     -not $implementationTracker.Contains('20260730022524') -or
     -not $implementationTracker.Contains('20260730022559') -or
     -not $implementationTracker.Contains('20260730022636') -or
-    -not $implementationTracker.Contains('20260730022713')) {
-    Write-Error 'Implementation tracker does not preserve the Unit 5C-4/M18-M28 handoff.'
+    -not $implementationTracker.Contains('20260730022713') -or
+    -not $implementationTracker.Contains('20260801093048 marketplace_phase9_unit6e_review_corrections')) {
+    Write-Error 'Implementation tracker does not preserve the Unit 6E/M30 handoff.'
 }
 $providerScaleMarkers = @{
     '00-phase-9-master-sdd.md' = @('MAS-13', 'MAS-17', 'MAS-AC14')
@@ -337,13 +341,15 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if (-not $tracker.Contains('**Implementation status:** `unit6d_merged_unit6e_separately_gated`') -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit6e_awaiting_separate_authorization`\r?$' -or
-    -not $tracker.Contains('**Next authorized action:** obtain separate authorization before beginning Phase 9 Unit 6E') -or
+if (-not $tracker.Contains('**Implementation status:** `unit6e_finalized_unit6f_separately_gated`') -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit6f_awaiting_separate_authorization`\r?$' -or
+    -not $tracker.Contains('**Next authorized action:** obtain separate authorization before beginning Phase 9 Unit 6F') -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
+    -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
     -not $tracker.Contains('20-unit6b-route-query-cache-evidence.md') -or
-    -not $tracker.Contains('22-unit6d-candidate-review-evidence.md')) {
-    Write-Error 'TRACKER.md does not preserve the Unit 6D closeout and Unit 6E gate.'
+    -not $tracker.Contains('22-unit6d-candidate-review-evidence.md') -or
+    -not $tracker.Contains('23-unit6e-review-corrections-evidence.md')) {
+    Write-Error 'TRACKER.md does not preserve the Unit 6E finalization and Unit 6F gate.'
 }
 $packageAudit = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-live-audit.md'))
 $packageDesign = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/01-package1-database-design.md'))
@@ -605,18 +611,23 @@ if (-not $sessionStart.Contains('06-owner-capture-review-recovery-ux-sdd.md') -o
     -not $sessionStart.Contains('18-unit6-owner-ux-design-evidence.md') -or
     -not $sessionStart.Contains('20-unit6b-route-query-cache-evidence.md') -or
     -not $sessionStart.Contains('22-unit6d-candidate-review-evidence.md') -or
+    -not $sessionStart.Contains('23-unit6e-review-corrections-evidence.md') -or
     -not $sessionStart.Contains('Unit 6B is') -or
     -not $sessionStart.Contains('Unit 6D') -or
-    -not $sessionStart.Contains('Unit 6E only')) {
-    Write-Error 'SESSION-START.md does not preserve the Unit 6D closeout and Unit 6E gate.'
+    -not $sessionStart.Contains('Unit 6E') -or
+    -not $sessionStart.Contains('Unit 6F only') -or
+    -not $sessionStart.Contains('20260801093048 marketplace_phase9_unit6e_review_corrections')) {
+    Write-Error 'SESSION-START.md does not preserve the Unit 6E finalization and Unit 6F gate.'
 }
 $phaseReadme = [IO.File]::ReadAllText((Join-Path $phaseRoot 'README.md'))
-if (-not $phaseReadme.Contains('**Status:** `unit6d_merged_unit6e_separately_gated`') -or
+if (-not $phaseReadme.Contains('**Status:** `unit6e_finalized_unit6f_separately_gated`') -or
     -not $phaseReadme.Contains('M01-M08/M10-M29 are live once') -or
     -not $phaseReadme.Contains('Unit 6B is merged at `9ef9eb3`') -or
     -not $phaseReadme.Contains('Unit 6D is') -or
-    -not $phaseReadme.Contains('22-unit6d-candidate-review-evidence.md')) {
-    Write-Error 'Phase 9 README disagrees with the Unit 6D closeout checkpoint.'
+    -not $phaseReadme.Contains('22-unit6d-candidate-review-evidence.md') -or
+    -not $phaseReadme.Contains('23-unit6e-review-corrections-evidence.md') -or
+    -not $phaseReadme.Contains('M30 was applied exactly once')) {
+    Write-Error 'Phase 9 README disagrees with the Unit 6E finalization checkpoint.'
 }
 $pipeline = [IO.File]::ReadAllText((Join-Path $phaseRoot '02-extraction-enrichment-pipeline-sdd.md'))
 if (-not $pipeline.Contains('M11 `20260726182238`, M12 `20260726182539`, and M13 `20260727025046` are live') -or

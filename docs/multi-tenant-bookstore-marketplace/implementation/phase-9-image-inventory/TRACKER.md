@@ -1,18 +1,18 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit6_owner_ux_approved_design_authority`
-**Implementation status:** `unit6d_merged_unit6e_separately_gated`
-**Last updated:** 2026-07-31
-**Current milestone:** Unit 6 Owner Capture, Review, and Recovery UX implementation routing
-**Active work unit:** `unit6e_awaiting_separate_authorization`
+**Implementation status:** `unit6e_finalized_unit6f_separately_gated`
+**Last updated:** 2026-08-01
+**Current milestone:** Unit 6E false/missed-variant correction finalization
+**Active work unit:** `unit6f_awaiting_separate_authorization`
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Unit 6D Owner candidate review and strict editing implemented at `c363b60`; evidence is [tracker 22](./trackers/22-unit6d-candidate-review-evidence.md)
-**Next authorized action:** obtain separate authorization before beginning Phase 9 Unit 6E
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; authenticated Owner RPC smoke passed and mutable/operational residue is zero
-**Scope boundary:** Unit 6D is complete; Unit 6E is separately gated, and Unit 6F and Unit 7 remain gated
-**Implementation authority:** no later unit is authorized by this handoff; Unit 6E requires a separate user authorization under the approved [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md) and [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md)
-**Migration creation/application authority:** M18-M28 are immutable live history and M29 is live once as `20260730162700`; no further migration is authorized by this closeout
-**Current gate:** Unit 6E requires separate authorization; no migration, deployment, Unit 6E-6F, or Unit 7 work is authorized
+**Last completed:** Unit 6E false/missed-variant corrections finalized at `8bceab260a953b4d832fd55f34f58db12fa009b1`; evidence is [tracker 23](./trackers/23-unit6e-review-corrections-evidence.md)
+**Next authorized action:** obtain separate authorization before beginning Phase 9 Unit 6F
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; read-only remote verification and authenticated Owner RPC denial passed
+**Scope boundary:** Unit 6E is complete; Unit 6F and Unit 7 remain separately gated
+**Implementation authority:** no later unit is authorized by this handoff; Unit 6F requires a separate user authorization under the approved [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md) and [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md)
+**Migration creation/application authority:** M18-M29 are immutable live history and M30 was applied exactly once after exact-project preflight; no further migration is authorized by this closeout
+**Current gate:** Unit 6F requires separate authorization; no further migration, deployment, Unit 7, inventory/publication, commerce, or provider work is authorized
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -50,12 +50,13 @@ exact approved rollout controls. No language is benchmarked or approved and
 no capability is enabled.
 
 Unit 6A is merged on `main` and live-verified through M29. Unit 6B is merged at
-`9ef9eb3`, and Unit 6C is merged through `092562d`. Unit 6D is implemented at
-`c363b60`: Owner candidate discovery, strict editing, fail-closed refresh,
-condition/damage/sellability policy, conflict recovery, dirty-navigation
-protection, and identity-scoped cleanup are covered by typed adapters and
-deterministic tests. Unit 6E requires separate authorization; Unit 6F and Unit
-7 remain separately gated.
+`9ef9eb3`, and Unit 6C is merged through `092562d`. Unit 6D remains implemented
+at `c363b60`. Unit 6E false/missed-variant corrections are finalized at
+`8bceab260a953b4d832fd55f34f58db12fa009b1`; M30 is live exactly once and its
+remote helper/RPC definitions, read-only fixture checks, and fail-closed owner
+authorization boundary are recorded in [tracker 23](./trackers/23-unit6e-review-corrections-evidence.md).
+Unit 6F is next and requires separate authorization; Unit 7 remains separately
+gated.
 
 The provider/scale reconciliation keeps real Gemini provider-contract design as a separately gated prospective Unit 4B and keeps Unit 5 authoritatively named `Metadata/aliases`. The generic architecture supports one metadata primary and at most one disabled-until-approved secondary, horizontal correctness, and a fixed-multi-replica activation gate; it does not authorize provider calls, deployment changes, scheduling, or autoscaling. The bounded F1–F3 correction removes the deferred-secondary contradiction, makes media/vision/metadata capacity signals explicit, and disables raw provider/model payload persistence by default while retaining the independent-review gate.
 
@@ -122,7 +123,7 @@ The exact development project was re-verified read-only at M11/M12 closeout:
 | Work Unit 4A deployment-runtime scaffolding | [`deployed_and_live_fixture_verified`](./trackers/06-fixture-pipeline-deployment-evidence.md) |
 | Work Unit 4B Gemini vision adapter | [`m14_live_verified_provider_deferred`](./work-units/04b-gemini-vision-adapter-handoff.md) |
 | Unit 5C Lite target SDD | [`merged_at_b44277a`](./work-units/05c-lite-multilingual-search-variants-sdd.md); Units 5C-1 through 5C-6 are merged/live at their recorded levels; M24-M28 live exactly once and no language enabled |
-| Unit 6 Owner UX design authority | [`unit6d_merged`](./work-units/06-owner-capture-review-recovery-ux-sdd.md); [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md); [Unit 6A evidence](./trackers/19-unit6a-owner-safe-backend-evidence.md); [Unit 6B evidence](./trackers/20-unit6b-route-query-cache-evidence.md); [Unit 6C evidence](./trackers/21-unit6c-capture-upload-recovery-evidence.md); [Unit 6D evidence](./trackers/22-unit6d-candidate-review-evidence.md); Unit 6E separately gated; split 6A-6F |
+| Unit 6 Owner UX design authority | [`unit6e_finalized`](./work-units/06-owner-capture-review-recovery-ux-sdd.md); [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md); [Unit 6A evidence](./trackers/19-unit6a-owner-safe-backend-evidence.md); [Unit 6B evidence](./trackers/20-unit6b-route-query-cache-evidence.md); [Unit 6C evidence](./trackers/21-unit6c-capture-upload-recovery-evidence.md); [Unit 6D evidence](./trackers/22-unit6d-candidate-review-evidence.md); [Unit 6E evidence](./trackers/23-unit6e-review-corrections-evidence.md); Unit 6F separately gated; split 6A-6F |
 | Provider and scale architecture SDD reconciliation | `stale_marker_superseded_by_unit4b_m14_m17_unit5a_review_evidence_2026-07-28` |
 
 ## Blocking gate before further implementation
@@ -133,7 +134,8 @@ M01-M08/M10-M28, the Owner ingestion boundary, and both separate fixture
 workers are live-verified; M09 remains absent. Unit 5C-4 is merged at
 `d092f08`; Unit 5C-5/5C-6 and Unit 6A are merged on `main`. Unit 6B is merged
 at `9ef9eb3`; Unit 6C is merged through `092562d`; Unit 6D is implemented at
-`c363b60`. Unit 6E requires separate authorization. Customer display changes,
+`c363b60`; Unit 6E is finalized with M30 live exactly once. Unit 6F requires
+separate authorization. Customer display changes,
 customer display changes, inventory/publication, commerce, provider fallback,
 and global alias authority remain separately gated.
 
@@ -173,11 +175,10 @@ Unit 5C-5/5C-6 backend is live-verified through M28 at approved tree
 `66db5be740940a8c882bb7ea312817f4c33bb2db` and implementation commit
 `4b667fc6674d606a8f88e2a4ee933d79bf332f53`; it is merged on `main`.
 Unit 6A is merged and live-verified through M29. Unit 6B is merged at `9ef9eb3`,
-Unit 6C is merged through `092562d`, and Unit 6D is implemented at `c363b60`
-with evidence in [tracker 22](./trackers/22-unit6d-candidate-review-evidence.md).
-Phase 9 Unit 6E requires separate authorization. Do not start Units 6E-6F or Unit 7,
-and do
-not create/apply a migration or deploy without
-the separate authority required by AGENTS.md. Keep M09 absent and do not commit
-inventory/listings, publish, add commerce, add provider fallback, or create
-global alias authority.
+Unit 6C is merged through `092562d`, and Unit 6D is implemented at `c363b60`.
+Unit 6E is finalized at `8bceab260a953b4d832fd55f34f58db12fa009b1` with M30
+live exactly once; evidence is in [tracker 23](./trackers/23-unit6e-review-corrections-evidence.md).
+Phase 9 Unit 6F requires separate authorization. Do not start Unit 7, create/apply
+another migration, or deploy without the separate authority required by AGENTS.md.
+Keep M09 absent and do not commit inventory/listings, publish, add commerce, add
+provider fallback, or create global alias authority.

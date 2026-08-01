@@ -1,12 +1,13 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit6d_merged_unit6e_separately_gated`
-**Last updated:** 2026-07-31
-**Implementation status:** M01-M08/M10-M29 are live-verified at their recorded
+**Status:** `unit6e_finalized_unit6f_separately_gated`
+**Last updated:** 2026-08-01
+**Implementation status:** M01-M08/M10-M30 are live-verified at their recorded
 levels; Unit 6A is merged/live, Unit 6B is merged at `9ef9eb3`, Unit 6C is
-merged through `092562d`, and Unit 6D is implemented at `c363b60`
-**Supabase mutation status:** M01-M08/M10-M29 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; Unit 6D performed no Supabase/Storage mutation
-**Database checkpoint:** M01-M08 and forward migrations M10-M29 are live-verified.
+merged through `092562d`, Unit 6D is implemented at `c363b60`, and Unit 6E
+false/missed-variant corrections are finalized at `8bceab2`
+**Supabase mutation status:** M01-M08/M10-M29 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; M30 was applied exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; no other Unit 6E external mutation occurred
+**Database checkpoint:** M01-M08 and forward migrations M10-M30 are live-verified at their recorded levels; M09 remains absent.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 
@@ -84,6 +85,9 @@ The local tracking set intentionally has three files:
 - [Unit 6D evidence](./trackers/22-unit6d-candidate-review-evidence.md):
   candidate review/editing, refresh authority, conflict recovery, review,
   focused test, browser, privacy, and external-state receipt.
+- [Unit 6E evidence](./trackers/23-unit6e-review-corrections-evidence.md):
+  false/missed-variant correction closure, M30 readback, bounded remote
+  verification, authenticated browser limitation, tests, and final handoff.
 - [Planning and decisions](./trackers/01-planning-and-decisions.md): decision register, source reconciliation, audit evidence, and planning review.
 - [Implementation and verification](./trackers/02-implementation-and-verification.md): future work units, migration ledger, tests, rollout, and operational evidence.
 
@@ -115,7 +119,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, WU0A/WU0B, corrected Package 1 design, and Units through 5C-4 are integrated at their recorded checkpoints. M01-M08/M10-M23, Owner ingestion, and both separate fixture workers are live-verified. After this documentation closeout merges, the next bounded task combines Unit 5C-5 Owner variant-decision backend authority and Unit 5C-6 benchmark/per-language rollout-control infrastructure in one backend session and branch. It exposes UI-ready contracts without visual UI, assumes no qualifying benchmark evidence, keeps rollout fail closed, and requires exact-tree independent approval before applying new migrations. M09, customer display, inventory/publication, commerce, Google Books Roman-query fallback, global alias authority, and later units remain separately gated. Preserve these controls:
+The planning baseline, WU0A/WU0B, corrected Package 1 design, Units through 5C-6, and Unit 6A-6E are integrated at their recorded checkpoints. M01-M08/M10-M30, Owner ingestion, and both separate fixture workers are live-verified; M09 remains absent. Unit 6E's correction-only M30 is additive and was applied exactly once after exact-project preflight; the next bounded task is Unit 6F only and requires separate authorization. Customer display, inventory/publication, commerce, Google Books Roman-query fallback, global alias authority, and Unit 7 remain separately gated. Preserve these controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

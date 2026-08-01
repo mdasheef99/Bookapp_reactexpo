@@ -363,14 +363,30 @@ If implementation changes product or architecture behavior, update the relevant 
 > commerce, or other external mutation occurred. [Tracker 22](./implementation/phase-9-image-inventory/trackers/22-unit6d-candidate-review-evidence.md)
 > owns the detailed receipt.
 
+> 2026-08-01 Phase 9 Unit 6E finalization: the previously closed diff-only
+> correction checkpoint `8bceab260a953b4d832fd55f34f58db12fa009b1` was frozen
+> at tree `8a70bbb3b102ecda22f2904f20952852849567f1` with no later or uncommitted
+> contamination. The checked-in M30 correction was applied exactly once after
+> exact-project M29 preflight; Supabase readback records
+> `20260801093048 marketplace_phase9_unit6e_review_corrections` with no later
+> migration. Focused verification passed 12 suites/95 tests, remote-backed
+> integration passed 3/3, compatible TypeScript passed, and continuity passed
+> with 195 definitions and zero duplicate/missing traceability. The bounded
+> authenticated browser reached `/library`, `/profile`, `/status`, and
+> `/inventory`; the supplied account remained under Store Owner application
+> review, so private scan data was withheld and no Owner mutation was attempted.
+> No Storage, provider, deployment, inventory, publication, or commerce mutation
+> occurred. [Tracker 23](./implementation/phase-9-image-inventory/trackers/23-unit6e-review-corrections-evidence.md)
+> owns the detailed receipt; Unit 6F now requires separate authorization.
+
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6D merged** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6E finalized** |
 | Overall status | `in_progress` |
-| Last updated | 2026-07-31 |
-| Latest handoff | Unit 6A is merged/live-verified; Unit 6B is merged at `9ef9eb3`; Unit 6C is merged through `092562d`; Unit 6D candidate review and strict editing is implemented at `c363b60` with evidence in tracker 22. |
-| Current risk level | Unit 6D made no external mutation. Authenticated Owner-only browser mutation states remain unclaimed because the supplied account lacked an Active Store Owner membership; deterministic tests cover them. |
-| Next recommended task | Obtain separate authorization before beginning Unit 6E. |
+| Last updated | 2026-08-01 |
+| Latest handoff | Unit 6A is merged/live-verified; Unit 6B is merged at `9ef9eb3`; Unit 6C is merged through `092562d`; Unit 6D remains implemented at `c363b60`; Unit 6E correction checkpoint `8bceab2` is finalized with M30 live exactly once and evidence in tracker 23. |
+| Current risk level | M30 was additive and applied once. The supplied account lacked Active Store Owner membership, so positive Owner-only false/missed-variant mutation states remain deterministic-test evidence; the browser fail-closed inventory boundary passed. |
+| Next recommended task | Obtain separate authorization before beginning Unit 6F. |
 
 ---
 
@@ -387,7 +403,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6d_merged_unit6e_separately_gated` | [Unit 6 SDD](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-ux-sdd.md) · [contract matrix](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-contract-matrix.md) · [tracker 22](./implementation/phase-9-image-inventory/trackers/22-unit6d-candidate-review-evidence.md) | Unit 6A merged/live through M29; Unit 6B merged at `9ef9eb3`; Unit 6C merged through `092562d`; Unit 6D implemented at `c363b60`; Unit 6E, Unit 6F, and Unit 7 gated. |
+| Phase 9: Image-to-LLM Inventory | `unit6e_finalized_unit6f_separately_gated` | [Unit 6 SDD](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-ux-sdd.md) · [contract matrix](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-contract-matrix.md) · [tracker 22](./implementation/phase-9-image-inventory/trackers/22-unit6d-candidate-review-evidence.md) · [tracker 23](./implementation/phase-9-image-inventory/trackers/23-unit6e-review-corrections-evidence.md) | Unit 6A merged/live through M29; Unit 6B merged at `9ef9eb3`; Unit 6C merged through `092562d`; Unit 6D implemented at `c363b60`; Unit 6E finalized at `8bceab2` with M30 live once; Unit 6F and Unit 7 gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -504,8 +520,9 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Obtain separate authorization before beginning **Phase 9 Unit 6E**. M29
-   remains live exactly once. Do not begin Units 6E-6F or Unit 7 without the
+1. Obtain separate authorization before beginning **Phase 9 Unit 6F**. M29
+   remains live exactly once and M30 is live exactly once as the Unit 6E
+   correction. Do not begin Unit 7 or apply another migration without the
    required authority.
 2. Historical handoff (vision portion superseded 2026-07-27): Gemini remains configuration/deployment/live-call deferred. Google Books is implemented behind provider-neutral contracts but remains fixture/mock verified only; credentials, provider-registry enablement, deployment, and live smoke remain deferred.
    The current initial primary vision model ID is configuration-driven

@@ -1,7 +1,7 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-07-31
+**Last updated:** 2026-08-01
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
@@ -11,15 +11,19 @@ The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` �
 Current routed handoff: Unit 6A is merged/live-verified through M29, Unit 6B is
 merged at `9ef9eb3` with [tracker 20](./trackers/20-unit6b-route-query-cache-evidence.md),
 and Unit 6C is merged through `092562d`. Unit 6D — Owner
-candidate review and strict editing — is implemented at `c363b60`;
-[tracker 22](./trackers/22-unit6d-candidate-review-evidence.md) owns its
-implementation, corrections, review, verification, and bounded browser-smoke
-receipt. Unit 6D added no migration, Supabase/Storage mutation, deployment,
-provider call, inventory commit, publication, or other external mutation.
+candidate review and strict editing — remains implemented at `c363b60` with
+[tracker 22](./trackers/22-unit6d-candidate-review-evidence.md). Unit 6E
+false/missed-variant corrections are finalized at correction checkpoint
+`8bceab260a953b4d832fd55f34f58db12fa009b1`; [tracker 23](./trackers/23-unit6e-review-corrections-evidence.md)
+owns the exact diff-only closure, M30 application, remote readback, bounded
+browser-smoke receipt, and handoff. M30 is live exactly once as
+`20260801093048 marketplace_phase9_unit6e_review_corrections`; no other
+migration, Supabase/Storage, deployment, provider, inventory, publication, or
+commerce mutation occurred.
 
-The next eligible work is Phase 9 Unit 6E only and requires separate
-authorization. Do not begin Unit 6F or Unit 7. No migration,
-Supabase/Storage mutation, or deployment is authorized by this handoff.
+The next eligible work is Phase 9 Unit 6F only and requires separate
+authorization. Do not begin Unit 7. No further migration, Supabase/Storage
+mutation, or deployment is authorized by this handoff.
 
 ## 1. Canonical status source
 
