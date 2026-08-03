@@ -72,7 +72,7 @@ $requiredPhaseFiles = @(
     'trackers/19-unit6a-owner-safe-backend-evidence.md',
     'trackers/20-unit6b-route-query-cache-evidence.md',
     'trackers/21-unit6c-capture-upload-recovery-evidence.md',
-    'trackers/22-unit6d-candidate-review-evidence.md', 'trackers/23-unit6e-review-corrections-evidence.md',
+    'trackers/22-unit6d-candidate-review-evidence.md', 'trackers/23-unit6e-review-corrections-evidence.md', 'trackers/25-owner-inventory-read-boundary-wu1-evidence.md',
     'work-units/00-contracts-threat-migration-plan.md', 'work-units/00b-backend-api-technical-design-plan.md',
     'work-units/00b-technical-design/00-overview-authority-and-file-map.md', 'work-units/00b-technical-design/01-command-query-and-dto-catalogue.md',
     'work-units/00b-technical-design/02-authorization-tenancy-and-privacy.md', 'work-units/00b-technical-design/03-state-transactions-idempotency-and-publication.md',
@@ -83,6 +83,7 @@ $requiredPhaseFiles = @(
     'work-units/04b-gemini-vision-adapter-handoff.md',
     'work-units/05c-lite-multilingual-search-variants-sdd.md',
     'work-units/06-owner-capture-review-recovery-ux-sdd.md',
+    'work-units/owner-inventory-read-boundary-wu1-sdd.md',
     'work-units/06-owner-capture-review-recovery-contract-matrix.md'
 )
 $missing = @()
@@ -132,7 +133,10 @@ if (-not $active.Contains('06-owner-capture-review-recovery-ux-sdd.md') -or
     -not $active.Contains('20260801093048 marketplace_phase9_unit6e_review_corrections')) { Write-Error 'ACTIVE.md does not preserve the Unit 6E finalization and Unit 6F gate.' }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6e_finalized_unit6f_separately_gated`') -or
+if (-not ($doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6e_finalized_unit6f_separately_gated`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6f_browser_verified_native_gate_pending`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `wu1_owner_inventory_read_boundary_locally_complete_unapplied`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `wu1_owner_inventory_read_boundary_applied_runtime_deferred`')) -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
     -not $doc13.Contains('20260727231217 marketplace_phase9_sensitive_table_acl_correction') -or
     -not $doc13.Contains('20260727233457 marketplace_phase9_maintain_acl_correction') -or
@@ -152,8 +156,13 @@ if (-not $doc13.Contains('No language is benchmarked or approved') -or
     Write-Error 'DOC-13 does not preserve the fail-closed Unit 5C-5/5C-6 closeout.'
 }
 $implementationTracker = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/02-implementation-and-verification.md'))
-if (-not $implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_separately_gated`') -or
-    -not $implementationTracker.Contains('**Active work unit:** `unit6f_awaiting_separate_authorization`') -or
+if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_separately_gated`') -or
+    $implementationTracker.Contains('**Status:** `unit6f_browser_verified_native_gate_pending`') -or
+    $implementationTracker.Contains('**Status:** `wu1_owner_inventory_read_boundary_locally_complete_unapplied`') -or
+    $implementationTracker.Contains('**Status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`')) -or
+    -not ($implementationTracker.Contains('**Active work unit:** `unit6f_awaiting_separate_authorization`') -or
+    $implementationTracker.Contains('**Active work unit:** `unit6f_browser_verified_native_gate_pending`') -or
+    $implementationTracker.Contains('**Active work unit:** `owner_inventory_read_boundary_wu1`')) -or
     -not $implementationTracker.Contains('20-unit6b-route-query-cache-evidence.md') -or
     -not $implementationTracker.Contains('22-unit6d-candidate-review-evidence.md') -or
     -not $implementationTracker.Contains('23-unit6e-review-corrections-evidence.md') -or
@@ -341,9 +350,16 @@ foreach ($relative in $artifactRelativePaths) {
     }
     $artifactBodies[$relative] = [IO.File]::ReadAllText((Join-Path $phaseRoot "work-units/$relative"))
 }
-if (-not $tracker.Contains('**Implementation status:** `unit6e_finalized_unit6f_separately_gated`') -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `unit6f_awaiting_separate_authorization`\r?$' -or
-    -not $tracker.Contains('**Next authorized action:** obtain separate authorization before beginning Phase 9 Unit 6F') -or
+if (-not (($tracker.Contains('**Implementation status:** `unit6e_finalized_unit6f_separately_gated`') -or
+    $tracker.Contains('**Implementation status:** `unit6f_browser_verified_native_gate_pending`') -or
+    $tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_locally_complete_unapplied`') -or
+    $tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`'))) -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1)`\r?$' -or
+    -not ($tracker.Contains('**Next authorized action:** obtain separate authorization before beginning Phase 9 Unit 6F') -or
+    $tracker.Contains('**Next authorized action:** obtain representative low-end Android evidence') -or
+    $tracker.Contains('**Next authorized action:** obtain separate approval to apply the WU1 migration draft') -or
+    $tracker.Contains('**Next authorized action:** obtain independent review of the corrected WU1 draft') -or
+    $tracker.Contains('**Next authorized action:** obtain an approved development Owner JWT')) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
     -not $tracker.Contains('20-unit6b-route-query-cache-evidence.md') -or
@@ -400,16 +416,48 @@ $migrationNames = @(
 foreach ($name in $migrationNames) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot "supabase/migrations/$name"))) { Write-Error "Missing approved Phase 9 migration: $name" }
 }
+$draftMigrationNames = @('20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql')
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
-$actualMigrationNames = @($phase9Migrations.Name | Sort-Object)
+$wu1AppliedStatus = $tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`')
+$expectedMigrationNames = @($migrationNames)
+if ($wu1AppliedStatus) { $expectedMigrationNames += $draftMigrationNames }
+$appliedPhase9Migrations = if ($wu1AppliedStatus) {
+    @($phase9Migrations)
+} else {
+    @($phase9Migrations | Where-Object { $draftMigrationNames -notcontains $_.Name })
+}
+$actualMigrationNames = @($appliedPhase9Migrations.Name | Sort-Object)
 $duplicateMigrationVersions = @($phase9Migrations | Group-Object { [int]$_.Name.Substring(8,6) } | Where-Object Count -gt 1)
-$unexpectedCorrectionMigrations = @($phase9Migrations | Where-Object { [int]$_.Name.Substring(8,6) -ge 31 })
-if ($actualMigrationNames.Count -ne 29 -or
-    (Compare-Object $migrationNames $actualMigrationNames) -or
+$unexpectedCorrectionMigrations = @($phase9Migrations | Where-Object {
+    [int]$_.Name.Substring(8,6) -ge 31 -and $draftMigrationNames -notcontains $_.Name
+})
+foreach ($draftName in $draftMigrationNames) {
+    if (-not (Test-Path -LiteralPath (Join-Path $repoRoot "supabase/migrations/$draftName"))) {
+        Write-Error "Missing authorized unapplied WU1 draft: $draftName"
+    }
+}
+$wu1Addendum = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/owner-inventory-read-boundary-wu1-sdd.md'))
+$wu1Evidence = [IO.File]::ReadAllText((Join-Path $phaseRoot 'trackers/25-owner-inventory-read-boundary-wu1-evidence.md'))
+$wu1Sql = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql'))
+if (-not $wu1Addendum.Contains('ordering horizon') -or
+    $wu1Addendum -notmatch 'not a repeatable database\s+snapshot' -or
+    -not $wu1Addendum.Contains('does not modify those write paths') -or
+    -not $wu1Evidence.Contains('No live migration') -or
+    -not $wu1Sql.Contains('p_page_size IS NULL') -or
+    -not $wu1Sql.Contains('EXCEPTION WHEN others THEN') -or
+    -not $wu1Sql.Contains('P9_INTERNAL_ERROR')) {
+    Write-Error 'WU1 artifact or boundary invariants are incomplete.'
+}
+if ($wu1AppliedStatus -and -not $wu1Evidence.Contains('WU1_LIVE_APPLICATION=TRUE')) {
+    Write-Error 'Applied WU1 status is missing the live application receipt.'
+}
+$expectedMigrationCount = if ($wu1AppliedStatus) { 30 } else { 29 }
+if ($actualMigrationNames.Count -ne $expectedMigrationCount -or
+    (Compare-Object $expectedMigrationNames $actualMigrationNames) -or
     $duplicateMigrationVersions.Count -ne 0 -or
     $unexpectedCorrectionMigrations.Count -ne 0 -or
     $phase9Migrations.Name -match '000009|quantity.*validat') {
-    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M30 exactly once and in filename order, with no M09/M31-or-later correction.'
+    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M30 exactly once; WU1 is included only when the tracker records its applied receipt.'
 }
 $m24 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000024_marketplace_phase9_owner_variant_decisions.sql'))
 $m25 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000025_marketplace_phase9_owner_variant_corrections.sql'))
@@ -437,6 +485,32 @@ if (-not $m30.Contains('phase9_confirmed_variant_source') -or
     -not $m30.Contains("SECURITY DEFINER SET search_path=''") -or
     $m30 -match '(?im)^\s*(?:GRANT|REVOKE|ALTER\s+FUNCTION|INSERT\s+INTO|UPDATE\s+public\.|DELETE\s+FROM|CREATE\s+TABLE|CREATE\s+TRIGGER)\b') {
     Write-Error 'Phase 9 M30 must remain an additive Unit 6E function-compatibility correction with preserved ACLs and no data, table, or trigger mutation.'
+}
+$wu1TestHarnesses = @(
+    'supabase/migrations/__tests__/marketplacePhase9OwnerInventoryReadBoundary.test.ts',
+    'supabase/tests/phase9/phase9OwnerInventoryReadBoundary.integration.test.mjs'
+)
+foreach ($relative in $wu1TestHarnesses) {
+    if (-not (Test-Path -LiteralPath (Join-Path $repoRoot $relative))) {
+        Write-Error "Missing WU1 test harness file: $relative"
+    }
+}
+$wu1BoundaryMarkers = @(
+    'WU1_NO_LIVE_APPLICATION=TRUE',
+    'WU1_NO_CLIENT_UI_SERVICE_OR_STALE_CODE_CHANGE=TRUE',
+    'WU1_NO_WRITE_PATH_OR_DASHBOARD_CHANGE=TRUE',
+    'WU1_REMOTE_JWT_RLS_RUNTIME=DEFERRED_UNTIL_AFTER_APPLICATION'
+)
+foreach ($marker in $wu1BoundaryMarkers) {
+    if (-not $wu1Evidence.Contains($marker)) {
+        Write-Error "WU1 evidence is missing required boundary marker: $marker"
+    }
+}
+if ($wu1Sql -match '(?i)CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+public\.phase9_owner_inventory\s*\(' -or
+    $wu1Sql -match '(?i)ALTER\s+FUNCTION\s+public\.phase9_owner_inventory\s*\(' -or
+    $wu1Sql -match '(?i)^\s*CREATE\s+POLICY\b' -or
+    $wu1Sql -match '(?i)GRANT\s+(?:SELECT|INSERT|UPDATE|DELETE).*store_inventory') {
+    Write-Error 'WU1 draft crosses the stable-detail, RLS/policy, or direct-table-grant boundary.'
 }
 foreach ($relative in @('supabase/tests/phase9/phase6_baseline.sql','supabase/tests/phase9/databaseHarness.mjs',
     'supabase/tests/phase9/phase9Database.integration.test.mjs','supabase/tests/phase9/phase9IngestionRuntime.integration.test.mjs','supabase/tests/phase9/phase9VisionRuntime.integration.test.mjs','supabase/migrations/__tests__/marketplacePhase9DatabaseFoundation.test.ts',
@@ -615,13 +689,16 @@ if (-not $sessionStart.Contains('06-owner-capture-review-recovery-ux-sdd.md') -o
     -not $sessionStart.Contains('Unit 6B is') -or
     -not $sessionStart.Contains('Unit 6D') -or
     -not $sessionStart.Contains('Unit 6E') -or
-    -not $sessionStart.Contains('Unit 6F only') -or
+    -not ($sessionStart.Contains('Unit 6F only') -or $sessionStart.Contains('After that gate, return to the representative low-end Android Unit 6F evidence') -or $sessionStart.Contains('then resume the representative Unit 6F native evidence') -or $sessionStart.Contains('then return to the representative low-end Android Unit 6F')) -or
     -not $sessionStart.Contains('20260801093048 marketplace_phase9_unit6e_review_corrections')) {
     Write-Error 'SESSION-START.md does not preserve the Unit 6E finalization and Unit 6F gate.'
 }
 $phaseReadme = [IO.File]::ReadAllText((Join-Path $phaseRoot 'README.md'))
-if (-not $phaseReadme.Contains('**Status:** `unit6e_finalized_unit6f_separately_gated`') -or
-    -not $phaseReadme.Contains('M01-M08/M10-M29 are live once') -or
+if (-not ($phaseReadme.Contains('**Status:** `unit6e_finalized_unit6f_separately_gated`') -or
+    $phaseReadme.Contains('**Status:** `unit6f_browser_verified_native_gate_pending`') -or
+    $phaseReadme.Contains('**Status:** `wu1_owner_inventory_read_boundary_locally_complete_unapplied`') -or
+    $phaseReadme.Contains('**Status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`')) -or
+    -not ($phaseReadme.Contains('M01-M08/M10-M29 are live once') -or $phaseReadme.Contains('M01-M08/M10-M30 are live once')) -or
     -not $phaseReadme.Contains('Unit 6B is merged at `9ef9eb3`') -or
     -not $phaseReadme.Contains('Unit 6D is') -or
     -not $phaseReadme.Contains('22-unit6d-candidate-review-evidence.md') -or
@@ -692,11 +769,29 @@ if (@($sizeRegression | Where-Object Path -eq 'cohesive-351.md').Count -ne 0 -or
 }
 Write-Output 'DOCUMENT_SIZE_POLICY_REGRESSION=PASS above_350_allowed=true advisory_above_500=true'
 
+$wu1DiffPaths = @(
+    'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/owner-inventory-read-boundary-wu1-sdd.md',
+    'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md',
+    'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/25-owner-inventory-read-boundary-wu1-evidence.md',
+    'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/scripts/validate-phase9-continuity.ps1',
+    'supabase/migrations/20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql',
+    'supabase/migrations/__tests__/marketplacePhase9OwnerInventoryReadBoundary.test.ts',
+    'supabase/tests/phase9/phase9OwnerInventoryReadBoundary.integration.test.mjs'
+)
 Push-Location $repoRoot
 try {
-    & git diff --check
+    & git diff --check -- $wu1DiffPaths
     if ($LASTEXITCODE -ne 0) {
-        throw 'git diff --check failed.'
+        throw 'WU1-scoped git diff --check failed.'
+    }
+    Write-Output 'WU1_DIFF_CHECK=PASS'
+
+    & git diff --check --
+    if ($LASTEXITCODE -eq 0) {
+        Write-Output 'REPOSITORY_DIFF_CHECK=PASS'
+    } else {
+        Write-Warning 'Repository-wide git diff --check failed outside the WU1-scoped verdict.'
+        Write-Output 'REPOSITORY_DIFF_CHECK=FAIL'
     }
 }
 finally {

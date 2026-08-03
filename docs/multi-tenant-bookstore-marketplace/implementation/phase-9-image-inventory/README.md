@@ -1,15 +1,22 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit6e_finalized_unit6f_separately_gated`
-**Last updated:** 2026-08-01
+**Status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`
+**Last updated:** 2026-08-04
 **Implementation status:** M01-M08/M10-M30 are live-verified at their recorded
 levels; Unit 6A is merged/live, Unit 6B is merged at `9ef9eb3`, Unit 6C is
 merged through `092562d`, Unit 6D is implemented at `c363b60`, and Unit 6E
 false/missed-variant corrections are finalized at `8bceab2`
-**Supabase mutation status:** M01-M08/M10-M29 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; M30 was applied exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; no other Unit 6E external mutation occurred
-**Database checkpoint:** M01-M08 and forward migrations M10-M30 are live-verified at their recorded levels; M09 remains absent.
+**Supabase mutation status:** M01-M08/M10-M30 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; WU1 was applied exactly once as `20260803221216 marketplace_phase9_owner_inventory_read_boundary`; no WU1 row, user, fixture, listing, publication, Storage, provider, or deployment mutation occurred
+**Database checkpoint:** M01-M08 and forward migrations M10-M30 plus WU1 are live-verified at their recorded levels; M09 remains absent; positive Owner JWT runtime remains deferred.
+M30 was applied exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
+
+The user explicitly re-sequenced [WU1](./work-units/owner-inventory-read-boundary-wu1-sdd.md)
+ahead of the Unit 6F native gate. WU1 documentation, red tests, exact-project
+application, and post-application readback are complete; client/dashboard/
+legacy-caller change remains out of scope and positive Owner runtime is
+credential-gated.
 
 Every new development session starts at repository `AGENTS.md`, then follows `implementation/ACTIVE.md` → DOC-13 → [SESSION-START.md](./SESSION-START.md) → [TRACKER.md](./TRACKER.md). `SESSION-START.md` defines the Phase 9 resume brief, work-unit reading router, Supabase gate, documentation update matrix, and mandatory closeout transaction.
 
@@ -45,6 +52,7 @@ After the repository entrypoint, read in this order:
 | [04 Media, security, and privacy](./04-media-security-privacy-sdd.md) | Trust boundaries, buckets, upload validation, access, retention, deletion, incident and recovery controls. |
 | [05 Marketplace discovery](./05-marketplace-discovery-display-sdd.md) | Bookstore-first discovery, multilingual search, store catalogue, counts, cover/detail display. |
 | [06 Customer photo request](./06-customer-photo-request-extension-sdd.md) | Item-level current-copy photo requests, mandatory fulfillment gate, private evidence, Phase 6 seam. |
+| [WU1 Owner-inventory read boundary](./work-units/owner-inventory-read-boundary-wu1-sdd.md) | Separate stable detail/list read contract, signed deterministic cursor, exact DTO/filter allowlists, Owner authorization, and the applied forward migration; positive Owner runtime remains deferred. |
 
 ## Supporting set
 
@@ -88,6 +96,12 @@ The local tracking set intentionally has three files:
 - [Unit 6E evidence](./trackers/23-unit6e-review-corrections-evidence.md):
   false/missed-variant correction closure, M30 readback, bounded remote
   verification, authenticated browser limitation, tests, and final handoff.
+- [Unit 6F evidence](./trackers/24-unit6f-readiness-quality-gates-evidence.md):
+  bounded browser/readback verification, local quality gates, architectural
+  risk, and the outstanding representative low-end Android gate.
+- [WU1 evidence](./trackers/25-owner-inventory-read-boundary-wu1-evidence.md):
+  re-sequencing, exact-project preflight/application/readback, red-first contract
+  tests, local behavior, anonymous denial, and the deferred Owner runtime gate.
 - [Planning and decisions](./trackers/01-planning-and-decisions.md): decision register, source reconciliation, audit evidence, and planning review.
 - [Implementation and verification](./trackers/02-implementation-and-verification.md): future work units, migration ledger, tests, rollout, and operational evidence.
 
@@ -119,7 +133,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, WU0A/WU0B, corrected Package 1 design, Units through 5C-6, and Unit 6A-6E are integrated at their recorded checkpoints. M01-M08/M10-M30, Owner ingestion, and both separate fixture workers are live-verified; M09 remains absent. Unit 6E's correction-only M30 is additive and was applied exactly once after exact-project preflight; the next bounded task is Unit 6F only and requires separate authorization. Customer display, inventory/publication, commerce, Google Books Roman-query fallback, global alias authority, and Unit 7 remain separately gated. Preserve these controls:
+The planning baseline, WU0A/WU0B, corrected Package 1 design, Units through 5C-6, and Unit 6A-6E are integrated at their recorded checkpoints. M01-M08/M10-M30, Owner ingestion, and both separate fixture workers are live-verified; M09 remains absent. Unit 6E's correction-only M30 is additive and was applied exactly once after exact-project preflight. Unit 6F browser/readback verification is recorded, but representative low-end Android evidence remains required before completion or merge. Customer display, inventory/publication, commerce, Google Books Roman-query fallback, global alias authority, and Unit 7 remain separately gated. Preserve these controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

@@ -381,12 +381,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6E finalized** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **WU1 applied/readback complete; positive Owner runtime deferred** |
 | Overall status | `in_progress` |
-| Last updated | 2026-08-01 |
-| Latest handoff | Unit 6A is merged/live-verified; Unit 6B is merged at `9ef9eb3`; Unit 6C is merged through `092562d`; Unit 6D remains implemented at `c363b60`; Unit 6E correction checkpoint `8bceab2` is finalized with M30 live exactly once and evidence in tracker 23. |
-| Current risk level | M30 was additive and applied once. The supplied account lacked Active Store Owner membership, so positive Owner-only false/missed-variant mutation states remain deterministic-test evidence; the browser fail-closed inventory boundary passed. |
-| Next recommended task | Obtain separate authorization before beginning Unit 6F. |
+| Last updated | 2026-08-04 |
+| Latest handoff | Unit 6A is merged/live-verified; Unit 6B is merged at `9ef9eb3`; Unit 6C is merged through `092562d`; Unit 6D remains implemented at `c363b60`; Unit 6E correction checkpoint `8bceab2` is finalized with M30 live exactly once; Unit 6F browser/readback evidence is in tracker 24; WU1 is applied once as `20260803221216` with post-application readback in tracker 25. |
+| Current risk level | `WU1_OWNER_RUNTIME_VERIFICATION_DEFERRED`: positive Owner, cross-store, inactive-Owner, filter, cursor-context, live-DTO, and authenticated table-SELECT runtime cases need an approved Owner JWT; representative low-end Android evidence required by Unit 6 SDD §§24/28/34 and U6-AC36/U6-AC39 remains outstanding afterward. |
+| Next recommended task | Obtain an approved development Owner JWT for the deferred WU1 runtime matrix, then resume the representative low-end Android Unit 6F gate; do not cut over legacy callers or begin Unit 7. |
 
 ---
 
@@ -403,7 +403,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6e_finalized_unit6f_separately_gated` | [Unit 6 SDD](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-ux-sdd.md) · [contract matrix](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-contract-matrix.md) · [tracker 22](./implementation/phase-9-image-inventory/trackers/22-unit6d-candidate-review-evidence.md) · [tracker 23](./implementation/phase-9-image-inventory/trackers/23-unit6e-review-corrections-evidence.md) | Unit 6A merged/live through M29; Unit 6B merged at `9ef9eb3`; Unit 6C merged through `092562d`; Unit 6D implemented at `c363b60`; Unit 6E finalized at `8bceab2` with M30 live once; Unit 6F and Unit 7 gated. |
+| Phase 9: Image-to-LLM Inventory | `wu1_owner_inventory_read_boundary_applied_runtime_deferred` | [WU1 addendum](./implementation/phase-9-image-inventory/work-units/owner-inventory-read-boundary-wu1-sdd.md) · [tracker 25](./implementation/phase-9-image-inventory/trackers/25-owner-inventory-read-boundary-wu1-evidence.md) · [Unit 6 SDD](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-ux-sdd.md) · [tracker 24](./implementation/phase-9-image-inventory/trackers/24-unit6f-readiness-quality-gates-evidence.md) | WU1 is applied once with exact-project security/object readback and anonymous denial pass; positive Owner runtime, Unit 6F native completion/merge, legacy-caller cutover, and Unit 7 remain gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

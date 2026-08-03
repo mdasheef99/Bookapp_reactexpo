@@ -1,22 +1,36 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit6_owner_ux_approved_design_authority`
-**Implementation status:** `unit6e_finalized_unit6f_separately_gated`
-**Last updated:** 2026-08-01
-**Current milestone:** Unit 6E false/missed-variant correction finalization
-**Active work unit:** `unit6f_awaiting_separate_authorization`
+**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`
+**Last updated:** 2026-08-04
+**Current milestone:** WU1 Owner-inventory read boundary applied and post-application readback complete; positive Owner runtime deferred
+**Active work unit:** `owner_inventory_read_boundary_wu1`
+**Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Unit 6E false/missed-variant corrections finalized at `8bceab260a953b4d832fd55f34f58db12fa009b1`; evidence is [tracker 23](./trackers/23-unit6e-review-corrections-evidence.md)
-**Next authorized action:** obtain separate authorization before beginning Phase 9 Unit 6F
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; read-only remote verification and authenticated Owner RPC denial passed
-**Scope boundary:** Unit 6E is complete; Unit 6F and Unit 7 remain separately gated
-**Implementation authority:** no later unit is authorized by this handoff; Unit 6F requires a separate user authorization under the approved [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md) and [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md)
-**Migration creation/application authority:** M18-M29 are immutable live history and M30 was applied exactly once after exact-project preflight; no further migration is authorized by this closeout
-**Current gate:** Unit 6F requires separate authorization; no further migration, deployment, Unit 7, inventory/publication, commerce, or provider work is authorized
+**Last completed:** Unit 6E false/missed-variant corrections finalized at `8bceab260a953b4d832fd55f34f58db12fa009b1`; evidence is [tracker 23](./trackers/23-unit6e-review-corrections-evidence.md). Unit 6F browser/readback evidence is recorded in [tracker 24](./trackers/24-unit6f-readiness-quality-gates-evidence.md). WU1 application and post-application readback are recorded in [tracker 25](./trackers/25-owner-inventory-read-boundary-wu1-evidence.md).
+**Next authorized action:** obtain an approved development Owner JWT for the deferred positive runtime cases; then resume the representative Unit 6F native evidence. Legacy-caller cutover remains separately authorized.
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; WU1 is live exactly once as `20260803221216 marketplace_phase9_owner_inventory_read_boundary`; post-application readback and anonymous RPC denial passed
+**Scope boundary:** WU1 application/readback is complete; positive Owner runtime, legacy-caller cutover, Unit 6F native completion/merge, and Unit 7 remain separately gated
+**Implementation authority:** WU1 is authorized only through local/static validation under [the WU1 addendum](./work-units/owner-inventory-read-boundary-wu1-sdd.md); no routes, UI, hooks, services, Edge Functions, dashboard, writes, or stale-code deletion are authorized
+**Migration creation/application authority:** WU1 file creation and the one authorized application are complete; M18-M30 remain immutable live history; no other migration or database mutation is authorized
+**Current gate:** `WU1_OWNER_RUNTIME_VERIFICATION_DEFERRED`; no client cutover, deployment, Unit 7, inventory/publication, commerce, or provider mutation is authorized in this handoff
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
 ## Current handoff
+
+The current remediation context is development-only: there is no production rollout or external consumer compatibility requirement. The active problem is incomplete migration inside the development codebase from the Phase 4 direct-table owner console to the Phase 9 controlled owner boundary. The development Supabase project remains a real remote database, so authenticated/RLS/RPC behavior must still be verified against the exact project before any database mutation; this does not make the application a production environment.
+
+The user explicitly re-sequenced WU1 ahead of the Unit 6F native gate. WU1
+covered the [contract addendum](./work-units/owner-inventory-read-boundary-wu1-sdd.md),
+red tests, exact-project preflight, and application of
+`20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql`. The
+stable `phase9_owner_inventory(uuid)` detail RPC remains intact. The focused
+static suite (10/10), local PGlite behavior/readback suite (3/3), continuity
+validator, exact-project preflight, post-application readback, and anonymous
+RPC denial passed. Positive Owner JWT runtime remains deferred because no
+approved Owner credential was available; the native Unit 6F gate remains after
+that runtime gate.
 
 Phase 6 remains `complete_e2e_deferred`; Phases 7 and 8 remain deferred. Phase 9 M01-M08/M10-M14 are live exactly once and M09 remains absent. M13 exposes only minimum `SECURITY INVOKER` public wrappers for the authoritative private service RPCs; M14 adds service-only provider-attempt lineage and final egress validation. Owner ingestion is active with JWT verification; `phase9-media-sanitation` and `phase9-fixture-vision` are separate free-plan Render services at `96991a9`.
 

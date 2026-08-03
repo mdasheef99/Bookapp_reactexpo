@@ -1,9 +1,9 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-07-29 Unit 5C-3 M20/M21 application and live verification
-**Audit mode:** exact-project migration, schema/security readback, and bounded rollback-only smoke
+**Audit date:** 2026-08-04 WU1 exact-project application and post-application readback
+**Audit mode:** exact-project migration, schema/security readback, ACL/RLS/trigger comparison, and bounded anonymous denial smoke
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10-M21 live exactly once; M09 absent; M18 `20260729004216`, M19 `20260729020008`, M20 `20260729054842`, M21 `20260729060238`; synthetic lifecycle smoke rolled back with zero residue; no Storage/provider/deployment/product-data mutation
+**Mutation status:** M01-M08/M10-M30 live exactly once; M09 absent; WU1 is live exactly once as `20260803221216 marketplace_phase9_owner_inventory_read_boundary`; no rows, users, fixtures, listings, publications, Storage objects, providers, deployments, or product-data mutation occurred
 
 **Unit 5C-3 live reconciliation:** The existing Gemini provider call may return
 an optional multilingual companion, but strict canonical `p9-vision-v2`
@@ -205,6 +205,29 @@ Proposed boundary:
 3. A controlled server command performs candidate commit, duplicate choice, quantity-bucket changes, audit/event creation, and eligible public projection atomically per candidate where possible.
 4. Service-role functions/Edge Functions derive actor/store, use fixed schemas/search paths, expose minimum commands, and have explicit grants plus cross-tenant denial tests; worker/service access is separately enumerated from authenticated access.
 5. Model/provider workers have a narrow job capability, not a user bearer token and not general database authority.
+
+### WU1 owner-inventory read-boundary application (2026-08-04)
+
+The development-only remediation addendum
+[`owner-inventory-read-boundary-wu1-sdd.md`](../work-units/owner-inventory-read-boundary-wu1-sdd.md)
+records the reviewed target for the missing Owner list boundary. The stable
+`public.phase9_owner_inventory(uuid)` detail RPC remains unchanged. The
+applied migration `20260803221216 marketplace_phase9_owner_inventory_read_boundary`
+(local file `20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql`)
+adds only the separate `phase9_owner_inventory_page_v1` RPC, one
+evidence-backed `(store_id, updated_at DESC, id DESC)` index, fixed
+`search_path`, `postgres` ownership, and narrow execute grants. It added no
+table privileges, policies, or trigger changes. Exact-project post-application
+readback confirms the stable detail RPC, `store_inventory` RLS/policies/table
+ACL, existing indexes/constraints, and projection trigger/function are
+unchanged. Anonymous REST execution is denied; positive Owner JWT runtime is
+deferred because no approved Owner credential was available.
+
+The 2026-08-04 correction pass added fail-closed NULL page-size validation plus
+safe unexpected-error normalization. Its `asOf`
+cursor value is documented as an ordering horizon rather than a repeatable
+database snapshot because existing quantity/publication writes do not uniformly
+advance `updated_at`; those write paths remain outside WU1.
 
 Live M12 implements `claim_phase9_vision_jobs`, `phase9_vision_job_context`, `phase9_persist_vision_analysis`, and `phase9_fail_vision_job`. M13 exposes only the minimum public invoker wrappers required by PostgREST while leaving the authoritative functions in `marketplace_sec`. Each function is service-only, pins `search_path`, rejects NULL security/transition arguments, proves row existence, and validates job kind, attempt, owner, token hash, expiry, and complete store/session/input/media relationships. Invalid relationships use the approved exact-claim job-only reconciliation result and never mutate unverified related rows. One persistence transaction recursively validates the canonical positive allowlist, computes the UTF-8 normalized-`jsonb` hash, inserts immutable image/observation evidence and accepted candidates, and then performs terminal input/job updates. It cannot call metadata, inventory, listing, publication, or Storage operations.
 
