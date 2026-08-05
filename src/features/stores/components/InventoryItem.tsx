@@ -1,27 +1,36 @@
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-import type { StoreInventoryItem } from '../types';
 
 function rupeesFromMinor(value: number) {
     return Math.round(value / 100);
 }
 
-export interface InventoryItemProps {
-    item: StoreInventoryItem;
+export interface InventoryItemViewModel {
+    id: string;
+    title: string;
+    condition: string;
+    quantity_available: number;
+    selling_price_minor: number;
+    visibility_status: string;
+    listing_quality_status: string;
+}
+
+export interface InventoryItemProps<TItem extends InventoryItemViewModel = InventoryItemViewModel> {
+    item: TItem;
     selected?: boolean;
-    onSelect?: (item: StoreInventoryItem) => void;
+    onSelect?: (item: TItem) => void;
     onPublish?: (inventoryId: string) => void;
     onPause?: (inventoryId: string) => void;
-    onEdit?: (item: StoreInventoryItem) => void;
+    onEdit?: (item: TItem) => void;
     onSaveEdits?: (inventoryId: string, price: string, quantity: string) => void;
     editPrice?: string;
     editQuantity?: string;
-    onEditPriceChange?: (item: StoreInventoryItem, value: string) => void;
-    onEditQuantityChange?: (item: StoreInventoryItem, value: string) => void;
+    onEditPriceChange?: (item: TItem, value: string) => void;
+    onEditQuantityChange?: (item: TItem, value: string) => void;
 }
 
-export default function InventoryItem({
+export default function InventoryItem<TItem extends InventoryItemViewModel>({
     item,
     selected = false,
     onSelect,
@@ -33,7 +42,7 @@ export default function InventoryItem({
     editQuantity,
     onEditPriceChange,
     onEditQuantityChange,
-}: InventoryItemProps) {
+}: InventoryItemProps<TItem>) {
     const { colors } = useTheme();
     const isLowStock = item.quantity_available === 1;
     const isOutOfStock = item.quantity_available === 0;

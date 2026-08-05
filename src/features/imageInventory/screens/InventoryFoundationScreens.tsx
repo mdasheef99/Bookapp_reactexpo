@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { ActivityIndicator, ScrollView, Text } from 'react-native';
-import StoreInventoryScreen from '@/features/stores/screens/StoreInventoryScreen';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { useTheme } from '@/hooks/useTheme';
@@ -27,6 +26,7 @@ import {
 import { InventoryCandidateReviewScreen } from './CandidateReviewRouteScreen';
 import { InventoryMissedBookScreen } from './MissedBookScreen';
 import { InventoryReadinessSummaryScreen } from './ReadinessSummaryScreen';
+import { OwnerInventoryReadScreen } from './OwnerInventoryReadScreen';
 
 type QueryState = {
     isLoading: boolean;
@@ -93,7 +93,12 @@ export function InventoryHubFoundationScreen() {
 }
 
 function Hub({ identity }: { identity: ImageInventoryIdentity }) {
-    return <StoreInventoryScreen scanHeader={<InventoryHubRecoveryCard identity={identity} />} />;
+    return (
+        <OwnerInventoryReadScreen
+            identity={identity}
+            scanHeader={<InventoryHubRecoveryCard identity={identity} />}
+        />
+    );
 }
 
 function ScanSetup({ identity }: { identity: ImageInventoryIdentity }) {
