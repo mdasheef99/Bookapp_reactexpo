@@ -1,5 +1,5 @@
 import { authRuntimeConfiguration } from '@/features/auth/config/authRuntimeConfig';
-import { mmkvSupabaseStorage } from '@/lib/mmkv';
+import { supabaseStorage } from '@/lib/storage';
 
 export function deriveSupabaseAuthStorageKey(supabaseUrl: string): string {
   const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
@@ -17,18 +17,18 @@ const pendingLogoutStorageKey = `${supabaseAuthStorageKey}-logout-pending`;
 
 /** SDK fallback for explicit current-device logout only. */
 export async function clearPersistedSupabaseSession(): Promise<void> {
-  await Promise.resolve(mmkvSupabaseStorage.removeItem(supabaseAuthStorageKey));
+  await supabaseStorage.removeItem(supabaseAuthStorageKey);
 }
 
 /** Non-secret crash/restart guard; token deletion must complete before this marker is cleared. */
 export async function markPendingLogoutIntent(): Promise<void> {
-  await Promise.resolve(mmkvSupabaseStorage.setItem(pendingLogoutStorageKey, '1'));
+  await supabaseStorage.setItem(pendingLogoutStorageKey, '1');
 }
 
-export function hasPendingLogoutIntent(): boolean {
-  return mmkvSupabaseStorage.getItem(pendingLogoutStorageKey) === '1';
+export async function hasPendingLogoutIntent(): Promise<boolean> {
+  return (await supabaseStorage.getItem(pendingLogoutStorageKey)) === '1';
 }
 
 export async function clearPendingLogoutIntent(): Promise<void> {
-  await Promise.resolve(mmkvSupabaseStorage.removeItem(pendingLogoutStorageKey));
+  await supabaseStorage.removeItem(pendingLogoutStorageKey);
 }

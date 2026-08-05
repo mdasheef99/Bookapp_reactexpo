@@ -1,4 +1,5 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import * as Crypto from 'expo-crypto';
 import * as ImagePicker from 'expo-image-picker';
 import {
     InventoryCapturePreviewScreen,
@@ -14,6 +15,7 @@ let mockCurrentIdentity = mockIdentity;
 const mockQueryClient = { invalidateQueries: jest.fn(() => Promise.resolve()) };
 
 jest.mock('expo-router', () => ({ useRouter: () => mockRouter }));
+jest.mock('expo-crypto', () => ({ randomUUID: jest.fn() }));
 jest.mock('@react-navigation/native', () => ({ useIsFocused: () => true }));
 jest.mock('@tanstack/react-query', () => ({ useQueryClient: () => mockQueryClient }));
 jest.mock('expo-image-picker', () => ({
@@ -84,16 +86,48 @@ jest.mock('../queries/ownerUxQueries', () => ({
 }));
 
 const picker = ImagePicker as jest.Mocked<typeof ImagePicker>;
+const randomUUID = Crypto.randomUUID as jest.MockedFunction<typeof Crypto.randomUUID>;
 jest.setTimeout(60_000);
 
 describe('Phase 9 Unit 6C capture routes', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockQueryClient.invalidateQueries.mockReset().mockResolvedValue(undefined);
+        let uuidCounter = 0;
+        randomUUID.mockImplementation(() => (
+            `00000000-0000-4000-8000-${String(++uuidCounter).padStart(12, '0')}`
+        ));
         mockWorkflow.selected = null;
         mockCurrentIdentity = mockIdentity;
         picker.getCameraPermissionsAsync.mockResolvedValue({
             granted: true, canAskAgain: true, status: 'granted', expires: 'never',
         } as never);
+    });
+
+    it('keeps the setup attempt identity stable across rerenders', () => {
+        const screen = render(<InventoryCaptureSetupScreen />);
+        const initialUuidCalls = randomUUID.mock.calls.length;
+
+        screen.rerender(<InventoryCaptureSetupScreen />);
+
+        expect(randomUUID).toHaveBeenCalledTimes(initialUuidCalls);
+    });
+
+    it('keeps upload attempt identities stable across rerenders', () => {
+        mockWorkflow.selected = {
+            uri: 'file:///private/scan.jpg',
+            mimeType: 'image/jpeg',
+            fileSize: 1024,
+            width: 100,
+            height: 200,
+            source: 'camera',
+        };
+        const screen = render(<InventoryCapturePreviewScreen sessionId="session-1" />);
+        const initialUuidCalls = randomUUID.mock.calls.length;
+
+        screen.rerender(<InventoryCapturePreviewScreen sessionId="session-1" />);
+
+        expect(randomUUID).toHaveBeenCalledTimes(initialUuidCalls);
     });
 
     it('treats picker cancellation as normal and creates no session', async () => {
@@ -166,6 +200,9 @@ describe('Phase 9 Unit 6C capture routes', () => {
     });
 
     it('uploads, registers, clears local media, and routes to server progress', async () => {
+        const handoffEvents: string[] = [];
+        mockWorkflow.clear.mockImplementation(() => handoffEvents.push('clear'));
+        mockRouter.replace.mockImplementation(() => handoffEvents.push('replace'));
         mockWorkflow.selected = {
             uri: 'file:///private/scan.jpg',
             mimeType: 'image/jpeg',
@@ -190,13 +227,48 @@ describe('Phase 9 Unit 6C capture routes', () => {
             <InventoryCapturePreviewScreen sessionId="00000000-0000-4000-8000-000000000001" />,
         );
         fireEvent.press(screen.getByText('Upload image'));
-        await waitFor(() => expect(mockWorkflow.clear).toHaveBeenCalled());
-        expect(mockWorkflow.clear).toHaveBeenCalled();
-        expect(mockRouter.replace).toHaveBeenCalled();
+        await waitFor(() => expect(mockRouter.replace).toHaveBeenCalled());
+        expect(mockWorkflow.clear).not.toHaveBeenCalled();
+        expect(handoffEvents).toEqual(['replace']);
         expect(mockQueryClient.invalidateQueries).toHaveBeenCalledTimes(3);
+        screen.unmount();
+        expect(mockWorkflow.clear).toHaveBeenCalledTimes(1);
+        expect(handoffEvents).toEqual(['replace', 'clear']);
     });
 
-    it('releases each selected preview reference on cancellation or unmount', () => {
+    it('does not navigate or clear after Preview unmounts during post-registration refresh', async () => {
+        const pendingInvalidations: Array<() => void> = [];
+        mockQueryClient.invalidateQueries.mockImplementation(() => new Promise<void>((resolve) => {
+            pendingInvalidations.push(resolve);
+        }));
+        mockWorkflow.selected = {
+            uri: 'file:///private/scan.jpg', mimeType: 'image/jpeg', fileSize: 1024,
+            width: 100, height: 200, source: 'camera',
+        };
+        const register = jest.fn().mockResolvedValue({
+            inputId: '00000000-0000-4000-8000-000000000004', state: 'uploaded',
+        });
+        (captureService.prepareUpload as jest.Mock).mockResolvedValue({
+            expiresAt: '2099-01-01T00:00:00.000Z',
+            upload: () => ({ promise: Promise.resolve(), cancel: jest.fn() }),
+            register,
+        });
+        const screen = render(
+            <InventoryCapturePreviewScreen sessionId="00000000-0000-4000-8000-000000000001" />,
+        );
+        fireEvent.press(screen.getByText('Upload image'));
+        await waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+        expect(pendingInvalidations).toHaveLength(3);
+
+        screen.unmount();
+        pendingInvalidations.forEach((resolve) => resolve());
+        await act(async () => { await Promise.resolve(); });
+
+        expect(mockRouter.replace).not.toHaveBeenCalled();
+        expect(mockWorkflow.clear).not.toHaveBeenCalled();
+    });
+
+    it('preserves selected media across a transient Preview unmount', () => {
         mockWorkflow.selected = {
             uri: 'file:///private/scan-3.jpg', mimeType: 'image/jpeg', fileSize: 1024,
             width: 100, height: 200, source: 'camera',
@@ -205,7 +277,34 @@ describe('Phase 9 Unit 6C capture routes', () => {
             <InventoryCapturePreviewScreen sessionId="00000000-0000-4000-8000-000000000001" />,
         );
         screen.unmount();
+        expect(mockWorkflow.clear).not.toHaveBeenCalled();
+    });
+
+    it('clears selected media only when the Owner chooses another image', () => {
+        mockWorkflow.selected = {
+            uri: 'file:///private/scan-3.jpg', mimeType: 'image/jpeg', fileSize: 1024,
+            width: 100, height: 200, source: 'camera',
+        };
+        const screen = render(
+            <InventoryCapturePreviewScreen sessionId="00000000-0000-4000-8000-000000000001" />,
+        );
+
+        fireEvent.press(screen.getByText('Choose another image'));
+
         expect(mockWorkflow.clear).toHaveBeenCalledTimes(1);
+        expect(mockRouter.back).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps unavailable-media recovery routed back to scan setup', () => {
+        const screen = render(
+            <InventoryCapturePreviewScreen sessionId="00000000-0000-4000-8000-000000000001" />,
+        );
+
+        expect(screen.getByText('That upload was not registered. Select the image again.'))
+            .toBeTruthy();
+        fireEvent.press(screen.getByText('Choose image'));
+
+        expect(mockRouter.replace).toHaveBeenCalled();
     });
 
     it('uses a new registration key after object-change reauthorization', async () => {

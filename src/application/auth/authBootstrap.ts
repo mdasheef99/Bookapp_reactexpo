@@ -47,17 +47,29 @@ function recoverPendingLogout(): Promise<void> {
   return pendingLogoutRecoveryPromise;
 }
 
+async function handleAuthStateChange(
+  event: AuthChangeEvent,
+  session: Session | null,
+  eventVersion: number,
+): Promise<void> {
+  const pendingLogout = await hasPendingLogoutIntent();
+  if (eventVersion !== authEventVersion) return;
+
+  if (session && pendingLogout) {
+    await recoverPendingLogout();
+    return;
+  }
+
+  initialized = true;
+  await applySessionTransition(event, session).catch(() => undefined);
+}
+
 function ensureSubscription() {
   if (subscription) return;
   const { data } = supabase.auth.onAuthStateChange(
     (event: AuthChangeEvent, session: Session | null) => {
       authEventVersion += 1;
-      if (session && hasPendingLogoutIntent()) {
-        void recoverPendingLogout();
-        return;
-      }
-      initialized = true;
-      void applySessionTransition(event, session).catch(() => undefined);
+      void handleAuthStateChange(event, session, authEventVersion).catch(() => undefined);
     },
   );
   subscription = data.subscription;
@@ -70,7 +82,7 @@ async function restoreSession(timeoutMs: number): Promise<void> {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
   try {
-    if (hasPendingLogoutIntent()) {
+    if (await hasPendingLogoutIntent()) {
       await recoverPendingLogout();
       return;
     }

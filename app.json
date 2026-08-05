@@ -23,7 +23,10 @@
           "cameraPermission": "Allow BookTalks to photograph book spines for private inventory processing.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-font",
+      "@react-native-community/datetimepicker",
+      "expo-router"
     ],
     "splash": {
       "image": "./assets/splash-icon.png",

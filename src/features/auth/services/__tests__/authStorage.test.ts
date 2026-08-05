@@ -1,12 +1,12 @@
-jest.mock('@/lib/mmkv', () => ({
-  mmkvSupabaseStorage: {
+jest.mock('@/lib/storage', () => ({
+  supabaseStorage: {
     getItem: jest.fn(),
     setItem: jest.fn(),
     removeItem: jest.fn(),
   },
 }));
 
-import { mmkvSupabaseStorage } from '@/lib/mmkv';
+import { supabaseStorage } from '@/lib/storage';
 import {
   clearPersistedSupabaseSession,
   clearPendingLogoutIntent,
@@ -24,23 +24,23 @@ describe('Supabase auth storage fallback', () => {
 
   it('removes only the configured Supabase auth key', async () => {
     await clearPersistedSupabaseSession();
-    expect(mmkvSupabaseStorage.removeItem).toHaveBeenCalledTimes(1);
-    expect(mmkvSupabaseStorage.removeItem).toHaveBeenCalledWith(expect.stringMatching(/^sb-.+-auth-token$/));
+    expect(supabaseStorage.removeItem).toHaveBeenCalledTimes(1);
+    expect(supabaseStorage.removeItem).toHaveBeenCalledWith(expect.stringMatching(/^sb-.+-auth-token$/));
     expect(supabaseAuthStorageKey).toBe('sb-test-auth-token');
   });
 
   it('persists and clears a non-secret pending-logout marker separately from the token', async () => {
-    (mmkvSupabaseStorage.getItem as jest.Mock).mockReturnValue('1');
+    (supabaseStorage.getItem as jest.Mock).mockResolvedValue('1');
 
     await markPendingLogoutIntent();
-    expect(hasPendingLogoutIntent()).toBe(true);
+    await expect(hasPendingLogoutIntent()).resolves.toBe(true);
     await clearPendingLogoutIntent();
 
-    expect(mmkvSupabaseStorage.setItem).toHaveBeenCalledWith(
+    expect(supabaseStorage.setItem).toHaveBeenCalledWith(
       'sb-test-auth-token-logout-pending',
       '1',
     );
-    expect(mmkvSupabaseStorage.removeItem).toHaveBeenCalledWith(
+    expect(supabaseStorage.removeItem).toHaveBeenCalledWith(
       'sb-test-auth-token-logout-pending',
     );
   });

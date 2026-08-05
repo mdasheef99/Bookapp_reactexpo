@@ -18,7 +18,7 @@ import {
     validateSelectedMedia,
     type CaptureSource,
 } from '../capture/captureState';
-import { createCaptureUuid, createSemanticKey } from '../capture/captureIds';
+import { createCaptureAttempt, type CaptureAttempt } from '../capture/captureIds';
 import { captureDefaults, hasCurrentCaptureIdentity } from '../capture/captureAuthority';
 import { useCaptureWorkflow } from '../capture/CaptureWorkflowContext';
 import { registerCaptureCancellation } from '../capture/captureCancellation';
@@ -44,10 +44,7 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
     const operationGeneration = useRef(0);
     const [sourceStep, setSourceStep] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
-    const startAttempt = useRef({
-        key: createSemanticKey('start-session'),
-        commandId: createCaptureUuid(),
-    });
+    const [startAttempt] = useState(() => createCaptureAttempt('start-session'));
     const gate = useOwnerQueryMutationGate({
         scope: `${identity.userId}:${identity.storeId}:capture-setup`,
         isOffline,
@@ -105,8 +102,8 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
             const sessionId = discovery.data?.activeSession?.sessionId
                 ?? await captureService.startSession(
                     captureDefaults,
-                    startAttempt.current.key,
-                    startAttempt.current.commandId,
+                    startAttempt.key,
+                    startAttempt.commandId,
                 );
             if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             workflow.select(validated.media);
@@ -177,8 +174,9 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
     const running = useRef(false);
     const active = useRef<UploadHandle | null>(null);
     const prepared = useRef<PreparedUpload | null>(null);
-    const authorizeAttempt = useRef({ key: createSemanticKey('authorize-upload'), commandId: createCaptureUuid() });
-    const registerAttempt = useRef({ key: createSemanticKey('register-upload'), commandId: createCaptureUuid() });
+    const authorizeAttempt = useRef<CaptureAttempt | null>(null);
+    const registerAttempt = useRef<CaptureAttempt | null>(null);
+    const successfulNavigation = useRef(false);
     const media = workflow.selected;
     const gate = useOwnerQueryMutationGate({
         scope: `${identity.userId}:${identity.storeId}:${sessionId}:upload`,
@@ -201,7 +199,7 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
         return () => {
             unregister();
             cancel();
-            workflow.clear();
+            if (successfulNavigation.current) { successfulNavigation.current = false; workflow.clear(); }
         };
     }, [workflow.clear]);
 
@@ -217,20 +215,18 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
             if (!registrationReplay && (
                 !uploadAttempt || Date.parse(uploadAttempt.expiresAt) <= Date.now() + 5_000
             )) {
-                authorizeAttempt.current = { key: createSemanticKey('authorize-upload'), commandId: createCaptureUuid() };
+                const nextAuthorizeAttempt = createCaptureAttempt('authorize-upload');
+                authorizeAttempt.current = nextAuthorizeAttempt;
                 uploadAttempt = await captureService.prepareUpload(
                     sessionId,
                     media,
                     (inputs.data?.items.length ?? 0) + 1,
-                    authorizeAttempt.current.key,
-                    authorizeAttempt.current.commandId,
+                    nextAuthorizeAttempt.key,
+                    nextAuthorizeAttempt.commandId,
                 );
                 if (!mutationAuthority.current) return;
                 prepared.current = uploadAttempt;
-                registerAttempt.current = {
-                    key: createSemanticKey('register-upload'),
-                    commandId: createCaptureUuid(),
-                };
+                registerAttempt.current = createCaptureAttempt('register-upload');
             }
             if (!uploadAttempt) throw new CaptureClientError(
                 'P9_INTERNAL_ERROR',
@@ -249,21 +245,26 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
             dispatch({ type: 'register', generation: nextGeneration });
             registrationStarted = true;
             if (!mutationAuthority.current) return;
-            await uploadAttempt.register(
-                registerAttempt.current.key,
-                registerAttempt.current.commandId,
+            const currentRegisterAttempt = registerAttempt.current;
+            if (!currentRegisterAttempt) throw new CaptureClientError(
+                'P9_INTERNAL_ERROR',
+                true,
+                'Upload registration identity is unavailable.',
             );
+            await uploadAttempt.register(currentRegisterAttempt.key, currentRegisterAttempt.commandId);
             if (generation.current !== nextGeneration || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             dispatch({ type: 'success', generation: nextGeneration });
-            workflow.clear();
             prepared.current = null;
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: imageInventoryKeys.discovery(identity) }),
                 queryClient.invalidateQueries({ queryKey: imageInventoryKeys.session(identity, sessionId) }),
                 queryClient.invalidateQueries({ queryKey: imageInventoryKeys.inputs(identity, sessionId) }),
             ]);
+            if (generation.current !== nextGeneration || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
+            successfulNavigation.current = true;
             router.replace(inventoryRoutes.session(sessionId));
         } catch (error) {
+            successfulNavigation.current = false;
             if (generation.current !== nextGeneration) return;
             const captureError = error instanceof CaptureClientError ? error : null;
             let retryPhase: 'transport' | 'registration' = registrationStarted
