@@ -56,7 +56,7 @@ export default function StoreOwnerLayout() {
                 }}
             />
             <Tabs.Screen
-                name="orders"
+                name="orders/index"
                 options={{
                     title: 'Orders',
                     tabBarIcon: ({ color, size }: { color: string; size: number }) => (
