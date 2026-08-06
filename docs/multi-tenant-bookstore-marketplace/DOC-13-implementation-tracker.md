@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-07-31
+**Date:** 2026-08-06
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -379,14 +379,148 @@ If implementation changes product or architecture behavior, update the relevant 
 > occurred. [Tracker 23](./implementation/phase-9-image-inventory/trackers/23-unit6e-review-corrections-evidence.md)
 > owns the detailed receipt; Unit 6F now requires separate authorization.
 
+> 2026-08-02 Phase 9 Unit 6F browser/readback closeout: the feature branch
+> `codex/phase9-unit6f-readiness-quality-gates` was verified at final correction
+> head `a0d55b5e50d4dc3990851643d10bc05a54c54514`. Authenticated Expo web
+> verification covered canonical Review Save persistence, stale-scope fencing,
+> confirmation safeguards, exact `Confirming…`, one Close, closed-session
+> persistence, narrow reflow, and zero inventory/listing/publication effects.
+> Focused deterministic verification passed 22 suites/155 tests, auth/owner
+> verification passed 15 suites/114 tests, app auth/Owner route tests passed
+> 5 suites/11 tests, TypeScript passed, and continuity passed. The mandatory
+> representative low-end Android evidence required by Unit 6 SDD §§24, 28, and
+> 34 and U6-AC36/U6-AC39 was not run; Unit 6F remains incomplete and unmerged.
+> [Tracker 24](./implementation/phase-9-image-inventory/trackers/24-unit6f-readiness-quality-gates-evidence.md)
+> owns the detailed receipt and `USER_ACTION_REQUIRED_NATIVE_EVIDENCE` verdict.
+
+> 2026-08-02 Phase 9 Unit 6F native UUID remediation checkpoint: the bounded
+> scan-startup correction added SDK54-compatible `expo-crypto`, removed the
+> browser-global crypto dependency, and made capture attempt identities lazy
+> and render-stable. Focused capture verification passed 2 suites/17 tests,
+> the full image-inventory suite passed 33 suites/223 tests, TypeScript passed,
+> and no Supabase/Storage/migration/external mutation occurred. No Android
+> device or emulator was available to `adb`, so the mandatory native gate
+> remains outstanding; `store_inventory` investigation was intentionally not
+> started. Tracker 24 owns the detailed evidence.
+
+> 2026-08-03 local web runtime and route-warning checkpoint: the concrete
+> Store Owner Orders route was corrected from `orders` to `orders/index`, with
+> a regression assertion. Production web export passed after bundling 2,245
+> modules. The Codex in-app browser authenticated with the supplied development
+> OTP and rendered `/library`, `/dashboard`, and `/inventory` without browser
+> errors; only existing framework, notifications, Sentry, and style warnings
+> were observed. A fresh exact-project read-only check confirmed
+> `store_inventory` RLS is enabled, authenticated table SELECT/INSERT/UPDATE
+> are denied, the owner policies remain present, and the controlled inventory
+> RPCs are executable by authenticated clients. The legacy store dashboard and
+> inventory services still call `.from('store_inventory')`; the inventory hook
+> currently swallows that read error. No database, migration, Storage,
+> deployment, inventory, listing, or publication mutation occurred. The
+> native Unit 6F evidence gate remains outstanding.
+
+> 2026-08-03 WU1 owner-inventory read-boundary re-sequencing: the user
+> explicitly authorized WU1 ahead of the Unit 6F native gate, limited to the
+> contract addendum, red tests, local/static validation, and an unapplied
+> forward migration draft. The exact development project
+> `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) was re-verified read-only;
+> live migration history still ends at M30. The stable
+> `phase9_owner_inventory(uuid)` detail RPC remains intact. Focused contract
+> tests passed 6/6 after the intentional pre-draft red run, and local PGlite
+> draft parse/readback passed 1/1. No SQL was applied and no client/UI/service,
+> dashboard, inventory, listing, publication, Storage, deployment, or external
+> mutation occurred. [WU1 evidence](./implementation/phase-9-image-inventory/trackers/25-owner-inventory-read-boundary-wu1-evidence.md)
+> owns the detailed receipt; separate SQL/security approval is required before
+> applying the draft, after which the Unit 6F native gate resumes.
+
+> 2026-08-04 WU1 correction checkpoint: the review findings were handled within
+> the existing local-only boundary. Explicit NULL page sizes now fail closed;
+> unexpected SQL failures map to `P9_INTERNAL_ERROR`; `asOf` is documented as an
+> ordering horizon rather than a repeatable database snapshot; and the
+> continuity validator requires the WU1 addendum/evidence artifacts and boundary
+> markers. The correction-focused Jest suite is 9/9 green after an intentional
+> 3-test red run; corrected PGlite passed 1/1, continuity passed with 65
+> Markdown files/51 required phase files, and `git diff --check` passed. The
+> draft remains unapplied, live migration history remains
+> at M30, and no client/UI/service, write-path, database, Storage, deployment,
+> inventory, listing, publication, or external mutation occurred. Independent
+> review and separate application approval remain required.
+
+> 2026-08-04 WU1 correction closure: the cursor helper call is now outside the
+> narrow cast-error handler, so unexpected helper failures reach
+> `P9_INTERNAL_ERROR` while malformed timestamp/UUID values remain
+> `P9_CURSOR_INVALID`. Local behavior coverage now passes equal-timestamp
+> keyset pagination, filters, empty results, invalid page-size/cursor,
+> Owner/anonymous scope, and unexpected-helper normalization. Focused WU1
+> Jest is 10/10, local PGlite is 3/3, and continuity reports separate
+> `WU1_DIFF_CHECK=PASS`, `REPOSITORY_DIFF_CHECK=PASS`, and
+> `PHASE9_CONTINUITY_CHECK=PASS`. No Supabase mutation occurred; WU1 remains
+> unapplied and independent review plus separate application approval remain
+> required.
+
+> 2026-08-04 WU1 exact-project application and readback: the user-authorized
+> development-only migration `20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql`
+> was applied exactly once through Supabase MCP to
+> `ahntbtktjjmvfosgkmgn` and is recorded live as
+> `20260803221216 marketplace_phase9_owner_inventory_read_boundary`.
+> Preflight matched `Bookconnect_reactexpo`, `ACTIVE_HEALTHY`, and the M30
+> tail; the new RPC/index were absent before application. Post-readback proves
+> the exact eight-argument `jsonb` RPC, `STABLE SECURITY DEFINER`, postgres
+> owner, empty `search_path`, narrow execute ACLs, exact descending index,
+> unchanged detail RPC, and unchanged `store_inventory` RLS/policies/table
+> ACL/trigger boundaries. Anonymous REST execution returned HTTP 401. No rows,
+> users, fixtures, listings, publications, Storage objects, providers,
+> deployments, or client/dashboard/write-path behavior changed. Positive Owner
+> JWT runtime cases remain deferred because no approved Owner credential or
+> active Owner browser session was available; Unit 6F native evidence remains
+> outstanding and Unit 7 remains separately gated.
+>
+> 2026-08-04 WU2 read-only Owner inventory client integration: the active
+> Store Owner `/inventory` route now calls
+> `phase9_owner_inventory_page_v1` through a strict exact-shape DTO decoder,
+> identity/store/contract/filter-isolated infinite-query cache, opaque cursor
+> pagination, exact WU1 filters, and distinct read error/partial-page states.
+> The reachable route graph no longer imports the legacy direct-table inventory
+> service. After correction-review closure, focused WU2 tests pass 4 suites/50
+> tests and the related regression set passes 39 suites/303 tests;
+> strict offset timestamps/positive versions, non-destructive failed refresh,
+> explicit current-generation refresh fencing, no unauthorized retry, and
+> truthful category/operation/empty states are covered. TypeScript passes with
+> `--allowImportingTsExtensions`. No migration, database/storage row, Edge
+> Function, deployment, dashboard, write path, or Unit 7 behavior changed.
+> Authenticated Owner runtime remains deferred pending an approved session.
+> A final focused correction removed the global header Refresh control from
+> unauthorized initial and partial states; screen 15/15, focused 4 suites/50,
+> and related 39 suites/303 remain green without external mutation.
+
+> 2026-08-05 Android 11 observation and browser follow-up: the user reports
+> accessible large-text use and a connected native camera. No device model,
+> font-scale/screen receipt, performance trace, or offline/reconnect evidence
+> was supplied, so this is not promoted to the mandatory Unit 6F native gate.
+> Browser follow-up covered authenticated Owner read/filter/search/review/Resume,
+> sanitized fixture upload, disposable Review Save, logout/re-authentication,
+> and unavailable-session Retry with zero browser errors. The disposable session
+> remained active with four images processing, so Close was unavailable on that
+> session; cross-store and inactive-Owner fixtures remain deferred. Unit 6F
+> remains incomplete under SDD §§24, 28, and 34; Unit 7 remains gated.
+
+> 2026-08-05 15-card/Gemini clarification: code tracing confirms that the
+> image-inventory UI consumes decoded Owner candidate DTOs and does not invoke
+> Gemini directly. Deterministic `ownerUxTestFixtures.ts` data covers fifteen
+> ordered candidates, an independent partial failure, and the over-fifteen
+> safeguard; the focused suites pass 2 suites/20 tests. This closes the local
+> fixture-backed UI/contract check only. Live Gemini/provider verification,
+> native fifteen-card responsiveness/memory, the remaining representative
+> Android Unit 6F evidence, and the deferred WU1/WU2 runtime cases remain
+> pending; Unit 7 remains gated.
+
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **WU1 applied/readback complete; positive Owner runtime deferred** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **WU2 locally complete; core Gemini/metadata integration unproven; Unit 7 gated** |
 | Overall status | `in_progress` |
-| Last updated | 2026-08-04 |
-| Latest handoff | Unit 6A is merged/live-verified; Unit 6B is merged at `9ef9eb3`; Unit 6C is merged through `092562d`; Unit 6D remains implemented at `c363b60`; Unit 6E correction checkpoint `8bceab2` is finalized with M30 live exactly once; Unit 6F browser/readback evidence is in tracker 24; WU1 is applied once as `20260803221216` with post-application readback in tracker 25. |
-| Current risk level | `WU1_OWNER_RUNTIME_VERIFICATION_DEFERRED`: positive Owner, cross-store, inactive-Owner, filter, cursor-context, live-DTO, and authenticated table-SELECT runtime cases need an approved Owner JWT; representative low-end Android evidence required by Unit 6 SDD §§24/28/34 and U6-AC36/U6-AC39 remains outstanding afterward. |
-| Next recommended task | Obtain an approved development Owner JWT for the deferred WU1 runtime matrix, then resume the representative low-end Android Unit 6F gate; do not cut over legacy callers or begin Unit 7. |
+| Last updated | 2026-08-07 |
+| Latest handoff | WU2 locally cuts over only the Owner `/inventory` route to the canonical WU1 list RPC; tracker 26 owns its evidence. The Unit 4B server startup/configuration receipt remains valid but proves no provider inference. Production media/vision execution, metadata-job creation, metadata-worker execution, enriched-candidate persistence, and Unit 6 readback remain unproven. Unit 6F and Unit 7 remain open/gated. |
+| Current risk level | `CORE_PIPELINE_INTEGRATION_UNPROVEN`: component, fixture, migration, and UI evidence exists, but the approved Gemini-to-metadata-to-review workflow has not been proven as a production path. WU1/WU2 runtime and representative Android Unit 6F gates also remain open. |
+| Next recommended task | Run a read-only vertical integration audit under the existing Unit 4B/5A/5B authority. Do not implement, deploy, invoke providers, mutate database/Storage, or begin Unit 7 until its gap matrix is reviewed. |
 
 ---
 
@@ -403,7 +537,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `wu1_owner_inventory_read_boundary_applied_runtime_deferred` | [WU1 addendum](./implementation/phase-9-image-inventory/work-units/owner-inventory-read-boundary-wu1-sdd.md) · [tracker 25](./implementation/phase-9-image-inventory/trackers/25-owner-inventory-read-boundary-wu1-evidence.md) · [Unit 6 SDD](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-ux-sdd.md) · [tracker 24](./implementation/phase-9-image-inventory/trackers/24-unit6f-readiness-quality-gates-evidence.md) | WU1 is applied once with exact-project security/object readback and anonymous denial pass; positive Owner runtime, Unit 6F native completion/merge, legacy-caller cutover, and Unit 7 remain gated. |
+| Phase 9: Image-to-LLM Inventory | `wu2_owner_inventory_client_locally_complete_runtime_deferred` | [WU2 tracker](./implementation/phase-9-image-inventory/trackers/26-owner-inventory-read-client-wu2-evidence.md) · [tracker 24](./implementation/phase-9-image-inventory/trackers/24-unit6f-readiness-quality-gates-evidence.md) | WU2 is locally complete and read-only. The production Gemini-to-metadata-to-review integration is unproven and requires a read-only vertical audit. Authenticated Owner runtime, Unit 6F native completion, dashboard remediation, and Unit 7 remain separately gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -421,6 +555,9 @@ If implementation changes product or architecture behavior, update the relevant 
 - DOC-16 Bangalore pilot/unit-economics review pending before pilot launch planning.
 - Existing Supabase security advisor issues must be remediated separately or explicitly isolated before marketplace production launch.
 - Phase 4 review remediation is deployed; positive authenticated profile/setup smoke remains pending an approved disposable Store Owner credential.
+- Phase 9 core pipeline integration remains unproven: real Gemini execution,
+  metadata-job creation and worker execution, enriched-candidate persistence,
+  and Unit 6 readback require a read-only vertical audit before implementation.
 
 ---
 
@@ -520,12 +657,40 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Obtain separate authorization before beginning **Phase 9 Unit 6F**. M29
-   remains live exactly once and M30 is live exactly once as the Unit 6E
-   correction. Do not begin Unit 7 or apply another migration without the
-   required authority.
-2. Historical handoff (vision portion superseded 2026-07-27): Gemini remains configuration/deployment/live-call deferred. Google Books is implemented behind provider-neutral contracts but remains fixture/mock verified only; credentials, provider-registry enablement, deployment, and live smoke remain deferred.
-   The current initial primary vision model ID is configuration-driven
-   `gemini-3.5-flash-lite`; provider configuration/calls remain deferred.
-3. Keep M09, customer display, Owner/customer/platform-admin visual UI, production-language approval without qualifying evidence, scheduling/autoscaling, inventory commit, publication, commerce, Google Books Roman-query fallback, global alias authority, Library, and Phases 7/8 separately gated.
-4. Re-verify the exact project, migrations, schema, Storage, services, and advisors before any later mutation.
+1. Run a read-only vertical integration audit of upload, media, Gemini/vision,
+   metadata enrichment, candidate readiness, and Unit 6 consumption under the
+   existing Unit 4B/5A/5B authority.
+2. Produce an exact code/schema/live-state gap matrix and review it before any
+   implementation, migration, deployment, provider call, scheduler, or external
+   mutation.
+3. WU1/WU2 authenticated runtime evidence and representative low-end Android
+   Unit 6F evidence remain open. Do not begin Unit 7, dashboard remediation,
+   inventory/publication writes, or commerce behavior until their applicable
+   gates are evidenced.
+4. Keep M09, customer display, Owner/customer/platform-admin visual UI,
+   production-language approval without qualifying evidence, autoscaling,
+   inventory commit, publication, commerce, Google Books Roman-query fallback,
+   global alias authority, Library, and Phases 7/8 separately gated.
+5. Re-verify the exact project, migrations, schema, Storage, services, and
+   advisors before every later mutation; record any migration in the Phase 9
+   ledger with exact effects and readback.
+
+---
+
+### 2026-08-05 Unit 4B Gemini configuration/startup evidence
+
+The user authorized a temporary server-only Gemini configuration check. Render
+service `phase9-fixture-vision` was deployed from remote `main` commit
+`7eaf921efcaefccab4d0189dc26779796f164ed4` as deployment
+`dep-d9pdei9t0dsc73ddgbh0`. The final deployment emitted
+`service_started` for the vision worker and reached Render `live` status. The
+masked `PHASE9_GEMINI_API_KEY` is present alongside Gemini mode,
+`gemini-3.5-flash-lite`, and 30-second timeout; the fixture-only variable was
+removed. A first env-inconsistent attempt failed at startup and was corrected.
+
+This receipt proves deployment/startup configuration only. No authenticated
+`/run`, real Gemini inference, M14 usage/cost receipt, Supabase/Storage/migration
+mutation, or product effect occurred. The key value was never read or recorded
+by the agent. The next exact action is to revoke the exposed temporary key,
+enter a fresh key directly in Render, and separately approve one sanitized-media
+provider-call smoke.

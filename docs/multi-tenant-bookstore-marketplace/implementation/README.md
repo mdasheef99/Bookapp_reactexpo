@@ -15,11 +15,16 @@ If you are a new agent, do this before changing files:
 5. Read [`../README.md`](../README.md) and [`../DOC-12-build-strategy-and-implementation-sequence.md`](../DOC-12-build-strategy-and-implementation-sequence.md) for stable guardrails and phase gates.
 6. Read the source/domain documents routed for the active work unit and inspect current code/live evidence before acting.
 
-Current handoff as of 2026-07-29:
+Current handoff as of 2026-08-07:
 
 - Phase 6 is `complete_e2e_deferred`; its migrations M01-M39 and provider-independent `payment_ready` boundary are applied/verified in the development project.
 - Phases 7 Payment/Ledger/Settlement and 8 Pickup are deferred.
-- Phase 9 Image-to-LLM Inventory has M01-M08/M10-M19 live-verified on `ahntbtktjjmvfosgkmgn`; Unit 5C-2 is merged at `b398034`; M09 remains absent and Unit 5C Batch 1 awaits separate authorization.
+- Phase 9 Image-to-LLM Inventory has progressed beyond the historical Unit 5C
+  Batch 1 handoff. WU2 is locally complete, Unit 6F remains open, and Unit 7 is
+  gated. The next authorized action is a read-only vertical integration audit
+  under existing Unit 4B/5A/5B authority; it authorizes no implementation,
+  provider call, deployment, scheduler, database/Storage mutation, or
+  inventory/publication behavior.
 - The active set is [`phase-9-image-inventory/`](./phase-9-image-inventory/README.md);
   each component is implemented only at the level recorded by its tracker.
 - The current runtime uses one selected language per `spine_stack` and a maximum

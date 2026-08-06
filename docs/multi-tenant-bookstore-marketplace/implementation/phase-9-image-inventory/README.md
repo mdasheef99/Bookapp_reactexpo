@@ -1,12 +1,12 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`
-**Last updated:** 2026-08-04
+**Status:** `wu2_owner_inventory_client_locally_complete_runtime_deferred`
+**Last updated:** 2026-08-07
 **Implementation status:** M01-M08/M10-M30 are live-verified at their recorded
 levels; Unit 6A is merged/live, Unit 6B is merged at `9ef9eb3`, Unit 6C is
 merged through `092562d`, Unit 6D is implemented at `c363b60`, and Unit 6E
 false/missed-variant corrections are finalized at `8bceab2`
-**Supabase mutation status:** M01-M08/M10-M30 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; WU1 was applied exactly once as `20260803221216 marketplace_phase9_owner_inventory_read_boundary`; no WU1 row, user, fixture, listing, publication, Storage, provider, or deployment mutation occurred
+**Supabase mutation status:** M01-M08/M10-M30 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; WU1 was applied exactly once as `20260803221216 marketplace_phase9_owner_inventory_read_boundary`; no WU1 row, user, fixture, listing, publication, or Storage mutation occurred. A separately authorized Render Unit 4B configuration/startup deployment is recorded in the implementation evidence; no provider inference was run.
 **Database checkpoint:** M01-M08 and forward migrations M10-M30 plus WU1 are live-verified at their recorded levels; M09 remains absent; positive Owner JWT runtime remains deferred.
 M30 was applied exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`.
 
@@ -14,9 +14,14 @@ This folder is the implementation-planning source for Phase 9. It turns the prod
 
 The user explicitly re-sequenced [WU1](./work-units/owner-inventory-read-boundary-wu1-sdd.md)
 ahead of the Unit 6F native gate. WU1 documentation, red tests, exact-project
-application, and post-application readback are complete; client/dashboard/
-legacy-caller change remains out of scope and positive Owner runtime is
-credential-gated.
+application, and post-application readback are complete. [WU2](./work-units/owner-inventory-read-client-wu2-sdd.md)
+locally cuts over only the Owner `/inventory` route to the canonical RPC with
+strict decoding, isolated pagination/cache behavior, and read-only UI states;
+dashboard remediation remains out of scope. A disposable authenticated Owner
+browser session now covers positive read smoke, while the fixture-backed
+fifteen-card UI check is green. The full runtime matrix, live Gemini provider-call
+verification, and representative Android gate remain deferred; Unit 4B server
+configuration/startup is recorded separately as a bounded operational check.
 
 Every new development session starts at repository `AGENTS.md`, then follows `implementation/ACTIVE.md` → DOC-13 → [SESSION-START.md](./SESSION-START.md) → [TRACKER.md](./TRACKER.md). `SESSION-START.md` defines the Phase 9 resume brief, work-unit reading router, Supabase gate, documentation update matrix, and mandatory closeout transaction.
 
@@ -53,6 +58,7 @@ After the repository entrypoint, read in this order:
 | [05 Marketplace discovery](./05-marketplace-discovery-display-sdd.md) | Bookstore-first discovery, multilingual search, store catalogue, counts, cover/detail display. |
 | [06 Customer photo request](./06-customer-photo-request-extension-sdd.md) | Item-level current-copy photo requests, mandatory fulfillment gate, private evidence, Phase 6 seam. |
 | [WU1 Owner-inventory read boundary](./work-units/owner-inventory-read-boundary-wu1-sdd.md) | Separate stable detail/list read contract, signed deterministic cursor, exact DTO/filter allowlists, Owner authorization, and the applied forward migration; positive Owner runtime remains deferred. |
+| [WU2 Owner-inventory read client](./work-units/owner-inventory-read-client-wu2-sdd.md) | Read-only `/inventory` cutover to the WU1 list RPC, strict DTO validation, opaque pagination, cache isolation, exact filters, and error/empty/partial states; authenticated runtime remains deferred. |
 
 ## Supporting set
 
@@ -102,6 +108,9 @@ The local tracking set intentionally has three files:
 - [WU1 evidence](./trackers/25-owner-inventory-read-boundary-wu1-evidence.md):
   re-sequencing, exact-project preflight/application/readback, red-first contract
   tests, local behavior, anonymous denial, and the deferred Owner runtime gate.
+- [WU2 evidence](./trackers/26-owner-inventory-read-client-wu2-evidence.md):
+  active-route cutover, strict client contract, pagination/cache behavior,
+  read-only UI states, focused/regression tests, and deferred runtime evidence.
 - [Planning and decisions](./trackers/01-planning-and-decisions.md): decision register, source reconciliation, audit evidence, and planning review.
 - [Implementation and verification](./trackers/02-implementation-and-verification.md): future work units, migration ledger, tests, rollout, and operational evidence.
 
@@ -133,7 +142,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, WU0A/WU0B, corrected Package 1 design, Units through 5C-6, and Unit 6A-6E are integrated at their recorded checkpoints. M01-M08/M10-M30, Owner ingestion, and both separate fixture workers are live-verified; M09 remains absent. Unit 6E's correction-only M30 is additive and was applied exactly once after exact-project preflight. Unit 6F browser/readback verification is recorded, but representative low-end Android evidence remains required before completion or merge. Customer display, inventory/publication, commerce, Google Books Roman-query fallback, global alias authority, and Unit 7 remain separately gated. Preserve these controls:
+The planning baseline, WU0A/WU0B, corrected Package 1 design, Units through 5C-6, and Unit 6A-6E are integrated at their recorded checkpoints. M01-M08/M10-M30, Owner ingestion, and both separate fixture workers are live-verified; M09 remains absent. Unit 6E's correction-only M30 is additive and was applied exactly once after exact-project preflight. Unit 6F browser/readback verification and the local fixture-backed fifteen-card UI check are recorded, but real Gemini inference, production metadata enrichment, the complete upload-to-review path, and representative low-end Android evidence remain unproven. Customer display, inventory/publication, commerce, Google Books Roman-query fallback, global alias authority, and Unit 7 remain separately gated. Preserve these controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

@@ -126,5 +126,15 @@ behavior.
 
 ## Next authorized action
 
-Await explicit user authorization. Gemini configuration/deployment/live
-verification, M09, Unit 5, and all later implementation remain separately gated.
+Await separate authorization for a real Gemini provider call. M09, Unit 5, and
+all later implementation remain separately gated.
+
+## 2026-08-05 operational addendum
+
+The server-only Gemini configuration/startup check was separately authorized and
+completed on Render. The vision worker is live at remote `main` commit
+`7eaf921efcaefccab4d0189dc26779796f164ed4` with the masked API-key variable,
+`gemini` analyzer mode, `gemini-3.5-flash-lite`, and a 30-second timeout; the
+fixture-only variable was removed. This verifies deployment/startup only. No
+real provider inference was invoked, so the handoff remains provider-call
+deferred. The temporary key must be revoked and replaced before further use.

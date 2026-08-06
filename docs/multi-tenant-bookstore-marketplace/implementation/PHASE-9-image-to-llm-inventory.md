@@ -1,9 +1,9 @@
 # PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `unit5c2_variant_persistence_merged_awaiting_unit5c_batch1_authorization`
+**Status:** `unit6f_open_wu2_locally_complete_core_pipeline_integration_unproven`
 **Planning set:** `approved_baseline`
-**Implementation:** Unit 5C-1 and Unit 5C-2 are merged; M01-M08/M10-M19 are live-verified; private proposed-only persistence and accepted-envelope replay fencing are live while activation/search/UI behavior remains unimplemented
-**Last updated:** 2026-07-29
+**Implementation:** M01-M08/M10-M30 plus WU1 are live at their recorded levels; WU2 is locally complete; Unit 6F remains open; real Gemini inference, production metadata enrichment, and the complete upload-to-review path remain unproven; Unit 7 is gated
+**Last updated:** 2026-08-07
 
 This stable phase handoff points to the detailed planning set:
 
@@ -60,7 +60,7 @@ This stable phase handoff points to the detailed planning set:
 - M13 uses only minimum postgres-owned, empty-`search_path` `SECURITY INVOKER` wrappers; the private schema remains unexposed and client roles remain denied.
 - Owner ingestion is active with JWT verification. `phase9-media-sanitation` and `phase9-fixture-vision` are separate free-plan Render services at `96991a9`, with auto deploy off.
 - Deployed `one_book` and eight fresh-process fixture cases passed normal claim/fencing/persistence/failure paths. Inventory/listing/published counts remained 5/5/5.
-- Future decisions select Gemini 3.5 Flash (`gemini-3.5-flash`) and initial Google Books API metadata. The reconciled generic architecture supports one metadata primary and zero or one separately evaluated secondary; no secondary/fallback provider is selected or enabled and no real provider was configured or called.
+- The original provider decision selected Gemini 3.5 Flash (`gemini-3.5-flash`) and initial Google Books API metadata. At that checkpoint no real provider was configured or called. The reconciled generic architecture supports one metadata primary and zero or one separately evaluated secondary; no secondary/fallback provider is selected or enabled.
 - The founder subsequently superseded only the initial vision model ID to
   configuration-driven `gemini-3.5-flash-lite`; the earlier decision remains
   historical. The local adapter has mocked evidence only, the fixture adapter
@@ -68,11 +68,13 @@ This stable phase handoff points to the detailed planning set:
 
 ## Next gate
 
-Unit 5C-1 and Unit 5C-2 are merged; Unit 5C-2 is at `b398034`, with M18 plus
-the bounded M19 replay fence live-verified. Stop and await explicit
-authorization for Unit 5C Batch 1.
-M09, activation/search projection, provider configuration/calls, deployment,
-scheduling/autoscaling, UI, inventory/publication, commerce, lifecycle work,
-Library behavior, and any further migration remain separately gated.
+Unit 5C-1 and Unit 5C-2 are merged; the former Unit 5C Batch 1 handoff is
+historical. The current authorized action is a read-only vertical integration
+audit under the existing Unit 4B/5A/5B authority. It must determine the actual
+production handoffs and gaps between upload/media processing, Gemini vision,
+metadata enrichment, candidate persistence, and Owner review. It authorizes no
+code, migration, provider call, deployment, scheduler, database/Storage
+mutation, inventory/publication behavior, or Unit 7 work. Unit 6F and Unit 7
+remain open and gated respectively.
 
 Every material session must use the Phase 9 update matrix, append its evidence to the correct tracker, leave one exact next authorized action, and pass the continuity validator before handoff.

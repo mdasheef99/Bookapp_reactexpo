@@ -144,3 +144,21 @@ Recommended next work:
 1. Run positive authenticated profile/setup smoke when an approved disposable Store Owner credential is available.
 2. Apply the separately reviewed Phase 3 anonymous policy split before Phase 5 consumer discovery relies on public listing reads.
 3. Continue Phase 5 using `marketplace_book_listings` and `public_store_profiles`, never `store_inventory` or P2P `listings`.
+
+2026-08-03 route/runtime follow-up: the Store Owner tab registration was
+corrected to use the concrete `orders/index` route, and its route regression
+test passed. Production web export passed after bundling 2,245 modules, and
+the authenticated Codex in-app browser rendered the Store Owner dashboard and
+inventory routes without browser console errors. A fresh exact-project
+read-only ACL check confirmed the later Phase 9 controlled boundary: direct
+authenticated access to `store_inventory` is denied even though owner RLS
+policies remain present. Legacy dashboard/inventory services still use direct
+table calls; that separate boundary remediation must not be solved by adding
+broad client grants or by silently reopening the Phase 4 completion status.
+
+2026-08-04 WU2 follow-up: the active Store Owner `/inventory` route now uses
+the Phase 9 canonical `phase9_owner_inventory_page_v1` RPC through a strict,
+read-only client boundary. The legacy `StoreInventoryScreen`, hook, and service
+remain in the repository for separately authorized cleanup but are no longer
+reachable from that route. Dashboard remediation remains out of WU2 scope, and
+Phase 4 completion status is unchanged.

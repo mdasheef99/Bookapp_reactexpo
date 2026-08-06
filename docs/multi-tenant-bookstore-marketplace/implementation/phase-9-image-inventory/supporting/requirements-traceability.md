@@ -1,6 +1,24 @@
 # Phase 9 Requirements Traceability
 
-**Last updated:** 2026-07-30
+**Last updated:** 2026-08-07
+
+## WU2 read-only Owner inventory client integration
+
+| Requirement | Owning source | Evidence/status |
+| --- | --- | --- |
+| Owner `/inventory` reads only through `phase9_owner_inventory_page_v1`; no client store identity is sent and no direct `store_inventory` read remains reachable from the route | DOC-8 §5; Phase 9 master SDD §§3/5/7/9; WU1 addendum §§4–7; WU2 addendum §§2–4 | Route-graph architecture test and [tracker 26](../trackers/26-owner-inventory-read-client-wu2-evidence.md) |
+| Decode the exact WU1 envelope/item contract and fail closed on malformed, extra, or invalid fields | WU1 addendum §§4–7; SDD 03 §§9–13 | Strict runtime decoder includes offset-aware timestamps and positive projection versions; service tests distinguish invalid response, unauthorized, invalid request/cursor, unavailable, and internal states |
+| Search/filter changes restart at page one; opaque cursors, first-seen de-duplication, partial-page failures, and identity/store cache isolation are preserved | DOC-8 §5; WU1 addendum §5; WU2 addendum §§4–6 | Query tests cover page reset, retry, cursor forwarding, de-duplication, cached-refresh failure, and late identity/filter fencing; cache swaps require explicit success/current generation while invalid-cursor reset remains destructive |
+| WU2 remains read-only and does not start dashboard remediation, inventory writes, publication, deployment, or Unit 7 | Phase 9 master SDD §§3/7/9; WU2 addendum §§1/7 | Architecture assertions and scoped diff; authenticated Owner runtime remains deferred |
+
+## WU1 controlled Owner-inventory read boundary (2026-08-04 correction pass)
+
+| Requirement | Owning source | Evidence/status |
+| --- | --- | --- |
+| Pagination does not overclaim repeatable state or expose raw unexpected database errors | WU1 addendum §5/§7; existing quantity/publication command paths | `asOf` is documented as an ordering horizon only; explicit NULL page sizes fail closed; unexpected SQL failures map to `P9_INTERNAL_ERROR`; correction regression tests are 9/9 locally green |
+| Preserve the existing Owner detail read contract and establish a separate server-scoped, filterable, deterministic list boundary | DOC-8 §5; Phase 9 SDD 00 §§3/5/7/9; SDD 03 §§9–13 | [WU1 addendum](../work-units/owner-inventory-read-boundary-wu1-sdd.md); unapplied draft `20260803000031`; red-first/static and local PGlite tests; no client or live migration change |
+| Client-supplied store identity cannot grant authority; private inventory remains outside direct authenticated table access | Phase 9 SDD 00 §9; current-vs-target §RLS/grants | Server-derived `phase9_owner_ux_assert_owner()`, fixed `search_path`, narrow execute grants, and cross-context cursor checks in the WU1 draft; live application separately gated |
+| Owner list pagination remains complete and deterministic across ties/context changes | Phase 9 query/cursor conventions; DOC-8 §5 | Signed context-bound cursor over `updated_at DESC, id DESC`, 1–50 page bounds, explicit `hasMore/nextCursor`, and no offset pagination |
 
 ## Unit 6A implementation receipt
 
@@ -148,6 +166,14 @@ tables as recorded in tracker 10.
 Server-generated upload paths, content-hashed canonical completion, immutable service-only source snapshots, opaque token-and-attempt validation leases, sanitized private linking, and one vision-job identity trace to 02 Extraction EXT-01 through EXT-06 and 04 Media MED-01 through MED-10. M11 is live as `20260726182238`; Owner ingestion and the dedicated media worker are deployed and live-verified. Owner Edge hashes completion bytes but never decodes or sanitizes media. Animated/multi-frame PNG/WebP is rejected, and ImageMagick's 64 MP internal working allowance remains subordinate to the 16 MP source ceiling.
 
 The [Unit 4 design](../work-units/04-fixture-vision-analysis-runtime-design.md) traces `p9-vision-v2`, count/language/repeated-position policy, exact lease fencing, transactional evidence/candidate persistence, M12 schema/grants, privacy allowlists, stable errors, and the red-first matrix to MAS-01/02/05/07, MAS-AC11, DAT-16/26/27, EXT-02-10/19-25, and MED-08/09/21/23/24. The corrected contract/analyzer/policy/worker/M12 implementation and [live deployment evidence](../trackers/06-fixture-pipeline-deployment-evidence.md) cover authoritative claims, relationship reconciliation, retryability, canonical validation, path rejection, every recorded fixture outcome, service-only denial, and zero commerce effects. M12 is live as `20260726182539`, M13 as `20260727025046`, and the fixture worker is deployed; no real provider has been called.
+
+### 2026-08-05 operational evidence
+
+The server-only Unit 4B configuration/startup check is additionally traced to
+SDD 00 §§3/5/9/11, SDD 02 §§5/9/11/12, SDD 04 §§8/10/13, and the Unit 4B
+handoff. Render deployment/startup was verified at `7eaf921`; the Gemini
+provider call itself remains unverified and separately gated. No product,
+schema, Storage, or client behavior requirement changed.
 
 ## Root specification mapping
 

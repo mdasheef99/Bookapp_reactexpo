@@ -1,6 +1,6 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`; **last updated:** 2026-08-04
-**Active work unit:** `owner_inventory_read_boundary_wu1`. Unit 6A is merged/live-verified through M29, Unit 6B is merged at `9ef9eb3`, Unit 6C is merged through `092562d`, Unit 6D is implemented at `c363b60`, and Unit 6E is finalized at `8bceab2`. The [Unit 6 design](../work-units/06-owner-capture-review-recovery-ux-sdd.md), [contract matrix](../work-units/06-owner-capture-review-recovery-contract-matrix.md), [Unit 6E evidence](./23-unit6e-review-corrections-evidence.md), [Unit 6F evidence](./24-unit6f-readiness-quality-gates-evidence.md), and [WU1 evidence](./25-owner-inventory-read-boundary-wu1-evidence.md) are authoritative for their scopes. M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; WU1 migration `20260803221216 marketplace_phase9_owner_inventory_read_boundary` is live exactly once with post-application readback complete, while positive Owner runtime and Unit 6F native evidence remain gated. WU0B history preserves `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and review.
+**Status:** `wu2_owner_inventory_client_locally_complete_runtime_deferred`; **last updated:** 2026-08-07
+**Active work unit:** `phase9_core_pipeline_vertical_integration_audit`. WU2 is locally complete under its [addendum](../work-units/owner-inventory-read-client-wu2-sdd.md) and [tracker 26](./26-owner-inventory-read-client-wu2-evidence.md). Unit 6F and the remaining WU1/WU2 runtime evidence stay open; Unit 7 is gated. The next authorized action is a read-only audit of the existing Unit 4B/5A/5B production handoffs. It authorizes no code, migration, provider call, deployment, scheduler, database/Storage mutation, or inventory/publication behavior. WU0B history preserves `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and independent review.
 ## Work units
 | Unit | Scope | Status | Required gate |
 | --- | --- | --- | --- |
@@ -12,11 +12,12 @@
 | 3 | Private media staging, server upload authorization, validation/re-encode/promotion boundary | `deployed_and_live_verified` | M11 live as `20260726182238`; Owner Edge and separate media service verified |
 | 4 | [Fixture vision-analysis runtime](../work-units/04-fixture-vision-analysis-runtime-design.md): `p9-vision-v2`, analyzer, job orchestration, immutable evidence/candidates | `fixture_deployed_and_live_verified` | M12 live as `20260726182539`; all nine fixture cases verified; no real provider |
 | 4A | [Deployment-runtime scaffolding](../work-units/04a-deployment-runtime-scaffolding-sdd.md): executable sanitation/fixture-vision hosts, strict environment, builds/containers, invocation and validation | [`deployed_and_live_fixture_verified`](./06-fixture-pipeline-deployment-evidence.md) | separate free Render services live at `96991a9`; M13 invoker boundary live |
-| 4B | [Gemini vision adapter](../work-units/04b-gemini-vision-adapter-handoff.md) for configured `gemini-3.5-flash-lite`; optional whole-image fallback remains unselected/disabled | `m14_live_verified_provider_deferred` | M14 live once; no live call, credential configuration, Gemini deployment, Storage mutation, or fallback selection |
+| 4B | [Gemini vision adapter](../work-units/04b-gemini-vision-adapter-handoff.md) for configured `gemini-3.5-flash-lite`; optional whole-image fallback remains unselected/disabled | `m14_live_verified_provider_deferred` | M14 live once; server-only Render configuration and startup deployment are recorded, but no authenticated `/run`, real Gemini inference, independent public health receipt, Storage mutation, or fallback selection is proven |
 | 5A | [Metadata foundation](../work-units/05a-metadata-foundation-handoff.md): provider-neutral local-first routing/cache/coalescing, ISBN validation, coherent selection, and attempt/cost lineage | `m17_live_acl_verified` | M17 live once; four sensitive tables are service SELECT-only with RPC-only mutation |
 | 5B/5C | Google Books primary adapter / [Unit 5C Lite multilingual variants](../work-units/05c-lite-multilingual-search-variants-sdd.md) | [`5B merged_fixture_verified_provider_deferred`](./11-unit5b-implementation-evidence.md) / [`5C-5/5C-6 merged and live`](./17-unit5c5-6-owner-rollout-backend-evidence.md) | M18-M28 live once; M29 was absent at Unit 5C closeout and is now live through Unit 6A; no language enabled |
 | 6 | [Owner capture/review/recovery UX](../work-units/06-owner-capture-review-recovery-ux-sdd.md), split 6A-6F | [`unit6f_browser_verified_native_gate_pending`](./24-unit6f-readiness-quality-gates-evidence.md) | Browser/readback and deterministic gates are recorded; representative low-end Android evidence is required before Unit 6 completion/merge; Unit 7 remains separately gated |
 | WU1 | [Controlled Owner-inventory read boundary](../work-units/owner-inventory-read-boundary-wu1-sdd.md) | [`applied_readback_complete_runtime_deferred`](./25-owner-inventory-read-boundary-wu1-evidence.md) | Exact development migration applied once; post-application security/object readback and anonymous denial pass; positive Owner runtime and client/UI/legacy-caller changes remain gated |
+| WU2 | [Read-only Owner inventory client integration](../work-units/owner-inventory-read-client-wu2-sdd.md) | [`locally_complete_authenticated_runtime_deferred`](./26-owner-inventory-read-client-wu2-evidence.md) | Owner `/inventory` uses the canonical page RPC with strict DTO validation, isolated cache/pagination, exact filters, and read-only states; dashboard, writes, deployment, authenticated runtime, and Unit 7 remain gated |
 | 7 | Controlled per-candidate commit, advisory duplicates, idempotency, projection changes | `not_started` | quantity/hold concurrency tests |
 | 8 | Marketplace bookstore-first search, multilingual aliases, counts, full store catalogue | `not_started` | public/private projection tests |
 | 9 | Damaged-book public media and mandatory customer photo-request extension | `not_started` | DOC-6/14 seam tests; no payment implementation |
@@ -110,6 +111,7 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 - [ ] Model/provider/prompt/schema versions support rollback and incident correlation.
 - [ ] Feature flag, store allowlist, locality gate, and kill switch are verified.
 - [ ] No Phase 7/8 payment, paid-order, pickup, refund, ledger, or settlement behavior is introduced; fixed multi-replica tests cover claims/fencing, shutdown, provider retries, spend reconciliation, connection safety, fairness, stage-specific scaling, queue observability, and throughput before autoscaling can be enabled.
+
 ## Append-only implementation log
 
 ### 2026-07-27 — provider and scale SDD reconciliation
@@ -417,3 +419,339 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 - Decisions/deviations/risks: browser console showed pre-existing/framework warnings plus an invalid-refresh-token recovery error and no Unit 6E action; the account lacked Active Store Owner membership, so Owner false/missed-variant mutation UI, native device behavior, and positive owner-write smoke remain unclaimed; no Storage/provider/deployment/inventory/publication/commerce behavior was introduced
 - Tracker/source-doc updates: ACTIVE, DOC-13, Phase 9 README/SESSION-START/TRACKER, this implementation tracker, continuity validator, and [tracker 23](./23-unit6e-review-corrections-evidence.md)
 - Next authorized action and gate: obtain separate authorization before beginning Phase 9 Unit 6F; do not begin Unit 7, apply another migration, deploy, or mutate inventory/publication/commerce
+
+### 2026-08-02 — Unit 6F browser verification and native-gate handoff
+
+- Date/session: 2026-08-02 bounded authenticated browser verification and quality-gate closeout
+- Authorized work unit and scope: Unit 6F readiness/offline/privacy/accessibility/telemetry/Unit 7 noninterference verification; exact-project preflight; disposable Review Save and Close probes; evidence and continuity updates. No product-code, migration, deployment, provider, Storage, inventory, listing, publication, or commerce change was authorized or made.
+- Completed: local Expo web reached the Owner inventory/session routes; normal Review Save persisted one canonical version; the stale transition completed before navigation without stale synchronization; confirmation dialog safeguards and exact `Confirming…` were observed; one Close produced a closed session with retained staged candidates and zero committed items; narrow 360×800 Summary reflow was observed. Detailed live/readback evidence is [tracker 24](./24-unit6f-readiness-quality-gates-evidence.md).
+- Files/components/migrations: documentation/evidence only; no migration created or applied; implementation under test was `bdb85b6` → `237393b` → `a0d55b5`.
+- Verification actually run: Unit 6D–6F/image-inventory/auth/privacy/Unit 7 focused Jest 22 suites/155 tests passed; auth/owner/identity/access Jest 15 suites/114 tests passed; app auth/Store Owner route tests 5 suites/11 tests passed via `--runTestsByPath`; TypeScript passed; continuity passed with 195 definitions, zero duplicate/missing traceability, 48 required phase files before this evidence addition; `.pyc` count `0`; native/device gate not run.
+- Supabase/external mutations: exact project `ahntbtktjjmvfosgkmgn` and expected Owner/store were verified read-only. Two disposable `U6C01` Save probes and one `U6C02` Close were authorized and read back; target store inventory/listings remained `0/0`, all candidates remained uncommitted, and no migration, Storage, provider, deployment, publication, or commerce mutation occurred. Pre-existing RLS-disabled advisor tables were not remediated.
+- Decisions/deviations/risks: verdict is `USER_ACTION_REQUIRED_NATIVE_EVIDENCE` because Unit 6 SDD §§24, 28, and 34 and matrix U6-AC36/U6-AC39 require representative low-end Android evidence. Live offline/reconnect request-count behavior, native accessibility/large-text, and native performance remain unclaimed. The Owner operation lifecycle-composition risk and no-consolidation decision gate are recorded in the Phase 9 tracker and tracker 24; Unit 7 remains gated.
+- Tracker/source-doc updates: [tracker 24](./24-unit6f-readiness-quality-gates-evidence.md), Phase 9 TRACKER, README, SESSION-START, ACTIVE, DOC-13, this implementation tracker, and the continuity validator routing/status checks.
+- Next authorized action and gate: obtain representative low-end Android evidence for camera/gallery/recovery, 15-card responsiveness, offline/reconnect, accessibility/large-text, and performance; then rerun the final quality/continuity/merge review. Do not merge Unit 6F, begin Unit 7, apply another migration, deploy, or mutate inventory/publication/commerce before that gate.
+
+### 2026-08-03 â€” Local web runtime, route-warning correction, and ACL explanation
+
+- Date/session: 2026-08-03 bounded local web build/runtime verification and
+  independent Store Owner route-warning correction
+- Authorized work unit and scope: user-requested app build check, explanation
+  of the observed `store_inventory` permission error, and correction of the
+  Expo Router `orders` warning; no database or Phase 9 migration work
+- Completed: changed `Tabs.Screen name="orders"` to the concrete
+  `orders/index` route and added a regression assertion. The authenticated
+  Codex in-app browser reached `/library`, `/dashboard`, and `/inventory`.
+- Files/components: `app/(store-owner)/_layout.tsx`, its route test, and
+  read-only documentation/evidence updates; no migration or external service
+  write
+- Verification actually run: route test 3/3; `npm.cmd run export:web` passed
+  with 2,245 modules; authenticated browser console had no errors. The export
+  and browser emitted only existing framework/style/notifications/Sentry/build
+  warnings.
+- Supabase/external mutations: exact project read-only ACL/function checks
+  only; no database, Storage, migration, deployment, inventory, listing,
+  publication, or commerce mutation
+- Decision/deviation/risk: direct legacy `.from('store_inventory')` calls
+  remain incompatible with the live authenticated table ACL; the hook hides
+  the read failure. Do not grant broad table access. A separately authorized
+  controlled service-boundary remediation is still required. The next Phase 9
+  action remains representative SDK54 Android evidence.
+
+### 2026-08-02 — Expo Go SDK54 runtime compatibility remediation
+
+- Date/session: 2026-08-02 bounded runtime diagnosis and Expo Go compatibility fix after the supplied Android call stack
+- Authorized work unit and scope: restore the SDK54 mobile prerequisite without changing Unit 6F product behavior, acceptance criteria, schema, migration, deployment, or native-gate authority
+- Completed: confirmed the device client was Expo Go SDK56 while the project is SDK54; removed the Expo Go-incompatible `react-native-mmkv@4.1.0`/NitroModules dependency; replaced the Supabase/auth storage adapter with the already-installed AsyncStorage boundary; made the pending-logout marker check asynchronous; restarted Metro with a clean cache and explicit LAN host
+- Files/components/migrations: `src/lib/storage.ts`, `src/lib/mmkv.ts` removed, `src/lib/supabase.ts`, `src/features/auth/services/authStorage.ts`, `src/application/auth/authBootstrap.ts`, affected auth/Supabase tests, `package.json`, and `package-lock.json`; no migration created or applied
+- Verification actually run: Expo Doctor `18/18`; TypeScript `npx.cmd tsc --noEmit --allowImportingTsExtensions`; focused auth/storage/Supabase Jest `3 suites, 16/16`; Android bundle HTTP `200` with no `react-native-mmkv` reference; `git diff --check`
+- Supabase/external mutations: none; no database, Storage, provider, deployment, inventory, listing, publication, commerce, or migration mutation occurred
+- Decisions/deviations/risks: SDK54 remains authoritative for this project; stock SDK56 Expo Go remains incompatible, so the native gate is still unclaimed until the SDK54 client is installed and the required representative Android evidence is run
+- Tracker/source-doc updates: [tracker 24](./24-unit6f-readiness-quality-gates-evidence.md) and this implementation tracker
+- Next authorized action and gate: install Expo Go SDK54 on the Android device, reopen `exp://192.168.31.183:8083`, then obtain the representative low-end Android Unit 6F evidence; do not merge Unit 6F, begin Unit 7, apply another migration, or deploy before that gate
+
+### 2026-08-03 — WU1 controlled Owner-inventory read boundary
+
+- Authorized scope: user-authorized WU1 only; documentation/addendum, red tests,
+  unapplied forward migration draft, and local/static validation. WU1 is
+  explicitly sequenced before the Unit 6F native gate.
+- Completed: added the [WU1 contract addendum](../work-units/owner-inventory-read-boundary-wu1-sdd.md), preserved the stable `phase9_owner_inventory(uuid)` detail RPC, specified the separate signed/keyset list RPC, and created only `20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql`.
+- Verification actually run: red-first static contract suite failed before the
+  WU1 files existed; after the draft was created, the focused Jest suite passed
+  6/6 and the local PGlite parse/readback test passed 1/1. `git diff --check`
+  and the Phase 9 continuity validator remain part of closeout.
+- Supabase evidence/mutations: exact development project
+  `ahntbtktjjmvfosgkmgn` was re-verified read-only; live migration history still
+  ends at M30. No migration was applied and no database, Storage, deployment,
+  route, screen, hook, service, Edge, dashboard, inventory, listing, or
+  publication behavior was changed.
+- Decision: `phase9_owner_inventory(uuid)` remains intact; list behavior is a
+  separate RPC with server-derived store scope, page-size bounds, exact DTO
+  allowlists, filters, signed context-bound cursor, and
+  `(updated_at DESC, id DESC)` keyset ordering. The next action requires a
+  separate review/approval before applying the draft; Unit 6F native evidence
+  remains after this WU1 gate.
+
+### 2026-08-04 — WU1 post-review correction pass
+
+- Authorized scope: correct only the reviewed WU1 boundary findings in the local
+  addendum, unapplied migration draft, regression tests, continuity validator,
+  and evidence/traceability documents. No client, UI, legacy-caller, write-path,
+  live database, or external-service change was authorized.
+- Completed: explicit NULL page-size rejection; outer safe mapping of unexpected
+  SQL failures to `P9_INTERNAL_ERROR`; explicit ordering-horizon/asOf semantics
+  that do not claim a repeatable database snapshot; and WU1 artifact/invariant
+  checks in the continuity validator.
+- Verification actually run: correction red-first run reproduced 3 failures;
+  focused WU1 Jest passed 9/9; PGlite parse/readback passed 1/1; continuity
+  passed with 65 Markdown files and 51 required phase files; final
+  `git diff --check` passed.
+- Supabase/external mutations: none. The exact development project remains
+  read-only for this correction; M30 is still the live migration tail and WU1
+  remains unapplied.
+- Decision/deviation: full cross-page state consistency would require a
+  separate write-boundary/version decision; WU1 does not add a trigger or alter
+  quantity/publication commands. Independent review is required before any
+  application approval.
+
+### 2026-08-04 — WU1 correction closure: cursor errors, local behavior, and continuity gate
+
+- Date/session: 2026-08-04 bounded follow-up correction after independent WU1 review
+- Authorized work unit and scope: WU1 only — narrow cursor exception handling, local executable behavior coverage, `asOf`/`id` contract wording, continuity test/boundary enforcement, and separated diff reporting. No client, UI, legacy-caller, write-path, live database, or external-service change was authorized.
+- Completed: helper failures now reach the outer `P9_INTERNAL_ERROR` mapping; only invalid timestamp/UUID decoding is converted to `P9_CURSOR_INVALID`; the WU1 PGlite test covers equal-timestamp keyset pagination, filters, empty results, invalid page size/cursor, Owner/anonymous scope, and unexpected helper failure; the validator requires both WU1 test harnesses, explicit no-application/no-client/no-write boundary receipts, the stable-detail/direct-table/policy boundary, and separate WU1/repository diff signals; the SDD now consistently defines `asOf` as an ordering horizon and uses `id` for the tie-breaker.
+- Files/components/migrations: WU1 addendum, WU1 evidence, continuity validator, unapplied `20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql`, focused static Jest test, and local PGlite integration test. The stable detail RPC and all client/write paths remain unchanged.
+- Verification actually run: correction red runs reproduced the intended static and runtime failures; focused Jest `marketplacePhase9OwnerInventoryReadBoundary.test.ts` **10/10**; PGlite `phase9OwnerInventoryReadBoundary.integration.test.mjs` **3/3**; continuity `WU1_DIFF_CHECK=PASS`, `REPOSITORY_DIFF_CHECK=PASS`, `PHASE9_CONTINUITY_CHECK=PASS`, `MARKDOWN_FILES_CHECKED=65`, `REQUIRED_PHASE_FILES=51`; no Python tests were run.
+- Supabase/external mutations: none. No new live Supabase readback was required for this local-only correction; the recorded exact development project remains at M30 and WU1 remains unapplied.
+- Decisions/deviations/risks: the PGlite harness required local-only compatibility columns for live inventory fields absent from its compact Phase 6 baseline; this is test-fixture setup, not a migration change. Remote JWT/RLS, exact-project ACL, positive Owner read, concurrency, and post-application runtime verification remain unclaimed.
+- Tracker/source-doc updates: Phase 9 TRACKER, WU1 SDD, WU1 evidence, continuity validator, and this implementation tracker.
+- Next authorized action and gate: obtain independent review of the corrected WU1 draft and runtime-test plan; then perform exact-project read-only preflight and obtain separate migration-application approval. Do not apply the draft in this handoff.
+
+### 2026-08-04 — WU1 exact-project application and readback
+
+- Date/session: 2026-08-04 bounded WU1 application, post-application readback,
+  anonymous denial check, and evidence closeout.
+- Authorized work unit and scope: WU1 only against development project
+  `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`; no production, client,
+  dashboard, legacy-caller, write-path, Storage, provider, or fixture mutation.
+- Completed: exact local migration `20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql`
+  applied exactly once through Supabase MCP; live version
+  `20260803221216 marketplace_phase9_owner_inventory_read_boundary`.
+- Verification actually run: preflight confirmed healthy exact project, M30
+  tail, absent WU1 objects, stable detail RPC, table schema/constraints/
+  indexes/RLS/policies/ACL, cursor/Owner helpers, and projection trigger.
+  Post-readback confirmed the exact eight-argument `jsonb` RPC, `STABLE
+  SECURITY DEFINER`, postgres owner, empty `search_path`, narrow ACLs, exact
+  `(store_id, updated_at DESC, id DESC)` index, unchanged detail RPC, and
+  unchanged table/trigger boundaries. Anonymous REST returned HTTP 401.
+  Focused Jest 10/10, PGlite 3/3, continuity, and diff checks passed before
+  application.
+- Supabase/external mutations: one approved migration application only; no
+  rows, users, fixtures, listings, publications, Storage objects, providers,
+  deployments, or other external services were mutated. Regular index creation
+  completed successfully.
+- Decisions/deviations/risks: pre-existing anonymous table-DML ACL entries
+  remain outside WU1; RLS has no anonymous policies and WU1 did not alter that
+  drift. Positive Owner/cross-store/inactive-owner/filter/cursor-context/live-
+  DTO/authenticated-table runtime remains deferred because no approved Owner
+  JWT or active Owner browser session was available.
+- Tracker/source-doc updates: WU1 SDD/evidence, Phase 9 TRACKER, README,
+  SESSION-START, ACTIVE, DOC-13, current-vs-target audit, continuity validator,
+  and this implementation tracker.
+- Next authorized action and gate: obtain an approved Owner JWT for the
+  deferred runtime matrix, then resume representative low-end Android Unit 6F
+  evidence; do not cut over legacy callers, begin Unit 7, or apply another
+  migration without separate authorization.
+
+### 2026-08-04 — WU2 read-only Owner inventory client integration
+
+- Scope: WU2 only. The active Owner `/inventory` route, canonical read service,
+  strict decoder, infinite-query cache/pagination layer, exact filter/search
+  UI, tests, and continuity documentation. No dashboard, write, Unit 7,
+  deployment, migration, or stale-code deletion was authorized.
+- Implemented: the route reaches `OwnerInventoryReadScreen`,
+  `useOwnerInventoryRead`, and `phase9_owner_inventory_page_v1`; no client
+  store authority is sent. Exact response keys/types/enums are validated,
+  cursors remain opaque, filter/search changes and refresh restart page one,
+  IDs are de-duplicated first-seen, and cache keys isolate identity, store,
+  contract, and filters.
+- UI states: initial loading, successful empty, unauthorized, invalid
+  request/cursor, unavailable/internal, refresh failure, and partial next-page
+  failure are distinct while already loaded rows remain visible.
+- Verification actually run: red-first WU2 tests failed before implementation;
+  after correction-review closure focused Jest **4 suites/50 tests**
+  passed; related image-inventory, legacy regression, and route Jest **39
+  suites/303 tests** passed; `npx.cmd tsc
+  --noEmit --allowImportingTsExtensions` passed. Jest printed its known
+  post-run open-handle warning; the broad run also printed pre-existing
+  CandidateReview `act(...)` warnings.
+- Supabase/external mutations: none. Read-only exact-project verification
+  confirmed WU1 function signature/defaults, security/owner/search path,
+  grants, detail RPC, and owner-page index. No database/storage row, migration,
+  Edge Function, provider, deployment, commit, push, or staging action occurred.
+- Evidence: [WU2 addendum](../work-units/owner-inventory-read-client-wu2-sdd.md)
+  and [tracker 26](./26-owner-inventory-read-client-wu2-evidence.md).
+- Next authorized action and gate: obtain an approved development Owner session
+  for the deferred WU1/WU2 runtime matrix, then resume representative low-end
+  Android Unit 6F evidence. Dashboard remediation and Unit 7 remain gated.
+
+### 2026-08-04 — WU2 independent-review corrections
+
+- Review verdict: `changes_requested` for permissive timestamp/version
+  decoding, destructive failed refresh, and conflated error/operation states;
+  one P3 architecture-test hardening note was non-blocking.
+- Red-first evidence: three suites failed with eight assertions before the
+  correction. Added cases reject date-only/non-ISO-offset timestamps and zero
+  versions, preserve loaded rows on failed first-page refresh, and distinguish
+  request, cursor, unavailable, internal/malformed, refresh, and next-page UI.
+- Implementation: shared offset-aware timestamp schema plus positive version;
+  separately cancellable first-page refresh cache swapped only on success;
+  destructive reset retained only for invalid-cursor recovery; category- and
+  operation-specific safe copy/actions.
+- Verification: focused WU2 **4 suites/45 tests**, related regressions **39
+  suites/298 tests**, and TypeScript passed. Jest's known post-run lifecycle
+  warning and pre-existing CandidateReview `act(...)` warnings remain.
+- Mutations/scope: no Supabase/database/Storage, migration, deployment,
+  dashboard, write-path, Unit 7, staging, commit, or push action. Authenticated
+  Owner runtime remains deferred; P3 architecture hardening remains optional.
+
+### 2026-08-04 — WU2 second correction-review closure
+
+- Findings: failed refresh could recommit cached first-page data and drop later
+  pages; post-await cache swap lacked an explicit current-scope fence;
+  unauthorized initial/partial errors offered retry; refresh error after an
+  empty success rendered contradictory empty and error states.
+- Red-first evidence: query/screen suites failed with four assertions. The
+  stale-identity test already passed through observer cancellation, so the
+  production correction adds a defense-in-depth scope/request-generation fence.
+- Corrected: only explicit successful current-generation refreshes atomically
+  replace pages; filter/identity/unmount/newer refresh fences stale completion;
+  unauthorized states omit actions; refresh error excludes successful empty.
+- Verification: focused **4 suites/50 tests**, related **39 suites/303 tests**,
+  TypeScript, continuity, and diff hygiene passed. Known Jest lifecycle and
+  CandidateReview warnings remain; no external or database mutation occurred.
+
+### 2026-08-04 — WU2 focused correction-review closure
+
+- Remaining finding: the header Refresh button bypassed the unauthorized card's
+  no-action boundary in both initial and partial states.
+- Red/green: two assertions failed before correction; screen 15/15, focused
+  4 suites/50 tests, related 39 suites/303 tests, and TypeScript passed after.
+- Correction/scope: header refresh is omitted for unauthorized category only;
+  no transport, cache, route, write, database, dashboard, Unit 7, deployment,
+  staging, commit, or push behavior changed.
+
+### 2026-08-04 — CAP-01/CAP-02 capture-to-Preview handoff correction
+
+- Authorized work unit and scope: local capture selection handoff only; no
+  upload/registration/process/session close, migration, dashboard, WU2,
+  transport, or Unit 7 change.
+- Root cause and correction: Preview's unmount cleanup cleared provider-held
+  media during the real Stack/access-boundary transition. Cleanup now cancels
+  local upload work without clearing selection; explicit successful upload and
+  reselect paths still clear it.
+- Files/components: `CaptureScreens.tsx`, `CaptureScreens.test.tsx`, and the
+  real-provider/navigation regression `CaptureWorkflowNavigation.test.tsx`.
+- Verification actually run: red-first lifecycle reproduction; focused
+  capture/provider/navigation **9 suites/46 tests**; TypeScript
+  `npx.cmd tsc --noEmit --allowImportingTsExtensions`; `git diff --check`;
+  `.pyc` count `0`; local browser Preview/Back/reselect/Choose another/picker
+  cancel with zero browser errors.
+- Supabase/external mutation note: browser reaching Preview used the existing
+  `start_session` handoff and created one disposable session
+  (`97925897-56dd-47dc-bf33-24ae4fdf2f10`), left open because the requested
+  stop point was Preview. Upload was not pressed, and no registration,
+  processing, save, close, migration, Storage, inventory, listing, deployment,
+  staging, commit, or push occurred.
+- Limits: web evidence only; no native claim. Existing Unit 6F Android gate
+  and WU1/WU2 authenticated runtime gate remain unchanged.
+
+### 2026-08-04 — post-registration Preview flash correction
+
+- Authorized scope: bounded successful upload-to-progress handoff timing only.
+- Root cause: clearing the provider selection while Preview remained mounted
+  exposed the unavailable-media branch during successful registration; even
+  after moving clear after `router.replace`, Expo Router queues that replace
+  and can still render Preview once before dispatch.
+- Correction: preserve the invalidations, mark successful navigation intent,
+  recheck generation/identity/authority, and clear provider media only from
+  Preview cleanup after the destination route unmounts. No transport,
+  registration contract, session, database, Storage, dashboard, WU2, Unit 7,
+  or native behavior was broadened.
+- Verification: red/green real-provider/router render-history test; focused
+  capture/provider/navigation 9 suites/48 tests; TypeScript; `git diff --check`;
+  `.pyc` count 0. Browser/native rerun for this timing correction remains
+  unclaimed.
+
+### 2026-08-05 — Android 11 observation and browser follow-up
+
+- User-reported context: Android 11; large-text use is reported accessible and
+  the native camera is reported connected. No device model, font-scale value,
+  performance trace, offline/reconnect receipt, or screen-by-screen evidence
+  was supplied, so this is not a native-gate pass.
+- Code trace: capture setup checks and requests camera/gallery permission before
+  opening the OS source; permanent denial exposes settings guidance; the Expo
+  image-picker configuration blocks microphone permission.
+- Browser follow-up: authenticated Owner read/filter/search/review/Resume,
+  sanitized fixture upload, disposable Review Save, logout/re-authentication,
+  and unavailable-session Retry completed with zero browser errors. The tested
+  disposable session remained active with four images processing, so Close was
+  unavailable. Separate cross-store/inactive-Owner fixtures were unavailable.
+- Scope/mutations: this documentation checkpoint changed no product code,
+  database, migration, Storage, deployment, commit, push, or Unit 7 behavior.
+- Decision/deviation: record large text as user-confirmed observation, but keep
+  the formal Unit 6F native gate and WU1/WU2 denial matrix deferred. The
+  dropdown UX request remains a later non-gating improvement.
+- Tracker/source-doc updates: tracker 24 and the Phase 9 master tracker are
+  updated with the same evidence classification; global status remains
+  `USER_ACTION_REQUIRED_NATIVE_EVIDENCE`.
+- Next authorized action and gate: obtain the missing representative Android
+  evidence required by the Unit 6 SDD, then rerun continuity/quality review
+  before closing Unit 6F or starting Unit 7.
+
+### 2026-08-05 — 15-card and Gemini fixture clarification
+
+- Code trace: the image-inventory UI consumes decoded Owner candidate DTOs and
+  does not invoke Gemini directly. Gemini/provider configuration, deployment,
+  and live-call verification remain separately deferred.
+- The fifteen-candidate UI requirement is covered without Gemini by deterministic
+  `ownerUxTestFixtures.ts` DTOs. `CandidateReviewScreens.test.tsx` renders
+  fifteen ordered candidates with an independent partial failure, while
+  `CaptureProgressScreens.test.tsx` covers the over-fifteen safeguard.
+- Verification actually run: the two focused suites passed **20/20 tests**;
+  existing `act(...)` warnings were non-failing. No product code, provider,
+  database, Storage, migration, deployment, commit, or push mutation occurred.
+- Decision/limitation: the fixture-backed UI/contract check is complete, but it
+  does not claim live Gemini output, a fifteen-card browser session, or native
+  device responsiveness/memory. Unit 6F remains open under
+  `USER_ACTION_REQUIRED_NATIVE_EVIDENCE`.
+- Next authorized action and gate: obtain representative Android evidence for
+  camera/gallery/recovery, fifteen fixture-backed cards, three sequential
+  captures, offline/reconnect, accessibility/large text, performance, and the
+  CAP/post-registration reruns; then complete the deferred WU1/WU2 runtime
+  cases when approved fixtures exist. Do not start Unit 7 before those gates.
+
+### 2026-08-05 — Unit 4B Gemini Render configuration/startup check
+
+- Authorized scope: server-only Gemini environment activation for the existing
+  Render vision worker. No mobile credential, repository secret, database,
+  Storage, inventory, publication, or migration behavior was changed.
+- Deployment: `phase9-fixture-vision` was manually deployed from remote `main`
+  commit `7eaf921efcaefccab4d0189dc26779796f164ed4` after confirming the live
+  `96991a9` image did not contain the Gemini adapter. Final deployment
+  `dep-d9pdei9t0dsc73ddgbh0` is live; logs show `service_started` and Render's
+  successful live status. An initial env-inconsistent attempt failed at startup
+  and was corrected before the final deployment.
+- Configuration: masked `PHASE9_GEMINI_API_KEY` is present;
+  `PHASE9_VISION_ANALYZER_MODE=gemini`, model `gemini-3.5-flash-lite`, and
+  timeout `30000` are set; `PHASE9_VISION_FIXTURE_CASE` is removed. The agent
+  did not read or log the secret value.
+- Verification actually run: deployment/build/startup evidence was read from
+  Render. The in-app browser blocked direct public health navigation and the
+  local PowerShell/curl probes could not complete TLS, so no independent HTTP
+  `/health`/`/ready` receipt is claimed here. Render's live deployment health
+  gate passed. No authenticated `/run` or real provider inference was run.
+- Next authorized action and gate: revoke/replace the exposed key, then use one
+  approved sanitized-media job for a controlled authenticated `/run` provider
+  call, verifying M14 attempt registration, egress fences, strict decoding,
+  usage/cost lineage, and zero commerce effects. Unit 6F/WU1/WU2 gates remain
+  unchanged.

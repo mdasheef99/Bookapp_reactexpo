@@ -178,6 +178,21 @@ requires a positive selling price; price-on-request is not a Unit 5C target.
 
 Existing quantity buckets remain authoritative. `photos text[]` is deprecated only after typed media links are backfilled and all readers migrate.
 
+### WU1 Owner-inventory read projection
+
+The WU1 addendum defines the exact Owner list DTO and keeps the stable detail
+DTO separate: [`owner-inventory-read-boundary-wu1-sdd.md`](../work-units/owner-inventory-read-boundary-wu1-sdd.md).
+The list exposes only the current console’s owner-facing identity, metadata,
+condition, available quantity, price, visibility/quality/source, notes/location,
+timestamps, and version fields through a server-derived store scope. It does
+not widen direct `store_inventory` privileges or alter the quantity, condition,
+ publication, or public-projection rules above.
+
+The list cursor's `asOf` is an ordering horizon, not a repeatable database
+snapshot. It excludes rows whose ordering timestamp advances after the first
+page, but does not freeze mutable DTO/filter values when an existing write path
+does not update `updated_at`. The WU1 draft does not change those write paths.
+
 ## `marketplace_book_listings` additions
 
 | Field | Public behavior |
@@ -350,3 +365,10 @@ Audit records identify actor, store, entity, command, outcome, idempotency, and 
 Telemetry includes adapter/model/provider version, duration, outcome/error class, fallback, cache hit, token/image cost units, correction categories, candidate counts, and cleanup backlog. User-entered titles may be hashed or sampled only under an approved privacy policy; raw images are never analytics payloads.
 
 Provider scorecards separate availability, schema validity, coherent-match quality, Owner correction deltas, language/edition cohort, latency, and cost. Queue telemetry additionally covers queued count and oldest age by stage, claim latency, active leases, retry backlog, dead letters, provider rate limiting/concurrency, per-store concentration, and worker startup/readiness duration.
+
+### 2026-08-05 operational note
+
+The Unit 4B Render configuration/startup check changed no field, table, RPC,
+bucket, path, retention class, or stored-data rule. The existing M14 provider
+attempt schema remains the only persistence surface for a future real provider
+call; no provider-attempt row was created by this check.

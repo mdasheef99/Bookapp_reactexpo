@@ -196,7 +196,16 @@ benchmark manifests, approved languages, rollout rows, or enabled capabilities.
 
 ## RLS, grants, and write boundaries
 
-Observed relevant core tables have RLS. Store inventory currently allows authenticated owner INSERT/UPDATE under `is_store_admin`; public listing rows are trigger-maintained and public-readable through safe eligibility policies. `book_metadata_sources` is platform-operator writable.
+Observed relevant core tables have RLS. A fresh exact-project read-only check on
+2026-08-03 found that `public.store_inventory` has no `SELECT`, `INSERT`, or
+`UPDATE` table privilege for `authenticated` (`anon` also has no `SELECT`),
+while `service_role` retains the required private-table access. The existing
+authenticated owner policies remain present, but policies cannot make a direct
+PostgREST table call pass when the role has no table privilege. The
+`phase9_owner_inventory` and named inventory-edit/quantity RPCs are the
+available authenticated controlled boundary. Public listing rows are
+trigger-maintained and public-readable through safe eligibility policies.
+`book_metadata_sources` is platform-operator writable.
 
 Proposed boundary:
 
@@ -273,3 +282,11 @@ Advisor remediation references:
 7. Validate data/constraints after evidence passes.
 8. Deprecate legacy photo arrays/direct paths only after all readers migrate.
 9. Use forward correction for any live issue; do not rewrite applied history.
+
+## 2026-08-05 operational deployment note
+
+The temporary Unit 4B Gemini test changed Render environment/deployment state
+only. The exact Supabase project, migrations, schema, RLS/grants, Storage
+objects, and current-vs-target database state were not mutated or re-read as part
+of this deployment. A future provider-call smoke must re-verify the exact project
+and use an approved sanitized-media job before any M14 evidence is claimed.

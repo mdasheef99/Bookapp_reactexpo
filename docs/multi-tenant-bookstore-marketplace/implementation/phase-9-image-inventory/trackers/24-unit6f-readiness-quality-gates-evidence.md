@@ -360,15 +360,15 @@ access, change Unit 6 behavior, or change the native evidence requirement.
   WU1/WU2 runtime cases requiring approved cross-store/inactive-Owner/runtime
   fixtures. Unit 7 remains gated.
 
-## 14. 2026-08-06 Unit 6F checkpoint commit before P9-O1
+## 14. 2026-08-06 Unit 6F checkpoint commit
 
 - The coherent post-`a0d55b5` Unit 6F checkpoint was committed as
   `b564fbd` (`fix(phase9): record Unit 6F native runtime checkpoint`). It
   contains only the reviewed SDK54/native runtime remediation, AsyncStorage
   auth-storage boundary, `expo-crypto` capture identity correction, Preview
-  lifecycle correction, and their focused tests. WU2 Owner-read changes, Unit
-  4C dispatcher/worker changes, P9-O1 planning, Store Owner route-warning work,
-  and unrelated dirty-worktree changes were intentionally excluded.
+  lifecycle correction, and their focused tests. Later WU2 Owner-read changes,
+  Store Owner route-warning work, and unrelated dirty-worktree changes were
+  intentionally excluded.
 - Verification after the checkpoint contents were prepared: the focused
   Unit 6F/native-remediation run passed **6 suites/38 tests**; TypeScript
   (`npx.cmd tsc --noEmit --allowImportingTsExtensions`) passed; the Phase 9

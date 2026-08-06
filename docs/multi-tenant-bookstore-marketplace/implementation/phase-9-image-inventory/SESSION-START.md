@@ -1,7 +1,7 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-08-04
+**Last updated:** 2026-08-07
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
@@ -21,18 +21,28 @@ browser-smoke receipt, and handoff. M30 is live exactly once as
 migration, Supabase/Storage, deployment, provider, inventory, publication, or
 commerce mutation occurred. Unit 6F browser/readback verification and local
 quality gates are recorded in [tracker 24](./trackers/24-unit6f-readiness-quality-gates-evidence.md);
-the representative low-end Android gate remains outstanding.
+the representative low-end Android Unit 6F evidence remains outstanding.
 
-The user has explicitly re-sequenced [WU1](./work-units/owner-inventory-read-boundary-wu1-sdd.md)
-ahead of the Unit 6F native gate. WU1 contract/addendum review, local gates,
-exact-project application, and post-application readback are complete. The
+The user explicitly re-sequenced [WU1](./work-units/owner-inventory-read-boundary-wu1-sdd.md)
+and [WU2](./work-units/owner-inventory-read-client-wu2-sdd.md) ahead of the
+Unit 6F native gate. WU1 contract/addendum review, local gates, exact-project
+application, and post-application readback are complete. A disposable
+authenticated Owner browser session has now covered positive read smoke and
+the capture/review follow-up, but the full WU1/WU2 matrix remains deferred. The
 local migration `20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql`
 is live once as `20260803221216 marketplace_phase9_owner_inventory_read_boundary`;
 the stable `phase9_owner_inventory(uuid)` detail RPC remains intact. The next
-authorized action is to obtain an approved Owner JWT for the deferred positive
-runtime matrix, then return to the representative low-end Android Unit 6F
-evidence. No client/UI/service, stale-code deletion, legacy-caller cutover, or
-Unit 7 change is authorized in this handoff.
+WU2 read-only Owner `/inventory` client now uses
+`phase9_owner_inventory_page_v1` through a strict DTO decoder, identity/store-
+isolated infinite query, opaque cursor pagination, and read-only UI states;
+[tracker 26](./trackers/26-owner-inventory-read-client-wu2-evidence.md) owns the
+local evidence. The next authorized action is to complete the deferred
+cross-store/inactive-Owner/runtime-context cases when approved fixtures exist;
+those gates remain open and are not waived. The production Gemini-to-metadata-
+to-review path remains unproven. The active next action is a read-only vertical
+integration audit under the existing Unit 4B/5A/5B authority. No dashboard
+remediation, stale-code deletion, write path, Unit 7 implementation, deployment,
+provider call, or unrelated product change is authorized.
 
 ## 1. Canonical status source
 
@@ -95,6 +105,7 @@ Do not describe an action as authorized merely because it is listed as a future 
 | Service deployment/live fixture verification | 02 Pipeline; 04 Security | [Unit 4A deployment-runtime SDD](./work-units/04a-deployment-runtime-scaffolding-sdd.md), [M11/M12 live-application evidence](./trackers/05-m11-m12-live-application-evidence.md), current-vs-target audit, migration ledger, current worker/Owner entrypoints, environment loaders, container/deployment validators, hosting configuration, and fresh exact-project service/function readback |
 | 5 Metadata/aliases | 01 Data; 02 Pipeline; 03 Review; 04 Security; 05 Marketplace | Unit 5A/5B handoffs/evidence, [Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md), data dictionary, current-vs-target audit, requirements traceability, complexity register, provider audit/fixtures |
 | 6 Owner UX | [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md); [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md); 03 Review; 02 Pipeline | [tracker 18](./trackers/18-unit6-owner-ux-design-evidence.md), DOC-8, accessibility/verification matrix |
+| WU1/WU2 Owner inventory read boundary/client | [WU1](./work-units/owner-inventory-read-boundary-wu1-sdd.md); [WU2](./work-units/owner-inventory-read-client-wu2-sdd.md); 00 Master; 03 Review | [tracker 25](./trackers/25-owner-inventory-read-boundary-wu1-evidence.md), [tracker 26](./trackers/26-owner-inventory-read-client-wu2-evidence.md), DOC-8 §5, current-vs-target audit, requirements traceability |
 | 7 Commit/duplicates/projection | 01 Data; 03 Review; 05 Marketplace | quantity/hold invariants, current trigger audit |
 | 8 Marketplace | 05 Marketplace; 01 Data | DOC-0, DOC-3, DOC-5, public/private tests |
 | 9 Damage/request photos | 04 Security; 06 Photo Request; 03 Review | DOC-1, DOC-6, DOC-14, retention matrix |
