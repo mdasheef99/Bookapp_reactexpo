@@ -1,5 +1,4 @@
 import {
-  GEMINI_VISION_RESPONSE_SCHEMA,
   GeminiAnalyzerError,
   GeminiSpineImageAnalyzer,
   GeminiUsageEvidence,
@@ -31,8 +30,9 @@ const observation = (ordinal: number, language = 'en') => ({
   isbn_clue: null,
   detected_language: language,
   confidence: 0.9,
-  geometry: null,
-  warning_codes: [],
+  title_romanization: null,
+  english_translation_candidate: null,
+  author_romanizations: [null],
 });
 
 const output = (
@@ -40,10 +40,11 @@ const output = (
   imageOutcome = 'analyzed',
   count: number | null = observations.length,
 ) => ({
-  image_outcome: imageOutcome,
-  detected_visible_book_count: count,
-  observations,
-  warning_codes: [],
+  vision: {
+    image_outcome: imageOutcome,
+    detected_visible_book_count: count,
+    observations,
+  },
 });
 
 function setup(response: unknown, overrides: Record<string, unknown> = {}) {
@@ -74,7 +75,7 @@ function setup(response: unknown, overrides: Record<string, unknown> = {}) {
 }
 
 describe('Phase 9 Gemini spine-image analyzer', () => {
-  it('maps sanitized image input and a strict structured-output schema for multiple books', async () => {
+  it('maps sanitized image input through simple JSON mode and validates locally', async () => {
     const { analyzer, generateContent } = setup({
       text: JSON.stringify(output([observation(1), observation(2)])),
       usageMetadata: { promptTokenCount: 100, candidatesTokenCount: 50, totalTokenCount: 150 },
@@ -101,16 +102,25 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
       }],
       config: expect.objectContaining({
         responseMimeType: 'application/json',
-        responseJsonSchema: GEMINI_VISION_RESPONSE_SCHEMA,
         tools: undefined,
       }),
     }));
     const config = generateContent.mock.calls[0][0].config;
+    const prompt = generateContent.mock.calls[0][0].contents[0].parts[0].text;
+    expect(prompt).toContain('Optional language hint: en');
+    expect(prompt).toContain('Do not exclude other languages');
+    expect(prompt).not.toContain(request.correlationId);
+    expect(prompt).not.toContain(request.jobReference);
     expect(config).not.toHaveProperty('temperature');
     expect(config).not.toHaveProperty('candidateCount');
+    expect(config).not.toHaveProperty('responseJsonSchema');
+    expect(prompt).toContain('title_romanization');
+    expect(prompt).toContain('author_romanizations');
+    expect(prompt).toContain('english_translation_candidate');
+    expect(prompt).not.toContain('multilingual_search_enrichment');
   });
 
-  it('normalizes empty, language-mismatch, and over-15 responses without changing policy', async () => {
+  it('normalizes empty, cross-language, and over-15 responses with language as a hint', async () => {
     const empty = setup({ text: JSON.stringify(output([], 'no_books', 0)) });
     await expect(empty.analyzer.analyze(request)).resolves.toMatchObject({
       imageOutcome: 'no_books', observations: [],
@@ -119,7 +129,7 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
     const mismatch = setup({ text: JSON.stringify(output([observation(1, 'hi-Deva')])) });
     const mismatchResult = await mismatch.analyzer.analyze(request);
     expect(evaluateVisionResult(mismatchResult)).toMatchObject({
-      outcome: 'language_mismatch', candidates: [],
+      outcome: 'accepted', candidates: [{ detectedLanguage: 'hi-Deva' }],
     });
 
     const over = setup({ text: JSON.stringify(output([], 'too_many_books', 16)) });
@@ -129,10 +139,43 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
     });
   });
 
+  it('normalizes Gemini JSON-mode success and null detected language', async () => {
+    const providerObservation = {
+      ...observation(1),
+      title_guess: null,
+      author_guesses: [],
+      detected_language: null,
+      confidence: 0.3,
+      author_romanizations: [],
+    };
+    const proof = setup({
+      text: JSON.stringify(output([providerObservation], 'success', 1)),
+    });
+
+    await expect(proof.analyzer.analyze(request)).resolves.toMatchObject({
+      imageOutcome: 'analyzed',
+      detectedVisibleBookCount: 1,
+      observations: [{ detectedLanguage: 'und' }],
+    });
+  });
+
   it.each([
     ['malformed_response', { text: '{"observations":' }],
     ['schema_invalid', { text: JSON.stringify({ ...output([observation(1)]), extra: true }) }],
     ['schema_invalid', { text: JSON.stringify(output([observation(2)])) }],
+    ['schema_invalid', { text: JSON.stringify({
+      vision: {
+        ...output([observation(1)]).vision,
+        observations: [{
+          ...observation(1),
+          author_guesses: ['A', 'B', 'C', 'D', 'E', 'F'],
+        }],
+      },
+    }) }],
+    ['schema_invalid', { text: JSON.stringify({
+      ...output([observation(1)]),
+      search_variant_proposals: { proposals: [] },
+    }) }],
   ])('classifies %s output without retaining raw response data', async (classification, response) => {
     const { analyzer } = setup(response);
     await expect(analyzer.analyze(request)).rejects.toMatchObject({
@@ -171,6 +214,33 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
     const serialized = JSON.stringify(logs);
     expect(serialized).not.toContain('private provider body');
     expect(serialized).not.toContain('key-adjacent');
+  });
+
+  it('redacts privileged values from bounded provider identifiers', async () => {
+    const apiKey = 'AIzaSySecretKeyMaterial123456789';
+    const providerCodeSecret = 'PRIVATE_PROVIDER_SECRET_123456789';
+    const failure = {
+      status: 400,
+      requestId: apiKey,
+      error: { status: providerCodeSecret },
+    };
+    const { analyzer, logs } = setup({}, {
+      client: { models: { generateContent: jest.fn().mockRejectedValue(failure) } },
+      privilegedValues: [apiKey, providerCodeSecret],
+    });
+    await expect(analyzer.analyze(request)).rejects.toMatchObject({
+      code: 'P9_VISION_ANALYZER_UNAVAILABLE',
+      classification: 'provider_error',
+      retryable: true,
+    });
+    expect(logs).toContainEqual(expect.objectContaining({
+      event: 'gemini_analysis_failed',
+      providerErrorCode: null,
+      providerRequestId: null,
+    }));
+    const serialized = JSON.stringify(logs);
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(providerCodeSecret);
   });
 
   it.each([

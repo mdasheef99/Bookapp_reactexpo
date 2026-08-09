@@ -21,16 +21,19 @@ const claim = {
 describe('Phase 9 Gemini final egress fence', () => {
   it('validates the current claim immediately before download and again before provider invocation', async () => {
     const order: string[] = [];
+    const providerSecret = 'AIzaSySecretKeyMaterial123456789';
+    const finalize = jest.fn(async () => { order.push('finalize'); });
     const generateContent = jest.fn(async () => {
       order.push('provider');
       return {
         text: JSON.stringify({
-          image_outcome: 'no_books',
-          detected_visible_book_count: 0,
-          observations: [],
-          warning_codes: [],
+          vision: {
+            image_outcome: 'no_books',
+            detected_visible_book_count: 0,
+            observations: [],
+          },
         }),
-        responseId: 'provider-request-1',
+        responseId: providerSecret,
         usageMetadata: { totalTokenCount: 2 },
       };
     });
@@ -47,7 +50,7 @@ describe('Phase 9 Gemini final egress fence', () => {
           order.push(`validate_${phase}`);
           return phase === 'media_download' ? 'authorization-1' : undefined;
         }),
-        finalize: jest.fn(async () => { order.push('finalize'); }),
+        finalize,
         mark: jest.fn(async () => { order.push('mark'); }),
       },
       resolveMedia: jest.fn(async (_request, authorization) => {
@@ -55,6 +58,7 @@ describe('Phase 9 Gemini final egress fence', () => {
         order.push('download');
         return { bytes: new Uint8Array([1]), mimeType: 'image/webp' as const };
       }),
+      privilegedValues: [providerSecret],
     });
     const completed = await analyzer.analyzeClaim(request, claim);
     expect(completed.providerAttemptId).toBe('attempt-1');
@@ -62,6 +66,11 @@ describe('Phase 9 Gemini final egress fence', () => {
       'register', 'validate_media_download', 'download',
       'validate_provider_egress', 'provider', 'finalize',
     ]);
+    expect(finalize).toHaveBeenCalledWith(
+      'attempt-1',
+      claim,
+      expect.objectContaining({ providerRequestId: null }),
+    );
   });
 
   it('performs zero download/provider calls when an expired claim is rejected at registration', async () => {

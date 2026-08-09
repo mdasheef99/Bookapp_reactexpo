@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { after, before, beforeEach, test } from 'node:test';
 import {
   createPhase9Database,
+  migrationPath,
   resetActor,
   scalar,
   setActor,
@@ -32,7 +34,7 @@ const result = {
   job_reference: `job_${CORRELATION.replaceAll('-', '')}`,
   attempt_number: 1,
   correlation_id: CORRELATION,
-  expected_language: 'kn',
+  expected_language: 'en',
   provider_key: 'recorded_fixture',
   model_key: 'fixture_multimodal',
   model_version: '2026-07-26',
@@ -109,7 +111,7 @@ async function seed() {
   await db.exec(`INSERT INTO public.image_extraction_sessions
     (id,store_id,created_by,selected_language,default_condition,default_location,
      orchestration_version,prompt_version)
-    VALUES('${SESSION}','${STORE_A}','${OWNER}','kn','good','A1',
+    VALUES('${SESSION}','${STORE_A}','${OWNER}','en','good','A1',
       'phase9-v1','fixture-prompt-v2');
     INSERT INTO public.media_assets
     (id,store_id,uploaded_by,purpose,privacy_class,bucket_id,object_path,sha256,
@@ -206,6 +208,9 @@ async function attachInventory(candidateId) {
 
 before(async () => {
   db = await createPhase9Database();
+  await db.exec(fs.readFileSync(migrationPath(
+    '20260809000034_marketplace_phase9_vision_language_hint_correction.sql',
+  ), 'utf8'));
   await db.exec(`INSERT INTO public.stores(id,display_name)
     VALUES('${STORE_A}','Store A'),('${STORE_B}','Store B');
     INSERT INTO public.store_administrators(store_id,user_id,role,status)

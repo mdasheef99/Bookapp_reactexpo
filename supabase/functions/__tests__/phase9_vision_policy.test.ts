@@ -30,20 +30,20 @@ describe('Phase 9 platform-owned vision policy', () => {
     expect(result.candidates.map((candidate) => candidate.observationOrdinal)).toEqual([1, 2]);
   });
 
-  it('V4-P04 retains mixed-language evidence and accepts only expected-language titles', () => {
+  it('V4-P04 treats selected language as a hint and accepts detected-language titles', () => {
     const result = evaluate(visionMixedLanguage);
     expect(result.outcome).toBe('accepted_with_language_skips');
-    expect(result.candidates.map((candidate) => candidate.observationOrdinal)).toEqual([1]);
+    expect(result.candidates.map((candidate) => candidate.observationOrdinal)).toEqual([1, 2]);
     expect(result.observations.map((entry) => entry.disposition))
-      .toEqual(['candidate', 'language_mismatch', 'unknown_language']);
+      .toEqual(['candidate', 'candidate', 'unknown_language']);
   });
 
-  it('V4-P05 resolves all mismatching/unknown observations without candidates', () => {
+  it('V4-P05 retains a detected cross-language book while unknown language stays non-candidate', () => {
     expect(evaluate(visionAllWrongLanguage)).toMatchObject({
-      outcome: 'language_mismatch',
-      candidates: [],
-      inputState: 'skipped',
-      jobStatus: 'resolved_noop',
+      outcome: 'accepted_with_language_skips',
+      candidates: [{ detectedLanguage: 'hi' }],
+      inputState: 'ready',
+      jobStatus: 'resolved',
     });
   });
 

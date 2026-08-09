@@ -28,10 +28,10 @@ const providerVision = {
     isbn_clue: null,
     detected_language: 'kn',
     confidence: 0.91,
-    geometry: null,
-    warning_codes: [],
+    title_romanization: 'Mookajjiya Kanasugalu',
+    english_translation_candidate: "Mookajji's Dreams",
+    author_romanizations: ['Kota Shivarama Karantha'],
   }],
-  warning_codes: [],
 };
 
 function analyzerFor(responseBody: unknown) {
@@ -53,71 +53,96 @@ function analyzerFor(responseBody: unknown) {
 }
 
 describe('Phase 9 Unit 5C-3 Gemini companion integration', () => {
-  it('accepts a valid optional sidecar from the same Gemini call', async () => {
-    const sidecar = {
-      ...kannadaVariantSidecar,
-      generation_source: 'vision_model',
-      analysis_reference: request.correlationId,
-      provider_key: 'google_gemini',
-      model_key: 'gemini-3.5-flash-lite',
-      model_version: 'gemini-3.5-flash-lite',
-      prompt_version: request.promptVersion,
-      titles: [{
-        ...kannadaVariantSidecar.titles[0],
-        source_text: providerVision.observations[0].title_guess,
-      }],
-      authors: [{
-        ...kannadaVariantSidecar.authors[0],
-        source_text: providerVision.observations[0].author_guesses[0],
-      }],
-    };
-    const { analyzer, generateContent } = analyzerFor({
-      vision: providerVision,
-      search_variant_proposals: sidecar,
-    });
+  it('attaches server provenance to compact multilingual enrichment', async () => {
+    const { analyzer, generateContent } = analyzerFor({ vision: providerVision });
     await expect(analyzer.analyzeWithCompanion(request)).resolves.toMatchObject({
       vision: { schemaVersion: 'p9-vision-v2', observations: [{ ordinal: 1 }] },
       searchVariantProposals: {
         status: 'accepted',
-        value: { schemaVersion: 'search_variant_proposals_v1' },
+        value: {
+          schemaVersion: 'search_variant_proposals_v1',
+          analysisReference: request.correlationId,
+          providerKey: 'google_gemini',
+          titles: [{ proposals: [
+            { type: 'primary_roman', text: 'Mookajjiya Kanasugalu' },
+            { type: 'translation_candidate', text: "Mookajji's Dreams" },
+          ] }],
+          authors: [{ proposals: [
+            { type: 'primary_roman', text: 'Kota Shivarama Karantha' },
+          ] }],
+        },
       },
     });
     expect(generateContent).toHaveBeenCalledTimes(1);
-    expect(JSON.stringify(generateContent.mock.calls[0])).toContain('search_variant_proposals');
+    const requestBody = JSON.stringify(generateContent.mock.calls[0]);
+    expect(requestBody).not.toContain('multilingual_search_enrichment');
+    expect(requestBody).toContain('author_romanizations');
+    expect(requestBody).not.toContain('analysis_reference');
+    expect(requestBody).not.toContain('maxItems\":300');
+  });
+
+  it('rejects malformed compact enrichment without invalidating vision', async () => {
+    const { analyzer } = analyzerFor({
+      vision: {
+        ...providerVision,
+        observations: [{
+          ...providerVision.observations[0],
+          author_romanizations: [],
+        }],
+      },
+    });
+    await expect(analyzer.analyzeWithCompanion(request)).resolves.toMatchObject({
+      vision: { imageOutcome: 'analyzed' },
+      searchVariantProposals: {
+        status: 'rejected', value: null, reason: 'schema_invalid',
+      },
+    });
+  });
+
+  it.each([
+    ['oversized', Array.from({ length: 6 }, () => 'Romanized Author')],
+    ['non-array', 'Romanized Author'],
+  ])('rejects %s flattened author enrichment without invalidating vision', async (
+    _label,
+    authorRomanizations,
+  ) => {
+    const { analyzer } = analyzerFor({
+      vision: {
+        ...providerVision,
+        observations: [{
+          ...providerVision.observations[0],
+          author_romanizations: authorRomanizations,
+        }],
+      },
+    });
+    await expect(analyzer.analyzeWithCompanion(request)).resolves.toMatchObject({
+      vision: { imageOutcome: 'analyzed' },
+      searchVariantProposals: {
+        status: 'rejected', value: null, reason: 'schema_invalid',
+      },
+    });
   });
 
   it.each([
     ['missing', undefined],
-    ['empty', {}],
+    ['empty', ''],
     ['malformed', { unexpected: true }],
-    ['unsupported', { ...kannadaVariantSidecar, schema_version: 'future-v2' }],
-    ['oversized', {
-      ...kannadaVariantSidecar,
-      titles: [{
-        ...kannadaVariantSidecar.titles[0],
-        proposals: [{
-          ...kannadaVariantSidecar.titles[0].proposals[0],
-          variant_text: 'A'.repeat(70_000),
-        }],
-      }],
-    }],
-    ['provenance mismatch', { ...kannadaVariantSidecar, analysis_reference: 'different-reference-0001' }],
-  ])('keeps ordinary vision successful when the sidecar is %s', async (_label, sidecar) => {
-    const body = sidecar === undefined
-      ? { vision: providerVision }
-      : { vision: providerVision, search_variant_proposals: sidecar };
+  ])('keeps ordinary vision successful when flattened title enrichment is %s', async (_label, enrichment) => {
+    const observation = { ...providerVision.observations[0] } as Record<string, unknown>;
+    if (enrichment === undefined) delete observation.title_romanization;
+    else observation.title_romanization = enrichment;
+    const body = { vision: { ...providerVision, observations: [observation] } };
     const { analyzer, generateContent } = analyzerFor(body);
     const result = await analyzer.analyzeWithCompanion(request);
     expect(result.vision.imageOutcome).toBe('analyzed');
-    expect(result.searchVariantProposals.status).not.toBe('accepted');
     expect(generateContent).toHaveBeenCalledTimes(1);
   });
 
-  it('preserves direct legacy p9-vision-v2 provider output as a missing companion', async () => {
+  it('rejects direct legacy p9-vision-v2 provider output', async () => {
     const { analyzer } = analyzerFor(providerVision);
-    await expect(analyzer.analyzeWithCompanion(request)).resolves.toMatchObject({
-      vision: { imageOutcome: 'analyzed' },
-      searchVariantProposals: { status: 'missing', value: null },
+    await expect(analyzer.analyzeWithCompanion(request)).rejects.toMatchObject({
+      code: 'P9_VISION_SCHEMA_INVALID',
+      classification: 'schema_invalid',
     });
   });
 });

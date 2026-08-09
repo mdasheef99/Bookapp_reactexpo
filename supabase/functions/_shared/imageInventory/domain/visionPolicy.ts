@@ -29,10 +29,6 @@ export type VisionPolicyResult = Readonly<{
   candidates: readonly VisionPolicyCandidate[];
 }>;
 
-function primaryLanguage(tag: string): string {
-  return tag.split('-')[0];
-}
-
 export function evaluateVisionResult(result: SpineAnalysisResult): VisionPolicyResult {
   if (result.imageOutcome === 'no_books') {
     return terminal('no_books', 'skipped', 'resolved_noop', 'P9_VISION_NO_BOOKS');
@@ -44,11 +40,9 @@ export function evaluateVisionResult(result: SpineAnalysisResult): VisionPolicyR
     return terminal('quality_rejected', 'failed', 'resolved', 'P9_VISION_QUALITY_REJECTED');
   }
 
-  const expected = primaryLanguage(result.expectedLanguage);
   const observations: VisionPolicyObservation[] = result.observations.map((entry) => {
     let disposition: VisionObservationDisposition;
     if (entry.detectedLanguage === 'und') disposition = 'unknown_language';
-    else if (primaryLanguage(entry.detectedLanguage) !== expected) disposition = 'language_mismatch';
     else if (entry.titleGuess === null) disposition = 'identity_insufficient';
     else disposition = 'candidate';
     return { observation: entry, disposition };
@@ -60,10 +54,10 @@ export function evaluateVisionResult(result: SpineAnalysisResult): VisionPolicyR
       candidateIndex: index + 1,
       observationOrdinal: entry.observation.ordinal,
     }));
-  const allLanguageSkipped = observations.every((entry) => (
-    entry.disposition === 'language_mismatch' || entry.disposition === 'unknown_language'
-  ));
-  if (allLanguageSkipped) {
+  const allLanguageUnknown = observations.every(
+    (entry) => entry.disposition === 'unknown_language',
+  );
+  if (allLanguageUnknown) {
     return {
       outcome: 'language_mismatch',
       inputState: 'skipped',

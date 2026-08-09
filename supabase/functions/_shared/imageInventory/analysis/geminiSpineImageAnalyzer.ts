@@ -8,10 +8,7 @@ import {
   SpineImageAnalyzer,
 } from '../contracts/vision';
 import { SearchVariantCompanion } from '../contracts/searchVariants';
-import {
-  GEMINI_VISION_PROMPT,
-  GEMINI_VISION_RESPONSE_SCHEMA,
-} from './geminiVisionSchema';
+import { GEMINI_VISION_PROMPT } from './geminiVisionSchema';
 import {
   extractGeminiUsageEvidence,
   GeminiCostCalculator,
@@ -37,7 +34,6 @@ import {
   safeProviderRequestId,
 } from './geminiAnalyzerGuards';
 
-export { GEMINI_VISION_RESPONSE_SCHEMA } from './geminiVisionSchema';
 export type { GeminiUsageEvidence } from './geminiUsageEvidence';
 export type {
   VisionClaimContext,
@@ -204,9 +200,7 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
             {
               text: [
                 GEMINI_VISION_PROMPT,
-                `Companion analysis_reference must be ${request.correlationId}.`,
-                `Companion model_key/model_version must be ${this.options.modelId}.`,
-                `Companion prompt_version must be ${request.promptVersion}.`,
+                `Optional language hint: ${request.expectedLanguage}. Do not exclude other languages.`,
               ].join(' '),
             },
             {
@@ -219,7 +213,6 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
         }],
         config: {
           responseMimeType: 'application/json',
-          responseJsonSchema: GEMINI_VISION_RESPONSE_SCHEMA,
           tools: undefined,
           httpOptions: { timeout: this.options.timeoutMs },
           abortSignal: AbortSignal.timeout(this.options.timeoutMs),
@@ -235,7 +228,11 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
           classification,
         );
       }
-      this.failed(classification, started, sanitizeGeminiFailure(error, classification));
+      this.failed(classification, started, sanitizeGeminiFailure(
+        error,
+        classification,
+        this.options.privilegedValues ?? [],
+      ));
       throw new GeminiAnalyzerError(
         classification === 'timeout'
           ? 'P9_VISION_ANALYZER_TIMEOUT' : 'P9_VISION_ANALYZER_UNAVAILABLE',
@@ -251,7 +248,10 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
       this.options.calculateCostUnits,
     );
     await this.options.recordUsage?.(usage);
-    const providerRequestId = safeProviderRequestId(response.responseId);
+    const providerRequestId = safeProviderRequestId(
+      response.responseId,
+      this.options.privilegedValues ?? [],
+    );
 
     let providerOutput: Record<string, unknown>;
     try {
