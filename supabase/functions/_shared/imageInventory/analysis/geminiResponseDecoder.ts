@@ -19,6 +19,10 @@ export type GeminiAnalysisWithCompanion = Readonly<{
   searchVariantProposals: SearchVariantCompanion;
 }>;
 
+const LANGUAGE_NAMES: Readonly<Record<string, string>> = {
+  english: 'en', hindi: 'hi', kannada: 'kn', tamil: 'ta', telugu: 'te',
+  malayalam: 'ml', arabic: 'ar', meitei: 'mni', manipuri: 'mni',
+};
 const RESPONSE_KEYS = ['vision'] as const;
 const VISION_KEYS = [
   'image_outcome', 'detected_visible_book_count', 'observations',
@@ -28,6 +32,18 @@ const OBSERVATION_KEYS = [
   'detected_language', 'confidence', 'title_romanization',
   'english_translation_candidate', 'author_romanizations',
 ] as const;
+
+function compactLanguage(value: unknown): unknown {
+  if (value === null || value === undefined) return 'und';
+  if (typeof value !== 'string') return value;
+  return LANGUAGE_NAMES[value.trim().toLocaleLowerCase('en-US')] ?? value;
+}
+
+function compactIsbnClue(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  const withoutLabel = value.trim().replace(/^ISBN(?:-1[03])?\s*:?\s*/iu, '');
+  return /^(?=.*\d)[\dXx\s-]+$/u.test(withoutLabel) ? withoutLabel : value;
+}
 
 function compactVision(value: unknown): Readonly<{
   canonical: Record<string, unknown>;
@@ -48,7 +64,18 @@ function compactVision(value: unknown): Readonly<{
         `${field}.author_guesses`, 'must contain at most 5 entries',
       );
     }
-    return observation;
+    return {
+      ordinal: observation.ordinal,
+      title_guess: observation.title_guess,
+      author_guesses: observation.author_guesses,
+      publisher_clue: observation.publisher_clue,
+      isbn_clue: compactIsbnClue(observation.isbn_clue),
+      detected_language: compactLanguage(observation.detected_language),
+      confidence: observation.confidence,
+      title_romanization: observation.title_romanization,
+      english_translation_candidate: observation.english_translation_candidate,
+      author_romanizations: observation.author_romanizations,
+    };
   });
   const observations = flattenedObservations.map((observation) => {
     const {
@@ -59,17 +86,17 @@ function compactVision(value: unknown): Readonly<{
     } = observation;
     return {
       ...identity,
-      detected_language: identity.detected_language === null
-        ? 'und' : identity.detected_language,
       geometry: null,
       warning_codes: [],
     };
   });
+  const imageOutcome = vision.image_outcome === 'success'
+    ? 'analyzed' : vision.image_outcome;
   return {
     canonical: {
-      ...vision,
-      image_outcome: vision.image_outcome === 'success'
-        ? 'analyzed' : vision.image_outcome,
+      image_outcome: imageOutcome,
+      detected_visible_book_count: imageOutcome === 'analyzed'
+        ? observations.length : vision.detected_visible_book_count,
       observations,
       warning_codes: [],
     },
