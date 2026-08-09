@@ -4,6 +4,7 @@ import { handlePhase9VisionAnalysisWorker } from './index';
 import {
   GeminiSpineImageAnalyzer,
 } from '../../supabase/functions/_shared/imageInventory/analysis/geminiSpineImageAnalyzer';
+import type { GeminiSafeLogEvent } from '../../supabase/functions/_shared/imageInventory/analysis/geminiAnalyzerGuards';
 import {
   createDeploymentFixtureAnalyzer,
   DeploymentFixtureCase,
@@ -20,6 +21,7 @@ type BaseVisionWorkerConfiguration = Readonly<{
   workerId: string;
   workerAuthToken: string;
   privilegedSecrets?: readonly string[];
+  log?: (event: GeminiSafeLogEvent) => void;
 }>;
 export type VisionWorkerConfiguration = BaseVisionWorkerConfiguration & (
   | Readonly<{ analyzerMode?: 'fixture'; fixtureCase: DeploymentFixtureCase }>
@@ -83,6 +85,7 @@ export function createPhase9VisionAnalysisService(
       timeoutMs: configuration.timeoutMs,
       resolveMedia: createSupabaseVisionMediaResolver(serviceClient as any),
       providerAttempts,
+      log: configuration.log,
       privilegedValues: [
         configuration.apiKey,
         configuration.supabaseServiceRoleKey,

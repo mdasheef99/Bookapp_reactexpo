@@ -1,12 +1,32 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-08-07
+**Last updated:** 2026-08-09
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
+
+Current operational correction: M32 is live exactly once. Local M33 is
+implemented, tested, and unapplied; it closes the missing media-to-vision usage
+reservation transaction and narrowly repairs only active-session,
+initiating-Owner-bound eligible nonterminal jobs. The independent review's two
+required corrections are locally complete. The next gate is correction-only
+rereview followed by separately authorized
+exact-project M33 application/readback. Do not invoke the original vision job
+or process/cancel the later duplicate media input until that application gate
+is complete.
+
+The compact Gemini/multilingual language-hint correction and local forward M34
+are also implemented and unapplied. Its independent review required one
+diagnostics correction: configured privileged values are now removed from
+bounded provider request IDs and error codes before failure logging or successful
+attempt finalization. Red-first evidence and focused Jest 47/47 plus the
+vision-worker TypeScript build are green. The
+exact next gate for this active work unit is independent correction-only
+rereview; provider proof, deployment, M34 application, and attempt 5 remain
+separately gated.
 
 Current routed handoff: Unit 6A is merged/live-verified through M29, Unit 6B is
 merged at `9ef9eb3` with [tracker 20](./trackers/20-unit6b-route-query-cache-evidence.md),

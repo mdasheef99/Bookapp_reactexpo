@@ -28,10 +28,7 @@ const providerVision = {
     isbn_clue: null,
     detected_language: 'kn',
     confidence: 0.91,
-    geometry: null,
-    warning_codes: [],
   }],
-  warning_codes: [],
 };
 
 function analyzerFor(responseBody: unknown) {
@@ -53,59 +50,118 @@ function analyzerFor(responseBody: unknown) {
 }
 
 describe('Phase 9 Unit 5C-3 Gemini companion integration', () => {
-  it('accepts a valid optional sidecar from the same Gemini call', async () => {
-    const sidecar = {
-      ...kannadaVariantSidecar,
-      generation_source: 'vision_model',
-      analysis_reference: request.correlationId,
-      provider_key: 'google_gemini',
-      model_key: 'gemini-3.5-flash-lite',
-      model_version: 'gemini-3.5-flash-lite',
-      prompt_version: request.promptVersion,
-      titles: [{
-        ...kannadaVariantSidecar.titles[0],
-        source_text: providerVision.observations[0].title_guess,
-      }],
-      authors: [{
-        ...kannadaVariantSidecar.authors[0],
-        source_text: providerVision.observations[0].author_guesses[0],
-      }],
-    };
+  it('attaches server provenance to compact multilingual enrichment', async () => {
     const { analyzer, generateContent } = analyzerFor({
       vision: providerVision,
-      search_variant_proposals: sidecar,
+      multilingual_search_enrichment: [{
+        observation_ordinal: 1,
+        title: {
+          source_language: 'kn',
+          source_script: 'Knda',
+          title_romanization: 'Mookajjiya Kanasugalu',
+          english_translation_candidate: "Mookajji's Dreams",
+        },
+        authors: [{
+          author_ordinal: 1,
+          source_language: 'kn',
+          source_script: 'Knda',
+          author_romanization: 'Kota Shivarama Karantha',
+        }],
+      }],
     });
     await expect(analyzer.analyzeWithCompanion(request)).resolves.toMatchObject({
       vision: { schemaVersion: 'p9-vision-v2', observations: [{ ordinal: 1 }] },
       searchVariantProposals: {
         status: 'accepted',
-        value: { schemaVersion: 'search_variant_proposals_v1' },
+        value: {
+          schemaVersion: 'search_variant_proposals_v1',
+          analysisReference: request.correlationId,
+          providerKey: 'google_gemini',
+          titles: [{ proposals: [
+            { type: 'primary_roman', text: 'Mookajjiya Kanasugalu' },
+            { type: 'translation_candidate', text: "Mookajji's Dreams" },
+          ] }],
+          authors: [{ proposals: [
+            { type: 'primary_roman', text: 'Kota Shivarama Karantha' },
+          ] }],
+        },
       },
     });
     expect(generateContent).toHaveBeenCalledTimes(1);
-    expect(JSON.stringify(generateContent.mock.calls[0])).toContain('search_variant_proposals');
+    const requestBody = JSON.stringify(generateContent.mock.calls[0]);
+    expect(requestBody).toContain('multilingual_search_enrichment');
+    expect(requestBody).not.toContain('analysis_reference');
+    expect(requestBody).not.toContain('maxItems\":300');
+  });
+
+  it('rejects malformed compact enrichment without invalidating vision', async () => {
+    const { analyzer } = analyzerFor({
+      vision: providerVision,
+      multilingual_search_enrichment: [{
+        observation_ordinal: 1,
+        title: {
+          source_language: 'kn',
+          source_script: 'Knda',
+          title_romanization: 'Mookajjiya Kanasugalu',
+          english_translation_candidate: null,
+        },
+        authors: [{
+          author_ordinal: 6,
+          source_language: 'kn',
+          source_script: 'Knda',
+          author_romanization: 'Missing Author',
+        }],
+      }],
+    });
+    await expect(analyzer.analyzeWithCompanion(request)).resolves.toMatchObject({
+      vision: { imageOutcome: 'analyzed' },
+      searchVariantProposals: {
+        status: 'rejected', value: null, reason: 'schema_invalid',
+      },
+    });
+  });
+
+  it.each([
+    ['duplicate', [1, 1]],
+    ['dangling', [2]],
+  ])('rejects %s enrichment author ordinals without invalidating vision', async (
+    _label,
+    ordinals,
+  ) => {
+    const { analyzer } = analyzerFor({
+      vision: providerVision,
+      multilingual_search_enrichment: [{
+        observation_ordinal: 1,
+        title: null,
+        authors: ordinals.map((authorOrdinal) => ({
+          author_ordinal: authorOrdinal,
+          source_language: 'kn',
+          source_script: 'Knda',
+          author_romanization: 'Kota Shivarama Karantha',
+        })),
+      }],
+    });
+    await expect(analyzer.analyzeWithCompanion(request)).resolves.toMatchObject({
+      vision: { imageOutcome: 'analyzed' },
+      searchVariantProposals: {
+        status: 'rejected', value: null, reason: 'schema_invalid',
+      },
+    });
   });
 
   it.each([
     ['missing', undefined],
-    ['empty', {}],
-    ['malformed', { unexpected: true }],
-    ['unsupported', { ...kannadaVariantSidecar, schema_version: 'future-v2' }],
-    ['oversized', {
-      ...kannadaVariantSidecar,
-      titles: [{
-        ...kannadaVariantSidecar.titles[0],
-        proposals: [{
-          ...kannadaVariantSidecar.titles[0].proposals[0],
-          variant_text: 'A'.repeat(70_000),
-        }],
-      }],
-    }],
-    ['provenance mismatch', { ...kannadaVariantSidecar, analysis_reference: 'different-reference-0001' }],
-  ])('keeps ordinary vision successful when the sidecar is %s', async (_label, sidecar) => {
-    const body = sidecar === undefined
+    ['empty', []],
+    ['malformed', [{ unexpected: true }]],
+    ['oversized', Array.from({ length: 16 }, (_, index) => ({
+      observation_ordinal: index + 1,
+      title: null,
+      authors: [],
+    }))],
+  ])('keeps ordinary vision successful when compact enrichment is %s', async (_label, enrichment) => {
+    const body = enrichment === undefined
       ? { vision: providerVision }
-      : { vision: providerVision, search_variant_proposals: sidecar };
+      : { vision: providerVision, multilingual_search_enrichment: enrichment };
     const { analyzer, generateContent } = analyzerFor(body);
     const result = await analyzer.analyzeWithCompanion(request);
     expect(result.vision.imageOutcome).toBe('analyzed');
@@ -113,11 +169,11 @@ describe('Phase 9 Unit 5C-3 Gemini companion integration', () => {
     expect(generateContent).toHaveBeenCalledTimes(1);
   });
 
-  it('preserves direct legacy p9-vision-v2 provider output as a missing companion', async () => {
+  it('rejects direct legacy p9-vision-v2 provider output', async () => {
     const { analyzer } = analyzerFor(providerVision);
-    await expect(analyzer.analyzeWithCompanion(request)).resolves.toMatchObject({
-      vision: { imageOutcome: 'analyzed' },
-      searchVariantProposals: { status: 'missing', value: null },
+    await expect(analyzer.analyzeWithCompanion(request)).rejects.toMatchObject({
+      code: 'P9_VISION_SCHEMA_INVALID',
+      classification: 'schema_invalid',
     });
   });
 });

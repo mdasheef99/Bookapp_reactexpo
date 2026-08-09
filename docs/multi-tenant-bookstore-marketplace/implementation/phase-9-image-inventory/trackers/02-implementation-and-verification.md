@@ -1,6 +1,6 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `wu2_owner_inventory_client_locally_complete_runtime_deferred`; **last updated:** 2026-08-07
-**Active work unit:** `phase9_core_pipeline_vertical_integration_audit`. WU2 is locally complete under its [addendum](../work-units/owner-inventory-read-client-wu2-sdd.md) and [tracker 26](./26-owner-inventory-read-client-wu2-evidence.md). Unit 6F and the remaining WU1/WU2 runtime evidence stay open; Unit 7 is gated. The next authorized action is a read-only audit of the existing Unit 4B/5A/5B production handoffs. It authorizes no code, migration, provider call, deployment, scheduler, database/Storage mutation, or inventory/publication behavior. WU0B history preserves `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and independent review.
+**Status:** `compact_gemini_required_diagnostics_correction_complete_awaiting_rereview`; **last updated:** 2026-08-09
+**Active work unit:** `phase9_compact_gemini_multilingual_language_hint_correction`. The compact provider contract, non-fatal multilingual mapping, five-author cap, TypeScript language-hint policy, and forward M34 are locally implemented and verified through the current M32/M33 tree. M34 remains unapplied. Provider-only proof, Render deployment/configuration, migration application, attempt 5, inventory/publication, scheduler, Unit 7, stage, commit, and push remain separately gated. See [tracker 27](./27-compact-gemini-multilingual-language-hint-evidence.md). WU0B history preserves `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`, and independent review.
 ## Work units
 | Unit | Scope | Status | Required gate |
 | --- | --- | --- | --- |
@@ -52,6 +52,7 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260729000024` through `20260729000028` Unit 5C-5/5C-6 migrations | `20260730022442`, `20260730022524`, `20260730022559`, `20260730022636`, `20260730022713`, exactly once | MCP exact project 2026-07-30 | exact tree `66db5be7` dual-approved | strict Owner decisions; candidate-first replacement; canonical benchmark/review evidence; exact rollout; platform evidence reads; M29 absent at this historical gate and now live through Unit 6A | Jest 140/140; PGlite 53/53; real concurrency/security/evidence/rollout smoke; zero residue | [`backend_complete_live_verified`](./17-unit5c5-6-owner-rollout-backend-evidence.md) |
 | `20260801000030_marketplace_phase9_unit6e_review_corrections.sql` | `20260801093048 marketplace_phase9_unit6e_review_corrections` | MCP exact project 2026-08-01; `ahntbtktjjmvfosgkmgn` | authorized after exact M29 preflight; applied exactly once via Supabase MCP | additive `CREATE OR REPLACE FUNCTION` compatibility correction only; no table, trigger, index, data, Storage, provider, deployment, inventory, publication, or commerce effect | post-apply migration history has no later entry; function owners/ACLs/security/search_path unchanged; read-only fixture/helper/RPC checks recorded in [tracker 23](./23-unit6e-review-corrections-evidence.md) | [`live_verified`](./23-unit6e-review-corrections-evidence.md) |
 | `20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql` | `20260803221216 marketplace_phase9_owner_inventory_read_boundary` | MCP exact project 2026-08-04; `ahntbtktjjmvfosgkmgn` | attached user request after WU1 review/preflight; applied once via Supabase MCP | forward-only new list RPC plus one owner-page index; stable detail RPC/RLS/table grants/triggers untouched | preflight M30 tail; post-apply exact signature/security/owner/search_path/ACL/index/detail/RLS/trigger readback; anonymous REST denial; positive Owner JWT runtime deferred | [`applied_readback_runtime_deferred`](./25-owner-inventory-read-boundary-wu1-evidence.md) |
+| `20260809000034_marketplace_phase9_vision_language_hint_correction.sql` | not applied | no live-project query in this coding session | local file creation only | forward replacement of selected-language rejection and 20-to-5 author validation inside existing persistence function; M12 immutable; no table/column/data change | static migration suite; current M32/M33 PGlite vision/variant 59/59; worker TypeScript; focused provider/policy tests | [`local_unapplied`](./27-compact-gemini-multilingual-language-hint-evidence.md) |
 Rules: re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
 - Use forward corrections; record every schema, grant, Storage, data, and verification effect.
 ## Required verification matrix
@@ -755,3 +756,38 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
   call, verifying M14 attempt registration, egress fences, strict decoding,
   usage/cost lineage, and zero commerce effects. Unit 6F/WU1/WU2 gates remain
   unchanged.
+### 2026-08-09 compact Gemini multilingual/language-hint correction
+
+- Authority: implement the frozen compact provider contract, non-fatal compact
+  multilingual enrichment, five-author maximum, and selected-language-as-hint
+  behavior; add a forward migration only because the applied persistence function
+  also enforces the old rejection.
+- Completed: provider schema/prompt/decoder cleanup; server-owned canonical
+  provenance reconstruction; strict enrichment ordinal mapping; TypeScript policy
+  correction; local forward M34 after M33; focused contract and database tests.
+- Verification: focused target Jest 46 tests (the main command also discovered the
+  isolated worktree and reported the same tests twice as 92/92); vision-worker
+  TypeScript passed; current M32/M33/M34 PGlite vision plus variants 59/59; isolated
+  baseline PGlite 45/45.
+- External state: none. M34 was not applied; no provider, Render, job, Supabase,
+  inventory/publication, stage, commit, or push action occurred.
+- Next gate: independent review of the exact local correction. Provider-only smoke,
+  deployment, M34 application, and attempt 5 remain separately authorized actions.
+
+### 2026-08-09 compact Gemini required diagnostics correction
+
+- Authority: implement only the independent review's required privileged-value
+  filtering for bounded Gemini failure identifiers and its regression evidence.
+- Red evidence: 1/22 analyzer and 1/6 egress assertions failed; configured
+  secrets appeared in failure `providerRequestId`/`providerErrorCode` fields and
+  a successful provider response ID reached attempt finalization.
+- Completed: the failure sanitizer receives the existing privileged-value list
+  and nulls either bounded identifier when it contains a configured secret;
+  successful response IDs use the same filter before attempt finalization.
+- Verification: corrected analyzer Jest 22/22; complete focused correction Jest
+  47/47; vision-worker TypeScript build passed.
+- External state: none. M34 remains unapplied; no provider, Render, job, Supabase,
+  inventory/publication, stage, commit, or push action occurred, and attempt 5
+  was not invoked.
+- Next gate: independent correction-only rereview of the compact Gemini/M34 and
+  diagnostics scope.

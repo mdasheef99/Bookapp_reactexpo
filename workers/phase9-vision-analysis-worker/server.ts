@@ -8,16 +8,19 @@ import {
 } from '../phase9-runtime/httpService';
 import { createPhase9VisionAnalysisService } from './bootstrap';
 import { parseDeploymentFixtureCase } from './deploymentFixtures';
+import type { GeminiSafeLogEvent } from '../../supabase/functions/_shared/imageInventory/analysis/geminiAnalyzerGuards';
 
 export async function startPhase9VisionAnalysisWorker(
   environment: Readonly<Record<string, string | undefined>> = process.env,
 ) {
   const configuration = loadVisionWorkerEnvironment(environment);
+  const analyzerLog = createJsonOperationalLogger<GeminiSafeLogEvent>();
   const base = {
     supabaseUrl: configuration.supabaseUrl,
     supabaseServiceRoleKey: configuration.supabaseServiceRoleKey,
     workerId: configuration.workerId,
     workerAuthToken: configuration.workerAuthToken,
+    log: analyzerLog,
   };
   const handler = createPhase9VisionAnalysisService(
     configuration.analyzerMode === 'gemini'

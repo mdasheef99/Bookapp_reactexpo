@@ -32,6 +32,7 @@ import {
   classifyGeminiFailure,
   GeminiAnalyzerError,
   GeminiSafeLogEvent,
+  sanitizeGeminiFailure,
   MAX_GEMINI_IMAGE_BYTES,
   safeProviderRequestId,
 } from './geminiAnalyzerGuards';
@@ -203,9 +204,7 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
             {
               text: [
                 GEMINI_VISION_PROMPT,
-                `Companion analysis_reference must be ${request.correlationId}.`,
-                `Companion model_key/model_version must be ${this.options.modelId}.`,
-                `Companion prompt_version must be ${request.promptVersion}.`,
+                `Optional language hint: ${request.expectedLanguage}. Do not exclude other languages.`,
               ].join(' '),
             },
             {
@@ -219,8 +218,6 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
         config: {
           responseMimeType: 'application/json',
           responseJsonSchema: GEMINI_VISION_RESPONSE_SCHEMA,
-          temperature: 0,
-          candidateCount: 1,
           tools: undefined,
           httpOptions: { timeout: this.options.timeoutMs },
           abortSignal: AbortSignal.timeout(this.options.timeoutMs),
@@ -236,7 +233,11 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
           classification,
         );
       }
-      this.failed(classification, started);
+      this.failed(classification, started, sanitizeGeminiFailure(
+        error,
+        classification,
+        this.options.privilegedValues ?? [],
+      ));
       throw new GeminiAnalyzerError(
         classification === 'timeout'
           ? 'P9_VISION_ANALYZER_TIMEOUT' : 'P9_VISION_ANALYZER_UNAVAILABLE',
@@ -252,7 +253,10 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
       this.options.calculateCostUnits,
     );
     await this.options.recordUsage?.(usage);
-    const providerRequestId = safeProviderRequestId(response.responseId);
+    const providerRequestId = safeProviderRequestId(
+      response.responseId,
+      this.options.privilegedValues ?? [],
+    );
 
     let providerOutput: Record<string, unknown>;
     try {
@@ -336,6 +340,7 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
     classification: 'timeout' | 'rate_limited' | 'provider_error'
       | 'media_unavailable' | 'malformed_response' | 'schema_invalid',
     started: number,
+    failure?: ReturnType<typeof sanitizeGeminiFailure>,
   ): void {
     this.options.log?.({
       event: 'gemini_analysis_failed',
@@ -343,6 +348,7 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
       modelId: this.options.modelId,
       classification,
       durationMs: Math.max(0, this.now().getTime() - started),
+      ...failure,
     });
   }
 }

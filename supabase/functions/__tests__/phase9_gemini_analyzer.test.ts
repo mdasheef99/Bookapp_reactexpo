@@ -31,8 +31,6 @@ const observation = (ordinal: number, language = 'en') => ({
   isbn_clue: null,
   detected_language: language,
   confidence: 0.9,
-  geometry: null,
-  warning_codes: [],
 });
 
 const output = (
@@ -40,10 +38,11 @@ const output = (
   imageOutcome = 'analyzed',
   count: number | null = observations.length,
 ) => ({
-  image_outcome: imageOutcome,
-  detected_visible_book_count: count,
-  observations,
-  warning_codes: [],
+  vision: {
+    image_outcome: imageOutcome,
+    detected_visible_book_count: count,
+    observations,
+  },
 });
 
 function setup(response: unknown, overrides: Record<string, unknown> = {}) {
@@ -105,9 +104,33 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
         tools: undefined,
       }),
     }));
+    const config = generateContent.mock.calls[0][0].config;
+    const prompt = generateContent.mock.calls[0][0].contents[0].parts[0].text;
+    expect(prompt).toContain('Optional language hint: en');
+    expect(prompt).toContain('Do not exclude other languages');
+    expect(prompt).not.toContain(request.correlationId);
+    expect(prompt).not.toContain(request.jobReference);
+    expect(config).not.toHaveProperty('temperature');
+    expect(config).not.toHaveProperty('candidateCount');
+    const schema = JSON.stringify(config.responseJsonSchema);
+    expect(schema).toContain('multilingual_search_enrichment');
+    expect(schema).toContain('title_romanization');
+    expect(schema).toContain('author_romanization');
+    expect(schema).toContain('english_translation_candidate');
+    expect(schema).not.toContain('search_variant_proposals');
+    expect(schema).not.toContain('analysis_reference');
+    expect(schema).not.toContain('geometry');
+    expect(schema).not.toContain('warning_codes');
+    expect(schema).not.toContain('contract_version');
+    expect(schema).not.toContain('schema_version');
+    expect(schema).not.toContain('model_key');
+    expect(schema).not.toContain('prompt_version');
+    expect(schema).toContain('"author_guesses":{"type":"array","maxItems":5');
+    expect(schema).toContain('"authors":{"type":"array","maxItems":5');
+    expect(schema).not.toContain('maxItems\":300');
   });
 
-  it('normalizes empty, language-mismatch, and over-15 responses without changing policy', async () => {
+  it('normalizes empty, cross-language, and over-15 responses with language as a hint', async () => {
     const empty = setup({ text: JSON.stringify(output([], 'no_books', 0)) });
     await expect(empty.analyzer.analyze(request)).resolves.toMatchObject({
       imageOutcome: 'no_books', observations: [],
@@ -116,7 +139,7 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
     const mismatch = setup({ text: JSON.stringify(output([observation(1, 'hi-Deva')])) });
     const mismatchResult = await mismatch.analyzer.analyze(request);
     expect(evaluateVisionResult(mismatchResult)).toMatchObject({
-      outcome: 'language_mismatch', candidates: [],
+      outcome: 'accepted', candidates: [{ detectedLanguage: 'hi-Deva' }],
     });
 
     const over = setup({ text: JSON.stringify(output([], 'too_many_books', 16)) });
@@ -130,6 +153,19 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
     ['malformed_response', { text: '{"observations":' }],
     ['schema_invalid', { text: JSON.stringify({ ...output([observation(1)]), extra: true }) }],
     ['schema_invalid', { text: JSON.stringify(output([observation(2)])) }],
+    ['schema_invalid', { text: JSON.stringify({
+      vision: {
+        ...output([observation(1)]).vision,
+        observations: [{
+          ...observation(1),
+          author_guesses: ['A', 'B', 'C', 'D', 'E', 'F'],
+        }],
+      },
+    }) }],
+    ['schema_invalid', { text: JSON.stringify({
+      ...output([observation(1)]),
+      search_variant_proposals: { proposals: [] },
+    }) }],
   ])('classifies %s output without retaining raw response data', async (classification, response) => {
     const { analyzer } = setup(response);
     await expect(analyzer.analyze(request)).rejects.toMatchObject({
@@ -137,6 +173,64 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
       classification,
       retryable: false,
     });
+  });
+
+  it('logs only bounded provider error evidence', async () => {
+    const failure = {
+      status: 400,
+      requestId: 'gemini-request-17',
+      error: {
+        code: 400,
+        status: 'INVALID_ARGUMENT',
+        message: 'private provider body and key-adjacent detail',
+      },
+    };
+    const { analyzer, logs } = setup({}, {
+      client: { models: { generateContent: jest.fn().mockRejectedValue(failure) } },
+    });
+    await expect(analyzer.analyze(request)).rejects.toMatchObject({
+      code: 'P9_VISION_ANALYZER_UNAVAILABLE',
+      classification: 'provider_error',
+      retryable: true,
+    });
+    expect(logs).toContainEqual(expect.objectContaining({
+      event: 'gemini_analysis_failed',
+      httpStatus: 400,
+      providerErrorCode: 'INVALID_ARGUMENT',
+      providerErrorCategory: 'malformed_request',
+      providerRequestId: 'gemini-request-17',
+      safeMessage: 'provider rejected the request shape',
+    }));
+    const serialized = JSON.stringify(logs);
+    expect(serialized).not.toContain('private provider body');
+    expect(serialized).not.toContain('key-adjacent');
+  });
+
+  it('redacts privileged values from bounded provider identifiers', async () => {
+    const apiKey = 'AIzaSySecretKeyMaterial123456789';
+    const providerCodeSecret = 'PRIVATE_PROVIDER_SECRET_123456789';
+    const failure = {
+      status: 400,
+      requestId: apiKey,
+      error: { status: providerCodeSecret },
+    };
+    const { analyzer, logs } = setup({}, {
+      client: { models: { generateContent: jest.fn().mockRejectedValue(failure) } },
+      privilegedValues: [apiKey, providerCodeSecret],
+    });
+    await expect(analyzer.analyze(request)).rejects.toMatchObject({
+      code: 'P9_VISION_ANALYZER_UNAVAILABLE',
+      classification: 'provider_error',
+      retryable: true,
+    });
+    expect(logs).toContainEqual(expect.objectContaining({
+      event: 'gemini_analysis_failed',
+      providerErrorCode: null,
+      providerRequestId: null,
+    }));
+    const serialized = JSON.stringify(logs);
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain(providerCodeSecret);
   });
 
   it.each([

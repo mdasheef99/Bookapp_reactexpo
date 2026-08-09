@@ -160,12 +160,28 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
     $implementationTracker.Contains('**Status:** `unit6f_browser_verified_native_gate_pending`') -or
     $implementationTracker.Contains('**Status:** `wu1_owner_inventory_read_boundary_locally_complete_unapplied`') -or
     $implementationTracker.Contains('**Status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
-    $implementationTracker.Contains('**Status:** `wu2_owner_inventory_client_locally_complete_runtime_deferred`')) -or
+    $implementationTracker.Contains('**Status:** `wu2_owner_inventory_client_locally_complete_runtime_deferred`') -or
+    $implementationTracker.Contains('**Status:** `structural_metadata_integration_locally_complete_unapplied`') -or
+    $implementationTracker.Contains('**Status:** `final_targeted_corrections_complete_ready_for_approval_rereview_unapplied`') -or
+    $implementationTracker.Contains('**Status:** `live_metadata_vertical_proof_blocked_before_provider_egress`') -or
+    $implementationTracker.Contains('**Status:** `metadata_runtime_safety_complete_google_books_adapter_smoke_blocked`') -or
+    $implementationTracker.Contains('**Status:** `metadata_runtime_safety_and_google_books_adapter_smoke_complete`') -or
+    $implementationTracker.Contains('**Status:** `m33_vision_reservation_correction_local_complete_awaiting_review_and_application`') -or
+    $implementationTracker.Contains('**Status:** `compact_gemini_multilingual_language_hint_local_complete_unapplied`') -or
+    $implementationTracker.Contains('**Status:** `compact_gemini_required_diagnostics_correction_complete_awaiting_rereview`')) -or
     -not ($implementationTracker.Contains('**Active work unit:** `unit6f_awaiting_separate_authorization`') -or
     $implementationTracker.Contains('**Active work unit:** `unit6f_browser_verified_native_gate_pending`') -or
     $implementationTracker.Contains('**Active work unit:** `owner_inventory_read_boundary_wu1`') -or
     $implementationTracker.Contains('**Active work unit:** `owner_inventory_read_client_wu2`') -or
-    $implementationTracker.Contains('**Active work unit:** `phase9_core_pipeline_vertical_integration_audit`')) -or
+    $implementationTracker.Contains('**Active work unit:** `phase9_core_pipeline_vertical_integration_audit`') -or
+    $implementationTracker.Contains('**Active work unit:** `phase9_structural_metadata_integration`') -or
+    $implementationTracker.Contains('**Active work unit:** `phase9_structural_metadata_integration_correction_pass`') -or
+    $implementationTracker.Contains('**Active work unit:** `phase9_structural_metadata_integration_correction_pass_complete`') -or
+    $implementationTracker.Contains('**Active work unit:** `phase9_controlled_live_metadata_vertical_proof`') -or
+    $implementationTracker.Contains('**Active work unit:** `phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard`') -or
+    $implementationTracker.Contains('**Active work unit:** `phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard_complete`') -or
+    $implementationTracker.Contains('**Active work unit:** `phase9_m33_vision_reservation_correction`') -or
+    $implementationTracker.Contains('**Active work unit:** `phase9_compact_gemini_multilingual_language_hint_correction`')) -or
     -not $implementationTracker.Contains('20-unit6b-route-query-cache-evidence.md') -or
     -not $implementationTracker.Contains('22-unit6d-candidate-review-evidence.md') -or
     -not $implementationTracker.Contains('23-unit6e-review-corrections-evidence.md') -or
@@ -360,9 +376,18 @@ if (
         $tracker.Contains('**Implementation status:** `unit6f_browser_verified_native_gate_pending`') -or
         $tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_locally_complete_unapplied`') -or
         $tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
-        $tracker.Contains('**Implementation status:** `wu2_owner_inventory_client_locally_complete_runtime_deferred`')
+        $tracker.Contains('**Implementation status:** `wu2_owner_inventory_client_locally_complete_runtime_deferred`') -or
+        $tracker.Contains('**Implementation status:** `structural_metadata_integration_locally_complete_unapplied`') -or
+        $tracker.Contains('**Implementation status:** `structural_metadata_review_corrections_complete_pending_rereview_unapplied`') -or
+        $tracker.Contains('**Implementation status:** `final_targeted_corrections_complete_ready_for_approval_rereview_unapplied`') -or
+        $tracker.Contains('**Implementation status:** `live_metadata_vertical_proof_blocked_before_provider_egress`') -or
+        $tracker.Contains('**Implementation status:** `metadata_runtime_safety_complete_google_books_adapter_smoke_blocked_key_unavailable`') -or
+        $tracker.Contains('**Implementation status:** `metadata_runtime_safety_and_google_books_adapter_smoke_complete`') -or
+        $tracker.Contains('**Implementation status:** `m33_vision_reservation_correction_local_complete_awaiting_review_and_application`') -or
+        $tracker.Contains('**Implementation status:** `compact_gemini_multilingual_language_hint_local_complete_unapplied`') -or
+        $tracker.Contains('**Implementation status:** `compact_gemini_required_diagnostics_correction_complete_awaiting_rereview`')
     ) -or
-    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit)`\r?$' -or
+    $tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction)`\r?$' -or
     -not (
         $tracker.Contains('**Next authorized action:** obtain separate authorization before beginning Phase 9 Unit 6F') -or
         $tracker.Contains('**Next authorized action:** obtain representative low-end Android evidence') -or
@@ -370,7 +395,17 @@ if (
         $tracker.Contains('**Next authorized action:** obtain independent review of the corrected WU1 draft') -or
         $tracker.Contains('**Next authorized action:** obtain an approved development Owner JWT') -or
         $tracker.Contains('**Next authorized action:** obtain an approved development Owner session') -or
-        $tracker.Contains('**Next authorized action:** run a read-only vertical integration audit under existing Unit 4B/5A/5B authority')
+        $tracker.Contains('**Next authorized action:** run a read-only vertical integration audit under existing Unit 4B/5A/5B authority') -or
+        $tracker.Contains('**Next authorized action:** independent review and exact-project read-only preflight for M32 application; application remains separately gated') -or
+        $tracker.Contains('**Next authorized action:** independent correction-only rereview of M32 and the complete structural integration diff') -or
+        $tracker.Contains('**Next authorized action:** independent approval rereview of the frozen M32/structural integration diff') -or
+        $tracker.Contains('**Next authorized action:** configure the exact target-project service credential and Google Books credential through the approved secret mechanism, then rerun the same bounded one-candidate proof') -or
+        $tracker.Contains('**Next authorized action:** make the already-authorized temporary Google Books key available to one process-scoped adapter-only smoke') -or
+        $tracker.Contains('**Next authorized action:** obtain separate authorization for `CONTROLLED_ONE_CANDIDATE_METADATA_VERTICAL_PROOF`') -or
+        $tracker.Contains('**Next authorized action:** independently review M33, then separately authorize exact-project application/readback') -or
+        $tracker.Contains('**Next authorized action:** independently rereview the two M33 corrections and complete local diff, then separately authorize exact-project application/readback') -or
+        $tracker.Contains('**Next authorized action:** independently review the exact compact Gemini/M34 correction before any provider-only proof, deployment, migration application, or preserved attempt-5 invocation') -or
+        $tracker.Contains('**Next authorized action:** independently rereview the compact Gemini/M34 correction and privileged-diagnostics fix before any provider-only proof, deployment, migration application, or preserved attempt-5 invocation')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
@@ -430,10 +465,20 @@ $migrationNames = @(
 foreach ($name in $migrationNames) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot "supabase/migrations/$name"))) { Write-Error "Missing approved Phase 9 migration: $name" }
 }
-$draftMigrationNames = @('20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql')
+$draftMigrationNames = @(
+    '20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql',
+    '20260807000032_marketplace_phase9_structural_metadata_integration.sql',
+    '20260809000033_marketplace_phase9_vision_reservation_correction.sql',
+    '20260809000034_marketplace_phase9_vision_language_hint_correction.sql'
+)
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
-    $tracker.Contains('**Implementation status:** `wu2_owner_inventory_client_locally_complete_runtime_deferred`'))
+    $tracker.Contains('**Implementation status:** `wu2_owner_inventory_client_locally_complete_runtime_deferred`') -or
+    $tracker.Contains('**Implementation status:** `structural_metadata_integration_locally_complete_unapplied`') -or
+    $tracker.Contains('**Implementation status:** `live_metadata_vertical_proof_blocked_before_provider_egress`') -or
+    $tracker.Contains('**Implementation status:** `m33_vision_reservation_correction_local_complete_awaiting_review_and_application`') -or
+    $tracker.Contains('**Implementation status:** `compact_gemini_multilingual_language_hint_local_complete_unapplied`') -or
+    $tracker.Contains('**Implementation status:** `compact_gemini_required_diagnostics_correction_complete_awaiting_rereview`'))
 $expectedMigrationNames = @($migrationNames)
 if ($wu1AppliedStatus) { $expectedMigrationNames += $draftMigrationNames }
 $appliedPhase9Migrations = if ($wu1AppliedStatus) {
@@ -448,7 +493,7 @@ $unexpectedCorrectionMigrations = @($phase9Migrations | Where-Object {
 })
 foreach ($draftName in $draftMigrationNames) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot "supabase/migrations/$draftName"))) {
-        Write-Error "Missing authorized unapplied WU1 draft: $draftName"
+        Write-Error "Missing authorized Phase 9 migration artifact: $draftName"
     }
 }
 $wu1Addendum = [IO.File]::ReadAllText((Join-Path $phaseRoot 'work-units/owner-inventory-read-boundary-wu1-sdd.md'))
@@ -474,13 +519,13 @@ if (-not $wu2Addendum.Contains('phase9_owner_inventory_page_v1') -or
     -not $wu2Evidence.Contains('migration, database/storage mutation')) {
     Write-Error 'WU2 artifact or read-only boundary evidence is incomplete.'
 }
-$expectedMigrationCount = if ($wu1AppliedStatus) { 30 } else { 29 }
+$expectedMigrationCount = if ($wu1AppliedStatus) { 33 } else { 29 }
 if ($actualMigrationNames.Count -ne $expectedMigrationCount -or
     (Compare-Object $expectedMigrationNames $actualMigrationNames) -or
     $duplicateMigrationVersions.Count -ne 0 -or
     $unexpectedCorrectionMigrations.Count -ne 0 -or
     $phase9Migrations.Name -match '000009|quantity.*validat') {
-    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M30 exactly once; WU1 is included only when the tracker records its applied receipt.'
+    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M34 exactly once; WU1/M32/M33/M34 are included only when the tracker records the current structural handoff.'
 }
 $m24 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000024_marketplace_phase9_owner_variant_decisions.sql'))
 $m25 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000025_marketplace_phase9_owner_variant_corrections.sql'))

@@ -82,7 +82,9 @@ async function persist(claimed, result = baseResult()) {
 }
 
 before(async () => {
-  db = await createPhase9Database();
+  db = await createPhase9Database({
+    throughMigration: '20260809000034_marketplace_phase9_vision_language_hint_correction.sql',
+  });
   await db.exec(`INSERT INTO public.stores(id,display_name) VALUES('${STORE_A}','Store A'),('${STORE_B}','Store B');
     INSERT INTO public.store_administrators(store_id,user_id,role,status)
     VALUES('${STORE_A}','${OWNER_A}','owner','active');`);
@@ -121,6 +123,11 @@ test('V4-D01 atomically persists result, observation, candidate, input, session,
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_analysis_results'), 1);
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_analysis_observations'), 1);
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_extraction_candidates'), 1);
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM public.image_extraction_jobs
+    WHERE job_kind='metadata_enrich'`), 1);
+  assert.equal(await scalar(db, `SELECT j.entity_id=c.id FROM public.image_extraction_jobs j
+    JOIN public.image_extraction_candidates c ON c.id=j.entity_id
+    WHERE j.job_kind='metadata_enrich'`), true);
   assert.equal(await scalar(db, `SELECT state FROM public.image_extraction_inputs WHERE id='${INPUT_A}'`), 'ready');
   assert.equal(await scalar(db, `SELECT candidate_count FROM public.image_extraction_sessions WHERE id='${SESSION_A}'`), 1);
   assert.equal(await scalar(db, `SELECT status FROM public.image_extraction_jobs WHERE id='${JOB_A}'`), 'resolved');
@@ -401,19 +408,20 @@ test('V4-D06 zero-books, all-mismatch, and over-limit persist zero candidates wi
   assert.equal(await scalar(db, `SELECT status FROM public.image_extraction_jobs WHERE id='${JOB_A}'`), 'resolved_noop');
 });
 
-test('V4-D06 all-language-mismatch retains evidence and resolves noop', async () => {
+test('M34 treats session language as a hint and retains unknown-language evidence', async () => {
   const claimed = await claim();
   const mismatch = baseResult([
     { ...baseResult().observations[0], ordinal: 1, detected_language: 'hi' },
     { ...baseResult().observations[0], ordinal: 2, detected_language: 'und' },
   ]);
   const completed = await persist(claimed, mismatch);
-  assert.equal(completed.outcome, 'language_mismatch');
-  assert.equal(completed.candidate_count, 0);
+  assert.equal(completed.outcome, 'accepted_with_language_skips');
+  assert.equal(completed.candidate_count, 1);
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_analysis_observations'), 2);
-  assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_extraction_candidates'), 0);
-  assert.equal(await scalar(db, `SELECT state FROM public.image_extraction_inputs WHERE id='${INPUT_A}'`), 'skipped');
-  assert.equal(await scalar(db, `SELECT status FROM public.image_extraction_jobs WHERE id='${JOB_A}'`), 'resolved_noop');
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM public.image_extraction_candidates
+    WHERE observed_language='hi'`), 1);
+  assert.equal(await scalar(db, `SELECT state FROM public.image_extraction_inputs WHERE id='${INPUT_A}'`), 'ready');
+  assert.equal(await scalar(db, `SELECT status FROM public.image_extraction_jobs WHERE id='${JOB_A}'`), 'resolved');
 });
 
 test('V4-D06 over-limit stores image evidence and rejects the whole result', async () => {
@@ -446,7 +454,7 @@ test('V4-W05 transient analyzer failure dead-letters exactly on attempt five', a
   assert.equal(await scalar(db, `SELECT state FROM public.image_extraction_inputs WHERE id='${INPUT_A}'`), 'failed');
 });
 
-test('V4-P03/P04 repeated books stay distinct while mixed-language evidence is retained and skipped', async () => {
+test('V4-P03/P04 repeated and detected cross-language books become distinct candidates', async () => {
   const claimed = await claim();
   const repeatedMixed = baseResult([
     { ...baseResult().observations[0], ordinal: 1, title_guess: 'Same Book' },
@@ -455,12 +463,23 @@ test('V4-P03/P04 repeated books stay distinct while mixed-language evidence is r
     { ...baseResult().observations[0], ordinal: 4, detected_language: 'und' },
   ]);
   const completed = await persist(claimed, repeatedMixed);
-  assert.equal(completed.candidate_count, 2);
+  assert.equal(completed.candidate_count, 3);
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_analysis_observations'), 4);
   assert.equal(await scalar(db, `SELECT count(*)::int FROM public.image_analysis_observations
-    WHERE disposition IN ('language_mismatch','unknown_language')`), 2);
+    WHERE disposition IN ('language_mismatch','unknown_language')`), 1);
   assert.equal(await scalar(db, `SELECT count(*)::int FROM public.image_extraction_candidates
     WHERE observed_title='Same Book'`), 2);
+});
+
+test('M34 rejects a provider observation with more than five authors', async () => {
+  const claimed = await claim();
+  const tooManyAuthors = baseResult([{
+    ...baseResult().observations[0],
+    author_guesses: ['A', 'B', 'C', 'D', 'E', 'F'],
+  }]);
+  await assert.rejects(persist(claimed, tooManyAuthors), /P9_VISION_SCHEMA_INVALID/);
+  assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_analysis_results'), 0);
+  assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_extraction_candidates'), 0);
 });
 
 test('V4-S01/S02 client grants and cross-store authoritative relationships are denied', async () => {

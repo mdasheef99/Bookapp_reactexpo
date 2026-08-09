@@ -25,6 +25,18 @@ Every coding session must update tracking before ending if it changes any of the
 - next recommended task
 - handoff notes
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
+
+> 2026-08-09 Phase 9 bounded local correction: Gemini now returns only compact
+> visual identity plus optional compact multilingual enrichment, capped at five
+> authors. Enrichment is non-fatal, original-script identity stays canonical,
+> and selected session language is a hint in TypeScript and local forward M34.
+> The independent review's required diagnostics correction now prevents bounded
+> provider request IDs or error codes from carrying configured privileged values.
+> Red-first evidence failed 1/22 analyzer and 1/6 egress assertions; corrected
+> analyzer/egress Jest is 22/22 and 6/6, and the complete focused scope is 47/47.
+> Vision-worker TypeScript and current-tree PGlite
+> 59/59 through M32/M33/M34 passed. M34 is unapplied; no provider, Render, job,
+> Supabase, inventory/publication, stage, commit, or push mutation occurred.
 If implementation changes product or architecture behavior, update the relevant source spec and record the reason in this tracker.
 ---
 ## 2. Current Status
@@ -515,12 +527,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **WU2 locally complete; core Gemini/metadata integration unproven; Unit 7 gated** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **M32 live exactly once; M33 local correction complete and unapplied; Unit 7 gated** |
 | Overall status | `in_progress` |
-| Last updated | 2026-08-07 |
-| Latest handoff | WU2 locally cuts over only the Owner `/inventory` route to the canonical WU1 list RPC; tracker 26 owns its evidence. The Unit 4B server startup/configuration receipt remains valid but proves no provider inference. Production media/vision execution, metadata-job creation, metadata-worker execution, enriched-candidate persistence, and Unit 6 readback remain unproven. Unit 6F and Unit 7 remain open/gated. |
-| Current risk level | `CORE_PIPELINE_INTEGRATION_UNPROVEN`: component, fixture, migration, and UI evidence exists, but the approved Gemini-to-metadata-to-review workflow has not been proven as a production path. WU1/WU2 runtime and representative Android Unit 6F gates also remain open. |
-| Next recommended task | Run a read-only vertical integration audit under the existing Unit 4B/5A/5B authority. Do not implement, deploy, invoke providers, mutate database/Storage, or begin Unit 7 until its gap matrix is reviewed. |
+| Last updated | 2026-08-09 |
+| Latest handoff | M32 is live exactly once as `20260808020404 marketplace_phase9_structural_metadata_integration` on `ahntbtktjjmvfosgkmgn`. The real fresh proof reached sanitized media and isolated a missing vision reservation. Forward-only M33 is locally implemented, applies after the actual M31/M32 tail, excludes closed-session/wrong-initiator malformed history, and remains unapplied. The original job remains attempt `4/5`; a later duplicate open media input is untouched. |
+| Current risk level | `M33_REQUIRED_CORRECTIONS_COMPLETE_AWAITING_REREVIEW_AND_APPLICATION`: the durable correction is local and focused ingestion/vision/provider/M33 PGlite is 61/61, but the live database still lacks M33, so invoking the original vision job would schedule another failed retry. The correction pass's focused static suites are 39/39 and the migration-catalog/database suite is 17/17. |
+| Next recommended task | Independently rereview only the two M33 corrections and resulting complete diff, then separately authorize exact-project application/readback. After successful apply, cancel the duplicate input through the existing lifecycle boundary and invoke only the original fresh vision job. |
 
 ---
 
