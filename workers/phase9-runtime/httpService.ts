@@ -96,9 +96,9 @@ async function relay(webResponse: Response, nodeResponse: ServerResponse): Promi
   nodeResponse.end(new Uint8Array(await webResponse.arrayBuffer()));
 }
 
-export function createJsonOperationalLogger(
+export function createJsonOperationalLogger<TEvent extends object = SafeOperationalEvent>(
   write: (line: string) => void = (line) => console.log(line),
-): SafeLog {
+): (event: TEvent) => void {
   return (event) => write(JSON.stringify(event));
 }
 

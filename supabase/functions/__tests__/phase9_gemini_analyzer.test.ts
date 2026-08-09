@@ -105,6 +105,9 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
         tools: undefined,
       }),
     }));
+    const config = generateContent.mock.calls[0][0].config;
+    expect(config).not.toHaveProperty('temperature');
+    expect(config).not.toHaveProperty('candidateCount');
   });
 
   it('normalizes empty, language-mismatch, and over-15 responses without changing policy', async () => {
@@ -137,6 +140,37 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
       classification,
       retryable: false,
     });
+  });
+
+  it('logs only bounded provider error evidence', async () => {
+    const failure = {
+      status: 400,
+      requestId: 'gemini-request-17',
+      error: {
+        code: 400,
+        status: 'INVALID_ARGUMENT',
+        message: 'private provider body and key-adjacent detail',
+      },
+    };
+    const { analyzer, logs } = setup({}, {
+      client: { models: { generateContent: jest.fn().mockRejectedValue(failure) } },
+    });
+    await expect(analyzer.analyze(request)).rejects.toMatchObject({
+      code: 'P9_VISION_ANALYZER_UNAVAILABLE',
+      classification: 'provider_error',
+      retryable: true,
+    });
+    expect(logs).toContainEqual(expect.objectContaining({
+      event: 'gemini_analysis_failed',
+      httpStatus: 400,
+      providerErrorCode: 'INVALID_ARGUMENT',
+      providerErrorCategory: 'malformed_request',
+      providerRequestId: 'gemini-request-17',
+      safeMessage: 'provider rejected the request shape',
+    }));
+    const serialized = JSON.stringify(logs);
+    expect(serialized).not.toContain('private provider body');
+    expect(serialized).not.toContain('key-adjacent');
   });
 
   it.each([
