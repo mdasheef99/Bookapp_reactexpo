@@ -8,10 +8,7 @@ import {
   SpineImageAnalyzer,
 } from '../contracts/vision';
 import { SearchVariantCompanion } from '../contracts/searchVariants';
-import {
-  GEMINI_VISION_PROMPT,
-  GEMINI_VISION_RESPONSE_SCHEMA,
-} from './geminiVisionSchema';
+import { GEMINI_VISION_PROMPT } from './geminiVisionSchema';
 import {
   extractGeminiUsageEvidence,
   GeminiCostCalculator,
@@ -37,7 +34,6 @@ import {
   safeProviderRequestId,
 } from './geminiAnalyzerGuards';
 
-export { GEMINI_VISION_RESPONSE_SCHEMA } from './geminiVisionSchema';
 export type { GeminiUsageEvidence } from './geminiUsageEvidence';
 export type {
   VisionClaimContext,
@@ -217,7 +213,6 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
         }],
         config: {
           responseMimeType: 'application/json',
-          responseJsonSchema: GEMINI_VISION_RESPONSE_SCHEMA,
           tools: undefined,
           httpOptions: { timeout: this.options.timeoutMs },
           abortSignal: AbortSignal.timeout(this.options.timeoutMs),

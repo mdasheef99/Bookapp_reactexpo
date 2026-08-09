@@ -19,22 +19,26 @@ export type GeminiAnalysisWithCompanion = Readonly<{
   searchVariantProposals: SearchVariantCompanion;
 }>;
 
-const RESPONSE_KEYS = ['vision', 'multilingual_search_enrichment'] as const;
+const RESPONSE_KEYS = ['vision'] as const;
 const VISION_KEYS = [
   'image_outcome', 'detected_visible_book_count', 'observations',
 ] as const;
 const OBSERVATION_KEYS = [
   'ordinal', 'title_guess', 'author_guesses', 'publisher_clue', 'isbn_clue',
-  'detected_language', 'confidence',
+  'detected_language', 'confidence', 'title_romanization',
+  'english_translation_candidate', 'author_romanizations',
 ] as const;
 
-function compactVision(value: unknown): Record<string, unknown> {
+function compactVision(value: unknown): Readonly<{
+  canonical: Record<string, unknown>;
+  flattenedObservations: readonly Record<string, unknown>[];
+}> {
   const vision = asRecord(value, 'gemini_response.vision');
   assertKnownKeys(vision, VISION_KEYS, 'gemini_response.vision');
   if (!Array.isArray(vision.observations)) {
     throw new Phase9ContractError('gemini_response.vision.observations', 'must be an array');
   }
-  const observations = vision.observations.map((entry, index) => {
+  const flattenedObservations = vision.observations.map((entry, index) => {
     const field = `gemini_response.vision.observations[${index}]`;
     const observation = asRecord(entry, field);
     assertKnownKeys(observation, OBSERVATION_KEYS, field);
@@ -44,9 +48,33 @@ function compactVision(value: unknown): Record<string, unknown> {
         `${field}.author_guesses`, 'must contain at most 5 entries',
       );
     }
-    return { ...observation, geometry: null, warning_codes: [] };
+    return observation;
   });
-  return { ...vision, observations, warning_codes: [] };
+  const observations = flattenedObservations.map((observation) => {
+    const {
+      title_romanization: _titleRomanization,
+      english_translation_candidate: _englishTranslation,
+      author_romanizations: _authorRomanizations,
+      ...identity
+    } = observation;
+    return {
+      ...identity,
+      detected_language: identity.detected_language === null
+        ? 'und' : identity.detected_language,
+      geometry: null,
+      warning_codes: [],
+    };
+  });
+  return {
+    canonical: {
+      ...vision,
+      image_outcome: vision.image_outcome === 'success'
+        ? 'analyzed' : vision.image_outcome,
+      observations,
+      warning_codes: [],
+    },
+    flattenedObservations,
+  };
 }
 
 function resultEnvelope(
@@ -81,38 +109,34 @@ export function decodeGeminiAnalysisResponse(
   providerOutput: Record<string, unknown>,
 ): GeminiAnalysisWithCompanion {
   assertKnownKeys(providerOutput, RESPONSE_KEYS, 'gemini_response');
-  const visionOutput = compactVision(providerOutput.vision);
+  const compact = compactVision(providerOutput.vision);
   const envelope = resultEnvelope(
     request,
     modelId,
     receivedAt,
-    visionOutput as Record<string, unknown>,
+    compact.canonical,
   );
   const canonical = decodeVisionSearchVariantCompanion(envelope, undefined);
   assertSpineAnalysisIdentity(request, canonical.vision);
   let sidecarOutput: unknown;
-  if (Object.prototype.hasOwnProperty.call(
-    providerOutput, 'multilingual_search_enrichment',
-  )) {
-    try {
-      const built = buildGeminiSearchVariantSidecar(
-        providerOutput.multilingual_search_enrichment,
-        canonical.vision,
-        {
-          analysisReference: request.correlationId,
-          modelId,
-          promptVersion: request.promptVersion,
-        },
-      );
-      sidecarOutput = built ?? undefined;
-    } catch {
-      return {
-        vision: canonical.vision,
-        searchVariantProposals: {
-          status: 'rejected', value: null, reason: 'schema_invalid',
-        },
-      };
-    }
+  try {
+    const built = buildGeminiSearchVariantSidecar(
+      compact.flattenedObservations,
+      canonical.vision,
+      {
+        analysisReference: request.correlationId,
+        modelId,
+        promptVersion: request.promptVersion,
+      },
+    );
+    sidecarOutput = built ?? undefined;
+  } catch {
+    return {
+      vision: canonical.vision,
+      searchVariantProposals: {
+        status: 'rejected', value: null, reason: 'schema_invalid',
+      },
+    };
   }
   const decoded = decodeVisionSearchVariantCompanion(envelope, sidecarOutput);
   assertSpineAnalysisIdentity(request, decoded.vision);

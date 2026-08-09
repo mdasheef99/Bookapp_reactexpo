@@ -1,7 +1,6 @@
 import {
   asRecord,
   assertKnownKeys,
-  canonicalBcp47,
   Phase9ContractError,
   requiredString,
 } from '../domain/validation';
@@ -9,38 +8,30 @@ import {
   PHASE9_CONTRACT_VERSION,
   PHASE9_SEARCH_VARIANT_SCHEMA_VERSION,
 } from '../contracts/versions';
-import {
-  SpineAnalysisResult,
-} from '../contracts/vision';
+import { SpineAnalysisResult } from '../contracts/vision';
 import {
   SupportedSearchVariantScript,
   textUsesScript,
 } from '../contracts/searchVariantScripts';
 
-const ENRICHMENT_KEYS = [
-  'observation_ordinal', 'title', 'authors',
-] as const;
-const TITLE_KEYS = [
-  'source_language', 'source_script', 'title_romanization',
-  'english_translation_candidate',
-] as const;
-const AUTHOR_KEYS = [
-  'author_ordinal', 'source_language', 'source_script', 'author_romanization',
+const OBSERVATION_KEYS = [
+  'ordinal', 'title_guess', 'author_guesses', 'publisher_clue', 'isbn_clue',
+  'detected_language', 'confidence', 'title_romanization',
+  'english_translation_candidate', 'author_romanizations',
 ] as const;
 const SCRIPTS: readonly SupportedSearchVariantScript[] = [
   'Latn', 'Knda', 'Taml', 'Telu', 'Mlym', 'Deva', 'Arab', 'Mtei',
 ];
 
-function nullableText(value: unknown, field: string): string | null {
-  if (value === null) return null;
+function optionalProposalText(value: unknown, field: string): string | null {
+  if (value === null || value === undefined) return null;
   return requiredString(value, field, 256);
 }
-function sourceScript(value: unknown, text: string, field: string): SupportedSearchVariantScript {
-  if (typeof value !== 'string' || !SCRIPTS.includes(value as SupportedSearchVariantScript)
-    || !textUsesScript(text, value as SupportedSearchVariantScript)) {
-    throw new Phase9ContractError(field, 'script does not match source text');
-  }
-  return value as SupportedSearchVariantScript;
+
+function inferredScript(text: string, field: string): SupportedSearchVariantScript {
+  const script = SCRIPTS.find((candidate) => textUsesScript(text, candidate));
+  if (!script) throw new Phase9ContractError(field, 'unsupported source script');
+  return script;
 }
 
 function romanProposal(text: string, language: string) {
@@ -70,104 +61,69 @@ export function buildGeminiSearchVariantSidecar(
     promptVersion: string;
   }>,
 ): Record<string, unknown> | null {
-  if (!Array.isArray(value) || value.length > 15) {
+  if (!Array.isArray(value) || value.length !== vision.observations.length) {
     throw new Phase9ContractError(
-      'multilingual_search_enrichment', 'must contain at most 15 entries',
+      'vision.observations', 'must match canonical observations',
     );
   }
   const titles: Record<string, unknown>[] = [];
   const authors: Record<string, unknown>[] = [];
-  const seenOrdinals = new Set<number>();
 
   value.forEach((entry, index) => {
-    const field = `multilingual_search_enrichment[${index}]`;
+    const field = `vision.observations[${index}]`;
     const input = asRecord(entry, field);
-    assertKnownKeys(input, ENRICHMENT_KEYS, field);
-    const ordinal = input.observation_ordinal;
-    if (!Number.isInteger(ordinal) || (ordinal as number) < 1
-      || (ordinal as number) > 15 || seenOrdinals.has(ordinal as number)) {
-      throw new Phase9ContractError(
-        `${field}.observation_ordinal`, 'invalid or duplicate ordinal',
-      );
+    assertKnownKeys(input, OBSERVATION_KEYS, field);
+    const observation = vision.observations[index];
+    if (input.ordinal !== observation.ordinal) {
+      throw new Phase9ContractError(`${field}.ordinal`, 'does not match vision');
     }
-    seenOrdinals.add(ordinal as number);
-    const observation = vision.observations.find((item) => item.ordinal === ordinal);
-    if (!observation) {
-      throw new Phase9ContractError(
-        `${field}.observation_ordinal`, 'missing vision observation',
-      );
-    }
-    if (input.title !== null) {
-      const title = asRecord(input.title, `${field}.title`);
-      assertKnownKeys(title, TITLE_KEYS, `${field}.title`);
-      if (!observation.titleGuess) {
-        throw new Phase9ContractError(`${field}.title`, 'missing vision title');
-      }
-      const language = canonicalBcp47(
-        title.source_language, `${field}.title.source_language`,
-      );
-      const script = sourceScript(
-        title.source_script, observation.titleGuess, `${field}.title.source_script`,
-      );
-      const titleRomanization = nullableText(
-        title.title_romanization, `${field}.title.title_romanization`,
-      );
-      const translation = nullableText(
-        title.english_translation_candidate,
-        `${field}.title.english_translation_candidate`,
-      );
+
+    const titleRomanization = optionalProposalText(
+      input.title_romanization, `${field}.title_romanization`,
+    );
+    const translation = optionalProposalText(
+      input.english_translation_candidate,
+      `${field}.english_translation_candidate`,
+    );
+    if (observation.titleGuess) {
+      const script = inferredScript(observation.titleGuess, `${field}.title_guess`);
       const proposals = [
         ...(titleRomanization && script !== 'Latn'
-          ? [romanProposal(titleRomanization, language)] : []),
+          ? [romanProposal(titleRomanization, observation.detectedLanguage)] : []),
         ...(translation ? [translationProposal(translation)] : []),
       ];
       if (proposals.length > 0) {
         titles.push({
-          source_field: `observation:${ordinal}:title`,
+          source_field: `observation:${observation.ordinal}:title`,
           source_text: observation.titleGuess,
-          source_language: language,
+          source_language: observation.detectedLanguage,
           source_script: script,
           proposals,
         });
       }
     }
 
-    if (!Array.isArray(input.authors) || input.authors.length > 5) {
+    if (!Array.isArray(input.author_romanizations)
+      || input.author_romanizations.length > 5
+      || input.author_romanizations.length !== observation.authorGuesses.length) {
       throw new Phase9ContractError(
-        `${field}.authors`, 'must contain at most 5 entries',
+        `${field}.author_romanizations`, 'must align one-to-one with author_guesses',
       );
     }
-    const seenAuthors = new Set<number>();
-    input.authors.forEach((authorEntry, authorIndex) => {
-      const authorField = `${field}.authors[${authorIndex}]`;
-      const author = asRecord(authorEntry, authorField);
-      assertKnownKeys(author, AUTHOR_KEYS, authorField);
-      const authorOrdinal = author.author_ordinal;
-      if (!Number.isInteger(authorOrdinal) || (authorOrdinal as number) < 1
-        || (authorOrdinal as number) > observation.authorGuesses.length
-        || seenAuthors.has(authorOrdinal as number)) {
-        throw new Phase9ContractError(
-          `${authorField}.author_ordinal`, 'invalid or duplicate author ordinal',
-        );
-      }
-      seenAuthors.add(authorOrdinal as number);
-      const romanization = nullableText(
-        author.author_romanization, `${authorField}.author_romanization`,
+    input.author_romanizations.forEach((rawRomanization, authorIndex) => {
+      const romanization = optionalProposalText(
+        rawRomanization, `${field}.author_romanizations[${authorIndex}]`,
       );
-      const sourceText = observation.authorGuesses[(authorOrdinal as number) - 1];
-      const language = canonicalBcp47(
-        author.source_language, `${authorField}.source_language`,
-      );
-      const script = sourceScript(
-        author.source_script, sourceText, `${authorField}.source_script`,
-      );
-      if (!romanization || script === 'Latn') return;
+      if (!romanization) return;
+      const sourceText = observation.authorGuesses[authorIndex];
+      const script = inferredScript(sourceText, `${field}.author_guesses[${authorIndex}]`);
+      if (script === 'Latn') return;
       authors.push({
-        source_field: `observation:${ordinal}:author:${authorOrdinal}`,
+        source_field: `observation:${observation.ordinal}:author:${authorIndex + 1}`,
         source_text: sourceText,
-        source_language: language,
+        source_language: observation.detectedLanguage,
         source_script: script,
-        proposals: [romanProposal(romanization, language)],
+        proposals: [romanProposal(romanization, observation.detectedLanguage)],
       });
     });
   });

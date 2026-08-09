@@ -1,5 +1,4 @@
 import {
-  GEMINI_VISION_RESPONSE_SCHEMA,
   GeminiAnalyzerError,
   GeminiSpineImageAnalyzer,
   GeminiUsageEvidence,
@@ -31,6 +30,9 @@ const observation = (ordinal: number, language = 'en') => ({
   isbn_clue: null,
   detected_language: language,
   confidence: 0.9,
+  title_romanization: null,
+  english_translation_candidate: null,
+  author_romanizations: [null],
 });
 
 const output = (
@@ -73,7 +75,7 @@ function setup(response: unknown, overrides: Record<string, unknown> = {}) {
 }
 
 describe('Phase 9 Gemini spine-image analyzer', () => {
-  it('maps sanitized image input and a strict structured-output schema for multiple books', async () => {
+  it('maps sanitized image input through simple JSON mode and validates locally', async () => {
     const { analyzer, generateContent } = setup({
       text: JSON.stringify(output([observation(1), observation(2)])),
       usageMetadata: { promptTokenCount: 100, candidatesTokenCount: 50, totalTokenCount: 150 },
@@ -100,7 +102,6 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
       }],
       config: expect.objectContaining({
         responseMimeType: 'application/json',
-        responseJsonSchema: GEMINI_VISION_RESPONSE_SCHEMA,
         tools: undefined,
       }),
     }));
@@ -112,22 +113,11 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
     expect(prompt).not.toContain(request.jobReference);
     expect(config).not.toHaveProperty('temperature');
     expect(config).not.toHaveProperty('candidateCount');
-    const schema = JSON.stringify(config.responseJsonSchema);
-    expect(schema).toContain('multilingual_search_enrichment');
-    expect(schema).toContain('title_romanization');
-    expect(schema).toContain('author_romanization');
-    expect(schema).toContain('english_translation_candidate');
-    expect(schema).not.toContain('search_variant_proposals');
-    expect(schema).not.toContain('analysis_reference');
-    expect(schema).not.toContain('geometry');
-    expect(schema).not.toContain('warning_codes');
-    expect(schema).not.toContain('contract_version');
-    expect(schema).not.toContain('schema_version');
-    expect(schema).not.toContain('model_key');
-    expect(schema).not.toContain('prompt_version');
-    expect(schema).toContain('"author_guesses":{"type":"array","maxItems":5');
-    expect(schema).toContain('"authors":{"type":"array","maxItems":5');
-    expect(schema).not.toContain('maxItems\":300');
+    expect(config).not.toHaveProperty('responseJsonSchema');
+    expect(prompt).toContain('title_romanization');
+    expect(prompt).toContain('author_romanizations');
+    expect(prompt).toContain('english_translation_candidate');
+    expect(prompt).not.toContain('multilingual_search_enrichment');
   });
 
   it('normalizes empty, cross-language, and over-15 responses with language as a hint', async () => {
@@ -146,6 +136,26 @@ describe('Phase 9 Gemini spine-image analyzer', () => {
     const overResult = await over.analyzer.analyze(request);
     expect(evaluateVisionResult(overResult)).toMatchObject({
       outcome: 'over_visible_book_limit', candidates: [],
+    });
+  });
+
+  it('normalizes Gemini JSON-mode success and null detected language', async () => {
+    const providerObservation = {
+      ...observation(1),
+      title_guess: null,
+      author_guesses: [],
+      detected_language: null,
+      confidence: 0.3,
+      author_romanizations: [],
+    };
+    const proof = setup({
+      text: JSON.stringify(output([providerObservation], 'success', 1)),
+    });
+
+    await expect(proof.analyzer.analyze(request)).resolves.toMatchObject({
+      imageOutcome: 'analyzed',
+      detectedVisibleBookCount: 1,
+      observations: [{ detectedLanguage: 'und' }],
     });
   });
 
