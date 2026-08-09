@@ -29,7 +29,7 @@ export function buildGoogleBooksRequest(
   url.searchParams.set('maxResults', String(GOOGLE_BOOKS_RESULT_LIMIT));
   url.searchParams.set('orderBy', 'relevance');
   url.searchParams.set('printType', 'books');
-  url.searchParams.set('projection', 'lite');
+  url.searchParams.set('projection', 'full');
   url.searchParams.set('startIndex', '0');
   url.searchParams.set('key', apiKey);
   const safe = new URL(url);
