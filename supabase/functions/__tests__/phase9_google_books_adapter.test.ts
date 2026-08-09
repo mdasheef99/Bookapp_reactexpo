@@ -43,6 +43,7 @@ describe('Phase 9 Unit 5B Google Books adapter', () => {
     expect(request.url.searchParams.get('maxResults')).toBe('10');
     expect(request.url.searchParams.get('startIndex')).toBe('0');
     expect(request.url.searchParams.get('printType')).toBe('books');
+    expect(request.url.searchParams.get('projection')).toBe('full');
     expect(request.url.searchParams.get('key')).toBe('server-only-key');
     expect(request.safeUrl).not.toContain('server-only-key');
     expect(request.url.toString()).not.toContain('store');
