@@ -1,6 +1,6 @@
 # Phase 9 Implementation and Verification Tracker
 **Status:** `metadata_retry_correction_locally_complete_approved`; **last updated:** 2026-08-10
-**Active work unit:** `phase9_metadata_retry_provider_attempt_correction`. Local M38, the metadata worker correction, focused regression evidence, independent review, and optional bounded Git publication are authorized. M38 application, deployment, provider/job invocation, live-job retry/requeue, Storage, media, vision, query-policy, duplicate-replay, Unit 7, inventory, listing, and publication mutations remain prohibited.
+**Active work unit:** `phase9_metadata_retry_provider_attempt_correction`. Local M38, the metadata worker correction, focused regression evidence, independent review, and bounded Git publication are complete. M38 application, deployment, provider/job invocation, live-job retry/requeue, Storage, media, vision, query-policy, duplicate-replay, Unit 7, inventory, listing, and product-publication mutations remain prohibited.
 **Preserved authorization sequence:** `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`; neither status by itself authorizes migration application or external mutation.
 ## Work units
 | Unit | Scope | Status | Required gate |
@@ -1491,11 +1491,13 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 - Verification: metadata Jest 148/148; structural metadata PGlite 14/14; full
   Phase 9 PGlite 242/242; metadata build, entrypoint smoke, deployment validator,
   continuity validator, diff hygiene, secret/artifact scan, and `.pyc` count pass.
-- External/database effects: none. The exact project was read only; M38 remains
-  unapplied; the failed live job was not retried, requeued, or otherwise mutated.
+- External/database effects: Git-only publication of correction commit `8c55fea`
+  to `origin/codex/phase9-metadata-retry-correction`. The exact project was read
+  only; M38 remains unapplied; the failed live job was not retried, requeued, or
+  otherwise mutated.
 - Decisions/deviations: the minimum forward schema change is required because
   M32's public context omitted the physical-call claim attempt. M32-M37 remain
   byte-unchanged. No media, vision, dispatcher, Vault/Cron, Owner UI, query
   policy, duplicate-replay, or Unit 7 behavior changed.
-- Next: publish only this approved correction branch. Application and metadata
-  redeployment require a separately authorized operational session.
+- Next: open a separately authorized operational session if M38 application and
+  metadata redeployment are desired. Neither is authorized by this closeout.

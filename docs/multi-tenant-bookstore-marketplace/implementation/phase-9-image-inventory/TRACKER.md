@@ -8,12 +8,12 @@
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** H1 is resolved by proof: authorized Owner review rejects a `processing` candidate without changing its version, while claim attempt/worker/token/lease, candidate state, and authoritative vision lineage fence physical finalization. H2 uses one shared offset-aware ISO-8601 timestamp helper across vision, metadata edition/result, and automated-alias boundaries. H3 directly proves repeated reconciliation, registered-call reclaim survival, known-completion reuse, and stale-worker non-overwrite. SQL-backed worker evidence remains green for finalized-retryable replay, sibling isolation, invalid-ISBN fallback, and storage-denied positive-retention gaps. All 14 M32 public worker wrappers remain covered by exhaustive ACL proof. M32 was then verified live exactly once, and the minimum Google Books registry row was configured.
-**Next authorized action:** publish the approved bounded correction branch; operational M38 application and metadata-only redeployment require a separate explicit session
+**Next authorized action:** open a separately authorized operational session if M38 application and metadata-only redeployment are desired; no operational action is authorized now
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M33 are live at their recorded versions; M34 is live once as `20260809182407 marketplace_phase9_vision_language_hint_correction`; M35 is live once as `20260809223135 marketplace_phase9_single_image_removal`.
 **Scope boundary:** this unit authorizes classification, bounded commits, local tests/review, and publication of the correction branch. Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and product-publication actions are excluded.
 **Implementation authority:** the user's latest 2026-08-10 instruction authorizes the bounded correction and permits its commit/push after independent approval; it does not expand external mutation authority or authorize a `main` push.
 **Migration creation/application authority:** local M38 creation is authorized; application is prohibited. M32-M37 are immutable and live exactly once. No deployment, provider/job invocation, live-job retry/requeue, Storage, media, vision, query-policy, Unit 7, inventory, listing, or publication mutation is authorized.
-**Current gate:** `M38_LOCALLY_COMPLETE_INDEPENDENTLY_APPROVED`; focused metadata Jest passes 148/148, exact Google Books HTTP 503-to-200 structural PGlite passes, full Phase 9 PGlite passes 242/242 through M38, metadata build/entrypoint/deployment validation pass, independent correction-only review is `APPROVED`, and no live state changed.
+**Current gate:** `M38_LOCALLY_COMPLETE_APPROVED_BRANCH_PUBLISHED`; focused metadata Jest passes 148/148, exact Google Books HTTP 503-to-200 structural PGlite passes, full Phase 9 PGlite passes 242/242 through M38, metadata build/entrypoint/deployment validation pass, independent correction-only review is `APPROVED`, correction commit `8c55fea` is pushed on `codex/phase9-metadata-retry-correction`, and no live state changed.
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -1024,5 +1024,9 @@ provider fallback, or create global alias authority.
   invocation, retry/requeue, Vault/Cron, Storage, media, vision, query-policy,
   duplicate-replay, Unit 7, inventory, listing, or product-publication state
   changed.
-- Exact next authorized action: publish the bounded correction branch only.
-  M38 application and metadata-only redeployment require a new explicit session.
+- Git publication: correction commit `8c55fea` was pushed to
+  `origin/codex/phase9-metadata-retry-correction`; `docs/codemap/` remained
+  untracked and untouched.
+- Exact next authorized action: open a separately authorized operational session
+  if M38 application and metadata-only redeployment are desired. Neither is
+  authorized by this closeout.

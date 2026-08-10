@@ -22,8 +22,8 @@ owns the bounded retry fix. Local M38 adds only metadata context v2 and exposes
 the latest physical provider call's originating claim attempt. Retryable results
 are replayed only inside the same claim; a later claim registers a new physical
 call and performs fresh egress. Terminal/non-retryable reconciliation remains
-replay-safe. Independent correction-only review is `APPROVED`; bounded Git
-publication is the remaining local closeout. M38 application, metadata redeploy,
+replay-safe. Independent correction-only review is `APPROVED`; correction commit
+`8c55fea` is published on `codex/phase9-metadata-retry-correction`. M38 application, metadata redeploy,
 live-job mutation, and every media, vision, query-policy, duplicate-replay,
 Unit 7, inventory, listing, or publication mutation remain prohibited.
 

@@ -471,7 +471,8 @@ if (
         $tracker.Contains('**Next authorized action:** rerun the required gates on the isolated candidate, obtain independent final approval, verify fresh-main ancestry/content, then push that exact candidate normally to `origin/main`') -or
         $tracker.Contains('**Next authorized action:** obtain independent final approval of the corrected isolated candidate, verify fresh-main ancestry/content, then push that exact candidate normally to `origin/main`') -or
         $tracker.Contains('**Next authorized action:** obtain independent final approval of the corrected isolated candidate, verify fresh-main ancestry/content, report publish readiness, and wait for a new explicit user instruction before any push') -or
-        $tracker.Contains('**Next authorized action:** publish the approved bounded correction branch; operational M38 application and metadata-only redeployment require a separate explicit session')
+        $tracker.Contains('**Next authorized action:** publish the approved bounded correction branch; operational M38 application and metadata-only redeployment require a separate explicit session') -or
+        $tracker.Contains('**Next authorized action:** open a separately authorized operational session if M38 application and metadata-only redeployment are desired; no operational action is authorized now')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or

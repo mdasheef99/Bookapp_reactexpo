@@ -85,6 +85,9 @@ If implementation changes product or architecture behavior, update the relevant 
 > independent correction-only verdict is `APPROVED`. M38 is local/unapplied. No database,
 > deployment, provider, job, media/vision, query-policy, Unit 7, inventory,
 > listing, or publication mutation is authorized in this correction session.
+> Correction commit `8c55fea` is published on
+> `codex/phase9-metadata-retry-correction`; this Git-only effect did not mutate
+> Supabase, Render, providers, jobs, Storage, inventory, listings, or publication.
 
 > 2026-08-10 Phase 9 Unit 6 pre-main reconciliation has assembled an isolated
 > candidate from fresh `origin/main` `388d8bf`. Merge checkpoint `8e327d7`

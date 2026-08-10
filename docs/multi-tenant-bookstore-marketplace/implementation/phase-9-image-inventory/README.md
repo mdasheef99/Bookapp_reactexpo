@@ -23,7 +23,7 @@ and must be overridden for the worker process.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 
-The current narrow authority is the locally complete, independently `APPROVED` Phase 9 metadata retry/provider-attempt correction: local forward M38 and its worker/tests may be published as one bounded correction. M32-M37 are live and immutable; M38 is unapplied. Supabase, Render, provider/job, Storage, media, vision, query-policy, duplicate-replay, Unit 7, inventory, listing, and product-publication mutations remain separately gated.
+The current narrow authority is the locally complete, independently `APPROVED` Phase 9 metadata retry/provider-attempt correction, published as commit `8c55fea` on `codex/phase9-metadata-retry-correction`. M32-M37 are live and immutable; M38 is unapplied. Supabase, Render, provider/job, Storage, media, vision, query-policy, duplicate-replay, Unit 7, inventory, listing, and product-publication mutations remain separately gated.
 
 WU1 and WU2 remain complete at their recorded levels. Local M32 now closes the
 structural metadata seam with transaction-atomic candidate/job creation,
