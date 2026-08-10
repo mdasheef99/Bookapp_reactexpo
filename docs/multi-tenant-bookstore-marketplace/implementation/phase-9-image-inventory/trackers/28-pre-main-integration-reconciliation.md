@@ -1,6 +1,6 @@
 # Phase 9 Unit 6 Pre-Main Integration Reconciliation
 
-**Status:** `bounded_packages_committed_full_verification_pending`
+**Status:** `full_local_gates_pass_independent_review_pending`
 **Date:** 2026-08-10
 **Target:** one reviewed `main` SHA containing the current Phase 9 ingestion path
 
@@ -136,9 +136,24 @@ and the changed suites passed in the bounded diagnostic run above.
 
 ## 6. Remaining candidate gate
 
-Commit the reconciled documentation, run the complete Phase 9 local matrix and
-artifact/secret checks, obtain an independent `APPROVED` review, then integrate
-from a freshly fetched `origin/main`. The final tree must exclude `.wt/`,
+The complete local gate is green:
+
+- Phase 9 function/runtime plus migration-structure Jest: 54 suites, 694/694;
+- complete image-inventory client Jest: 39 suites, 287/287; the run retained
+  known candidate-review `act(...)` warnings but had no test failure;
+- full Phase 9 PGlite migration/runtime replay: 240/240 through local M36;
+- media, vision, and metadata worker builds plus authenticated entrypoint smoke:
+  PASS;
+- deployment-runtime validator and canonical repository TypeScript: PASS;
+- continuity: 195 definitions, zero duplicate/missing traceability, 107 semantic
+  negative probes, 70 Markdown files, and 53 required files: PASS;
+- repository diff, tracked-artifact, and `.pyc` hygiene: PASS; `.pyc` count 0;
+- branch-delta secret scan: no blocking finding. Two invalid-length test tokens
+  and one documented angle-bracket placeholder were explicitly allowlisted;
+- container smoke: unavailable because Docker is not installed; not claimed.
+
+Obtain an independent `APPROVED` review, then integrate from a freshly fetched
+`origin/main`. The final tree must exclude `.wt/`,
 `docs/codemap/`, Store Owner Orders commit `2f32231`, the Phase 4 hunk from
 `0c705d4`, and superseded Gemini content, while preserving the exact dispatcher
 commit ancestry required by this publication. Only then may the exact candidate

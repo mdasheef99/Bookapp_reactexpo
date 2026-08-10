@@ -13,7 +13,7 @@
 **Scope boundary:** this unit authorizes classification, bounded commits, local tests/review, clean integration, and normal Git publication only. Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and publication actions are excluded.
 **Implementation authority:** the user's 2026-08-10 pre-main reconciliation request authorizes exact current-required packaging and controlled publication to `main`; it does not expand any external mutation authority.
 **Migration creation/application authority:** M36 remains a local forward migration under review. No migration application, Vault mutation, Cron activation, Render deployment/redeployment, live image removal, worker invocation, or final live proof is authorized.
-**Current gate:** `PRE_MAIN_PACKAGE_ASSEMBLY`; commits `ce5f787`, `3e16973`, and `b76cf05` package the metadata/M32, M33, and M35/Unit 6 working-tree slices. Full gates and final independent review remain required before integration.
+**Current gate:** `FULL_LOCAL_GATES_PASS_INDEPENDENT_REVIEW_PENDING`; commits `ce5f787`, `3e16973`, `b76cf05`, and `d4a0fd0` package the metadata/M32, M33, M35/Unit 6, and authority-document slices. Phase 9 Jest 694/694, complete image-inventory client Jest 287/287, Phase 9 PGlite 240/240, all three worker builds/entrypoints, deployment validation, canonical repository TypeScript, continuity, diff/secret/artifact checks, and `.pyc` zero-count pass. Docker is unavailable, so container smoke is not claimed. Final independent review remains required before integration.
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
