@@ -1441,3 +1441,13 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
   warnings without failures. The secret scan allowlisted only two invalid-length
   test tokens and one angle-bracket README placeholder; blocking count is zero.
 - Current gate: independent complete-delta review before clean integration.
+- Isolated candidate assembly: fresh `origin/main` `388d8bf` plus proven
+  `projection=full` checkpoint `6b31025` and merge checkpoint `8e327d7`.
+  Exact dispatcher commit `51c51f4` is an ancestor. Gemini conflicts were
+  resolved to main; the migration harness combines M34/M35/M36; Store Owner
+  Orders and the unrelated Phase 4 file are unchanged from main.
+- Git ancestry caveat: preserving exact `51c51f4` necessarily retains
+  historical ancestors `2f32231`, `dc19107`, and `df63801`; their tree effects
+  are explicitly neutralized and the ancestry is disclosed in tracker 28.
+- Next gate: complete candidate rerun and independent final approval, followed
+  by a fresh `origin/main` comparison and normal push of the exact candidate.

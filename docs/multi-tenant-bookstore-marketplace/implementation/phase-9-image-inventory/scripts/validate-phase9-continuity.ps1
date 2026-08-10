@@ -456,7 +456,8 @@ if (
         $tracker.Contains('**Next authorized action:** review M35 and explicitly authorize its exact-project application; Edge deployment and any live removal remain separate approvals') -or
         $tracker.Contains('**Next authorized action:** refresh and observe the new post-removal input without mutation; any further image removal requires a new explicit target decision') -or
         $tracker.Contains('**Next authorized action:** review the local automatic-worker-wake implementation and explicitly authorize or reject a separate deployment/external-mutation unit') -or
-        $tracker.Contains('**Next authorized action:** complete local verification and independent review, assemble a clean candidate from fresh `origin/main`, then push that exact verified candidate normally to `origin/main`')
+        $tracker.Contains('**Next authorized action:** complete local verification and independent review, assemble a clean candidate from fresh `origin/main`, then push that exact verified candidate normally to `origin/main`') -or
+        $tracker.Contains('**Next authorized action:** rerun the required gates on the isolated candidate, obtain independent final approval, verify fresh-main ancestry/content, then push that exact candidate normally to `origin/main`')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or

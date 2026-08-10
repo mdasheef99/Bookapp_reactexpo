@@ -69,15 +69,17 @@ Every material session must also leave one exact active work unit and next autho
 If implementation changes product or architecture behavior, update the relevant source spec and record the reason in this tracker.
 ---
 ## 2. Current Status
-> 2026-08-10 Phase 9 automatic-worker-wake dispatcher remains the active narrow
-> work unit. M35 and Owner Edge v3 remain the last completed live milestone.
-> Red-first local implementation and correction-only independent review are
-> recorded: M36 is unapplied, creates its one cron inactive, and locally proves
-> private claimability parity, Vault-only configuration, bounded observability,
-> dispatch correlation, timeout evidence, and metadata deployment preparation.
-> Applying/configuring/enabling the dispatcher, Render deployment/redeployment,
-> worker invocation, live image removal, final live proof, Git publication,
-> duplicate replay, Unit 7, inventory, and publication remain prohibited.
+> 2026-08-10 Phase 9 Unit 6 pre-main reconciliation has assembled an isolated
+> candidate from fresh `origin/main` `388d8bf`. Merge checkpoint `8e327d7`
+> contains the complete packaged M32/M33/M35/Unit 6/runtime source, exact M36
+> dispatcher ancestry, and the proven Google Books `projection=full` correction.
+> Unrelated Store Owner Orders and Phase 4 content plus superseded Gemini tree
+> content were restored to authoritative `origin/main` versions before commit.
+> Complete local gates passed on the package; candidate rerun and independent
+> final review remain before normal `origin/main` push. M36 application and all
+> Supabase, Vault, Cron, Render, worker/provider, Storage, live-image,
+> duplicate-replay, Unit 7, inventory, listing, and publication mutations remain
+> prohibited.
 
 > 2026-08-09 Phase 9 metadata-runtime safety checkpoint: M32 remains live exactly
 > once on verified healthy project `ahntbtktjjmvfosgkmgn`. Shared worker startup

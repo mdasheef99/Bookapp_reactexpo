@@ -1,6 +1,6 @@
 # Phase 9 Unit 6 Pre-Main Integration Reconciliation
 
-**Status:** `full_local_gates_pass_independent_review_pending`
+**Status:** `isolated_candidate_assembled_final_verification_review_pending`
 **Date:** 2026-08-10
 **Target:** one reviewed `main` SHA containing the current Phase 9 ingestion path
 
@@ -152,9 +152,26 @@ The complete local gate is green:
   and one documented angle-bracket placeholder were explicitly allowlisted;
 - container smoke: unavailable because Docker is not installed; not claimed.
 
-Obtain an independent `APPROVED` review, then integrate from a freshly fetched
-`origin/main`. The final tree must exclude `.wt/`,
-`docs/codemap/`, Store Owner Orders commit `2f32231`, the Phase 4 hunk from
-`0c705d4`, and superseded Gemini content, while preserving the exact dispatcher
-commit ancestry required by this publication. Only then may the exact candidate
-be pushed normally to `origin/main`.
+## 7. Isolated candidate assembly receipt
+
+- Fresh base: `origin/main` `388d8bf07cabbe08a89af9dbd26910cb899627d9`.
+- Proven Google Books correction: cherry-picked as `6b31025`, with exact
+  `projection=full` source and regression assertion.
+- Merge checkpoint: `8e327d7`; exact `51c51f4` dispatcher and `5add881`
+  package ancestry are present.
+- Conflict resolution: both Gemini source conflicts use the `origin/main`
+  compact-normalization implementation. `databaseHarness.mjs` retains M34 and
+  adds M35/M36 in order.
+- Explicit tree exclusions: Store Owner Orders `_layout` source/test and the
+  Phase 4 file from mixed commit `0c705d4` are byte-equivalent to `origin/main`;
+  superseded Gemini source is likewise byte-equivalent to `origin/main`.
+- History disclosure: exact `51c51f4` ancestry necessarily carries ancestor
+  commits `2f32231`, `dc19107`, and `df63801`. Their unrelated/superseded tree
+  effects are neutralized in `8e327d7`; they are retained only as transparent
+  historical ancestry because preserving exact dispatcher commit identity and
+  excluding those ancestors are mutually impossible in Git.
+- Generated `.wt/` and `docs/codemap/` content is absent from the candidate.
+
+Rerun the required gates on this isolated tree, obtain an independent
+`APPROVED` verdict on the complete candidate, freshly recheck `origin/main`,
+then push only the exact verified candidate normally to `origin/main`.
