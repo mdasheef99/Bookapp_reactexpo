@@ -17,8 +17,7 @@ const CALL_B = '89000000-0000-4000-8000-000000000042';
 let db;
 
 const jobReference = `job_${CORRELATION.replaceAll('-', '')}`;
-const pgliteDigest = (value) => createHash('md5').update(value).digest('hex')
-  + createHash('md5').update(`${value}sha256`).digest('hex');
+const pgliteDigest = (value) => createHash('sha256').update(value).digest('hex');
 const mediaReference = `media_${pgliteDigest(`${MEDIA}:${JOB}`).slice(0, 48)}`;
 const json = (value) => JSON.stringify(value).replaceAll("'", "''");
 const analysisResult = {
