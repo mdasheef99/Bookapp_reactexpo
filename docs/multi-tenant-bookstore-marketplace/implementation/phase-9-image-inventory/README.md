@@ -1,7 +1,7 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `wu2_owner_inventory_client_locally_complete_runtime_deferred`
-**Last updated:** 2026-08-07
+**Status:** `automatic_worker_wake_dispatcher_local_review_corrections_applied`
+**Last updated:** 2026-08-10
 **Implementation status:** M01-M08/M10-M30 are live-verified at their recorded
 levels; Unit 6A is merged/live, Unit 6B is merged at `9ef9eb3`, Unit 6C is
 merged through `092562d`, Unit 6D is implemented at `c363b60`, and Unit 6E
@@ -9,6 +9,8 @@ false/missed-variant corrections are finalized at `8bceab2`
 **Supabase mutation status:** M01-M08/M10-M30 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; WU1 was applied exactly once as `20260803221216 marketplace_phase9_owner_inventory_read_boundary`; no WU1 row, user, fixture, listing, publication, or Storage mutation occurred. A separately authorized Render Unit 4B configuration/startup deployment is recorded in the implementation evidence; no provider inference was run.
 **Database checkpoint:** M01-M08 and forward migrations M10-M30 plus WU1 are live-verified at their recorded levels; M09 remains absent; positive Owner JWT runtime remains deferred.
 M30 was applied exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`.
+
+The current narrow authority is [Automatic Worker Wake Dispatcher](./work-units/automatic-worker-wake-dispatcher-sdd.md): its local red-first implementation and correction-only independent review are recorded. M36 remains unapplied and creates its cron inactive. Live application, Vault/Cron/Render mutation, worker invocation, current-image removal, final live proof, Git publication, duplicate replay, Unit 7, inventory, and publication remain separately gated.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 

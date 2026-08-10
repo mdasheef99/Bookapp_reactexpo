@@ -12,6 +12,9 @@ const REQUIRED_FILES = [
   'workers/phase9-vision-analysis-worker/deploymentFixtures.ts',
   'workers/phase9-vision-analysis-worker/tsconfig.json',
   'workers/phase9-vision-analysis-worker/Dockerfile',
+  'workers/phase9-metadata-worker/server.ts',
+  'workers/phase9-metadata-worker/tsconfig.json',
+  'workers/phase9-metadata-worker/Dockerfile',
   'scripts/invoke-phase9-worker.js',
   'scripts/smoke-phase9-worker-entrypoints.js',
   'scripts/smoke-phase9-worker-containers.js',
@@ -25,6 +28,8 @@ const REQUIRED_SCRIPTS = {
   'start:phase9:media-worker': 'node .phase9-dist/workers/phase9-media-validation-worker/server.js',
   'build:phase9:vision-worker': 'tsc -p workers/phase9-vision-analysis-worker/tsconfig.json',
   'start:phase9:vision-worker': 'node .phase9-dist/workers/phase9-vision-analysis-worker/server.js',
+  'build:phase9:metadata-worker': 'tsc -p workers/phase9-metadata-worker/tsconfig.json',
+  'start:phase9:metadata-worker': 'node .phase9-dist/workers/phase9-metadata-worker/server.js',
   'invoke:phase9:worker': 'node scripts/invoke-phase9-worker.js',
   'smoke:phase9:worker-entrypoints': 'node scripts/smoke-phase9-worker-entrypoints.js',
   'smoke:phase9:worker-containers': 'node scripts/smoke-phase9-worker-containers.js',
@@ -86,7 +91,11 @@ function validatePhase9DeploymentRuntime(root = process.cwd()) {
     errors.push('owner-ingestion-import-map');
   }
 
-  for (const worker of ['phase9-media-validation-worker', 'phase9-vision-analysis-worker']) {
+  for (const worker of [
+    'phase9-media-validation-worker',
+    'phase9-vision-analysis-worker',
+    'phase9-metadata-worker',
+  ]) {
     const dockerfile = read(root, `workers/${worker}/Dockerfile`);
     if (!dockerfile.includes('RUN npm ci') || !dockerfile.includes('npm ci --omit=dev')
       || !dockerfile.includes('node:22.13.0-bookworm-slim')) {
@@ -111,9 +120,10 @@ function validatePhase9DeploymentRuntime(root = process.cwd()) {
     'workers/phase9-media-validation-worker/server.ts',
     'workers/phase9-vision-analysis-worker/server.ts',
     'workers/phase9-vision-analysis-worker/deploymentFixtures.ts',
+    'workers/phase9-metadata-worker/server.ts',
     'scripts/invoke-phase9-worker.js',
   ].map((name) => read(root, name)).join('\n');
-  if (/OPENAI_API_KEY|GOOGLE_BOOKS_API_KEY|OPEN_LIBRARY_API_KEY/u.test(runtimeSources)) {
+  if (/OPENAI_API_KEY|OPEN_LIBRARY_API_KEY/u.test(runtimeSources)) {
     errors.push('provider-credential-variable');
   }
   const nonEnvironmentRuntimeSources = [
@@ -121,15 +131,22 @@ function validatePhase9DeploymentRuntime(root = process.cwd()) {
     'workers/phase9-media-validation-worker/server.ts',
     'workers/phase9-vision-analysis-worker/server.ts',
     'workers/phase9-vision-analysis-worker/deploymentFixtures.ts',
+    'workers/phase9-metadata-worker/server.ts',
     'scripts/invoke-phase9-worker.js',
     '.github/workflows/phase9-worker-container-smoke.yml',
     'workers/phase9-media-validation-worker/Dockerfile',
     'workers/phase9-vision-analysis-worker/Dockerfile',
+    'workers/phase9-metadata-worker/Dockerfile',
   ].map((name) => read(root, name)).join('\n');
   if (/GEMINI_API_KEY/u.test(nonEnvironmentRuntimeSources)
     || !read(root, 'workers/phase9-runtime/environment.ts')
       .includes("'PHASE9_GEMINI_API_KEY'")) {
     errors.push('gemini-credential-boundary');
+  }
+  if (/PHASE9_GOOGLE_BOOKS_API_KEY/u.test(nonEnvironmentRuntimeSources)
+    || !read(root, 'workers/phase9-runtime/environment.ts')
+      .includes("'PHASE9_GOOGLE_BOOKS_API_KEY'")) {
+    errors.push('google-books-credential-boundary');
   }
   if (!runtimeSources.includes('/health') || !runtimeSources.includes('/ready')) {
     errors.push('health-readiness');
@@ -153,7 +170,11 @@ async function runExecutableDeploymentValidation(root = process.cwd()) {
   const { spawnSync } = require('node:child_process');
   const npmCli = process.env.npm_execpath;
   if (!npmCli) throw new Error('P9_DEPLOYMENT_NPM_UNAVAILABLE');
-  for (const script of ['build:phase9:media-worker', 'build:phase9:vision-worker']) {
+  for (const script of [
+    'build:phase9:media-worker',
+    'build:phase9:vision-worker',
+    'build:phase9:metadata-worker',
+  ]) {
     const build = spawnSync(
       process.execPath,
       [npmCli, 'run', script],

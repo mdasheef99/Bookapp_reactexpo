@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-08-06
+**Date:** 2026-08-10
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -37,6 +37,15 @@ Every material session must also leave one exact active work unit and next autho
 > Vision-worker TypeScript and current-tree PGlite
 > 59/59 through M32/M33/M34 passed. M34 is unapplied; no provider, Render, job,
 > Supabase, inventory/publication, stage, commit, or push mutation occurred.
+> 2026-08-10 Phase 9 automatic-worker-wake dispatcher remains the active narrow
+> work unit. M35 and Owner Edge v3 remain the last completed live milestone.
+> Red-first local implementation and correction-only independent review are
+> recorded: M36 is unapplied, creates its one cron inactive, and locally proves
+> private claimability parity, Vault-only configuration, bounded observability,
+> dispatch correlation, timeout evidence, and metadata deployment preparation.
+> Applying/configuring/enabling the dispatcher, Render deployment/redeployment,
+> worker invocation, live image removal, final live proof, Git publication,
+> duplicate replay, Unit 7, inventory, and publication remain prohibited.
 If implementation changes product or architecture behavior, update the relevant source spec and record the reason in this tracker.
 ---
 ## 2. Current Status

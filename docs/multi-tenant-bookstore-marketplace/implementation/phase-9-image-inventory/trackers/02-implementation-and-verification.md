@@ -791,3 +791,49 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
   was not invoked.
 - Next gate: independent correction-only rereview of the compact Gemini/M34 and
   diagnostics scope.
+
+### 2026-08-10 — automatic worker wake dispatcher local review package
+
+- Authorized scope: red-first local implementation of one private claimability
+  helper, inactive Cron/`pg_net`/Vault-backed dispatcher migration, bounded
+  observability, safe dispatch-ID receipt logging, metadata deployment
+  preparation, tests, and correction-only independent review.
+- Implementation: local unapplied M36 preserves the three claim RPCs and job
+  rows, dispatches at most one matching `/run` request per stage/minute, creates
+  its cron inactive, reads only six fixed Vault names, uses an explicit
+  120-second timeout, and retains secret-free observations for seven days;
+  the Authorization header is transiently held only by pg_net's private
+  request queue, outside the M36 observation relation and application logs.
+- Red-first evidence: the first focused run failed because M36 and receipt
+  logging were absent. Green implementation then passed focused structural and
+  runtime Jest 22/22 and dispatcher PGlite 24/24; full Phase 9 Jest passed
+  693/693 and full Phase 9 PGlite passed 236/236 before review corrections. All three worker builds and
+  authenticated health/readiness/entrypoint smokes passed.
+- Independent review: `APPROVED_WITH_REQUIRED_CORRECTIONS`. The corrections add
+  due-vision and due-metadata stage isolation, multiple-due-row single-request
+  proof, measured timeout reasoning plus scaled delayed `/run` coverage, and an
+  accurate lease-suppression claim composed with existing provider-idempotency
+  regressions. Corrected focused gates pass: dispatcher PGlite 28/28 and focused
+  structural/runtime Jest 23/23; corrected full gates pass at Phase 9 Jest
+  694/694 and Phase 9 PGlite 240/240.
+- Closeout gates: continuity PASS with 195 requirement definitions, zero
+  duplicate/missing mappings, 69 Markdown files, and 53 required files;
+  repository `git diff --check` PASS; generated `.pyc` count 0.
+- Security review: fixed empty `search_path`; postgres ownership; no
+  PUBLIC/anon/authenticated/service-role access; no user/store authority; no
+  provider/service-role credential names; no secret, URL, body, content, or
+  error persistence in Phase 9 application observations/logs (pg_net's private
+  request queue transiently carries the bearer header as required for delivery);
+  bounded retention and response classification only.
+- External/database effects: none. Live tail remains M35; one claimable media
+  job remains untouched; no Phase 9 live cron, Phase 9 Vault configuration, or
+  metadata Render service exists. Nothing was applied, configured, deployed,
+  enabled, invoked, removed, staged, committed, or pushed.
+- Rollout conclusion: the deployed media and vision services remain ordinary
+  authenticated `/run`-compatible with the optional dispatch-ID header, but
+  predate dispatch-ID receipt logging. Redeploy both before final live
+  correlation proof; this is observability-only and requires no claim-RPC or
+  provider behavior redesign. Metadata service creation remains separate.
+- Exact next authorized action: review and explicitly authorize or reject a
+  separate deployment/external-mutation unit. Duplicate replay remains a later
+  separate work unit only after fresh automatic-path proof.

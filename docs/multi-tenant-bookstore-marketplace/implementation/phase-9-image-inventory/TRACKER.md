@@ -1,19 +1,19 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit6_owner_ux_approved_design_authority`
-**Implementation status:** `compact_gemini_required_diagnostics_correction_complete_awaiting_rereview`
-**Last updated:** 2026-08-09
-**Current milestone:** compact Gemini/multilingual contract, language-hint M34, and required diagnostics redaction correction locally complete; external proof remains gated
-**Active work unit:** `phase9_compact_gemini_multilingual_language_hint_correction`
+**Implementation status:** `automatic_worker_wake_dispatcher_local_review_corrections_applied`
+**Last updated:** 2026-08-10
+**Current milestone:** M35 and Owner Edge v3 remain live-verified; automatic worker wake dispatch is the active local-only work unit
+**Active work unit:** [`automatic_worker_wake_dispatcher`](./work-units/automatic-worker-wake-dispatcher-sdd.md)
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** H1 is resolved by proof: authorized Owner review rejects a `processing` candidate without changing its version, while claim attempt/worker/token/lease, candidate state, and authoritative vision lineage fence physical finalization. H2 uses one shared offset-aware ISO-8601 timestamp helper across vision, metadata edition/result, and automated-alias boundaries. H3 directly proves repeated reconciliation, registered-call reclaim survival, known-completion reuse, and stale-worker non-overwrite. SQL-backed worker evidence remains green for finalized-retryable replay, sibling isolation, invalid-ISBN fallback, and storage-denied positive-retention gaps. All 14 M32 public worker wrappers remain covered by exhaustive ACL proof. M32 was then verified live exactly once, and the minimum Google Books registry row was configured.
-**Next authorized action:** independently rereview the compact Gemini/M34 correction and privileged-diagnostics fix before any provider-only proof, deployment, migration application, or preserved attempt-5 invocation
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; WU1 is live exactly once as `20260803221216 marketplace_phase9_owner_inventory_read_boundary`; M32 is live exactly once as `20260808020404 marketplace_phase9_structural_metadata_integration`; M33 is local-only and unapplied
-**Scope boundary:** one Google Books registry configuration row was the only live data mutation in this proof. Provider egress, candidate/session/input creation, worker deployment, scheduler/automatic dispatch, inventory/publication behavior, and Unit 7 remain excluded.
-**Implementation authority:** local structural implementation is complete; M32 is live and its exact-project schema/RPC/ACL/trigger readback passed. The live vertical proof is blocked before provider egress by missing credentials.
-**Migration creation/application authority:** local forward M34 was created after M33; it is unapplied, no applied migration was edited, and this coding session performed no Supabase query or mutation.
-**Current gate:** `LIVE_WEB_PROOF_BLOCKED_EXISTING_ACTIVE_SESSIONS_UNSCOPED_PENDING_QUEUE_AND_MISSING_GOOGLE_BOOKS_SECRET`; focused changed-scope Jest is 84/84 and metadata-worker TypeScript build passes. One prior Google Books request returned HTTP 200 and passed adapter bounds/decoding/normalization with `no_acceptable_match`. The authorized web run reached the real Profile → Store Owner Console → Inventory path, but found an older capture with 6 processing images and 1 review item. Exact-project baseline was 4 sessions, 3 active/closing, 18 inputs, 27 jobs, 8 pending jobs, 13 candidates, and zero metadata jobs/attempts/provider calls/lookups/cache entries. The current process has no Google Books credential. No fresh session, upload, worker, provider, Storage, or database mutation occurred. Unit 7 remains gated.
+**Next authorized action:** review the local automatic-worker-wake implementation and explicitly authorize or reject a separate deployment/external-mutation unit; do not apply, configure, deploy, enable, invoke, remove the live image, stage, commit, or push
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M33 are live at their recorded versions; M34 is live once as `20260809182407 marketplace_phase9_vision_language_hint_correction`; M35 is live once as `20260809223135 marketplace_phase9_single_image_removal`
+**Scope boundary:** only claimability inspection, private wake dispatch, inactive Cron/pg_net/Vault configuration, bounded observability, metadata deployment preparation, and local tests are authorized. Claim RPC refactoring, duplicate replay, provider behavior, Unit 7, inventory/publication, persistent polling, and new queue infrastructure are excluded.
+**Implementation authority:** the user's 2026-08-10 automatic-worker-wake decision authorizes local code/tests, one narrow forward migration file, and required work-unit documentation. Historical manual-dispatch evidence remains true.
+**Migration creation/application authority:** creation and local testing of the dispatcher forward migration are authorized. Application, Vault mutation, Cron activation, Render deployment/redeployment, live image removal, worker invocation, final live proof, and Git stage/commit/push are not authorized.
+**Current gate:** `AUTOMATIC_WORKER_WAKE_LOCAL_REVIEW_READY`; the existing claimable media job remains untouched, M36 remains unapplied, and no live Phase 9 Cron exists.
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -566,3 +566,34 @@ provider fallback, or create global alias authority.
   local and unapplied; the preserved attempt-5 action was not invoked.
 - Exact next authorized action: independent correction-only rereview of the
   compact Gemini/M34 scope and this diagnostics fix.
+
+### 2026-08-10 — automatic worker wake dispatcher local review package
+
+- Local M36, dispatcher/runtime tests, metadata deployment preparation, and
+  required continuity records are implemented but unapplied.
+- Red-first and full regression evidence: focused pre-correction Jest 22/22,
+  dispatcher PGlite 24/24, Phase 9 Jest 693/693, Phase 9 PGlite 236/236 before
+  review corrections, and all
+  three worker build/entrypoint smokes passed.
+- Independent verdict was `APPROVED_WITH_REQUIRED_CORRECTIONS`; all findings
+  were corrected with due-stage isolation for media/vision/metadata, two-row
+  single-wake proof, measured timeout justification, scaled delayed `/run`
+  coverage, and accurate composed idempotency evidence. Corrected focused gates
+  pass at Jest 23/23 and dispatcher PGlite 28/28; corrected full gates pass at
+  Phase 9 Jest 694/694 and Phase 9 PGlite 240/240.
+- Continuity passes with 195 requirement definitions, zero duplicate/missing
+  mappings, 69 Markdown files, and 53 required files. Repository diff check
+  passes and generated `.pyc` count is 0.
+- No live/external mutation occurred. M36 is unapplied, live migration tail is
+  M35, the existing claimable media job is untouched, and live Phase 9
+  Cron/Vault/metadata-service state is unchanged.
+- Rollout conclusion: the deployed media and vision services remain ordinary
+  authenticated `/run`-compatible with the optional dispatch-ID header, but
+  predate dispatch-ID receipt logging. Redeploy both before final live
+  correlation proof; this is observability-only and requires no claim-RPC or
+  provider behavior redesign. Metadata service creation remains separate.
+- Exact next authorized action: review and explicitly authorize or reject a
+  separate deployment/external-mutation unit. Application, secrets, service
+  deployment/redeployment, cron activation, live worker proof, live image
+  removal, duplicate replay, Unit 7, inventory/publication, stage, commit, and
+  push remain prohibited.

@@ -1,6 +1,17 @@
 # Phase 9 Requirements Traceability
 
-**Last updated:** 2026-08-07
+**Last updated:** 2026-08-10
+
+## Automatic worker wake dispatcher
+
+| Requirement | Owning source | Evidence/status |
+| --- | --- | --- |
+| Due media, vision, and metadata jobs wake their matching request-driven worker without moving claim/lease/fencing authority out of the existing RPCs | Master SDD §§8–10; pipeline SDD §§10, 14–15 | Local M36 private parity helper/dispatcher; 18 predicate-parity cases plus independent due-stage request cases for all three kinds |
+| Worker origins/tokens are Vault-only; provider/service-role credentials and secret-bearing observability are forbidden | Security SDD §§9, 13, 15; dispatcher SDD §4 | Six fixed secret names; private seven-day observation excludes values; pg_net may transiently hold the bearer header in its private request queue, but M36 returns and durably logs neither it nor other secret-bearing output; structural and PGlite secret-exclusion/ACL tests |
+| Scheduler creation is safe by default and bounded | Pipeline SDD §§14–15; dispatcher SDD §§4.1, 5 | One named 60-second cron created inactive; one stage/tick fence; explicit 120-second timeout backed by measured cold wake, provider ceiling, margin arithmetic, and scaled delayed HTTP-service proof |
+| Timeout and duplicate wake behavior preserves normal provider idempotency | Pipeline SDD §§10, 14–15 | Dispatcher timeout/active-lease suppression plus full Phase 9 exact vision replay and finalized metadata physical-call reconstruction regressions |
+| No activation or operational mutation occurs in the local work unit | Dispatcher SDD §§2, 5, 7 | M36 unapplied; no live Cron/Vault/Render/worker/provider/Storage/job/inventory/publication mutation |
+
 
 ## WU2 read-only Owner inventory client integration
 

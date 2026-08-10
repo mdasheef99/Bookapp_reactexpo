@@ -11,6 +11,8 @@
 !workers/phase9-media-validation-worker/**
 !workers/phase9-vision-analysis-worker/
 !workers/phase9-vision-analysis-worker/**
+!workers/phase9-metadata-worker/
+!workers/phase9-metadata-worker/**
 
 !supabase/
 !supabase/functions/

@@ -372,3 +372,25 @@ The Unit 4B Render configuration/startup check changed no field, table, RPC,
 bucket, path, retention class, or stored-data rule. The existing M14 provider
 attempt schema remains the only persistence surface for a future real provider
 call; no provider-attempt row was created by this check.
+
+### `phase9_worker_wake_dispatches` (local M36, unapplied)
+
+Postgres-private, seven-day-bounded operational correlation only. One row per
+`tick_started_at` and closed `job_kind` records a generated UUID dispatch ID,
+optional `pg_net` request ID, dispatch/response states, optional bounded HTTP
+status, and timestamps. It stores no URL, header, token, secret, body, response
+content, error text, user identity, store identity, job identity, provider
+payload, or media reference. Client roles and `service_role` have no table or
+sequence privilege. The private pg_net request queue is separate from this
+relation and may transiently hold the authenticated header until delivery; M36
+does not return, query, or copy that value into durable observations or logs.
+
+`has_claimable_phase9_work(text)` is a postgres-private boolean inspection of
+the existing media, vision, or metadata claim predicate. It is read-only and
+does not claim, lock, lease, increment, or mutate jobs.
+
+`dispatch_phase9_worker_wakes()` is a postgres-private cron entrypoint. It may
+mutate only the bounded correlation relation, reads only six fixed Vault names,
+and emits at most one authenticated `POST /run` per stage/tick through
+`pg_net`. Existing worker claim RPCs remain the sole mutation and fencing
+boundary for queued work.

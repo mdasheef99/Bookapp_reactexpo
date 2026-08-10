@@ -290,3 +290,24 @@ only. The exact Supabase project, migrations, schema, RLS/grants, Storage
 objects, and current-vs-target database state were not mutated or re-read as part
 of this deployment. A future provider-call smoke must re-verify the exact project
 and use an approved sanitized-media job before any M14 evidence is claimed.
+
+### 2026-08-10 local M36 worker-wake target delta
+
+Fresh read-only evidence verified exact project `ahntbtktjjmvfosgkmgn`, live
+migration tail `20260809223135 marketplace_phase9_single_image_removal`, one
+claimable `media_validate_sanitize` job, and no Phase 9 cron job or named Phase
+9 Vault secret. `pg_cron` 1.6.4, `pg_net` 0.19.5, and `supabase_vault` 0.3.1
+are installed. Media and vision services are live at their recorded SHAs; no
+metadata Render service exists.
+
+Local M36 remains unapplied. It adds one postgres-private read-only
+claimability helper, one postgres-private dispatcher, one seven-day-bounded
+private dispatch-observation relation, and one named minute cron that is
+inactive when the migration transaction commits. The helper exactly mirrors
+the three current claim predicates and the dispatcher changes no job row. Six
+fixed Vault names supply only worker origins and ingress tokens; neither values
+nor HTTP bodies/errors are persisted in the M36 observation relation or Phase 9
+application logs; pg_net's private request queue transiently carries the
+Authorization header as required for delivery. Local tests cover all claimability states
+and all three due-stage dispatch paths. No database, Vault, Cron, Render,
+Storage, worker, provider, inventory, listing, or publication mutation occurred.
