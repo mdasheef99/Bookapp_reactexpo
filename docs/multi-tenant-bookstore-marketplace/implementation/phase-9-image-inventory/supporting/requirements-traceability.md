@@ -1,6 +1,15 @@
 # Phase 9 Requirements Traceability
 
-**Last updated:** 2026-08-10
+**Last updated:** 2026-08-11
+
+## Multilingual vision-response resilience correction
+
+| Requirement | Owning source | Evidence/status |
+| --- | --- | --- |
+| MAS-01/02; EXT-03/10 | Provider count/array evidence from 16-100 normalizes to canonical `too_many_books` with zero observations; values above the defensive maximum and malformed/unknown structure fail closed | Pipeline SDD §§3, 5, 7, 9, 12, 14-15; decoder resilience fixtures 1-4 |
+| MAS-04/19; MAS-AC16; EXT-20/40 | Original Unicode title/authors remain unchanged; null/missing language becomes `und`, known names map, valid BCP 47 stays strict, and bounded unknown human labels degrade to `und`; malformed enrichment is rejected independently | Master SDD §§3, 5, 14; Pipeline SDD §§5, 7, 9; resilience fixtures 5-9 |
+| MAS-02; EXT-10/17; MED-08/09/18/24/28/29 | Unknown keys, active content, non-string language, invalid identity, malformed ordinals, and raw-payload overflow remain rejected; logs expose only a sanitized code-owned field path and closed category | Pipeline SDD §§5, 9, 13-15; Security SDD §§8, 11, 13, 15-16; resilience strictness/privacy fixtures |
+| Scope/rollout gate | No migration, Supabase/Storage write, deployment, provider call, removed-input retry, Unit 7 effect, stage, commit, or push is part of the local correction | Phase 9 tracker and implementation log, 2026-08-11 |
 
 ## Automatic worker wake dispatcher
 

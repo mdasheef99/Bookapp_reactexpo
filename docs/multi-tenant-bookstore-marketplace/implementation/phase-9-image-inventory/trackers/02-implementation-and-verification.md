@@ -1,6 +1,6 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `metadata_retry_correction_locally_complete_approved`; **last updated:** 2026-08-10
-**Active work unit:** `phase9_metadata_retry_provider_attempt_correction`. Local M38, the metadata worker correction, focused regression evidence, independent review, and bounded Git publication are complete. M38 application, deployment, provider/job invocation, live-job retry/requeue, Storage, media, vision, query-policy, duplicate-replay, Unit 7, inventory, listing, and product-publication mutations remain prohibited.
+**Status:** `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`; **last updated:** 2026-08-11
+**Active work unit:** `phase9_multilingual_vision_response_resilience_review`. User-supplied Android evidence closes the native FileSystem transport proof through Storage `2xx`, exactly one object, input registration, and sanitation. The downstream `P9_VISION_SCHEMA_INVALID` decoder correction is locally green. Bounded review is next; migration, Supabase/Storage mutation, deployment, live provider replay, removed-input retry, Unit 7, inventory, listing, and publication remain unauthorized.
 **Preserved authorization sequence:** `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`; neither status by itself authorizes migration application or external mutation.
 ## Work units
 | Unit | Scope | Status | Required gate |
@@ -16,10 +16,10 @@
 | 4B | [Gemini vision adapter](../work-units/04b-gemini-vision-adapter-handoff.md) for configured `gemini-3.5-flash-lite`; optional whole-image fallback remains unselected/disabled | `m14_live_verified_provider_deferred` | M14 live once; server-only Render configuration and startup deployment are recorded, but no authenticated `/run`, real Gemini inference, independent public health receipt, Storage mutation, or fallback selection is proven |
 | 5A | [Metadata foundation](../work-units/05a-metadata-foundation-handoff.md): provider-neutral local-first routing/cache/coalescing, ISBN validation, coherent selection, and attempt/cost lineage | `m17_live_acl_verified` | M17 live once; four sensitive tables are service SELECT-only with RPC-only mutation |
 | 5B/5C | Google Books primary adapter / [Unit 5C Lite multilingual variants](../work-units/05c-lite-multilingual-search-variants-sdd.md) | [`5B merged_fixture_verified_provider_deferred`](./11-unit5b-implementation-evidence.md) / [`5C-5/5C-6 merged and live`](./17-unit5c5-6-owner-rollout-backend-evidence.md) | M18-M28 live once; M29 was absent at Unit 5C closeout and is now live through Unit 6A; no language enabled |
-| 6 | [Owner capture/review/recovery UX](../work-units/06-owner-capture-review-recovery-ux-sdd.md), split 6A-6F | [`unit6f_browser_verified_native_gate_pending`](./24-unit6f-readiness-quality-gates-evidence.md) | Browser/readback and deterministic gates are recorded; representative low-end Android evidence is required before Unit 6 completion/merge; Unit 7 remains separately gated |
+| 6 | [Owner capture/review/recovery UX](../work-units/06-owner-capture-review-recovery-ux-sdd.md), split 6A-6F | `complete_live_verified` | M38 rollout plus one real authenticated Owner upload proved automatic media, vision/Gemini, metadata, and Owner Needs Review; the user's explicit final-proof instruction closes Unit 6 without rerunning the prior representative low-end Android gate; Unit 7 remains separately gated |
 | WU1 | [Controlled Owner-inventory read boundary](../work-units/owner-inventory-read-boundary-wu1-sdd.md) | [`applied_readback_complete_runtime_deferred`](./25-owner-inventory-read-boundary-wu1-evidence.md) | Exact development migration applied once; post-application security/object readback and anonymous denial pass; positive Owner runtime and client/UI/legacy-caller changes remain gated |
 | WU2 | [Read-only Owner inventory client integration](../work-units/owner-inventory-read-client-wu2-sdd.md) | [`locally_complete_authenticated_runtime_deferred`](./26-owner-inventory-read-client-wu2-evidence.md) | Owner `/inventory` uses the canonical page RPC with strict DTO validation, isolated cache/pagination, exact filters, and read-only states; dashboard, writes, deployment, authenticated runtime, and Unit 7 remain gated |
-| Wake dispatcher | [Automatic worker wake dispatcher](../work-units/automatic-worker-wake-dispatcher-sdd.md) | `live_inactive` | M36 is live exactly once; its cron remains inactive and separate explicit configuration/deployment/activation authority is required |
+| Wake dispatcher | [Automatic worker wake dispatcher](../work-units/automatic-worker-wake-dispatcher-sdd.md) | `live_active_verified` | M36 is live exactly once; its cron is active and automatically completed the final Unit 6 media, vision, and metadata path without manual invocation |
 | 7 | Controlled per-candidate commit, advisory duplicates, idempotency, projection changes | `not_started` | quantity/hold concurrency tests |
 | 8 | Marketplace bookstore-first search, multilingual aliases, counts, full store catalogue | `not_started` | public/private projection tests |
 | 9 | Damaged-book public media and mandatory customer photo-request extension | `not_started` | DOC-6/14 seam tests; no payment implementation |
@@ -60,7 +60,7 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260810000035_marketplace_phase9_single_image_removal.sql` | `20260809223135` | MCP exact project 2026-08-10; `ahntbtktjjmvfosgkmgn` | application and three exact removals authorized; Edge deployment separately authorized | forward constraint/function replacements; logical removal, dual single-input guards, current-input read filtering; no physical Storage delete or candidate/inventory/listing mutation | structural Jest 6/6; isolated M01-M35 PGlite 3/3; live function/migration readback; 3/3 inputs removed; 3/3 jobs cancelled; Owner Edge v3 four-file exact match | `live_verified` |
 | `20260810000036_marketplace_phase9_worker_wake_dispatcher.sql` | `20260810105448 marketplace_phase9_worker_wake_dispatcher` | MCP exact project 2026-08-10; `ahntbtktjjmvfosgkmgn` | prior authorized application; read-only verified in this session | forward-only private helper/observability/dispatcher plus one named cron created inactive; Vault configuration, Render services, job rows, Storage, inventory, and publication unchanged | live migration history readback plus prior red-first structural/runtime Jest 23/23, dispatcher PGlite 28/28, full Phase 9 Jest 694/694, full Phase 9 PGlite 240/240, and worker build/entrypoint smokes | `live_inactive` |
 | `20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql` | `20260810105517 marketplace_phase9_owner_discovery_scope_correction` | MCP exact project 2026-08-10; `ahntbtktjjmvfosgkmgn` | prior authorized application; read-only verified in this session | `CREATE OR REPLACE FUNCTION` only; scopes `needsReviewCount` to authenticated actor plus server-resolved active store while preserving immutable M35 source and existing authenticated-only ACL | live migration history readback plus prior focused M35/M37/Edge/mobile Jest 5 suites/189, isolated M35-to-M37 PGlite 4/4, and full M35-to-M37 Phase 9 DB replay 241/241 | `live_verified` |
-| `20260810000038_marketplace_phase9_metadata_retry_correction.sql` | not applied; live tail is `20260810105517 marketplace_phase9_owner_discovery_scope_correction` | exact project `ahntbtktjjmvfosgkmgn` read-only verified healthy with M32-M37 exactly once | user-authorized bounded forward-migration creation; application prohibited | private context-v2 helper plus service-only public wrapper replacement; exposes only selected physical-call claim attempt; M32-M37 unchanged | red-first retry failure reproduced; metadata Jest 148/148; exact Google Books HTTP 503-to-200 structural PGlite; full Phase 9 PGlite 242/242; metadata build, entrypoint smoke, deployment validation PASS; independent correction-only review `APPROVED` | `local_unapplied_approved` |
+| `20260810000038_marketplace_phase9_metadata_retry_correction.sql` | `20260810130638 marketplace_phase9_metadata_retry_correction` | exact project `ahntbtktjjmvfosgkmgn` verified healthy immediately before application and read back after | user-authorized M38-only operational application | private context-v2 helper plus service-only public wrapper replacement; exposes only selected physical-call claim attempt; M32-M37 unchanged | history once; empty `search_path`; postgres owner; service-role-only execute; dispatcher stayed active; zero apply-created/claimed jobs; unchanged baseline counts; prior metadata Jest 148/148, exact HTTP 503-to-200 regression, full PGlite 242/242, build/entrypoint/deployment validation and independent `APPROVED` review | `live_verified` |
 Rules: re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
 - Use forward corrections; record every schema, grant, Storage, data, and verification effect.
 ## Required verification matrix
@@ -1501,3 +1501,145 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
   policy, duplicate-replay, or Unit 7 behavior changed.
 - Next: open a separately authorized operational session if M38 application and
   metadata redeployment are desired. Neither is authorized by this closeout.
+
+### 2026-08-10 — M38 rollout and Unit 6 closure
+
+- Authorized work unit and scope: publish exact approved correction to `main`,
+  apply M38 only, redeploy metadata exactly once, and upload one SHA-new image
+  through the real Owner UI for automatic closure proof.
+- Completed: `main` fast-forwarded to immutable `a138baa7d3bbc086da019bc052a5ae31d0e15882`;
+  M38 applied once as `20260810130638`; metadata deploy
+  `dep-d9ssq2v10e5c73ahp18g` became live from that SHA; one Owner image produced
+  six vision candidates and six automatically resolved metadata jobs; the UI
+  exposed six Needs-attention review cards.
+- Verification actually run: exact-project migration/function/ACL/search-path,
+  cron, claimable-work, row-count, inventory/listing, and historical-dead-letter
+  readbacks; all six worker `/health` and `/ready` checks; Render service/deploy
+  readback; real Owner UI upload and passive UI observation. No new broad local
+  test suite was run; the approved correction retains its recorded 148/148 Jest
+  and 242/242 PGlite evidence.
+- Supabase/external mutations: one `main` fast-forward push; exact M38 apply;
+  exactly one metadata deployment; prior terminal Owner session closed through
+  its non-committing UI; one new session and one new image upload. Automatic
+  effects were one media job, one vision job, six candidates, six metadata jobs,
+  six lookups, five physical provider calls, five attempts, and two new safe
+  cache entries. Inventory/listings stayed 5/5. Media/vision deployments were 0.
+- Decisions/deviations/risks: no natural retryable Google Books 5xx occurred,
+  so the approved 503-to-200 regression remains the retry-specific proof. The
+  user's explicit final-proof instruction accepts this live automatic proof as
+  Unit 6 closure without rerunning the prior low-end Android gate.
+- Tracker/source-doc updates: Phase 9 tracker/router/session start/README,
+  DOC-13, current-vs-target audit, migration ledger, and this log.
+- Next authorized action and gate: none. Unit 7 remains not started and requires
+  a new explicit authorization. Duplicate replay was not tested.
+
+### 2026-08-11 — Android signed-upload transport correction
+
+- Authorized scope: investigate, then implement only the narrow local mobile
+  upload correction; no native live upload or external mutation.
+- Completed: replaced the React Native `Blob`/`FormData` signed-PUT body with
+  raw `ArrayBuffer` bytes and explicit `content-type`,
+  `cache-control: max-age=0`, and `x-upsert: false` headers. Existing
+  authorization, size validation, progress, cancellation, registration, and
+  retry behavior are unchanged.
+- Verification actually run: red regression failed on the old Blob path;
+  corrected transport 2/2; focused capture/upload 26/26; Image Inventory 39
+  suites and 290/290 tests reported passing (the known Jest open handle retained
+  the otherwise completed runner); repository TypeScript passed.
+- Documentation verification: Phase 9 continuity and repository diff checks
+  passed; only existing document-size advisories and line-ending warnings were
+  emitted.
+- External state: none. No native upload, Supabase/Storage/database mutation,
+  migration, deployment, provider call, staging, commit, push, or publication.
+- Next authorized action: none. Post-fix native proof and Unit 7 each require
+  separate explicit authorization.
+
+### 2026-08-11 — authorized Android runtime investigation
+
+- Authorized scope: one bounded Expo Go upload proof and read-only correlation
+  through exact-project Edge, Postgres, and Storage logs; no deployment,
+  migration, repair, inventory/listing mutation, or Unit 7 work.
+- Live result: three short-lived upload capability rows were issued during the
+  investigation. Corrected Android raw-byte requests reached signed Storage
+  PUT and returned HTTP 400; no Storage object, registered input, or job was
+  created.
+- Secondary result: after development reload cleared the in-memory capability,
+  reauthorization while the prior capability remained unexpired reached Owner
+  Edge at 19:33:10 UTC. Postgres raised `P9_SINGLE_IMAGE_LIMIT`, while deployed
+  Edge v3 returned generic HTTP 500. The device therefore showed 0% and `The
+  request could not be completed.` This request never reached Storage.
+- Privacy/cleanup: signed URLs and tokens were redacted; the temporary
+  development-only console diagnostic was removed. No private image body was
+  persisted in documentation or logs by this investigation.
+- Next authorized action: none. A further Android transport correction, Owner
+  Edge deployment, additional live upload, or Unit 7 work requires explicit
+  authorization.
+
+### 2026-08-11 — native FileSystem signed-upload replacement
+
+- Authorized scope: implement the bounded native transport replacement and
+  verify it locally; preserve web and exclude backend, migration, deployment,
+  Storage-policy, worker, provider, inventory/listing, and Unit 7 changes.
+- Red-first evidence: the new transport suite failed 6/6 against the retained
+  React Native XHR implementation. It proved native transport selection, exact
+  file body/MIME/header contract, size integrity, cancellation, 2xx-only
+  success, bounded non-2xx diagnostics, and web FormData preservation.
+- Implementation: added direct SDK-compatible `expo-file-system` `~19.0.23`.
+  Android/iOS now preflight the URI size and use native `UploadTask` with
+  `BINARY_CONTENT`, signed `PUT`, `content-type`, `cache-control: max-age=0`,
+  `x-upsert: false`, foreground cancellation semantics, and real byte progress.
+  Web again uses the previously proven Blob/FormData browser XHR path.
+- Verification actually run: transport 6/6; focused capture/upload 37/37;
+  repository TypeScript PASS; final Image Inventory 39 suites and 294/294 PASS.
+  One first full-scope attempt exposed a virtual-mock isolation defect and was
+  not a product failure; removing the incorrect virtual marker made the
+  affected pair 10/10 before the final full pass. The known Jest open handle
+  remained after each completed result and the idle runner was stopped.
+- External state: none. No Android live upload, Supabase/Storage/database
+  mutation, migration, Edge/service deployment, provider/worker call, Git
+  stage/commit/push, inventory/listing/publication, or Unit 7 action occurred.
+- Gate recorded at that checkpoint: one fresh Android Owner upload through
+  normal UI state, requiring signed Storage `2xx`, exactly one object, and
+  successful input registration. The later user-supplied proof passed this gate;
+  the `P9_SINGLE_IMAGE_LIMIT` deployment drift remains separate.
+
+### 2026-08-11 — multilingual vision-response resilience correction
+
+- Authorized scope: local TypeScript compatibility/diagnostic correction,
+  deterministic fixtures, focused/full verification, and required Phase 9
+  documentation only. No migration, remote mutation, deployment, provider call,
+  Git publication, removed-input retry, or Unit 7 action was authorized.
+- Runtime handoff supplied by the user: FileSystem upload succeeded through one
+  Storage object, registration, and sanitation. Input
+  `a1c8e286-07f2-40c5-9bbd-2fed49c5148d` and vision job
+  `20734f70-dd4c-4f68-87d5-aa837cb32b7d` then ended at deterministic
+  `P9_VISION_SCHEMA_INVALID`; the input was later removed and remains untouched.
+- Red-first evidence: 5/21 resilience assertions failed before production
+  changes on the three intended gaps. Final resilience is 21/21.
+- Implementation: provider-boundary compatibility normalizes bounded 16-100
+  count/array evidence to canonical `too_many_books` with zero observations,
+  rejects larger responses, retains strict in-cap structure, preserves original
+  Unicode, degrades only bounded plain unknown language labels to `und`, keeps
+  optional enrichment non-fatal, and emits only sanitized closed schema
+  diagnostics.
+- Files/components: `geminiResponseDecoder.ts`, new
+  `geminiSchemaDiagnostics.ts`, `geminiAnalyzerGuards.ts`,
+  `geminiSpineImageAnalyzer.ts`, new resilience Jest fixtures, Pipeline/Security
+  SDDs, traceability, ACTIVE/session/README handoff, DOC-13, Phase 9 master and
+  implementation trackers, Unit 6C evidence, and the continuity validator.
+- Verification actually run: analyzer/captured payload plus resilience 3 suites
+  and 46/46; worker/orchestration, vision contracts/policy, multilingual,
+  security, and Unit 6 polling 10 suites and 120/120; Image Inventory 39 suites
+  and 294/294 reported passing before the known idle Jest handle was stopped;
+  repository TypeScript passed with `--allowImportingTsExtensions`; vision-worker
+  build passed; Phase 9 continuity passed with 195 requirement definitions,
+  zero duplicate/missing mappings, 70 Markdown files, 53 required files, and
+  repository diff check PASS. The unflagged TypeScript command reported only
+  the repository's known TS5097 import-extension configuration errors.
+- External state: none in this correction session. No database/Storage write,
+  migration creation/application, Edge/service deployment, Gemini retransmission,
+  job replay, removed-input revival, inventory/listing/publication effect, stage,
+  commit, push, or PR occurred.
+- Exact next gate: bounded independent review; deployment requires a new explicit
+  authorization, followed by exactly one fresh Android image proof. Unit 7 stays
+  unauthorized.

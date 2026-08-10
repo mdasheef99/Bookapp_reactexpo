@@ -1,15 +1,15 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-08-10
+**Last updated:** 2026-08-11
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-Current operational correction: M29-M37 are live exactly once; exact-project
-history ends at `20260810105517 marketplace_phase9_owner_discovery_scope_correction`.
+Current operational closure: M29-M38 are live exactly once; exact-project
+history ends at `20260810130638 marketplace_phase9_metadata_retry_correction`.
 The user's 2026-08-10 decision retains Remove image and replaces append-style
 multi-image capture with one current image plus one replacement after explicit
 pre-candidate removal. M35 is live, the three authorized legacy inputs were
@@ -17,15 +17,32 @@ logically removed, and Owner Edge v3 is deployed/readback-verified. One new
 input was registered after removal and must not be removed or otherwise mutated
 without a new explicit target decision.
 
-Current Git-only handoff: `phase9_metadata_retry_provider_attempt_correction`
-owns the bounded retry fix. Local M38 adds only metadata context v2 and exposes
-the latest physical provider call's originating claim attempt. Retryable results
-are replayed only inside the same claim; a later claim registers a new physical
-call and performs fresh egress. Terminal/non-retryable reconciliation remains
-replay-safe. Independent correction-only review is `APPROVED`; correction commit
-`8c55fea` is published on `codex/phase9-metadata-retry-correction`. M38 application, metadata redeploy,
-live-job mutation, and every media, vision, query-policy, duplicate-replay,
-Unit 7, inventory, listing, or publication mutation remain prohibited.
+Current routed handoff: Unit 6 is complete. Approved `main` SHA
+`a138baa7d3bbc086da019bc052a5ae31d0e15882` contains the reviewed M38/runtime
+correction. M38 is live once; metadata was deployed once from that SHA; and one
+authenticated Owner upload automatically completed media, vision/Gemini, six
+metadata jobs, and the Needs Review UI. There were zero manual runs, claims,
+repairs, or operator retries; inventory/listings stayed 5/5 and the historical
+dead-letter job was untouched. Duplicate replay was not tested and Unit 7 was
+not started. No next work unit is authorized; Unit 7 requires a new explicit
+session.
+
+Current local correction: user-supplied 2026-08-11 physical Android evidence
+proves the Expo FileSystem `UploadTask` replacement reached signed Storage
+`2xx`, created exactly one object, registered input
+`a1c8e286-07f2-40c5-9bbd-2fed49c5148d`, and completed media sanitation. Vision
+job `20734f70-dd4c-4f68-87d5-aa837cb32b7d` then received parseable Gemini JSON
+and failed permanently as `P9_VISION_SCHEMA_INVALID`; the removed/skipped input
+must not be revived. The bounded local decoder correction now converts 16-100
+reported observations into complete-image `too_many_books`, degrades only safe
+bounded unknown human language labels to `und`, preserves original Unicode,
+isolates malformed optional enrichment, and logs only closed content-free schema
+diagnostics. Resilience is 21/21, existing analyzer/captured payload plus
+resilience is 46/46, focused worker/extraction/multilingual/security/Unit 6
+polling is 120/120, Image Inventory is 39 suites and 294/294, and repository
+TypeScript plus the vision-worker build pass. Exact next action is bounded
+review; deployment and one fresh post-deployment Android image proof require
+separate authorization. Unit 7 remains separately gated.
 
 Current routed handoff: Unit 6A is merged/live-verified through M29, Unit 6B is
 merged at `9ef9eb3` with [tracker 20](./trackers/20-unit6b-route-query-cache-evidence.md),

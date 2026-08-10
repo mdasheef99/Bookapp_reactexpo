@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-08-10
+**Date:** 2026-08-11
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -72,6 +72,59 @@ Every material session must also leave one exact active work unit and next autho
 If implementation changes product or architecture behavior, update the relevant source spec and record the reason in this tracker.
 ---
 ## 2. Current Status
+> 2026-08-11 Phase 9 multilingual vision-response resilience correction:
+> user-supplied physical Android evidence closes the native FileSystem transport
+> proof through signed Storage `2xx`, exactly one object, input registration, and
+> sanitation. The downstream Gemini job then failed deterministically as
+> `P9_VISION_SCHEMA_INVALID`; the input was later removed and remains untouched.
+> Red-first local correction now converts bounded 16-100 count/array evidence to
+> complete-image `too_many_books`, preserves Unicode while bounded unknown human
+> language labels degrade to `und`, isolates optional enrichment, and emits only
+> closed content-free schema diagnostics. Resilience passes 21/21; existing
+> analyzer/captured payload plus resilience 46/46; focused worker/extraction/
+> multilingual/security/Unit 6 polling 120/120; Image Inventory 294/294;
+> repository TypeScript and the vision-worker build pass. No migration, remote
+> mutation, deployment, provider call, Git publication, removed-input retry, or
+> Unit 7 action occurred. Next: bounded review, then separately authorized
+> deployment and one fresh post-deployment Android image proof.
+>
+> 2026-08-11 Phase 9 native transport replacement: the bounded local correction
+> now explicitly preserves the proven browser Blob/FormData XHR path and routes
+> Android/iOS through Expo FileSystem `UploadTask` with URI-backed
+> `BINARY_CONTENT`, signed `PUT`, exact file-size and MIME/header validation,
+> native byte progress, cancellation, and bounded secret-safe HTTP diagnostics.
+> Red-first transport coverage is 6/6; focused capture/upload is 37/37; the full
+> Image Inventory scope is 39 suites and 294/294; repository TypeScript passes.
+> At that local checkpoint no fresh Android proof or external mutation had
+> occurred. The later physical proof recorded above passed Storage `2xx` and
+> registration, superseding that transport gate. The separate deployed
+> `P9_SINGLE_IMAGE_LIMIT` mapping drift remains unchanged and no Edge deployment
+> is authorized.
+>
+> 2026-08-11 Phase 9 mobile upload correction: read-only evidence isolated the
+> failed Android path to the signed Storage PUT after successful capability and
+> signed-URL issuance and before object creation/registration. The narrow local
+> fix sends raw `ArrayBuffer` bytes with explicit MIME/cache headers instead of
+> React Native `Blob`/`FormData`, preserving progress, cancellation, size,
+> registration, and retry behavior. Red-first transport coverage, focused
+> capture/upload tests (26/26), all Image Inventory tests (290/290 reported
+> passing), and repository TypeScript pass. No post-fix native upload or other
+> external mutation occurred; native runtime proof remains separately gated.
+>
+> 2026-08-11 authorized native follow-up: Expo Go raw-byte PUTs reached Storage
+> but returned HTTP 400; no object or input was created. A later development
+> reload caused reauthorization while the prior capability remained live. The
+> database raised `P9_SINGLE_IMAGE_LIMIT`, but deployed Edge version 3 mapped it
+> to generic HTTP 500. Further correction or deployment is not authorized.
+> 2026-08-10 Phase 9 Unit 6 closure: `origin/main` is published at exact
+> approved SHA `a138baa7d3bbc086da019bc052a5ae31d0e15882`; M38 is live once as
+> `20260810130638 marketplace_phase9_metadata_retry_correction`; and only the
+> metadata worker was redeployed, exactly once, from that SHA. One authenticated
+> Owner upload automatically completed media, vision/Gemini, six metadata jobs,
+> and the Needs Review UI. There were zero manual runs/claims/repairs/operator
+> retries, inventory/listings stayed 5/5, and the historical failed metadata job
+> was untouched. Duplicate replay was not tested and Unit 7 was not started.
+> Unit 6 closure verdict is `PASS`; no next work unit is authorized.
 > 2026-08-10 Phase 9 metadata retry/provider-attempt correction is locally
 > implemented red-first on a fresh `origin/main` branch. Exact-project read-only
 > evidence confirms M32-M37 live exactly once. Forward-only M38 adds metadata
@@ -616,12 +669,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **M32 live exactly once; M33 local correction complete and unapplied; Unit 7 gated** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6 complete; native FileSystem proof passed; multilingual decoder correction locally verified; review/deployment proof and Unit 7 gated** |
 | Overall status | `in_progress` |
-| Last updated | 2026-08-09 |
-| Latest handoff | M32 is live exactly once as `20260808020404 marketplace_phase9_structural_metadata_integration` on `ahntbtktjjmvfosgkmgn`. The real fresh proof reached sanitized media and isolated a missing vision reservation. Forward-only M33 is locally implemented, applies after the actual M31/M32 tail, excludes closed-session/wrong-initiator malformed history, and remains unapplied. The original job remains attempt `4/5`; a later duplicate open media input is untouched. |
-| Current risk level | `M33_REQUIRED_CORRECTIONS_COMPLETE_AWAITING_REREVIEW_AND_APPLICATION`: the durable correction is local and focused ingestion/vision/provider/M33 PGlite is 61/61, but the live database still lacks M33, so invoking the original vision job would schedule another failed retry. The correction pass's focused static suites are 39/39 and the migration-catalog/database suite is 17/17. |
-| Next recommended task | Independently rereview only the two M33 corrections and resulting complete diff, then separately authorize exact-project application/readback. After successful apply, cancel the duplicate input through the existing lifecycle boundary and invoke only the original fresh vision job. |
+| Last updated | 2026-08-11 |
+| Latest handoff | User-supplied Android evidence proves FileSystem upload through object creation, registration, and sanitation; Gemini then failed as `P9_VISION_SCHEMA_INVALID`. The structural decoder correction is locally green with strict over-cap, language, enrichment, and privacy behavior preserved. |
+| Current risk level | `VISION_RESPONSE_RESILIENCE_REVIEW_PENDING`: local deterministic evidence is green, but deployment and one fresh post-deployment Android proof are unclaimed. The secondary deployed Edge mapping drift remains. |
+| Next recommended task | Perform a bounded independent review of the multilingual response correction. Deployment requires separate authorization, followed by exactly one fresh Android image proof. Unit 7 remains unauthorized. |
 
 ---
 
@@ -638,7 +691,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6_pre_main_integration_reconciliation` | [reconciliation tracker](./implementation/phase-9-image-inventory/trackers/28-pre-main-integration-reconciliation.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | M01-M35 are live at their recorded levels; M36 and the M35-preserving Owner discovery scope correction M37 remain local/unapplied. Complete current M32/M33/M35/Unit 6/runtime source is being reconciled with the reviewed dispatcher and authoritative compact-Gemini lineage for one verified `main` candidate. External mutation, Unit 7, inventory, listing, and publication remain gated. |
+| Phase 9: Image-to-LLM Inventory | `unit6_multilingual_vision_response_resilience_locally_verified_review_pending` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | Unit 6 remains complete; native FileSystem transport is physically proven. The downstream multilingual decoder correction is locally verified and awaits bounded review; deployment, one fresh proof, Edge mapping drift, and Unit 7 remain separate. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -656,9 +709,8 @@ If implementation changes product or architecture behavior, update the relevant 
 - DOC-16 Bangalore pilot/unit-economics review pending before pilot launch planning.
 - Existing Supabase security advisor issues must be remediated separately or explicitly isolated before marketplace production launch.
 - Phase 4 review remediation is deployed; positive authenticated profile/setup smoke remains pending an approved disposable Store Owner credential.
-- Phase 9 core pipeline integration remains unproven: real Gemini execution,
-  metadata-job creation and worker execution, enriched-candidate persistence,
-  and Unit 6 readback require a read-only vertical audit before implementation.
+- Phase 9 Unit 6 is complete; duplicate replay and Unit 7 remain separately
+  gated and were not started by the closure proof.
 
 ---
 

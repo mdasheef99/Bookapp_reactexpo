@@ -11,11 +11,12 @@ the existing provider-neutral analyzer seam with server-only configuration, stri
 structured output, bounded normalized usage/cost evidence, sanitized error classes,
 and no raw prompt/response/image/credential logging. It has made no provider call
 and is not deployed or selected in any live environment.
-**Metadata retry security correction (local, unapplied 2026-08-10):** M38 adds
+**Metadata retry security correction (live once 2026-08-10):** M38 adds
 one postgres-owned, fixed-search-path private helper and replaces the existing
 service-only public metadata-context wrapper. It exposes only a bounded claim
 attempt number, grants no client execution, and does not widen table, payload,
-credential, provider, store, or candidate access.
+credential, provider, store, or candidate access. Live readback confirms empty
+`search_path`, postgres ownership, and postgres/service-role-only execution.
 **Unit 4B security correction (local, unapplied):** M14 registration is a
 service-only atomic egress fence. It rejects stale/expired/superseded claims or any
 job/reference/correlation, owner/token/attempt, store/session/input/media,
@@ -286,6 +287,9 @@ Allowed:
 - media ID/purpose/store ID (appropriately protected), bytes/dimensions/detected MIME/hash prefix where policy permits;
 - validation result/code, adapter/version, latency/cost, lifecycle status;
 - actor/action/entity/idempotency/outcome.
+- for vision schema failures only, a code-owned sanitized field path plus one
+  closed failure category; observation values, generated key names, and raw
+  exception messages remain forbidden.
 
 Forbidden:
 

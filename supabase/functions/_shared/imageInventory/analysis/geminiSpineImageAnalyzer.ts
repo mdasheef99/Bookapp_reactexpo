@@ -23,6 +23,7 @@ import {
   decodeGeminiAnalysisResponse,
   GeminiAnalysisWithCompanion,
 } from './geminiResponseDecoder';
+import { sanitizeGeminiSchemaFailure } from './geminiSchemaDiagnostics';
 import { SpineAnalyzerError } from './spineAnalyzerError';
 import {
   assertGeminiConfiguration,
@@ -35,10 +36,7 @@ import {
 } from './geminiAnalyzerGuards';
 
 export type { GeminiUsageEvidence } from './geminiUsageEvidence';
-export type {
-  VisionClaimContext,
-  VisionProviderAttemptGateway,
-} from './visionProviderAttempt';
+export type { VisionClaimContext, VisionProviderAttemptGateway } from './visionProviderAttempt';
 
 type ImageMime = 'image/jpeg' | 'image/png' | 'image/webp';
 type MediaInput = Readonly<{ bytes: Uint8Array; mimeType: ImageMime }>;
@@ -279,11 +277,11 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
         this.now().toISOString(),
         providerOutput,
       );
-    } catch {
+    } catch (error) {
       await this.finalize(
         registration, claim, 'failed', 'schema_invalid', providerRequestId, usage,
       );
-      this.failed('schema_invalid', started);
+      this.failed('schema_invalid', started, sanitizeGeminiSchemaFailure(error));
       throw new GeminiAnalyzerError(
         'P9_VISION_SCHEMA_INVALID', false, 'schema_invalid',
       );
@@ -335,7 +333,8 @@ export class GeminiSpineImageAnalyzer implements SpineImageAnalyzer {
     classification: 'timeout' | 'rate_limited' | 'provider_error'
       | 'media_unavailable' | 'malformed_response' | 'schema_invalid',
     started: number,
-    failure?: ReturnType<typeof sanitizeGeminiFailure>,
+    failure?: ReturnType<typeof sanitizeGeminiFailure>
+      | ReturnType<typeof sanitizeGeminiSchemaFailure>,
   ): void {
     this.options.log?.({
       event: 'gemini_analysis_failed',

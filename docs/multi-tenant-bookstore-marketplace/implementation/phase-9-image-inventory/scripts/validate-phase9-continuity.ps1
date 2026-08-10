@@ -153,7 +153,31 @@ $metadataRetryHandoff = $active.Contains('phase9_metadata_retry_provider_attempt
     $active.Contains('independently `APPROVED`') -and
     $active.Contains('M38 application, deployment, live-job mutation') -and
     $active.Contains('media, vision, query-policy, Unit 7')
-if (-not ($legacyM32Handoff -or $liveM32Handoff -or $metadataSafetyHandoff -or $dispatcherHandoff -or $integrationHandoff -or $metadataRetryHandoff)) {
+$unit6ClosureHandoff = $active.Contains('Unit 6 is complete') -and
+    $active.Contains('M32-M38 are live exactly once') -and
+    $active.Contains('a138baa7d3bbc086da019bc052a5ae31d0e15882') -and
+    $active.Contains('Duplicate replay was not tested') -and
+    $active.Contains('Unit 7 was not started')
+$mobileUploadCorrectionHandoff = $active.Contains('Android attempt') -and
+    $active.Contains('raw `ArrayBuffer` bytes') -and
+    $active.Contains('No post-fix native upload or external mutation was authorized') -and
+    $active.Contains('Unit 7')
+$mobileUploadNativeFailureHandoff = $active.Contains('authorized Expo Go proof shows Android still reaches signed Storage PUT') -and
+    $active.Contains('HTTP 400') -and
+    $active.Contains('P9_SINGLE_IMAGE_LIMIT') -and
+    $active.Contains('No object or input was created') -and
+    $active.Contains('Unit 7')
+$mobileUploadFileSystemHandoff = $active.Contains('Expo FileSystem `UploadTask`') -and
+    $active.Contains('294/294') -and
+    $active.Contains('fresh Android Storage `2xx` proof is not yet run') -and
+    $active.Contains('P9_SINGLE_IMAGE_LIMIT') -and
+    $active.Contains('Unit 7 remains unauthorized')
+$visionResponseResilienceHandoff = $active.Contains('signed Storage `2xx`') -and
+    $active.Contains('P9_VISION_SCHEMA_INVALID') -and
+    $active.Contains('16-100') -and
+    $active.Contains('21/21') -and
+    $active.Contains('Unit 7 remains unauthorized')
+if (-not ($legacyM32Handoff -or $liveM32Handoff -or $metadataSafetyHandoff -or $dispatcherHandoff -or $integrationHandoff -or $metadataRetryHandoff -or $unit6ClosureHandoff -or $mobileUploadCorrectionHandoff -or $mobileUploadNativeFailureHandoff -or $mobileUploadFileSystemHandoff -or $visionResponseResilienceHandoff)) {
     Write-Error 'ACTIVE.md does not preserve the current Phase 9 handoff and external-mutation gates.'
 }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
@@ -168,7 +192,12 @@ if (-not ($doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6e_finalized
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `final_targeted_corrections_complete_ready_for_approval_rereview_unapplied`') -or
     $doc13.Contains('M32 live exactly once; controlled metadata proof blocked before provider egress') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `m33_local_complete_awaiting_review_and_application`') -or
-    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_pre_main_integration_reconciliation`')) -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_pre_main_integration_reconciliation`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_complete_live_verified`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_upload_transport_correction_locally_verified`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_upload_transport_native_failed_diagnosed`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`')) -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
     -not $doc13.Contains('20260727231217 marketplace_phase9_sensitive_table_acl_correction') -or
     -not $doc13.Contains('20260727233457 marketplace_phase9_maintain_acl_correction') -or
@@ -206,7 +235,11 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
     $implementationTracker.Contains('**Status:** `automatic_worker_wake_dispatcher_local_review_corrections_applied`') -or
     $implementationTracker.Contains('**Status:** `unit6_pre_main_integration_reconciliation_in_progress`') -or
     $implementationTracker.Contains('**Status:** `unit6_pre_main_candidate_corrections_verified_rereview_pending`') -or
-    $implementationTracker.Contains('**Status:** `metadata_retry_correction_locally_complete_approved`')) -or
+    $implementationTracker.Contains('**Status:** `metadata_retry_correction_locally_complete_approved`') -or
+    $implementationTracker.Contains('**Status:** `unit6_complete_live_verified`') -or
+    $implementationTracker.Contains('**Status:** `unit6_mobile_upload_transport_correction_locally_verified`') -or
+    $implementationTracker.Contains('**Status:** `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
+    $implementationTracker.Contains('**Status:** `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`')) -or
     -not ($implementationTracker.Contains('**Active work unit:** `unit6f_awaiting_separate_authorization`') -or
     $implementationTracker.Contains('**Active work unit:** `unit6f_browser_verified_native_gate_pending`') -or
     $implementationTracker.Contains('**Active work unit:** `owner_inventory_read_boundary_wu1`') -or
@@ -222,6 +255,10 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
     $implementationTracker.Contains('**Active work unit:** `phase9_compact_gemini_multilingual_language_hint_correction`') -or
     $implementationTracker.Contains('**Active work unit:** `unit6c_single_image_safe_remove`') -or
     $implementationTracker.Contains('**Active work unit:** `phase9_metadata_retry_provider_attempt_correction`') -or
+    $implementationTracker.Contains('**Active work unit:** `unit6_complete`') -or
+    $implementationTracker.Contains('**Active work unit:** `unit6_mobile_upload_transport_correction_local_complete`') -or
+    $implementationTracker.Contains('**Active work unit:** `unit6_mobile_filesystem_transport_live_proof_pending`') -or
+    $implementationTracker.Contains('**Active work unit:** `phase9_multilingual_vision_response_resilience_review`') -or
     $implementationTracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -or
     $implementationTracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
     -not $implementationTracker.Contains('20-unit6b-route-query-cache-evidence.md') -or
@@ -435,9 +472,14 @@ if (
         $tracker.Contains('**Implementation status:** `automatic_worker_wake_dispatcher_local_review_corrections_applied`') -or
         $tracker.Contains('**Implementation status:** `unit6_pre_main_integration_reconciliation_in_progress`') -or
         $tracker.Contains('**Implementation status:** `unit6_pre_main_candidate_corrections_verified_rereview_pending`') -or
-        $tracker.Contains('**Implementation status:** `metadata_retry_correction_locally_complete_approved`')
+        $tracker.Contains('**Implementation status:** `metadata_retry_correction_locally_complete_approved`') -or
+        $tracker.Contains('**Implementation status:** `unit6_complete_live_verified`') -or
+        $tracker.Contains('**Implementation status:** `unit6_mobile_upload_transport_correction_locally_verified`') -or
+        $tracker.Contains('**Implementation status:** `unit6_mobile_upload_transport_native_failed_diagnosed`') -or
+        $tracker.Contains('**Implementation status:** `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
+        $tracker.Contains('**Implementation status:** `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`')
     ) -or
-    ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|unit6c_single_image_safe_remove|phase9_metadata_retry_provider_attempt_correction)`\r?$' -and
+    ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|phase9_multilingual_vision_response_resilience_review|unit6c_single_image_safe_remove|phase9_metadata_retry_provider_attempt_correction|unit6_complete|unit6_mobile_upload_transport_correction_local_complete|unit6_mobile_upload_transport_native_failure_diagnosed|unit6_mobile_filesystem_transport_live_proof_pending)`\r?$' -and
         -not $tracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -and
         -not $tracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
     -not (
@@ -472,7 +514,12 @@ if (
         $tracker.Contains('**Next authorized action:** obtain independent final approval of the corrected isolated candidate, verify fresh-main ancestry/content, then push that exact candidate normally to `origin/main`') -or
         $tracker.Contains('**Next authorized action:** obtain independent final approval of the corrected isolated candidate, verify fresh-main ancestry/content, report publish readiness, and wait for a new explicit user instruction before any push') -or
         $tracker.Contains('**Next authorized action:** publish the approved bounded correction branch; operational M38 application and metadata-only redeployment require a separate explicit session') -or
-        $tracker.Contains('**Next authorized action:** open a separately authorized operational session if M38 application and metadata-only redeployment are desired; no operational action is authorized now')
+        $tracker.Contains('**Next authorized action:** open a separately authorized operational session if M38 application and metadata-only redeployment are desired; no operational action is authorized now') -or
+        $tracker.Contains('**Next authorized action:** none in this session; Unit 7 remains not started and requires a new explicit authorization') -or
+        $tracker.Contains('**Next authorized action:** none; a native-device signed-upload proof would create Storage/database state and requires separate explicit authorization, while Unit 7 remains not started') -or
+        $tracker.Contains('**Next authorized action:** none; a further transport correction, Edge deployment, or additional live upload requires separate explicit authorization, while Unit 7 remains not started') -or
+        $tracker.Contains('**Next authorized action:** perform exactly one fresh Android Owner upload through the normal UI and require signed Storage `2xx`, exactly one object, and successful input registration; stop on the first failure. Edge deployment and Unit 7 remain separately unauthorized.') -or
+        $tracker.Contains('**Next authorized action:** bounded independent review of the multilingual vision-response resilience correction; deployment requires separate authorization, followed by exactly one fresh Android image proof after deployment. Unit 7 remains unauthorized.')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
@@ -553,7 +600,12 @@ $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_in
     $tracker.Contains('**Implementation status:** `single_image_safe_remove_local_complete_m35_application_and_edge_rollout_gated`') -or
     $tracker.Contains('**Implementation status:** `single_image_safe_remove_m35_live_edge_v3_verified`') -or
     $tracker.Contains('**Implementation status:** `automatic_worker_wake_dispatcher_local_review_corrections_applied`') -or
-    $tracker.Contains('**Implementation status:** `metadata_retry_correction_locally_complete_approved`'))
+    $tracker.Contains('**Implementation status:** `metadata_retry_correction_locally_complete_approved`') -or
+    $tracker.Contains('**Implementation status:** `unit6_complete_live_verified`') -or
+    $tracker.Contains('**Implementation status:** `unit6_mobile_upload_transport_correction_locally_verified`') -or
+    $tracker.Contains('**Implementation status:** `unit6_mobile_upload_transport_native_failed_diagnosed`') -or
+    $tracker.Contains('**Implementation status:** `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
+    $tracker.Contains('**Implementation status:** `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`'))
 $expectedMigrationNames = @($migrationNames)
 if ($wu1AppliedStatus) { $expectedMigrationNames += $draftMigrationNames }
 $appliedPhase9Migrations = if ($wu1AppliedStatus) {
@@ -847,8 +899,9 @@ if (-not ($phaseReadme.Contains('**Status:** `unit6e_finalized_unit6f_separately
     $phaseReadme.Contains('**Status:** `metadata_runtime_safety_locally_complete_adapter_smoke_pending`') -or
     $phaseReadme.Contains('**Status:** `metadata_runtime_safety_and_adapter_smoke_complete`') -or
     $phaseReadme.Contains('**Status:** `automatic_worker_wake_dispatcher_local_review_corrections_applied`') -or
-    $phaseReadme.Contains('**Status:** `unit6_pre_main_integration_reconciliation_in_progress`')) -or
-    -not ($phaseReadme.Contains('M01-M08/M10-M29 are live once') -or $phaseReadme.Contains('M01-M08/M10-M30 are live once')) -or
+    $phaseReadme.Contains('**Status:** `unit6_pre_main_integration_reconciliation_in_progress`') -or
+    $phaseReadme.Contains('**Status:** `unit6_complete_live_verified`')) -or
+    -not ($phaseReadme.Contains('M01-M08/M10-M29 are live once') -or $phaseReadme.Contains('M01-M08/M10-M30 are live once') -or $phaseReadme.Contains('M01-M08/M10-M38 and WU1 are live once')) -or
     -not $phaseReadme.Contains('Unit 6B is merged at `9ef9eb3`') -or
     -not $phaseReadme.Contains('Unit 6D is') -or
     -not $phaseReadme.Contains('22-unit6d-candidate-review-evidence.md') -or

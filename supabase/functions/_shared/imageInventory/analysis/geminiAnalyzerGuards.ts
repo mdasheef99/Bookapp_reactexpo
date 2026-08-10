@@ -1,4 +1,7 @@
 import { SpineAnalyzerError } from './spineAnalyzerError';
+import type {
+  GeminiSchemaFailureCategory,
+} from './geminiSchemaDiagnostics';
 
 const MODEL_ID = /^[a-z][a-z0-9._-]{1,63}$/u;
 const PROVIDER_REQUEST_ID = /^[A-Za-z0-9._:-]{1,128}$/u;
@@ -36,6 +39,8 @@ export type GeminiSafeLogEvent = Readonly<{
   providerErrorCategory?: GeminiProviderErrorCategory;
   providerRequestId?: string | null;
   safeMessage?: string;
+  schemaField?: string | null;
+  schemaFailureCategory?: GeminiSchemaFailureCategory;
 }>;
 
 export class GeminiAnalyzerError extends SpineAnalyzerError {

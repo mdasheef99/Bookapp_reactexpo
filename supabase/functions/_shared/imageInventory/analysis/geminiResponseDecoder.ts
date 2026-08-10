@@ -10,9 +10,15 @@ import {
 import { buildGeminiSearchVariantSidecar } from './geminiMultilingualEnrichment';
 import {
   asRecord,
+  assertRawPayloadWithinLimit,
   assertKnownKeys,
+  boundedInteger,
+  canonicalBcp47,
   Phase9ContractError,
+  requiredString,
 } from '../domain/validation';
+import { PHASE9_LIMITS } from '../contracts/registers';
+import { PHASE9_MAX_CANDIDATES } from '../contracts/versions';
 
 export type GeminiAnalysisWithCompanion = Readonly<{
   vision: SpineAnalysisResult;
@@ -32,11 +38,28 @@ const OBSERVATION_KEYS = [
   'detected_language', 'confidence', 'title_romanization',
   'english_translation_candidate', 'author_romanizations',
 ] as const;
+const MAX_PROVIDER_VISIBLE_BOOKS = 100;
+const IMAGE_OUTCOMES = [
+  'analyzed', 'no_books', 'too_many_books', 'quality_rejected',
+] as const;
+const HUMAN_LANGUAGE_LABEL = /^[\p{L}\p{M}]+(?:[ ._'’()-]+[\p{L}\p{M}]+)*$/u;
 
-function compactLanguage(value: unknown): unknown {
+function compactLanguage(value: unknown, field: string): string {
   if (value === null || value === undefined) return 'und';
-  if (typeof value !== 'string') return value;
-  return LANGUAGE_NAMES[value.trim().toLocaleLowerCase('en-US')] ?? value;
+  if (typeof value !== 'string') {
+    throw new Phase9ContractError(field, 'must be a string');
+  }
+  const known = LANGUAGE_NAMES[value.trim().toLocaleLowerCase('en-US')];
+  if (known) return known;
+  try {
+    return canonicalBcp47(value, field);
+  } catch {
+    const label = requiredString(value, field, PHASE9_LIMITS.languageTagChars);
+    if (!HUMAN_LANGUAGE_LABEL.test(label)) {
+      throw new Phase9ContractError(field, 'has an invalid language label format');
+    }
+    return 'und';
+  }
 }
 
 function compactIsbnClue(value: unknown): unknown {
@@ -54,6 +77,43 @@ function compactVision(value: unknown): Readonly<{
   if (!Array.isArray(vision.observations)) {
     throw new Phase9ContractError('gemini_response.vision.observations', 'must be an array');
   }
+  if (vision.observations.length > MAX_PROVIDER_VISIBLE_BOOKS) {
+    throw new Phase9ContractError(
+      'gemini_response.vision.observations',
+      `must contain at most ${MAX_PROVIDER_VISIBLE_BOOKS} entries`,
+    );
+  }
+  const reportedCount = vision.detected_visible_book_count === null
+    ? null
+    : boundedInteger(
+      vision.detected_visible_book_count,
+      'gemini_response.vision.detected_visible_book_count',
+      0,
+      MAX_PROVIDER_VISIBLE_BOOKS,
+    );
+  const imageOutcome = vision.image_outcome === 'success'
+    ? 'analyzed' : vision.image_outcome;
+  if (typeof imageOutcome !== 'string'
+    || !IMAGE_OUTCOMES.includes(imageOutcome as typeof IMAGE_OUTCOMES[number])) {
+    throw new Phase9ContractError(
+      'gemini_response.vision.image_outcome', 'unsupported image outcome',
+    );
+  }
+  const defensiveVisibleCount = Math.max(
+    reportedCount ?? 0,
+    vision.observations.length,
+  );
+  if (defensiveVisibleCount > PHASE9_MAX_CANDIDATES) {
+    return {
+      canonical: {
+        image_outcome: 'too_many_books',
+        detected_visible_book_count: defensiveVisibleCount,
+        observations: [],
+        warning_codes: [],
+      },
+      flattenedObservations: [],
+    };
+  }
   const flattenedObservations = vision.observations.map((entry, index) => {
     const field = `gemini_response.vision.observations[${index}]`;
     const observation = asRecord(entry, field);
@@ -70,7 +130,9 @@ function compactVision(value: unknown): Readonly<{
       author_guesses: observation.author_guesses,
       publisher_clue: observation.publisher_clue,
       isbn_clue: compactIsbnClue(observation.isbn_clue),
-      detected_language: compactLanguage(observation.detected_language),
+      detected_language: compactLanguage(
+        observation.detected_language, `${field}.detected_language`,
+      ),
       confidence: observation.confidence,
       title_romanization: observation.title_romanization,
       english_translation_candidate: observation.english_translation_candidate,
@@ -90,8 +152,6 @@ function compactVision(value: unknown): Readonly<{
       warning_codes: [],
     };
   });
-  const imageOutcome = vision.image_outcome === 'success'
-    ? 'analyzed' : vision.image_outcome;
   return {
     canonical: {
       image_outcome: imageOutcome,
@@ -135,6 +195,7 @@ export function decodeGeminiAnalysisResponse(
   receivedAt: string,
   providerOutput: Record<string, unknown>,
 ): GeminiAnalysisWithCompanion {
+  assertRawPayloadWithinLimit(providerOutput, 'gemini_response');
   assertKnownKeys(providerOutput, RESPONSE_KEYS, 'gemini_response');
   const compact = compactVision(providerOutput.vision);
   const envelope = resultEnvelope(

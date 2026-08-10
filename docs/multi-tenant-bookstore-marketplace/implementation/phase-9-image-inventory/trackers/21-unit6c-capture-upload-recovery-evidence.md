@@ -1,6 +1,6 @@
 # Phase 9 Unit 6C Capture, Upload, Progress, and Recovery Evidence
 
-**Status:** `merged_on_main`
+**Status:** `merged_on_main_with_2026_08_11_local_transport_correction`
 **Date:** 2026-07-31
 **Implementation commit:** `b87469d`
 **Authorized scope:** Unit 6C only
@@ -127,3 +127,102 @@ Unit 6C is merged on `main` through evidence commit `092562d`. The exact next
 eligible action is separate authorization for Phase 9 Unit 6D only. Units
 6E-6F, Unit 7, migrations, Supabase/Storage writes,
 deployment, and live backend verification remain separately gated.
+
+## 2026-08-11 Android signed-upload transport correction
+
+A read-only investigation of the failed mobile attempt proved capability and
+signed-URL issuance succeeded, while repeated Android PUTs returned HTTP 400
+before any Storage object or registered input existed. The local client used a
+React Native `Blob` wrapped in `FormData` for the signed PUT. The narrow
+red-first correction now reads the same selected URI as an `ArrayBuffer`,
+retains the declared byte-length check, and sends those bytes directly with
+`content-type`, `cache-control: max-age=0`, and `x-upsert: false`.
+
+Verification actually run:
+
+- red regression: the new raw-byte assertion failed because `arrayBuffer()` was
+  never called by the old implementation;
+- corrected transport suite: 2/2 passed;
+- focused capture/upload suites: 4 suites, 26/26 passed;
+- full Image Inventory Jest scope: 39 suites, 290/290 reported passing; the
+  existing Jest open handle remained after completion and the idle runner was
+  stopped;
+- repository TypeScript: passed with no diagnostics.
+- Phase 9 continuity validator: passed, including repository diff check; only
+  existing document-size advisories and line-ending warnings were emitted.
+
+The change does not alter signed capability issuance, upload progress,
+cancellation, retry/registration semantics, backend behavior, or any Unit 7
+boundary.
+
+## 2026-08-11 authorized Android runtime investigation
+
+The user separately authorized one bounded native upload proof and performed
+the retry in Expo Go. Exact-project evidence recorded three short-lived upload
+capabilities across the investigation and no registered input or stored object.
+The corrected Android raw-byte transport reached Storage, but every observed
+`okhttp/4.12.0` signed PUT returned HTTP 400. Capability issuance and Edge auth
+succeeded before those PUTs, so the remaining primary defect is isolated to
+the React Native-to-Storage request body/boundary rather than local file read,
+authentication, capability issuance, registration, or downstream processing.
+
+A later retry occurred after a development reload had cleared the in-memory
+capability while the prior capability was still unexpired. The live database
+correctly raised `P9_SINGLE_IMAGE_LIMIT`; deployed Edge version 3 surfaced that
+known domain error as generic HTTP 500, producing the changed 0% message
+`The request could not be completed.` This is a secondary live deployment
+drift/error-mapping observation and did not exercise the Storage PUT.
+
+External effects were limited to the authorized capability rows and rejected
+requests. No object, input, job, inventory/listing/publication effect,
+migration, deployment, provider call, staging, commit, or push occurred. The
+temporary development-only console diagnostic was removed after correlation.
+
+## 2026-08-11 native FileSystem transport replacement
+
+The user authorized the smallest supported native transport correction after
+the two XHR-backed Android bodies both reached Storage and returned HTTP 400.
+The browser transport is restored to its previously proven Blob/FormData XHR
+contract. Android and iOS no longer instantiate React Native XHR for signed
+upload; they use Expo FileSystem `UploadTask` with the original local URI and
+`BINARY_CONTENT`.
+
+The native preflight rejects a missing/changed file before transmission. The
+signed PUT carries the declared MIME, `cache-control: max-age=0`, and
+`x-upsert: false`; progress comes from native bytes sent/expected; cancellation
+calls the native task once; only 2xx permits registration continuation. Typed
+non-2xx evidence retains platform, stage, status, MIME, expected byte size, and
+an allowlisted/redacted bounded Storage message without retaining the signed
+URL or token.
+
+Verification actually run:
+
+- red-first transport suite: 6/6 failed against the XHR implementation;
+- corrected transport suite: 6/6 passed;
+- focused capture/upload suites: 4 suites, 37/37 passed;
+- repository TypeScript: passed with no diagnostics;
+- final Image Inventory scope: 39 suites, 294/294 passed;
+- the known Jest open handle remained after completed results and the idle
+  runner was stopped; no open-handle audit was started.
+
+At this local checkpoint no live Android proof, database/Storage/backend
+mutation, migration, Edge or worker deployment, provider call,
+inventory/listing/publication action, Git stage/commit/push, or Unit 7 work had
+occurred. The then-pending Android gate was later passed as recorded below.
+
+## 2026-08-11 user-supplied physical FileSystem proof and downstream handoff
+
+The later physical Android run closed that pending transport gate. The native
+signed PUT succeeded, exactly one Storage object was created, input
+`a1c8e286-07f2-40c5-9bbd-2fed49c5148d` registered successfully, and media
+sanitation completed. The worker then reached Gemini and vision job
+`20734f70-dd4c-4f68-87d5-aa837cb32b7d` failed terminally with
+`P9_VISION_SCHEMA_INVALID`. Provider evidence retained only configured model,
+prompt/schema versions, normalized outcome, token count, and sanitized media
+shape; no raw model payload was persisted or logged.
+
+The Owner later removed the input. It remains `skipped/P9_OWNER_REMOVED` and is
+not eligible for retry or revival. This evidence closes the native transport
+blocker and moves the active correction downstream to the Gemini response
+decoder. The prior browser path remains unchanged. Edge error-mapping drift,
+deployment, another provider call, and Unit 7 remain separate gates.

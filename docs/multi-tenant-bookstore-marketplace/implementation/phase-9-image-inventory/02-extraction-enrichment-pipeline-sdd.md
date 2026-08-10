@@ -12,12 +12,14 @@ duplicate-spend linkage, bounded usage/injected pricing evidence, and explicit
 accepted/stale/failed/unknown dispositions. Register/finalize/associate/mark RPCs
 do not alter `p9-vision-v2` or permit metadata/inventory/publication writes.
 
-**Metadata retry correction (local, unapplied 2026-08-10):** forward-only M38
+**Metadata retry correction (live once 2026-08-10):** forward-only M38
 adds metadata job context v2 with the latest physical provider call's originating
 claim attempt. A finalized retryable result is reconciled without new egress only
 inside that same claim attempt; a later job claim registers a fresh physical call
 and retries the provider. Finalized terminal/non-retryable evidence remains
-replay-safe, preserving accepted-state and cost/idempotency recovery.
+replay-safe, preserving accepted-state and cost/idempotency recovery. One final
+automatic Owner proof completed six metadata jobs on claim 1 with no natural
+retryable result and reached six Needs Review cards.
 
 ## 1. Decision
 
@@ -203,13 +205,28 @@ response schema. The prompt defines the single flat `vision` shape, while the
 BookConnect decoder remains the authoritative strict contract boundary. This
 avoids provider-specific structured-schema rejection without weakening local
 validation, provenance construction, or raw-response retention policy.
-Before strict validation, the decoder applies only the evidenced Gemini
-JSON-mode compatibility mappings: provider `image_outcome: "success"` becomes
-canonical `analyzed`; null language becomes `und`; known language names become
-BCP 47 tags; safe `ISBN`/`ISBN-10`/`ISBN-13` labels are stripped from otherwise
-valid identifier clues; and an analyzed visible-book count is reconciled to the
-accepted observation count. Unknown languages, malformed ISBN clues, and every
-other provider value remain subject to the strict canonical decoder.
+Before strict validation, the decoder applies a bounded Gemini JSON-mode
+compatibility layer. Provider `image_outcome: "success"` becomes canonical
+`analyzed`; safe `ISBN`/`ISBN-10`/`ISBN-13` labels are stripped from otherwise
+valid identifier clues; and an in-cap analyzed visible-book count is reconciled
+to the accepted observation count. A bounded provider count or observation
+array of 16-100 books becomes canonical `too_many_books` with the validated
+defensive count and zero observations. This is complete-image rejection: no
+observation is truncated, persisted, or offered to optional enrichment. Counts
+or arrays above 100, unknown response/vision structure, and malformed in-cap
+observations remain deterministic schema failures.
+
+Null or missing detected language becomes `und`; known human-readable language
+names become their existing BCP 47 mappings; and valid BCP 47-shaped tags keep
+strict canonical handling. An unrecognized, bounded, plain human-language label
+degrades to `und` without changing original Unicode title/author content. A
+non-string, empty, over-bound, control/bidi-bearing, active-content, or otherwise
+malformed language value remains a schema failure. Optional Romanization or
+translation is still validated independently; its rejection cannot invalidate
+valid core extraction. Schema-failure logs may contain only a code-owned,
+sanitized field path and one closed category (`unknown_keys`, `type`, `bounds`,
+`format`, `active_content`, `coherence`, `identity`, or `other`), never the raw
+payload, rejected value, generated key name, or bibliographic text.
 
 Use positive and negative caches keyed by normalized provider-independent query plus adapter/schema version. Cache expiry is policy-configured. A circuit breaker suppresses repeated calls to a failing provider while leaving manual/local paths available.
 
@@ -276,6 +293,9 @@ SDD 04 owns holds, deletion evidence, exceptions, and signed access.
 - blur/glare/rotation/low-resolution/empty/wrong-language/mixed-language cases;
 - multimodal prompt-injection text embedded in spines/background;
 - malformed/extra/oversized schema output;
+- 16-100 observation/count normalization to complete-image over-cap rejection,
+  greater-than-100 defensive rejection, bounded unknown language labels, and
+  closed privacy-safe schema diagnostics;
 - primary timeout, fallback success/failure, valid-empty no-fallback;
 - provider exact/fuzzy/conflict/no-match/cache/negative-cache/circuit-breaker;
 - ISBN checksum/conversion;

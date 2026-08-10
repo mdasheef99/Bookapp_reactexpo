@@ -1,19 +1,19 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit6_owner_ux_approved_design_authority`
-**Implementation status:** `metadata_retry_correction_locally_complete_approved`
-**Last updated:** 2026-08-10
-**Current milestone:** M32-M37 are live exactly once; local forward M38 corrects later-claim metadata provider retry while preserving same-claim and terminal reconciliation
-**Active work unit:** `phase9_metadata_retry_provider_attempt_correction`
+**Implementation status:** `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`
+**Last updated:** 2026-08-11
+**Current milestone:** Unit 6 remains complete; native FileSystem upload is physically proven through object creation, registration, and sanitation, and the downstream multilingual Gemini decoder resilience correction is locally complete
+**Active work unit:** `phase9_multilingual_vision_response_resilience_review`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** H1 is resolved by proof: authorized Owner review rejects a `processing` candidate without changing its version, while claim attempt/worker/token/lease, candidate state, and authoritative vision lineage fence physical finalization. H2 uses one shared offset-aware ISO-8601 timestamp helper across vision, metadata edition/result, and automated-alias boundaries. H3 directly proves repeated reconciliation, registered-call reclaim survival, known-completion reuse, and stale-worker non-overwrite. SQL-backed worker evidence remains green for finalized-retryable replay, sibling isolation, invalid-ISBN fallback, and storage-denied positive-retention gaps. All 14 M32 public worker wrappers remain covered by exhaustive ACL proof. M32 was then verified live exactly once, and the minimum Google Books registry row was configured.
-**Next authorized action:** open a separately authorized operational session if M38 application and metadata-only redeployment are desired; no operational action is authorized now
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M33 are live at their recorded versions; M34 is live once as `20260809182407 marketplace_phase9_vision_language_hint_correction`; M35 is live once as `20260809223135 marketplace_phase9_single_image_removal`.
-**Scope boundary:** this unit authorizes classification, bounded commits, local tests/review, and publication of the correction branch. Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and product-publication actions are excluded.
-**Implementation authority:** the user's latest 2026-08-10 instruction authorizes the bounded correction and permits its commit/push after independent approval; it does not expand external mutation authority or authorize a `main` push.
-**Migration creation/application authority:** local M38 creation is authorized; application is prohibited. M32-M37 are immutable and live exactly once. No deployment, provider/job invocation, live-job retry/requeue, Storage, media, vision, query-policy, Unit 7, inventory, listing, or publication mutation is authorized.
-**Current gate:** `M38_LOCALLY_COMPLETE_APPROVED_BRANCH_PUBLISHED`; focused metadata Jest passes 148/148, exact Google Books HTTP 503-to-200 structural PGlite passes, full Phase 9 PGlite passes 242/242 through M38, metadata build/entrypoint/deployment validation pass, independent correction-only review is `APPROVED`, correction commit `8c55fea` is pushed on `codex/phase9-metadata-retry-correction`, and no live state changed.
+**Last completed:** Red-first response-resilience fixtures failed on over-cap normalization, unknown bounded language labels, and closed schema diagnostics, then passed 21/21 after correction. Existing analyzer/captured payload plus resilience passes 46/46; focused worker/extraction/multilingual/security/Unit 6 polling passes 120/120; Image Inventory passes 39 suites and 294/294; repository TypeScript and the vision-worker build pass.
+**Next authorized action:** bounded independent review of the multilingual vision-response resilience correction; deployment requires separate authorization, followed by exactly one fresh Android image proof after deployment. Unit 7 remains unauthorized.
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`.
+**Scope boundary:** The 2026-08-11 response correction changes only the Gemini provider compatibility/diagnostic boundary, deterministic fixtures, and required Phase 9 documentation. The proven upload transport, database/RPCs, removed input, provider configuration, worker topology, metadata, inventory/listing/publication, Unit 7, migration, deployment, and live provider execution remain excluded.
+**Implementation authority:** the user's 2026-08-11 instructions authorize this narrow local correction and verification; they do not authorize Git publication, migration, Supabase/Storage mutation, removed-input retry, backend/Edge correction, deployment, or live Gemini execution.
+**Migration creation/application authority:** M38 was applied exactly once to verified project `ahntbtktjjmvfosgkmgn`; no further migration, database, queue, Storage, or service mutation is authorized.
+**Current gate:** `VISION_RESPONSE_RESILIENCE_REVIEW_PENDING`; user-supplied Android evidence closed the FileSystem transport proof and exposed downstream `P9_VISION_SCHEMA_INVALID`. The local structural correction is green, but deployment and one fresh post-deployment Android proof remain separately gated. The secondary deployed-Edge `P9_SINGLE_IMAGE_LIMIT` mapping drift is unchanged.
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -1030,3 +1030,69 @@ provider fallback, or create global alias authority.
 - Exact next authorized action: open a separately authorized operational session
   if M38 application and metadata-only redeployment are desired. Neither is
   authorized by this closeout.
+
+### 2026-08-10 — M38 rollout and final Unit 6 proof
+
+- Publication: `origin/main` was fast-forwarded without force or conflict from
+  `211217b` to exact approved SHA `a138baa7d3bbc086da019bc052a5ae31d0e15882`.
+- Database: exact project `ahntbtktjjmvfosgkmgn` was healthy; preflight found
+  M32-M37 exactly once, M38 absent, the dispatcher active, zero claimable work,
+  zero active metadata leases, and baseline counts of 6 sessions, 26 inputs,
+  57 jobs, 25 candidates, 5 inventory rows, and 5 listings. Exact M38 was then
+  applied once as `20260810130638 marketplace_phase9_metadata_retry_correction`.
+  Post-apply readback proved fixed empty `search_path`, postgres ownership,
+  service-role-only execution, active dispatcher, zero created/claimed jobs,
+  and unchanged row counts.
+- Deployment: only `phase9-metadata-worker` was deployed, exactly once, as
+  Render deploy `dep-d9ssq2v10e5c73ahp18g` from the approved SHA. Health and
+  readiness returned 200 and auto-deploy remained off. Media and vision were
+  not redeployed.
+- Final proof: after closing the prior terminal Owner session through its normal
+  non-committing UI, one SHA-new 3,269,293-byte PNG was uploaded through the
+  authenticated Owner UI into session `1bd67cb3-3cc4-4b0e-8b6b-11e9fff9d64a`.
+  Automatic media and vision/Gemini each resolved on claim 1; six observations,
+  six candidates, and six metadata jobs were created. All six metadata jobs
+  resolved automatically on claim 1: five physical Google Books calls and one
+  safe cache completion, with two coherent matches and three safe ambiguous
+  provider outcomes. No retryable provider result occurred naturally.
+- Owner result: the real session screen showed one processed image, six books,
+  `Continue to book review`, and six `Needs attention` cards. No candidate was
+  opened, reviewed, committed, or published.
+- Non-interference: final inventory/listing counts remained 5/5; the historical
+  metadata dead-letter job `206ffc83-de84-4cbf-835a-a2d3fb56eb79` retained its
+  pre-session `2026-08-10T11:33:01.16159Z` terminal timestamp. Manual `/run`,
+  manual claims, SQL repair/reset, operator retries, duplicate replay, media or
+  vision redeploy, and Unit 7 actions were all zero.
+- Closure verdict: `PASS`. Unit 6 is complete. The prior representative low-end
+  Android evidence was not rerun; the user's explicit final-proof acceptance
+  instruction makes this successful bounded live proof the Unit 6 closure gate.
+- Exact next authorized action: none. Any Unit 7 work requires a new explicit
+  authorization and a new bounded session.
+
+### 2026-08-11 — multilingual vision-response resilience correction
+
+- User-supplied physical evidence: native FileSystem signed upload succeeded,
+  exactly one Storage object and input were created, sanitation completed, and
+  vision job `20734f70-dd4c-4f68-87d5-aa837cb32b7d` failed terminally as
+  `P9_VISION_SCHEMA_INVALID`. Removed input
+  `a1c8e286-07f2-40c5-9bbd-2fed49c5148d` remains `skipped/P9_OWNER_REMOVED`.
+- Red-first implementation: 16-100 reported observations become complete-image
+  `too_many_books`; values beyond 100 fail; bounded unknown human language
+  labels become `und` without modifying Unicode title/authors; optional
+  enrichment remains independently rejectable; schema logs contain only a
+  sanitized code-owned path and closed category.
+- Strictness retained: unknown top/vision/in-cap observation keys, active core
+  content, non-string languages, invalid identity, malformed ordinals, and raw
+  payload overflow fail closed. No observation truncation or malformed-core
+  salvage occurs.
+- Verification: red suite failed 5/21 before production changes; final
+  resilience 21/21; analyzer/captured payload plus resilience 46/46; focused
+  worker/extraction/multilingual/security/Unit 6 polling 120/120; Image Inventory
+  39 suites and 294/294; repository TypeScript with the documented import flag
+  and vision-worker build pass. The unflagged TypeScript command produced only
+  the repository's known TS5097 import-extension configuration errors.
+- External effects in this correction session: none. No migration, database or
+  Storage write, deployment, live provider call, removed-input retry, inventory,
+  listing, publication, Unit 7, stage, commit, push, or PR action occurred.
+- Exact next action: bounded independent review; after approval, separately
+  authorize deployment, then exactly one fresh Android image proof.

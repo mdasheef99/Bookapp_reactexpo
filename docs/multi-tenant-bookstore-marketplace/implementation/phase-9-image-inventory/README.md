@@ -1,37 +1,40 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit6_pre_main_integration_reconciliation_in_progress`
-**Last updated:** 2026-08-10
-**Implementation status:** M01-M08/M10-M30 are live-verified at their recorded
-levels; Unit 6A is merged/live, Unit 6B is merged at `9ef9eb3`, Unit 6C is
-merged through `092562d`, Unit 6D is implemented at `c363b60`, and Unit 6E
-false/missed-variant corrections are finalized at `8bceab2`
-**Supabase mutation status:** M01-M08/M10-M30 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; WU1 was applied exactly once as `20260803221216 marketplace_phase9_owner_inventory_read_boundary`; no WU1 row, user, fixture, listing, publication, or Storage mutation occurred. A separately authorized Render Unit 4B configuration/startup deployment is recorded in the implementation evidence; no provider inference was run.
-**Database checkpoint:** M01-M08 and forward migrations M10-M30 plus WU1 are live-verified at their recorded levels; M09 remains absent; positive Owner JWT runtime remains deferred.
+**Status:** `unit6_complete_live_verified`
+**Last updated:** 2026-08-11
+**Implementation status:** Unit 6 is complete. M01-M08/M10-M38 are live-verified
+at their recorded levels; approved `main` SHA `a138baa7d3bbc086da019bc052a5ae31d0e15882`
+is published and deployed to metadata; one authenticated Owner upload completed
+the full automatic path to Needs Review without inventory/listing effects.
+Unit 6B is merged at `9ef9eb3`; Unit 6D is implemented at `c363b60`; their
+recorded evidence remains authoritative beneath this final closure checkpoint.
+**Supabase mutation status:** M01-M08/M10-M38 and WU1 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent. The final closure session applied only M38, created one Owner session/input, and allowed the automatic pipeline to create its bounded jobs/candidates/metadata evidence. Inventory/listings stayed 5/5; no Storage cleanup, publication, duplicate replay, or Unit 7 mutation occurred.
+**Database checkpoint:** M01-M08 and forward migrations M10-M38 plus WU1 are live-verified at their recorded levels; M09 remains absent; the authenticated Owner automatic path is live-verified through Needs Review.
 M30 was applied exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`.
-M32 is live exactly once as `20260808020404`. The local metadata runtime now
-enforces the exact approved Supabase origin, has no meaningless peer-hash input,
-and is reachable through the existing bounded manual invoker. The one-call
-adapter-only Google Books smoke returned HTTP 200 and passed credential,
-response-bound, decoder, and normalized-result checks without database use.
-No live automatic dispatcher, metadata deployment, candidate, inventory/publication,
-or Unit 7 action is part of this slice. A one-candidate proof requires separate
-authorization and a fresh process-only Google Books key after revocation of the
-chat-exposed temporary key. The inherited service-role key was revalidated on
-2026-08-09 as the exact-project key; only the inherited `SUPABASE_URL` is foreign
-and must be overridden for the worker process.
+M32 is live exactly once as `20260808020404`; M38 is live exactly once as
+`20260810130638`. The metadata runtime enforces the exact approved Supabase
+origin and is deployed from approved SHA `a138baa`. The active dispatcher and
+all three workers completed the final one-image proof automatically; no manual
+invoker was used.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 
-The current narrow authority is the locally complete, independently `APPROVED` Phase 9 metadata retry/provider-attempt correction, published as commit `8c55fea` on `codex/phase9-metadata-retry-correction`. M32-M37 are live and immutable; M38 is unapplied. Supabase, Render, provider/job, Storage, media, vision, query-policy, duplicate-replay, Unit 7, inventory, listing, and product-publication mutations remain separately gated.
+The current handoff is Unit 6 closure `PASS`. M32-M38 are live and immutable at
+their recorded versions; metadata deploy count for the rollout was 1/1 and
+media/vision were not redeployed. Duplicate replay was not tested, Unit 7 was
+not started, and no next work unit is authorized without a new explicit session.
 
-WU1 and WU2 remain complete at their recorded levels. Local M32 now closes the
+The current post-closure handoff is the local multilingual vision-response
+resilience correction. User-supplied Android evidence closes the FileSystem
+transport proof and moves the blocker to strict Gemini decoding. The local
+correction is green and review-pending; deployment, a fresh post-deployment
+Android proof, and Unit 7 remain separately unauthorized.
+
+WU1 and WU2 remain complete at their recorded levels. M32 closes the
 structural metadata seam with transaction-atomic candidate/job creation,
 same-candidate fenced worker processing, a provider-neutral Google Books path,
-and replay-safe terminal persistence using approved states. Independent review
-and an explicitly authorized exact-project read-only preflight are next. M32
-application, live Gemini/Google Books calls, deployment, automatic dispatch,
-the full runtime matrix, and the representative Android gate remain deferred.
+and replay-safe terminal persistence using approved states. M38 and the final
+automatic live proof close the later-claim retry and Unit 6 operational gates.
 
 Every new development session starts at repository `AGENTS.md`, then follows `implementation/ACTIVE.md` → DOC-13 → [SESSION-START.md](./SESSION-START.md) → [TRACKER.md](./TRACKER.md). `SESSION-START.md` defines the Phase 9 resume brief, work-unit reading router, Supabase gate, documentation update matrix, and mandatory closeout transaction.
 
