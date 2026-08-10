@@ -4,9 +4,8 @@ import {
 } from '../../../workers/phase9-metadata-worker/bootstrap';
 
 const base = {
-  SUPABASE_URL: 'https://example.supabase.co',
+  SUPABASE_URL: 'https://ahntbtktjjmvfosgkmgn.supabase.co',
   SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-that-is-long-enough-0001',
-  PHASE9_PEER_WORKER_INGRESS_TOKEN_SHA256: 'a'.repeat(64),
   PHASE9_WORKER_HOST: '0.0.0.0',
   PHASE9_WORKER_PORT: '8080',
   PHASE9_WORKER_CONCURRENCY: '1',
@@ -15,6 +14,45 @@ const base = {
 };
 
 describe('Phase 9 metadata worker server-only environment', () => {
+  it('fails closed on every non-approved privileged Supabase target before composition', () => {
+    const compose = jest.fn();
+    const rejected = [
+      'https://another-project.supabase.co',
+      'https://ahntbtktjjmvfosgkmgn.supabase.co.attacker.example',
+      'http://ahntbtktjjmvfosgkmgn.supabase.co',
+      'https://user@ahntbtktjjmvfosgkmgn.supabase.co',
+      'https://ahntbtktjjmvfosgkmgn.supabase.co?unsafe=1',
+      'https://ahntbtktjjmvfosgkmgn.supabase.co#unsafe',
+      'https://ahntbtktjjmvfosgkmgn.supabase.co/unexpected',
+      'not a url',
+      '',
+    ];
+
+    expect(loadMetadataWorkerEnvironment(base)).toMatchObject({
+      supabaseUrl: 'https://ahntbtktjjmvfosgkmgn.supabase.co',
+    });
+    for (const SUPABASE_URL of rejected) {
+      expect(() => {
+        const configuration = loadMetadataWorkerEnvironment({ ...base, SUPABASE_URL });
+        compose(configuration);
+      }).toThrow('P9_WORKER_CONFIGURATION_INVALID');
+    }
+    expect(compose).not.toHaveBeenCalled();
+  });
+
+  it('rejects a service credential when the approved URL is absent', () => {
+    expect(() => loadMetadataWorkerEnvironment({ ...base, SUPABASE_URL: undefined }))
+      .toThrow('P9_WORKER_CONFIGURATION_INVALID');
+  });
+
+  it('does not require or accept a meaningless peer fingerprint', () => {
+    expect(loadMetadataWorkerEnvironment(base)).toMatchObject({ providerMode: 'fixture' });
+    expect(() => loadMetadataWorkerEnvironment({
+      ...base,
+      PHASE9_PEER_WORKER_INGRESS_TOKEN_SHA256: 'a'.repeat(64),
+    })).toThrow('P9_WORKER_CONFIGURATION_INVALID');
+  });
+
   it('defaults to fixture mode without a provider credential', () => {
     expect(loadMetadataWorkerEnvironment(base)).toMatchObject({ providerMode: 'fixture' });
   });

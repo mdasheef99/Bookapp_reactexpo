@@ -6,6 +6,7 @@ import {
   canonicalBcp47,
   optionalString,
   Phase9ContractError,
+  requiredIsoTimestamp,
   requiredString,
   utf8ByteLength,
 } from '../domain/validation';
@@ -19,6 +20,13 @@ const METADATA_KEYS = [
   'fetched_at', 'title', 'subtitle', 'authors', 'description', 'isbn10', 'isbn13',
   'publisher', 'published_date', 'language', 'script', 'edition_statement', 'series', 'volume', 'format',
   'page_count', 'categories', 'cover_reference', 'match_rationale', 'confidence',
+] as const;
+
+const NORMALIZED_METADATA_KEYS = [
+  'contractVersion', 'schemaVersion', 'adapterKey', 'adapterVersion', 'normalizerVersion', 'correlationId', 'attemptId', 'providerRecordId',
+  'fetchedAt', 'title', 'subtitle', 'authors', 'description', 'isbn10', 'isbn13',
+  'publisher', 'publishedDate', 'language', 'script', 'editionStatement', 'series', 'volume', 'format',
+  'pageCount', 'categories', 'coverReference', 'matchRationale', 'confidence',
 ] as const;
 
 export type MetadataEdition = Readonly<{
@@ -101,8 +109,7 @@ export function parseMetadataEdition(value: unknown, hostPolicy?: ProviderHostPo
     input.isbn10 === null || input.isbn10 === undefined ? null : requiredString(input.isbn10, 'isbn10', 32, { activeContent: false }),
     input.isbn13 === null || input.isbn13 === undefined ? null : requiredString(input.isbn13, 'isbn13', 32, { activeContent: false }),
   );
-  const fetchedAt = requiredString(input.fetched_at, 'fetched_at', 40, { activeContent: false });
-  if (!Number.isFinite(Date.parse(fetchedAt))) throw new Phase9ContractError('fetched_at', 'must be an ISO timestamp');
+  const fetchedAt = requiredIsoTimestamp(input.fetched_at, 'fetched_at');
   const pageCount = input.page_count === null || input.page_count === undefined
     ? null
     : boundedInteger(input.page_count, 'page_count', 1, PHASE9_LIMITS.pageCount);
@@ -138,6 +145,44 @@ export function parseMetadataEdition(value: unknown, hostPolicy?: ProviderHostPo
   };
 }
 
+export function parseNormalizedMetadataEdition(
+  value: unknown,
+  hostPolicy?: ProviderHostPolicy,
+): MetadataEdition {
+  const input = asRecord(value, 'normalized_metadata_edition');
+  assertKnownKeys(input, NORMALIZED_METADATA_KEYS, 'normalized_metadata_edition');
+  return parseMetadataEdition({
+    contract_version: input.contractVersion,
+    schema_version: input.schemaVersion,
+    adapter_key: input.adapterKey,
+    adapter_version: input.adapterVersion,
+    normalizer_version: input.normalizerVersion,
+    correlation_id: input.correlationId,
+    attempt_id: input.attemptId,
+    provider_record_id: input.providerRecordId,
+    fetched_at: input.fetchedAt,
+    title: input.title,
+    subtitle: input.subtitle,
+    authors: input.authors,
+    description: input.description,
+    isbn10: input.isbn10,
+    isbn13: input.isbn13,
+    publisher: input.publisher,
+    published_date: input.publishedDate,
+    language: input.language,
+    script: input.script,
+    edition_statement: input.editionStatement,
+    series: input.series,
+    volume: input.volume,
+    format: input.format,
+    page_count: input.pageCount,
+    categories: input.categories,
+    cover_reference: input.coverReference,
+    match_rationale: input.matchRationale,
+    confidence: input.confidence,
+  }, hostPolicy);
+}
+
 export function parseMetadataAdapterResult(value: unknown, hostPolicy?: ProviderHostPolicy): MetadataAdapterResult {
   if (utf8ByteLength(value) > PHASE9_LIMITS.rawPayloadBytes) throw new Phase9ContractError('metadata_adapter_result', `exceeds ${PHASE9_LIMITS.rawPayloadBytes} bytes`);
   const input = asRecord(value, 'metadata_adapter_result');
@@ -155,8 +200,7 @@ export function parseMetadataAdapterResult(value: unknown, hostPolicy?: Provider
   const outcome = input.outcome as MetadataOutcome;
   if (outcome === 'matched' && candidates.length === 0) throw new Phase9ContractError('candidates', 'matched outcome requires a coherent edition');
   if (outcome !== 'matched' && candidates.length > 0) throw new Phase9ContractError('candidates', 'non-matched outcome cannot carry editions');
-  const receivedAt = requiredString(input.received_at, 'received_at', 40, { activeContent: false });
-  if (!Number.isFinite(Date.parse(receivedAt))) throw new Phase9ContractError('received_at', 'must be an ISO timestamp');
+  const receivedAt = requiredIsoTimestamp(input.received_at, 'received_at');
   return {
     contractVersion: PHASE9_CONTRACT_VERSION,
     schemaVersion: PHASE9_METADATA_SCHEMA_VERSION,

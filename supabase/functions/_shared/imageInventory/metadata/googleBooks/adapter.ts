@@ -1,7 +1,11 @@
 import { MetadataEdition } from '../../contracts/metadata';
 import { MetadataQueryIdentity } from '../queryIdentity';
+import {
+  MetadataProviderAdapter,
+  MetadataProviderOutcome,
+} from '../providerAdapter';
 import { buildGoogleBooksRequest } from './request';
-import { decodeGoogleBooksResponse } from './decoder';
+import { decodeGoogleBooksResponse, GOOGLE_BOOKS_EDITION_HOST_POLICY } from './decoder';
 import { rankGoogleBooksEditions } from './ranking';
 
 type Fetcher = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
@@ -18,18 +22,14 @@ type Lookup = Readonly<{
   attemptId: string;
   signal: AbortSignal;
 }>;
-export type GoogleBooksOutcome = Readonly<{
-  outcome: 'coherent_match' | 'ambiguous_match' | 'material_conflict'
-    | 'no_acceptable_match' | 'authentication_configuration_failure'
-    | 'timeout' | 'cancelled' | 'network_failure' | 'rate_limited'
-    | 'provider_unavailable' | 'malformed_response' | 'response_too_large'
-    | 'unsupported_content_type';
-  candidates: readonly MetadataEdition[];
-  selected: MetadataEdition | null;
-  evidence: readonly string[];
-  retryable: boolean;
-  providerRequestId: string | null;
-}>;
+export type GoogleBooksOutcome = MetadataProviderOutcome;
+
+const secondaryEligible = new Set<MetadataProviderOutcome['outcome']>([
+  'no_acceptable_match', 'ambiguous_match', 'material_conflict',
+  'provider_unavailable', 'timeout', 'network_failure', 'rate_limited',
+  'circuit_breaker_open', 'malformed_response', 'schema_invalid',
+  'response_too_large', 'unsupported_content_type',
+]);
 
 const outcome = (
   value: GoogleBooksOutcome['outcome'],
@@ -40,10 +40,12 @@ const outcome = (
   selected: null,
   evidence: [],
   retryable,
+  secondaryEligible: secondaryEligible.has(value),
   providerRequestId: null,
 });
 
-export class GoogleBooksAdapter {
+export class GoogleBooksAdapter implements MetadataProviderAdapter {
+  readonly normalizedEditionHostPolicy = GOOGLE_BOOKS_EDITION_HOST_POLICY;
   constructor(private readonly configuration: Configuration) {}
 
   async lookup(input: Lookup): Promise<GoogleBooksOutcome> {
@@ -103,6 +105,7 @@ export class GoogleBooksAdapter {
         ...ranking,
         candidates,
         retryable: false,
+        secondaryEligible: secondaryEligible.has(ranking.outcome),
         providerRequestId: requestId,
       };
     } catch (error) {

@@ -31,7 +31,12 @@ export const normalizeBibliographicSearchKey = (value: string): string =>
     .trim()
     .replace(/\s+/gu, ' ');
 
-const stableKey = (parts: readonly unknown[]): string => JSON.stringify(parts);
+const canonicalJson = (value: unknown): string => {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(', ')}]`;
+  return JSON.stringify(value);
+};
+
+const stableKey = (parts: readonly unknown[]): string => canonicalJson(parts);
 
 export function buildMetadataQueryIdentity(input: Readonly<{
   strategy: MetadataLookupStrategy;
@@ -49,7 +54,9 @@ export function buildMetadataQueryIdentity(input: Readonly<{
   const normalizedEditionClues = [...new Set(
     input.editionClues.map(normalizeBibliographicText).filter(Boolean),
   )].sort();
-  const strategy = input.strategy;
+  const strategy: MetadataLookupStrategy = normalizedIsbn13 === null
+    ? 'bibliographic'
+    : input.strategy === 'approved_strong_evidence' ? input.strategy : 'isbn';
   const key = stableKey([
     METADATA_LOOKUP_CONTRACT_VERSION,
     METADATA_NORMALIZER_VERSION,

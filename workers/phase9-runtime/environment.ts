@@ -1,12 +1,16 @@
 import { createHash } from 'node:crypto';
 
-export const SHARED_ENVIRONMENT_NAMES = Object.freeze([
+const BASE_ENVIRONMENT_NAMES = Object.freeze([
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
-  'PHASE9_PEER_WORKER_INGRESS_TOKEN_SHA256',
   'PHASE9_WORKER_HOST',
   'PHASE9_WORKER_PORT',
   'PHASE9_WORKER_CONCURRENCY',
+] as const);
+
+export const SHARED_ENVIRONMENT_NAMES = Object.freeze([
+  ...BASE_ENVIRONMENT_NAMES,
+  'PHASE9_PEER_WORKER_INGRESS_TOKEN_SHA256',
 ] as const);
 
 export const MEDIA_ENVIRONMENT_NAMES = Object.freeze([
@@ -28,7 +32,7 @@ export const VISION_ENVIRONMENT_NAMES = Object.freeze([
 ] as const);
 
 export const METADATA_ENVIRONMENT_NAMES = Object.freeze([
-  ...SHARED_ENVIRONMENT_NAMES,
+  ...BASE_ENVIRONMENT_NAMES,
   'PHASE9_METADATA_WORKER_ID',
   'PHASE9_METADATA_WORKER_INGRESS_TOKEN',
   'PHASE9_METADATA_PROVIDER_MODE',
@@ -79,6 +83,7 @@ const sha256Pattern = /^[0-9a-f]{64}$/u;
 const hostPattern = /^(?:localhost|0\.0\.0\.0|127\.0\.0\.1|::|[A-Za-z0-9.-]{1,253})$/u;
 const fixturePattern = /^[a-z][a-z0-9_]{1,63}$/u;
 const modelPattern = /^[a-z][a-z0-9._-]{1,63}$/u;
+export const APPROVED_PHASE9_SUPABASE_HOSTNAME = 'ahntbtktjjmvfosgkmgn.supabase.co';
 
 function invalid(): never {
   throw new Error('P9_WORKER_CONFIGURATION_INVALID');
@@ -101,6 +106,7 @@ function parseUrl(value: string): string {
   try {
     const parsed = new URL(value);
     if (parsed.protocol !== 'https:' || parsed.username || parsed.password
+      || parsed.hostname !== APPROVED_PHASE9_SUPABASE_HOSTNAME || parsed.port
       || parsed.pathname !== '/' || parsed.search || parsed.hash) invalid();
     return parsed.toString().replace(/\/$/u, '');
   } catch {
@@ -125,6 +131,7 @@ function validateCommon(
   allowed: readonly string[],
   idName: string,
   tokenName: string,
+  peerTokenRequired: boolean,
 ) {
   rejectUnknownPhase9Names(environment, allowed);
   const supabaseUrl = parseUrl(required(environment, 'SUPABASE_URL'));
@@ -133,15 +140,18 @@ function validateCommon(
   );
   const workerId = required(environment, idName);
   const workerAuthToken = validateSecret(required(environment, tokenName));
-  const peerTokenHash = required(environment, 'PHASE9_PEER_WORKER_INGRESS_TOKEN_SHA256');
+  const peerTokenHash = peerTokenRequired
+    ? required(environment, 'PHASE9_PEER_WORKER_INGRESS_TOKEN_SHA256') : null;
   const host = required(environment, 'PHASE9_WORKER_HOST');
   const port = parsePort(required(environment, 'PHASE9_WORKER_PORT'));
   const concurrency = required(environment, 'PHASE9_WORKER_CONCURRENCY');
 
   if (!workerIdPattern.test(workerId) || !hostPattern.test(host)
-    || concurrency !== '1' || !sha256Pattern.test(peerTokenHash)
+    || concurrency !== '1'
+    || (peerTokenRequired && (peerTokenHash === null || !sha256Pattern.test(peerTokenHash)))
     || workerAuthToken === supabaseServiceRoleKey
-    || createHash('sha256').update(workerAuthToken).digest('hex') === peerTokenHash) invalid();
+    || (peerTokenHash !== null
+      && createHash('sha256').update(workerAuthToken).digest('hex') === peerTokenHash)) invalid();
 
   return {
     supabaseUrl,
@@ -162,6 +172,7 @@ export function loadMediaWorkerEnvironment(
     MEDIA_ENVIRONMENT_NAMES,
     'PHASE9_MEDIA_WORKER_ID',
     'PHASE9_MEDIA_WORKER_INGRESS_TOKEN',
+    true,
   );
   const magickWasmPath = required(environment, 'PHASE9_MEDIA_WORKER_MAGICK_WASM_PATH');
   if (magickWasmPath.includes('\0') || magickWasmPath.length > 1_024) invalid();
@@ -176,6 +187,7 @@ export function loadVisionWorkerEnvironment(
     VISION_ENVIRONMENT_NAMES,
     'PHASE9_VISION_WORKER_ID',
     'PHASE9_VISION_WORKER_INGRESS_TOKEN',
+    true,
   );
   const analyzerMode = environment.PHASE9_VISION_ANALYZER_MODE?.trim() || 'fixture';
   if (analyzerMode === 'fixture') {
@@ -204,6 +216,7 @@ export function loadMetadataWorkerEnvironment(
     METADATA_ENVIRONMENT_NAMES,
     'PHASE9_METADATA_WORKER_ID',
     'PHASE9_METADATA_WORKER_INGRESS_TOKEN',
+    false,
   );
   const providerMode = environment.PHASE9_METADATA_PROVIDER_MODE?.trim() || 'fixture';
   if (providerMode === 'fixture') {

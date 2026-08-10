@@ -1,4 +1,5 @@
 const SAFE_OUTCOME = /^[a-z][a-z0-9_]{0,63}$/u;
+const SUPPORTED_SERVICES = Object.freeze(['media', 'vision', 'metadata']);
 
 function invalid() {
   throw new Error('P9_WORKER_INVOCATION_CONFIGURATION_INVALID');
@@ -76,7 +77,7 @@ async function invokePhase9Worker({
   maxResponseBytes = 16_384,
   fetchImpl = fetch,
 }) {
-  if (!['media', 'vision'].includes(service)
+  if (!SUPPORTED_SERVICES.includes(service)
     || typeof token !== 'string' || token.length < 32) invalid();
   const endpoint = parseWorkerUrl(url);
   const safeBatchSize = parseInteger(batchSize, 1, 10);
@@ -107,7 +108,9 @@ async function invokePhase9Worker({
 }
 
 function selectedConfiguration(environment, service) {
-  const prefix = service === 'media' ? 'MEDIA' : service === 'vision' ? 'VISION' : invalid();
+  const prefix = service === 'media' ? 'MEDIA'
+    : service === 'vision' ? 'VISION'
+      : service === 'metadata' ? 'METADATA' : invalid();
   return {
     service,
     url: environment[`PHASE9_${prefix}_WORKER_URL`] ?? '',
@@ -125,7 +128,7 @@ async function main() {
     if (summary.status < 200 || summary.status >= 300) process.exitCode = 1;
   } catch (error) {
     process.stderr.write(`${JSON.stringify({
-      service: ['media', 'vision'].includes(service) ? service : 'invalid',
+      service: SUPPORTED_SERVICES.includes(service) ? service : 'invalid',
       error: error instanceof Error && /^P9_[A-Z_]+$/u.test(error.message)
         ? error.message : 'P9_WORKER_INVOCATION_FAILED',
     })}\n`);

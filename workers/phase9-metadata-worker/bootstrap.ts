@@ -3,10 +3,14 @@ import {
   GOOGLE_BOOKS_CAPABILITY,
 } from '../../supabase/functions/_shared/imageInventory/metadata/googleBooks';
 import { MetadataWorkerEnvironment } from '../phase9-runtime/environment';
+import { MetadataProviderAdapter } from '../../supabase/functions/_shared/imageInventory/metadata/providerAdapter';
+import { ProviderCapabilityDeclaration } from '../../supabase/functions/_shared/imageInventory/metadata/contracts';
+import { createClient } from '@supabase/supabase-js';
+import { handlePhase9MetadataWorker } from './index';
 
 export type MetadataProductionDependencies = Readonly<{
-  primary: GoogleBooksAdapter | null;
-  primaryCapability: typeof GOOGLE_BOOKS_CAPABILITY | null;
+  primary: MetadataProviderAdapter | null;
+  primaryCapability: ProviderCapabilityDeclaration | null;
   secondary: null;
 }>;
 
@@ -31,5 +35,19 @@ export function createMetadataProductionDependencies(
     }),
     primaryCapability: GOOGLE_BOOKS_CAPABILITY,
     secondary: null,
+  });
+}
+
+export function createPhase9MetadataService(environment: MetadataWorkerEnvironment) {
+  const serviceClient = createClient(environment.supabaseUrl, environment.supabaseServiceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+  const dependencies = createMetadataProductionDependencies(environment);
+  return (request: Request) => handlePhase9MetadataWorker(request, {
+    workerId: environment.workerId,
+    workerAuthToken: environment.workerAuthToken,
+    serviceClient,
+    primary: dependencies.primary,
+    primaryCapability: dependencies.primaryCapability,
   });
 }

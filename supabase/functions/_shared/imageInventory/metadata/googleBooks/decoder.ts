@@ -1,10 +1,17 @@
 import { parseMetadataEdition, MetadataEdition } from '../../contracts/metadata';
+import { ProviderHostPolicy } from '../../contracts/providerReuse';
 import { normalizeIsbnClue } from '../../domain/isbn';
 
 const MAX_ITEMS = 10;
 const MAX_AUTHORS = 16;
 const MAX_CATEGORIES = 32;
 const MAX_TEXT = 8_000;
+
+export const GOOGLE_BOOKS_EDITION_HOST_POLICY: ProviderHostPolicy = Object.freeze({
+  adapterKey: 'google_books',
+  policyVersion: 'google-books-hosts-v1',
+  approvedCoverHosts: Object.freeze(['books.google.com']),
+});
 
 type Context = Readonly<{
   correlationId: string;
@@ -117,11 +124,7 @@ function decodeItem(value: unknown, context: Context): MetadataEdition | null {
       cover_reference: cover(info?.imageLinks),
       match_rationale: 'Provider result; deterministic application ranking required.',
       confidence: 0,
-    }, {
-      adapterKey: 'google_books',
-      policyVersion: 'google-books-hosts-v1',
-      approvedCoverHosts: ['books.google.com'],
-    });
+    }, GOOGLE_BOOKS_EDITION_HOST_POLICY);
   } catch {
     return null;
   }

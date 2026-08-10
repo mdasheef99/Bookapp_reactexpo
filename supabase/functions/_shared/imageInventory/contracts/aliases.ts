@@ -1,4 +1,4 @@
-import { asRecord, assertKnownKeys, boundedNumber, canonicalBcp47, Phase9ContractError, requiredString } from '../domain/validation';
+import { asRecord, assertKnownKeys, boundedNumber, canonicalBcp47, Phase9ContractError, requiredIsoTimestamp, requiredString } from '../domain/validation';
 import { PHASE9_ALIAS_SCHEMA_VERSION, PHASE9_CONTRACT_VERSION, PHASE9_MAX_AUTOMATED_ALIASES } from './versions';
 import { PHASE9_LIMITS } from './registers';
 
@@ -63,8 +63,7 @@ export function parseAutomatedAliasResult(value: unknown): AliasResult {
       searchOnly: true,
     };
   });
-  const generatedAt = requiredString(input.generated_at, 'generated_at', 40, { activeContent: false });
-  if (!Number.isFinite(Date.parse(generatedAt))) throw new Phase9ContractError('generated_at', 'must be an ISO timestamp');
+  const generatedAt = requiredIsoTimestamp(input.generated_at, 'generated_at');
   return {
     contractVersion: PHASE9_CONTRACT_VERSION,
     schemaVersion: PHASE9_ALIAS_SCHEMA_VERSION,

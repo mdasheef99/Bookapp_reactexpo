@@ -55,6 +55,7 @@ playwright/.cache/
 .expo-web.err
 .e2e-serve.log
 .worktrees/
+.wt/
 supabase/.temp/
 
 # IDE/tooling artifacts

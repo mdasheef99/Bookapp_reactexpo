@@ -7,6 +7,9 @@ const OTHER_STORE = '72000000-0000-0000-0000-000000000052';
 const OWNER = '71000000-0000-0000-0000-000000000051';
 const SESSION = '73000000-0000-0000-0000-000000000051';
 const INPUT = '74000000-0000-0000-0000-000000000051';
+const VISION_JOB = '74000000-0000-0000-0000-000000000052';
+const ANALYSIS_RESULT = '74000000-0000-0000-0000-000000000053';
+const OBSERVATION = '74000000-0000-0000-0000-000000000054';
 const CANDIDATE = '75000000-0000-0000-0000-000000000051';
 const JOB = '76000000-0000-0000-0000-000000000051';
 const RESERVATION = '77000000-0000-0000-0000-000000000051';
@@ -16,7 +19,7 @@ const CANONICAL_EDITION = '79000000-0000-0000-0000-000000000052';
 const FOLLOWER = '75000000-0000-0000-0000-000000000052';
 const FOLLOWER_JOB = '76000000-0000-0000-0000-000000000052';
 const WORKER = 'metadata-worker-0000051';
-const QUERY = 'a'.repeat(64);
+const QUERY = '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "bibliographic", null, "fixture book", ["fixture author"], "en", []]';
 let db;
 
 async function seed() {
@@ -26,11 +29,36 @@ async function seed() {
     INSERT INTO public.image_extraction_inputs
     (id,session_id,store_id,source_kind,state,sha256,orchestration_version)
     VALUES('${INPUT}','${SESSION}','${STORE}','camera','uploaded','${'b'.repeat(64)}','phase9-v1');
+    INSERT INTO public.image_extraction_jobs
+    (id,store_id,entity_type,entity_id,job_kind,dedupe_key,operation_version,status,
+      completed_at)
+    VALUES('${VISION_JOB}','${STORE}','input','${INPUT}','vision_extract',
+      'vision:${INPUT}','phase9-v1','resolved',transaction_timestamp());
+    INSERT INTO public.image_analysis_results
+    (id,store_id,session_id,input_id,vision_job_id,contract_version,
+      analysis_schema_version,pipeline_version,prompt_version,adapter_key,adapter_version,
+      provider_key,model_key,model_version,image_outcome,authoritative_outcome,
+      detected_visible_book_count,accepted_candidate_count,canonical_result_snapshot,
+      canonical_result_sha256,completing_attempt,completing_worker,
+      completing_lease_token_hash,completion_summary,received_at)
+    VALUES('${ANALYSIS_RESULT}','${STORE}','${SESSION}','${INPUT}','${VISION_JOB}',
+      'p9-contract-v1','p9-vision-v2','phase9-v1','fixture-prompt-v2','fixture_adapter',
+      '1.0.0','recorded_fixture','fixture_model','1','analyzed','accepted',1,1,
+      '{}'::jsonb,'${'c'.repeat(64)}',1,'vision-worker-foundation-0051',
+      '${'d'.repeat(64)}','{"outcome":"accepted"}'::jsonb,transaction_timestamp());
+    INSERT INTO public.image_analysis_observations
+    (id,analysis_result_id,store_id,input_id,observation_ordinal,disposition,
+      observed_title,observed_authors,observed_language,confidence,observation_snapshot)
+    VALUES('${OBSERVATION}','${ANALYSIS_RESULT}','${STORE}','${INPUT}',1,'candidate',
+      'Fixture Book',ARRAY['Fixture Author'],'en',1,'{}'::jsonb);
     INSERT INTO public.image_extraction_candidates
     (id,session_id,input_id,store_id,candidate_index,observed_title,
-      observed_authors,observed_language,state)
+      observed_authors,observed_language,state,vision_job_id,analysis_observation_id,
+      analysis_schema_version)
     VALUES('${CANDIDATE}','${SESSION}','${INPUT}','${STORE}',1,'Fixture Book',
-      ARRAY['Fixture Author'],'en','processing');
+      ARRAY['Fixture Author'],'en','needs_review','${VISION_JOB}','${OBSERVATION}',
+      'p9-vision-v2');
+    UPDATE public.image_extraction_candidates SET state='processing' WHERE id='${CANDIDATE}';
     INSERT INTO public.image_extraction_jobs
     (id,store_id,entity_type,entity_id,job_kind,dedupe_key,operation_version)
     VALUES('${JOB}','${STORE}','candidate','${CANDIDATE}','metadata_enrich',
@@ -52,7 +80,7 @@ async function lookup(claimed, leader = 'NULL') {
   return scalar(db, `SELECT public.phase9_register_metadata_lookup(
     '${JOB}','${WORKER}','${claimed.lease_token}',${claimed.attempt_count},
     '${QUERY}','provider-cache-fixture-0051','recorded_metadata','1.0.0',
-    'cap-v1','p9-metadata-v1','isbn','p9-metadata-lookup-v1',
+    'cap-v1','p9-metadata-v1','bibliographic','p9-metadata-lookup-v1',
     'p9-bibliographic-normalizer-v1',
     'p9-metadata-routing-v1','store_private','1','cache-policy-v1',
     'metadata-v1',${leader})`);
@@ -83,7 +111,9 @@ async function completeLeader() {
 }
 
 before(async () => {
-  db = await createPhase9Database();
+  db = await createPhase9Database({
+    throughMigration: '20260807000032_marketplace_phase9_structural_metadata_integration.sql',
+  });
   await db.exec(`INSERT INTO public.stores(id,display_name)
     VALUES('${STORE}','Store'),('${OTHER_STORE}','Other Store');`);
 });
@@ -94,16 +124,18 @@ beforeEach(async () => {
     public.metadata_enrichment_attempts,public.phase9_usage_reservations,
     public.image_extraction_candidates,public.image_extraction_jobs,
     public.image_extraction_inputs,public.image_extraction_sessions CASCADE;`);
-  await setActor(db, OWNER, 'service_role');
   await seed();
+  await setActor(db, OWNER, 'service_role');
   await db.exec(`INSERT INTO public.phase9_provider_registry(
-    adapter_key,provider_kind,adapter_version,enabled,matching_allowed,storage_allowed)
-    VALUES('recorded_metadata','metadata','1.0.0',true,true,true),
-      ('recorded_secondary','metadata','2.0.0',true,true,true),
-      ('matching_only','metadata','1.0.0',true,true,false)
+    adapter_key,provider_kind,adapter_version,enabled,matching_allowed,storage_allowed,
+    revalidation_seconds)
+    VALUES('recorded_metadata','metadata','1.0.0',true,true,true,86400),
+      ('recorded_secondary','metadata','2.0.0',true,true,true,86400),
+      ('matching_only','metadata','1.0.0',true,true,false,86400)
     ON CONFLICT(adapter_key) DO UPDATE SET provider_kind='metadata',
       adapter_version=excluded.adapter_version,enabled=true,matching_allowed=true,
-      storage_allowed=excluded.storage_allowed;`);
+      storage_allowed=excluded.storage_allowed,
+      revalidation_seconds=excluded.revalidation_seconds;`);
 });
 after(async () => db.close());
 
@@ -357,6 +389,121 @@ test('persists one immutable coherent snapshot without inventory/publication eff
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.marketplace_book_listings'), 0);
 });
 
+test('structural wrappers reject candidate-state TOCTOU before logical finalization', async () => {
+  const claimed = await claim();
+  const candidateVersion = await scalar(db, `SELECT version FROM public.image_extraction_candidates
+    WHERE id='${CANDIDATE}'`);
+  const registeredLookup = await scalar(db, `SELECT public.phase9_register_structural_metadata_lookup(
+    '${JOB}','${WORKER}','${claimed.lease_token}',${claimed.attempt_count},
+    '${CANDIDATE}',${candidateVersion},'${QUERY}','provider-cache-fixture-0051',
+    'recorded_metadata','1.0.0','cap-v1','p9-metadata-v1','bibliographic',
+    'p9-metadata-lookup-v1','p9-bibliographic-normalizer-v1',
+    'p9-metadata-routing-v1','store_private','1','cache-policy-v1','metadata-v1',NULL)`);
+  const attempt = await scalar(db, `SELECT public.phase9_register_structural_metadata_attempt(
+    '${registeredLookup.lookup_id}','${JOB}','${WORKER}','${claimed.lease_token}',
+    ${claimed.attempt_count},'${CANDIDATE}',${candidateVersion},
+    '88000000-0000-4000-8000-000000000099','provider-cache-fixture-0051',
+    'primary',1,'recorded_metadata','1.0.0','cap-v1','p9-metadata-v1',
+    'p9-bibliographic-normalizer-v1','p9-metadata-routing-v1','local_insufficient',
+    '${RESERVATION}')`);
+  await db.exec(`UPDATE public.image_extraction_candidates SET state='needs_review'
+    WHERE id='${CANDIDATE}'`);
+  await assert.rejects(db.query(`SELECT public.phase9_finalize_structural_metadata_attempt(
+    '${attempt.attempt_id}','${JOB}','${WORKER}','${claimed.lease_token}',
+    ${claimed.attempt_count},'${CANDIDATE}',${candidateVersion},'accepted',
+    'accepted_metadata_match','late-request','miss',10,'fixture',
+    '{"currency":"USD","input_basis":"request","pricing_source_version":"fixture-v1"}'::jsonb,
+    0,'{"title":"Fixture Book"}'::jsonb)`), /P9_STATE_CONFLICT/);
+  assert.equal(await scalar(db, `SELECT disposition FROM public.metadata_enrichment_attempts
+    WHERE id='${attempt.attempt_id}'`), 'unresolved');
+});
+
+test('completion response-loss replay creates one accepted outcome, snapshot, job completion, and transition', async () => {
+  const claimed = await claim();
+  const registeredLookup = await lookup(claimed);
+  const registered = await scalar(db, `SELECT public.phase9_register_metadata_attempt(
+    '${registeredLookup.lookup_id}','${JOB}','${WORKER}','${claimed.lease_token}',
+    ${claimed.attempt_count},'${ATTEMPT_IDENTITY}','provider-cache-fixture-0051',
+    'primary',1,'recorded_metadata','1.0.0','cap-v1','p9-metadata-v1',
+    'p9-bibliographic-normalizer-v1','p9-metadata-routing-v1',
+    'local_insufficient','${RESERVATION}')`);
+  const physical = await scalar(db, `SELECT public.phase9_register_metadata_provider_call(
+    '${registered.attempt_id}','${JOB}','${WORKER}','${claimed.lease_token}',
+    ${claimed.attempt_count},'88000000-0000-4000-8000-000000000051')`);
+  await scalar(db, `SELECT public.phase9_finalize_metadata_provider_call(
+    '${physical.provider_call_id}','${JOB}','${WORKER}','${claimed.lease_token}',
+    ${claimed.attempt_count},'finalized','coherent_match','coherent_match','request-51',false,
+    '{"title":"Fixture Book","authors":["Fixture Author"]}'::jsonb,
+    '["validated_isbn"]'::jsonb)`);
+  await scalar(db, `SELECT public.phase9_finalize_metadata_attempt(
+    '${registered.attempt_id}','${JOB}','${WORKER}','${claimed.lease_token}',
+    ${claimed.attempt_count},'accepted','coherent_match','request-51','miss',25,
+    'fixture','{"currency":"USD","input_basis":"request",
+      "pricing_source_version":"fixture-v1"}'::jsonb,0,
+    '{"title":"Fixture Book","authors":["Fixture Author"]}'::jsonb)`);
+  const completionSql = `SELECT public.phase9_select_metadata_snapshot(
+    '${registeredLookup.lookup_id}','${JOB}','${WORKER}','${claimed.lease_token}',
+    ${claimed.attempt_count},'${registered.attempt_id}','${registered.attempt_id}',
+    'p9-selected-metadata-v1','selection-v1',
+    '{"title":"Fixture Book","authors":["Fixture Author"]}'::jsonb,
+    '["validated_isbn"]'::jsonb,'accepted_metadata_match',NULL)`;
+  const first = await scalar(db, completionSql);
+  assert.deepEqual(await scalar(db, completionSql), first);
+  assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.phase9_selected_metadata_snapshots'), 1);
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM public.metadata_enrichment_attempts
+    WHERE disposition='accepted'`), 1);
+  assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.phase9_metadata_provider_calls'), 1);
+  assert.equal(await scalar(db, `SELECT status FROM public.image_extraction_jobs WHERE id='${JOB}'`), 'resolved');
+  assert.equal(await scalar(db, `SELECT state FROM public.image_extraction_candidates
+    WHERE id='${CANDIDATE}'`), 'ready');
+});
+
+test('worker reclaim retains one logical attempt while recording separate physical calls', async () => {
+  const first = await claim();
+  const registeredLookup = await lookup(first);
+  const registered = await scalar(db, `SELECT public.phase9_register_metadata_attempt(
+    '${registeredLookup.lookup_id}','${JOB}','${WORKER}','${first.lease_token}',1,
+    '${ATTEMPT_IDENTITY}','provider-cache-fixture-0051','primary',1,
+    'recorded_metadata','1.0.0','cap-v1','p9-metadata-v1',
+    'p9-bibliographic-normalizer-v1','p9-metadata-routing-v1',
+    'local_insufficient','${RESERVATION}')`);
+  const physical1 = await scalar(db, `SELECT public.phase9_register_metadata_provider_call(
+    '${registered.attempt_id}','${JOB}','${WORKER}','${first.lease_token}',1,
+    '88000000-0000-4000-8000-000000000052')`);
+  await db.exec(`UPDATE public.image_extraction_jobs SET lease_expires_at=
+    transaction_timestamp()-interval '1 second' WHERE id='${JOB}'`);
+  const second = await claim();
+  assert.equal(second.attempt_count, 2);
+  await assert.rejects(db.query(`SELECT public.phase9_finalize_metadata_provider_call(
+    '${physical1.provider_call_id}','${JOB}','${WORKER}','${first.lease_token}',1,
+    'finalized','coherent_match','coherent_match','late-request-52',false,NULL,'[]'::jsonb)`),
+  /P9_STATE_CONFLICT/);
+  assert.equal(await scalar(db, `SELECT status FROM public.phase9_metadata_provider_calls
+    WHERE id='${physical1.provider_call_id}'`), 'registered');
+  const physical2 = await scalar(db, `SELECT public.phase9_register_metadata_provider_call(
+    '${registered.attempt_id}','${JOB}','${WORKER}','${second.lease_token}',2,
+    '88000000-0000-4000-8000-000000000053')`);
+  assert.notEqual(physical2.provider_call_id, physical1.provider_call_id);
+  const finalized2 = await scalar(db, `SELECT public.phase9_finalize_metadata_provider_call(
+    '${physical2.provider_call_id}','${JOB}','${WORKER}','${second.lease_token}',2,
+    'finalized','no_acceptable_match','no_acceptable_match',NULL,false,NULL,'[]'::jsonb)`);
+  assert.equal(finalized2.status, 'finalized');
+  await assert.rejects(db.query(`SELECT public.phase9_reconcile_metadata_provider_call(
+    '${physical2.provider_call_id}','${JOB}','${WORKER}','${first.lease_token}',1)`),
+  /P9_STATE_CONFLICT/);
+  await assert.rejects(db.query(`SELECT public.phase9_reconcile_metadata_provider_call(
+    '${physical1.provider_call_id}','${JOB}','${WORKER}','${first.lease_token}',1)`),
+  /P9_STATE_CONFLICT/);
+  assert.equal(await scalar(db, `SELECT status FROM public.phase9_metadata_provider_calls
+    WHERE id='${physical1.provider_call_id}'`), 'registered');
+  assert.equal(await scalar(db, `SELECT status FROM public.phase9_metadata_provider_calls
+    WHERE id='${physical2.provider_call_id}'`), 'finalized');
+  assert.equal(await scalar(db, `SELECT normalized_outcome FROM public.phase9_metadata_provider_calls
+    WHERE id='${physical2.provider_call_id}'`), 'no_acceptable_match');
+  assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.metadata_enrichment_attempts'), 1);
+  assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.phase9_metadata_provider_calls'), 2);
+});
+
 test('keeps metadata authority service-only', async () => {
   const claimed = await claim();
   const registeredLookup = await lookup(claimed);
@@ -364,9 +511,40 @@ test('keeps metadata authority service-only', async () => {
     SET normalized_outcome='no_match' WHERE id='${registeredLookup.lookup_id}'`));
   await setActor(db, OWNER, 'authenticated');
   await assert.rejects(db.query('SELECT * FROM public.phase9_metadata_lookups'));
+  await assert.rejects(db.query('SELECT * FROM public.phase9_metadata_provider_calls'));
+  await assert.rejects(db.query('SELECT * FROM public.phase9_metadata_coalescing_waiters'));
   await assert.rejects(db.query(
     `SELECT public.claim_phase9_metadata_jobs(1,'${WORKER}')`,
   ));
+  const acl = await db.query(`SELECT p.proname,
+      has_function_privilege('anon',p.oid,'EXECUTE') AS anon_execute,
+      has_function_privilege('authenticated',p.oid,'EXECUTE') AS authenticated_execute,
+      has_function_privilege('service_role',p.oid,'EXECUTE') AS service_execute
+    FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname='public' AND p.proname = ANY(ARRAY[
+      'phase9_complete_structural_local_metadata_match',
+      'phase9_register_structural_metadata_lookup',
+      'phase9_register_structural_metadata_attempt',
+      'phase9_finalize_structural_metadata_attempt',
+      'phase9_metadata_job_context','phase9_metadata_cache_reuse_context',
+      'phase9_metadata_coalescing_context',
+      'phase9_complete_metadata_cache_reuse','phase9_select_structural_metadata_snapshot',
+      'phase9_register_metadata_provider_call','phase9_finalize_metadata_provider_call',
+      'phase9_reconcile_metadata_provider_call',
+      'phase9_reserve_metadata_usage','phase9_fail_metadata_job'])`);
+  assert.equal(acl.rows.length, 14);
+  for (const fn of acl.rows) {
+    assert.equal(fn.anon_execute, false, `${fn.proname} must deny anon`);
+    assert.equal(fn.authenticated_execute, false, `${fn.proname} must deny authenticated`);
+    assert.equal(fn.service_execute, true, `${fn.proname} must allow service_role`);
+  }
+  const tableAcl = (await db.query(`SELECT
+    has_table_privilege('anon','public.phase9_metadata_coalescing_waiters','SELECT') AS anon_select,
+    has_table_privilege('authenticated','public.phase9_metadata_coalescing_waiters','SELECT') AS authenticated_select,
+    has_table_privilege('service_role','public.phase9_metadata_coalescing_waiters','SELECT') AS service_select`)).rows[0];
+  assert.equal(tableAcl.anon_select, false);
+  assert.equal(tableAcl.authenticated_select, false);
+  assert.equal(tableAcl.service_select, true);
 });
 
 test('materializes an identical follower with source lineage and zero provider charge', async () => {
@@ -375,30 +553,69 @@ test('materializes an identical follower with source lineage and zero provider c
     '${leader.registeredLookup.lookup_id}','${WORKER}','${leader.claimed.lease_token}',
     ${leader.claimed.attempt_count},'positive',
     '{"title":"Fixture Book","authors":["Fixture Author"]}'::jsonb,
-    'fixture-record-51','2026-07-28T00:00:00Z','2026-08-28T00:00:00Z')`);
+    'fixture-record-51',transaction_timestamp(),
+    transaction_timestamp()+interval '30 days')`);
   assert.equal(cached.outcome, 'positive');
-  assert.equal((await scalar(db, `SELECT public.phase9_invalidate_metadata_cache(
-    'provider-cache-fixture-0051','adapter-version-retired')`)).status, 'invalidated');
-  await db.exec(`INSERT INTO public.image_extraction_candidates
+  await resetActor(db);
+  const followerVisionJob = '74000000-0000-0000-0000-000000000062';
+  const followerResult = '74000000-0000-0000-0000-000000000063';
+  const followerObservation = '74000000-0000-0000-0000-000000000064';
+  const followerInput = '74000000-0000-0000-0000-000000000065';
+  await db.exec(`INSERT INTO public.image_extraction_inputs
+    (id,session_id,store_id,source_kind,state,sha256,orchestration_version)
+    VALUES('${followerInput}','${SESSION}','${STORE}','camera','uploaded',
+      '${'9'.repeat(64)}','phase9-v1');
+    INSERT INTO public.image_extraction_jobs
+    (id,store_id,entity_type,entity_id,job_kind,dedupe_key,operation_version,status,completed_at)
+    VALUES('${followerVisionJob}','${STORE}','input','${followerInput}','vision_extract',
+      'vision:follower-0052','phase9-v1','resolved',transaction_timestamp());
+    INSERT INTO public.image_analysis_results
+    (id,store_id,session_id,input_id,vision_job_id,contract_version,
+      analysis_schema_version,pipeline_version,prompt_version,adapter_key,adapter_version,
+      provider_key,model_key,model_version,image_outcome,authoritative_outcome,
+      detected_visible_book_count,accepted_candidate_count,canonical_result_snapshot,
+      canonical_result_sha256,completing_attempt,completing_worker,
+      completing_lease_token_hash,completion_summary,received_at)
+    VALUES('${followerResult}','${STORE}','${SESSION}','${followerInput}','${followerVisionJob}',
+      'p9-contract-v1','p9-vision-v2','phase9-v1','fixture-prompt-v2','fixture_adapter',
+      '1.0.0','recorded_fixture','fixture_model','1','analyzed','accepted',1,1,
+      '{}'::jsonb,'${'e'.repeat(64)}',1,'vision-worker-foundation-0052',
+      '${'f'.repeat(64)}','{"outcome":"accepted"}'::jsonb,transaction_timestamp());
+    INSERT INTO public.image_analysis_observations
+    (id,analysis_result_id,store_id,input_id,observation_ordinal,disposition,
+      observed_title,observed_authors,observed_language,confidence,observation_snapshot)
+    VALUES('${followerObservation}','${followerResult}','${STORE}','${followerInput}',1,'candidate',
+      'Fixture Book',ARRAY['Fixture Author'],'en',1,'{}'::jsonb);
+    INSERT INTO public.image_extraction_candidates
     (id,session_id,input_id,store_id,candidate_index,observed_title,
-      observed_authors,observed_language,state)
-    VALUES('${FOLLOWER}','${SESSION}','${INPUT}','${STORE}',2,'Fixture Book',
-      ARRAY['Fixture Author'],'en','processing');
+      observed_authors,observed_language,state,vision_job_id,analysis_observation_id,
+      analysis_schema_version)
+    VALUES('${FOLLOWER}','${SESSION}','${followerInput}','${STORE}',2,'Fixture Book',
+      ARRAY['Fixture Author'],'en','needs_review','${followerVisionJob}',
+      '${followerObservation}','p9-vision-v2');
+    UPDATE public.image_extraction_candidates SET state='processing' WHERE id='${FOLLOWER}';
     INSERT INTO public.image_extraction_jobs
     (id,store_id,entity_type,entity_id,job_kind,dedupe_key,operation_version)
     VALUES('${FOLLOWER_JOB}','${STORE}','candidate','${FOLLOWER}','metadata_enrich',
       'metadata:${FOLLOWER}','phase9-metadata-v1');`);
+  await setActor(db, OWNER, 'service_role');
   const claimed = (await db.query(
     `SELECT * FROM public.claim_phase9_metadata_jobs(1,'${WORKER}')`,
   )).rows[0];
-  const reused = await scalar(db, `SELECT public.phase9_register_metadata_lookup(
+  const followerVersion = await scalar(db, `SELECT version FROM public.image_extraction_candidates
+    WHERE id='${FOLLOWER}'`);
+  const context = await scalar(db, `SELECT public.phase9_metadata_cache_reuse_context(
     '${FOLLOWER_JOB}','${WORKER}','${claimed.lease_token}',${claimed.attempt_count},
-    '${QUERY}','provider-cache-fixture-0051','recorded_metadata','1.0.0',
-    'cap-v1','p9-metadata-v1','isbn','p9-metadata-lookup-v1',
-    'p9-bibliographic-normalizer-v1','p9-metadata-routing-v1','store_private',
-    '1','cache-policy-v1','metadata-v1','${leader.registeredLookup.lookup_id}')`);
-  assert.equal(reused.creates_provider_charge, false);
-  assert.equal(reused.reuse_source_attempt_id, leader.registered.attempt_id);
+    '${FOLLOWER}',${followerVersion},'provider-cache-fixture-0051')`);
+  assert.equal(context.leaderLookupId, leader.registeredLookup.lookup_id);
+  const reused = await scalar(db, `SELECT public.phase9_complete_metadata_cache_reuse(
+    '${FOLLOWER_JOB}','${WORKER}','${claimed.lease_token}',${claimed.attempt_count},
+    '${FOLLOWER}',${followerVersion},'${QUERY}','provider-cache-fixture-0051',
+    'recorded_metadata','1.0.0','cap-v1','p9-metadata-v1','bibliographic',
+    'p9-metadata-lookup-v1','p9-bibliographic-normalizer-v1','p9-metadata-routing-v1',
+    'store_private','1','cache-policy-v1','metadata-v1','p9-selected-metadata-v1',
+    'selection-v1')`);
+  assert.equal(reused.status, 'completed');
   assert.equal(await scalar(db, `SELECT count(*)::int FROM public.metadata_enrichment_attempts
     WHERE candidate_id='${FOLLOWER}'`), 0);
   assert.equal(await scalar(db, `SELECT status FROM public.image_extraction_jobs

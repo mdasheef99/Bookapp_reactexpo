@@ -1,4 +1,5 @@
 import { buildMetadataQueryIdentity } from '../../_shared/imageInventory/metadata';
+import { MetadataEdition } from '../../_shared/imageInventory/contracts/metadata';
 import { MetadataProductionGateway } from '../../_shared/imageInventory/runtime/metadataProductionComposition';
 
 const query = buildMetadataQueryIdentity({
@@ -9,6 +10,42 @@ const query = buildMetadataQueryIdentity({
   language: 'en',
   editionClues: [],
 });
+
+export function metadataEdition(
+  overrides: Partial<MetadataEdition> = {},
+): MetadataEdition {
+  return {
+    contractVersion: 'p9-contract-v1',
+    schemaVersion: 'p9-metadata-v1',
+    adapterKey: 'recorded_metadata',
+    adapterVersion: '1.0.0',
+    normalizerVersion: 'p9-recorded-normalizer-v1',
+    correlationId: 'lookup-1',
+    attemptId: 'attempt-1',
+    providerRecordId: 'volume-1',
+    fetchedAt: '2026-08-07T00:00:00.000Z',
+    title: 'Fixture Book',
+    subtitle: null,
+    authors: ['Fixture Author'],
+    description: null,
+    isbn10: '0306406152',
+    isbn13: '9780306406157',
+    publisher: null,
+    publishedDate: null,
+    language: 'en',
+    script: null,
+    editionStatement: null,
+    series: null,
+    volume: null,
+    format: null,
+    pageCount: null,
+    categories: [],
+    coverReference: null,
+    matchRationale: 'Exact validated ISBN fixture.',
+    confidence: 1,
+    ...overrides,
+  };
+}
 
 export function metadataGateway(
   overrides: Partial<MetadataProductionGateway> = {},
@@ -44,6 +81,8 @@ export function metadataGateway(
     registerAttempt: jest.fn(async () => (
       calls.push('attempt'), { attemptId: 'attempt-1' }
     )),
+    deferFollower: jest.fn(async () => { calls.push('defer-follower'); }),
+    resumeFinalizedAttempt: jest.fn(async () => null),
     validateEgress: jest.fn(async () => {
       calls.push('fence');
       return true;
@@ -54,7 +93,8 @@ export function metadataGateway(
       selected: null,
       evidence: [],
       retryable: false,
-      providerRequestId: null,
+    providerRequestId: null,
+    secondaryEligible: true,
     })),
     finalizeAttempt: jest.fn(async () => { calls.push('finalize'); }),
     persistCache: jest.fn(async () => { calls.push('persist-cache'); }),

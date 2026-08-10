@@ -10,6 +10,7 @@ import {
 } from '../../../workers/phase9-runtime/httpService';
 import {
   invokePhase9Worker,
+  selectedConfiguration,
   summarizeWorkerResponse,
 } from '../../../scripts/invoke-phase9-worker';
 import {
@@ -48,7 +49,7 @@ async function stalledRequest(
 }
 
 const shared = {
-  SUPABASE_URL: 'https://example.supabase.co',
+  SUPABASE_URL: 'https://ahntbtktjjmvfosgkmgn.supabase.co',
   SUPABASE_SERVICE_ROLE_KEY: serviceKey,
 };
 
@@ -378,6 +379,48 @@ describe('Phase 9 worker HTTP service', () => {
 });
 
 describe('Phase 9 manual invocation and deployment validation', () => {
+  it('maps metadata to its dedicated URL/token and sends only the bounded claim request', async () => {
+    const metadataToken = 'metadata-worker-ingress-C9x.51_wVq-003-strong';
+    const configuration = selectedConfiguration({
+      PHASE9_METADATA_WORKER_URL: 'http://127.0.0.1:8093',
+      PHASE9_METADATA_WORKER_INGRESS_TOKEN: metadataToken,
+    }, 'metadata');
+    expect(configuration).toEqual({
+      service: 'metadata',
+      url: 'http://127.0.0.1:8093',
+      token: metadataToken,
+      batchSize: '1',
+      timeoutMs: '30000',
+    });
+
+    const fetchImpl = jest.fn(async (_url, init) => {
+      expect(init?.body).toBe(JSON.stringify({ contractVersion: 'phase9-v1', batchSize: 1 }));
+      expect(Object.keys(JSON.parse(String(init?.body))).sort())
+        .toEqual(['batchSize', 'contractVersion']);
+      return new Response(JSON.stringify({ claimed: 0, results: [] }));
+    });
+    await expect(invokePhase9Worker({ ...configuration, fetchImpl }))
+      .resolves.toEqual({ service: 'metadata', status: 200, claimed: 0, outcomes: [] });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects an unknown selector and redacts metadata response details', () => {
+    expect(() => selectedConfiguration({}, 'scheduler'))
+      .toThrow('P9_WORKER_INVOCATION_CONFIGURATION_INVALID');
+    expect(summarizeWorkerResponse('metadata', 200, {
+      claimed: 1,
+      results: [{
+        outcome: 'accepted_metadata_match',
+        candidateId: 'private-candidate',
+        title: 'Private Title',
+        token: 'private-token',
+      }],
+    })).toEqual({
+      service: 'metadata', status: 200, claimed: 1,
+      outcomes: ['accepted_metadata_match'],
+    });
+  });
+
   it('times out explicitly and prints only bounded summaries', async () => {
     await expect(invokePhase9Worker({
       service: 'media',

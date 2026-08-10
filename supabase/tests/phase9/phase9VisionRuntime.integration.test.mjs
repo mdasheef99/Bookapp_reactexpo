@@ -10,6 +10,7 @@ const INPUT_A = '94000000-0000-0000-0000-000000000021';
 const MEDIA_A = '95000000-0000-0000-0000-000000000021';
 const JOB_A = '96000000-0000-0000-0000-000000000021';
 const WORKER = 'vision-worker-0000000001';
+const METADATA_WORKER = 'metadata-worker-000001';
 let db;
 
 const baseResult = (observations = [{
@@ -81,6 +82,18 @@ async function persist(claimed, result = baseResult()) {
     '${JSON.stringify(result).replaceAll("'", "''")}'::jsonb) AS value`)).rows[0].value;
 }
 
+async function claimMetadataAfterVision(result = baseResult()) {
+  const visionClaim = await claim();
+  await persist(visionClaim, result);
+  const metadataClaim = (await db.query(
+    `SELECT * FROM public.claim_phase9_metadata_jobs(1,'${METADATA_WORKER}')`,
+  )).rows[0];
+  const context = await scalar(db, `SELECT public.phase9_metadata_job_context(
+    '${metadataClaim.id}','${METADATA_WORKER}','${metadataClaim.lease_token}',
+    ${metadataClaim.attempt_count})`);
+  return { metadataClaim, context };
+}
+
 before(async () => {
   db = await createPhase9Database({
     throughMigration: '20260809000034_marketplace_phase9_vision_language_hint_correction.sql',
@@ -142,7 +155,191 @@ test('V4-D02 constraint failure rolls back the entire persistence transaction', 
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_analysis_results'), 0);
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_analysis_observations'), 0);
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_extraction_candidates'), 1);
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM public.image_extraction_jobs
+    WHERE job_kind='metadata_enrich'`), 0);
   assert.equal(await scalar(db, `SELECT status FROM public.image_extraction_jobs WHERE id='${JOB_A}'`), 'in_progress');
+});
+
+test('metadata enqueue excludes manual, missed, malformed-lineage, and legacy review candidates', async () => {
+  const manual = '75000000-0000-4000-8000-000000000061';
+  await db.exec(`INSERT INTO public.image_extraction_candidates
+    (id,session_id,input_id,store_id,candidate_index,observed_title,observed_language,state)
+    VALUES('${manual}','${SESSION_A}','${INPUT_A}','${STORE_A}',14,'Manual Book','en','needs_review')`);
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM public.image_extraction_jobs
+    WHERE job_kind='metadata_enrich'`), 0);
+  const claimed = await claim();
+  await persist(claimed);
+  const resultId = await scalar(db, 'SELECT id FROM public.image_analysis_results');
+  const malformedObservation = '75000000-0000-4000-8000-000000000062';
+  const legacyObservation = '75000000-0000-4000-8000-000000000063';
+  await resetActor(db);
+  await db.exec(`INSERT INTO public.image_analysis_observations
+    (id,analysis_result_id,store_id,input_id,observation_ordinal,disposition,
+      observed_title,observed_authors,observed_language,confidence,warning_codes,
+      observation_snapshot)
+    VALUES('${malformedObservation}','${resultId}','${STORE_A}','${INPUT_A}',2,
+      'identity_insufficient',NULL,ARRAY[]::text[],'en',0.5,ARRAY[]::text[],'{}'::jsonb),
+      ('${legacyObservation}','${resultId}','${STORE_A}','${INPUT_A}',3,
+      'candidate','Legacy Review',ARRAY['Legacy Author'],'en',0.5,ARRAY[]::text[],'{}'::jsonb);
+    INSERT INTO public.image_extraction_candidates
+    (session_id,input_id,store_id,candidate_index,observed_title,observed_authors,
+      observed_language,state,vision_job_id,analysis_observation_id,analysis_schema_version)
+    VALUES('${SESSION_A}','${INPUT_A}','${STORE_A}',12,'Malformed Lineage',ARRAY['Author'],
+      'en','processing','${JOB_A}','${malformedObservation}','p9-vision-v2'),
+      ('${SESSION_A}','${INPUT_A}','${STORE_A}',13,'Legacy Review',ARRAY['Legacy Author'],
+      'en','needs_review','${JOB_A}','${legacyObservation}','p9-vision-v2')`);
+  await setActor(db, OWNER_A, 'service_role');
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM public.image_extraction_jobs
+    WHERE job_kind='metadata_enrich'`), 1);
+});
+
+test('loads minimum SAME-candidate metadata context through the exact claim fence', async () => {
+  const visionClaim = await claim();
+  await persist(visionClaim);
+  const metadataClaim = (await db.query(
+    `SELECT * FROM public.claim_phase9_metadata_jobs(1,'${METADATA_WORKER}')`,
+  )).rows[0];
+  const context = await scalar(db, `SELECT public.phase9_metadata_job_context(
+    '${metadataClaim.id}','${METADATA_WORKER}','${metadataClaim.lease_token}',
+    ${metadataClaim.attempt_count})`);
+  const candidateId = await scalar(db, 'SELECT id FROM public.image_extraction_candidates');
+  assert.equal(context.jobId, metadataClaim.id);
+  assert.equal(context.candidateId, candidateId);
+  assert.equal(context.storeId, STORE_A);
+  assert.equal(context.sessionId, SESSION_A);
+  assert.equal(context.inputId, INPUT_A);
+  assert.equal(context.title, 'Fixture Book');
+  assert.equal(context.queryIdentity.includes('fixture book'), true);
+  assert.equal(context.metadataContractVersion, 'p9-metadata-foundation-v1');
+  for (const forbidden of ['media', 'path', 'url', 'credential', 'payload']) {
+    assert.equal(Object.keys(context).some((key) => key.toLowerCase().includes(forbidden)), false);
+  }
+  await assert.rejects(db.query(`SELECT public.phase9_metadata_job_context(
+    '${metadataClaim.id}','${METADATA_WORKER}','${'f'.repeat(64)}',
+    ${metadataClaim.attempt_count})`), /P9_STATE_CONFLICT/);
+  await db.exec(`UPDATE public.image_extraction_jobs SET store_id='${STORE_B}'
+    WHERE id='${metadataClaim.id}'`);
+  await assert.rejects(db.query(`SELECT public.phase9_metadata_job_context(
+    '${metadataClaim.id}','${METADATA_WORKER}','${metadataClaim.lease_token}',
+    ${metadataClaim.attempt_count})`), /P9_STATE_CONFLICT/);
+  await setActor(db, OWNER_A, 'authenticated');
+  await assert.rejects(db.query(`SELECT public.phase9_metadata_job_context(
+    '${metadataClaim.id}','${METADATA_WORKER}','${metadataClaim.lease_token}',
+    ${metadataClaim.attempt_count})`));
+  await assert.rejects(db.query('SELECT * FROM public.phase9_metadata_provider_calls'));
+  await setActor(db, OWNER_A, 'service_role');
+});
+
+test('retryable metadata failure schedules the same job and leaves candidate processing', async () => {
+  const { metadataClaim, context } = await claimMetadataAfterVision();
+  const failed = await scalar(db, `SELECT public.phase9_fail_metadata_job(
+    '${metadataClaim.id}','${METADATA_WORKER}','${metadataClaim.lease_token}',
+    ${metadataClaim.attempt_count},'${context.candidateId}',${context.candidateVersion},
+    '${context.queryIdentity.replaceAll("'", "''")}',
+    'timeout',true)`);
+  assert.equal(failed.status, 'retry_scheduled');
+  assert.equal(await scalar(db, `SELECT status FROM public.image_extraction_jobs
+    WHERE id='${metadataClaim.id}'`), 'retry_scheduled');
+  assert.equal(await scalar(db, 'SELECT state FROM public.image_extraction_candidates'), 'processing');
+  assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.phase9_selected_metadata_snapshots'), 0);
+});
+
+test('exhausted metadata failure atomically dead-letters with one replay-safe degraded snapshot', async () => {
+  const visionClaim = await claim();
+  await persist(visionClaim);
+  await db.exec(`UPDATE public.image_extraction_jobs SET attempt_count=4
+    WHERE job_kind='metadata_enrich'`);
+  const metadataClaim = (await db.query(
+    `SELECT * FROM public.claim_phase9_metadata_jobs(1,'${METADATA_WORKER}')`,
+  )).rows[0];
+  const context = await scalar(db, `SELECT public.phase9_metadata_job_context(
+    '${metadataClaim.id}','${METADATA_WORKER}','${metadataClaim.lease_token}',5)`);
+  const sql = `SELECT public.phase9_fail_metadata_job(
+    '${metadataClaim.id}','${METADATA_WORKER}','${metadataClaim.lease_token}',5,
+    '${context.candidateId}',${context.candidateVersion},
+    '${context.queryIdentity.replaceAll("'", "''")}','timeout',true)`;
+  const completed = await scalar(db, sql);
+  assert.equal(completed.status, 'dead_letter');
+  assert.equal(completed.manual_outcome, 'technical_failure');
+  assert.equal((await scalar(db, sql)).status, 'replayed');
+  assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.phase9_selected_metadata_snapshots'), 1);
+  assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.phase9_metadata_lookups'), 1);
+  assert.equal(await scalar(db, 'SELECT state FROM public.image_extraction_candidates'), 'needs_review');
+  await resetActor(db);
+  assert.equal(await scalar(db, `SELECT marketplace_sec.phase9_owner_ux_metadata_state(
+    (SELECT id FROM public.image_extraction_candidates))`), 'temporarily_unavailable');
+  await setActor(db, OWNER_A, 'service_role');
+});
+
+test('valid lookup with no result remains no_match despite its degraded snapshot FK', async () => {
+  const { metadataClaim, context } = await claimMetadataAfterVision();
+  const completed = await scalar(db, `SELECT public.phase9_fail_metadata_job(
+    '${metadataClaim.id}','${METADATA_WORKER}','${metadataClaim.lease_token}',
+    ${metadataClaim.attempt_count},'${context.candidateId}',${context.candidateVersion},
+    '${context.queryIdentity.replaceAll("'", "''")}',
+    'no_acceptable_match',false)`);
+  assert.equal(completed.manual_outcome, 'no_match');
+  assert.equal(await scalar(db, `SELECT selected_metadata_snapshot_id IS NOT NULL
+    FROM public.image_extraction_candidates`), true);
+  await resetActor(db);
+  assert.equal(await scalar(db, `SELECT marketplace_sec.phase9_owner_ux_metadata_state(
+    (SELECT id FROM public.image_extraction_candidates))`), 'no_match');
+  await setActor(db, OWNER_A, 'service_role');
+});
+
+for (const [failureKind, manualOutcome, jobStatus, ownerState] of [
+  ['insufficient_query', 'manual_metadata_required', 'resolved', 'manual'],
+  ['ambiguous_match', 'ambiguous', 'resolved', 'ambiguous'],
+  ['material_conflict', 'material_conflict', 'resolved', 'ambiguous'],
+  ['policy_denied', 'policy_denied', 'resolved', 'failed'],
+  ['authentication_configuration_failure', 'policy_denied', 'resolved', 'failed'],
+  ['legal_launch_denied', 'policy_denied', 'resolved', 'failed'],
+  ['cost_quota_denied', 'cost_quota_denied', 'resolved', 'failed'],
+  ['malformed_response', 'technical_failure', 'dead_letter', 'temporarily_unavailable'],
+]) {
+  test(`metadata terminal outcome ${failureKind} is durable and Owner-truthful`, async () => {
+    const { metadataClaim, context } = await claimMetadataAfterVision();
+    const completed = await scalar(db, `SELECT public.phase9_fail_metadata_job(
+      '${metadataClaim.id}','${METADATA_WORKER}','${metadataClaim.lease_token}',
+      ${metadataClaim.attempt_count},'${context.candidateId}',${context.candidateVersion},
+      '${context.queryIdentity.replaceAll("'", "''")}','${failureKind}',false)`);
+    assert.equal(completed.manual_outcome, manualOutcome);
+    assert.equal(await scalar(db, `SELECT status FROM public.image_extraction_jobs
+      WHERE id='${metadataClaim.id}'`), jobStatus);
+    assert.equal(await scalar(db, `SELECT state FROM public.image_extraction_candidates
+      WHERE id='${context.candidateId}'`), 'needs_review');
+    assert.equal(await scalar(db, `SELECT count(*)::int
+      FROM public.phase9_selected_metadata_snapshots
+      WHERE candidate_id='${context.candidateId}' AND manual_outcome='${manualOutcome}'`), 1);
+    await resetActor(db);
+    assert.equal(await scalar(db, `SELECT marketplace_sec.phase9_owner_ux_metadata_state(
+      '${context.candidateId}')`), ownerState);
+    await setActor(db, OWNER_A, 'service_role');
+  });
+}
+
+test('metadata-job creation failure rolls back its associated usable candidate', async () => {
+  const claimed = await claim();
+  await resetActor(db);
+  await db.exec(`CREATE FUNCTION marketplace_sec.phase9_test_reject_metadata_job()
+    RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+      IF NEW.job_kind='metadata_enrich' THEN RAISE EXCEPTION 'forced metadata job failure'; END IF;
+      RETURN NEW;
+    END $$;
+    CREATE TRIGGER phase9_test_reject_metadata_job
+      BEFORE INSERT ON public.image_extraction_jobs
+      FOR EACH ROW EXECUTE FUNCTION marketplace_sec.phase9_test_reject_metadata_job();`);
+  await setActor(db, OWNER_A, 'service_role');
+  await assert.rejects(persist(claimed), /forced metadata job failure/);
+  assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_analysis_results'), 0);
+  assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_analysis_observations'), 0);
+  assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_extraction_candidates'), 0);
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM public.image_extraction_jobs
+    WHERE job_kind='metadata_enrich'`), 0);
+  await resetActor(db);
+  await db.exec(`DROP TRIGGER phase9_test_reject_metadata_job ON public.image_extraction_jobs;
+    DROP FUNCTION marketplace_sec.phase9_test_reject_metadata_job();`);
+  await setActor(db, OWNER_A, 'service_role');
 });
 
 test('V4-D03/D04 exact replay is duplicate-free after ambiguous response loss', async () => {
@@ -152,6 +349,8 @@ test('V4-D03/D04 exact replay is duplicate-free after ambiguous response loss', 
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_analysis_results'), 1);
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_analysis_observations'), 1);
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.image_extraction_candidates'), 1);
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM public.image_extraction_jobs
+    WHERE job_kind='metadata_enrich'`), 1);
 });
 
 test('V4-D05 changed canonical payload or changed attempt replay cannot overwrite evidence', async () => {
@@ -352,6 +551,15 @@ test('database validation uses UTF-8 bytes and accepts the 15-observation maximu
     title_guess: `Fixture Book ${index + 1}`,
   }));
   assert.equal((await persist(claimed, baseResult(observations))).candidate_count, 15);
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM public.image_extraction_jobs
+    WHERE job_kind='metadata_enrich'`), 15);
+  assert.equal(await scalar(db, `SELECT count(DISTINCT entity_id)::int
+    FROM public.image_extraction_jobs WHERE job_kind='metadata_enrich'`), 15);
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM (
+    SELECT c.id FROM public.image_extraction_candidates c
+    JOIN public.image_extraction_jobs j ON j.entity_id=c.id
+      AND j.entity_type='candidate' AND j.job_kind='metadata_enrich'
+    GROUP BY c.id HAVING count(j.id)=1) exact_pairs`), 15);
 
   await resetActor(db);
   await db.exec(`TRUNCATE public.image_analysis_observations,public.image_analysis_results,

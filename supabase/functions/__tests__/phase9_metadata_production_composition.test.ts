@@ -2,7 +2,7 @@ import {
   decideMetadataProductionPolicy,
   runMetadataProductionComposition,
 } from '../_shared/imageInventory/runtime/metadataProductionComposition';
-import { metadataGateway as gateway, metadataRequest as request }
+import { metadataEdition, metadataGateway as gateway, metadataRequest as request }
   from './support/phase9MetadataComposition';
 
 describe('Phase 9 Unit 5B production metadata composition', () => {
@@ -108,7 +108,7 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
   });
 
   it('skips reuse but preserves fresh matching, fencing, and snapshot retention', async () => {
-    const selected: any = { providerRecordId: 'volume-1', attemptId: 'attempt-1' };
+    const selected = metadataEdition();
     const fixture = gateway({
       invokePrimary: jest.fn(async () => (fixture.calls.push('provider'), {
         outcome: 'coherent_match' as const,
@@ -116,6 +116,7 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
         selected,
         evidence: ['exact_validated_isbn'],
         retryable: false,
+        secondaryEligible: false,
         providerRequestId: 'safe-request-id',
       })),
     });
@@ -180,7 +181,7 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
     await runMetadataProductionComposition(request, fixture.value);
     expect(fixture.calls).toEqual([
       'local', 'cache', 'coalescing', 'lookup', 'reserve', 'attempt',
-      'fence', 'provider', 'finalize', 'persist-cache', 'manual',
+      'fence', 'provider', 'finalize', 'manual', 'persist-cache',
     ]);
   });
 
@@ -198,16 +199,20 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
   });
 
   it('persists one coherent accepted snapshot and never invokes a secondary', async () => {
-    const selected: any = { providerRecordId: 'volume-1', attemptId: 'attempt-1' };
+    const selected = metadataEdition();
     const fixture = gateway({
-      invokePrimary: jest.fn(async () => ({
-        outcome: 'coherent_match' as const,
-        candidates: [selected],
-        selected,
-        evidence: ['exact_validated_isbn'],
-        retryable: false,
-        providerRequestId: 'safe-request-id',
-      })),
+      invokePrimary: jest.fn(async () => {
+        fixture.calls.push('provider');
+        return {
+          outcome: 'coherent_match' as const,
+          candidates: [selected],
+          selected,
+          evidence: ['exact_validated_isbn'],
+          retryable: false,
+          secondaryEligible: false,
+          providerRequestId: 'safe-request-id',
+        };
+      }),
     });
     await expect(runMetadataProductionComposition(request, fixture.value))
       .resolves.toEqual({ outcome: 'accepted_metadata_match' });
@@ -216,10 +221,50 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
       evidence: ['exact_validated_isbn'],
     }));
     expect(fixture.value.completeManual).not.toHaveBeenCalled();
+    expect(fixture.calls).toEqual([
+      'local', 'cache', 'coalescing', 'lookup', 'reserve', 'attempt',
+      'fence', 'provider', 'finalize', 'selection', 'persist-cache',
+    ]);
+  });
+
+  it('resumes a durably finalized logical attempt without another physical call', async () => {
+    const fixture = gateway({
+      resumeFinalizedAttempt: jest.fn(async () => ({ outcome: 'accepted_metadata_match' })),
+    });
+    await expect(runMetadataProductionComposition(request, fixture.value))
+      .resolves.toEqual({ outcome: 'accepted_metadata_match' });
+    expect(fixture.value.resumeFinalizedAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({ lookupId: 'lookup-1', attemptId: 'attempt-1' }),
+    );
+    expect(fixture.value.validateEgress).not.toHaveBeenCalled();
+    expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
+    expect(fixture.value.finalizeAttempt).not.toHaveBeenCalled();
+  });
+
+  it('does not strand a terminal accepted match when cache persistence fails', async () => {
+    const selected = metadataEdition();
+    const fixture = gateway({
+      invokePrimary: jest.fn(async () => ({
+        outcome: 'coherent_match' as const,
+        candidates: [selected], selected,
+        evidence: ['exact_validated_isbn'], retryable: false,
+        secondaryEligible: false,
+        providerRequestId: 'safe-request-id',
+      })),
+      persistCache: jest.fn(async () => {
+        fixture.calls.push('persist-cache');
+        throw new Error('cache unavailable');
+      }),
+    });
+    await expect(runMetadataProductionComposition(request, fixture.value))
+      .resolves.toEqual({ outcome: 'accepted_metadata_match' });
+    expect(fixture.value.persistSelection).toHaveBeenCalledTimes(1);
+    expect(fixture.calls.indexOf('selection'))
+      .toBeLessThan(fixture.calls.indexOf('persist-cache'));
   });
 
   it('fails closed when storage permission is absent', async () => {
-    const selected: any = { providerRecordId: 'volume-1', attemptId: 'attempt-1' };
+    const selected = metadataEdition();
     const fixture = gateway({
       invokePrimary: jest.fn(async () => ({
         outcome: 'coherent_match' as const,
@@ -227,6 +272,7 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
         selected,
         evidence: ['exact_validated_isbn'],
         retryable: false,
+        secondaryEligible: false,
         providerRequestId: null,
       })),
     });
@@ -236,13 +282,56 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
     }, fixture.value)).resolves.toEqual({ outcome: 'manual_metadata_required' });
     expect(fixture.value.persistCache).not.toHaveBeenCalled();
     expect(fixture.value.persistSelection).not.toHaveBeenCalled();
+    expect(fixture.value.finalizeAttempt).toHaveBeenCalledWith(expect.objectContaining({
+      normalizedOutcome: 'coherent_match',
+      logicalOutcome: 'policy_denied',
+      disposition: 'rejected',
+      normalizedCandidate: null,
+      retryable: false,
+    }));
     expect(fixture.value.completeManual).toHaveBeenCalledWith(expect.objectContaining({
       outcome: 'policy_denied',
     }));
   });
 
+  it.each([
+    { outcome: 'coherent_match', selected: null, candidates: [] },
+    { outcome: 'no_acceptable_match', selected: { providerRecordId: 'bad', attemptId: 'attempt-1' }, candidates: [] },
+    { outcome: 'coherent_match', selected: {}, candidates: [{}] },
+  ])('fails malformed provider outcome combinations closed as schema_invalid', async (malformed) => {
+    const fixture = gateway({
+      invokePrimary: jest.fn(async () => ({
+        ...malformed,
+        evidence: [], retryable: false, secondaryEligible: true, providerRequestId: null,
+      } as any)),
+    });
+    await expect(runMetadataProductionComposition(request, fixture.value))
+      .resolves.toEqual({ outcome: 'manual_metadata_required' });
+    expect(fixture.value.finalizeAttempt).toHaveBeenCalledWith(expect.objectContaining({
+      normalizedOutcome: 'schema_invalid', disposition: 'rejected',
+      normalizedCandidate: null, retryable: false,
+    }));
+    expect(fixture.value.persistSelection).not.toHaveBeenCalled();
+  });
+
+  it.each([null, {}, { outcome: 'unknown', candidates: [], selected: null,
+    evidence: [], retryable: false, secondaryEligible: false, providerRequestId: null },
+  { outcome: 'coherent_match', candidates: [{ providerRecordId: 'v', attemptId: 'a' }],
+    selected: { providerRecordId: 'v', attemptId: 'a' }, evidence: [], retryable: true,
+    secondaryEligible: false, providerRequestId: null },
+  { outcome: 'timeout', candidates: [], selected: null, evidence: [], retryable: true,
+    secondaryEligible: false, providerRequestId: 'unsafe request id' }])(
+    'normalizes hostile provider value %p to non-retryable schema_invalid', async (value) => {
+      const fixture = gateway({ invokePrimary: jest.fn(async () => value as any) });
+      await runMetadataProductionComposition(request, fixture.value);
+      expect(fixture.value.finalizeAttempt).toHaveBeenCalledWith(expect.objectContaining({
+        normalizedOutcome: 'schema_invalid',retryable: false,normalizedCandidate: null,
+      }));
+    },
+  );
+
   it('does not consume a positive cache hit when storage is denied and still permits fresh matching', async () => {
-    const selected: any = { providerRecordId: 'volume-1', attemptId: 'attempt-1' };
+    const selected = metadataEdition();
     const fixture = gateway({
       readCache: jest.fn(async () => (fixture.calls.push('cache'), {
         outcome: 'hit' as const,
@@ -254,6 +343,7 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
         selected,
         evidence: ['exact_validated_isbn'],
         retryable: false,
+        secondaryEligible: false,
         providerRequestId: 'safe-request-id',
       })),
     });
@@ -319,7 +409,7 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
   );
 
   it('allows a fresh call without reuse or storage but retains no positive output', async () => {
-    const selected: any = { providerRecordId: 'volume-1', attemptId: 'attempt-1' };
+    const selected = metadataEdition();
     const fixture = gateway({
       invokePrimary: jest.fn(async () => (fixture.calls.push('provider'), {
         outcome: 'coherent_match' as const,
@@ -327,6 +417,7 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
         selected,
         evidence: ['exact_validated_isbn'],
         retryable: false,
+        secondaryEligible: false,
         providerRequestId: null,
       })),
     });
