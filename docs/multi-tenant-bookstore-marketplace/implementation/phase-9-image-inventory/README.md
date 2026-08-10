@@ -23,7 +23,7 @@ and must be overridden for the worker process.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 
-The current narrow authority is [Unit 6 pre-main integration reconciliation](./trackers/28-pre-main-integration-reconciliation.md): exact current-required source may be packaged, verified, independently reviewed, cleanly integrated from fresh `origin/main`, and normally published to `main`. M36 remains unapplied. Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and publication mutations remain separately gated.
+The current narrow authority is [Unit 6 pre-main integration reconciliation](./trackers/28-pre-main-integration-reconciliation.md): exact current-required source may be packaged, verified, independently reviewed, cleanly integrated from fresh `origin/main`, and normally published to `main`. M36 and the M35-preserving forward correction M37 remain unapplied. Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and publication mutations remain separately gated.
 
 WU1 and WU2 remain complete at their recorded levels. Local M32 now closes the
 structural metadata seam with transaction-atomic candidate/job creation,

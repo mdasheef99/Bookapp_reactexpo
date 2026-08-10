@@ -7,6 +7,7 @@ import {
 
 const M34 = '20260809000034_marketplace_phase9_vision_language_hint_correction.sql';
 const M35 = '20260810000035_marketplace_phase9_single_image_removal.sql';
+const M37 = '20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql';
 const STORE = '9a000000-0000-0000-0000-000000000001';
 const OWNER = '9b000000-0000-0000-0000-000000000001';
 const COMMAND_A = '9c000000-0000-4000-8000-000000000001';
@@ -47,6 +48,7 @@ before(async () => {
   legacySecondCapability = await issue(2, 'legacy-second-issue-0001', COMMAND_B);
   await resetActor(db);
   await db.exec(fs.readFileSync(migrationPath(M35), 'utf8'));
+  await db.exec(fs.readFileSync(migrationPath(M37), 'utf8'));
 });
 
 after(async () => db?.close());
@@ -110,7 +112,7 @@ test('candidate lineage rejects removal atomically without changing job or book 
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.marketplace_book_listings'), 0);
 });
 
-test('discovery review count is isolated to the server-resolved active store', async () => {
+test('M37 isolates discovery review count to the server-resolved active store', async () => {
   await resetActor(db);
   await db.exec(`
     INSERT INTO public.stores(id,display_name) VALUES('${SECOND_STORE}','Resolved Store');

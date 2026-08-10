@@ -5,6 +5,12 @@
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
 **Mutation status:** M01-M08/M10-M35 and WU1 are live exactly once; M09 absent. M35 is live as `20260809223135 marketplace_phase9_single_image_removal`; three authorized legacy inputs were logically removed and their exact jobs cancelled; Owner Edge v3 is active. No candidate, inventory, listing, publication, physical Storage deletion, or Unit 7 mutation occurred.
 
+**Local target delta:** M36 and M37 are unapplied. M37 is a forward-only
+replacement of `phase9_owner_discover_session_v1()` that limits the global
+needs-review count to `auth.uid()` and the server-resolved active store. It was
+created during Git-only review so the already-live M35 file remains immutable;
+no database or Storage mutation was authorized or performed.
+
 **2026-08-09 runtime target guard:** Fresh read-only control-plane verification
 reconfirmed `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as healthy and M32
 exactly once. The shared worker loader now rejects every Supabase origin except

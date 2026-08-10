@@ -24,7 +24,7 @@ checkpoint `8e327d7` starts from fresh `origin/main` `388d8bf`, preserves exact
 M36 dispatcher ancestry, and restores unrelated/superseded tree content to
 main. Candidate verification, independent final approval, fresh-main recheck,
 and normal publication of the exact candidate are the remaining authorized
-actions. M36 application and every Supabase, Vault, Cron, Render,
+actions. M36/M37 application and every Supabase, Vault, Cron, Render,
 worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory,
 listing, and publication mutation remain prohibited.
 

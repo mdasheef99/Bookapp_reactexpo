@@ -175,22 +175,32 @@ The complete local gate is green:
 ## 8. Initial independent review and correction receipt
 
 The context-isolated reviewer returned `CHANGES_REQUIRED` on four current-tree
-issues: stale normative Gemini normalization wording; an unscoped M35
+issues: stale normative Gemini normalization wording; an unscoped Owner discovery
 `needsReviewCount`; missing Edge preservation of `P9_INPUT_HAS_CANDIDATES` and
 `P9_SINGLE_IMAGE_LIMIT`; and missing bounded mobile handling for those two
 errors. The candidate corrected each finding red-first:
 
 - normative documents now describe the complete current main-line Gemini
   compatibility boundary without changing provider behavior;
-- M35 derives `needsReviewCount` only for the authenticated actor and active
-  server-derived store, with a second-store PGlite regression;
+- local forward M37 derives `needsReviewCount` only for the authenticated actor
+  and active server-derived store, with a second-store PGlite regression, while
+  the already-live M35 migration source remains immutable;
 - Owner Edge unwraps both M35 errors into safe nonretryable 409 envelopes; and
 - capture/review clients preserve the bounded replacement/removal guidance.
 
-Corrected focused Jest passes 4 suites/187 tests. The complete corrected
-candidate passes 55 Phase 9 function/migration suites with 701 tests, 39 client
-suites with 289 tests, and 241/241 Phase 9 PGlite tests. All three worker
-builds/entrypoints, deployment validation, canonical TypeScript, and the
-previous hygiene gates pass. Independent correction-only re-review is the sole
-remaining review gate before a fresh `origin/main` check and normal push of the
-exact approved candidate.
+The prior complete candidate passes 55 Phase 9 function/migration suites with
+701 tests and 39 client suites with 289 tests. Final M35/M37 plus affected
+Edge/mobile focused Jest passes 5 suites/189 tests, isolated M35→M37 PGlite
+passes 4/4, and full M35→M36→M37 Phase 9 DB replay passes 241/241 after the
+migration-list assertion's expected red/green update. All three worker sources
+are unchanged from the candidate where their builds/entrypoints passed.
+Independent correction-only re-review is the sole remaining review gate. A
+normal push is prohibited until a new explicit user instruction.
+
+The first correction-only re-review remained `CHANGES_REQUIRED` because the
+scope predicate had initially been placed in already-live M35 and ACTIVE still
+called the historical Unit 6C checkpoint active. M35 is restored byte-for-byte
+to the assembled/live source, M37 now carries the forward-only function
+replacement, the migration ledger records it as unapplied, and ACTIVE names
+only this reconciliation as the active unit. M36/M37 application remains
+prohibited.

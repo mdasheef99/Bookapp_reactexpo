@@ -1,6 +1,6 @@
 # Phase 9 Implementation and Verification Tracker
 **Status:** `unit6_pre_main_candidate_corrections_verified_rereview_pending`; **last updated:** 2026-08-10
-**Active work unit:** [`unit6_pre_main_integration_reconciliation`](./28-pre-main-integration-reconciliation.md). Current-required source may be classified, packaged, verified, independently reviewed, cleanly integrated, and normally published to `main`. M36 application and all Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and publication mutations remain prohibited.
+**Active work unit:** [`unit6_pre_main_integration_reconciliation`](./28-pre-main-integration-reconciliation.md). Current-required source may be classified, packaged, verified, independently reviewed, cleanly integrated, and normally published to `main`. M36/M37 application and all Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and publication mutations remain prohibited.
 **Preserved authorization sequence:** `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`; neither status by itself authorizes migration application or external mutation.
 ## Work units
 | Unit | Scope | Status | Required gate |
@@ -59,6 +59,7 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260809000034_marketplace_phase9_vision_language_hint_correction.sql` | `20260809182407 marketplace_phase9_vision_language_hint_correction` | MCP exact project 2026-08-10; `ahntbtktjjmvfosgkmgn` | prior authorized application; read-only verified in this session | forward replacement of selected-language rejection and author validation | migration history and function/schema evidence from completed real-image proof | [`live_verified`](./27-compact-gemini-multilingual-language-hint-evidence.md) |
 | `20260810000035_marketplace_phase9_single_image_removal.sql` | `20260809223135` | MCP exact project 2026-08-10; `ahntbtktjjmvfosgkmgn` | application and three exact removals authorized; Edge deployment separately authorized | forward constraint/function replacements; logical removal, dual single-input guards, current-input read filtering; no physical Storage delete or candidate/inventory/listing mutation | structural Jest 6/6; isolated M01-M35 PGlite 3/3; live function/migration readback; 3/3 inputs removed; 3/3 jobs cancelled; Owner Edge v3 four-file exact match | `live_verified` |
 | `20260810000036_marketplace_phase9_worker_wake_dispatcher.sql` | not applied; live tail remains `20260809223135` | MCP exact project 2026-08-10; `ahntbtktjjmvfosgkmgn` | local migration creation only; application prohibited | forward-only private helper/observability/dispatcher plus one named cron created inactive; Vault configuration, Render services, job rows, Storage, inventory, and publication unchanged | red-first receipt; corrected structural/runtime Jest 23/23; dispatcher PGlite 28/28; full Phase 9 Jest 694/694; full Phase 9 PGlite 240/240; all three worker build/entrypoint smokes PASS | `local_unapplied_review_corrections_applied` |
+| `20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql` | not applied; live tail remains `20260809223135` | exact-project live state already read-only verified 2026-08-10; no new database call | local forward-migration creation required by pre-main review; application prohibited | `CREATE OR REPLACE FUNCTION` only; scopes `needsReviewCount` to authenticated actor plus server-resolved active store while preserving immutable live M35 source and existing authenticated-only ACL | focused M35/M37/Edge/mobile Jest 5 suites/189; isolated M35→M37 PGlite 4/4; full M35→M36→M37 Phase 9 DB replay 241/241 after expected migration-list red/green | `local_unapplied_verified_review_pending` |
 Rules: re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
 - Use forward corrections; record every schema, grant, Storage, data, and verification effect.
 ## Required verification matrix
@@ -1455,19 +1456,22 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 ### 2026-08-10 — isolated candidate review corrections
 
 - Initial independent verdict: `CHANGES_REQUIRED` for normative Gemini wording,
-  M35 active-store/actor count scope, Edge transport of the two new M35 errors,
+  Owner discovery active-store/actor count scope, Edge transport of the two new M35 errors,
   and bounded mobile handling of those errors.
-- Red-first corrections now scope `needsReviewCount` to the authenticated actor
-  and active server-derived store; preserve both errors as safe nonretryable 409
+- Red-first corrections now use local forward M37 to scope `needsReviewCount`
+  to the authenticated actor and active server-derived store while leaving the
+  already-live M35 file byte-identical to its assembled source; preserve both errors as safe nonretryable 409
   envelopes; expose bounded replacement/removal guidance; and align normative
   documentation with the existing current main-line Gemini normalization.
-- Corrected focused Jest passes 4 suites/187 tests. The complete corrected gate
-  passes Phase 9 function/runtime and migration Jest 55 suites/701 tests,
-  image-inventory client Jest 39 suites/289 tests, and Phase 9 PGlite 241/241.
-  All worker builds/entrypoints, deployment validation, canonical TypeScript,
-  and prior hygiene checks remain green. Docker is unavailable and container
-  smoke is not claimed.
-- External effects: none. M36 remains unapplied and no Supabase, Vault, Cron,
+- The prior complete candidate gate passed Phase 9 function/runtime and
+  migration Jest 55 suites/701 tests and image-inventory client Jest 39
+  suites/289 tests. Final M35/M37 plus affected Edge/mobile focused Jest passes
+  5 suites/189 tests; isolated M35→M37 PGlite passes 4/4; and full
+  M35→M36→M37 Phase 9 DB replay passes 241/241 after the migration-list
+  assertion's expected red/green update. Worker sources are unchanged from the
+  candidate where all three builds/entrypoints passed. Docker is unavailable
+  and container smoke is not claimed.
+- External effects: none. M36/M37 remain unapplied and no Supabase, Vault, Cron,
   Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7,
   inventory, listing, or publication mutation occurred.
 - Exact next action: independent correction-only re-review, then fresh-main

@@ -78,9 +78,10 @@ If implementation changes product or architecture behavior, update the relevant 
 > dispatcher ancestry, and the proven Google Books `projection=full` correction.
 > Unrelated Store Owner Orders and Phase 4 content plus superseded Gemini tree
 > content were restored to authoritative `origin/main` versions before commit.
-> Complete corrected candidate gates pass after red-first closure of the initial
-> independent review findings; independent final re-review remains before normal
-> `origin/main` push. M36 application and all
+> The prior complete candidate gate remains green; immutable-M35/local-M37
+> corrections pass focused Jest 5 suites/189 and Phase 9 DB continuity 241/241.
+> Independent final correction-only re-review remains, and `origin/main` push
+> requires a new explicit user instruction. M36/M37 application and all
 > Supabase, Vault, Cron, Render, worker/provider, Storage, live-image,
 > duplicate-replay, Unit 7, inventory, listing, and publication mutations remain
 > prohibited.
@@ -620,7 +621,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6_pre_main_integration_reconciliation` | [reconciliation tracker](./implementation/phase-9-image-inventory/trackers/28-pre-main-integration-reconciliation.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | M01-M35 are live at their recorded levels and M36 remains local/unapplied. Complete current M32/M33/M35/Unit 6/runtime source is being reconciled with the reviewed dispatcher and authoritative compact-Gemini lineage for one verified `main` candidate. External mutation, Unit 7, inventory, listing, and publication remain gated. |
+| Phase 9: Image-to-LLM Inventory | `unit6_pre_main_integration_reconciliation` | [reconciliation tracker](./implementation/phase-9-image-inventory/trackers/28-pre-main-integration-reconciliation.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | M01-M35 are live at their recorded levels; M36 and the M35-preserving Owner discovery scope correction M37 remain local/unapplied. Complete current M32/M33/M35/Unit 6/runtime source is being reconciled with the reviewed dispatcher and authoritative compact-Gemini lineage for one verified `main` candidate. External mutation, Unit 7, inventory, listing, and publication remain gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

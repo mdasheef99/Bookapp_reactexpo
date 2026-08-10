@@ -38,6 +38,7 @@ export const phase9MigrationNames = [
   '20260809000034_marketplace_phase9_vision_language_hint_correction.sql',
   '20260810000035_marketplace_phase9_single_image_removal.sql',
   '20260810000036_marketplace_phase9_worker_wake_dispatcher.sql',
+  '20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql',
 ];
 
 const root = process.cwd();

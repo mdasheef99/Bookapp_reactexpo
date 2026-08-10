@@ -526,7 +526,8 @@ $draftMigrationNames = @(
     '20260809000033_marketplace_phase9_vision_reservation_correction.sql',
     '20260809000034_marketplace_phase9_vision_language_hint_correction.sql',
     '20260810000035_marketplace_phase9_single_image_removal.sql',
-    '20260810000036_marketplace_phase9_worker_wake_dispatcher.sql'
+    '20260810000036_marketplace_phase9_worker_wake_dispatcher.sql',
+    '20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql'
 )
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
