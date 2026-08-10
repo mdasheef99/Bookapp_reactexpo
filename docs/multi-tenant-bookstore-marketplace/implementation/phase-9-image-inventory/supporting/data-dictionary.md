@@ -251,7 +251,7 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | Field | Rule |
 | --- | --- |
 | scope/position | result/store/input, stable ordinal, unique `(analysis_result_id,observation_ordinal)`. |
-| disposition | `candidate`, `language_mismatch`, `unknown_language`, or `identity_insufficient`. |
+| disposition | Corrected target: `candidate`, `unknown_language`, or `identity_insufficient`; selected session language is a hint and creates no new `language_mismatch`. Historical rows may retain `language_mismatch`. |
 | immutable clues | Current: title/authors/publisher/ISBN, candidate language, confidence, geometry, warnings. Target: title/each-author language and script plus separately validated optional variant sidecar. |
 | evidence | bounded canonical observation snapshot only; no raw provider response, prompt, URL/path/token, or arbitrary metadata. |
 | candidate link | nullable one-to-one link for accepted observations; skipped evidence has no candidate. |
@@ -372,6 +372,49 @@ The Unit 4B Render configuration/startup check changed no field, table, RPC,
 bucket, path, retention class, or stored-data rule. The existing M14 provider
 attempt schema remains the only persistence surface for a future real provider
 call; no provider-attempt row was created by this check.
+
+### 2026-08-08 structural metadata live-readback delta
+
+M32 is live exactly once as `20260808020404` and reuses
+`image_extraction_jobs` and its approved states for one candidate-owned
+`metadata_enrich` job per usable vision candidate. The unique
+`dedupe_key` hashes candidate ID, provider-independent query identity, metadata
+contract, routing policy, and selection policy. It adds
+`phase9_metadata_provider_calls` solely for physical outbound-call lineage;
+`metadata_enrichment_attempts` remains the stable logical provider-role attempt.
+The new table stores IDs, claim fencing, closed status/outcome, and bounded
+request ID only—never raw payload, credential, URL, media, or bibliographic text.
+Conceptual failures map to existing M15 snapshot outcomes and existing job/
+candidate states; no new persisted status or enum is introduced.
+
+The Luna correction adds `phase9_metadata_coalescing_waiters` for durable
+in-flight follower attachment. It stores only job/candidate/store IDs, leader
+lookup ID, exact query/provider-cache identity, privacy scope, and timing. The
+physical-call row now separately stores its normalized logical outcome so a
+lost logical-finalization response can be reconstructed exactly. Neither table
+stores raw provider payload, credentials, URLs, or media.
+
+The final bounded correction keeps those columns and adds one service-owned
+reconciliation operation over an existing physical-call row. A failed or lost
+physical-finalization response first reads the durable row: an already
+`finalized` result remains immutable, while an active still-`registered` call
+is completed as `outcome_unknown` with no candidate payload. This records
+uncertain egress without reclassifying it as a known provider result.
+
+### 2026-08-09 M33 vision-reservation correction
+
+M33 adds no relation or field. It operationalizes the existing
+`phase9_usage_reservations` row for sanitized-media vision jobs:
+`cost_kind=vision`, `policy_version=1`, `operation=extract`,
+`idempotency_identity=image_extraction_jobs.dedupe_key`,
+`reserved_cost_units=1`, and initial `status=reserved`. The existing unique
+constraint `(store_id,job_id,cost_kind,policy_version)` remains the sole
+concurrency arbiter. A new postgres-private helper validates the complete
+job/input/active-session/initiating-Owner/media lineage, inserts on
+conflict-do-nothing, re-reads, and fails closed on any conflicting reservation.
+The repair changes no attempt, scheduling, safe-error, or audit field and
+excludes terminal, closed-session, expired-session, wrong-initiator, and
+non-vision history. No client or direct service-role execution grant is added.
 
 ### `phase9_worker_wake_dispatches` (local M36, unapplied)
 

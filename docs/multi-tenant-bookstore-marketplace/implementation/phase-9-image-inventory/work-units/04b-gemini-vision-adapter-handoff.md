@@ -15,6 +15,11 @@ disabled.
 
 ## Completed scope
 
+**2026-08-09 local correction checkpoint:** the provider response is reduced to
+compact visual identity plus optional compact multilingual enrichment, with at
+most five authors. BookConnect attaches canonical provenance, treats enrichment
+as non-fatal, and treats selected language as a hint. See [tracker 27](../trackers/27-compact-gemini-multilingual-language-hint-evidence.md).
+
 - Added the official `@google/genai` server dependency and a Gemini adapter behind
   the existing provider-neutral `SpineImageAnalyzer` interface.
 - Mapped sanitized WebP/JPEG/PNG bytes to Gemini inline image input with no tools,

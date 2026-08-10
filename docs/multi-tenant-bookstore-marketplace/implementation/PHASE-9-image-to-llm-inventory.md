@@ -1,9 +1,9 @@
 # PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `unit6f_open_wu2_locally_complete_core_pipeline_integration_unproven`
+**Status:** `unit6_pre_main_integration_reconciliation`
 **Planning set:** `approved_baseline`
-**Implementation:** M01-M08/M10-M30 plus WU1 are live at their recorded levels; WU2 is locally complete; Unit 6F remains open; real Gemini inference, production metadata enrichment, and the complete upload-to-review path remain unproven; Unit 7 is gated
-**Last updated:** 2026-08-07
+**Implementation:** M01-M35 are live at their recorded levels; M36 is reviewed local code and remains unapplied; the real upload-to-Owner-review path is proven; current worker source is undergoing pre-main publication reconciliation; Unit 7 is gated
+**Last updated:** 2026-08-10
 
 This stable phase handoff points to the detailed planning set:
 
@@ -22,27 +22,26 @@ This stable phase handoff points to the detailed planning set:
 
 ## Locked phase direction
 
-- The implemented runtime still uses a selected language for each `spine_stack`.
-  The approved Unit 5C Lite target instead auto-detects language/script per title
-  and author field, with optional language hints. The maximum remains 15
-  books/image; reject/rescan above 15.
-- Camera and gallery/manual upload; multiple images per simple Start/Close session.
-- The implemented runtime still defaults to English and permits another selected
-  language before upload. That method is superseded as target authority by Unit
-  5C Lite; mixed-language stacks and per-field language/script are approved
-  target behavior, not current implementation.
+- The current runtime treats the selected session language as a non-authoritative
+  hint. Gemini returns detected language per observation; usable original Unicode
+  title/author fields remain primary. The maximum remains 15 books/image;
+  reject/rescan above 15.
+- Camera and gallery/manual upload with one current image per simple Start/Close
+  session. Before candidate lineage exists, the Owner may explicitly remove the
+  current image and choose one replacement; append-style additional images are
+  not allowed.
+- The current compact Gemini contract returns original identity plus optional
+  title Romanization, optional English title translation, and positionally
+  aligned optional author Romanizations. Optional enrichment is non-fatal and
+  does not replace original-script identity.
 - Model/provider adapters with one primary and bounded fallback; model has no tools/data authority.
 - Local canonical lookup then configured metadata providers remain the metadata
-  path. The former target rule requiring up to three automated English aliases
-  is superseded. Unit 5C Lite instead permits an optional analysis-associated
-  `search_variant_proposals_v1` sidecar with bounded provisional Roman variants,
+  path. The former giant nested provider sidecar is superseded. BookConnect maps
+  usable compact enrichment into the existing M18/M19 private proposal envelope,
   keeps deterministic search keys separate from linguistic variants, preserves
   original-language title and author as primary values, confirms those fields
   independently, and activates variants only through field-specific,
-  store-scoped reconciliation. Unit 5C-1 supplies the provider-neutral sidecar
-  contract/fixture validation, and Unit 5C-2 persists validated proposals
-  privately as proposed/non-searchable through M18. Runtime generation,
-  reconciliation/activation, search, and UI remain unimplemented.
+  store-scoped reconciliation.
 - Mandatory owner review, advisory same-store duplicates, no image comparison/auto-merge, independent idempotent candidate commits.
 - Five public conditions plus separate damage; damaged sellable copies require note and 1-3 approved public photos.
 - Bookstore-first marketplace results and complete public store catalogue.
@@ -54,27 +53,27 @@ This stable phase handoff points to the detailed planning set:
 
 - Supabase project re-verified during fixture deployment: `ahntbtktjjmvfosgkmgn` / `Bookconnect_reactexpo`, `ACTIVE_HEALTHY`.
 - `store_id` is canonical: 37 public-schema columns; zero `tenant_id`.
-- M01-M08/M10-M19 are live exactly once; M09 is absent. Exact versions and
+- M01-M08/M10-M35 are live exactly once; M09 and M36 are absent. Exact versions and
   readback evidence are maintained in the implementation tracker and
   current-versus-target audit.
 - M13 uses only minimum postgres-owned, empty-`search_path` `SECURITY INVOKER` wrappers; the private schema remains unexposed and client roles remain denied.
-- Owner ingestion is active with JWT verification. `phase9-media-sanitation` and `phase9-fixture-vision` are separate free-plan Render services at `96991a9`, with auto deploy off.
+- Owner ingestion is active with JWT verification. `phase9-media-sanitation` is
+  live at `96991a9`; `phase9-fixture-vision` is live at `388d8bf`; both are
+  configured from `main` with auto deploy off. No metadata Render service exists.
 - Deployed `one_book` and eight fresh-process fixture cases passed normal claim/fencing/persistence/failure paths. Inventory/listing/published counts remained 5/5/5.
 - The original provider decision selected Gemini 3.5 Flash (`gemini-3.5-flash`) and initial Google Books API metadata. At that checkpoint no real provider was configured or called. The reconciled generic architecture supports one metadata primary and zero or one separately evaluated secondary; no secondary/fallback provider is selected or enabled.
 - The founder subsequently superseded only the initial vision model ID to
   configuration-driven `gemini-3.5-flash-lite`; the earlier decision remains
-  historical. The local adapter has mocked evidence only, the fixture adapter
-  remains available, and no optional vision fallback is selected or enabled.
+  historical. Real Gemini and Google Books execution are proven through Owner
+  review. No optional vision fallback is selected or enabled.
 
 ## Next gate
 
-Unit 5C-1 and Unit 5C-2 are merged; the former Unit 5C Batch 1 handoff is
-historical. The current authorized action is a read-only vertical integration
-audit under the existing Unit 4B/5A/5B authority. It must determine the actual
-production handoffs and gaps between upload/media processing, Gemini vision,
-metadata enrichment, candidate persistence, and Owner review. It authorizes no
-code, migration, provider call, deployment, scheduler, database/Storage
-mutation, inventory/publication behavior, or Unit 7 work. Unit 6F and Unit 7
-remain open and gated respectively.
+The current authorized action is pre-main reconciliation and controlled Git
+publication of the complete current Unit 6 ingestion source. M36 application,
+Vault/Cron configuration, Render deployment, worker/provider invocation,
+database/Storage mutation, duplicate replay, Unit 7, inventory, and publication
+remain prohibited. After publication, a separate deployment session must use
+the one approved final `main` SHA for media, vision, and metadata.
 
 Every material session must use the Phase 9 update matrix, append its evidence to the correct tracker, leave one exact next authorized action, and pass the continuity validator before handoff.

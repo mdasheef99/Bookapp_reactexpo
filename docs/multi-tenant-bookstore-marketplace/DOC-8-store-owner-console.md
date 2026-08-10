@@ -452,7 +452,7 @@ Activity logs should be append-only from the client perspective.
 | CON-09 | Console does not expose platform-wide subscription management or cross-store data. |
 | CON-10 | Owner can view own settlement summaries and policy/compliance blockers. |
 | CON-11 | Owner can see operational trust metrics needed to improve confirmation and fulfillment. |
-| CON-12 | Owner can run a simple Start/Close camera/gallery session with at most 15 spines; the approved target auto-detects field language/script and treats language controls as optional hints. |
+| CON-12 | Owner can run a simple Start/Close camera/gallery session with one current image and at most 15 spines. Before candidate lineage exists, the Owner may explicitly remove that image and choose one replacement. The approved target auto-detects field language/script and treats language controls as optional hints. |
 | CON-13 | Owner review supports defaults, add-missed/remove-false, advisory duplicate choice, five conditions, damage evidence, and independent candidate commits. |
 | CON-14 | Owner can edit controlled inventory fields after commit without mutating shared canonical metadata. |
 | CON-15 | Requested-photo items require 1-3 private current-copy photos or an unavailable/unfulfilled outcome. |

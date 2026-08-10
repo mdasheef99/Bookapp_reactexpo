@@ -1,19 +1,19 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit6_owner_ux_approved_design_authority`
-**Implementation status:** `automatic_worker_wake_dispatcher_local_review_corrections_applied`
+**Implementation status:** `unit6_pre_main_integration_reconciliation_in_progress`
 **Last updated:** 2026-08-10
-**Current milestone:** M35 and Owner Edge v3 remain live-verified; automatic worker wake dispatch is the active local-only work unit
-**Active work unit:** [`automatic_worker_wake_dispatcher`](./work-units/automatic-worker-wake-dispatcher-sdd.md)
+**Current milestone:** M35 and Owner Edge v3 remain live-verified; complete current Unit 6 ingestion source is being reconciled for controlled publication to `main`
+**Active work unit:** [`unit6_pre_main_integration_reconciliation`](./trackers/28-pre-main-integration-reconciliation.md)
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** H1 is resolved by proof: authorized Owner review rejects a `processing` candidate without changing its version, while claim attempt/worker/token/lease, candidate state, and authoritative vision lineage fence physical finalization. H2 uses one shared offset-aware ISO-8601 timestamp helper across vision, metadata edition/result, and automated-alias boundaries. H3 directly proves repeated reconciliation, registered-call reclaim survival, known-completion reuse, and stale-worker non-overwrite. SQL-backed worker evidence remains green for finalized-retryable replay, sibling isolation, invalid-ISBN fallback, and storage-denied positive-retention gaps. All 14 M32 public worker wrappers remain covered by exhaustive ACL proof. M32 was then verified live exactly once, and the minimum Google Books registry row was configured.
-**Next authorized action:** review the local automatic-worker-wake implementation and explicitly authorize or reject a separate deployment/external-mutation unit; do not apply, configure, deploy, enable, invoke, remove the live image, stage, commit, or push
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M33 are live at their recorded versions; M34 is live once as `20260809182407 marketplace_phase9_vision_language_hint_correction`; M35 is live once as `20260809223135 marketplace_phase9_single_image_removal`
-**Scope boundary:** only claimability inspection, private wake dispatch, inactive Cron/pg_net/Vault configuration, bounded observability, metadata deployment preparation, and local tests are authorized. Claim RPC refactoring, duplicate replay, provider behavior, Unit 7, inventory/publication, persistent polling, and new queue infrastructure are excluded.
-**Implementation authority:** the user's 2026-08-10 automatic-worker-wake decision authorizes local code/tests, one narrow forward migration file, and required work-unit documentation. Historical manual-dispatch evidence remains true.
-**Migration creation/application authority:** creation and local testing of the dispatcher forward migration are authorized. Application, Vault mutation, Cron activation, Render deployment/redeployment, live image removal, worker invocation, final live proof, and Git stage/commit/push are not authorized.
-**Current gate:** `AUTOMATIC_WORKER_WAKE_LOCAL_REVIEW_READY`; the existing claimable media job remains untouched, M36 remains unapplied, and no live Phase 9 Cron exists.
+**Next authorized action:** complete local verification and independent review, assemble a clean candidate from fresh `origin/main`, then push that exact verified candidate normally to `origin/main`
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M33 are live at their recorded versions; M34 is live once as `20260809182407 marketplace_phase9_vision_language_hint_correction`; M35 is live once as `20260809223135 marketplace_phase9_single_image_removal`.
+**Scope boundary:** this unit authorizes classification, bounded commits, local tests/review, clean integration, and normal Git publication only. Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and publication actions are excluded.
+**Implementation authority:** the user's 2026-08-10 pre-main reconciliation request authorizes exact current-required packaging and controlled publication to `main`; it does not expand any external mutation authority.
+**Migration creation/application authority:** M36 remains a local forward migration under review. No migration application, Vault mutation, Cron activation, Render deployment/redeployment, live image removal, worker invocation, or final live proof is authorized.
+**Current gate:** `PRE_MAIN_PACKAGE_ASSEMBLY`; commits `ce5f787`, `3e16973`, and `b76cf05` package the metadata/M32, M33, and M35/Unit 6 working-tree slices. Full gates and final independent review remain required before integration.
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -531,6 +531,234 @@ provider fallback, or create global alias authority.
 - Verification boundary: no provider-attempt, usage/cost, or candidate output
   may be claimed from this investigation. The existing key-rotation and
   controlled-provider-call gate remains unchanged.
+
+### 2026-08-07 final bounded structural-metadata correction pass
+
+- Completed only H1-H3 and E1-E3/F1. Physical finalization now revalidates the
+  accepted vision lineage; provider outcomes require one exact complete,
+  identity-coherent normalized edition; and failed/lost physical-finalization
+  responses reconcile committed evidence or persist `outcome_unknown`.
+- SQL-backed worker evidence proves known-retryable replay with one physical
+  call, independently committed sibling success, invalid-ISBN bibliographic
+  fallback, and zero positive retention under storage denial. E1-E3/F1 exposed
+  no production defect and therefore changed tests only.
+- Final current verification: focused identity/provider/gateway/composition/
+  worker Jest 97/97; structural worker/PGlite 14/14; metadata foundation 13/13;
+  vision/M32 40/40; metadata-worker TypeScript build passed. The continuity and
+  final diff-hygiene results are recorded in tracker 02.
+- All 14 public M32 worker wrappers deny PUBLIC/anon/authenticated and grant
+  only `service_role`; the new reconciliation wrapper has fixed empty
+  `search_path`, schema-qualified references, and server-derived lineage.
+- No Supabase/Storage read or mutation, M32 application, provider call,
+  deployment, scheduler, commerce effect, Unit 7 work, stage, commit, push, or
+  merge occurred. M32 remains repository-only and unapplied.
+- Next authorized action: independent approval rereview of the frozen bounded
+  diff. Exact-project read-only preflight and M32 application remain separately
+  gated.
+
+### 2026-08-08 latest M32 narrow-correction closure
+
+- H1 disposition is `RESOLVED_BY_PROOF`: the approved Owner review transition
+  rejects a `processing` candidate and leaves its version unchanged. Physical
+  work remains fenced by the authoritative claim attempt, worker, token, lease,
+  candidate state, and accepted vision lineage, so M32 needs no candidate-version
+  column or runtime parameter on the physical-call row.
+- H2 is resolved by one shared `requiredIsoTimestamp` boundary used by vision,
+  metadata edition/result, and automated-alias parsing. Direct regressions reject
+  date-only, timezone-less, and malformed values and accept `Z` and explicit
+  offsets.
+- H3 direct regressions cover repeated identical reconciliation, registered-call
+  survival across reclaim, idempotent reuse of a known finalized completion, and
+  rejection of an old worker's post-reclaim overwrite without physical, logical,
+  candidate, job, or snapshot mutation.
+- Verification actually run: focused Jest 7 suites/97 tests; structural PGlite
+  14/14; metadata foundation PGlite 13/13; vision/M32 PGlite 40/40. The
+  metadata-worker TypeScript build, Phase 9 continuity validator, and repository
+  diff hygiene passed.
+- The oversized production gateway LOW is intentionally deferred: its stateful
+  lookup, physical-call, and completion sequencing has no extraction boundary
+  that avoids new callback/state indirection in this narrow pass.
+- M32 remains repository-only and unapplied. No Supabase/Storage access,
+  provider call, deployment, scheduler/dispatch, secondary-provider selection,
+  inventory/publication effect, Unit 7 work, stage, commit, push, or merge
+  occurred.
+
+### 2026-08-08 independent narrow correction-only rereview
+
+- A fresh context-isolated, read-only reviewer examined only the H1/H2/H3
+  corrections and gateway-size disposition and returned `APPROVED`.
+- The reviewer confirmed H1 is resolved by the existing authority proof, H2
+  uses one strict shared timestamp boundary, H3 has direct reconciliation,
+  reclaim, idempotency, and stale-worker regressions, and the gateway LOW is
+  appropriately deferred for this correction pass.
+- The reviewer made no edits and performed no external or Git mutation. M32
+  remains repository-only and unapplied.
+- Next authorized action: final approval rereview of the frozen narrow diff;
+  exact-project preflight and M32 application remain separately gated.
+
+### 2026-08-08 controlled live metadata proof — blocked before provider egress
+
+- Authorized scope: exact-project preflight, minimum Google Books registry configuration,
+  local metadata-worker readiness/auth/empty-queue smoke, and one fresh post-M32
+  candidate only if the real worker/provider prerequisites were available. No
+  historical candidate, manual metadata job, M33, scheduler, inventory, listing,
+  publication, Unit 7, Git, or `docs/codemap/` action was authorized.
+- Exact-project readback: `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` is
+  `ACTIVE_HEALTHY`; M32 is live exactly once as
+  `20260808020404 marketplace_phase9_structural_metadata_integration`. Six
+  historical M32-eligible candidates remain untouched; metadata jobs remain zero.
+- Live configuration mutation: inserted exactly one `google_books` / `metadata`
+  registry row for adapter `1.0.0`, enabled/matching/storage allowed, 86,400-second
+  revalidation, policy 1. Public display and image caching remain disabled.
+- Blocker: the checked-out runtime has no `PHASE9_GOOGLE_BOOKS_API_KEY`, and its
+  configured `SUPABASE_SERVICE_ROLE_KEY` resolves to a different Supabase host than
+  the verified development project. The worker therefore could not safely connect
+  to the target project in real-provider mode. No candidate, session, input, metadata
+  job, lookup, attempt, physical provider call, snapshot, or Owner readback was created.
+- Readback: metadata jobs/attempts/lookups/cache/snapshots/usage reservations/provider
+  calls are all zero; inventory/listings are unchanged at 5/5; inventory media links,
+  moderation flags, committed candidates, metadata schedulers, and Phase 9 scheduler
+  rows are zero. The five existing cron jobs are unrelated club/notification/commerce
+  jobs. Supabase also reports the pre-existing RLS-disabled advisor finding for
+  `spatial_ref_sys`, `marketplace_event_schema_registry`, and
+  `marketplace_notification_type_registry`; it was not changed.
+- Verification actually run: exact-project Supabase MCP readback, provider-row
+  readback, cron/function/trigger/ACL checks, metadata-worker TypeScript build PASS,
+  `git diff --check` PASS, and the Phase 9 continuity validator PASS after the
+  documentation and validator-status update.
+- Next authorized action and gate: configure the exact target-project service
+  credential and Google Books credential through the approved secret mechanism, then
+  rerun the bounded proof. Do not create a candidate until that gate passes.
+
+### 2026-08-08 Phase 0 credential inventory rerun - blocked before test data
+
+- The source-defined real path requires `SUPABASE_URL`,
+  `SUPABASE_SERVICE_ROLE_KEY`, `PHASE9_GEMINI_API_KEY`,
+  `PHASE9_GEMINI_MODEL_ID`, `PHASE9_GEMINI_TIMEOUT_MS`,
+  `PHASE9_GOOGLE_BOOKS_API_KEY`, `PHASE9_GOOGLE_BOOKS_TIMEOUT_MS`, and
+  `PHASE9_GOOGLE_BOOKS_MAX_RESPONSE_BYTES`. Gemini is the `google_gemini`
+  adapter using configuration-driven `gemini-3.5-flash-lite`; Google Books is
+  the `google_books` adapter version `1.0.0` and requires its API key in real
+  mode.
+- Credential inventory without secret values: the process has a Supabase URL
+  and service-role value, but the URL host is
+  `nxjnoqjxzkipeghhfxee.supabase.co`, not the approved
+  `ahntbtktjjmvfosgkmgn.supabase.co`; all six `PHASE9_GEMINI_*`/real
+  `PHASE9_GOOGLE_BOOKS_*` runtime names are absent. No approved environment
+  file defines any of those Phase 9 names.
+- Exact-project read-only MCP verification still identifies
+  `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as `ACTIVE_HEALTHY`, with
+  M32 exactly once and one existing approved Google Books registry row. Counts
+  remain metadata jobs `0`, historical M32-eligible candidates `6`, inventory
+  `5`, and listings `5`.
+- The mandatory Phase 0 gate therefore stopped before vision/metadata worker
+  startup, upload, Gemini egress, Google Books egress, candidate creation, or
+  Owner readback. No remote mutation occurred in this rerun; the existing
+  registry row was reused for readback only.
+- Verdict for this credential-inventory run: `LIVE_METADATA_BLOCKED_MISSING_CREDENTIALS`.
+  The Supabase target/credential mismatch is an additional `BLOCKER`.
+- Next authorized action: configure the exact target-project service URL/key and
+  all required real Gemini/Google Books variables through the approved secret
+  mechanism, verify them without printing values, then rerun the same bounded
+  one-candidate proof.
+### 2026-08-09 authorized stale-state cleanup and Owner web proof stop
+
+- The user authorized a development-only cleanup of stale Phase 9 processing
+  state while preserving inventory, listings, stores/users, canonical books,
+  and unrelated data. Nine remaining objects in `image-extraction-inputs` were
+  removed. Three active/closing sessions were closed, 17 inputs were
+  terminalized, eight pending media/vision jobs were cancelled, 13 stale
+  uncommitted candidates were either deleted or expired at the immutable-audit
+  boundary, 20 upload capabilities were removed, and 10 scoped media rows were
+  marked deleted. Immutable vision evidence, append-only variant decisions,
+  and their required audit rows were retained.
+- Post-cleanup readback was `0` active/closing sessions, `0` stale pending
+  media/vision jobs, and Owner Inventory displayed `Review books (0)`. No
+  inventory, listing/publication, store/user, canonical-book, migration,
+  scheduler, Unit 7, deployment, or Git publication effect occurred.
+- The real Expo web Owner flow accepted
+  `C:\Users\user\Pictures\Books\testimage.jpeg` and created fresh session
+  `204b9115-cf8b-4344-a771-042fdfdfd9f1`, one uploaded input, and one open
+  `media_validate_sanitize` job. The proof stopped there because the invoking
+  process has neither `PHASE9_MEDIA_WORKER_URL` nor
+  `PHASE9_MEDIA_WORKER_INGRESS_TOKEN`; vision and metadata invoker variables
+  are also absent. No unauthenticated bypass or Render configuration change was
+  attempted, and Gemini/Google Books were not called.
+- Exact next authorized action: supply the existing worker URLs and matching
+  ingress tokens process-locally, then resume by invoking only the fresh media
+  job. A Google Books key must also be supplied process-locally before the
+  metadata stage; the previously authorized key is no longer available.
+- Follow-up evidence: Render readback located the existing
+  `phase9-media-sanitation` service at
+  `https://phase9-media-sanitation.onrender.com` and confirmed its existing
+  `PHASE9_MEDIA_WORKER_INGRESS_TOKEN` configuration without exposing the value.
+  The token and URL were passed only to the existing invoker process. The
+  bounded invocation returned HTTP 200, claimed one job, and reported `queued`.
+  Database readback shows the media job `resolved` after one attempt, the input
+  `queued` with media/sha256 lineage present, and one fresh `vision_extract` job
+  `open`; unrelated pending media jobs remain zero.
+- Vision follow-up located the existing `phase9-fixture-vision` Render service
+  and used its existing ingress token process-locally without printing or
+  persisting it. Exact isolation was one fresh open vision job, zero unrelated
+  open vision jobs, and zero pre-existing fresh candidates. Two bounded claims
+  both returned HTTP 200 / `retry_scheduled`; the job is at attempt 2 of 5 with
+  safe error `P9_VISION_ANALYZER_UNAVAILABLE`. No provider-attempt or usage row
+  exists, proving Gemini egress did not occur.
+- Live function readback identifies the integration defect: applied
+  `marketplace_sec.phase9_complete_media_validation` creates `vision_extract`
+  but does not create a `phase9_usage_reservations` row, while applied
+  `marketplace_sec.phase9_register_vision_provider_attempt` requires that row.
+  The proof stopped rather than exhaust retries or fabricate the missing
+  reservation. Owner UI displays `Image 1 · Trying again`, `Books found: 0`.
+  Exact next authorized action: implement and apply the forward-only reservation
+  creation correction with focused media-to-vision tests, then resume this same
+  job/session. This requires separate migration authority.
+
+### 2026-08-09 local M33 vision-reservation correction
+
+- Authorized local scope completed: red tests preceded
+  `20260809000033_marketplace_phase9_vision_reservation_correction.sql`.
+  M33 adds one postgres-private reservation helper, replaces only the
+  service-only media finalizer, and creates or validates the policy-1 vision
+  reservation before the media job can resolve.
+- The guarded data repair selects only structurally valid, unleased
+  `open|retry_scheduled` vision jobs with approved linked WebP media and no
+  reservation. It excludes terminal history, uses no generated job IDs, and
+  preserves attempt/error lineage; the live preflight found exactly one such
+  vision job, the fresh proof job at attempt `2/5`.
+- Regression evidence: M33 static 3/3; M33 integration 5/5 including full-M32
+  application compatibility, private-helper ACLs, M14 registration, conflict
+  rollback, and terminal exclusion; combined ingestion/vision/provider/M33
+  PGlite 61/61. The pre-existing M14 fixture digest was corrected from a fake
+  two-MD5 construction to the harness's authoritative SHA-256.
+- M33 was not applied. No Supabase/Storage/provider/worker/UI/product mutation,
+  duplicate-input cleanup, stage, commit, push, deployment, scheduler, Unit 7,
+  inventory, listing, or publication action occurred.
+- Exact next authorized action: independently review the M33 local diff and
+  evidence, then separately authorize exact-project application/readback.
+  After a successful apply, cancel the duplicate open media input through the
+  existing lifecycle boundary and invoke only the original fresh vision job.
+
+### 2026-08-09 M33 required-review corrections
+
+- The independent verdict was `APPROVED_WITH_REQUIRED_CORRECTIONS`: the repair
+  admitted malformed nonterminal history on closed sessions or media owned by a
+  different same-store initiator, and the shared migration harness skipped M31
+  while claiming a complete M32 tail.
+- Red-first regressions failed on both findings. M33 now requires an active
+  session and `media_assets.uploaded_by = image_extraction_sessions.created_by`
+  in both helper and repair. Tests directly exclude closed-session,
+  wrong-initiator, terminal, and duplicate media-job fixtures while preserving
+  attempt count, next-attempt time, and safe error history.
+- `databaseHarness.mjs` now orders M31 before M32/M33. Final verification:
+  M33 static 3/3, focused static 39/39, M33 integration 5/5, combined focused
+  PGlite 61/61, and database foundation/catalog 17/17.
+- No Supabase/Storage/provider/worker/deployment, migration application,
+  duplicate-input cleanup, inventory/publication, scheduler, Unit 7, stage,
+  commit, or push action occurred. M33 remains local-only and unapplied.
+- Exact next authorized action: independent correction-only rereview, followed
+  by separately authorized exact-project application/readback.
+
 ### 2026-08-09 compact Gemini multilingual/language-hint correction
 
 - Gemini output is reduced to compact visual identity plus optional compact
@@ -566,6 +794,181 @@ provider fallback, or create global alias authority.
   local and unapplied; the preserved attempt-5 action was not invoked.
 - Exact next authorized action: independent correction-only rereview of the
   compact Gemini/M34 scope and this diagnostics fix.
+
+### 2026-08-09 corrected-production provider-proof stop
+
+- Exact source: reviewed commit `dc19107ef9fc1252f85626614147de2562f15559`
+  at local `HEAD`; branch is one commit ahead of upstream and was not pushed.
+- Exact-project read-only preflight reconfirmed `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn` as `ACTIVE_HEALTHY`. M31, M32, and M33 are recorded in
+  order, with M33 exactly once as `20260809023834`; M34 is absent and unapplied.
+- The replacement Gemini key was merged into only the existing Render vision
+  service. Render does not offer save-only behavior through the update path and
+  automatically restarted once. Deploy `dep-d9s3mtqjobas73ehntdg` became live
+  at the prior source SHA `83cf61ae93b263d6a31a5cda67da2be91cdb97fb`.
+- The production sanitizer regenerated the existing 1600x1600 WebP byte-for-byte
+  at SHA-256 `5a9c18ea392cb63bbf3c2e58a9d91482bca4e9e8f32b576063cba5a0d5c41e39`.
+  The exact committed full prompt/schema/decoder request used the configured
+  `gemini-3.5-flash-lite` model and failed before decode with HTTP 400,
+  `INVALID_ARGUMENT`, and safe provider category `malformed_request`.
+- Bounded isolation kept the same key, model, image, prompt, and request shape.
+  Omitting only the optional `multilingual_search_enrichment` schema subtree
+  returned HTTP 200. Replacing nullable `anyOf` nodes with documented type-array
+  nullability left the full schema at HTTP 400. The concrete failing component
+  is therefore the multilingual response-schema subtree/combined nesting
+  complexity, not the image, core `vision` schema, prompt, model, or null form.
+- Stop-rule effects: no Supabase job claim/mutation, M34 application, Git push,
+  corrected deployment, attempt-5 invocation, candidate/metadata work, Owner UI
+  continuation, inventory/publication, scheduler, or Unit 7 action occurred.
+- Exact next authorized action: make the smallest compatibility correction to
+  the multilingual provider response schema and rerun this same provider-only
+  request. Do not resume M34/deploy/job execution until the full request decodes.
+
+### 2026-08-09 flattened observation correction
+
+- The user replaced the separate multilingual provider subtree with one flat
+  observation contract: original identity plus nullable title Romanization,
+  nullable English title translation, and positionally aligned nullable author
+  Romanizations. BookConnect derives script/provenance/source-field identities
+  and maps usable values into the unchanged M18/M19 envelope server-side.
+- Red-first evidence: the two focused suites failed 10 assertions against the
+  old decoder before production changes. Final focused analyzer, egress,
+  variant-runtime, vision-policy, and deployment-runtime Jest is 59/59; the
+  vision-worker TypeScript build passes.
+- The exact provider-only rerun was not executed because the external-action
+  boundary requires explicit approval to send the sanitized contents of
+  `C:\Users\user\Pictures\Books\testimage.jpeg` to Google Gemini. One such
+  request was approved and attempted with the flattened production
+  schema/decoder/mapper. Gemini returned HTTP 400; the safe category was
+  `malformed_request` with message `provider rejected the request shape` and no
+  safe provider error code or request ID. The analyzer mapped this to
+  `P9_VISION_ANALYZER_UNAVAILABLE` before production decode.
+  No workaround was attempted. M34, Git, Render, Supabase, jobs, metadata,
+  Owner UI, inventory/publication, scheduler, and Unit 7 remain untouched.
+- That approved retry is exhausted. Exact next authorized action: obtain fresh
+  approval only if another sanitized-image probe is needed to isolate the schema
+  component; downstream execution remains blocked until HTTP 200 plus decode.
+
+### 2026-08-09 schema-free JSON-mode correction and proof
+
+- Red-first: the focused analyzer test failed because the production request still
+  contained `responseJsonSchema`.
+- Completed: removed the provider-side response schema entirely. Gemini now
+  receives only JSON MIME mode, the sanitized WebP, and the compact flat prompt;
+  the existing BookConnect decoder remains the authoritative validation boundary.
+- Verification: exact-path focused Jest 59/59 and vision-worker TypeScript PASS.
+  A broader Jest invocation also discovered the unrelated `.wt/g3` worktree and
+  reported one failure from that worktree's different deployment state; the five
+  authoritative root paths are green.
+- Approved provider result: Gemini accepted the request and returned JSON. There
+  was no HTTP 400/provider-shape rejection. Production decoding then returned
+  `P9_VISION_SCHEMA_INVALID`, proving the remaining blocker is local response
+  normalization, not provider request compatibility.
+- No Supabase, Storage, job, Render, Git, metadata, Owner UI,
+  inventory/publication, scheduler, or Unit 7 mutation occurred. The temporary
+  proof script was removed.
+- Next gate: one explicitly approved bounded retry that captures the returned JSON
+  without secrets, followed by only the decoder normalization supported by that
+  evidence. Downstream execution remains blocked until production decode passes.
+
+### 2026-08-09 bounded JSON capture and decoder normalization
+
+- The approved bounded capture reached Gemini and returned the simple `vision`
+  object with eight observations. The exact decoder mismatches were
+  `image_outcome: "success"` and one unreadable observation with
+  `detected_language: null`; all other requested flat fields were present.
+- Red-first analyzer Jest reproduced `P9_VISION_SCHEMA_INVALID`. Production now
+  normalizes only `success` to canonical `analyzed` and null detected language to
+  canonical `und`, then applies the unchanged strict decoder and M18/M19 mapper.
+- Verification: exact-path focused Jest 60/60; vision-worker TypeScript PASS.
+- A final real-image proof was not run: the approval boundary rejected the
+  additional image transmission as separate from the capture call. No workaround
+  was attempted. The temporary capture script was removed.
+- No Supabase, Storage, job, Render, Git, metadata, Owner UI,
+  inventory/publication, scheduler, or Unit 7 mutation occurred.
+- Next gate: explicit approval for one final sanitized-image provider request;
+  downstream execution remains blocked until production decode succeeds.
+### 2026-08-10 — preserved real-image pipeline and Owner UI proof
+
+- Exact project: `ahntbtktjjmvfosgkmgn`; M34 applied once as live version
+  `20260809182407 marketplace_phase9_vision_language_hint_correction`.
+- Vision: preserved job `8bf664bb-5afa-41f7-ad2c-d86d9b2de2e8` resolved at
+  attempt 5 with `accepted_with_language_skips`; input is `ready`, result
+  `eafc9bf3-5373-4ec4-bd7b-d6dfa9b3b017` contains 8 observations and produced
+  7 candidates. The eighth observation was retained as an unknown-language
+  non-candidate.
+- Metadata: the seven resulting M32 jobs were claimed once and resolved to
+  `P9_METADATA_NO_MATCH`, placing every candidate in `needs_review`. The
+  previously supplied Google Books key is present and valid (HTTP 200). Root
+  cause was the adapter's `projection=lite`, whose live response omits required
+  `language`; `projection=full` decodes live results (8/10 for the bounded Black
+  Swan check). Correction commit `e4f2b34` is pushed on
+  `codex/phase9-gemini-json-deploy`; focused Jest 26/26 and metadata-worker
+  TypeScript build pass.
+- Owner UI: Profile -> Store Owner Console -> Inventory reports
+  `2 images · 7 need attention`; `/inventory/reviews` renders all seven books;
+  the Black Swan detail preserves original title, author, and `en`, exposes the
+  manual-details fallback, and defaults to Save private.
+- Integrity/scope: immutable terminal metadata snapshots were not bypassed,
+  deleted, or overwritten. No review save, inventory/listing/publication,
+  scheduler, commerce, or Unit 7 action occurred. No additional Render deploy
+  followed the user's no-deploy instruction.
+- Exact next authorized action: Owner manual review of these seven candidates
+  only. Any automatic replay of terminal metadata evidence requires a separately
+  designed and authorized recovery path; do not enter Unit 7 or publication.
+
+### 2026-08-10 — remove uploaded image local implementation boundary
+
+- User-authorized scope is limited to an Owner-controlled Remove image action;
+  automatic dispatch, Unit 7, and publication remain out of scope.
+- Red-first mobile and Edge coverage now defines a strict `remove_scan_input`
+  command using session/input identity, expected input version, idempotency key,
+  and command ID. The canonical response is an input transitioned to `skipped`
+  with updated input/session/presentation versions.
+- Implemented locally: confirmation UI, identity-fenced mutation/cache refresh,
+  strict mobile/Edge request and response contracts, service adapter, and exact
+  `phase9_remove_scan_input_v1` RPC routing. Focused Jest is 187/187 green and
+  TypeScript passes with the repository's Deno import-path option enabled.
+- In-app Browser proof on session `f1fc2f59-2cec-4666-a9ee-86ff62723ca4`
+  confirmed both image cards expose Remove image and Image 2 opens the bounded
+  confirmation. The confirmation was cancelled; no removal request was sent.
+- No database/storage mutation, migration creation/application, Edge deployment,
+  worker invocation, Git stage/commit/push, or live image removal occurred.
+- Exact next authorized action: obtain explicit permission to create one forward
+  migration file implementing `phase9_remove_scan_input_v1` plus database tests.
+  Creating the file does not authorize applying it to Supabase.
+
+### 2026-08-10 — one-current-image correction and safe removal M35
+
+- User product decision: retain **Remove image**, remove append-style **Add
+  another image**, and offer one replacement only after the current image is
+  removed. This supersedes only the multiple-image portion of P9-D04.
+- Client boundary: Preview refuses a second authorization when a current input
+  exists. Progress retains Remove image only when `acceptedCandidateCount=0`,
+  hides append UI, and exposes Choose replacement image only when no current
+  input remains.
+- Database boundary: local forward M35 adds the authenticated, server-derived,
+  versioned `phase9_remove_scan_input_v1`; both upload issuance and completion
+  enforce one current input. Removal rejects any candidate lineage, cancels only
+  exact media/vision jobs, marks the input `skipped/P9_OWNER_REMOVED`, preserves
+  historical session counts, and schedules hold-aware cleanup without deleting
+  Storage objects, candidates, inventory, or listings.
+- Verification: M35 structural Jest 6/6; isolated PGlite migration/behavior 3/3,
+  including legacy two-capability state, replacement after removal, and atomic
+  rollback when a candidate exists; capture preview 18/18; progress/remove 9/9;
+  cache identity 2/2; service/Edge regressions 186/186; repository TypeScript
+  PASS; Phase 9 continuity PASS with 195 definitions, zero duplicate/missing
+  traceability, 68 Markdown files, 53 required files, and diff check PASS.
+- Read-only in-app Browser verification on the legacy live session showed three
+  existing processing image cards, each retaining Remove image, with no Add
+  another image control. Image 1 opened the updated exact-input cancellation and
+  cleanup confirmation; Cancel was pressed and no removal request was sent.
+- External state: Supabase project and M34 tail were read-only reverified. M35
+  was not applied; no Edge deploy, live removal, Storage write/delete, worker
+  call, Git stage/commit/push, inventory, listing, publication, or Unit 7 action.
+- Exact next authorized action: review M35 and explicitly authorize its
+  exact-project application. Edge deployment and live removal remain separately
+  authorized actions.
 
 ### 2026-08-10 — automatic worker wake dispatcher local review package
 

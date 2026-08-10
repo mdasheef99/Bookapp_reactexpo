@@ -1,6 +1,6 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `automatic_worker_wake_dispatcher_local_review_corrections_applied`
+**Status:** `unit6_pre_main_integration_reconciliation_in_progress`
 **Last updated:** 2026-08-10
 **Implementation status:** M01-M08/M10-M30 are live-verified at their recorded
 levels; Unit 6A is merged/live, Unit 6B is merged at `9ef9eb3`, Unit 6C is
@@ -9,21 +9,29 @@ false/missed-variant corrections are finalized at `8bceab2`
 **Supabase mutation status:** M01-M08/M10-M30 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; WU1 was applied exactly once as `20260803221216 marketplace_phase9_owner_inventory_read_boundary`; no WU1 row, user, fixture, listing, publication, or Storage mutation occurred. A separately authorized Render Unit 4B configuration/startup deployment is recorded in the implementation evidence; no provider inference was run.
 **Database checkpoint:** M01-M08 and forward migrations M10-M30 plus WU1 are live-verified at their recorded levels; M09 remains absent; positive Owner JWT runtime remains deferred.
 M30 was applied exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`.
-
-The current narrow authority is [Automatic Worker Wake Dispatcher](./work-units/automatic-worker-wake-dispatcher-sdd.md): its local red-first implementation and correction-only independent review are recorded. M36 remains unapplied and creates its cron inactive. Live application, Vault/Cron/Render mutation, worker invocation, current-image removal, final live proof, Git publication, duplicate replay, Unit 7, inventory, and publication remain separately gated.
+M32 is live exactly once as `20260808020404`. The local metadata runtime now
+enforces the exact approved Supabase origin, has no meaningless peer-hash input,
+and is reachable through the existing bounded manual invoker. The one-call
+adapter-only Google Books smoke returned HTTP 200 and passed credential,
+response-bound, decoder, and normalized-result checks without database use.
+No live automatic dispatcher, metadata deployment, candidate, inventory/publication,
+or Unit 7 action is part of this slice. A one-candidate proof requires separate
+authorization and a fresh process-only Google Books key after revocation of the
+chat-exposed temporary key. The inherited service-role key was revalidated on
+2026-08-09 as the exact-project key; only the inherited `SUPABASE_URL` is foreign
+and must be overridden for the worker process.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 
-The user explicitly re-sequenced [WU1](./work-units/owner-inventory-read-boundary-wu1-sdd.md)
-ahead of the Unit 6F native gate. WU1 documentation, red tests, exact-project
-application, and post-application readback are complete. [WU2](./work-units/owner-inventory-read-client-wu2-sdd.md)
-locally cuts over only the Owner `/inventory` route to the canonical RPC with
-strict decoding, isolated pagination/cache behavior, and read-only UI states;
-dashboard remediation remains out of scope. A disposable authenticated Owner
-browser session now covers positive read smoke, while the fixture-backed
-fifteen-card UI check is green. The full runtime matrix, live Gemini provider-call
-verification, and representative Android gate remain deferred; Unit 4B server
-configuration/startup is recorded separately as a bounded operational check.
+The current narrow authority is [Unit 6 pre-main integration reconciliation](./trackers/28-pre-main-integration-reconciliation.md): exact current-required source may be packaged, verified, independently reviewed, cleanly integrated from fresh `origin/main`, and normally published to `main`. M36 remains unapplied. Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and publication mutations remain separately gated.
+
+WU1 and WU2 remain complete at their recorded levels. Local M32 now closes the
+structural metadata seam with transaction-atomic candidate/job creation,
+same-candidate fenced worker processing, a provider-neutral Google Books path,
+and replay-safe terminal persistence using approved states. Independent review
+and an explicitly authorized exact-project read-only preflight are next. M32
+application, live Gemini/Google Books calls, deployment, automatic dispatch,
+the full runtime matrix, and the representative Android gate remain deferred.
 
 Every new development session starts at repository `AGENTS.md`, then follows `implementation/ACTIVE.md` → DOC-13 → [SESSION-START.md](./SESSION-START.md) → [TRACKER.md](./TRACKER.md). `SESSION-START.md` defines the Phase 9 resume brief, work-unit reading router, Supabase gate, documentation update matrix, and mandatory closeout transaction.
 
@@ -124,7 +132,9 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 - One image contains at most 15 visible book spines. Current runtime requires
   selected language; approved target auto-detects with optional hints.
-- Capture supports camera and gallery/manual upload; multiple images may be processed in one simple Start/Close session.
+- Capture supports camera and gallery/manual upload with one current image per
+  simple Start/Close session. An explicit pre-candidate removal enables one
+  replacement; append-style multi-image capture is not allowed.
 - Current runtime defaults the required batch language to English. Unit 5C Lite
   target instead auto-detects per field, accepts optional hints, and still
   excludes per-spine model switching.

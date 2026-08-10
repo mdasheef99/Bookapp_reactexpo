@@ -12,6 +12,25 @@
 | Timeout and duplicate wake behavior preserves normal provider idempotency | Pipeline SDD §§10, 14–15 | Dispatcher timeout/active-lease suppression plus full Phase 9 exact vision replay and finalized metadata physical-call reconstruction regressions |
 | No activation or operational mutation occurs in the local work unit | Dispatcher SDD §§2, 5, 7 | M36 unapplied; no live Cron/Vault/Render/worker/provider/Storage/job/inventory/publication mutation |
 
+## Compact provider/language-hint correction
+
+| Requirement | Evidence |
+| --- | --- |
+| EXT-22/23/40; MED-30 | Gemini JSON mode returns one compact `vision` object with flattened optional Romanization/translation fields per observation and at most five authors; no provider response schema is sent. BookConnect normalizes evidenced `success`/null-language aliases, validates locally, and attaches server-owned provenance. |
+| MAS-19; DAT-10-14 | Flattened enrichment is independently non-fatal and `author_romanizations` aligns positionally one-to-one with `author_guesses`, using null for unavailable entries. |
+| MAS-AC17/18 | Original-script title/authors remain canonical; Romanization and optional English title translation remain separate M18/M19 proposals. |
+| Approved auto-detect target | A selected language is a hint; a differently detected valid book persists a candidate and continues through unchanged M32 metadata-job creation. |
+
+See [tracker 27](../trackers/27-compact-gemini-multilingual-language-hint-evidence.md).
+
+## Metadata local-runtime safety and manual invocation
+
+| Requirement | Owning source | Evidence/status |
+| --- | --- | --- |
+| Privileged worker startup accepts only the exact approved development Supabase HTTPS origin and rejects foreign/suffix/userinfo/query/fragment/path/malformed targets before client composition | Repository `AGENTS.md` database rule; Unit 4A Â§11; current user authorization | Focused metadata environment tests 7/7; inherited foreign process URL was not used |
+| Metadata has no peer worker; media/vision mutual ingress-token distinctness remains mandatory | Unit 4A Â§3/Â§11; M32 manual claim architecture | Metadata omits/rejects the peer hash; existing media/vision positive and same-token negative tests remain green |
+| Manual invoker supports metadata without client-supplied candidate/store/session/query/provider/lease/attempt authority | Unit 4A Â§7/Â§11; M32 database claim boundary | Runtime/invoker suite proves metadata mapping, exact body, timeout, response bound, unknown rejection, and output redaction |
+| Temporary provider secrets remain process-only and an adapter-only credential smoke causes no database/provider-attempt persistence | Unit 5B provider boundary; current user authorization | Exactly one HTTP 200 request; credential accepted; bounds/decoder/provider-neutral normalization passed; no database/provider-attempt persistence |
 
 ## WU2 read-only Owner inventory client integration
 
@@ -35,9 +54,9 @@
 
 Matrix §1.1-§1.4 boundaries, decoding, stale/replay/Close fences, and Unit 7 noninterference are locally implemented and tested; [tracker 19](../trackers/19-unit6a-owner-safe-backend-evidence.md) records the evidence. M29 is unapplied.
 
-## Unit 5C Lite target reconciliation (2026-07-29)
+## Historical Unit 5C Lite target reconciliation (2026-07-29)
 
-Unit 5C Lite is the approved target. Current selected-language runtime,
+At this historical checkpoint, Unit 5C Lite was the approved target. The then-current selected-language runtime,
 `p9-vision-v2`, and live M01 `book_search_aliases` remain unchanged. Unit 5C-2
 implements only private provisional persistence; activation/search/UI remain
 separately authorized.
@@ -91,7 +110,7 @@ and global alias authority remain deferred.
 | --- | --- | --- |
 | Original title/author preserved as primary with per-field language/script | 00 Master; 01 Data; Unit 5C Lite | MAS-04; MAS-AC16; DAT-10 |
 | Auto-detect default; optional hints; no language-forcing | 00 Master; 02 Extraction; Unit 5C Lite | MAS-01; EXT-04/05/20 |
-| Optional sidecar isolated from strict current vision result | 00 Master; 02 Extraction; 04 Media; Unit 5C Lite | MAS-19; EXT-40; MED-30 |
+| Compact optional enrichment isolated from strict persisted vision result and mapped into the existing private proposal contract | 00 Master; 02 Extraction; 04 Media; Unit 5C Lite | MAS-19; EXT-40; MED-30 |
 | Independent title/author confirmation and activation | 00 Master; 01 Data; 03 Review; Unit 5C Lite | MAS-18; DAT-12; REV-22 |
 | Deterministic keys separate from linguistic variants | 01 Data; 05 Marketplace; Unit 5C Lite | DAT-14; MKT-16 |
 | Bounded provisional Roman forms; translation separate/inactive | 01 Data; Unit 5C Lite | DAT-11/12 |
@@ -109,6 +128,7 @@ and global alias authority remain deferred.
 | Model-agnostic primary/fallback vision | 02 Extraction; Unit 4 design | EXT-07–EXT-10; EXT-19 |
 | Vision count/language/repeated-position policy | 00 Master; 01 Data; 02 Extraction; Unit 4 design | MAS-01/02; DAT-26/27; EXT-19–EXT-21 |
 | Attempt-token-fenced vision persistence and replay | 02 Extraction; 04 Media; Unit 4 design | EXT-22/23; MED-23 |
+| Atomic media-to-vision reservation and guarded nonterminal repair | 02 Extraction; 04 Media; M33 migration/tests | EXT-13/14/22/30; MED-23; active-session and initiating-Owner media binding exclude malformed history |
 | Immutable analysis evidence separate from metadata/Owner edits | 01 Data; 02 Extraction; 04 Media; Unit 4 design | DAT-26/27; EXT-24; MED-24 |
 | Fixture vision runtime has zero metadata/inventory/publication effect | 00 Master; 02 Extraction; Unit 4 design | MAS-05/07; MAS-AC02/03/11; EXT-25 |
 | Provider-agnostic local/primary/secondary metadata | 01 Data; 02 Extraction | DAT-05–DAT-09; EXT-11 |
@@ -121,6 +141,8 @@ and global alias authority remain deferred.
 | Provider licensing/publication allowlist, shadow-evaluation gate, and coalescing privacy | 04 Media; 01 Data | MED-22/25/26/27; DAT-31 |
 | Availability/quality/correction scorecards and promotion gate | 01 Data; 02 Extraction; 03 Review | DAT-32; EXT-38/39; REV-21 |
 | Horizontally safe claims, graceful shutdown, spend reconciliation and capacity admission | 00 Master; 02 Extraction | MAS-17; MAS-AC14/15; EXT-30–37 |
+| Physical-call finalization response loss preserves committed evidence or records uncertain egress without payload retention | 00 Master; 02 Extraction; 04 Security | MAS-02/17; MAS-AC14/15; EXT-17/30–37; MED-18/28/29 |
+| Provider output is parsed as one exact complete coherent edition before persistence | 00 Master; 01 Data; 02 Extraction | MAS-13/15; MAS-AC12/13; DAT-05–09/33; EXT-11/26–28 |
 | Raw provider payload disabled by default and credentials excluded from every unsafe surface | 02 Extraction; 04 Media; P9 decisions | EXT-15/17; MED-09/17/18/28/29; P9-D63 |
 | Autoscaling disabled until fixed multi-replica evidence | 00 Master; 02 Extraction | MAS-AC14; EXT-36 |
 | Title/author priority; visible ISBN only as clue | 02 Extraction; 01 Data | EXT-12; DAT-03 |
@@ -185,6 +207,16 @@ SDD 00 §§3/5/9/11, SDD 02 §§5/9/11/12, SDD 04 §§8/10/13, and the Unit 4B
 handoff. Render deployment/startup was verified at `7eaf921`; the Gemini
 provider call itself remains unverified and separately gated. No product,
 schema, Storage, or client behavior requirement changed.
+
+### 2026-08-07 structural metadata integration trace
+
+| Requirement | Local implementation evidence |
+| --- | --- |
+| MAS-06/13/17; EXT-10/22/30 | M32 atomic candidate/job trigger, unique semantic dedupe, fenced context, reclaim-safe logical/physical lineage |
+| DAT-05/28/30/33; EXT-11/28 | provider-neutral fail-closed gateway/adapter contract, exact-ISBN-first local/cache/primary order, atomic leader reservation and durable follower attachment, Google Books contained in its adapter |
+| REV-04/20/21; EXT-12/16 | existing M15 degraded outcomes, SAME-candidate snapshot/transition, corrected Owner metadata-state/read DTO |
+| MED-21/23/24/26 | service-only RPC grants, cross-store/stale-claim denial, no raw scan/provider payload in context or lineage |
+| MAS-05/07/09 | central worker/PGlite test proves zero inventory, listing, publication, or Unit 7 effect |
 
 ## Root specification mapping
 

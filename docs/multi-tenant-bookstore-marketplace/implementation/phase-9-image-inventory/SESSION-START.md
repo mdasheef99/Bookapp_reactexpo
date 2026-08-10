@@ -1,32 +1,30 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-08-09
+**Last updated:** 2026-08-10
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-Current operational correction: M32 is live exactly once. Local M33 is
-implemented, tested, and unapplied; it closes the missing media-to-vision usage
-reservation transaction and narrowly repairs only active-session,
-initiating-Owner-bound eligible nonterminal jobs. The independent review's two
-required corrections are locally complete. The next gate is correction-only
-rereview followed by separately authorized
-exact-project M33 application/readback. Do not invoke the original vision job
-or process/cancel the later duplicate media input until that application gate
-is complete.
+Current operational correction: M29-M35 are live exactly once; exact-project
+history ends at `20260809223135 marketplace_phase9_single_image_removal`.
+The user's 2026-08-10 decision retains Remove image and replaces append-style
+multi-image capture with one current image plus one replacement after explicit
+pre-candidate removal. M35 is live, the three authorized legacy inputs were
+logically removed, and Owner Edge v3 is deployed/readback-verified. One new
+input was registered after removal and must not be removed or otherwise mutated
+without a new explicit target decision.
 
-The compact Gemini/multilingual language-hint correction and local forward M34
-are also implemented and unapplied. Its independent review required one
-diagnostics correction: configured privileged values are now removed from
-bounded provider request IDs and error codes before failure logging or successful
-attempt finalization. Red-first evidence and focused Jest 47/47 plus the
-vision-worker TypeScript build are green. The
-exact next gate for this active work unit is independent correction-only
-rereview; provider proof, deployment, M34 application, and attempt 5 remain
-separately gated.
+Current Git-only handoff: [tracker 28](./trackers/28-pre-main-integration-reconciliation.md)
+owns pre-main reconciliation. Metadata/M32, M33, and M35/Unit 6 dirty-tree
+slices are packaged at `ce5f787`, `3e16973`, and `b76cf05`. Complete local
+verification, independent review, clean integration from fresh `origin/main`,
+and normal publication of the exact candidate are the remaining authorized
+actions. M36 application and every Supabase, Vault, Cron, Render,
+worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory,
+listing, and publication mutation remain prohibited.
 
 Current routed handoff: Unit 6A is merged/live-verified through M29, Unit 6B is
 merged at `9ef9eb3` with [tracker 20](./trackers/20-unit6b-route-query-cache-evidence.md),
@@ -43,26 +41,41 @@ commerce mutation occurred. Unit 6F browser/readback verification and local
 quality gates are recorded in [tracker 24](./trackers/24-unit6f-readiness-quality-gates-evidence.md);
 the representative low-end Android Unit 6F evidence remains outstanding.
 
-The user explicitly re-sequenced [WU1](./work-units/owner-inventory-read-boundary-wu1-sdd.md)
-and [WU2](./work-units/owner-inventory-read-client-wu2-sdd.md) ahead of the
-Unit 6F native gate. WU1 contract/addendum review, local gates, exact-project
-application, and post-application readback are complete. A disposable
-authenticated Owner browser session has now covered positive read smoke and
-the capture/review follow-up, but the full WU1/WU2 matrix remains deferred. The
-local migration `20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql`
-is live once as `20260803221216 marketplace_phase9_owner_inventory_read_boundary`;
-the stable `phase9_owner_inventory(uuid)` detail RPC remains intact. The next
-WU2 read-only Owner `/inventory` client now uses
-`phase9_owner_inventory_page_v1` through a strict DTO decoder, identity/store-
-isolated infinite query, opaque cursor pagination, and read-only UI states;
-[tracker 26](./trackers/26-owner-inventory-read-client-wu2-evidence.md) owns the
-local evidence. The next authorized action is to complete the deferred
-cross-store/inactive-Owner/runtime-context cases when approved fixtures exist;
-those gates remain open and are not waived. The production Gemini-to-metadata-
-to-review path remains unproven. The active next action is a read-only vertical
-integration audit under the existing Unit 4B/5A/5B authority. No dashboard
-remediation, stale-code deletion, write path, Unit 7 implementation, deployment,
-provider call, or unrelated product change is authorized.
+WU1 and WU2 remain complete at their recorded levels. M32 is now live exactly
+once as `20260808020404 marketplace_phase9_structural_metadata_integration` on
+the verified development project. The controlled live proof configured one
+Google Books registry row and stopped before candidate creation because the
+approved local environment lacks the exact target-project service credential,
+the Gemini live configuration, and the required Google Books credential. The latest local H1/H2/H3
+evidence remains green: focused Jest is 97/97, structural PGlite is 14/14,
+metadata foundation is 13/13, and vision/M32 PGlite is 40/40:
+vision candidate creation and metadata-job creation share one PostgreSQL
+transaction, the worker loads and mutates the same candidate through claim-token
+fencing, provider HTTP work occurs outside database transactions, and replay-safe
+terminal outcomes use the existing M15 contract. Google Books remains the only
+implemented provider adapter; no automatic dispatch was added. No fresh session,
+input, candidate, metadata job, provider call, or Owner readback was created in
+the blocked live proof. The next authorized action is to configure the exact
+target-project service credential and Google Books credential through the approved
+secret mechanism, then rerun the bounded proof. Unit 6F native evidence and the
+remaining runtime gates stay open.
+
+The 2026-08-09 bounded metadata-runtime safety unit is locally implemented:
+shared worker startup accepts only the exact approved Supabase HTTPS origin;
+metadata has no peer worker and no longer accepts the media/vision peer hash;
+media/vision peer distinctness remains mandatory; and the existing manual
+invoker supports `metadata` with the same bounded body, timeout, and safe output.
+Secrets remain process-only. Focused Jest is 84/84 and the metadata worker build
+passes. Exactly one process-only Google Books adapter request returned HTTP 200;
+the credential was accepted, the response stayed within bounds, and the decoder
+produced a valid provider-neutral `no_acceptable_match` result. No privileged
+worker, candidate, database mutation, provider persistence, Render/Gemini change,
+or deployment occurred. The next gate is separate authorization for
+`CONTROLLED_ONE_CANDIDATE_METADATA_VERTICAL_PROOF` plus safe process-only
+injection of a fresh process-only Google Books key after revocation of the
+chat-exposed temporary key. A 2026-08-09 recheck proved the inherited service-role
+key belongs to and is accepted by the exact project; the inherited `SUPABASE_URL`
+alone is foreign and must be overridden before worker startup.
 
 ## 1. Canonical status source
 

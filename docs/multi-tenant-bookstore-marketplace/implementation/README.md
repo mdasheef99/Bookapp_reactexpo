@@ -15,28 +15,27 @@ If you are a new agent, do this before changing files:
 5. Read [`../README.md`](../README.md) and [`../DOC-12-build-strategy-and-implementation-sequence.md`](../DOC-12-build-strategy-and-implementation-sequence.md) for stable guardrails and phase gates.
 6. Read the source/domain documents routed for the active work unit and inspect current code/live evidence before acting.
 
-Current handoff as of 2026-08-07:
+Current handoff as of 2026-08-10:
 
 - Phase 6 is `complete_e2e_deferred`; its migrations M01-M39 and provider-independent `payment_ready` boundary are applied/verified in the development project.
 - Phases 7 Payment/Ledger/Settlement and 8 Pickup are deferred.
-- Phase 9 Image-to-LLM Inventory has progressed beyond the historical Unit 5C
-  Batch 1 handoff. WU2 is locally complete, Unit 6F remains open, and Unit 7 is
-  gated. The next authorized action is a read-only vertical integration audit
-  under existing Unit 4B/5A/5B authority; it authorizes no implementation,
-  provider call, deployment, scheduler, database/Storage mutation, or
-  inventory/publication behavior.
+- Phase 9 Image-to-LLM Inventory is in the Git-only Unit 6 pre-main
+  reconciliation recorded by tracker 28. M01-M35 are live at their recorded
+  levels, M36 is reviewed local code and remains unapplied, and the complete
+  current ingestion source is being packaged and verified for controlled
+  publication to `main`. Supabase, Vault, Cron, Render, worker/provider,
+  Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and
+  publication mutations are not authorized.
 - The active set is [`phase-9-image-inventory/`](./phase-9-image-inventory/README.md);
   each component is implemented only at the level recorded by its tracker.
-- The current runtime uses one selected language per `spine_stack` and a maximum
-  of 15 books/image. The approved
-  [Unit 5C Lite target](./phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md)
-  supersedes that language method with per-field auto-detection and optional
-  hints while keeping original-language title and author primary. The former
-  three-English-alias target is likewise superseded by an optional bounded
-  proposal sidecar and store-scoped active-only reconciliation. Unit 5C-1 is
-  merged; Unit 5C-2 persists validated proposals privately as proposed and
-  non-searchable through live M18. Generation, activation, search/UI, and later
-  Unit 5C Lite behavior remain unimplemented.
+- The current runtime treats the selected session language only as a
+  non-authoritative hint, records per-observation detected language, and keeps
+  the 15-books/image maximum. The compact Gemini contract preserves
+  original-language title and author as primary and permits bounded optional
+  Romanization/English-title enrichment. The former three-English-alias and
+  giant nested-sidecar targets are superseded. Validated enrichment maps into
+  the existing M18/M19 private proposal envelope; activation remains
+  field-specific, store-scoped, and reconciliation-controlled.
 - Owner review, the future Unit 5B Roman-query extension, inventory,
   publication, and commerce remain separate. Public publication still requires
   a positive selling price; price-on-request is excluded from Unit 5C Lite.

@@ -147,8 +147,9 @@ Local tests must prove:
 
 This unit does not change duplicate-image replay, Gemini or Google Books
 contracts, M18/M19/M32/M33/M34/M35 semantics, Owner review, Unit 7, inventory,
-listing/publication, queue infrastructure, or persistent Render polling. The
-stale multiple-image wording elsewhere is noted but is not corrected here.
+listing/publication, queue infrastructure, or persistent Render polling.
+Historical multiple-image evidence remains preserved; current normative sources
+use the one-current-image contract.
 
 After a fresh automatic live PASS, duplicate-image replay correction remains a
 separate authorized work unit and gate before Phase 9 ingestion can be called

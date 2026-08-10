@@ -93,8 +93,9 @@ decision; it is not an implementation option.
 1. The hub resolves Owner/store and fetches one active session plus needs-review.
 2. The Owner resumes or starts with visible defaults, then chooses camera/gallery,
    checks the preview guidance, and uploads.
-3. Registration starts durable sanitation/analysis; the Owner may add an image
-   or leave while ordered cards arrive and failures stay input-local.
+3. Registration starts durable sanitation/analysis. The Owner may leave while
+   ordered cards arrive. One current image is allowed; before candidate lineage
+   exists, explicit removal enables one replacement and failures stay input-local.
 4. The Owner confirms original fields, edits store fields, handles false/missed
    candidates, and sees exceptional variants only when offered.
 5. Saved versions feed readiness. Close requires terminal inputs and never
@@ -129,16 +130,15 @@ sheet are the two specified major modals.
 ```text
 Inventory · Local Books
 [ Scan book spines ]  [ Add manually ]
-Resume scan · 2 images processing             [Resume]
+Resume scan · 1 image processing              [Resume]
 Needs review · 6 books                        [Review]
 Existing inventory...
 ```
 
 ```text
 Scan session                          Saved on server
-Image 1  Uploading 64% / Checking / Finding books
-Image 2  Try a clearer photo                     [Retry]
-[ Camera ] [ Gallery ] [ Add missed book ]
+Image 1  Uploading 64% / Checking / Finding books [Remove image]
+[ Choose replacement only after removal ] [ Add missed book ]
 Ready 4 · Needs attention 2 · Processing 1
 Candidate cards (virtualized, spine order)
 ```
@@ -256,7 +256,8 @@ Recovery begins only after successful registration. Picker URI, upload
 capability, and bytes are intentionally memory-only; process death after
 authorization or byte transfer but before registration is non-resumable. On
 relaunch no input is invented: the Owner sees “That upload was not registered.
-Select the image again.” and performs a new deliberate upload. Server retention
+Select the image again.” and performs a new deliberate upload only when the
+session has no current input. Server retention
 and orphan reconciliation—not the mobile client—expire the unused capability
 and remove an unregistered staged object.
 
@@ -400,8 +401,9 @@ Preserve `/inventory` as a nested Stack; combine progress and candidate list;
 use explicit server saves with no persisted/offline draft queue; and use
 poll/refetch rather than Realtime. Keep required current English default until
 rollout authority, private first-session intent, and only server-approved later
-defaults. Terminal image retry is a new upload while transient retry is
-automatic. Variants expose only `allowed_actions` and may remain unresolved.
+defaults. Terminal image replacement first requires explicit removal while no
+candidate lineage exists; transient retry is automatic. Variants expose only
+`allowed_actions` and may remain unresolved.
 Duplicate intent is staged, while every resolution effect stays in Unit 7.
 
 ## 34. Definition of Unit 6 completion
