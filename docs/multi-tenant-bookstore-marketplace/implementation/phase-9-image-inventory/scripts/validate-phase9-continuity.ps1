@@ -460,7 +460,8 @@ if (
         $tracker.Contains('**Next authorized action:** review the local automatic-worker-wake implementation and explicitly authorize or reject a separate deployment/external-mutation unit') -or
         $tracker.Contains('**Next authorized action:** complete local verification and independent review, assemble a clean candidate from fresh `origin/main`, then push that exact verified candidate normally to `origin/main`') -or
         $tracker.Contains('**Next authorized action:** rerun the required gates on the isolated candidate, obtain independent final approval, verify fresh-main ancestry/content, then push that exact candidate normally to `origin/main`') -or
-        $tracker.Contains('**Next authorized action:** obtain independent final approval of the corrected isolated candidate, verify fresh-main ancestry/content, then push that exact candidate normally to `origin/main`')
+        $tracker.Contains('**Next authorized action:** obtain independent final approval of the corrected isolated candidate, verify fresh-main ancestry/content, then push that exact candidate normally to `origin/main`') -or
+        $tracker.Contains('**Next authorized action:** obtain independent final approval of the corrected isolated candidate, verify fresh-main ancestry/content, report publish readiness, and wait for a new explicit user instruction before any push')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or

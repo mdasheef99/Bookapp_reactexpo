@@ -2,7 +2,7 @@
 
 **Status:** `candidate_corrections_verified_independent_rereview_pending`
 **Date:** 2026-08-10
-**Target:** one reviewed `main` SHA containing the current Phase 9 ingestion path
+**Target:** one reviewed publish-ready candidate SHA containing the current Phase 9 ingestion path
 
 ## 1. Authority and live-state receipt
 
@@ -16,8 +16,9 @@
 - Render readback: media is live at `96991a9`, vision is live at `388d8bf`,
   both services use branch `main` with auto deploy off, and no metadata service
   exists.
-- This reconciliation authorizes Git packaging, normal integration, and normal
-  push only after all gates pass. It authorizes no Supabase, Vault, Cron,
+- This reconciliation authorizes Git packaging, local integration, review, and
+  publish-readiness reporting. A push requires a new explicit user instruction.
+  It authorizes no Supabase, Vault, Cron,
   Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7,
   inventory, listing, or publication mutation.
 

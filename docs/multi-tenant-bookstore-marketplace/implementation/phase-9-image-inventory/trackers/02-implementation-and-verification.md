@@ -1,6 +1,6 @@
 # Phase 9 Implementation and Verification Tracker
 **Status:** `unit6_pre_main_candidate_corrections_verified_rereview_pending`; **last updated:** 2026-08-10
-**Active work unit:** [`unit6_pre_main_integration_reconciliation`](./28-pre-main-integration-reconciliation.md). Current-required source may be classified, packaged, verified, independently reviewed, cleanly integrated, and normally published to `main`. M36/M37 application and all Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and publication mutations remain prohibited.
+**Active work unit:** [`unit6_pre_main_integration_reconciliation`](./28-pre-main-integration-reconciliation.md). Current-required source may be classified, packaged, verified, independently reviewed, and cleanly integrated into a publish-ready candidate. Any `main` push requires a new explicit user instruction. M36/M37 application and all Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and publication mutations remain prohibited.
 **Preserved authorization sequence:** `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`; neither status by itself authorizes migration application or external mutation.
 ## Work units
 | Unit | Scope | Status | Required gate |
@@ -1431,8 +1431,9 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
   media Render at `96991a9`, vision Render at `388d8bf`, no metadata service,
   and M36 absent live.
 - Next authorized action: finish documentation validation and full local gates,
-  obtain independent approval, assemble the clean candidate, verify exact
-  ancestry/content, and push that candidate normally to `origin/main`.
+  obtain independent approval, assemble the clean candidate, and verify exact
+  ancestry/content. The later explicit user instruction requires readiness
+  reporting and a stop before any push.
 - Full local gate result: Phase 9 Jest 54 suites/694 tests; complete
   image-inventory client Jest 39 suites/287 tests; Phase 9 PGlite 240/240; all
   three worker builds and entrypoint smoke; deployment validator; canonical
@@ -1451,7 +1452,8 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
   historical ancestors `2f32231`, `dc19107`, and `df63801`; their tree effects
   are explicitly neutralized and the ancestry is disclosed in tracker 28.
 - Next gate: complete candidate rerun and independent final approval, followed
-  by a fresh `origin/main` comparison and normal push of the exact candidate.
+  by a fresh `origin/main` comparison and readiness report; any push requires a
+  new explicit user instruction.
 
 ### 2026-08-10 — isolated candidate review corrections
 
@@ -1475,4 +1477,5 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
   Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7,
   inventory, listing, or publication mutation occurred.
 - Exact next action: independent correction-only re-review, then fresh-main
-  ancestry/content verification and normal push of only the approved candidate.
+  ancestry/content verification and readiness reporting; stop before push and
+  await a new explicit user instruction.
