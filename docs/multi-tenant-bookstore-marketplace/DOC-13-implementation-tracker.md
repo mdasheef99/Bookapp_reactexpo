@@ -72,6 +72,20 @@ Every material session must also leave one exact active work unit and next autho
 If implementation changes product or architecture behavior, update the relevant source spec and record the reason in this tracker.
 ---
 ## 2. Current Status
+> 2026-08-10 Phase 9 metadata retry/provider-attempt correction is locally
+> implemented red-first on a fresh `origin/main` branch. Exact-project read-only
+> evidence confirms M32-M37 live exactly once. Forward-only M38 adds metadata
+> context v2 with the selected physical call's claim-attempt number; later claims
+> no longer replay an older retryable provider result, while same-claim and
+> terminal-result reconciliation remain spend-safe. Focused metadata Jest is
+> 148/148 and full Phase 9 PGlite is 242/242; metadata build, entrypoint smoke,
+> and deployment-runtime validation pass. The exact Google Books HTTP 503-to-200
+> regression proves two fetches and two physical calls across claim attempts 1
+> and 2, successful ready-state resolution, and no dead-letter/exhaustion. The
+> independent correction-only verdict is `APPROVED`. M38 is local/unapplied. No database,
+> deployment, provider, job, media/vision, query-policy, Unit 7, inventory,
+> listing, or publication mutation is authorized in this correction session.
+
 > 2026-08-10 Phase 9 Unit 6 pre-main reconciliation has assembled an isolated
 > candidate from fresh `origin/main` `388d8bf`. Merge checkpoint `8e327d7`
 > contains the complete packaged M32/M33/M35/Unit 6/runtime source, exact M36

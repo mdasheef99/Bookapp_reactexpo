@@ -8,8 +8,8 @@ This is the deterministic resume procedure for Phase 9. A new session should rec
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-Current operational correction: M29-M35 are live exactly once; exact-project
-history ends at `20260809223135 marketplace_phase9_single_image_removal`.
+Current operational correction: M29-M37 are live exactly once; exact-project
+history ends at `20260810105517 marketplace_phase9_owner_discovery_scope_correction`.
 The user's 2026-08-10 decision retains Remove image and replaces append-style
 multi-image capture with one current image plus one replacement after explicit
 pre-candidate removal. M35 is live, the three authorized legacy inputs were
@@ -17,16 +17,15 @@ logically removed, and Owner Edge v3 is deployed/readback-verified. One new
 input was registered after removal and must not be removed or otherwise mutated
 without a new explicit target decision.
 
-Current Git-only handoff: [tracker 28](./trackers/28-pre-main-integration-reconciliation.md)
-owns pre-main reconciliation. Metadata/M32, M33, and M35/Unit 6 dirty-tree
-slices are packaged at `ce5f787`, `3e16973`, and `b76cf05`; isolated merge
-checkpoint `8e327d7` starts from fresh `origin/main` `388d8bf`, preserves exact
-M36 dispatcher ancestry, and restores unrelated/superseded tree content to
-main. Candidate verification, independent final approval, fresh-main recheck,
-and publish-readiness reporting are the remaining authorized actions. Any push
-requires a new explicit user instruction. M36/M37 application and every Supabase, Vault, Cron, Render,
-worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory,
-listing, and publication mutation remain prohibited.
+Current Git-only handoff: `phase9_metadata_retry_provider_attempt_correction`
+owns the bounded retry fix. Local M38 adds only metadata context v2 and exposes
+the latest physical provider call's originating claim attempt. Retryable results
+are replayed only inside the same claim; a later claim registers a new physical
+call and performs fresh egress. Terminal/non-retryable reconciliation remains
+replay-safe. Independent correction-only review is `APPROVED`; bounded Git
+publication is the remaining local closeout. M38 application, metadata redeploy,
+live-job mutation, and every media, vision, query-policy, duplicate-replay,
+Unit 7, inventory, listing, or publication mutation remain prohibited.
 
 Current routed handoff: Unit 6A is merged/live-verified through M29, Unit 6B is
 merged at `9ef9eb3` with [tracker 20](./trackers/20-unit6b-route-query-cache-evidence.md),

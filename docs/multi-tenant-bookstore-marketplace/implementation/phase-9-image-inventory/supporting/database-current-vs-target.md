@@ -1,15 +1,15 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-08-10 M35 application/removal and Owner Edge v3 readback
-**Audit mode:** exact-project migration, schema/security readback, ACL/RLS/trigger comparison, and bounded anonymous denial smoke
+**Audit date:** 2026-08-10 M38 metadata retry correction preflight
+**Audit mode:** exact-project read-only project/migration verification plus local schema/security and PGlite replay
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10-M35 and WU1 are live exactly once; M09 absent. M35 is live as `20260809223135 marketplace_phase9_single_image_removal`; three authorized legacy inputs were logically removed and their exact jobs cancelled; Owner Edge v3 is active. No candidate, inventory, listing, publication, physical Storage deletion, or Unit 7 mutation occurred.
+**Mutation status:** M01-M08/M10-M37 and WU1 are live exactly once; M09 absent. Exact live tail is `20260810105517 marketplace_phase9_owner_discovery_scope_correction`. This correction session performed read-only verification only; no database, Storage, provider/job, deployment, inventory, listing, publication, or Unit 7 mutation occurred.
 
-**Local target delta:** M36 and M37 are unapplied. M37 is a forward-only
-replacement of `phase9_owner_discover_session_v1()` that limits the global
-needs-review count to `auth.uid()` and the server-resolved active store. It was
-created during Git-only review so the already-live M35 file remains immutable;
-no database or Storage mutation was authorized or performed.
+**Local target delta:** M38 is unapplied. It adds a private fixed-search-path
+metadata context v2 helper and replaces only the existing service-only public
+context wrapper. The response gains `currentPhysicalClaimAttempt`, derived from
+the same latest physical call already represented by the context. M32-M37 remain
+unchanged. Full local Phase 9 PGlite replay through M38 passes 242/242.
 
 **2026-08-09 runtime target guard:** Fresh read-only control-plane verification
 reconfirmed `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as healthy and M32

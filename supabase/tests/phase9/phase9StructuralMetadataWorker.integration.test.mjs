@@ -1,8 +1,14 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { after, before, test } from 'node:test';
 import { runMetadataWorkerBatch } from '../../../.phase9-dist/workers/phase9-metadata-worker/index.js';
 import { buildMetadataQueryIdentity } from '../../../.phase9-dist/supabase/functions/_shared/imageInventory/metadata/queryIdentity.js';
-import { createPhase9Database, resetActor, scalar, setActor } from './databaseHarness.mjs';
+import {
+  GOOGLE_BOOKS_CAPABILITY, GoogleBooksAdapter,
+} from '../../../.phase9-dist/supabase/functions/_shared/imageInventory/metadata/googleBooks/index.js';
+import {
+  createPhase9Database, migrationPath, resetActor, scalar, setActor,
+} from './databaseHarness.mjs';
 
 const STORE='aa000000-0000-0000-0000-000000000001';
 const OWNER='ab000000-0000-0000-0000-000000000001';
@@ -83,7 +89,11 @@ const fullEdition=({correlationId,attemptId,title,providerRecordId})=>({
 
 before(async()=>{
   db=await createPhase9Database({throughMigration:
-    '20260807000032_marketplace_phase9_structural_metadata_integration.sql'});
+    '20260810000035_marketplace_phase9_single_image_removal.sql'});
+  await db.exec(fs.readFileSync(migrationPath(
+    '20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql'), 'utf8'));
+  await db.exec(fs.readFileSync(migrationPath(
+    '20260810000038_marketplace_phase9_metadata_retry_correction.sql'), 'utf8'));
   await db.exec(`INSERT INTO public.stores(id,display_name) VALUES('${STORE}','Structural Store');
     INSERT INTO public.store_administrators(store_id,user_id,role,status)
     VALUES('${STORE}','${OWNER}','owner','active');
@@ -829,53 +839,80 @@ test('physical finalization failure before commit durably records outcome_unknow
   ['outcome_unknown','finalized']);
 });
 
-test('finalized retryable physical result is reused after logical response loss',async()=>{
+test('later claim retries provider after finalized transient result and completes',async()=>{
   const candidate='ba000000-0000-4000-8000-000000000001';
   await seedStructuralCandidate({
     candidate,observation:'ba100000-0000-4000-8000-000000000001',index:10,
     title:'Retryable Replay Book',
   });
   await setActor(db,OWNER,'service_role');
-  let providerCalls=0; let loseDecisionResponse=true; const rpcErrors=[];
+  let fetchCalls=0; const claimAttempts=[]; const rpcErrors=[];
   const base=serviceClientFor(rpcErrors);
   const serviceClient={rpc:async(name,p)=>{
-    if(name==='phase9_fail_metadata_job' && p.p_candidate_id===candidate
-      && loseDecisionResponse){
-      loseDecisionResponse=false;
-      const committed=await base.rpc(name,p);
-      assert.equal(committed.error,null);
-      return {data:null,error:new Error('simulated retry-decision response loss')};
+    const result=await base.rpc(name,p);
+    if(name==='claim_phase9_metadata_jobs' && result.error===null
+      && Array.isArray(result.data) && result.data.length===1) {
+      claimAttempts.push(result.data[0].attempt_count);
     }
-    return base.rpc(name,p);
+    return result;
   }};
-  const primary={lookup:async()=>{
-    providerCalls+=1;
-    return {outcome:'timeout',candidates:[],selected:null,evidence:[],retryable:true,
-      secondaryEligible:true,providerRequestId:null};
-  }};
+  await resetActor(db);
+  await db.exec(`INSERT INTO public.phase9_provider_registry(adapter_key,provider_kind,
+    adapter_version,enabled,matching_allowed,storage_allowed,revalidation_seconds,policy_version)
+    VALUES('google_books','metadata','1.0.0',true,true,true,86400,1)
+    ON CONFLICT(adapter_key) DO UPDATE SET enabled=true,matching_allowed=true,
+      storage_allowed=true,revalidation_seconds=86400,policy_version=1`);
+  await setActor(db,OWNER,'service_role');
+  const primary=new GoogleBooksAdapter({mode:'real',apiKey:'test-only-key',
+    timeoutMs:1000,maxResponseBytes:64000,fetcher:async()=>{
+      fetchCalls+=1;
+      if(fetchCalls===1) return new Response('',{status:503,
+        headers:{'content-type':'application/json','x-request-id':'retry-503'}});
+      return new Response(JSON.stringify({totalItems:1,items:[{id:'retry-success-volume',
+        volumeInfo:{title:'Retryable Replay Book',authors:['Fixture Author'],language:'en'}}]}),
+      {status:200,headers:{'content-type':'application/json','x-request-id':'retry-200'}});
+    }});
   const first=await runMetadataWorkerBatch(1,{workerId:METADATA_WORKER,
-    workerAuthToken:'unused',serviceClient,primary,primaryCapability:capability});
-  assert.deepEqual(first,{claimed:1,results:[{outcome:'stale_claim'}]});
+    workerAuthToken:'unused',serviceClient,primary,primaryCapability:GOOGLE_BOOKS_CAPABILITY});
+  assert.deepEqual(first,{claimed:1,results:[{outcome:'manual_metadata_required'}]});
   await resetActor(db);
   assert.equal(await scalar(db,`SELECT status FROM public.phase9_metadata_provider_calls
     WHERE candidate_id='${candidate}'`),'finalized');
   assert.equal(await scalar(db,`SELECT normalized_outcome FROM public.phase9_metadata_provider_calls
-    WHERE candidate_id='${candidate}'`),'timeout');
+    WHERE candidate_id='${candidate}'`),'provider_unavailable');
   await db.exec(`UPDATE public.image_extraction_jobs SET next_attempt_at=transaction_timestamp()
     WHERE entity_id='${candidate}' AND job_kind='metadata_enrich'`);
   await setActor(db,OWNER,'service_role');
   const reclaimed=await runMetadataWorkerBatch(1,{workerId:METADATA_WORKER,
-    workerAuthToken:'unused',serviceClient,primary,primaryCapability:capability});
-  assert.deepEqual(reclaimed,{claimed:1,results:[{outcome:'manual_metadata_required'}]},
+    workerAuthToken:'unused',serviceClient,primary,primaryCapability:GOOGLE_BOOKS_CAPABILITY});
+  assert.deepEqual(reclaimed,{claimed:1,results:[{outcome:'accepted_metadata_match'}]},
     JSON.stringify(rpcErrors));
-  assert.equal(providerCalls,1);
+  assert.equal(fetchCalls,2);
+  assert.deepEqual(claimAttempts,[1,2]);
   await resetActor(db);
   assert.equal(await scalar(db,`SELECT count(*)::int FROM public.phase9_metadata_provider_calls
-    WHERE candidate_id='${candidate}'`),1);
+    WHERE candidate_id='${candidate}'`),2);
+  assert.deepEqual((await db.query(`SELECT claim_attempt_number,status
+    FROM public.phase9_metadata_provider_calls WHERE candidate_id='${candidate}'
+    ORDER BY claim_attempt_number,id`)).rows,[
+    {claim_attempt_number:1,status:'finalized'},
+    {claim_attempt_number:2,status:'finalized'},
+  ]);
   assert.equal(await scalar(db,`SELECT count(*)::int FROM public.metadata_enrichment_attempts
     WHERE candidate_id='${candidate}'`),1);
   assert.equal(await scalar(db,`SELECT status FROM public.image_extraction_jobs
-    WHERE entity_id='${candidate}' AND job_kind='metadata_enrich'`),'retry_scheduled');
+    WHERE entity_id='${candidate}' AND job_kind='metadata_enrich'`),'resolved');
+  assert.equal(await scalar(db,`SELECT attempt_count FROM public.image_extraction_jobs
+    WHERE entity_id='${candidate}' AND job_kind='metadata_enrich'`),2);
+  assert.equal(await scalar(db,`SELECT status<>'dead_letter'
+    AND attempt_count<max_attempts
+    AND last_safe_error_code IS DISTINCT FROM 'P9_METADATA_ATTEMPTS_EXHAUSTED'
+    FROM public.image_extraction_jobs
+    WHERE entity_id='${candidate}' AND job_kind='metadata_enrich'`),true);
+  assert.equal(await scalar(db,`SELECT state FROM public.image_extraction_candidates
+    WHERE id='${candidate}'`),'ready');
+  assert.equal(await scalar(db,`SELECT count(*)::int FROM public.phase9_selected_metadata_snapshots
+    WHERE candidate_id='${candidate}'`),1);
 });
 
 test('one failed sibling completion cannot abort another candidate durable success',async()=>{

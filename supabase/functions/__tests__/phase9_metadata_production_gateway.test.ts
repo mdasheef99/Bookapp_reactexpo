@@ -7,7 +7,7 @@ import {
 import { canonicalizeMetadataOutcome } from '../_shared/imageInventory/metadata/providerAdapter';
 
 const context = {
-  contractVersion: 'p9-metadata-job-context-v1',
+  contractVersion: 'p9-metadata-job-context-v2',
   jobId: 'job-1', attempt: 1, claimToken: 'a'.repeat(64),
   candidateId: 'candidate-1', candidateState: 'processing', candidateVersion: 1,
   storeId: 'store-1', sessionId: 'session-1', inputId: 'input-1',
@@ -19,6 +19,7 @@ const context = {
   currentAttemptId: null, currentAttemptOutcome: null,
   currentAttemptDisposition: null, currentAttemptCandidate: null,
   currentAttemptProviderRequestId: null,
+  currentPhysicalStatus: null,currentPhysicalClaimAttempt: null,
   providerPolicies: [{
     adapterKey: 'google_books', adapterVersion: '1.0.0', enabled: true,
     matchingAllowed: true, storageAllowed: true, reuseAllowed: true, policyVersion: 1,
@@ -83,6 +84,7 @@ describe('Phase 9 production metadata gateway boundary', () => {
       ...context,currentLookupId: 'lookup-1',currentAttemptId: 'attempt-1',
       queryIdentity: '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "isbn", "9780306406157", "fixture book", ["fixture author"], "en", []]',
       currentAttemptDisposition: 'unresolved',currentPhysicalStatus: 'finalized',
+      currentPhysicalClaimAttempt: 1,
       currentPhysicalOutcome: 'coherent_match',currentPhysicalProviderRequestId: 'request-1',
       currentPhysicalRetryable: false,currentPhysicalCandidate: selected,
       currentPhysicalEvidence: ['exact_validated_isbn'],
@@ -114,6 +116,7 @@ describe('Phase 9 production metadata gateway boundary', () => {
       ...context,currentLookupId: 'lookup-1',currentAttemptId: 'attempt-1',
       queryIdentity: '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "isbn", "9780306406157", "fixture book", ["fixture author"], "en", []]',
       currentAttemptDisposition: 'unresolved',currentPhysicalStatus: 'finalized',
+      currentPhysicalClaimAttempt: 1,
       currentPhysicalOutcome: 'timeout',currentPhysicalLogicalOutcome: 'timeout',
       currentPhysicalProviderRequestId: null,currentPhysicalRetryable: true,
       currentPhysicalCandidate: null,currentPhysicalEvidence: [],
@@ -134,6 +137,35 @@ describe('Phase 9 production metadata gateway boundary', () => {
       lookupId: 'lookup-1',attemptId: 'attempt-1',
     })).resolves.toEqual({ outcome: 'manual_metadata_required' });
     expect(primary.lookup).not.toHaveBeenCalled();
+  });
+
+  it('does not replay older-claim finalized transients on second or third claims', async () => {
+    for (const [attempt, physicalAttempt] of [[2, 1], [3, 2]] as const) {
+      const recovered = decodeMetadataJobContext({
+        ...context,attempt,currentLookupId: 'lookup-1',currentAttemptId: 'attempt-1',
+        queryIdentity: '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "isbn", "9780306406157", "fixture book", ["fixture author"], "en", []]',
+        currentAttemptDisposition: 'unresolved',currentPhysicalStatus: 'finalized',
+        currentPhysicalClaimAttempt: physicalAttempt,currentPhysicalOutcome: 'provider_unavailable',
+        currentPhysicalLogicalOutcome: 'provider_unavailable',currentPhysicalProviderRequestId: null,
+        currentPhysicalRetryable: true,currentPhysicalCandidate: null,currentPhysicalEvidence: [],
+      });
+      const rpc = jest.fn(async () => ({ data: {}, error: null }));
+      const primary = { lookup: jest.fn() } as any;
+      const gateway = new SupabaseMetadataProductionGateway({ rpc }, {
+        worker: 'metadata-worker-0001',context: recovered,primary,
+        adapterKey: 'google_books',adapterVersion: '1.0.0',capabilityVersion: 'cap-v1',
+        schemaVersion: 'p9-metadata-foundation-v1',lookupContractVersion: 'p9-metadata-lookup-v1',
+        normalizerVersion: 'p9-bibliographic-normalizer-v1',routingPolicyVersion: 'p9-metadata-routing-v1',
+        selectionPolicyVersion: 'p9-metadata-selection-v1',snapshotVersion: 'p9-selected-metadata-v1',
+        cachePolicyVersion: 'p9-metadata-cache-v1',cacheNamespace: 'metadata-v1',
+        pricingPolicyVersion: 'metadata-zero-cost-v1',revalidationSeconds: 1,
+      });
+      await expect(gateway.resumeFinalizedAttempt({
+        ...requestFromMetadataContext(recovered),claimWorker: 'metadata-worker-0001',
+        lookupId: 'lookup-1',attemptId: 'attempt-1',
+      })).resolves.toBeNull();
+      expect(rpc).not.toHaveBeenCalled();
+    }
   });
 
   it('rejects malformed or failed context responses without leaking provider details', async () => {

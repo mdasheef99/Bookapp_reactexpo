@@ -7,6 +7,8 @@ import {
 
 const M35 = '20260810000035_marketplace_phase9_single_image_removal.sql';
 const M36 = '20260810000036_marketplace_phase9_worker_wake_dispatcher.sql';
+const M37 = '20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql';
+const M38 = '20260810000038_marketplace_phase9_metadata_retry_correction.sql';
 const STORE = 'ad000000-0000-0000-0000-000000000001';
 const ENTITY = 'ad000000-0000-0000-0000-000000000002';
 const WORKER = 'phase9-parity-worker-0001';
@@ -103,6 +105,8 @@ before(async () => {
   await db.exec(`INSERT INTO public.stores(id,display_name) VALUES('${STORE}','Wake Store')`);
   await installExternalStubs();
   await db.exec(fs.readFileSync(migrationPath(M36), 'utf8'));
+  await db.exec(fs.readFileSync(migrationPath(M37), 'utf8'));
+  await db.exec(fs.readFileSync(migrationPath(M38), 'utf8'));
 });
 
 beforeEach(async () => {
@@ -118,6 +122,17 @@ after(async () => db?.close());
 test('M36 creates exactly one inactive 60-second cron job', async () => {
   assert.deepEqual((await db.query(`SELECT jobname,schedule,active FROM cron.job`)).rows,
     [{ jobname: 'phase9-worker-wake-dispatcher', schedule: '* * * * *', active: false }]);
+});
+
+test('full M35 through M38 tail preserves dispatcher and installs metadata context v2', async () => {
+  assert.equal(await scalar(db, `SELECT to_regprocedure(
+    'marketplace_sec.phase9_metadata_job_context_v2(uuid,text,text,integer)') IS NOT NULL`), true);
+  assert.equal(await scalar(db, `SELECT has_function_privilege(
+    'authenticated','marketplace_sec.phase9_metadata_job_context_v2(uuid,text,text,integer)','EXECUTE')`), false);
+  assert.equal(await scalar(db, `SELECT has_function_privilege(
+    'service_role','marketplace_sec.phase9_metadata_job_context_v2(uuid,text,text,integer)','EXECUTE')`), true);
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM cron.job
+    WHERE jobname='phase9-worker-wake-dispatcher' AND active=false`), 1);
 });
 
 for (const kind of kinds) {

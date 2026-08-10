@@ -163,6 +163,8 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
       if (current.currentPhysicalStatus !== 'finalized'
         || current.currentPhysicalOutcome === null
         || current.currentPhysicalRetryable === null) return null;
+      if (current.currentPhysicalRetryable
+        && current.currentPhysicalClaimAttempt !== current.attempt) return null;
       const normalizedOutcome = current.currentPhysicalOutcome as MetadataNormalizedOutcome;
       const logicalOutcome = current.currentPhysicalLogicalOutcome as MetadataNormalizedOutcome | null;
       const accepted = normalizedOutcome === 'coherent_match'

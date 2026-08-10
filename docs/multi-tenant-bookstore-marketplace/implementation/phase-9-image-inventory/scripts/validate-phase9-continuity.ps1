@@ -147,8 +147,14 @@ $integrationHandoff = $active.Contains('Phase 9 Unit 6 pre-main integration reco
     $active.Contains('Supabase, Vault, Cron, Render') -and
     $active.Contains('Unit 7') -and
     $active.Contains('publication mutations remain prohibited')
-if (-not ($legacyM32Handoff -or $liveM32Handoff -or $metadataSafetyHandoff -or $dispatcherHandoff -or $integrationHandoff)) {
-    Write-Error 'ACTIVE.md does not preserve the local M32 handoff and external-mutation gates.'
+$metadataRetryHandoff = $active.Contains('phase9_metadata_retry_provider_attempt_correction') -and
+    $active.Contains('M32-M37 are live exactly once') -and
+    $active.Contains('Local forward M38') -and
+    $active.Contains('independently `APPROVED`') -and
+    $active.Contains('M38 application, deployment, live-job mutation') -and
+    $active.Contains('media, vision, query-policy, Unit 7')
+if (-not ($legacyM32Handoff -or $liveM32Handoff -or $metadataSafetyHandoff -or $dispatcherHandoff -or $integrationHandoff -or $metadataRetryHandoff)) {
+    Write-Error 'ACTIVE.md does not preserve the current Phase 9 handoff and external-mutation gates.'
 }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
@@ -199,7 +205,8 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
     $implementationTracker.Contains('**Status:** `single_image_safe_remove_m35_live_edge_v3_verified`') -or
     $implementationTracker.Contains('**Status:** `automatic_worker_wake_dispatcher_local_review_corrections_applied`') -or
     $implementationTracker.Contains('**Status:** `unit6_pre_main_integration_reconciliation_in_progress`') -or
-    $implementationTracker.Contains('**Status:** `unit6_pre_main_candidate_corrections_verified_rereview_pending`')) -or
+    $implementationTracker.Contains('**Status:** `unit6_pre_main_candidate_corrections_verified_rereview_pending`') -or
+    $implementationTracker.Contains('**Status:** `metadata_retry_correction_locally_complete_approved`')) -or
     -not ($implementationTracker.Contains('**Active work unit:** `unit6f_awaiting_separate_authorization`') -or
     $implementationTracker.Contains('**Active work unit:** `unit6f_browser_verified_native_gate_pending`') -or
     $implementationTracker.Contains('**Active work unit:** `owner_inventory_read_boundary_wu1`') -or
@@ -214,6 +221,7 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
     $implementationTracker.Contains('**Active work unit:** `phase9_m33_vision_reservation_correction`') -or
     $implementationTracker.Contains('**Active work unit:** `phase9_compact_gemini_multilingual_language_hint_correction`') -or
     $implementationTracker.Contains('**Active work unit:** `unit6c_single_image_safe_remove`') -or
+    $implementationTracker.Contains('**Active work unit:** `phase9_metadata_retry_provider_attempt_correction`') -or
     $implementationTracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -or
     $implementationTracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
     -not $implementationTracker.Contains('20-unit6b-route-query-cache-evidence.md') -or
@@ -426,9 +434,10 @@ if (
         $tracker.Contains('**Implementation status:** `single_image_safe_remove_m35_live_edge_v3_verified`') -or
         $tracker.Contains('**Implementation status:** `automatic_worker_wake_dispatcher_local_review_corrections_applied`') -or
         $tracker.Contains('**Implementation status:** `unit6_pre_main_integration_reconciliation_in_progress`') -or
-        $tracker.Contains('**Implementation status:** `unit6_pre_main_candidate_corrections_verified_rereview_pending`')
+        $tracker.Contains('**Implementation status:** `unit6_pre_main_candidate_corrections_verified_rereview_pending`') -or
+        $tracker.Contains('**Implementation status:** `metadata_retry_correction_locally_complete_approved`')
     ) -or
-    ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|unit6c_single_image_safe_remove)`\r?$' -and
+    ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|unit6c_single_image_safe_remove|phase9_metadata_retry_provider_attempt_correction)`\r?$' -and
         -not $tracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -and
         -not $tracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
     -not (
@@ -461,7 +470,8 @@ if (
         $tracker.Contains('**Next authorized action:** complete local verification and independent review, assemble a clean candidate from fresh `origin/main`, then push that exact verified candidate normally to `origin/main`') -or
         $tracker.Contains('**Next authorized action:** rerun the required gates on the isolated candidate, obtain independent final approval, verify fresh-main ancestry/content, then push that exact candidate normally to `origin/main`') -or
         $tracker.Contains('**Next authorized action:** obtain independent final approval of the corrected isolated candidate, verify fresh-main ancestry/content, then push that exact candidate normally to `origin/main`') -or
-        $tracker.Contains('**Next authorized action:** obtain independent final approval of the corrected isolated candidate, verify fresh-main ancestry/content, report publish readiness, and wait for a new explicit user instruction before any push')
+        $tracker.Contains('**Next authorized action:** obtain independent final approval of the corrected isolated candidate, verify fresh-main ancestry/content, report publish readiness, and wait for a new explicit user instruction before any push') -or
+        $tracker.Contains('**Next authorized action:** publish the approved bounded correction branch; operational M38 application and metadata-only redeployment require a separate explicit session')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
@@ -528,7 +538,8 @@ $draftMigrationNames = @(
     '20260809000034_marketplace_phase9_vision_language_hint_correction.sql',
     '20260810000035_marketplace_phase9_single_image_removal.sql',
     '20260810000036_marketplace_phase9_worker_wake_dispatcher.sql',
-    '20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql'
+    '20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql',
+    '20260810000038_marketplace_phase9_metadata_retry_correction.sql'
 )
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
@@ -540,7 +551,8 @@ $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_in
     $tracker.Contains('**Implementation status:** `compact_gemini_required_diagnostics_correction_complete_awaiting_rereview`') -or
     $tracker.Contains('**Implementation status:** `single_image_safe_remove_local_complete_m35_application_and_edge_rollout_gated`') -or
     $tracker.Contains('**Implementation status:** `single_image_safe_remove_m35_live_edge_v3_verified`') -or
-    $tracker.Contains('**Implementation status:** `automatic_worker_wake_dispatcher_local_review_corrections_applied`'))
+    $tracker.Contains('**Implementation status:** `automatic_worker_wake_dispatcher_local_review_corrections_applied`') -or
+    $tracker.Contains('**Implementation status:** `metadata_retry_correction_locally_complete_approved`'))
 $expectedMigrationNames = @($migrationNames)
 if ($wu1AppliedStatus) { $expectedMigrationNames += $draftMigrationNames }
 $appliedPhase9Migrations = if ($wu1AppliedStatus) {
@@ -581,13 +593,13 @@ if (-not $wu2Addendum.Contains('phase9_owner_inventory_page_v1') -or
     -not $wu2Evidence.Contains('migration, database/storage mutation')) {
     Write-Error 'WU2 artifact or read-only boundary evidence is incomplete.'
 }
-$expectedMigrationCount = if ($wu1AppliedStatus) { 35 } else { 29 }
+$expectedMigrationCount = $expectedMigrationNames.Count
 if ($actualMigrationNames.Count -ne $expectedMigrationCount -or
     (Compare-Object $expectedMigrationNames $actualMigrationNames) -or
     $duplicateMigrationVersions.Count -ne 0 -or
     $unexpectedCorrectionMigrations.Count -ne 0 -or
     $phase9Migrations.Name -match '000009|quantity.*validat') {
-    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M36 exactly once; WU1/M32/M33/M34/M35/M36 are included only when the tracker records the current structural handoff.'
+    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M38 exactly once; WU1/M32-M38 are included only when the tracker records the current structural handoff.'
 }
 $m24 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000024_marketplace_phase9_owner_variant_decisions.sql'))
 $m25 = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260729000025_marketplace_phase9_owner_variant_corrections.sql'))

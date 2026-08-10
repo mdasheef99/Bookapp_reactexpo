@@ -12,6 +12,13 @@ duplicate-spend linkage, bounded usage/injected pricing evidence, and explicit
 accepted/stale/failed/unknown dispositions. Register/finalize/associate/mark RPCs
 do not alter `p9-vision-v2` or permit metadata/inventory/publication writes.
 
+**Metadata retry correction (local, unapplied 2026-08-10):** forward-only M38
+adds metadata job context v2 with the latest physical provider call's originating
+claim attempt. A finalized retryable result is reconciled without new egress only
+inside that same claim attempt; a later job claim registers a fresh physical call
+and retries the provider. Finalized terminal/non-retryable evidence remains
+replay-safe, preserving accepted-state and cost/idempotency recovery.
+
 ## 1. Decision
 
 Use a persistent, asynchronous, provider-agnostic pipeline for spine images.

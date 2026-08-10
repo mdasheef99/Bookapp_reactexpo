@@ -69,6 +69,7 @@ test('clean Phase 6 migration creates all relations and deferred foreign keys', 
     '20260810000035_marketplace_phase9_single_image_removal.sql',
     '20260810000036_marketplace_phase9_worker_wake_dispatcher.sql',
     '20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql',
+    '20260810000038_marketplace_phase9_metadata_retry_correction.sql',
   ]);
   const count = await scalar(db, `SELECT count(*)::int FROM information_schema.tables
     WHERE table_schema='public' AND table_name IN ('phase9_provider_registry','book_search_aliases',

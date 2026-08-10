@@ -5,9 +5,11 @@
 **Date:** 2026-07-19
 **Phase:** 9
 **Implementation checkpoint (2026-08-10):** the current Unit 6 ingestion path is
-implemented through Owner review. M32-M35 are live; M36 is reviewed local code
-and remains unapplied. Gemini uses a compact flat JSON contract, session language
-is a hint, and Google Books requests `projection=full`.
+implemented through Owner review. M32-M37 are live. Local forward M38 corrects
+metadata provider retry so a later claim performs fresh egress after a retryable
+physical result, while same-claim and terminal reconciliation remain replay-safe.
+Gemini uses a compact flat JSON contract, session language is a hint, and Google
+Books requests `projection=full`.
 
 **Unit 4B local checkpoint (2026-07-27):** the configuration-driven
 `gemini-3.5-flash-lite` adapter is locally implemented behind the same

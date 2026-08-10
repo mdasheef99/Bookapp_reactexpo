@@ -14,7 +14,7 @@ type ProviderPolicy = Readonly<{
 }>;
 
 export type MetadataJobContext = Readonly<{
-  contractVersion: 'p9-metadata-job-context-v1';
+  contractVersion: 'p9-metadata-job-context-v2';
   jobId: string;
   attempt: number;
   claimToken: string;
@@ -43,6 +43,7 @@ export type MetadataJobContext = Readonly<{
   currentAttemptCandidate: Record<string, unknown> | null;
   currentAttemptProviderRequestId: string | null;
   currentPhysicalStatus: 'registered' | 'finalized' | 'outcome_unknown' | 'stale_rejected' | null;
+  currentPhysicalClaimAttempt: number | null;
   currentPhysicalOutcome: string | null;
   currentPhysicalLogicalOutcome: string | null;
   currentPhysicalProviderRequestId: string | null;
@@ -61,7 +62,7 @@ const contextKeys = new Set([
   'reusableLookupId','reusableOutcome','currentLookupId','currentOutcome',
   'currentAttemptId','currentAttemptOutcome','providerPolicies',
   'currentAttemptDisposition','currentAttemptCandidate','currentAttemptProviderRequestId',
-  'currentPhysicalStatus','currentPhysicalOutcome','currentPhysicalProviderRequestId',
+  'currentPhysicalStatus','currentPhysicalClaimAttempt','currentPhysicalOutcome','currentPhysicalProviderRequestId',
   'currentPhysicalLogicalOutcome',
   'currentPhysicalRetryable','currentPhysicalCandidate','currentPhysicalEvidence',
 ]);
@@ -101,7 +102,7 @@ export function decodeMetadataJobContext(value: unknown): MetadataJobContext {
       policyVersion: policy.policyVersion as number,
     });
   }) : [];
-  if (row.contractVersion !== 'p9-metadata-job-context-v1'
+  if (row.contractVersion !== 'p9-metadata-job-context-v2'
     || row.candidateState !== 'processing' || !Number.isInteger(row.attempt)
     || !Number.isInteger(row.candidateVersion) || !Array.isArray(row.authors)
     || row.authors.some((author) => typeof author !== 'string')
@@ -109,6 +110,11 @@ export function decodeMetadataJobContext(value: unknown): MetadataJobContext {
       .includes(row.currentAttemptDisposition as string | null)
     || ![undefined, null, 'registered', 'finalized', 'outcome_unknown', 'stale_rejected']
       .includes(row.currentPhysicalStatus as string | null | undefined)
+    || (row.currentPhysicalClaimAttempt !== null
+      && (!Number.isInteger(row.currentPhysicalClaimAttempt)
+        || Number(row.currentPhysicalClaimAttempt) < 1
+        || Number(row.currentPhysicalClaimAttempt) > 5))
+    || (row.currentPhysicalStatus !== null && row.currentPhysicalClaimAttempt === null)
     || ![undefined, null, true, false].includes(row.currentPhysicalRetryable as boolean | null | undefined)
     || (row.currentPhysicalEvidence != null && (!Array.isArray(row.currentPhysicalEvidence)
       || row.currentPhysicalEvidence.some((item) => typeof item !== 'string')))) {
@@ -135,6 +141,7 @@ export function decodeMetadataJobContext(value: unknown): MetadataJobContext {
       : metadataObject(row.currentAttemptCandidate),
     currentAttemptProviderRequestId: nullableText(row.currentAttemptProviderRequestId),
     currentPhysicalStatus: (row.currentPhysicalStatus ?? null) as MetadataJobContext['currentPhysicalStatus'],
+    currentPhysicalClaimAttempt: row.currentPhysicalClaimAttempt as number | null,
     currentPhysicalOutcome: nullableText(row.currentPhysicalOutcome ?? null),
     currentPhysicalLogicalOutcome: nullableText(row.currentPhysicalLogicalOutcome ?? null),
     currentPhysicalProviderRequestId: nullableText(row.currentPhysicalProviderRequestId ?? null),

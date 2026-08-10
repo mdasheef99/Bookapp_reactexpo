@@ -1,19 +1,19 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit6_owner_ux_approved_design_authority`
-**Implementation status:** `unit6_pre_main_candidate_corrections_verified_rereview_pending`
+**Implementation status:** `metadata_retry_correction_locally_complete_approved`
 **Last updated:** 2026-08-10
-**Current milestone:** M35 and Owner Edge v3 remain live-verified; immutable-M35/local-M37 corrections pass focused Unit 6 and full Phase 9 database continuity gates and await independent correction-only re-review
-**Active work unit:** [`unit6_pre_main_integration_reconciliation`](./trackers/28-pre-main-integration-reconciliation.md)
+**Current milestone:** M32-M37 are live exactly once; local forward M38 corrects later-claim metadata provider retry while preserving same-claim and terminal reconciliation
+**Active work unit:** `phase9_metadata_retry_provider_attempt_correction`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** H1 is resolved by proof: authorized Owner review rejects a `processing` candidate without changing its version, while claim attempt/worker/token/lease, candidate state, and authoritative vision lineage fence physical finalization. H2 uses one shared offset-aware ISO-8601 timestamp helper across vision, metadata edition/result, and automated-alias boundaries. H3 directly proves repeated reconciliation, registered-call reclaim survival, known-completion reuse, and stale-worker non-overwrite. SQL-backed worker evidence remains green for finalized-retryable replay, sibling isolation, invalid-ISBN fallback, and storage-denied positive-retention gaps. All 14 M32 public worker wrappers remain covered by exhaustive ACL proof. M32 was then verified live exactly once, and the minimum Google Books registry row was configured.
-**Next authorized action:** obtain independent final approval of the corrected isolated candidate, verify fresh-main ancestry/content, report publish readiness, and wait for a new explicit user instruction before any push
+**Next authorized action:** publish the approved bounded correction branch; operational M38 application and metadata-only redeployment require a separate explicit session
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M33 are live at their recorded versions; M34 is live once as `20260809182407 marketplace_phase9_vision_language_hint_correction`; M35 is live once as `20260809223135 marketplace_phase9_single_image_removal`.
-**Scope boundary:** this unit authorizes classification, bounded commits, local tests/review, and a clean publish-ready candidate. Git publication now requires a new explicit user instruction. Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and publication actions are excluded.
-**Implementation authority:** the user's latest 2026-08-10 instruction authorizes exact current-required packaging and readiness reporting, then requires a stop before any `main` push; it does not expand any external mutation authority.
-**Migration creation/application authority:** M36 and the review-required M37 forward correction remain local and unapplied. No migration application, Vault mutation, Cron activation, Render deployment/redeployment, live image removal, worker invocation, or final live proof is authorized.
-**Current gate:** `M37_VERIFIED_INDEPENDENT_CORRECTION_ONLY_REREVIEW_PENDING`; merge checkpoint `8e327d7` is based on fresh `origin/main` `388d8bf`, preserves exact dispatcher commit `51c51f4` ancestry, and neutralizes unrelated/superseded tree content. M35 matches the assembled live source; local M37 alone carries the Owner discovery scope correction. Focused Jest passes 5 suites/189 tests and Phase 9 DB replay passes 241/241. Final independent correction-only review remains required; push requires a new explicit user instruction. Docker is unavailable, so container smoke is not claimed.
+**Scope boundary:** this unit authorizes classification, bounded commits, local tests/review, and publication of the correction branch. Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and product-publication actions are excluded.
+**Implementation authority:** the user's latest 2026-08-10 instruction authorizes the bounded correction and permits its commit/push after independent approval; it does not expand external mutation authority or authorize a `main` push.
+**Migration creation/application authority:** local M38 creation is authorized; application is prohibited. M32-M37 are immutable and live exactly once. No deployment, provider/job invocation, live-job retry/requeue, Storage, media, vision, query-policy, Unit 7, inventory, listing, or publication mutation is authorized.
+**Current gate:** `M38_LOCALLY_COMPLETE_INDEPENDENTLY_APPROVED`; focused metadata Jest passes 148/148, exact Google Books HTTP 503-to-200 structural PGlite passes, full Phase 9 PGlite passes 242/242 through M38, metadata build/entrypoint/deployment validation pass, independent correction-only review is `APPROVED`, and no live state changed.
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -1000,3 +1000,29 @@ provider fallback, or create global alias authority.
   deployment/redeployment, cron activation, live worker proof, live image
   removal, duplicate replay, Unit 7, inventory/publication, stage, commit, and
   push remain prohibited.
+
+### 2026-08-10 — metadata retry/provider-attempt correction
+
+- Exact-project read-only verification confirmed M32-M37 live exactly once,
+  with M37 as the migration tail. Applied migrations remain immutable.
+- Red-first SQL-backed evidence reproduced the defect: after Google Books
+  returned a retryable result, the next job claim replayed that finalized
+  physical call and advanced toward dead-letter without fresh provider egress.
+- Local forward M38 exposes the selected physical call's originating claim
+  attempt through service-only metadata context v2. Retryable finalized evidence
+  is reused only within the same claim; a later claim registers a fresh physical
+  call. Terminal and non-retryable reconciliation remains replay-safe.
+- Exact Google Books HTTP 503-to-200 evidence proves two fetches, physical-call
+  claim attempts `[1, 2]`, `attempt_count=2`, one resolved ready snapshot, and no
+  dead-letter or attempts-exhausted event. Same-claim and later second/third
+  claim guards are covered separately.
+- Verification: focused metadata Jest 148/148; structural metadata PGlite 14/14;
+  full Phase 9 PGlite 242/242; metadata build, entrypoint smoke, deployment
+  runtime validation, continuity, diff hygiene, secret/artifact hygiene, and
+  generated `.pyc` checks pass. Independent correction-only verdict: `APPROVED`.
+- External effects: none. M38 was not applied; no deployment, provider/job
+  invocation, retry/requeue, Vault/Cron, Storage, media, vision, query-policy,
+  duplicate-replay, Unit 7, inventory, listing, or product-publication state
+  changed.
+- Exact next authorized action: publish the bounded correction branch only.
+  M38 application and metadata-only redeployment require a new explicit session.

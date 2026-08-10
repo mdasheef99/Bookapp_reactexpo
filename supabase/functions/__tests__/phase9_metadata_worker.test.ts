@@ -4,7 +4,7 @@ import { handlePhase9MetadataWorker }
 const workerId = 'metadata-worker-000001';
 const workerAuthToken = 'metadata-worker-ingress-A7z.49_xYp-001';
 const context = {
-  contractVersion: 'p9-metadata-job-context-v1',jobId: 'job-1',attempt: 1,
+  contractVersion: 'p9-metadata-job-context-v2',jobId: 'job-1',attempt: 1,
   claimToken: 'a'.repeat(64),claimExpiresAt: '2026-08-07T00:05:00Z',
   candidateId: 'candidate-1',candidateState: 'processing',candidateVersion: 1,
   storeId: 'store-1',sessionId: 'session-1',inputId: 'input-1',
@@ -16,6 +16,7 @@ const context = {
   localCanonicalEditionId: null,reusableLookupId: null,reusableOutcome: null,
   currentLookupId: null,currentOutcome: null,currentAttemptId: null,currentAttemptOutcome: null,
   currentAttemptDisposition: null,currentAttemptCandidate: null,currentAttemptProviderRequestId: null,
+  currentPhysicalStatus: null,currentPhysicalClaimAttempt: null,
   providerPolicies: [],
 };
 
