@@ -150,7 +150,8 @@ BEGIN
     'activeSession',v_active,
     'needsReviewCount',(SELECT count(*) FROM public.image_extraction_candidates c
       JOIN public.image_extraction_sessions s ON s.id=c.session_id
-      WHERE marketplace_sec.phase9_owner_ux_needs_review(c,s,transaction_timestamp())),
+      WHERE s.store_id=v_store AND s.created_by=auth.uid()
+        AND marketplace_sec.phase9_owner_ux_needs_review(c,s,transaction_timestamp())),
     'reviewScopeVersion',v_scope);
 END;
 $$;

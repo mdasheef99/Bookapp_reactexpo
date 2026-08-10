@@ -1,6 +1,6 @@
 # Phase 9 Unit 6 Pre-Main Integration Reconciliation
 
-**Status:** `isolated_candidate_assembled_final_verification_review_pending`
+**Status:** `candidate_corrections_verified_independent_rereview_pending`
 **Date:** 2026-08-10
 **Target:** one reviewed `main` SHA containing the current Phase 9 ingestion path
 
@@ -134,14 +134,14 @@ recorded command with that option passed. Two timed-out bundled Jest commands
 were not counted as evidence; their exact orphaned Node processes were stopped,
 and the changed suites passed in the bounded diagnostic run above.
 
-## 6. Remaining candidate gate
+## 6. Candidate verification gate
 
 The complete local gate is green:
 
-- Phase 9 function/runtime plus migration-structure Jest: 54 suites, 694/694;
-- complete image-inventory client Jest: 39 suites, 287/287; the run retained
+- Phase 9 function/runtime plus migration-structure Jest: 55 suites, 701/701;
+- complete image-inventory client Jest: 39 suites, 289/289; the run retained
   known candidate-review `act(...)` warnings but had no test failure;
-- full Phase 9 PGlite migration/runtime replay: 240/240 through local M36;
+- full Phase 9 PGlite migration/runtime replay: 241/241 through local M36;
 - media, vision, and metadata worker builds plus authenticated entrypoint smoke:
   PASS;
 - deployment-runtime validator and canonical repository TypeScript: PASS;
@@ -172,6 +172,25 @@ The complete local gate is green:
   excluding those ancestors are mutually impossible in Git.
 - Generated `.wt/` and `docs/codemap/` content is absent from the candidate.
 
-Rerun the required gates on this isolated tree, obtain an independent
-`APPROVED` verdict on the complete candidate, freshly recheck `origin/main`,
-then push only the exact verified candidate normally to `origin/main`.
+## 8. Initial independent review and correction receipt
+
+The context-isolated reviewer returned `CHANGES_REQUIRED` on four current-tree
+issues: stale normative Gemini normalization wording; an unscoped M35
+`needsReviewCount`; missing Edge preservation of `P9_INPUT_HAS_CANDIDATES` and
+`P9_SINGLE_IMAGE_LIMIT`; and missing bounded mobile handling for those two
+errors. The candidate corrected each finding red-first:
+
+- normative documents now describe the complete current main-line Gemini
+  compatibility boundary without changing provider behavior;
+- M35 derives `needsReviewCount` only for the authenticated actor and active
+  server-derived store, with a second-store PGlite regression;
+- Owner Edge unwraps both M35 errors into safe nonretryable 409 envelopes; and
+- capture/review clients preserve the bounded replacement/removal guidance.
+
+Corrected focused Jest passes 4 suites/187 tests. The complete corrected
+candidate passes 55 Phase 9 function/migration suites with 701 tests, 39 client
+suites with 289 tests, and 241/241 Phase 9 PGlite tests. All three worker
+builds/entrypoints, deployment validation, canonical TypeScript, and the
+previous hygiene gates pass. Independent correction-only re-review is the sole
+remaining review gate before a fresh `origin/main` check and normal push of the
+exact approved candidate.

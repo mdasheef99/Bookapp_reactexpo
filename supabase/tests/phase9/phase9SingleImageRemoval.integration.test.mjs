@@ -11,6 +11,8 @@ const STORE = '9a000000-0000-0000-0000-000000000001';
 const OWNER = '9b000000-0000-0000-0000-000000000001';
 const COMMAND_A = '9c000000-0000-4000-8000-000000000001';
 const COMMAND_B = '9c000000-0000-4000-8000-000000000002';
+const SECOND_STORE = '8a000000-0000-0000-0000-000000000001';
+const COMMAND_C = '9c000000-0000-4000-8000-000000000003';
 let db;
 let sessionId;
 let firstCapability;
@@ -106,4 +108,26 @@ test('candidate lineage rejects removal atomically without changing job or book 
   assert.equal(await scalar(db, `SELECT observed_title FROM public.image_extraction_candidates WHERE id='${candidate}'`), 'Preserved book');
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.store_inventory'), 0);
   assert.equal(await scalar(db, 'SELECT count(*)::int FROM public.marketplace_book_listings'), 0);
+});
+
+test('discovery review count is isolated to the server-resolved active store', async () => {
+  await resetActor(db);
+  await db.exec(`
+    INSERT INTO public.stores(id,display_name) VALUES('${SECOND_STORE}','Resolved Store');
+    INSERT INTO public.store_administrators(store_id,user_id,role,status)
+      VALUES('${SECOND_STORE}','${OWNER}','owner','active');
+  `);
+  await setActor(db, OWNER);
+  const secondSession = await scalar(db, `SELECT public.phase9_start_session(
+    NULL,'en',NULL,'good','B1',1,'private','second-store-session-0001','${COMMAND_C}')`);
+  await resetActor(db);
+  await db.exec(`INSERT INTO public.image_extraction_candidates(
+    session_id,input_id,store_id,candidate_index,observed_title,observed_authors,
+    observed_language,state
+  ) VALUES('${secondSession}',NULL,'${SECOND_STORE}',1,'Resolved store book',
+    ARRAY['Author'],'en','needs_review')`);
+  await setActor(db, OWNER);
+  const discovery = await scalar(db, 'SELECT public.phase9_owner_discover_session_v1()');
+  assert.equal(discovery.activeSession.sessionId, secondSession);
+  assert.equal(discovery.needsReviewCount, 1);
 });

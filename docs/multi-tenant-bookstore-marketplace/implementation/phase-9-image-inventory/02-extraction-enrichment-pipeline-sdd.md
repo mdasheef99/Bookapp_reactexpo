@@ -196,9 +196,13 @@ response schema. The prompt defines the single flat `vision` shape, while the
 BookConnect decoder remains the authoritative strict contract boundary. This
 avoids provider-specific structured-schema rejection without weakening local
 validation, provenance construction, or raw-response retention policy.
-The decoder normalizes only two evidenced Gemini JSON-mode aliases before strict
-validation: provider `image_outcome: "success"` becomes canonical `analyzed`, and
-a null `detected_language` becomes canonical `und`.
+Before strict validation, the decoder applies only the evidenced Gemini
+JSON-mode compatibility mappings: provider `image_outcome: "success"` becomes
+canonical `analyzed`; null language becomes `und`; known language names become
+BCP 47 tags; safe `ISBN`/`ISBN-10`/`ISBN-13` labels are stripped from otherwise
+valid identifier clues; and an analyzed visible-book count is reconciled to the
+accepted observation count. Unknown languages, malformed ISBN clues, and every
+other provider value remain subject to the strict canonical decoder.
 
 Use positive and negative caches keyed by normalized provider-independent query plus adapter/schema version. Cache expiry is policy-configured. A circuit breaker suppresses repeated calls to a failing provider while leaving manual/local paths available.
 

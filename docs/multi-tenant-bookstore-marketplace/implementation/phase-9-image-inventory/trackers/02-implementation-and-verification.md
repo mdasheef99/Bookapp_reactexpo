@@ -1,5 +1,5 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit6_pre_main_integration_reconciliation_in_progress`; **last updated:** 2026-08-10
+**Status:** `unit6_pre_main_candidate_corrections_verified_rereview_pending`; **last updated:** 2026-08-10
 **Active work unit:** [`unit6_pre_main_integration_reconciliation`](./28-pre-main-integration-reconciliation.md). Current-required source may be classified, packaged, verified, independently reviewed, cleanly integrated, and normally published to `main`. M36 application and all Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and publication mutations remain prohibited.
 **Preserved authorization sequence:** `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`; neither status by itself authorizes migration application or external mutation.
 ## Work units
@@ -1451,3 +1451,24 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
   are explicitly neutralized and the ancestry is disclosed in tracker 28.
 - Next gate: complete candidate rerun and independent final approval, followed
   by a fresh `origin/main` comparison and normal push of the exact candidate.
+
+### 2026-08-10 — isolated candidate review corrections
+
+- Initial independent verdict: `CHANGES_REQUIRED` for normative Gemini wording,
+  M35 active-store/actor count scope, Edge transport of the two new M35 errors,
+  and bounded mobile handling of those errors.
+- Red-first corrections now scope `needsReviewCount` to the authenticated actor
+  and active server-derived store; preserve both errors as safe nonretryable 409
+  envelopes; expose bounded replacement/removal guidance; and align normative
+  documentation with the existing current main-line Gemini normalization.
+- Corrected focused Jest passes 4 suites/187 tests. The complete corrected gate
+  passes Phase 9 function/runtime and migration Jest 55 suites/701 tests,
+  image-inventory client Jest 39 suites/289 tests, and Phase 9 PGlite 241/241.
+  All worker builds/entrypoints, deployment validation, canonical TypeScript,
+  and prior hygiene checks remain green. Docker is unavailable and container
+  smoke is not claimed.
+- External effects: none. M36 remains unapplied and no Supabase, Vault, Cron,
+  Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7,
+  inventory, listing, or publication mutation occurred.
+- Exact next action: independent correction-only re-review, then fresh-main
+  ancestry/content verification and normal push of only the approved candidate.

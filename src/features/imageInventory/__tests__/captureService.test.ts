@@ -77,4 +77,22 @@ describe('Phase 9 Unit 6C ingestion adapter', () => {
             uuid(1), media, 1, 'authorize-upload-key-0001', uuid(6),
         )).rejects.toMatchObject({ code: 'P9_INTERNAL_ERROR' });
     });
+
+    it('preserves the one-current-image limit as bounded replacement guidance', async () => {
+        invoke.mockResolvedValue({
+            data: null,
+            error: {
+                context: { json: async () => ({
+                    error: 'P9_SINGLE_IMAGE_LIMIT', retryable: false,
+                    message: 'private database detail',
+                }) },
+            },
+        });
+        await expect(captureService.prepareUpload(
+            uuid(1), media, 1, 'authorize-upload-key-0001', uuid(6),
+        )).rejects.toMatchObject({
+            code: 'P9_SINGLE_IMAGE_LIMIT', retryable: false,
+            message: 'Remove the current image before choosing a replacement.',
+        });
+    });
 });

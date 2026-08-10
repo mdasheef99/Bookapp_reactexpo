@@ -30,7 +30,7 @@ type SignedUploadTransportResponse = Readonly<{
 
 function unwrap(result: RpcResult): any {
   if (result.error) {
-    const safeCode = result.error.message?.match(/\b(P9_(?:AUTH_REQUIRED|OWNER_NOT_AUTHORIZED|REQUEST_INVALID|CURSOR_INVALID|NOT_FOUND|STATE_CONFLICT|VERSION_CONFLICT|CANDIDATE_VERSION_CONFLICT|IDEMPOTENCY_MISMATCH|INTERNAL_ERROR))\b/u)?.[1];
+    const safeCode = result.error.message?.match(/\b(P9_(?:AUTH_REQUIRED|OWNER_NOT_AUTHORIZED|REQUEST_INVALID|CURSOR_INVALID|NOT_FOUND|STATE_CONFLICT|VERSION_CONFLICT|CANDIDATE_VERSION_CONFLICT|INPUT_HAS_CANDIDATES|SINGLE_IMAGE_LIMIT|IDEMPOTENCY_MISMATCH|INTERNAL_ERROR))\b/u)?.[1];
     throw new Error(safeCode ?? 'P9_INTERNAL_ERROR');
   }
   return result.data;

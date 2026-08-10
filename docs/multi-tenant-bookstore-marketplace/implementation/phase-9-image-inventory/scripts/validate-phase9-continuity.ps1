@@ -198,7 +198,8 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
     $implementationTracker.Contains('**Status:** `single_image_safe_remove_local_complete_m35_unapplied`') -or
     $implementationTracker.Contains('**Status:** `single_image_safe_remove_m35_live_edge_v3_verified`') -or
     $implementationTracker.Contains('**Status:** `automatic_worker_wake_dispatcher_local_review_corrections_applied`') -or
-    $implementationTracker.Contains('**Status:** `unit6_pre_main_integration_reconciliation_in_progress`')) -or
+    $implementationTracker.Contains('**Status:** `unit6_pre_main_integration_reconciliation_in_progress`') -or
+    $implementationTracker.Contains('**Status:** `unit6_pre_main_candidate_corrections_verified_rereview_pending`')) -or
     -not ($implementationTracker.Contains('**Active work unit:** `unit6f_awaiting_separate_authorization`') -or
     $implementationTracker.Contains('**Active work unit:** `unit6f_browser_verified_native_gate_pending`') -or
     $implementationTracker.Contains('**Active work unit:** `owner_inventory_read_boundary_wu1`') -or
@@ -424,7 +425,8 @@ if (
         $tracker.Contains('**Implementation status:** `single_image_safe_remove_local_complete_m35_application_and_edge_rollout_gated`') -or
         $tracker.Contains('**Implementation status:** `single_image_safe_remove_m35_live_edge_v3_verified`') -or
         $tracker.Contains('**Implementation status:** `automatic_worker_wake_dispatcher_local_review_corrections_applied`') -or
-        $tracker.Contains('**Implementation status:** `unit6_pre_main_integration_reconciliation_in_progress`')
+        $tracker.Contains('**Implementation status:** `unit6_pre_main_integration_reconciliation_in_progress`') -or
+        $tracker.Contains('**Implementation status:** `unit6_pre_main_candidate_corrections_verified_rereview_pending`')
     ) -or
     ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|unit6c_single_image_safe_remove)`\r?$' -and
         -not $tracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -and
@@ -457,7 +459,8 @@ if (
         $tracker.Contains('**Next authorized action:** refresh and observe the new post-removal input without mutation; any further image removal requires a new explicit target decision') -or
         $tracker.Contains('**Next authorized action:** review the local automatic-worker-wake implementation and explicitly authorize or reject a separate deployment/external-mutation unit') -or
         $tracker.Contains('**Next authorized action:** complete local verification and independent review, assemble a clean candidate from fresh `origin/main`, then push that exact verified candidate normally to `origin/main`') -or
-        $tracker.Contains('**Next authorized action:** rerun the required gates on the isolated candidate, obtain independent final approval, verify fresh-main ancestry/content, then push that exact candidate normally to `origin/main`')
+        $tracker.Contains('**Next authorized action:** rerun the required gates on the isolated candidate, obtain independent final approval, verify fresh-main ancestry/content, then push that exact candidate normally to `origin/main`') -or
+        $tracker.Contains('**Next authorized action:** obtain independent final approval of the corrected isolated candidate, verify fresh-main ancestry/content, then push that exact candidate normally to `origin/main`')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or

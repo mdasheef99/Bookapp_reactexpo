@@ -33,6 +33,7 @@ const operationErrors: Record<IngestionOperation, ReadonlySet<string>> = {
     authorize: new Set([
         'P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_STATE_CONFLICT',
         'P9_MEDIA_NOT_APPROVED', 'P9_MEDIA_TOO_LARGE', 'P9_QUOTA_EXCEEDED',
+        'P9_SINGLE_IMAGE_LIMIT',
         'P9_INTERNAL_ERROR',
     ]),
     register: new Set([
@@ -41,6 +42,7 @@ const operationErrors: Record<IngestionOperation, ReadonlySet<string>> = {
         'P9_MEDIA_DIMENSIONS_EXCEEDED', 'P9_MEDIA_PIXEL_LIMIT',
         'P9_MEDIA_MULTIFRAME_UNSUPPORTED', 'P9_MEDIA_OBJECT_CHANGED',
         'P9_STATE_CONFLICT', 'P9_IDEMPOTENCY_MISMATCH', 'P9_QUOTA_EXCEEDED',
+        'P9_SINGLE_IMAGE_LIMIT',
         'P9_INTERNAL_ERROR',
     ]),
 };
@@ -58,6 +60,7 @@ const localErrors: Record<string, { retryable: boolean; message: string }> = {
     P9_MEDIA_PIXEL_LIMIT: { retryable: false, message: 'This image has too many pixels.' },
     P9_MEDIA_MULTIFRAME_UNSUPPORTED: { retryable: false, message: 'Animated images are not supported.' },
     P9_MEDIA_OBJECT_CHANGED: { retryable: true, message: 'The image changed. A new upload authorization is required.' },
+    P9_SINGLE_IMAGE_LIMIT: { retryable: false, message: 'Remove the current image before choosing a replacement.' },
     P9_IDEMPOTENCY_MISMATCH: { retryable: false, message: 'This retry no longer matches the original upload.' },
     P9_INTERNAL_ERROR: { retryable: true, message: 'The request could not be completed.' },
 };

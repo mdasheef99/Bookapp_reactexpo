@@ -547,6 +547,18 @@ describe('Phase 9 Unit 6A Edge RPC adapter', () => {
 
   beforeEach(() => jest.resetAllMocks());
 
+  it.each(['P9_INPUT_HAS_CANDIDATES', 'P9_SINGLE_IMAGE_LIMIT'])(
+    'preserves the registered M35 domain error %s through the Edge RPC adapter',
+    async (code) => {
+      rpc.mockResolvedValue({ data: null, error: { message: code } });
+      await expect(executeOwnerIngestion({
+        action: 'remove_scan_input', contractVersion,
+        sessionId: uuid(1), inputId: uuid(2), expectedInputVersion: 1,
+        idempotencyKey: 'remove-input-00001', commandId: uuid(3),
+      } as any, uuid(9), client, client)).rejects.toThrow(code);
+    },
+  );
+
   it.each([
     ['discover_scan_session', 'phase9_owner_discover_session_v1', {}, {}],
     ['read_scan_session', 'phase9_owner_session_summary_v2',
@@ -636,6 +648,8 @@ describe('Phase 9 Unit 6A safe errors', () => {
     ['P9_CURSOR_INVALID', 400, false],
     ['P9_NOT_FOUND', 404, false],
     ['P9_STATE_CONFLICT', 409, true],
+    ['P9_INPUT_HAS_CANDIDATES', 409, false],
+    ['P9_SINGLE_IMAGE_LIMIT', 409, false],
     ['P9_VERSION_CONFLICT', 409, true],
     ['P9_CANDIDATE_VERSION_CONFLICT', 409, true],
     ['P9_IDEMPOTENCY_MISMATCH', 409, false],

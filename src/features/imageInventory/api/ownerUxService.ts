@@ -24,6 +24,8 @@ const errorCodes = z.enum([
     'P9_STATE_CONFLICT',
     'P9_VERSION_CONFLICT',
     'P9_CANDIDATE_VERSION_CONFLICT',
+    'P9_INPUT_HAS_CANDIDATES',
+    'P9_SINGLE_IMAGE_LIMIT',
     'P9_IDEMPOTENCY_MISMATCH',
     'P9_INTERNAL_ERROR',
 ]);
@@ -55,6 +57,8 @@ const errorRegistry: Record<OwnerUxErrorCode, { retryable: boolean; message: str
     P9_STATE_CONFLICT: { retryable: true, message: 'The item state changed. Refresh and try again.' },
     P9_VERSION_CONFLICT: { retryable: true, message: 'The session changed. Refresh and try again.' },
     P9_CANDIDATE_VERSION_CONFLICT: { retryable: true, message: 'The candidate changed. Refresh and try again.' },
+    P9_INPUT_HAS_CANDIDATES: { retryable: false, message: 'This image already has detected books and cannot be removed.' },
+    P9_SINGLE_IMAGE_LIMIT: { retryable: false, message: 'Remove the current image before choosing a replacement.' },
     P9_IDEMPOTENCY_MISMATCH: { retryable: false, message: 'This retry does not match the original request.' },
     P9_INTERNAL_ERROR: { retryable: true, message: 'The request could not be completed.' },
 };
@@ -114,6 +118,7 @@ const operationErrors: Record<OwnerUxAction, ReadonlySet<OwnerUxErrorCode>> = {
         'P9_NOT_FOUND',
         'P9_STATE_CONFLICT',
         'P9_VERSION_CONFLICT',
+        'P9_INPUT_HAS_CANDIDATES',
         'P9_IDEMPOTENCY_MISMATCH',
         'P9_INTERNAL_ERROR',
     ]),

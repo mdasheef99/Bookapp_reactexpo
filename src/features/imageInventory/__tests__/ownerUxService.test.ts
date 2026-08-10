@@ -202,6 +202,28 @@ describe('Phase 9 Unit 6B Owner UX service', () => {
         });
     });
 
+    it('preserves the candidate-lineage removal conflict as bounded corrective UX', async () => {
+        invoke.mockResolvedValue({
+            data: null,
+            error: {
+                context: { json: async () => ({
+                    error: 'P9_INPUT_HAS_CANDIDATES', retryable: false,
+                    message: 'private database detail',
+                }) },
+            },
+        });
+        await expect(ownerUxService.removeInput({
+            sessionId: '00000000-0000-4000-8000-000000000001',
+            inputId: '00000000-0000-4000-8000-000000000002',
+            expectedInputVersion: 1,
+            idempotencyKey: 'remove-input:fixed-command-0001',
+            commandId: '00000000-0000-4000-8000-000000000009',
+        })).rejects.toMatchObject({
+            code: 'P9_INPUT_HAS_CANDIDATES', retryable: false,
+            message: 'This image already has detected books and cannot be removed.',
+        });
+    });
+
     it.each([
         () => ownerUxService.readSession('not-a-uuid'),
         () => ownerUxService.readCandidate(

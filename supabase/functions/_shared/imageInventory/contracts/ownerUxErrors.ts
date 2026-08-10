@@ -2,6 +2,7 @@ export type OwnerUxErrorCode =
   | 'P9_AUTH_REQUIRED' | 'P9_OWNER_NOT_AUTHORIZED' | 'P9_REQUEST_INVALID'
   | 'P9_CURSOR_INVALID' | 'P9_NOT_FOUND' | 'P9_STATE_CONFLICT'
   | 'P9_VERSION_CONFLICT' | 'P9_CANDIDATE_VERSION_CONFLICT'
+  | 'P9_INPUT_HAS_CANDIDATES' | 'P9_SINGLE_IMAGE_LIMIT'
   | 'P9_IDEMPOTENCY_MISMATCH' | 'P9_INTERNAL_ERROR';
 
 const safeErrors: Record<OwnerUxErrorCode, {
@@ -15,6 +16,8 @@ const safeErrors: Record<OwnerUxErrorCode, {
   P9_STATE_CONFLICT: { status: 409, retryable: true, message: 'The item state changed. Refresh and try again.' },
   P9_VERSION_CONFLICT: { status: 409, retryable: true, message: 'The session changed. Refresh and try again.' },
   P9_CANDIDATE_VERSION_CONFLICT: { status: 409, retryable: true, message: 'The candidate changed. Refresh and try again.' },
+  P9_INPUT_HAS_CANDIDATES: { status: 409, retryable: false, message: 'This image already has detected books and cannot be removed.' },
+  P9_SINGLE_IMAGE_LIMIT: { status: 409, retryable: false, message: 'Remove the current image before choosing a replacement.' },
   P9_IDEMPOTENCY_MISMATCH: { status: 409, retryable: false, message: 'This retry does not match the original request.' },
   P9_INTERNAL_ERROR: { status: 500, retryable: true, message: 'The request could not be completed.' },
 };

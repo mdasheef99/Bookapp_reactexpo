@@ -60,4 +60,16 @@ describe('Phase 9 single-image and safe input-removal contract', () => {
     expect(source.match(/quality_reason IS DISTINCT FROM 'P9_OWNER_REMOVED'/gu)?.length).toBeGreaterThanOrEqual(4);
     expect(source).not.toMatch(/SET\s+input_count\s*=\s*input_count\s*-/iu);
   });
+
+  it('scopes the global needs-review discovery count to the resolved active store and actor', () => {
+    const source = sql();
+    const discover = source.match(
+      /CREATE OR REPLACE FUNCTION public\.phase9_owner_discover_session_v1\(\)[\s\S]*?\$\$;/u,
+    )?.[0] ?? '';
+    const countQuery = discover.match(
+      /'needsReviewCount',[\s\S]*?marketplace_sec\.phase9_owner_ux_needs_review\(c,s,transaction_timestamp\(\)\)\)/u,
+    )?.[0] ?? '';
+    expect(countQuery).toContain('s.store_id=v_store');
+    expect(countQuery).toContain('s.created_by=auth.uid()');
+  });
 });

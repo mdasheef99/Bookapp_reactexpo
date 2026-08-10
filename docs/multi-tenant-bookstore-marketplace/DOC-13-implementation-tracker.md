@@ -34,7 +34,10 @@ Every material session must also leave one exact active work unit and next autho
 > The approved bounded capture returned eight observations and proved the exact
 > local mismatches: provider `image_outcome: success` and one null
 > `detected_language`. Red-first reproduced the failure; BookConnect now
-> normalizes only those values to canonical `analyzed` and `und`. Exact-path
+> normalizes those aliases to canonical `analyzed` and `und`; later main-line
+> live-payload evidence also maps known language names to BCP 47 tags, strips
+> safe ISBN labels, and reconciles analyzed visible-book count to accepted
+> observation count. Exact-path
 > focused Jest is 60/60 and the vision-worker build passes. The separate final
 > proof transmission was blocked by the approval boundary and remains pending
 > explicit approval. M34, Git, Render,
@@ -75,8 +78,9 @@ If implementation changes product or architecture behavior, update the relevant 
 > dispatcher ancestry, and the proven Google Books `projection=full` correction.
 > Unrelated Store Owner Orders and Phase 4 content plus superseded Gemini tree
 > content were restored to authoritative `origin/main` versions before commit.
-> Complete local gates passed on the package; candidate rerun and independent
-> final review remain before normal `origin/main` push. M36 application and all
+> Complete corrected candidate gates pass after red-first closure of the initial
+> independent review findings; independent final re-review remains before normal
+> `origin/main` push. M36 application and all
 > Supabase, Vault, Cron, Render, worker/provider, Storage, live-image,
 > duplicate-replay, Unit 7, inventory, listing, and publication mutations remain
 > prohibited.
