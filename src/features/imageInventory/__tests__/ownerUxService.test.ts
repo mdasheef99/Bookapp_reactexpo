@@ -172,6 +172,36 @@ describe('Phase 9 Unit 6B Owner UX service', () => {
         });
     });
 
+    it('maps the exact remove-image command without client authority fields', async () => {
+        const canonical = {
+            sessionId: '00000000-0000-4000-8000-000000000001',
+            inputId: '00000000-0000-4000-8000-000000000002',
+            inputState: 'skipped',
+            inputVersion: 2,
+            sessionVersion: 3,
+            presentationRevision: 4,
+        };
+        invoke.mockResolvedValue({
+            data: { contractVersion: 'phase9-owner-ux-v1', data: canonical }, error: null,
+        });
+        const request = {
+            sessionId: canonical.sessionId,
+            inputId: canonical.inputId,
+            expectedInputVersion: 1,
+            idempotencyKey: 'remove-input:fixed-command-0001',
+            commandId: '00000000-0000-4000-8000-000000000009',
+        };
+
+        await expect(ownerUxService.removeInput(request)).resolves.toEqual(canonical);
+        expect(invoke).toHaveBeenCalledWith('phase9-owner-ingestion', {
+            body: {
+                action: 'remove_scan_input',
+                contractVersion: 'phase9-owner-ux-v1',
+                ...request,
+            },
+        });
+    });
+
     it.each([
         () => ownerUxService.readSession('not-a-uuid'),
         () => ownerUxService.readCandidate(

@@ -203,6 +203,10 @@ const responseSchemas = {
   list_scan_inputs: z.object({
     items: z.array(inputProgress), pageInfo, sessionVersion: version, presentationRevision: version,
   }).strict(),
+  remove_scan_input: z.object({
+    sessionId: uuid, inputId: uuid, inputState: z.literal('skipped'),
+    inputVersion: version, sessionVersion: version, presentationRevision: version,
+  }).strict(),
   list_scan_candidates: z.object({
     items: z.array(candidateSummary), pageInfo, scopeVersion: version, sessionVersion: version.nullable(),
   }).strict(),

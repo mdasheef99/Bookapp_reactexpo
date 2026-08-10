@@ -120,6 +120,14 @@ const responseSchemas = {
         sessionVersion: versionSchema,
         presentationRevision: versionSchema,
     }).strict(),
+    remove_scan_input: z.object({
+        sessionId: uuidSchema,
+        inputId: uuidSchema,
+        inputState: z.literal('skipped'),
+        inputVersion: versionSchema,
+        sessionVersion: versionSchema,
+        presentationRevision: versionSchema,
+    }).strict(),
     list_scan_candidates: z.object({
         items: z.array(candidateSummarySchema),
         pageInfo: pageInfoSchema,
@@ -133,11 +141,12 @@ const responseSchemas = {
 } as const;
 
 export type OwnerUxAction = keyof typeof responseSchemas;
-export type OwnerUxQueryAction = Exclude<OwnerUxAction, 'update_candidate_review' | 'close_scan_session'>;
+export type OwnerUxQueryAction = Exclude<OwnerUxAction, 'remove_scan_input' | 'update_candidate_review' | 'close_scan_session'>;
 export type OwnerDiscovery = z.infer<typeof responseSchemas.discover_scan_session>;
 export type OwnerSessionSummary = z.infer<typeof responseSchemas.read_scan_session>;
 export type OwnerInputProgress = z.infer<typeof inputProgressSchema>;
 export type OwnerInputPage = z.infer<typeof responseSchemas.list_scan_inputs>;
+export type OwnerRemoveInputResult = z.infer<typeof responseSchemas.remove_scan_input>;
 export type OwnerCandidatePage = z.infer<typeof responseSchemas.list_scan_candidates>;
 export type OwnerCandidateDetail = z.infer<typeof responseSchemas.read_scan_candidate>;
 export type OwnerSessionReadiness = z.infer<typeof responseSchemas.read_scan_readiness>;

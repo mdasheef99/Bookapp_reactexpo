@@ -204,7 +204,8 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
     }, [workflow.clear]);
 
     async function upload() {
-        if (!media || !mutationAuthority.current || running.current) return;
+        if (!media || !mutationAuthority.current || running.current
+            || (inputs.data?.items.length ?? 0) > 0) return;
         running.current = true;
         const nextGeneration = ++generation.current;
         let registrationStarted = false;
@@ -323,6 +324,9 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                         </Text>
                     ) : null}
                     {state.message ? <Text selectable style={{ color: colors.error, marginTop: 10 }}>{state.message}</Text> : null}
+                    {(inputs.data?.items.length ?? 0) > 0 ? (
+                        <Text selectable accessibilityLiveRegion="assertive" style={{ color: colors.error, marginTop: 10 }}>This scan already has an image. Remove it before choosing a replacement.</Text>
+                    ) : null}
                     <View style={{ gap: 12, marginTop: 18 }}>
                         {state.stage !== 'terminal_error' ? (
                             <Button
@@ -332,7 +336,7 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                                         ? 'Retry upload'
                                         : 'Upload image'}
                                 onPress={() => void upload()}
-                                disabled={!gate.canMutate || ['authorizing', 'uploading', 'registration_pending'].includes(state.stage)}
+                                disabled={!gate.canMutate || (inputs.data?.items.length ?? 0) > 0 || ['authorizing', 'uploading', 'registration_pending'].includes(state.stage)}
                             />
                         ) : null}
                         {['authorizing', 'uploading'].includes(state.stage) ? <Button title="Cancel upload" variant="secondary" onPress={cancel} /> : null}

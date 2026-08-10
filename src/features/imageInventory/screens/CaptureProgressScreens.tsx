@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, FlatList, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
@@ -18,6 +18,9 @@ import {
 } from '../queries/ownerUxQueries';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
 import { coalesceOwnerUxRefresh } from '../offline/ownerUxOfflineGate';
+import { createCaptureUuid, createSemanticKey } from '../capture/captureIds';
+import { useRemoveOwnerInventoryInput } from '../queries/ownerUxInputQueries';
+import type { RemoveScanInputRequest } from '../api/ownerUxService';
 
 function inputLabel(item: { presentationState: string; retryState: string; safeCode: string | null }) {
     if (item.retryState === 'server_retrying') return 'Trying again';
@@ -46,6 +49,12 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     });
     const { isOffline } = useNetworkStatus();
     const { colors } = useTheme();
+    const removeMutation = useRemoveOwnerInventoryInput(identity, sessionId);
+    const [removeTarget, setRemoveTarget] = useState<{
+        inputId: string; ordinal: number; inputVersion: number;
+    } | null>(null);
+    const [removeMessage, setRemoveMessage] = useState<string | null>(null);
+    const pendingRemoval = useRef<RemoveScanInputRequest | null>(null);
     const unavailable = session.data?.status === 'expired' || [session.error, inputs.error].some(
         (error) => error && 'code' in error
             && ['P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND'].includes(String(error.code)),
@@ -79,6 +88,36 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const inputAnnouncement = inputs.data?.items.length
         ? `${inputs.data.items.filter((item) => item.presentationState === 'ready').length} images processed. ${inputs.data.items.filter((item) => item.presentationState === 'needs_attention').length} need attention. ${inputs.data.items.filter((item) => ['checking_image', 'finding_books'].includes(item.presentationState)).length} processing.`
         : null;
+    const beginRemove = (target: { inputId: string; ordinal: number; inputVersion: number }) => {
+        if (removeMutation.isPending) return;
+        if (pendingRemoval.current?.inputId !== target.inputId
+            || pendingRemoval.current.expectedInputVersion !== target.inputVersion) {
+            pendingRemoval.current = null;
+        }
+        setRemoveMessage(null);
+        setRemoveTarget(target);
+    };
+    const confirmRemove = () => {
+        if (!removeTarget || isOffline || session.data?.status !== 'active' || removeMutation.isPending) return;
+        const request = pendingRemoval.current ?? {
+            sessionId,
+            inputId: removeTarget.inputId,
+            expectedInputVersion: removeTarget.inputVersion,
+            idempotencyKey: createSemanticKey('remove-input'),
+            commandId: createCaptureUuid(),
+        };
+        pendingRemoval.current = request;
+        removeMutation.mutate(request, {
+            onSuccess: () => {
+                pendingRemoval.current = null;
+                setRemoveTarget(null);
+                setRemoveMessage(`Image ${removeTarget.ordinal} removed.`);
+            },
+            onError: () => {
+                setRemoveMessage('The image could not be removed. Refresh and try again.');
+            },
+        });
+    };
 
     return (
         <ScreenBackground>
@@ -122,10 +161,30 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                             <Text selectable style={{ color: colors.textSecondary, marginTop: 8 }}>Saved on server. Processing continues if you leave.</Text>
                             <View style={{ gap: 10, marginTop: 16 }}>
                                 {inputAnnouncement ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{inputAnnouncement}</Text> : null}
+                                {removeMessage ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{removeMessage}</Text> : null}
                                 {inputs.data?.items.map((item) => (
                                     <View key={item.inputId} accessibilityLabel={`Image ${item.ordinal}. ${inputLabel(item)}`} style={{ padding: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 12 }}>
                                         <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>Image {item.ordinal}</Text>
                                         <Text selectable style={{ color: colors.textSecondary, marginTop: 4 }}>{inputLabel(item)}</Text>
+                                        {removeTarget?.inputId === item.inputId ? (
+                                            <View style={{ gap: 8, marginTop: 12 }}>
+                                                <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>Remove Image {item.ordinal}?</Text>
+                                                <Text selectable style={{ color: colors.textSecondary }}>This removes the image from this scan, cancels its processing, and schedules private media cleanup.</Text>
+                                                <Button title="Remove image now" onPress={confirmRemove} disabled={isOffline || removeMutation.isPending || session.data?.status !== 'active'} />
+                                                <Button title="Cancel" variant="secondary" onPress={() => setRemoveTarget(null)} disabled={removeMutation.isPending} />
+                                            </View>
+                                        ) : item.acceptedCandidateCount === 0 ? (
+                                            <Button
+                                                title="Remove image"
+                                                variant="secondary"
+                                                style={{ marginTop: 10 }}
+                                                onPress={() => beginRemove(item)}
+                                                disabled={isOffline || removeMutation.isPending || session.data?.status !== 'active'}
+                                                accessibilityHint="Removes this uploaded image after confirmation"
+                                            />
+                                        ) : (
+                                            <Text selectable style={{ color: colors.textSecondary, marginTop: 10 }}>Review the books found from this image instead of removing it.</Text>
+                                        )}
                                     </View>
                                 ))}
                                 {!inputs.isLoading && inputs.data?.items.length === 0
@@ -152,8 +211,10 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                 )}
                 ListFooterComponent={!loading && !unavailable && !retryableError ? (
                     <View style={{ gap: 12, paddingTop: 4 }}>
-                        {isOffline ? <Text selectable style={{ color: colors.textSecondary }}>Reconnect to add another image.</Text> : null}
-                        <Button title="Add another image" onPress={() => router.push(inventoryRoutes.scan())} disabled={isOffline || (inputs.data?.items.length ?? 0) >= 15} />
+                        {isOffline && (inputs.data?.items.length ?? 0) === 0 ? <Text selectable style={{ color: colors.textSecondary }}>Reconnect to choose a replacement image.</Text> : null}
+                        {(inputs.data?.items.length ?? 0) === 0 ? (
+                            <Button title="Choose replacement image" onPress={() => router.push(inventoryRoutes.scan())} disabled={isOffline} />
+                        ) : null}
                         <Button title="View session summary" variant="secondary" onPress={() => router.push(inventoryRoutes.summary(sessionId))} />
                         <Button
                             title="Add missed book"

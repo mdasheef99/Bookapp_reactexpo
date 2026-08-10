@@ -15,6 +15,11 @@ const listInputs = z.object({
   pageSize: z.number().int().min(1).max(50).optional(),
   cursor: z.string().min(1).max(4096).nullable().optional(),
 }).strict();
+const removeInput = z.object({
+  action: z.literal('remove_scan_input'), contractVersion,
+  sessionId: uuid, inputId: uuid, expectedInputVersion: version,
+  idempotencyKey, commandId: uuid,
+}).strict();
 const listCandidates = z.object({
   action: z.literal('list_scan_candidates'), contractVersion,
   scope: z.enum(['session', 'needs_review']),
@@ -50,6 +55,7 @@ const requestSchemas = {
   }).strict(),
   read_scan_session: readSession,
   list_scan_inputs: listInputs,
+  remove_scan_input: removeInput,
   list_scan_candidates: listCandidates,
   read_scan_candidate: z.object({
     action: z.literal('read_scan_candidate'), contractVersion,
@@ -64,7 +70,7 @@ const requestSchemas = {
 
 const ownerUxRequest = z.discriminatedUnion('action', [
   requestSchemas.discover_scan_session, readSession, listInputs,
-  listCandidates as any, requestSchemas.read_scan_candidate, updateReview,
+  removeInput, listCandidates as any, requestSchemas.read_scan_candidate, updateReview,
   requestSchemas.read_scan_readiness, closeSession,
 ]);
 

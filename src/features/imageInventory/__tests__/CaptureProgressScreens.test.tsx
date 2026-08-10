@@ -4,6 +4,7 @@ import { InventorySessionProgressScreen } from '../screens/CaptureProgressScreen
 
 const mockRouter = { push: jest.fn(), replace: jest.fn() };
 const mockRefetch = jest.fn(() => Promise.resolve({ isError: false, error: null }));
+const mockRemoveMutate = jest.fn();
 let mockFocused = true;
 const mockSession = { data: { status: 'active' }, error: null, refetch: mockRefetch };
 const mockInputs = {
@@ -12,9 +13,11 @@ const mockInputs = {
         items: [{
             inputId: '00000000-0000-4000-8000-000000000001',
             ordinal: 1,
+            inputVersion: 3,
             presentationState: 'needs_attention',
             retryState: 'new_upload_required',
             safeCode: 'P9_VISION_OVER_LIMIT',
+            acceptedCandidateCount: 0,
         }],
     },
     isLoading: false,
@@ -71,9 +74,61 @@ jest.mock('../queries/ownerUxQueries', () => ({
     useOwnerInventoryInputs: () => mockInputs,
     useOwnerInventoryCandidates: () => mockCandidates,
 }));
+jest.mock('../queries/ownerUxInputQueries', () => ({
+    useRemoveOwnerInventoryInput: () => ({
+        mutate: mockRemoveMutate,
+        isPending: false,
+        error: null,
+    }),
+}));
+jest.mock('../capture/captureIds', () => ({
+    createSemanticKey: () => 'remove-input:00000000-0000-4000-8000-000000000008',
+    createCaptureUuid: () => '00000000-0000-4000-8000-000000000009',
+}));
 
 describe('Phase 9 Unit 6C server progress and handoff', () => {
-    beforeEach(() => { jest.clearAllMocks(); mockFocused = true; });
+    const registeredInput = mockInputs.data.items[0];
+    beforeEach(() => {
+        jest.clearAllMocks();
+        mockFocused = true;
+        registeredInput.acceptedCandidateCount = 0;
+        mockInputs.data.items = [registeredInput];
+    });
+
+    it('keeps remove image but does not offer a second image while one is registered', () => {
+        const screen = render(
+            <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+
+        expect(screen.getByText('Remove image')).toBeTruthy();
+        expect(screen.queryByText('Add another image')).toBeNull();
+        expect(screen.queryByText('Choose replacement image')).toBeNull();
+    });
+
+    it('offers a replacement only after the current image has disappeared', () => {
+        const originalItems = mockInputs.data.items;
+        mockInputs.data.items = [] as typeof originalItems;
+        const screen = render(
+            <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+
+        fireEvent.press(screen.getByText('Choose replacement image'));
+        expect(mockRouter.push).toHaveBeenCalledWith('/(store-owner)/inventory/scan');
+        mockInputs.data.items = originalItems;
+    });
+
+    it('does not offer input removal after book candidates exist', () => {
+        const input = mockInputs.data.items[0];
+        const originalCount = input.acceptedCandidateCount;
+        input.acceptedCandidateCount = 1;
+        const screen = render(
+            <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+
+        expect(screen.queryByText('Remove image')).toBeNull();
+        expect(screen.getByText('Review the books found from this image instead of removing it.')).toBeTruthy();
+        input.acceptedCandidateCount = originalCount;
+    });
 
     it('renders terminal over-limit guidance and hands off only to the review shell', () => {
         const screen = render(
@@ -117,6 +172,25 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
         fireEvent.press(screen.getByText('Retry'));
         expect(mockRefetch).toHaveBeenCalled();
         mockCandidates.error = null;
+    });
+
+    it('requires confirmation and sends the exact registered input version for removal', () => {
+        const screen = render(
+            <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+
+        fireEvent.press(screen.getByText('Remove image'));
+        expect(screen.getByText('Remove Image 1?')).toBeTruthy();
+        expect(mockRemoveMutate).not.toHaveBeenCalled();
+
+        fireEvent.press(screen.getByText('Remove image now'));
+        expect(mockRemoveMutate).toHaveBeenCalledWith(expect.objectContaining({
+            sessionId: '00000000-0000-4000-8000-000000000010',
+            inputId: '00000000-0000-4000-8000-000000000001',
+            expectedInputVersion: 3,
+            idempotencyKey: expect.stringMatching(/^remove-input:/u),
+            commandId: expect.stringMatching(/^[0-9a-f-]{36}$/u),
+        }), expect.any(Object));
     });
 
     it('does not refresh or expose per-item live regions while the route is blurred', () => {

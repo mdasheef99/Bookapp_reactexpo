@@ -8,6 +8,37 @@ import { decodeOwnerUxRequest } from '../contracts/ownerUxRequestContracts';
 const uuid = (digit: number) => `00000000-0000-4000-8000-${String(digit).padStart(12, '0')}`;
 
 describe('Phase 9 Unit 6B mobile Owner UX response contracts', () => {
+    it('strictly decodes the remove-image command and canonical skipped result', () => {
+        const request = {
+            action: 'remove_scan_input' as const,
+            contractVersion: OWNER_UX_CONTRACT_VERSION,
+            sessionId: uuid(1),
+            inputId: uuid(2),
+            expectedInputVersion: 3,
+            idempotencyKey: 'remove-input:fixed-command-0001',
+            commandId: uuid(9),
+        };
+        const result = {
+            sessionId: uuid(1),
+            inputId: uuid(2),
+            inputState: 'skipped',
+            inputVersion: 4,
+            sessionVersion: 5,
+            presentationRevision: 6,
+        };
+
+        expect(decodeOwnerUxRequest('remove_scan_input', request)).toEqual(request);
+        expect(decodeOwnerUxRequest('remove_scan_input', { ...request, storeId: uuid(8) })).toBeNull();
+        expect(decodeOwnerUxResponse('remove_scan_input', {
+            contractVersion: OWNER_UX_CONTRACT_VERSION,
+            data: result,
+        })).toEqual(result);
+        expect(() => decodeOwnerUxResponse('remove_scan_input', {
+            contractVersion: OWNER_UX_CONTRACT_VERSION,
+            data: { ...result, objectPath: 'private/path.jpg' },
+        })).toThrow(OwnerUxResponseContractError);
+    });
+
     it('strictly decodes the Unit 6F Close response and rejects unknown request keys', () => {
         const readiness = {
             sessionId: uuid(1),

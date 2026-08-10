@@ -45,6 +45,11 @@ const ownerUxRpc = {
     p_session_id: request.sessionId, p_page_size: request.pageSize ?? 20,
     p_cursor: request.cursor ?? null,
   })],
+  remove_scan_input: ['phase9_remove_scan_input_v1', (request: any) => ({
+    p_session_id: request.sessionId, p_input_id: request.inputId,
+    p_expected_input_version: request.expectedInputVersion,
+    p_idempotency_key: request.idempotencyKey, p_command_id: request.commandId,
+  })],
   list_scan_candidates: ['phase9_owner_candidates_page_v2', (request: any) => ({
     p_scope: request.scope, p_session_id: request.sessionId ?? null,
     p_attention: request.attention ?? 'all', p_page_size: request.pageSize ?? 20,

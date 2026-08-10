@@ -12,6 +12,7 @@ const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn() };
 const mockWorkflow = { selected: null as any, select: jest.fn(), clear: jest.fn() };
 const mockIdentity = { userId: 'owner-1', storeId: 'store-1' };
 let mockCurrentIdentity = mockIdentity;
+let mockPreviewInputItems: any[] = [];
 const mockQueryClient = { invalidateQueries: jest.fn(() => Promise.resolve()) };
 
 jest.mock('expo-router', () => ({ useRouter: () => mockRouter }));
@@ -77,8 +78,8 @@ jest.mock('../queries/ownerUxQueries', () => ({
         refetch: jest.fn().mockResolvedValue({ data: { activeSession: null }, isError: false, error: null }),
     })),
     useOwnerInventoryInputs: jest.fn(() => ({
-        data: { items: [] }, isLoading: false, error: null, isFetchedAfterMount: true,
-        refetch: jest.fn().mockResolvedValue({ data: { items: [] }, isError: false, error: null }),
+        data: { items: mockPreviewInputItems }, isLoading: false, error: null, isFetchedAfterMount: true,
+        refetch: jest.fn().mockResolvedValue({ data: { items: mockPreviewInputItems }, isError: false, error: null }),
     })),
     useOwnerInventorySession: jest.fn(() => ({
         data: { status: 'active' }, error: null, refetch: jest.fn(),
@@ -99,6 +100,7 @@ describe('Phase 9 Unit 6C capture routes', () => {
         ));
         mockWorkflow.selected = null;
         mockCurrentIdentity = mockIdentity;
+        mockPreviewInputItems = [];
         picker.getCameraPermissionsAsync.mockResolvedValue({
             granted: true, canAskAgain: true, status: 'granted', expires: 'never',
         } as never);
@@ -234,6 +236,30 @@ describe('Phase 9 Unit 6C capture routes', () => {
         screen.unmount();
         expect(mockWorkflow.clear).toHaveBeenCalledTimes(1);
         expect(handoffEvents).toEqual(['replace', 'clear']);
+    });
+
+    it('refuses to authorize a second image for a session that already has one', async () => {
+        mockPreviewInputItems = [{
+            inputId: '00000000-0000-4000-8000-000000000099',
+            inputVersion: 1,
+        }];
+        mockWorkflow.selected = {
+            uri: 'file:///private/second-scan.jpg',
+            mimeType: 'image/jpeg',
+            fileSize: 1024,
+            width: 100,
+            height: 200,
+            source: 'gallery',
+        };
+
+        const screen = render(
+            <InventoryCapturePreviewScreen sessionId="00000000-0000-4000-8000-000000000001" />,
+        );
+        fireEvent.press(screen.getByText('Upload image'));
+
+        await act(async () => { await Promise.resolve(); });
+        expect(captureService.prepareUpload).not.toHaveBeenCalled();
+        expect(screen.getByText('This scan already has an image. Remove it before choosing a replacement.')).toBeTruthy();
     });
 
     it('does not navigate or clear after Preview unmounts during post-registration refresh', async () => {

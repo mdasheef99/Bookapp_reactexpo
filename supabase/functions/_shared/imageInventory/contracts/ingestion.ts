@@ -61,6 +61,7 @@ export function parseOwnerIngestionRequest(value: unknown): OwnerIngestionReques
       : undefined;
     if (typeof action === 'string' && [
       'discover_scan_session', 'read_scan_session', 'list_scan_inputs',
+      'remove_scan_input',
       'list_scan_candidates', 'read_scan_candidate', 'update_candidate_review',
       'read_scan_readiness', 'close_scan_session',
     ].includes(action)) return parseOwnerUxRequest(value);
