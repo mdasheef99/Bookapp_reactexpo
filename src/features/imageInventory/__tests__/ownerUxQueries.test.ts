@@ -5,8 +5,9 @@ import {
     imageInventoryKeys,
     inputPollingInterval,
     resetImageInventoryIdentityForTests,
-    synchronizeCandidateReviewSuccess,
 } from '../queries/ownerUxQueries';
+import { synchronizeCandidateReviewSuccess } from '../queries/ownerUxReviewQueries';
+import { synchronizeCloseSuccess } from '../queries/ownerUxCloseQueries';
 import { candidateDetailFixture, testUuid } from '../testing/ownerUxTestFixtures';
 
 const identity = (userId: string, storeId: string) => ({ userId, storeId });
@@ -62,6 +63,7 @@ describe('Phase 9 Unit 6B private query identity', () => {
         expect(inputPollingInterval(undefined)).toBe(false);
         expect(inputPollingInterval([{ polling: false }])).toBe(false);
         expect(inputPollingInterval([{ polling: false }, { polling: true }])).toBe(3_000);
+        expect(inputPollingInterval([{ polling: true }], false)).toBe(false);
     });
 
     it('cancels in-flight private work before removing every Unit 6 cache entry', async () => {
@@ -183,6 +185,38 @@ describe('Phase 9 Unit 6B private query identity', () => {
         );
 
         expect(client.getQueriesData({ queryKey: imageInventoryKeys.all })).toEqual([]);
+        client.clear();
+    });
+
+    it('applies canonical Close only to the active identity/session and invalidates all related views', async () => {
+        const client = new QueryClient();
+        const active = identity('user-1', 'store-1');
+        await coordinateImageInventoryIdentity(active, client);
+        const canonical = {
+            sessionId: testUuid(1), sessionStatus: 'closed' as const, sessionVersion: 3,
+            allInputsTerminal: true, closeSummary: {
+                imagesSubmitted: 0, imagesProcessed: 0, imagesFailed: 0, imagesSkipped: 0,
+                candidatesDetected: 0, candidatesReviewReady: 0, candidatesNeedsReview: 0,
+                candidatesFailed: 0, falseDetections: 0, manualMissedCandidates: 0,
+                committedInventoryItems: 0, quantitiesAddedToExisting: 0, privateItems: 0,
+                publishedItems: 0, languageSkips: 0, candidateCapSkips: 0, qualitySkips: 0,
+            }, blockerCounts: {
+                input_processing: 0, candidate_processing: 0, candidate_failed: 0,
+                review_missing: 0, title_unconfirmed: 0, author_confirmation_incomplete: 0,
+                language_missing: 0, metadata_choice_missing: 0, quantity_invalid: 0,
+                price_invalid: 0, condition_missing: 0, damage_answer_missing: 0,
+                damage_details_missing: 0, location_missing: 0, publication_intent_missing: 0,
+                duplicate_intent_missing: 0, variant_source_stale: 0,
+            }, nextBlockingCandidateId: null, closeState: 'closed' as const,
+            closeAllowed: false, presentationRevision: 4,
+        };
+        const invalidate = jest.spyOn(client, 'invalidateQueries');
+        expect(await synchronizeCloseSuccess(client, active, testUuid(1), canonical)).toBe(true);
+        expect(client.getQueryData(imageInventoryKeys.readiness(active, testUuid(1)))).toEqual(canonical);
+        expect(invalidate).toHaveBeenCalled();
+
+        await coordinateImageInventoryIdentity(identity('user-2', 'store-2'), client);
+        expect(await synchronizeCloseSuccess(client, active, testUuid(1), canonical)).toBe(false);
         client.clear();
     });
 });

@@ -75,9 +75,13 @@ function runtimeRpcNames(): string[] {
   const source = files.map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n');
   const direct = [...source.matchAll(/[A-Za-z]*[Cc]lient\.rpc\(\s*['"]((?:phase9_|claim_phase9_)[a-z0-9_]+)['"]/gu)];
   const bounded = [...source.matchAll(/rpcCall\(\s*client\s*,\s*['"]((?:phase9_|claim_phase9_)[a-z0-9_]+)['"]/gu)];
-  return [...direct, ...bounded]
-    .map((match) => match[1])
-    .filter((name) => name !== 'phase9_start_session')
+  const conditional = [...source.matchAll(
+    /\?\s*['"]((?:phase9_|claim_phase9_)[a-z0-9_]+)['"]\s*:\s*['"]((?:phase9_|claim_phase9_)[a-z0-9_]+)['"]/gu,
+  )].flatMap((match) => [match[1], match[2]]);
+  return [...direct, ...bounded].map((match) => match[1])
+    .concat(conditional)
+    .filter((name) => name !== 'phase9_start_session' && name in wrappers)
+    .filter((name, index, names) => names.indexOf(name) === index)
     .sort();
 }
 

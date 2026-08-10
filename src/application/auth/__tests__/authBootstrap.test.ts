@@ -5,7 +5,7 @@ jest.mock('@/features/marketplace/commerce/services/commerceSession', () => ({
 jest.mock('@/features/auth/services/authStorage', () => ({
   clearPendingLogoutIntent: jest.fn(() => Promise.resolve()),
   clearPersistedSupabaseSession: jest.fn(() => Promise.resolve()),
-  hasPendingLogoutIntent: jest.fn(() => false),
+  hasPendingLogoutIntent: jest.fn(() => Promise.resolve(false)),
 }));
 
 import { supabase } from '@/lib/supabase';
@@ -29,6 +29,12 @@ const makeSession = (userId: string, token = `${userId}-token`) => ({
   access_token: token,
   user: { id: userId },
 }) as never;
+
+async function flushAuthWork(): Promise<void> {
+  for (let index = 0; index < 5; index += 1) {
+    await Promise.resolve();
+  }
+}
 
 describe('root auth bootstrap', () => {
   let callback: ((event: string, session: never) => void) | undefined;
@@ -97,9 +103,11 @@ describe('root auth bootstrap', () => {
     }));
 
     const initialization = initializeAuth();
+    await flushAuthWork();
     callback?.('SIGNED_IN', makeSession('new-user'));
     resolveSession?.({ data: { session: null }, error: null });
     await initialization;
+    await flushAuthWork();
 
     expect(useAuthStore.getState().session?.user.id).toBe('new-user');
     expect(useAuthStore.getState().status).toBe('authenticated');
@@ -124,6 +132,7 @@ describe('root auth bootstrap', () => {
 
     const first = startAuthBootstrap();
     const second = initializeAuth();
+    await flushAuthWork();
     expect(mockAuth.getSession).toHaveBeenCalledTimes(1);
     resolveSession?.({ data: { session: null }, error: null });
     await Promise.all([first, second]);
@@ -139,6 +148,7 @@ describe('root auth bootstrap', () => {
     }));
 
     const initialization = startAuthBootstrap();
+    await flushAuthWork();
     stopAuthBootstrap();
     resolveSession?.({ data: { session: makeSession('stale-user') }, error: null });
     await initialization;
@@ -154,15 +164,14 @@ describe('root auth bootstrap', () => {
     await initializeAuth();
 
     callback?.('SIGNED_OUT', null as never);
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushAuthWork();
 
     expect(clearCommerceSession).toHaveBeenCalled();
     expect(mockAuth.signOut).not.toHaveBeenCalled();
   });
 
   it('does not restore a persisted session after a pending logout survives restart', async () => {
-    (hasPendingLogoutIntent as jest.Mock).mockReturnValue(true);
+    (hasPendingLogoutIntent as jest.Mock).mockResolvedValue(true);
     (mockAuth.getSession as jest.Mock).mockResolvedValue({
       data: { session: makeSession('logged-out-user') }, error: null,
     });
@@ -177,7 +186,7 @@ describe('root auth bootstrap', () => {
   });
 
   it('keeps restart blocked when pending logout deletion still fails', async () => {
-    (hasPendingLogoutIntent as jest.Mock).mockReturnValue(true);
+    (hasPendingLogoutIntent as jest.Mock).mockResolvedValue(true);
     (clearPersistedSupabaseSession as jest.Mock).mockRejectedValueOnce(new Error('storage failed'));
 
     await initializeAuth();

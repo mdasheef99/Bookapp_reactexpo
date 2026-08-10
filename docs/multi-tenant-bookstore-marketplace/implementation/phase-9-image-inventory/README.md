@@ -1,15 +1,37 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit6e_finalized_unit6f_separately_gated`
-**Last updated:** 2026-08-01
+**Status:** `unit6_pre_main_integration_reconciliation_in_progress`
+**Last updated:** 2026-08-10
 **Implementation status:** M01-M08/M10-M30 are live-verified at their recorded
 levels; Unit 6A is merged/live, Unit 6B is merged at `9ef9eb3`, Unit 6C is
 merged through `092562d`, Unit 6D is implemented at `c363b60`, and Unit 6E
 false/missed-variant corrections are finalized at `8bceab2`
-**Supabase mutation status:** M01-M08/M10-M29 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; M30 was applied exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; no other Unit 6E external mutation occurred
-**Database checkpoint:** M01-M08 and forward migrations M10-M30 are live-verified at their recorded levels; M09 remains absent.
+**Supabase mutation status:** M01-M08/M10-M30 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent; WU1 was applied exactly once as `20260803221216 marketplace_phase9_owner_inventory_read_boundary`; no WU1 row, user, fixture, listing, publication, or Storage mutation occurred. A separately authorized Render Unit 4B configuration/startup deployment is recorded in the implementation evidence; no provider inference was run.
+**Database checkpoint:** M01-M08 and forward migrations M10-M30 plus WU1 are live-verified at their recorded levels; M09 remains absent; positive Owner JWT runtime remains deferred.
+M30 was applied exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`.
+M32 is live exactly once as `20260808020404`. The local metadata runtime now
+enforces the exact approved Supabase origin, has no meaningless peer-hash input,
+and is reachable through the existing bounded manual invoker. The one-call
+adapter-only Google Books smoke returned HTTP 200 and passed credential,
+response-bound, decoder, and normalized-result checks without database use.
+No live automatic dispatcher, metadata deployment, candidate, inventory/publication,
+or Unit 7 action is part of this slice. A one-candidate proof requires separate
+authorization and a fresh process-only Google Books key after revocation of the
+chat-exposed temporary key. The inherited service-role key was revalidated on
+2026-08-09 as the exact-project key; only the inherited `SUPABASE_URL` is foreign
+and must be overridden for the worker process.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
+
+The current narrow authority is [Unit 6 pre-main integration reconciliation](./trackers/28-pre-main-integration-reconciliation.md): exact current-required source may be packaged, verified, independently reviewed, cleanly integrated from fresh `origin/main`, and normally published to `main`. M36 remains unapplied. Supabase, Vault, Cron, Render, worker/provider, Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and publication mutations remain separately gated.
+
+WU1 and WU2 remain complete at their recorded levels. Local M32 now closes the
+structural metadata seam with transaction-atomic candidate/job creation,
+same-candidate fenced worker processing, a provider-neutral Google Books path,
+and replay-safe terminal persistence using approved states. Independent review
+and an explicitly authorized exact-project read-only preflight are next. M32
+application, live Gemini/Google Books calls, deployment, automatic dispatch,
+the full runtime matrix, and the representative Android gate remain deferred.
 
 Every new development session starts at repository `AGENTS.md`, then follows `implementation/ACTIVE.md` → DOC-13 → [SESSION-START.md](./SESSION-START.md) → [TRACKER.md](./TRACKER.md). `SESSION-START.md` defines the Phase 9 resume brief, work-unit reading router, Supabase gate, documentation update matrix, and mandatory closeout transaction.
 
@@ -45,6 +67,8 @@ After the repository entrypoint, read in this order:
 | [04 Media, security, and privacy](./04-media-security-privacy-sdd.md) | Trust boundaries, buckets, upload validation, access, retention, deletion, incident and recovery controls. |
 | [05 Marketplace discovery](./05-marketplace-discovery-display-sdd.md) | Bookstore-first discovery, multilingual search, store catalogue, counts, cover/detail display. |
 | [06 Customer photo request](./06-customer-photo-request-extension-sdd.md) | Item-level current-copy photo requests, mandatory fulfillment gate, private evidence, Phase 6 seam. |
+| [WU1 Owner-inventory read boundary](./work-units/owner-inventory-read-boundary-wu1-sdd.md) | Separate stable detail/list read contract, signed deterministic cursor, exact DTO/filter allowlists, Owner authorization, and the applied forward migration; positive Owner runtime remains deferred. |
+| [WU2 Owner-inventory read client](./work-units/owner-inventory-read-client-wu2-sdd.md) | Read-only `/inventory` cutover to the WU1 list RPC, strict DTO validation, opaque pagination, cache isolation, exact filters, and error/empty/partial states; authenticated runtime remains deferred. |
 
 ## Supporting set
 
@@ -88,6 +112,15 @@ The local tracking set intentionally has three files:
 - [Unit 6E evidence](./trackers/23-unit6e-review-corrections-evidence.md):
   false/missed-variant correction closure, M30 readback, bounded remote
   verification, authenticated browser limitation, tests, and final handoff.
+- [Unit 6F evidence](./trackers/24-unit6f-readiness-quality-gates-evidence.md):
+  bounded browser/readback verification, local quality gates, architectural
+  risk, and the outstanding representative low-end Android gate.
+- [WU1 evidence](./trackers/25-owner-inventory-read-boundary-wu1-evidence.md):
+  re-sequencing, exact-project preflight/application/readback, red-first contract
+  tests, local behavior, anonymous denial, and the deferred Owner runtime gate.
+- [WU2 evidence](./trackers/26-owner-inventory-read-client-wu2-evidence.md):
+  active-route cutover, strict client contract, pagination/cache behavior,
+  read-only UI states, focused/regression tests, and deferred runtime evidence.
 - [Planning and decisions](./trackers/01-planning-and-decisions.md): decision register, source reconciliation, audit evidence, and planning review.
 - [Implementation and verification](./trackers/02-implementation-and-verification.md): future work units, migration ledger, tests, rollout, and operational evidence.
 
@@ -99,7 +132,9 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 - One image contains at most 15 visible book spines. Current runtime requires
   selected language; approved target auto-detects with optional hints.
-- Capture supports camera and gallery/manual upload; multiple images may be processed in one simple Start/Close session.
+- Capture supports camera and gallery/manual upload with one current image per
+  simple Start/Close session. An explicit pre-candidate removal enables one
+  replacement; append-style multi-image capture is not allowed.
 - Current runtime defaults the required batch language to English. Unit 5C Lite
   target instead auto-detects per field, accepts optional hints, and still
   excludes per-spine model switching.
@@ -119,7 +154,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, WU0A/WU0B, corrected Package 1 design, Units through 5C-6, and Unit 6A-6E are integrated at their recorded checkpoints. M01-M08/M10-M30, Owner ingestion, and both separate fixture workers are live-verified; M09 remains absent. Unit 6E's correction-only M30 is additive and was applied exactly once after exact-project preflight; the next bounded task is Unit 6F only and requires separate authorization. Customer display, inventory/publication, commerce, Google Books Roman-query fallback, global alias authority, and Unit 7 remain separately gated. Preserve these controls:
+The planning baseline, WU0A/WU0B, corrected Package 1 design, Units through 5C-6, and Unit 6A-6E are integrated at their recorded checkpoints. M01-M08/M10-M30, Owner ingestion, and both separate fixture workers are live-verified; M09 remains absent. Unit 6E's correction-only M30 is additive and was applied exactly once after exact-project preflight. Unit 6F browser/readback verification and the local fixture-backed fifteen-card UI check are recorded, but real Gemini inference, production metadata enrichment, the complete upload-to-review path, and representative low-end Android evidence remain unproven. Customer display, inventory/publication, commerce, Google Books Roman-query fallback, global alias authority, and Unit 7 remain separately gated. Preserve these controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

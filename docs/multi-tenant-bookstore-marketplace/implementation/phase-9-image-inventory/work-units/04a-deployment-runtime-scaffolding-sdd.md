@@ -191,3 +191,19 @@ deterministic start artifacts, deployment validation, and Owner JWT configuratio
 Stop before live application when any verification fails, a provider credential or
 automatic scheduler appears, M11/M12 or Supabase/Storage changes, evidence cleanup
 is claimed, or the Library branch changes.
+
+## 11. 2026-08-09 metadata local-runtime addendum
+
+Later Unit 5/M32 authority adds a third local metadata worker without changing
+the historical media/vision deployment decision. All privileged Phase 9 workers
+now accept only `https://ahntbtktjjmvfosgkmgn.supabase.co`. Metadata is not a
+peer of media or vision: it is manually invoked and claims database-owned jobs,
+so it neither requires nor accepts `PHASE9_PEER_WORKER_INGRESS_TOKEN_SHA256`.
+Media and vision retain their mutual peer-fingerprint requirement unchanged.
+
+`npm run invoke:phase9:worker -- metadata` selects only
+`PHASE9_METADATA_WORKER_URL` and `PHASE9_METADATA_WORKER_INGRESS_TOKEN`, sends
+the existing contract-version/batch-size body, and retains the timeout, response
+bound, and summary allowlist. Local server/provider secrets are injected only into
+the child-process environment and never into repository `.env` files. Fresh
+exact-project control-plane verification remains mandatory before privileged use.

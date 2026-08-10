@@ -1,7 +1,7 @@
 # Phase 9 Planning and Decision Tracker
 
 **Status:** `approved_baseline`
-**Last updated:** 2026-07-29
+**Last updated:** 2026-08-10
 **Purpose:** retain detailed product decisions, audit evidence, reconciliations, and deferred choices without inflating the master tracker
 
 ## Decision register
@@ -11,7 +11,7 @@
 | P9-D01 | Phase 9 first capture mode is `spine_stack`, maximum 15 books per image. | locked |
 | P9-D02 | More than 15 detected spines causes reject/rescan; the system never silently truncates the image. | locked |
 | P9-D03 | Camera and gallery/manual upload are both supported. | locked |
-| P9-D04 | A session has only Start and Close, may contain multiple images, and ends with a summary. No user-visible pause/save/discard state. | locked |
+| P9-D04 | A session has only Start and Close, may contain multiple images, and ends with a summary. No user-visible pause/save/discard state. | multiple-image portion superseded by P9-D70; remaining Start/Close rule retained |
 | P9-D05 | Close is available only when each submitted input is terminal (`ready`, `failed`, or explicitly skipped). Leaving the app keeps the server session active. | locked by design delegation |
 | P9-D06 | Session defaults cover condition, shelf/location, publication preference, language, and quantity=1. First-session publication default is private; a prior explicit preference may be reused. | language-default portion superseded by P9-D65; remaining defaults locked |
 | P9-D07 | Owner-only pilot. Manager/staff concurrent scanning is deferred. | locked by design delegation |
@@ -77,6 +77,7 @@
 | P9-D67 | Title and author confirmation/reconciliation is independent; deterministic keys are not variants; only active store-scoped variants search; global promotion requires future catalogue governance. | approved target 2026-07-29 |
 | P9-D68 | Metadata failure permits an Owner-confirmed nullable-canonical listing under existing gates. Public listing still requires a positive selling price; price-on-request is excluded. | approved target 2026-07-29 |
 | P9-D69 | Unit 5C makes no provider call. Roman-query Google Books fallback is a separately authorized Unit 5B extension with at most two distinct logical query plans. | approved boundary 2026-07-29 |
+| P9-D70 | A Start/Close session has one current image. The Owner may explicitly remove it only before candidate lineage exists, canceling only exact input work and scheduling hold-aware private cleanup; only then may one replacement be uploaded. No candidate, inventory, listing, or immediate Storage cascade is allowed. | founder decision 2026-08-10; supersedes P9-D04 multiple-image portion |
 
 ## Source reconciliation
 

@@ -31,7 +31,7 @@ Owner starts simple session and selects defaults; language hint is optional
   -> captures or uploads one image (maximum 15 spines)
   -> private server boundary validates, re-encodes, strips EXIF, quality-checks
   -> primary vision adapter extracts original title/author and field language/script
-  -> optional variant sidecar returns bounded provisional linguistic forms
+  -> compact optional Romanization/translation fields are validated independently
   -> at most one whole-image fallback for technical/schema/broad failure
   -> local canonical lookup, then configured primary/secondary metadata adapters
   -> coherent metadata or Owner-confirmed unmatched data confirms source fields
@@ -53,7 +53,11 @@ Phase 9 first slice is `spine_stack`.
 - Camera capture and gallery/manual upload are both supported.
 - One image contains 1-15 visible book spines.
 - More than 15 detected spines causes reject/rescan; do not silently truncate.
-- Multiple images may be processed in one session.
+- A session has one current image. The Owner may explicitly remove it only
+  before it has candidate lineage, then choose one replacement image.
+- Removal is logical and cancels only that input's active processing. It never
+  cascades into candidates, inventory, or listings; private media deletion stays
+  hold-aware lifecycle work.
 - One visible spine is one candidate; repeated spines remain repeated.
 - A framing guide and blur/glare/resolution/decodability check should reject poor images before model cost.
 - Exact image hash may prevent replay/double charging but is never duplicate-book evidence.
@@ -64,19 +68,20 @@ Phase 9 first slice is `spine_stack`.
 
 ## 4. Language behavior
 
-The deployed runtime still requires one selected language, defaults to English,
-and skips mismatched/unknown-language observations. That implemented behavior is
-not changed by this specification.
+The current runtime treats the session-selected language as a non-authoritative
+hint. It retains mixed-language observations, maps provider null language to
+canonical `und`, and creates candidates for titled observations whose detected
+language is not `und`.
 
-The approved target is [Unit 5C Lite](./implementation/phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md):
+The governing Unit 5C behavior is:
 
 - auto-detection is the default; scan/store language values are optional hints;
 - hints never force every spine or field into one language;
 - title and each author retain independent BCP 47 language and ISO 15924 script;
 - confirmed original-language title/author remain primary;
 - title and author confirmation and variant activation are independent;
-- `p9-vision-v2` remains the strict current result while an optional
-  `search_variant_proposals_v1` sidecar carries bounded provisional variants;
+- `p9-vision-v2` remains the strict persisted result while compact optional
+  Romanization/translation fields map into the existing private proposal model;
 - deterministic search keys are not linguistic variants;
 - only active store-scoped variants search, never define identity/duplicates;
 - transliteration, plain Roman search spelling, and translation remain distinct;
@@ -91,7 +96,7 @@ User-visible controls are Start session and Close session with summary. There is
 
 Before Start, preselect:
 
-- current runtime selected language; approved target optional language hint;
+- optional language hint;
 - base condition;
 - shelf/location;
 - quantity 1;
@@ -106,7 +111,7 @@ First-session publication defaults private; a prior explicit preference may be r
 The model receives only:
 
 - sanitized image;
-- current selected language/script or future optional hint;
+- optional language hint;
 - maximum candidate count 15;
 - strict task/schema version;
 - opaque correlation ID.
@@ -115,14 +120,20 @@ It does not receive store/customer PII, shelf location, database IDs, credential
 
 Expected output:
 
-- ordered candidate index/optional bounding box;
-- observed original-language title with field language/script in the target;
-- observed original-language author(s), each with field language/script in the target;
+- ordered candidate index;
+- observed original-language title;
+- up to five observed original-language author guesses;
 - optional visible ISBN clue;
-- current candidate-level selected/detected language/script;
-- optional target `search_variant_proposals_v1` sidecar;
-- bounded confidence/warnings;
-- image outcome such as accepted, empty, wrong language, over cap, or quality failure.
+- detected candidate language;
+- optional compact title Romanization, English title translation, and
+  positionally aligned author Romanizations;
+- bounded confidence;
+- image outcome such as analyzed, empty, over cap, or quality failure.
+
+Gemini receives JSON MIME mode and the flat compact prompt, not a provider-side
+response schema. BookConnect performs strict local decoding, adds canonical
+provenance plus null geometry/closed warnings, and maps usable enrichment into
+the existing M18/M19 persistence contract.
 
 All output is untrusted, length/count/schema validated, and rendered as plain text. Model-provided commands, URLs, paths, SQL, or active markup are rejected.
 
@@ -134,9 +145,8 @@ All output is untrusted, length/count/schema validated, and rendered as plain te
 - Use one primary and at most one whole-image fallback.
 - Fallback is allowed for transient technical failure, invalid schema, or broadly unusable output.
 - Do not invoke fallback per candidate.
-- Do not invoke fallback for valid empty/no-book, over-cap, current-runtime
-  language mismatch, invalid upload, policy denial, or a missing/invalid Unit 5C
-  sidecar.
+- Do not invoke fallback for valid empty/no-book, over-cap, invalid upload,
+  policy denial, or missing/invalid optional enrichment.
 - Manual correction remains the final fallback.
 
 Model/provider/prompt/schema versions, latency, error class, fallback, and cost units are observable without storing raw content in telemetry.
@@ -276,7 +286,9 @@ Required concepts:
 - commit idempotency/version/audit/provenance;
 - lifecycle/retention/hold/deletion fields.
 
-`store_id` is the tenant discriminator. The exact current-vs-target audit and field dictionary are in the Phase 9 supporting set. No migration exists yet.
+`store_id` is the tenant discriminator. The exact current-vs-target audit and
+field dictionary are in the Phase 9 supporting set. M01-M35 are applied at their
+recorded live versions; M36 remains local and unapplied.
 
 ---
 
@@ -285,11 +297,11 @@ Required concepts:
 | ID | Criterion |
 | --- | --- |
 | IMG-01 | Only an active authorized Owner can start/operate a session for the server-derived store. |
-| IMG-02 | Camera/gallery spine images process 1–15 candidates; current runtime selected-language behavior is explicit and target hints never force fields. |
+| IMG-02 | Camera/gallery spine images process 1–15 candidates; language hints never reject or force detected identity fields. |
 | IMG-03 | More than 15 rejects/rescans and never truncates. |
 | IMG-04 | One primary and at most one whole-image fallback use a strict schema and no tools. |
 | IMG-05 | Local-first, primary/secondary metadata enrichment is provider-agnostic and coherent. |
-| IMG-06 | Confirmed original-language fields remain primary; optional sidecar variants are bounded, field-reconciled, store-scoped, provenance-bearing, and active-only for search. |
+| IMG-06 | Confirmed original-language fields remain primary; compact optional enrichment is bounded, field-reconciled, store-scoped, provenance-bearing, and active-only for search. |
 | IMG-07 | Owner review confirms required inventory fields before every create/increment. |
 | IMG-08 | Duplicate warnings are advisory, explicit, same-store, concurrency-safe, and contain no image comparison. |
 | IMG-09 | Each candidate commit is atomic/idempotent and preserves Phase 6 quantities/holds. |
@@ -309,7 +321,7 @@ Required concepts:
 ## 16. Deferred
 
 - high-volume shelf batch;
-- mixed-language/per-spine routing;
+- per-spine model routing;
 - image similarity duplicates;
 - auto-publish without owner review;
 - manager/staff concurrent scanning;

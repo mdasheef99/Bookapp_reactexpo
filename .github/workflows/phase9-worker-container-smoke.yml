@@ -14,6 +14,7 @@ on:
       - "workers/phase9-runtime/**"
       - "workers/phase9-media-validation-worker/**"
       - "workers/phase9-vision-analysis-worker/**"
+      - "workers/phase9-metadata-worker/**"
       - "docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/04-deployment-runtime-scaffolding-evidence.md"
   pull_request:
     branches:
@@ -28,6 +29,7 @@ on:
       - "workers/phase9-runtime/**"
       - "workers/phase9-media-validation-worker/**"
       - "workers/phase9-vision-analysis-worker/**"
+      - "workers/phase9-metadata-worker/**"
       - "docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/04-deployment-runtime-scaffolding-evidence.md"
   workflow_dispatch:
 
@@ -45,5 +47,5 @@ jobs:
     steps:
       - name: Check out candidate
         uses: actions/checkout@v4
-      - name: Build and smoke both worker images
+      - name: Build and smoke all worker images
         run: npm run smoke:phase9:worker-containers

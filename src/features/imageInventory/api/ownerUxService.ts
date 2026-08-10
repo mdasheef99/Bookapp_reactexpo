@@ -7,6 +7,7 @@ import {
     type OwnerCandidatePage,
     type OwnerDiscovery,
     type OwnerInputPage,
+    type OwnerRemoveInputResult,
     type OwnerSessionReadiness,
     type OwnerSessionSummary,
     type OwnerUxAction,
@@ -106,6 +107,25 @@ const operationErrors: Record<OwnerUxAction, ReadonlySet<OwnerUxErrorCode>> = {
         'P9_REQUEST_INVALID',
         'P9_INTERNAL_ERROR',
     ]),
+    remove_scan_input: new Set([
+        'P9_AUTH_REQUIRED',
+        'P9_OWNER_NOT_AUTHORIZED',
+        'P9_REQUEST_INVALID',
+        'P9_NOT_FOUND',
+        'P9_STATE_CONFLICT',
+        'P9_VERSION_CONFLICT',
+        'P9_IDEMPOTENCY_MISMATCH',
+        'P9_INTERNAL_ERROR',
+    ]),
+    close_scan_session: new Set([
+        'P9_AUTH_REQUIRED',
+        'P9_OWNER_NOT_AUTHORIZED',
+        'P9_REQUEST_INVALID',
+        'P9_STATE_CONFLICT',
+        'P9_VERSION_CONFLICT',
+        'P9_IDEMPOTENCY_MISMATCH',
+        'P9_INTERNAL_ERROR',
+    ]),
 };
 
 function registeredError(code: OwnerUxErrorCode): OwnerUxClientError {
@@ -142,6 +162,7 @@ async function normalizeError(
 async function invoke<Action extends OwnerUxAction>(
     action: Action,
     body: Record<string, unknown>,
+    signal?: AbortSignal,
 ) {
     const request = decodeOwnerUxRequest(action, {
         action,
@@ -152,6 +173,7 @@ async function invoke<Action extends OwnerUxAction>(
     try {
         const result = await supabase.functions.invoke('phase9-owner-ingestion', {
             body: request,
+            ...(signal ? { signal } : {}),
         });
         if (result.error) throw await normalizeError(action, result.error);
         const data = decodeOwnerUxResponse(action, result.data);
@@ -194,6 +216,21 @@ export type UpdateCandidateReviewRequest = Readonly<{
     commandId: string;
 }>;
 
+export type CloseScanSessionRequest = Readonly<{
+    sessionId: string;
+    expectedSessionVersion: number;
+    idempotencyKey: string;
+    commandId: string;
+}>;
+
+export type RemoveScanInputRequest = Readonly<{
+    sessionId: string;
+    inputId: string;
+    expectedInputVersion: number;
+    idempotencyKey: string;
+    commandId: string;
+}>;
+
 export const ownerUxService = {
     discover(): Promise<OwnerDiscovery> {
         return invoke('discover_scan_session', {});
@@ -208,6 +245,12 @@ export const ownerUxService = {
     ): Promise<OwnerInputPage> {
         return invoke('list_scan_inputs', { sessionId, pageSize, cursor });
     },
+    removeInput(
+        request: RemoveScanInputRequest,
+        signal?: AbortSignal,
+    ): Promise<OwnerRemoveInputResult> {
+        return invoke('remove_scan_input', request, signal);
+    },
     listCandidates(request: CandidatePageRequest): Promise<OwnerCandidatePage> {
         return invoke('list_scan_candidates', {
             ...request,
@@ -218,10 +261,16 @@ export const ownerUxService = {
     readCandidate(sessionId: string, candidateId: string): Promise<OwnerCandidateDetail> {
         return invoke('read_scan_candidate', { sessionId, candidateId });
     },
-    updateCandidateReview(request: UpdateCandidateReviewRequest): Promise<OwnerCandidateDetail> {
-        return invoke('update_candidate_review', request);
+    updateCandidateReview(
+        request: UpdateCandidateReviewRequest,
+        signal?: AbortSignal,
+    ): Promise<OwnerCandidateDetail> {
+        return invoke('update_candidate_review', request, signal);
     },
     readReadiness(sessionId: string): Promise<OwnerSessionReadiness> {
         return invoke('read_scan_readiness', { sessionId });
+    },
+    closeSession(request: CloseScanSessionRequest, signal?: AbortSignal): Promise<OwnerSessionReadiness> {
+        return invoke('close_scan_session', request, signal);
     },
 };

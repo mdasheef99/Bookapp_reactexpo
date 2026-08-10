@@ -3,6 +3,7 @@ import { Linking, ScrollView, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -17,11 +18,11 @@ import {
     validateSelectedMedia,
     type CaptureSource,
 } from '../capture/captureState';
-import { createCaptureUuid, createSemanticKey } from '../capture/captureIds';
+import { createCaptureAttempt, type CaptureAttempt } from '../capture/captureIds';
+import { captureDefaults, hasCurrentCaptureIdentity } from '../capture/captureAuthority';
 import { useCaptureWorkflow } from '../capture/CaptureWorkflowContext';
 import { registerCaptureCancellation } from '../capture/captureCancellation';
 import type { UploadHandle } from '../capture/uploadTransport';
-import { getResolvedImageInventoryIdentity } from '../queries/ownerUxQueries';
 import {
     imageInventoryKeys,
     type ImageInventoryIdentity,
@@ -30,13 +31,7 @@ import {
 } from '../queries/ownerUxQueries';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
-
-const defaults = { language: 'en', script: 'Latn', condition: 'good' as const };
-
-function sameIdentity(expected: ImageInventoryIdentity): boolean {
-    const current = getResolvedImageInventoryIdentity();
-    return current?.userId === expected.userId && current.storeId === expected.storeId;
-}
+import { useOwnerQueryMutationGate } from '../offline/ownerUxOfflineGate';
 
 function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
     const router = useRouter();
@@ -49,10 +44,14 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
     const operationGeneration = useRef(0);
     const [sourceStep, setSourceStep] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
-    const startAttempt = useRef({
-        key: createSemanticKey('start-session'),
-        commandId: createCaptureUuid(),
+    const [startAttempt] = useState(() => createCaptureAttempt('start-session'));
+    const gate = useOwnerQueryMutationGate({
+        scope: `${identity.userId}:${identity.storeId}:capture-setup`,
+        isOffline,
+        query: discovery,
     });
+    const mutationAuthority = useRef(gate.canMutate);
+    mutationAuthority.current = gate.canMutate;
     useEffect(() => registerCaptureCancellation(() => {
         operationGeneration.current += 1;
         busyRef.current = false;
@@ -61,7 +60,7 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
     }), []);
 
     async function choose(source: CaptureSource) {
-        if (busyRef.current || isOffline) return;
+        if (busyRef.current || !gate.canMutate) return;
         busyRef.current = true;
         const attempt = ++operationGeneration.current;
         setBusy(true);
@@ -74,9 +73,9 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
                 ? ImagePicker.requestCameraPermissionsAsync
                 : ImagePicker.requestMediaLibraryPermissionsAsync;
             let permission = await getPermission();
-            if (attempt !== operationGeneration.current || !sameIdentity(identity)) return;
+            if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             if (!permission.granted && permission.canAskAgain) permission = await requestPermission();
-            if (attempt !== operationGeneration.current || !sameIdentity(identity)) return;
+            if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             const normalized = permissionState(permission);
             if (normalized !== 'granted') {
                 setMessage(normalized === 'settings_required'
@@ -92,21 +91,21 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
                     mediaTypes: ['images'], allowsEditing: false, quality: 1, exif: false, base64: false,
                     allowsMultipleSelection: false,
                 });
-            if (attempt !== operationGeneration.current || !sameIdentity(identity)) return;
+            if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             if (result.canceled) return;
             const validated = validateSelectedMedia(result.assets[0], source);
             if (!validated.ok) {
                 setMessage(validated.message);
                 return;
             }
-            if (attempt !== operationGeneration.current || !sameIdentity(identity)) return;
+            if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             const sessionId = discovery.data?.activeSession?.sessionId
                 ?? await captureService.startSession(
-                    defaults,
-                    startAttempt.current.key,
-                    startAttempt.current.commandId,
+                    captureDefaults,
+                    startAttempt.key,
+                    startAttempt.commandId,
                 );
-            if (attempt !== operationGeneration.current || !sameIdentity(identity)) return;
+            if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             workflow.select(validated.media);
             router.push(inventoryRoutes.preview(sessionId));
         } catch (error) {
@@ -139,11 +138,11 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
                     </Text>
                     <View style={{ gap: 12, marginTop: 18 }}>
                         {!sourceStep ? (
-                            <Button title="Start scanning" onPress={() => setSourceStep(true)} disabled={busy || isOffline || discovery.isLoading} testID="capture-start" />
+                            <Button title="Start scanning" onPress={() => setSourceStep(true)} disabled={busy || !gate.canMutate || discovery.isLoading} testID="capture-start" />
                         ) : (
                             <>
-                                <Button title="Open camera" onPress={() => void choose('camera')} disabled={busy || isOffline} testID="capture-camera" />
-                                <Button title="Choose from gallery" variant="secondary" onPress={() => void choose('gallery')} disabled={busy || isOffline} testID="capture-gallery" />
+                                <Button title="Open camera" onPress={() => void choose('camera')} disabled={busy || !gate.canMutate} testID="capture-camera" />
+                                <Button title="Choose from gallery" variant="secondary" onPress={() => void choose('gallery')} disabled={busy || !gate.canMutate} testID="capture-gallery" />
                             </>
                         )}
                         {message?.includes('settings') ? (
@@ -164,9 +163,10 @@ export function InventoryCaptureSetupScreen() {
 
 function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; sessionId: string }) {
     const router = useRouter();
+    const isFocused = useIsFocused();
     const queryClient = useQueryClient();
     const workflow = useCaptureWorkflow();
-    const inputs = useOwnerInventoryInputs(identity, sessionId);
+    const inputs = useOwnerInventoryInputs(identity, sessionId, isFocused);
     const { isOffline } = useNetworkStatus();
     const { colors } = useTheme();
     const [state, dispatch] = useReducer(uploadReducer, initialUploadState);
@@ -174,9 +174,17 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
     const running = useRef(false);
     const active = useRef<UploadHandle | null>(null);
     const prepared = useRef<PreparedUpload | null>(null);
-    const authorizeAttempt = useRef({ key: createSemanticKey('authorize-upload'), commandId: createCaptureUuid() });
-    const registerAttempt = useRef({ key: createSemanticKey('register-upload'), commandId: createCaptureUuid() });
+    const authorizeAttempt = useRef<CaptureAttempt | null>(null);
+    const registerAttempt = useRef<CaptureAttempt | null>(null);
+    const successfulNavigation = useRef(false);
     const media = workflow.selected;
+    const gate = useOwnerQueryMutationGate({
+        scope: `${identity.userId}:${identity.storeId}:${sessionId}:upload`,
+        isOffline,
+        query: inputs,
+    });
+    const mutationAuthority = useRef(gate.canMutate);
+    mutationAuthority.current = gate.canMutate;
 
     const cancel = () => {
         generation.current += 1;
@@ -191,11 +199,13 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
         return () => {
             unregister();
             cancel();
+            if (successfulNavigation.current) { successfulNavigation.current = false; workflow.clear(); }
         };
-    }, []);
+    }, [workflow.clear]);
 
     async function upload() {
-        if (!media || isOffline || running.current) return;
+        if (!media || !mutationAuthority.current || running.current
+            || (inputs.data?.items.length ?? 0) > 0) return;
         running.current = true;
         const nextGeneration = ++generation.current;
         let registrationStarted = false;
@@ -206,51 +216,56 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
             if (!registrationReplay && (
                 !uploadAttempt || Date.parse(uploadAttempt.expiresAt) <= Date.now() + 5_000
             )) {
-                authorizeAttempt.current = { key: createSemanticKey('authorize-upload'), commandId: createCaptureUuid() };
+                const nextAuthorizeAttempt = createCaptureAttempt('authorize-upload');
+                authorizeAttempt.current = nextAuthorizeAttempt;
                 uploadAttempt = await captureService.prepareUpload(
                     sessionId,
                     media,
                     (inputs.data?.items.length ?? 0) + 1,
-                    authorizeAttempt.current.key,
-                    authorizeAttempt.current.commandId,
+                    nextAuthorizeAttempt.key,
+                    nextAuthorizeAttempt.commandId,
                 );
+                if (!mutationAuthority.current) return;
                 prepared.current = uploadAttempt;
-                registerAttempt.current = {
-                    key: createSemanticKey('register-upload'),
-                    commandId: createCaptureUuid(),
-                };
+                registerAttempt.current = createCaptureAttempt('register-upload');
             }
             if (!uploadAttempt) throw new CaptureClientError(
                 'P9_INTERNAL_ERROR',
                 true,
                 'Upload preparation is unavailable.',
             );
-            if (generation.current !== nextGeneration || !sameIdentity(identity)) return;
+            if (generation.current !== nextGeneration || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             if (!registrationReplay) {
                 dispatch({ type: 'authorized', generation: nextGeneration });
                 active.current = uploadAttempt.upload((progress) => {
                     dispatch({ type: 'progress', generation: nextGeneration, progress });
                 });
                 await active.current.promise;
-                if (generation.current !== nextGeneration || !sameIdentity(identity)) return;
+                if (generation.current !== nextGeneration || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             }
             dispatch({ type: 'register', generation: nextGeneration });
             registrationStarted = true;
-            await uploadAttempt.register(
-                registerAttempt.current.key,
-                registerAttempt.current.commandId,
+            if (!mutationAuthority.current) return;
+            const currentRegisterAttempt = registerAttempt.current;
+            if (!currentRegisterAttempt) throw new CaptureClientError(
+                'P9_INTERNAL_ERROR',
+                true,
+                'Upload registration identity is unavailable.',
             );
-            if (generation.current !== nextGeneration || !sameIdentity(identity)) return;
+            await uploadAttempt.register(currentRegisterAttempt.key, currentRegisterAttempt.commandId);
+            if (generation.current !== nextGeneration || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             dispatch({ type: 'success', generation: nextGeneration });
-            workflow.clear();
             prepared.current = null;
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: imageInventoryKeys.discovery(identity) }),
                 queryClient.invalidateQueries({ queryKey: imageInventoryKeys.session(identity, sessionId) }),
                 queryClient.invalidateQueries({ queryKey: imageInventoryKeys.inputs(identity, sessionId) }),
             ]);
+            if (generation.current !== nextGeneration || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
+            successfulNavigation.current = true;
             router.replace(inventoryRoutes.session(sessionId));
         } catch (error) {
+            successfulNavigation.current = false;
             if (generation.current !== nextGeneration) return;
             const captureError = error instanceof CaptureClientError ? error : null;
             let retryPhase: 'transport' | 'registration' = registrationStarted
@@ -309,6 +324,9 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                         </Text>
                     ) : null}
                     {state.message ? <Text selectable style={{ color: colors.error, marginTop: 10 }}>{state.message}</Text> : null}
+                    {(inputs.data?.items.length ?? 0) > 0 ? (
+                        <Text selectable accessibilityLiveRegion="assertive" style={{ color: colors.error, marginTop: 10 }}>This scan already has an image. Remove it before choosing a replacement.</Text>
+                    ) : null}
                     <View style={{ gap: 12, marginTop: 18 }}>
                         {state.stage !== 'terminal_error' ? (
                             <Button
@@ -318,7 +336,7 @@ function Preview({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                                         ? 'Retry upload'
                                         : 'Upload image'}
                                 onPress={() => void upload()}
-                                disabled={isOffline || ['authorizing', 'uploading', 'registration_pending'].includes(state.stage)}
+                                disabled={!gate.canMutate || (inputs.data?.items.length ?? 0) > 0 || ['authorizing', 'uploading', 'registration_pending'].includes(state.stage)}
                             />
                         ) : null}
                         {['authorizing', 'uploading'].includes(state.stage) ? <Button title="Cancel upload" variant="secondary" onPress={cancel} /> : null}

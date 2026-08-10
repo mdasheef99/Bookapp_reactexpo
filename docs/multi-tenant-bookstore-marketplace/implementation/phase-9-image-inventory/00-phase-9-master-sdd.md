@@ -4,11 +4,10 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 **Phase:** 9
-**Implementation checkpoint (2026-07-29):** Units 0–5B are complete at their
-recorded levels; Unit 5B is fixture/mock verified only. Unit 5C-1 implements the
-provider-neutral optional proposal contract and fixture-gated independent
-validation seam only. The current Gemini generation, selected-language runtime,
-strict `p9-vision-v2`, and live M01 alias schema remain unchanged.
+**Implementation checkpoint (2026-08-10):** the current Unit 6 ingestion path is
+implemented through Owner review. M32-M35 are live; M36 is reviewed local code
+and remains unapplied. Gemini uses a compact flat JSON contract, session language
+is a hint, and Google Books requests `projection=full`.
 
 **Unit 4B local checkpoint (2026-07-27):** the configuration-driven
 `gemini-3.5-flash-lite` adapter is locally implemented behind the same
@@ -35,7 +34,11 @@ This SDD refines DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14. T
 - Camera and gallery upload.
 - Spine stacks with a maximum 15 books/image; current runtime requires selected
   language, while the approved target auto-detects with optional hints.
-- Multiple images in a simple Start/Close session.
+- One current image in a simple Start/Close session. Before candidate lineage
+  exists, the Owner may explicitly remove that image and choose one replacement;
+  append-style additional images are not allowed. Removal is logical, cancels
+  only that input's active media/vision work, and does not cascade into
+  candidates, inventory, listings, or immediate Storage deletion.
 - Persistent asynchronous extraction and enrichment.
 - Model/provider adapter contracts and bounded fallback.
 - Rich book metadata plus bounded, field-specific, store-scoped linguistic
@@ -63,7 +66,7 @@ This SDD refines DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14. T
 
 | ID | Invariant |
 | --- | --- |
-| MAS-01 | One accepted image contains 1–15 visible spine candidates. More than 15 is rejected for rescan. Current runtime applies selected-language filtering; the approved target uses field detection and optional hints. |
+| MAS-01 | One accepted image contains 1–15 visible spine candidates. More than 15 is rejected for rescan. Session language is a non-authoritative hint and never forces or rejects detected identity. |
 | MAS-02 | Model/provider output is untrusted input. Only deterministic validated code can advance state or write data. |
 | MAS-03 | Every store-owned row and media object is scoped by server-derived `store_id`; a client value cannot grant authority. |
 | MAS-04 | Confirmed original-language title and author remain primary. Deterministic keys are not variants; active store-scoped linguistic variants are search-only and never duplicate/canonical evidence. |
@@ -81,7 +84,7 @@ This SDD refines DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14. T
 | MAS-16 | Provider outage, ambiguity, quota/capacity exhaustion, breaker-open state, or kill switch preserves Owner/manual unmatched inventory as a successful path. |
 | MAS-17 | Worker correctness is horizontally safe: durable jobs, leases, attempt numbers, idempotency and fencing—not process-local state—own authorization and accepted transitions. |
 | MAS-18 | Unit 5C title and author confirmation/reconciliation is independent; no candidate-level approval activates unrelated fields. |
-| MAS-19 | `p9-vision-v2` remains the strict current result. A future optional `search_variant_proposals_v1` sidecar cannot invalidate otherwise valid extraction. |
+| MAS-19 | `p9-vision-v2` remains the strict persisted result. Optional compact Romanization/translation enrichment is independently validated, maps into the existing proposal persistence contract, and cannot invalidate otherwise valid extraction. |
 
 ## 4. Target architecture
 
@@ -110,20 +113,17 @@ flowchart LR
 ## 5. End-to-end workflow
 
 1. Owner starts a session after the server verifies active Owner capability, entitlement/quota, feature flag, locality/store allowlist, and no conflicting session policy.
-2. UI preselects condition, shelf/location, quantity 1, and publication
-   preference. Current runtime also requires selected language; the approved
-   target treats language as an optional hint. First publication preference is private.
+2. UI preselects condition, shelf/location, quantity 1, publication preference,
+   and an optional language hint. First publication preference is private.
 3. Owner captures or uploads an image. The app may do local guidance, but the server is authoritative.
 4. Server creates a private media asset, validates signature/MIME/decode/size/pixels, re-encodes, strips metadata, hashes it, and checks replay/quota policy.
 5. Quality gate checks blur, glare, resolution, framing, and count envelope. An image with more than 15 spines is rejected; it is never truncated silently.
 6. A persistent job invokes the primary vision adapter with only the sanitized
-   image, current language context or future optional hint, strict task/schema,
-   and opaque correlation ID.
-7. Output is schema-validated and bounded. The current runtime persists only
-   selected-language candidates under strict `p9-vision-v2`. The approved target
-   adds field language/script and an optional independently validated variant
-   sidecar; sidecar failure cannot invalidate extraction. More than 15 rejects
-   the complete image.
+   image, optional language hint, strict task/schema, and opaque correlation ID.
+7. Output is locally schema-validated and bounded. The runtime persists usable
+   detected-language candidates under strict `p9-vision-v2`; compact optional
+   enrichment is validated independently and cannot invalidate extraction. More
+   than 15 rejects the complete image.
 8. Each observed candidate is looked up locally, then through sequential configured metadata providers if necessary. One coherent edition snapshot is selected.
 9. Unit 5C Lite reconciles bounded provisional title/author variants against
    independently confirmed source fields. Only active store-scoped variants

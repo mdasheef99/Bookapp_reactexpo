@@ -11,6 +11,7 @@ export type SafeOperationalEvent = Readonly<{
   claimed?: number;
   outcomes?: readonly string[];
   durationMs?: number;
+  dispatchId?: string;
   category?: 'unauthorized' | 'busy' | 'body_too_large' | 'body_read_timeout'
     | 'invalid_route';
 }>;
@@ -42,6 +43,12 @@ const jsonHeaders = {
   pragma: 'no-cache',
 };
 const safeOutcome = /^[a-z][a-z0-9_]{0,63}$/u;
+const safeDispatchId = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
+
+function requestDispatchId(value: string | string[] | undefined): string | undefined {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  return candidate && safeDispatchId.test(candidate) ? candidate : undefined;
+}
 
 function sendJson(response: ServerResponse, status: number, body: unknown): void {
   response.writeHead(status, jsonHeaders);
@@ -156,6 +163,7 @@ export function createPhase9WorkerHttpService(
       sendJson(response, 403, { error: 'forbidden' });
       return;
     }
+    const dispatchId = requestDispatchId(request.headers['x-phase9-dispatch-id']);
 
     const declared = Number(request.headers['content-length'] ?? 0);
     if (Number.isFinite(declared) && declared > maxBodyBytes) {
@@ -164,6 +172,7 @@ export function createPhase9WorkerHttpService(
         service: options.serviceName,
         status: 413,
         category: 'body_too_large',
+        dispatchId,
       });
       sendJson(response, 413, { error: 'request_body_too_large' });
       return;
@@ -174,6 +183,7 @@ export function createPhase9WorkerHttpService(
         service: options.serviceName,
         status: 409,
         category: 'busy',
+        dispatchId,
       });
       sendJson(response, 409, { error: 'worker_busy' });
       return;
@@ -188,6 +198,7 @@ export function createPhase9WorkerHttpService(
         event: 'invocation_accepted',
         service: options.serviceName,
         batchSize,
+        dispatchId,
       });
       const webRequest = new Request(`http://worker.local${url.pathname}`, {
         method: 'POST',
@@ -204,6 +215,7 @@ export function createPhase9WorkerHttpService(
         claimed: summary.claimed,
         outcomes: summary.outcomes,
         durationMs: Math.max(0, Math.round(performance.now() - started)),
+        dispatchId,
         ...(handled.status === 403 ? { category: 'unauthorized' as const } : {}),
       });
       await relay(handled, response);
@@ -214,6 +226,7 @@ export function createPhase9WorkerHttpService(
           service: options.serviceName,
           status: 413,
           category: 'body_too_large',
+          dispatchId,
         });
         sendJson(response, 413, { error: 'request_body_too_large' });
       } else if (error instanceof Error && error.message === 'body_read_timeout') {
@@ -222,6 +235,7 @@ export function createPhase9WorkerHttpService(
           service: options.serviceName,
           status: 408,
           category: 'body_read_timeout',
+          dispatchId,
         });
         response.setHeader('connection', 'close');
         response.once('finish', () => request.destroy());

@@ -5,6 +5,7 @@ const path = require('node:path');
 
 const mediaToken = 'media-entrypoint-smoke-A7z.49_xYp-001-strong';
 const visionToken = 'vision-entrypoint-smoke-B8y.50_zXp-002-strong';
+const metadataToken = 'metadata-entrypoint-smoke-D0w.62_vUr-004-strong';
 const serviceKey = 'service-entrypoint-smoke-C9x.51_wVq-003-strong';
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 
@@ -78,12 +79,14 @@ async function smokeEntrypoint(root, specification) {
     cwd: root,
     env: {
       ...cleanEnvironment(),
-      SUPABASE_URL: 'https://example.supabase.co',
+      SUPABASE_URL: 'https://ahntbtktjjmvfosgkmgn.supabase.co',
       SUPABASE_SERVICE_ROLE_KEY: serviceKey,
-      PHASE9_PEER_WORKER_INGRESS_TOKEN_SHA256: hash(specification.peerToken),
       PHASE9_WORKER_HOST: '127.0.0.1',
       PHASE9_WORKER_PORT: String(port),
       PHASE9_WORKER_CONCURRENCY: '1',
+      ...(specification.peerToken
+        ? { PHASE9_PEER_WORKER_INGRESS_TOKEN_SHA256: hash(specification.peerToken) }
+        : {}),
       ...specification.environment,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -122,6 +125,14 @@ async function smokePhase9WorkerEntrypoints(root = process.cwd()) {
       PHASE9_VISION_WORKER_ID: 'vision-entrypoint-0000001',
       PHASE9_VISION_WORKER_INGRESS_TOKEN: visionToken,
       PHASE9_VISION_FIXTURE_CASE: 'one_book',
+    },
+  });
+  await smokeEntrypoint(root, {
+    entrypoint: '.phase9-dist/workers/phase9-metadata-worker/server.js',
+    environment: {
+      PHASE9_METADATA_WORKER_ID: 'metadata-entrypoint-000001',
+      PHASE9_METADATA_WORKER_INGRESS_TOKEN: metadataToken,
+      PHASE9_METADATA_PROVIDER_MODE: 'fixture',
     },
   });
 }

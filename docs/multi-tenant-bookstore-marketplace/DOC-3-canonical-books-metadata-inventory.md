@@ -305,7 +305,8 @@ Duplicates can occur when:
 
 - the same book is scanned multiple times
 - the same ISBN exists in inventory already
-- LLM extracts the same title from multiple photos
+- LLM extracts the same title from more than one authorized image upload across
+  separate capture attempts
 - Google Books and Open Library identify similar editions differently
 - stores manually add an existing book
 

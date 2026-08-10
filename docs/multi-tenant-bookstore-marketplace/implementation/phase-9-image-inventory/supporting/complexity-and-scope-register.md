@@ -17,7 +17,7 @@ The workflow is substantial but bounded. It is not an autonomous agent: determin
 | Variants | Full multilingual catalogue localization | Optional sidecar; one primary Roman form, up to two alternatives, separate inactive translation; field reconciliation and store scope | search value without global authority or UI translation |
 | Duplicates | Image matching, auto-merge, cross-store reconciliation | Same-store advisory warning; deterministic identity/variant rules; explicit owner choice | low irreversible-risk surface |
 | Repeated spines | Attempt to infer physical identity | One visible spine remains one candidate | owner controls quantity/rows |
-| Sessions | Pause/resume/save/discard/branching state machine | Start, add images, Close with summary; invisible persistence only | simple mental model |
+| Sessions | Pause/resume/save/discard/branching state machine | Start, upload one current image, optionally remove then replace it before candidate lineage, and Close with summary; invisible persistence only | simple mental model |
 | Review | Full metadata form for every item | Defaults, required-field highlighting, collapsed optional details, partial commits | low data-entry burden |
 | Conditions | Damage embedded as condition ladder | Five standard conditions plus separate damage disclosure | clearer customer semantics |
 | Photos | Reuse any image everywhere | Purpose-specific scan/public/request classes | clearer access and retention |

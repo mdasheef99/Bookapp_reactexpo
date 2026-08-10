@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, ScrollView, Text, TextInput, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
 import type { NavigationAction } from '@react-navigation/native';
@@ -30,6 +30,7 @@ import {
     useOwnerInventorySession,
 } from '../queries/ownerUxQueries';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
+import { useOwnerUxOfflineGate } from '../offline/ownerUxOfflineGate';
 
 type BeforeRemoveEvent = {
     preventDefault: () => void;
@@ -73,6 +74,20 @@ function MissedBookForm({
     const currentFingerprint = missedBookFingerprint(draft);
     const dirty = currentFingerprint !== (committedFingerprint ?? initialFingerprint);
     const successfulDraft = committedFingerprint === currentFingerprint;
+    const refreshAuthority = useCallback(async () => {
+        const refreshed = await sessionQuery.refetch();
+        return !refreshed.isError
+            && refreshed.error === null
+            && refreshed.data?.sessionId === sessionId
+            && ['active', 'closed'].includes(refreshed.data.status);
+    }, [sessionId, sessionQuery.refetch]);
+    const gate = useOwnerUxOfflineGate({
+        scope,
+        isOffline,
+        refresh: refreshAuthority,
+        hasAuthoritativeData: Boolean(sessionQuery.data && !sessionQuery.error),
+        currentAuthorityVerified: sessionQuery.isFetchedAfterMount,
+    });
 
     useEffect(() => navigation.addListener('beforeRemove', (event: BeforeRemoveEvent) => {
         const committed = committedFingerprintRef.current ?? initialFingerprint;
@@ -91,6 +106,7 @@ function MissedBookForm({
     }), [draft, initialFingerprint, mutation.isPending, navigation]);
 
     const run = async (command: AddManualCandidateRequest) => {
+        if (!gate.canMutate) return;
         const callScope = activeScope.current;
         setMessage(null);
         try {
@@ -152,7 +168,7 @@ function MissedBookForm({
     };
 
     const submit = () => {
-        if (!built.success || pendingRef.current || mutation.isPending || successfulDraft) return;
+        if (!gate.canMutate || !built.success || pendingRef.current || mutation.isPending || successfulDraft) return;
         const command: AddManualCandidateRequest = {
             sessionId,
             ...built.value,
@@ -191,8 +207,8 @@ function MissedBookForm({
                 </GlassCard>
                 {!built.success && dirty ? <Text selectable accessibilityLiveRegion="assertive" style={{ color: colors.error }}>{Object.values(built.errors).join(' ')}</Text> : null}
                 {message ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error }}>{message}</Text> : null}
-                {pending && message ? <Button title="Retry same addition" onPress={() => void run(pending)} disabled={isOffline || mutation.isPending} /> : null}
-                <Button title="Add candidate" onPress={submit} loading={mutation.isPending} disabled={isOffline || mutation.isPending || !built.success || Boolean(pending) || successfulDraft} />
+                {pending && message ? <Button title="Retry same addition" onPress={() => void run(pending)} disabled={!gate.canMutate || mutation.isPending} /> : null}
+                <Button title="Add candidate" onPress={submit} loading={mutation.isPending} disabled={!gate.canMutate || mutation.isPending || !built.success || Boolean(pending) || successfulDraft} />
             </ScrollView>
         </ScreenBackground>
     );

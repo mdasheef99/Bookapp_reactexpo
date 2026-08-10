@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
@@ -24,6 +24,7 @@ function Reviews({ identity }: { identity: ImageInventoryIdentity }) {
     const [cursorHistory, setCursorHistory] = useState<Array<string | null>>([]);
     const [cursorFailure, setCursorFailure] = useState(false);
     const seen = useRef(new Set<string>());
+    const firstPageScopeVersion = useRef<number | null>(null);
     const query = useOwnerInventoryCandidates(identity, {
         scope: 'needs_review',
         attention: 'all',
@@ -56,12 +57,26 @@ function Reviews({ identity }: { identity: ImageInventoryIdentity }) {
         setCursorHistory([]);
         setCursorFailure(false);
     };
+    useEffect(() => {
+        const version = query.data?.scopeVersion;
+        if (!version) return;
+        if (cursor === null) {
+            firstPageScopeVersion.current = version;
+            return;
+        }
+        if (firstPageScopeVersion.current !== version) restart();
+    }, [cursor, query.data?.scopeVersion]);
     return (
         <ScreenBackground>
             <FlatList
                 contentInsetAdjustmentBehavior="automatic"
                 contentContainerStyle={{ padding: 20, gap: 12, flexGrow: 1 }}
                 data={query.data?.items ?? []}
+                maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+                initialNumToRender={6}
+                maxToRenderPerBatch={6}
+                windowSize={5}
+                removeClippedSubviews
                 keyExtractor={(item) => item.candidateId}
                 renderItem={({ item }) => (
                     <CandidateCard

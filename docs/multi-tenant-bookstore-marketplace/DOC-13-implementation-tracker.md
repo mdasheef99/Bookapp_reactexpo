@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-07-31
+**Date:** 2026-08-10
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -25,9 +25,86 @@ Every coding session must update tracking before ending if it changes any of the
 - next recommended task
 - handoff notes
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
+
+> 2026-08-09 Phase 9 schema-free Gemini JSON correction is locally complete.
+> Gemini now receives JSON MIME mode and the flat `vision` prompt with no provider
+> response schema; BookConnect retains strict local validation and unchanged
+> M18/M19 mapping. Red-first proved the old request still carried the schema;
+> final exact-path focused Jest is 59/59 and vision-worker TypeScript passes.
+> The approved bounded capture returned eight observations and proved the exact
+> local mismatches: provider `image_outcome: success` and one null
+> `detected_language`. Red-first reproduced the failure; BookConnect now
+> normalizes only those values to canonical `analyzed` and `und`. Exact-path
+> focused Jest is 60/60 and the vision-worker build passes. The separate final
+> proof transmission was blocked by the approval boundary and remains pending
+> explicit approval. M34, Git, Render,
+> Supabase/jobs, metadata, Owner UI, inventory/publication, scheduler, and Unit 7
+> remain untouched by this correction.
+
+> 2026-08-09 Phase 9 corrected-production provider proof stopped before M34.
+> Reviewed local `HEAD` is unpushed commit `dc19107`. The replacement Gemini key
+> was installed only on the existing Render vision service and automatically
+> caused one restart at prior source SHA `83cf61a`. The exact full committed
+> request used the matching sanitized WebP and configured model but returned
+> HTTP 400 `INVALID_ARGUMENT`. With image, prompt, model, and request otherwise
+> unchanged, the core `vision` schema returned HTTP 200 when only the optional
+> multilingual subtree was omitted; changing nullable encoding did not fix the
+> full schema. M33 is live once as `20260809023834`; M34 remains unapplied. No
+> job, database/Storage mutation, push, corrected deployment, metadata, Owner UI
+> continuation, inventory/publication, scheduler, or Unit 7 action occurred.
+> Next: smallest multilingual provider-schema compatibility correction, then
+> rerun the exact provider-only request before any downstream execution.
+
+> 2026-08-09 Phase 9 bounded local correction: Gemini now returns only compact
+> visual identity plus optional compact multilingual enrichment, capped at five
+> authors. Enrichment is non-fatal, original-script identity stays canonical,
+> and selected session language is a hint in TypeScript and local forward M34.
+> The independent review's required diagnostics correction now prevents bounded
+> provider request IDs or error codes from carrying configured privileged values.
+> Red-first evidence failed 1/22 analyzer and 1/6 egress assertions; corrected
+> analyzer/egress Jest is 22/22 and 6/6, and the complete focused scope is 47/47.
+> Vision-worker TypeScript and current-tree PGlite
+> 59/59 through M32/M33/M34 passed. M34 is unapplied; no provider, Render, job,
+> Supabase, inventory/publication, stage, commit, or push mutation occurred.
 If implementation changes product or architecture behavior, update the relevant source spec and record the reason in this tracker.
 ---
 ## 2. Current Status
+> 2026-08-10 Phase 9 automatic-worker-wake dispatcher remains the active narrow
+> work unit. M35 and Owner Edge v3 remain the last completed live milestone.
+> Red-first local implementation and correction-only independent review are
+> recorded: M36 is unapplied, creates its one cron inactive, and locally proves
+> private claimability parity, Vault-only configuration, bounded observability,
+> dispatch correlation, timeout evidence, and metadata deployment preparation.
+> Applying/configuring/enabling the dispatcher, Render deployment/redeployment,
+> worker invocation, live image removal, final live proof, Git publication,
+> duplicate replay, Unit 7, inventory, and publication remain prohibited.
+
+> 2026-08-09 Phase 9 metadata-runtime safety checkpoint: M32 remains live exactly
+> once on verified healthy project `ahntbtktjjmvfosgkmgn`. Shared worker startup
+> now fails closed on any non-approved Supabase origin; metadata no longer accepts
+> the media/vision peer fingerprint; and the bounded manual invoker supports
+> `metadata`. Focused changed-scope Jest is 84/84 and the metadata-worker build
+> passes. Exactly one process-only Google Books adapter request returned HTTP 200;
+> the credential was accepted and bounds/decoder/provider-neutral normalization
+> passed with `no_acceptable_match`. No candidate, privileged worker,
+> database/provider persistence, Gemini/Render change, deployment, scheduler,
+> inventory/publication, Unit 7, or Git mutation occurred. The one-candidate proof
+> still requires separate authorization and a fresh process-only Google Books key after revocation of
+> the chat-exposed temporary key. A sanitized JWT inspection and authenticated
+> read on 2026-08-09 proved that the inherited service-role key belongs to and
+> is accepted by the exact project; only the inherited `SUPABASE_URL` is foreign
+> and must be overridden for the worker process.
+
+> 2026-08-09 authorized Expo web proof: the legitimate Profile → Store Owner
+> Console → Inventory path loaded under the authenticated Owner session. The
+> screen resumed an older capture with 6 processing images and 1 review item;
+> exact-project read-only baseline was 4 sessions, 3 active/closing, 18 inputs,
+> 27 jobs, 8 pending jobs, 13 candidates, and zero metadata jobs/attempts/
+> provider calls/lookups/cache entries. Because the shared worker queue could
+> not be isolated to a fresh image, and no Google Books credential was present
+> in the process, the proof stopped before session creation or upload. No
+> database, Storage, Gemini, Google Books, worker, or provider mutation occurred.
+
 > 2026-06-30 refresh: Phase 1 foundation remains applied in live Supabase. Phase 2A Store Owner gate/auth/security hardening is implemented locally and its write-boundary hardening migration is applied live. Phase 2B has controlled store application/document writes through the `store-application` Edge Function, app service wrappers, onboarding UI, metadata persistence, pilot locality validation, sanitized DB errors, and private document upload tests. Phase 2C platform review/setup entitlements is implemented locally and deployed: review metadata migration is live, `store-review` is deployed with JWT verification enabled, and Store Owner setup/status screens exist. Phase 2B authenticated live smoke passed; Phase 2C unauthenticated live smoke returned `401`; authenticated platform-review smoke is pending platform-operator test credentials. Phase 3 manual inventory/canonical/listing projection migration is applied live through Supabase MCP and schema/RLS verified. A 2026-06-29 Supabase MCP smoke confirmed the inventory trigger projects a publishable row into `marketplace_book_listings`, then cleaned up the disposable smoke inventory/listing and restored the store fixture. Anonymous public-read smoke is still blocked by the public listing RLS policy calling `marketplace_sec` helper functions that `anon` cannot execute. Phase 4 Store Owner Console is locally complete: dashboard, owner inventory management, storefront/profile settings, subscription/quota visibility, compliance blockers, route tabs, and focused tests are implemented with TypeScript and web export passing.
 
 > 2026-07-15 review refresh: Git is synchronized by content with the recently merged `origin/main`. Supabase MCP and `.env` both identify project `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`). Phase 4 remediation adds the controlled `store-profile` function, approved-store setup completion, stricter checklist readiness, inventory workflow fixes, and migration `20260715000001_marketplace_phase4_security_hardening.sql`. Store tests pass 13 suites/118 tests; TypeScript and production web export pass. The migration is live as `20260715115929 marketplace_phase4_security_hardening`; grants verify `anon=false`, `authenticated=false`, `service_role=true`. `store-profile` version 1 is ACTIVE with `verify_jwt=true`; unauthenticated live smoke returned `401`. Positive authenticated owner-write smoke awaits an approved disposable credential.
@@ -379,14 +456,148 @@ If implementation changes product or architecture behavior, update the relevant 
 > occurred. [Tracker 23](./implementation/phase-9-image-inventory/trackers/23-unit6e-review-corrections-evidence.md)
 > owns the detailed receipt; Unit 6F now requires separate authorization.
 
+> 2026-08-02 Phase 9 Unit 6F browser/readback closeout: the feature branch
+> `codex/phase9-unit6f-readiness-quality-gates` was verified at final correction
+> head `a0d55b5e50d4dc3990851643d10bc05a54c54514`. Authenticated Expo web
+> verification covered canonical Review Save persistence, stale-scope fencing,
+> confirmation safeguards, exact `Confirming…`, one Close, closed-session
+> persistence, narrow reflow, and zero inventory/listing/publication effects.
+> Focused deterministic verification passed 22 suites/155 tests, auth/owner
+> verification passed 15 suites/114 tests, app auth/Owner route tests passed
+> 5 suites/11 tests, TypeScript passed, and continuity passed. The mandatory
+> representative low-end Android evidence required by Unit 6 SDD §§24, 28, and
+> 34 and U6-AC36/U6-AC39 was not run; Unit 6F remains incomplete and unmerged.
+> [Tracker 24](./implementation/phase-9-image-inventory/trackers/24-unit6f-readiness-quality-gates-evidence.md)
+> owns the detailed receipt and `USER_ACTION_REQUIRED_NATIVE_EVIDENCE` verdict.
+
+> 2026-08-02 Phase 9 Unit 6F native UUID remediation checkpoint: the bounded
+> scan-startup correction added SDK54-compatible `expo-crypto`, removed the
+> browser-global crypto dependency, and made capture attempt identities lazy
+> and render-stable. Focused capture verification passed 2 suites/17 tests,
+> the full image-inventory suite passed 33 suites/223 tests, TypeScript passed,
+> and no Supabase/Storage/migration/external mutation occurred. No Android
+> device or emulator was available to `adb`, so the mandatory native gate
+> remains outstanding; `store_inventory` investigation was intentionally not
+> started. Tracker 24 owns the detailed evidence.
+
+> 2026-08-03 local web runtime and route-warning checkpoint: the concrete
+> Store Owner Orders route was corrected from `orders` to `orders/index`, with
+> a regression assertion. Production web export passed after bundling 2,245
+> modules. The Codex in-app browser authenticated with the supplied development
+> OTP and rendered `/library`, `/dashboard`, and `/inventory` without browser
+> errors; only existing framework, notifications, Sentry, and style warnings
+> were observed. A fresh exact-project read-only check confirmed
+> `store_inventory` RLS is enabled, authenticated table SELECT/INSERT/UPDATE
+> are denied, the owner policies remain present, and the controlled inventory
+> RPCs are executable by authenticated clients. The legacy store dashboard and
+> inventory services still call `.from('store_inventory')`; the inventory hook
+> currently swallows that read error. No database, migration, Storage,
+> deployment, inventory, listing, or publication mutation occurred. The
+> native Unit 6F evidence gate remains outstanding.
+
+> 2026-08-03 WU1 owner-inventory read-boundary re-sequencing: the user
+> explicitly authorized WU1 ahead of the Unit 6F native gate, limited to the
+> contract addendum, red tests, local/static validation, and an unapplied
+> forward migration draft. The exact development project
+> `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) was re-verified read-only;
+> live migration history still ends at M30. The stable
+> `phase9_owner_inventory(uuid)` detail RPC remains intact. Focused contract
+> tests passed 6/6 after the intentional pre-draft red run, and local PGlite
+> draft parse/readback passed 1/1. No SQL was applied and no client/UI/service,
+> dashboard, inventory, listing, publication, Storage, deployment, or external
+> mutation occurred. [WU1 evidence](./implementation/phase-9-image-inventory/trackers/25-owner-inventory-read-boundary-wu1-evidence.md)
+> owns the detailed receipt; separate SQL/security approval is required before
+> applying the draft, after which the Unit 6F native gate resumes.
+
+> 2026-08-04 WU1 correction checkpoint: the review findings were handled within
+> the existing local-only boundary. Explicit NULL page sizes now fail closed;
+> unexpected SQL failures map to `P9_INTERNAL_ERROR`; `asOf` is documented as an
+> ordering horizon rather than a repeatable database snapshot; and the
+> continuity validator requires the WU1 addendum/evidence artifacts and boundary
+> markers. The correction-focused Jest suite is 9/9 green after an intentional
+> 3-test red run; corrected PGlite passed 1/1, continuity passed with 65
+> Markdown files/51 required phase files, and `git diff --check` passed. The
+> draft remains unapplied, live migration history remains
+> at M30, and no client/UI/service, write-path, database, Storage, deployment,
+> inventory, listing, publication, or external mutation occurred. Independent
+> review and separate application approval remain required.
+
+> 2026-08-04 WU1 correction closure: the cursor helper call is now outside the
+> narrow cast-error handler, so unexpected helper failures reach
+> `P9_INTERNAL_ERROR` while malformed timestamp/UUID values remain
+> `P9_CURSOR_INVALID`. Local behavior coverage now passes equal-timestamp
+> keyset pagination, filters, empty results, invalid page-size/cursor,
+> Owner/anonymous scope, and unexpected-helper normalization. Focused WU1
+> Jest is 10/10, local PGlite is 3/3, and continuity reports separate
+> `WU1_DIFF_CHECK=PASS`, `REPOSITORY_DIFF_CHECK=PASS`, and
+> `PHASE9_CONTINUITY_CHECK=PASS`. No Supabase mutation occurred; WU1 remains
+> unapplied and independent review plus separate application approval remain
+> required.
+
+> 2026-08-04 WU1 exact-project application and readback: the user-authorized
+> development-only migration `20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql`
+> was applied exactly once through Supabase MCP to
+> `ahntbtktjjmvfosgkmgn` and is recorded live as
+> `20260803221216 marketplace_phase9_owner_inventory_read_boundary`.
+> Preflight matched `Bookconnect_reactexpo`, `ACTIVE_HEALTHY`, and the M30
+> tail; the new RPC/index were absent before application. Post-readback proves
+> the exact eight-argument `jsonb` RPC, `STABLE SECURITY DEFINER`, postgres
+> owner, empty `search_path`, narrow execute ACLs, exact descending index,
+> unchanged detail RPC, and unchanged `store_inventory` RLS/policies/table
+> ACL/trigger boundaries. Anonymous REST execution returned HTTP 401. No rows,
+> users, fixtures, listings, publications, Storage objects, providers,
+> deployments, or client/dashboard/write-path behavior changed. Positive Owner
+> JWT runtime cases remain deferred because no approved Owner credential or
+> active Owner browser session was available; Unit 6F native evidence remains
+> outstanding and Unit 7 remains separately gated.
+>
+> 2026-08-04 WU2 read-only Owner inventory client integration: the active
+> Store Owner `/inventory` route now calls
+> `phase9_owner_inventory_page_v1` through a strict exact-shape DTO decoder,
+> identity/store/contract/filter-isolated infinite-query cache, opaque cursor
+> pagination, exact WU1 filters, and distinct read error/partial-page states.
+> The reachable route graph no longer imports the legacy direct-table inventory
+> service. After correction-review closure, focused WU2 tests pass 4 suites/50
+> tests and the related regression set passes 39 suites/303 tests;
+> strict offset timestamps/positive versions, non-destructive failed refresh,
+> explicit current-generation refresh fencing, no unauthorized retry, and
+> truthful category/operation/empty states are covered. TypeScript passes with
+> `--allowImportingTsExtensions`. No migration, database/storage row, Edge
+> Function, deployment, dashboard, write path, or Unit 7 behavior changed.
+> Authenticated Owner runtime remains deferred pending an approved session.
+> A final focused correction removed the global header Refresh control from
+> unauthorized initial and partial states; screen 15/15, focused 4 suites/50,
+> and related 39 suites/303 remain green without external mutation.
+
+> 2026-08-05 Android 11 observation and browser follow-up: the user reports
+> accessible large-text use and a connected native camera. No device model,
+> font-scale/screen receipt, performance trace, or offline/reconnect evidence
+> was supplied, so this is not promoted to the mandatory Unit 6F native gate.
+> Browser follow-up covered authenticated Owner read/filter/search/review/Resume,
+> sanitized fixture upload, disposable Review Save, logout/re-authentication,
+> and unavailable-session Retry with zero browser errors. The disposable session
+> remained active with four images processing, so Close was unavailable on that
+> session; cross-store and inactive-Owner fixtures remain deferred. Unit 6F
+> remains incomplete under SDD §§24, 28, and 34; Unit 7 remains gated.
+
+> 2026-08-05 15-card/Gemini clarification: code tracing confirms that the
+> image-inventory UI consumes decoded Owner candidate DTOs and does not invoke
+> Gemini directly. Deterministic `ownerUxTestFixtures.ts` data covers fifteen
+> ordered candidates, an independent partial failure, and the over-fifteen
+> safeguard; the focused suites pass 2 suites/20 tests. This closes the local
+> fixture-backed UI/contract check only. Live Gemini/provider verification,
+> native fifteen-card responsiveness/memory, the remaining representative
+> Android Unit 6F evidence, and the deferred WU1/WU2 runtime cases remain
+> pending; Unit 7 remains gated.
+
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6E finalized** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **M32 live exactly once; M33 local correction complete and unapplied; Unit 7 gated** |
 | Overall status | `in_progress` |
-| Last updated | 2026-08-01 |
-| Latest handoff | Unit 6A is merged/live-verified; Unit 6B is merged at `9ef9eb3`; Unit 6C is merged through `092562d`; Unit 6D remains implemented at `c363b60`; Unit 6E correction checkpoint `8bceab2` is finalized with M30 live exactly once and evidence in tracker 23. |
-| Current risk level | M30 was additive and applied once. The supplied account lacked Active Store Owner membership, so positive Owner-only false/missed-variant mutation states remain deterministic-test evidence; the browser fail-closed inventory boundary passed. |
-| Next recommended task | Obtain separate authorization before beginning Unit 6F. |
+| Last updated | 2026-08-09 |
+| Latest handoff | M32 is live exactly once as `20260808020404 marketplace_phase9_structural_metadata_integration` on `ahntbtktjjmvfosgkmgn`. The real fresh proof reached sanitized media and isolated a missing vision reservation. Forward-only M33 is locally implemented, applies after the actual M31/M32 tail, excludes closed-session/wrong-initiator malformed history, and remains unapplied. The original job remains attempt `4/5`; a later duplicate open media input is untouched. |
+| Current risk level | `M33_REQUIRED_CORRECTIONS_COMPLETE_AWAITING_REREVIEW_AND_APPLICATION`: the durable correction is local and focused ingestion/vision/provider/M33 PGlite is 61/61, but the live database still lacks M33, so invoking the original vision job would schedule another failed retry. The correction pass's focused static suites are 39/39 and the migration-catalog/database suite is 17/17. |
+| Next recommended task | Independently rereview only the two M33 corrections and resulting complete diff, then separately authorize exact-project application/readback. After successful apply, cancel the duplicate input through the existing lifecycle boundary and invoke only the original fresh vision job. |
 
 ---
 
@@ -403,7 +614,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6e_finalized_unit6f_separately_gated` | [Unit 6 SDD](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-ux-sdd.md) · [contract matrix](./implementation/phase-9-image-inventory/work-units/06-owner-capture-review-recovery-contract-matrix.md) · [tracker 22](./implementation/phase-9-image-inventory/trackers/22-unit6d-candidate-review-evidence.md) · [tracker 23](./implementation/phase-9-image-inventory/trackers/23-unit6e-review-corrections-evidence.md) | Unit 6A merged/live through M29; Unit 6B merged at `9ef9eb3`; Unit 6C merged through `092562d`; Unit 6D implemented at `c363b60`; Unit 6E finalized at `8bceab2` with M30 live once; Unit 6F and Unit 7 gated. |
+| Phase 9: Image-to-LLM Inventory | `unit6_pre_main_integration_reconciliation` | [reconciliation tracker](./implementation/phase-9-image-inventory/trackers/28-pre-main-integration-reconciliation.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | M01-M35 are live at their recorded levels and M36 remains local/unapplied. Complete current M32/M33/M35/Unit 6/runtime source is being reconciled with the reviewed dispatcher and authoritative compact-Gemini lineage for one verified `main` candidate. External mutation, Unit 7, inventory, listing, and publication remain gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -421,6 +632,9 @@ If implementation changes product or architecture behavior, update the relevant 
 - DOC-16 Bangalore pilot/unit-economics review pending before pilot launch planning.
 - Existing Supabase security advisor issues must be remediated separately or explicitly isolated before marketplace production launch.
 - Phase 4 review remediation is deployed; positive authenticated profile/setup smoke remains pending an approved disposable Store Owner credential.
+- Phase 9 core pipeline integration remains unproven: real Gemini execution,
+  metadata-job creation and worker execution, enriched-candidate persistence,
+  and Unit 6 readback require a read-only vertical audit before implementation.
 
 ---
 
@@ -520,12 +734,163 @@ The Phase 1 foundation is applied, audited, and fully v0.2 compliant. The follow
 - `marketplace_sec.is_store_admin()` — canonical RLS helper for all store-scoped policies
 
 Next work:
-1. Obtain separate authorization before beginning **Phase 9 Unit 6F**. M29
-   remains live exactly once and M30 is live exactly once as the Unit 6E
-   correction. Do not begin Unit 7 or apply another migration without the
-   required authority.
-2. Historical handoff (vision portion superseded 2026-07-27): Gemini remains configuration/deployment/live-call deferred. Google Books is implemented behind provider-neutral contracts but remains fixture/mock verified only; credentials, provider-registry enablement, deployment, and live smoke remain deferred.
-   The current initial primary vision model ID is configuration-driven
-   `gemini-3.5-flash-lite`; provider configuration/calls remain deferred.
-3. Keep M09, customer display, Owner/customer/platform-admin visual UI, production-language approval without qualifying evidence, scheduling/autoscaling, inventory commit, publication, commerce, Google Books Roman-query fallback, global alias authority, Library, and Phases 7/8 separately gated.
-4. Re-verify the exact project, migrations, schema, Storage, services, and advisors before any later mutation.
+1. Run a read-only vertical integration audit of upload, media, Gemini/vision,
+   metadata enrichment, candidate readiness, and Unit 6 consumption under the
+   existing Unit 4B/5A/5B authority.
+2. Produce an exact code/schema/live-state gap matrix and review it before any
+   implementation, migration, deployment, provider call, scheduler, or external
+   mutation.
+3. WU1/WU2 authenticated runtime evidence and representative low-end Android
+   Unit 6F evidence remain open. Do not begin Unit 7, dashboard remediation,
+   inventory/publication writes, or commerce behavior until their applicable
+   gates are evidenced.
+4. Keep M09, customer display, Owner/customer/platform-admin visual UI,
+   production-language approval without qualifying evidence, autoscaling,
+   inventory commit, publication, commerce, Google Books Roman-query fallback,
+   global alias authority, Library, and Phases 7/8 separately gated.
+5. Re-verify the exact project, migrations, schema, Storage, services, and
+   advisors before every later mutation; record any migration in the Phase 9
+   ledger with exact effects and readback.
+
+---
+
+### 2026-08-05 Unit 4B Gemini configuration/startup evidence
+
+The user authorized a temporary server-only Gemini configuration check. Render
+service `phase9-fixture-vision` was deployed from remote `main` commit
+`7eaf921efcaefccab4d0189dc26779796f164ed4` as deployment
+`dep-d9pdei9t0dsc73ddgbh0`. The final deployment emitted
+`service_started` for the vision worker and reached Render `live` status. The
+masked `PHASE9_GEMINI_API_KEY` is present alongside Gemini mode,
+`gemini-3.5-flash-lite`, and 30-second timeout; the fixture-only variable was
+removed. A first env-inconsistent attempt failed at startup and was corrected.
+
+This receipt proves deployment/startup configuration only. No authenticated
+`/run`, real Gemini inference, M14 usage/cost receipt, Supabase/Storage/migration
+mutation, or product effect occurred. The key value was never read or recorded
+by the agent. The next exact action is to revoke the exposed temporary key,
+enter a fresh key directly in Render, and separately approve one sanitized-media
+provider-call smoke.
+
+### 2026-08-08 controlled Phase 9 metadata proof preflight
+
+The user-authorized live proof verified `Bookconnect_reactexpo`
+(`ahntbtktjjmvfosgkmgn`) as `ACTIVE_HEALTHY` and confirmed M32 live exactly once
+as `20260808020404 marketplace_phase9_structural_metadata_integration`. Exactly
+one minimum `google_books` / `metadata` registry row was configured with adapter
+`1.0.0`, enabled/matching/storage allowed, 86,400-second revalidation, and policy
+1; public display and image caching remain disabled. The proof stopped before
+creating a fresh candidate because `PHASE9_GOOGLE_BOOKS_API_KEY` is missing and
+the available local service credential resolves to a different Supabase host.
+Metadata jobs, attempts, lookups, cache entries, snapshots, usage reservations,
+and physical provider calls remain zero; inventory/listing counts remain 5/5;
+metadata and Phase 9 scheduler counts remain zero. No migration was applied by
+this session, no provider egress occurred, and Unit 7 remains gated. The exact
+next action is to configure both credentials through the approved secret
+mechanism and rerun the bounded one-candidate proof.
+
+### 2026-08-08 Phase 0 credential inventory rerun
+
+The mandatory credential gate was re-run before any fresh test data. Source
+inspection confirmed Gemini requires `PHASE9_GEMINI_API_KEY`,
+`PHASE9_GEMINI_MODEL_ID`, and `PHASE9_GEMINI_TIMEOUT_MS`; Google Books requires
+`PHASE9_GOOGLE_BOOKS_API_KEY`, `PHASE9_GOOGLE_BOOKS_TIMEOUT_MS`, and
+`PHASE9_GOOGLE_BOOKS_MAX_RESPONSE_BYTES`. None are readable by the current
+process or defined in the checked-in env files. The process Supabase URL/service
+credential target `nxjnoqjxzkipeghhfxee.supabase.co`, not the approved
+`ahntbtktjjmvfosgkmgn` project, so it was not used against the target. Exact
+project/read-only registry/count verification passed; no worker, upload,
+Gemini/Google Books request, candidate, or remote mutation occurred. The exact
+next action is to configure the target service URL/key and all source-defined
+real-provider variables through the approved secret mechanism, verify without
+printing values, and rerun the same bounded proof. Verdict:
+`LIVE_METADATA_BLOCKED_MISSING_CREDENTIALS`.
+### 2026-08-09 Phase 9 stale-state cleanup and fresh web-upload gate
+
+The authorized development cleanup completed with `0` active/closing Phase 9
+sessions and `0` stale pending media/vision jobs. Inventory, listings,
+stores/users, canonical data, unrelated data, migrations, deployment, scheduler,
+Unit 7, and Git publication were untouched. Immutable audit evidence was
+retained. The actual Expo web Owner flow then uploaded the supplied multi-book
+image successfully and created one fresh media job. Processing stopped before
+media sanitation because the current invoker process lacks the media worker URL
+and ingress token; no Gemini or Google Books call occurred. The exact next gate
+is process-local authenticated worker invocation configuration, followed by the
+fresh media job only.
+
+The existing Render media URL and masked ingress-token configuration were then
+located under explicit follow-up authority. They were supplied process-locally
+to the existing invoker without printing or persisting the token. The fresh
+media job resolved after one attempt and created one open fresh vision job; no
+unrelated media job was processed. The next gate is the existing authenticated
+vision-worker invocation for this same fresh input.
+
+The same fresh vision job was then invoked twice through the existing Render
+vision service. Both claims safely scheduled retry with
+`P9_VISION_ANALYZER_UNAVAILABLE`; Gemini was not called and no provider attempt,
+usage reservation, candidate, or M32 metadata job exists. Live function
+readback proves the media completion function creates the vision job without
+the usage reservation required by vision provider registration. The bounded
+proof is stopped at this genuine integration failure. The next gate is a
+separately authorized forward migration/code correction and focused regression
+evidence; the current task did not authorize that change.
+
+The user subsequently authorized systematic local implementation. Forward-only
+M33 is now created locally and unapplied. It atomically creates and validates
+the required vision reservation before media completion, fails closed and rolls
+back on conflicting lineage, and repairs only valid unleased
+`open|retry_scheduled` jobs while excluding terminal history. Focused static
+tests pass, M33 applies after the full local M32 tail, and combined
+ingestion/vision/provider/M33 PGlite passes 61/61. The current fresh job remains
+unchanged at attempt `2/5`; the later duplicate open media input remains
+untouched. Exact next gate: independent M33 review, followed by separately
+authorized exact-project application/readback. No live migration, worker,
+provider, Storage, inventory, publication, scheduler, Unit 7, stage, commit,
+push, or deployment action occurred.
+
+The independent review returned `APPROVED_WITH_REQUIRED_CORRECTIONS`. The local
+correction pass now requires an active session and initiating-Owner media
+binding in both the private helper and one-time repair, with direct regressions
+for closed-session and wrong-initiator nonterminal history. The shared PGlite
+migration sequence now includes M31 before M32, so its full-tail claim is
+literal. Red tests failed on both findings before implementation; final M33
+static is 3/3, focused static is 39/39, M33 integration is 5/5, combined PGlite
+is 61/61, and database foundation/catalog is 17/17. M33 remains unapplied and
+the next gate is independent correction-only rereview.
+### 2026-08-10 Phase 9 real-image proof completed through Owner review
+
+M34 is live once on verified project `ahntbtktjjmvfosgkmgn`. The preserved
+sanitized input completed vision at attempt 5 with
+`accepted_with_language_skips`: 8 visible observations, 7 candidates, and one
+bounded unknown-language skip. The seven resulting M32 metadata jobs were
+claimed once by the local dedicated metadata worker and resolved into the
+Owner-safe manual-review path. Google Books authentication was rechecked using
+the previously supplied process-only credential and returned HTTP 200; the
+false no-match cause was `projection=lite`, which omits required `language`.
+Commit `e4f2b34` changes the request to `projection=full`; focused adapter Jest
+is 26/26, the metadata-worker build passes, and a live bounded response decoded
+8 editions instead of 0. The existing terminal snapshots were not rewritten.
+Owner UI proof passed through Profile -> Store Owner Console -> Inventory: the
+hub shows 7 needing attention, all seven books render in the review queue, and
+candidate detail preserves title/author/language with private review selected.
+No review was saved, no inventory/listing/publication mutation occurred, and
+Unit 7 remains gated.
+
+### 2026-08-10 Phase 9 single-image safe removal live
+
+The Owner decision now permits one current image per Start/Close session and
+retains explicit Remove image before candidate lineage; only successful removal
+enables one replacement. Mobile append UI and direct second-upload authorization
+are blocked. Local M35 adds the authenticated logical-remove RPC, exact-job
+cancellation, hold-aware cleanup scheduling, current-input read filtering, and
+server-side issuance/registration guards. Structural Jest is 6/6 and isolated
+M01-M35 PGlite behavior is 3/3, including legacy two-capability handling and
+atomic rejection with preserved candidate/inventory/listing state. M35 was
+applied once as `20260809223135` to verified project `ahntbtktjjmvfosgkmgn`.
+The three explicitly targeted legacy inputs were logically removed, all three
+exact jobs were cancelled, and zero candidates/inventory/listings changed.
+Owner Edge `phase9-owner-ingestion` v3 was separately authorized, deployed,
+and read back with all four overlay files matching exactly and JWT verification
+enabled. The three private staging objects remain for lifecycle cleanup. One
+new input was registered after removal and remains untouched pending a new
+explicit decision. No Git stage/commit/push occurred.

@@ -6,6 +6,7 @@ import {
   canonicalBcp47,
   optionalString,
   Phase9ContractError,
+  requiredIsoTimestamp,
   requiredString,
   utf8ByteLength,
 } from '../domain/validation';
@@ -104,11 +105,7 @@ const OBSERVATION_KEYS = [
 const GEOMETRY_KEYS = ['x', 'y', 'width', 'height', 'rotation'] as const;
 
 function timestamp(value: unknown, field: string): string {
-  const parsed = requiredString(value, field, 40, { activeContent: false });
-  if (!Number.isFinite(Date.parse(parsed)) || !/(?:Z|[+-]\d{2}:\d{2})$/u.test(parsed)) {
-    throw new Phase9ContractError(field, 'must be an ISO-8601 timestamp with timezone');
-  }
-  return parsed;
+  return requiredIsoTimestamp(value, field);
 }
 
 function identifier(value: unknown, field: string): string {

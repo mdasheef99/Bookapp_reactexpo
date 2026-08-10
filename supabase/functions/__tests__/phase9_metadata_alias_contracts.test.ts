@@ -23,6 +23,30 @@ describe('Phase 9 metadata and alias contracts', () => {
     expect(() => parseMetadataEdition({ ...coherentEnglishEdition, isbn13: '9781861972712' })).toThrow(/different editions/i);
   });
 
+  it('requires offset-aware ISO-8601 timestamps at metadata boundaries', () => {
+    for (const timestamp of ['2026-07-19', '2026-07-19T00:00:00', 'not-a-timestamp']) {
+      expect(() => parseMetadataEdition({ ...coherentEnglishEdition, fetched_at: timestamp })).toThrow(/timestamp/i);
+      expect(() => parseMetadataAdapterResult({ ...providerNoMatch, received_at: timestamp })).toThrow(/timestamp/i);
+      expect(() => parseAutomatedAliasResult({ ...hindiAliasResult, generated_at: timestamp })).toThrow(/timestamp/i);
+    }
+    expect(parseMetadataEdition({
+      ...coherentEnglishEdition,
+      fetched_at: '2026-07-19T00:00:00Z',
+    }).fetchedAt).toBe('2026-07-19T00:00:00Z');
+    expect(parseMetadataEdition({
+      ...coherentEnglishEdition,
+      fetched_at: '2026-07-19T05:30:00+05:30',
+    }).fetchedAt).toBe('2026-07-19T05:30:00+05:30');
+    expect(parseMetadataAdapterResult({
+      ...providerNoMatch,
+      received_at: '2026-07-18T20:00:00-04:00',
+    }).receivedAt).toBe('2026-07-18T20:00:00-04:00');
+    expect(parseAutomatedAliasResult({
+      ...hindiAliasResult,
+      generated_at: '2026-07-19T05:30:00+05:30',
+    }).generatedAt).toBe('2026-07-19T05:30:00+05:30');
+  });
+
   it('accepts HTTPS cover references but rejects insecure or credential-bearing URLs', () => {
     const hostPolicy = { adapterKey: 'recorded_metadata', policyVersion: '1', approvedCoverHosts: ['covers.example.invalid'] };
     expect(parseMetadataEdition({ ...coherentEnglishEdition, cover_reference: 'https://covers.example.invalid/book.jpg' }, hostPolicy).coverReference).toMatch(/^https:/u);

@@ -1,9 +1,51 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-07-29 Unit 5C-3 M20/M21 application and live verification
-**Audit mode:** exact-project migration, schema/security readback, and bounded rollback-only smoke
+**Audit date:** 2026-08-10 M35 application/removal and Owner Edge v3 readback
+**Audit mode:** exact-project migration, schema/security readback, ACL/RLS/trigger comparison, and bounded anonymous denial smoke
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10-M21 live exactly once; M09 absent; M18 `20260729004216`, M19 `20260729020008`, M20 `20260729054842`, M21 `20260729060238`; synthetic lifecycle smoke rolled back with zero residue; no Storage/provider/deployment/product-data mutation
+**Mutation status:** M01-M08/M10-M35 and WU1 are live exactly once; M09 absent. M35 is live as `20260809223135 marketplace_phase9_single_image_removal`; three authorized legacy inputs were logically removed and their exact jobs cancelled; Owner Edge v3 is active. No candidate, inventory, listing, publication, physical Storage deletion, or Unit 7 mutation occurred.
+
+**2026-08-09 runtime target guard:** Fresh read-only control-plane verification
+reconfirmed `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as healthy and M32
+exactly once. The shared worker loader now rejects every Supabase origin except
+`https://ahntbtktjjmvfosgkmgn.supabase.co` before client composition. A sanitized
+2026-08-09 JWT inspection showed the inherited service-role key claims the exact
+project and is unexpired; one authenticated `GET ...?select=id&limit=1` against
+the approved host returned HTTP 200. Only the inherited process URL is foreign.
+The read returned an empty JSON array and made no database or Storage mutation;
+no privileged worker was started.
+
+## 2026-08-10 M35 live removal readback
+
+- Exact project: `ahntbtktjjmvfosgkmgn` / `Bookconnect_reactexpo` remained
+  `ACTIVE_HEALTHY`; M35 exists exactly once as live version `20260809223135`.
+- The three authorized inputs are owner-removed and excluded from current-input
+  reads; their versions are `4/2/2`, their exact three jobs are cancelled, and
+  they have no candidates.
+- Store inventory/listing counts remain zero. Their three private staging
+  objects remain for the scheduled lifecycle path rather than immediate delete.
+- A fourth input, `ef965790-1695-429b-82b7-2c386bc0ae27`, was registered after
+  removal and remains untouched; it is the sole current input at readback.
+- Owner Edge `phase9-owner-ingestion` v3 is active with JWT verification and an
+  exact readback match for only the four Remove-image overlay files.
+
+## 2026-08-09 authorized Expo web-proof baseline
+
+The real authenticated web path reached Profile → Store Owner Console →
+Inventory. The Owner-safe inventory read loaded an older active capture with
+six processing images and one review item; it was inspected but not reused.
+Read-only exact-project counts were sessions `4` total / `3` active-or-closing,
+inputs `18`, jobs `27` / `8` pending, candidates `13`, and zero metadata jobs,
+metadata attempts, M32 provider calls, metadata lookups, or metadata cache
+entries. Because the worker queue is shared and not attributable to a fresh
+image, the authorized proof stopped before session creation/upload. No
+database, Storage, or provider mutation occurred.
+
+The separately authorized credential-only smoke made exactly one Google Books
+HTTP request through the compiled BookConnect adapter and no Supabase client or
+RPC. It returned HTTP 200 and a valid provider-neutral `no_acceptable_match`
+result. Database/provider-attempt/snapshot mutation counts attributable to this
+smoke are zero.
 
 **Unit 5C-3 live reconciliation:** The existing Gemini provider call may return
 an optional multilingual companion, but strict canonical `p9-vision-v2`
@@ -196,7 +238,16 @@ benchmark manifests, approved languages, rollout rows, or enabled capabilities.
 
 ## RLS, grants, and write boundaries
 
-Observed relevant core tables have RLS. Store inventory currently allows authenticated owner INSERT/UPDATE under `is_store_admin`; public listing rows are trigger-maintained and public-readable through safe eligibility policies. `book_metadata_sources` is platform-operator writable.
+Observed relevant core tables have RLS. A fresh exact-project read-only check on
+2026-08-03 found that `public.store_inventory` has no `SELECT`, `INSERT`, or
+`UPDATE` table privilege for `authenticated` (`anon` also has no `SELECT`),
+while `service_role` retains the required private-table access. The existing
+authenticated owner policies remain present, but policies cannot make a direct
+PostgREST table call pass when the role has no table privilege. The
+`phase9_owner_inventory` and named inventory-edit/quantity RPCs are the
+available authenticated controlled boundary. Public listing rows are
+trigger-maintained and public-readable through safe eligibility policies.
+`book_metadata_sources` is platform-operator writable.
 
 Proposed boundary:
 
@@ -205,6 +256,29 @@ Proposed boundary:
 3. A controlled server command performs candidate commit, duplicate choice, quantity-bucket changes, audit/event creation, and eligible public projection atomically per candidate where possible.
 4. Service-role functions/Edge Functions derive actor/store, use fixed schemas/search paths, expose minimum commands, and have explicit grants plus cross-tenant denial tests; worker/service access is separately enumerated from authenticated access.
 5. Model/provider workers have a narrow job capability, not a user bearer token and not general database authority.
+
+### WU1 owner-inventory read-boundary application (2026-08-04)
+
+The development-only remediation addendum
+[`owner-inventory-read-boundary-wu1-sdd.md`](../work-units/owner-inventory-read-boundary-wu1-sdd.md)
+records the reviewed target for the missing Owner list boundary. The stable
+`public.phase9_owner_inventory(uuid)` detail RPC remains unchanged. The
+applied migration `20260803221216 marketplace_phase9_owner_inventory_read_boundary`
+(local file `20260803000031_marketplace_phase9_owner_inventory_read_boundary.sql`)
+adds only the separate `phase9_owner_inventory_page_v1` RPC, one
+evidence-backed `(store_id, updated_at DESC, id DESC)` index, fixed
+`search_path`, `postgres` ownership, and narrow execute grants. It added no
+table privileges, policies, or trigger changes. Exact-project post-application
+readback confirms the stable detail RPC, `store_inventory` RLS/policies/table
+ACL, existing indexes/constraints, and projection trigger/function are
+unchanged. Anonymous REST execution is denied; positive Owner JWT runtime is
+deferred because no approved Owner credential was available.
+
+The 2026-08-04 correction pass added fail-closed NULL page-size validation plus
+safe unexpected-error normalization. Its `asOf`
+cursor value is documented as an ordering horizon rather than a repeatable
+database snapshot because existing quantity/publication writes do not uniformly
+advance `updated_at`; those write paths remain outside WU1.
 
 Live M12 implements `claim_phase9_vision_jobs`, `phase9_vision_job_context`, `phase9_persist_vision_analysis`, and `phase9_fail_vision_job`. M13 exposes only the minimum public invoker wrappers required by PostgREST while leaving the authoritative functions in `marketplace_sec`. Each function is service-only, pins `search_path`, rejects NULL security/transition arguments, proves row existence, and validates job kind, attempt, owner, token hash, expiry, and complete store/session/input/media relationships. Invalid relationships use the approved exact-claim job-only reconciliation result and never mutate unverified related rows. One persistence transaction recursively validates the canonical positive allowlist, computes the UTF-8 normalized-`jsonb` hash, inserts immutable image/observation evidence and accepted candidates, and then performs terminal input/job updates. It cannot call metadata, inventory, listing, publication, or Storage operations.
 
@@ -250,3 +324,176 @@ Advisor remediation references:
 7. Validate data/constraints after evidence passes.
 8. Deprecate legacy photo arrays/direct paths only after all readers migrate.
 9. Use forward correction for any live issue; do not rewrite applied history.
+
+## 2026-08-05 operational deployment note
+
+The temporary Unit 4B Gemini test changed Render environment/deployment state
+only. The exact Supabase project, migrations, schema, RLS/grants, Storage
+objects, and current-vs-target database state were not mutated or re-read as part
+of this deployment. A future provider-call smoke must re-verify the exact project
+and use an approved sanitized-media job before any M14 evidence is claimed.
+
+## 2026-08-07 local M32 current-versus-target note
+
+Live development state remains M30 plus WU1; M32 is repository-only and was not
+applied. The local target adds same-transaction candidate/job fan-out, a
+service-only fenced metadata context, usage/failure/provider-call RPCs, one
+private SELECT-only physical-call lineage table, and a forward replacement of
+the Owner metadata-state helper so degraded snapshots are not misreported as
+selected. Exact-project schema/ACL/function preflight and application remain
+separately gated. No database, Storage, provider, deployment, inventory, listing,
+or publication mutation occurred in this implementation session.
+
+The correction pass keeps the same local target and adds no unrelated schema.
+Within still-unapplied M32 it tightens vision-only trigger provenance; canonical
+query normalization; M15 cache-entry reuse; service-only ACLs; exact
+job/candidate/store/vision/lookup/attempt/snapshot lineage; candidate-version
+TOCTOU fences; and monotonic stale physical-call reconciliation. Local PGlite
+compiled and exercised M32. Remote migration history and exact-project ACL/RLS
+state were not queried in this pass, so they remain preflight gates.
+
+The Luna correction pass further records normalized logical outcomes for exact
+response-loss recovery and durably attaches an identical pending job to the
+single atomically reserved in-flight leader before any follower can reserve
+usage or call the provider. Exact validated ISBN matches now precede title/
+author/language equivalence. These remain unapplied local M32 targets.
+
+The final bounded correction retains the same unapplied target. M32 now also
+revalidates accepted vision authority at physical finalization and exposes a
+fixed-search-path, service-only reconciliation wrapper. It preserves an
+already-finalized physical outcome after response loss or records an active
+unconfirmed call as `outcome_unknown`; exhaustive local ACL proof covers all 14
+public worker wrappers. The runtime provider boundary now validates the exact
+complete normalized edition and coherent selected-candidate identity before
+any persistence. No live schema or external state was read or changed.
+
+## 2026-08-08 controlled live metadata proof preflight
+
+Exact-project MCP readback verified `Bookconnect_reactexpo` /
+`ahntbtktjjmvfosgkmgn`, PostgreSQL 17.6, and M32 exactly once as
+`20260808020404 marketplace_phase9_structural_metadata_integration`. The live
+provider registry now contains exactly one row: `google_books`, `metadata`,
+adapter `1.0.0`, enabled/matching/storage allowed, 86,400-second revalidation,
+policy 1, with public display and image caching disabled. The worker/provider
+proof stopped before candidate creation because the checked-out environment has
+no Google Books credential and its available process URL points to a different
+Supabase host. The service-role key was not evaluated in that preflight and was
+subsequently proved valid for the exact project on 2026-08-09. Metadata jobs,
+attempts, lookups, cache entries,
+snapshots, usage reservations, and physical provider calls remain zero. The six
+historical M32-eligible candidates were not modified; inventory/listings remain
+5/5 and metadata/Phase 9 scheduler counts remain zero. The existing five cron
+jobs are unrelated club/notification/commerce jobs. No applied migration was
+edited or applied by this session.
+
+## 2026-08-08 Phase 0 credential inventory rerun
+
+The source-defined real worker path was inspected without starting either
+worker. Gemini requires `PHASE9_GEMINI_API_KEY`,
+`PHASE9_GEMINI_MODEL_ID`, and `PHASE9_GEMINI_TIMEOUT_MS`; Google Books requires
+`PHASE9_GOOGLE_BOOKS_API_KEY`, `PHASE9_GOOGLE_BOOKS_TIMEOUT_MS`, and
+`PHASE9_GOOGLE_BOOKS_MAX_RESPONSE_BYTES`. None of those names are readable by
+the current process or defined in the checked-in `.env` files. The process
+`SUPABASE_URL` host is `nxjnoqjxzkipeghhfxee.supabase.co`, not the verified
+development host `ahntbtktjjmvfosgkmgn.supabase.co`; its service credential was
+not used against the target.
+
+Read-only MCP verification confirmed the target project is
+`Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`, `ACTIVE_HEALTHY`, with M32
+exactly once and one existing Google Books registry row. Metadata jobs remain
+zero; six historical M32-eligible candidates remain untouched; inventory and
+listing counts remain `5/5`. No mutation occurred in this rerun.
+### 2026-08-09 development cleanup and fresh-proof state
+
+- Authorized stale processing cleanup closed three active/closing sessions,
+  terminalized 17 inputs and eight pending media/vision jobs, removed transient
+  uncommitted candidates/capabilities where lifecycle and FK rules allowed, and
+  expired the remaining closed-fixture candidates whose append-only variant
+  decisions prevent deletion. Immutable evidence and required audit lineage
+  remain intact.
+- Resulting pre-upload baseline: active/closing sessions `0`, stale pending
+  media/vision jobs `0`, unexpired stale review candidates `0`.
+- Fresh Expo web upload state: session
+  `204b9115-cf8b-4344-a771-042fdfdfd9f1`, one uploaded input, one open
+  `media_validate_sanitize` job, zero fresh candidates. Processing is paused at
+  the missing authenticated worker-invocation configuration gate.
+- Follow-up readback after authenticated media invocation: the media job is
+  `resolved` with attempt count `1`; the input is `queued` with a linked media
+  asset and SHA-256; one fresh `vision_extract` job is `open`; unrelated pending
+  media jobs are `0`. The next external mutation remains the separately bounded
+  authenticated vision-worker claim for this fresh input only.
+- Fresh vision proof exposes a live current-vs-target defect. The applied media
+  completion function creates a vision job without the `vision` usage
+  reservation required by applied provider-attempt registration. The fresh job
+  therefore reached `retry_scheduled` twice with
+  `P9_VISION_ANALYZER_UNAVAILABLE`, attempt `2/5`, while provider attempts,
+  usage rows, analysis results, candidates, and M32 metadata jobs remain zero.
+  A forward-only correction is required before this same proof can reach Gemini.
+
+### 2026-08-09 local M33 target delta
+
+M33 is created locally and remains unapplied. It adds no table, column, index,
+trigger, bucket, or policy. One new `postgres`-private
+`marketplace_sec.phase9_ensure_vision_usage_reservation(uuid)` helper locks and
+validates the complete job/input/active-session/initiating-Owner/sanitized-media relationship, inserts
+the existing policy-1 vision reservation under the existing unique constraint,
+then re-reads and rejects conflicting lineage. The service-only media completion
+function now calls the helper before resolving its media job, so job creation,
+reservation creation, and media completion share one transaction.
+
+The migration's repair query excludes terminal jobs and selects only valid,
+unleased `open|retry_scheduled` vision work with linked validated private WebP
+media and no reservation. Exact-project read-only preflight found one eligible
+row: the original fresh proof job at attempt `2/5`. Eleven historical terminal
+jobs remain intentionally outside the repair. A later duplicate upload has an
+open media job and is not selected because it has no vision job. No live state
+was mutated in the M33 implementation session.
+
+Independent-review corrections now make the helper and repair require
+`session.status='active'` and `media.uploaded_by=session.created_by`. The local
+migration harness also applies M31 before M32/M33. These corrections remain
+local and caused no live database or Storage mutation.
+
+### 2026-08-09 local M34 target delta
+
+M34 is local and unapplied. It replaces only the selected-session-language
+rejection and the former 20-author validation inside
+`marketplace_sec.phase9_persist_vision_analysis`: selected language becomes a
+hint, `und` remains non-candidate evidence, and provider authors are capped at
+five. It does not change tables, columns, indexes, triggers, data, M18/M19, or
+M32 metadata jobs. Current-tree PGlite passed 59/59 through M32/M33/M34. No live
+database query or mutation occurred in this coding session.
+### 2026-08-10 live readback — M34 and preserved proof
+
+- Project `ahntbtktjjmvfosgkmgn` contains M34 once as live version
+  `20260809182407 marketplace_phase9_vision_language_hint_correction`.
+- Preserved vision lineage is terminal and coherent: one resolved attempt-5
+  job, one ready input, one result, 8 observations, and 7 candidates.
+- The seven trigger-created M32 metadata jobs are resolved at attempt 1 with
+  seven lookups, seven finalized physical-call records, seven rejected logical
+  attempts, and seven immutable selected snapshots with manual outcome
+  `no_match`; all seven candidates are `needs_review`.
+- No inventory, listing, publication, or Unit 7 row was created or changed by
+  this proof. Terminal snapshot history was not deleted or rewritten after the
+  adapter request defect was corrected in code.
+
+### 2026-08-10 local M36 worker-wake target delta
+
+Fresh read-only evidence verified exact project `ahntbtktjjmvfosgkmgn`, live
+migration tail `20260809223135 marketplace_phase9_single_image_removal`, one
+claimable `media_validate_sanitize` job, and no Phase 9 cron job or named Phase
+9 Vault secret. `pg_cron` 1.6.4, `pg_net` 0.19.5, and `supabase_vault` 0.3.1
+are installed. Media and vision services are live at their recorded SHAs; no
+metadata Render service exists.
+
+Local M36 remains unapplied. It adds one postgres-private read-only
+claimability helper, one postgres-private dispatcher, one seven-day-bounded
+private dispatch-observation relation, and one named minute cron that is
+inactive when the migration transaction commits. The helper exactly mirrors
+the three current claim predicates and the dispatcher changes no job row. Six
+fixed Vault names supply only worker origins and ingress tokens; neither values
+nor HTTP bodies/errors are persisted in the M36 observation relation or Phase 9
+application logs; pg_net's private request queue transiently carries the
+Authorization header as required for delivery. Local tests cover all claimability states
+and all three due-stage dispatch paths. No database, Vault, Cron, Render,
+Storage, worker, provider, inventory, listing, or publication mutation occurred.

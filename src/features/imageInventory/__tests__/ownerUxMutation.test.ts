@@ -62,13 +62,15 @@ describe('Phase 9 Unit 6D review mutation adapter', () => {
             idempotencyKey: 'review:fixed-command-0001',
             commandId: testUuid(9),
         };
-        await expect(ownerUxService.updateCandidateReview(request)).resolves.toEqual(canonical);
+        const signal = new AbortController().signal;
+        await expect(ownerUxService.updateCandidateReview(request, signal)).resolves.toEqual(canonical);
         expect(invoke).toHaveBeenCalledWith('phase9-owner-ingestion', {
             body: {
                 action: 'update_candidate_review',
                 contractVersion: 'phase9-owner-ux-v1',
                 ...request,
             },
+            signal,
         });
     });
 

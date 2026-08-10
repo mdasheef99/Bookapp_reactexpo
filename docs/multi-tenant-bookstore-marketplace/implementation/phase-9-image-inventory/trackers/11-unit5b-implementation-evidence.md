@@ -113,3 +113,25 @@ unstarted.
 Unit 5B is merged and pushed. The exact next action is separate authorization
 before Unit 5C begins. Production configuration, credentials, deployment,
 provider calls, and live smoke remain separately gated.
+
+## 2026-08-09 credential-only operational addendum
+
+After exact-project startup and process-only secret safeguards passed, one
+temporary-key request ran through the compiled `GoogleBooksAdapter`, real HTTP
+boundary, decoder, and provider-neutral normalizer using repository fixture ISBN
+`9780306406157`. Google Books returned HTTP 200; credential acceptance, response
+bounds, decoding, and normalized shape passed. The valid normalized outcome was
+`no_acceptable_match`. Exactly one external HTTP call occurred. No Supabase
+client/RPC, metadata attempt/provider-call row, snapshot, candidate, Storage,
+inventory/publication, Render/Gemini, deployment, scheduler, or Unit 7 effect
+occurred. The temporary harness was removed and the key was not recorded here.
+### 2026-08-10 Google Books live-response correction
+
+The previously supplied Google Books API key remains valid (bounded HTTP 200
+check; value never printed or persisted). Real metadata jobs exposed that
+Google Books `projection=lite` omits the contract-required `language` field,
+causing the strict decoder to discard otherwise valid volumes. The adapter now
+requests `projection=full`; the focused suite passes 26/26, the metadata worker
+build passes, and a bounded live response decoded 8 of 10 editions. Commit
+`e4f2b34` is pushed. Existing terminal no-match snapshots remain immutable and
+route to manual Owner review rather than being rewritten.

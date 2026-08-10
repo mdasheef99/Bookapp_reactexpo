@@ -348,3 +348,15 @@ Audit is append-only from normal clients and records sensitive reads/promotions/
 ## 17. Residual risk
 
 No architecture can guarantee a multimodal model ignores every injected instruction or extracts every script correctly. The recommended design contains impact by giving the model no authority, validating outputs, requiring owner approval, and keeping commits server-controlled. Public image caching and legal retention are also operational risks; short private capabilities, deletion evidence, holds, and launch review make them manageable rather than invisible.
+
+### 2026-08-09 M33 implementation alignment
+
+The new reservation helper is owned by `postgres` and has no direct
+`service_role`, `authenticated`, or anonymous execution grant. The existing
+service-only media finalizer remains the only runtime caller and still enforces
+the worker, attempt, lease-token, expiry, store, input, session, capability, and
+sanitized-media fences before the helper can act. This closes the MED-23
+cross-seam gap without exposing a new RPC or weakening M14 provider egress.
+The helper and one-time repair additionally require an active session and bind
+the sanitized media uploader to that session's initiating Owner, preventing
+malformed historical state from being made provider-egress eligible.

@@ -554,6 +554,15 @@ describe('Phase 9 Unit 6A Edge RPC adapter', () => {
     ['list_scan_inputs', 'phase9_owner_session_inputs_v1',
       { sessionId: uuid(1) },
       { p_session_id: uuid(1), p_page_size: 20, p_cursor: null }],
+    ['remove_scan_input', 'phase9_remove_scan_input_v1',
+      {
+        sessionId: uuid(1), inputId: uuid(2), expectedInputVersion: 1,
+        idempotencyKey: 'remove-input-00001', commandId: uuid(3),
+      },
+      {
+        p_session_id: uuid(1), p_input_id: uuid(2), p_expected_input_version: 1,
+        p_idempotency_key: 'remove-input-00001', p_command_id: uuid(3),
+      }],
     ['list_scan_candidates', 'phase9_owner_candidates_page_v2',
       { scope: 'session', sessionId: uuid(1) },
       { p_scope: 'session', p_session_id: uuid(1), p_attention: 'all', p_page_size: 20, p_cursor: null }],

@@ -1,6 +1,6 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
-import { mmkvSupabaseStorage } from './mmkv';
+import { supabaseStorage } from './storage';
 import { authRuntimeConfiguration } from '@/features/auth/config/authRuntimeConfig';
 import { supabaseAuthStorageKey } from '@/features/auth/services/authStorage';
 
@@ -22,7 +22,7 @@ const localAuthLock = async <T,>(
 
 export const supabase = createClient(resolvedSupabaseUrl, resolvedSupabaseAnonKey, {
     auth: {
-        storage: mmkvSupabaseStorage,
+        storage: supabaseStorage,
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,

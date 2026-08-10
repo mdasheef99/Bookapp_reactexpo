@@ -131,3 +131,25 @@ The fixture deployment unit is complete. The local Codex
 receive separate authorization; it must not infer authority for Gemini/Google Books
 integration, scheduling, autoscaling, metadata enrichment, mobile UI, inventory
 commit, publication, or Library work.
+
+## 2026-08-05 Unit 4B Gemini configuration/startup addendum
+
+This addendum supersedes the fixture-only deployment state for the bounded
+server startup check, while retaining all historical fixture evidence above.
+The user authorized a temporary Render configuration test for the existing
+`phase9-fixture-vision` service (`srv-d9jbsjf41pts73cejqag`). Remote `main`
+commit `7eaf921efcaefccab4d0189dc26779796f164ed4` was deployed as
+`dep-d9pdei9t0dsc73ddgbh0`; Render reported `service_started` and the service
+live. The earlier env-inconsistent attempt failed because the key was present
+while fixture mode remained selected, then was corrected.
+
+The final masked environment contains `PHASE9_GEMINI_API_KEY`,
+`PHASE9_VISION_ANALYZER_MODE=gemini`,
+`PHASE9_GEMINI_MODEL_ID=gemini-3.5-flash-lite`, and
+`PHASE9_GEMINI_TIMEOUT_MS=30000`; `PHASE9_VISION_FIXTURE_CASE` is absent. The
+agent never read or recorded the key value. No real Gemini request, authenticated
+`/run`, Supabase/Storage mutation, or M12/M14 data mutation was performed.
+Render's health gate produced the live deployment status; direct independent
+HTTP probes were unavailable from the local browser/TLS environment and are not
+claimed as separate receipts. The next gate is key rotation followed by a
+separately approved sanitized-media provider call.

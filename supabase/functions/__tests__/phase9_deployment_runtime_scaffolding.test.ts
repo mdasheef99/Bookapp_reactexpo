@@ -10,6 +10,7 @@ import {
 } from '../../../workers/phase9-runtime/httpService';
 import {
   invokePhase9Worker,
+  selectedConfiguration,
   summarizeWorkerResponse,
 } from '../../../scripts/invoke-phase9-worker';
 import {
@@ -48,7 +49,7 @@ async function stalledRequest(
 }
 
 const shared = {
-  SUPABASE_URL: 'https://example.supabase.co',
+  SUPABASE_URL: 'https://ahntbtktjjmvfosgkmgn.supabase.co',
   SUPABASE_SERVICE_ROLE_KEY: serviceKey,
 };
 
@@ -307,6 +308,7 @@ describe('Phase 9 worker HTTP service', () => {
 
   it('logs only allowlisted operational fields', async () => {
     const events: SafeOperationalEvent[] = [];
+    const dispatchId = 'ad000000-0000-4000-8000-000000000001';
     const service = createPhase9WorkerHttpService({
       serviceName: 'phase9-test-worker',
       host: '127.0.0.1',
@@ -330,16 +332,95 @@ describe('Phase 9 worker HTTP service', () => {
     const address = await service.start();
     await fetch(`${address.url}/run`, {
       method: 'POST',
-      headers: authorization,
+      headers: { ...authorization, 'x-phase9-dispatch-id': dispatchId },
       body: JSON.stringify({ contractVersion: 'phase9-v1', batchSize: 1 }),
     });
     const serialized = JSON.stringify(events);
     expect(serialized).toContain('retry_scheduled');
+    expect(serialized).toContain(dispatchId);
     expect(serialized).not.toMatch(/private-job-id|Private Fixture Clue|private\/path|token|A7z/);
+  });
+
+  it('completes one delayed authenticated run within the scaled dispatcher timeout budget', async () => {
+    const scale = 100;
+    const scaledColdWakeAndProviderMs = Math.ceil((23_423 + 30_000) / scale);
+    const scaledDispatcherTimeoutMs = 120_000 / scale;
+    const events: SafeOperationalEvent[] = [];
+    const handler = jest.fn(async () => {
+      await new Promise((resolve) => setTimeout(resolve, scaledColdWakeAndProviderMs));
+      return new Response(JSON.stringify({
+        claimed: 1,
+        results: [{ outcome: 'accepted' }],
+      }), { headers: { 'content-type': 'application/json' } });
+    });
+    const service = createPhase9WorkerHttpService({
+      serviceName: 'phase9-timeout-budget-worker',
+      host: '127.0.0.1',
+      port: 0,
+      concurrency: 1,
+      workerAuthToken: mediaToken,
+      handler,
+      readiness: () => true,
+      log: (event) => events.push(event),
+    });
+    started.push(service);
+    const address = await service.start();
+    const response = await fetch(`${address.url}/run`, {
+      method: 'POST',
+      headers: authorization,
+      body: JSON.stringify({ contractVersion: 'phase9-v1', batchSize: 1 }),
+      signal: AbortSignal.timeout(scaledDispatcherTimeoutMs),
+    });
+    expect(response.status).toBe(200);
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(events.filter((event) => event.event === 'invocation_accepted')).toHaveLength(1);
+    expect(events.filter((event) => event.event === 'invocation_completed')).toHaveLength(1);
   });
 });
 
 describe('Phase 9 manual invocation and deployment validation', () => {
+  it('maps metadata to its dedicated URL/token and sends only the bounded claim request', async () => {
+    const metadataToken = 'metadata-worker-ingress-C9x.51_wVq-003-strong';
+    const configuration = selectedConfiguration({
+      PHASE9_METADATA_WORKER_URL: 'http://127.0.0.1:8093',
+      PHASE9_METADATA_WORKER_INGRESS_TOKEN: metadataToken,
+    }, 'metadata');
+    expect(configuration).toEqual({
+      service: 'metadata',
+      url: 'http://127.0.0.1:8093',
+      token: metadataToken,
+      batchSize: '1',
+      timeoutMs: '30000',
+    });
+
+    const fetchImpl = jest.fn(async (_url, init) => {
+      expect(init?.body).toBe(JSON.stringify({ contractVersion: 'phase9-v1', batchSize: 1 }));
+      expect(Object.keys(JSON.parse(String(init?.body))).sort())
+        .toEqual(['batchSize', 'contractVersion']);
+      return new Response(JSON.stringify({ claimed: 0, results: [] }));
+    });
+    await expect(invokePhase9Worker({ ...configuration, fetchImpl }))
+      .resolves.toEqual({ service: 'metadata', status: 200, claimed: 0, outcomes: [] });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects an unknown selector and redacts metadata response details', () => {
+    expect(() => selectedConfiguration({}, 'scheduler'))
+      .toThrow('P9_WORKER_INVOCATION_CONFIGURATION_INVALID');
+    expect(summarizeWorkerResponse('metadata', 200, {
+      claimed: 1,
+      results: [{
+        outcome: 'accepted_metadata_match',
+        candidateId: 'private-candidate',
+        title: 'Private Title',
+        token: 'private-token',
+      }],
+    })).toEqual({
+      service: 'metadata', status: 200, claimed: 1,
+      outcomes: ['accepted_metadata_match'],
+    });
+  });
+
   it('times out explicitly and prints only bounded summaries', async () => {
     await expect(invokePhase9Worker({
       service: 'media',

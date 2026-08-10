@@ -3,6 +3,7 @@ const { spawnSync } = require('node:child_process');
 
 const mediaToken = 'media-container-smoke-A7z.49_xYp-001-strong';
 const visionToken = 'vision-container-smoke-B8y.50_zXp-002-strong';
+const metadataToken = 'metadata-container-smoke-D0w.62_vUr-004-strong';
 const serviceKey = 'service-container-smoke-C9x.51_wVq-003-strong';
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 
@@ -82,7 +83,7 @@ async function smokeContainer(specification, root) {
 async function smokePhase9WorkerContainers(root = process.cwd()) {
   docker(['version']);
   const shared = {
-    SUPABASE_URL: 'https://example.supabase.co',
+    SUPABASE_URL: 'https://ahntbtktjjmvfosgkmgn.supabase.co',
     SUPABASE_SERVICE_ROLE_KEY: serviceKey,
     PHASE9_WORKER_HOST: '0.0.0.0',
     PHASE9_WORKER_CONCURRENCY: '1',
@@ -110,6 +111,18 @@ async function smokePhase9WorkerContainers(root = process.cwd()) {
       PHASE9_VISION_WORKER_INGRESS_TOKEN: visionToken,
       PHASE9_PEER_WORKER_INGRESS_TOKEN_SHA256: hash(mediaToken),
       PHASE9_VISION_FIXTURE_CASE: 'one_book',
+    },
+  }, root);
+  await smokeContainer({
+    service: 'metadata',
+    dockerfile: 'workers/phase9-metadata-worker/Dockerfile',
+    port: 8093,
+    environment: {
+      ...shared,
+      PHASE9_WORKER_PORT: '8093',
+      PHASE9_METADATA_WORKER_ID: 'metadata-container-000001',
+      PHASE9_METADATA_WORKER_INGRESS_TOKEN: metadataToken,
+      PHASE9_METADATA_PROVIDER_MODE: 'fixture',
     },
   }, root);
 }

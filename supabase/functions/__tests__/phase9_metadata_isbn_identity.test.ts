@@ -55,7 +55,7 @@ describe('Phase 9 Unit 5A ISBN and query identity', () => {
     expect(JSON.stringify(first)).not.toMatch(/store|secret|credential|provider/i);
   });
 
-  it('distinguishes strategy, language, and edition clues', () => {
+  it('derives ISBN strategy only from a valid normalized ISBN', () => {
     const baseline = {
       strategy: 'bibliographic' as const,
       isbnClue: null,
@@ -64,8 +64,28 @@ describe('Phase 9 Unit 5A ISBN and query identity', () => {
       language: 'en',
       editionClues: ['paperback'],
     };
-    expect(buildMetadataQueryIdentity({ ...baseline, strategy: 'isbn' }).key)
-      .not.toBe(buildMetadataQueryIdentity(baseline).key);
+    expect(buildMetadataQueryIdentity({ ...baseline, strategy: 'isbn' }).strategy)
+      .toBe('bibliographic');
+    expect(buildMetadataQueryIdentity({
+      ...baseline, strategy: 'isbn', isbnClue: '9780306406158',
+    }).strategy).toBe('bibliographic');
+    expect(buildMetadataQueryIdentity({
+      ...baseline, strategy: 'approved_strong_evidence', isbnClue: '9780306406158',
+    }).strategy).toBe('bibliographic');
+    expect(buildMetadataQueryIdentity({
+      ...baseline, strategy: 'bibliographic', isbnClue: '0-306-40615-2',
+    }).strategy).toBe('isbn');
+  });
+
+  it('distinguishes language and edition clues', () => {
+    const baseline = {
+      strategy: 'bibliographic' as const,
+      isbnClue: null,
+      title: 'Fixture Book',
+      authors: ['Fixture Author'],
+      language: 'en',
+      editionClues: ['paperback'],
+    };
     expect(buildMetadataQueryIdentity({ ...baseline, language: 'hi-Deva' }).key)
       .not.toBe(buildMetadataQueryIdentity(baseline).key);
     expect(buildMetadataQueryIdentity({ ...baseline, editionClues: ['hardcover'] }).key)

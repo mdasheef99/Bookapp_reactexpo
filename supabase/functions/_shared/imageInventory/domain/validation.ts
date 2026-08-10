@@ -49,6 +49,14 @@ export function requiredString(
   return normalized;
 }
 
+export function requiredIsoTimestamp(value: unknown, field: string, maxLength = 40): string {
+  const timestamp = requiredString(value, field, maxLength, { activeContent: false });
+  if (!Number.isFinite(Date.parse(timestamp)) || !/(?:Z|[+-]\d{2}:\d{2})$/u.test(timestamp)) {
+    throw new Phase9ContractError(field, 'must be an ISO-8601 timestamp with timezone');
+  }
+  return timestamp;
+}
+
 export function optionalString(value: unknown, field: string, maxLength: number): string | null {
   if (value === null || value === undefined) return null;
   return requiredString(value, field, maxLength);

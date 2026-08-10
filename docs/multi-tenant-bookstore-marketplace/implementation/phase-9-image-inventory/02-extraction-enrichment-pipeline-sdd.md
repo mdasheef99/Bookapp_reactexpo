@@ -20,15 +20,11 @@ extract observed identity clues. Deterministic code then performs local
 canonical lookup and sequential metadata-provider enrichment. The mobile
 request does not wait synchronously for the complete pipeline.
 
-The current runtime remains selected-language and strict `p9-vision-v2`.
-[Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md)
-prospectively replaces the language/variant target. Unit 5C-1 implements only
-its provider-neutral sidecar contract, fixtures, and independent decoder. Unit
-5C-2 maps validated sidecars into a separate private M18 relation through the
-existing M12 token/attempt persistence fence. Forward M19 fingerprints the
-first accepted envelope so exact replay is duplicate-free and changed accepted
-replay rolls back. Invalid sidecars cannot invalidate valid vision evidence.
-Generation and runtime language changes remain unimplemented.
+The current runtime uses strict `p9-vision-v2` with session language as a
+non-authoritative hint. Gemini returns a compact flat JSON object; BookConnect
+locally validates it and maps usable optional enrichment into the existing M18/
+M19 private proposal relation. Invalid enrichment cannot invalidate valid vision
+evidence.
 
 Future implementation decisions select Gemini 3.5 Flash (`gemini-3.5-flash`) for
 vision and Google Books API as the initial metadata provider. The provider-neutral
@@ -46,7 +42,9 @@ No optional vision fallback model is selected or enabled.
 The user-visible session has only:
 
 1. Start session.
-2. Capture/upload one or more images.
+2. Capture/upload one current image. Before candidate lineage exists, the Owner
+   may explicitly remove it and choose one replacement; append-style additional
+   images are not allowed.
 3. Review/commit candidates as results arrive.
 4. Close session and see summary.
 
@@ -54,8 +52,7 @@ There is no pause/save/discard command. Server persistence provides recovery whe
 
 Session defaults:
 
-- current runtime selected language: English initially; approved target:
-  optional language hint with auto-detection default;
+- optional language hint with auto-detection authoritative;
 - condition;
 - shelf/location;
 - quantity: 1;
@@ -64,8 +61,7 @@ Session defaults:
 ## 3. Capture contract
 
 - Camera and gallery/manual upload are equal supported sources.
-- Current runtime requires one language before upload and defaults to English.
-- Approved target accepts 1–15 visible spines and treats language as a hint.
+- The runtime accepts 1–15 visible spines and treats selected language as a hint.
 - If the model/quality service sees more than 15 spines, reject and ask for a smaller photo. Do not retain only the first 15.
 - Current runtime skips/reports mismatched observations. Approved target detects
   language/script per field without per-spine model switching.
@@ -92,9 +88,8 @@ Exact image replay returns the existing input/job result when safe; it does not 
 ### Input
 
 - opaque sanitized-media reference;
-- current runtime: session-selected canonical BCP 47 expected language;
-- approved target: optional canonical language hint and optional store
-  common-language context, neither authoritative;
+- optional canonical language hint and optional store common-language context,
+  neither authoritative;
 - literal maximum visible books = 15;
 - opaque job, attempt, and correlation identities;
 - contract, analysis-schema, pipeline, prompt, adapter, and adapter-version identifiers;
@@ -116,12 +111,20 @@ Strict versioned JSON:
 
 Unknown values are null, not invented placeholders. The model cannot return executable instructions, URLs, SQL, Markdown/HTML, provider queries, or database actions. All strings are length/Unicode/control-character validated and rendered as plain text.
 
-The exact `p9-vision-v2` request/result coherence, field bounds, provenance, and
-unsupported-field policy remain normative current runtime. The approved target
-adds per-title/per-author BCP 47 language and ISO 15924 script plus an optional
-independently versioned `search_variant_proposals_v1` sidecar associated with
-the same analysis. Missing or invalid sidecar data cannot invalidate canonical
-extraction. Provider-specific payloads remain inside the adapter.
+Gemini returns one compact `vision` object. Each observation contains ordinal,
+nullable original title, no more than five original authors, nullable
+publisher/ISBN clues, detected language, confidence, nullable title
+Romanization, nullable English title translation, and an `author_romanizations`
+array aligned positionally one-to-one with `author_guesses` (using null when no
+Romanization is available). There is no separate provider enrichment subtree.
+
+Geometry, warning codes, server provenance/contract/model/schema/prompt echoes,
+source-text/source-field duplication, the former sidecar envelope, and oversized
+author arrays are not provider output. BookConnect infers/validates source script,
+supplies canonical provenance and source-field identity, adds null geometry/closed
+warnings, and maps usable flattened enrichment to M18/M19. Missing, empty, or
+unusable enrichment is non-fatal. The canonical `p9-vision-v2` persistence
+contract remains authoritative after normalization.
 
 ## 6. Fallback policy
 
@@ -131,7 +134,9 @@ Invoke the configured fallback at most once for the whole image when the primary
 - output that cannot satisfy the schema;
 - broadly unusable result inconsistent with the selected language/task.
 
-Do not fallback per candidate. Do not fallback for valid empty/no-book, selected-language mismatch, over-cap, invalid upload, policy denial, or an owner-disliked but valid result. Manual correction remains available.
+Do not fallback per candidate. Do not fallback for valid empty/no-book, over-cap,
+invalid upload, policy denial, missing optional enrichment, or an owner-disliked
+but valid result. Manual correction remains available.
 
 Fallback result goes through the same validator. Store adapter/model/prompt/schema version and error class, never secret configuration.
 
@@ -147,10 +152,10 @@ Deterministic normalization:
 - reject strings with unsafe control/bidi patterns from direct UI rendering or normalize/display safely with script-aware rules.
 
 Structurally malformed output fails as one permanent contract result; individual
-malformed observations are never salvaged. Current runtime retains mixed/
-unknown-language observations as immutable evidence but creates candidates only
-for the selected language. The approved target instead validates language and
-script per field, treating any hint as non-authoritative. Repeated identical
+malformed observations are never salvaged. The corrected runtime retains mixed/
+unknown-language observations as immutable evidence and treats selected language
+as a non-authoritative hint; any titled observation with detected language other
+than `und` becomes a candidate. Repeated identical
 observations at different ordinals remain separate.
 
 ## 8. Metadata enrichment
@@ -185,6 +190,15 @@ Each adapter supports:
 - field-level reuse policy: matching-only, storage allowed, public display allowed, image caching allowed, attribution required, and expiry/revalidation required;
 - raw response retention policy;
 - rate-limit/circuit-breaker signals.
+
+The Gemini vision adapter requests `application/json` without a provider-side
+response schema. The prompt defines the single flat `vision` shape, while the
+BookConnect decoder remains the authoritative strict contract boundary. This
+avoids provider-specific structured-schema rejection without weakening local
+validation, provenance construction, or raw-response retention policy.
+The decoder normalizes only two evidenced Gemini JSON-mode aliases before strict
+validation: provider `image_outcome: "success"` becomes canonical `analyzed`, and
+a null `detected_language` becomes canonical `und`.
 
 Use positive and negative caches keyed by normalized provider-independent query plus adapter/schema version. Cache expiry is policy-configured. A circuit breaker suppresses repeated calls to a failing provider while leaving manual/local paths available.
 
@@ -221,7 +235,7 @@ The implementation should reuse the repository's proven Postgres job/worker patt
 | Invalid/malicious/over-size/over-pixel file | Reject before model call; delete/quarantine staging by policy. |
 | Blur/glare/low resolution | Actionable rescan message; no candidate commit. |
 | More than 15 spines | Reject/rescan; never truncate. |
-| Wrong selected language | Skip/report selected-language mismatch; do not auto-route. |
+| Hint differs from detected language | Retain the detected-language evidence and usable candidate; do not force the hint. |
 | Vision primary technical/schema failure | One allowed fallback. |
 | Both vision adapters fail | Input failed; other inputs continue; owner may retry/new upload. |
 | Metadata provider unavailable | Secondary if allowed; then manual/needs-review. |
@@ -322,3 +336,13 @@ CI uses recorded fixtures and validates schemas/behavior, never exact generative
 | EXT-39 | Provider promotion/demotion requires conformance, licensing/privacy review, authorized shadow evidence, rollback configuration, scorecard review, and explicit approval. |
 | EXT-40 | `search_variant_proposals_v1` is optional, independently validated, and cannot invalidate a valid `p9-vision-v2` result. |
 | EXT-41 | Unit 5C performs no untracked provider call; any Roman-query fallback remains a separately authorized Unit 5B extension. |
+
+## 17.1 2026-08-09 M33 implementation alignment
+
+The local, unapplied M33 correction implements existing EXT-13, EXT-14, EXT-22,
+and EXT-30 without changing their product semantics. Sanitized-media completion
+cannot resolve until the downstream vision job has exactly one validated
+policy-1 reservation in the same transaction. Conflicting replay lineage rolls
+the entire completion back. Its one-time repair is restricted to valid,
+unleased, nonterminal jobs in active sessions whose sanitized media belongs to
+the initiating Owner, and preserves their attempts, scheduling, and safe errors.

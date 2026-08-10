@@ -3,10 +3,81 @@ import {
     OwnerUxResponseContractError,
     decodeOwnerUxResponse,
 } from '../contracts/ownerUxContracts';
+import { decodeOwnerUxRequest } from '../contracts/ownerUxRequestContracts';
 
 const uuid = (digit: number) => `00000000-0000-4000-8000-${String(digit).padStart(12, '0')}`;
 
 describe('Phase 9 Unit 6B mobile Owner UX response contracts', () => {
+    it('strictly decodes the remove-image command and canonical skipped result', () => {
+        const request = {
+            action: 'remove_scan_input' as const,
+            contractVersion: OWNER_UX_CONTRACT_VERSION,
+            sessionId: uuid(1),
+            inputId: uuid(2),
+            expectedInputVersion: 3,
+            idempotencyKey: 'remove-input:fixed-command-0001',
+            commandId: uuid(9),
+        };
+        const result = {
+            sessionId: uuid(1),
+            inputId: uuid(2),
+            inputState: 'skipped',
+            inputVersion: 4,
+            sessionVersion: 5,
+            presentationRevision: 6,
+        };
+
+        expect(decodeOwnerUxRequest('remove_scan_input', request)).toEqual(request);
+        expect(decodeOwnerUxRequest('remove_scan_input', { ...request, storeId: uuid(8) })).toBeNull();
+        expect(decodeOwnerUxResponse('remove_scan_input', {
+            contractVersion: OWNER_UX_CONTRACT_VERSION,
+            data: result,
+        })).toEqual(result);
+        expect(() => decodeOwnerUxResponse('remove_scan_input', {
+            contractVersion: OWNER_UX_CONTRACT_VERSION,
+            data: { ...result, objectPath: 'private/path.jpg' },
+        })).toThrow(OwnerUxResponseContractError);
+    });
+
+    it('strictly decodes the Unit 6F Close response and rejects unknown request keys', () => {
+        const readiness = {
+            sessionId: uuid(1),
+            sessionStatus: 'closed',
+            sessionVersion: 3,
+            allInputsTerminal: true,
+            closeSummary: {
+                imagesSubmitted: 0, imagesProcessed: 0, imagesFailed: 0, imagesSkipped: 0,
+                candidatesDetected: 0, candidatesReviewReady: 0, candidatesNeedsReview: 0,
+                candidatesFailed: 0, falseDetections: 0, manualMissedCandidates: 0,
+                committedInventoryItems: 0, quantitiesAddedToExisting: 0, privateItems: 0,
+                publishedItems: 0, languageSkips: 0, candidateCapSkips: 0, qualitySkips: 0,
+            },
+            blockerCounts: {
+                input_processing: 0, candidate_processing: 0, candidate_failed: 0,
+                review_missing: 0, title_unconfirmed: 0, author_confirmation_incomplete: 0,
+                language_missing: 0, metadata_choice_missing: 0, quantity_invalid: 0,
+                price_invalid: 0, condition_missing: 0, damage_answer_missing: 0,
+                damage_details_missing: 0, location_missing: 0, publication_intent_missing: 0,
+                duplicate_intent_missing: 0, variant_source_stale: 0,
+            },
+            nextBlockingCandidateId: null,
+            closeState: 'closed',
+            closeAllowed: false,
+            presentationRevision: 4,
+        };
+        expect(decodeOwnerUxResponse('close_scan_session', {
+            contractVersion: OWNER_UX_CONTRACT_VERSION,
+            data: readiness,
+        })).toEqual(readiness);
+        const request = {
+            action: 'close_scan_session' as const,
+            contractVersion: OWNER_UX_CONTRACT_VERSION,
+            sessionId: uuid(1), expectedSessionVersion: 2,
+            idempotencyKey: 'close:fixed-command-0001', commandId: uuid(9),
+        };
+        expect(decodeOwnerUxRequest('close_scan_session', request)).toEqual(request);
+        expect(decodeOwnerUxRequest('close_scan_session', { ...request, storeId: uuid(8) })).toBeNull();
+    });
     it('strictly decodes discovery and rejects identity fields or unknown versions', () => {
         const data = {
             activeSession: null,

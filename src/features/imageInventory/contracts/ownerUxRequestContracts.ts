@@ -68,6 +68,23 @@ const requestSchemas = {
         contractVersion,
         sessionId: uuidSchema,
     }).strict(),
+    remove_scan_input: z.object({
+        action: z.literal('remove_scan_input'),
+        contractVersion: z.literal(OWNER_UX_CONTRACT_VERSION),
+        sessionId: uuidSchema,
+        inputId: uuidSchema,
+        expectedInputVersion: z.number().int().positive().safe(),
+        idempotencyKey: z.string().min(16).max(128).regex(/^[A-Za-z0-9._:-]+$/u),
+        commandId: uuidSchema,
+    }).strict(),
+    close_scan_session: z.object({
+        action: z.literal('close_scan_session'),
+        contractVersion,
+        sessionId: uuidSchema,
+        expectedSessionVersion: z.number().int().positive().safe(),
+        idempotencyKey: z.string().min(16).max(128).regex(/^[A-Za-z0-9._:-]+$/u),
+        commandId: uuidSchema,
+    }).strict(),
 } as const;
 
 export function decodeOwnerUxRequest<Action extends OwnerUxAction>(

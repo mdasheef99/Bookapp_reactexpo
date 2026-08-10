@@ -24,8 +24,8 @@ describe('supabase client configuration', () => {
 
         jest.doMock('@supabase/supabase-js', () => ({ createClient }));
         jest.doMock('react-native-url-polyfill/auto', () => ({}));
-        jest.doMock('../mmkv', () => ({
-            mmkvSupabaseStorage: {
+        jest.doMock('../storage', () => ({
+            supabaseStorage: {
                 getItem: jest.fn(),
                 setItem: jest.fn(),
                 removeItem: jest.fn(),
