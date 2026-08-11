@@ -1,9 +1,9 @@
 # PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `unit6_pre_main_integration_reconciliation`
-**Planning set:** `approved_baseline`
-**Implementation:** M01-M35 are live at their recorded levels; M36 is reviewed local code and remains unapplied; the real upload-to-Owner-review path is proven; current worker source is undergoing pre-main publication reconciliation; Unit 7 is gated
-**Last updated:** 2026-08-10
+**Status:** `unit7a_create_only_design_frozen`
+**Planning set:** `unit7a_ready_for_separately_authorized_red_tests`
+**Implementation:** M01-M38 are live at their recorded levels; the automatic/functional Unit 6 upload-to-Owner-review path is PASS with no inventory/listing effects. Unit 7A is frozen as one eligible candidate to one new private inventory row from server-held review state, with no duplicate branch and Unit 7B publication separate. No Unit 7A test, runtime, or migration has been implemented. Native Unit 6F validation remains deferred accepted debt, not PASS.
+**Last updated:** 2026-08-12
 
 This stable phase handoff points to the detailed planning set:
 
@@ -19,6 +19,7 @@ This stable phase handoff points to the detailed planning set:
 - [Work Unit 0 contracts/threat/migration plan](./phase-9-image-inventory/work-units/00-contracts-threat-migration-plan.md)
 - [Unit 5C Lite governing target decision](./phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md)
 - [Unit 5C-2 persistence evidence](./phase-9-image-inventory/trackers/14-unit5c2-variant-persistence-evidence.md)
+- [Unit 7A create-only commit SDD](./phase-9-image-inventory/work-units/07a-create-only-inventory-commit-sdd.md)
 
 ## Locked phase direction
 
@@ -42,7 +43,10 @@ This stable phase handoff points to the detailed planning set:
   original-language title and author as primary values, confirms those fields
   independently, and activates variants only through field-specific,
   store-scoped reconciliation.
-- Mandatory owner review, advisory same-store duplicates, no image comparison/auto-merge, independent idempotent candidate commits.
+- Mandatory Owner review and explicit independent idempotent candidate commits.
+  Unit 7A creates one new private inventory row per eligible candidate and has
+  no duplicate lookup/choice, merge, existing-row increment, manual match, or
+  keep-separate action. Historical duplicate behavior is deferred/legacy.
 - Five public conditions plus separate damage; damaged sellable copies require note and 1-3 approved public photos.
 - Bookstore-first marketplace results and complete public store catalogue.
 - Customer-requested current-copy photos are mandatory before requested-item confirmation/payment readiness.
@@ -69,11 +73,14 @@ This stable phase handoff points to the detailed planning set:
 
 ## Next gate
 
-The current authorized action is pre-main reconciliation and controlled Git
-publication of the complete current Unit 6 ingestion source. M36 application,
-Vault/Cron configuration, Render deployment, worker/provider invocation,
-database/Storage mutation, duplicate replay, Unit 7, inventory, and publication
-remain prohibited. After publication, a separate deployment session must use
-the one approved final `main` SHA for media, vision, and metadata.
+The automatic/functional Unit 6 pipeline is **PASS** through Owner Needs Review;
+automatic media, vision/Gemini, metadata, and Owner-review handoff completed
+without inventory/listing effects. Native Unit 6F validation remains deferred
+`NOT_RUN`/`UNRESOLVED` debt and is not promoted to PASS. The project owner
+accepts that deferred native-validation risk and authorizes Unit 7 to begin in a
+new bounded session. This authority supersedes older Unit 6 sequencing language
+that made the native debt a Unit 7 blocker; it does not change any Unit 6 SDD or
+acceptance criterion, and deployment/provider/database/Storage actions remain
+separately gated.
 
 Every material session must use the Phase 9 update matrix, append its evidence to the correct tracker, leave one exact next authorized action, and pass the continuity validator before handoff.

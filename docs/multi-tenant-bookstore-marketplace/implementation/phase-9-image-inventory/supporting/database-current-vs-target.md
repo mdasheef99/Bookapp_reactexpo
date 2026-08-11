@@ -1,15 +1,25 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-08-10 M38 metadata retry correction preflight
-**Audit mode:** exact-project read-only project/migration verification plus local schema/security and PGlite replay
+**Audit date:** 2026-08-10 M38 rollout and final Unit 6 proof
+**Audit mode:** exact-project pre/post migration readback plus bounded automatic live proof
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10-M37 and WU1 are live exactly once; M09 absent. Exact live tail is `20260810105517 marketplace_phase9_owner_discovery_scope_correction`. This correction session performed read-only verification only; no database, Storage, provider/job, deployment, inventory, listing, publication, or Unit 7 mutation occurred.
+**Mutation status:** M01-M08/M10-M38 and WU1 are live exactly once; M09 absent. Exact live tail is `20260810130638 marketplace_phase9_metadata_retry_correction`. The bounded closure session applied only M38, deployed metadata once, closed one prior terminal Owner session, and uploaded one new Owner image. Inventory/listings remained 5/5; no Storage cleanup, queue repair/reset, historical-job mutation, duplicate replay, publication, or Unit 7 mutation occurred. The 2026-08-12 Unit 7A planning reassessment concludes that a forward create-only command migration is required because live M05 accepts caller-supplied business/duplicate fields and does not prove current review/metadata revision binding; migration creation/application remains unauthorized. M09/global historical constraint validation is not required for Unit 7A, which must initialize each newly created row in balance.
 
-**Local target delta:** M38 is unapplied. It adds a private fixed-search-path
-metadata context v2 helper and replaces only the existing service-only public
-context wrapper. The response gains `currentPhysicalClaimAttempt`, derived from
-the same latest physical call already represented by the context. M32-M37 remain
-unchanged. Full local Phase 9 PGlite replay through M38 passes 242/242.
+**Current live delta:** M38 adds the approved private fixed-search-path metadata
+context v2 helper and replaces only the existing service-only public wrapper.
+Readback proves postgres ownership, empty `search_path`, and postgres/service-role
+execute only. The response exposes `currentPhysicalClaimAttempt`; M32-M37 remain
+unchanged. Applying M38 created or claimed no job and left the dispatcher active.
+
+**Unit 6 closure readback:** pre-proof counts were 6 sessions, 26 inputs, 57
+jobs, 25 candidates, 19 metadata attempts, 19 provider calls, 20 lookups, one
+cache entry, 5 inventory rows, and 5 listings. One SHA-new Owner upload produced
+one media job, one vision job, six candidates, and six metadata jobs. Final
+counts were 7 sessions, 27 inputs, 65 jobs, 31 candidates, 24 metadata attempts,
+24 provider calls, 26 lookups, 3 cache entries, and unchanged inventory/listings
+at 5/5. All proof jobs are terminal and claimable count is zero. Historical
+metadata dead-letter job `206ffc83-de84-4cbf-835a-a2d3fb56eb79` retains its
+pre-session `2026-08-10T11:33:01.16159Z` terminal timestamp.
 
 **2026-08-09 runtime target guard:** Fresh read-only control-plane verification
 reconfirmed `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as healthy and M32
@@ -237,7 +247,7 @@ benchmark manifests, approved languages, rollout rows, or enabled capabilities.
 | --- | --- | --- |
 | Conditions | `new`, `like_new`, `good`, `fair`, `damaged`. | Install a temporary union CHECK and update legacy validators/triggers before mapping `fair -> acceptable`; adjudicate `damaged` into a base condition plus separate damage data; then validate an exact five-value final CHECK. |
 | Current rows | Five inventory rows and five public projections; all are `good`. | Today no live `fair`/`damaged` adjudication is needed, but the migration must still be safe if data changes before application. Re-query immediately before migration. |
-| Quantity equality | `quantity_total = available + reserved + sold + removed` exists `NOT VALID`; existing rows were previously audited as non-violating. PostgreSQL still enforces the CHECK for new/updated rows while historical validation remains pending. | All commits/increments use the controlled bucket-transfer boundary. Keep validation out of M01-M08; M09 requires a fresh violation preflight, separate review/application authorization, validation, and `convalidated=true` readback. |
+| Quantity equality | `quantity_total = available + reserved + sold + removed` exists `NOT VALID`; existing rows were previously audited as non-violating. PostgreSQL still enforces the CHECK for new/updated rows while historical validation remains pending. | Unit 7A create-only commit must insert `total=available=q` and reserved/sold/removed zero. This per-new-row guarantee does not require or authorize M09; global historical validation still requires fresh preflight and separate review/application authority. |
 | Provider values | Provider CHECK embeds concrete vendors. | Migrate without losing provenance; adapter keys become data/config, not schema releases. |
 | Listing cardinality | Unique `marketplace_book_listings.inventory_id`. | Keep row identity separate; aggregate offers and stores at read time. |
 | Canonical uniqueness | Unique ISBNs; unique work title/authors without language. | Normalize/check ISBNs before write. Audit work uniqueness before adding language-aware semantics; do not loosen blindly. |
@@ -259,7 +269,7 @@ Proposed boundary:
 
 1. Mobile clients use named Q01-Q06/Q11 RPCs or dedicated positive-allowlist views for owner-safe projections and named commands for upload authorization; they receive no direct private base-table SELECT grant.
 2. Mobile clients do not directly insert committed inventory from model output, mutate canonical rows, select raw provider/model payloads, or promote media.
-3. A controlled server command performs candidate commit, duplicate choice, quantity-bucket changes, audit/event creation, and eligible public projection atomically per candidate where possible.
+3. Unit 7A uses a new controlled server command to create exactly one private inventory row per eligible reviewed candidate, initialize its quantity buckets from server-held review state, and write provenance/audit/idempotency atomically. It performs no duplicate choice or public projection; publication is Unit 7B.
 4. Service-role functions/Edge Functions derive actor/store, use fixed schemas/search paths, expose minimum commands, and have explicit grants plus cross-tenant denial tests; worker/service access is separately enumerated from authenticated access.
 5. Model/provider workers have a narrow job capability, not a user bearer token and not general database authority.
 

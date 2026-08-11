@@ -1,21 +1,52 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `unit6_owner_ux_approved_design_authority`
-**Implementation status:** `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`
-**Last updated:** 2026-08-11
-**Current milestone:** Unit 6 remains complete; native FileSystem upload is physically proven through object creation, registration, and sanitation, and the downstream multilingual Gemini decoder resilience correction is locally complete
-**Active work unit:** `phase9_multilingual_vision_response_resilience_review`
+**Planning status:** `unit7a_create_only_contract_frozen`
+**Implementation status:** `unit6_complete_live_verified`
+**Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
+**Last updated:** 2026-08-12
+**Current milestone:** Unit 7A create-only inventory-commit design is frozen and reconciled; Unit 6 automatic/functional pipeline remains PASS, with native Unit 6F debt deferred and accepted as non-blocking
+**Active work unit:** `unit7a_create_only_commit_red_tests_pending_separate_authorization`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** Red-first response-resilience fixtures failed on over-cap normalization, unknown bounded language labels, and closed schema diagnostics, then passed 21/21 after correction. Existing analyzer/captured payload plus resilience passes 46/46; focused worker/extraction/multilingual/security/Unit 6 polling passes 120/120; Image Inventory passes 39 suites and 294/294; repository TypeScript and the vision-worker build pass.
-**Next authorized action:** bounded independent review of the multilingual vision-response resilience correction; deployment requires separate authorization, followed by exactly one fresh Android image proof after deployment. Unit 7 remains unauthorized.
+**Next authorized action:** separately authorize the Unit 7A load-bearing red-test implementation against the frozen create-only SDD. No test, production-code, migration-file, database, deployment, provider, inventory, listing, publication, stage, commit, or push action is authorized by this planning closeout.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`.
-**Scope boundary:** The 2026-08-11 response correction changes only the Gemini provider compatibility/diagnostic boundary, deterministic fixtures, and required Phase 9 documentation. The proven upload transport, database/RPCs, removed input, provider configuration, worker topology, metadata, inventory/listing/publication, Unit 7, migration, deployment, and live provider execution remain excluded.
-**Implementation authority:** the user's 2026-08-11 instructions authorize this narrow local correction and verification; they do not authorize Git publication, migration, Supabase/Storage mutation, removed-input retry, backend/Edge correction, deployment, or live Gemini execution.
+**Scope boundary:** This session is Unit 7A documentation-only reconciliation: create-only commit, server-held reviewed quantity, one-to-one provenance, false-only skip semantics, private inventory, and the Unit 6 duplicate-contract transition. Unit 7B publication and every implementation/external action remain excluded.
+**Implementation authority:** the owner's 2026-08-12 decision freezes the Unit 7A contract and authorizes only the requested documentation reconciliation. It authorizes no runtime, tests, migration file, Supabase/Storage, deployment, provider, inventory, listing, or publication mutation.
 **Migration creation/application authority:** M38 was applied exactly once to verified project `ahntbtktjjmvfosgkmgn`; no further migration, database, queue, Storage, or service mutation is authorized.
-**Current gate:** `VISION_RESPONSE_RESILIENCE_REVIEW_PENDING`; user-supplied Android evidence closed the FileSystem transport proof and exposed downstream `P9_VISION_SCHEMA_INVALID`. The local structural correction is green, but deployment and one fresh post-deployment Android proof remain separately gated. The secondary deployed-Edge `P9_SINGLE_IMAGE_LIMIT` mapping drift is unchanged.
+**Current gate:** `UNIT_6_AUTOMATIC_PIPELINE_PASS_NATIVE_VALIDATION_DEBT_DEFERRED`; M38 automatic proof passed media, vision/Gemini, metadata, and Owner-review handoff with no inventory/listing effects. Native camera/gallery parity, recovery/reconnect, 15-card representative-device performance, offline/reconnect, accessibility/large text, and low-end Android resource/performance remain `NOT_RUN`/`UNRESOLVED`, not PASS. Deployment and any fresh post-deployment Android proof remain separately gated; the secondary deployed-Edge `P9_SINGLE_IMAGE_LIMIT` mapping drift is unchanged.
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
+
+## Current Unit 7A planning authority — 2026-08-12
+
+The Owner has frozen a create-only commit model. Every explicit commit of an
+eligible reviewed candidate creates exactly one new private inventory row from
+the current server-held review; no duplicate lookup, merge, increment, manual
+match, or “keep separate” branch exists in Unit 7A. The new row initializes
+`total_quantity=available_quantity=q` and all other buckets to zero. Historical
+Unit 6 duplicate controls are superseded for this path and must become
+non-actionable/non-blocking before enablement. The normative authority is
+[Unit 7A create-only inventory commit](./work-units/07a-create-only-inventory-commit-sdd.md).
+The design concludes that a forward migration is required, but neither its
+creation nor application is authorized. M09/global historical quantity
+strengthening is not a Unit 7A prerequisite.
+
+## Current Unit 6 closure authority — 2026-08-12
+
+The automatic/functional Unit 6 pipeline is **PASS**: M38 automatic proof
+completed media, vision/Gemini, metadata, and Owner-review handoff, with no
+inventory/listing effects. The detailed native Unit 6F evidence remains
+deferred `NOT_RUN`/`UNRESOLVED` debt, not PASS, for camera/gallery
+physical-device parity, native recovery/reconnect, 15-card representative-device
+performance, offline/reconnect, accessibility/large text, and low-end Android
+resource/performance. The project owner accepts this deferred native-validation
+risk and authorizes Unit 7 to begin. This current overlay supersedes older
+Unit 6 sequencing statements that made the native debt a Unit 7 blocker; it
+does not change Unit 6 SDD requirements or acceptance criteria, and Unit 7 has
+not started in this documentation-only reconciliation.
+
+> **Historical 2026-08-11 sequencing note (superseded):** **Next authorized action:** bounded independent review of the multilingual vision-response resilience correction; deployment requires separate authorization, followed by exactly one fresh Android image proof after deployment. Unit 7 remains unauthorized. That was the dated checkpoint; the current 2026-08-12 authority overlay above supersedes that sequencing decision.
 
 ## 2026-08-09 authorized web-proof stop
 
@@ -39,8 +70,9 @@ local-canonical-first metadata enrichment before Owner review becomes
 actionable. Repository evidence proves the component foundations but does not
 yet prove the production handoffs or a complete upload-to-enriched-review run.
 The read-only vertical integration audit and architecture freeze identified the
-missing structural seam. Unit 6F, WU1/WU2 runtime evidence, and Unit 7 remain
-open gates.
+missing structural seam. Native Unit 6F and WU1/WU2 runtime evidence remain
+open as deferred validation debt. Unit 7 remains not started but is
+owner-authorized under the current closure authority above.
 
 The 2026-08-07 authorized structural implementation closes that seam locally:
 vision persistence and metadata-job creation share one PostgreSQL transaction;
@@ -119,8 +151,9 @@ remote helper/RPC definitions, read-only fixture checks, and fail-closed owner
 authorization boundary are recorded in [tracker 23](./trackers/23-unit6e-review-corrections-evidence.md).
 Unit 6F browser verification, live disposable Save/Close readback, and local
 quality gates are recorded in [tracker 24](./trackers/24-unit6f-readiness-quality-gates-evidence.md).
-The Unit 6F completion gate remains open because representative low-end Android
-evidence was not run; Unit 7 remains separately gated.
+The Unit 6F evidence gate remains open because representative native evidence
+was not run; the debt is preserved and is not marked PASS. Unit 7 sequencing is
+owner-authorized under the current closure authority above.
 
 The provider/scale reconciliation keeps real Gemini provider-contract design as a separately gated prospective Unit 4B and keeps Unit 5 authoritatively named `Metadata/aliases`. The generic architecture supports one metadata primary and at most one disabled-until-approved secondary, horizontal correctness, and a fixed-multi-replica activation gate; it does not authorize provider calls, deployment changes, scheduling, or autoscaling. The bounded F1–F3 correction removes the deferred-secondary contradiction, makes media/vision/metadata capacity signals explicit, and disables raw provider/model payload persistence by default while retaining the independent-review gate.
 
@@ -1096,3 +1129,22 @@ provider fallback, or create global alias authority.
   listing, publication, Unit 7, stage, commit, push, or PR action occurred.
 - Exact next action: bounded independent review; after approval, separately
   authorize deployment, then exactly one fresh Android image proof.
+
+### 2026-08-12 — Unit 7A create-only planning reconciliation
+
+- Frozen behavior: each explicitly committed eligible reviewed candidate creates
+  exactly one new private inventory row from the current server-held review.
+- Removed from the Unit 7A contract: duplicate lookup/advice/action, target-row
+  selection, merge, existing-row increment, manual match, and keep-separate.
+- Quantity: the reviewed `q >= 1` initializes total/available to `q` and
+  reserved/sold/removed to zero. Unit 7C owns later quantity changes; M09/global
+  historical validation is not a Unit 7A prerequisite.
+- Unit 6 transition: historical duplicate UI/DTO requirements are superseded
+  for Unit 7A and must be non-actionable/non-blocking before enablement.
+- Migration verdict: a forward create-only command migration is required; the
+  existing applied M05 command is not safe to connect. No migration was created
+  or applied.
+- Effects and verification: documentation changes only; no Unit 7A tests were
+  created or executed, and no production code, database/Storage, deployment,
+  provider, inventory, listing, publication, stage, commit, push, or PR action
+  occurred. Exact next gate: separately authorize the load-bearing red tests.

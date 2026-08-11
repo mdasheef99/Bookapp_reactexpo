@@ -1,4 +1,4 @@
-# SDD 03: Owner Review, Duplicate Choice, and Inventory Commit
+# SDD 03: Owner Review and Inventory Commit
 
 **Unit 5C-5 backend checkpoint (2026-07-30):** the live backend defines the
 exceptional field-specific Owner variant read/decision contract with exact
@@ -11,9 +11,19 @@ proposal-second is the canonical lock order.
 **Version:** 1.0
 **Date:** 2026-07-19
 
+**Unit 7A normative override (2026-08-12):** the Owner froze scanned-candidate
+commit as create-only. Every explicitly committed reviewed candidate creates one
+new private inventory row using the locked server-held review. Duplicate advice,
+target selection, increment, manual match, and keep-separate semantics are
+**SUPERSEDED FOR UNIT 7A**. The focused normative implementation contract is
+[Unit 7A create-only inventory commit](./work-units/07a-create-only-inventory-commit-sdd.md).
+
 ## 1. Decision
 
-Make owner review the only gateway from staged AI/provider output into store inventory. Keep the screen compact through session defaults, progressive disclosure, and attention markers. Commit each candidate independently through a controlled, versioned, idempotent server command that preserves Phase 6 quantity buckets and safe public projection.
+Make Owner review the only gateway from staged AI/provider output into store
+inventory. Unit 7A commits each candidate independently through a controlled,
+versioned, idempotent create-only command and ends with one new private inventory
+row. Unit 7B separately owns safe public projection.
 
 ## 2. User experience principles
 
@@ -21,7 +31,7 @@ Make owner review the only gateway from staged AI/provider output into store inv
 - Do not introduce application translation in Phase 9. Original book text is displayed faithfully; inventory actions remain the existing app language.
 - Show only the fields needed to make the item sellable. Put bibliographic detail in an expandable section.
 - Apply selected defaults automatically and visibly.
-- Highlight only low-confidence, missing, conflicting, duplicate, damage, or publication-blocking fields.
+- Highlight only low-confidence, missing, conflicting, damage, or publication-blocking fields. Legacy duplicate warnings are not actionable in Unit 7A.
 - Preserve one visible spine as one review card, including repeated spines.
 - Never require all candidates to succeed together.
 
@@ -55,7 +65,7 @@ Each candidate card contains:
 - base condition with explanation marker;
 - shelf/location;
 - damage yes/no;
-- duplicate warning when applicable;
+- no actionable duplicate warning or choice on the Unit 7A path;
 - publication choice inherited from session;
 - Add to inventory action.
 
@@ -101,7 +111,12 @@ If Damage = Yes:
 
 If the owner reports an unsellable condition, force private/blocked listing quality. The system may retain a private record but must not project it publicly.
 
-## 7. Duplicate warning experience
+## 7. Legacy duplicate-warning experience
+
+This section records the pre-Unit-7A review design. Its actions are
+**DEFERRED / LEGACY** and have no create-only commit effect. Before the Unit 7A
+client action is enabled, the minimum required Unit 6 contract/UI correction is
+to stop requiring or presenting these choices as actionable commit inputs.
 
 The warning explains why a possible same-store match was found and offers only valid actions:
 
@@ -126,7 +141,6 @@ Required before private inventory commit:
 - integer `price_paise >= 0` for private inventory (`price_paise > 0` required to publish); negative, fractional, and unsafe integer values are rejected;
 - valid base condition;
 - shelf/location according to store policy;
-- explicit duplicate action when warned;
 - explicit damage/sellability answer.
 
 Required before public projection:
@@ -150,16 +164,15 @@ does not create shared catalogue truth. Price-on-request is excluded.
 
 ## 9. Controlled command contract
 
-Conceptual input:
+Normative Unit 7A conceptual input:
 
 ```text
-commit_candidate(
+add_candidate_to_inventory(
+  session_id,
   candidate_id,
   expected_candidate_version,
-  owner_review_snapshot,
-  duplicate_action,
-  expected_duplicate_target_version nullable,
-  publication_action,
+  expected_review_version,
+  expected_metadata_revision,
   idempotency_key,
   command_id
 )
@@ -167,16 +180,17 @@ commit_candidate(
 
 The server:
 
-1. Derives `auth.uid()` and resolves active Owner capability/store.
-2. Loads candidate and verifies the final `store_id`; ignores client authority claims.
-3. Validates state/version, reviewed snapshot, field confirmations, active
-   store-scoped variants, damage/media, and publication eligibility.
-4. Recomputes same-store duplicate evidence under an identity/row transaction lock.
-5. Performs `create_new`, `increment_quantity`, `manual_match`, or `skip`.
-6. Writes bounded audit/event evidence and candidate outcome.
-7. Commits the private inventory outcome and records the requested publication intent.
-8. Creates/updates/retracts the safe public projection as required; projection failure records a retryable private outcome without repeating inventory effects.
-9. Returns canonical inventory/listing/session summary; retries return the recorded result.
+1. Derives `auth.uid()` and resolves active Owner capability/store through the
+   persisted candidate/session relationship.
+2. Locks the candidate and validates candidate, review, and metadata versions.
+3. Loads all business fields from the authoritative saved review/current
+   selected-or-manual metadata state; the command does not resubmit them.
+4. Creates exactly one new private inventory row and never targets existing inventory.
+5. Initializes total/available from reviewed quantity and reserved/sold/removed to zero.
+6. Writes reciprocal candidate/inventory provenance, session accounting,
+   bounded audit/event evidence, candidate `committed` outcome, and canonical replay result.
+7. Retains publication intent for Unit 7B without creating a listing.
+8. Returns the canonical candidate/inventory response; retries return the recorded result.
 
 The model/provider cannot invoke this command.
 
@@ -188,25 +202,22 @@ The model/provider cannot invoke this command.
 - reserved/sold/removed start at zero;
 - preserve equality with the existing Phase 6 bucket model.
 
-### Increment existing
-
-- lock the target inventory row;
-- recheck store, edition/ISBN, language, format, condition, price, and absence of copy-specific variants;
-- add reviewed quantity to both total and available;
-- do not change reserved/sold/removed;
-- fail with a refreshable conflict if compatibility or target version changed.
-
-The existing quantity equality is currently `NOT VALID`; Phase 9 must preserve it regardless of validation timing. No direct client quantity update is used for a scan commit.
+There is no increment-existing path or target-inventory concurrency in Unit 7A.
+Post-commit quantity adjustment belongs to Unit 7C. Unit 7A guarantees equality
+for every row it creates; global validation/repair of the historical constraint
+remains the separately gated M09 scope.
 
 ## 11. Partial success and errors
 
 - A single candidate error leaves other candidates usable.
-- Error messages are stable codes plus short owner text: authorization, stale review, duplicate changed, required field, media missing, unsellable, publication blocked, quota/policy, or retryable server failure.
-- A failed public projection cannot be reported as published and does not roll back a valid private inventory commit. The candidate remains persisted as `committed`, publication becomes `publication_failed`, and the API returns command outcome `committed_publication_failed`; record an audit event and retryable publication intent. The publication-retry command reauthorizes current eligibility and is idempotent against the original commit, so it cannot create or increment inventory again.
+- Error messages are stable codes plus short Owner text: authorization,
+  ineligible candidate, stale candidate/review/metadata, invalid saved review,
+  idempotency mismatch, or retryable internal transaction failure.
+- Unit 7A has no public projection outcome. Publication failure/retry belongs to Unit 7B.
 - A failed request may safely retry using the same idempotency identity.
 - Needs-review candidates remain outside inventory after Close and expire by policy.
 
-The canonical API error catalogue separates adapter outcomes from domain/API failures. Every `P9_*` API error records stable code, HTTP status, retryability, safe Owner message, log severity, whether a database effect survived, and whether retry must reuse the same idempotency key. Required initial codes cover unauthorized Owner, inactive session, candidate version conflict, changed duplicate target, unapproved media, quantity invariant failure, and publication failure.
+The canonical API error catalogue separates adapter outcomes from domain/API failures. Every `P9_*` API error records stable code, HTTP status, retryability, safe Owner message, log severity, whether a database effect survived, and whether retry must reuse the same idempotency key. Unit 7A codes cover unauthorized Owner, inactive session, candidate/review/metadata revision conflict, invalid reviewed quantity, already-handled candidate, idempotency mismatch, and retryable internal transaction failure. Duplicate-target and publication failures are legacy/later-unit concerns, not Unit 7A outcomes.
 
 ## 12. Session close summary
 
@@ -215,7 +226,7 @@ Close is accepted only when all submitted inputs are terminal. Summary shows:
 - images processed/failed/skipped;
 - candidates detected;
 - committed inventory items;
-- quantities added to existing rows;
+- quantities added to existing rows (always zero for Unit 7A; legacy summary field only);
 - published items;
 - private items;
 - needs-review/uncommitted items;
@@ -259,10 +270,10 @@ Rules:
 - defaults and per-candidate override/apply-to-remaining;
 - 15 ordered cards, repeated spines, add missed/remove false;
 - all condition explanations and damage gates;
-- compatible/incompatible/fuzzy duplicate actions;
-- create/increment concurrency and idempotent retry;
-- active hold/bucket preservation;
-- candidate partial success and projection failure;
+- no duplicate action rendered, required, sent, or applied;
+- create-only concurrency and idempotent retry;
+- exact new-row quantity initialization and no existing-row mutation;
+- candidate partial success; publication/projection failure belongs to Unit 7B;
 - post-commit edit/rematch/retraction;
 - background/refetch/close summary/Needs review;
 - cross-tenant and stale-version denial;
@@ -272,24 +283,24 @@ Rules:
 
 | ID | Criterion |
 | --- | --- |
-| REV-01 | Owner review is mandatory before every inventory create/increment. |
-| REV-02 | Confirmed original title, accepted language, quantity, positive public price, condition, location, damage, duplicate, and publication requirements are validated server-side. |
+| REV-01 | Owner review and explicit Add to Inventory are mandatory before every create-only scanned-candidate commit. |
+| REV-02 | Confirmed original title, accepted language, quantity, price, condition, location, damage, and publication intent are validated from locked server-held review state. |
 | REV-03 | Optional metadata is collapsed but editable. |
 | REV-04 | One candidate failure does not block other commits. |
 | REV-05 | Every commit is atomic/idempotent and returns its recorded result on retry. |
 | REV-06 | Session defaults reduce repeated entry and remain visible/overridable. |
-| REV-07 | Repeated spines stay separate candidates until explicit owner action. |
+| REV-07 | Repeated spines stay separate candidates and every successful commit creates a separate inventory row. |
 | REV-08 | Five conditions and accessible explanations are available. |
 | REV-09 | Damaged publication requires note/types/1–3 approved photos. |
-| REV-10 | Damaged/copy-specific candidates cannot increment a generic quantity row. |
+| REV-10 | Unit 7A never increments an existing inventory row. |
 | REV-11 | Unsellable items remain private and cannot project. |
 | REV-12 | Add-missed and remove-false work without rerunning the image. |
-| REV-13 | Create/increment preserves Phase 6 quantity/hold invariants under concurrency. |
+| REV-13 | Create initializes exact quantity equality; post-commit quantity lifecycle is Unit 7C. |
 | REV-14 | Session close summary is authoritative and never silently commits/discards. |
 | REV-15 | Post-push store fields remain editable through controlled commands. |
 | REV-16 | Store edits cannot mutate canonical truth. |
-| REV-17 | ISBN/edition edits rematch and re-evaluate duplicates/public projection. |
-| REV-18 | Projection failure returns one private `committed_publication_failed` outcome and idempotent publication retry cannot repeat inventory effects. |
+| REV-17 | Post-commit ISBN/edition rematching and projection re-evaluation belong to Unit 7C. |
+| REV-18 | Unit 7A ends private; Unit 7B publication retry cannot repeat the inventory effect. |
 | REV-19 | Stable API errors distinguish retryability, safe Owner text, surviving effects, and idempotency reuse. |
 | REV-20 | Complete provider outage, ambiguity, breaker-open state, or exhausted external capacity leaves the candidate available for manual reviewed inventory. |
 | REV-21 | Owner review exposes provider-neutral provenance/attention signals and records bounded correction categories without raw provider payloads. |

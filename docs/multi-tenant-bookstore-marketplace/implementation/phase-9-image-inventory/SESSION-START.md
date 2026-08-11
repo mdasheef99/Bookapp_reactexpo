@@ -1,7 +1,7 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-08-11
+**Last updated:** 2026-08-12
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
@@ -17,15 +17,30 @@ logically removed, and Owner Edge v3 is deployed/readback-verified. One new
 input was registered after removal and must not be removed or otherwise mutated
 without a new explicit target decision.
 
-Current routed handoff: Unit 6 is complete. Approved `main` SHA
-`a138baa7d3bbc086da019bc052a5ae31d0e15882` contains the reviewed M38/runtime
-correction. M38 is live once; metadata was deployed once from that SHA; and one
-authenticated Owner upload automatically completed media, vision/Gemini, six
-metadata jobs, and the Needs Review UI. There were zero manual runs, claims,
-repairs, or operator retries; inventory/listings stayed 5/5 and the historical
-dead-letter job was untouched. Duplicate replay was not tested and Unit 7 was
-not started. No next work unit is authorized; Unit 7 requires a new explicit
-session.
+Current routed handoff: Unit 6's automatic/functional pipeline is **PASS**.
+Approved `main` SHA `a138baa7d3bbc086da019bc052a5ae31d0e15882` contains the
+reviewed M38/runtime correction. M38 is live once; metadata was deployed once
+from that SHA; and one authenticated Owner upload automatically completed
+media, vision/Gemini, six metadata jobs, and the Needs Review UI. There were
+zero manual runs, claims, repairs, or operator retries; inventory/listings
+stayed 5/5 and the historical dead-letter job was untouched. Duplicate replay
+was not tested and Unit 7 was not started. Native Unit 6F validation remains
+deferred `NOT_RUN`/`UNRESOLVED` debt, not PASS, for camera/gallery
+physical-device parity, native recovery/reconnect, 15-card representative-device
+performance, offline/reconnect, accessibility/large text, and low-end Android
+resource/performance. The project owner accepts this deferred validation risk
+and authorizes Unit 7 to begin in a new bounded session.
+
+Current active planning handoff: Unit 7A is now frozen as a create-only private
+inventory commit. Read
+[the Unit 7A SDD](./work-units/07a-create-only-inventory-commit-sdd.md) before
+any red-test or implementation work. One eligible reviewed candidate creates
+one new row from the server-held saved review; duplicate lookup/merge/increment/
+manual-match/keep-separate behavior is excluded, and publication is Unit 7B.
+The Unit 6 duplicate UI/DTO path is superseded for Unit 7A and must become
+non-actionable/non-blocking before enablement. A forward migration is required,
+but migration creation/application and all runtime/external actions remain
+separately authorized. Exact next gate: authorize the load-bearing red tests.
 
 Current local correction: user-supplied 2026-08-11 physical Android evidence
 proves the Expo FileSystem `UploadTask` replacement reached signed Storage
@@ -42,7 +57,8 @@ resilience is 46/46, focused worker/extraction/multilingual/security/Unit 6
 polling is 120/120, Image Inventory is 39 suites and 294/294, and repository
 TypeScript plus the vision-worker build pass. Exact next action is bounded
 review; deployment and one fresh post-deployment Android image proof require
-separate authorization. Unit 7 remains separately gated.
+separate authorization. The native Unit 6F debt remains tracked and is not a
+Unit 7 blocker under the owner-authorized sequencing decision.
 
 Current routed handoff: Unit 6A is merged/live-verified through M29, Unit 6B is
 merged at `9ef9eb3` with [tracker 20](./trackers/20-unit6b-route-query-cache-evidence.md),
@@ -57,7 +73,9 @@ browser-smoke receipt, and handoff. M30 is live exactly once as
 migration, Supabase/Storage, deployment, provider, inventory, publication, or
 commerce mutation occurred. Unit 6F browser/readback verification and local
 quality gates are recorded in [tracker 24](./trackers/24-unit6f-readiness-quality-gates-evidence.md);
-the representative low-end Android Unit 6F evidence remains outstanding.
+the representative low-end Android Unit 6F evidence remains outstanding as
+deferred validation debt; it is not marked PASS and is not a Unit 7 blocker
+under the current owner-authorized sequencing decision.
 
 WU1 and WU2 remain complete at their recorded levels. M32 is now live exactly
 once as `20260808020404 marketplace_phase9_structural_metadata_integration` on
@@ -157,7 +175,8 @@ Do not describe an action as authorized merely because it is listed as a future 
 | 5 Metadata/aliases | 01 Data; 02 Pipeline; 03 Review; 04 Security; 05 Marketplace | Unit 5A/5B handoffs/evidence, [Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md), data dictionary, current-vs-target audit, requirements traceability, complexity register, provider audit/fixtures |
 | 6 Owner UX | [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md); [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md); 03 Review; 02 Pipeline | [tracker 18](./trackers/18-unit6-owner-ux-design-evidence.md), DOC-8, accessibility/verification matrix |
 | WU1/WU2 Owner inventory read boundary/client | [WU1](./work-units/owner-inventory-read-boundary-wu1-sdd.md); [WU2](./work-units/owner-inventory-read-client-wu2-sdd.md); 00 Master; 03 Review | [tracker 25](./trackers/25-owner-inventory-read-boundary-wu1-evidence.md), [tracker 26](./trackers/26-owner-inventory-read-client-wu2-evidence.md), DOC-8 §5, current-vs-target audit, requirements traceability |
-| 7 Commit/duplicates/projection | 01 Data; 03 Review; 05 Marketplace | quantity/hold invariants, current trigger audit |
+| 7A Create-only private inventory commit | [Unit 7A SDD](./work-units/07a-create-only-inventory-commit-sdd.md); 00 Master; 01 Data; 03 Review | Unit 6 SDD/contract transition, DOC-3/4/8, quantity/hold invariants, current-vs-target audit, traceability |
+| 7B Publication/projection | 03 Review; 05 Marketplace | private/public projection and current trigger audit; separately authorized after 7A |
 | 8 Marketplace | 05 Marketplace; 01 Data | DOC-0, DOC-3, DOC-5, public/private tests |
 | 9 Damage/request photos | 04 Security; 06 Photo Request; 03 Review | DOC-1, DOC-6, DOC-14, retention matrix |
 | 10 Lifecycle worker | 04 Security; 02 Pipeline | retention/deletion fields and ops checks |

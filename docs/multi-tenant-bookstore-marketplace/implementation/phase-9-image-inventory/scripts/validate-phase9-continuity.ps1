@@ -177,7 +177,12 @@ $visionResponseResilienceHandoff = $active.Contains('signed Storage `2xx`') -and
     $active.Contains('16-100') -and
     $active.Contains('21/21') -and
     $active.Contains('Unit 7 remains unauthorized')
-if (-not ($legacyM32Handoff -or $liveM32Handoff -or $metadataSafetyHandoff -or $dispatcherHandoff -or $integrationHandoff -or $metadataRetryHandoff -or $unit6ClosureHandoff -or $mobileUploadCorrectionHandoff -or $mobileUploadNativeFailureHandoff -or $mobileUploadFileSystemHandoff -or $visionResponseResilienceHandoff)) {
+$unit7aCreateOnlyHandoff = $active.Contains('Unit 7A create-only inventory commit design is frozen') -and
+    $active.Contains('exactly one new private inventory row') -and
+    $active.Contains('publication is Unit 7B') -and
+    $active.Contains('forward migration') -and
+    $active.Contains('separately authorized load-bearing red tests')
+if (-not ($legacyM32Handoff -or $liveM32Handoff -or $metadataSafetyHandoff -or $dispatcherHandoff -or $integrationHandoff -or $metadataRetryHandoff -or $unit6ClosureHandoff -or $mobileUploadCorrectionHandoff -or $mobileUploadNativeFailureHandoff -or $mobileUploadFileSystemHandoff -or $visionResponseResilienceHandoff -or $unit7aCreateOnlyHandoff)) {
     Write-Error 'ACTIVE.md does not preserve the current Phase 9 handoff and external-mutation gates.'
 }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
@@ -197,7 +202,8 @@ if (-not ($doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6e_finalized
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_upload_transport_correction_locally_verified`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_upload_transport_native_failed_diagnosed`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
-    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`')) -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit7a_create_only_design_frozen`')) -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
     -not $doc13.Contains('20260727231217 marketplace_phase9_sensitive_table_acl_correction') -or
     -not $doc13.Contains('20260727233457 marketplace_phase9_maintain_acl_correction') -or
@@ -259,6 +265,7 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
     $implementationTracker.Contains('**Active work unit:** `unit6_mobile_upload_transport_correction_local_complete`') -or
     $implementationTracker.Contains('**Active work unit:** `unit6_mobile_filesystem_transport_live_proof_pending`') -or
     $implementationTracker.Contains('**Active work unit:** `phase9_multilingual_vision_response_resilience_review`') -or
+    $implementationTracker.Contains('**Active work unit:** `unit7a_create_only_commit_red_tests_pending_separate_authorization`') -or
     $implementationTracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -or
     $implementationTracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
     -not $implementationTracker.Contains('20-unit6b-route-query-cache-evidence.md') -or
@@ -479,7 +486,7 @@ if (
         $tracker.Contains('**Implementation status:** `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
         $tracker.Contains('**Implementation status:** `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`')
     ) -or
-    ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|phase9_multilingual_vision_response_resilience_review|unit6c_single_image_safe_remove|phase9_metadata_retry_provider_attempt_correction|unit6_complete|unit6_mobile_upload_transport_correction_local_complete|unit6_mobile_upload_transport_native_failure_diagnosed|unit6_mobile_filesystem_transport_live_proof_pending)`\r?$' -and
+    ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit7a_create_only_commit_red_tests_pending_separate_authorization|unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|phase9_multilingual_vision_response_resilience_review|unit6c_single_image_safe_remove|phase9_metadata_retry_provider_attempt_correction|unit6_complete|unit6_mobile_upload_transport_correction_local_complete|unit6_mobile_upload_transport_native_failure_diagnosed|unit6_mobile_filesystem_transport_live_proof_pending)`\r?$' -and
         -not $tracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -and
         -not $tracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
     -not (
@@ -519,7 +526,8 @@ if (
         $tracker.Contains('**Next authorized action:** none; a native-device signed-upload proof would create Storage/database state and requires separate explicit authorization, while Unit 7 remains not started') -or
         $tracker.Contains('**Next authorized action:** none; a further transport correction, Edge deployment, or additional live upload requires separate explicit authorization, while Unit 7 remains not started') -or
         $tracker.Contains('**Next authorized action:** perform exactly one fresh Android Owner upload through the normal UI and require signed Storage `2xx`, exactly one object, and successful input registration; stop on the first failure. Edge deployment and Unit 7 remain separately unauthorized.') -or
-        $tracker.Contains('**Next authorized action:** bounded independent review of the multilingual vision-response resilience correction; deployment requires separate authorization, followed by exactly one fresh Android image proof after deployment. Unit 7 remains unauthorized.')
+        $tracker.Contains('**Next authorized action:** bounded independent review of the multilingual vision-response resilience correction; deployment requires separate authorization, followed by exactly one fresh Android image proof after deployment. Unit 7 remains unauthorized.') -or
+        $tracker.Contains('**Next authorized action:** separately authorize the Unit 7A load-bearing red-test implementation against the frozen create-only SDD.')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
@@ -890,6 +898,7 @@ if (-not $sessionStart.Contains('06-owner-capture-review-recovery-ux-sdd.md') -o
 }
 $phaseReadme = [IO.File]::ReadAllText((Join-Path $phaseRoot 'README.md'))
 if (-not ($phaseReadme.Contains('**Status:** `unit6e_finalized_unit6f_separately_gated`') -or
+    $phaseReadme.Contains('**Status:** `unit7a_create_only_design_frozen`') -or
     $phaseReadme.Contains('**Status:** `unit6f_browser_verified_native_gate_pending`') -or
     $phaseReadme.Contains('**Status:** `wu1_owner_inventory_read_boundary_locally_complete_unapplied`') -or
     $phaseReadme.Contains('**Status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or

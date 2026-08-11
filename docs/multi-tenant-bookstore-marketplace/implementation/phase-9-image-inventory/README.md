@@ -1,11 +1,23 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit6_complete_live_verified`
-**Last updated:** 2026-08-11
-**Implementation status:** Unit 6 is complete. M01-M08/M10-M38 are live-verified
-at their recorded levels; approved `main` SHA `a138baa7d3bbc086da019bc052a5ae31d0e15882`
-is published and deployed to metadata; one authenticated Owner upload completed
-the full automatic path to Needs Review without inventory/listing effects.
+**Status:** `unit7a_create_only_design_frozen`
+**Last updated:** 2026-08-12
+**Implementation status:** Unit 6's automatic/functional pipeline is **PASS**.
+M01-M08/M10-M38 are live-verified at their recorded levels; approved `main` SHA
+`a138baa7d3bbc086da019bc052a5ae31d0e15882` is published and deployed to
+metadata; one authenticated Owner upload completed the full automatic path to
+Needs Review without inventory/listing effects. Native Unit 6F validation
+remains deferred `NOT_RUN`/`UNRESOLVED` debt, not PASS, for camera/gallery
+physical-device parity, native recovery/reconnect, 15-card representative-device
+performance, offline/reconnect, accessibility/large text, and low-end Android
+resource/performance. The project owner accepts that deferred risk and
+authorizes Unit 7 to begin.
+The active Unit 7A design is now frozen as create-only: one eligible reviewed
+candidate creates one new private inventory row from the current server-held
+review; no duplicate lookup/merge/increment/manual-match/keep-separate behavior
+exists in 7A, and publication is Unit 7B. It is ready for separately authorized
+red tests. A forward migration is required but is not authorized for creation
+or application by this planning checkpoint.
 Unit 6B is merged at `9ef9eb3`; Unit 6D is implemented at `c363b60`; their
 recorded evidence remains authoritative beneath this final closure checkpoint.
 **Supabase mutation status:** M01-M08/M10-M38 and WU1 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent. The final closure session applied only M38, created one Owner session/input, and allowed the automatic pipeline to create its bounded jobs/candidates/metadata evidence. Inventory/listings stayed 5/5; no Storage cleanup, publication, duplicate replay, or Unit 7 mutation occurred.
@@ -19,22 +31,28 @@ invoker was used.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 
-The current handoff is Unit 6 closure `PASS`. M32-M38 are live and immutable at
-their recorded versions; metadata deploy count for the rollout was 1/1 and
-media/vision were not redeployed. Duplicate replay was not tested, Unit 7 was
-not started, and no next work unit is authorized without a new explicit session.
+The current handoff is Unit 6 automatic/functional pipeline `PASS`. M32-M38 are
+live and immutable at their recorded versions; metadata deploy count for the
+rollout was 1/1 and media/vision were not redeployed. Duplicate replay was not
+tested and Unit 7 was not started. Native Unit 6F evidence remains deferred
+`NOT_RUN`/`UNRESOLVED` debt and is not marked PASS. The project owner accepts
+the risk and authorizes Unit 7 to begin in a new bounded session.
 
 The current post-closure handoff is the local multilingual vision-response
 resilience correction. User-supplied Android evidence closes the FileSystem
-transport proof and moves the blocker to strict Gemini decoding. The local
-correction is green and review-pending; deployment, a fresh post-deployment
-Android proof, and Unit 7 remain separately unauthorized.
+transport proof and moves the evidence issue to strict Gemini decoding. The
+local correction is green and review-pending; deployment and a fresh
+post-deployment Android proof remain separately authorized. The native Unit 6F
+debt is preserved below and no longer blocks Unit 7 under the owner-authorized
+sequencing decision.
 
 WU1 and WU2 remain complete at their recorded levels. M32 closes the
 structural metadata seam with transaction-atomic candidate/job creation,
 same-candidate fenced worker processing, a provider-neutral Google Books path,
 and replay-safe terminal persistence using approved states. M38 and the final
-automatic live proof close the later-claim retry and Unit 6 operational gates.
+automatic live proof close the later-claim retry and Unit 6 automatic/functional
+operational gates; they do not constitute native-device evidence for the
+deferred Unit 6F validation debt.
 
 Every new development session starts at repository `AGENTS.md`, then follows `implementation/ACTIVE.md` → DOC-13 → [SESSION-START.md](./SESSION-START.md) → [TRACKER.md](./TRACKER.md). `SESSION-START.md` defines the Phase 9 resume brief, work-unit reading router, Supabase gate, documentation update matrix, and mandatory closeout transaction.
 
@@ -72,6 +90,7 @@ After the repository entrypoint, read in this order:
 | [06 Customer photo request](./06-customer-photo-request-extension-sdd.md) | Item-level current-copy photo requests, mandatory fulfillment gate, private evidence, Phase 6 seam. |
 | [WU1 Owner-inventory read boundary](./work-units/owner-inventory-read-boundary-wu1-sdd.md) | Separate stable detail/list read contract, signed deterministic cursor, exact DTO/filter allowlists, Owner authorization, and the applied forward migration; positive Owner runtime remains deferred. |
 | [WU2 Owner-inventory read client](./work-units/owner-inventory-read-client-wu2-sdd.md) | Read-only `/inventory` cutover to the WU1 list RPC, strict DTO validation, opaque pagination, cache isolation, exact filters, and error/empty/partial states; authenticated runtime remains deferred. |
+| [Unit 7A create-only commit](./work-units/07a-create-only-inventory-commit-sdd.md) | One reviewed candidate to one new private inventory row, server-held review/revision authority, quantity buckets, replay/concurrency, one-to-one provenance, false-only skip semantics, Unit 6 duplicate-contract transition, and migration verdict. |
 
 ## Supporting set
 
@@ -157,7 +176,7 @@ The routing/status separation is intentional: [`../ACTIVE.md`](../ACTIVE.md) rou
 
 ## Planning and implementation gates
 
-The planning baseline, WU0A/WU0B, corrected Package 1 design, Units through 5C-6, and Unit 6A-6E are integrated at their recorded checkpoints. M01-M08/M10-M30, Owner ingestion, and both separate fixture workers are live-verified; M09 remains absent. Unit 6E's correction-only M30 is additive and was applied exactly once after exact-project preflight. Unit 6F browser/readback verification and the local fixture-backed fifteen-card UI check are recorded, but real Gemini inference, production metadata enrichment, the complete upload-to-review path, and representative low-end Android evidence remain unproven. Customer display, inventory/publication, commerce, Google Books Roman-query fallback, global alias authority, and Unit 7 remain separately gated. Preserve these controls:
+The planning baseline, WU0A/WU0B, corrected Package 1 design, Units through 5C-6, and Unit 6A-6E are integrated at their recorded checkpoints. M01-M08/M10-M38, Owner ingestion, and both separate fixture workers are live-verified; M09 remains absent. Unit 6E's correction-only M30 is additive and was applied exactly once after exact-project preflight. The M38 automatic proof closes the functional upload-to-Owner-review path without inventory/listing effects. Unit 6F browser/readback and local fixture-backed checks remain recorded, but native camera/gallery parity, recovery/reconnect, 15-card representative-device performance, offline/reconnect, accessibility/large text, and low-end Android resource/performance evidence remain deferred `NOT_RUN`/`UNRESOLVED` debt and are not PASS. Customer display, inventory/publication, commerce, Google Books Roman-query fallback, and global alias authority remain separately gated; Unit 7 is owner-authorized under the current authority overlay. Preserve these controls:
 
 - the seven SDDs agree on states, identifiers, retention, and public/private boundaries;
 - the data dictionary and current-vs-target audit are reviewed;

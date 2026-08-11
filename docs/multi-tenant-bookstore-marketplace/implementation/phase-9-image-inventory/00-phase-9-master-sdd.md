@@ -4,12 +4,19 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 **Phase:** 9
-**Implementation checkpoint (2026-08-10):** the current Unit 6 ingestion path is
-implemented through Owner review. M32-M37 are live. Local forward M38 corrects
-metadata provider retry so a later claim performs fresh egress after a retryable
-physical result, while same-claim and terminal reconciliation remain replay-safe.
-Gemini uses a compact flat JSON contract, session language is a hint, and Google
-Books requests `projection=full`.
+**Implementation checkpoint (2026-08-12):** Unit 6's automatic/functional
+pipeline is **PASS** through Owner Needs Review. M32-M38 are live exactly once;
+metadata is deployed from approved SHA `a138baa`; and one authenticated Owner
+upload automatically completed media, vision/Gemini, and six metadata jobs
+without inventory/listing effects. M38 ensures a later claim performs fresh
+egress after a retryable physical result while preserving same-claim and
+terminal reconciliation. Native Unit 6F validation remains deferred debt:
+camera/gallery physical-device parity, native recovery/reconnect, 15-card
+representative-device performance, offline/reconnect, accessibility/large
+text, and low-end Android resource/performance are `NOT_RUN`/`UNRESOLVED` and
+none is marked PASS. The project owner accepts this deferred native-validation
+risk and authorizes Unit 7 to begin. This changes sequencing only; it does not
+alter Unit 6 requirements or acceptance criteria.
 
 **Unit 4B local checkpoint (2026-07-27):** the configuration-driven
 `gemini-3.5-flash-lite` adapter is locally implemented behind the same
@@ -45,7 +52,7 @@ This SDD refines DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14. T
 - Model/provider adapter contracts and bounded fallback.
 - Rich book metadata plus bounded, field-specific, store-scoped linguistic
   variant proposals under [Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md).
-- Mandatory owner review, advisory duplicates, atomic per-candidate commit.
+- Mandatory Owner review and atomic create-only per-candidate private-inventory commit.
 - Five public condition values plus separate damage disclosure.
 - Public damage/actual-copy media and lifecycle management.
 - Bookstore-first marketplace discovery and complete public store catalogue.
@@ -72,7 +79,7 @@ This SDD refines DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14. T
 | MAS-02 | Model/provider output is untrusted input. Only deterministic validated code can advance state or write data. |
 | MAS-03 | Every store-owned row and media object is scoped by server-derived `store_id`; a client value cannot grant authority. |
 | MAS-04 | Confirmed original-language title and author remain primary. Deterministic keys are not variants; active store-scoped linguistic variants are search-only and never duplicate/canonical evidence. |
-| MAS-05 | Owner review is required before any candidate creates or increments inventory. |
+| MAS-05 | Owner review and explicit Add to Inventory are required before a scanned candidate creates exactly one new private inventory row; scan commit never increments an existing row. |
 | MAS-06 | No candidate failure blocks unrelated candidates; every candidate commit is atomic and idempotent. |
 | MAS-07 | Private inventory and public marketplace data are separate. Only eligible server-projected fields become public. |
 | MAS-08 | Scan, public-copy, and customer-request media are different security/lifecycle classes and cannot be repurposed by path reuse. |
@@ -103,10 +110,10 @@ flowchart LR
     Validate --> Canonical["Local canonical lookup"]
     Canonical --> Metadata["Metadata adapter: primary / secondary"]
     Metadata --> Candidates["Private staged candidates"]
-    Candidates --> Review["Owner review and duplicate warning"]
+    Candidates --> Review["Owner review"]
     Review --> Commit["Idempotent per-candidate commit command"]
     Commit --> Inventory["Private store inventory"]
-    Commit --> Projection["Safe listing projection"]
+    Inventory --> Projection["Separate Unit 7B safe listing projection"]
     Projection --> Market["Bookstore-first marketplace"]
     Commit --> PublicMedia["Approved public media"]
     App --> RequestMedia["Private customer request media"]
@@ -130,8 +137,14 @@ flowchart LR
 9. Unit 5C Lite reconciles bounded provisional title/author variants against
    independently confirmed source fields. Only active store-scoped variants
    become search-eligible; deterministic keys do not become alias rows.
-10. Owner reviews candidates, applies defaults, corrects only highlighted fields, adds a missed candidate/removes a false candidate, and chooses duplicate action and private/publish outcome.
-11. Each candidate commit command re-authorizes the Owner/store, rechecks candidate/version/idempotency/duplicate/quantity/eligibility, then creates a new row or increments a compatible row and updates the safe projection.
+10. Owner reviews candidates, applies defaults, corrects only highlighted fields,
+    adds a missed candidate/removes a false candidate, and saves private/publish
+    intent. Legacy duplicate choices are superseded for Unit 7A and must not be
+    presented as actionable commit inputs.
+11. Each explicit Unit 7A commit re-authorizes the Owner/store, locks and checks
+    candidate/review/metadata versions, loads the server-held saved review, and
+    creates exactly one new private inventory row. It never targets or increments
+    existing inventory. Unit 7B separately performs safe projection.
 12. Owner closes the session only when every input is terminal. The summary separates committed, published, private, needs-review, failed, and skipped candidates.
 13. Lifecycle workers delete scan/raw/staged objects by policy and record deletion evidence. Committed inventory remains editable through controlled commands.
 
@@ -155,11 +168,18 @@ State labels shown in the UI may be simpler, but persisted values are versioned.
 
 - The session is not one giant transaction. External calls and owner review are persistent staged work.
 - A candidate commit is the atomic business boundary.
-- `create_new` atomically writes the private inventory, audit/event, alias/media links, and candidate commit linkage. Eligible publication is a separately idempotent projection step so its failure cannot erase or repeat the inventory effect.
-- `increment_quantity` locks the compatible inventory identity and transfers only the intended quantity into `quantity_total` and `quantity_available`; existing reserved/sold/removed buckets remain unchanged.
-- Duplicate check is repeated inside the commit transaction. The UI warning is not the concurrency guard.
-- Projection failure returns `committed_publication_failed`, leaves inventory private, and retries publication idempotently without repeating the inventory write.
-- Projection failure is explicit and recoverable; the API cannot report “published” while the public projection failed.
+- Unit 7A create-new atomically writes one private inventory row, exact reviewed
+  quantity buckets, audit/event, candidate linkage, session accounting, and the
+  canonical idempotency result.
+- The saved reviewed quantity initializes the new row's total and available
+  buckets; reserved, sold, and removed start at zero. Existing inventory is never
+  read or mutated by the scan commit.
+- Duplicate advice/resolution and target-inventory concurrency are outside Unit 7A.
+- Unit 7A returns only a private inventory result. Unit 7B projection failure
+  leaves that inventory private and retries publication idempotently without
+  repeating the inventory write.
+- Unit 7B projection failure is explicit and recoverable; its API cannot report
+  “published” while the public projection failed.
 - A committed candidate cannot commit twice under a new client retry. Its stable candidate/action idempotency identity returns the recorded canonical result.
 
 ## 8. Reliability and fallback

@@ -63,12 +63,21 @@ are never exposed.
 
 ## 6. Unit 6 versus Unit 7 boundary
 
-Unit 6 saves review/publication/duplicate intent, marks false detections, creates
+Unit 6 saves the reviewed candidate snapshot, marks false detections, creates
 staged manual candidates, and stops at derived `review_ready`.
 
-Unit 7 alone reauthorizes, locks/recomputes duplicates, validates sellability/
-projection, and calls controlled commit. Unit 6 cannot call, wrap, simulate, or
-optimistically apply it; preview is non-authoritative and writes nothing public.
+The original Unit 6 `duplicateAdvice`/`duplicateIntent` review controls and DTO
+requirements are **SUPERSEDED FOR UNIT 7A** by the Owner's 2026-08-12
+create-only decision. Before the Unit 7A action is enabled, the client must stop
+presenting duplicate actions and the server must stop making duplicate intent a
+review-readiness requirement. Nullable legacy fields may remain decodable for
+backward compatibility, but they are non-actionable and cannot affect commit.
+
+Unit 7A alone reauthorizes and calls the controlled create-only commit. It does
+not look up, lock, select, merge with, increment, or manually match an existing
+inventory row. Unit 6 cannot call, wrap, simulate, or optimistically apply it;
+preview is non-authoritative and writes nothing public. Publication intent is
+legacy/deferred for the Unit 7A private commit and belongs to Unit 7B.
 
 ## 7. Actors and authorization
 
@@ -330,16 +339,17 @@ evidence rather than invented constants.
 Client checks MIME/declared bytes, required fields, integer quantity, INR display,
 and obvious input length only for guidance. Server validates signature/decode/
 pixels, store/session authority, strict DTOs, versions, state, field language/
-script, condition/damage, price in integer minor units, duplicate evidence, and
+script, condition/damage, and price in integer minor units, and
 variant source linkage. Client store IDs, stages, confidence, readiness, and
 publication eligibility are never authoritative.
 
 Supporting matrix §2.3 is the strict Unit 6 review-field contract. The client
 may provide immediate guidance using the same bounds, but the server rejects
 unknown keys and owns normalization, enum validation, cross-field rules,
-`review_ready`, and the returned canonical value/version. Unit 7 must re-read
-and revalidate every sellability, duplicate, damage/media, publication, and
-version-dependent value; Unit 6 review readiness is not commit eligibility.
+`review_ready`, and the returned canonical value/version. Unit 7A must re-read
+and revalidate every create-only eligibility and version-dependent value; Unit
+6 review readiness is not commit eligibility. Duplicate and publication fields
+are not Unit 7A commit inputs.
 
 ## 26. Analytics and observability
 
@@ -404,7 +414,8 @@ rollout authority, private first-session intent, and only server-approved later
 defaults. Terminal image replacement first requires explicit removal while no
 candidate lineage exists; transient retry is automatic. Variants expose only
 `allowed_actions` and may remain unresolved.
-Duplicate intent is staged, while every resolution effect stays in Unit 7.
+Historical duplicate intent is non-actionable for Unit 7A and must not gate its
+review or commit path.
 
 ## 34. Definition of Unit 6 completion
 
@@ -415,13 +426,15 @@ continuity records.
 
 ## 35. Unit 7 handoff contract
 
-Unit 6 hands off a freshly read `OwnerCandidateDetail`: bound opaque IDs,
-candidate/review versions, confirmations/readiness, staged sellable fields and
-intent, advisory duplicate version/action, variant summary, blocking codes, and
-allowed next actions.
+Unit 6 hands Unit 7A a freshly read `OwnerCandidateDetail`: bound opaque IDs,
+candidate/review/metadata revisions, confirmations/readiness, the saved reviewed
+fields including quantity, variant summary, blocking codes, and allowed next
+actions. Legacy duplicate advice/intent and publication intent are explicitly
+outside the Unit 7A command.
 
-Unit 7 must refetch and reauthorize this envelope, recompute duplicate and public
-eligibility under its transaction locks, and treat every field as staleable.
-Unit 6 never promises commit success. A Unit 7 result invalidates relevant Unit 6
-queries; a failure returns to the candidate with its surviving review state and
-does not silently repeat inventory effects.
+Unit 7A must refetch and reauthorize this envelope, validate current revisions,
+and treat every reviewed field as staleable. Unit 6 never promises commit
+success. A Unit 7A result invalidates relevant Unit 6 queries; a failure returns
+to the candidate with its surviving review state and does not silently repeat
+inventory effects. The controlling commit contract is
+[Unit 7A create-only inventory commit](./07a-create-only-inventory-commit-sdd.md).

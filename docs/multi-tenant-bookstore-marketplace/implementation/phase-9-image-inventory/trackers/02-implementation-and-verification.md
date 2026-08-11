@@ -1,6 +1,7 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`; **last updated:** 2026-08-11
-**Active work unit:** `phase9_multilingual_vision_response_resilience_review`. User-supplied Android evidence closes the native FileSystem transport proof through Storage `2xx`, exactly one object, input registration, and sanitation. The downstream `P9_VISION_SCHEMA_INVALID` decoder correction is locally green. Bounded review is next; migration, Supabase/Storage mutation, deployment, live provider replay, removed-input retry, Unit 7, inventory, listing, and publication remain unauthorized.
+**Status:** `unit6_complete_live_verified`; **last updated:** 2026-08-12
+**Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
+**Active work unit:** `unit7a_create_only_commit_red_tests_pending_separate_authorization`. The Unit 7A create-only contract is frozen and reconciled documentation-only. No Unit 7A tests, production code, migration file, database/Storage mutation, deployment, provider call, inventory/listing/publication effect, or Git action occurred.
 **Preserved authorization sequence:** `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`; neither status by itself authorizes migration application or external mutation.
 ## Work units
 | Unit | Scope | Status | Required gate |
@@ -16,15 +17,32 @@
 | 4B | [Gemini vision adapter](../work-units/04b-gemini-vision-adapter-handoff.md) for configured `gemini-3.5-flash-lite`; optional whole-image fallback remains unselected/disabled | `m14_live_verified_provider_deferred` | M14 live once; server-only Render configuration and startup deployment are recorded, but no authenticated `/run`, real Gemini inference, independent public health receipt, Storage mutation, or fallback selection is proven |
 | 5A | [Metadata foundation](../work-units/05a-metadata-foundation-handoff.md): provider-neutral local-first routing/cache/coalescing, ISBN validation, coherent selection, and attempt/cost lineage | `m17_live_acl_verified` | M17 live once; four sensitive tables are service SELECT-only with RPC-only mutation |
 | 5B/5C | Google Books primary adapter / [Unit 5C Lite multilingual variants](../work-units/05c-lite-multilingual-search-variants-sdd.md) | [`5B merged_fixture_verified_provider_deferred`](./11-unit5b-implementation-evidence.md) / [`5C-5/5C-6 merged and live`](./17-unit5c5-6-owner-rollout-backend-evidence.md) | M18-M28 live once; M29 was absent at Unit 5C closeout and is now live through Unit 6A; no language enabled |
-| 6 | [Owner capture/review/recovery UX](../work-units/06-owner-capture-review-recovery-ux-sdd.md), split 6A-6F | `complete_live_verified` | M38 rollout plus one real authenticated Owner upload proved automatic media, vision/Gemini, metadata, and Owner Needs Review; the user's explicit final-proof instruction closes Unit 6 without rerunning the prior representative low-end Android gate; Unit 7 remains separately gated |
+| 6 | [Owner capture/review/recovery UX](../work-units/06-owner-capture-review-recovery-ux-sdd.md), split 6A-6F | `complete_live_verified` | Automatic/functional Unit 6 pipeline is PASS: M38 rollout plus one real authenticated Owner upload proved automatic media, vision/Gemini, metadata, and Owner Needs Review with no inventory/listing effects. Native Unit 6F gates remain deferred `NOT_RUN`/`UNRESOLVED` validation debt, not PASS; the project owner accepts the risk and authorizes Unit 7. |
 | WU1 | [Controlled Owner-inventory read boundary](../work-units/owner-inventory-read-boundary-wu1-sdd.md) | [`applied_readback_complete_runtime_deferred`](./25-owner-inventory-read-boundary-wu1-evidence.md) | Exact development migration applied once; post-application security/object readback and anonymous denial pass; positive Owner runtime and client/UI/legacy-caller changes remain gated |
 | WU2 | [Read-only Owner inventory client integration](../work-units/owner-inventory-read-client-wu2-sdd.md) | [`locally_complete_authenticated_runtime_deferred`](./26-owner-inventory-read-client-wu2-evidence.md) | Owner `/inventory` uses the canonical page RPC with strict DTO validation, isolated cache/pagination, exact filters, and read-only states; dashboard, writes, deployment, authenticated runtime, and Unit 7 remain gated |
 | Wake dispatcher | [Automatic worker wake dispatcher](../work-units/automatic-worker-wake-dispatcher-sdd.md) | `live_active_verified` | M36 is live exactly once; its cron is active and automatically completed the final Unit 6 media, vision, and metadata path without manual invocation |
-| 7 | Controlled per-candidate commit, advisory duplicates, idempotency, projection changes | `not_started` | quantity/hold concurrency tests |
+| 7A | [Create-only per-candidate private inventory commit](../work-units/07a-create-only-inventory-commit-sdd.md), server-held review snapshot, exact replay/concurrency, one-to-one provenance, and Unit 6 duplicate-contract transition | `design_frozen_ready_for_red_tests` | separate red-test authorization; forward migration required but creation/application not authorized |
+| 7B | Publication/projection after private inventory creation | `not_started` | separately authorized public/private projection tests |
 | 8 | Marketplace bookstore-first search, multilingual aliases, counts, full store catalogue | `not_started` | public/private projection tests |
 | 9 | Damaged-book public media and mandatory customer photo-request extension | `not_started` | DOC-6/14 seam tests; no payment implementation |
 | 10 | Lifecycle worker, deletion evidence, orphan cleanup, alerts, retention holds | `not_started` | lifecycle failure/replay tests |
 | 11 | Pilot fixtures, security/regression/E2E/accessibility/cost verification and handoff | `not_started` | all prior units complete |
+## Current Unit 6 closure authority — 2026-08-12
+
+The automatic/functional Unit 6 pipeline is **PASS**: M38 automatic proof
+completed media, vision/Gemini, metadata, and Owner-review handoff, with no
+inventory/listing effects. Native Unit 6F evidence remains deferred
+`NOT_RUN`/`UNRESOLVED` debt, not PASS, for camera/gallery physical-device
+parity, native recovery/reconnect, 15-card representative-device performance,
+offline/reconnect, accessibility/large text, and low-end Android
+resource/performance. AC36 and AC39 remain the mapped native acceptance
+criteria; neither criterion is changed or treated as satisfied by automatic
+pipeline evidence. The project owner accepts the deferred native-validation
+risk and authorizes Unit 7 to begin. This current authority supersedes older
+sequencing statements in dated entries below that made the native debt a Unit
+7 blocker; it does not change the Unit 6 SDD, acceptance criteria, or evidence
+classification.
+
 ## Migration ledger
 Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in order after the reviewed M06 owner-safe correction. M09 remains the separate live-data preflight and constraint-validation gate.
 | Local filename | Live version/name | Project verified | Applied by | Rollback/forward fix | Verification | Status |
@@ -1530,8 +1548,10 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
   Unit 6 closure without rerunning the prior low-end Android gate.
 - Tracker/source-doc updates: Phase 9 tracker/router/session start/README,
   DOC-13, current-vs-target audit, migration ledger, and this log.
-- Next authorized action and gate: none. Unit 7 remains not started and requires
-  a new explicit authorization. Duplicate replay was not tested.
+- Next authorized action and gate at that 2026-08-10 checkpoint: none. Unit 7
+  remained not started and required a new explicit authorization; duplicate
+  replay was not tested. Current sequencing is superseded by the 2026-08-12
+  authority reconciliation below.
 
 ### 2026-08-11 — Android signed-upload transport correction
 
@@ -1640,6 +1660,44 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
   migration creation/application, Edge/service deployment, Gemini retransmission,
   job replay, removed-input revival, inventory/listing/publication effect, stage,
   commit, push, or PR occurred.
-- Exact next gate: bounded independent review; deployment requires a new explicit
-  authorization, followed by exactly one fresh Android image proof. Unit 7 stays
-  unauthorized.
+- Exact next gate at that 2026-08-11 checkpoint: bounded independent review;
+  deployment required a new explicit authorization, followed by exactly one
+  fresh Android image proof. Unit 7 stayed unauthorized at that checkpoint;
+  current sequencing is superseded by the 2026-08-12 authority reconciliation
+  below.
+
+### 2026-08-12 — Unit 6 closure authority reconciliation
+
+- Automatic/functional Unit 6 pipeline: **PASS**. M38 automatic proof completed
+  media, vision/Gemini, metadata, and Owner-review handoff; no inventory/listing
+  side effects occurred.
+- Native Unit 6F evidence remains `NOT_RUN`/`UNRESOLVED` deferred validation
+  debt, not PASS: camera/gallery physical-device parity, native recovery/
+  reconnect, 15-card representative-device performance, offline/reconnect,
+  accessibility/large text, and low-end Android resource/performance. AC36 and
+  AC39 remain mapped acceptance criteria and are not changed or satisfied by
+  automatic pipeline evidence.
+- Authority: the project owner accepts the deferred native-validation risk and
+  authorizes Unit 7 to begin. This supersedes older dated sequencing statements
+  that made the native debt a Unit 7 blocker, for current routing only; it does
+  not change the Unit 6 SDD, acceptance criteria, or evidence classification.
+- This reconciliation changed documentation only. No application code,
+  migration, test, Supabase/Storage state, deployment, runtime, provider,
+  inventory, listing, or publication state was changed.
+
+### 2026-08-12 — Unit 7A create-only SDD freeze
+
+- The normative Unit 7A SDD now specifies one explicit eligible candidate
+  commit to one newly created private inventory row using only the current
+  server-held saved review and current candidate/review/metadata revisions.
+- The load-bearing red-test contract covers saved-review authority, exact
+  quantity initialization, tenancy/non-enumeration, version fences, create-only
+  cardinality, replay, changed replay, same-candidate concurrency, rollback,
+  canonical immutability, private-media isolation, and durable provenance.
+- Forward migration is assessed as required because the applied M05 boundary
+  accepts caller business/duplicate fields and lacks current review/metadata
+  fencing. M09/global quantity validation is not required by Unit 7A.
+- Verification this session is documentation-only. No Unit 7A test was created
+  or executed; no production/migration file, database/Storage state, deployment,
+  provider call, inventory/listing/publication effect, stage, commit, push, or
+  PR occurred. Next gate: separately authorize load-bearing red tests.

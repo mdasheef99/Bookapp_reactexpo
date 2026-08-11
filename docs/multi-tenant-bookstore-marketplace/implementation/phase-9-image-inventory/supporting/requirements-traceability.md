@@ -203,6 +203,26 @@ tables as recorded in tracker 10.
 | Distinct scan, public-copy, and request-photo media classes | 00 Master; 04 Media; 06 Photo request | MAS-08; MED-06–MED-12; PHO-09–PHO-12 |
 | Phase 7/8 independence | 00 Master; 06 Photo request | MAS-09; MAS-AC08; PHO-13 |
 
+## Unit 7A create-only commit trace (2026-08-12)
+
+The controlling design is
+[Unit 7A create-only inventory commit](../work-units/07a-create-only-inventory-commit-sdd.md).
+This section supersedes the older duplicate/increment mappings only for Unit 7A;
+those rows remain historical context for any separately authorized future work.
+
+| Requirement | Authority and acceptance trace |
+| --- | --- |
+| One explicit eligible candidate commit creates exactly one new inventory row | P9-D71; Unit 7A §§3, 7, 10; U7A-AC01/06 |
+| No duplicate lookup, merge, increment, manual match, target row, or “keep separate” branch | P9-D71; DOC-3 §9; DOC-4 §§8–11; Unit 7A §§4/7/15; U7A-AC03 |
+| Quantity comes only from the current server-held saved review and initializes `total=available=q`, other buckets zero | P9-D71/72; Unit 7A §§5/7; U7A-AC02 |
+| Expected candidate/review/metadata revisions fail closed on stale state | Unit 7A §§5/6/9; U7A-AC04 |
+| Exact replay is stable; mismatched replay and concurrent double submit cannot create a second row | Unit 7A §§8/9; U7A-AC05/06 |
+| One-to-one immutable candidate provenance is retained | Unit 7A §10; U7A-AC07 |
+| Only `skipped_false_detection` is skipped; valid uncommitted candidates remain uncommitted | P9-D72; Unit 7A §12; U7A-AC08 |
+| Commit creates private inventory only; publication is separately authorized Unit 7B | P9-D71; DOC-4 §11; Unit 7A §§13/15; U7A-AC09 |
+| Unit 6 duplicate controls/DTO blockers are removed or made explicitly legacy before Unit 7A enablement | P9-D71; Unit 6 SDD §6; Unit 6 contract matrix §2.3; Unit 7A §4; U7A-AC10 |
+| Existing M05 is not safe to connect; a forward migration is required, while M09/global historical strengthening is not required by Unit 7A | P9-D72; Unit 7A §16 |
+
 ## Local ingestion-runtime and Unit 4 trace (2026-07-26)
 
 Server-generated upload paths, content-hashed canonical completion, immutable service-only source snapshots, opaque token-and-attempt validation leases, sanitized private linking, and one vision-job identity trace to 02 Extraction EXT-01 through EXT-06 and 04 Media MED-01 through MED-10. M11 is live as `20260726182238`; Owner ingestion and the dedicated media worker are deployed and live-verified. Owner Edge hashes completion bytes but never decodes or sanitizes media. Animated/multi-frame PNG/WebP is rejected, and ImageMagick's 64 MP internal working allowance remains subordinate to the 16 MP source ceiling.

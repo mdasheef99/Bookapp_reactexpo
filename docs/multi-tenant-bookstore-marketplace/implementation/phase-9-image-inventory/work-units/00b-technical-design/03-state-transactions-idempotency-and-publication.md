@@ -3,6 +3,12 @@
 **Status:** `independently_approved`
 **Rule:** external calls never participate in database transactions
 
+> **Unit 7A override (2026-08-12):** duplicate recomputation, target locks,
+> increment-match, and create-separate branches in this historical design are
+> **DEFERRED / LEGACY** for Unit 7A. The active create-only transaction is
+> defined by [the Unit 7A SDD](../07a-create-only-inventory-commit-sdd.md), and
+> publication is a separate Unit 7B operation.
+
 ## 1. Authoritative persisted-state mapping
 
 The Master SDD §6 is the sole persisted vocabulary for Phase 9 extraction sessions, inputs and candidates. UI labels, job outcomes and domain groupings below never create a second persisted vocabulary.

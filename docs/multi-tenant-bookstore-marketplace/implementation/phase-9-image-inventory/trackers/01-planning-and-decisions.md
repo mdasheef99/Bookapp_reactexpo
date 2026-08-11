@@ -1,7 +1,7 @@
 # Phase 9 Planning and Decision Tracker
 
 **Status:** `approved_baseline`
-**Last updated:** 2026-08-10
+**Last updated:** 2026-08-12
 **Purpose:** retain detailed product decisions, audit evidence, reconciliations, and deferred choices without inflating the master tracker
 
 ## Decision register
@@ -26,9 +26,9 @@
 | P9-D16 | Metadata includes description, identifiers, publisher/date, language, edition, volume, format/binding, pages, categories, cover, and provenance. | locked |
 | P9-D17 | No background canonical metadata refresh in the first release. Selected metadata is frozen until a controlled rematch/correction. | locked by design delegation |
 | P9-D18 | Uncertain/manual inventory may remain unmatched with `canonical_edition_id = null`; it cannot create shared canonical truth. | locked by design delegation |
-| P9-D19 | Duplicate detection is advisory, same-store only, and excludes image/photo similarity. It never auto-merges. | locked |
-| P9-D20 | Quantity increment is recommended only for the same validated edition, language, format, condition, and price with no copy-specific damage, notes, or approved public actual-copy/damage photos. Private customer-request photos never affect duplicate identity. | locked; clarified 2026-07-19 |
-| P9-D21 | Shelf/location alone does not require a separate row, but the owner may keep it separate after warning. | locked |
+| P9-D19 | Duplicate detection is advisory, same-store only, and excludes image/photo similarity. It never auto-merges. | legacy/deferred; superseded for Unit 7A by P9-D71 |
+| P9-D20 | Quantity increment is recommended only for the same validated edition, language, format, condition, and price with no copy-specific damage, notes, or approved public actual-copy/damage photos. Private customer-request photos never affect duplicate identity. | legacy/deferred; superseded for Unit 7A by P9-D71 |
+| P9-D21 | Shelf/location alone does not require a separate row, but the owner may keep it separate after warning. | legacy/deferred; superseded for Unit 7A by P9-D71 |
 | P9-D22 | Public conditions are `new`, `like_new`, `very_good`, `good`, `acceptable`; all except New have an accessible explanation marker. | locked |
 | P9-D23 | Damage is a separate disclosure, not a base condition. Sellable damaged copies require public notes and 1–3 actual-copy photos; unsafe/unreadable copies remain private. | locked |
 | P9-D24 | Owner review is mandatory. One candidate can fail without blocking the others; each commit is idempotent and atomic. | locked |
@@ -78,6 +78,8 @@
 | P9-D68 | Metadata failure permits an Owner-confirmed nullable-canonical listing under existing gates. Public listing still requires a positive selling price; price-on-request is excluded. | approved target 2026-07-29 |
 | P9-D69 | Unit 5C makes no provider call. Roman-query Google Books fallback is a separately authorized Unit 5B extension with at most two distinct logical query plans. | approved boundary 2026-07-29 |
 | P9-D70 | A Start/Close session has one current image. The Owner may explicitly remove it only before candidate lineage exists, canceling only exact input work and scheduling hold-aware private cleanup; only then may one replacement be uploaded. No candidate, inventory, listing, or immediate Storage cascade is allowed. | founder decision 2026-08-10; supersedes P9-D04 multiple-image portion |
+| P9-D71 | Unit 7A is create-only: each explicit commit of an eligible reviewed candidate creates exactly one new private inventory row from the current server-held saved review. It never performs duplicate lookup, merge, quantity increment, manual match, or “keep separate” choice. The row starts with `total_quantity=available_quantity=q` and `reserved_quantity=sold_quantity=removed_quantity=0`; publication is Unit 7B. | owner-frozen 2026-08-12; supersedes P9-D19–P9-D21 and Unit 6 duplicate-action semantics for Unit 7A |
+| P9-D72 | Unit 7A guarantees quantity-bucket equality for each row it creates but does not strengthen the global historical inventory constraint; M09/global constraint work remains separately assessed and authorized. Valid uncommitted candidates stay uncommitted, and `skipped_false_detection` remains the only skipped candidate disposition. | owner-frozen 2026-08-12 |
 
 ## Source reconciliation
 

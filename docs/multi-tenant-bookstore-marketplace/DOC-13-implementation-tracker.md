@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-08-11
+**Date:** 2026-08-12
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -72,6 +72,30 @@ Every material session must also leave one exact active work unit and next autho
 If implementation changes product or architecture behavior, update the relevant source spec and record the reason in this tracker.
 ---
 ## 2. Current Status
+
+> **2026-08-12 current authority reconciliation — Unit 6 / Unit 7 sequencing:**
+> The automatic/functional Unit 6 pipeline is **PASS**: M38 automatic proof
+> completed media, vision/Gemini, metadata, and Owner-review handoff, with no
+> inventory/listing side effects. Native Unit 6F validation remains deferred
+> `NOT_RUN`/`UNRESOLVED` debt, not PASS, for camera/gallery physical-device
+> parity, native recovery/reconnect, 15-card representative-device
+> performance, offline/reconnect, accessibility/large text, and low-end
+> Android resource/performance. The project owner accepts this deferred native
+> validation risk and authorizes Unit 7 to begin. This changes sequencing only;
+> it does not alter Unit 6 requirements or acceptance criteria. The detailed
+> Unit 6F evidence and AC36/AC39 mapping remain preserved in tracker 24.
+
+> **2026-08-12 Unit 7A create-only planning checkpoint:** the Owner froze the
+> controlled commit as create-only. Every eligible reviewed candidate commit
+> creates exactly one new private inventory row from the current server-held
+> saved review, with `total=available=q` and reserved/sold/removed all zero.
+> Duplicate lookup, merge, increment, manual match, and “keep separate” are not
+> Unit 7A behaviors; historical Unit 6 duplicate controls are superseded for
+> this path and must be non-actionable/non-blocking before enablement.
+> Publication is Unit 7B. The design is ready for separately authorized red
+> tests and requires a forward migration; no test, runtime, migration file,
+> database, external-service, or Git action occurred in this planning session.
+
 > 2026-08-11 Phase 9 multilingual vision-response resilience correction:
 > user-supplied physical Android evidence closes the native FileSystem transport
 > proof through signed Storage `2xx`, exactly one object, input registration, and
@@ -669,12 +693,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6 complete; native FileSystem proof passed; multilingual decoder correction locally verified; review/deployment proof and Unit 7 gated** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7A create-only commit design frozen; ready for separately authorized red tests** |
 | Overall status | `in_progress` |
-| Last updated | 2026-08-11 |
-| Latest handoff | User-supplied Android evidence proves FileSystem upload through object creation, registration, and sanitation; Gemini then failed as `P9_VISION_SCHEMA_INVALID`. The structural decoder correction is locally green with strict over-cap, language, enrichment, and privacy behavior preserved. |
-| Current risk level | `VISION_RESPONSE_RESILIENCE_REVIEW_PENDING`: local deterministic evidence is green, but deployment and one fresh post-deployment Android proof are unclaimed. The secondary deployed Edge mapping drift remains. |
-| Next recommended task | Perform a bounded independent review of the multilingual response correction. Deployment requires separate authorization, followed by exactly one fresh Android image proof. Unit 7 remains unauthorized. |
+| Last updated | 2026-08-12 |
+| Latest handoff | Unit 7A is normatively reconciled as one eligible candidate → one new private inventory row from server-held review state. Unit 6 duplicate actions are superseded for this path; Unit 7B publication is separate. Unit 6 native validation debt remains deferred and is not marked PASS. |
+| Current risk level | `UNIT_6_NATIVE_VALIDATION_DEBT_DEFERRED_OWNER_ACCEPTED`: native evidence remains unrun/unresolved; the project owner accepts the risk and authorizes Unit 7. Deployment and any fresh post-deployment Android proof remain separately gated. |
+| Next recommended task | In a separately authorized session, write the load-bearing Unit 7A red tests from the frozen SDD; do not create/apply the required forward migration or implement production behavior until separately authorized. |
 
 ---
 
@@ -691,7 +715,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6_multilingual_vision_response_resilience_locally_verified_review_pending` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | Unit 6 remains complete; native FileSystem transport is physically proven. The downstream multilingual decoder correction is locally verified and awaits bounded review; deployment, one fresh proof, Edge mapping drift, and Unit 7 remain separate. |
+| Phase 9: Image-to-LLM Inventory | `unit7a_create_only_design_frozen` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | Unit 7A create-only commit is normatively reconciled and ready for separately authorized red tests. Forward migration is required but not authorized. Unit 6 automatic/functional PASS and deferred native debt remain unchanged. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -709,8 +733,10 @@ If implementation changes product or architecture behavior, update the relevant 
 - DOC-16 Bangalore pilot/unit-economics review pending before pilot launch planning.
 - Existing Supabase security advisor issues must be remediated separately or explicitly isolated before marketplace production launch.
 - Phase 4 review remediation is deployed; positive authenticated profile/setup smoke remains pending an approved disposable Store Owner credential.
-- Phase 9 Unit 6 is complete; duplicate replay and Unit 7 remain separately
-  gated and were not started by the closure proof.
+- Phase 9 Unit 6 automatic/functional pipeline is complete/PASS; native Unit 6F
+  validation remains deferred `NOT_RUN`/`UNRESOLVED` debt and is not marked
+  PASS. Duplicate replay was not tested, Unit 7 has not started, and the
+  project owner has authorized Unit 7 under the current authority overlay.
 
 ---
 
@@ -817,9 +843,11 @@ Next work:
    implementation, migration, deployment, provider call, scheduler, or external
    mutation.
 3. WU1/WU2 authenticated runtime evidence and representative low-end Android
-   Unit 6F evidence remain open. Do not begin Unit 7, dashboard remediation,
-   inventory/publication writes, or commerce behavior until their applicable
-   gates are evidenced.
+   Unit 6F evidence remain open as separately tracked validation debt. The
+   project owner accepts the deferred native-validation risk and authorizes
+   Unit 7 to begin; do not represent the native debt as PASS or alter the Unit
+   6 requirements/acceptance criteria. Dashboard remediation,
+   inventory/publication writes, and commerce behavior remain separately gated.
 4. Keep M09, customer display, Owner/customer/platform-admin visual UI,
    production-language approval without qualifying evidence, autoscaling,
    inventory commit, publication, commerce, Google Books Roman-query fallback,

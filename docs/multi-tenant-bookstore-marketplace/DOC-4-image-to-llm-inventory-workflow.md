@@ -6,7 +6,7 @@
 **Date:** 2026-07-19
 **Status:** Approved Phase 9 planning source; corrected WU0 approved
 **Depends On:** DOC-1, DOC-2, DOC-3
-**Owns:** Image capture, model extraction, metadata enrichment, owner review, duplicate choice, inventory commit, quota/cost, recovery, and scan retention.
+**Owns:** Image capture, model extraction, metadata enrichment, owner review, create-only scanned-candidate inventory commit, quota/cost, recovery, and scan retention.
 
 ---
 
@@ -36,10 +36,9 @@ Owner starts simple session and selects defaults; language hint is optional
   -> local canonical lookup, then configured primary/secondary metadata adapters
   -> coherent metadata or Owner-confirmed unmatched data confirms source fields
   -> Unit 5C validates/reconciles variants; only active store-scoped forms search
-  -> same-store advisory duplicate check
   -> owner reviews/corrects required fields
-  -> each candidate independently creates/increments private inventory
-  -> eligible reviewed candidates project publicly
+  -> explicit Add to Inventory creates one new private row per candidate
+  -> publication is a separate Unit 7B operation
   -> owner closes session and sees summary
   -> lifecycle worker deletes scan/raw/staged data by policy
 ```
@@ -205,7 +204,6 @@ Mandatory minimal fields:
 - base condition;
 - shelf/location;
 - damage yes/no;
-- duplicate action when warned;
 - private/publish action.
 
 Extended bibliographic/acquisition fields are collapsed. Owner may add a missed candidate, remove a false candidate, correct metadata/aliases, and preview the future marketplace card.
@@ -214,11 +212,17 @@ Conditions are New, Like New, Very Good, Good, and Acceptable, with an accessibl
 
 ---
 
-## 10. Duplicate choice
+## 10. Create-only scanned-candidate identity
 
-Duplicate detection is same-store, advisory, and recomputed during commit.
+**2026-08-12 Owner decision:** Unit 7A contains no duplicate lookup, choice,
+target, compatibility check, merge, manual match, keep-separate action, or
+existing-inventory increment. Every successfully reviewed candidate explicitly
+committed by the Owner creates one new private inventory row. Repeated candidates
+for the same title, edition, or ISBN remain separate inventory identities.
 
-Recommend quantity increment only for the same validated edition/ISBN, language, format, condition, and price with no copy-specific damage, notes, collectible distinction, or approved public actual-copy/damage photo. Private customer-request photos are later request-scoped evidence and never affect duplicate identity. Otherwise recommend a separate row. No ISBN + strong original title/author/language match is an explicit owner decision, not an auto-merge. Aliases and image/photo similarity are excluded.
+Existing Unit 6 duplicate-choice DTO/UI values and older database machinery are
+**SUPERSEDED FOR UNIT 7A** and deferred/legacy. They must not be presented as
+actionable 7A choices or silently ignored by the future commit boundary.
 
 Different stores always remain separate inventory/offers.
 
@@ -229,15 +233,18 @@ Different stores always remain separate inventory/offers.
 Every candidate commit:
 
 - re-authorizes authenticated Owner and server-derived `store_id`;
-- validates candidate/expected version and review fields;
-- recomputes duplicates under a transaction/row lock;
-- performs explicit create, quantity increment, manual match, separate row, or skip;
-- preserves `quantity_total = available + reserved + sold + removed` and active holds;
+- validates candidate, saved review, and metadata versions under a candidate lock;
+- loads all business fields, including reviewed quantity, from the authoritative
+  server-held saved review;
+- creates exactly one new private inventory row and never targets an existing row;
+- initializes total/available to reviewed quantity and reserved/sold/removed to zero;
+- preserves `quantity_total = available + reserved + sold + removed`;
 - writes bounded audit/event evidence and idempotent outcome;
-- updates/retracts eligible public projection;
+- records durable one-candidate-to-one-inventory provenance;
 - never lets one candidate failure block other candidates.
 
-A valid private inventory commit survives public-projection failure. The result is `committed_publication_failed`; inventory remains private, and an idempotent publication-retry command may create the projection without creating or incrementing inventory again.
+Unit 7A creates private inventory only. Unit 7B separately owns publication,
+public projection/media, and idempotent publication failure/retry.
 
 Mobile does not insert model output directly. Post-push price, quantity, condition, damage, location, notes, photos, and visibility remain editable through controlled commands; store edits do not mutate shared canonical truth.
 
@@ -302,8 +309,8 @@ recorded live versions; M36 remains local and unapplied.
 | IMG-04 | One primary and at most one whole-image fallback use a strict schema and no tools. |
 | IMG-05 | Local-first, primary/secondary metadata enrichment is provider-agnostic and coherent. |
 | IMG-06 | Confirmed original-language fields remain primary; compact optional enrichment is bounded, field-reconciled, store-scoped, provenance-bearing, and active-only for search. |
-| IMG-07 | Owner review confirms required inventory fields before every create/increment. |
-| IMG-08 | Duplicate warnings are advisory, explicit, same-store, concurrency-safe, and contain no image comparison. |
+| IMG-07 | Owner review confirms required inventory fields before every create-only scanned-candidate commit. |
+| IMG-08 | Unit 7A performs no duplicate lookup, merge, target selection, manual match, or existing-row increment. |
 | IMG-09 | Each candidate commit is atomic/idempotent and preserves Phase 6 quantities/holds. |
 | IMG-10 | Failed candidates do not block successful candidates. |
 | IMG-11 | Five conditions, separate damage, and required damaged-copy evidence are enforced. |
@@ -312,9 +319,9 @@ recorded live versions; M36 remains local and unapplied.
 | IMG-14 | Scan/raw/staged data follows private access and retention/deletion rules. |
 | IMG-15 | No Phase 7/8 payment/paid-order/pickup/refund/ledger/settlement behavior is introduced. |
 | IMG-16 | Only the initiating Owner mutates/resumes a pilot session; terminal-input Close uses an internal race-safe finalization state. |
-| IMG-17 | Publication failure preserves one private inventory effect and retries only publication idempotently. |
+| IMG-17 | Unit 7A ends with one private inventory effect; Unit 7B retries only publication idempotently. |
 | IMG-18 | Provider field reuse rights are enforced separately from provenance. |
-| IMG-19 | Private customer-request photos never affect duplicate identity or quantity compatibility. |
+| IMG-19 | Private customer-request photos and scan media never become public listing media through Unit 7A. |
 
 ---
 

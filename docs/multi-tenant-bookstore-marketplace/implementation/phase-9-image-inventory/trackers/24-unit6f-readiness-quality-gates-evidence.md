@@ -13,6 +13,20 @@ the authorized browser/readback work and the exact reason the Unit 6 merge gate
 did not close. It does not change the Unit 6 SDD, acceptance criteria, schema,
 or runtime behavior.
 
+## Current authority overlay — 2026-08-12
+
+This dated record remains authoritative for evidence classification: native
+Unit 6F evidence is still `NOT_RUN`/`UNRESOLVED`, never PASS, for camera/gallery
+physical-device parity, native recovery/reconnect, 15-card representative-device
+performance, offline/reconnect, accessibility/large text, and low-end Android
+resource/performance. The automatic/functional Unit 6 pipeline is **PASS**:
+M38 automatic proof completed media, vision/Gemini, metadata, and Owner-review
+handoff with no inventory/listing effects. The project owner accepts the
+deferred native-validation risk and authorizes Unit 7 to begin. This overlay
+supersedes only older Unit 6 sequencing dispositions that made the native debt
+a Unit 7 blocker; it does not change the Unit 6 SDD, AC36, AC39, or any other
+acceptance criterion, and it does not promote native evidence to PASS.
+
 ## 1. Authority, scope, and stop condition
 
 The evidence is evaluated against the approved Unit 6 SDD §§19–24, 28, and
@@ -172,7 +186,9 @@ The feature branch remains unmerged and no documentation commit was created in
 this session. The exact next action is to obtain a representative low-end
 Android run covering the outstanding camera/gallery/recovery, 15-card,
 offline/reconnect, accessibility/large-text, and performance gates, then rerun
-the final continuity/quality/merge review. Unit 7 remains gated.
+the final continuity/quality/merge review. At that 2026-08-02 checkpoint,
+Unit 7 remained gated; current sequencing is superseded by the authority
+overlay above.
 
 ## 7. Expo Go SDK54 runtime remediation
 
@@ -358,7 +374,8 @@ access, change Unit 6 behavior, or change the native evidence requirement.
   three sequential captures, offline/reconnect, accessibility/large text,
   performance, and CAP/post-registration reruns) plus the separately deferred
   WU1/WU2 runtime cases requiring approved cross-store/inactive-Owner/runtime
-  fixtures. Unit 7 remains gated.
+fixtures. Unit 7 remained gated at that dated checkpoint; current sequencing is
+superseded by the authority overlay above.
 
 ## 14. 2026-08-06 Unit 6F checkpoint commit
 

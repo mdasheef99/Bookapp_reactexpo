@@ -4,6 +4,13 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
+**Unit 7A override (2026-08-12):** the duplicate-choice and existing-row
+increment design below is **DEFERRED / LEGACY** for scanned-candidate commit.
+Unit 7A creates exactly one new private inventory row per explicitly committed
+eligible reviewed candidate and performs no duplicate lookup, target selection,
+merge, increment, manual match, or keep-separate choice. The controlling design
+is [Unit 7A create-only inventory commit](./work-units/07a-create-only-inventory-commit-sdd.md).
+
 **Implementation checkpoint (2026-07-29):** `book_search_aliases` exists from
 live M01 with its limited target/source/status schema and zero recorded rows at
 the M18 audit. Unit 5C-2 adds a separate private
@@ -16,7 +23,7 @@ active-only alias/search projection remain unimplemented.
 
 ## 1. Decision
 
-Extend the existing edition-first canonical catalogue without making uncertain scans global truth. Store a coherent selected metadata snapshot on inventory, retain provider provenance privately, keep the canonical link nullable, and add source-bearing search aliases. Use advisory duplicate detection with explicit owner choice; never use image similarity or automatic merge.
+Extend the existing edition-first canonical catalogue without making uncertain scans global truth. Store a coherent selected metadata snapshot on inventory, retain provider provenance privately, keep the canonical link nullable, and add source-bearing search aliases. Unit 7A uses create-only scanned-candidate commits; the older advisory duplicate-choice model is retained only as deferred/legacy guidance outside 7A.
 
 ## 2. Identity hierarchy
 
@@ -117,7 +124,7 @@ Damage is orthogonal:
 
 There is no promotion/discount engine in Phase 9. The owner enters the lower selling price. MRP/cost are optional private/collapsed fields.
 
-## 8. Advisory duplicate matrix
+## 8. Deferred/legacy advisory duplicate matrix
 
 A duplicate warning is same-store only. One visible spine remains one candidate, including repeated spines in the same/other images.
 
@@ -200,7 +207,7 @@ Current live conditions are `new`, `like_new`, `good`, `fair`, `damaged`; all cu
 | DAT-15 | Language capabilities are benchmarked and reversible without changing identity authority. |
 | DAT-16 | Duplicate detection is same-store and advisory. |
 | DAT-17 | Image similarity is absent from duplicate logic. |
-| DAT-18 | Compatible copies can increment quantity atomically and idempotently. |
+| DAT-18 | Deferred/legacy outside Unit 7A: a separately authorized workflow may increment compatible existing inventory atomically and idempotently; Unit 7A always creates a new row. |
 | DAT-19 | Copy-specific variants create separate rows. |
 | DAT-20 | Different stores remain separate offers. |
 | DAT-21 | Five public base conditions and accessible explanations are implemented. |

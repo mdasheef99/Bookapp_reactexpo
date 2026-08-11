@@ -3,6 +3,12 @@
 **Status:** `independently_approved`
 **Database facts:** `DB_AUDIT_REQUIRED_BEFORE_DATABASE_DESIGN`
 
+> **Unit 7A override (2026-08-12):** any C08-C10 duplicate-action or
+> target-inventory authority referenced here is **SUPERSEDED FOR UNIT 7A**.
+> Unit 7A authorizes only create-new private inventory from the locked
+> server-held review under the initiating-Owner boundary; see
+> [the Unit 7A SDD](../07a-create-only-inventory-commit-sdd.md).
+
 ## 1. Authorization sequence
 
 Every user boundary performs this order: verify gateway JWT; resolve authenticated user; strict-parse the request; load the target entity through the service boundary; derive final `store_id`; verify current membership/role and entity ownership; apply initiating-Owner/customer/public policy; compare expected version; then call a named transaction. A supplied `store_id`, storage path, actor ID, role, workflow state, or capability claim is never authority.

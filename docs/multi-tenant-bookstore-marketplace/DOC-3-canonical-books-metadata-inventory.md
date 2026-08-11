@@ -299,7 +299,25 @@ Only `published` rows should appear in consumer marketplace search.
 
 ---
 
-## 9. Duplicate Resolution
+## 9. Scanned-candidate row identity and legacy duplicate resolution
+
+**2026-08-12 Owner decision:** Unit 7A uses a create-only scanned-candidate
+commit. Every explicitly committed reviewed scanned candidate creates one new
+private inventory row. Scan commit never targets or increments an existing row,
+even for the same title, edition, or ISBN. Reviewed quantity greater than one
+means the Owner asserts that the copies represented by that new row are
+interchangeable under its reviewed copy-level attributes. Post-commit quantity
+adjustment is a separate controlled inventory-lifecycle operation.
+
+Duplicate advice, target selection, `increment_quantity`, `manual_match`, and
+keep-separate choices are **SUPERSEDED FOR UNIT 7A**. Existing duplicate columns,
+functions, historical evidence, and non-scan/manual inventory behavior are
+deferred/legacy and are not removed by this decision. The current Unit 6 review
+UI must stop presenting those choices as actionable Unit 7A inputs before the
+new commit action is enabled.
+
+The rules below are retained only as deferred/legacy duplicate guidance outside
+the Unit 7A scanned-candidate commit:
 
 Duplicates can occur when:
 
@@ -310,7 +328,7 @@ Duplicates can occur when:
 - Google Books and Open Library identify similar editions differently
 - stores manually add an existing book
 
-Resolution rules:
+Legacy/deferred resolution rules:
 
 1. Warnings are same-store advisory only; never auto-merge.
 2. Quantity increment is recommended only for the same validated edition/ISBN, language, format, condition, and price, with no copy-specific damage, notes, collectible distinction, or approved public actual-copy/damage photo.
@@ -587,7 +605,7 @@ listing_moderation_flags
 | INV-02 | Store Owner can publish only inventory with required public fields. |
 | INV-03 | Consumer search reads public listing projection only. |
 | INV-04 | Same ISBN across stores can resolve to one edition identity while consumer results keep every eligible bookstore distinct. |
-| INV-05 | Same-store compatible copies may suggest explicit quantity increment; no duplicate auto-merge occurs. |
+| INV-05 | Legacy/deferred outside Unit 7A: a future separately authorized workflow may suggest explicit quantity increment; Unit 7A never performs duplicate lookup or increments. |
 | INV-06 | Low-confidence metadata match requires owner confirmation. |
 | INV-07 | Inventory supports `new`, `like_new`, `very_good`, `good`, `acceptable`, with damage stored separately. |
 | INV-08 | Private fields are not exposed in public listing responses. |
@@ -598,6 +616,8 @@ listing_moderation_flags
 | INV-13 | Metadata providers are replaceable behind one provider-neutral contract without changing candidate, canonical, review, duplicate, inventory, projection, or marketplace contracts. |
 | INV-14 | One logical lookup performs at most one primary and one allowlisted sequential secondary attempt and accepts one coherent single-source edition. |
 | INV-15 | Complete metadata-provider outage or ambiguity preserves reviewed manual unmatched inventory. |
+| INV-16 | Every successful Unit 7A scanned-candidate commit creates one new private inventory row from the current server-held review and never targets or mutates an existing inventory row. |
+| INV-17 | A Unit 7A-created row starts with `total_quantity=available_quantity=q` and reserved/sold/removed quantities of zero; post-commit quantity changes are separately controlled. |
 
 ---
 

@@ -15,17 +15,23 @@ If you are a new agent, do this before changing files:
 5. Read [`../README.md`](../README.md) and [`../DOC-12-build-strategy-and-implementation-sequence.md`](../DOC-12-build-strategy-and-implementation-sequence.md) for stable guardrails and phase gates.
 6. Read the source/domain documents routed for the active work unit and inspect current code/live evidence before acting.
 
-Current handoff as of 2026-08-10:
+Current handoff as of 2026-08-12:
 
 - Phase 6 is `complete_e2e_deferred`; its migrations M01-M39 and provider-independent `payment_ready` boundary are applied/verified in the development project.
 - Phases 7 Payment/Ledger/Settlement and 8 Pickup are deferred.
-- Phase 9 Image-to-LLM Inventory is in the Git-only Unit 6 pre-main
-  reconciliation recorded by tracker 28. M01-M35 are live at their recorded
-  levels, M36 is reviewed local code and remains unapplied, and the complete
-  current ingestion source is being packaged and verified for controlled
-  publication to `main`. Supabase, Vault, Cron, Render, worker/provider,
-  Storage, live-image, duplicate-replay, Unit 7, inventory, listing, and
-  publication mutations are not authorized.
+- Phase 9 Image-to-LLM Inventory has a PASS automatic/functional Unit 6
+  pipeline through Owner Needs Review with no inventory/listing effects. The
+  native Unit 6F camera/gallery, recovery/reconnect, 15-card performance,
+  offline/reconnect, accessibility/large-text, and low-end Android
+  resource/performance evidence remains deferred `NOT_RUN`/`UNRESOLVED` debt,
+  not PASS. The project owner accepts that risk. Unit 7A planning is now frozen:
+  every explicit eligible candidate commit creates one new private inventory
+  row from server-held review state; duplicate lookup/merge/increment/manual
+  match/keep-separate are excluded, and publication is Unit 7B. Unit 7A is ready
+  for separately authorized red tests; no runtime or migration has started.
+  Supabase, Vault, Cron, Render, worker/provider,
+  Storage, live-image, duplicate-replay, inventory, listing, and publication
+  mutations remain separately gated.
 - The active set is [`phase-9-image-inventory/`](./phase-9-image-inventory/README.md);
   each component is implemented only at the level recorded by its tracker.
 - The current runtime treats the selected session language only as a

@@ -3,6 +3,12 @@
 **Status:** `independently_approved`
 **Authority:** design only; WU0A contracts/registers remain normative
 
+> **Unit 7A override (2026-08-12):** C08-C10's duplicate advice, action,
+> target-row, increment, and create-separate semantics are **SUPERSEDED FOR UNIT
+> 7A**. They are historical/deferred and are not implementation authority. Unit
+> 7A uses the create-only command defined in
+> [the Unit 7A SDD](../07a-create-only-inventory-commit-sdd.md).
+
 ## 1. Shared envelopes and notation
 
 Every command request is a strict, unknown-key-rejecting object containing `contract_version`, UUID `command_id`, 16–128 character `idempotency_key`, target ID, expected target version when stateful, and the named payload. JWT is the trust boundary for user commands; service-role JWT plus a claimed task is the boundary for workers. The actor resolver derives entity ownership and final `store_id`; supplied store identity never authorizes. Every mutation records the canonical result against `(actor-or-service, operation, idempotency_key)` and rejects key reuse with a different request fingerprint.
