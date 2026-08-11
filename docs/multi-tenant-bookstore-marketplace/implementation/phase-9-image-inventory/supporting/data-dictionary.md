@@ -178,6 +178,29 @@ requires a positive selling price; price-on-request is not a Unit 5C target.
 
 Existing quantity buckets remain authoritative. `photos text[]` is deprecated only after typed media links are backfilled and all readers migrate.
 
+### Unit 7A create-only commit boundary
+
+Local unapplied M39 defines
+`public.phase9_add_candidate_to_inventory_v1(session_id, candidate_id,
+expected_candidate_version, expected_review_version,
+expected_metadata_revision, idempotency_key, command_id)`. All parameters are
+control/fencing values; none is inventory business content. The function
+derives the authenticated Owner's active store, locks the candidate, and reads
+the current saved review and selected metadata. A first success creates one
+private row with `created_from_candidate_id` set to that candidate,
+`total_quantity=available_quantity=q`, and reserved/sold/removed all zero. It
+also records the reciprocal committed inventory reference, bounded audit/event
+evidence, and an idempotency response in the same transaction.
+
+The candidate-to-inventory relationship is one-to-one and immutable. Exact
+replay returns the stored canonical result; changed replay and stale revisions
+fail closed. Duplicate advice and legacy duplicate intent are neither inputs nor
+eligibility gates. The legacy M05 function remains as migration history, but
+M39 revokes its execute boundary from API/service roles. Publication status and
+public projection remain Unit 7B concerns. M39 is local only and these fields/
+function semantics must not be described as live until authorized application
+and readback.
+
 ### WU1 Owner-inventory read projection
 
 The WU1 addendum defines the exact Owner list DTO and keeps the stable detail

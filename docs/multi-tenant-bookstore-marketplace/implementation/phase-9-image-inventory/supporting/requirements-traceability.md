@@ -223,6 +223,19 @@ those rows remain historical context for any separately authorized future work.
 | Unit 6 duplicate controls/DTO blockers are removed or made explicitly legacy before Unit 7A enablement | P9-D71; Unit 6 SDD §6; Unit 6 contract matrix §2.3; Unit 7A §4; U7A-AC10 |
 | Existing M05 is not safe to connect; a forward migration is required, while M09/global historical strengthening is not required by Unit 7A | P9-D72; Unit 7A §16 |
 
+Local implementation evidence is recorded in
+[tracker 29](../trackers/29-unit7a-create-only-commit-evidence.md). Dedicated
+PGlite cases U7A-01 through U7A-13 map in order to saved-review/current-metadata
+authority, exact quantity buckets, authorization/non-enumeration, three revision
+fences, create-only cardinality, exact replay, changed replay, same-candidate
+concurrency, transaction rollback, canonical immutability, private-media
+isolation, reciprocal provenance, and duplicate non-interference. The Edge and
+mobile contract/mutation tests cover the authenticated command DTO, absence of
+business fields, online/non-optimistic behavior, exact ambiguous retry,
+identity/route fencing, version refresh, and private-cache invalidation. M39 is
+unapplied, so live ACL/function and authenticated Owner smoke evidence remain
+pending rather than inferred from local tests.
+
 ## Local ingestion-runtime and Unit 4 trace (2026-07-26)
 
 Server-generated upload paths, content-hashed canonical completion, immutable service-only source snapshots, opaque token-and-attempt validation leases, sanitized private linking, and one vision-job identity trace to 02 Extraction EXT-01 through EXT-06 and 04 Media MED-01 through MED-10. M11 is live as `20260726182238`; Owner ingestion and the dedicated media worker are deployed and live-verified. Owner Edge hashes completion bytes but never decodes or sanitizes media. Animated/multi-frame PNG/WebP is rejected, and ImageMagick's 64 MP internal working allowance remains subordinate to the 16 MP source ceiling.

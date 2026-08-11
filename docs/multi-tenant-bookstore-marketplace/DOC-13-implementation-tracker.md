@@ -96,6 +96,22 @@ If implementation changes product or architecture behavior, update the relevant 
 > tests and requires a forward migration; no test, runtime, migration file,
 > database, external-service, or Git action occurred in this planning session.
 
+> **2026-08-12 Unit 7A local implementation checkpoint:** the frozen create-only
+> contract is implemented locally on
+> `codex/phase9-unit7a-create-only-inventory` from exact `origin/main`
+> `f2ccc6a20f065ec000fd3a3ac89ba4f014b52cb4`. Forward M39 adds the
+> authenticated current-revision-fenced create command and revokes the unsafe
+> M05 callable without deleting legacy history. Edge/mobile now expose only the
+> strict online, non-optimistic add action; duplicate controls are non-actionable.
+> Red-first dedicated PGlite is 13/13, Phase 9 Edge/mobile/migration regression
+> is 42 suites and 479/479, and TypeScript passes with the documented import
+> flag. Fresh read-only Supabase preflight verified the exact healthy project
+> and M38 live tail; M39 remains unapplied. No database/Storage, deployment,
+> provider, inventory/listing/publication, stage, commit, push, or PR mutation
+> occurred. The next authorized action is complete local-diff review; live
+> application/deployment, authenticated smoke, and Git publication require
+> separate explicit authorization. [Detailed evidence](./implementation/phase-9-image-inventory/trackers/29-unit7a-create-only-commit-evidence.md).
+
 > 2026-08-11 Phase 9 multilingual vision-response resilience correction:
 > user-supplied physical Android evidence closes the native FileSystem transport
 > proof through signed Storage `2xx`, exactly one object, input registration, and
@@ -693,12 +709,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7A create-only commit design frozen; ready for separately authorized red tests** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7A create-only commit locally complete; review pending** |
 | Overall status | `in_progress` |
 | Last updated | 2026-08-12 |
-| Latest handoff | Unit 7A is normatively reconciled as one eligible candidate → one new private inventory row from server-held review state. Unit 6 duplicate actions are superseded for this path; Unit 7B publication is separate. Unit 6 native validation debt remains deferred and is not marked PASS. |
+| Latest handoff | Unit 7A local M39/Edge/mobile implementation is green and review-pending: one eligible candidate → one new private inventory row from server-held review state, with no duplicate action or publication. M39 is unapplied and no external mutation occurred. Unit 6 native validation debt remains deferred and is not marked PASS. |
 | Current risk level | `UNIT_6_NATIVE_VALIDATION_DEBT_DEFERRED_OWNER_ACCEPTED`: native evidence remains unrun/unresolved; the project owner accepts the risk and authorizes Unit 7. Deployment and any fresh post-deployment Android proof remain separately gated. |
-| Next recommended task | In a separately authorized session, write the load-bearing Unit 7A red tests from the frozen SDD; do not create/apply the required forward migration or implement production behavior until separately authorized. |
+| Next recommended task | Review the complete local Unit 7A diff. M39 application, Edge deployment, authenticated live smoke, stage/commit/push, Unit 7B, and Unit 7C require separate explicit authorization. |
 
 ---
 
@@ -715,7 +731,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit7a_create_only_design_frozen` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | Unit 7A create-only commit is normatively reconciled and ready for separately authorized red tests. Forward migration is required but not authorized. Unit 6 automatic/functional PASS and deferred native debt remain unchanged. |
+| Phase 9: Image-to-LLM Inventory | `unit7a_locally_complete_review_pending` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7A evidence](./implementation/phase-9-image-inventory/trackers/29-unit7a-create-only-commit-evidence.md) | Unit 7A local M39/Edge/mobile implementation and red-first verification are complete. M39 is unapplied; review is next, and live application/deployment plus Git publication remain separately gated. Unit 6 automatic/functional PASS and deferred native debt remain unchanged. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

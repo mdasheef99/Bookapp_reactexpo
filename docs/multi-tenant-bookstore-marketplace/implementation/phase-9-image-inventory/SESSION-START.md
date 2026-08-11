@@ -23,24 +23,29 @@ reviewed M38/runtime correction. M38 is live once; metadata was deployed once
 from that SHA; and one authenticated Owner upload automatically completed
 media, vision/Gemini, six metadata jobs, and the Needs Review UI. There were
 zero manual runs, claims, repairs, or operator retries; inventory/listings
-stayed 5/5 and the historical dead-letter job was untouched. Duplicate replay
-was not tested and Unit 7 was not started. Native Unit 6F validation remains
+stayed 5/5 and the historical dead-letter job was untouched. Unit 7A is now
+locally implemented as described below. Native Unit 6F validation remains
 deferred `NOT_RUN`/`UNRESOLVED` debt, not PASS, for camera/gallery
 physical-device parity, native recovery/reconnect, 15-card representative-device
 performance, offline/reconnect, accessibility/large text, and low-end Android
 resource/performance. The project owner accepts this deferred validation risk
 and authorizes Unit 7 to begin in a new bounded session.
 
-Current active planning handoff: Unit 7A is now frozen as a create-only private
-inventory commit. Read
+Current active implementation handoff: Unit 7A is frozen and locally complete
+as a create-only private inventory commit. Read
 [the Unit 7A SDD](./work-units/07a-create-only-inventory-commit-sdd.md) before
 any red-test or implementation work. One eligible reviewed candidate creates
 one new row from the server-held saved review; duplicate lookup/merge/increment/
 manual-match/keep-separate behavior is excluded, and publication is Unit 7B.
-The Unit 6 duplicate UI/DTO path is superseded for Unit 7A and must become
-non-actionable/non-blocking before enablement. A forward migration is required,
-but migration creation/application and all runtime/external actions remain
-separately authorized. Exact next gate: authorize the load-bearing red tests.
+The Unit 6 duplicate UI/DTO path is superseded for Unit 7A and is now
+non-actionable/non-blocking. Local M39, the Edge command, and mobile action are
+review-pending; dedicated PGlite is 13/13, Phase 9 Edge/mobile/migration
+regression is 479/479, and TypeScript passes with the documented import flag.
+M39 is unapplied and no external mutation or Git publication occurred. Read
+[tracker 29](./trackers/29-unit7a-create-only-commit-evidence.md). Exact next
+gate: review the complete local diff. M39 application, Edge deployment,
+authenticated live smoke, stage/commit/push, Unit 7B, and Unit 7C require
+separate explicit authorization.
 
 Current local correction: user-supplied 2026-08-11 physical Android evidence
 proves the Expo FileSystem `UploadTask` replacement reached signed Storage

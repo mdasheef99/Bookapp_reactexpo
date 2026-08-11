@@ -65,6 +65,13 @@ const ownerUxRpc = {
     p_review: request.review, p_idempotency_key: request.idempotencyKey,
     p_command_id: request.commandId,
   })],
+  add_candidate_to_inventory: ['phase9_add_candidate_to_inventory_v1', (request: any) => ({
+    p_session_id: request.sessionId, p_candidate_id: request.candidateId,
+    p_expected_candidate_version: request.expectedCandidateVersion,
+    p_expected_review_version: request.expectedReviewVersion,
+    p_expected_metadata_revision: request.expectedMetadataRevision,
+    p_idempotency_key: request.idempotencyKey, p_command_id: request.commandId,
+  })],
   read_scan_readiness: ['phase9_owner_session_readiness_v1', (request: any) => ({
     p_session_id: request.sessionId,
   })],

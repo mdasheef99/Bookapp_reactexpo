@@ -212,6 +212,11 @@ const responseSchemas = {
   }).strict(),
   read_scan_candidate: candidateDetail,
   update_candidate_review: candidateDetail,
+  add_candidate_to_inventory: z.object({
+    sessionId: uuid, candidateId: uuid, candidateVersion: version,
+    inventoryId: uuid, inventoryVersion: version,
+    outcome: z.literal('committed_private'),
+  }).strict(),
   read_scan_readiness: readiness,
   close_scan_session: readiness,
 } as const;

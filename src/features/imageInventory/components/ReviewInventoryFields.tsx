@@ -3,7 +3,6 @@ import { Input } from '@/components/ui/Input';
 import { useTheme } from '@/hooks/useTheme';
 import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
 import type { ReviewDraft, ReviewFieldErrors } from '../review/reviewForm';
-import { DuplicateEvidencePanel } from './CandidateEvidencePanels';
 import { ReviewFieldError, ReviewToggle } from './ReviewFieldControls';
 
 const conditions = [
@@ -95,34 +94,6 @@ export function ReviewInventoryFields({
                 ) : null}
             </View>
 
-            {detail.duplicateAdvice.version !== null ? (
-                <View style={sectionStyle}>
-                    <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '800' }}>
-                        Possible existing item
-                    </Text>
-                    <DuplicateEvidencePanel detail={detail} />
-                    {detail.duplicateAdvice.allowedIntents.map((action) => (
-                        <ReviewToggle
-                            key={action}
-                            label={{
-                                increment_quantity: 'Increase existing quantity',
-                                create_separate: 'Keep as a separate item',
-                                manual_match: 'Use this existing item',
-                            }[action]}
-                            selected={draft.duplicateIntent?.action === action}
-                            onPress={() => update({
-                                duplicateIntent: {
-                                    action,
-                                    targetInventoryId: action === 'create_separate' ? null : detail.duplicateAdvice.targetInventoryId,
-                                    adviceVersion: detail.duplicateAdvice.version as number,
-                                },
-                            })}
-                            disabled={disabled}
-                        />
-                    ))}
-                    <ReviewFieldError message={errors.duplicateIntent} />
-                </View>
-            ) : null}
         </>
     );
 }

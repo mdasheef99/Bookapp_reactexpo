@@ -118,4 +118,33 @@ describe('Phase 9 Unit 6D review mutation adapter', () => {
         })).rejects.toMatchObject({ code: 'P9_REQUEST_INVALID' });
         expect(invoke).not.toHaveBeenCalled();
     });
+
+    it('sends only Unit 7A control fields and decodes the canonical commit result', async () => {
+        const canonical = {
+            sessionId: testUuid(1), candidateId: testUuid(2), candidateVersion: 5,
+            inventoryId: testUuid(8), inventoryVersion: 1, outcome: 'committed_private' as const,
+        };
+        invoke.mockResolvedValue({
+            data: { contractVersion: 'phase9-owner-ux-v1', data: canonical },
+            error: null,
+        });
+        const request = {
+            sessionId: testUuid(1), candidateId: testUuid(2),
+            expectedCandidateVersion: 4, expectedReviewVersion: 1,
+            expectedMetadataRevision: 7, idempotencyKey: 'commit:fixed-command-0001',
+            commandId: testUuid(9),
+        };
+
+        await expect(ownerUxService.addCandidateToInventory(request)).resolves.toEqual(canonical);
+        expect(invoke).toHaveBeenCalledWith('phase9-owner-ingestion', {
+            body: {
+                action: 'add_candidate_to_inventory',
+                contractVersion: 'phase9-owner-ux-v1',
+                ...request,
+            },
+        });
+        await expect(ownerUxService.addCandidateToInventory({
+            ...request, quantity: 99,
+        } as typeof request)).rejects.toMatchObject({ code: 'P9_REQUEST_INVALID' });
+    });
 });

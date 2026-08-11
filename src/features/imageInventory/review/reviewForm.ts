@@ -82,7 +82,7 @@ export function createReviewDraft(
         publicNote: stringValue(saved?.notes.publicNote ?? null),
         internalNote: stringValue(saved?.notes.internalNote ?? null),
         publicationIntent: saved?.publicationIntent ?? defaults.publication,
-        duplicateIntent: saved?.duplicateIntent ?? null,
+        duplicateIntent: null,
         originalFieldConfirmation: saved
             ? {
                 title: saved.originalFieldConfirmation.title,
@@ -106,22 +106,6 @@ function localErrors(draft: ReviewDraft): ReviewFieldErrors {
         draft.metadataMode === 'selected'
         && draft.selectionId !== draft.currentMetadataSelectionId
     ) errors.metadataChoice = 'The matched book details changed. Choose them again or use manual details.';
-    if (
-        draft.duplicateAdviceVersion !== null
-        && draft.duplicateIntent === null
-    ) errors.duplicateIntent = 'Choose how to handle the possible match.';
-    if (draft.duplicateIntent) {
-        if (draft.duplicateIntent.adviceVersion !== draft.duplicateAdviceVersion) {
-            errors.duplicateIntent = 'The possible match changed. Refresh before saving.';
-        } else if (!draft.duplicateAllowedIntents.includes(draft.duplicateIntent.action)) {
-            errors.duplicateIntent = 'This duplicate choice is no longer available.';
-        } else if (
-            draft.duplicateIntent.action !== 'create_separate'
-            && draft.duplicateIntent.targetInventoryId !== draft.duplicateTargetInventoryId
-        ) {
-            errors.duplicateIntent = 'The selected inventory match changed.';
-        }
-    }
     return errors;
 }
 
@@ -162,7 +146,7 @@ export function buildReviewInput(draft: ReviewDraft): ReviewBuildResult {
         publicationIntent: (contamination || !draft.isSellable || !draft.completeReadableSafe)
             ? 'private'
             : draft.publicationIntent,
-        duplicateIntent: draft.duplicateIntent,
+        duplicateIntent: null,
         originalFieldConfirmation: draft.originalFieldConfirmation,
         candidateDisposition: 'reviewed',
     };
@@ -180,7 +164,14 @@ export function buildReviewInput(draft: ReviewDraft): ReviewBuildResult {
 }
 
 export function reviewDraftFingerprint(draft: ReviewDraft): string {
-    return JSON.stringify(draft);
+    const {
+        duplicateIntent: _duplicateIntent,
+        duplicateAdviceVersion: _duplicateAdviceVersion,
+        duplicateTargetInventoryId: _duplicateTargetInventoryId,
+        duplicateAllowedIntents: _duplicateAllowedIntents,
+        ...authoritative
+    } = draft;
+    return JSON.stringify(authoritative);
 }
 
 export function rebaseReviewDraft(

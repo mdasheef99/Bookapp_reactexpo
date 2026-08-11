@@ -1,24 +1,24 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit7a_create_only_contract_frozen`
-**Implementation status:** `unit6_complete_live_verified`
+**Implementation status:** `unit7a_locally_complete_review_pending`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-12
-**Current milestone:** Unit 7A create-only inventory-commit design is frozen and reconciled; Unit 6 automatic/functional pipeline remains PASS, with native Unit 6F debt deferred and accepted as non-blocking
-**Active work unit:** `unit7a_create_only_commit_red_tests_pending_separate_authorization`
+**Current milestone:** Unit 7A create-only inventory commit is locally implemented and review-pending; Unit 6 automatic/functional pipeline remains PASS, with native Unit 6F debt deferred and accepted as non-blocking
+**Active work unit:** `unit7a_create_only_commit_locally_complete_review_pending`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Red-first response-resilience fixtures failed on over-cap normalization, unknown bounded language labels, and closed schema diagnostics, then passed 21/21 after correction. Existing analyzer/captured payload plus resilience passes 46/46; focused worker/extraction/multilingual/security/Unit 6 polling passes 120/120; Image Inventory passes 39 suites and 294/294; repository TypeScript and the vision-worker build pass.
-**Next authorized action:** separately authorize the Unit 7A load-bearing red-test implementation against the frozen create-only SDD. No test, production-code, migration-file, database, deployment, provider, inventory, listing, publication, stage, commit, or push action is authorized by this planning closeout.
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`.
-**Scope boundary:** This session is Unit 7A documentation-only reconciliation: create-only commit, server-held reviewed quantity, one-to-one provenance, false-only skip semantics, private inventory, and the Unit 6 duplicate-contract transition. Unit 7B publication and every implementation/external action remain excluded.
-**Implementation authority:** the owner's 2026-08-12 decision freezes the Unit 7A contract and authorizes only the requested documentation reconciliation. It authorizes no runtime, tests, migration file, Supabase/Storage, deployment, provider, inventory, listing, or publication mutation.
-**Migration creation/application authority:** M38 was applied exactly once to verified project `ahntbtktjjmvfosgkmgn`; no further migration, database, queue, Storage, or service mutation is authorized.
+**Last completed:** Unit 7A red-first implementation is locally green: dedicated PGlite 13/13, Phase 9 Edge/mobile/migration regression 42 suites and 479/479 tests, and repository TypeScript with `--allowImportingTsExtensions`. Detailed evidence is in [tracker 29](./trackers/29-unit7a-create-only-commit-evidence.md).
+**Next authorized action:** review the complete local Unit 7A diff. M39 application, Edge deployment, authenticated live smoke, Git staging/commit/push, Unit 7B publication, and Unit 7C editing require separate explicit authorization.
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`. Local M39 is `20260812000039_marketplace_phase9_create_only_inventory_commit.sql` and remains unapplied.
+**Scope boundary:** This session implements only Unit 7A create-only commit, server-held reviewed quantity, one-to-one provenance, false-only skip semantics, private inventory, and the Unit 6 duplicate-contract transition. Unit 7B publication, Unit 7C editing, and every live/external action remain excluded.
+**Implementation authority:** the owner's 2026-08-12 Unit 7A session authorized local tests, production code, one forward migration file, local/ephemeral database execution, and documentation. It did not authorize Supabase/Storage mutation, deployment, provider calls, inventory/listing/publication effects, or Git staging/commit/push.
+**Migration creation/application authority:** local M39 creation and PGlite execution are complete. M39 was not applied to verified project `ahntbtktjjmvfosgkmgn`; no database, queue, Storage, or service mutation is authorized.
 **Current gate:** `UNIT_6_AUTOMATIC_PIPELINE_PASS_NATIVE_VALIDATION_DEBT_DEFERRED`; M38 automatic proof passed media, vision/Gemini, metadata, and Owner-review handoff with no inventory/listing effects. Native camera/gallery parity, recovery/reconnect, 15-card representative-device performance, offline/reconnect, accessibility/large text, and low-end Android resource/performance remain `NOT_RUN`/`UNRESOLVED`, not PASS. Deployment and any fresh post-deployment Android proof remain separately gated; the secondary deployed-Edge `P9_SINGLE_IMAGE_LIMIT` mapping drift is unchanged.
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
-## Current Unit 7A planning authority — 2026-08-12
+## Current Unit 7A implementation authority — 2026-08-12
 
 The Owner has frozen a create-only commit model. Every explicit commit of an
 eligible reviewed candidate creates exactly one new private inventory row from
@@ -28,8 +28,9 @@ match, or “keep separate” branch exists in Unit 7A. The new row initializes
 Unit 6 duplicate controls are superseded for this path and must become
 non-actionable/non-blocking before enablement. The normative authority is
 [Unit 7A create-only inventory commit](./work-units/07a-create-only-inventory-commit-sdd.md).
-The design concludes that a forward migration is required, but neither its
-creation nor application is authorized. M09/global historical quantity
+The local implementation and forward M39 migration file are complete and
+review-pending. M39 remains unapplied; Edge deployment and authenticated live
+smoke require separate authorization. M09/global historical quantity
 strengthening is not a Unit 7A prerequisite.
 
 ## Current Unit 6 closure authority — 2026-08-12
@@ -1148,3 +1149,44 @@ provider fallback, or create global alias authority.
   created or executed, and no production code, database/Storage, deployment,
   provider, inventory, listing, publication, stage, commit, push, or PR action
   occurred. Exact next gate: separately authorize the load-bearing red tests.
+
+### 2026-08-12 — Unit 7A create-only local implementation
+
+- Authorized work unit and scope: local Unit 7A red-first database/Edge/mobile
+  implementation, forward migration-file creation, ephemeral database tests,
+  verification, and required documentation. Live migration application,
+  deployment, Supabase/Storage writes, Unit 7B/7C, and Git publication were
+  excluded.
+- Completed: new authenticated create-only command, server-held review and
+  metadata authority, candidate/review/metadata revision fences, exact replay,
+  changed-replay and concurrency protection, one-to-one provenance, private
+  inventory-only creation, duplicate non-interference, strict Edge/mobile
+  contracts, online-only non-optimistic UI action, ambiguous retry, and exact
+  cache invalidation. The legacy M05 callable is retained but its execute grant
+  is revoked for all API/service roles.
+- Files/components/migrations: local M39
+  `20260812000039_marketplace_phase9_create_only_inventory_commit.sql`, the
+  Unit 7A PGlite fixture/suite, Owner ingestion contracts/runtime tests, mobile
+  candidate contracts/service/query/form/screens/tests, and
+  [tracker 29](./trackers/29-unit7a-create-only-commit-evidence.md). The frozen
+  Unit 7A SDD was not edited.
+- Verification actually run: clean red baseline 13/13 failed before M39; final
+  Unit 7A PGlite 13/13 passed; Phase 9 Edge/mobile/migration regression 42
+  suites and 479/479 tests passed; TypeScript with the repository's documented
+  `--allowImportingTsExtensions` flag passed. Final continuity and diff/security
+  hygiene are recorded in tracker 29 after closeout execution.
+- Supabase/external mutations: none. Fresh read-only preflight verified
+  `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` healthy with live history
+  ending at M38. M39 was run only in the repository's ephemeral PGlite harness
+  and remains unapplied. No Storage, queue, provider, inventory, listing,
+  publication, deployment, stage, commit, push, or PR action occurred.
+- Decisions/deviations/risks: no SDD conflict or behavior deviation found.
+  Unit 6F native debt remains unchanged. Live ACL/function readback and an
+  authenticated Owner smoke remain operational gates after any future approved
+  M39 application/Edge deployment.
+- Tracker/source-doc updates: ACTIVE, DOC-13, Phase 9 stable handoff, README,
+  SESSION-START, master/implementation trackers, migration ledger,
+  current-vs-target audit, data dictionary, traceability, and tracker 29.
+- Next authorized action and gate: review the complete local Unit 7A diff. M39
+  application, Edge deployment, authenticated live smoke, staging, commit, and
+  push require separate explicit authorization.
