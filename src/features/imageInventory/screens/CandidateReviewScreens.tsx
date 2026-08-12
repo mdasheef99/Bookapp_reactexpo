@@ -9,6 +9,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { OwnerUxClientError, type UpdateCandidateReviewRequest } from '../api/ownerUxService';
 import { createSemanticKey, createCaptureUuid } from '../capture/captureIds';
 import { ReviewFormFields } from '../components/ReviewFormFields';
+import { AddCandidateToInventoryAction } from '../components/AddCandidateToInventoryAction';
 import { CandidateReviewState } from '../components/CandidateReviewState';
 import { CandidateConflictPanels } from '../components/CandidateConflictPanels';
 import { CandidateCorrectionActions } from '../components/CandidateCorrectionActions';
@@ -318,6 +319,14 @@ export function CandidateReview({
                         }} disabled={mutation.isPending} />
                     </View>
                 ) : null}
+                <AddCandidateToInventoryAction
+                    identity={identity}
+                    detail={detail}
+                    disabled={disabled}
+                    hasUnsavedReview={dirty}
+                    isOffline={isOffline}
+                    refetchCandidate={candidateQuery.refetch}
+                />
                 <Button
                     title="Save review"
                     loading={mutation.isPending}

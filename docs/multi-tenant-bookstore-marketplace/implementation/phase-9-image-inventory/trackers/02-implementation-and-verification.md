@@ -1,7 +1,112 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit6_complete_live_verified`; **last updated:** 2026-08-12
+**Status:** `unit7a_live_proof_blocked_by_ui_availability`; **last updated:** 2026-08-12
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit7a_create_only_commit_red_tests_pending_separate_authorization`. The Unit 7A create-only contract is frozen and reconciled documentation-only. No Unit 7A tests, production code, migration file, database/Storage mutation, deployment, provider call, inventory/listing/publication effect, or Git action occurred.
+**Active work unit:** `unit7a_controlled_live_owner_proof_ui_blocked`. The frozen create-only contract is implemented at reviewed SHA `e2437f18`; M39 is live as `20260812003419`; and corrected Owner Edge version 4 is ACTIVE with ID `f8aec89f-ae2a-431a-8a97-5775a2405b90`. The authenticated Owner UI selected an eligible reviewed candidate, but candidate detail failed twice before Add to Inventory could be exposed. No commit, replay, manual RPC, or business mutation occurred. See [tracker 29](./29-unit7a-create-only-commit-evidence.md).
+
+Historical continuity markers (status and migration ledger are immutable):
+**Status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`;
+**Active work unit:** `unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`;
+M24-M30 live identifiers `20260730022442`, `20260730022524`,
+`20260730022559`, `20260730022636`, `20260730022713`, and
+`20260801093048 marketplace_phase9_unit6e_review_corrections` remain recorded
+below and unchanged.
+
+### 2026-08-12 - New scan review save and UI proof stop
+
+- The user authorized saving new candidate
+  `5b8a7220-d460-40fc-ad5c-330c84d69903` through the authenticated Owner UI
+  with private intent, quantity `1`, and invented price `250000` paise.
+- Exact-project readback confirms the review save succeeded: candidate state
+  `ready`, disposition `reviewed`, `review_ready=true`, review version `1`,
+  metadata revision `4`, and no committed inventory ID.
+- The scan summary exposed “Ready for next step,” but the candidate-detail
+  route failed on initial load and exact retry. Add to Inventory was never
+  exposed, so Unit 7A commit/replay was not attempted.
+- Read-only final state remains inventory `5`, committed total `0`, Unit 7A
+  idempotency/audit/event `0/0/0`, inventory-media links `0`, and five private
+  inventory rows. Verdict: `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY`.
+
+### 2026-08-12 - Fresh image upload observation
+
+- User-started session `166a20cb-c919-4e06-8e4a-1cd53e4ef393` accepted one
+  image through the Owner flow. The media-validation job retried once, then
+  final read-only readback showed input state `skipped`,
+  `quality_reason=P9_OWNER_REMOVED`, job status `cancelled`, and attempt
+  count `2/5`.
+- The session has zero candidates and zero commits. No Unit 7A inventory
+  command was issued. The removed input remains excluded from further proof
+  unless a new explicit target decision authorizes a new upload.
+
+Historical pre-correction active work unit marker preserved for continuity:
+`unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`.
+Historical status marker: **Status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`.
+
+### 2026-08-12 - Fresh image completed with two review-needed candidates
+
+- The same session later accepted a second image and completed media/vision
+  processing successfully. It now reports two candidates: `Individuals` by
+  `P. F. Strawson` and `Thinking, Fast and Slow` by Daniel Kahneman.
+- Exact-project readback shows both candidates `state=ready` with
+  `review_ready=false`, and the session has two inputs, two candidates, and
+  zero commits. The first review screen loads matched metadata but price and
+  Owner confirmations are still required. No review or inventory write was
+  made for these fresh candidates.
+
+### 2026-08-12 - Fresh candidate saved; inventory step unavailable
+
+- Candidate `f6266e3a-e920-4fa0-a993-c02c739f5108` (`Individuals`) was saved
+  privately through the Owner UI with quantity `1` and price `250000` paise.
+- Exact-project readback confirms `state=ready`, `reviewed`,
+  `review_ready=true`, review version `1`, and no committed inventory ID.
+- The scan summary exposed “Ready for next step,” but candidate detail failed
+  on initial load and exact retry. Add to Inventory was never exposed; final
+  inventory remains `5`, committed total `0`, and Unit 7A counters remain
+  `0/0/0`.
+
+### 2026-08-12 - Unit 7A corrected deployment and controlled live-proof stop
+
+- User-authorized scope was limited to one authenticated Owner UI commit and an
+  exact same-command replay; no code, migration, manual RPC, Unit 7B/7C, or
+  unrelated deployment action was taken.
+- Read-only exact-project preflight confirmed M39 exactly once, the expected
+  Unit 7A ACL/M05 revocation, and baseline inventory/listing `5/5`, candidates
+  `18 ready/36 needs_review/1 failed`, committed total `0`, Unit 7A
+  idempotency/audit/event `0/0/0`, and inventory-media links `0`.
+- `phase9-owner-ingestion` version 4 is ACTIVE with deployment ID
+  `f8aec89f-ae2a-431a-8a97-5775a2405b90`; deployment attempts are `1/1`.
+- The real authenticated Owner Browser path selected existing eligible reviewed
+  candidate `d61d2193-4674-49d1-ae09-aed120dfe261` (`q=1`, candidate state
+  `ready`, `reviewed`, `review_ready=true`). Candidate detail failed twice;
+  Add to Inventory was never exposed, so the primary commit and exact replay
+  were not run.
+- Final read-only readback showed no business effect: candidate remained
+  `ready`, inventory/listings remained `5/5`, committed total remained `0`,
+  Unit 7A idempotency/audit/event remained `0/0/0`, and inventory-media links
+  remained `0`.
+- Verdict: `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY`.
+- Next authorized action: restore the authenticated Owner candidate-detail/Add-
+  to-Inventory UI path, then resume only the one commit followed by exact
+  same-command replay. Manual RPC and additional deployment remain excluded.
+
+### 2026-08-12 — Unit 7A controlled Owner Edge deployment attempt
+
+- Exact scope: only `phase9-owner-ingestion`; media, vision/Gemini, metadata,
+  publication, and Unit 7B/7C functions were not deployed.
+- Predeployment verification: runtime matched reviewed SHA `e2437f18`; focused
+  Owner UX, ingestion runtime, and security suites passed 182/182.
+- Deployment result: `FAILED_BEFORE_ACTIVATION`, count 1/1, no retry. Supabase
+  bundling could not resolve extensionless import `../contracts/registers` from
+  `_shared/imageInventory/domain/validation.ts`.
+- Readback: prior `phase9-owner-ingestion` id
+  `f8aec89f-ae2a-431a-8a97-5775a2405b90`, version 3, remains ACTIVE with
+  `verify_jwt=true`. No new version activated.
+- Zero-effect evidence: pre/post inventory/listings 5/5, publication
+  `{private:5}`, media links/public media 0/0, candidates
+  `{ready:18,needs_review:36,failed:1}`, committed total 0, and Unit 7A
+  idempotency/audit/event counts 0/0/0.
+- Next gate: separately authorize a reviewed source-only import-resolution
+  correction and, after review, a new deployment attempt. Live Add to Inventory
+  and exact replay remain `NOT_RUN` and blocked.
 **Preserved authorization sequence:** `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`; neither status by itself authorizes migration application or external mutation.
 ## Work units
 | Unit | Scope | Status | Required gate |
@@ -21,7 +126,7 @@
 | WU1 | [Controlled Owner-inventory read boundary](../work-units/owner-inventory-read-boundary-wu1-sdd.md) | [`applied_readback_complete_runtime_deferred`](./25-owner-inventory-read-boundary-wu1-evidence.md) | Exact development migration applied once; post-application security/object readback and anonymous denial pass; positive Owner runtime and client/UI/legacy-caller changes remain gated |
 | WU2 | [Read-only Owner inventory client integration](../work-units/owner-inventory-read-client-wu2-sdd.md) | [`locally_complete_authenticated_runtime_deferred`](./26-owner-inventory-read-client-wu2-evidence.md) | Owner `/inventory` uses the canonical page RPC with strict DTO validation, isolated cache/pagination, exact filters, and read-only states; dashboard, writes, deployment, authenticated runtime, and Unit 7 remain gated |
 | Wake dispatcher | [Automatic worker wake dispatcher](../work-units/automatic-worker-wake-dispatcher-sdd.md) | `live_active_verified` | M36 is live exactly once; its cron is active and automatically completed the final Unit 6 media, vision, and metadata path without manual invocation |
-| 7A | [Create-only per-candidate private inventory commit](../work-units/07a-create-only-inventory-commit-sdd.md), server-held review snapshot, exact replay/concurrency, one-to-one provenance, and Unit 6 duplicate-contract transition | `design_frozen_ready_for_red_tests` | separate red-test authorization; forward migration required but creation/application not authorized |
+| 7A | [Create-only per-candidate private inventory commit](../work-units/07a-create-only-inventory-commit-sdd.md), server-held review snapshot, exact replay/concurrency, one-to-one provenance, and Unit 6 duplicate-contract transition | [`edge_deployment_blocked_by_source_routing_mismatch`](./29-unit7a-create-only-commit-evidence.md) | M39 application/readback pass; the one Owner Edge deployment attempt failed before activation on an extensionless import; no retry, source repair, or business effect |
 | 7B | Publication/projection after private inventory creation | `not_started` | separately authorized public/private projection tests |
 | 8 | Marketplace bookstore-first search, multilingual aliases, counts, full store catalogue | `not_started` | public/private projection tests |
 | 9 | Damaged-book public media and mandatory customer photo-request extension | `not_started` | DOC-6/14 seam tests; no payment implementation |
@@ -79,6 +184,7 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260810000036_marketplace_phase9_worker_wake_dispatcher.sql` | `20260810105448 marketplace_phase9_worker_wake_dispatcher` | MCP exact project 2026-08-10; `ahntbtktjjmvfosgkmgn` | prior authorized application; read-only verified in this session | forward-only private helper/observability/dispatcher plus one named cron created inactive; Vault configuration, Render services, job rows, Storage, inventory, and publication unchanged | live migration history readback plus prior red-first structural/runtime Jest 23/23, dispatcher PGlite 28/28, full Phase 9 Jest 694/694, full Phase 9 PGlite 240/240, and worker build/entrypoint smokes | `live_inactive` |
 | `20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql` | `20260810105517 marketplace_phase9_owner_discovery_scope_correction` | MCP exact project 2026-08-10; `ahntbtktjjmvfosgkmgn` | prior authorized application; read-only verified in this session | `CREATE OR REPLACE FUNCTION` only; scopes `needsReviewCount` to authenticated actor plus server-resolved active store while preserving immutable M35 source and existing authenticated-only ACL | live migration history readback plus prior focused M35/M37/Edge/mobile Jest 5 suites/189, isolated M35-to-M37 PGlite 4/4, and full M35-to-M37 Phase 9 DB replay 241/241 | `live_verified` |
 | `20260810000038_marketplace_phase9_metadata_retry_correction.sql` | `20260810130638 marketplace_phase9_metadata_retry_correction` | exact project `ahntbtktjjmvfosgkmgn` verified healthy immediately before application and read back after | user-authorized M38-only operational application | private context-v2 helper plus service-only public wrapper replacement; exposes only selected physical-call claim attempt; M32-M37 unchanged | history once; empty `search_path`; postgres owner; service-role-only execute; dispatcher stayed active; zero apply-created/claimed jobs; unchanged baseline counts; prior metadata Jest 148/148, exact HTTP 503-to-200 regression, full PGlite 242/242, build/entrypoint/deployment validation and independent `APPROVED` review | `live_verified` |
+| `20260812000039_marketplace_phase9_create_only_inventory_commit.sql` | not applied; proposed `marketplace_phase9_create_only_inventory_commit` | fresh read-only MCP verification of exact healthy project `ahntbtktjjmvfosgkmgn`; live history ends at M38 | local file creation and PGlite execution authorized; live application explicitly prohibited | forward-only private eligibility/helper replacements plus authenticated-only create command; revokes unsafe legacy M05 execute without deleting history; no M09/global validation | red-first dedicated PGlite 13/13; Phase 9 Edge/mobile/migration regression 42 suites and 479/479; TypeScript with documented import flag; no live readback because unapplied | [`local_unapplied_review_pending`](./29-unit7a-create-only-commit-evidence.md) |
 Rules: re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
 - Use forward corrections; record every schema, grant, Storage, data, and verification effect.
 ## Required verification matrix
@@ -94,7 +200,7 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 - [ ] Upload capabilities are persisted, server-derived, actor/purpose/entity/path bound, expiring, revocable/failable and atomically single-use for C02/C03, C15/C16 and C20/C21.
 - [ ] Cost reservations enforce exactly one `(store_id, job_id, cost_kind, policy_version)` row under retries and concurrent inserts.
 - [ ] Inventory equality and active-hold semantics survive increment/new-row/partial failure races.
-- [ ] Duplicate check and commit are concurrency-safe and idempotent.
+- [ ] Unit 7A create-only commit is concurrency-safe and idempotent; duplicate advice/history is non-actionable and cannot block or redirect it.
 ### AI/provider contracts
 - [ ] Prompt-injection text embedded in an image cannot cause tools, URLs, queries, or writes.
 - [ ] Model output is rejected unless it satisfies the versioned schema and limits.
@@ -117,7 +223,7 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 - [ ] Start/Close-only session behavior works across foreground/background/logout/network loss.
 - [ ] Camera/gallery enforce the 15-spine cap; language-hint behavior never
   rejects or overwrites detected identity and remains regression-covered.
-- [ ] Minimal review fields, defaults, add-missed/remove-false, duplicate warning, condition explanations, and preview are keyboard/screen-reader accessible.
+- [ ] Minimal review fields, defaults, add-missed/remove-false, non-actionable legacy duplicate history, condition explanations, and preview are keyboard/screen-reader accessible.
 - [ ] A failed candidate does not block successful candidate commits.
 - [ ] Projection failure leaves candidate `committed`, publication `publication_failed`, and returns command/API outcome `committed_publication_failed`; idempotent retry cannot repeat inventory effects.
 - [ ] Session summary accurately reports committed/private/published/needs-review/failed/skipped counts.
@@ -1701,3 +1807,41 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
   or executed; no production/migration file, database/Storage state, deployment,
   provider call, inventory/listing/publication effect, stage, commit, push, or
   PR occurred. Next gate: separately authorize load-bearing red tests.
+
+### 2026-08-12 — Unit 7A local implementation closeout
+
+- Scope: implemented only the frozen Unit 7A create-only command across the
+  database, Owner Edge boundary, and mobile review path. Unit 7B publication,
+  Unit 7C editing, live application/deployment, and external data creation were
+  excluded.
+- Database: local M39 adds the current-revision-fenced, server-authoritative,
+  authenticated create command; initializes balanced quantity buckets; writes
+  inventory, candidate/session, audit, event, and idempotency effects atomically;
+  and revokes the unsafe M05 callable instead of deleting legacy objects.
+- Client: the review path no longer exposes or requires duplicate intent. Add
+  to inventory is online-only, non-optimistic, identity/route fenced, supports
+  exact ambiguous retry, refreshes on version conflict, and invalidates the
+  exact private read surfaces after canonical success.
+- Verification: the dedicated suite was red 13/13 before M39 and green 13/13
+  after implementation. Phase 9 Edge/mobile/migration regression passed 42
+  suites and 479/479 tests. TypeScript passed with
+  `--allowImportingTsExtensions`; unflagged output remained limited to known
+  TS5097 Deno import-extension configuration errors.
+- Security: local tests prove cross-store/actor denial, non-enumerating failures,
+  current revision fences, exact replay, changed replay, same-candidate
+  contention, rollback on forced audit failure, immutable canonical data,
+  private inventory/media behavior, and reciprocal provenance. Live ACL/RLS
+  readback is deliberately pending because M39 is unapplied.
+- External state: fresh read-only MCP preflight only. No migration application,
+  database/Storage/queue/provider mutation, deployment, inventory/listing/
+  publication effect, stage, commit, push, or PR occurred.
+- Detailed evidence and the exact next gate are in
+  [tracker 29](./29-unit7a-create-only-commit-evidence.md).
+
+## Unit 7A live proof PASS - 2026-08-12
+
+- Live proof complete: one Owner UI commit plus exact same-command replay,
+  with zero replay effects. Detailed evidence is in
+  [tracker 29](./29-unit7a-create-only-commit-evidence.md).
+- Implementation status: `unit7a_live_proof_pass`.
+- Next gate: Unit 7B publication, separately gated.

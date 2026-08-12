@@ -63,7 +63,7 @@ export function parseOwnerIngestionRequest(value: unknown): OwnerIngestionReques
       'discover_scan_session', 'read_scan_session', 'list_scan_inputs',
       'remove_scan_input',
       'list_scan_candidates', 'read_scan_candidate', 'update_candidate_review',
-      'read_scan_readiness', 'close_scan_session',
+      'add_candidate_to_inventory', 'read_scan_readiness', 'close_scan_session',
     ].includes(action)) return parseOwnerUxRequest(value);
     const unknown = result.error.issues.some((issue) => issue.code === 'unrecognized_keys');
     throw new Error(unknown ? 'unknown keys in Owner ingestion request' : 'invalid Owner ingestion request');

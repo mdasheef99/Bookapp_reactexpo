@@ -55,6 +55,13 @@ describe('Phase 9 Unit 6A Owner UX request contracts', () => {
       expectedCandidateVersion: 1, expectedMetadataRevision: 1,
       review, idempotencyKey: 'review-request-0001', commandId: uuid(3),
     },
+    {
+      action: 'add_candidate_to_inventory', contractVersion,
+      sessionId: uuid(1), candidateId: uuid(2),
+      expectedCandidateVersion: 2, expectedReviewVersion: 1,
+      expectedMetadataRevision: 3, idempotencyKey: 'commit-request-0001',
+      commandId: uuid(5),
+    },
     { action: 'read_scan_readiness', contractVersion, sessionId: uuid(1) },
     {
       action: 'close_scan_session', contractVersion, sessionId: uuid(1),
@@ -79,6 +86,10 @@ describe('Phase 9 Unit 6A Owner UX request contracts', () => {
       idempotencyKey: 'close-request-00001', commandId: uuid(2) }, /invalid/i],
     [{ action: 'close_scan_session', contractVersion, sessionId: uuid(1), expectedSessionVersion: 1.5,
       idempotencyKey: 'close-request-00001', commandId: uuid(2) }, /invalid/i],
+    [{ action: 'add_candidate_to_inventory', contractVersion, sessionId: uuid(1),
+      candidateId: uuid(2), expectedCandidateVersion: 2, expectedReviewVersion: 1,
+      expectedMetadataRevision: 3, idempotencyKey: 'commit-request-0001', commandId: uuid(5),
+      quantity: 99 }, /unknown/i],
     [{ action: 'discover_scan_session', contractVersion: 'phase9-v1' }, /invalid/i],
   ])('rejects invalid request %#', (request, error) => {
     expect(() => parseOwnerUxRequest(request)).toThrow(error);
@@ -591,6 +602,18 @@ describe('Phase 9 Unit 6A Edge RPC adapter', () => {
         p_session_id: uuid(1), p_candidate_id: uuid(2), p_expected_candidate_version: 1,
         p_expected_metadata_revision: 1, p_review: review,
         p_idempotency_key: 'review-request-0001', p_command_id: uuid(3),
+      }],
+    ['add_candidate_to_inventory', 'phase9_add_candidate_to_inventory_v1',
+      {
+        sessionId: uuid(1), candidateId: uuid(2), expectedCandidateVersion: 2,
+        expectedReviewVersion: 1, expectedMetadataRevision: 3,
+        idempotencyKey: 'commit-request-0001', commandId: uuid(5),
+      },
+      {
+        p_session_id: uuid(1), p_candidate_id: uuid(2),
+        p_expected_candidate_version: 2, p_expected_review_version: 1,
+        p_expected_metadata_revision: 3, p_idempotency_key: 'commit-request-0001',
+        p_command_id: uuid(5),
       }],
     ['read_scan_readiness', 'phase9_owner_session_readiness_v1',
       { sessionId: uuid(1) }, { p_session_id: uuid(1) }],

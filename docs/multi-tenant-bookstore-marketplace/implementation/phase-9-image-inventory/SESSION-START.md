@@ -8,14 +8,15 @@ This is the deterministic resume procedure for Phase 9. A new session should rec
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-Current operational closure: M29-M38 are live exactly once; exact-project
-history ends at `20260810130638 marketplace_phase9_metadata_retry_correction`.
+Current operational closure: M29-M39 are live exactly once; exact-project
+history ends at `20260812003419 marketplace_phase9_create_only_inventory_commit`.
 The user's 2026-08-10 decision retains Remove image and replaces append-style
 multi-image capture with one current image plus one replacement after explicit
 pre-candidate removal. M35 is live, the three authorized legacy inputs were
-logically removed, and Owner Edge v3 is deployed/readback-verified. One new
-input was registered after removal and must not be removed or otherwise mutated
-without a new explicit target decision.
+logically removed, and Owner Edge v3 is the historical single-image checkpoint.
+Unit 7A's corrected Owner Edge is now version 5 ACTIVE and its completed live
+proof is recorded below. One new input was registered after removal and must not
+be removed or otherwise mutated without a new explicit target decision.
 
 Current routed handoff: Unit 6's automatic/functional pipeline is **PASS**.
 Approved `main` SHA `a138baa7d3bbc086da019bc052a5ae31d0e15882` contains the
@@ -23,24 +24,53 @@ reviewed M38/runtime correction. M38 is live once; metadata was deployed once
 from that SHA; and one authenticated Owner upload automatically completed
 media, vision/Gemini, six metadata jobs, and the Needs Review UI. There were
 zero manual runs, claims, repairs, or operator retries; inventory/listings
-stayed 5/5 and the historical dead-letter job was untouched. Duplicate replay
-was not tested and Unit 7 was not started. Native Unit 6F validation remains
+stayed 5/5 and the historical dead-letter job was untouched. Unit 7A is now
+locally implemented as described below. Native Unit 6F validation remains
 deferred `NOT_RUN`/`UNRESOLVED` debt, not PASS, for camera/gallery
 physical-device parity, native recovery/reconnect, 15-card representative-device
 performance, offline/reconnect, accessibility/large text, and low-end Android
 resource/performance. The project owner accepts this deferred validation risk
 and authorizes Unit 7 to begin in a new bounded session.
 
-Current active planning handoff: Unit 7A is now frozen as a create-only private
-inventory commit. Read
+Current active implementation handoff: Unit 7A is frozen and implemented
+as a create-only private inventory commit. Read
 [the Unit 7A SDD](./work-units/07a-create-only-inventory-commit-sdd.md) before
 any red-test or implementation work. One eligible reviewed candidate creates
 one new row from the server-held saved review; duplicate lookup/merge/increment/
 manual-match/keep-separate behavior is excluded, and publication is Unit 7B.
-The Unit 6 duplicate UI/DTO path is superseded for Unit 7A and must become
-non-actionable/non-blocking before enablement. A forward migration is required,
-but migration creation/application and all runtime/external actions remain
-separately authorized. Exact next gate: authorize the load-bearing red tests.
+The Unit 6 duplicate UI/DTO path is superseded for Unit 7A and is now
+non-actionable/non-blocking. The reviewed implementation SHA is
+`e2437f18e9489b1e03c27858342b44737522d4e8`; dedicated PGlite is 13/13,
+Phase 9 Edge/mobile/migration regression is 479/479, and TypeScript passes with
+the documented import flag. Exact-project preflight plus real independent-
+connection PostgreSQL contention passed. M39 is live exactly once as
+`20260812003419 marketplace_phase9_create_only_inventory_commit`; post-apply
+function/ACL/M05 readback passed and migration application created no business
+effect. Read [tracker 29](./trackers/29-unit7a-create-only-commit-evidence.md).
+The post-M39 checkpoint is committed and pushed. `phase9-owner-ingestion` is
+version 5 ACTIVE with the `add_to_inventory` member in the `allowedActions`
+enum in `ownerUxResponses.ts`; this resolved the
+`OwnerUxResponseContractError`/`P9_INTERNAL_ERROR` that blocked candidate
+detail. At 04:41 UTC, the authenticated Owner committed candidate
+`f6266e3a-e920-4fa0-a993-c02c739f5108` from session
+`166a20cb-c919-4e06-8e4a-1cd53e4ef393`, creating inventory
+`5f5a2bc9-d702-4aeb-af55-2a9df6c16478`. At approximately 05:00 UTC, the exact
+original command replay returned the canonical recorded result and created no
+new effects. `UNIT_7A_LIVE_PROOF` is PASS and the
+`UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY` gate is CLEARED. No further
+Unit 7A runtime action is authorized. Unit 7B publication, Unit 7C post-commit
+edits, manual RPC fallback, and merge to `main` remain separately gated.
+
+Latest controlled-proof update: the first commit readback shows
+`created_from_candidate_id=f6266e3a-e920-4fa0-a993-c02c739f5108`,
+`entry_method=image_extraction`, `visibility_status=draft`,
+`publication_status=private`, `selling_price_minor=250000`, and quantities
+`1/1/0/0/0`; candidate outcome is `committed_private` and session
+`committed_count=1`. The exact replay used the original idempotency key and
+command with expected versions `2/1/4`, returned inventory version `1` and
+candidate version `3`, and read back one completed idempotency row, one audit
+log, and one event. Replay side effects were zero. `Thinking, Fast and Slow`
+remains uncommitted (`review_ready=false`) and is outside this proof.
 
 Current local correction: user-supplied 2026-08-11 physical Android evidence
 proves the Expo FileSystem `UploadTask` replacement reached signed Storage

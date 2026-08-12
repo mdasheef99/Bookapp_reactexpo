@@ -1,6 +1,6 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit7a_create_only_design_frozen`
+**Status:** `unit7a_create_only_locally_complete_review_pending`
 **Last updated:** 2026-08-12
 **Implementation status:** Unit 6's automatic/functional pipeline is **PASS**.
 M01-M08/M10-M38 are live-verified at their recorded levels; approved `main` SHA
@@ -12,15 +12,17 @@ physical-device parity, native recovery/reconnect, 15-card representative-device
 performance, offline/reconnect, accessibility/large text, and low-end Android
 resource/performance. The project owner accepts that deferred risk and
 authorizes Unit 7 to begin.
-The active Unit 7A design is now frozen as create-only: one eligible reviewed
+The active Unit 7A design is frozen as create-only: one eligible reviewed
 candidate creates one new private inventory row from the current server-held
 review; no duplicate lookup/merge/increment/manual-match/keep-separate behavior
-exists in 7A, and publication is Unit 7B. It is ready for separately authorized
-red tests. A forward migration is required but is not authorized for creation
-or application by this planning checkpoint.
+exists in 7A, and publication is Unit 7B. Local M39, Edge, and mobile
+implementation are complete and review-pending with dedicated PGlite 13/13,
+Phase 9 Edge/mobile/migration regression 479/479, and TypeScript green under the
+documented import flag. M39 remains unapplied; deployment, live smoke, and Git
+publication require separate authorization.
 Unit 6B is merged at `9ef9eb3`; Unit 6D is implemented at `c363b60`; their
 recorded evidence remains authoritative beneath this final closure checkpoint.
-**Supabase mutation status:** M01-M08/M10-M38 and WU1 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent. The final closure session applied only M38, created one Owner session/input, and allowed the automatic pipeline to create its bounded jobs/candidates/metadata evidence. Inventory/listings stayed 5/5; no Storage cleanup, publication, duplicate replay, or Unit 7 mutation occurred.
+**Supabase mutation status:** M01-M08/M10-M38 and WU1 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent and local M39 is unapplied. Unit 7A used read-only preflight plus ephemeral PGlite only; no Supabase/Storage, inventory, listing, publication, or deployment mutation occurred.
 **Database checkpoint:** M01-M08 and forward migrations M10-M38 plus WU1 are live-verified at their recorded levels; M09 remains absent; the authenticated Owner automatic path is live-verified through Needs Review.
 M30 was applied exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`.
 M32 is live exactly once as `20260808020404`; M38 is live exactly once as
@@ -31,12 +33,12 @@ invoker was used.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 
-The current handoff is Unit 6 automatic/functional pipeline `PASS`. M32-M38 are
-live and immutable at their recorded versions; metadata deploy count for the
-rollout was 1/1 and media/vision were not redeployed. Duplicate replay was not
-tested and Unit 7 was not started. Native Unit 6F evidence remains deferred
-`NOT_RUN`/`UNRESOLVED` debt and is not marked PASS. The project owner accepts
-the risk and authorizes Unit 7 to begin in a new bounded session.
+The current handoff is Unit 7A local completion pending review. M32-M38 are live
+and immutable at their recorded versions; M39 exists only locally. The Unit 7A
+command's exact replay and duplicate non-interference are covered by the local
+13-case database suite. Native Unit 6F evidence remains deferred
+`NOT_RUN`/`UNRESOLVED` debt and is not marked PASS. Review of the complete local
+diff is next; operational application/deployment remains separately gated.
 
 The current post-closure handoff is the local multilingual vision-response
 resilience correction. User-supplied Android evidence closes the FileSystem
@@ -54,7 +56,7 @@ automatic live proof close the later-claim retry and Unit 6 automatic/functional
 operational gates; they do not constitute native-device evidence for the
 deferred Unit 6F validation debt.
 
-Every new development session starts at repository `AGENTS.md`, then follows `implementation/ACTIVE.md` → DOC-13 → [SESSION-START.md](./SESSION-START.md) → [TRACKER.md](./TRACKER.md). `SESSION-START.md` defines the Phase 9 resume brief, work-unit reading router, Supabase gate, documentation update matrix, and mandatory closeout transaction.
+Every new development session starts at repository `AGENTS.md`, then follows `implementation/ACTIVE.md` → DOC-13 → [SESSION-START.md](./SESSION-START.md) → [TRACKER.md](./TRACKER.md). `SESSION-START.md` defines the Phase 9 resume brief, work-unit reading router, Supabase gate, documentation update matrix, and mandatory closeout transaction. Unit 7A local implementation evidence is in [tracker 29](./trackers/29-unit7a-create-only-commit-evidence.md).
 
 ## Authority and reading order
 

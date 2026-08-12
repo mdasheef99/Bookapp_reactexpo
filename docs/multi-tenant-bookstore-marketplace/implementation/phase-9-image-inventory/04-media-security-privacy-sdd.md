@@ -17,6 +17,16 @@ service-only public metadata-context wrapper. It exposes only a bounded claim
 attempt number, grants no client execution, and does not widen table, payload,
 credential, provider, store, or candidate access. Live readback confirms empty
 `search_path`, postgres ownership, and postgres/service-role-only execution.
+**Unit 7A security checkpoint (local, unapplied 2026-08-12):** M39 adds one
+authenticated-only create command with server-derived Owner/store authority,
+current candidate/review/metadata revision fences, fixed object qualification,
+atomic audit/event/idempotency effects, and non-enumerating denials. It revokes
+execute on the unsafe M05 commit signature from `PUBLIC`, `anon`,
+`authenticated`, and `service_role` while preserving the legacy object. Local
+PGlite proves cross-store/actor denial, rollback, replay/concurrency, canonical
+immutability, and private media/listing isolation. Live ACL/RLS/function
+readback remains pending because M39 is not applied. See
+[tracker 29](./trackers/29-unit7a-create-only-commit-evidence.md).
 **Unit 4B security correction (local, unapplied):** M14 registration is a
 service-only atomic egress fence. It rejects stale/expired/superseded claims or any
 job/reference/correlation, owner/token/attempt, store/session/input/media,

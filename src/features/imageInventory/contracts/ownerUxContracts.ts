@@ -136,12 +136,21 @@ const responseSchemas = {
     }).strict(),
     read_scan_candidate: candidateDetailSchema,
     update_candidate_review: candidateDetailSchema,
+    add_candidate_to_inventory: z.object({
+        sessionId: uuidSchema,
+        candidateId: uuidSchema,
+        candidateVersion: versionSchema,
+        inventoryId: uuidSchema,
+        inventoryVersion: versionSchema,
+        outcome: z.literal('committed_private'),
+    }).strict(),
     read_scan_readiness: readinessSchema,
     close_scan_session: readinessSchema,
 } as const;
 
 export type OwnerUxAction = keyof typeof responseSchemas;
-export type OwnerUxQueryAction = Exclude<OwnerUxAction, 'remove_scan_input' | 'update_candidate_review' | 'close_scan_session'>;
+export type OwnerUxQueryAction = Exclude<OwnerUxAction,
+    'remove_scan_input' | 'update_candidate_review' | 'add_candidate_to_inventory' | 'close_scan_session'>;
 export type OwnerDiscovery = z.infer<typeof responseSchemas.discover_scan_session>;
 export type OwnerSessionSummary = z.infer<typeof responseSchemas.read_scan_session>;
 export type OwnerInputProgress = z.infer<typeof inputProgressSchema>;
@@ -149,6 +158,7 @@ export type OwnerInputPage = z.infer<typeof responseSchemas.list_scan_inputs>;
 export type OwnerRemoveInputResult = z.infer<typeof responseSchemas.remove_scan_input>;
 export type OwnerCandidatePage = z.infer<typeof responseSchemas.list_scan_candidates>;
 export type OwnerCandidateDetail = z.infer<typeof responseSchemas.read_scan_candidate>;
+export type OwnerCandidateCommitResult = z.infer<typeof responseSchemas.add_candidate_to_inventory>;
 export type OwnerSessionReadiness = z.infer<typeof responseSchemas.read_scan_readiness>;
 
 export class OwnerUxResponseContractError extends Error {

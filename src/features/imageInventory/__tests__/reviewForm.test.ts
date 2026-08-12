@@ -67,7 +67,7 @@ describe('Phase 9 Unit 6D strict review form model', () => {
         expect(buildReviewInput(draft).success).toBe(false);
     });
 
-    it('requires exact current duplicate advice and changes its semantic fingerprint', () => {
+    it('treats legacy duplicate advice and intent as non-authoritative', () => {
         const detail = candidateDetailFixture({
             duplicateAdvice: {
                 state: 'possible_match',
@@ -109,7 +109,7 @@ describe('Phase 9 Unit 6D strict review form model', () => {
         const draft = createReviewDraft(detail, sessionSummaryFixture().defaults);
         draft.priceMinor = '100';
         draft.originalFieldConfirmation = { title: true, authors: [true] };
-        expect(buildReviewInput(draft).success).toBe(false);
+        expect(buildReviewInput(draft).success).toBe(true);
 
         const before = reviewDraftFingerprint(draft);
         draft.duplicateIntent = {
@@ -117,8 +117,11 @@ describe('Phase 9 Unit 6D strict review form model', () => {
             targetInventoryId: testUuid(8),
             adviceVersion: 3,
         };
-        expect(buildReviewInput(draft).success).toBe(true);
-        expect(reviewDraftFingerprint(draft)).not.toBe(before);
+        const result = buildReviewInput(draft);
+        expect(result.success).toBe(true);
+        if (!result.success) return;
+        expect(result.data.duplicateIntent).toBeNull();
+        expect(reviewDraftFingerprint(draft)).toBe(before);
     });
 
     it('forces mould or contamination to unsafe, unsellable, and private', () => {

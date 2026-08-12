@@ -29,6 +29,7 @@ type BeforeRemoveListener = (event: BeforeRemoveEvent) => void;
 const mockCandidateRefetch = jest.fn<Promise<RefetchResult<OwnerCandidateDetail>>, []>();
 const mockSessionRefetch = jest.fn<Promise<RefetchResult<OwnerSessionSummary>>, []>();
 const mockMutateAsync = jest.fn();
+const mockCommitMutateAsync = jest.fn();
 const mockAddListener = jest.fn<
     () => void,
     ['beforeRemove', BeforeRemoveListener]
@@ -85,6 +86,10 @@ jest.mock('../queries/ownerUxReviewQueries', () => ({
     useUpdateOwnerCandidateReview: () => ({
         mutateAsync: mockMutateAsync,
         isPending: mockMutationPending,
+    }),
+    useAddOwnerCandidateToInventory: () => ({
+        mutateAsync: mockCommitMutateAsync,
+        isPending: false,
     }),
 }));
 jest.mock('../queries/ownerCorrectionQueries', () => ({
@@ -157,6 +162,10 @@ describe('Phase 9 Unit 6D candidate list and strict review screens', () => {
             candidateState: 'ready',
             candidateVersion: 5,
         }));
+        mockCommitMutateAsync.mockResolvedValue({
+            sessionId: testUuid(1), candidateId: testUuid(2), candidateVersion: 5,
+            inventoryId: testUuid(8), inventoryVersion: 1, outcome: 'committed_private',
+        });
     });
 
     afterEach(() => {
@@ -173,6 +182,24 @@ describe('Phase 9 Unit 6D candidate list and strict review screens', () => {
         expect(mockPush).toHaveBeenCalledWith(
             `/(store-owner)/inventory/scan/${testUuid(1)}/candidate/${testUuid(4)}`,
         );
+    });
+
+    it('removes legacy duplicate choices and exposes the explicit create-only action', () => {
+        mockCandidateData = candidateDetailFixture({
+            candidateState: 'ready',
+            allowedActions: ['save_review', 'add_to_inventory'],
+            duplicateAdvice: {
+                state: 'compatible_match', version: 3, targetInventoryId: testUuid(8),
+                matchReason: 'exact_validated_edition', compatibility: null, display: null,
+                allowedIntents: ['increment_quantity', 'create_separate'],
+            },
+        });
+        mockCandidateState = { ...mockCandidateState, data: mockCandidateData };
+        const screen = render(
+            <InventoryCandidateReviewScreen sessionId={testUuid(1)} candidateId={testUuid(2)} />,
+        );
+        expect(screen.queryByText('Possible existing item')).toBeNull();
+        expect(screen.getByText('Add to inventory')).toBeTruthy();
     });
 
     it('renders authoritative empty and retry states without private detail', () => {

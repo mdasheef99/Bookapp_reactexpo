@@ -2,20 +2,33 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { PropsWithChildren } from 'react';
 import type { OwnerCandidateReview } from '../contracts/ownerUxReviewSchema';
-import { ownerUxService, type UpdateCandidateReviewRequest } from '../api/ownerUxService';
+import {
+    ownerUxService,
+    type AddCandidateToInventoryRequest,
+    type UpdateCandidateReviewRequest,
+} from '../api/ownerUxService';
 import {
     coordinateImageInventoryIdentity,
     resetImageInventoryIdentityForTests,
 } from '../queries/ownerUxQueries';
-import { useUpdateOwnerCandidateReview } from '../queries/ownerUxReviewQueries';
+import {
+    useAddOwnerCandidateToInventory,
+    useUpdateOwnerCandidateReview,
+} from '../queries/ownerUxReviewQueries';
+import { ownerInventoryReadKeys } from '../queries/ownerInventoryReadQueries';
 import { candidateDetailFixture, testUuid } from '../testing/ownerUxTestFixtures';
 
 jest.mock('../api/ownerUxService', () => {
     const actual = jest.requireActual('../api/ownerUxService');
-    return { ...actual, ownerUxService: { ...actual.ownerUxService, updateCandidateReview: jest.fn() } };
+    return { ...actual, ownerUxService: {
+        ...actual.ownerUxService,
+        updateCandidateReview: jest.fn(),
+        addCandidateToInventory: jest.fn(),
+    } };
 });
 
 const updateCandidateReview = ownerUxService.updateCandidateReview as jest.Mock;
+const addCandidateToInventory = ownerUxService.addCandidateToInventory as jest.Mock;
 const identity = { userId: 'owner-a', storeId: 'store-a' };
 const review: OwnerCandidateReview = {
     originalTitle: 'Review title', authors: ['Review author'], originalLanguage: 'en', script: 'Latn',
@@ -33,6 +46,11 @@ const request: UpdateCandidateReviewRequest = {
     sessionId: testUuid(1), candidateId: testUuid(2), expectedCandidateVersion: 4,
     expectedMetadataRevision: 7, review, idempotencyKey: 'review:fixed-command-0001',
     commandId: testUuid(9),
+};
+const commitRequest: AddCandidateToInventoryRequest = {
+    sessionId: testUuid(1), candidateId: testUuid(2), expectedCandidateVersion: 5,
+    expectedReviewVersion: 1, expectedMetadataRevision: 7,
+    idempotencyKey: 'commit:fixed-command-0001', commandId: testUuid(8),
 };
 
 describe('Phase 9 Unit 6F Review Save request authority fence', () => {
@@ -167,6 +185,56 @@ describe('Phase 9 Unit 6F Review Save request authority fence', () => {
         );
         await expect(hook.result.current.mutateAsync(request)).rejects.toThrow('OWNER_IDENTITY_CHANGED');
         expect(updateCandidateReview).not.toHaveBeenCalled();
+        hook.unmount();
+    });
+
+    it('commits online without optimism and invalidates candidate, queues, readiness and inventory', async () => {
+        const canonical = {
+            sessionId: commitRequest.sessionId,
+            candidateId: commitRequest.candidateId,
+            candidateVersion: 6,
+            inventoryId: testUuid(7),
+            inventoryVersion: 1,
+            outcome: 'committed_private' as const,
+        };
+        addCandidateToInventory.mockResolvedValue(canonical);
+        const keys = [
+            ['phase9', 'ownerInventory', identity.userId, identity.storeId, 'candidate'],
+            ownerInventoryReadKeys.list(identity),
+        ];
+        keys.forEach((key) => client.setQueryData(key, { retained: true }));
+        const hook = renderHook(
+            () => useAddOwnerCandidateToInventory(
+                identity, commitRequest.sessionId, commitRequest.candidateId,
+            ),
+            { wrapper },
+        );
+
+        await act(async () => expect(hook.result.current.mutateAsync(commitRequest))
+            .resolves.toEqual(canonical));
+        expect(addCandidateToInventory).toHaveBeenCalledWith(
+            commitRequest, expect.any(AbortSignal),
+        );
+        expect(client.getMutationCache().getAll().at(-1)?.options).toMatchObject({
+            networkMode: 'always', retry: false,
+        });
+        expect(client.getQueryState(ownerInventoryReadKeys.list(identity))?.isInvalidated).toBe(true);
+        expect(client.getQueriesData({ queryKey: ['phase9', 'ownerInventory'] }))
+            .toEqual(expect.arrayContaining([[keys[0], { retained: true }]]));
+        hook.unmount();
+    });
+
+    it('refuses a commit command from a different candidate before transport', async () => {
+        const hook = renderHook(
+            () => useAddOwnerCandidateToInventory(
+                identity, commitRequest.sessionId, commitRequest.candidateId,
+            ),
+            { wrapper },
+        );
+        await expect(hook.result.current.mutateAsync({
+            ...commitRequest, candidateId: testUuid(3),
+        })).rejects.toThrow('OWNER_COMMIT_AUTHORITY_CHANGED');
+        expect(addCandidateToInventory).not.toHaveBeenCalled();
         hook.unmount();
     });
 });

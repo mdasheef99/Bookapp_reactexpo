@@ -4,6 +4,7 @@ import {
     decodeOwnerUxResponse,
     OWNER_UX_CONTRACT_VERSION,
     type OwnerCandidateDetail,
+    type OwnerCandidateCommitResult,
     type OwnerCandidatePage,
     type OwnerDiscovery,
     type OwnerInputPage,
@@ -99,6 +100,17 @@ const operationErrors: Record<OwnerUxAction, ReadonlySet<OwnerUxErrorCode>> = {
         'P9_AUTH_REQUIRED',
         'P9_OWNER_NOT_AUTHORIZED',
         'P9_REQUEST_INVALID',
+        'P9_STATE_CONFLICT',
+        'P9_CANDIDATE_VERSION_CONFLICT',
+        'P9_VERSION_CONFLICT',
+        'P9_IDEMPOTENCY_MISMATCH',
+        'P9_INTERNAL_ERROR',
+    ]),
+    add_candidate_to_inventory: new Set([
+        'P9_AUTH_REQUIRED',
+        'P9_OWNER_NOT_AUTHORIZED',
+        'P9_REQUEST_INVALID',
+        'P9_NOT_FOUND',
         'P9_STATE_CONFLICT',
         'P9_CANDIDATE_VERSION_CONFLICT',
         'P9_VERSION_CONFLICT',
@@ -228,6 +240,16 @@ export type CloseScanSessionRequest = Readonly<{
     commandId: string;
 }>;
 
+export type AddCandidateToInventoryRequest = Readonly<{
+    sessionId: string;
+    candidateId: string;
+    expectedCandidateVersion: number;
+    expectedReviewVersion: number;
+    expectedMetadataRevision: number;
+    idempotencyKey: string;
+    commandId: string;
+}>;
+
 export type RemoveScanInputRequest = Readonly<{
     sessionId: string;
     inputId: string;
@@ -271,6 +293,12 @@ export const ownerUxService = {
         signal?: AbortSignal,
     ): Promise<OwnerCandidateDetail> {
         return invoke('update_candidate_review', request, signal);
+    },
+    addCandidateToInventory(
+        request: AddCandidateToInventoryRequest,
+        signal?: AbortSignal,
+    ): Promise<OwnerCandidateCommitResult> {
+        return invoke('add_candidate_to_inventory', request, signal);
     },
     readReadiness(sessionId: string): Promise<OwnerSessionReadiness> {
         return invoke('read_scan_readiness', { sessionId });

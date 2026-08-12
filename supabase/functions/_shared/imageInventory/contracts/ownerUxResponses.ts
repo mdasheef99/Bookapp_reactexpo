@@ -171,6 +171,7 @@ const candidateDetail = z.object({
   }).strict(),
   allowedActions: z.array(z.enum([
     'save_review', 'mark_false', 'open_variant_review', 'add_missed', 'view_readiness',
+    'add_to_inventory',
   ])),
   updatedAt: timestamp,
 }).strict();
@@ -212,6 +213,11 @@ const responseSchemas = {
   }).strict(),
   read_scan_candidate: candidateDetail,
   update_candidate_review: candidateDetail,
+  add_candidate_to_inventory: z.object({
+    sessionId: uuid, candidateId: uuid, candidateVersion: version,
+    inventoryId: uuid, inventoryVersion: version,
+    outcome: z.literal('committed_private'),
+  }).strict(),
   read_scan_readiness: readiness,
   close_scan_session: readiness,
 } as const;

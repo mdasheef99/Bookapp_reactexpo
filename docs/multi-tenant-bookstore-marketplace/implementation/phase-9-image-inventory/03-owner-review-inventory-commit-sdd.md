@@ -18,6 +18,14 @@ target selection, increment, manual match, and keep-separate semantics are
 **SUPERSEDED FOR UNIT 7A**. The focused normative implementation contract is
 [Unit 7A create-only inventory commit](./work-units/07a-create-only-inventory-commit-sdd.md).
 
+**Unit 7A implementation checkpoint (2026-08-12):** the frozen contract is
+locally implemented and review-pending through unapplied M39, the authenticated
+Owner Edge command, and the online/non-optimistic mobile action. Dedicated
+PGlite is 13/13 and the Phase 9 Edge/mobile/migration regression is 479/479.
+This checkpoint changes no behavior or acceptance criterion in the frozen Unit
+7A SDD. M39 application, deployment, authenticated live smoke, and Unit 7B/7C
+remain separately gated. See [tracker 29](./trackers/29-unit7a-create-only-commit-evidence.md).
+
 ## 1. Decision
 
 Make Owner review the only gateway from staged AI/provider output into store

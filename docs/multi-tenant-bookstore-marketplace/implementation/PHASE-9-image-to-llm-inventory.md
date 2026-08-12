@@ -1,8 +1,8 @@
 # PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `unit7a_create_only_design_frozen`
-**Planning set:** `unit7a_ready_for_separately_authorized_red_tests`
-**Implementation:** M01-M38 are live at their recorded levels; the automatic/functional Unit 6 upload-to-Owner-review path is PASS with no inventory/listing effects. Unit 7A is frozen as one eligible candidate to one new private inventory row from server-held review state, with no duplicate branch and Unit 7B publication separate. No Unit 7A test, runtime, or migration has been implemented. Native Unit 6F validation remains deferred accepted debt, not PASS.
+**Status:** `unit7a_create_only_locally_complete_review_pending`
+**Planning set:** `unit7a_frozen_implemented_locally`
+**Implementation:** M01-M38 are live at their recorded levels; local M39 is unapplied. The automatic/functional Unit 6 upload-to-Owner-review path remains PASS with no inventory/listing effects. Unit 7A is locally implemented as one eligible candidate to one new private inventory row from server-held review state, with no duplicate branch and Unit 7B publication separate. Dedicated PGlite is 13/13, Phase 9 Edge/mobile/migration regression is 479/479, and TypeScript passes with the documented import flag. Review is next; live application/deployment and Git publication remain separately gated. Native Unit 6F validation remains deferred accepted debt, not PASS.
 **Last updated:** 2026-08-12
 
 This stable phase handoff points to the detailed planning set:
@@ -20,6 +20,7 @@ This stable phase handoff points to the detailed planning set:
 - [Unit 5C Lite governing target decision](./phase-9-image-inventory/work-units/05c-lite-multilingual-search-variants-sdd.md)
 - [Unit 5C-2 persistence evidence](./phase-9-image-inventory/trackers/14-unit5c2-variant-persistence-evidence.md)
 - [Unit 7A create-only commit SDD](./phase-9-image-inventory/work-units/07a-create-only-inventory-commit-sdd.md)
+- [Unit 7A local implementation evidence](./phase-9-image-inventory/trackers/29-unit7a-create-only-commit-evidence.md)
 
 ## Locked phase direction
 

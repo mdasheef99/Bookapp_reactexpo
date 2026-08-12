@@ -1,9 +1,19 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-08-10 M38 rollout and final Unit 6 proof
-**Audit mode:** exact-project pre/post migration readback plus bounded automatic live proof
+**Audit date:** 2026-08-12 Unit 7A read-only preflight and local M39 implementation
+**Audit mode:** exact-project read-only preflight plus local/ephemeral M39 verification; no live Unit 7A mutation
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10-M38 and WU1 are live exactly once; M09 absent. Exact live tail is `20260810130638 marketplace_phase9_metadata_retry_correction`. The bounded closure session applied only M38, deployed metadata once, closed one prior terminal Owner session, and uploaded one new Owner image. Inventory/listings remained 5/5; no Storage cleanup, queue repair/reset, historical-job mutation, duplicate replay, publication, or Unit 7 mutation occurred. The 2026-08-12 Unit 7A planning reassessment concludes that a forward create-only command migration is required because live M05 accepts caller-supplied business/duplicate fields and does not prove current review/metadata revision binding; migration creation/application remains unauthorized. M09/global historical constraint validation is not required for Unit 7A, which must initialize each newly created row in balance.
+**Mutation status:** M01-M08/M10-M38 and WU1 are live exactly once; M09 absent. Exact live tail remains `20260810130638 marketplace_phase9_metadata_retry_correction`. Fresh read-only Unit 7A preflight reconfirmed the exact healthy project, live migration tail, relevant `store_inventory` columns, and unsafe M05 callable. Local M39 `20260812000039_marketplace_phase9_create_only_inventory_commit.sql` is implemented and PGlite-verified but **unapplied**. No database, Storage, queue, provider, inventory, listing, publication, or deployment mutation occurred. M09/global historical constraint validation is not required for Unit 7A, which initializes every newly created row in balance.
+
+**Unit 7A local delta:** M39 adds an authenticated create-only command that
+derives Owner/store authority, reads the current saved review and selected
+metadata under candidate/review/metadata revision fences, creates one private
+inventory row, and writes candidate/session, audit, event, and idempotency
+effects atomically. Exact replay is stable; changed replay and same-candidate
+contention cannot create a second row. Duplicate advice/legacy intent is
+non-blocking. The unsafe M05 signature is retained for history but execute is
+revoked from all API/service roles. This paragraph describes local target
+evidence only, not live schema state.
 
 **Current live delta:** M38 adds the approved private fixed-search-path metadata
 context v2 helper and replaces only the existing service-only public wrapper.
@@ -269,7 +279,7 @@ Proposed boundary:
 
 1. Mobile clients use named Q01-Q06/Q11 RPCs or dedicated positive-allowlist views for owner-safe projections and named commands for upload authorization; they receive no direct private base-table SELECT grant.
 2. Mobile clients do not directly insert committed inventory from model output, mutate canonical rows, select raw provider/model payloads, or promote media.
-3. Unit 7A uses a new controlled server command to create exactly one private inventory row per eligible reviewed candidate, initialize its quantity buckets from server-held review state, and write provenance/audit/idempotency atomically. It performs no duplicate choice or public projection; publication is Unit 7B.
+3. Local unapplied M39 implements the Unit 7A controlled server command to create exactly one private inventory row per eligible reviewed candidate, initialize its quantity buckets from server-held review state, and write provenance/audit/event/idempotency atomically. It performs no duplicate choice or public projection; publication is Unit 7B. Live state remains on the unsafe M05 boundary until an explicitly authorized M39 application performs the documented revocation.
 4. Service-role functions/Edge Functions derive actor/store, use fixed schemas/search paths, expose minimum commands, and have explicit grants plus cross-tenant denial tests; worker/service access is separately enumerated from authenticated access.
 5. Model/provider workers have a narrow job capability, not a user bearer token and not general database authority.
 

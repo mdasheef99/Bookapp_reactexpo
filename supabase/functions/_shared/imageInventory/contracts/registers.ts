@@ -4,7 +4,7 @@ import {
   PHASE9_MAX_AUTOMATED_ALIASES,
   PHASE9_MAX_CANDIDATES,
   PHASE9_RANKING_VERSION,
-} from './versions';
+} from './versions.ts';
 
 export type VisibilityClass = 'public' | 'owner_private' | 'service_internal';
 export type NormalizationRule = 'none' | 'trim_nfc' | 'bcp47' | 'isbn' | 'lowercase' | 'uuid';

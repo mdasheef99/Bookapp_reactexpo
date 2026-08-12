@@ -186,6 +186,7 @@ export const candidateDetailSchema = z.object({
         'open_variant_review',
         'add_missed',
         'view_readiness',
+        'add_to_inventory',
     ])),
     updatedAt: timestampSchema,
 }).strict().superRefine((value, context) => {

@@ -44,6 +44,12 @@ const updateReview = z.object({
   expectedCandidateVersion: version, expectedMetadataRevision: version,
   review, idempotencyKey, commandId: uuid,
 }).strict();
+const addCandidateToInventory = z.object({
+  action: z.literal('add_candidate_to_inventory'), contractVersion,
+  sessionId: uuid, candidateId: uuid,
+  expectedCandidateVersion: version, expectedReviewVersion: version,
+  expectedMetadataRevision: version, idempotencyKey, commandId: uuid,
+}).strict();
 const closeSession = z.object({
   action: z.literal('close_scan_session'), contractVersion,
   sessionId: uuid, expectedSessionVersion: version, idempotencyKey, commandId: uuid,
@@ -62,6 +68,7 @@ const requestSchemas = {
     sessionId: uuid, candidateId: uuid,
   }).strict(),
   update_candidate_review: updateReview,
+  add_candidate_to_inventory: addCandidateToInventory,
   read_scan_readiness: z.object({
     action: z.literal('read_scan_readiness'), contractVersion, sessionId: uuid,
   }).strict(),
@@ -71,7 +78,7 @@ const requestSchemas = {
 const ownerUxRequest = z.discriminatedUnion('action', [
   requestSchemas.discover_scan_session, readSession, listInputs,
   removeInput, listCandidates as any, requestSchemas.read_scan_candidate, updateReview,
-  requestSchemas.read_scan_readiness, closeSession,
+  addCandidateToInventory, requestSchemas.read_scan_readiness, closeSession,
 ]);
 
 export type OwnerUxRequest = z.infer<typeof ownerUxRequest>;
