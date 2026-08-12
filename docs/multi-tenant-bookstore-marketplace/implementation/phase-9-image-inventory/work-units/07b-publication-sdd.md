@@ -395,6 +395,58 @@ contains shelf/location, acquisition cost, internal notes, exact quantity,
 metadata confidence internals, extraction payloads, duplicate evidence, scan
 media, request-photo IDs, or moderation/risk internals (DOC-3 §7, §14; DISC-06).
 
+### Public projection DTO contract (normative — carried-forward decision)
+
+Freeze one safe consumer DTO. The safe projection/RPC maps persisted fields to
+this normative public contract; existing physical DB column names do not need
+cosmetic renaming:
+
+```text
+listingId
+storeId
+title
+authors
+language
+description
+editionStatement
+volume
+format
+isbn10 / isbn13          -- when validated
+condition
+hasDamage
+publicDamageNote
+damageTypes
+priceMinor
+currency
+availabilityStatus
+coverUrl
+publicMediaCount
+fulfillmentOptions
+status
+moderationStatus
+qualityStatus
+friendlyInventoryFreshnessSignal   -- not the exact private timestamp
+```
+
+**Never exposed in the public DTO:**
+
+```text
+exact available quantity
+reserved / sold / removed quantities
+shelf/location
+acquisition cost
+internal notes
+metadata/model confidence
+raw provider/model payloads
+scan/request media
+duplicate evidence/history
+private moderation/risk internals
+```
+
+The DTO is versioned with the projection/search contract; any field addition or
+semantic change requires a separately approved public-contract version
+(MKT-15).
+
 ## 12. Publication states
 
 - `private`: inventory exists, not public. Unit 7A ends here.
@@ -478,6 +530,22 @@ publication-status display, a retry affordance for `publication_failed`
 flow. `publication_failed` is added to the inventory listing-status filter set
 (DOC-8 §5). The legacy Phase 4 publish/pause service and screen are retired or
 rewired (§13).
+
+### Retry UX contract (normative — carried-forward decision)
+
+Publication controls belong to **inventory**, not scan candidates:
+
+- The inventory row/card shows publication status.
+- `publication_failed` shows: a failure badge/status, an Owner-safe failure
+  reason, and an inline **Retry publication** action.
+- Inventory detail may additionally show a failure banner.
+- `publication_failed` is added to the Owner inventory publication-status
+  filter.
+- **No separate retry screen is created for Unit 7B.**
+- Owner-correctable 4xx eligibility failures are **not** presented as "retry
+  publication" failures — the UI tells the Owner what must be corrected (e.g.
+  set a positive price, add approved damage photos).
+- Only the transient `publication_failed` state receives **Retry publication**.
 
 **Retry worker (dedicated `phase9-publication-worker`, token-fenced):**
 
@@ -732,6 +800,14 @@ document:
 10. **Audit/event ownership** — §10: one command → one audit + one event; replay +0/+0; trigger is infrastructure.
 11. **Projection writer** — §11: one authoritative writer path only (controlled command → state transition → existing sync trigger → listing); no independent writer.
 12. **DOC-4 authority** — resolved (authority line above includes DOC-4).
+13. **Public projection DTO contract** — §11: one normative consumer DTO with the
+    exact exposed/never-exposed field lists; physical column names need no
+    cosmetic rename; the safe projection/RPC maps persisted fields to the DTO.
+14. **Retry UX** — §14: publication controls belong to inventory (not scan
+    candidates); `publication_failed` shows a badge, Owner-safe reason, and
+    inline **Retry publication**; optional detail banner; no separate retry
+    screen; Owner-correctable 4xx failures are shown as corrections, not retry;
+    only transient `publication_failed` receives Retry.
 
 **Freeze gate:** the status line above marks this document frozen. Implementation
 red tests, migration creation/application, deployment, and any live mutation
