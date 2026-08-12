@@ -1,6 +1,6 @@
 # Unit 7A Create-Only Inventory Commit Evidence
 
-**Status:** `m39_applied_and_verified_runtime_deployment_pending`
+**Status:** `edge_bundle_fix_locally_verified_narrow_review_pending`
 **Date:** 2026-08-12
 **Branch:** `codex/phase9-unit7a-create-only-inventory`
 **Base:** `origin/main` at `f2ccc6a20f065ec000fd3a3ac89ba4f014b52cb4`
@@ -191,11 +191,40 @@ Focused verification after correction:
 
 ## Residual gates and next action
 
+## Resolution-only Edge bundle correction — 2026-08-12
+
+- The reviewed Edge Function remains the existing
+  `supabase/functions/phase9-owner-ingestion/index.ts`; no function, route,
+  decoder, RPC call, or runtime behavior was created or redesigned.
+- Reachable-graph tracing found four extensionless relative imports. Each was
+  changed only to name the same-cased existing `.ts` target explicitly:
+  `validation.ts` → `registers.ts` and `privacy.ts`; `registers.ts` →
+  `versions.ts`; and `searchVariantScripts.ts` → `validation.ts`.
+- Local Supabase Functions serve was attempted but could not start because the
+  Windows Docker engine was absent. The strongest available local graph proof,
+  `npx.cmd --yes deno@2.5.6 check --config
+  supabase/functions/phase9-owner-ingestion/deno.json
+  supabase/functions/phase9-owner-ingestion/index.ts`, passed with zero
+  unresolved imports. GitHub Actions has no established
+  `phase9-owner-ingestion` Edge bundle job; the existing Phase 9 workflow is a
+  separate worker-container smoke and is not claimed as Edge bundle evidence.
+- Focused Owner Edge/mobile Unit 7A regression passed 7 suites and 223/223
+  tests. Repository TypeScript passed with `--allowImportingTsExtensions`.
+  Existing React `act(...)` diagnostics and the known idle Jest handle remained
+  non-failing; the lingering process was stopped only after the complete PASS
+  summary.
+- Semantic diff proof: M39, the frozen Unit 7A SDD, Edge entrypoint, strict
+  request/response decoders, `executeOwnerIngestion` routing, RPC target,
+  authorization, duplicate supersession, and publication boundary are
+  unchanged. Classification: `RESOLUTION_ONLY`.
+- Redeployment remains `NOT_RUN`; deployed Owner Edge version 3 remains ACTIVE.
+  No Supabase data/Storage mutation or live Add-to-Inventory proof occurred.
+
 - Unit 7A implementation and M39 are complete; runtime deployment and live
   mutation proof remain operational gates.
 - Unit 7B publication and Unit 7C post-commit editing remain excluded.
 - Unit 6F native validation debt remains `NOT_RUN`/`UNRESOLVED` and unchanged.
 
-**Next authorized action:** none. Obtain separate authorization for a reviewed
-source-only correction to the extensionless import and, after review, a new
-single deployment attempt. Do not run Add to Inventory or exact replay.
+**Next authorized action:** narrow independent review limited to the four
+import-resolution edits, local Deno/import-graph proof, semantic equivalence,
+and focused regressions. Redeployment and Add to Inventory remain unauthorized.

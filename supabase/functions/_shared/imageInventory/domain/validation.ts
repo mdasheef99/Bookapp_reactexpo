@@ -136,5 +136,5 @@ export function assertNoForbiddenTelemetryFields(value: unknown, field = 'teleme
     assertNoForbiddenTelemetryFields(nested, `${field}.${key}`);
   }
 }
-import { PHASE9_FORBIDDEN_TELEMETRY_FIELDS, PHASE9_LIMITS } from '../contracts/registers';
-import { isPrivacySensitiveKey } from '../contracts/privacy';
+import { PHASE9_FORBIDDEN_TELEMETRY_FIELDS, PHASE9_LIMITS } from '../contracts/registers.ts';
+import { isPrivacySensitiveKey } from '../contracts/privacy.ts';

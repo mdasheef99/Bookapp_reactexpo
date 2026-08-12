@@ -1,7 +1,7 @@
 import {
   Phase9ContractError,
   requiredString,
-} from '../domain/validation';
+} from '../domain/validation.ts';
 
 const SCRIPT_PATTERNS = {
   Latn: /\p{Script=Latin}/gu,
