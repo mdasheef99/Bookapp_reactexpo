@@ -1,7 +1,7 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit7b_review_candidate_pushed_luna_review_pending`; **last updated:** 2026-08-12
+**Status:** `unit7b_corrected_review_candidate_ready_luna_review_pending`; **last updated:** 2026-08-13
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit7b_luna_xhigh_review`. Independent review remains `NOT APPROVED` until Luna passes. The scoped candidate is committed and pushed under the Owner's 2026-08-12 sequencing decision. Real-PostgreSQL concurrency, Docker container smoke, and the Deno Edge graph remain `NOT_RUN`, deferred rather than skipped, and `REQUIRED_BEFORE_LIVE` on the final post-correction SHA before the Stage J exact-SHA release gate. The closed metadata-foundation PGlite fixture and six empty Jest collectors remain explicitly dispositioned debt. Exact-project preflight/application and all deployment/live proofs remain `NOT_RUN`.
+**Active work unit:** `unit7b_luna_xhigh_review`. Sol Light findings 001–006 are locally `CLOSED`; independent review remains `NOT APPROVED` until actual Luna xhigh full review. Real PostgreSQL and Deno pass on corrected source. Docker container smoke remains `NOT_RUN/BLOCKED_ENVIRONMENT` and `REQUIRED_BEFORE_LIVE`. The unchanged metadata-foundation PGlite fixture and six empty Jest collectors remain explicitly dispositioned debt. M40 is unapplied; exact-project preflight/application and all deployment/live proofs remain `NOT_RUN`.
 
 Historical continuity markers (status and migration ledger are immutable):
 **Status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`;
@@ -200,7 +200,7 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql` | `20260810105517 marketplace_phase9_owner_discovery_scope_correction` | MCP exact project 2026-08-10; `ahntbtktjjmvfosgkmgn` | prior authorized application; read-only verified in this session | `CREATE OR REPLACE FUNCTION` only; scopes `needsReviewCount` to authenticated actor plus server-resolved active store while preserving immutable M35 source and existing authenticated-only ACL | live migration history readback plus prior focused M35/M37/Edge/mobile Jest 5 suites/189, isolated M35-to-M37 PGlite 4/4, and full M35-to-M37 Phase 9 DB replay 241/241 | `live_verified` |
 | `20260810000038_marketplace_phase9_metadata_retry_correction.sql` | `20260810130638 marketplace_phase9_metadata_retry_correction` | exact project `ahntbtktjjmvfosgkmgn` verified healthy immediately before application and read back after | user-authorized M38-only operational application | private context-v2 helper plus service-only public wrapper replacement; exposes only selected physical-call claim attempt; M32-M37 unchanged | history once; empty `search_path`; postgres owner; service-role-only execute; dispatcher stayed active; zero apply-created/claimed jobs; unchanged baseline counts; prior metadata Jest 148/148, exact HTTP 503-to-200 regression, full PGlite 242/242, build/entrypoint/deployment validation and independent `APPROVED` review | `live_verified` |
 | `20260812000039_marketplace_phase9_create_only_inventory_commit.sql` | not applied; proposed `marketplace_phase9_create_only_inventory_commit` | fresh read-only MCP verification of exact healthy project `ahntbtktjjmvfosgkmgn`; live history ends at M38 | local file creation and PGlite execution authorized; live application explicitly prohibited | forward-only private eligibility/helper replacements plus authenticated-only create command; revokes unsafe legacy M05 execute without deleting history; no M09/global validation | red-first dedicated PGlite 13/13; Phase 9 Edge/mobile/migration regression 42 suites and 479/479; TypeScript with documented import flag; no live readback because unapplied | [`local_unapplied_review_pending`](./29-unit7a-create-only-commit-evidence.md) |
-| `20260812000040_marketplace_phase9_safe_publication.sql` | not applied; proposed `marketplace_phase9_safe_publication` | no fresh exact-project preflight; connected project untouched | local remediation only; connected application prohibited | dual-version publication, retry fencing, Owner read v2, closed-summary freeze, safe discovery, sanitized public media, trigger ownership, audit/events, and wake dispatch | Unit 7B PGlite 22/22; focused backend 32/32; focused mobile/read/discovery assertions 80/80; Unit 7A 13/13; dispatcher 29/29; prior worker runtime 31/31; compatible TypeScript, four worker builds, entrypoint smoke, and deployment validator pass. M39 matches `main`/base byte-for-byte. Real PostgreSQL, Docker, and Deno are environment-blocked before their assertions; broad PGlite/Jest debt is explicitly dispositioned | `local_unapplied_gate_blocked` |
+| `20260812000040_marketplace_phase9_safe_publication.sql` | not applied; proposed `marketplace_phase9_safe_publication` | no connected exact-project preflight; connected project untouched | local Sol Light correction only; connected application prohibited | shared rollout eligibility, moderation preservation, safe grouped discovery, complete targeted public-media retraction, post-lease exact worker replay, actual cross-layer runtime proof, and prior Unit 7B scope | corrected Unit 7B 27/27; cross-layer 4/4; focused Jest 25/25; Unit 7A+dispatcher 42/42; real PostgreSQL upgrade/concurrency, Deno, TypeScript, four builds, entrypoint, and deployment validator pass. Full PGlite 281/282 on unchanged metadata debt; broad Jest 2010 real tests pass with six unchanged empty collectors. Docker `NOT_RUN/BLOCKED_ENVIRONMENT`. M39 byte-unchanged | `local_corrected_review_candidate_ready` |
 Rules: re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
 - Use forward corrections; record every schema, grant, Storage, data, and verification effect.
 ## Required verification matrix
@@ -1861,3 +1861,19 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
   [tracker 29](./29-unit7a-create-only-commit-evidence.md).
 - Implementation status: `unit7a_live_proof_pass`.
 - Next gate: Unit 7B publication, separately gated.
+
+## Unit 7B Sol Light correction closure - 2026-08-13
+
+- Findings 001–006: `CLOSED`; factual evidence finding 008: `CLOSED`.
+- Unit 7B disposable 27/27; actual database-to-Edge-runtime-to-decoder-to-
+  query/UI 4/4; focused Jest 25/25; Unit 7A plus dispatcher 42/42.
+- Real PostgreSQL M01–M40 upgrade and active-listing/RT05/RT07/RT12/Owner-
+  reauthorization concurrency: PASS. Deno, TypeScript, four builds,
+  entrypoint smoke, and deployment-runtime validation: PASS.
+- Full PGlite: 281/282 on unchanged metadata fixture. Broad Jest: 2010 real
+  tests pass; only six unchanged empty collectors fail.
+- Docker container smoke: `NOT_RUN/BLOCKED_ENVIRONMENT` because the installed
+  engine is unresponsive. M39 is unchanged; M40 is not applied. No connected
+  mutation, deployment, live proof, Unit 7C, or main integration occurred.
+- Exact next action: actual Luna xhigh full independent review. Review remains
+  `NOT APPROVED`; do not begin connected exact-project preflight.

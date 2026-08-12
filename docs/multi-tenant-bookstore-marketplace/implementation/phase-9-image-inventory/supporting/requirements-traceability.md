@@ -241,18 +241,18 @@ pending rather than inferred from local tests.
 The frozen Unit 7B SDD §19 contains 20 numbered load-bearing tests. The exact
 number-to-invariant-to-test mapping is maintained in
 [07b-red-test-traceability.md](../work-units/07b-red-test-traceability.md). The
-expanded disposable suite passes 22/22, covering all 20 rows plus two RT15
-worker/database cases. M40 and the Edge/client/UI/worker changes implement the SDD's
+corrected disposable suite passes 27/27, covering all 20 rows, expanded RT15
+cases, and the five Sol Light correction cases. M40 and the Edge/client/UI/worker changes implement the SDD's
 dual-version fence, transient-only retry, stale-lease protection, single
 projection writer, public DTO privacy, sanitized media/fallback rules,
 controlled Owner read boundary, closed-summary freeze, and one-command audit/
-event ownership. Focused backend is 32/32, focused mobile/read/discovery
-assertions are 80/80, Unit 7A is 13/13, dispatcher regression is 29/29, and
-prior worker runtime regression is 31/31. Full local acceptance remains
-environment-blocked before the real-PostgreSQL/Docker/Deno assertions; the
-unchanged metadata-fixture PGlite failure and six empty Jest collectors are
-explicitly dispositioned as unrelated debt. Connected-project and live
-acceptance evidence remain `NOT_RUN`.
+event ownership. The actual disposable database-to-Owner-Edge-runtime-to-client-
+decoder-to-query/UI gate is 4/4; focused Jest is 25/25; Unit 7A plus dispatcher
+is 42/42. Real PostgreSQL upgrade/concurrency and the Deno graph pass. Full
+PGlite is 281/282 on the unchanged metadata fixture, and broad Jest passes 2010
+real tests with only six unchanged empty collectors. Docker remains
+`NOT_RUN/BLOCKED_ENVIRONMENT`. Connected-project and live acceptance evidence
+remain `NOT_RUN`.
 
 ## Local ingestion-runtime and Unit 4 trace (2026-07-26)
 

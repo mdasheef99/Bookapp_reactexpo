@@ -40,7 +40,31 @@ CREATE FUNCTION cron.alter_job(
 $$;
 
 -- Phase 6 baseline compatibility columns supplied by the full production chain.
-CREATE TABLE public.marketplace_localities(id uuid PRIMARY KEY,name text NOT NULL);
+CREATE TABLE public.marketplace_localities(
+  id uuid PRIMARY KEY,name text NOT NULL,is_pilot_enabled boolean NOT NULL DEFAULT true
+);
+CREATE TABLE public.store_subscriptions(
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),store_id uuid NOT NULL,
+  status text NOT NULL,updated_at timestamptz NOT NULL DEFAULT transaction_timestamp()
+);
+CREATE TABLE public.store_entitlements(
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),store_id uuid NOT NULL,
+  feature_key text NOT NULL,limit_value integer,is_enabled boolean NOT NULL DEFAULT true,
+  UNIQUE(store_id,feature_key)
+);
+CREATE TABLE public.marketplace_policy_config(
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),policy_key text NOT NULL,
+  scope_type text NOT NULL,scope_value text,store_id uuid,value jsonb NOT NULL,
+  value_type text NOT NULL,policy_version integer NOT NULL,is_active boolean NOT NULL,
+  effective_from timestamptz NOT NULL,effective_to timestamptz,
+  normalized_scope_identity text
+);
+CREATE TABLE public.listing_moderation_flags(
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),listing_id uuid NOT NULL
+    REFERENCES public.marketplace_book_listings(id),store_id uuid NOT NULL,
+  flag_type text NOT NULL,status text NOT NULL DEFAULT 'open',
+  created_at timestamptz NOT NULL DEFAULT transaction_timestamp()
+);
 ALTER TABLE public.stores
   ADD COLUMN verification_status text NOT NULL DEFAULT 'approved',
   ADD COLUMN pickup_enabled boolean NOT NULL DEFAULT false,

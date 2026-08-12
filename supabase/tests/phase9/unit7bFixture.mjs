@@ -19,7 +19,26 @@ export async function createUnit7bDatabase() {
   ]) await db.exec(fs.readFileSync(migrationPath(tail), 'utf8'));
   await db.exec(fs.readFileSync(migrationPath(M39), 'utf8'));
   await db.exec(`
-    CREATE TABLE public.marketplace_localities(id uuid PRIMARY KEY,name text NOT NULL);
+    CREATE TABLE public.marketplace_localities(id uuid PRIMARY KEY,name text NOT NULL,
+      is_pilot_enabled boolean NOT NULL DEFAULT true);
+    CREATE TABLE public.store_subscriptions(
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),store_id uuid NOT NULL,
+      status text NOT NULL,updated_at timestamptz NOT NULL DEFAULT transaction_timestamp());
+    CREATE TABLE public.store_entitlements(
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),store_id uuid NOT NULL,
+      feature_key text NOT NULL,limit_value integer,is_enabled boolean NOT NULL DEFAULT true,
+      UNIQUE(store_id,feature_key));
+    CREATE TABLE public.marketplace_policy_config(
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),policy_key text NOT NULL,
+      scope_type text NOT NULL,scope_value text,store_id uuid,value jsonb NOT NULL,
+      value_type text NOT NULL,policy_version integer NOT NULL,is_active boolean NOT NULL,
+      effective_from timestamptz NOT NULL,effective_to timestamptz,
+      normalized_scope_identity text);
+    CREATE TABLE public.listing_moderation_flags(
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),listing_id uuid NOT NULL
+        REFERENCES public.marketplace_book_listings(id),store_id uuid NOT NULL,
+      flag_type text NOT NULL,status text NOT NULL DEFAULT 'open',
+      created_at timestamptz NOT NULL DEFAULT transaction_timestamp());
     ALTER TABLE public.stores
       ADD COLUMN verification_status text NOT NULL DEFAULT 'approved',
       ADD COLUMN pickup_enabled boolean NOT NULL DEFAULT false,
@@ -73,28 +92,44 @@ export async function seedPublicationInventory(db, overrides = {}) {
   const ownerId = overrides.ownerId ?? randomUUID();
   const otherOwnerId = overrides.otherOwnerId ?? randomUUID();
   const inventoryId = randomUUID();
+  const localityId = overrides.localityId ?? randomUUID();
   if (!overrides.storeId) await db.exec(`
+    INSERT INTO public.marketplace_localities(id,name,is_pilot_enabled)
+    VALUES('${localityId}','Unit 7B Locality',${overrides.pilotEnabled ?? true});
     INSERT INTO public.stores(
       id,display_name,status,verification_status,setup_status,selling_status,
-      pickup_enabled,delivery_enabled,city
+      pickup_enabled,delivery_enabled,city,locality_id
     ) VALUES(
       '${storeId}','Unit 7B Store','${overrides.storeStatus ?? 'active'}',
       '${overrides.verificationStatus ?? 'approved'}','${overrides.setupStatus ?? 'complete'}',
-      '${overrides.sellingStatus ?? 'allowed'}',true,false,'Pune'
+      '${overrides.sellingStatus ?? 'allowed'}',true,false,'Pune','${localityId}'
     );
     INSERT INTO public.store_administrators(store_id,user_id,role,status)
     VALUES('${storeId}','${ownerId}','owner','${overrides.ownerStatus ?? 'active'}');
+    INSERT INTO public.store_subscriptions(store_id,status)
+    VALUES('${storeId}','${overrides.subscriptionStatus ?? 'trialing'}');
+    INSERT INTO public.store_entitlements(store_id,feature_key,limit_value,is_enabled)
+    VALUES('${storeId}','active_listing_limit',${overrides.activeListingLimit ?? 100},
+      ${overrides.marketplaceEntitled ?? true});
+    INSERT INTO public.marketplace_policy_config(
+      policy_key,scope_type,store_id,value,value_type,policy_version,is_active,effective_from
+    ) VALUES
+      ('marketplace_enabled','global',NULL,'${overrides.marketplaceEnabled ?? true}'::jsonb,
+        'boolean',1,true,transaction_timestamp()-interval '1 day'),
+      ('commerce.store_allowlisted','store','${storeId}','${overrides.storeAllowlisted ?? true}'::jsonb,
+        'boolean',1,true,transaction_timestamp()-interval '1 day');
   `);
   await db.exec(`
     INSERT INTO public.store_inventory(
       id,store_id,title,authors,language,description,edition_statement,volume,format,
-      condition,selling_price_minor,quantity_total,quantity_available,quantity_reserved,
+      isbn_10,isbn_13,condition,selling_price_minor,quantity_total,quantity_available,quantity_reserved,
       quantity_sold,quantity_removed,visibility_status,publication_status,
       publication_intent_version,version,is_sellable,has_damage,damage_types,damage_notes,
       listing_quality_status,entry_method,created_by,public_notes,shelf_location,internal_notes
     ) VALUES(
       '${inventoryId}','${storeId}','${sql(overrides.title ?? 'Unit 7B Title')}',
       ARRAY['Unit 7B Author'],'en','Public description','First edition','1','paperback',
+      ${nullableSql(overrides.isbn10 ?? null)},${nullableSql(overrides.isbn13 ?? null)},
       '${overrides.condition ?? 'good'}',${overrides.priceMinor ?? 725},
       ${overrides.quantityTotal ?? 3},${overrides.quantityAvailable ?? 3},0,0,0,
       '${overrides.visibilityStatus ?? 'draft'}','${overrides.publicationStatus ?? 'private'}',
@@ -107,6 +142,28 @@ export async function seedPublicationInventory(db, overrides = {}) {
   `);
   await setActor(db, ownerId);
   return { storeId, ownerId, otherOwnerId, inventoryId };
+}
+
+export async function grantPublicationEligibility(db, fixture, overrides = {}) {
+  await resetActor(db);
+  const localityId = randomUUID();
+  await db.exec(`
+    INSERT INTO public.marketplace_localities(id,name,is_pilot_enabled)
+    VALUES('${localityId}','Unit 7B Existing Store',true);
+    UPDATE public.stores SET locality_id='${localityId}' WHERE id='${fixture.storeId}';
+    INSERT INTO public.store_subscriptions(store_id,status)
+    VALUES('${fixture.storeId}','${overrides.subscriptionStatus ?? 'trialing'}');
+    INSERT INTO public.store_entitlements(store_id,feature_key,limit_value,is_enabled)
+    VALUES('${fixture.storeId}','active_listing_limit',100,true);
+    INSERT INTO public.marketplace_policy_config(
+      policy_key,scope_type,store_id,value,value_type,policy_version,is_active,effective_from
+    ) VALUES
+      ('marketplace_enabled','global',NULL,'true','boolean',1,true,
+        transaction_timestamp()-interval '1 day'),
+      ('commerce.store_allowlisted','store','${fixture.storeId}','true','boolean',1,true,
+        transaction_timestamp()-interval '1 day');
+  `);
+  await setActor(db, fixture.ownerId);
 }
 
 export function setPublicationSql(fixture, overrides = {}) {
@@ -130,6 +187,7 @@ export async function addApprovedPublicMedia(db, fixture, role, order = 1) {
 
 export async function addPublicMedia(db, fixture, options = {}) {
   await resetActor(db);
+  const sourceId = randomUUID();
   const assetId = randomUUID();
   const linkId = randomUUID();
   const role = options.role ?? 'actual_copy';
@@ -143,13 +201,21 @@ export async function addPublicMedia(db, fixture, options = {}) {
   await db.exec(`
     INSERT INTO public.media_assets(
       id,store_id,uploaded_by,purpose,privacy_class,bucket_id,object_path,sha256,
+      detected_mime,bytes,width,height,retention_class,lifecycle_status
+    ) VALUES(
+      '${sourceId}','${fixture.storeId}','${fixture.ownerId}','scan_input','private_scan',
+      'image-extraction-inputs','${fixture.storeId}/source/${sourceId}.png','${'b'.repeat(64)}',
+      'image/png',128,100,100,'phase9-source','validated'
+    );
+    INSERT INTO public.media_assets(
+      id,store_id,uploaded_by,purpose,privacy_class,bucket_id,object_path,sha256,
       detected_mime,bytes,width,height,validation_version,reencode_version,
-      exif_strip_version,retention_class,lifecycle_status
+      exif_strip_version,source_media_asset_id,retention_class,lifecycle_status
     ) VALUES(
       '${assetId}','${fixture.storeId}','${fixture.ownerId}','public_copy','public',
       '${bucketId}','${fixture.storeId}/public_copy/${fixture.inventoryId}/${assetId}.webp',
       '${'a'.repeat(64)}','image/webp',128,100,100,${nullableSql(validationVersion)},
-      ${nullableSql(reencodeVersion)},${nullableSql(exifStripVersion)},
+      ${nullableSql(reencodeVersion)},${nullableSql(exifStripVersion)},'${sourceId}',
       'public_inventory','${lifecycleStatus}'
     );
     INSERT INTO public.inventory_media_links(
@@ -161,7 +227,7 @@ export async function addPublicMedia(db, fixture, options = {}) {
     );
   `);
   await setActor(db, fixture.ownerId);
-  return { assetId, linkId };
+  return { assetId, linkId, sourceId };
 }
 
 export async function businessEffectSnapshot(db, fixture) {

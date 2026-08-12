@@ -87,6 +87,7 @@ describe('consumerDiscoveryService safe Unit 7B boundary', () => {
     it('uses bounded RPC pagination and slices the requested page', async () => {
         rpc.mockResolvedValueOnce({ data: Array.from({ length: 40 }, (_, index) => safePublication({
             listingId: `10000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+            isbn13: String(9780000000000 + index),
         })), error: null });
         const results = await consumerDiscoveryService.searchMarketplaceBooks('', { page: 2, pageSize: 20 });
         expect(rpc).toHaveBeenCalledWith('phase9_public_listing_search_v2', expect.objectContaining({ p_page_size: 40 }));

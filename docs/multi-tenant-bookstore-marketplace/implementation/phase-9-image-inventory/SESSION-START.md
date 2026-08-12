@@ -1,14 +1,30 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-08-12
+**Last updated:** 2026-08-13
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-Current operational closure: M29-M39 are live exactly once; exact-project
+Current corrected handoff (supersedes the older Unit 7B gate narrative below):
+the approved Sol Light findings 001–006 are locally `CLOSED`, and finding 008
+has been updated factually. Corrected Unit 7B disposable tests pass 27/27; the
+actual database-to-Owner-Edge-runtime-to-client-decoder-to-query/UI gate passes
+4/4; real PostgreSQL M01–M40 upgrade and active-limit/RT05/RT07/RT12/Owner-
+reauthorization concurrency pass; and Deno, TypeScript, four worker builds,
+entrypoint smoke, and deployment-runtime validation pass. Full Phase 9 PGlite
+is 281/282 on the unchanged metadata-foundation fixture. Broad Jest passes
+2010 real tests and fails only the six unchanged empty collectors. Docker
+container smoke is `NOT_RUN/BLOCKED_ENVIRONMENT` because the installed engine
+is unresponsive. M39 remains Git blob
+`1154054240042863083aa2aa32c67bc18e46f71d`; M40 is unapplied. Review remains
+`NOT APPROVED`; the exact next action is actual Luna xhigh full independent
+review. Connected preflight/application, deployment, live proof, Unit 7C, and
+main integration remain unauthorized.
+
+Historical pre-correction operational closure: M29-M39 are live exactly once; exact-project
 history ends at `20260812003419 marketplace_phase9_create_only_inventory_commit`.
 Unit 7B independent review remains `NOT APPROVED`; local remediation is
 implemented for seven merge blockers covering the public-copy media pipeline,

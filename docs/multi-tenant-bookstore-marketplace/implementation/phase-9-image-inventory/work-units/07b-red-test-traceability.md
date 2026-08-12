@@ -48,3 +48,20 @@ red tests; they do not replace any row above.
 - `supabase/migrations/__tests__/marketplacePhase9Publication.test.ts` — one
   forward-only migration, single projection writer, grants, v2 read boundary,
   retry fencing, dispatcher allowlist, and unchanged applied migrations.
+
+## 2026-08-13 Sol Light material subcases
+
+- `phase9Unit7bCorrectionMatrix.integration.test.mjs` proves shared rollout and
+  post-publication fail-closed behavior, moderation preservation/restoration,
+  ISBN/server-group discovery, complete targeted media retraction, and exact
+  successful worker replay after lease clearance.
+- `unit7bCrossLayerDatabaseHarness.mjs` and
+  `publicationContractIntegration.test.tsx` pass disposable M40 RPC results
+  through production Owner Edge runtime/error mapping, captured transport, the
+  real client decoder/query invalidation, and rendered controls. The response
+  DTO is not manufactured by the test.
+- `phase9_unit7b_concurrency.ps1` proves store-row serialized active-listing
+  admission in addition to RT05, RT07, RT12, and Owner reauthorization.
+- Established Phase 9 database regressions continue to prove approved active
+  variants only and M07 stable store-group cursor boundaries; corrected M40
+  calls that active-variant authority and groups before limiting.

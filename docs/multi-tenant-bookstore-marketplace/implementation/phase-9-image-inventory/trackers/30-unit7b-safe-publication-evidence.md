@@ -1,10 +1,18 @@
 # Unit 7B Safe Publication — Local Implementation Evidence
 
-**Status:** `review_candidate_committed_luna_review_pending_deferred_gates_required_before_live`
-**Date:** 2026-08-12
+**Status:** `corrected_review_candidate_ready_luna_review_pending`
+**Date:** 2026-08-13
 **Authority:** frozen [Unit 7B SDD](../work-units/07b-publication-sdd.md)
 
-## Independent review verdict
+## Current Sol Light correction verdict
+
+The prior independent review returned `NOT APPROVED`; Luna xhigh has not yet
+reviewed the candidate. The approved Sol Light correction matrix is now
+implemented locally. Findings 001–006 are `CLOSED`, and factual evidence
+finding 008 is updated after functional verification. This is review-candidate
+readiness, not review approval or live-release approval.
+
+## Historical independent review verdict
 
 The first independent review returned `NOT APPROVED`. The prior local pass
 counts below are historical baseline evidence only; they do not establish Unit
@@ -130,3 +138,43 @@ smoke, and the Deno Edge graph remain `NOT_RUN`; none is PASS. They are deferred
 not skipped, and all three are `REQUIRED_BEFORE_LIVE` on the final
 post-correction SHA before the Stage J exact-SHA release gate. Review remains
 `NOT APPROVED` until Luna passes.
+
+## 2026-08-13 Sol Light correction closure
+
+| Finding | Status | Corrected evidence |
+|---|---|---|
+| 001 rollout/publication/discovery eligibility | `CLOSED` | One server-owned primitive covers store lifecycle, established subscription statuses, entitlement, pilot locality, marketplace enablement, and allowlist; discovery fails closed after eligibility loss; store-row serialization protects active-listing admission. |
+| 002 platform moderation authority | `CLOSED` | Conflict refresh preserves retained moderation; pending, blocked, prohibited, and unresolved flags deny republish without mutation; resolved platform authority permits publish. |
+| 003 discovery regression | `CLOSED` | Exact ISBN-10/13 and the established active-variant helper are retained; server selects complete groups before limiting; deterministic group ordering and storefront cardinality prevent client-side pre-group truncation. Existing M07 cursor/variant database regressions remain green in the full Phase 9 run. |
+| 004 media eligibility-loss refresh/retraction | `CLOSED` | Selection and targeted link/asset refresh share the complete public-media predicate; critical asset changes and link move/removal retract stale primary/damage projection. |
+| 005 exact successful worker replay | `CLOSED` | Immutable binding plus exact canonical replay precede active-lease checks; only new effects require the live token/expiry/intent fence. Exact post-lease replay is canonical with zero second effect. |
+| 006 real cross-layer proof | `CLOSED` | Disposable M40 database results flow through production Owner Edge request/runtime/error mapping, captured transport, real client decoder/query invalidation, and rendered Owner controls; network transport alone is mocked. |
+| 008 factual documentation | `CLOSED` | Counts, host-gate outcomes, review state, and next action are corrected in the minimum continuity/evidence set. |
+
+Final corrected-tree verification:
+
+- Unit 7B disposable database: **27/27**; actual database→Edge runtime→decoder→
+  query/UI: **4/4**.
+- Focused migration/Edge/worker/discovery/media Jest: **25/25**; Unit 7A plus
+  dispatcher disposable regression: **42/42**.
+- Real PostgreSQL 18.4 disposable M01–M40 upgrade: **PASS**. Concurrency passes
+  active-listing admission, RT05, RT07, RT12, and under-lock Owner
+  reauthorization; the disposable database is dropped afterward.
+- Full Phase 9 PGlite: **281/282**. The only failure remains the unchanged
+  metadata-foundation fixture inserting null `canonical_works.primary_title`.
+- Repository Jest: **2010 real tests passed** across 241 passing suites; the
+  command fails only the same six unchanged empty fixture/support collectors.
+  The separately invoked four-test cross-layer suite passes.
+- TypeScript no-emit, Deno Owner Edge graph, four worker builds, worker
+  entrypoint smoke, and deployment-runtime validator: **PASS**.
+- Docker publication-worker/container smoke: **NOT_RUN/BLOCKED_ENVIRONMENT**.
+  Docker Desktop and its CLI are installed, but the engine is unresponsive;
+  no PASS is inferred.
+- M39 is unchanged as Git blob
+  `1154054240042863083aa2aa32c67bc18e46f71d`; no M01–M39 file is in the
+  correction diff. M40 remains unapplied. Connected Supabase/Storage, deploy,
+  live proof, Unit 7C, and main remain untouched.
+
+Exact next authorized action: actual Luna xhigh full independent review of the
+verified Unit-7A-integrated base through the corrected candidate SHA. Review is
+still `NOT APPROVED`; do not begin exact-project preflight.

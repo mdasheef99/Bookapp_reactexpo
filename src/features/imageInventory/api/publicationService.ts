@@ -18,6 +18,8 @@ export const publicationResultSchema = z.object({
     publicationFailureReason: z.enum([
         'projection_temporarily_unavailable', 'price', 'stock', 'sellability',
         'condition', 'metadata', 'damage_media', 'store_policy',
+        'subscription', 'entitlement', 'pilot_locality', 'marketplace_feature',
+        'store_allowlist', 'active_listing_limit', 'moderation',
     ]).nullable(),
     outcome: z.enum([
         'published', 'pause', 'paused', 'private', 'committed_publication_failed',

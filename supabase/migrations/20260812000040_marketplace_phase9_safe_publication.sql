@@ -218,23 +218,28 @@ DECLARE v_job public.image_extraction_jobs; v_inventory public.store_inventory;
 BEGIN
   IF auth.role() IS DISTINCT FROM 'service_role' THEN
     RAISE EXCEPTION 'P9_OWNER_NOT_AUTHORIZED'; END IF;
-  SELECT * INTO v_job FROM public.image_extraction_jobs WHERE id=p_job_id FOR UPDATE;
-  SELECT * INTO v_inventory FROM public.store_inventory WHERE id=p_inventory_id FOR UPDATE;
-  IF v_job.id IS NULL OR v_inventory.id IS NULL OR v_job.status<>'in_progress'
+  SELECT * INTO v_job FROM public.image_extraction_jobs WHERE id=p_job_id;
+  SELECT * INTO v_inventory FROM public.store_inventory WHERE id=p_inventory_id;
+  IF v_job.id IS NULL OR v_inventory.id IS NULL
     OR v_job.job_kind<>'publication_retry' OR v_job.entity_type<>'store_inventory'
     OR v_job.entity_id<>p_inventory_id OR v_job.store_id<>v_inventory.store_id
-    OR v_job.lease_token IS DISTINCT FROM p_lease_token
-    OR v_job.lease_owner IS DISTINCT FROM p_worker
-    OR v_job.lease_expires_at<=transaction_timestamp()
-    OR v_job.attempt_count<>p_attempt_number
     OR v_job.operation_version<>p_expected_publication_intent_version::text
-    OR v_inventory.publication_intent_version<>p_expected_publication_intent_version
   THEN RAISE EXCEPTION 'P9_STATE_CONFLICT'; END IF;
 
   v_replay:=marketplace_sec.phase9_replay(v_actor,'U7BC12W',p_idempotency_key,
     concat_ws('|',p_command_id,p_inventory_id,p_expected_publication_intent_version,
       p_job_id,p_lease_token,p_attempt_number,p_worker));
   IF v_replay IS NOT NULL THEN RETURN v_replay; END IF;
+  SELECT * INTO v_job FROM public.image_extraction_jobs WHERE id=p_job_id FOR UPDATE;
+  SELECT * INTO v_inventory FROM public.store_inventory WHERE id=p_inventory_id FOR UPDATE;
+  IF v_job.status<>'in_progress'
+    OR v_job.lease_token IS DISTINCT FROM p_lease_token
+    OR v_job.lease_owner IS DISTINCT FROM p_worker
+    OR v_job.lease_expires_at<=transaction_timestamp()
+    OR v_job.attempt_count<>p_attempt_number
+    OR v_inventory.publication_intent_version<>p_expected_publication_intent_version
+  THEN RAISE EXCEPTION 'P9_STATE_CONFLICT'; END IF;
+  PERFORM 1 FROM public.stores WHERE id=v_inventory.store_id FOR UPDATE;
   v_reason:=marketplace_sec.phase9_publication_ineligibility(v_inventory);
   IF v_reason IS NOT NULL THEN
     UPDATE public.image_extraction_jobs SET status='cancelled',lease_owner=NULL,
@@ -329,13 +334,70 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
     'friendlyInventoryFreshnessSignal',coalesce(p_listing.last_inventory_verified_bucket,'not_recently_verified'))
 $$;
 
+-- DOC-2 §10.3/§10.4, DOC-5 §11, and DOC-16 §2: one server-owned
+-- rollout primitive is shared by publication and anonymous discovery. Listing
+-- admission remains a distinct flag because its count must be checked under
+-- the publication transaction's inventory lock.
+CREATE FUNCTION marketplace_sec.phase9_store_publication_ineligibility(
+  p_store_id uuid,p_check_listing_admission boolean DEFAULT false
+) RETURNS text LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
+DECLARE v_store public.stores; v_limit integer; v_policy boolean;
+BEGIN
+  SELECT * INTO v_store FROM public.stores WHERE id=p_store_id;
+  IF v_store.id IS NULL OR v_store.status<>'active'
+    OR v_store.verification_status<>'approved'
+    OR v_store.setup_status<>'complete' OR v_store.selling_status<>'allowed'
+  THEN RETURN 'store_policy'; END IF;
+  IF v_store.locality_id IS NULL OR NOT EXISTS(
+    SELECT 1 FROM public.marketplace_localities l
+    WHERE l.id=v_store.locality_id AND l.is_pilot_enabled
+  ) THEN RETURN 'pilot_locality'; END IF;
+  IF NOT EXISTS(SELECT 1 FROM public.store_subscriptions s
+    WHERE s.store_id=p_store_id AND s.status IN
+      ('trialing','active','past_due','grace_period'))
+  THEN RETURN 'subscription'; END IF;
+  SELECT e.limit_value INTO v_limit FROM public.store_entitlements e
+    WHERE e.store_id=p_store_id AND e.feature_key='active_listing_limit'
+      AND e.is_enabled;
+  IF v_limit IS NULL THEN RETURN 'entitlement'; END IF;
+  SELECT (pc.value)::boolean INTO v_policy
+  FROM public.marketplace_policy_config pc
+  WHERE pc.policy_key='marketplace_enabled' AND pc.is_active
+    AND pc.effective_from<=transaction_timestamp()
+    AND (pc.effective_to IS NULL OR pc.effective_to>transaction_timestamp())
+    AND pc.scope_type IN ('global','city','locality','store')
+    AND CASE pc.scope_type WHEN 'store' THEN pc.store_id=p_store_id
+      WHEN 'locality' THEN coalesce(pc.normalized_scope_identity,pc.scope_value)=v_store.locality_id::text
+      WHEN 'city' THEN lower(coalesce(pc.normalized_scope_identity,pc.scope_value))=lower(v_store.city)
+      ELSE true END
+  ORDER BY CASE pc.scope_type WHEN 'store' THEN 4 WHEN 'locality' THEN 3
+    WHEN 'city' THEN 2 ELSE 1 END DESC,pc.effective_from DESC,pc.policy_version DESC
+  LIMIT 1;
+  IF NOT coalesce(v_policy,false) THEN RETURN 'marketplace_feature'; END IF;
+  v_policy:=NULL;
+  SELECT (pc.value)::boolean INTO v_policy
+  FROM public.marketplace_policy_config pc
+  WHERE pc.policy_key='commerce.store_allowlisted' AND pc.is_active
+    AND pc.effective_from<=transaction_timestamp()
+    AND (pc.effective_to IS NULL OR pc.effective_to>transaction_timestamp())
+    AND ((pc.scope_type='store' AND pc.store_id=p_store_id)
+      OR pc.scope_type='global')
+  ORDER BY CASE pc.scope_type WHEN 'store' THEN 2 ELSE 1 END DESC,
+    pc.effective_from DESC,pc.policy_version DESC LIMIT 1;
+  IF NOT coalesce(v_policy,false) THEN RETURN 'store_allowlist'; END IF;
+  IF p_check_listing_admission AND (SELECT count(*) FROM public.marketplace_book_listings l
+    WHERE l.store_id=p_store_id AND l.status='active')>=v_limit
+  THEN RETURN 'active_listing_limit'; END IF;
+  RETURN NULL;
+END$$;
+
 CREATE FUNCTION public.phase9_public_listing_detail_v2(p_listing_id uuid)
 RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
   SELECT marketplace_sec.phase9_public_listing_json(l)
   FROM public.marketplace_book_listings l JOIN public.stores s ON s.id=l.store_id
   WHERE l.id=p_listing_id AND l.status='active' AND l.availability_status<>'unavailable'
     AND l.moderation_status='approved' AND l.listing_quality_status='ready'
-    AND s.status='active' AND s.setup_status='complete' AND s.selling_status='allowed'
+    AND marketplace_sec.phase9_store_publication_ineligibility(l.store_id,false) IS NULL
 $$;
 
 CREATE FUNCTION public.phase9_public_listing_search_v2(
@@ -345,29 +407,78 @@ DECLARE v_rows jsonb;
 BEGIN
   IF p_page_size NOT BETWEEN 1 AND 50 OR char_length(coalesce(p_query,''))>200 THEN
     RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;
-  SELECT coalesce(jsonb_agg(marketplace_sec.phase9_public_listing_json(x)
-    ORDER BY x.public_title,x.id),'[]'::jsonb) INTO v_rows
-  FROM (SELECT l.* FROM public.marketplace_book_listings l JOIN public.stores s ON s.id=l.store_id
+  WITH eligible AS (
+    SELECT l.id AS listing_id,l.public_title,l.selling_price_minor,
+      CASE WHEN p_store_id IS NOT NULL THEN 'listing:'||l.id::text
+      WHEN l.canonical_edition_id IS NOT NULL THEN 'edition:'||l.canonical_edition_id::text
+      WHEN l.isbn_13 IS NOT NULL THEN 'isbn13:'||l.isbn_13
+      WHEN l.isbn_10 IS NOT NULL THEN 'isbn10:'||l.isbn_10
+      ELSE 'manual:'||lower(btrim(l.public_title))||'|'||
+        lower(array_to_string(coalesce(l.public_authors,'{}'), '|')) END AS group_key
+    FROM public.marketplace_book_listings l
     WHERE l.status='active' AND l.availability_status<>'unavailable'
       AND l.moderation_status='approved' AND l.listing_quality_status='ready'
-      AND s.status='active' AND s.setup_status='complete' AND s.selling_status='allowed'
+      AND marketplace_sec.phase9_store_publication_ineligibility(l.store_id,false) IS NULL
       AND (p_store_id IS NULL OR l.store_id=p_store_id)
-      AND (coalesce(btrim(p_query),'')='' OR l.search_document@@plainto_tsquery('simple',p_query)
-        OR lower(l.public_title) LIKE '%'||lower(btrim(p_query))||'%')
-    ORDER BY l.public_title,l.id LIMIT p_page_size) x;
+      AND (coalesce(btrim(p_query),'')='' OR
+        (regexp_replace(upper(p_query),'[-[:space:]]','','g')~'^([0-9]{9}[0-9X]|[0-9]{13})$'
+          AND (l.isbn_10=regexp_replace(upper(p_query),'[-[:space:]]','','g')
+            OR l.isbn_13=regexp_replace(upper(p_query),'[-[:space:]]','','g')))
+        OR l.search_document@@plainto_tsquery('simple',p_query)
+        OR lower(l.public_title) LIKE '%'||lower(btrim(p_query))||'%'
+        OR l.id IN (SELECT m.listing_id
+          FROM marketplace_sec.phase9_active_variant_listing_ids(p_query) m))
+  ), selected_groups AS (
+    SELECT group_key,min(public_title) title
+    FROM eligible GROUP BY group_key ORDER BY title,group_key LIMIT p_page_size
+  )
+  SELECT coalesce(jsonb_agg(marketplace_sec.phase9_public_listing_json(l)
+    ORDER BY g.title,g.group_key,e.selling_price_minor,l.id),'[]'::jsonb) INTO v_rows
+  FROM eligible e JOIN selected_groups g USING(group_key)
+  JOIN public.marketplace_book_listings l ON l.id=e.listing_id;
   RETURN v_rows;
 END$$;
+
+-- Unit 7B SDD §6: selection and lifecycle refresh must evaluate the same
+-- complete public-copy predicate so no stale URL survives an eligibility loss.
+CREATE FUNCTION marketplace_sec.phase9_public_media_eligible(
+  p_link public.inventory_media_links,p_asset public.media_assets
+) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
+  SELECT p_link.id IS NOT NULL AND p_asset.id IS NOT NULL
+    AND p_link.media_asset_id=p_asset.id
+    AND p_link.store_id=p_asset.store_id
+    AND p_link.approval_status='approved'
+    AND p_link.role IN ('damage','actual_copy','primary_fallback')
+    AND p_asset.purpose='public_copy' AND p_asset.privacy_class='public'
+    AND p_asset.bucket_id='inventory-photos'
+    AND p_asset.lifecycle_status IN ('approved','linked')
+    AND p_asset.validation_version IS NOT NULL
+    AND p_asset.reencode_version IS NOT NULL
+    AND p_asset.exif_strip_version IS NOT NULL
+    AND p_asset.source_media_asset_id IS NOT NULL
+    AND p_asset.deleted_at IS NULL
+    AND p_asset.object_path<>''
+    AND p_asset.object_path!~ '(^|/)\.\.(/|$)|[?#\\]'
+$$;
 
 CREATE OR REPLACE FUNCTION marketplace_sec.phase9_publication_ineligibility(
   p_inventory public.store_inventory
 ) RETURNS text LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
 DECLARE v_store public.stores; v_damage_count integer;
+  v_listing public.marketplace_book_listings;
 BEGIN
-  SELECT * INTO v_store FROM public.stores WHERE id=p_inventory.store_id;
-  IF v_store.id IS NULL OR v_store.status<>'active'
-    OR v_store.verification_status<>'approved'
-    OR v_store.setup_status<>'complete' OR v_store.selling_status<>'allowed'
-  THEN RETURN 'store_policy'; END IF;
+  IF marketplace_sec.phase9_store_publication_ineligibility(
+    p_inventory.store_id,NOT EXISTS(SELECT 1 FROM public.marketplace_book_listings l
+      WHERE l.inventory_id=p_inventory.id)) IS NOT NULL
+  THEN RETURN marketplace_sec.phase9_store_publication_ineligibility(
+    p_inventory.store_id,NOT EXISTS(SELECT 1 FROM public.marketplace_book_listings l
+      WHERE l.inventory_id=p_inventory.id)); END IF;
+  SELECT * INTO v_listing FROM public.marketplace_book_listings
+    WHERE inventory_id=p_inventory.id;
+  IF v_listing.id IS NOT NULL AND (v_listing.moderation_status<>'approved'
+    OR EXISTS(SELECT 1 FROM public.listing_moderation_flags f
+      WHERE f.listing_id=v_listing.id AND f.status IN ('open','under_review')))
+  THEN RETURN 'moderation'; END IF;
   IF p_inventory.selling_price_minor<=0 THEN RETURN 'price'; END IF;
   IF p_inventory.quantity_available<=0 THEN RETURN 'stock'; END IF;
   IF NOT p_inventory.is_sellable THEN RETURN 'sellability'; END IF;
@@ -382,11 +493,7 @@ BEGIN
     FROM public.inventory_media_links l
     JOIN public.media_assets a ON a.id=l.media_asset_id
     WHERE l.inventory_id=p_inventory.id AND l.role='damage'
-      AND l.approval_status='approved' AND a.purpose='public_copy'
-      AND a.privacy_class='public' AND a.bucket_id='inventory-photos'
-      AND a.lifecycle_status IN ('approved','linked')
-      AND a.validation_version IS NOT NULL AND a.reencode_version IS NOT NULL
-      AND a.exif_strip_version IS NOT NULL;
+      AND marketplace_sec.phase9_public_media_eligible(l,a);
     IF coalesce(char_length(btrim(p_inventory.damage_notes)),0)=0
       OR coalesce(array_length(p_inventory.damage_types,1),0)=0
       OR v_damage_count NOT BETWEEN 1 AND 3
@@ -427,8 +534,7 @@ BEGIN
     max(a.object_path) FILTER (WHERE l.role='primary_fallback')
   INTO v_media_count,v_primary,v_primary_path
   FROM public.inventory_media_links l JOIN public.media_assets a ON a.id=l.media_asset_id
-  WHERE l.inventory_id=NEW.id AND l.approval_status='approved'
-    AND a.lifecycle_status IN ('approved','linked') AND a.bucket_id='inventory-photos';
+  WHERE l.inventory_id=NEW.id AND marketplace_sec.phase9_public_media_eligible(l,a);
   v_cover:=coalesce(NEW.cover_url,
     CASE WHEN v_primary_path IS NULL THEN NULL ELSE
       '/storage/v1/object/public/inventory-photos/'||v_primary_path END);
@@ -470,7 +576,7 @@ BEGIN
     selling_price_minor=excluded.selling_price_minor,
     availability_status=excluded.availability_status,
     fulfillment_options=excluded.fulfillment_options,status='active',
-    moderation_status='approved',listing_quality_status=excluded.listing_quality_status,
+    listing_quality_status=excluded.listing_quality_status,
     store_city=excluded.store_city,store_locality_id=excluded.store_locality_id,
     store_locality_name=excluded.store_locality_name,
     pickup_available=excluded.pickup_available,delivery_available=excluded.delivery_available,
@@ -497,52 +603,81 @@ EXECUTE FUNCTION public.sync_marketplace_listing_from_inventory();
 
 CREATE FUNCTION marketplace_sec.phase9_refresh_listing_for_media_change()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
-DECLARE v_inventory_id uuid:=coalesce(NEW.inventory_id,OLD.inventory_id);
-  v_inventory public.store_inventory;
+DECLARE v_change record; v_inventory public.store_inventory; v_was_primary boolean;
 BEGIN
-  SELECT * INTO v_inventory FROM public.store_inventory WHERE id=v_inventory_id FOR UPDATE;
-  IF v_inventory.id IS NULL THEN RETURN coalesce(NEW,OLD); END IF;
-  IF v_inventory.visibility_status='published'
-    AND marketplace_sec.phase9_publication_ineligibility(v_inventory) IS NOT NULL THEN
-    UPDATE public.store_inventory SET visibility_status='blocked',publication_status='private',
-      updated_at=transaction_timestamp() WHERE id=v_inventory_id;
-  ELSE
-    UPDATE public.store_inventory SET cover_url=cover_url WHERE id=v_inventory_id;
-  END IF;
+  FOR v_change IN
+    SELECT DISTINCT inventory_id,media_asset_id FROM (
+      SELECT OLD.inventory_id,OLD.media_asset_id WHERE TG_OP IN ('UPDATE','DELETE')
+      UNION ALL
+      SELECT NEW.inventory_id,NEW.media_asset_id WHERE TG_OP IN ('INSERT','UPDATE')
+    ) changed
+  LOOP
+    SELECT * INTO v_inventory FROM public.store_inventory
+      WHERE id=v_change.inventory_id FOR UPDATE;
+    CONTINUE WHEN v_inventory.id IS NULL;
+    SELECT EXISTS(SELECT 1 FROM public.marketplace_book_listings l
+      WHERE l.inventory_id=v_change.inventory_id
+        AND l.primary_public_media_id=v_change.media_asset_id) INTO v_was_primary;
+    IF v_inventory.visibility_status='published'
+      AND (marketplace_sec.phase9_publication_ineligibility(v_inventory) IS NOT NULL
+        OR (v_was_primary AND NOT EXISTS(
+          SELECT 1 FROM public.inventory_media_links link
+          JOIN public.media_assets asset ON asset.id=link.media_asset_id
+          WHERE link.inventory_id=v_change.inventory_id
+            AND link.media_asset_id=v_change.media_asset_id
+            AND link.role='primary_fallback'
+            AND marketplace_sec.phase9_public_media_eligible(link,asset)))) THEN
+      UPDATE public.store_inventory SET visibility_status='blocked',publication_status='private',
+        updated_at=transaction_timestamp() WHERE id=v_change.inventory_id;
+    ELSE
+      UPDATE public.store_inventory SET cover_url=cover_url WHERE id=v_change.inventory_id;
+    END IF;
+  END LOOP;
   RETURN coalesce(NEW,OLD);
 END$$;
 
 CREATE TRIGGER phase9_inventory_media_projection_refresh
-AFTER INSERT OR UPDATE OR DELETE ON public.inventory_media_links
+AFTER INSERT OR UPDATE OF inventory_id,store_id,media_asset_id,role,public_order,
+  approval_status OR DELETE ON public.inventory_media_links
 FOR EACH ROW EXECUTE FUNCTION marketplace_sec.phase9_refresh_listing_for_media_change();
 
-CREATE FUNCTION marketplace_sec.phase9_retract_listing_for_media_revocation()
+CREATE FUNCTION marketplace_sec.phase9_refresh_listing_for_media_asset_change()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE v_inventory_id uuid; v_inventory public.store_inventory;
 BEGIN
-  IF TG_OP='DELETE' THEN
-    UPDATE public.store_inventory i SET visibility_status='blocked',publication_status='private',
-      updated_at=transaction_timestamp()
-    WHERE i.id IN (SELECT l.inventory_id FROM public.inventory_media_links l
-      WHERE l.media_asset_id=OLD.id) AND i.visibility_status='published';
-    RETURN OLD;
-  ELSIF OLD.lifecycle_status IN ('approved','linked')
-    AND NEW.lifecycle_status NOT IN ('approved','linked') THEN
-    UPDATE public.store_inventory i SET visibility_status='blocked',publication_status='private',
-      updated_at=transaction_timestamp()
-    WHERE i.id IN (SELECT l.inventory_id FROM public.inventory_media_links l
-      WHERE l.media_asset_id=NEW.id) AND i.visibility_status='published';
-  ELSIF NEW.lifecycle_status IN ('approved','linked')
-    AND OLD.lifecycle_status IS DISTINCT FROM NEW.lifecycle_status THEN
-    UPDATE public.store_inventory SET cover_url=cover_url
-    WHERE id IN (SELECT l.inventory_id FROM public.inventory_media_links
-      WHERE media_asset_id=NEW.id);
-  END IF;
-  RETURN NEW;
+  FOR v_inventory_id IN SELECT DISTINCT l.inventory_id
+    FROM public.inventory_media_links l WHERE l.media_asset_id=coalesce(NEW.id,OLD.id)
+  LOOP
+    SELECT * INTO v_inventory FROM public.store_inventory
+      WHERE id=v_inventory_id FOR UPDATE;
+    IF v_inventory.visibility_status='published'
+      AND (TG_OP='DELETE'
+        OR marketplace_sec.phase9_publication_ineligibility(v_inventory) IS NOT NULL
+        OR EXISTS(SELECT 1 FROM public.marketplace_book_listings listing
+          WHERE listing.inventory_id=v_inventory_id
+            AND listing.primary_public_media_id=coalesce(NEW.id,OLD.id)
+            AND (TG_OP='DELETE' OR NOT EXISTS(
+              SELECT 1 FROM public.inventory_media_links link
+              WHERE link.inventory_id=v_inventory_id AND link.media_asset_id=NEW.id
+                AND marketplace_sec.phase9_public_media_eligible(link,NEW))))) THEN
+      UPDATE public.store_inventory SET visibility_status='blocked',publication_status='private',
+        updated_at=transaction_timestamp() WHERE id=v_inventory_id;
+    ELSE
+      UPDATE public.store_inventory SET cover_url=cover_url WHERE id=v_inventory_id;
+    END IF;
+  END LOOP;
+  RETURN coalesce(NEW,OLD);
 END$$;
 
 CREATE TRIGGER phase9_media_asset_projection_lifecycle
-BEFORE UPDATE OF lifecycle_status OR DELETE ON public.media_assets
-FOR EACH ROW EXECUTE FUNCTION marketplace_sec.phase9_retract_listing_for_media_revocation();
+AFTER UPDATE OF store_id,purpose,privacy_class,bucket_id,object_path,
+  validation_version,reencode_version,exif_strip_version,source_media_asset_id,
+  lifecycle_status,delete_after,deleted_at ON public.media_assets
+FOR EACH ROW EXECUTE FUNCTION marketplace_sec.phase9_refresh_listing_for_media_asset_change();
+
+CREATE TRIGGER phase9_media_asset_projection_delete
+BEFORE DELETE ON public.media_assets
+FOR EACH ROW EXECUTE FUNCTION marketplace_sec.phase9_refresh_listing_for_media_asset_change();
 
 CREATE FUNCTION marketplace_sec.phase9_publication_result(
   p_inventory_id uuid,p_outcome text,p_failure_reason text DEFAULT NULL
@@ -606,6 +741,9 @@ BEGIN
   THEN RAISE EXCEPTION 'P9_VERSION_CONFLICT'; END IF;
   IF NOT marketplace_sec.phase9_is_store_owner(v_inventory.store_id) THEN
     RAISE EXCEPTION 'P9_OWNER_NOT_AUTHORIZED';
+  END IF;
+  IF p_intent='publish' THEN
+    PERFORM 1 FROM public.stores WHERE id=v_inventory.store_id FOR UPDATE;
   END IF;
   IF p_intent='publish' AND v_inventory.publication_status='published' THEN
     RAISE EXCEPTION 'P9_STATE_CONFLICT';
@@ -691,6 +829,7 @@ BEGIN
   IF v_inventory.publication_intent_version<>p_expected_publication_intent_version
     OR v_inventory.publication_status<>'publication_failed'
   THEN RAISE EXCEPTION 'P9_VERSION_CONFLICT'; END IF;
+  PERFORM 1 FROM public.stores WHERE id=v_inventory.store_id FOR UPDATE;
   v_reason:=marketplace_sec.phase9_publication_ineligibility(v_inventory);
   IF v_reason='damage_media' THEN RAISE EXCEPTION 'P9_MEDIA_NOT_APPROVED'; END IF;
   IF v_reason IS NOT NULL THEN RAISE EXCEPTION 'P9_PUBLICATION_INELIGIBLE:%',v_reason; END IF;
@@ -1257,12 +1396,14 @@ GRANT EXECUTE ON FUNCTION public.phase9_public_listing_detail_v2(uuid),
 REVOKE ALL ON FUNCTION
   marketplace_sec.validate_inventory_media_link(),
   marketplace_sec.phase9_public_listing_json(public.marketplace_book_listings),
+  marketplace_sec.phase9_store_publication_ineligibility(uuid,boolean),
+  marketplace_sec.phase9_public_media_eligible(public.inventory_media_links,public.media_assets),
   marketplace_sec.phase9_publication_ineligibility(public.store_inventory),
   marketplace_sec.phase9_publication_result(uuid,text,text),
   marketplace_sec.phase9_record_publication(public.store_inventory,text,text,uuid,uuid),
   marketplace_sec.phase9_owner_ux_close_summary(uuid),
   marketplace_sec.phase9_refresh_listing_for_media_change(),
-  marketplace_sec.phase9_retract_listing_for_media_revocation(),
+  marketplace_sec.phase9_refresh_listing_for_media_asset_change(),
   marketplace_sec.has_claimable_phase9_work(text),
   marketplace_sec.dispatch_phase9_worker_wakes()
   FROM PUBLIC,anon,authenticated;

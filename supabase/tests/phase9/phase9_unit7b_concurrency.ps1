@@ -63,20 +63,37 @@ $job = '7b000000-0000-4000-8000-000000000006'
 $commandA = '7b000000-0000-4000-8000-000000000007'
 $commandB = '7b000000-0000-4000-8000-000000000008'
 $inventoryAuth = '7b000000-0000-4000-8000-000000000009'
+$locality = '7b000000-0000-4000-8000-000000000010'
+$inventoryLimitA = '7b000000-0000-4000-8000-000000000011'
+$inventoryLimitB = '7b000000-0000-4000-8000-000000000012'
 
 Invoke-Psql @"
 delete from public.phase9_idempotency_keys where actor_or_service='$owner';
-delete from public.marketplace_events where entity_id in ('$inventory','$inventoryReplay','$inventoryPause','$inventoryAuth');
-delete from public.marketplace_audit_logs where entity_id in ('$inventory','$inventoryReplay','$inventoryPause','$inventoryAuth');
+delete from public.marketplace_events where entity_id in ('$inventory','$inventoryReplay','$inventoryPause','$inventoryAuth','$inventoryLimitA','$inventoryLimitB');
+delete from public.marketplace_audit_logs where entity_id in ('$inventory','$inventoryReplay','$inventoryPause','$inventoryAuth','$inventoryLimitA','$inventoryLimitB');
 delete from public.image_extraction_jobs where store_id='$store';
 delete from public.marketplace_book_listings where store_id='$store';
 delete from public.store_inventory where store_id='$store';
 delete from public.store_administrators where store_id='$store';
+delete from public.store_subscriptions where store_id='$store';
+delete from public.store_entitlements where store_id='$store';
+delete from public.marketplace_policy_config where store_id='$store' or policy_key='marketplace_enabled';
 delete from public.stores where id='$store';
-insert into public.stores(id,display_name,status,verification_status,setup_status,selling_status)
-values('$store','Unit 7B concurrency','active','approved','complete','allowed');
+delete from public.marketplace_localities where id='$locality';
+insert into public.marketplace_localities(id,name,is_pilot_enabled)
+values('$locality','Unit 7B Concurrency',true);
+insert into public.stores(id,display_name,status,verification_status,setup_status,selling_status,locality_id,city)
+values('$store','Unit 7B concurrency','active','approved','complete','allowed','$locality','Pune');
 insert into public.store_administrators(store_id,user_id,role,status)
 values('$store','$owner','owner','active');
+insert into public.store_subscriptions(store_id,status) values('$store','trialing');
+insert into public.store_entitlements(store_id,feature_key,limit_value,is_enabled)
+values('$store','active_listing_limit',100,true);
+insert into public.marketplace_policy_config(
+  policy_key,scope_type,store_id,value,value_type,policy_version,is_active,effective_from
+) values
+('marketplace_enabled','global',null,'true','boolean',1,true,transaction_timestamp()-interval '1 day'),
+('commerce.store_allowlisted','store','$store','true','boolean',1,true,transaction_timestamp()-interval '1 day');
 insert into public.store_inventory(
   id,store_id,title,authors,language,condition,selling_price_minor,
   quantity_total,quantity_available,visibility_status,publication_status,
@@ -90,10 +107,34 @@ insert into public.store_inventory(
 ('$inventoryPause','$store','Pause race',array['Author'],'en','good',725,3,3,
  'draft','publication_failed',2,1,true,false,'ready','manual','$owner'),
 ('$inventoryAuth','$store','Authorization race',array['Author'],'en','good',725,3,3,
- 'draft','publication_failed',2,1,true,false,'ready','manual','$owner');
+ 'draft','publication_failed',2,1,true,false,'ready','manual','$owner'),
+('$inventoryLimitA','$store','Limit race A',array['Author'],'en','good',725,3,3,
+ 'draft','private',1,1,true,false,'ready','manual','$owner'),
+('$inventoryLimitB','$store','Limit race B',array['Author'],'en','good',725,3,3,
+ 'draft','private',1,1,true,false,'ready','manual','$owner');
 "@
 
 try {
+  # DOC-2 §10.3: store-row serialization makes active-listing admission
+  # race-safe across different inventory rows.
+  Invoke-Psql "update public.store_entitlements set limit_value=1
+    where store_id='$store' and feature_key='active_listing_limit';"
+  $limitA = Actor-Sql $owner "select public.phase9_set_publication_state_v2(
+    '$inventoryLimitA',1,1,'publish','u7b-limit-race-a01','$commandA');"
+  $limitB = Actor-Sql $owner "select public.phase9_set_publication_state_v2(
+    '$inventoryLimitB',1,1,'publish','u7b-limit-race-b01','$commandB');"
+  $limitRace = Complete-BarrierRace 'U7B active listing limit race' 73001 $limitA $limitB
+  Assert-OneSuccess 'U7B active listing limit race' $limitRace 'P9_PUBLICATION_INELIGIBLE'
+  if ((Invoke-Psql "select count(*) from public.marketplace_book_listings
+    where store_id='$store' and status='active';") -ne '1') {
+    throw 'U7B active listing limit admitted more than one listing'
+  }
+  Invoke-Psql "delete from public.marketplace_book_listings where inventory_id in
+    ('$inventoryLimitA','$inventoryLimitB'); update public.store_inventory
+    set visibility_status='draft',publication_status='private',publication_intent_version=1
+    where id in ('$inventoryLimitA','$inventoryLimitB'); update public.store_entitlements
+    set limit_value=100 where store_id='$store' and feature_key='active_listing_limit';"
+
   # U7B-RT05: both inventory and publication-intent versions are rechecked
   # under the row lock, so equal stale requests cannot both publish.
   $publishA = Actor-Sql $owner "select public.phase9_set_publication_state_v2(
@@ -179,13 +220,13 @@ try {
   Invoke-Psql "update public.store_administrators set status='active'
     where store_id='$store' and user_id='$owner';"
 
-  Write-Output 'U7B PostgreSQL concurrency: RT05, RT07, RT12, owner retry reauthorization passed.'
+  Write-Output 'U7B PostgreSQL concurrency: active-listing admission, RT05, RT07, RT12, owner retry reauthorization passed.'
 }
 finally {
   Invoke-Psql @"
 delete from public.phase9_idempotency_keys where actor_or_service='$owner';
-delete from public.marketplace_events where entity_id in ('$inventory','$inventoryReplay','$inventoryPause','$inventoryAuth');
-delete from public.marketplace_audit_logs where entity_id in ('$inventory','$inventoryReplay','$inventoryPause','$inventoryAuth');
+delete from public.marketplace_events where entity_id in ('$inventory','$inventoryReplay','$inventoryPause','$inventoryAuth','$inventoryLimitA','$inventoryLimitB');
+delete from public.marketplace_audit_logs where entity_id in ('$inventory','$inventoryReplay','$inventoryPause','$inventoryAuth','$inventoryLimitA','$inventoryLimitB');
 delete from public.image_extraction_jobs where store_id='$store';
 delete from public.marketplace_book_listings where store_id='$store';
 delete from public.store_inventory where store_id='$store';

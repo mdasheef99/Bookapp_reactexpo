@@ -7,7 +7,7 @@ import {
   addApprovedPublicMedia, addPublicMedia, businessEffectSnapshot,
   completePublicCopyDerivative, createUnit7bDatabase, disableTransientProjectionFault,
   installTransientProjectionFault, linkPublicCopyDerivative, registerPublicCopySource,
-  seedPublicationInventory, setPublication, state,
+  grantPublicationEligibility, seedPublicationInventory, setPublication, state,
 } from './unit7bFixture.mjs';
 
 async function withDb(run) {
@@ -119,6 +119,7 @@ test('U7B-RT18 later publication pause and retry do not change the closed ingest
     hasDamage: false, damageTypes: [], damageNote: null, isSellable: true,
     completeReadableSafe: true,
   } } });
+  await grantPublicationEligibility(db, c);
   await resetActor(db);
   await db.exec(`UPDATE public.stores SET status='active',verification_status='approved',setup_status='complete',selling_status='allowed' WHERE id='${c.storeId}'`);
   await setActor(db, c.ownerId);

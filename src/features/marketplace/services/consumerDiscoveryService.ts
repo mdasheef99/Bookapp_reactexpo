@@ -92,8 +92,8 @@ export const consumerDiscoveryService = {
     ): Promise<GroupedBookResult[]> {
         const term = cleanText(query) ?? '';
         const { from, to } = normalizePage(options);
-        const rows = (await safeSearch(term, null, Math.min(50, to + 1))).slice(from, to + 1);
-        const grouped = groupOffers(await mapSafeRowsWithStoreNames(rows));
+        const rows = await safeSearch(term, null, Math.min(50, to + 1));
+        const grouped = groupOffers(await mapSafeRowsWithStoreNames(rows)).slice(from, to + 1);
         if (term && grouped.length === 0) {
             await recordUnavailableSearch(term).catch(() => undefined);
         }
