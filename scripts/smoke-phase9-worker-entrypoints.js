@@ -6,6 +6,7 @@ const path = require('node:path');
 const mediaToken = 'media-entrypoint-smoke-A7z.49_xYp-001-strong';
 const visionToken = 'vision-entrypoint-smoke-B8y.50_zXp-002-strong';
 const metadataToken = 'metadata-entrypoint-smoke-D0w.62_vUr-004-strong';
+const publicationToken = 'publication-entrypoint-smoke-E1v.73_uTs-005-strong';
 const serviceKey = 'service-entrypoint-smoke-C9x.51_wVq-003-strong';
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 
@@ -133,6 +134,13 @@ async function smokePhase9WorkerEntrypoints(root = process.cwd()) {
       PHASE9_METADATA_WORKER_ID: 'metadata-entrypoint-000001',
       PHASE9_METADATA_WORKER_INGRESS_TOKEN: metadataToken,
       PHASE9_METADATA_PROVIDER_MODE: 'fixture',
+    },
+  });
+  await smokeEntrypoint(root, {
+    entrypoint: '.phase9-dist/workers/phase9-publication-worker/server.js',
+    environment: {
+      PHASE9_PUBLICATION_WORKER_ID: 'publication-entrypoint-01',
+      PHASE9_PUBLICATION_WORKER_INGRESS_TOKEN: publicationToken,
     },
   });
 }

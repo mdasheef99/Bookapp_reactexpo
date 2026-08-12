@@ -1,9 +1,9 @@
 # Unit 7B SDD: Safe Public Projection and Publication
 
-**Status:** normative design frozen 2026-08-12; implementation not started
+**Status:** normative design frozen 2026-08-12; review candidate implemented; Luna review `NOT APPROVED`
 **Authority:** Owner decisions 2026-08-12 (all 12 review findings resolved); DOC-3, DOC-4, DOC-5, DOC-8; Phase 9 master SDD; SDD 03; SDD 05
-**Implementation authority:** none; red-test specification is the next separately authorized step
-**Migration authority:** planning conclusion only; no migration file creation or application authorized
+**Implementation authority:** Owner-authorized local implementation and review-candidate commit/push; real-PostgreSQL concurrency, Docker container smoke, and Deno Edge graph remain `NOT_RUN` and are deferred `REQUIRED_BEFORE_LIVE` on the final post-correction SHA before the Stage J exact-SHA release gate
+**Migration authority:** local M40 creation only; no connected preflight or application authorized
 
 ## 1. Purpose and scope
 

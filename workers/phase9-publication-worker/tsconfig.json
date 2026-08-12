@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target":"ES2022","module":"CommonJS","moduleResolution":"Node",
+    "lib":["ES2022","DOM"],"types":["node"],"strict":true,
+    "esModuleInterop":true,"rootDir":"../..","outDir":"../../.phase9-dist",
+    "noEmitOnError":true,"skipLibCheck":true
+  },
+  "include":["*.ts","../phase9-runtime/**/*.ts"]
+}

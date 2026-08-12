@@ -7,6 +7,10 @@ import {
   OwnerUxAction,
   parseOwnerUxResponse,
 } from '../contracts/ownerUx.ts';
+import {
+  parsePublicationResponse, PUBLICATION_CONTRACT_VERSION,
+  PublicationRequest,
+} from '../contracts/publication.ts';
 import { sha256Hex, StoredImageObject, storedImageEnvelope } from '../media/sourceIdentity.ts';
 
 type RpcResult = { data: any; error: { message?: string } | null };
@@ -30,7 +34,7 @@ type SignedUploadTransportResponse = Readonly<{
 
 function unwrap(result: RpcResult): any {
   if (result.error) {
-    const safeCode = result.error.message?.match(/\b(P9_(?:AUTH_REQUIRED|OWNER_NOT_AUTHORIZED|REQUEST_INVALID|CURSOR_INVALID|NOT_FOUND|STATE_CONFLICT|VERSION_CONFLICT|CANDIDATE_VERSION_CONFLICT|INPUT_HAS_CANDIDATES|SINGLE_IMAGE_LIMIT|IDEMPOTENCY_MISMATCH|INTERNAL_ERROR))\b/u)?.[1];
+    const safeCode = result.error.message?.match(/\b(P9_(?:AUTH_REQUIRED|OWNER_NOT_AUTHORIZED|REQUEST_INVALID|CURSOR_INVALID|NOT_FOUND|STATE_CONFLICT|VERSION_CONFLICT|CANDIDATE_VERSION_CONFLICT|INPUT_HAS_CANDIDATES|SINGLE_IMAGE_LIMIT|IDEMPOTENCY_MISMATCH|MEDIA_NOT_APPROVED|PUBLICATION_INELIGIBLE|PUBLICATION_FAILED|INTERNAL_ERROR))\b/u)?.[1];
     throw new Error(safeCode ?? 'P9_INTERNAL_ERROR');
   }
   return result.data;
@@ -106,6 +110,85 @@ export async function executeOwnerIngestion(
   userClient: Client,
   serviceClient: Client,
 ): Promise<Record<string, unknown>> {
+  if (request.contractVersion === PUBLICATION_CONTRACT_VERSION) {
+    const publication = request as PublicationRequest;
+    let data: unknown;
+    if (publication.action === 'set_publication_state') {
+      data = unwrap(await userClient.rpc('phase9_set_publication_state_v2', {
+        p_inventory_id: publication.inventoryId,
+        p_expected_inventory_version: publication.expectedInventoryVersion,
+        p_expected_publication_intent_version: publication.expectedPublicationIntentVersion,
+        p_intent: publication.intent,
+        p_idempotency_key: publication.idempotencyKey,
+        p_command_id: publication.commandId,
+      }));
+    } else if (publication.action === 'retry_publication') {
+      data = unwrap(await userClient.rpc('phase9_retry_publication_owner_v1', {
+        p_inventory_id: publication.inventoryId,
+        p_expected_publication_intent_version: publication.expectedPublicationIntentVersion,
+        p_idempotency_key: publication.idempotencyKey,
+        p_command_id: publication.commandId,
+      }));
+    } else if (publication.action === 'read_publication_status') {
+      data = unwrap(await userClient.rpc('phase9_publication_status_v2', {
+        p_inventory_id: publication.inventoryId,
+      }));
+    } else if (publication.action === 'authorize_public_copy') {
+      const expiresAt = new Date(Date.now() + 15 * 60_000).toISOString();
+      const issued = unwrap(await userClient.rpc('phase9_authorize_public_copy_upload_v2', {
+        p_inventory_id: publication.inventoryId, p_role: publication.role,
+        p_ordinal: publication.ordinal, p_declared_mime: publication.declaredMime,
+        p_declared_bytes: publication.declaredBytes,
+        p_envelope_sha256: publication.envelopeSha256,
+        p_expires_at: expiresAt, p_idempotency_key: publication.idempotencyKey,
+        p_command_id: publication.commandId,
+      }));
+      const signed = unwrap(await serviceClient.storage.from(issued.bucket)
+        .createSignedUploadUrl(issued.path));
+      data = {
+        capabilityId: issued.capabilityId, signedUploadUrl: signed.signedUrl,
+        uploadToken: signed.token, expiresAt,
+      };
+    } else if (publication.action === 'complete_public_copy_upload') {
+      const context = unwrap(await serviceClient.rpc('phase9_public_copy_upload_context_v1', {
+        p_actor: actorId, p_capability_id: publication.capabilityId,
+      }));
+      const { prefix, name } = splitPath(context.object_path);
+      const bucket = serviceClient.storage.from(context.bucket_id);
+      const observed = await storedImageEnvelope(await exactStoredObject(bucket, prefix, name));
+      if (observed.size !== context.declared_bytes || observed.mime !== context.declared_mime) {
+        throw new Error('P9_MEDIA_NOT_APPROVED');
+      }
+      const downloaded = await bucket.download(context.object_path);
+      if (downloaded.error || !downloaded.data) throw new Error('P9_MEDIA_NOT_APPROVED');
+      const bytes = new Uint8Array(await downloaded.data.arrayBuffer());
+      const sourceSha256 = await sha256Hex(bytes);
+      const registered = unwrap(await serviceClient.rpc('phase9_register_public_copy_upload_v1', {
+        p_actor: actorId, p_capability_id: publication.capabilityId,
+        p_object_identity: observed.objectIdentity, p_source_sha256: sourceSha256,
+        p_observed_mime: observed.mime, p_observed_bytes: observed.size,
+        p_idempotency_key: publication.idempotencyKey, p_command_id: publication.commandId,
+      }));
+      data = { mediaAssetId: registered.media_asset_id, state: registered.state };
+    } else if (publication.action === 'read_public_copy_status') {
+      data = unwrap(await userClient.rpc('phase9_public_copy_status_v1', {
+        p_source_media_asset_id: publication.mediaAssetId,
+      }));
+    } else {
+      const submitted = publication as Extract<PublicationRequest, { action: 'submit_public_copy_media' }>;
+      const mediaLinkId = unwrap(await userClient.rpc('phase9_submit_public_copy_media_v2', {
+        p_inventory_id: submitted.inventoryId, p_capability_id: submitted.capabilityId,
+        p_media_asset_id: submitted.mediaAssetId, p_role: submitted.role,
+        p_public_order: submitted.publicOrder, p_idempotency_key: submitted.idempotencyKey,
+        p_command_id: submitted.commandId,
+      }));
+      data = { mediaLinkId };
+    }
+    return parsePublicationResponse(publication.action, {
+      contractVersion: PUBLICATION_CONTRACT_VERSION, data,
+    }) as Record<string, unknown>;
+  }
+
   if (request.contractVersion === OWNER_UX_CONTRACT_VERSION) {
     const action = request.action as OwnerUxAction;
     const route = ownerUxRpc[action];

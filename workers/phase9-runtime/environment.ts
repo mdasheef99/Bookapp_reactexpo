@@ -40,6 +40,11 @@ export const METADATA_ENVIRONMENT_NAMES = Object.freeze([
   'PHASE9_GOOGLE_BOOKS_TIMEOUT_MS',
   'PHASE9_GOOGLE_BOOKS_MAX_RESPONSE_BYTES',
 ] as const);
+export const PUBLICATION_ENVIRONMENT_NAMES = Object.freeze([
+  ...BASE_ENVIRONMENT_NAMES,
+  'PHASE9_PUBLICATION_WORKER_ID',
+  'PHASE9_PUBLICATION_WORKER_INGRESS_TOKEN',
+] as const);
 
 type Environment = Readonly<Record<string, string | undefined>>;
 
@@ -76,6 +81,7 @@ export type MetadataWorkerEnvironment = WorkerNetworkEnvironment & (
     maxResponseBytes: number;
   }>
 );
+export type PublicationWorkerEnvironment = WorkerNetworkEnvironment;
 
 const secretPattern = /^[A-Za-z0-9._~+/=-]{32,256}$/u;
 const workerIdPattern = /^[A-Za-z0-9._:-]{16,128}$/u;
@@ -237,4 +243,16 @@ export function loadMetadataWorkerEnvironment(
     || !Number.isInteger(maxResponseBytes)
     || maxResponseBytes < 16_384 || maxResponseBytes > 2_000_000) invalid();
   return { ...common, providerMode, apiKey, timeoutMs, maxResponseBytes };
+}
+
+export function loadPublicationWorkerEnvironment(
+  environment: Environment,
+): PublicationWorkerEnvironment {
+  return validateCommon(
+    environment,
+    PUBLICATION_ENVIRONMENT_NAMES,
+    'PHASE9_PUBLICATION_WORKER_ID',
+    'PHASE9_PUBLICATION_WORKER_INGRESS_TOKEN',
+    false,
+  );
 }

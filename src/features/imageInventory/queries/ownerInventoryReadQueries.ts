@@ -26,6 +26,7 @@ function normalizeFilters(filters: OwnerInventoryFilters = {}): NormalizedFilter
         quantityState: filters.quantityState ?? 'all',
         entryMethod: filters.entryMethod ?? 'all',
         dateAdded: filters.dateAdded ?? 'all',
+        publicationStatus: filters.publicationStatus ?? 'all',
     };
 }
 
@@ -51,6 +52,7 @@ export const ownerInventoryReadKeys = {
             normalized.quantityState,
             normalized.entryMethod,
             normalized.dateAdded,
+            normalized.publicationStatus,
         ] as const;
     },
 };

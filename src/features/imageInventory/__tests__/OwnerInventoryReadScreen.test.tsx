@@ -2,11 +2,13 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { OwnerInventoryReadError } from '../api/ownerInventoryReadService';
 import { useOwnerInventoryRead } from '../queries/ownerInventoryReadQueries';
 import { OwnerInventoryReadScreen } from '../screens/OwnerInventoryReadScreen';
+import { usePublicationCommands } from '../queries/publicationQueries';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('../queries/ownerInventoryReadQueries', () => ({
     useOwnerInventoryRead: jest.fn(),
 }));
+jest.mock('../queries/publicationQueries', () => ({ usePublicationCommands: jest.fn() }));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
         colors: {
@@ -51,6 +53,11 @@ const row = {
     createdAt: '2026-08-01T10:00:00.000Z',
     updatedAt: '2026-08-03T10:00:00.000Z',
     version: 1,
+    publicationStatus: 'private',
+    publicationIntentVersion: 1,
+    publicationRetryable: false,
+    publicationFailureReason: null,
+    publicListingStatus: null,
 };
 
 function hookState(overrides: Record<string, unknown> = {}) {
@@ -79,6 +86,7 @@ describe('OwnerInventoryReadScreen', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         readHook.mockReturnValue(hookState());
+        (usePublicationCommands as jest.Mock).mockReturnValue({ mutateAsync: jest.fn() });
     });
 
     it('distinguishes loading from a successful empty inventory', () => {
@@ -129,7 +137,7 @@ describe('OwnerInventoryReadScreen', () => {
         expect(screen.queryByText('No inventory items found')).toBeNull();
     });
 
-    it('renders reusable item/filter visuals without any legacy write control', () => {
+    it('renders controlled publication and public-media controls without legacy edit writes', () => {
         readHook.mockReturnValue(hookState({ items: [row] }));
         const screen = render(<OwnerInventoryReadScreen identity={identity} />);
 
@@ -139,8 +147,9 @@ describe('OwnerInventoryReadScreen', () => {
         expect(screen.queryByText('Manual book entry')).toBeNull();
         expect(screen.queryByTestId('save-inventory-draft')).toBeNull();
         expect(screen.queryByTestId('check-duplicates')).toBeNull();
-        expect(screen.queryByTestId(`publish-${row.id}`)).toBeNull();
+        expect(screen.getByTestId(`publish-${row.id}`)).toBeTruthy();
         expect(screen.queryByTestId(`pause-${row.id}`)).toBeNull();
+        expect(screen.getByTestId(`manage-public-media-${row.id}`)).toBeTruthy();
         expect(screen.queryByTestId(`edit-modal-${row.id}`)).toBeNull();
         expect(screen.queryByTestId(`save-edit-${row.id}`)).toBeNull();
         expect(screen.queryByTestId('bulk-publish')).toBeNull();

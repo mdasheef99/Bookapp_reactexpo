@@ -14,6 +14,9 @@ export interface InventoryItemViewModel {
     selling_price_minor: number;
     visibility_status: string;
     listing_quality_status: string;
+    publication_status?: string;
+    publication_retryable?: boolean;
+    publication_failure_reason?: string | null;
 }
 
 export interface InventoryItemProps<TItem extends InventoryItemViewModel = InventoryItemViewModel> {
@@ -22,6 +25,9 @@ export interface InventoryItemProps<TItem extends InventoryItemViewModel = Inven
     onSelect?: (item: TItem) => void;
     onPublish?: (inventoryId: string) => void;
     onPause?: (inventoryId: string) => void;
+    onPrivate?: (inventoryId: string) => void;
+    onRetryPublication?: (inventoryId: string) => void;
+    onManagePublicMedia?: (inventoryId: string) => void;
     onEdit?: (item: TItem) => void;
     onSaveEdits?: (inventoryId: string, price: string, quantity: string) => void;
     editPrice?: string;
@@ -36,6 +42,9 @@ export default function InventoryItem<TItem extends InventoryItemViewModel>({
     onSelect,
     onPublish,
     onPause,
+    onPrivate,
+    onRetryPublication,
+    onManagePublicMedia,
     onEdit,
     onSaveEdits,
     editPrice,
@@ -46,7 +55,9 @@ export default function InventoryItem<TItem extends InventoryItemViewModel>({
     const { colors } = useTheme();
     const isLowStock = item.quantity_available === 1;
     const isOutOfStock = item.quantity_available === 0;
-    const canPublish = item.visibility_status !== 'published' && item.visibility_status !== 'blocked';
+    const canPublish = item.visibility_status !== 'published'
+        && item.visibility_status !== 'blocked'
+        && !item.publication_retryable;
     const canPause = item.visibility_status === 'published';
 
     return (
@@ -71,6 +82,16 @@ export default function InventoryItem<TItem extends InventoryItemViewModel>({
                 <Text style={[styles.body, { color: colors.textSecondary }]}>
                     {item.visibility_status} - {item.listing_quality_status}
                 </Text>
+                {item.publication_status ? (
+                    <Text testID={`publication-status-${item.id}`} style={[styles.body, { color: colors.textSecondary }]}>
+                        Publication: {item.publication_status}
+                    </Text>
+                ) : null}
+                {item.publication_retryable ? (
+                    <View testID={`publication-failed-${item.id}`} style={[styles.badge, { backgroundColor: '#FEE2E2' }]}>
+                        <Text style={[styles.badgeText, { color: '#B91C1C' }]}>Publication failed temporarily</Text>
+                    </View>
+                ) : null}
                 <View style={styles.metaRow}>
                     <Text style={[styles.body, { color: colors.textSecondary }]}>
                         {item.condition} - Rs {rupeesFromMinor(item.selling_price_minor)} - Qty {item.quantity_available}
@@ -137,6 +158,33 @@ export default function InventoryItem<TItem extends InventoryItemViewModel>({
                         onPress={() => onPause(item.id)}
                     >
                         <Text style={[styles.inlineSecondaryText, { color: colors.textPrimary }]}>Pause</Text>
+                    </TouchableOpacity>
+                ) : null}
+                {(item.visibility_status !== 'draft' || item.publication_status === 'publication_failed') && onPrivate ? (
+                    <TouchableOpacity
+                        testID={`private-${item.id}`}
+                        style={[styles.inlineSecondaryAction, { borderColor: colors.border }]}
+                        onPress={() => onPrivate(item.id)}
+                    >
+                        <Text style={[styles.inlineSecondaryText, { color: colors.textPrimary }]}>Make private</Text>
+                    </TouchableOpacity>
+                ) : null}
+                {item.publication_retryable && onRetryPublication ? (
+                    <TouchableOpacity
+                        testID={`retry-publication-${item.id}`}
+                        style={[styles.inlineAction, { backgroundColor: colors.accent }]}
+                        onPress={() => onRetryPublication(item.id)}
+                    >
+                        <Text style={styles.inlineActionText}>Retry publication</Text>
+                    </TouchableOpacity>
+                ) : null}
+                {onManagePublicMedia ? (
+                    <TouchableOpacity
+                        testID={`manage-public-media-${item.id}`}
+                        style={[styles.inlineSecondaryAction, { borderColor: colors.border }]}
+                        onPress={() => onManagePublicMedia(item.id)}
+                    >
+                        <Text style={[styles.inlineSecondaryText, { color: colors.textPrimary }]}>Manage public photos</Text>
                     </TouchableOpacity>
                 ) : null}
                 {canPublish && onPublish ? (

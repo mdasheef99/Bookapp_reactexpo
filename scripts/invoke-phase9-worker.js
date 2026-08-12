@@ -1,5 +1,5 @@
 const SAFE_OUTCOME = /^[a-z][a-z0-9_]{0,63}$/u;
-const SUPPORTED_SERVICES = Object.freeze(['media', 'vision', 'metadata']);
+const SUPPORTED_SERVICES = Object.freeze(['media', 'vision', 'metadata', 'publication']);
 
 function invalid() {
   throw new Error('P9_WORKER_INVOCATION_CONFIGURATION_INVALID');
@@ -110,7 +110,8 @@ async function invokePhase9Worker({
 function selectedConfiguration(environment, service) {
   const prefix = service === 'media' ? 'MEDIA'
     : service === 'vision' ? 'VISION'
-      : service === 'metadata' ? 'METADATA' : invalid();
+      : service === 'metadata' ? 'METADATA'
+        : service === 'publication' ? 'PUBLICATION' : invalid();
   return {
     service,
     url: environment[`PHASE9_${prefix}_WORKER_URL`] ?? '',

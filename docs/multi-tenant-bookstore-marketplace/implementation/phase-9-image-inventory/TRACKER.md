@@ -1,20 +1,27 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit7a_create_only_contract_frozen`
-**Implementation status:** `unit7a_live_proof_pass`
+**Implementation status:** `unit7b_review_candidate_commit_authorized_luna_review_pending`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-12
-**Current milestone:** `phase9-owner-ingestion` version 5 is ACTIVE; one authenticated Owner Unit 7A commit and the exact same-command replay both passed with zero replay side effects
-**Active work unit:** `unit7a_live_proof_complete_unit7b_separately_gated`
+**Current milestone:** Unit 7B review remediation is implemented; scoped candidate commit/push is authorized for Luna xhigh review
+**Active work unit:** `unit7b_review_candidate_publication`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** exact-project M39 preflight/application/readback, `phase9-owner-ingestion` version 5 deployment, one authenticated Owner UI commit, and exact same-command replay all passed. Detailed evidence is in [tracker 29](./trackers/29-unit7a-create-only-commit-evidence.md).
-**Next authorized action:** no further Unit 7A runtime action is authorized. Unit 7B publication is the next separately gated work unit; Unit 7C post-commit edits, manual RPC fallback, and merge to `main` also remain separately gated.
+**Last completed:** the Unit 7B local gate rerun passed the expanded database contract 22/22, focused backend 32/32, Unit 7A 13/13, dispatcher 29/29, prior worker runtime 31/31, focused mobile/read/discovery assertions 80/80, TypeScript, all four worker builds, entrypoint smoke, deployment-runtime validation, and the M39 byte-for-byte check. Full PGlite reproduced the unrelated 276/277 metadata-fixture debt; repository Jest passed all 2012 real tests and failed only six pre-existing empty collectors.
+**Next authorized action:** create and push one intentional Unit 7B-only review candidate for Luna xhigh review. Review remains `NOT APPROVED`; run real-PostgreSQL concurrency, Docker container smoke, and the Deno Edge graph on the final post-correction SHA before the Stage J exact-SHA release gate. Stop before connected exact-project preflight/application or any deployment/live proof.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; reviewed M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit` with no retry and zero migration-created business effects.
-**Scope boundary:** This session implements only Unit 7A create-only commit, server-held reviewed quantity, one-to-one provenance, false-only skip semantics, private inventory, and the Unit 6 duplicate-contract transition. Unit 7B publication, Unit 7C editing, and every live/external action remain excluded.
-**Implementation authority:** the owner's 2026-08-12 Unit 7A session authorized local tests, production code, one forward migration file, local/ephemeral database execution, and documentation. It did not authorize Supabase/Storage mutation, deployment, provider calls, inventory/listing/publication effects, or Git staging/commit/push.
-**Migration creation/application authority:** M39 creation, preflight, real PostgreSQL contention proof, controlled application, and post-apply readback are complete. The authorized version 5 deployment and one Owner UI commit/exact replay are complete. No further migration or database/data mutation is authorized; Unit 7B/7C, manual RPC fallback, and merge remain separately gated.
+**Scope boundary:** This session is limited to Unit 7B local review remediation, M40, local/disposable verification, required documentation, and a gated Unit 7B-only commit/push. Unit 7C, customer commerce, unrelated features, and every connected/live action remain excluded.
+**Implementation authority:** the Owner's 2026-08-12 deferral decision authorizes the intentional Unit 7B-only review-candidate commit/push now. Real-PostgreSQL concurrency, Docker container smoke, and the Deno Edge graph remain `NOT_RUN`, deferred rather than skipped, and `REQUIRED_BEFORE_LIVE` on the final post-correction SHA before Stage J. It does not authorize connected Supabase/Storage access, migration application, deployment, provider calls, or live publication/discovery effects.
+**Migration creation/application authority:** Local M40 may be completed and verified only in disposable environments. It has not been preflighted against or applied to the connected project. No connected database/Storage mutation, Edge/worker deployment, live publication, or main integration is authorized.
 **Current gate:** `UNIT_7A_LIVE_PROOF_PASS`; `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY` is CLEARED. Edge version 5 is ACTIVE, the first commit created exactly one private inventory row, and the exact replay returned the canonical result with zero new effects. Native Unit 6F validation remains `NOT_RUN`/`UNRESOLVED`, not PASS, and Unit 7B/7C remain separately gated.
+
+**Unit 7B independent-review status:** the seven implementation, coverage, and
+documentation findings are remediated and pass the disposable/focused suites.
+Review remains `NOT APPROVED` until Luna passes. The three host gates remain
+`NOT_RUN` and are deferred `REQUIRED_BEFORE_LIVE` on the final post-correction
+SHA before the Stage J exact-SHA release gate; they do not block this scoped
+review-candidate Git publication.
 Historical continuity marker: **Next authorized action:** narrow independent review only of the four explicit-extension edits, local Deno graph proof, semantic equivalence, and focused regressions.
 **Historical implementation status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`
 **Historical active work unit:** `unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`

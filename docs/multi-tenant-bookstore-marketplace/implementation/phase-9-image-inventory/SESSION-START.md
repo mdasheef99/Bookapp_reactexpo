@@ -10,6 +10,24 @@ The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` �
 
 Current operational closure: M29-M39 are live exactly once; exact-project
 history ends at `20260812003419 marketplace_phase9_create_only_inventory_commit`.
+Unit 7B independent review remains `NOT APPROVED`; local remediation is
+implemented for seven merge blockers covering the public-copy media pipeline,
+committed-transient worker handling, incomplete §19 subcases, media-driven
+projection refresh/retraction, under-lock retry reauthorization, failed-state
+cancellation UI, and overstated documentation. The expanded disposable suite
+passes 22/22. The focused backend, Unit 7A, prior worker-kind/runtime,
+TypeScript, four worker builds, entrypoint, deployment-runtime, and focused
+mobile assertion gates also pass. The Owner's 2026-08-12 sequencing decision
+authorizes the scoped review-candidate commit/push now. Real-PostgreSQL
+concurrency, Docker container smoke, and the Deno Edge graph remain `NOT_RUN`,
+are deferred rather than skipped, and are all `REQUIRED_BEFORE_LIVE` on the
+final post-correction SHA before the Stage J exact-SHA release gate. The
+unrelated full PGlite result remains 276/277 on the unchanged
+metadata-foundation fixture, while repository Jest passes all 2012 real tests
+and fails only six pre-existing empty fixture/support collectors. Forward M40 is
+unapplied. Exact-project preflight/application, Edge/worker deployment,
+and all live Unit 7B proofs remain `NOT_RUN` and unauthorized. See
+[tracker 30](./trackers/30-unit7b-safe-publication-evidence.md).
 The user's 2026-08-10 decision retains Remove image and replaces append-style
 multi-image capture with one current image plus one replacement after explicit
 pre-candidate removal. M35 is live, the three authorized legacy inputs were

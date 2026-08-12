@@ -1,9 +1,20 @@
 # Phase 9 Database and Storage: Current vs Target
 
 **Audit date:** 2026-08-12 Unit 7A read-only preflight and local M39 implementation
-**Audit mode:** exact-project read-only preflight plus local/ephemeral M39 verification; no live Unit 7A mutation
+**Audit mode:** prior exact-project Unit 7A evidence plus local/disposable Unit 7B M40 verification; no Unit 7B connected-project access or mutation
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10-M38 and WU1 are live exactly once; M09 absent. Exact live tail remains `20260810130638 marketplace_phase9_metadata_retry_correction`. Fresh read-only Unit 7A preflight reconfirmed the exact healthy project, live migration tail, relevant `store_inventory` columns, and unsafe M05 callable. Local M39 `20260812000039_marketplace_phase9_create_only_inventory_commit.sql` is implemented and PGlite-verified but **unapplied**. No database, Storage, queue, provider, inventory, listing, publication, or deployment mutation occurred. M09/global historical constraint validation is not required for Unit 7A, which initializes every newly created row in balance.
+**Mutation status:** M01-M39 are live at their separately recorded checkpoints; M09 is absent. Local M40 `20260812000040_marketplace_phase9_safe_publication.sql` is implemented and verified in PGlite only; it is **unapplied**. Real PostgreSQL concurrency/upgrade verification is `BLOCKED_ENVIRONMENT`: `psql` 18.4 works, but both fresh `initdb` and installed-cluster `pg_ctl` fail before SQL under the Codex sandbox restricted token, while Docker is invisible to the sandbox. No Unit 7B connected database, Storage, queue, inventory, listing, publication, Edge, or worker mutation occurred.
+
+**Unit 7B local delta:** M40 adds the dual-version controlled publication
+commands, intent-keyed retry claim/token fencing, v2 Owner inventory page,
+closed-session-summary freeze, safe public DTO/RPC boundary, one-primary-
+fallback and sanitized-public-media enforcement, authoritative listing-sync
+trigger reconciliation, bounded audit/event ownership, and publication wake
+dispatch. The expanded disposable PGlite suite is 22/22 green, including all
+20 SDD rows and two committed-transient worker subcases. The M39 local blob is
+byte-for-byte identical to both `main` and base `f8839c2`. Real PostgreSQL
+concurrency/upgrade is environment-blocked; exact-project preflight and live
+readback remain `NOT_RUN`.
 
 **Unit 7A local delta:** M39 adds an authenticated create-only command that
 derives Owner/store authority, reads the current saved review and selected

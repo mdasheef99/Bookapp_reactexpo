@@ -236,6 +236,24 @@ identity/route fencing, version refresh, and private-cache invalidation. M39 is
 unapplied, so live ACL/function and authenticated Owner smoke evidence remain
 pending rather than inferred from local tests.
 
+### Unit 7B local implementation trace
+
+The frozen Unit 7B SDD §19 contains 20 numbered load-bearing tests. The exact
+number-to-invariant-to-test mapping is maintained in
+[07b-red-test-traceability.md](../work-units/07b-red-test-traceability.md). The
+expanded disposable suite passes 22/22, covering all 20 rows plus two RT15
+worker/database cases. M40 and the Edge/client/UI/worker changes implement the SDD's
+dual-version fence, transient-only retry, stale-lease protection, single
+projection writer, public DTO privacy, sanitized media/fallback rules,
+controlled Owner read boundary, closed-summary freeze, and one-command audit/
+event ownership. Focused backend is 32/32, focused mobile/read/discovery
+assertions are 80/80, Unit 7A is 13/13, dispatcher regression is 29/29, and
+prior worker runtime regression is 31/31. Full local acceptance remains
+environment-blocked before the real-PostgreSQL/Docker/Deno assertions; the
+unchanged metadata-fixture PGlite failure and six empty Jest collectors are
+explicitly dispositioned as unrelated debt. Connected-project and live
+acceptance evidence remain `NOT_RUN`.
+
 ## Local ingestion-runtime and Unit 4 trace (2026-07-26)
 
 Server-generated upload paths, content-hashed canonical completion, immutable service-only source snapshots, opaque token-and-attempt validation leases, sanitized private linking, and one vision-job identity trace to 02 Extraction EXT-01 through EXT-06 and 04 Media MED-01 through MED-10. M11 is live as `20260726182238`; Owner ingestion and the dedicated media worker are deployed and live-verified. Owner Edge hashes completion bytes but never decodes or sanitizes media. Animated/multi-frame PNG/WebP is rejected, and ImageMagick's 64 MP internal working allowance remains subordinate to the 16 MP source ceiling.

@@ -21,7 +21,6 @@ const identity = { userId: 'owner-a', storeId: 'store-a' } as const;
 function inventoryItem(id: string, title: string): OwnerInventoryListItem {
     return {
         id,
-        storeId: '20000000-0000-4000-8000-000000000001',
         title,
         authors: null,
         isbn10: null,
@@ -37,6 +36,11 @@ function inventoryItem(id: string, title: string): OwnerInventoryListItem {
         createdAt: '2026-08-01T10:00:00.000Z',
         updatedAt: '2026-08-03T10:00:00.000Z',
         version: 1,
+        publicationStatus: 'private',
+        publicationIntentVersion: 1,
+        publicationRetryable: false,
+        publicationFailureReason: null,
+        publicListingStatus: null,
     };
 }
 
@@ -46,7 +50,7 @@ function inventoryPage(
     nextCursor: string | null = null,
 ): OwnerInventoryPage {
     return {
-        contractVersion: 'phase9-owner-inventory-v1',
+        contractVersion: 'phase9-owner-inventory-v2',
         items,
         pageInfo: { hasMore, nextCursor },
     };

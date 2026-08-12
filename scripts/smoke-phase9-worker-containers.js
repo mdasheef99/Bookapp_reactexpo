@@ -4,6 +4,7 @@ const { spawnSync } = require('node:child_process');
 const mediaToken = 'media-container-smoke-A7z.49_xYp-001-strong';
 const visionToken = 'vision-container-smoke-B8y.50_zXp-002-strong';
 const metadataToken = 'metadata-container-smoke-D0w.62_vUr-004-strong';
+const publicationToken = 'publication-container-smoke-E1v.73_uTs-005-strong';
 const serviceKey = 'service-container-smoke-C9x.51_wVq-003-strong';
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 
@@ -123,6 +124,17 @@ async function smokePhase9WorkerContainers(root = process.cwd()) {
       PHASE9_METADATA_WORKER_ID: 'metadata-container-000001',
       PHASE9_METADATA_WORKER_INGRESS_TOKEN: metadataToken,
       PHASE9_METADATA_PROVIDER_MODE: 'fixture',
+    },
+  }, root);
+  await smokeContainer({
+    service: 'publication',
+    dockerfile: 'workers/phase9-publication-worker/Dockerfile',
+    port: 8094,
+    environment: {
+      ...shared,
+      PHASE9_WORKER_PORT: '8094',
+      PHASE9_PUBLICATION_WORKER_ID: 'publication-container-01',
+      PHASE9_PUBLICATION_WORKER_INGRESS_TOKEN: publicationToken,
     },
   }, root);
 }

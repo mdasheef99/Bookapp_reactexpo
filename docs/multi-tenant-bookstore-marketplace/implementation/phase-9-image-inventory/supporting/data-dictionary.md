@@ -178,6 +178,17 @@ requires a positive selling price; price-on-request is not a Unit 5C target.
 
 Existing quantity buckets remain authoritative. `photos text[]` is deprecated only after typed media links are backfilled and all readers migrate.
 
+### Unit 7B publication projection delta
+
+Local unapplied M40 preserves `inventory.version` as business-content
+concurrency and uses `publication_intent_version` for publication lifecycle.
+The Owner page v2 exposes only bounded publication state/retry fields. Public
+discovery is limited to the v2 safe DTO/RPCs and omits exact quantity,
+location, cost, internal notes, private media, provider/model payloads, and
+risk internals. `inventory_media_links` permits at most one
+`primary_fallback` per inventory, and eligible public links require an approved
+sanitized `public_copy` derivative in `inventory-photos`.
+
 ### Unit 7A create-only commit boundary
 
 Local unapplied M39 defines
