@@ -166,6 +166,29 @@ Focused verification after correction:
 - Edge/runtime deployment: `NOT_RUN` at this checkpoint. Controlled live Add to
   Inventory and exact replay proof: `NOT_RUN`.
 
+## Controlled Owner Edge deployment attempt — 2026-08-12
+
+- Scope trace selected only `phase9-owner-ingestion`: request decoding flows
+  through `executeOwnerIngestion` to `phase9_add_candidate_to_inventory_v1`.
+  Media, vision/Gemini, metadata, publication, and Unit 7B/7C runtimes were not
+  deployed.
+- Runtime remained byte-equivalent to reviewed implementation SHA `e2437f18`.
+  The strict decoder exposes command/control fields only, forwards the ordinary
+  authenticated context, and leaves authorization/business state to M39.
+  Focused Owner UX, ingestion runtime, and security tests passed 182/182.
+- Read-only baseline was inventory/listings `5/5`, publication `{private:5}`,
+  media links/public media `0/0`, candidates `{ready:18,needs_review:36,failed:1}`,
+  session committed total `0`, and Unit 7A idempotency/audit/event `0/0/0`.
+- The only authorized deployment attempt failed during bundling before
+  activation. The Supabase bundler could not resolve `../contracts/registers`
+  imported without `.ts` by `_shared/imageInventory/domain/validation.ts`.
+  Deployment count was 1/1; no retry, code change, or improvised repair occurred.
+- Post-attempt readback confirms `phase9-owner-ingestion` id
+  `f8aec89f-ae2a-431a-8a97-5775a2405b90`, version 3, remains ACTIVE with
+  `verify_jwt=true`. All baseline counts are unchanged. M39 remains live once;
+  no database, Storage, candidate, inventory, publication, or media mutation
+  occurred. Controlled live Add to Inventory/exact replay remains `NOT_RUN`.
+
 ## Residual gates and next action
 
 - Unit 7A implementation and M39 are complete; runtime deployment and live
@@ -173,7 +196,6 @@ Focused verification after correction:
 - Unit 7B publication and Unit 7C post-commit editing remain excluded.
 - Unit 6F native validation debt remains `NOT_RUN`/`UNRESOLVED` and unchanged.
 
-**Next authorized action:** create and push the documentation-only M39 evidence
-checkpoint, then deploy only the traced Unit 7A Owner Edge runtime and perform
-read-only post-deployment verification. Do not run Add to Inventory or exact
-replay until separately authorized.
+**Next authorized action:** none. Obtain separate authorization for a reviewed
+source-only correction to the extensionless import and, after review, a new
+single deployment attempt. Do not run Add to Inventory or exact replay.

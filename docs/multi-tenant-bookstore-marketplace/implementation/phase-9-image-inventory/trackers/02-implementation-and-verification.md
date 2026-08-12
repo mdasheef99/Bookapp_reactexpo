@@ -1,7 +1,27 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit7a_m39_live_runtime_deployment_pending`; **last updated:** 2026-08-12
+**Status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`; **last updated:** 2026-08-12
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit7a_post_m39_feature_push_and_owner_edge_deployment`. The frozen create-only contract is implemented at reviewed SHA `e2437f18`; dedicated PGlite 13/13, Phase 9 Edge/mobile/migration regression 479/479, TypeScript, exact-project preflight, real PostgreSQL contention, one M39 application, and post-apply security/zero-effect readback pass. M39 is live as `20260812003419`; Owner Edge deployment and controlled live proof remain pending. See [tracker 29](./29-unit7a-create-only-commit-evidence.md).
+**Active work unit:** `unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`. The frozen create-only contract is implemented at reviewed SHA `e2437f18`; M39 is live as `20260812003419`. The sole authorized `phase9-owner-ingestion` deployment attempt failed before activation because a transitive import omitted `.ts`. No retry or repair occurred, deployed version 3 remains ACTIVE, business state is unchanged, and controlled live proof remains blocked. See [tracker 29](./29-unit7a-create-only-commit-evidence.md).
+
+### 2026-08-12 — Unit 7A controlled Owner Edge deployment attempt
+
+- Exact scope: only `phase9-owner-ingestion`; media, vision/Gemini, metadata,
+  publication, and Unit 7B/7C functions were not deployed.
+- Predeployment verification: runtime matched reviewed SHA `e2437f18`; focused
+  Owner UX, ingestion runtime, and security suites passed 182/182.
+- Deployment result: `FAILED_BEFORE_ACTIVATION`, count 1/1, no retry. Supabase
+  bundling could not resolve extensionless import `../contracts/registers` from
+  `_shared/imageInventory/domain/validation.ts`.
+- Readback: prior `phase9-owner-ingestion` id
+  `f8aec89f-ae2a-431a-8a97-5775a2405b90`, version 3, remains ACTIVE with
+  `verify_jwt=true`. No new version activated.
+- Zero-effect evidence: pre/post inventory/listings 5/5, publication
+  `{private:5}`, media links/public media 0/0, candidates
+  `{ready:18,needs_review:36,failed:1}`, committed total 0, and Unit 7A
+  idempotency/audit/event counts 0/0/0.
+- Next gate: separately authorize a reviewed source-only import-resolution
+  correction and, after review, a new deployment attempt. Live Add to Inventory
+  and exact replay remain `NOT_RUN` and blocked.
 **Preserved authorization sequence:** `definition_independently_approved_awaiting_implementation_authorization`, `implementation_authorized`; neither status by itself authorizes migration application or external mutation.
 ## Work units
 | Unit | Scope | Status | Required gate |
@@ -21,7 +41,7 @@
 | WU1 | [Controlled Owner-inventory read boundary](../work-units/owner-inventory-read-boundary-wu1-sdd.md) | [`applied_readback_complete_runtime_deferred`](./25-owner-inventory-read-boundary-wu1-evidence.md) | Exact development migration applied once; post-application security/object readback and anonymous denial pass; positive Owner runtime and client/UI/legacy-caller changes remain gated |
 | WU2 | [Read-only Owner inventory client integration](../work-units/owner-inventory-read-client-wu2-sdd.md) | [`locally_complete_authenticated_runtime_deferred`](./26-owner-inventory-read-client-wu2-evidence.md) | Owner `/inventory` uses the canonical page RPC with strict DTO validation, isolated cache/pagination, exact filters, and read-only states; dashboard, writes, deployment, authenticated runtime, and Unit 7 remain gated |
 | Wake dispatcher | [Automatic worker wake dispatcher](../work-units/automatic-worker-wake-dispatcher-sdd.md) | `live_active_verified` | M36 is live exactly once; its cron is active and automatically completed the final Unit 6 media, vision, and metadata path without manual invocation |
-| 7A | [Create-only per-candidate private inventory commit](../work-units/07a-create-only-inventory-commit-sdd.md), server-held review snapshot, exact replay/concurrency, one-to-one provenance, and Unit 6 duplicate-contract transition | [`m39_live_runtime_deployment_pending`](./29-unit7a-create-only-commit-evidence.md) | implementation reviewed; real PostgreSQL contention and M39 application/readback pass; Owner Edge deployment and controlled live proof remain pending |
+| 7A | [Create-only per-candidate private inventory commit](../work-units/07a-create-only-inventory-commit-sdd.md), server-held review snapshot, exact replay/concurrency, one-to-one provenance, and Unit 6 duplicate-contract transition | [`edge_deployment_blocked_by_source_routing_mismatch`](./29-unit7a-create-only-commit-evidence.md) | M39 application/readback pass; the one Owner Edge deployment attempt failed before activation on an extensionless import; no retry, source repair, or business effect |
 | 7B | Publication/projection after private inventory creation | `not_started` | separately authorized public/private projection tests |
 | 8 | Marketplace bookstore-first search, multilingual aliases, counts, full store catalogue | `not_started` | public/private projection tests |
 | 9 | Damaged-book public media and mandatory customer photo-request extension | `not_started` | DOC-6/14 seam tests; no payment implementation |

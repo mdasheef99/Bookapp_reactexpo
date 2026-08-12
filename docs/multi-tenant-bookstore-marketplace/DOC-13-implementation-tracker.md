@@ -125,6 +125,16 @@ If implementation changes product or architecture behavior, update the relevant 
 > Unit 7A idempotency/audit/event effects. Edge/runtime deployment and the
 > controlled live Add-to-Inventory/exact-replay proof remain `NOT_RUN`.
 
+> **2026-08-12 Unit 7A Owner Edge deployment blocker:** the M39 evidence commit
+> was pushed normally to the feature branch. Dependency tracing selected only
+> `phase9-owner-ingestion`, and its focused Edge/runtime/security suites passed
+> 182/182. The one authorized deployment attempt failed during bundling before
+> activation: `domain/validation.ts` imports `../contracts/registers` without a
+> `.ts` extension. No retry, source repair, database mutation, or unrelated Edge
+> deployment occurred. Owner Edge version 3 remains ACTIVE with JWT verification;
+> pre/post inventory, listing, candidate, session, idempotency, audit, event,
+> media, and publication state is identical. Live Unit 7A proof remains blocked.
+
 > 2026-08-11 Phase 9 multilingual vision-response resilience correction:
 > user-supplied physical Android evidence closes the native FileSystem transport
 > proof through signed Storage `2xx`, exactly one object, input registration, and
@@ -725,7 +735,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7A M39 live; Owner Edge deployment pending** |
 | Overall status | `in_progress` |
 | Last updated | 2026-08-12 |
-| Latest handoff | Unit 7A implementation is reviewed at `e2437f18`; real PostgreSQL contention passed and M39 is live exactly once as `20260812003419` with source/ACL/M05 readback PASS and zero migration-created business effect. Owner Edge deployment and controlled live proof remain pending. Unit 6 native validation debt remains deferred and is not marked PASS. |
+| Latest handoff | Unit 7A implementation is reviewed at `e2437f18`; M39 is live exactly once as `20260812003419`. The sole Owner Edge deployment attempt failed before activation on an extensionless transitive import; version 3 and all business state remain unchanged. Source correction/review and new deployment authorization are required before live proof. |
 | Current risk level | `UNIT_6_NATIVE_VALIDATION_DEBT_DEFERRED_OWNER_ACCEPTED`: native evidence remains unrun/unresolved; the project owner accepts the risk and authorizes Unit 7. Deployment and any fresh post-deployment Android proof remain separately gated. |
 | Next recommended task | Record/push the M39 checkpoint, deploy only the traced Unit 7A Owner Edge runtime, and perform read-only post-deployment verification. Live Add-to-Inventory/exact replay remains separately gated. |
 
@@ -744,7 +754,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit7a_m39_live_runtime_deployment_pending` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7A evidence](./implementation/phase-9-image-inventory/trackers/29-unit7a-create-only-commit-evidence.md) | Unit 7A implementation is reviewed and M39 is live exactly once with post-apply security/readback PASS and no business effect. Owner Edge deployment and controlled live proof remain pending. Unit 6 automatic/functional PASS and deferred native debt remain unchanged. |
+| Phase 9: Image-to-LLM Inventory | `unit7a_edge_deployment_blocked_by_source_routing_mismatch` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7A evidence](./implementation/phase-9-image-inventory/trackers/29-unit7a-create-only-commit-evidence.md) | Unit 7A implementation is reviewed and M39 is live exactly once. The only authorized Owner Edge deployment attempt failed before activation on an extensionless transitive import; version 3 and all business state remain unchanged. Source correction/review and new deployment authorization are required before live proof. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

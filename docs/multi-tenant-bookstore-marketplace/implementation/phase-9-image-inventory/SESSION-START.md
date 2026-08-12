@@ -46,9 +46,14 @@ connection PostgreSQL contention passed. M39 is live exactly once as
 `20260812003419 marketplace_phase9_create_only_inventory_commit`; post-apply
 function/ACL/M05 readback passed and migration application created no business
 effect. Read [tracker 29](./trackers/29-unit7a-create-only-commit-evidence.md).
-The active gate is the documentation checkpoint, feature-branch push, and only
-the traced Unit 7A Owner Edge deployment. Controlled live Add-to-Inventory and
-exact replay, Unit 7B, Unit 7C, and merge to `main` remain separately gated.
+The post-M39 checkpoint is committed and pushed. The single authorized
+`phase9-owner-ingestion` deployment attempt failed before activation because
+the Supabase bundler could not resolve the extensionless transitive import
+`../contracts/registers` in `domain/validation.ts`. No retry or source repair
+was attempted; deployed version 3 remains ACTIVE and read-only pre/post counts
+are identical. A reviewed source correction and new deployment authorization
+are required before controlled live Add-to-Inventory/exact replay. Unit 7B,
+Unit 7C, and merge to `main` remain separately gated.
 
 Current local correction: user-supplied 2026-08-11 physical Android evidence
 proves the Expo FileSystem `UploadTask` replacement reached signed Storage

@@ -192,7 +192,11 @@ $unit7aLocalCompleteHandoff = $active.Contains('Unit 7A create-only inventory co
 $unit7aM39LiveHandoff = $active.Contains('M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`') -and
     $active.Contains('Post-apply source/ACL readback passed') -and
     $active.Contains('Controlled live Add-to-Inventory and exact-replay proof')
-if (-not ($legacyM32Handoff -or $liveM32Handoff -or $metadataSafetyHandoff -or $dispatcherHandoff -or $integrationHandoff -or $metadataRetryHandoff -or $unit6ClosureHandoff -or $mobileUploadCorrectionHandoff -or $mobileUploadNativeFailureHandoff -or $mobileUploadFileSystemHandoff -or $visionResponseResilienceHandoff -or $unit7aCreateOnlyHandoff -or $unit7aLocalCompleteHandoff -or $unit7aM39LiveHandoff)) {
+$unit7aEdgeBlockedHandoff = $active.Contains('The sole authorized `phase9-owner-ingestion` deployment attempt failed before activation') -and
+    $active.Contains('`../contracts/registers` without `.ts`') -and
+    $active.Contains('version 3 remains ACTIVE') -and
+    $active.Contains('controlled live Add-to-Inventory/exact replay')
+if (-not ($legacyM32Handoff -or $liveM32Handoff -or $metadataSafetyHandoff -or $dispatcherHandoff -or $integrationHandoff -or $metadataRetryHandoff -or $unit6ClosureHandoff -or $mobileUploadCorrectionHandoff -or $mobileUploadNativeFailureHandoff -or $mobileUploadFileSystemHandoff -or $visionResponseResilienceHandoff -or $unit7aCreateOnlyHandoff -or $unit7aLocalCompleteHandoff -or $unit7aM39LiveHandoff -or $unit7aEdgeBlockedHandoff)) {
     Write-Error 'ACTIVE.md does not preserve the current Phase 9 handoff and external-mutation gates.'
 }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
@@ -215,7 +219,8 @@ if (-not ($doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6e_finalized
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit7a_create_only_design_frozen`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit7a_locally_complete_review_pending`') -or
-    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit7a_m39_live_runtime_deployment_pending`')) -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit7a_m39_live_runtime_deployment_pending`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit7a_edge_deployment_blocked_by_source_routing_mismatch`')) -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
     -not $doc13.Contains('20260727231217 marketplace_phase9_sensitive_table_acl_correction') -or
     -not $doc13.Contains('20260727233457 marketplace_phase9_maintain_acl_correction') -or
@@ -259,7 +264,8 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
     $implementationTracker.Contains('**Status:** `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
     $implementationTracker.Contains('**Status:** `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`') -or
     $implementationTracker.Contains('**Status:** `unit7a_locally_complete_review_pending`') -or
-    $implementationTracker.Contains('**Status:** `unit7a_m39_live_runtime_deployment_pending`')) -or
+    $implementationTracker.Contains('**Status:** `unit7a_m39_live_runtime_deployment_pending`') -or
+    $implementationTracker.Contains('**Status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`')) -or
     -not ($implementationTracker.Contains('**Active work unit:** `unit6f_awaiting_separate_authorization`') -or
     $implementationTracker.Contains('**Active work unit:** `unit6f_browser_verified_native_gate_pending`') -or
     $implementationTracker.Contains('**Active work unit:** `owner_inventory_read_boundary_wu1`') -or
@@ -281,6 +287,7 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
     $implementationTracker.Contains('**Active work unit:** `phase9_multilingual_vision_response_resilience_review`') -or
     $implementationTracker.Contains('**Active work unit:** `unit7a_create_only_commit_red_tests_pending_separate_authorization`') -or
     $implementationTracker.Contains('**Active work unit:** `unit7a_create_only_commit_locally_complete_review_pending`') -or
+    $implementationTracker.Contains('**Active work unit:** `unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`') -or
     $implementationTracker.Contains('**Active work unit:** `unit7a_post_m39_feature_push_and_owner_edge_deployment`') -or
     $implementationTracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -or
     $implementationTracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
@@ -502,9 +509,11 @@ if (
         $tracker.Contains('**Implementation status:** `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
         $tracker.Contains('**Implementation status:** `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`') -or
         $tracker.Contains('**Implementation status:** `unit7a_locally_complete_review_pending`') -or
-        $tracker.Contains('**Implementation status:** `unit7a_m39_live_runtime_deployment_pending`')
+        $tracker.Contains('**Implementation status:** `unit7a_m39_live_runtime_deployment_pending`') -or
+        $tracker.Contains('**Implementation status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`')
     ) -or
     ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit7a_post_m39_feature_push_and_owner_edge_deployment|unit7a_create_only_commit_locally_complete_review_pending|unit7a_create_only_commit_red_tests_pending_separate_authorization|unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|phase9_multilingual_vision_response_resilience_review|unit6c_single_image_safe_remove|phase9_metadata_retry_provider_attempt_correction|unit6_complete|unit6_mobile_upload_transport_correction_local_complete|unit6_mobile_upload_transport_native_failure_diagnosed|unit6_mobile_filesystem_transport_live_proof_pending)`\r?$' -and
+        -not $tracker.Contains('**Active work unit:** `unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`') -and
         -not $tracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -and
         -not $tracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
     -not (
@@ -547,7 +556,8 @@ if (
         $tracker.Contains('**Next authorized action:** bounded independent review of the multilingual vision-response resilience correction; deployment requires separate authorization, followed by exactly one fresh Android image proof after deployment. Unit 7 remains unauthorized.') -or
         $tracker.Contains('**Next authorized action:** separately authorize the Unit 7A load-bearing red-test implementation against the frozen create-only SDD.') -or
         $tracker.Contains('**Next authorized action:** review the complete local Unit 7A diff.') -or
-        $tracker.Contains('**Next authorized action:** record and push the M39 checkpoint')
+        $tracker.Contains('**Next authorized action:** record and push the M39 checkpoint') -or
+        $tracker.Contains('**Next authorized action:** none. Obtain separate authorization for a reviewed source-only correction')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
@@ -636,7 +646,8 @@ $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_in
     $tracker.Contains('**Implementation status:** `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
     $tracker.Contains('**Implementation status:** `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`') -or
     $tracker.Contains('**Implementation status:** `unit7a_locally_complete_review_pending`') -or
-    $tracker.Contains('**Implementation status:** `unit7a_m39_live_runtime_deployment_pending`'))
+    $tracker.Contains('**Implementation status:** `unit7a_m39_live_runtime_deployment_pending`') -or
+    $tracker.Contains('**Implementation status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`'))
 $expectedMigrationNames = @($migrationNames)
 if ($wu1AppliedStatus) { $expectedMigrationNames += $draftMigrationNames }
 $appliedPhase9Migrations = if ($wu1AppliedStatus) {
