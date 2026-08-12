@@ -1,6 +1,6 @@
 # Unit 7A Create-Only Inventory Commit Evidence
 
-**Status:** `review_findings_corrected_ready_for_rereview`
+**Status:** `m39_applied_and_verified_runtime_deployment_pending`
 **Date:** 2026-08-12
 **Branch:** `codex/phase9-unit7a-create-only-inventory`
 **Base:** `origin/main` at `f2ccc6a20f065ec000fd3a3ac89ba4f014b52cb4`
@@ -140,17 +140,40 @@ Focused verification after correction:
   scan, frozen-SDD check, and final worktree status: PASS; only M39, the Unit 7A
   fixture/test, and this existing evidence file changed for the correction.
 
+## Controlled M39 preflight and application — 2026-08-12
+
+- Exact-project identity, migration history, live schema, quantity/provenance
+  data, function/ACL, helper, RLS, and trigger preconditions passed on
+  `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` with M38 as the prior head.
+- A disposable PostgreSQL 17 cluster loaded the Phase 9 chain through reviewed
+  M39. Two genuinely independent `psql` connections overlapped in both the
+  same-command replay race and distinct-command candidate-lock race. Exact
+  replay returned one canonical inventory ID and one business effect; distinct
+  commands produced one winner and one non-mutating version-conflict loser.
+- Reviewed M39 was applied once, without retry, and is live exactly once as
+  `20260812003419 marketplace_phase9_create_only_inventory_commit`.
+- Immediate live readback matched the reviewed Unit 7A function body by exact
+  SHA-256, confirmed postgres ownership, `SECURITY DEFINER`, fixed empty
+  `search_path`, and authenticated-only execution. `PUBLIC`, `anon`, and
+  `service_role` cannot execute the new command. M05 remains present but only
+  postgres can execute it; internal helper exposure did not broaden.
+- Migration application created no business effect. Inventory/listing counts
+  remained `5/5`; all five inventory rows remained private; inventory/public-
+  media links remained zero; candidate states and session committed counts were
+  unchanged; Unit 7A idempotency/audit/event counts remained zero; canonical
+  rows, operational job count, policies, triggers, quantity constraints, and
+  `UNIQUE(committed_inventory_id)` remained unchanged.
+- Edge/runtime deployment: `NOT_RUN` at this checkpoint. Controlled live Add to
+  Inventory and exact replay proof: `NOT_RUN`.
+
 ## Residual gates and next action
 
-- Unit 7A is locally complete but review-pending; it is not live-verified.
-- M39 application and Edge deployment require a fresh exact-project preflight,
-  explicit separate authorization, post-application ACL/function/schema
-  readback, and authenticated Owner smoke evidence.
+- Unit 7A implementation and M39 are complete; runtime deployment and live
+  mutation proof remain operational gates.
 - Unit 7B publication and Unit 7C post-commit editing remain excluded.
 - Unit 6F native validation debt remains `NOT_RUN`/`UNRESOLVED` and unchanged.
 
-**Next authorized action:** independent rereview of the corrected Unit 7A diff.
-Before M39 approval/application, obtain genuine separate-connection PostgreSQL
-contention evidence in a separately authorized controlled preflight. Do not
-apply M39, deploy the Edge Function, stage, commit, or push without a separate
-explicit instruction.
+**Next authorized action:** create and push the documentation-only M39 evidence
+checkpoint, then deploy only the traced Unit 7A Owner Edge runtime and perform
+read-only post-deployment verification. Do not run Add to Inventory or exact
+replay until separately authorized.

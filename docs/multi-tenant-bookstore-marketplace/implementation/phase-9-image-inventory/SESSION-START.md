@@ -31,21 +31,24 @@ performance, offline/reconnect, accessibility/large text, and low-end Android
 resource/performance. The project owner accepts this deferred validation risk
 and authorizes Unit 7 to begin in a new bounded session.
 
-Current active implementation handoff: Unit 7A is frozen and locally complete
+Current active implementation handoff: Unit 7A is frozen and implemented
 as a create-only private inventory commit. Read
 [the Unit 7A SDD](./work-units/07a-create-only-inventory-commit-sdd.md) before
 any red-test or implementation work. One eligible reviewed candidate creates
 one new row from the server-held saved review; duplicate lookup/merge/increment/
 manual-match/keep-separate behavior is excluded, and publication is Unit 7B.
 The Unit 6 duplicate UI/DTO path is superseded for Unit 7A and is now
-non-actionable/non-blocking. Local M39, the Edge command, and mobile action are
-review-pending; dedicated PGlite is 13/13, Phase 9 Edge/mobile/migration
-regression is 479/479, and TypeScript passes with the documented import flag.
-M39 is unapplied and no external mutation or Git publication occurred. Read
-[tracker 29](./trackers/29-unit7a-create-only-commit-evidence.md). Exact next
-gate: review the complete local diff. M39 application, Edge deployment,
-authenticated live smoke, stage/commit/push, Unit 7B, and Unit 7C require
-separate explicit authorization.
+non-actionable/non-blocking. The reviewed implementation SHA is
+`e2437f18e9489b1e03c27858342b44737522d4e8`; dedicated PGlite is 13/13,
+Phase 9 Edge/mobile/migration regression is 479/479, and TypeScript passes with
+the documented import flag. Exact-project preflight plus real independent-
+connection PostgreSQL contention passed. M39 is live exactly once as
+`20260812003419 marketplace_phase9_create_only_inventory_commit`; post-apply
+function/ACL/M05 readback passed and migration application created no business
+effect. Read [tracker 29](./trackers/29-unit7a-create-only-commit-evidence.md).
+The active gate is the documentation checkpoint, feature-branch push, and only
+the traced Unit 7A Owner Edge deployment. Controlled live Add-to-Inventory and
+exact replay, Unit 7B, Unit 7C, and merge to `main` remain separately gated.
 
 Current local correction: user-supplied 2026-08-11 physical Android evidence
 proves the Expo FileSystem `UploadTask` replacement reached signed Storage
