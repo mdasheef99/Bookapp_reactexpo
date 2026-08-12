@@ -1,15 +1,15 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit7a_create_only_contract_frozen`
-**Implementation status:** `unit7b_review_candidate_commit_authorized_luna_review_pending`
+**Implementation status:** `unit7b_review_candidate_pushed_luna_review_pending`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-12
-**Current milestone:** Unit 7B review remediation is implemented; scoped candidate commit/push is authorized for Luna xhigh review
-**Active work unit:** `unit7b_review_candidate_publication`
+**Current milestone:** Unit 7B review candidate is committed and pushed; Luna xhigh review is pending
+**Active work unit:** `unit7b_luna_xhigh_review`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** the Unit 7B local gate rerun passed the expanded database contract 22/22, focused backend 32/32, Unit 7A 13/13, dispatcher 29/29, prior worker runtime 31/31, focused mobile/read/discovery assertions 80/80, TypeScript, all four worker builds, entrypoint smoke, deployment-runtime validation, and the M39 byte-for-byte check. Full PGlite reproduced the unrelated 276/277 metadata-fixture debt; repository Jest passed all 2012 real tests and failed only six pre-existing empty collectors.
-**Next authorized action:** create and push one intentional Unit 7B-only review candidate for Luna xhigh review. Review remains `NOT APPROVED`; run real-PostgreSQL concurrency, Docker container smoke, and the Deno Edge graph on the final post-correction SHA before the Stage J exact-SHA release gate. Stop before connected exact-project preflight/application or any deployment/live proof.
+**Next authorized action:** Luna xhigh review of the committed and pushed Unit 7B candidate. Review remains `NOT APPROVED`; after corrections, run real-PostgreSQL concurrency, Docker container smoke, and the Deno Edge graph on the final SHA before the Stage J exact-SHA release gate. Stop before connected exact-project preflight/application or any deployment/live proof.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; reviewed M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit` with no retry and zero migration-created business effects.
 **Scope boundary:** This session is limited to Unit 7B local review remediation, M40, local/disposable verification, required documentation, and a gated Unit 7B-only commit/push. Unit 7C, customer commerce, unrelated features, and every connected/live action remain excluded.
 **Implementation authority:** the Owner's 2026-08-12 deferral decision authorizes the intentional Unit 7B-only review-candidate commit/push now. Real-PostgreSQL concurrency, Docker container smoke, and the Deno Edge graph remain `NOT_RUN`, deferred rather than skipped, and `REQUIRED_BEFORE_LIVE` on the final post-correction SHA before Stage J. It does not authorize connected Supabase/Storage access, migration application, deployment, provider calls, or live publication/discovery effects.

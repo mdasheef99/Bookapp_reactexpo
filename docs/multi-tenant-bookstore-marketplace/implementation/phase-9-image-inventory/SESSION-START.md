@@ -17,8 +17,9 @@ projection refresh/retraction, under-lock retry reauthorization, failed-state
 cancellation UI, and overstated documentation. The expanded disposable suite
 passes 22/22. The focused backend, Unit 7A, prior worker-kind/runtime,
 TypeScript, four worker builds, entrypoint, deployment-runtime, and focused
-mobile assertion gates also pass. The Owner's 2026-08-12 sequencing decision
-authorizes the scoped review-candidate commit/push now. Real-PostgreSQL
+mobile assertion gates also pass. Under the Owner's 2026-08-12 sequencing
+decision, the scoped review-candidate branch is committed and pushed for Luna
+xhigh review. Real-PostgreSQL
 concurrency, Docker container smoke, and the Deno Edge graph remain `NOT_RUN`,
 are deferred rather than skipped, and are all `REQUIRED_BEFORE_LIVE` on the
 final post-correction SHA before the Stage J exact-SHA release gate. The

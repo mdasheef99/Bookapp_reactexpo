@@ -66,10 +66,9 @@ application, deployment, live proofs, Unit 7C, and main integration remain
 
 ## Next action
 
-Commit and push the scoped Unit 7B review candidate for Luna xhigh review under
-the Owner-approved 2026-08-12 sequencing decision. Review remains
-`NOT APPROVED` until Luna passes. Stop before exact-project preflight or any
-live mutation.
+Obtain Luna xhigh review of the committed and pushed scoped Unit 7B candidate.
+Review remains `NOT APPROVED` until Luna passes. Stop before exact-project
+preflight or any live mutation.
 
 ## 2026-08-12 remediation verification update
 

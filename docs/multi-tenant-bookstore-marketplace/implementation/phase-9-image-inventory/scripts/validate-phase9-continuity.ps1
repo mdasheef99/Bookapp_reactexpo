@@ -513,7 +513,8 @@ if (
         $tracker.Contains('**Implementation status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`') -or
         $tracker.Contains('**Implementation status:** `unit7b_local_implementation_complete_review_pending`') -or
         $tracker.Contains('**Implementation status:** `unit7b_review_remediation_implemented_local_gate_blocked`') -or
-        $tracker.Contains('**Implementation status:** `unit7b_review_candidate_commit_authorized_luna_review_pending`')
+        $tracker.Contains('**Implementation status:** `unit7b_review_candidate_commit_authorized_luna_review_pending`') -or
+        $tracker.Contains('**Implementation status:** `unit7b_review_candidate_pushed_luna_review_pending`')
     ) -or
     ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit7a_post_m39_feature_push_and_owner_edge_deployment|unit7a_create_only_commit_locally_complete_review_pending|unit7a_create_only_commit_red_tests_pending_separate_authorization|unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|phase9_multilingual_vision_response_resilience_review|unit6c_single_image_safe_remove|phase9_metadata_retry_provider_attempt_correction|unit6_complete|unit6_mobile_upload_transport_correction_local_complete|unit6_mobile_upload_transport_native_failure_diagnosed|unit6_mobile_filesystem_transport_live_proof_pending)`\r?$' -and
         -not $tracker.Contains('**Active work unit:** `unit7a_owner_edge_bundle_fix_narrow_review_pending`') -and
@@ -521,6 +522,7 @@ if (
         -not $tracker.Contains('**Active work unit:** `unit7b_independent_review`') -and
         -not $tracker.Contains('**Active work unit:** `unit7b_local_gate_remediation`') -and
         -not $tracker.Contains('**Active work unit:** `unit7b_review_candidate_publication`') -and
+        -not $tracker.Contains('**Active work unit:** `unit7b_luna_xhigh_review`') -and
         -not $tracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -and
         -not $tracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
     -not (
@@ -568,7 +570,8 @@ if (
         $tracker.Contains('**Next authorized action:** narrow independent review only of the four explicit-extension edits') -or
         $tracker.Contains('**Next authorized action:** one focused independent review of the complete local Unit 7B diff.') -or
         $tracker.Contains('**Next authorized action:** rerun the outstanding real-PostgreSQL concurrency, Docker container, and Deno graph gates in a capable local environment') -or
-        $tracker.Contains('**Next authorized action:** create and push one intentional Unit 7B-only review candidate for Luna xhigh review')
+        $tracker.Contains('**Next authorized action:** create and push one intentional Unit 7B-only review candidate for Luna xhigh review') -or
+        $tracker.Contains('**Next authorized action:** Luna xhigh review of the committed and pushed Unit 7B candidate')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
@@ -662,7 +665,8 @@ $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_in
     $tracker.Contains('**Implementation status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`') -or
     $tracker.Contains('**Implementation status:** `unit7b_local_implementation_complete_review_pending`') -or
     $tracker.Contains('**Implementation status:** `unit7b_review_remediation_implemented_local_gate_blocked`') -or
-    $tracker.Contains('**Implementation status:** `unit7b_review_candidate_commit_authorized_luna_review_pending`'))
+    $tracker.Contains('**Implementation status:** `unit7b_review_candidate_commit_authorized_luna_review_pending`') -or
+    $tracker.Contains('**Implementation status:** `unit7b_review_candidate_pushed_luna_review_pending`'))
 $expectedMigrationNames = @($migrationNames)
 if ($wu1AppliedStatus) { $expectedMigrationNames += $draftMigrationNames }
 $appliedPhase9Migrations = if ($wu1AppliedStatus) {
