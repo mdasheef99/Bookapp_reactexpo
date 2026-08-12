@@ -4,22 +4,23 @@
 **Implementation status:** `unit7b_corrected_review_candidate_ready_luna_review_pending`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-13
-**Current milestone:** Sol Light corrections are locally complete; corrected review candidate is ready for Luna xhigh review
+**Current milestone:** Finding-001 is closed; the bounded latest-subscription-order follow-up is integrated and ready for the exact-SHA release gate
 **Active work unit:** `unit7b_luna_xhigh_review`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Sol Light findings 001–006 are `CLOSED`. Corrected Unit 7B disposable tests pass 27/27; actual database→Owner Edge runtime→client decoder→query/UI passes 4/4; focused Jest passes 25/25; Unit 7A plus dispatcher passes 42/42; real PostgreSQL M01–M40 upgrade and active-limit/RT05/RT07/RT12/Owner-reauthorization concurrency pass; Deno, TypeScript, four worker builds, entrypoint smoke, and deployment-runtime validation pass. Full PGlite is 281/282 on the unchanged metadata fixture; broad Jest passes 2010 real tests and fails only six unchanged empty collectors. Docker is `NOT_RUN/BLOCKED_ENVIRONMENT` because the installed engine is unresponsive. M39 is byte-unchanged.
-**Next authorized action:** actual Luna xhigh full independent review of the verified Unit-7A-integrated base through the corrected candidate. Review remains `NOT APPROVED`. Stop before connected exact-project preflight/application, deployment/live proof, Unit 7C, or main integration.
+**Last completed:** Sol Light findings 001–006 are `CLOSED`. The prior corrected Unit 7B disposable baseline was 27/27; this bounded follow-up correction matrix is 6/6, focused migration assertions are 4/4, and Owner-publication/discovery/worker suites are 20/20. The actual database→Owner Edge runtime→client decoder→query/UI proof remains 4/4; prior Unit 7A, deferred-gate, PGlite, broad-Jest, and Docker dispositions are unchanged. M39 is byte-unchanged.
+**Next authorized action:** Run the exact-SHA release gate on the final Unit 7B feature-branch commit, then the separately authorized deferred gates. Stop before connected exact-project preflight/application, deployment/live proof, Unit 7C, or main integration.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; reviewed M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit` with no retry and zero migration-created business effects.
 **Scope boundary:** This session is limited to Unit 7B local review remediation, M40, local/disposable verification, required documentation, and a gated Unit 7B-only commit/push. Unit 7C, customer commerce, unrelated features, and every connected/live action remain excluded.
 **Implementation authority:** the Owner's approved Sol Light matrix authorizes local correction, explicit commit, and push of the Unit 7B review candidate. Real PostgreSQL and Deno now pass on corrected source; Docker remains `NOT_RUN/BLOCKED_ENVIRONMENT` and is still required before live release. This authority does not permit connected Supabase/Storage access, migration application, deployment, provider calls, or live publication/discovery effects.
 **Migration creation/application authority:** Local M40 may be completed and verified only in disposable environments. It has not been preflighted against or applied to the connected project. No connected database/Storage mutation, Edge/worker deployment, live publication, or main integration is authorized.
 **Current gate:** `UNIT_7A_LIVE_PROOF_PASS`; `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY` is CLEARED. Edge version 5 is ACTIVE, the first commit created exactly one private inventory row, and the exact replay returned the canonical result with zero new effects. Native Unit 6F validation remains `NOT_RUN`/`UNRESOLVED`, not PASS, and Unit 7B/7C remain separately gated.
 
-**Unit 7B independent-review status:** Sol Light findings 001–006 are locally
-`CLOSED`; factual evidence finding 008 is updated. Review remains `NOT
-APPROVED` until Luna xhigh performs the full independent review. Real
-PostgreSQL and Deno pass on corrected source. Docker container smoke remains
+**Unit 7B independent-review status:** `FINDING_001: CLOSED`; Sol Light findings
+001–006 are `CLOSED`, the bounded latest-subscription-order follow-up is
+integrated, and factual evidence finding 008 is updated. The correction status
+is `UNIT_7B_CORRECTIONS_PASS_READY_FOR_EXACT_SHA_RELEASE_GATE`. Real PostgreSQL
+and Deno pass on corrected source. Docker container smoke remains
 `NOT_RUN/BLOCKED_ENVIRONMENT` and `REQUIRED_BEFORE_LIVE`; it does not become a
 PASS by deferral.
 Historical continuity marker: **Next authorized action:** narrow independent review only of the four explicit-extension edits, local Deno graph proof, semantic equivalence, and focused regressions.
@@ -1236,3 +1237,21 @@ provider fallback, or create global alias authority.
 - Next authorized action: Unit 7B publication requires separate authorization.
   Unit 7C post-commit edits, manual RPC fallback, and merge to `main` remain
   separately gated; no further Unit 7A runtime action is authorized.
+
+### 2026-08-13 — bounded Unit 7B latest-subscription correction
+
+- Scope: correct only the shared M40 subscription eligibility predicate and add
+  the stale-history regression. No other Unit 7B behavior was changed.
+- Red-first: the new CORR-001 case failed when the latest subscription was
+  `cancelled` and an older row was `trialing`; public detail remained visible.
+- Correction: the shared predicate now selects the latest subscription by
+  `updated_at DESC, id DESC` and requires its status to be allowed. The same
+  primitive covers publication and public discovery.
+- Verification: correction matrix **6/6**; migration assertions **4/4**;
+  Owner-publication, discovery, and worker suites **20/20**; `git diff --check`
+  PASS.
+- External state: no Supabase access, migration application, deployment, or live
+  proof occurred. The correction commit is integrated on the feature branch;
+  pre-existing `docs/codemap/` remains untouched.
+- Next authorized action: exact-SHA release verification; connected preflight and
+  live release gates remain separately unauthorized.

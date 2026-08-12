@@ -352,9 +352,11 @@ BEGIN
     SELECT 1 FROM public.marketplace_localities l
     WHERE l.id=v_store.locality_id AND l.is_pilot_enabled
   ) THEN RETURN 'pilot_locality'; END IF;
-  IF NOT EXISTS(SELECT 1 FROM public.store_subscriptions s
-    WHERE s.store_id=p_store_id AND s.status IN
-      ('trialing','active','past_due','grace_period'))
+  IF NOT COALESCE((SELECT s.status IN
+      ('trialing','active','past_due','grace_period')
+    FROM public.store_subscriptions s
+    WHERE s.store_id=p_store_id
+    ORDER BY s.updated_at DESC,s.id DESC LIMIT 1),false)
   THEN RETURN 'subscription'; END IF;
   SELECT e.limit_value INTO v_limit FROM public.store_entitlements e
     WHERE e.store_id=p_store_id AND e.feature_key='active_listing_limit'

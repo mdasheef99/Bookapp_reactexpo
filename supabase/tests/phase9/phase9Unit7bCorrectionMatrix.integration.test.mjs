@@ -38,6 +38,26 @@ test('CORR-001 publication and discovery share rollout eligibility and fail clos
   assert.equal(hidden, null);
 }));
 
+test('CORR-001 latest subscription status overrides stale allowed history', () => withDb(async (db) => {
+  const f = await seedPublicationInventory(db);
+  const published = await setPublication(db, f);
+  await resetActor(db);
+  await db.exec(`
+    UPDATE public.store_subscriptions
+      SET status='cancelled', updated_at='2026-08-13 12:00:00+00'
+      WHERE store_id='${f.storeId}';
+    INSERT INTO public.store_subscriptions(store_id,status,updated_at)
+      VALUES('${f.storeId}','trialing','2026-08-12 12:00:00+00');
+  `);
+  assert.equal(await scalar(db, `SELECT public.phase9_public_listing_detail_v2('${published.listingId}')`), null);
+  assert.deepEqual(await scalar(db, `SELECT public.phase9_public_listing_search_v2(NULL,NULL,50)`), []);
+  await setActor(db, f.ownerId);
+  await setPublication(db, f, { intent: 'pause', intentVersion: 2,
+    idempotencyKey: `pause-${randomUUID()}` });
+  await assert.rejects(setPublication(db, f, { intentVersion: 3,
+    idempotencyKey: `republish-${randomUUID()}` }), /P9_PUBLICATION_INELIGIBLE/u);
+}));
+
 test('CORR-002 Owner publication preserves platform moderation and blocking flags', () => withDb(async (db) => {
   let f;
   for (const moderation of ['pending', 'blocked', 'prohibited']) {

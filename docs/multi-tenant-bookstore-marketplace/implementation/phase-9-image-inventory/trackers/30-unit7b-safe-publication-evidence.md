@@ -1,16 +1,30 @@
 # Unit 7B Safe Publication — Local Implementation Evidence
 
-**Status:** `corrected_review_candidate_ready_luna_review_pending`
+**Status:** `unit7b_corrections_pass_ready_for_exact_sha_release_gate`
 **Date:** 2026-08-13
 **Authority:** frozen [Unit 7B SDD](../work-units/07b-publication-sdd.md)
 
 ## Current Sol Light correction verdict
 
-The prior independent review returned `NOT APPROVED`; Luna xhigh has not yet
-reviewed the candidate. The approved Sol Light correction matrix is now
-implemented locally. Findings 001–006 are `CLOSED`, and factual evidence
-finding 008 is updated after functional verification. This is review-candidate
-readiness, not review approval or live-release approval.
+The bounded Finding-001 follow-up is verified and integrated on the Unit 7B
+feature branch. Findings 001–006 are `CLOSED`, and factual evidence finding
+008 is updated after functional verification. This is correction closure and
+exact-SHA release-gate readiness, not live-release approval.
+
+## 2026-08-13 bounded subscription-order follow-up
+
+Focused independent verification found that CORR-001's shared eligibility
+primitive treated any historical allowed subscription as current. The bounded
+local correction now evaluates the latest subscription by `updated_at DESC,
+id DESC` and fails closed when that row is not an allowed status. The new
+red-first case uses a latest `cancelled` row plus an older `trialing` row and
+proves both public discovery suppression and republish rejection.
+
+- Correction matrix: **6/6**.
+- Focused migration assertions: **4/4**; Owner-publication, discovery, and
+  worker suites: **20/20**.
+- No connected Supabase access, migration application, deployment, or live proof
+  occurred. The correction commit is integrated on the feature branch.
 
 ## Historical independent review verdict
 
@@ -74,9 +88,8 @@ application, deployment, live proofs, Unit 7C, and main integration remain
 
 ## Next action
 
-Obtain Luna xhigh review of the committed and pushed scoped Unit 7B candidate.
-Review remains `NOT APPROVED` until Luna passes. Stop before exact-project
-preflight or any live mutation.
+Run the exact-SHA release gate on the integrated scoped Unit 7B candidate.
+Stop before exact-project preflight or any live mutation.
 
 ## 2026-08-12 remediation verification update
 
@@ -143,7 +156,7 @@ post-correction SHA before the Stage J exact-SHA release gate. Review remains
 
 | Finding | Status | Corrected evidence |
 |---|---|---|
-| 001 rollout/publication/discovery eligibility | `CLOSED` | One server-owned primitive covers store lifecycle, established subscription statuses, entitlement, pilot locality, marketplace enablement, and allowlist; discovery fails closed after eligibility loss; store-row serialization protects active-listing admission. |
+| 001 rollout/publication/discovery eligibility | `CLOSED` | One server-owned primitive covers store lifecycle, latest-row subscription status, entitlement, pilot locality, marketplace enablement, and allowlist; the red-first stale-subscription case proves discovery fails closed and republish is rejected; store-row serialization protects active-listing admission. |
 | 002 platform moderation authority | `CLOSED` | Conflict refresh preserves retained moderation; pending, blocked, prohibited, and unresolved flags deny republish without mutation; resolved platform authority permits publish. |
 | 003 discovery regression | `CLOSED` | Exact ISBN-10/13 and the established active-variant helper are retained; server selects complete groups before limiting; deterministic group ordering and storefront cardinality prevent client-side pre-group truncation. Existing M07 cursor/variant database regressions remain green in the full Phase 9 run. |
 | 004 media eligibility-loss refresh/retraction | `CLOSED` | Selection and targeted link/asset refresh share the complete public-media predicate; critical asset changes and link move/removal retract stale primary/damage projection. |

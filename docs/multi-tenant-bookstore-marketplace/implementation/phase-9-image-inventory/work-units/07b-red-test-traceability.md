@@ -54,7 +54,9 @@ red tests; they do not replace any row above.
 - `phase9Unit7bCorrectionMatrix.integration.test.mjs` proves shared rollout and
   post-publication fail-closed behavior, moderation preservation/restoration,
   ISBN/server-group discovery, complete targeted media retraction, and exact
-  successful worker replay after lease clearance.
+  successful worker replay after lease clearance. Its CORR-001 latest-row case
+  also proves that a newer cancelled subscription overrides older allowed
+  subscription history for both discovery and republish.
 - `unit7bCrossLayerDatabaseHarness.mjs` and
   `publicationContractIntegration.test.tsx` pass disposable M40 RPC results
   through production Owner Edge runtime/error mapping, captured transport, the
