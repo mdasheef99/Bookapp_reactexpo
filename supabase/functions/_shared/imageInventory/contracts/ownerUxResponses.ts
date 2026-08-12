@@ -171,6 +171,7 @@ const candidateDetail = z.object({
   }).strict(),
   allowedActions: z.array(z.enum([
     'save_review', 'mark_false', 'open_variant_review', 'add_missed', 'view_readiness',
+    'add_to_inventory',
   ])),
   updatedAt: timestamp,
 }).strict();

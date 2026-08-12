@@ -1,7 +1,92 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`; **last updated:** 2026-08-12
+**Status:** `unit7a_live_proof_blocked_by_ui_availability`; **last updated:** 2026-08-12
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`. The frozen create-only contract is implemented at reviewed SHA `e2437f18`; M39 is live as `20260812003419`. The sole authorized `phase9-owner-ingestion` deployment attempt failed before activation because a transitive import omitted `.ts`. No retry or repair occurred, deployed version 3 remains ACTIVE, business state is unchanged, and controlled live proof remains blocked. See [tracker 29](./29-unit7a-create-only-commit-evidence.md).
+**Active work unit:** `unit7a_controlled_live_owner_proof_ui_blocked`. The frozen create-only contract is implemented at reviewed SHA `e2437f18`; M39 is live as `20260812003419`; and corrected Owner Edge version 4 is ACTIVE with ID `f8aec89f-ae2a-431a-8a97-5775a2405b90`. The authenticated Owner UI selected an eligible reviewed candidate, but candidate detail failed twice before Add to Inventory could be exposed. No commit, replay, manual RPC, or business mutation occurred. See [tracker 29](./29-unit7a-create-only-commit-evidence.md).
+
+Historical continuity markers (status and migration ledger are immutable):
+**Status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`;
+**Active work unit:** `unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`;
+M24-M30 live identifiers `20260730022442`, `20260730022524`,
+`20260730022559`, `20260730022636`, `20260730022713`, and
+`20260801093048 marketplace_phase9_unit6e_review_corrections` remain recorded
+below and unchanged.
+
+### 2026-08-12 - New scan review save and UI proof stop
+
+- The user authorized saving new candidate
+  `5b8a7220-d460-40fc-ad5c-330c84d69903` through the authenticated Owner UI
+  with private intent, quantity `1`, and invented price `250000` paise.
+- Exact-project readback confirms the review save succeeded: candidate state
+  `ready`, disposition `reviewed`, `review_ready=true`, review version `1`,
+  metadata revision `4`, and no committed inventory ID.
+- The scan summary exposed “Ready for next step,” but the candidate-detail
+  route failed on initial load and exact retry. Add to Inventory was never
+  exposed, so Unit 7A commit/replay was not attempted.
+- Read-only final state remains inventory `5`, committed total `0`, Unit 7A
+  idempotency/audit/event `0/0/0`, inventory-media links `0`, and five private
+  inventory rows. Verdict: `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY`.
+
+### 2026-08-12 - Fresh image upload observation
+
+- User-started session `166a20cb-c919-4e06-8e4a-1cd53e4ef393` accepted one
+  image through the Owner flow. The media-validation job retried once, then
+  final read-only readback showed input state `skipped`,
+  `quality_reason=P9_OWNER_REMOVED`, job status `cancelled`, and attempt
+  count `2/5`.
+- The session has zero candidates and zero commits. No Unit 7A inventory
+  command was issued. The removed input remains excluded from further proof
+  unless a new explicit target decision authorizes a new upload.
+
+Historical pre-correction active work unit marker preserved for continuity:
+`unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`.
+Historical status marker: **Status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`.
+
+### 2026-08-12 - Fresh image completed with two review-needed candidates
+
+- The same session later accepted a second image and completed media/vision
+  processing successfully. It now reports two candidates: `Individuals` by
+  `P. F. Strawson` and `Thinking, Fast and Slow` by Daniel Kahneman.
+- Exact-project readback shows both candidates `state=ready` with
+  `review_ready=false`, and the session has two inputs, two candidates, and
+  zero commits. The first review screen loads matched metadata but price and
+  Owner confirmations are still required. No review or inventory write was
+  made for these fresh candidates.
+
+### 2026-08-12 - Fresh candidate saved; inventory step unavailable
+
+- Candidate `f6266e3a-e920-4fa0-a993-c02c739f5108` (`Individuals`) was saved
+  privately through the Owner UI with quantity `1` and price `250000` paise.
+- Exact-project readback confirms `state=ready`, `reviewed`,
+  `review_ready=true`, review version `1`, and no committed inventory ID.
+- The scan summary exposed “Ready for next step,” but candidate detail failed
+  on initial load and exact retry. Add to Inventory was never exposed; final
+  inventory remains `5`, committed total `0`, and Unit 7A counters remain
+  `0/0/0`.
+
+### 2026-08-12 - Unit 7A corrected deployment and controlled live-proof stop
+
+- User-authorized scope was limited to one authenticated Owner UI commit and an
+  exact same-command replay; no code, migration, manual RPC, Unit 7B/7C, or
+  unrelated deployment action was taken.
+- Read-only exact-project preflight confirmed M39 exactly once, the expected
+  Unit 7A ACL/M05 revocation, and baseline inventory/listing `5/5`, candidates
+  `18 ready/36 needs_review/1 failed`, committed total `0`, Unit 7A
+  idempotency/audit/event `0/0/0`, and inventory-media links `0`.
+- `phase9-owner-ingestion` version 4 is ACTIVE with deployment ID
+  `f8aec89f-ae2a-431a-8a97-5775a2405b90`; deployment attempts are `1/1`.
+- The real authenticated Owner Browser path selected existing eligible reviewed
+  candidate `d61d2193-4674-49d1-ae09-aed120dfe261` (`q=1`, candidate state
+  `ready`, `reviewed`, `review_ready=true`). Candidate detail failed twice;
+  Add to Inventory was never exposed, so the primary commit and exact replay
+  were not run.
+- Final read-only readback showed no business effect: candidate remained
+  `ready`, inventory/listings remained `5/5`, committed total remained `0`,
+  Unit 7A idempotency/audit/event remained `0/0/0`, and inventory-media links
+  remained `0`.
+- Verdict: `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY`.
+- Next authorized action: restore the authenticated Owner candidate-detail/Add-
+  to-Inventory UI path, then resume only the one commit followed by exact
+  same-command replay. Manual RPC and additional deployment remain excluded.
 
 ### 2026-08-12 — Unit 7A controlled Owner Edge deployment attempt
 
@@ -1752,3 +1837,11 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
   publication effect, stage, commit, push, or PR occurred.
 - Detailed evidence and the exact next gate are in
   [tracker 29](./29-unit7a-create-only-commit-evidence.md).
+
+## Unit 7A live proof PASS - 2026-08-12
+
+- Live proof complete: one Owner UI commit plus exact same-command replay,
+  with zero replay effects. Detailed evidence is in
+  [tracker 29](./29-unit7a-create-only-commit-evidence.md).
+- Implementation status: `unit7a_live_proof_pass`.
+- Next gate: Unit 7B publication, separately gated.

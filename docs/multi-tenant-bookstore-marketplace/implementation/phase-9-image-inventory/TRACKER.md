@@ -1,20 +1,23 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit7a_create_only_contract_frozen`
-**Implementation status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`
+**Implementation status:** `unit7a_live_proof_pass`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-12
-**Current milestone:** the resolution-only Owner Edge import correction is locally Deno-checked and regression-verified; redeployment remains not run
-**Active work unit:** `unit7a_owner_edge_bundle_fix_narrow_review_pending`
+**Current milestone:** `phase9-owner-ingestion` version 5 is ACTIVE; one authenticated Owner Unit 7A commit and the exact same-command replay both passed with zero replay side effects
+**Active work unit:** `unit7a_live_proof_complete_unit7b_separately_gated`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** exact-project M39 preflight, genuine PostgreSQL 17 independent-connection contention, one controlled M39 application, and immediate function/ACL/M05/zero-business-effect readback all passed. Detailed evidence is in [tracker 29](./trackers/29-unit7a-create-only-commit-evidence.md).
-**Next authorized action:** narrow independent review only of the four explicit-extension edits, local Deno graph proof, semantic equivalence, and focused regressions. Redeployment and live Add-to-Inventory/exact replay remain unauthorized and were not run.
+**Last completed:** exact-project M39 preflight/application/readback, `phase9-owner-ingestion` version 5 deployment, one authenticated Owner UI commit, and exact same-command replay all passed. Detailed evidence is in [tracker 29](./trackers/29-unit7a-create-only-commit-evidence.md).
+**Next authorized action:** no further Unit 7A runtime action is authorized. Unit 7B publication is the next separately gated work unit; Unit 7C post-commit edits, manual RPC fallback, and merge to `main` also remain separately gated.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; reviewed M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit` with no retry and zero migration-created business effects.
 **Scope boundary:** This session implements only Unit 7A create-only commit, server-held reviewed quantity, one-to-one provenance, false-only skip semantics, private inventory, and the Unit 6 duplicate-contract transition. Unit 7B publication, Unit 7C editing, and every live/external action remain excluded.
 **Implementation authority:** the owner's 2026-08-12 Unit 7A session authorized local tests, production code, one forward migration file, local/ephemeral database execution, and documentation. It did not authorize Supabase/Storage mutation, deployment, provider calls, inventory/listing/publication effects, or Git staging/commit/push.
-**Migration creation/application authority:** M39 creation, preflight, real PostgreSQL contention proof, controlled application, and post-apply readback are complete. No further migration or database/data mutation is authorized; only the traced Unit 7A Owner Edge deployment is authorized before a separately gated live proof.
-**Current gate:** `UNIT_6_AUTOMATIC_PIPELINE_PASS_NATIVE_VALIDATION_DEBT_DEFERRED`; M38 automatic proof passed media, vision/Gemini, metadata, and Owner-review handoff with no inventory/listing effects. Native camera/gallery parity, recovery/reconnect, 15-card representative-device performance, offline/reconnect, accessibility/large text, and low-end Android resource/performance remain `NOT_RUN`/`UNRESOLVED`, not PASS. Deployment and any fresh post-deployment Android proof remain separately gated; the secondary deployed-Edge `P9_SINGLE_IMAGE_LIMIT` mapping drift is unchanged.
+**Migration creation/application authority:** M39 creation, preflight, real PostgreSQL contention proof, controlled application, and post-apply readback are complete. The authorized version 5 deployment and one Owner UI commit/exact replay are complete. No further migration or database/data mutation is authorized; Unit 7B/7C, manual RPC fallback, and merge remain separately gated.
+**Current gate:** `UNIT_7A_LIVE_PROOF_PASS`; `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY` is CLEARED. Edge version 5 is ACTIVE, the first commit created exactly one private inventory row, and the exact replay returned the canonical result with zero new effects. Native Unit 6F validation remains `NOT_RUN`/`UNRESOLVED`, not PASS, and Unit 7B/7C remain separately gated.
+Historical continuity marker: **Next authorized action:** narrow independent review only of the four explicit-extension edits, local Deno graph proof, semantic equivalence, and focused regressions.
+**Historical implementation status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`
+**Historical active work unit:** `unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
 
@@ -30,9 +33,12 @@ non-actionable/non-blocking before enablement. The normative authority is
 [Unit 7A create-only inventory commit](./work-units/07a-create-only-inventory-commit-sdd.md).
 The reviewed implementation and forward M39 migration are complete. M39 is
 live exactly once as `20260812003419`; post-apply source/ACL/M05 and zero-
-business-effect readback passed. Owner Edge deployment is the active authorized
-gate; authenticated live mutation proof remains separate. M09/global historical quantity
-strengthening is not a Unit 7A prerequisite.
+business-effect readback passed. Owner Edge version 5 is ACTIVE with JWT
+verification and the `add_to_inventory` response-contract fix. The controlled
+authenticated live mutation proof is PASS: one Owner UI commit plus exact
+same-command replay created one private inventory row and produced zero replay
+side effects. M09/global historical quantity strengthening is not a Unit 7A
+prerequisite.
 
 ## Current Unit 6 closure authority — 2026-08-12
 
@@ -1191,3 +1197,35 @@ provider fallback, or create global alias authority.
 - Next authorized action and gate: review the complete local Unit 7A diff. M39
   application, Edge deployment, authenticated live smoke, staging, commit, and
   push require separate explicit authorization.
+
+### 2026-08-12 — Unit 7A controlled live proof PASS
+
+- `phase9-owner-ingestion` version 5 is ACTIVE. The deployed bundle includes
+  `add_to_inventory` in the `allowedActions` enum in
+  `supabase/functions/_shared/imageInventory/contracts/ownerUxResponses.ts`,
+  resolving the `OwnerUxResponseContractError`/`P9_INTERNAL_ERROR` that had
+  prevented candidate detail from exposing Add to Inventory.
+- At 04:41 UTC, the authenticated Owner committed candidate
+  `f6266e3a-e920-4fa0-a993-c02c739f5108` (`Individuals` by P. F. Strawson) from
+  session `166a20cb-c919-4e06-8e4a-1cd53e4ef393`. The resulting inventory row
+  is `5f5a2bc9-d702-4aeb-af55-2a9df6c16478`, with one-to-one candidate
+  provenance, `entry_method=image_extraction`, draft/private visibility and
+  publication status, price `250000` minor units, and quantity buckets
+  `1/1/0/0/0`. Candidate state/outcome is `committed`/`committed_private`, and
+  session `committed_count=1`.
+- At approximately 05:00 UTC, the exact original command was replayed through
+  the deployed Edge as the authenticated Owner. The canonical response named
+  inventory `5f5a2bc9-d702-4aeb-af55-2a9df6c16478`, candidate version `3`,
+  inventory version `1`, and outcome `committed_private`.
+- Post-replay readback found one inventory row for the candidate, session
+  `committed_count=1`, one completed idempotency row, one audit log, and one
+  event. The replay created zero new effects. Verdict:
+  `UNIT_7A_LIVE_PROOF_PASS`; the
+  `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY` gate is cleared.
+- `Thinking, Fast and Slow` in the same session remains uncommitted
+  (`review_ready=false`) and is not part of this proof. Supabase reported an
+  existing RLS-disabled advisory for three registry/system tables; no
+  remediation was applied.
+- Next authorized action: Unit 7B publication requires separate authorization.
+  Unit 7C post-commit edits, manual RPC fallback, and merge to `main` remain
+  separately gated; no further Unit 7A runtime action is authorized.

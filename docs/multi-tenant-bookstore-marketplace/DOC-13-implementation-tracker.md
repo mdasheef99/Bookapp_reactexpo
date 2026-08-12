@@ -73,6 +73,45 @@ If implementation changes product or architecture behavior, update the relevant 
 ---
 ## 2. Current Status
 
+> **2026-08-12 Unit 7A live proof completion checkpoint (04:41–~05:00 UTC):**
+> `phase9-owner-ingestion` is ACTIVE as version 5. The deployed bundle contains
+> the `add_to_inventory` member in the `allowedActions` enum in
+> `supabase/functions/_shared/imageInventory/contracts/ownerUxResponses.ts`.
+> This resolved the `OwnerUxResponseContractError`/`P9_INTERNAL_ERROR` on
+> candidate detail and exposed Add to Inventory.
+>
+> At 04:41 UTC, the authenticated Owner clicked Add to Inventory for candidate
+> `f6266e3a-e920-4fa0-a993-c02c739f5108` (`Individuals` by P. F. Strawson) in
+> session `166a20cb-c919-4e06-8e4a-1cd53e4ef393`. The first live commit created
+> store_inventory row `5f5a2bc9-d702-4aeb-af55-2a9df6c16478` with
+> `created_from_candidate_id=f6266e3a-e920-4fa0-a993-c02c739f5108`,
+> `entry_method=image_extraction`, `visibility_status=draft`,
+> `publication_status=private`, `selling_price_minor=250000`, and quantities
+> `total/available/reserved/sold/removed=1/1/0/0/0`. Candidate readback is
+> `state=committed`, `committed_inventory_id=5f5a2bc9-d702-4aeb-af55-2a9df6c16478`,
+> `outcome=committed_private`; session `committed_count=1`.
+>
+> At approximately 05:00 UTC, the exact original command was replayed through
+> the deployed Edge as the authenticated Owner with
+> `idempotencyKey='commit:1779df52-2f35-413d-81f5-8c71769e176b'`,
+> `commandId='9a1182db-6e96-4c24-b484-dad57 909818'`,
+> `expectedCandidateVersion=2`, `expectedReviewVersion=1`, and
+> `expectedMetadataRevision=4`. The response was the canonical recorded result:
+> `inventoryId=5f5a2bc9-d702-4aeb-af55-2a9df6c16478`, `candidateVersion=3`,
+> `inventoryVersion=1`, `outcome=committed_private`. Post-replay readback found
+> one inventory row for the candidate, session `committed_count=1`, one completed
+> idempotency row, one audit log, and one event: zero new effects.
+>
+> New verdict: `UNIT_7A_LIVE_PROOF` is **PASS** and
+> `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY` is cleared. The controlled
+> proof is complete: one Owner UI commit plus exact replay, both verified with
+> zero side effects on replay. Unit 7B publication, Unit 7C post-commit edits,
+> manual RPC fallback, and merge to `main` remain separately gated. The same
+> session's `Thinking, Fast and Slow` candidate remains uncommitted
+> (`review_ready=false`) and is not part of this proof. Supabase also reported
+> an existing RLS-disabled advisory for three registry/system tables; no
+> remediation was applied.
+
 > **2026-08-12 current authority reconciliation — Unit 6 / Unit 7 sequencing:**
 > The automatic/functional Unit 6 pipeline is **PASS**: M38 automatic proof
 > completed media, vision/Gemini, metadata, and Owner-review handoff, with no
@@ -134,6 +173,61 @@ If implementation changes product or architecture behavior, update the relevant 
 > deployment occurred. Owner Edge version 3 remains ACTIVE with JWT verification;
 > pre/post inventory, listing, candidate, session, idempotency, audit, event,
 > media, and publication state is identical. Live Unit 7A proof remains blocked.
+
+> **2026-08-12 Unit 7A corrected Edge deployment and controlled-proof stop:**
+> the corrected `phase9-owner-ingestion` bundle is active as version 4 with
+> deployment ID `f8aec89f-ae2a-431a-8a97-5775a2405b90`; the deployment attempt
+> budget is exhausted at `1/1`. Exact-project read-only preflight and readback
+> confirmed M39 exactly once, the authenticated-only Unit 7A RPC ACL, M05
+> revocation, and the unchanged zero-effect baseline. The authenticated Codex
+> Browser Owner path selected existing eligible reviewed candidate
+> `d61d2193-4674-49d1-ae09-aed120dfe261` with reviewed quantity `q=1`, but its
+> candidate-detail route failed twice and never exposed Add to Inventory. No
+> RPC fallback, commit, replay, or business mutation occurred; final readback
+> remains inventory/listings `5/5`, candidates `18 ready/36 needs_review/1
+> failed`, committed total `0`, Unit 7A idempotency/audit/event `0/0/0`, and
+> inventory-media links `0`. Exact verdict:
+> `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY`. Next: restore the functioning
+> authenticated Owner candidate-detail/Add-to-Inventory path, then resume only
+> the authorized one commit followed by exact same-command replay. Unit 7B/7C
+> and manual RPC remain out of scope.
+
+> **2026-08-12 latest Owner review-save result:** after the new one-image scan,
+> the user authorized saving candidate
+> `5b8a7220-d460-40fc-ad5c-330c84d69903` with an invented private price of
+> `250000` paise. The save path succeeded: the candidate is `ready`,
+> `reviewed`, `review_ready=true`, quantity `1`, and has no committed
+> inventory ID. Opening its next-step detail failed on the initial load and
+> exact retry, so Add to Inventory was never exposed. Read-only readback shows
+> inventory `5`, session committed total `0`, Unit 7A idempotency/audit/event
+> `0/0/0`, and all five existing inventory rows still private. The latest
+> gate remains `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY`.
+
+> **2026-08-12 fresh-image observation:** the user-started session
+> `166a20cb-c919-4e06-8e4a-1cd53e4ef393` accepted one image, then media
+> validation moved to a retryable failure. Final read-only readback shows the
+> input `skipped` with `quality_reason=P9_OWNER_REMOVED`, its job cancelled at
+> attempt `2/5`, and zero candidates/commits. This observation did not change
+> the Unit 7A proof verdict; the removed input must not be revived without a
+> new explicit target decision.
+
+> **2026-08-12 fresh-processing continuation:** the same session later
+> accepted a second image and completed successfully with two candidates:
+> `Individuals` / `P. F. Strawson` and `Thinking, Fast and Slow` / `Daniel
+> Kahneman`. Both are `state=ready` but `review_ready=false`. The first review
+> screen loads matched metadata and remains private, but price and Owner
+> confirmations are still required; no new review or inventory write was made.
+
+> **2026-08-12 latest fresh review action:** candidate
+> `f6266e3a-e920-4fa0-a993-c02c739f5108` (`Individuals`) was saved privately
+> with quantity `1` and price `250000` paise. Server readback confirms
+> `ready`/`reviewed`/`review_ready=true`, but its next-step detail failed twice
+> and never exposed Add to Inventory. Inventory remains `5`; Unit 7A
+> idempotency/audit/event remains `0/0/0`; no inventory commit occurred.
+
+> Historical pre-correction status marker preserved for continuity:
+> `unit7a_edge_deployment_blocked_by_source_routing_mismatch`.
+> Historical phase-table status marker: | Phase 9: Image-to-LLM Inventory | `unit7a_edge_deployment_blocked_by_source_routing_mismatch` |
 
 > 2026-08-11 Phase 9 multilingual vision-response resilience correction:
 > user-supplied physical Android evidence closes the native FileSystem transport
@@ -754,7 +848,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit7a_edge_deployment_blocked_by_source_routing_mismatch` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7A evidence](./implementation/phase-9-image-inventory/trackers/29-unit7a-create-only-commit-evidence.md) | Unit 7A implementation is reviewed and M39 is live exactly once. The only authorized Owner Edge deployment attempt failed before activation on an extensionless transitive import; version 3 and all business state remain unchanged. Source correction/review and new deployment authorization are required before live proof. |
+| Phase 9: Image-to-LLM Inventory | `unit7a_live_proof_pass` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7A evidence](./implementation/phase-9-image-inventory/trackers/29-unit7a-create-only-commit-evidence.md) | Unit 7A implementation and M39 are reviewed/live exactly once; Owner Edge version 5 is ACTIVE with the `add_to_inventory` response-contract fix. One authenticated Owner UI commit and the exact same-command replay both passed with zero replay side effects. Unit 7B/7C, manual RPC fallback, and merge to `main` remain separately gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

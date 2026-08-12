@@ -1,14 +1,15 @@
 # Unit 7A Create-Only Inventory Commit Evidence
 
-**Status:** `edge_bundle_fix_locally_verified_narrow_review_pending`
+**Status:** `unit7a_live_proof_blocked_by_ui_availability`
 **Date:** 2026-08-12
 **Branch:** `codex/phase9-unit7a-create-only-inventory`
 **Base:** `origin/main` at `f2ccc6a20f065ec000fd3a3ac89ba4f014b52cb4`
 **Authority:** Unit 7A local implementation, load-bearing red tests, forward
 migration-file creation, local/ephemeral database execution, Edge/mobile
-integration, verification, and documentation closeout. Live migration
-application, Supabase/Storage mutation, deployment, Git staging/commit/push,
-Unit 7B publication, and Unit 7C inventory editing were excluded.
+integration, exact-project migration application, corrected Owner Edge
+deployment, one authenticated Owner UI commit followed by exact replay when
+available, verification, and documentation closeout. Manual RPC, additional
+deployment, Unit 7B publication, and Unit 7C inventory editing are excluded.
 
 ## Implemented scope
 
@@ -228,3 +229,124 @@ Focused verification after correction:
 **Next authorized action:** narrow independent review limited to the four
 import-resolution edits, local Deno/import-graph proof, semantic equivalence,
 and focused regressions. Redeployment and Add to Inventory remain unauthorized.
+
+## Controlled live Unit 7A proof - 2026-08-12
+
+- User authorization covered exactly one real authenticated Owner UI commit
+  followed by exact same-key/same-command replay. No manual RPC fallback,
+  duplicate/changed-command test, Unit 7B/7C action, or code/migration change
+  was authorized or performed.
+- Read-only preflight confirmed the exact project, M39 exactly once,
+  `phase9-owner-ingestion` version 4 ACTIVE with deployment ID
+  `f8aec89f-ae2a-431a-8a97-5775a2405b90`, attempt count `1/1`, authenticated
+  execute allowed for the Unit 7A RPC, and M05 execution denied to API roles.
+- Existing eligible candidate selected through the real authenticated Owner
+  UI: `d61d2193-4674-49d1-ae09-aed120dfe261`, session
+  `0a5cfd15-b460-4022-a02a-cb42f8f3ff64`, state `ready`, disposition `reviewed`,
+  `review_ready=true`, candidate version `2`, review version `1`, metadata
+  revision `4`, reviewed quantity `q=1`, and no committed inventory ID.
+- The Owner UI candidate-detail route failed twice after selection. The
+  Add-to-Inventory action was never exposed, so neither the first commit nor
+  the exact replay was run. No business state changed.
+- Final read-only readback: inventory/listings `5/5`; candidates
+  `18 ready/36 needs_review/1 failed`; committed total `0`; Unit 7A
+  idempotency/audit/event counts `0/0/0`; inventory-media links `0`; all five
+  publication rows remained private. The chosen candidate remained `ready`
+  with no committed inventory ID.
+- Exact verdict: `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY`.
+- Next authorized action: restore the authenticated Owner candidate-detail/Add-
+  to-Inventory UI path, then resume only the one commit followed by exact
+  same-command replay. Manual RPC and another deployment are not authorized.
+
+## Latest controlled-proof update - 2026-08-12
+
+- The user authorized a private review save for new candidate
+  `5b8a7220-d460-40fc-ad5c-330c84d69903` with invented price `250000` paise;
+  the review used quantity `1`, Good condition, no damage, sellable copy, and
+  private publication intent.
+- The UI initially reported an unclear save result and offered “Retry same
+  save.” The exact retry was performed without changing the values. Read-only
+  server verification confirms the save succeeded: candidate state `ready`,
+  disposition `reviewed`, `review_ready=true`, review version `1`, metadata
+  revision `4`, and no committed inventory ID.
+- The scan summary then exposed “Ready for next step,” but candidate detail
+  failed on the initial load and exact retry. Add to Inventory was never
+  exposed, so the Unit 7A inventory commit and exact replay were not run.
+- Final read-only state: inventory `5`, marketplace listings `5`, committed
+  total `0`, Unit 7A idempotency/audit/event `0/0/0`, inventory-media links
+  `0`, and five private inventory rows. Exact verdict:
+  `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY`.
+
+## Fresh image upload observation - 2026-08-12
+
+- User-started session `166a20cb-c919-4e06-8e4a-1cd53e4ef393` accepted one
+  image, but media validation retried once and the final exact-project
+  readback showed input state `skipped` with `P9_OWNER_REMOVED`.
+- The corresponding `media_validate_sanitize` job is `cancelled` at attempt
+  `2/5`; the session has zero candidates and zero commits. No Unit 7A commit or
+  replay was issued. The removed input must not be revived without a new
+  explicit target decision.
+
+## Fresh image completed - 2026-08-12
+
+- The same session later accepted a second image and completed successfully,
+  producing two candidates: `Individuals` by P. F. Strawson and `Thinking,
+  Fast and Slow` by Daniel Kahneman.
+- Exact-project readback shows both candidates `state=ready`,
+  `review_ready=false`, and no committed inventory ID; session counts are two
+  inputs, two candidates, and zero commits.
+- The first review screen loads matched metadata (language `en`, published
+  `1990`, format `book`, `255` pages), but price and Owner confirmations are
+  still required. No new review or inventory write was made.
+
+## Latest fresh review save - 2026-08-12
+
+- Candidate `f6266e3a-e920-4fa0-a993-c02c739f5108` (`Individuals`) was saved
+  privately through the Owner UI with quantity `1` and price `250000` paise.
+- Exact-project readback confirms `state=ready`, `reviewed`,
+  `review_ready=true`, review version `1`, and no committed inventory ID.
+- Its “Ready for next step” candidate-detail route failed on initial load and
+  exact retry. Add to Inventory was never exposed. Final inventory remains
+  `5`, committed total `0`, Unit 7A idempotency/audit/event `0/0/0`, and no
+  Unit 7A commit or replay was issued.
+
+## Unit 7A controlled live proof PASS - 2026-08-12
+
+- `phase9-owner-ingestion` version `5` is ACTIVE. Its deployed bundle adds
+  `add_to_inventory` to the `allowedActions` enum in
+  `ownerUxResponses.ts`, resolving the `OwnerUxResponseContractError` /
+  `P9_INTERNAL_ERROR` that had hidden Add to Inventory.
+- First live Owner UI commit at 04:41 UTC used candidate
+  `f6266e3a-e920-4fa0-a993-c02c739f5108` (`Individuals`, P. F. Strawson) in
+  session `166a20cb-c919-4e06-8e4a-1cd53e4ef393`. It created
+  `store_inventory` row `5f5a2bc9-d702-4aeb-af55-2a9df6c16478` with
+  `created_from_candidate_id` set to the candidate, `entry_method=
+  image_extraction`, `visibility_status=draft`, `publication_status=private`,
+  `selling_price_minor=250000`, and quantities
+  `total/available/reserved/sold/removed=1/1/0/0/0`. Candidate readback is
+  `committed`/`committed_private`; session `committed_count=1`.
+- Exact replay at approximately 05:00 UTC used
+  `idempotencyKey=commit:1779df52-2f35-413d-81f5-8c71769e176b`,
+  `commandId=9a1182db-6e96-4c24-b484-dad57e909818`, and expected versions
+  `candidate/review/metadata=2/1/4`. The canonical response returned
+  `inventoryId=5f5a2bc9-d702-4aeb-af55-2a9df6c16478` (prefix
+  `5f5a2bc9`), `candidateVersion=3`, `inventoryVersion=1`, and
+  `outcome=committed_private`. Post-replay readback found one inventory row,
+  `committed_count=1`, one completed idempotency row, one audit, and one event:
+  zero new effects.
+- Verdict: `UNIT_7A_LIVE_PROOF_PASS`; the UI-availability gate is cleared.
+  `Thinking, Fast and Slow` remains uncommitted (`review_ready=false`). An
+  existing RLS-disabled advisory for three registry/system tables was noted;
+  no remediation was applied.
+- Next gate: Unit 7B publication, separately gated.
+
+## Latest fresh review save - 2026-08-12
+
+- Candidate `f6266e3a-e920-4fa0-a993-c02c739f5108` (`Individuals`) was saved
+  privately through the Owner UI with quantity `1` and price `250000` paise.
+- Exact-project readback confirms `state=ready`, `reviewed`,
+  `review_ready=true`, review version `1`, and no committed inventory ID.
+- Its “Ready for next step” candidate-detail route failed on initial load and
+  exact retry. Add to Inventory was never exposed. Final inventory remains
+  `5`, committed total `0`, Unit 7A idempotency/audit/event `0/0/0`, and no
+  Unit 7A commit or replay was issued.
