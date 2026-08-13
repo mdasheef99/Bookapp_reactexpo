@@ -826,12 +826,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **M41 Unit 7A quality handoff locally green; connected release pending** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **M41 live; Unit 7B runtime rollout blocked** |
 | Overall status | `in_progress` |
 | Last updated | 2026-08-13 |
-| Latest handoff | M41 corrects the accepted M39 -> M40 quality handoff defect without changing either live migration or weakening Unit 7B. The candidate-commit seam, deterministic backfill, negative metadata case, and quality-change retraction are locally green; M01-M40 are byte-unchanged. |
+| Latest handoff | M41 is live exactly once on the verified DEV project. Three provenance-qualified rows deterministically changed to `ready` and remained private; corrected triggers read back successfully. Unit 7B runtime deployment is blocked because Edge deployment transport returned HTTP 403 and the confirmed Render workspace has no publication-worker service. |
 | Current risk level | Real-PostgreSQL concurrency, Docker container smoke, and the Deno Edge graph remain `NOT_RUN`, deferred rather than skipped, and `REQUIRED_BEFORE_LIVE` on the final post-correction SHA before the Stage J exact-SHA release gate. The unrelated full PGlite result is 276/277 and repository Jest fails only six empty collectors after all 2012 real tests pass. |
-| Next recommended task | Commit/push M41, perform exact-project read-only preflight, apply M41 once, verify exact backfill effects, then resume the existing Unit 7B runtime and Publish -> Discover -> Pause -> Republish proof. |
+| Next recommended task | Restore the Supabase Edge deployment path and provision or identify the approved Render publication-worker service, then complete Publish -> Discover -> Pause -> Republish through the runtime path. |
 
 ---
 

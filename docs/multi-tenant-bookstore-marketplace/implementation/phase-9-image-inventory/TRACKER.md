@@ -1,15 +1,15 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit7a_create_only_contract_frozen`
-**Implementation status:** `unit7a_quality_handoff_m41_local_pass_connected_preflight_pending`
+**Implementation status:** `unit7a_quality_handoff_m41_live_unit7b_runtime_blocked`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-13
-**Current milestone:** The bounded Unit 7A -> Unit 7B quality handoff correction is locally green in forward migration M41; connected preflight/application and the resumed Unit 7B rollout remain pending.
+**Current milestone:** M41 is live and verified once; the resumed Unit 7B rollout is blocked at runtime deployment.
 **Active work unit:** `unit7a_quality_handoff_m41_release`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** Sol Light findings 001–006 are `CLOSED`. The prior corrected Unit 7B disposable baseline was 27/27; this bounded follow-up correction matrix is 6/6, focused migration assertions are 4/4, and Owner-publication/discovery/worker suites are 20/20. The actual database→Owner Edge runtime→client decoder→query/UI proof remains 4/4; prior Unit 7A, deferred-gate, PGlite, broad-Jest, and Docker dispositions are unchanged. M39 is byte-unchanged.
-**Next authorized action:** Commit and push the locally green M41 correction, perform read-only exact-project preflight, apply M41 once through the established migration workflow, verify the deterministic backfill, then resume the existing Unit 7B deployment/live proof. Unit 7C and main integration remain excluded.
+**Next authorized action:** Restore a working authenticated Supabase Edge deployment path and provision/identify the approved `phase9-publication-worker` Render service, then deploy and run Publish -> Discover -> Pause -> Republish. Unit 7C and main integration remain excluded.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; reviewed M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit` with no retry and zero migration-created business effects.
 **Scope boundary:** This session is limited to the approved Unit 7A -> Unit 7B quality handoff correction, one forward M41 migration, affected verification, exact-project M41 application, and resumption of the existing Unit 7B rollout. Unit 7C, unrelated inventory redesign, direct row repair, and main integration remain excluded.
 **Implementation authority:** the Owner explicitly approved local correction, commit/push, read-only connected preflight, one M41 application, exact backfill verification, and the existing Unit 7B deployment/live proof after M41 is verified live.
@@ -1275,3 +1275,27 @@ provider fallback, or create global alias authority.
 - Narrow M41 review: pass. Database/storage mutation: none at this checkpoint.
   The Owner reports M39/M40 live; connected readback remains required before
   applying M41 exactly once.
+
+### 2026-08-13 — M41 connected application and Unit 7B resume attempt
+
+- Exact project verified: `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`,
+  `ACTIVE_HEALTHY`. Migration history showed M39 once at `20260812003419`, M40
+  once at `20260813000040`, and M41 absent before application.
+- M41 applied exactly once through the Supabase migration workflow and read back
+  once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`.
+- Deterministic backfill changed exactly three candidate-derived DEV rows from
+  `missing_metadata` to `ready`: `461fa328-d95b-4573-965a-1eaa4be61ba1`,
+  `5844d7e2-86ee-4256-bd85-6030ff80ed6a`, and
+  `5f5a2bc9-d702-4aeb-af55-2a9df6c16478`. All remained draft/private. No
+  manual or metadata-import row was targeted.
+- Trigger readback confirmed the Unit 7A insert derivation trigger, quality
+  downgrade transition trigger, and M40-origin projection trigger including
+  `listing_quality_status`.
+- Runtime resume blocker: local Supabase CLI lacks an access token; the connected
+  Edge deployment API first rejected an incomplete dependency bundle and then
+  returned transport HTTP 403 while retrying the complete bundle. No successful
+  Edge version was reported. Render workspace `tea-d9j67irtqb8s739ritc0`
+  contains metadata, vision, and media services but no publication-worker
+  service. No new Render service was invented and no direct-SQL live proof was
+  substituted for the required runtime path.
+- Live Publish -> Discover -> Pause -> Republish: `NOT_RUN/BLOCKED_RUNTIME`.
