@@ -6,6 +6,11 @@ import {
 
 export const M39 = '20260812000039_marketplace_phase9_create_only_inventory_commit.sql';
 export const M40 = '20260812000040_marketplace_phase9_safe_publication.sql';
+export const M41 = '20260813000041_marketplace_phase9_unit7a_quality_handoff.sql';
+
+export async function applyUnit7aQualityHandoff(db) {
+  await db.exec(fs.readFileSync(migrationPath(M41), 'utf8'));
+}
 
 export async function createUnit7bDatabase() {
   const db = await createPhase9Database({

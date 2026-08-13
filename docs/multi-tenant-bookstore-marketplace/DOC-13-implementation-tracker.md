@@ -826,12 +826,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7B candidate pending Luna xhigh review** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **M41 Unit 7A quality handoff locally green; connected release pending** |
 | Overall status | `in_progress` |
-| Last updated | 2026-08-12 |
-| Latest handoff | Finding-001 is closed after the bounded latest-subscription precedence correction. The correction matrix is 6/6 and focused migration plus Owner-publication/discovery/worker suites are 24/24. The correction is integrated on the Unit 7B feature branch; the next gate is exact-SHA release verification. |
+| Last updated | 2026-08-13 |
+| Latest handoff | M41 corrects the accepted M39 -> M40 quality handoff defect without changing either live migration or weakening Unit 7B. The candidate-commit seam, deterministic backfill, negative metadata case, and quality-change retraction are locally green; M01-M40 are byte-unchanged. |
 | Current risk level | Real-PostgreSQL concurrency, Docker container smoke, and the Deno Edge graph remain `NOT_RUN`, deferred rather than skipped, and `REQUIRED_BEFORE_LIVE` on the final post-correction SHA before the Stage J exact-SHA release gate. The unrelated full PGlite result is 276/277 and repository Jest fails only six empty collectors after all 2012 real tests pass. |
-| Next recommended task | Run the exact-SHA release gate on the final Unit 7B feature-branch commit, then the three deferred gates before Stage J. Connected preflight/application, deployment, and live proof remain unauthorized. |
+| Next recommended task | Commit/push M41, perform exact-project read-only preflight, apply M41 once, verify exact backfill effects, then resume the existing Unit 7B runtime and Publish -> Discover -> Pause -> Republish proof. |
 
 ---
 

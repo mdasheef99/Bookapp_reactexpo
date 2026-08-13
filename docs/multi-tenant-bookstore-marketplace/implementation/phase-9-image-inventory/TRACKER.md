@@ -1,19 +1,19 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit7a_create_only_contract_frozen`
-**Implementation status:** `unit7b_corrected_review_candidate_ready_luna_review_pending`
+**Implementation status:** `unit7a_quality_handoff_m41_local_pass_connected_preflight_pending`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-13
-**Current milestone:** Finding-001 is closed; the bounded latest-subscription-order follow-up is integrated and ready for the exact-SHA release gate
-**Active work unit:** `unit7b_luna_xhigh_review`
+**Current milestone:** The bounded Unit 7A -> Unit 7B quality handoff correction is locally green in forward migration M41; connected preflight/application and the resumed Unit 7B rollout remain pending.
+**Active work unit:** `unit7a_quality_handoff_m41_release`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** Sol Light findings 001–006 are `CLOSED`. The prior corrected Unit 7B disposable baseline was 27/27; this bounded follow-up correction matrix is 6/6, focused migration assertions are 4/4, and Owner-publication/discovery/worker suites are 20/20. The actual database→Owner Edge runtime→client decoder→query/UI proof remains 4/4; prior Unit 7A, deferred-gate, PGlite, broad-Jest, and Docker dispositions are unchanged. M39 is byte-unchanged.
-**Next authorized action:** Run the exact-SHA release gate on the final Unit 7B feature-branch commit, then the separately authorized deferred gates. Stop before connected exact-project preflight/application, deployment/live proof, Unit 7C, or main integration.
+**Next authorized action:** Commit and push the locally green M41 correction, perform read-only exact-project preflight, apply M41 once through the established migration workflow, verify the deterministic backfill, then resume the existing Unit 7B deployment/live proof. Unit 7C and main integration remain excluded.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; reviewed M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit` with no retry and zero migration-created business effects.
-**Scope boundary:** This session is limited to Unit 7B local review remediation, M40, local/disposable verification, required documentation, and a gated Unit 7B-only commit/push. Unit 7C, customer commerce, unrelated features, and every connected/live action remain excluded.
-**Implementation authority:** the Owner's approved Sol Light matrix authorizes local correction, explicit commit, and push of the Unit 7B review candidate. Real PostgreSQL and Deno now pass on corrected source; Docker remains `NOT_RUN/BLOCKED_ENVIRONMENT` and is still required before live release. This authority does not permit connected Supabase/Storage access, migration application, deployment, provider calls, or live publication/discovery effects.
-**Migration creation/application authority:** Local M40 may be completed and verified only in disposable environments. It has not been preflighted against or applied to the connected project. No connected database/Storage mutation, Edge/worker deployment, live publication, or main integration is authorized.
+**Scope boundary:** This session is limited to the approved Unit 7A -> Unit 7B quality handoff correction, one forward M41 migration, affected verification, exact-project M41 application, and resumption of the existing Unit 7B rollout. Unit 7C, unrelated inventory redesign, direct row repair, and main integration remain excluded.
+**Implementation authority:** the Owner explicitly approved local correction, commit/push, read-only connected preflight, one M41 application, exact backfill verification, and the existing Unit 7B deployment/live proof after M41 is verified live.
+**Migration creation/application authority:** M39 and M40 are declared live and immutable by the Owner. M41 is the only authorized forward migration; its connected application remains gated on exact-project and migration-history preflight.
 **Current gate:** `UNIT_7A_LIVE_PROOF_PASS`; `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY` is CLEARED. Edge version 5 is ACTIVE, the first commit created exactly one private inventory row, and the exact replay returned the canonical result with zero new effects. Native Unit 6F validation remains `NOT_RUN`/`UNRESOLVED`, not PASS, and Unit 7B/7C remain separately gated.
 
 **Unit 7B independent-review status:** `FINDING_001: CLOSED`; Sol Light findings
@@ -1255,3 +1255,23 @@ provider fallback, or create global alias authority.
   pre-existing `docs/codemap/` remains untouched.
 - Next authorized action: exact-SHA release verification; connected preflight and
   live release gates remain separately unauthorized.
+
+### 2026-08-13 — Unit 7A quality handoff correction (M41 local gate)
+
+- Root cause accepted: M39's authoritative candidate commit omitted
+  `listing_quality_status`, so the Phase 3 default `missing_metadata` survived
+  and M40 correctly rejected publication.
+- M41 derives the status from the server-held row only for candidate-derived
+  image-extraction inventory. Incoming quality values are ignored; incomplete
+  metadata, price, condition, sellability, and damaged-copy media map to the
+  existing controlled statuses rather than being blindly marked `ready`.
+- The M40-origin projection trigger now observes quality changes. A published
+  row downgraded from `ready` transitions to blocked/private before refresh so
+  its projection retracts.
+- Backfill is deterministic and provenance-bounded; legacy manual and
+  metadata-import rows are excluded and no blanket `ready` update exists.
+- Verification: new seam 4/4; Unit 7A 13/13; Unit 7B 12/12; migration
+  assertions 7/7; `git diff --check` pass; M01-M40 byte-unchanged.
+- Narrow M41 review: pass. Database/storage mutation: none at this checkpoint.
+  The Owner reports M39/M40 live; connected readback remains required before
+  applying M41 exactly once.
