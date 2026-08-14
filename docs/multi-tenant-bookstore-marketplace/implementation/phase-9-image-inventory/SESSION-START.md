@@ -11,28 +11,27 @@ The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` �
 ## Current 2026-08-14 final resume overlay
 
 Current phase: Phase 9 — Image-Assisted Inventory.
-Planning/implementation status: Unit 7B live rollout PASS; ready for main
-authorization. Unit 6F native validation remains deferred
+Planning/implementation status: Unit 7B live rollout PASS and integrated into
+`main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`. Unit 6F native validation remains deferred
 `NOT_RUN`/`UNRESOLVED`, not PASS.
 Last completed milestone: M42 corrected the generated-author column projection;
 the live Unit 7B publication, pause, republish, transient retry, stale-intent
 fencing, and final connected-state proof completed successfully.
-Active work unit: `unit7b_main_authorization_preparation`.
-Next authorized action: review the exact branch diff and obtain explicit main
-integration authorization. Do not merge automatically.
+Active work unit: `phase9_post_unit7b_handoff`.
+Next authorized action: obtain explicit authorization for the next Phase 9
+scope. Do not start Unit 7C automatically.
 Blockers/gates: Unit 7C, production rollout, payments, Phases 7/8, and M09
 remain separately gated. Unrelated worktree changes must be preserved.
 Supabase mutation authority for this handoff: M42 is already live exactly once;
 no further migration or business-row mutation is authorized by this document.
 Files expected to change: current Phase 9 status/evidence documentation only
-until main-integration authorization is granted.
+until the next scope is explicitly authorized.
 
 Exact live target: Supabase project `Bookconnect_reactexpo`, ref
 `ahntbtktjjmvfosgkmgn`, host `https://ahntbtktjjmvfosgkmgn.supabase.co`,
-`ACTIVE_HEALTHY`, region `ap-southeast-2`. Branch
-`codex/phase9-unit7b-publication` is at HEAD
-`c3c2726f4ec1455aa7f8cc2f16d206a9021d3649`; preserve unrelated untracked
-`docs/codemap/` changes.
+`ACTIVE_HEALTHY`, region `ap-southeast-2`. The checked-out branch is `main` at
+merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`, integrating Unit 7B
+commit `9f3e646`; preserve unrelated untracked `docs/codemap/` changes.
 
 M39 (`20260812003419`), M40 (`20260813000040`), M41 (`20260813070104`), and
 M42 (`20260814013536 marketplace_phase9_generated_authors_projection`) are
@@ -56,7 +55,9 @@ and leaves the generated column database-owned.
   `unit7b_dev_rollout`; its value is now `10` (previously the temporary value
   `1`). The authoritative derivation passes for the other ready rows;
   `Café du Livre` remains blocked by `price` because its price is zero.
-- No Unit 7C action or main merge has occurred.
+- Main integration is complete at merge commit
+  `53edbddc9c5417b34cb169599e8282b162e183b3`. No Unit 7C action or additional
+  live migration/business-row mutation was performed.
 
 ## Historical 2026-08-14 pre-M42 resume overlay (superseded)
 

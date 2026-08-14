@@ -1,14 +1,15 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit7b_live_rollout_pass_ready_for_main_authorization`
+**Status:** `unit7b_main_integrated_next_scope_authorization`
 **Last updated:** 2026-08-14
-**Current handoff:** Unit 7B is live-verified and ready for main authorization.
+**Current handoff:** Unit 7B is live-verified and integrated into `main` at
+merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`.
 M39, M40, M41, and M42 are live exactly once; Owner Edge v7 and the Render
 publication worker are live/ready; and the connected Publish -> Discover ->
 Pause -> Republish, transient retry, stale-intent fencing, and final readback
 proof are recorded. The current development `active_listing_limit` is 10 from
-the existing `unit7b_dev_rollout` entitlement row. Unit 7C and main merge remain
-separately gated.
+the existing `unit7b_dev_rollout` entitlement row. Unit 7C and any further live
+mutation remain separately gated.
 **Historical implementation status (superseded):** Unit 6's automatic/functional pipeline is **PASS**.
 M01-M08/M10-M38 are live-verified at their recorded levels; approved `main` SHA
 `a138baa7d3bbc086da019bc052a5ae31d0e15882` is published and deployed to
@@ -32,7 +33,9 @@ recorded evidence remains authoritative beneath this final closure checkpoint.
 **Supabase mutation status:** M01-M08/M10-M42 are live once at their recorded
 versions on `ahntbtktjjmvfosgkmgn`; M09 remains absent. M42 is the forward-only
 generated-author projection correction. Unit 7B deployment and live proof are
-complete; no Unit 7C action or main merge has occurred.
+complete; commit `9f3e646` is integrated into `main` at merge commit
+`53edbddc9c5417b34cb169599e8282b162e183b3`; no Unit 7C action or additional
+live migration/business-row mutation was performed.
 **Database checkpoint:** the exact project is `ACTIVE_HEALTHY`; M39/M40/M41/M42
 are live exactly once; the selected listing is published with one active public
 projection and zero outstanding publication retries. The development

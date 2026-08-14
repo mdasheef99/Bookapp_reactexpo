@@ -1,6 +1,6 @@
 # Unit 7B Safe Publication — Local Implementation Evidence
 
-**Status:** `unit7b_live_rollout_pass_ready_for_main_authorization`
+**Status:** `unit7b_main_integrated_next_scope_authorization`
 **Date:** 2026-08-14
 **Authority:** frozen [Unit 7B SDD](../work-units/07b-publication-sdd.md)
 
@@ -23,8 +23,9 @@
   `unit7b_dev_rollout`; it is now `10`, changed from temporary value `1`.
   Authoritative eligibility passes for the other ready rows;
   `Café du Livre` remains blocked by `price` because its price is zero.
-- Unit 7B is PASS and ready for main authorization. No Unit 7C action or main
-  merge occurred.
+- Unit 7B is PASS and integrated into `main`: commit `9f3e646` was merged at
+  `53edbddc9c5417b34cb169599e8282b162e183b3`. No Unit 7C action or additional
+  live migration/business-row mutation was performed.
 
 ## Historical 2026-08-14 pre-M42 generated-column blocker
 

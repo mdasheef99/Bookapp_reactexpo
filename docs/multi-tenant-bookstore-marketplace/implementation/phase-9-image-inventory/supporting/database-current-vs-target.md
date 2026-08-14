@@ -3,7 +3,7 @@
 **Audit date:** 2026-08-14 Unit 7B live-rollout closeout and M42 readback
 **Audit mode:** exact-project live readback after M39/M40/M41/M42 application, deployment, and Unit 7B proof
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10-M42 are live at their separately recorded checkpoints; M09 is absent. M39, M40, M41, and M42 are live exactly once and immutable. M42 is a forward function correction only: the listing-sync trigger omits generated `marketplace_book_listings.authors_text` from INSERT/UPDATE assignments. The development `active_listing_limit` entitlement is 10 from source `unit7b_dev_rollout`.
+**Mutation status:** M01-M08/M10-M42 are live at their separately recorded checkpoints; M09 is absent. M39, M40, M41, and M42 are live exactly once and immutable. M42 is a forward function correction only: the listing-sync trigger omits generated `marketplace_book_listings.authors_text` from INSERT/UPDATE assignments. The development `active_listing_limit` entitlement is 10 from source `unit7b_dev_rollout`. The Unit 7B implementation/documentation commit `9f3e646` is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`.
 
 **Unit 7B live delta:** M40 adds the dual-version controlled publication
 commands, intent-keyed retry claim/token fencing, v2 Owner inventory page,

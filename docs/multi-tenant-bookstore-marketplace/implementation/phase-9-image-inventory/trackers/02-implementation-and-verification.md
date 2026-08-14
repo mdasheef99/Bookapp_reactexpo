@@ -1,7 +1,7 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit7b_live_rollout_pass_ready_for_main_authorization`; **last updated:** 2026-08-14
+**Status:** `unit7b_main_integrated_next_scope_authorization`; **last updated:** 2026-08-14
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit7b_main_authorization_preparation`. M42 is live exactly once; Owner Edge version 7 and Render publication worker `srv-d9v6gsc9v7es73f1d6o0` are live/ready on exact commit `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649`. Unit 7B live proof is PASS and ready for main authorization.
+**Active work unit:** `phase9_post_unit7b_handoff`. M42 is live exactly once; Owner Edge version 7 and Render publication worker `srv-d9v6gsc9v7es73f1d6o0` are live/ready on exact commit `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649`. Unit 7B live proof is PASS and integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`.
 
 ### 2026-08-14 — Unit 7B live-rollout closeout
 
@@ -21,8 +21,10 @@
   tagged `unit7b_dev_rollout`; its value is now `10`, changed from temporary
   value `1`. Other ready rows pass the authoritative eligibility derivation;
   `Café du Livre` remains blocked by `price` because its price is zero.
-- Exact next action: review the branch diff and obtain explicit main-integration
-  authorization. No Unit 7C action or main merge has occurred.
+- Commit `9f3e646` was merged into `main` at merge commit
+  `53edbddc9c5417b34cb169599e8282b162e183b3`. Exact next action: obtain
+  explicit authorization for the next Phase 9 scope. No Unit 7C action or
+  additional live migration/business-row mutation was performed.
 
 ### Historical 2026-08-14 — pre-M42 generated-column blocker
 

@@ -1,20 +1,20 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit7a_create_only_contract_frozen`
-**Implementation status:** `unit7b_live_rollout_pass_ready_for_main_authorization`
+**Implementation status:** `unit7b_main_integrated_next_scope_authorization`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-14
-**Current milestone:** M42 is live exactly once and corrects the generated-author projection; Owner Edge version 7 and the publication worker are live/ready; Unit 7B's connected live proof is complete and ready for main authorization.
-**Active work unit:** `unit7b_main_authorization_preparation`
+**Current milestone:** M42 is live exactly once and corrects the generated-author projection; Owner Edge version 7 and the publication worker are live/ready; Unit 7B's connected live proof is complete and integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`.
+**Active work unit:** `phase9_post_unit7b_handoff`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** Sol Light findings 001–006 are `CLOSED`; factual finding 008 is updated. M39/M40/M41/M42 are live exactly once. Unit 7B completed Publish -> anonymous discovery -> Pause -> Republish, the controlled transient retry, stale-intent fencing, and final connected readback. The prior local correction matrix remains 6/6, focused migration assertions 4/4, focused Owner-publication/discovery/worker suites 20/20, and cross-layer proof 4/4.
-**Next authorized action:** review the exact branch diff and obtain explicit authorization for main integration. Do not merge automatically. Unit 7C and any further live mutation remain separately gated.
+**Next authorized action:** obtain explicit authorization for the next Phase 9 scope. Do not start Unit 7C or perform further live mutation without separate authorization.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; and M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`. M39/M40/M41/M42 remain immutable.
-**Scope boundary:** This handoff is limited to Unit 7B closeout and main-authorization preparation. Unit 7C, unrelated inventory redesign, further direct row repair, production rollout, payments, Phases 7/8, and M09 remain excluded.
-**Implementation authority:** exact-project read-only verification, M42 application/readback, Owner Edge version 7, Render worker deployment/readiness, the live Unit 7B proof, and the temporary development entitlement adjustment are recorded. No main merge has occurred.
+**Scope boundary:** This handoff is limited to the completed Unit 7B closeout and post-merge next-scope authorization. Unit 7C, unrelated inventory redesign, further direct row repair, production rollout, payments, Phases 7/8, and M09 remain excluded.
+**Implementation authority:** exact-project read-only verification, M42 application/readback, Owner Edge version 7, Render worker deployment/readiness, the live Unit 7B proof, the temporary development entitlement adjustment, and the `main` merge are recorded.
 **Migration creation/application authority:** M39, M40, M41, and M42 are live and immutable. No new migration is authorized unless separately requested.
-**Current gate:** `UNIT_7B_LIVE_ROLLOUT_PASS_READY_FOR_MAIN_AUTHORIZATION`; Owner Edge version 7 is ACTIVE and Render service `srv-d9v6gsc9v7es73f1d6o0` is live on exact commit `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649` with `/health=alive` and `/ready=ready`. The current development `active_listing_limit` is 10 from source `unit7b_dev_rollout`; the selected row is published with one active listing and zero outstanding publication retries. Native Unit 6F remains deferred and Unit 7C remains excluded.
+**Current gate:** `UNIT_7B_MAIN_INTEGRATED_NEXT_SCOPE_AUTHORIZATION`; Owner Edge version 7 is ACTIVE and Render service `srv-d9v6gsc9v7es73f1d6o0` is live on exact commit `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649` with `/health=alive` and `/ready=ready`. The current development `active_listing_limit` is 10 from source `unit7b_dev_rollout`; the selected row is published with one active listing and zero outstanding publication retries. Native Unit 6F remains deferred and Unit 7C remains excluded.
 
 ## 2026-08-14 — Unit 7B live-rollout closeout
 
@@ -33,7 +33,9 @@
   was changed from `active_listing_limit=1` to `10`. Authoritative eligibility
   now passes for the other ready rows; `Café du Livre` remains blocked by
   `price` because its price is zero.
-- No Unit 7C action or main merge occurred.
+- Commit `9f3e646` was merged into `main` at merge commit
+  `53edbddc9c5417b34cb169599e8282b162e183b3`. No Unit 7C action or additional
+  live migration/business-row mutation was performed.
 
 ## Historical 2026-08-14 — pre-M42 generated-column blocker
 

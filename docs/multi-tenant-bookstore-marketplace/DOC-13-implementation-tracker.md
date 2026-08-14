@@ -826,12 +826,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7B live rollout PASS; ready for main authorization** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7B live rollout PASS; integrated into `main`** |
 | Overall status | `in_progress` |
 | Last updated | 2026-08-14 |
-| Latest handoff | M39, M40, M41, and M42 are live exactly once on `ahntbtktjjmvfosgkmgn`. M42 forward-corrects the listing-sync trigger so the database owns generated `marketplace_book_listings.authors_text`. Owner Edge v7 and Render publication worker `srv-d9v6gsc9v7es73f1d6o0` are live/ready on exact commit `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649`. Unit 7B completed the live Publish -> Discover -> Pause -> Republish, transient retry, stale-intent fencing, and final connected-state proof. |
-| Current risk level | Unit 6F native validation remains `NOT_RUN`/`UNRESOLVED` deferred debt. Unit 7C has not started. The branch still contains uncommitted M42/test/documentation changes and must not be merged to `main` until the owner explicitly authorizes the exact integration scope. |
-| Next recommended task | Prepare the exact branch-diff handoff and obtain main-integration authorization. After authorization, review and commit the scoped M42/test/documentation set, then merge only the authorized branch. Keep Unit 7C, production rollout, payment, and Phases 7/8 excluded. |
+| Latest handoff | M39, M40, M41, and M42 are live exactly once on `ahntbtktjjmvfosgkmgn`. M42 forward-corrects the listing-sync trigger so the database owns generated `marketplace_book_listings.authors_text`. Owner Edge v7 and Render publication worker `srv-d9v6gsc9v7es73f1d6o0` are live/ready on exact commit `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649`. Unit 7B completed the live Publish -> Discover -> Pause -> Republish, transient retry, stale-intent fencing, and final connected-state proof. Commit `9f3e646` is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`. |
+| Current risk level | Unit 6F native validation remains `NOT_RUN`/`UNRESOLVED` deferred debt. Unit 7C has not started. The unrelated untracked `docs/codemap/` directory remains preserved; no further Phase 9 live mutation is authorized without a new scope decision. |
+| Next recommended task | Obtain explicit authorization for the next Phase 9 scope. Do not start Unit 7C, production rollout, payment work, or Phases 7/8 from this handoff. |
 
 ### 2026-08-14 Unit 7B live-rollout closeout
 
@@ -850,8 +850,9 @@ If implementation changes product or architecture behavior, update the relevant 
   explicitly tagged `unit7b_dev_rollout`; its existing value was changed from
   `1` to `10`. Authoritative eligibility now passes for the other ready rows;
   `Café du Livre` remains blocked by `price` because its price is zero.
-- No Unit 7C action or main merge occurred. The current documentation update
-  is the user-authorized closeout of this live handoff.
+- Commit `9f3e646` was merged into `main` at merge commit
+  `53edbddc9c5417b34cb169599e8282b162e183b3`. No Unit 7C action or additional
+  live migration/business-row mutation was performed as part of the merge.
 
 ---
 
@@ -868,7 +869,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit7b_live_rollout_pass_ready_for_main_authorization` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7B SDD](./implementation/phase-9-image-inventory/work-units/07b-publication-sdd.md) · [Unit 7B evidence](./implementation/phase-9-image-inventory/trackers/30-unit7b-safe-publication-evidence.md) | Unit 7A/M39 remain live and byte-unchanged. M40/M41/M42 are live exactly once; M42 corrected the generated-author projection. Owner Edge v7 and the Render publication worker are live/ready. Unit 7B Publish -> Discover -> Pause -> Republish, transient retry, stale-intent fencing, and final connected readback passed. Unit 7C and main integration remain separately gated. |
+| Phase 9: Image-to-LLM Inventory | `unit7b_main_integrated_next_scope_authorization` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7B SDD](./implementation/phase-9-image-inventory/work-units/07b-publication-sdd.md) · [Unit 7B evidence](./implementation/phase-9-image-inventory/trackers/30-unit7b-safe-publication-evidence.md) | Unit 7A/M39 remain live and byte-unchanged. M40/M41/M42 are live exactly once; M42 corrected the generated-author projection. Owner Edge v7 and the Render publication worker are live/ready. Unit 7B Publish -> Discover -> Pause -> Republish, transient retry, stale-intent fencing, and final connected readback passed. Commit `9f3e646` is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`; Unit 7C remains separately gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -888,8 +889,9 @@ If implementation changes product or architecture behavior, update the relevant 
 - Phase 4 review remediation is deployed; positive authenticated profile/setup smoke remains pending an approved disposable Store Owner credential.
 - Phase 9 Unit 6 automatic/functional pipeline is complete/PASS; native Unit 6F
   validation remains deferred `NOT_RUN`/`UNRESOLVED` debt and is not marked
-  PASS. Unit 7B live rollout is PASS and ready for main authorization; Unit 7C
-  remains out of scope until separately authorized.
+  PASS. Unit 7B live rollout is PASS and integrated into `main` at merge commit
+  `53edbddc9c5417b34cb169599e8282b162e183b3`; Unit 7C remains out of scope
+  until separately authorized.
 
 ---
 
@@ -973,8 +975,9 @@ Documentation milestones completed:
   the generated-author projection defect was confirmed. Owner Edge v7 and the
   publication worker are live/ready; Publish -> Discover -> Pause -> Republish,
   transient retry, stale-intent fencing, and final connected readback passed.
-  The development active-listing entitlement is now 10; Unit 7C and main
-  integration remain separately gated.
+  The development active-listing entitlement is now 10; main integration is
+  complete at `53edbddc9c5417b34cb169599e8282b162e183b3`, while Unit 7C
+  remains separately gated.
 - Expert review findings incorporated: platform support/disputes are core ops, founding-store trial model added, Bangalore locality pilot added, seller-of-record decision added, post-payment unavailable flow clarified, minors/school users marked out of pilot scope.
 - DOC-14 Commerce State Machines created.
 - DOC-15 Finance, Tax, and Settlement Operating Model created.
@@ -984,18 +987,18 @@ Documentation milestones completed:
 
 ## 8. Next Recommended Task
 
-**Current 2026-08-14 handoff:** Phase 9 Unit 7B live rollout is PASS and
-ready for main authorization. M39, M40, M41, and M42 are live exactly once on
-the verified development project; the publication worker and Owner Edge are
-live; and the connected Publish -> Discover -> Pause -> Republish, transient
-retry, stale-intent fencing, and final readback proof are recorded.
+**Current 2026-08-14 handoff:** Phase 9 Unit 7B live rollout is PASS and is
+integrated into `main` at merge commit
+`53edbddc9c5417b34cb169599e8282b162e183b3`. M39, M40, M41, and M42 are live
+exactly once on the verified development project; the publication worker and
+Owner Edge are live; and the connected Publish -> Discover -> Pause ->
+Republish, transient retry, stale-intent fencing, and final readback proof are
+recorded.
 
-Next work is to review the exact branch diff and obtain explicit authorization
-for main integration. After authorization, commit and merge only the scoped
-M42/test/documentation changes, preserving unrelated working-tree changes.
-Unit 7C, production rollout, payments, Phases 7/8, and M09 remain separately
-gated. The deferred native Unit 6F validation debt remains `NOT_RUN`/
-`UNRESOLVED` and is not silently converted to PASS.
+Next work requires explicit authorization for the next Phase 9 scope. Unit 7C,
+production rollout, payments, Phases 7/8, and M09 remain separately gated. The
+deferred native Unit 6F validation debt remains `NOT_RUN`/`UNRESOLVED` and is
+not silently converted to PASS.
 
 The older Phase 6 recommendation below is retained as historical continuity
 and is superseded by this current handoff.

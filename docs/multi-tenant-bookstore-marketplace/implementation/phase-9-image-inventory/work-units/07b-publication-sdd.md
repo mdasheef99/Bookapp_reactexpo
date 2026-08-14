@@ -2,7 +2,7 @@
 
 **Status:** normative design frozen 2026-08-12; review candidate implemented; Luna review `NOT APPROVED`
 **Authority:** Owner decisions 2026-08-12 (all 12 review findings resolved); DOC-3, DOC-4, DOC-5, DOC-8; Phase 9 master SDD; SDD 03; SDD 05
-**Implementation authority:** M40/M41/M42 are live exactly once on the verified development target; Owner Edge v7 and the publication worker are live; the connected Unit 7B completion proof is recorded in tracker 30. Main integration remains separately authorized.
+**Implementation authority:** M40/M41/M42 are live exactly once on the verified development target; Owner Edge v7 and the publication worker are live; the connected Unit 7B completion proof is recorded in tracker 30. The scoped implementation is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`; any further Unit 7B or Unit 7C change remains separately authorized.
 **Migration authority:** M40, M41, and M42 are immutable live history; no new migration is authorized by this SDD.
 
 ## 1. Purpose and scope

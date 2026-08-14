@@ -1,11 +1,11 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** current/live and approved-target representations separated; Unit 7B live rollout PASS and ready for main authorization
+**Status:** current/live and approved-target representations separated; Unit 7B live rollout PASS and integrated into `main`
 **Last updated:** 2026-08-14
 
 Unit 6A adds only local, unapplied Owner UX presentation/review support; it grants no Unit 7 inventory/publication mutation authority. See [tracker 19](../trackers/19-unit6a-owner-safe-backend-evidence.md).
 
-M01-M08/M10-M42 are live-verified at their recorded levels. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. M14 adds dedicated service-only vision-provider attempts and is live once as `20260727183546`. M39/M40/M41/M42 are live exactly once; M42 keeps generated listing authors projection database-owned. Owner/media/fixture-vision/publication-worker services remain deployed. M09 quantity validation remains a separate live-data gate.
+M01-M08/M10-M42 are live-verified at their recorded levels. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. M14 adds dedicated service-only vision-provider attempts and is live once as `20260727183546`. M39/M40/M41/M42 are live exactly once; M42 keeps generated listing authors projection database-owned. Owner/media/fixture-vision/publication-worker services remain deployed. Unit 7B is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`; M09 quantity validation remains a separate live-data gate.
 
 The dictionary distinguishes canonical truth, store-owned snapshots, public projections, staged AI output, and media/evidence. A field must not be added to several layers merely because it is convenient; each copy needs a named owner and synchronization rule.
 
