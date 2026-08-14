@@ -53,6 +53,29 @@ export const publicStoreProfileRowSchema = z.object({
 export type MarketplaceListingRow = z.infer<typeof marketplaceListingRowSchema>;
 export type PublicStoreProfileRow = z.infer<typeof publicStoreProfileRowSchema>;
 
+export const safePublicationDtoSchema = z.object({
+    listingId: z.string().uuid(), storeId: z.string().uuid(), title: z.string().min(1),
+    authors: z.array(z.string()), language: z.string().nullable(),
+    description: z.string().nullable(), editionStatement: z.string().nullable(),
+    volume: z.string().nullable(), format: z.string().nullable(),
+    isbn10: z.string().nullable(), isbn13: z.string().nullable(),
+    condition: z.enum(['new','like_new','very_good','good','acceptable']),
+    hasDamage: z.boolean(), publicDamageNote: z.string().nullable(),
+    damageTypes: z.array(z.string()), priceMinor: z.number().int().nonnegative(),
+    currency: z.literal('INR'), availabilityStatus: availabilitySchema,
+    coverUrl: z.string().nullable(), publicMediaCount: z.number().int().min(0).max(3),
+    fulfillmentOptions: z.array(z.string()), status: z.literal('active'),
+    moderationStatus: z.literal('approved'), qualityStatus: z.literal('ready'),
+    friendlyInventoryFreshnessSignal: z.enum(['recent','needs_confirmation','not_recently_verified']),
+}).strict();
+
+export type SafePublicationDto = z.infer<typeof safePublicationDtoSchema>;
+export function parseSafePublicationDtos(value: unknown): SafePublicationDto[] {
+    const parsed = z.array(safePublicationDtoSchema).safeParse(value ?? []);
+    if (!parsed.success) throw new Error('Invalid public publication response.');
+    return parsed.data;
+}
+
 export function parseMarketplaceListings(value: unknown): MarketplaceListingRow[] {
     const parsed = z.array(marketplaceListingRowSchema).safeParse(value ?? []);
     if (!parsed.success) {

@@ -8,14 +8,14 @@ import type {
     PublicMarketplaceListing,
     StoreInventoryItem,
 } from '../types';
+import { createCaptureUuid, createSemanticKey } from '@/features/imageInventory/capture/captureIds';
+import { publicationService } from '@/features/imageInventory/api/publicationService';
+import { consumerDiscoveryService } from '@/features/marketplace/services/consumerDiscoveryService';
+import type { SafePublicationDto } from '@/features/marketplace/services/discoverySchemas';
 
 function cleanText(value?: string | null) {
     const trimmed = value?.trim();
     return trimmed || null;
-}
-
-function escapeIlikeTerm(value: string) {
-    return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
 }
 
 function requireManualInventoryInput(input: ManualInventoryInput) {
@@ -76,6 +76,28 @@ function sanitizePublicListing(row: Partial<PublicMarketplaceListing>): PublicMa
     };
 }
 
+function legacyListingFromSafeDto(row: SafePublicationDto): PublicMarketplaceListing {
+    const condition = row.condition === 'very_good'
+        ? 'like_new'
+        : row.condition === 'acceptable' ? 'fair' : row.condition;
+    return sanitizePublicListing({
+        id: row.listingId,
+        store_id: row.storeId,
+        canonical_edition_id: null,
+        public_title: row.title,
+        public_authors: row.authors,
+        public_cover_url: row.coverUrl,
+        isbn_10: row.isbn10,
+        isbn_13: row.isbn13,
+        condition,
+        public_condition_notes: row.publicDamageNote,
+        selling_price_minor: row.priceMinor,
+        availability_status: row.availabilityStatus,
+        status: row.status,
+        moderation_status: row.moderationStatus,
+    });
+}
+
 function groupingKeyForListing(listing: PublicMarketplaceListing) {
     if (listing.canonical_edition_id) return `edition:${listing.canonical_edition_id}`;
     if (listing.isbn_13) return `isbn13:${listing.isbn_13}`;
@@ -115,22 +137,6 @@ async function updateInventoryByStore(input: InventoryItemMutationInput, updates
         .single();
 
     if (error) throw error;
-}
-
-type PublishableInventoryRow = {
-    id: string;
-    title?: string | null;
-    condition?: string | null;
-    quantity_available?: number | null;
-    selling_price_minor?: number | null;
-};
-
-function assertPublishableInventory(row: PublishableInventoryRow | null) {
-    if (!row) throw new Error('Inventory item not found.');
-    if (!cleanText(row.title)) throw new Error('Title is required before publishing.');
-    if (!row.condition) throw new Error('Condition is required before publishing.');
-    if (!row.selling_price_minor || row.selling_price_minor <= 0) throw new Error('Price is required before publishing.');
-    if (!row.quantity_available || row.quantity_available <= 0) throw new Error('Available quantity is required before publishing.');
 }
 
 export const storeInventoryService = {
@@ -178,24 +184,25 @@ export const storeInventoryService = {
     },
 
     async publishInventoryItem(input: InventoryItemMutationInput): Promise<void> {
-        const { data, error } = await supabase
-            .from('store_inventory')
-            .select('id, title, condition, quantity_available, selling_price_minor')
-            .eq('store_id', input.storeId)
-            .eq('id', input.inventoryId)
-            .maybeSingle();
-
-        if (error) throw error;
-        assertPublishableInventory(data as PublishableInventoryRow | null);
-
-        await updateInventoryByStore(input, {
-            visibility_status: 'published',
-            listing_quality_status: 'ready',
+        const current = await publicationService.readStatus(input.inventoryId);
+        await publicationService.setState({
+            inventoryId: input.inventoryId,
+            expectedInventoryVersion: current.inventoryVersion,
+            expectedPublicationIntentVersion: current.publicationIntentVersion,
+            intent: 'publish', idempotencyKey: createSemanticKey('legacy-publish'),
+            commandId: createCaptureUuid(),
         });
     },
 
     async pauseInventoryItem(input: InventoryItemMutationInput): Promise<void> {
-        await updateInventoryByStore(input, { visibility_status: 'paused' });
+        const current = await publicationService.readStatus(input.inventoryId);
+        await publicationService.setState({
+            inventoryId: input.inventoryId,
+            expectedInventoryVersion: current.inventoryVersion,
+            expectedPublicationIntentVersion: current.publicationIntentVersion,
+            intent: 'pause', idempotencyKey: createSemanticKey('legacy-pause'),
+            commandId: createCaptureUuid(),
+        });
     },
 
     async updateInventoryItem(input: InventoryItemUpdateInput): Promise<void> {
@@ -216,37 +223,8 @@ export const storeInventoryService = {
     },
 
     async searchPublicListings(queryText: string): Promise<PublicMarketplaceListing[]> {
-        let query = supabase
-            .from('marketplace_book_listings')
-            .select([
-                'id',
-                'store_id',
-                'canonical_edition_id',
-                'public_title',
-                'public_authors',
-                'public_cover_url',
-                'isbn_10',
-                'isbn_13',
-                'condition',
-                'public_condition_notes',
-                'selling_price_minor',
-                'availability_status',
-                'status',
-                'moderation_status',
-            ].join(', '))
-            .eq('status', 'active')
-            .eq('moderation_status', 'approved')
-            .order('updated_at', { ascending: false })
-            .limit(25);
-
-        const term = cleanText(queryText);
-        if (term) {
-            query = query.ilike('public_title', `%${escapeIlikeTerm(term)}%`);
-        }
-
-        const { data, error } = await query;
-        if (error) throw error;
-        return ((data ?? []) as Partial<PublicMarketplaceListing>[]).map(sanitizePublicListing);
+        const rows = await consumerDiscoveryService.searchSafePublications(cleanText(queryText) ?? '');
+        return rows.map(legacyListingFromSafeDto);
     },
 
     async searchPublicBookResults(queryText: string): Promise<PublicMarketplaceBookResult[]> {

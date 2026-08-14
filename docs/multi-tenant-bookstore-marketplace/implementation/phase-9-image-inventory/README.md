@@ -1,8 +1,15 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit7a_create_only_locally_complete_review_pending`
-**Last updated:** 2026-08-12
-**Implementation status:** Unit 6's automatic/functional pipeline is **PASS**.
+**Status:** `unit7b_live_rollout_pass_ready_for_main_authorization`
+**Last updated:** 2026-08-14
+**Current handoff:** Unit 7B is live-verified and ready for main authorization.
+M39, M40, M41, and M42 are live exactly once; Owner Edge v7 and the Render
+publication worker are live/ready; and the connected Publish -> Discover ->
+Pause -> Republish, transient retry, stale-intent fencing, and final readback
+proof are recorded. The current development `active_listing_limit` is 10 from
+the existing `unit7b_dev_rollout` entitlement row. Unit 7C and main merge remain
+separately gated.
+**Historical implementation status (superseded):** Unit 6's automatic/functional pipeline is **PASS**.
 M01-M08/M10-M38 are live-verified at their recorded levels; approved `main` SHA
 `a138baa7d3bbc086da019bc052a5ae31d0e15882` is published and deployed to
 metadata; one authenticated Owner upload completed the full automatic path to
@@ -22,25 +29,26 @@ documented import flag. M39 remains unapplied; deployment, live smoke, and Git
 publication require separate authorization.
 Unit 6B is merged at `9ef9eb3`; Unit 6D is implemented at `c363b60`; their
 recorded evidence remains authoritative beneath this final closure checkpoint.
-**Supabase mutation status:** M01-M08/M10-M38 and WU1 are live once on `ahntbtktjjmvfosgkmgn`; M09 is absent and local M39 is unapplied. Unit 7A used read-only preflight plus ephemeral PGlite only; no Supabase/Storage, inventory, listing, publication, or deployment mutation occurred.
-**Database checkpoint:** M01-M08 and forward migrations M10-M38 plus WU1 are live-verified at their recorded levels; M09 remains absent; the authenticated Owner automatic path is live-verified through Needs Review.
+**Supabase mutation status:** M01-M08/M10-M42 are live once at their recorded
+versions on `ahntbtktjjmvfosgkmgn`; M09 remains absent. M42 is the forward-only
+generated-author projection correction. Unit 7B deployment and live proof are
+complete; no Unit 7C action or main merge has occurred.
+**Database checkpoint:** the exact project is `ACTIVE_HEALTHY`; M39/M40/M41/M42
+are live exactly once; the selected listing is published with one active public
+projection and zero outstanding publication retries. The development
+`active_listing_limit` is 10 from source `unit7b_dev_rollout`.
 M30 was applied exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`.
-M32 is live exactly once as `20260808020404`; M38 is live exactly once as
-`20260810130638`. The metadata runtime enforces the exact approved Supabase
-origin and is deployed from approved SHA `a138baa`. The active dispatcher and
-all three workers completed the final one-image proof automatically; no manual
-invoker was used.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
 
-The current handoff is Unit 7A local completion pending review. M32-M38 are live
+Historical Unit 7A handoff: M32-M38 are live
 and immutable at their recorded versions; M39 exists only locally. The Unit 7A
 command's exact replay and duplicate non-interference are covered by the local
 13-case database suite. Native Unit 6F evidence remains deferred
 `NOT_RUN`/`UNRESOLVED` debt and is not marked PASS. Review of the complete local
 diff is next; operational application/deployment remains separately gated.
 
-The current post-closure handoff is the local multilingual vision-response
+Historical post-closure handoff: the local multilingual vision-response
 resilience correction. User-supplied Android evidence closes the FileSystem
 transport proof and moves the evidence issue to strict Gemini decoding. The
 local correction is green and review-pending; deployment and a fresh

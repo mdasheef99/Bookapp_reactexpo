@@ -3,25 +3,16 @@ import type { GroupedBookResult, MarketplaceListingOffer, PublicStoreProfile } f
 import {
     cleanText,
     groupOffers,
-    looksLikeIsbn,
-    normalizeIsbn,
     normalizePage,
-    quotedIlikeFilter,
     type MarketplacePageOptions,
 } from './discoveryHelpers';
 import {
-    mapListing,
     mapPublicStoreProfile,
-    parseMarketplaceListings,
     parsePublicStoreProfile,
+    parseSafePublicationDtos,
+    safePublicationDtoSchema,
+    type SafePublicationDto,
 } from './discoverySchemas';
-
-const LISTING_SELECT = [
-    'id', 'store_id', 'canonical_edition_id', 'public_title', 'public_authors',
-    'public_cover_url', 'isbn_10', 'isbn_13', 'condition', 'public_condition_notes',
-    'selling_price_minor', 'availability_status', 'fulfillment_options', 'store_city',
-    'store_locality_name', 'pickup_available', 'delivery_available',
-].join(', ');
 
 const PUBLIC_STORE_PROFILE_SELECT = [
     'store_id', 'display_name', 'description', 'logo_url', 'cover_url', 'city', 'state',
@@ -36,7 +27,6 @@ async function batchLoadStoreDisplayNames(storeIds: string[]): Promise<Map<strin
         .select('store_id, display_name')
         .in('store_id', storeIds);
     if (error) throw error;
-
     const map = new Map<string, string>();
     (data ?? []).forEach((row: { store_id: string; display_name: string }) => {
         if (row.store_id && row.display_name) map.set(row.store_id, row.display_name);
@@ -44,11 +34,51 @@ async function batchLoadStoreDisplayNames(storeIds: string[]): Promise<Map<strin
     return map;
 }
 
-async function mapRowsWithStoreNames(data: unknown): Promise<MarketplaceListingOffer[]> {
-    const rows = parseMarketplaceListings(data);
-    const storeIds = Array.from(new Set(rows.map((row) => row.store_id)));
+function offerFromSafePublication(
+    row: SafePublicationDto,
+    storeDisplayName: string | null,
+): MarketplaceListingOffer {
+    const condition = row.condition === 'very_good'
+        ? 'like_new'
+        : row.condition === 'acceptable' ? 'fair' : row.condition;
+    return {
+        id: row.listingId,
+        storeId: row.storeId,
+        canonicalEditionId: null,
+        publicTitle: row.title,
+        publicAuthors: row.authors,
+        publicCoverUrl: row.coverUrl,
+        isbn10: row.isbn10,
+        isbn13: row.isbn13,
+        condition,
+        publicConditionNotes: row.publicDamageNote,
+        sellingPriceMinor: row.priceMinor,
+        availabilityStatus: row.availabilityStatus,
+        fulfillmentOptions: row.fulfillmentOptions,
+        storeCity: null,
+        storeLocalityName: null,
+        pickupAvailable: row.fulfillmentOptions.includes('pickup'),
+        deliveryAvailable: row.fulfillmentOptions.includes('delivery'),
+        storeDisplayName,
+    };
+}
+
+async function mapSafeRowsWithStoreNames(
+    rows: SafePublicationDto[],
+): Promise<MarketplaceListingOffer[]> {
+    const storeIds = Array.from(new Set(rows.map((row) => row.storeId)));
     const names = await batchLoadStoreDisplayNames(storeIds);
-    return rows.map((row) => mapListing(row, names.get(row.store_id) ?? null));
+    return rows.map((row) => offerFromSafePublication(row, names.get(row.storeId) ?? null));
+}
+
+async function safeSearch(query: string, storeId: string | null, pageSize: number) {
+    const { data, error } = await supabase.rpc('phase9_public_listing_search_v2', {
+        p_query: query || null,
+        p_store_id: storeId,
+        p_page_size: pageSize,
+    });
+    if (error) throw error;
+    return parseSafePublicationDtos(data);
 }
 
 async function recordUnavailableSearch(query: string): Promise<void> {
@@ -60,48 +90,10 @@ export const consumerDiscoveryService = {
         query: string,
         options: MarketplacePageOptions = {},
     ): Promise<GroupedBookResult[]> {
-        const term = cleanText(query);
+        const term = cleanText(query) ?? '';
         const { from, to } = normalizePage(options);
-        const isIsbn = term ? looksLikeIsbn(term) : false;
-
-        if (term && !isIsbn) {
-            const { data, error } = await supabase.rpc(
-                'phase9_search_marketplace_listings',
-                { p_query: term, p_from: from, p_to: to },
-            );
-            if (error) throw error;
-            if (data !== null) {
-                const grouped = groupOffers(await mapRowsWithStoreNames(data));
-                if (grouped.length === 0) {
-                    await recordUnavailableSearch(term).catch(() => undefined);
-                }
-                return grouped;
-            }
-        }
-
-        let builder = supabase
-            .from('marketplace_book_listings')
-            .select(LISTING_SELECT)
-            .eq('status', 'active')
-            .eq('moderation_status', 'approved')
-            .order('updated_at', { ascending: false })
-            .range(from, to);
-
-        if (term) {
-            if (isIsbn) {
-                const isbn = normalizeIsbn(term)!;
-                builder = isbn.length === 10
-                    ? builder.eq('isbn_10', isbn)
-                    : builder.eq('isbn_13', isbn);
-            } else {
-                const filter = quotedIlikeFilter(term);
-                builder = builder.or(`public_title.ilike.${filter},authors_text.ilike.${filter}`);
-            }
-        }
-
-        const { data, error } = await builder;
-        if (error) throw error;
-        const grouped = groupOffers(await mapRowsWithStoreNames(data));
+        const rows = await safeSearch(term, null, Math.min(50, to + 1));
+        const grouped = groupOffers(await mapSafeRowsWithStoreNames(rows)).slice(from, to + 1);
         if (term && grouped.length === 0) {
             await recordUnavailableSearch(term).catch(() => undefined);
         }
@@ -127,39 +119,21 @@ export const consumerDiscoveryService = {
     },
 
     async getBookOffers(listingId: string): Promise<GroupedBookResult> {
-        const { data: seedData, error: seedError } = await supabase
-            .from('marketplace_book_listings')
-            .select(LISTING_SELECT)
-            .eq('id', listingId)
-            .eq('status', 'active')
-            .eq('moderation_status', 'approved')
-            .maybeSingle();
-        if (seedError) throw seedError;
-        if (!seedData) throw new Error('Public book listing not found.');
-        const seed = parseMarketplaceListings([seedData])[0];
-
-        let builder = supabase
-            .from('marketplace_book_listings')
-            .select(LISTING_SELECT)
-            .eq('status', 'active')
-            .eq('moderation_status', 'approved')
-            .order('selling_price_minor', { ascending: true })
-            .range(0, 49);
-        if (seed.canonical_edition_id) {
-            builder = builder.eq('canonical_edition_id', seed.canonical_edition_id);
-        } else if (seed.isbn_13) {
-            builder = builder.eq('isbn_13', seed.isbn_13);
-        } else if (seed.isbn_10) {
-            builder = builder.eq('isbn_10', seed.isbn_10);
-        } else {
-            builder = builder.eq('id', seed.id);
-        }
-
-        const { data, error } = await builder;
+        const { data, error } = await supabase.rpc('phase9_public_listing_detail_v2', {
+            p_listing_id: listingId,
+        });
         if (error) throw error;
-        const grouped = groupOffers(await mapRowsWithStoreNames(data));
-        if (!grouped[0]) throw new Error('Public book offers not found.');
-        return grouped[0];
+        const parsed = safePublicationDtoSchema.safeParse(data);
+        if (!parsed.success) throw new Error('Public book listing not found.');
+        const seed = parsed.data;
+        const related = await safeSearch(seed.isbn13 ?? seed.isbn10 ?? seed.title, null, 50);
+        const matching = related.filter((row) => row.listingId === seed.listingId
+            || (seed.isbn13 !== null && row.isbn13 === seed.isbn13)
+            || (seed.isbn13 === null && seed.isbn10 !== null && row.isbn10 === seed.isbn10));
+        const grouped = groupOffers(await mapSafeRowsWithStoreNames(matching.length ? matching : [seed]));
+        const selected = grouped.find((group) => group.offers.some((offer) => offer.id === listingId));
+        if (!selected) throw new Error('Public book offers not found.');
+        return selected;
     },
 
     async getPublicStoreProfile(storeId: string): Promise<PublicStoreProfile> {
@@ -178,15 +152,11 @@ export const consumerDiscoveryService = {
         options: MarketplacePageOptions = {},
     ): Promise<MarketplaceListingOffer[]> {
         const { from, to } = normalizePage(options);
-        const { data, error } = await supabase
-            .from('marketplace_book_listings')
-            .select(LISTING_SELECT)
-            .eq('store_id', storeId)
-            .eq('status', 'active')
-            .eq('moderation_status', 'approved')
-            .order('updated_at', { ascending: false })
-            .range(from, to);
-        if (error) throw error;
-        return parseMarketplaceListings(data).map((row) => mapListing(row, null));
+        const rows = (await safeSearch('', storeId, Math.min(50, to + 1))).slice(from, to + 1);
+        return mapSafeRowsWithStoreNames(rows);
+    },
+
+    searchSafePublications(query = '', storeId: string | null = null) {
+        return safeSearch(query, storeId, 20);
     },
 };

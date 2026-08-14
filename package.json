@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "scripts": {
+    "test:phase9:unit7b-cross-layer": "node scripts/test-phase9-unit7b-cross-layer.js",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
@@ -23,6 +24,8 @@
     "start:phase9:vision-worker": "node .phase9-dist/workers/phase9-vision-analysis-worker/server.js",
     "build:phase9:metadata-worker": "tsc -p workers/phase9-metadata-worker/tsconfig.json",
     "start:phase9:metadata-worker": "node .phase9-dist/workers/phase9-metadata-worker/server.js",
+    "build:phase9:publication-worker": "tsc -p workers/phase9-publication-worker/tsconfig.json",
+    "start:phase9:publication-worker": "node .phase9-dist/workers/phase9-publication-worker/server.js",
     "test:phase9:structural-metadata": "npm run build:phase9:metadata-worker && node --experimental-vm-modules --test supabase/tests/phase9/phase9StructuralMetadataWorker.integration.test.mjs",
     "invoke:phase9:worker": "node scripts/invoke-phase9-worker.js",
     "smoke:phase9:worker-entrypoints": "node scripts/smoke-phase9-worker-entrypoints.js",

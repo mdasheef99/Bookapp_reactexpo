@@ -9,26 +9,29 @@ jest.mock('@/lib/supabase');
 
 const item = {
     id: '10000000-0000-4000-8000-000000000001',
-    store_id: '20000000-0000-4000-8000-000000000001',
     title: 'The Bookshop',
     authors: ['Penelope Fitzgerald'],
-    isbn_10: null,
-    isbn_13: '9780006543541',
+    isbn10: null,
+    isbn13: '9780006543541',
     condition: 'good',
-    quantity_available: 2,
-    selling_price_minor: 35000,
-    visibility_status: 'draft',
-    listing_quality_status: 'ready',
-    public_notes: null,
-    shelf_location: 'A3',
-    entry_method: 'manual',
-    created_at: '2026-08-01T10:00:00.000Z',
-    updated_at: '2026-08-03T10:00:00.000Z',
-    version: 4,
+    quantityAvailable: 2,
+    sellingPriceMinor: 35000,
+    visibilityStatus: 'draft',
+    listingQualityStatus: 'ready',
+    publicNotes: null,
+    entryMethod: 'manual',
+    createdAt: '2026-08-01T10:00:00.000Z',
+    updatedAt: '2026-08-03T10:00:00.000Z',
+    inventoryVersion: 4,
+    publicationStatus: 'private',
+    publicationIntentVersion: 1,
+    publicationRetryable: false,
+    publicationFailureReason: null,
+    publicListingStatus: null,
 } as const;
 
 const page = {
-    contractVersion: 'phase9-owner-inventory-v1',
+    contractVersion: 'phase9-owner-inventory-v2',
     items: [item],
     pageInfo: {
         nextCursor: 'opaque.server.cursor.signature',
@@ -37,25 +40,29 @@ const page = {
 };
 
 const mappedPage = {
-    contractVersion: 'phase9-owner-inventory-v1',
+    contractVersion: 'phase9-owner-inventory-v2',
     items: [{
         id: item.id,
-        storeId: item.store_id,
         title: item.title,
         authors: item.authors,
-        isbn10: item.isbn_10,
-        isbn13: item.isbn_13,
+        isbn10: item.isbn10,
+        isbn13: item.isbn13,
         condition: item.condition,
-        quantityAvailable: item.quantity_available,
-        sellingPriceMinor: item.selling_price_minor,
-        visibilityStatus: item.visibility_status,
-        listingQualityStatus: item.listing_quality_status,
-        publicNotes: item.public_notes,
-        shelfLocation: item.shelf_location,
-        entryMethod: item.entry_method,
-        createdAt: item.created_at,
-        updatedAt: item.updated_at,
-        version: item.version,
+        quantityAvailable: item.quantityAvailable,
+        sellingPriceMinor: item.sellingPriceMinor,
+        visibilityStatus: item.visibilityStatus,
+        listingQualityStatus: item.listingQualityStatus,
+        publicNotes: item.publicNotes,
+        shelfLocation: null,
+        entryMethod: item.entryMethod,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        version: item.inventoryVersion,
+        publicationStatus: item.publicationStatus,
+        publicationIntentVersion: item.publicationIntentVersion,
+        publicationRetryable: item.publicationRetryable,
+        publicationFailureReason: item.publicationFailureReason,
+        publicListingStatus: item.publicListingStatus,
     }],
     pageInfo: page.pageInfo,
 };
@@ -80,6 +87,7 @@ describe('ownerInventoryReadService', () => {
             p_quantity_state: null,
             p_entry_method: null,
             p_date_added: null,
+            p_publication_status: null,
         });
         expect(rpc.mock.calls[0][1]).not.toHaveProperty('store_id');
         expect(rpc.mock.calls[0][1]).not.toHaveProperty('p_store_id');
@@ -97,6 +105,7 @@ describe('ownerInventoryReadService', () => {
                 quantityState: 'low_stock',
                 entryMethod: 'metadata_import',
                 dateAdded: 'last_30_days',
+                publicationStatus: 'publication_failed',
             },
         });
 
@@ -109,6 +118,7 @@ describe('ownerInventoryReadService', () => {
             p_quantity_state: 'low_stock',
             p_entry_method: 'metadata_import',
             p_date_added: 'last_30_days',
+            p_publication_status: 'publication_failed',
         });
     });
 
@@ -135,9 +145,9 @@ describe('ownerInventoryReadService', () => {
     });
 
     it.each([
-        ['created_at', '2026-08-01'],
-        ['updated_at', 'August 3, 2026 10:00:00'],
-        ['version', 0],
+        ['createdAt', '2026-08-01'],
+        ['updatedAt', 'August 3, 2026 10:00:00'],
+        ['inventoryVersion', 0],
     ])('rejects out-of-contract %s value %p', async (field, invalidValue) => {
         rpc.mockResolvedValue({
             data: {

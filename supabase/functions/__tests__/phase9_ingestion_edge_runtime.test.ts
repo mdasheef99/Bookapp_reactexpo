@@ -120,6 +120,49 @@ describe('Phase 9 ingestion Edge orchestration', () => {
     expect(result).toEqual({ claimed: 1, results: [{ jobId: 'job', outcome: 'queued', inputId: 'input' }] });
   });
 
+  it('U7B-RT17 promotes a sanitized public-copy derivative through the pinned media worker', async () => {
+    const identity = (await storedImageEnvelope(storedObject())).objectIdentity;
+    const sourceSha256 = await sha256Hex(sourceBytes);
+    const claim = { id: 'public-copy-job', attempt_count: 1, lease_token: '9'.repeat(64) };
+    rpc.mockResolvedValueOnce({ data: [claim], error: null });
+    rpc.mockResolvedValueOnce({ data: {
+      source_bucket: 'marketplace-media-staging', source_path: 'store/public_copy/inventory/photo.png',
+      source_object_identity: identity, source_sha256: sourceSha256,
+      source_bytes: 3, source_mime: 'image/png', snapshot_bucket: 'image-extraction-inputs',
+      snapshot_path: 'store/public_copy/source/source-attempt-1.bin',
+      source_snapshot_path: null, source_snapshot_sha256: null, source_snapshot_bytes: null,
+      target_bucket: 'inventory-photos', target_path: 'store/public_copy/inventory/source/attempt-1.webp',
+    }, error: null });
+    rpc.mockResolvedValueOnce({ data: true, error: null });
+    rpc.mockResolvedValueOnce({ data: true, error: null });
+    rpc.mockResolvedValueOnce({ data: true, error: null });
+    rpc.mockResolvedValueOnce({ data: true, error: null });
+    rpc.mockResolvedValueOnce({ data: {
+      media_asset_id: 'approved-derivative', source_media_asset_id: 'private-source', state: 'approved',
+    }, error: null });
+    list.mockResolvedValue({ data: [{ ...storedObject(), name: 'photo.png' }], error: null });
+    download.mockResolvedValue({ data: new Blob([sourceBytes]), error: null });
+    upload.mockResolvedValue({ data: {}, error: null });
+    const processor: any = { sanitize: jest.fn().mockResolvedValue({
+      bytes: new Uint8Array([4]), outputMime: 'image/webp', detectedMime: 'image/png',
+      sha256: 'a'.repeat(64), width: 1, height: 1, metadataRemoved: true,
+    }) };
+    const result = await runMediaValidationWorker({
+      contractVersion: 'phase9-v1', leaseOwner: 'media-worker-0000001', batchSize: 1,
+    }, client, processor);
+    expect(processor.sanitize).toHaveBeenCalledWith(expect.objectContaining({
+      declaredMime: 'image/png', bytes: sourceBytes,
+    }));
+    expect(upload).toHaveBeenCalledWith('store/public_copy/inventory/source/attempt-1.webp',
+      expect.any(Uint8Array), expect.objectContaining({
+        contentType: 'image/webp', upsert: false,
+        metadata: expect.objectContaining({ sanitizer: 'magick-wasm-0.0.41' }),
+      }));
+    expect(result).toEqual({ claimed: 1, results: [{
+      jobId: claim.id, outcome: 'approved', mediaAssetId: 'approved-derivative',
+    }] });
+  });
+
   it('rejects an object changed during processing before lease revalidation or upload', async () => {
     const identity = (await storedImageEnvelope(storedObject('v1', 'e1'))).objectIdentity;
     const sourceSha256 = await sha256Hex(sourceBytes);

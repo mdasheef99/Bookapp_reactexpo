@@ -1,8 +1,8 @@
 import { supabase } from '@/lib/supabase';
 import { timestampSchema } from '../contracts/ownerUxCommonSchemas';
 
-export const OWNER_INVENTORY_RPC_NAME = 'phase9_owner_inventory_page_v1';
-export const OWNER_INVENTORY_CONTRACT_VERSION = 'phase9-owner-inventory-v1';
+export const OWNER_INVENTORY_RPC_NAME = 'phase9_owner_inventory_page_v2';
+export const OWNER_INVENTORY_CONTRACT_VERSION = 'phase9-owner-inventory-v2';
 export const OWNER_INVENTORY_DEFAULT_PAGE_SIZE = 25;
 export const OWNER_INVENTORY_MAX_PAGE_SIZE = 50;
 
@@ -18,6 +18,7 @@ const VISIBILITY_STATUSES = [
 const QUANTITY_STATES = ['available', 'low_stock', 'out_of_stock'] as const;
 const ENTRY_METHODS = ['manual', 'image_extraction', 'metadata_import'] as const;
 const DATE_ADDED_FILTERS = ['last_7_days', 'last_30_days'] as const;
+const PUBLICATION_STATUSES = ['private', 'published', 'paused', 'publication_failed'] as const;
 const LISTING_QUALITY_STATUSES = [
     'ready',
     'missing_price',
@@ -33,6 +34,7 @@ export type OwnerInventoryVisibilityStatus = typeof VISIBILITY_STATUSES[number];
 export type OwnerInventoryQuantityState = typeof QUANTITY_STATES[number];
 export type OwnerInventoryEntryMethod = typeof ENTRY_METHODS[number];
 export type OwnerInventoryDateAdded = typeof DATE_ADDED_FILTERS[number];
+export type OwnerInventoryPublicationStatus = typeof PUBLICATION_STATUSES[number];
 export type OwnerInventoryListingQualityStatus = typeof LISTING_QUALITY_STATUSES[number];
 
 export type OwnerInventoryFilters = Readonly<{
@@ -42,6 +44,7 @@ export type OwnerInventoryFilters = Readonly<{
     quantityState?: OwnerInventoryQuantityState | 'all';
     entryMethod?: OwnerInventoryEntryMethod | 'all';
     dateAdded?: OwnerInventoryDateAdded | 'all';
+    publicationStatus?: OwnerInventoryPublicationStatus | 'all';
 }>;
 
 export type OwnerInventoryPageRequest = Readonly<{
@@ -52,7 +55,6 @@ export type OwnerInventoryPageRequest = Readonly<{
 
 export type OwnerInventoryListItem = Readonly<{
     id: string;
-    storeId: string;
     title: string;
     authors: string[] | null;
     isbn10: string | null;
@@ -68,6 +70,11 @@ export type OwnerInventoryListItem = Readonly<{
     createdAt: string;
     updatedAt: string;
     version: number;
+    publicationStatus: 'private' | 'publication_pending' | 'published' | 'publication_failed';
+    publicationIntentVersion: number;
+    publicationRetryable: boolean;
+    publicationFailureReason: 'projection_temporarily_unavailable' | null;
+    publicListingStatus: 'active' | 'paused' | 'out_of_stock' | 'blocked' | null;
 }>;
 
 export type OwnerInventoryPage = Readonly<{
@@ -130,13 +137,15 @@ type RpcArguments = {
     p_quantity_state: OwnerInventoryQuantityState | null;
     p_entry_method: OwnerInventoryEntryMethod | null;
     p_date_added: OwnerInventoryDateAdded | null;
+    p_publication_status: OwnerInventoryPublicationStatus | null;
 };
 
 const ITEM_KEYS = [
-    'id', 'store_id', 'title', 'authors', 'isbn_10', 'isbn_13', 'condition',
-    'quantity_available', 'selling_price_minor', 'visibility_status',
-    'listing_quality_status', 'public_notes', 'shelf_location', 'entry_method',
-    'created_at', 'updated_at', 'version',
+    'id', 'title', 'authors', 'isbn10', 'isbn13', 'condition',
+    'quantityAvailable', 'sellingPriceMinor', 'visibilityStatus',
+    'listingQualityStatus', 'publicNotes', 'entryMethod', 'createdAt', 'updatedAt',
+    'inventoryVersion', 'publicationStatus', 'publicationIntentVersion',
+    'publicationRetryable', 'publicationFailureReason', 'publicListingStatus',
 ] as const;
 
 function invalidRequest(): never {
@@ -184,37 +193,45 @@ function isUuid(value: unknown): value is string {
 
 function decodeItem(value: unknown): OwnerInventoryListItem {
     if (!isRecord(value) || !hasExactKeys(value, ITEM_KEYS)) invalidResponse();
-    if (!isUuid(value.id) || !isUuid(value.store_id) || typeof value.title !== 'string') invalidResponse();
+    if (!isUuid(value.id) || typeof value.title !== 'string') invalidResponse();
     if (!(value.authors === null || (Array.isArray(value.authors) && value.authors.every((author) => typeof author === 'string')))) invalidResponse();
-    if (!isNullableString(value.isbn_10) || !isNullableString(value.isbn_13)) invalidResponse();
+    if (!isNullableString(value.isbn10) || !isNullableString(value.isbn13)) invalidResponse();
     if (!isOneOf(value.condition, CONDITIONS)) invalidResponse();
-    if (!Number.isInteger(value.quantity_available) || (value.quantity_available as number) < 0) invalidResponse();
-    if (!Number.isInteger(value.selling_price_minor) || (value.selling_price_minor as number) < 0) invalidResponse();
-    if (!isOneOf(value.visibility_status, VISIBILITY_STATUSES)) invalidResponse();
-    if (!isOneOf(value.listing_quality_status, LISTING_QUALITY_STATUSES)) invalidResponse();
-    if (!isNullableString(value.public_notes) || !isNullableString(value.shelf_location)) invalidResponse();
-    if (!isOneOf(value.entry_method, ENTRY_METHODS)) invalidResponse();
-    if (!isTimestamp(value.created_at) || !isTimestamp(value.updated_at)) invalidResponse();
-    if (!Number.isInteger(value.version) || (value.version as number) <= 0) invalidResponse();
+    if (!Number.isInteger(value.quantityAvailable) || (value.quantityAvailable as number) < 0) invalidResponse();
+    if (!Number.isInteger(value.sellingPriceMinor) || (value.sellingPriceMinor as number) < 0) invalidResponse();
+    if (!isOneOf(value.visibilityStatus, VISIBILITY_STATUSES)) invalidResponse();
+    if (!isOneOf(value.listingQualityStatus, LISTING_QUALITY_STATUSES)) invalidResponse();
+    if (!isNullableString(value.publicNotes) || !isOneOf(value.entryMethod, ENTRY_METHODS)) invalidResponse();
+    if (!isTimestamp(value.createdAt) || !isTimestamp(value.updatedAt)) invalidResponse();
+    if (!Number.isInteger(value.inventoryVersion) || (value.inventoryVersion as number) <= 0) invalidResponse();
+    if (!isOneOf(value.publicationStatus, ['private','publication_pending','published','publication_failed'] as const)) invalidResponse();
+    if (!Number.isInteger(value.publicationIntentVersion) || (value.publicationIntentVersion as number) <= 0) invalidResponse();
+    if (typeof value.publicationRetryable !== 'boolean') invalidResponse();
+    if (!(value.publicationFailureReason === null || value.publicationFailureReason === 'projection_temporarily_unavailable')) invalidResponse();
+    if (!(value.publicListingStatus === null || isOneOf(value.publicListingStatus, ['active','paused','out_of_stock','blocked'] as const))) invalidResponse();
 
     return {
         id: value.id,
-        storeId: value.store_id,
         title: value.title,
         authors: value.authors as string[] | null,
-        isbn10: value.isbn_10,
-        isbn13: value.isbn_13,
+        isbn10: value.isbn10,
+        isbn13: value.isbn13,
         condition: value.condition,
-        quantityAvailable: value.quantity_available as number,
-        sellingPriceMinor: value.selling_price_minor as number,
-        visibilityStatus: value.visibility_status,
-        listingQualityStatus: value.listing_quality_status,
-        publicNotes: value.public_notes,
-        shelfLocation: value.shelf_location,
-        entryMethod: value.entry_method,
-        createdAt: value.created_at,
-        updatedAt: value.updated_at,
-        version: value.version as number,
+        quantityAvailable: value.quantityAvailable as number,
+        sellingPriceMinor: value.sellingPriceMinor as number,
+        visibilityStatus: value.visibilityStatus,
+        listingQualityStatus: value.listingQualityStatus,
+        publicNotes: value.publicNotes,
+        shelfLocation: null,
+        entryMethod: value.entryMethod,
+        createdAt: value.createdAt,
+        updatedAt: value.updatedAt,
+        version: value.inventoryVersion as number,
+        publicationStatus: value.publicationStatus,
+        publicationIntentVersion: value.publicationIntentVersion as number,
+        publicationRetryable: value.publicationRetryable,
+        publicationFailureReason: value.publicationFailureReason,
+        publicListingStatus: value.publicListingStatus,
     };
 }
 
@@ -261,6 +278,7 @@ function toRpcArguments(request: OwnerInventoryPageRequest): RpcArguments {
         p_quantity_state: normalizeCategory(filters.quantityState, QUANTITY_STATES),
         p_entry_method: normalizeCategory(filters.entryMethod, ENTRY_METHODS),
         p_date_added: normalizeCategory(filters.dateAdded, DATE_ADDED_FILTERS),
+        p_publication_status: normalizeCategory(filters.publicationStatus, PUBLICATION_STATUSES),
     };
 }
 

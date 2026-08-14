@@ -24,9 +24,12 @@ serve(async (request) => {
     const userClient = createClient(url, anonKey, { global: { headers: { Authorization: authorization } }, auth: { persistSession: false } });
     const serviceClient = createClient(url, serviceKey, { auth: { persistSession: false } });
     const body = parseOwnerIngestionRequest(await request.json());
-    return ownerUxJsonResponse(
-      await executeOwnerIngestion(body, actor.id, userClient as any, serviceClient as any),
+    const result = await executeOwnerIngestion(
+      body, actor.id, userClient as any, serviceClient as any,
     );
+    const failed = (result as any)?.contractVersion === 'phase9-publication-v1'
+      && (result as any)?.data?.outcome === 'committed_publication_failed';
+    return ownerUxJsonResponse(result, failed ? 202 : 200);
   } catch (error) {
     return ownerUxFailureResponse(error);
   }

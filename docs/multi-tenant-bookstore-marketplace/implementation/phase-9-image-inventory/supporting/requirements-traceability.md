@@ -236,6 +236,24 @@ identity/route fencing, version refresh, and private-cache invalidation. M39 is
 unapplied, so live ACL/function and authenticated Owner smoke evidence remain
 pending rather than inferred from local tests.
 
+### Unit 7B local implementation trace
+
+The frozen Unit 7B SDD §19 contains 20 numbered load-bearing tests. The exact
+number-to-invariant-to-test mapping is maintained in
+[07b-red-test-traceability.md](../work-units/07b-red-test-traceability.md). The
+corrected disposable suite passes 27/27, covering all 20 rows, expanded RT15
+cases, and the five Sol Light correction cases. M40 and the Edge/client/UI/worker changes implement the SDD's
+dual-version fence, transient-only retry, stale-lease protection, single
+projection writer, public DTO privacy, sanitized media/fallback rules,
+controlled Owner read boundary, closed-summary freeze, and one-command audit/
+event ownership. The actual disposable database-to-Owner-Edge-runtime-to-client-
+decoder-to-query/UI gate is 4/4; focused Jest is 25/25; Unit 7A plus dispatcher
+is 42/42. Real PostgreSQL upgrade/concurrency and the Deno graph pass. Full
+PGlite is 281/282 on the unchanged metadata fixture, and broad Jest passes 2010
+real tests with only six unchanged empty collectors. Docker remains
+`NOT_RUN/BLOCKED_ENVIRONMENT`. Connected-project and live acceptance evidence
+remain `NOT_RUN`.
+
 ## Local ingestion-runtime and Unit 4 trace (2026-07-26)
 
 Server-generated upload paths, content-hashed canonical completion, immutable service-only source snapshots, opaque token-and-attempt validation leases, sanitized private linking, and one vision-job identity trace to 02 Extraction EXT-01 through EXT-06 and 04 Media MED-01 through MED-10. M11 is live as `20260726182238`; Owner ingestion and the dedicated media worker are deployed and live-verified. Owner Edge hashes completion bytes but never decodes or sanitizes media. Animated/multi-frame PNG/WebP is rejected, and ImageMagick's 64 MP internal working allowance remains subordinate to the 16 MP source ceiling.

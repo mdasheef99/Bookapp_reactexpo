@@ -23,8 +23,17 @@ import {
     type OwnerInventoryQuantityState,
     type OwnerInventoryVisibilityStatus,
 } from '../api/ownerInventoryReadService';
+import { PublicationClientError } from '../api/publicationService';
 import { useOwnerInventoryRead } from '../queries/ownerInventoryReadQueries';
+import { usePublicationCommands } from '../queries/publicationQueries';
 import type { ImageInventoryIdentity } from '../queries/ownerUxQueries';
+import {
+    OwnerInventoryStateCard,
+    PublicationFilterBar,
+    ownerInventoryErrorCopy,
+    ownerInventoryPresentationItem,
+} from '../components/OwnerInventoryPresentation';
+import { PublicCopyMediaManager } from '../components/PublicCopyMediaManager';
 
 type Props = {
     identity: ImageInventoryIdentity;
@@ -38,95 +47,16 @@ const INITIAL_FILTERS: Required<OwnerInventoryFilters> = {
     quantityState: 'all',
     entryMethod: 'all',
     dateAdded: 'all',
+    publicationStatus: 'all',
 };
-
-function presentationItem(item: OwnerInventoryListItem) {
-    return {
-        id: item.id,
-        title: item.title,
-        condition: item.condition,
-        quantity_available: item.quantityAvailable,
-        selling_price_minor: item.sellingPriceMinor,
-        visibility_status: item.visibilityStatus,
-        listing_quality_status: item.listingQualityStatus,
-    };
-}
-
-function StateCard({
-    title,
-    body,
-    action,
-    actionLabel,
-    testID,
-}: {
-    title: string;
-    body: string;
-    action?: () => void;
-    actionLabel?: string;
-    testID?: string;
-}) {
-    const { colors } = useTheme();
-    return (
-        <GlassCard padding={18} borderRadius={16}>
-            <Text selectable accessibilityRole="header" style={[styles.stateTitle, { color: colors.textPrimary }]}>
-                {title}
-            </Text>
-            <Text selectable style={[styles.body, { color: colors.textSecondary }]}>{body}</Text>
-            {action && actionLabel ? (
-                <Pressable
-                    testID={testID}
-                    accessibilityRole="button"
-                    onPress={action}
-                    style={[styles.secondaryAction, { borderColor: colors.border }]}
-                >
-                    <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>{actionLabel}</Text>
-                </Pressable>
-            ) : null}
-        </GlassCard>
-    );
-}
-
-function errorCopy(error: OwnerInventoryReadError | null) {
-    if (error?.category === 'unauthorized') {
-        return {
-            title: 'Inventory access unavailable',
-            body: 'Active Store Owner access is required. Inventory rows were not shown.',
-        };
-    }
-    if (error?.category === 'invalid_request') {
-        return {
-            title: 'Inventory filters are invalid',
-            body: 'Review the inventory search and filters, then restart from the first page.',
-        };
-    }
-    if (error?.category === 'invalid_cursor') {
-        return {
-            title: 'Inventory page expired',
-            body: 'The page cursor is no longer valid. Restart from the first page.',
-        };
-    }
-    if (error?.category === 'unavailable') {
-        return {
-            title: 'Inventory temporarily unavailable',
-            body: 'The inventory service could not be reached. Your inventory was not treated as empty.',
-        };
-    }
-    if (error?.code === 'P9_RESPONSE_INVALID') {
-        return {
-            title: 'Inventory response unavailable',
-            body: 'The inventory response was invalid.',
-        };
-    }
-    return {
-        title: 'Inventory could not be loaded',
-        body: 'The inventory service returned an internal error. Your inventory was not treated as empty.',
-    };
-}
 
 export function OwnerInventoryReadScreen({ identity, scanHeader }: Props) {
     const { colors } = useTheme();
     const [filters, setFilters] = useState(INITIAL_FILTERS);
     const inventory = useOwnerInventoryRead(identity, filters);
+    const publication = usePublicationCommands(identity);
+    const [publicationMessage, setPublicationMessage] = useState<string | null>(null);
+    const [mediaManagerInventoryId, setMediaManagerInventoryId] = useState<string | null>(null);
     const error = inventory.error instanceof OwnerInventoryReadError ? inventory.error : null;
     const initialError = inventory.isError && inventory.items.length === 0;
     const initialLoading = inventory.isPending && inventory.items.length === 0;
@@ -134,7 +64,7 @@ export function OwnerInventoryReadScreen({ identity, scanHeader }: Props) {
         && !inventory.isError
         && !inventory.isRefreshError
         && inventory.items.length === 0;
-    const copy = errorCopy(error);
+    const copy = ownerInventoryErrorCopy(error);
     const resetFiltersAndPagination = async () => {
         setFilters(INITIAL_FILTERS);
         await inventory.resetPagination();
@@ -166,6 +96,30 @@ export function OwnerInventoryReadScreen({ identity, scanHeader }: Props) {
                         ? resetFiltersAndPagination()
                         : inventory.loadNextPage()
         );
+    const runPublication = async (
+        item: OwnerInventoryListItem,
+        intent: 'publish' | 'pause' | 'private' | 'retry',
+    ) => {
+        setPublicationMessage(null);
+        try {
+            const result = await publication.mutateAsync({
+                inventoryId: item.id,
+                inventoryVersion: item.version,
+                publicationIntentVersion: item.publicationIntentVersion,
+                intent,
+            });
+            setPublicationMessage(result.outcome === 'committed_publication_failed'
+                ? 'Publication is temporarily unavailable. Use Retry publication.'
+                : 'Publication state updated.');
+        } catch (failure) {
+            const code = failure instanceof PublicationClientError ? failure.code : null;
+            setPublicationMessage(code === 'P9_MEDIA_NOT_APPROVED'
+                ? 'Add approved damage photos before publishing.'
+                : code === 'P9_PUBLICATION_INELIGIBLE'
+                    ? 'Correct the price, stock, sellability, or required metadata before publishing.'
+                    : failure instanceof Error ? failure.message : 'Publication could not be updated.');
+        }
+    };
 
     return (
         <ScreenBackground>
@@ -194,8 +148,19 @@ export function OwnerInventoryReadScreen({ identity, scanHeader }: Props) {
                 {scanHeader}
 
                 <Text selectable style={[styles.readOnlyNote, { color: colors.textSecondary }]}>
-                    Read-only inventory view. Inventory changes remain unavailable in this screen.
+                    Publication controls use the server-authoritative inventory state.
                 </Text>
+                {publicationMessage ? (
+                    <Text testID="publication-message" selectable style={[styles.body, { color: colors.textSecondary }]}>
+                        {publicationMessage}
+                    </Text>
+                ) : null}
+                {mediaManagerInventoryId ? (
+                    <PublicCopyMediaManager
+                        inventoryId={mediaManagerInventoryId}
+                        onDone={() => setMediaManagerInventoryId(null)}
+                    />
+                ) : null}
                 <TextInput
                     testID="owner-inventory-search"
                     accessibilityLabel="Search inventory"
@@ -204,6 +169,11 @@ export function OwnerInventoryReadScreen({ identity, scanHeader }: Props) {
                     onChangeText={(query) => setFilters((current) => ({ ...current, query }))}
                     style={[styles.searchInput, { borderColor: colors.border, color: colors.textPrimary }]}
                 />
+                <View style={styles.publicationFilters}>
+                    <PublicationFilterBar onSelect={(publicationStatus) => setFilters((current) => ({
+                        ...current, publicationStatus,
+                    }))} />
+                </View>
                 <InventoryFilterPanel
                     mode="ownerRead"
                     conditionFilter={filters.condition}
@@ -241,7 +211,7 @@ export function OwnerInventoryReadScreen({ identity, scanHeader }: Props) {
                 ) : null}
 
                 {initialError ? (
-                    <StateCard
+                    <OwnerInventoryStateCard
                         title={copy.title}
                         body={copy.body}
                         action={initialAction ? () => void initialAction() : undefined}
@@ -259,7 +229,7 @@ export function OwnerInventoryReadScreen({ identity, scanHeader }: Props) {
                 ) : null}
 
                 {successfulEmpty ? (
-                    <StateCard
+                    <OwnerInventoryStateCard
                         title="No inventory items found"
                         body="The inventory request succeeded, but no items match these filters."
                     />
@@ -269,13 +239,21 @@ export function OwnerInventoryReadScreen({ identity, scanHeader }: Props) {
                     <View style={styles.list}>
                         <Text selectable style={[styles.sectionTitle, { color: colors.textPrimary }]}>Inventory ({inventory.items.length})</Text>
                         {inventory.items.map((item) => (
-                            <InventoryItem key={item.id} item={presentationItem(item)} />
+                            <InventoryItem
+                                key={item.id}
+                                item={ownerInventoryPresentationItem(item)}
+                                onPublish={() => void runPublication(item, 'publish')}
+                                onPause={() => void runPublication(item, 'pause')}
+                                onPrivate={() => void runPublication(item, 'private')}
+                                onRetryPublication={() => void runPublication(item, 'retry')}
+                                onManagePublicMedia={() => setMediaManagerInventoryId(item.id)}
+                            />
                         ))}
                     </View>
                 ) : null}
 
                 {(inventory.isNextPageError || inventory.isRefreshError) && inventory.items.length > 0 ? (
-                    <StateCard
+                    <OwnerInventoryStateCard
                         title={partialTitle}
                         body={partialBody}
                         action={partialAction}
@@ -325,12 +303,11 @@ const styles = StyleSheet.create({
     readOnlyNote: { fontSize: 14, lineHeight: 20 },
     searchInput: { minHeight: 46, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, backgroundColor: '#FFFFFF' },
     refreshAction: { minHeight: 40, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center' },
-    stateTitle: { fontSize: 18, fontWeight: '800' },
     body: { fontSize: 14, lineHeight: 20, marginTop: 8 },
     centerText: { textAlign: 'center', marginTop: 10 },
-    secondaryAction: { minHeight: 42, borderWidth: 1, borderRadius: 8, marginTop: 14, alignItems: 'center', justifyContent: 'center' },
     list: { gap: 10 },
     sectionTitle: { fontSize: 18, fontWeight: '800' },
     primaryAction: { minHeight: 46, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
     primaryActionText: { color: '#FFFFFF', fontWeight: '800' },
+    publicationFilters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });

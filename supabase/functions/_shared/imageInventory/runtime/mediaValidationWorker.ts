@@ -158,7 +158,12 @@ async function processClaim(client: Client, processor: MediaProcessor, job: Clai
       p_width: sanitized.width,
       p_height: sanitized.height,
     }));
-    return { jobId: job.id, outcome: 'queued', inputId: completed.input_id };
+    return {
+      jobId: job.id,
+      outcome: completed.state ?? 'queued',
+      ...(completed.input_id ? { inputId: completed.input_id } : {}),
+      ...(completed.media_asset_id ? { mediaAssetId: completed.media_asset_id } : {}),
+    };
   } catch (error) {
     const permanent = error instanceof MediaProcessingError;
     const code = permanent ? error.code : 'P9_MEDIA_PROCESSING_RETRYABLE';

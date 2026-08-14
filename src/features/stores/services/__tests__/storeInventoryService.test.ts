@@ -1,8 +1,12 @@
 import { supabase } from '@/lib/supabase';
 import { storeInventoryService } from '../storeInventoryService';
 import type { ManualInventoryInput } from '../../types';
+import { publicationService } from '@/features/imageInventory/api/publicationService';
+import { consumerDiscoveryService } from '@/features/marketplace/services/consumerDiscoveryService';
 
 jest.mock('@/lib/supabase');
+jest.mock('@/features/imageInventory/api/publicationService');
+jest.mock('@/features/marketplace/services/consumerDiscoveryService');
 
 function createBuilder(response: { data: unknown; error: Error | null }) {
     const builder: any = {
@@ -36,6 +40,21 @@ const manualInput: ManualInventoryInput = {
     internalNotes: 'Bought from estate sale',
     visibilityStatus: 'draft',
 };
+
+function safePublication(overrides: Record<string, unknown> = {}) {
+    return {
+        listingId: '20000000-0000-4000-8000-000000000001',
+        storeId: '20000000-0000-4000-8000-000000000002',
+        title: 'The Bookshop', authors: ['Penelope Fitzgerald'], language: 'en',
+        description: null, editionStatement: null, volume: null, format: null,
+        isbn10: null, isbn13: '9780006543541', condition: 'good', hasDamage: false,
+        publicDamageNote: null, damageTypes: [], priceMinor: 35000, currency: 'INR',
+        availabilityStatus: 'available', coverUrl: 'https://covers.example/bookshop.jpg',
+        publicMediaCount: 0, fulfillmentOptions: [], status: 'active',
+        moderationStatus: 'approved', qualityStatus: 'ready',
+        friendlyInventoryFreshnessSignal: 'recent', ...overrides,
+    };
+}
 
 describe('storeInventoryService.createManualInventoryItem', () => {
     beforeEach(() => {
@@ -106,65 +125,41 @@ describe('storeInventoryService.findPotentialDuplicates', () => {
 describe('storeInventoryService inventory publishing', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        (publicationService.readStatus as jest.Mock).mockResolvedValue({
+            inventoryId: 'inventory-1', inventoryVersion: 4,
+            publicationIntentVersion: 2,
+        });
+        (publicationService.setState as jest.Mock).mockResolvedValue({ outcome: 'published' });
     });
 
-    it('publishes only the owner-scoped inventory row and marks it listing-ready', async () => {
-        const fetchBuilder = createBuilder({
-            data: {
-                id: 'inventory-1',
-                title: 'The Bookshop',
-                condition: 'good',
-                quantity_available: 2,
-                selling_price_minor: 35000,
-            },
-            error: null,
-        });
-        const updateBuilder = createBuilder({ data: { id: 'inventory-1' }, error: null });
-        (supabase.from as jest.Mock).mockReturnValueOnce(fetchBuilder).mockReturnValueOnce(updateBuilder);
-
+    it('U7B-RT16 delegates legacy publish to the controlled version-fenced command', async () => {
         await storeInventoryService.publishInventoryItem({ storeId: 'store-1', inventoryId: 'inventory-1' });
 
-        expect(fetchBuilder.select).toHaveBeenCalledWith('id, title, condition, quantity_available, selling_price_minor');
-        expect(fetchBuilder.eq).toHaveBeenCalledWith('store_id', 'store-1');
-        expect(fetchBuilder.eq).toHaveBeenCalledWith('id', 'inventory-1');
-        expect(updateBuilder.update).toHaveBeenCalledWith({
-            visibility_status: 'published',
-            listing_quality_status: 'ready',
-        });
-        expect(updateBuilder.eq).toHaveBeenCalledWith('store_id', 'store-1');
-        expect(updateBuilder.eq).toHaveBeenCalledWith('id', 'inventory-1');
+        expect(publicationService.readStatus).toHaveBeenCalledWith('inventory-1');
+        expect(publicationService.setState).toHaveBeenCalledWith(expect.objectContaining({
+            inventoryId: 'inventory-1', expectedInventoryVersion: 4,
+            expectedPublicationIntentVersion: 2, intent: 'publish',
+        }));
+        expect(supabase.from).not.toHaveBeenCalled();
     });
 
-    it('rejects publish when required public listing fields are missing', async () => {
-        const fetchBuilder = createBuilder({
-            data: {
-                id: 'inventory-1',
-                title: 'The Bookshop',
-                condition: 'good',
-                quantity_available: 0,
-                selling_price_minor: 35000,
-            },
-            error: null,
-        });
-        (supabase.from as jest.Mock).mockReturnValueOnce(fetchBuilder);
-
+    it('surfaces deterministic controlled-boundary publication rejection', async () => {
+        (publicationService.setState as jest.Mock).mockRejectedValue(new Error('P9_PUBLICATION_INELIGIBLE:stock'));
         await expect(storeInventoryService.publishInventoryItem({
             storeId: 'store-1',
             inventoryId: 'inventory-1',
-        })).rejects.toThrow('Available quantity is required before publishing.');
-
-        expect(supabase.from).toHaveBeenCalledTimes(1);
+        })).rejects.toThrow('P9_PUBLICATION_INELIGIBLE:stock');
+        expect(supabase.from).not.toHaveBeenCalled();
     });
 
-    it('pauses a published inventory row through store-scoped filters', async () => {
-        const builder = createBuilder({ data: { id: 'inventory-1' }, error: null });
-        (supabase.from as jest.Mock).mockReturnValueOnce(builder);
-
+    it('U7B-RT16 delegates legacy pause to the controlled version-fenced command', async () => {
         await storeInventoryService.pauseInventoryItem({ storeId: 'store-1', inventoryId: 'inventory-1' });
 
-        expect(builder.update).toHaveBeenCalledWith({ visibility_status: 'paused' });
-        expect(builder.eq).toHaveBeenCalledWith('store_id', 'store-1');
-        expect(builder.eq).toHaveBeenCalledWith('id', 'inventory-1');
+        expect(publicationService.setState).toHaveBeenCalledWith(expect.objectContaining({
+            inventoryId: 'inventory-1', expectedInventoryVersion: 4,
+            expectedPublicationIntentVersion: 2, intent: 'pause',
+        }));
+        expect(supabase.from).not.toHaveBeenCalled();
     });
 
     it('edits public listing fields without accepting private consumer projection fields', async () => {
@@ -206,19 +201,7 @@ describe('storeInventoryService.searchPublicListings', () => {
     });
 
     it('reads consumer listings from the public projection only', async () => {
-        const builder = createBuilder({
-            data: [{
-                id: 'listing-1',
-                store_id: 'store-1',
-                public_title: 'The Bookshop',
-                public_authors: ['Penelope Fitzgerald'],
-                selling_price_minor: 35000,
-                condition: 'good',
-                status: 'active',
-            }],
-            error: null,
-        });
-        (supabase.from as jest.Mock).mockReturnValueOnce(builder);
+        (consumerDiscoveryService.searchSafePublications as jest.Mock).mockResolvedValue([safePublication()]);
 
         await expect(storeInventoryService.searchPublicListings('bookshop')).resolves.toEqual([
             expect.not.objectContaining({
@@ -229,49 +212,20 @@ describe('storeInventoryService.searchPublicListings', () => {
             }),
         ]);
 
-        expect(supabase.from).toHaveBeenCalledWith('marketplace_book_listings');
-        expect(supabase.from).not.toHaveBeenCalledWith('store_inventory');
-        expect(builder.eq).toHaveBeenCalledWith('status', 'active');
-        expect(builder.eq).toHaveBeenCalledWith('moderation_status', 'approved');
+        expect(consumerDiscoveryService.searchSafePublications).toHaveBeenCalledWith('bookshop');
+        expect(supabase.from).not.toHaveBeenCalled();
     });
 
     it('groups same ISBN public listings across stores without exposing inventory internals', async () => {
-        const builder = createBuilder({
-            data: [
-                {
-                    id: 'listing-1',
-                    store_id: 'store-1',
-                    canonical_edition_id: 'edition-1',
-                    public_title: 'The Bookshop',
-                    public_authors: ['Penelope Fitzgerald'],
-                    public_cover_url: 'https://covers.example/bookshop.jpg',
-                    isbn_13: '9780006543541',
-                    selling_price_minor: 35000,
-                    condition: 'good',
-                    status: 'active',
-                    moderation_status: 'approved',
-                },
-                {
-                    id: 'listing-2',
-                    store_id: 'store-2',
-                    canonical_edition_id: 'edition-1',
-                    public_title: 'The Bookshop',
-                    public_authors: ['Penelope Fitzgerald'],
-                    isbn_13: '9780006543541',
-                    selling_price_minor: 42000,
-                    condition: 'like_new',
-                    status: 'active',
-                    moderation_status: 'approved',
-                    internal_notes: 'private',
-                },
-            ],
-            error: null,
-        });
-        (supabase.from as jest.Mock).mockReturnValueOnce(builder);
+        (consumerDiscoveryService.searchSafePublications as jest.Mock).mockResolvedValue([
+            safePublication(),
+            safePublication({ listingId: '20000000-0000-4000-8000-000000000002',
+                storeId: '20000000-0000-4000-8000-000000000003', priceMinor: 42000 }),
+        ]);
 
         await expect(storeInventoryService.searchPublicBookResults('bookshop')).resolves.toEqual([
             {
-                groupingKey: 'edition:edition-1',
+                groupingKey: 'isbn13:9780006543541',
                 title: 'The Bookshop',
                 authors: ['Penelope Fitzgerald'],
                 isbn13: '9780006543541',
@@ -279,25 +233,22 @@ describe('storeInventoryService.searchPublicListings', () => {
                 offerCount: 2,
                 lowestPriceMinor: 35000,
                 offers: [
-                    expect.objectContaining({ id: 'listing-1', store_id: 'store-1' }),
+                    expect.objectContaining({ id: '20000000-0000-4000-8000-000000000001', store_id: '20000000-0000-4000-8000-000000000002' }),
                     expect.not.objectContaining({ internal_notes: expect.anything() }),
                 ],
             },
         ]);
     });
 
-    it('escapes wildcard characters before applying ilike search', async () => {
-        const builder = createBuilder({ data: [], error: null });
-        (supabase.from as jest.Mock).mockReturnValueOnce(builder);
-
+    it('passes wildcard text as an RPC value rather than a query-language fragment', async () => {
+        (consumerDiscoveryService.searchSafePublications as jest.Mock).mockResolvedValue([]);
         await storeInventoryService.searchPublicListings('100%_book');
 
-        expect(builder.ilike).toHaveBeenCalledWith('public_title', '%100\\%\\_book%');
+        expect(consumerDiscoveryService.searchSafePublications).toHaveBeenCalledWith('100%_book');
     });
 
     it('returns no grouped results for an empty public listing response', async () => {
-        const builder = createBuilder({ data: [], error: null });
-        (supabase.from as jest.Mock).mockReturnValueOnce(builder);
+        (consumerDiscoveryService.searchSafePublications as jest.Mock).mockResolvedValue([]);
 
         await expect(storeInventoryService.searchPublicBookResults('missing')).resolves.toEqual([]);
     });

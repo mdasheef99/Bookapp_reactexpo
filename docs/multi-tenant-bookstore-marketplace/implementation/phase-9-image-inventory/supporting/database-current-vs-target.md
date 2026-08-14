@@ -1,9 +1,20 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-08-12 Unit 7A read-only preflight and local M39 implementation
-**Audit mode:** exact-project read-only preflight plus local/ephemeral M39 verification; no live Unit 7A mutation
+**Audit date:** 2026-08-14 Unit 7B live-rollout closeout and M42 readback
+**Audit mode:** exact-project live readback after M39/M40/M41/M42 application, deployment, and Unit 7B proof
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10-M38 and WU1 are live exactly once; M09 absent. Exact live tail remains `20260810130638 marketplace_phase9_metadata_retry_correction`. Fresh read-only Unit 7A preflight reconfirmed the exact healthy project, live migration tail, relevant `store_inventory` columns, and unsafe M05 callable. Local M39 `20260812000039_marketplace_phase9_create_only_inventory_commit.sql` is implemented and PGlite-verified but **unapplied**. No database, Storage, queue, provider, inventory, listing, publication, or deployment mutation occurred. M09/global historical constraint validation is not required for Unit 7A, which initializes every newly created row in balance.
+**Mutation status:** M01-M08/M10-M42 are live at their separately recorded checkpoints; M09 is absent. M39, M40, M41, and M42 are live exactly once and immutable. M42 is a forward function correction only: the listing-sync trigger omits generated `marketplace_book_listings.authors_text` from INSERT/UPDATE assignments. The development `active_listing_limit` entitlement is 10 from source `unit7b_dev_rollout`.
+
+**Unit 7B live delta:** M40 adds the dual-version controlled publication
+commands, intent-keyed retry claim/token fencing, v2 Owner inventory page,
+closed-session-summary freeze, safe public DTO/RPC boundary, one-primary-
+fallback and sanitized-public-media enforcement, authoritative listing-sync
+trigger reconciliation, bounded audit/event ownership, and publication wake
+dispatch. M42 corrects the generated-author projection mismatch without
+changing M39/M40/M41. The connected proof selected `The Birth of Tragedy` and
+passed Publish -> anonymous discovery (one listing) -> Pause/removal ->
+Republish (one listing), controlled transient retry, stale-intent fencing, and
+final connected readback. Exact project and migration history read back healthy.
 
 **Unit 7A local delta:** M39 adds an authenticated create-only command that
 derives Owner/store authority, reads the current saved review and selected
@@ -218,6 +229,27 @@ benchmark manifests, approved languages, rollout rows, or enabled capabilities.
 
 **Live application checkpoint:** M01-M05 applied once. Live readback then proved `storage.objects` RLS was already enabled and owned by `supabase_storage_admin`; reviewed correction `e07efa1` removed only the redundant owner-only M06 RLS statement. Fresh preflight passed and M06-M08 applied once as `20260722095443`, `20260722095545`, and `20260722095729`. M06 Storage and M08 request-photo/privacy readbacks passed, while M08's broad function loop revoked M07's three anonymous discovery grants. Red-first forward correction M10 was independently approved, committed/pushed as `31253ad`, and applied once as `20260722125256 marketplace_phase9_public_boundary_security_correction`. Live readback proves exactly those three RPCs are anonymous, the eight request-photo RPCs remain authenticated-only, eight internal helpers remain service-only, private-table client grants are zero, the 24-field projection has `security_barrier=true` and `security_invoker=true`, and direct view access is absent. The Phase 9 `security_definer_view` error is resolved. Advisors are now security 174 (`INFO 46/WARN 127/ERROR 1`) and performance 350 (`INFO 199/WARN 151`); the three new WARNs intentionally describe the approved anonymous SECURITY DEFINER query boundaries, while the remaining ERROR is the legacy `public.spatial_ref_sys` RLS finding. M09 remains absent and the quantity CHECK remains `NOT VALID` with zero violations.
 
+## 2026-08-14 live Unit 7B readback
+
+- Supabase project `ahntbtktjjmvfosgkmgn` read back `ACTIVE_HEALTHY`; migration
+  history contains M39 (`20260812003419`), M40 (`20260813000040`), M41
+  (`20260813070104`), and M42 (`20260814013536`) exactly once.
+- M42 replaces `public.sync_marketplace_listing_from_inventory()` and omits
+  generated `marketplace_book_listings.authors_text` from both the insert and
+  conflict-update assignment paths. It does not rewrite M40 or alter the
+  generated-column definition.
+- The real Unit 7B proof completed Publish -> anonymous discovery with exactly
+  one listing -> Pause/removal -> Republish with exactly one listing. A forced
+  transient projection failure produced one retry job and was resolved by the
+  worker; a stale-intent retry was rejected with `P9_STATE_CONFLICT`.
+- Final connected readback for the selected row showed `published` state, one
+  active listing, unchanged quantity/identity, and zero outstanding publication
+  retries.
+- The existing `active_listing_limit` entitlement is enabled, sourced from
+  `unit7b_dev_rollout`, and now has `limit_value=10`. The authoritative
+  ineligibility function returns `NULL` for the other ready rows and `price` for
+  `Café du Livre` because its price is zero.
+
 ## Evidence classification
 
 - **Observed** means read from the verified live database, storage catalogue, advisor output, migration list, or inspected repository source.
@@ -279,7 +311,7 @@ Proposed boundary:
 
 1. Mobile clients use named Q01-Q06/Q11 RPCs or dedicated positive-allowlist views for owner-safe projections and named commands for upload authorization; they receive no direct private base-table SELECT grant.
 2. Mobile clients do not directly insert committed inventory from model output, mutate canonical rows, select raw provider/model payloads, or promote media.
-3. Local unapplied M39 implements the Unit 7A controlled server command to create exactly one private inventory row per eligible reviewed candidate, initialize its quantity buckets from server-held review state, and write provenance/audit/event/idempotency atomically. It performs no duplicate choice or public projection; publication is Unit 7B. Live state remains on the unsafe M05 boundary until an explicitly authorized M39 application performs the documented revocation.
+3. Live M39 implements the Unit 7A controlled server command to create exactly one private inventory row per eligible reviewed candidate, initialize its quantity buckets from server-held review state, and write provenance/audit/event/idempotency atomically. It performs no duplicate choice or public projection; publication remains Unit 7B-owned. The M39 application and readback are recorded in the current live handoff above.
 4. Service-role functions/Edge Functions derive actor/store, use fixed schemas/search paths, expose minimum commands, and have explicit grants plus cross-tenant denial tests; worker/service access is separately enumerated from authenticated access.
 5. Model/provider workers have a narrow job capability, not a user bearer token and not general database authority.
 
