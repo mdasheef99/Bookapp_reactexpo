@@ -1,8 +1,106 @@
 # Unit 7B Safe Publication — Local Implementation Evidence
 
-**Status:** `unit7b_corrections_pass_ready_for_exact_sha_release_gate`
-**Date:** 2026-08-13
+**Status:** `unit7b_live_rollout_pass_ready_for_main_authorization`
+**Date:** 2026-08-14
 **Authority:** frozen [Unit 7B SDD](../work-units/07b-publication-sdd.md)
+
+## 2026-08-14 Unit 7B live-rollout closeout
+
+- M42 (`20260814013536 marketplace_phase9_generated_authors_projection`) is
+  live exactly once. It removes the listing-sync assignment to generated
+  `marketplace_book_listings.authors_text`; the database-owned projection is
+  now respected without changing M39/M40/M41.
+- The real private row `The Birth of Tragedy` completed Publish -> anonymous
+  discovery with exactly one listing -> Pause/removal -> Republish with
+  exactly one listing.
+- A controlled transient projection failure produced one `publication_failed`
+  state and one retry job; the worker resolved it. A stale-intent retry was
+  fenced with `P9_STATE_CONFLICT`.
+- Final connected readback preserved inventory identity and quantity, showed
+  `published` inventory/publication state, one active listing, and zero
+  outstanding publication retries.
+- The existing live `active_listing_limit` entitlement is explicitly tagged
+  `unit7b_dev_rollout`; it is now `10`, changed from temporary value `1`.
+  Authoritative eligibility passes for the other ready rows;
+  `Café du Livre` remains blocked by `price` because its price is zero.
+- Unit 7B is PASS and ready for main authorization. No Unit 7C action or main
+  merge occurred.
+
+## Historical 2026-08-14 pre-M42 generated-column blocker
+
+- M41 was accepted after the requested narrow audit. All three changed rows
+  equal the authoritative server derivation `ready`; no unconditional promotion
+  was found, and focused insufficient-metadata coverage remains non-ready.
+- Render service `phase9-publication-worker` (`srv-d9v6gsc9v7es73f1d6o0`)
+  deployed exact commit `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649`.
+  Deploy `dep-d9v6gss9v7es73f1d7e0` is `live`; `/health=alive` and
+  `/ready=ready`. Auto-deploy is off and region is Singapore/free.
+- Supabase Vault now stores `phase9_publication_worker_url` and
+  `phase9_publication_worker_ingress_token`; values were not committed.
+- Read-only eligibility returned `ineligibility=null` and listing count `0` for
+  all three ready private candidate-derived rows. The proof selected
+  `461fa328-d95b-4573-965a-1eaa4be61ba1`, `The Birth of Tragedy`.
+- The normal Owner UI Publish request reached `phase9-owner-ingestion` v7 and
+  returned HTTP 500. PostgreSQL logs repeatedly recorded
+  `cannot insert a non-DEFAULT value into column "authors_text"`.
+- Live schema identifies `authors_text` as generated from `public_authors`.
+  M40's listing-sync function nevertheless includes `authors_text` in both the
+  INSERT values and `ON CONFLICT DO UPDATE` assignments. This is the blocker.
+- The failed transaction produced no business effect: inventory remains
+  draft/private at version `1`, publication-intent version `1`, with listing
+  count `0` and publication-retry count `0`.
+- No M42 was created and no existing migration was changed. Pause, republish,
+  anonymous discovery, transient retry, stale-intent fencing, and final
+  connected readback remain `NOT_RUN/BLOCKED_DEFECT`.
+
+## 2026-08-13 runtime rollout evidence
+
+- Supabase project: `Bookconnect_reactexpo` / ref
+  `ahntbtktjjmvfosgkmgn`, read back `ACTIVE_HEALTHY`.
+- `phase9-owner-ingestion` is ACTIVE at Edge version **7**. JWT verification
+  remains enabled. The deployed editor tree contains the complete checked-in
+  transitive dependency graph and the publication actions
+  `set_publication_state`, `retry_publication`, `authorize_public_copy`,
+  `complete_public_copy_upload`, `read_public_copy_status`,
+  `submit_public_copy_media`, and `read_publication_status`. The dashboard did
+  not expose a deployment UUID or Git SHA; the source readback matches branch
+  HEAD `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649`.
+- No unrelated Edge Function changed. No database, Storage, or business-row
+  mutation occurred during this rollout checkpoint.
+- Render workspace `tea-d9j67irtqb8s739ritc0` was enumerated with previews,
+  Key Value, and Postgres checks. Only the existing metadata, vision, and
+  media services were present; no `phase9-publication-worker` was found. No
+  service was created because infrastructure creation requires explicit Owner
+  authorization.
+- The authorized creation request was rejected before mutation because it
+  would transmit the Supabase `service_role` credential and a new worker
+  ingress token to the public Render service. No Render service, environment
+  variable, or deploy was created. Separate explicit approval is required for
+  that sensitive credential egress.
+- Live Publish -> Discover -> Pause -> Republish:
+  `NOT_RUN/BLOCKED_RUNTIME`. Runtime completion remains gated on the approved
+  Render service deployment and health/readiness verification; the business
+  test requires separate explicit authorization.
+
+## 2026-08-14 new-session security and configuration handoff
+
+- No additional remote mutation occurred after the M41/Edge version 7
+  checkpoint. Render workspace `tea-d9j67irtqb8s739ritc0` still has no
+  `phase9-publication-worker`; the browser dashboard check was at login even
+  though the available API listing was readable.
+- The supported Render creation request was rejected before mutation because
+  it would transmit the Supabase `service_role` credential and a new worker
+  ingress token to a public service. No Render service, environment variable,
+  or deploy was created, and no live business effect exists.
+- The current process had a foreign `SUPABASE_URL` host while the available
+  service-role JWT identified the target project ref. This was process-only;
+  user/machine environment scopes were unset and the project `.env` remains
+  target-correct. New runtime commands must explicitly use the target URL and
+  must never print the key.
+- Next gate: authenticated Render dashboard provisioning/identification,
+  secret configuration without exposure, worker deployment, and health/
+  readiness/ingress-fence readback. Stop there until separate live-business
+  authorization is recorded.
 
 ## Current Sol Light correction verdict
 
@@ -80,16 +178,18 @@ are recorded as unrelated repository-harness debt, not suppressed.
 
 ## External state and remaining gates
 
-M40 was not preflighted against or applied to the connected project. No Edge or
-worker was deployed, no Storage/database business data changed, and no live
-Owner publication/discovery/race proof ran. Exact-project preflight,
-application, deployment, live proofs, Unit 7C, and main integration remain
-`NOT_RUN` and require new authority.
+M39, M40, M41, and M42 are live exactly once. Owner Edge v7 is active and the
+publication worker is live/ready. The Unit 7B live proof is complete; the
+current development `active_listing_limit` is 10 from the existing
+`unit7b_dev_rollout` entitlement row. Unit 6F native validation remains
+deferred `NOT_RUN`/`UNRESOLVED`; Unit 7C and main integration remain separately
+gated.
 
 ## Next action
 
-Run the exact-SHA release gate on the integrated scoped Unit 7B candidate.
-Stop before exact-project preflight or any live mutation.
+Review the exact branch diff and obtain explicit main-integration authorization.
+Commit and merge only after that authorization, preserving unrelated working-
+tree changes. Do not start Unit 7C from this handoff.
 
 ## 2026-08-12 remediation verification update
 

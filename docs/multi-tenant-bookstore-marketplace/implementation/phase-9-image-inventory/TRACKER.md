@@ -1,20 +1,61 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit7a_create_only_contract_frozen`
-**Implementation status:** `unit7a_quality_handoff_m41_live_unit7b_runtime_blocked`
+**Implementation status:** `unit7b_live_rollout_pass_ready_for_main_authorization`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
-**Last updated:** 2026-08-13
-**Current milestone:** M41 is live and verified once; the resumed Unit 7B rollout is blocked at runtime deployment.
-**Active work unit:** `unit7a_quality_handoff_m41_release`
+**Last updated:** 2026-08-14
+**Current milestone:** M42 is live exactly once and corrects the generated-author projection; Owner Edge version 7 and the publication worker are live/ready; Unit 7B's connected live proof is complete and ready for main authorization.
+**Active work unit:** `unit7b_main_authorization_preparation`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Sol Light findings 001–006 are `CLOSED`. The prior corrected Unit 7B disposable baseline was 27/27; this bounded follow-up correction matrix is 6/6, focused migration assertions are 4/4, and Owner-publication/discovery/worker suites are 20/20. The actual database→Owner Edge runtime→client decoder→query/UI proof remains 4/4; prior Unit 7A, deferred-gate, PGlite, broad-Jest, and Docker dispositions are unchanged. M39 is byte-unchanged.
-**Next authorized action:** Restore a working authenticated Supabase Edge deployment path and provision/identify the approved `phase9-publication-worker` Render service, then deploy and run Publish -> Discover -> Pause -> Republish. Unit 7C and main integration remain excluded.
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; reviewed M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit` with no retry and zero migration-created business effects.
-**Scope boundary:** This session is limited to the approved Unit 7A -> Unit 7B quality handoff correction, one forward M41 migration, affected verification, exact-project M41 application, and resumption of the existing Unit 7B rollout. Unit 7C, unrelated inventory redesign, direct row repair, and main integration remain excluded.
-**Implementation authority:** the Owner explicitly approved local correction, commit/push, read-only connected preflight, one M41 application, exact backfill verification, and the existing Unit 7B deployment/live proof after M41 is verified live.
-**Migration creation/application authority:** M39 and M40 are declared live and immutable by the Owner. M41 is the only authorized forward migration; its connected application remains gated on exact-project and migration-history preflight.
-**Current gate:** `UNIT_7A_LIVE_PROOF_PASS`; `UNIT_7A_LIVE_PROOF_BLOCKED_BY_UI_AVAILABILITY` is CLEARED. Edge version 5 is ACTIVE, the first commit created exactly one private inventory row, and the exact replay returned the canonical result with zero new effects. Native Unit 6F validation remains `NOT_RUN`/`UNRESOLVED`, not PASS, and Unit 7B/7C remain separately gated.
+**Last completed:** Sol Light findings 001–006 are `CLOSED`; factual finding 008 is updated. M39/M40/M41/M42 are live exactly once. Unit 7B completed Publish -> anonymous discovery -> Pause -> Republish, the controlled transient retry, stale-intent fencing, and final connected readback. The prior local correction matrix remains 6/6, focused migration assertions 4/4, focused Owner-publication/discovery/worker suites 20/20, and cross-layer proof 4/4.
+**Next authorized action:** review the exact branch diff and obtain explicit authorization for main integration. Do not merge automatically. Unit 7C and any further live mutation remain separately gated.
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; and M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`. M39/M40/M41/M42 remain immutable.
+**Scope boundary:** This handoff is limited to Unit 7B closeout and main-authorization preparation. Unit 7C, unrelated inventory redesign, further direct row repair, production rollout, payments, Phases 7/8, and M09 remain excluded.
+**Implementation authority:** exact-project read-only verification, M42 application/readback, Owner Edge version 7, Render worker deployment/readiness, the live Unit 7B proof, and the temporary development entitlement adjustment are recorded. No main merge has occurred.
+**Migration creation/application authority:** M39, M40, M41, and M42 are live and immutable. No new migration is authorized unless separately requested.
+**Current gate:** `UNIT_7B_LIVE_ROLLOUT_PASS_READY_FOR_MAIN_AUTHORIZATION`; Owner Edge version 7 is ACTIVE and Render service `srv-d9v6gsc9v7es73f1d6o0` is live on exact commit `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649` with `/health=alive` and `/ready=ready`. The current development `active_listing_limit` is 10 from source `unit7b_dev_rollout`; the selected row is published with one active listing and zero outstanding publication retries. Native Unit 6F remains deferred and Unit 7C remains excluded.
+
+## 2026-08-14 — Unit 7B live-rollout closeout
+
+- M42 replaced the listing-sync trigger body so generated
+  `marketplace_book_listings.authors_text` remains database-owned.
+- The real private row `The Birth of Tragedy` completed Publish -> anonymous
+  discovery with exactly one listing -> Pause/removal -> Republish with
+  exactly one listing.
+- A controlled transient projection failure produced one `publication_failed`
+  state and one retry job; the worker resolved it. A stale-intent retry was
+  fenced with `P9_STATE_CONFLICT`.
+- Final connected readback preserved inventory identity and quantity, showed
+  `published` state, one active listing, and zero outstanding publication
+  retries.
+- The pre-existing development entitlement row tagged `unit7b_dev_rollout`
+  was changed from `active_listing_limit=1` to `10`. Authoritative eligibility
+  now passes for the other ready rows; `Café du Livre` remains blocked by
+  `price` because its price is zero.
+- No Unit 7C action or main merge occurred.
+
+## Historical 2026-08-14 — pre-M42 generated-column blocker
+
+- The narrow M41 audit passed: exactly three provenance-qualified rows derive
+  `ready` under the authoritative server function; no blanket promotion was
+  found, and insufficient metadata remains non-ready under the focused test.
+- Render service `phase9-publication-worker` / `srv-d9v6gsc9v7es73f1d6o0`
+  deployed exact commit `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649`.
+  Deploy `dep-d9v6gss9v7es73f1d7e0` is live; health/readiness are green.
+- Supabase Vault now contains the publication-worker URL and matching ingress
+  token. Secret values were not written to repository files.
+- The normal Owner UI selected eligible private inventory
+  `461fa328-d95b-4573-965a-1eaa4be61ba1` (`The Birth of Tragedy`). Owner Edge
+  v7 returned HTTP 500. PostgreSQL logs identify the exact failure:
+  `cannot insert a non-DEFAULT value into column "authors_text"`.
+- Live schema readback proves `marketplace_book_listings.authors_text` is
+  generated from `public_authors`, while M40's listing-sync function explicitly
+  inserts and updates `authors_text`. The transaction rolled back: the row
+  remains draft/private, intent/version remain `1/1`, listing count is `0`, and
+  retry count is `0`.
+- No M42 was created, no M39/M40/M41 file was modified, no inventory repair was
+  attempted, and Unit 7C/main integration were not started.
 
 **Unit 7B independent-review status:** `FINDING_001: CLOSED`; Sol Light findings
 001–006 are `CLOSED`, the bounded latest-subscription-order follow-up is
@@ -28,6 +69,56 @@ Historical continuity marker: **Next authorized action:** narrow independent rev
 **Historical active work unit:** `unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`
 **Global tracker:** [DOC-13](../../DOC-13-implementation-tracker.md)
 **Session protocol:** [SESSION-START.md](./SESSION-START.md)
+
+## 2026-08-13 — Unit 7B runtime rollout checkpoint
+
+- Supabase project readback remains `Bookconnect_reactexpo` / ref
+  `ahntbtktjjmvfosgkmgn`, `ACTIVE_HEALTHY`.
+- `phase9-owner-ingestion` was deployed from the checked-in source tree as
+  Edge version **7**. The dashboard readback shows the deployment active, JWT
+  verification enabled, the complete transitive local dependency tree, and
+  publication actions including `set_publication_state`, `retry_publication`,
+  `authorize_public_copy`, `complete_public_copy_upload`, and
+  `read_publication_status`. The editor did not expose a Git SHA or deployment
+  UUID; source readback matches the current branch HEAD `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649`.
+- No other Edge Function was changed. No database, Storage, or business-row
+  mutation occurred in this checkpoint.
+- Render workspace `tea-d9j67irtqb8s739ritc0` was enumerated with previews,
+  KV, and Postgres checks. It contains only `phase9-metadata-worker`,
+  `phase9-fixture-vision`, and `phase9-media-sanitation`; no approved
+  `phase9-publication-worker` service was found. No new Render service was
+  created because infrastructure creation requires explicit Owner
+  authorization.
+- After authorization, the supported Render creation request was rejected
+  before mutation because it would transmit the Supabase `service_role` key
+  and a new worker ingress token to the public Render service. No service,
+  environment variable, or deploy was created.
+- Publish -> Discover -> Pause -> Republish remains
+  `NOT_RUN/BLOCKED_RUNTIME`. The exact next action is the explicit
+  infrastructure authorization above, followed by Render deployment and
+  health/readiness verification; live business testing remains separately
+  gated.
+
+### 2026-08-14 — New-session runtime handoff clarification
+
+- No additional remote mutation occurred after the 2026-08-13 checkpoint.
+  The available Render API listing still shows only the metadata, fixture-vision,
+  and media-sanitation services. The browser dashboard check was at login, so a
+  new session must re-establish dashboard authentication before provisioning.
+- The supported Render create request was rejected before mutation because it
+  would transmit the Supabase `service_role` credential and a new worker ingress
+  token to a public service. No Render service, environment variable, or deploy
+  exists as a result of that attempt.
+- The process environment carried a foreign `SUPABASE_URL` host while the
+  available service-role JWT identified ref `ahntbtktjjmvfosgkmgn`. User and
+  machine environment scopes were unset, and the project `.env` remains pointed
+  at `ahntbtktjjmvfosgkmgn`. New runtime commands must explicitly set the exact
+  target URL and must not print the key.
+- Exact next action: use the authenticated Render dashboard to provision or
+  identify the approved `phase9-publication-worker`, configure its secrets
+  without exposing them, deploy the checked-in worker, and capture service,
+  deployment, health, readiness, and ingress-fence evidence. Stop before the
+  live business test and obtain separate explicit authorization for it.
 
 ## Current Unit 7A implementation authority — 2026-08-12
 

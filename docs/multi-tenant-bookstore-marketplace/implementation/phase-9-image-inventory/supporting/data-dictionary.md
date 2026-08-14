@@ -1,11 +1,11 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** current/live and approved-target representations separated; Unit 5C-4 search and Unit 5C-5/5C-6 backend live through M28
-**Last updated:** 2026-07-30
+**Status:** current/live and approved-target representations separated; Unit 7B live rollout PASS and ready for main authorization
+**Last updated:** 2026-08-14
 
 Unit 6A adds only local, unapplied Owner UX presentation/review support; it grants no Unit 7 inventory/publication mutation authority. See [tracker 19](../trackers/19-unit6a-owner-safe-backend-evidence.md).
 
-M01-M08/M10-M14 are live-verified. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. M14 adds dedicated service-only vision-provider attempts and is live once as `20260727183546`. Owner/media/fixture-vision services remain deployed. M09 quantity validation remains a separate live-data gate.
+M01-M08/M10-M42 are live-verified at their recorded levels. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. M14 adds dedicated service-only vision-provider attempts and is live once as `20260727183546`. M39/M40/M41/M42 are live exactly once; M42 keeps generated listing authors projection database-owned. Owner/media/fixture-vision/publication-worker services remain deployed. M09 quantity validation remains a separate live-data gate.
 
 The dictionary distinguishes canonical truth, store-owned snapshots, public projections, staged AI output, and media/evidence. A field must not be added to several layers merely because it is convenient; each copy needs a named owner and synchronization rule.
 
@@ -180,18 +180,22 @@ Existing quantity buckets remain authoritative. `photos text[]` is deprecated on
 
 ### Unit 7B publication projection delta
 
-Local unapplied M40 preserves `inventory.version` as business-content
+Live M40 preserves `inventory.version` as business-content
 concurrency and uses `publication_intent_version` for publication lifecycle.
 The Owner page v2 exposes only bounded publication state/retry fields. Public
 discovery is limited to the v2 safe DTO/RPCs and omits exact quantity,
 location, cost, internal notes, private media, provider/model payloads, and
-risk internals. `inventory_media_links` permits at most one
+risk internals. M42 forward-corrects the listing-sync trigger after PostgreSQL
+identified `marketplace_book_listings.authors_text` as a generated column: the
+trigger now omits that column from INSERT and conflict-update assignments,
+leaving the database-generated projection authoritative. `inventory_media_links`
+permits at most one
 `primary_fallback` per inventory, and eligible public links require an approved
 sanitized `public_copy` derivative in `inventory-photos`.
 
 ### Unit 7A create-only commit boundary
 
-Local unapplied M39 defines
+Live M39 defines
 `public.phase9_add_candidate_to_inventory_v1(session_id, candidate_id,
 expected_candidate_version, expected_review_version,
 expected_metadata_revision, idempotency_key, command_id)`. All parameters are
@@ -209,8 +213,8 @@ fail closed. Duplicate advice and legacy duplicate intent are neither inputs nor
 eligibility gates. The legacy M05 function remains as migration history, but
 M39 revokes its execute boundary from API/service roles. Publication status and
 public projection remain Unit 7B concerns. M39 is local only and these fields/
-function semantics must not be described as live until authorized application
-and readback.
+function semantics are live-verified after exact-project application and
+readback. M39 remains immutable; publication remains Unit 7B-owned.
 
 ### WU1 Owner-inventory read projection
 

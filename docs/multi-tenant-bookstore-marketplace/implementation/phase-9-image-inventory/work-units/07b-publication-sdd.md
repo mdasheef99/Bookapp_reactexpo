@@ -2,8 +2,8 @@
 
 **Status:** normative design frozen 2026-08-12; review candidate implemented; Luna review `NOT APPROVED`
 **Authority:** Owner decisions 2026-08-12 (all 12 review findings resolved); DOC-3, DOC-4, DOC-5, DOC-8; Phase 9 master SDD; SDD 03; SDD 05
-**Implementation authority:** Owner-authorized local implementation and review-candidate commit/push; real-PostgreSQL concurrency, Docker container smoke, and Deno Edge graph remain `NOT_RUN` and are deferred `REQUIRED_BEFORE_LIVE` on the final post-correction SHA before the Stage J exact-SHA release gate
-**Migration authority:** local M40 creation only; no connected preflight or application authorized
+**Implementation authority:** M40/M41/M42 are live exactly once on the verified development target; Owner Edge v7 and the publication worker are live; the connected Unit 7B completion proof is recorded in tracker 30. Main integration remains separately authorized.
+**Migration authority:** M40, M41, and M42 are immutable live history; no new migration is authorized by this SDD.
 
 ## 1. Purpose and scope
 
