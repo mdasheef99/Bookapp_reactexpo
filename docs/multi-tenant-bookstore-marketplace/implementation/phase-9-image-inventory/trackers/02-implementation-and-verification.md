@@ -1,7 +1,38 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit7c_wu2_store_view_read_locally_complete`; **last updated:** 2026-08-14
+**Status:** `unit7c_wu3_store_view_management_locally_complete`; **last updated:** 2026-08-14
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit7c_wu2_store_view_read_locally_complete`. The uncommitted WU2 Store View page/detail Edge→client→query→read-only UI vertical is locally complete; M43/M44 remain unapplied. Unit 7B remains live-verified and integrated into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`.
+**Active work unit:** `unit7c_wu3_store_view_management_locally_complete`. The uncommitted WU3 Save/stock/Unit 7B command-reuse vertical is locally complete; M43/M44 remain unapplied. Unit 7B remains live-verified and integrated into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`.
+
+### 2026-08-14 — Unit 7C WU3 Store View management vertical
+
+- Authorized scope: branch from exact WU2 commit `db7d118651eed4f5fca4a9109b4c091e391df5e9`;
+  consume unchanged M43 Save/stock through strict Owner Edge/client commands;
+  reuse Unit 7B publication/retry services/hooks; add bounded Store View edit,
+  stock, lifecycle controls, focused tests, local checks, and intercepted browser
+  smoke. Migration changes/application, connected writes, deployment, media,
+  history expansion, cutover, commit, and push were excluded.
+- RED/GREEN: missing management modules and controls failed first. Final Store
+  View/Edge coverage is 12 suites/63 tests; Unit 7C migration contract coverage
+  is 2 suites/10 tests; selected Unit 7B/WU2/routing/worker/legacy Inventory
+  regression is 102 passed with 4 pre-existing skips. TypeScript and Deno pass.
+  Expo web export and the intercepted Save/stock/lifecycle/retry smoke pass 1/1.
+- Implementation: `phase9-store-view-management-v1` maps Save only to M43 details
+  and stock only to M43 stock-v2; strict schemas reject caller store/listing
+  authority, forbidden edit fields, raw rows, and malformed responses. Client
+  mutations generate fresh command identities, never retry, invalidate detail/
+  list state, refetch on stale conflicts, and require explicit Owner retry.
+  The detail UI exposes the frozen edit fields, Owner-only distinctions, stock
+  bucket context, duplicate-submit fencing, and server-capability actions while
+  reusing Unit 7B publication commands unchanged.
+- Verification boundary: the fully intercepted browser flow proves client/UI/
+  Edge-envelope behavior, not PostgreSQL mutation semantics. Existing WU1/WU2A
+  disposable PostgreSQL evidence remains authoritative. Local Edge→DB is
+  `NOT_RUN_ENVIRONMENT` because no repository-supported local Edge→M43/M44
+  environment exists; no external workaround was used.
+- External/Git state: no Supabase/Storage/business-row mutation, migration
+  application, deployment, stage, commit, or push. M39–M44 are unchanged and no
+  M45 exists. `docs/codemap/` remains untouched. Next action: obtain separate
+  authorization to commit this exact WU3 vertical.
 
 ### 2026-08-14 — Unit 7C WU2 controlled Store View read vertical
 

@@ -12,6 +12,12 @@ jest.mock('../queries/storeViewQueries', () => ({
     useStoreViewPage: jest.fn(),
     useStoreViewDetail: jest.fn(),
 }));
+jest.mock('../queries/storeViewManagementQueries', () => ({
+    useStoreViewManagementCommands: () => ({ mutateAsync: jest.fn(), isPending: false }),
+}));
+jest.mock('@/features/imageInventory/queries/publicationQueries', () => ({
+    usePublicationCommands: () => ({ mutateAsync: jest.fn(), isPending: false }),
+}));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({ colors: {
         accent: '#2563eb', bgCard: '#fff', bgSecondary: '#eee', border: '#ddd',
@@ -118,7 +124,7 @@ describe('Unit 7C WU2 Store View UI', () => {
         }), undefined);
     });
 
-    it('renders read-only detail and visually identifies Owner-only values', () => {
+    it('renders management detail and visually identifies Owner-only values', () => {
         detailHook.mockReturnValue({ isPending: false, isError: false, data: {
             ...baseItem,
             privateOperations: { shelfLocation: 'A3', internalNotes: 'Owner note' },
@@ -129,8 +135,8 @@ describe('Unit 7C WU2 Store View UI', () => {
         expect(screen.getByText('Stock and operations · Owner only')).toBeTruthy();
         expect(screen.getByText('A3')).toBeTruthy();
         expect(screen.getByText('Owner note')).toBeTruthy();
-        expect(screen.queryByText('Save Changes')).toBeNull();
-        expect(screen.queryByText('Adjust Stock')).toBeNull();
+        expect(screen.getByTestId('store-view-edit')).toBeTruthy();
+        expect(screen.getByTestId('store-view-adjust-stock')).toBeTruthy();
     });
 
     it('keeps missing and cross-store detail errors non-enumerating', () => {

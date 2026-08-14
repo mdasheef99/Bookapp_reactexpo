@@ -214,8 +214,10 @@ tenant denial, ACL/RLS, and generated/default projection ownership are covered.
 WU2A evidence is forward-only M44 plus red/green and real-PostgreSQL proofs for
 authoritative filter-before-pagination, multi-page completeness, actor/store/filter-bound
 cursors, invalid filters, tenancy, and unchanged page-v1/detail-v1 behavior.
-Media management and UI/Edge/client cutover remain without implementation
-evidence and are not inferred from WU1.
+WU3 evidence adds strict separate Save/stock Edge/client commands, Store View
+edit/stock UI, authoritative cache refresh and stale handling, and capability-
+driven reuse of Unit 7B publication/retry commands. Media/history and final
+navigation cutover remain without implementation evidence and are not inferred.
 
 | Requirement | Authority and acceptance trace |
 | --- | --- |

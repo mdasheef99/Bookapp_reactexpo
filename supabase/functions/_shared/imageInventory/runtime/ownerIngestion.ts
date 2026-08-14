@@ -16,7 +16,12 @@ import {
   STORE_VIEW_CONTRACT_VERSION,
   StoreViewRequest,
 } from '../contracts/storeView.ts';
+import {
+  STORE_VIEW_MANAGEMENT_CONTRACT_VERSION,
+  StoreViewManagementRequest,
+} from '../contracts/storeViewManagement.ts';
 import { sha256Hex, StoredImageObject, storedImageEnvelope } from '../media/sourceIdentity.ts';
+import { executeStoreViewManagement } from './storeViewManagement.ts';
 
 type RpcResult = { data: any; error: { message?: string } | null };
 type Client = {
@@ -39,7 +44,7 @@ type SignedUploadTransportResponse = Readonly<{
 
 function unwrap(result: RpcResult): any {
   if (result.error) {
-    const safeCode = result.error.message?.match(/\b(P9_(?:AUTH_REQUIRED|OWNER_NOT_AUTHORIZED|REQUEST_INVALID|CURSOR_INVALID|NOT_FOUND|STATE_CONFLICT|VERSION_CONFLICT|CANDIDATE_VERSION_CONFLICT|INPUT_HAS_CANDIDATES|SINGLE_IMAGE_LIMIT|IDEMPOTENCY_MISMATCH|MEDIA_NOT_APPROVED|PUBLICATION_INELIGIBLE|PUBLICATION_FAILED|INTERNAL_ERROR))\b/u)?.[1];
+    const safeCode = result.error.message?.match(/\b(P9_(?:AUTH_REQUIRED|OWNER_NOT_AUTHORIZED|REQUEST_INVALID|CURSOR_INVALID|NOT_FOUND|STATE_CONFLICT|VERSION_CONFLICT|CANDIDATE_VERSION_CONFLICT|INPUT_HAS_CANDIDATES|SINGLE_IMAGE_LIMIT|IDEMPOTENCY_MISMATCH|MEDIA_NOT_APPROVED|PUBLICATION_INELIGIBLE|PUBLICATION_FAILED|NO_CHANGES|QUANTITY_INVARIANT_FAILED|INTERNAL_ERROR))\b/u)?.[1];
     throw new Error(safeCode ?? 'P9_INTERNAL_ERROR');
   }
   return result.data;
@@ -115,6 +120,14 @@ export async function executeOwnerIngestion(
   userClient: Client,
   serviceClient: Client,
 ): Promise<Record<string, unknown>> {
+  if (request.contractVersion === STORE_VIEW_MANAGEMENT_CONTRACT_VERSION) {
+    return executeStoreViewManagement(
+      request as StoreViewManagementRequest,
+      userClient,
+      unwrap,
+    );
+  }
+
   if (request.contractVersion === STORE_VIEW_CONTRACT_VERSION) {
     const storeView = request as StoreViewRequest;
     if (storeView.action === 'read_store_view_page') {

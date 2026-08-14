@@ -1,10 +1,10 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit7c_wu2a_filter_contract_locally_complete`
+**Status:** `unit7c_wu3_store_view_management_locally_complete`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
 **Last updated:** 2026-08-14
 **Current handoff:** Unit 7C's normative Owner Store View/post-commit inventory
-management SDD remains frozen; WU1 and the bounded WU2A filter correction are locally complete. Unit 7B remains
+management SDD remains frozen; WU1, WU2A, WU2, and WU3 are locally complete. Unit 7B remains
 live-verified and integrated into `main` at merge commit
 `53edbddc9c5417b34cb169599e8282b162e183b3`.
 M39, M40, M41, and M42 are live exactly once; Owner Edge v7 and the Render
@@ -16,8 +16,10 @@ RED/GREEN, focused Unit 7A/7B regression, and real-PostgreSQL vertical proof.
 Local M44 adds authoritative filtered page-v2 keyset pagination; its
 `needs_attention` bucket uses server-composed `attentionState = action_required`
 so publication-failed cards remain distinct while appearing in that bucket. It
-passes exact M01–M44 plus focused WU1/WU2A proofs. M43/M44 are not applied. Media management, client/UI work, migration application,
-deployment, and live verification remain separately gated.
+passes exact M01–M44 plus focused WU1/WU2A proofs. The WU2 read vertical and WU3
+strict Save/stock plus reused Unit 7B lifecycle controls pass focused, static,
+web-export, and intercepted browser gates. M43/M44 are not applied. Media/history,
+final cutover, migration application, deployment, and live verification remain separately gated.
 **Historical implementation status (superseded):** Unit 6's automatic/functional pipeline is **PASS**.
 M01-M08/M10-M38 are live-verified at their recorded levels; approved `main` SHA
 `a138baa7d3bbc086da019bc052a5ae31d0e15882` is published and deployed to

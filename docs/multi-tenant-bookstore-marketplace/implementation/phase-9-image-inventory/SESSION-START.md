@@ -12,31 +12,31 @@ The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` �
 
 Current phase: Phase 9 — Image-Assisted Inventory.
 Planning/implementation status: Unit 7C normative design remains frozen; WU1,
-WU2A, and the WU2 controlled Store View read vertical are locally complete. Unit 7B remains live-verified and integrated
+WU2A, WU2, and the WU3 Store View management vertical are locally complete. Unit 7B remains live-verified and integrated
 into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`. Unit 6F native
 validation remains deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-Last completed milestone: Unit 7C WU2 controlled Store View read vertical;
-strict page/detail Edge and client contracts, filter/cursor query identity,
-read-only list/detail UI, `inventoryId` routing, and fully intercepted browser
-smoke pass while preserving publication-failed state under Needs Attention.
-Active work unit: `unit7c_wu2_store_view_read_locally_complete`.
-Next authorized action: obtain separate authorization to commit the exact proven WU2 read vertical.
-Blockers/gates: M43/M44 connected application, WU3 mutation/media work, final navigation cutover,
+Last completed milestone: Unit 7C WU3 Store View management vertical; strict
+separate M43 Save/stock Edge and client commands, focused edit/stock UI,
+capability-driven Unit 7B publication/retry reuse, and fully intercepted browser
+management smoke pass.
+Active work unit: `unit7c_wu3_store_view_management_locally_complete`.
+Next authorized action: obtain separate authorization to commit the exact proven WU3 vertical.
+Blockers/gates: M43/M44 connected application, media/history work, final navigation cutover,
 deployment/live verification, production rollout, payments, Phases 7/8, and
 M09 remain separately gated. Unrelated worktree changes must be preserved.
 Supabase mutation authority for this handoff: M42 is already live exactly once;
 M43/M44 are local-only candidates and no connected migration or business-row mutation
 is authorized by this document.
-Files changed in WU2: Owner Edge Store View contracts/actions, strict client
-contracts/service/query layer, hidden list/detail routes and read-only UI,
-focused tests/browser smoke, and required handoff records. No commit or application
+Files changed in WU3: Owner Edge Store View management contracts/actions, strict
+client mutation contracts/service/query layer, edit/stock/action UI, focused
+tests/browser smoke, and required handoff records. No commit or application
 is authorized until a separate approval.
 
 Exact live target: Supabase project `Bookconnect_reactexpo`, ref
 `ahntbtktjjmvfosgkmgn`, host `https://ahntbtktjjmvfosgkmgn.supabase.co`,
 `ACTIVE_HEALTHY`, region `ap-southeast-2`. The checked-out branch is
-`codex/unit7c-wu2-store-view-read` at starting commit
-`298ac1d2a9ca553074ab1df3b454459014ea1405`; preserve unrelated untracked
+`codex/unit7c-wu3-store-view-management` from exact WU2 commit
+`db7d118651eed4f5fca4a9109b4c091e391df5e9`; preserve unrelated untracked
 `docs/codemap/` changes.
 
 M39 (`20260812003419`), M40 (`20260813000040`), M41 (`20260813070104`), and

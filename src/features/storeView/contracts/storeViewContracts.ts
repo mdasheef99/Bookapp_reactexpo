@@ -116,5 +116,7 @@ export function decodeStoreViewResponse<Action extends StoreViewAction>(
         data: responseSchemas[action],
     }).strict().safeParse(value);
     if (!result.success) throw new StoreViewResponseContractError();
-    return result.data.data as z.infer<(typeof responseSchemas)[Action]>;
+    return (result.data as unknown as {
+        data: z.infer<(typeof responseSchemas)[Action]>;
+    }).data;
 }

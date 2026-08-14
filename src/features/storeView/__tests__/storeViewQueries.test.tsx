@@ -51,7 +51,7 @@ describe('Unit 7C WU2 Store View query layer', () => {
     it('puts each server filter in a distinct page query identity', () => {
         const filters = ['all', 'private', 'live', 'paused', 'needs_attention', 'out_of_stock'] as const;
         const keys = filters.map((filter) => storeViewKeys.page(identity, filter));
-        expect(new Set(keys.map(JSON.stringify)).size).toBe(6);
+        expect(new Set(keys.map((key) => JSON.stringify(key))).size).toBe(6);
         filters.forEach((filter, index) => expect(keys[index]).toContain(filter));
     });
 

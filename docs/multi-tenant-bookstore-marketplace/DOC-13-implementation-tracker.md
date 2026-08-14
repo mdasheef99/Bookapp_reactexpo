@@ -826,12 +826,28 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C WU2 Store View read vertical locally complete; M43/M44 unapplied** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C WU3 Store View management locally complete; M43/M44 unapplied** |
 | Overall status | `in_progress` |
 | Last updated | 2026-08-14 |
-| Latest handoff | Unit 7C WU2 is locally complete but uncommitted on `codex/unit7c-wu2-store-view-read`: strict Owner Edge page/detail actions, client contracts/services/query hooks, hidden list/detail routes, six server filters, pagination, `inventoryId` routing, read-only detail, and intercepted browser smoke pass. M39–M44 are unchanged; M43/M44 are not applied. |
-| Current risk level | Local Edge→DB is `NOT_RUN_ENVIRONMENT` because Docker/local Supabase is unavailable. Connected M43/M44 application, deployment/live verification, WU3 mutations/media, and final navigation cutover remain unimplemented/unauthorized. Unit 6F native debt remains unrelated. The untracked `docs/codemap/` directory remains preserved and uninspected. |
-| Next recommended task | Obtain separate authorization to commit the exact WU2 read vertical. M43/M44 application, Supabase/Storage mutation, deployment, live verification, WU3, and final navigation cutover remain separate gates. |
+| Latest handoff | Unit 7C WU3 is locally complete but uncommitted on `codex/unit7c-wu3-store-view-management`: strict separate Save/stock commands consume unchanged M43, capability-driven Store View detail reuses Unit 7B publication/retry, and focused/static/intercepted-browser gates pass. M39–M44 are unchanged; M43/M44 are not applied. |
+| Current risk level | Local Edge→DB is `NOT_RUN_ENVIRONMENT` because no repository-supported local Edge→M43/M44 environment is available. Connected M43/M44 application, deployment/live verification, media/history, and final navigation cutover remain unimplemented/unauthorized. Unit 6F native debt remains unrelated. The untracked `docs/codemap/` directory remains preserved and uninspected. |
+| Next recommended task | Obtain separate authorization to commit the exact WU3 vertical. M43/M44 application, Supabase/Storage mutation, deployment, live verification, media/history, and final navigation cutover remain separate gates. |
+
+### 2026-08-14 Unit 7C WU3 local completion
+
+- Added strict separate Save and stock Edge/client commands over unchanged M43,
+  exact command identity, no mutation retry, authoritative cache refresh, stale
+  refetch without replay, and bounded edit/stock Store View interactions.
+- Store View lifecycle controls are server-capability-driven and reuse existing
+  Unit 7B publication/retry services/hooks for Publish, Pause, Republish, Make
+  Private, and Retry; no second lifecycle path was introduced.
+- Store View/Edge is 63/63; Unit 7C migration contracts are 10/10; selected Unit
+  7B/WU2/routing/worker/legacy Inventory regressions are 102 passed with 4
+  pre-existing skips. TypeScript, Deno, Expo web export, and the fully
+  intercepted management browser flow pass.
+- Local Edge→DB remains `NOT_RUN_ENVIRONMENT`; the browser proof is not database
+  mutation evidence. No migration, connected Supabase/Storage mutation,
+  deployment, stage, commit, or push occurred. `docs/codemap/` remains untouched.
 
 ### 2026-08-14 Unit 7C WU2 local completion
 
@@ -918,7 +934,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit7c_wu2_store_view_read_locally_complete` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7C SDD](./implementation/phase-9-image-inventory/work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | Local M43/M44 and the WU2 controlled read vertical pass; both migrations are unapplied and M39–M44 remain unchanged. Next: separately authorize WU2 commit. |
+| Phase 9: Image-to-LLM Inventory | `unit7c_wu3_store_view_management_locally_complete` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7C SDD](./implementation/phase-9-image-inventory/work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | WU3 strict Save/stock plus reused Unit 7B lifecycle controls pass locally; M43/M44 are unapplied and M39–M44 remain unchanged. Next: separately authorize WU3 commit. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -939,8 +955,9 @@ If implementation changes product or architecture behavior, update the relevant 
 - Phase 9 Unit 6 automatic/functional pipeline is complete/PASS; native Unit 6F
   validation remains deferred `NOT_RUN`/`UNRESOLVED` debt and is not marked
   PASS. Unit 7B live rollout is PASS and integrated into `main` at merge commit
-  `53edbddc9c5417b34cb169599e8282b162e183b3`; Unit 7C design is frozen and its
-  implementation remains unauthorized.
+  `53edbddc9c5417b34cb169599e8282b162e183b3`; Unit 7C WU1/WU2A/WU2/WU3 are
+  locally complete, while connected M43/M44 application, media/history, final
+  cutover, deployment, and commit/push remain separately gated.
 
 ---
 
@@ -1038,16 +1055,17 @@ Documentation milestones completed:
 
 ## 8. Next Recommended Task
 
-**Current 2026-08-14 handoff:** Phase 9 Unit 7C WU2 is locally complete. The
-controlled Store View read vertical consumes unchanged M43/M44 through strict
-Owner Edge/client/query/list/detail layers; focused, regression, TypeScript,
-Deno, web export, and intercepted browser proofs pass. Unit 7B
+**Current 2026-08-14 handoff:** Phase 9 Unit 7C WU3 is locally complete. The
+Store View management vertical consumes unchanged M43 Save/stock through strict
+separate Owner Edge/client/query/UI layers and reuses Unit 7B publication/retry;
+focused, regression, TypeScript, Deno, web export, and intercepted browser
+proofs pass. Unit 7B
 remains live-verified and integrated into `main`; M39–M43 are immutable, and
 M43/M44 are not applied.
 
-Next work requires separate authorization to commit the exact WU2 read vertical.
+Next work requires separate authorization to commit the exact WU3 vertical.
 M43/M44 application, Supabase or
-Storage mutation, WU3 mutation/media work, final cutover, deployment, live verification, production
+Storage mutation, media/history work, final cutover, deployment, live verification, production
 rollout, payments, Phases 7/8, and M09 remain separately gated. The
 deferred native Unit 6F validation debt remains `NOT_RUN`/`UNRESOLVED` and is
 not silently converted to PASS.

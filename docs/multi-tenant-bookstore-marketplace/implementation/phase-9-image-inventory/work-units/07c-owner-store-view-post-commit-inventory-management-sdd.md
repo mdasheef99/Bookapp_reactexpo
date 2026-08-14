@@ -1,8 +1,8 @@
 # Unit 7C SDD: Owner Store View and Post-Commit Inventory Management
 
-**Status:** normative design frozen 2026-08-14; WU1 and bounded WU2A filter correction locally complete
+**Status:** normative design frozen 2026-08-14; WU1/WU2A/WU2/WU3 locally complete
 **Authority:** final Owner contract reconciliation ending `UNIT_7C_READY_FOR_SDD`; DOC-3 §§5.3, 6–9, 14–16; DOC-4 §§2, 9–11, 14–15; DOC-5 §§5, 10–15; DOC-8 §§2–5, 8, 14–15; Phase 9 master SDD §§3–7, 9, 12–14; Unit 7A §§11, 13–20; Unit 7B §§2–15, 18–21.
-**Implementation checkpoint:** The attached 2026-08-14 authorizations completed WU1 and the bounded WU2A filter correction: local Store View page/detail reads, atomic details Save, stock adjustment v2, safe public revisions, Unit 7B lifecycle/projection integration, filtered page-v2 keyset pagination, and bounded database fixtures/proofs. Media management, Edge/mobile/UI, migration application, deployment, and live verification remain unimplemented and require separate authorization.
+**Implementation checkpoint:** The attached 2026-08-14 authorizations completed WU1/WU2A/WU2/WU3 locally: Store View page/detail reads, atomic details Save, stock adjustment v2, safe public revisions, filtered page-v2 pagination, strict Edge/client read and mutation contracts, focused edit/stock UI, and reuse of Unit 7B lifecycle/retry commands. Focused/static/web-export/intercepted-browser evidence passes. Media/history, final cutover, migration application, deployment, connected Edge→DB proof, and live verification remain unimplemented and require separate authorization.
 **Migration authority:** M39–M43 are immutable. Local candidates M43 and forward correction M44 (`20260814000044_marketplace_phase9_store_view_filter_contract.sql`) are not applied to Supabase; this SDD does not authorize connected application.
 
 ## 1. Decision and scope
