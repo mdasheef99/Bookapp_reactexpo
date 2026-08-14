@@ -1,7 +1,54 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit7b_main_integrated_next_scope_authorization`; **last updated:** 2026-08-14
+**Status:** `unit7c_wu1_locally_complete`; **last updated:** 2026-08-14
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `phase9_post_unit7b_handoff`. M42 is live exactly once; Owner Edge version 7 and Render publication worker `srv-d9v6gsc9v7es73f1d6o0` are live/ready on exact commit `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649`. Unit 7B live proof is PASS and integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`.
+**Active work unit:** `unit7c_wu1_complete_waiting_next_authorization`. Unit 7C WU1's database contract is locally complete; local M43 is unapplied. Unit 7B remains live-verified and integrated into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`.
+
+### 2026-08-14 — Unit 7C Work Unit 1 local database contract
+
+- Authorized scope: bounded WU1 RED tests, one forward migration candidate,
+  minimal fixtures, local/disposable PostgreSQL apply and vertical proof, and
+  required handoff documentation. Connected application/deployment, media,
+  Edge/mobile/UI, stage, commit, push, and unrelated cleanup were prohibited.
+- Implemented M43 Store View page/detail RPCs, exact-versioned/idempotent atomic
+  Save, stock adjustment v2 with hold/bucket preservation, zero-stock public
+  availability reconciliation, append-only safe public revisions, and reuse of
+  the existing Unit 7B publication and listing-sync paths.
+- RED: 0/11 expected failures, all attributable to absent pre-M43 WU1 contracts.
+  GREEN: Unit 7C integration 15/15; migration Jest 5/5; focused Unit 7A/7B
+  regression 40/40; exact final M01–M43 disposable PostgreSQL vertical proof
+  returned `UNIT_7C_REAL_POSTGRES_VERTICAL_PASS`.
+- PostgreSQL readback: nine affected functions are postgres-owned,
+  `SECURITY DEFINER`, and fixed to empty `search_path`; public Owner RPCs are
+  authenticated/service executable and anonymous denied; private helpers are
+  denied to API roles. The revision table is postgres-owned, RLS-enabled, and
+  has no authenticated/service update. Listing `authors_text` remains generated,
+  `id`/`published_at` remain default-owned, and exactly one sync trigger exists.
+- Read-only MCP reconfirmed exact project `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn` healthy and the relevant live seam; M42 remains the
+  remote migration tail. No Supabase/Storage or other external mutation occurred.
+- Full media list/reorder/remove/replace remains deferred. Exact next action:
+  obtain explicit authorization for the dedicated media-management work unit in
+  Unit 7C §§8 and 15.7; M43 application remains separately unauthorized.
+
+### 2026-08-14 — Unit 7C normative design completion
+
+- Authorized work unit and scope: documentation/design only; create the bounded
+  normative Unit 7C SDD from the final frozen contract reconciliation.
+- Completed: Owner IA, stable identity/authority, Store View page/detail reads,
+  atomic Save, separate stock/media commands, Unit 7B lifecycle reuse,
+  attention/capabilities, metadata authority, public revisions, UI cutover,
+  forward database delta, acceptance A–H, and implementation order.
+- Files/components/migrations: Unit 7C SDD and required documentation continuity
+  records only; no production component or migration file changed.
+- Verification actually run: Phase 9 continuity validator, Markdown link check,
+  SDD structure/line count check, `git diff --check`, and final status/diff review.
+- Supabase/external mutations: none; no project query, database/Storage write,
+  deployment, provider call, live verification, stage, commit, or push.
+- Decisions/deviations/risks: one 293-line SDD was sufficient; no blocker or
+  contradiction. M39–M42 stay immutable. Native Unit 6F debt remains unrelated.
+- Next authorized action and gate: explicit approval for Unit 7C forward
+  database-contract/red-test implementation; migration creation/application,
+  deployment, and live verification remain later separate gates.
 
 ### 2026-08-14 — Unit 7B live-rollout closeout
 
@@ -204,7 +251,8 @@ Historical status marker: **Status:** `unit7a_edge_deployment_blocked_by_source_
 | WU2 | [Read-only Owner inventory client integration](../work-units/owner-inventory-read-client-wu2-sdd.md) | [`locally_complete_authenticated_runtime_deferred`](./26-owner-inventory-read-client-wu2-evidence.md) | Owner `/inventory` uses the canonical page RPC with strict DTO validation, isolated cache/pagination, exact filters, and read-only states; dashboard, writes, deployment, authenticated runtime, and Unit 7 remain gated |
 | Wake dispatcher | [Automatic worker wake dispatcher](../work-units/automatic-worker-wake-dispatcher-sdd.md) | `live_active_verified` | M36 is live exactly once; its cron is active and automatically completed the final Unit 6 media, vision, and metadata path without manual invocation |
 | 7A | [Create-only per-candidate private inventory commit](../work-units/07a-create-only-inventory-commit-sdd.md), server-held review snapshot, exact replay/concurrency, one-to-one provenance, and Unit 6 duplicate-contract transition | [`edge_deployment_blocked_by_source_routing_mismatch`](./29-unit7a-create-only-commit-evidence.md) | M39 application/readback pass; the one Owner Edge deployment attempt failed before activation on an extensionless import; no retry, source repair, or business effect |
-| 7B | [Safe publication/projection after private inventory creation](../work-units/07b-publication-sdd.md) | `live_rollout_pass_ready_for_main_authorization` | review the exact branch diff and obtain explicit main-integration authorization; do not start Unit 7C from this handoff |
+| 7B | [Safe publication/projection after private inventory creation](../work-units/07b-publication-sdd.md) | `live_verified_main_integrated` | closed at merge `53edbddc9c5417b34cb169599e8282b162e183b3`; lifecycle contracts are reused unchanged by Unit 7C |
+| 7C | [Owner Store View and post-commit inventory management](../work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | `wu1_database_contract_locally_complete` | local M43 and bounded proofs pass; M43 is unapplied; obtain explicit media-management work-unit authorization next |
 
 Historical Unit 7B local correction matrix (2026-08-12; superseded by the live
 closeout above): expanded disposable Unit 7B is
@@ -281,6 +329,7 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260812000040_marketplace_phase9_safe_publication.sql` | `20260813000040 marketplace_phase9_safe_publication` | exact target `ahntbtktjjmvfosgkmgn`; migration history read back once | authorized M40 application; immutable | shared rollout eligibility using latest subscription row, moderation preservation, safe grouped discovery, targeted public-media retraction, post-lease worker replay, and Unit 7B scope | correction matrix 6/6; focused migration assertions 4/4; Owner-publication/discovery/worker 20/20; cross-layer proof 4/4; M39 byte-unchanged | `live_verified` |
 | `20260813000041_marketplace_phase9_unit7a_quality_handoff.sql` | `20260813070104 marketplace_phase9_unit7a_quality_handoff` | exact target `ahntbtktjjmvfosgkmgn`; migration history read back once | authorized M41 application; immutable | deterministic candidate-derived quality handoff only; no manual repair and no public-state change | exactly three provenance-qualified development rows changed `missing_metadata` → `ready`; all remained draft/private; triggers read back | `live_verified` |
 | `20260814000042_marketplace_phase9_generated_authors_projection.sql` | `20260814013536 marketplace_phase9_generated_authors_projection` | exact target `ahntbtktjjmvfosgkmgn`; project `ACTIVE_HEALTHY`; migration history read back once | authorized forward-only M42 application; immutable | replaces the listing-sync trigger body so generated `marketplace_book_listings.authors_text` is omitted from INSERT/UPDATE assignments; M39/M40/M41 unchanged | migration history exactly once; live function readback; Publish/Pause/Republish, transient retry, stale-intent fencing, and final connected-state proof passed | `live_verified` |
+| `20260814000043_marketplace_phase9_unit7c_inventory_management.sql` | not applied | exact target `ahntbtktjjmvfosgkmgn` read-only verified healthy; M42 remains remote tail | local WU1 creation only; connected application not authorized | forward Store View reads, atomic Save, stock v2, revision ledger, and Unit 7B lifecycle/projection integration; M39–M42 unchanged | expected RED 0/11; Unit 7C 15/15; static 5/5; Unit 7A/7B 40/40; exact M01–M43 disposable PostgreSQL vertical/readback PASS | `local_candidate_verified_unapplied` |
 Rules: re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
 - Use forward corrections; record every schema, grant, Storage, data, and verification effect.
 ## Required verification matrix

@@ -826,12 +826,35 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7B live rollout PASS; integrated into `main`** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C WU1 database contract locally complete; M43 unapplied** |
 | Overall status | `in_progress` |
 | Last updated | 2026-08-14 |
-| Latest handoff | M39, M40, M41, and M42 are live exactly once on `ahntbtktjjmvfosgkmgn`. M42 forward-corrects the listing-sync trigger so the database owns generated `marketplace_book_listings.authors_text`. Owner Edge v7 and Render publication worker `srv-d9v6gsc9v7es73f1d6o0` are live/ready on exact commit `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649`. Unit 7B completed the live Publish -> Discover -> Pause -> Republish, transient retry, stale-intent fencing, and final connected-state proof. Commit `9f3e646` is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`. |
-| Current risk level | Unit 6F native validation remains `NOT_RUN`/`UNRESOLVED` deferred debt. Unit 7C has not started. The unrelated untracked `docs/codemap/` directory remains preserved; no further Phase 9 live mutation is authorized without a new scope decision. |
-| Next recommended task | Obtain explicit authorization for the next Phase 9 scope. Do not start Unit 7C, production rollout, payment work, or Phases 7/8 from this handoff. |
+| Latest handoff | Unit 7C WU1 is locally complete on `codex/unit7c-wu1-db-contract`: local M43, bounded RED/GREEN and Unit 7A/7B regressions, and exact M01–M43 disposable PostgreSQL proof pass. M39–M42 remain live/immutable and M43 is not applied. |
+| Current risk level | WU1 has local database evidence only. Media management, Edge/mobile/UI cutover, connected M43 application, deployment, and live verification remain unimplemented/unauthorized. Unit 6F native debt remains unrelated. The untracked `docs/codemap/` directory remains preserved and uninspected. |
+| Next recommended task | Obtain explicit authorization for the dedicated Unit 7C media-management work unit (SDD §§8 and 15.7). M43 application, Supabase/Storage mutation, deployment, live verification, and client/UI work remain separate gates. |
+
+### 2026-08-14 Unit 7C Work Unit 1 local completion
+
+- Added local-only forward candidate M43 for Store View reads, atomic Save,
+  stock v2, safe public revisions, and Unit 7B lifecycle/projection reuse.
+- Expected RED was 0/11. Final evidence is Unit 7C integration 15/15,
+  migration Jest 5/5, focused Unit 7A/7B regression 40/40, and exact final
+  M01–M43 disposable PostgreSQL vertical/readback PASS.
+- Read-only exact-project preflight reconfirmed `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn` healthy with M42 as the remote tail. No connected
+  migration, database/Storage/business-row mutation, deployment, stage,
+  commit, or push occurred.
+- Media management is deferred to the next separately authorized work unit.
+
+### 2026-08-14 Unit 7C normative SDD completion
+
+- Froze the Owner Store View/post-commit management contract in one 293-line
+  SDD, including stable inventory identity, atomic Save, separate stock/media,
+  Unit 7B lifecycle reuse, safe revisions, IA cutover, and acceptance A–H.
+- Documentation only: no production code/test, migration file, Supabase/Storage
+  mutation, deployment, live verification, stage, commit, or push.
+- No contradiction/blocker found. The next gate is explicit authorization for
+  Unit 7C forward database-contract/red-test implementation.
 
 ### 2026-08-14 Unit 7B live-rollout closeout
 
@@ -869,7 +892,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit7b_main_integrated_next_scope_authorization` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7B SDD](./implementation/phase-9-image-inventory/work-units/07b-publication-sdd.md) · [Unit 7B evidence](./implementation/phase-9-image-inventory/trackers/30-unit7b-safe-publication-evidence.md) | Unit 7A/M39 remain live and byte-unchanged. M40/M41/M42 are live exactly once; M42 corrected the generated-author projection. Owner Edge v7 and the Render publication worker are live/ready. Unit 7B Publish -> Discover -> Pause -> Republish, transient retry, stale-intent fencing, and final connected readback passed. Commit `9f3e646` is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`; Unit 7C remains separately gated. |
+| Phase 9: Image-to-LLM Inventory | `unit7c_wu1_locally_complete` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7C SDD](./implementation/phase-9-image-inventory/work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | Local M43 database contract and bounded proofs pass; M43 is unapplied and M39–M42 remain live/immutable. Next: separately authorize Unit 7C media management. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -890,8 +913,8 @@ If implementation changes product or architecture behavior, update the relevant 
 - Phase 9 Unit 6 automatic/functional pipeline is complete/PASS; native Unit 6F
   validation remains deferred `NOT_RUN`/`UNRESOLVED` debt and is not marked
   PASS. Unit 7B live rollout is PASS and integrated into `main` at merge commit
-  `53edbddc9c5417b34cb169599e8282b162e183b3`; Unit 7C remains out of scope
-  until separately authorized.
+  `53edbddc9c5417b34cb169599e8282b162e183b3`; Unit 7C design is frozen and its
+  implementation remains unauthorized.
 
 ---
 
@@ -976,8 +999,10 @@ Documentation milestones completed:
   publication worker are live/ready; Publish -> Discover -> Pause -> Republish,
   transient retry, stale-intent fencing, and final connected readback passed.
   The development active-listing entitlement is now 10; main integration is
-  complete at `53edbddc9c5417b34cb169599e8282b162e183b3`, while Unit 7C
-  remains separately gated.
+  complete at `53edbddc9c5417b34cb169599e8282b162e183b3`.
+- Phase 9 Unit 7C WU1 local completion (2026-08-14): M43 and bounded database
+  evidence pass locally, including real PostgreSQL replay/readback. M43 remains
+  unapplied; media, client/UI, deployment, and connected proof remain gated.
 - Expert review findings incorporated: platform support/disputes are core ops, founding-store trial model added, Bangalore locality pilot added, seller-of-record decision added, post-payment unavailable flow clarified, minors/school users marked out of pilot scope.
 - DOC-14 Commerce State Machines created.
 - DOC-15 Finance, Tax, and Settlement Operating Model created.
@@ -987,16 +1012,16 @@ Documentation milestones completed:
 
 ## 8. Next Recommended Task
 
-**Current 2026-08-14 handoff:** Phase 9 Unit 7B live rollout is PASS and is
-integrated into `main` at merge commit
-`53edbddc9c5417b34cb169599e8282b162e183b3`. M39, M40, M41, and M42 are live
-exactly once on the verified development project; the publication worker and
-Owner Edge are live; and the connected Publish -> Discover -> Pause ->
-Republish, transient retry, stale-intent fencing, and final readback proof are
-recorded.
+**Current 2026-08-14 handoff:** Phase 9 Unit 7C WU1 is locally complete. Local
+M43 covers the database contract and passed bounded RED/GREEN, focused Unit
+7A/7B regressions, and exact M01–M43 disposable PostgreSQL proof. Unit 7B
+remains live-verified and integrated into `main`; M39–M42 remain live exactly
+once and immutable, and M43 is not applied.
 
-Next work requires explicit authorization for the next Phase 9 scope. Unit 7C,
-production rollout, payments, Phases 7/8, and M09 remain separately gated. The
+Next work requires explicit authorization for the dedicated Unit 7C
+media-management work unit in SDD §§8 and 15.7. M43 application, Supabase or
+Storage mutation, Edge/mobile/UI, deployment, live verification, production
+rollout, payments, Phases 7/8, and M09 remain separately gated. The
 deferred native Unit 6F validation debt remains `NOT_RUN`/`UNRESOLVED` and is
 not silently converted to PASS.
 

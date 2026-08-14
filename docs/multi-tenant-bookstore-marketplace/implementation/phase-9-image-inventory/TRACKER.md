@@ -1,22 +1,56 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `unit7a_create_only_contract_frozen`
-**Implementation status:** `unit7b_main_integrated_next_scope_authorization`
+**Planning status:** `unit7c_normative_sdd_frozen`
+**Implementation status:** `unit7c_wu1_locally_complete`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-14
-**Current milestone:** M42 is live exactly once and corrects the generated-author projection; Owner Edge version 7 and the publication worker are live/ready; Unit 7B's connected live proof is complete and integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`.
-**Active work unit:** `phase9_post_unit7b_handoff`
+**Current milestone:** Unit 7C Work Unit 1 database contract is locally complete on `codex/unit7c-wu1-db-contract`: M43, bounded fixtures, Store View reads, atomic Save, stock v2, safe public revisions, Unit 7B lifecycle reuse, and real-PostgreSQL proof are complete. M42 remains the live remote tail; M43 is not applied.
+**Active work unit:** `unit7c_wu1_complete_waiting_next_authorization`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Sol Light findings 001–006 are `CLOSED`; factual finding 008 is updated. M39/M40/M41/M42 are live exactly once. Unit 7B completed Publish -> anonymous discovery -> Pause -> Republish, the controlled transient retry, stale-intent fencing, and final connected readback. The prior local correction matrix remains 6/6, focused migration assertions 4/4, focused Owner-publication/discovery/worker suites 20/20, and cross-layer proof 4/4.
-**Next authorized action:** obtain explicit authorization for the next Phase 9 scope. Do not start Unit 7C or perform further live mutation without separate authorization.
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; and M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`. M39/M40/M41/M42 remain immutable.
-**Scope boundary:** This handoff is limited to the completed Unit 7B closeout and post-merge next-scope authorization. Unit 7C, unrelated inventory redesign, further direct row repair, production rollout, payments, Phases 7/8, and M09 remain excluded.
-**Implementation authority:** exact-project read-only verification, M42 application/readback, Owner Edge version 7, Render worker deployment/readiness, the live Unit 7B proof, the temporary development entitlement adjustment, and the `main` merge are recorded.
-**Migration creation/application authority:** M39, M40, M41, and M42 are live and immutable. No new migration is authorized unless separately requested.
-**Current gate:** `UNIT_7B_MAIN_INTEGRATED_NEXT_SCOPE_AUTHORIZATION`; Owner Edge version 7 is ACTIVE and Render service `srv-d9v6gsc9v7es73f1d6o0` is live on exact commit `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649` with `/health=alive` and `/ready=ready`. The current development `active_listing_limit` is 10 from source `unit7b_dev_rollout`; the selected row is published with one active listing and zero outstanding publication retries. Native Unit 6F remains deferred and Unit 7C remains excluded.
+**Last completed:** Unit 7C WU1 is locally complete: expected RED 0/11, final Unit 7C integration 15/15, migration Jest 5/5, focused Unit 7A/7B regression 40/40, and exact M01–M43 disposable PostgreSQL vertical proof PASS. Readback confirms ACL/RLS/search-path/owner and generated/default listing ownership. No connected write occurred.
+**Next authorized action:** obtain explicit authorization for the dedicated Unit 7C media-management work unit in SDD §§8 and 15.7. Do not apply M43, mutate Supabase/Storage, deploy, live-verify, or begin client/UI work without separate authorization.
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; and M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`. M39/M40/M41/M42 remain immutable. Local-only candidate M43 is `20260814000043_marketplace_phase9_unit7c_inventory_management.sql`; it has not been applied to Supabase.
+**Scope boundary:** WU1 covers the forward database contract for Store View reads, atomic Save, stock v2, lifecycle/revision integration, and bounded fixtures/proofs. Media list/reorder/remove/replace, Edge/mobile/UI cutover, external application/deployment/live verification, unrelated inventory redesign, direct row repair, production rollout, payments, Phases 7/8, and M09 remain excluded.
+**Implementation authority:** the attached request authorized WU1 local database implementation and disposable PostgreSQL proof only. No further Unit 7C work or external mutation is authorized.
+**Migration creation/application authority:** M39, M40, M41, and M42 are live and immutable. M43 exists only as an unapplied local forward candidate; connected application requires separate explicit authorization.
+**Current gate:** `UNIT_7C_WU1_LOCAL_PASS_NEXT_UNIT_AND_M43_APPLICATION_NOT_AUTHORIZED`; Owner Edge version 7 and the Unit 7B worker/runtime remain unchanged. Native Unit 6F remains deferred and is not a Unit 7C blocker.
+
+## 2026-08-14 — Unit 7C Work Unit 1 local database contract
+
+- Added local forward candidate M43 without editing immutable M39–M42.
+- Implemented server-scoped Store View page/detail reads, exact-versioned and
+  idempotent atomic Save, bounded stock adjustment v2, live zero-stock
+  projection handling, and append-only safe public revisions while reusing the
+  existing Unit 7B lifecycle and listing-sync path.
+- RED was 0/11 expected failures for absent WU1 contracts. GREEN is Unit 7C
+  integration 15/15, migration Jest 5/5, focused Unit 7A/7B regression 40/40,
+  and exact final M01–M43 disposable PostgreSQL vertical proof PASS.
+- Read-only MCP preflight reconfirmed `Bookconnect_reactexpo` / project ref
+  `ahntbtktjjmvfosgkmgn` healthy with M42 as the remote tail. No Supabase,
+  Storage, deployment, business-row, stage, commit, or push mutation occurred.
+- Full media management is intentionally deferred to the next separately
+  authorized work unit; WU1 only preserves existing approved public-media
+  projection/history semantics.
+
+## 2026-08-14 — Unit 7C normative SDD completion
+
+Historical prior-handoff markers: **Implementation status:** `unit7b_main_integrated_next_scope_authorization`; **Active work unit:** `phase9_post_unit7b_handoff`.
+
+- Created the single 293-line normative Unit 7C SDD for Owner Store View and
+  post-commit inventory management.
+- Frozen stable `inventoryId`, `store_inventory` authority, projection-only
+  listings, controlled Save/Stock/Media/Lifecycle boundaries, server-derived
+  state/capabilities, safe public revisions, UI cutover, forward database
+  responsibilities, acceptance areas A–H, and the 12-step implementation order.
+- Documentation verification only; no tests/code/migration file, Supabase or
+  Storage mutation, deployment, live verification, stage, commit, or push.
+- No design contradiction or blocker was found. Next: obtain explicit approval
+  for forward database-contract/red-test implementation.
 
 ## 2026-08-14 — Unit 7B live-rollout closeout
+
+Historical Unit 7B gate: **Next authorized action:** obtain explicit authorization for the next Phase 9 scope.
 
 - M42 replaced the listing-sync trigger body so generated
   `marketplace_book_listings.authors_text` remains database-owned.
@@ -174,14 +208,13 @@ authorization. The browser is left at `/inventory` for handoff.
 
 ## Current handoff
 
-The approved Phase 9 workflow requires validated vision output to pass through
-local-canonical-first metadata enrichment before Owner review becomes
-actionable. Repository evidence proves the component foundations but does not
-yet prove the production handoffs or a complete upload-to-enriched-review run.
-The read-only vertical integration audit and architecture freeze identified the
-missing structural seam. Native Unit 6F and WU1/WU2 runtime evidence remain
-open as deferred validation debt. Unit 7 remains not started but is
-owner-authorized under the current closure authority above.
+Unit 7C's normative Store View/post-commit management design is frozen in
+[the Unit 7C SDD](./work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md).
+Implementation is `NOT_STARTED`; the exact next gate is explicit authorization
+for forward database-contract/red-test work. M39–M42 remain immutable, and no
+migration creation/application, Supabase mutation, deployment, or live proof is
+authorized. The older implementation narrative below is retained as historical
+evidence and does not override the current top-of-file status.
 
 The 2026-08-07 authorized structural implementation closes that seam locally:
 vision persistence and metadata-job creation share one PostgreSQL transaction;

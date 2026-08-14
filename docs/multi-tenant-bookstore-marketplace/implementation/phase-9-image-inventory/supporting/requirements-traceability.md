@@ -1,6 +1,6 @@
 # Phase 9 Requirements Traceability
 
-**Last updated:** 2026-08-11
+**Last updated:** 2026-08-14
 
 ## Multilingual vision-response resilience correction
 
@@ -202,6 +202,35 @@ tables as recorded in tracker 10.
 | Quota/retry policy model-agnostic and configurable | 02 Extraction | EXT-13–EXT-17 |
 | Distinct scan, public-copy, and request-photo media classes | 00 Master; 04 Media; 06 Photo request | MAS-08; MED-06–MED-12; PHO-09–PHO-12 |
 | Phase 7/8 independence | 00 Master; 06 Photo request | MAS-09; MAS-AC08; PHO-13 |
+
+## Unit 7C Owner Store View trace (2026-08-14)
+
+The controlling design is [Unit 7C Owner Store View and post-commit inventory
+management](../work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md).
+
+WU1 local evidence is M43 plus the Unit 7C integration/static/vertical fixtures:
+Store View reads, Save, stock, lifecycle reuse, revisions, rollback, replay,
+tenant denial, ACL/RLS, and generated/default projection ownership are covered.
+Media management and UI/Edge/client cutover remain without implementation
+evidence and are not inferred from WU1.
+
+| Requirement | Authority and acceptance trace |
+| --- | --- |
+| Add-to-Inventory preserves review and optionally deep-links by stable `inventoryId` | P9-D73; DOC-4 §§9–11; Unit 7C §§1–3; U7C-A |
+| Store View is the rich post-commit surface; Inventory remains acquisition/review/recovery | P9-D73; DOC-8 §§2–5 as superseded; Unit 7C §§3/12; U7C-A/B |
+| `store_inventory` is authoritative; listing rows are controlled customer projections | P9-D74; DOC-3 §§6–8/15; Unit 7C §§1–2/6/13; U7C-B/C |
+| Ordinary Save is exact-versioned, idempotent, synchronous, transactional, and rollback-safe | P9-D74; Unit 7C §§2/6; U7C-C |
+| Stock is separate and preserves buckets/holds; live zero stock projects unavailable without failing lifecycle | P9-D74; DOC-3 §§6.2/7–8; Unit 7C §7; U7C-D/H |
+| Media replacement retains approved public media until an atomic safe swap | P9-D74; Unit 7B §6; Unit 7C §8; U7C-E/H |
+| Unit 7B lifecycle commands and intent fencing are reused without a second path | Unit 7B §§3–5/8–15; Unit 7C §9; U7C-F |
+| Attention, effective state, and capabilities are server-derived; Out of Stock is operational | P9-D73/74; Unit 7C §§2/4–5; U7C-B |
+| Owner-approved committed metadata cannot be silently overwritten or mutate canonical/provider truth | DOC-3 §5.3; DOC-4 §11; Unit 7C §§2/10; U7C-C |
+| Activity and append-only safe public revisions remain distinct | P9-D74; Unit 7C §11; U7C-G/H |
+| Real PostgreSQL seams precede broad adversarial proof and cannot use manual derived-state repair | Unit 7C §§14–15; U7C-H |
+
+`U7C-A` through `U7C-H` denote the eight normative acceptance areas in Unit 7C
+§14. WU1 supplies only the database evidence listed above; full acceptance,
+especially media and UI/runtime cutover, must not be inferred from it.
 
 ## Unit 7A create-only commit trace (2026-08-12)
 

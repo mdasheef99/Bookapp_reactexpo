@@ -1,15 +1,20 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit7b_main_integrated_next_scope_authorization`
+**Status:** `unit7c_wu1_locally_complete`
+**Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
 **Last updated:** 2026-08-14
-**Current handoff:** Unit 7B is live-verified and integrated into `main` at
-merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`.
+**Current handoff:** Unit 7C's normative Owner Store View/post-commit inventory
+management SDD remains frozen; WU1's local database contract is complete. Unit 7B remains
+live-verified and integrated into `main` at merge commit
+`53edbddc9c5417b34cb169599e8282b162e183b3`.
 M39, M40, M41, and M42 are live exactly once; Owner Edge v7 and the Render
 publication worker are live/ready; and the connected Publish -> Discover ->
 Pause -> Republish, transient retry, stale-intent fencing, and final readback
 proof are recorded. The current development `active_listing_limit` is 10 from
-the existing `unit7b_dev_rollout` entitlement row. Unit 7C and any further live
-mutation remain separately gated.
+the existing `unit7b_dev_rollout` entitlement row. Local M43 passed bounded
+RED/GREEN, focused Unit 7A/7B regression, and real-PostgreSQL vertical proof;
+it is not applied. Media management, client/UI work, migration application,
+deployment, and live verification remain separately gated.
 **Historical implementation status (superseded):** Unit 6's automatic/functional pipeline is **PASS**.
 M01-M08/M10-M38 are live-verified at their recorded levels; approved `main` SHA
 `a138baa7d3bbc086da019bc052a5ae31d0e15882` is published and deployed to
@@ -20,7 +25,7 @@ physical-device parity, native recovery/reconnect, 15-card representative-device
 performance, offline/reconnect, accessibility/large text, and low-end Android
 resource/performance. The project owner accepts that deferred risk and
 authorizes Unit 7 to begin.
-The active Unit 7A design is frozen as create-only: one eligible reviewed
+Historical pre-live Unit 7A checkpoint: the design was frozen as create-only: one eligible reviewed
 candidate creates one new private inventory row from the current server-held
 review; no duplicate lookup/merge/increment/manual-match/keep-separate behavior
 exists in 7A, and publication is Unit 7B. Local M39, Edge, and mobile
@@ -34,8 +39,8 @@ recorded evidence remains authoritative beneath this final closure checkpoint.
 versions on `ahntbtktjjmvfosgkmgn`; M09 remains absent. M42 is the forward-only
 generated-author projection correction. Unit 7B deployment and live proof are
 complete; commit `9f3e646` is integrated into `main` at merge commit
-`53edbddc9c5417b34cb169599e8282b162e183b3`; no Unit 7C action or additional
-live migration/business-row mutation was performed.
+`53edbddc9c5417b34cb169599e8282b162e183b3`; Unit 7C WU1 is local-only and no
+additional live migration/business-row mutation was performed.
 **Database checkpoint:** the exact project is `ACTIVE_HEALTHY`; M39/M40/M41/M42
 are live exactly once; the selected listing is published with one active public
 projection and zero outstanding publication retries. The development
@@ -104,6 +109,8 @@ After the repository entrypoint, read in this order:
 | [WU1 Owner-inventory read boundary](./work-units/owner-inventory-read-boundary-wu1-sdd.md) | Separate stable detail/list read contract, signed deterministic cursor, exact DTO/filter allowlists, Owner authorization, and the applied forward migration; positive Owner runtime remains deferred. |
 | [WU2 Owner-inventory read client](./work-units/owner-inventory-read-client-wu2-sdd.md) | Read-only `/inventory` cutover to the WU1 list RPC, strict DTO validation, opaque pagination, cache isolation, exact filters, and error/empty/partial states; authenticated runtime remains deferred. |
 | [Unit 7A create-only commit](./work-units/07a-create-only-inventory-commit-sdd.md) | One reviewed candidate to one new private inventory row, server-held review/revision authority, quantity buckets, replay/concurrency, one-to-one provenance, false-only skip semantics, Unit 6 duplicate-contract transition, and migration verdict. |
+| [Unit 7B safe publication](./work-units/07b-publication-sdd.md) | Existing publish/pause/private/retry lifecycle, public eligibility/projection, approved media, retry worker, and live completion contract. |
+| [Unit 7C Owner Store View](./work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | Stable post-commit Owner identity, Store View IA and reads, atomic Save, separate stock/media operations, Unit 7B lifecycle reuse, public revisions, UI cutover, database delta, and acceptance A–H. |
 
 ## Supporting set
 

@@ -11,21 +11,23 @@ The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` �
 ## Current 2026-08-14 final resume overlay
 
 Current phase: Phase 9 — Image-Assisted Inventory.
-Planning/implementation status: Unit 7B live rollout PASS and integrated into
-`main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`. Unit 6F native validation remains deferred
-`NOT_RUN`/`UNRESOLVED`, not PASS.
-Last completed milestone: M42 corrected the generated-author column projection;
-the live Unit 7B publication, pause, republish, transient retry, stale-intent
-fencing, and final connected-state proof completed successfully.
-Active work unit: `phase9_post_unit7b_handoff`.
-Next authorized action: obtain explicit authorization for the next Phase 9
-scope. Do not start Unit 7C automatically.
-Blockers/gates: Unit 7C, production rollout, payments, Phases 7/8, and M09
-remain separately gated. Unrelated worktree changes must be preserved.
+Planning/implementation status: Unit 7C normative design remains frozen; WU1's
+local database contract is complete. Unit 7B remains live-verified and integrated
+into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`. Unit 6F native
+validation remains deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
+Last completed milestone: Unit 7C WU1 local M43 database contract and bounded
+RED/GREEN, Unit 7A/7B regression, and real-PostgreSQL vertical proof.
+Active work unit: `unit7c_wu1_complete_waiting_next_authorization`.
+Next authorized action: obtain explicit authorization for the dedicated Unit 7C
+media-management work unit in the normative SDD §§8 and 15.7.
+Blockers/gates: M43 connected application, media management, Edge/mobile/UI,
+deployment/live verification, production rollout, payments, Phases 7/8, and
+M09 remain separately gated. Unrelated worktree changes must be preserved.
 Supabase mutation authority for this handoff: M42 is already live exactly once;
-no further migration or business-row mutation is authorized by this document.
-Files expected to change: current Phase 9 status/evidence documentation only
-until the next scope is explicitly authorized.
+M43 is a local-only candidate and no further migration or business-row mutation
+is authorized by this document.
+Files expected to change: none until the next Unit 7C scope is explicitly
+authorized.
 
 Exact live target: Supabase project `Bookconnect_reactexpo`, ref
 `ahntbtktjjmvfosgkmgn`, host `https://ahntbtktjjmvfosgkmgn.supabase.co`,
@@ -40,6 +42,13 @@ provenance-qualified candidate-derived development rows from
 `missing_metadata` to `ready`; all remained draft/private. M42 removes the
 listing-sync assignment to generated `marketplace_book_listings.authors_text`
 and leaves the generated column database-owned.
+
+Local-only M43 (`20260814000043_marketplace_phase9_unit7c_inventory_management.sql`)
+adds WU1 Store View reads, atomic Save, stock v2, safe public revisions, and the
+Unit 7B lifecycle/projection integration. It passed 15/15 Unit 7C integration,
+5/5 migration assertions, 40/40 focused Unit 7A/7B regression, and exact
+M01–M43 disposable PostgreSQL vertical proof. Read-only project verification
+found M42 still the remote tail; no connected mutation occurred.
 
 ### Live Unit 7B proof and current development configuration
 
@@ -360,6 +369,7 @@ Do not describe an action as authorized merely because it is listed as a future 
 | WU1/WU2 Owner inventory read boundary/client | [WU1](./work-units/owner-inventory-read-boundary-wu1-sdd.md); [WU2](./work-units/owner-inventory-read-client-wu2-sdd.md); 00 Master; 03 Review | [tracker 25](./trackers/25-owner-inventory-read-boundary-wu1-evidence.md), [tracker 26](./trackers/26-owner-inventory-read-client-wu2-evidence.md), DOC-8 §5, current-vs-target audit, requirements traceability |
 | 7A Create-only private inventory commit | [Unit 7A SDD](./work-units/07a-create-only-inventory-commit-sdd.md); 00 Master; 01 Data; 03 Review | Unit 6 SDD/contract transition, DOC-3/4/8, quantity/hold invariants, current-vs-target audit, traceability |
 | 7B Publication/projection | 03 Review; 05 Marketplace | private/public projection and current trigger audit; separately authorized after 7A |
+| 7C Owner Store View/post-commit management | [Unit 7C SDD](./work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md); [Unit 7B SDD](./work-units/07b-publication-sdd.md); 00 Master; 01 Data; 03 Review; 04 Security; 05 Marketplace | DOC-3/4/5/8; Unit 7A; current trigger/RPC/media code and migrations; current-vs-target audit; traceability; implementation tracker |
 | 8 Marketplace | 05 Marketplace; 01 Data | DOC-0, DOC-3, DOC-5, public/private tests |
 | 9 Damage/request photos | 04 Security; 06 Photo Request; 03 Review | DOC-1, DOC-6, DOC-14, retention matrix |
 | 10 Lifecycle worker | 04 Security; 02 Pipeline | retention/deletion fields and ops checks |
