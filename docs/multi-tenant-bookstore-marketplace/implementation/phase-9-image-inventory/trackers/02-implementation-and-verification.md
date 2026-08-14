@@ -1,7 +1,37 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit7c_wu1_locally_complete`; **last updated:** 2026-08-14
+**Status:** `unit7c_wu2a_filter_contract_locally_complete`; **last updated:** 2026-08-14
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit7c_wu1_complete_waiting_next_authorization`. Unit 7C WU1's database contract is locally complete; local M43 is unapplied. Unit 7B remains live-verified and integrated into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`.
+**Active work unit:** `unit7c_wu2a_complete_waiting_separate_commit_authorization`. M44's corrected filtered Store View page contract is locally complete; M43/M44 are unapplied. Unit 7B remains live-verified and integrated into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`.
+
+### 2026-08-14 — Unit 7C WU2A filtered Store View page correction
+
+- Authorized scope: red-first filtered-pagination tests, exactly one forward
+  migration after immutable M43, disposable PostgreSQL proof, focused WU1/M43
+  regressions, and required continuity updates. Edge/client/UI, connected
+  migration application, deployment, commit, and push were excluded.
+- Completed: M44 adds authenticated-only `phase9_store_view_page_v2(integer,
+  text,text)`. It reuses M43's item helper, filters the `needs_attention` bucket
+  by `attentionState = action_required` and the other named buckets by
+  `effectiveState` before `(updated_at DESC,id DESC)` keyset pagination, and
+  rejects cursors whose contract version, actor, store, or filter differs. Allowed
+  filters are all/private/live/paused/needs_attention/out_of_stock.
+- RED: 0/3 on a valid M43 database because page v2 was absent; a secondary
+  targeted RED reproduced cross-store same-filter cursor acceptance before
+  actor/store binding. The affected WU2A integration is 3/3, the M44 migration
+  suite is 5/5, and the M43 WU1 regression is 15/15. Exact disposable M01–M44
+  replay passed; existing WU1 vertical returned
+  `UNIT_7C_REAL_POSTGRES_VERTICAL_PASS`; WU2A real proof returned
+  `UNIT_7C_WU2A_REAL_POSTGRES_FILTER_PASS` for page sizes 1/2/3, all six filters,
+  mixed ordinary/publication-failed `needs_attention` traversal, cursor mismatch,
+  invalid filter, two-store isolation/non-enumeration, ACLs, and unchanged
+  page-v1/detail-v1 reads.
+- Exact-project read-only verification: `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn` is healthy and remote history still ends at M42. No
+  connected database/Storage mutation, deployment, application work, stage,
+  commit, or push occurred. M39–M43 are byte-unchanged.
+- Next authorized action: obtain separate authorization to commit this exact
+  proven correction. A fresh WU2 application session, M43/M44 application, and
+  all external actions remain separately gated.
 
 ### 2026-08-14 — Unit 7C Work Unit 1 local database contract
 
@@ -252,7 +282,7 @@ Historical status marker: **Status:** `unit7a_edge_deployment_blocked_by_source_
 | Wake dispatcher | [Automatic worker wake dispatcher](../work-units/automatic-worker-wake-dispatcher-sdd.md) | `live_active_verified` | M36 is live exactly once; its cron is active and automatically completed the final Unit 6 media, vision, and metadata path without manual invocation |
 | 7A | [Create-only per-candidate private inventory commit](../work-units/07a-create-only-inventory-commit-sdd.md), server-held review snapshot, exact replay/concurrency, one-to-one provenance, and Unit 6 duplicate-contract transition | [`edge_deployment_blocked_by_source_routing_mismatch`](./29-unit7a-create-only-commit-evidence.md) | M39 application/readback pass; the one Owner Edge deployment attempt failed before activation on an extensionless import; no retry, source repair, or business effect |
 | 7B | [Safe publication/projection after private inventory creation](../work-units/07b-publication-sdd.md) | `live_verified_main_integrated` | closed at merge `53edbddc9c5417b34cb169599e8282b162e183b3`; lifecycle contracts are reused unchanged by Unit 7C |
-| 7C | [Owner Store View and post-commit inventory management](../work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | `wu1_database_contract_locally_complete` | local M43 and bounded proofs pass; M43 is unapplied; obtain explicit media-management work-unit authorization next |
+| 7C | [Owner Store View and post-commit inventory management](../work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | `wu2a_filter_contract_locally_complete` | local M43/M44 and bounded proofs pass; both are unapplied; obtain separate WU2A commit authorization next |
 
 Historical Unit 7B local correction matrix (2026-08-12; superseded by the live
 closeout above): expanded disposable Unit 7B is
@@ -330,6 +360,7 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260813000041_marketplace_phase9_unit7a_quality_handoff.sql` | `20260813070104 marketplace_phase9_unit7a_quality_handoff` | exact target `ahntbtktjjmvfosgkmgn`; migration history read back once | authorized M41 application; immutable | deterministic candidate-derived quality handoff only; no manual repair and no public-state change | exactly three provenance-qualified development rows changed `missing_metadata` → `ready`; all remained draft/private; triggers read back | `live_verified` |
 | `20260814000042_marketplace_phase9_generated_authors_projection.sql` | `20260814013536 marketplace_phase9_generated_authors_projection` | exact target `ahntbtktjjmvfosgkmgn`; project `ACTIVE_HEALTHY`; migration history read back once | authorized forward-only M42 application; immutable | replaces the listing-sync trigger body so generated `marketplace_book_listings.authors_text` is omitted from INSERT/UPDATE assignments; M39/M40/M41 unchanged | migration history exactly once; live function readback; Publish/Pause/Republish, transient retry, stale-intent fencing, and final connected-state proof passed | `live_verified` |
 | `20260814000043_marketplace_phase9_unit7c_inventory_management.sql` | not applied | exact target `ahntbtktjjmvfosgkmgn` read-only verified healthy; M42 remains remote tail | local WU1 creation only; connected application not authorized | forward Store View reads, atomic Save, stock v2, revision ledger, and Unit 7B lifecycle/projection integration; M39–M42 unchanged | expected RED 0/11; Unit 7C 15/15; static 5/5; Unit 7A/7B 40/40; exact M01–M43 disposable PostgreSQL vertical/readback PASS | `local_candidate_verified_unapplied` |
+| `20260814000044_marketplace_phase9_store_view_filter_contract.sql` | not applied | exact target `ahntbtktjjmvfosgkmgn` read-only verified healthy; M42 remains remote tail | bounded WU2A local correction only; connected application not authorized | page v2 authoritative filters before keyset pagination (`needs_attention` uses action-required attention; other named states use effective state) with actor/store/filter-bound cursor; M39–M43 unchanged | WU2A integration 3/3; M44 static 5/5; M43 WU1 regression 15/15; exact M01–M44 replay, WU1 vertical, and WU2A real PostgreSQL proof PASS | `local_candidate_verified_unapplied` |
 Rules: re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
 - Use forward corrections; record every schema, grant, Storage, data, and verification effect.
 ## Required verification matrix

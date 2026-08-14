@@ -1,20 +1,45 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit7c_normative_sdd_frozen`
-**Implementation status:** `unit7c_wu1_locally_complete`
+**Implementation status:** `unit7c_wu2a_filter_contract_locally_complete`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-14
-**Current milestone:** Unit 7C Work Unit 1 database contract is locally complete on `codex/unit7c-wu1-db-contract`: M43, bounded fixtures, Store View reads, atomic Save, stock v2, safe public revisions, Unit 7B lifecycle reuse, and real-PostgreSQL proof are complete. M42 remains the live remote tail; M43 is not applied.
-**Active work unit:** `unit7c_wu1_complete_waiting_next_authorization`
+**Current milestone:** Unit 7C WU2A is locally complete on `codex/unit7c-wu2a-store-view-filter-contract`: forward-only M44 adds authoritative server-side filtered Store View keyset pagination without changing M39–M43. M42 remains the live remote tail; M43 and M44 are not applied.
+**Active work unit:** `unit7c_wu2a_complete_waiting_separate_commit_authorization`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Unit 7C WU1 is locally complete: expected RED 0/11, final Unit 7C integration 15/15, migration Jest 5/5, focused Unit 7A/7B regression 40/40, and exact M01–M43 disposable PostgreSQL vertical proof PASS. Readback confirms ACL/RLS/search-path/owner and generated/default listing ownership. No connected write occurred.
-**Next authorized action:** obtain explicit authorization for the dedicated Unit 7C media-management work unit in SDD §§8 and 15.7. Do not apply M43, mutate Supabase/Storage, deploy, live-verify, or begin client/UI work without separate authorization.
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; and M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`. M39/M40/M41/M42 remain immutable. Local-only candidate M43 is `20260814000043_marketplace_phase9_unit7c_inventory_management.sql`; it has not been applied to Supabase.
-**Scope boundary:** WU1 covers the forward database contract for Store View reads, atomic Save, stock v2, lifecycle/revision integration, and bounded fixtures/proofs. Media list/reorder/remove/replace, Edge/mobile/UI cutover, external application/deployment/live verification, unrelated inventory redesign, direct row repair, production rollout, payments, Phases 7/8, and M09 remain excluded.
-**Implementation authority:** the attached request authorized WU1 local database implementation and disposable PostgreSQL proof only. No further Unit 7C work or external mutation is authorized.
-**Migration creation/application authority:** M39, M40, M41, and M42 are live and immutable. M43 exists only as an unapplied local forward candidate; connected application requires separate explicit authorization.
-**Current gate:** `UNIT_7C_WU1_LOCAL_PASS_NEXT_UNIT_AND_M43_APPLICATION_NOT_AUTHORIZED`; Owner Edge version 7 and the Unit 7B worker/runtime remain unchanged. Native Unit 6F remains deferred and is not a Unit 7C blocker.
+**Last completed:** WU2A correction integration is 3/3, the M43 WU1 regression is 15/15, and the M44 migration suite is 5/5. Exact disposable PostgreSQL M01–M44 replay, the existing WU1 vertical, and the WU2A six-filter/multi-page/tenancy/security proof all PASS. No connected write occurred.
+**Next authorized action:** obtain separate authorization to commit the exact proven WU2A correction. Do not resume WU2 application work in this session; M43/M44 application, Supabase/Storage mutation, deployment, and UI work remain separately gated.
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; and M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`. M39–M43 remain immutable. Local-only candidates M43 and M44 (`20260814000044_marketplace_phase9_store_view_filter_contract.sql`) have not been applied to Supabase.
+**Scope boundary:** WU2A adds only Store View page v2, actor/store/filter-bound opaque keyset cursors, bounded tests, and disposable PostgreSQL proof. Edge/mobile/UI, Save/stock/media/lifecycle changes, external application/deployment/live verification, direct row repair, production rollout, payments, Phases 7/8, and M09 remain excluded.
+**Implementation authority:** the attached request authorized WU2A local database implementation and disposable PostgreSQL proof only. Commit, push, connected application, deployment, and application/UI work remain unauthorized.
+**Migration creation/application authority:** M39–M42 are live and immutable; M43 and M44 exist only as unapplied local forward candidates. Connected application requires separate explicit authorization.
+**Current gate:** `UNIT_7C_WU2A_LOCAL_PASS_COMMIT_AND_APPLICATION_NOT_AUTHORIZED`; Owner Edge version 7 and the Unit 7B worker/runtime remain unchanged. Native Unit 6F remains deferred and is not a Unit 7C blocker.
+
+## 2026-08-14 — Unit 7C WU2A Store View filter contract correction
+
+- Added exactly one forward migration, M44, without changing M39–M43. Page v2
+  accepts `all|private|live|paused|needs_attention|out_of_stock`, composes each
+  item through M43's helper, filters before keyset pagination, and binds the
+  versioned opaque cursor to the authenticated actor/store and selected filter.
+- M43 composes `publication_failed` as its own effective state while also
+  returning action-required attention; M44 includes it in the
+  `needs_attention` bucket without relabeling it. Ordinary attention rows remain
+  in that bucket, while out-of-stock rows do not enter it merely because they
+  are unavailable. The server-composed retry capability remains unchanged.
+- RED was 0/3 because the page-v2 function was absent on a valid M43 database.
+  A secondary targeted RED reproduced cross-store same-filter cursor acceptance
+  before actor/store binding was added.
+  The affected WU2A integration is 3/3, the M44 migration suite is 5/5, and the
+  M43 WU1 regression is 15/15. Exact disposable PostgreSQL M01–M44 replay passed; the existing WU1 vertical returned
+  `UNIT_7C_REAL_POSTGRES_VERTICAL_PASS`; the new proof returned
+  `UNIT_7C_WU2A_REAL_POSTGRES_FILTER_PASS` across page sizes 1/2/3 and two stores,
+  including mixed ordinary/publication-failed `needs_attention` traversal.
+- Read-only MCP reconfirmed exact project `ahntbtktjjmvfosgkmgn` healthy with
+  M42 as the remote tail. No Supabase/Storage mutation, deployment, application
+  work, staging, commit, or push occurred. Focused Unit 7A/7B suites were not
+  rerun because M44 does not touch shared projection helpers; M43's complete
+  WU1 integration and real vertical both passed unchanged.
 
 ## 2026-08-14 — Unit 7C Work Unit 1 local database contract
 

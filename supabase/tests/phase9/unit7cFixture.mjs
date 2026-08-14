@@ -8,6 +8,7 @@ import {
 export const M41 = '20260813000041_marketplace_phase9_unit7a_quality_handoff.sql';
 export const M42 = '20260814000042_marketplace_phase9_generated_authors_projection.sql';
 export const M43 = '20260814000043_marketplace_phase9_unit7c_inventory_management.sql';
+export const M44 = '20260814000044_marketplace_phase9_store_view_filter_contract.sql';
 
 export async function createUnit7cDatabase() {
   const db = await createUnit7bDatabase();
@@ -30,6 +31,9 @@ export async function createUnit7cDatabase() {
     await db.exec(`ALTER TABLE public.marketplace_events ADD COLUMN IF NOT EXISTS
       source text NOT NULL DEFAULT 'system_job'`);
     await db.exec(fs.readFileSync(migrationPath(M43), 'utf8'));
+    if (fs.existsSync(migrationPath(M44))) {
+      await db.exec(fs.readFileSync(migrationPath(M44), 'utf8'));
+    }
   }
   return db;
 }
@@ -97,6 +101,11 @@ export async function unit7cState(db, fixture) {
 export async function storeViewPage(db, pageSize = 20, cursor = null) {
   return scalar(db, `SELECT public.phase9_store_view_page_v1(
     ${pageSize},${cursor == null ? 'NULL' : `'${sql(cursor)}'`})`);
+}
+
+export async function storeViewPageV2(db, pageSize = 20, cursor = null, filter = 'all') {
+  return scalar(db, `SELECT public.phase9_store_view_page_v2(
+    ${pageSize},${cursor == null ? 'NULL' : `'${sql(cursor)}'`},'${sql(filter)}')`);
 }
 
 export async function storeViewDetail(db, inventoryId) {

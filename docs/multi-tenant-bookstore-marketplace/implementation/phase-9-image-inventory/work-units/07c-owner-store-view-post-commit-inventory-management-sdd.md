@@ -1,9 +1,9 @@
 # Unit 7C SDD: Owner Store View and Post-Commit Inventory Management
 
-**Status:** normative design frozen 2026-08-14; Work Unit 1 database contract locally complete
+**Status:** normative design frozen 2026-08-14; WU1 and bounded WU2A filter correction locally complete
 **Authority:** final Owner contract reconciliation ending `UNIT_7C_READY_FOR_SDD`; DOC-3 §§5.3, 6–9, 14–16; DOC-4 §§2, 9–11, 14–15; DOC-5 §§5, 10–15; DOC-8 §§2–5, 8, 14–15; Phase 9 master SDD §§3–7, 9, 12–14; Unit 7A §§11, 13–20; Unit 7B §§2–15, 18–21.
-**Implementation checkpoint:** The attached 2026-08-14 authorization completed WU1 only: local Store View page/detail reads, atomic details Save, stock adjustment v2, safe public revisions, Unit 7B lifecycle/projection integration, and bounded database fixtures/proofs. Media management, Edge/mobile/UI, migration application, deployment, and live verification remain unimplemented and require separate authorization.
-**Migration authority:** M39–M42 are immutable. Local candidate M43 is `20260814000043_marketplace_phase9_unit7c_inventory_management.sql`; it is not applied to Supabase and this SDD does not authorize application.
+**Implementation checkpoint:** The attached 2026-08-14 authorizations completed WU1 and the bounded WU2A filter correction: local Store View page/detail reads, atomic details Save, stock adjustment v2, safe public revisions, Unit 7B lifecycle/projection integration, filtered page-v2 keyset pagination, and bounded database fixtures/proofs. Media management, Edge/mobile/UI, migration application, deployment, and live verification remain unimplemented and require separate authorization.
+**Migration authority:** M39–M43 are immutable. Local candidates M43 and forward correction M44 (`20260814000044_marketplace_phase9_store_view_filter_contract.sql`) are not applied to Supabase; this SDD does not authorize connected application.
 
 ## 1. Decision and scope
 
@@ -89,6 +89,19 @@ StoreViewPage { items[], pageInfo /* opaque */ }
 ```
 
 The detail extends the same aggregate with the full allowed Owner-effective presentation, private operations (`shelfLocation`, `internalNotes`), exact stock buckets, Owner-safe media records, and history summary. It contains no duplicate desired/current presentation model and no ordinary edit-sync state.
+
+The page-v2 read accepts only `all`, `private`, `live`, `paused`,
+`needs_attention`, and `out_of_stock`. It composes the authoritative Store View
+item first, filters on that item's server-composed bucket, and only then applies
+stable `(updated_at DESC, id DESC)` keyset pagination. `all` has no state
+restriction; `private`, `live`, `paused`, and `out_of_stock` match
+`effectiveState`; `needs_attention` matches `attentionState = action_required`.
+Its opaque versioned cursor is bound to the authenticated actor/store and filter,
+and is rejected when that context changes. M43 composes
+`publication_failed` as a distinct effective state while also returning
+action-required attention; page v2 preserves that composition, so such rows are
+available under both `all` and `needs_attention` and are never relabeled as
+`needs_attention`.
 
 `attentionState` is `none | action_required`. The only Unit 7C `attentionReasons` are: `missing_metadata`, `missing_price`, `missing_condition`,
 `damage_evidence_required`, `not_sellable`, `moderation_blocked`,
@@ -238,6 +251,10 @@ page/detail RPCs, append-only publication-revision table/helper, audit/event
 additions, and strictly required trigger updates. Owner media
 read/reorder/remove/replace RPCs remain deferred. M39–M42 stay byte-immutable;
 connected M43 application remains separately gated.
+
+Bounded forward correction M44 adds only Store View page v2 with authoritative
+server-side filters and actor/store/filter-bound cursor context. M39–M43 remain byte-immutable;
+M43/M44 connected application remains separately gated.
 
 Expected application responsibility: versioned Edge schemas/actions and DTO
 decoders, Store View routes/list/detail components, controlled mutations and cache

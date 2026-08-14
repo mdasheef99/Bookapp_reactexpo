@@ -826,12 +826,25 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C WU1 database contract locally complete; M43 unapplied** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C WU2A filter contract locally complete; M43/M44 unapplied** |
 | Overall status | `in_progress` |
 | Last updated | 2026-08-14 |
-| Latest handoff | Unit 7C WU1 is locally complete on `codex/unit7c-wu1-db-contract`: local M43, bounded RED/GREEN and Unit 7A/7B regressions, and exact M01–M43 disposable PostgreSQL proof pass. M39–M42 remain live/immutable and M43 is not applied. |
-| Current risk level | WU1 has local database evidence only. Media management, Edge/mobile/UI cutover, connected M43 application, deployment, and live verification remain unimplemented/unauthorized. Unit 6F native debt remains unrelated. The untracked `docs/codemap/` directory remains preserved and uninspected. |
-| Next recommended task | Obtain explicit authorization for the dedicated Unit 7C media-management work unit (SDD §§8 and 15.7). M43 application, Supabase/Storage mutation, deployment, live verification, and client/UI work remain separate gates. |
+| Latest handoff | Unit 7C WU2A publication-failed filter correction is locally complete on `codex/unit7c-wu2a-store-view-filter-contract`: M44 includes action-required publication failures in `needs_attention` without changing their returned effective state, with focused integration/static/M43 regression and exact M01–M44 real PostgreSQL proofs pass. M39–M43 remain immutable; M43/M44 are not applied. |
+| Current risk level | WU2A has local database evidence only. WU2 Edge/client/UI, connected M43/M44 application, deployment, and live verification remain unimplemented/unauthorized. Unit 6F native debt remains unrelated. The untracked `docs/codemap/` directory remains preserved and uninspected. |
+| Next recommended task | Obtain separate authorization to commit the exact WU2A correction. M43/M44 application, Supabase/Storage mutation, deployment, live verification, and WU2 application work remain separate gates. |
+
+### 2026-08-14 Unit 7C WU2A local completion
+
+- Corrected only local M44: Store View page v2 keeps `private|live|paused|out_of_stock`
+  on `effectiveState`, uses `attentionState = action_required` for
+  `needs_attention`, and binds opaque cursor context to actor, store, and filter.
+  Publication-failed rows remain a distinct returned state with their
+  server-composed retry capability.
+- Affected evidence is WU2A integration 3/3, M44 migration Jest 5/5, M43 WU1
+  regression 15/15, exact M01–M44 replay, unchanged WU1 real vertical, and
+  `UNIT_7C_WU2A_REAL_POSTGRES_FILTER_PASS` across all filters and two stores.
+- Exact-project read-only verification still shows M42 as the remote tail. No
+  connected mutation, deployment, application work, stage, commit, or push occurred.
 
 ### 2026-08-14 Unit 7C Work Unit 1 local completion
 
@@ -892,7 +905,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit7c_wu1_locally_complete` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7C SDD](./implementation/phase-9-image-inventory/work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | Local M43 database contract and bounded proofs pass; M43 is unapplied and M39–M42 remain live/immutable. Next: separately authorize Unit 7C media management. |
+| Phase 9: Image-to-LLM Inventory | `unit7c_wu2a_filter_contract_locally_complete` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7C SDD](./implementation/phase-9-image-inventory/work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | Local M43/M44 contracts and bounded proofs pass; both are unapplied and M39–M43 remain immutable. Next: separately authorize WU2A commit. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -1012,14 +1025,14 @@ Documentation milestones completed:
 
 ## 8. Next Recommended Task
 
-**Current 2026-08-14 handoff:** Phase 9 Unit 7C WU1 is locally complete. Local
-M43 covers the database contract and passed bounded RED/GREEN, focused Unit
-7A/7B regressions, and exact M01–M43 disposable PostgreSQL proof. Unit 7B
-remains live-verified and integrated into `main`; M39–M42 remain live exactly
-once and immutable, and M43 is not applied.
+**Current 2026-08-14 handoff:** Phase 9 Unit 7C WU2A is locally complete. Local
+M44 corrects Store View filtered pagination and passed bounded RED/GREEN,
+combined M43 regression, and exact M01–M44 disposable PostgreSQL proofs. Unit 7B
+remains live-verified and integrated into `main`; M39–M43 are immutable, and
+M43/M44 are not applied.
 
-Next work requires explicit authorization for the dedicated Unit 7C
-media-management work unit in SDD §§8 and 15.7. M43 application, Supabase or
+Next work requires separate authorization to commit the exact WU2A correction.
+M43/M44 application, Supabase or
 Storage mutation, Edge/mobile/UI, deployment, live verification, production
 rollout, payments, Phases 7/8, and M09 remain separately gated. The
 deferred native Unit 6F validation debt remains `NOT_RUN`/`UNRESOLVED` and is

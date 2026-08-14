@@ -211,6 +211,9 @@ management](../work-units/07c-owner-store-view-post-commit-inventory-management-
 WU1 local evidence is M43 plus the Unit 7C integration/static/vertical fixtures:
 Store View reads, Save, stock, lifecycle reuse, revisions, rollback, replay,
 tenant denial, ACL/RLS, and generated/default projection ownership are covered.
+WU2A evidence is forward-only M44 plus red/green and real-PostgreSQL proofs for
+authoritative filter-before-pagination, multi-page completeness, actor/store/filter-bound
+cursors, invalid filters, tenancy, and unchanged page-v1/detail-v1 behavior.
 Media management and UI/Edge/client cutover remain without implementation
 evidence and are not inferred from WU1.
 
@@ -224,12 +227,13 @@ evidence and are not inferred from WU1.
 | Media replacement retains approved public media until an atomic safe swap | P9-D74; Unit 7B §6; Unit 7C §8; U7C-E/H |
 | Unit 7B lifecycle commands and intent fencing are reused without a second path | Unit 7B §§3–5/8–15; Unit 7C §9; U7C-F |
 | Attention, effective state, and capabilities are server-derived; Out of Stock is operational | P9-D73/74; Unit 7C §§2/4–5; U7C-B |
+| Store View filters use the authoritative UI bucket before stable keyset pagination (`needs_attention` = `attentionState/action_required`; other named states = `effectiveState`) and bind cursor context to actor, store, and filter | Unit 7C §§5/13–15; M44; U7C-B/H; WU2A integration and real PostgreSQL filter proof |
 | Owner-approved committed metadata cannot be silently overwritten or mutate canonical/provider truth | DOC-3 §5.3; DOC-4 §11; Unit 7C §§2/10; U7C-C |
 | Activity and append-only safe public revisions remain distinct | P9-D74; Unit 7C §11; U7C-G/H |
 | Real PostgreSQL seams precede broad adversarial proof and cannot use manual derived-state repair | Unit 7C §§14–15; U7C-H |
 
 `U7C-A` through `U7C-H` denote the eight normative acceptance areas in Unit 7C
-§14. WU1 supplies only the database evidence listed above; full acceptance,
+§14. WU1/WU2A supply only the database evidence listed above; full acceptance,
 especially media and UI/runtime cutover, must not be inferred from it.
 
 ## Unit 7A create-only commit trace (2026-08-12)

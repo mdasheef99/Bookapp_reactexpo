@@ -1,6 +1,6 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** current/live and approved-target representations separated; Unit 7C WU1 local database candidate complete, not live
+**Status:** current/live and approved-target representations separated; Unit 7C WU1/WU2A local database candidates complete, not live
 **Last updated:** 2026-08-14
 
 Unit 6A adds only local, unapplied Owner UX presentation/review support; it grants no Unit 7 inventory/publication mutation authority. See [tracker 19](../trackers/19-unit6a-owner-safe-backend-evidence.md).
@@ -216,6 +216,15 @@ published `1 -> 0` become out-of-stock/unavailable without rejecting the stock
 transaction; initial publication at zero remains ineligible. Owner media
 list/reorder/remove/replace is not in WU1 and remains a separately authorized
 target. M39–M42 are immutable; M43 is locally verified and not live.
+
+Forward-only M44 adds no table or stored derived-state field. It defines only
+`phase9_store_view_page_v2(page_size,cursor,filter)`: the allowed filter enum is
+`all|private|live|paused|needs_attention|out_of_stock`; authoritative item
+composition occurs before filtering and keyset pagination; `needs_attention`
+selects `attentionState = action_required` while the other named state filters
+select `effectiveState`; and the opaque cursor binds contract version,
+authenticated actor/store, filter, `updated_at`, and `inventoryId`. M39–M43 remain
+immutable, and M44 is locally verified but not live.
 
 ### Unit 7A create-only commit boundary
 

@@ -11,23 +11,25 @@ The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` �
 ## Current 2026-08-14 final resume overlay
 
 Current phase: Phase 9 — Image-Assisted Inventory.
-Planning/implementation status: Unit 7C normative design remains frozen; WU1's
-local database contract is complete. Unit 7B remains live-verified and integrated
+Planning/implementation status: Unit 7C normative design remains frozen; WU1 and
+the bounded WU2A filter correction are locally complete. Unit 7B remains live-verified and integrated
 into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`. Unit 6F native
 validation remains deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-Last completed milestone: Unit 7C WU1 local M43 database contract and bounded
-RED/GREEN, Unit 7A/7B regression, and real-PostgreSQL vertical proof.
-Active work unit: `unit7c_wu1_complete_waiting_next_authorization`.
-Next authorized action: obtain explicit authorization for the dedicated Unit 7C
-media-management work unit in the normative SDD §§8 and 15.7.
-Blockers/gates: M43 connected application, media management, Edge/mobile/UI,
+Last completed milestone: Unit 7C WU2A publication-failed filter correction;
+`needs_attention` now uses `attentionState = action_required` while the returned
+publication-failed state remains distinct, with bounded RED/GREEN, M43 regression,
+and exact M01–M44 real-PostgreSQL proofs.
+Active work unit: `unit7c_wu2a_complete_waiting_separate_commit_authorization`.
+Next authorized action: obtain separate authorization to commit the exact proven WU2A correction.
+Blockers/gates: M43/M44 connected application, WU2 application, media management, Edge/mobile/UI,
 deployment/live verification, production rollout, payments, Phases 7/8, and
 M09 remain separately gated. Unrelated worktree changes must be preserved.
 Supabase mutation authority for this handoff: M42 is already live exactly once;
-M43 is a local-only candidate and no further migration or business-row mutation
+M43/M44 are local-only candidates and no connected migration or business-row mutation
 is authorized by this document.
-Files expected to change: none until the next Unit 7C scope is explicitly
-authorized.
+Files changed in the bounded correction: local M44, its focused tests/vertical,
+and the required Phase 9 handoff/traceability records. No commit or application
+is authorized until a separate approval.
 
 Exact live target: Supabase project `Bookconnect_reactexpo`, ref
 `ahntbtktjjmvfosgkmgn`, host `https://ahntbtktjjmvfosgkmgn.supabase.co`,
@@ -49,6 +51,13 @@ Unit 7B lifecycle/projection integration. It passed 15/15 Unit 7C integration,
 5/5 migration assertions, 40/40 focused Unit 7A/7B regression, and exact
 M01–M43 disposable PostgreSQL vertical proof. Read-only project verification
 found M42 still the remote tail; no connected mutation occurred.
+
+Local-only M44 (`20260814000044_marketplace_phase9_store_view_filter_contract.sql`)
+adds authenticated page v2 with actor/store/filter-bound cursors; it uses
+`attentionState = action_required` for `needs_attention` and `effectiveState`
+for the other named state filters. The corrected WU2A integration is 3/3,
+M44 migration Jest is 5/5, M43 regression is 15/15, and exact M01–M44 plus both
+real PostgreSQL verticals pass. M39–M43 are unchanged; M43/M44 are not applied.
 
 ### Live Unit 7B proof and current development configuration
 

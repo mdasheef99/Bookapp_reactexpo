@@ -1,7 +1,7 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-08-14 Unit 7C WU1 read-only preflight and local M43 proof
-**Audit mode:** exact-project read-only seam verification plus disposable PostgreSQL M01–M43 replay; no connected mutation
+**Audit date:** 2026-08-14 Unit 7C WU2A read-only preflight and local M44 proof
+**Audit mode:** exact-project read-only verification plus disposable PostgreSQL M01–M44 replay; no connected mutation
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
 **Mutation status:** M01-M08/M10-M42 are live at their separately recorded checkpoints; M09 is absent. M39, M40, M41, and M42 are live exactly once and immutable. M42 is a forward function correction only: the listing-sync trigger omits generated `marketplace_book_listings.authors_text` from INSERT/UPDATE assignments. The development `active_listing_limit` entitlement is 10 from source `unit7b_dev_rollout`. The Unit 7B implementation/documentation commit `9f3e646` is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`.
 
@@ -13,6 +13,15 @@ Store View page/detail RPCs, append-only safe public revisions, and audit/event
 integration. Exact M01–M43 disposable PostgreSQL proof and security readback pass.
 M39–M42 remain immutable. M43 is not applied; Owner media
 read/reorder/remove/replace remains deferred.
+
+**Unit 7C WU2A local target:** M44 adds only authenticated Store View page v2.
+It reuses M43's item composition, filters the `needs_attention` bucket by
+`attentionState = action_required` and the other named state buckets by
+canonical `effectiveState` before keyset pagination, and rejects
+actor/store/filter cursor mismatches. Exact M01–M44 replay,
+the WU1 vertical, and the six-filter/two-tenant real PostgreSQL proof pass.
+Read-only MCP still shows M42 as the remote tail; M43/M44 are not applied and
+M39–M43 are byte-immutable.
 
 **Unit 7B live delta:** M40 adds the dual-version controlled publication
 commands, intent-keyed retry claim/token fencing, v2 Owner inventory page,
@@ -283,7 +292,7 @@ benchmark manifests, approved languages, rollout rows, or enabled capabilities.
 | `store_inventory` | 33 fields; lacks language, description, edition, volume, format, structured damage, typed media, freshness, acquisition type/method/MRP. Canonical edition may be null. | Add store-owned metadata snapshot fields, damage/freshness/acquisition fields, commit provenance/version, and typed links. Keep canonical link nullable. |
 | `marketplace_book_listings` | One projection per `inventory_id`; lacks language, description, aliases, structured damage/media/freshness. | Extend safe projection with public metadata/damage/media/search fields. Preserve one projection per inventory row; visual grouping occurs in query/UI, not DB merging. |
 | Unit 7C public revision history | Live M42 has no dedicated narrow append-only exact public-snapshot relation. Local M43 adds postgres-owned, RLS-enabled `phase9_publication_revisions`; direct client/service mutation is denied. | Apply only after separate authorization and exact-project preflight; preserve activity/audit separation and append-only enforcement. |
-| Unit 7C Owner command/read boundary | Live M42 still has C22/C24/C25 and no frozen Store View aggregate. Local M43 adds controlled exact-versioned Save, stock v2, and Store View page/detail RPCs without widening direct table grants. | WU1 local contract is complete. Media list/reorder/remove/replace, client cutover, and connected M43 application remain separate work/gates. |
+| Unit 7C Owner command/read boundary | Live M42 still has C22/C24/C25 and no frozen Store View aggregate. Local M43 adds controlled exact-versioned Save, stock v2, and Store View page/detail RPCs; local M44 adds authenticated page v2 with authoritative server-side filters before keyset pagination and actor/store/filter-bound cursors. | WU1/WU2A local contracts are complete. Media, client cutover, and connected M43/M44 application remain separate work/gates. |
 | Projection trigger | Explicitly copies current inventory fields; revoked from anon/authenticated and executable by service role. | Extend or replace with a controlled projection writer covering new public fields and eligibility. Projection failure must be observable; no silent inventory/public divergence. |
 | Image extraction tables | M02/M11/M12/M13/M14 are live: token-fenced jobs, private immutable evidence, candidate and provider-attempt lineage, service-only invoker wrappers, and final egress validation exist. Fixture runtime remains deployed and live-verified. | Gemini configuration/deployment/live-provider verification remains separately authorized. |
 | Variant/alias storage | M18-M28 live: Owner decisions/corrections, candidate-first replacement locking, canonical benchmark/rollout evidence, platform evidence reads, exact-evidence activation, trigger-version fencing, and truthful Owner policy reasons. | No language/capability is enabled; customer display, visual UI, inventory/publication/commerce, Google Books fallback, and global alias authority remain separate. |
