@@ -47,6 +47,10 @@ export default function StoreOwnerLayout() {
                 }}
             />
             <Tabs.Screen
+                name="store-view"
+                options={{ href: null }}
+            />
+            <Tabs.Screen
                 name="storefront"
                 options={{
                     title: 'Storefront',

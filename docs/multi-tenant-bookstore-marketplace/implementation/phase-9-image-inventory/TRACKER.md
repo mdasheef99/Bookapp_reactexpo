@@ -1,20 +1,50 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit7c_normative_sdd_frozen`
-**Implementation status:** `unit7c_wu2a_filter_contract_locally_complete`
+**Implementation status:** `unit7c_wu2_store_view_read_locally_complete`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-14
-**Current milestone:** Unit 7C WU2A is locally complete on `codex/unit7c-wu2a-store-view-filter-contract`: forward-only M44 adds authoritative server-side filtered Store View keyset pagination without changing M39–M43. M42 remains the live remote tail; M43 and M44 are not applied.
-**Active work unit:** `unit7c_wu2a_complete_waiting_separate_commit_authorization`
+**Current milestone:** Unit 7C WU2 is locally complete but uncommitted on `codex/unit7c-wu2-store-view-read`: the controlled Store View page/detail read vertical consumes unchanged M43/M44 through Owner Edge, strict client contracts/queries, hidden routes, and read-only list/detail UI. M42 remains the live remote tail; M43 and M44 are not applied.
+**Active work unit:** `unit7c_wu2_store_view_read_locally_complete`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** WU2A correction integration is 3/3, the M43 WU1 regression is 15/15, and the M44 migration suite is 5/5. Exact disposable PostgreSQL M01–M44 replay, the existing WU1 vertical, and the WU2A six-filter/multi-page/tenancy/security proof all PASS. No connected write occurred.
-**Next authorized action:** obtain separate authorization to commit the exact proven WU2A correction. Do not resume WU2 application work in this session; M43/M44 application, Supabase/Storage mutation, deployment, and UI work remain separately gated.
+**Last completed:** WU2 focused contracts/service/query/UI/routes are 31/31; the combined Owner Edge, existing committed-list, and routing regression is 274/274. TypeScript, Deno Edge graph, web export, and an all-network-intercepted Edge browser list→`inventoryId` detail smoke pass. Local Edge→DB is `NOT_RUN_ENVIRONMENT`; no connected write occurred.
+**Next authorized action:** obtain separate authorization to commit the exact proven WU2 read vertical. Do not begin WU3, final tab cutover, M43/M44 application, Supabase/Storage mutation, or deployment.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; and M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`. M39–M43 remain immutable. Local-only candidates M43 and M44 (`20260814000044_marketplace_phase9_store_view_filter_contract.sql`) have not been applied to Supabase.
-**Scope boundary:** WU2A adds only Store View page v2, actor/store/filter-bound opaque keyset cursors, bounded tests, and disposable PostgreSQL proof. Edge/mobile/UI, Save/stock/media/lifecycle changes, external application/deployment/live verification, direct row repair, production rollout, payments, Phases 7/8, and M09 remain excluded.
-**Implementation authority:** the attached request authorized WU2A local database implementation and disposable PostgreSQL proof only. Commit, push, connected application, deployment, and application/UI work remain unauthorized.
+**Scope boundary:** WU2 adds only the Store View controlled read vertical. Save/stock/publication/media mutations, Activity timeline, Inventory removal/cutover, final tab cutover, external application/deployment/live verification, direct row repair, production rollout, payments, Phases 7/8, and M09 remain excluded.
+**Implementation authority:** the attached request authorized local WU2 Edge/client/query/routes/read-only UI, focused tests, local/disposable verification, and browser smoke. Commit, push, connected application, deployment, and WU3 remain unauthorized.
 **Migration creation/application authority:** M39–M42 are live and immutable; M43 and M44 exist only as unapplied local forward candidates. Connected application requires separate explicit authorization.
-**Current gate:** `UNIT_7C_WU2A_LOCAL_PASS_COMMIT_AND_APPLICATION_NOT_AUTHORIZED`; Owner Edge version 7 and the Unit 7B worker/runtime remain unchanged. Native Unit 6F remains deferred and is not a Unit 7C blocker.
+**Current gate:** `UNIT_7C_WU2_LOCAL_PASS_COMMIT_AND_APPLICATION_NOT_AUTHORIZED`; deployed Owner Edge version 7 and the Unit 7B worker/runtime remain unchanged. Native Unit 6F remains deferred and is not a Unit 7C blocker.
+
+## 2026-08-14 — Unit 7C WU2 controlled Store View read vertical
+
+- Added strict `phase9-store-view-read-v1` page/detail request and response
+  contracts. The existing Owner ingestion router maps only
+  `read_store_view_page` to M44 page-v2 and `read_store_view_detail` to M43
+  detail-v1; requests contain no caller-authoritative store ID, and Edge maps
+  the approved public projection to a bounded cover/availability summary.
+- Added Store View service/query identity with server filter in every page key,
+  opaque cursor forwarding, `inventoryId` detail identity, and no direct table
+  or listing-ID management query. The hidden `/store-view` routes preserve the
+  existing Inventory UI and Storefront primary tab pending WU5 cutover.
+- The read-only list/detail UI renders all six filters and server lifecycle,
+  attention, stock, capability, presentation, quantity, private-operation, and
+  approved-media values without recreating eligibility. Publication-failed
+  rows remain distinctly labeled under Needs Attention; Out of Stock remains
+  distinct. No future-command buttons were added.
+- RED began with four missing contract/service/route modules. Final focused
+  WU2 evidence is 6 suites/31 tests; combined Owner Edge, existing Inventory
+  read, and routing regression is 13 suites/274 tests. TypeScript, Deno check,
+  web export, and fully intercepted Edge browser list→detail smoke pass.
+  Local Edge→DB is `NOT_RUN_ENVIRONMENT` because Docker/local Supabase is not
+  available; GitHub-hosted Docker would require prohibited publication/workflow
+  authority, and an MCP branch would require a separately approved paid external
+  mutation. Existing WU1/WU2A disposable PostgreSQL evidence is not relabeled.
+- No M39–M44 edit, new migration, connected Supabase/Storage mutation,
+  deployment, stage, commit, or push occurred. Read-only Supabase MCP reconfirmed
+  exact project `ahntbtktjjmvfosgkmgn` healthy with M42 as the remote tail.
+  `docs/codemap/`
+  remains user-owned, untracked, and untouched.
 
 ## 2026-08-14 — Unit 7C WU2A Store View filter contract correction
 

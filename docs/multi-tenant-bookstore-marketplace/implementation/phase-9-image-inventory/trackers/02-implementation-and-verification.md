@@ -1,7 +1,35 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit7c_wu2a_filter_contract_locally_complete`; **last updated:** 2026-08-14
+**Status:** `unit7c_wu2_store_view_read_locally_complete`; **last updated:** 2026-08-14
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit7c_wu2a_complete_waiting_separate_commit_authorization`. M44's corrected filtered Store View page contract is locally complete; M43/M44 are unapplied. Unit 7B remains live-verified and integrated into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`.
+**Active work unit:** `unit7c_wu2_store_view_read_locally_complete`. The uncommitted WU2 Store View page/detail Edge→client→query→read-only UI vertical is locally complete; M43/M44 remain unapplied. Unit 7B remains live-verified and integrated into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`.
+
+### 2026-08-14 — Unit 7C WU2 controlled Store View read vertical
+
+- Authorized scope: consume unchanged M43/M44 through the existing Owner Edge
+  router, strict TypeScript contracts/services/query hooks, hidden list/detail
+  routes, read-only UI, focused tests, local/disposable verification, and web
+  smoke. WU3 mutations/media, final navigation cutover, connected application,
+  deployment, commit, and push were excluded.
+- Implemented `read_store_view_page` and `read_store_view_detail` with no client
+  store authority, strict curated DTOs, server filter/cursor forwarding,
+  `inventoryId` cache/routing identity, six-filter list/pagination states, and
+  Owner-distinguished private detail values. Publication failure remains its
+  own effective state under Needs Attention; Out of Stock is not relabeled.
+- Verification: initial missing-module RED; focused WU2 6 suites/31 tests;
+  combined Owner Edge/committed-list/route regression 13 suites/274 tests;
+  TypeScript PASS; Deno Edge graph PASS; Expo web export PASS; intercepted Edge
+  browser list→detail smoke 1/1 PASS. The combined Jest runner printed the full
+  green summary but retained an open test handle and was stopped afterward;
+  focused WU2 Jest exits normally. Local Edge→DB is `NOT_RUN_ENVIRONMENT`
+  because Docker/local Supabase is unavailable; GitHub-hosted Docker would
+  require prohibited publication/workflow authority, and an MCP branch would
+  require a separately approved paid external mutation.
+- M39–M44 are unchanged and no M45 exists. No connected Supabase/Storage
+  mutation, deployment, stage, commit, or push occurred. Read-only Supabase MCP
+  reconfirmed exact project `ahntbtktjjmvfosgkmgn` healthy with M42 as the
+  remote tail.
+  `docs/codemap/` remains untouched. Next action requires separate authorization
+  to commit this exact WU2 vertical; do not begin WU3.
 
 ### 2026-08-14 — Unit 7C WU2A filtered Store View page correction
 
@@ -282,7 +310,7 @@ Historical status marker: **Status:** `unit7a_edge_deployment_blocked_by_source_
 | Wake dispatcher | [Automatic worker wake dispatcher](../work-units/automatic-worker-wake-dispatcher-sdd.md) | `live_active_verified` | M36 is live exactly once; its cron is active and automatically completed the final Unit 6 media, vision, and metadata path without manual invocation |
 | 7A | [Create-only per-candidate private inventory commit](../work-units/07a-create-only-inventory-commit-sdd.md), server-held review snapshot, exact replay/concurrency, one-to-one provenance, and Unit 6 duplicate-contract transition | [`edge_deployment_blocked_by_source_routing_mismatch`](./29-unit7a-create-only-commit-evidence.md) | M39 application/readback pass; the one Owner Edge deployment attempt failed before activation on an extensionless import; no retry, source repair, or business effect |
 | 7B | [Safe publication/projection after private inventory creation](../work-units/07b-publication-sdd.md) | `live_verified_main_integrated` | closed at merge `53edbddc9c5417b34cb169599e8282b162e183b3`; lifecycle contracts are reused unchanged by Unit 7C |
-| 7C | [Owner Store View and post-commit inventory management](../work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | `wu2a_filter_contract_locally_complete` | local M43/M44 and bounded proofs pass; both are unapplied; obtain separate WU2A commit authorization next |
+| 7C | [Owner Store View and post-commit inventory management](../work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | `wu2_store_view_read_locally_complete` | local M43/M44 plus WU2 Edge/client/query/list/detail read vertical pass; both migrations are unapplied; obtain separate WU2 commit authorization next |
 
 Historical Unit 7B local correction matrix (2026-08-12; superseded by the live
 closeout above): expanded disposable Unit 7B is

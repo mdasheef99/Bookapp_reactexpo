@@ -11,31 +11,33 @@ The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` �
 ## Current 2026-08-14 final resume overlay
 
 Current phase: Phase 9 — Image-Assisted Inventory.
-Planning/implementation status: Unit 7C normative design remains frozen; WU1 and
-the bounded WU2A filter correction are locally complete. Unit 7B remains live-verified and integrated
+Planning/implementation status: Unit 7C normative design remains frozen; WU1,
+WU2A, and the WU2 controlled Store View read vertical are locally complete. Unit 7B remains live-verified and integrated
 into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`. Unit 6F native
 validation remains deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-Last completed milestone: Unit 7C WU2A publication-failed filter correction;
-`needs_attention` now uses `attentionState = action_required` while the returned
-publication-failed state remains distinct, with bounded RED/GREEN, M43 regression,
-and exact M01–M44 real-PostgreSQL proofs.
-Active work unit: `unit7c_wu2a_complete_waiting_separate_commit_authorization`.
-Next authorized action: obtain separate authorization to commit the exact proven WU2A correction.
-Blockers/gates: M43/M44 connected application, WU2 application, media management, Edge/mobile/UI,
+Last completed milestone: Unit 7C WU2 controlled Store View read vertical;
+strict page/detail Edge and client contracts, filter/cursor query identity,
+read-only list/detail UI, `inventoryId` routing, and fully intercepted browser
+smoke pass while preserving publication-failed state under Needs Attention.
+Active work unit: `unit7c_wu2_store_view_read_locally_complete`.
+Next authorized action: obtain separate authorization to commit the exact proven WU2 read vertical.
+Blockers/gates: M43/M44 connected application, WU3 mutation/media work, final navigation cutover,
 deployment/live verification, production rollout, payments, Phases 7/8, and
 M09 remain separately gated. Unrelated worktree changes must be preserved.
 Supabase mutation authority for this handoff: M42 is already live exactly once;
 M43/M44 are local-only candidates and no connected migration or business-row mutation
 is authorized by this document.
-Files changed in the bounded correction: local M44, its focused tests/vertical,
-and the required Phase 9 handoff/traceability records. No commit or application
+Files changed in WU2: Owner Edge Store View contracts/actions, strict client
+contracts/service/query layer, hidden list/detail routes and read-only UI,
+focused tests/browser smoke, and required handoff records. No commit or application
 is authorized until a separate approval.
 
 Exact live target: Supabase project `Bookconnect_reactexpo`, ref
 `ahntbtktjjmvfosgkmgn`, host `https://ahntbtktjjmvfosgkmgn.supabase.co`,
-`ACTIVE_HEALTHY`, region `ap-southeast-2`. The checked-out branch is `main` at
-merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`, integrating Unit 7B
-commit `9f3e646`; preserve unrelated untracked `docs/codemap/` changes.
+`ACTIVE_HEALTHY`, region `ap-southeast-2`. The checked-out branch is
+`codex/unit7c-wu2-store-view-read` at starting commit
+`298ac1d2a9ca553074ab1df3b454459014ea1405`; preserve unrelated untracked
+`docs/codemap/` changes.
 
 M39 (`20260812003419`), M40 (`20260813000040`), M41 (`20260813070104`), and
 M42 (`20260814013536 marketplace_phase9_generated_authors_projection`) are

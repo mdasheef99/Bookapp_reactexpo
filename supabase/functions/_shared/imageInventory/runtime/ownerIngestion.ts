@@ -11,6 +11,11 @@ import {
   parsePublicationResponse, PUBLICATION_CONTRACT_VERSION,
   PublicationRequest,
 } from '../contracts/publication.ts';
+import {
+  parseStoreViewRpcResponse,
+  STORE_VIEW_CONTRACT_VERSION,
+  StoreViewRequest,
+} from '../contracts/storeView.ts';
 import { sha256Hex, StoredImageObject, storedImageEnvelope } from '../media/sourceIdentity.ts';
 
 type RpcResult = { data: any; error: { message?: string } | null };
@@ -110,6 +115,22 @@ export async function executeOwnerIngestion(
   userClient: Client,
   serviceClient: Client,
 ): Promise<Record<string, unknown>> {
+  if (request.contractVersion === STORE_VIEW_CONTRACT_VERSION) {
+    const storeView = request as StoreViewRequest;
+    if (storeView.action === 'read_store_view_page') {
+      const data = unwrap(await userClient.rpc('phase9_store_view_page_v2', {
+        p_page_size: storeView.pageSize ?? 20,
+        p_cursor: storeView.cursor ?? null,
+        p_filter: storeView.filter ?? 'all',
+      }));
+      return parseStoreViewRpcResponse(storeView.action, data) as Record<string, unknown>;
+    }
+    const data = unwrap(await userClient.rpc('phase9_store_view_detail_v1', {
+      p_inventory_id: storeView.inventoryId,
+    }));
+    return parseStoreViewRpcResponse(storeView.action, data) as Record<string, unknown>;
+  }
+
   if (request.contractVersion === PUBLICATION_CONTRACT_VERSION) {
     const publication = request as PublicationRequest;
     let data: unknown;
