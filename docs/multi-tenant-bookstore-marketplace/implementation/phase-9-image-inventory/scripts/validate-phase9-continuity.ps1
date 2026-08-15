@@ -662,7 +662,8 @@ $draftMigrationNames = @(
     '20260813000041_marketplace_phase9_unit7a_quality_handoff.sql',
     '20260814000042_marketplace_phase9_generated_authors_projection.sql',
     '20260814000043_marketplace_phase9_unit7c_inventory_management.sql',
-    '20260814000044_marketplace_phase9_store_view_filter_contract.sql'
+    '20260814000044_marketplace_phase9_store_view_filter_contract.sql',
+    '20260815000045_marketplace_phase9_unit7c_media_history.sql'
 )
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
@@ -740,7 +741,7 @@ if ($actualMigrationNames.Count -ne $expectedMigrationCount -or
     $duplicateMigrationVersions.Count -ne 0 -or
     $unexpectedCorrectionMigrations.Count -ne 0 -or
     $phase9Migrations.Name -match '000009|quantity.*validat') {
-    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M44 exactly once; WU1/M32-M44 are included only when the tracker records the current structural handoff.'
+    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M45 exactly once; WU1/M32-M45 are included only when the tracker records the current structural handoff.'
 }
 $wu2aSql = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260814000044_marketplace_phase9_store_view_filter_contract.sql'))
 $wu2aIntegrationPath = Join-Path $repoRoot 'supabase/tests/phase9/phase9Unit7cStoreViewFilterContract.integration.test.mjs'

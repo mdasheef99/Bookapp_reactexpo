@@ -1,4 +1,11 @@
 import type { StoreViewItem } from '../contracts/storeViewContracts';
+import type { StoreViewMediaRecord } from '../contracts/storeViewMediaContracts';
+
+export const MEDIA_ROLE_LABELS: Record<StoreViewMediaRecord['role'], string> = {
+    damage: 'Damage evidence',
+    actual_copy: 'Actual copy',
+    primary_fallback: 'Primary photo',
+};
 
 export const EFFECTIVE_STATE_LABELS: Record<StoreViewItem['lifecycle']['effectiveState'], string> = {
     private: 'Private',

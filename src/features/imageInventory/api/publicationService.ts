@@ -132,12 +132,15 @@ export const publicationService = {
         inventoryId: string; role: PublicMediaRole; ordinal: number;
         media: SelectedScanMedia; envelopeSha256: string;
         idempotencyKey: string; commandId: string;
+        operationKind?: 'add' | 'replace'; targetLinkId?: string;
     }) {
         const authorization = await invokeMedia('authorize_public_copy', {
             inventoryId: input.inventoryId, role: input.role, ordinal: input.ordinal,
             declaredMime: input.media.mimeType, declaredBytes: input.media.fileSize,
             envelopeSha256: input.envelopeSha256,
             idempotencyKey: input.idempotencyKey, commandId: input.commandId,
+            ...(input.operationKind ? { operationKind: input.operationKind } : {}),
+            ...(input.targetLinkId ? { targetLinkId: input.targetLinkId } : {}),
         }, mediaAuthorizationEnvelope);
         return {
             capabilityId: authorization.capabilityId,

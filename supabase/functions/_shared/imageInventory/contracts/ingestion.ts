@@ -14,6 +14,15 @@ import {
   parseStoreViewManagementRequest,
   StoreViewManagementRequest,
 } from './storeViewManagement.ts';
+import {
+  isStoreViewMediaAction,
+  parseStoreViewMediaRequest,
+  StoreViewMediaRequest,
+} from './storeViewMedia.ts';
+import {
+  parseStoreViewHistoryRequest,
+  StoreViewHistoryRequest,
+} from './storeViewHistory.ts';
 
 const uuid = z.string().uuid();
 const contractVersion = z.literal('phase9-v1');
@@ -63,7 +72,8 @@ const dedicatedWorkerRequest = z.object({
 }).strict();
 
 export type OwnerIngestionRequest = z.infer<typeof ownerRequest> | OwnerUxRequest
-  | PublicationRequest | StoreViewRequest | StoreViewManagementRequest;
+  | PublicationRequest | StoreViewRequest | StoreViewManagementRequest
+  | StoreViewMediaRequest | StoreViewHistoryRequest;
 export type WorkerIngestionRequest = z.infer<typeof workerRequest>;
 export type DedicatedWorkerRequest = z.infer<typeof dedicatedWorkerRequest>;
 
@@ -80,6 +90,8 @@ export function parseOwnerIngestionRequest(value: unknown): OwnerIngestionReques
       'add_candidate_to_inventory', 'read_scan_readiness', 'close_scan_session',
     ].includes(action)) return parseOwnerUxRequest(value);
     if (isStoreViewManagementAction(action)) return parseStoreViewManagementRequest(value);
+    if (isStoreViewMediaAction(action)) return parseStoreViewMediaRequest(value);
+    if (action === 'read_store_view_history') return parseStoreViewHistoryRequest(value);
     if (isStoreViewAction(action)) return parseStoreViewRequest(value);
     if (isPublicationAction(action)) return parsePublicationRequest(value);
     const unknown = result.error.issues.some((issue) => issue.code === 'unrecognized_keys');

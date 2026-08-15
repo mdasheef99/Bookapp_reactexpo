@@ -15,6 +15,15 @@ jest.mock('../queries/storeViewQueries', () => ({
 jest.mock('../queries/storeViewManagementQueries', () => ({
     useStoreViewManagementCommands: () => ({ mutateAsync: jest.fn(), isPending: false }),
 }));
+jest.mock('../queries/storeViewMediaCommands', () => ({
+    useStoreViewMediaCommands: () => ({ mutateAsync: jest.fn(), isPending: false }),
+}));
+jest.mock('../queries/storeViewMediaQueries', () => ({
+    useStoreViewMedia: () => ({ isPending: false, isError: false, data: null, refetch: jest.fn() }),
+}));
+jest.mock('../queries/storeViewHistoryQueries', () => ({
+    useStoreViewHistory: () => ({ isPending: false, isError: false, data: null }),
+}));
 jest.mock('@/features/imageInventory/queries/publicationQueries', () => ({
     usePublicationCommands: () => ({ mutateAsync: jest.fn(), isPending: false }),
 }));

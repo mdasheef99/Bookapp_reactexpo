@@ -420,6 +420,7 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260814000042_marketplace_phase9_generated_authors_projection.sql` | `20260814013536 marketplace_phase9_generated_authors_projection` | exact target `ahntbtktjjmvfosgkmgn`; project `ACTIVE_HEALTHY`; migration history read back once | authorized forward-only M42 application; immutable | replaces the listing-sync trigger body so generated `marketplace_book_listings.authors_text` is omitted from INSERT/UPDATE assignments; M39/M40/M41 unchanged | migration history exactly once; live function readback; Publish/Pause/Republish, transient retry, stale-intent fencing, and final connected-state proof passed | `live_verified` |
 | `20260814000043_marketplace_phase9_unit7c_inventory_management.sql` | not applied | exact target `ahntbtktjjmvfosgkmgn` read-only verified healthy; M42 remains remote tail | local WU1 creation only; connected application not authorized | forward Store View reads, atomic Save, stock v2, revision ledger, and Unit 7B lifecycle/projection integration; M39–M42 unchanged | expected RED 0/11; Unit 7C 15/15; static 5/5; Unit 7A/7B 40/40; exact M01–M43 disposable PostgreSQL vertical/readback PASS | `local_candidate_verified_unapplied` |
 | `20260814000044_marketplace_phase9_store_view_filter_contract.sql` | not applied | exact target `ahntbtktjjmvfosgkmgn` read-only verified healthy; M42 remains remote tail | bounded WU2A local correction only; connected application not authorized | page v2 authoritative filters before keyset pagination (`needs_attention` uses action-required attention; other named states use effective state) with actor/store/filter-bound cursor; M39–M43 unchanged | WU2A integration 3/3; M44 static 5/5; M43 WU1 regression 15/15; exact M01–M44 replay, WU1 vertical, and WU2A real PostgreSQL proof PASS | `local_candidate_verified_unapplied` |
+| `20260815000045_marketplace_phase9_unit7c_media_history.sql` | not applied | no connected verification in WU4 finalization; M42 remains the remote tail | WU4 local candidate only; connected application not authorized | forward-only Store View media/history commands, bounded activity projection, and approved-media reorder; M39–M44 unchanged | exact M45 disposable PostgreSQL media/history proof 12/12; focused Edge/client/UI and Unit 7B/Unit 7C regressions recorded above | `local_candidate_verified_unapplied` |
 Rules: re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
 - Use forward corrections; record every schema, grant, Storage, data, and verification effect.
 ## Required verification matrix
@@ -2139,3 +2140,25 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 - No connected state, migration application, deployment, or live proof occurred.
   The correction commit is integrated on the feature branch. The exact-SHA
   release gate is the next authorized action.
+
+## Unit 7C WU4 validated-finding correction - 2026-08-15
+
+- Corrected only F-01 through F-05 in the uncommitted WU4 candidate. The
+  Store View media upload authorization persists bounded `add|replace` intent
+  and an exact replacement link; pending reads expose only safe operation
+  identity; replacement completion requires that persisted target; resumed ADD
+  uses the existing Unit 7B link RPC. History is limited before aggregation,
+  has deterministic tie-breaking, and allowlists details/payload keys. Reorder
+  compares and updates only approved/eligible links.
+- Red/green regressions: exact-target replacement across reorder/refetch,
+  resumed ADD, >50 activity rows with privacy/order checks, and hidden-link
+  reorder exclusion/rejection. Exact M45 disposable PostgreSQL proof is 12/12.
+  Focused Edge/client/UI Jest is 68 passed with 4 pre-existing skips; relevant
+  Unit 7B/Unit 7C WU1-WU3 disposable regressions are 30/30. TypeScript,
+  Deno, and `git diff --check` pass.
+- Database authority: M45 is a local uncommitted candidate only. No connected
+  Supabase/Storage mutation, migration application, deployment, stage, commit,
+  push, or PR occurred. `docs/codemap/` was not inspected, modified, or
+  cleaned. Browser E2E and WU5 remain unauthorized.
+- Exact next authorized action: independent handoff; separately authorize any
+  staging/commit/application step for this WU4 candidate.

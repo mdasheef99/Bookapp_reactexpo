@@ -10,6 +10,15 @@ jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('@/features/imageInventory/queries/publicationQueries', () => ({ usePublicationCommands: jest.fn() }));
 jest.mock('../queries/storeViewManagementQueries', () => ({ useStoreViewManagementCommands: jest.fn() }));
 jest.mock('../queries/storeViewQueries', () => ({ useStoreViewDetail: jest.fn() }));
+jest.mock('../queries/storeViewMediaCommands', () => ({
+    useStoreViewMediaCommands: () => ({ mutateAsync: jest.fn(), isPending: false }),
+}));
+jest.mock('../queries/storeViewMediaQueries', () => ({
+    useStoreViewMedia: () => ({ isPending: false, isError: false, data: null, refetch: jest.fn() }),
+}));
+jest.mock('../queries/storeViewHistoryQueries', () => ({
+    useStoreViewHistory: () => ({ isPending: false, isError: false, data: null }),
+}));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({ colors: {
         accent: '#2563eb', bgCard: '#fff', bgSecondary: '#eee', border: '#ddd',

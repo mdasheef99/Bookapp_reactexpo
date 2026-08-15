@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { Image } from 'expo-image';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { PublicationClientError } from '@/features/imageInventory/api/publicationService';
@@ -11,6 +11,8 @@ import { StoreViewManagementClientError } from '../api/storeViewManagementServic
 import type { StoreViewChanges } from '../contracts/storeViewManagementContracts';
 import { StoreViewActions } from '../components/StoreViewActions';
 import { StoreViewEditModal } from '../components/StoreViewEditModal';
+import { StoreViewHistorySection } from '../components/StoreViewHistorySection';
+import { StoreViewManagePhotosModal } from '../components/StoreViewManagePhotosModal';
 import { StoreViewStockModal } from '../components/StoreViewStockModal';
 import {
     EFFECTIVE_STATE_LABELS,
@@ -54,6 +56,7 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
     const actionLock = useRef(false);
     const [editOpen, setEditOpen] = useState(false);
     const [stockOpen, setStockOpen] = useState(false);
+    const [photosOpen, setPhotosOpen] = useState(false);
     const [actionBusy, setActionBusy] = useState(false);
     const [editError, setEditError] = useState<string | null>(null);
     const [stockError, setStockError] = useState<string | null>(null);
@@ -203,6 +206,19 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
                 </Section>
                 <Section title="Media">
                     <Field label="Approved media" value={`${item.mediaSummary.approvedCount}`} />
+                    {item.capabilities.includes('manage_photos') ? (
+                        <Pressable
+                            testID="store-view-manage-photos"
+                            disabled={busy}
+                            onPress={() => setPhotosOpen(true)}
+                            style={{ minHeight: 44, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent }}
+                        >
+                            <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>Manage Photos</Text>
+                        </Pressable>
+                    ) : null}
+                </Section>
+                <Section title="Activity and history">
+                    <StoreViewHistorySection identity={identity} inventoryId={item.identity.inventoryId} />
                 </Section>
             </ScrollView>
             <StoreViewEditModal
@@ -220,6 +236,13 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
                 error={stockError}
                 onDismiss={() => { if (!busy) setStockOpen(false); }}
                 onSave={adjustStock}
+            />
+            <StoreViewManagePhotosModal
+                visible={photosOpen}
+                identity={identity}
+                inventoryId={item.identity.inventoryId}
+                inventoryVersion={item.versions.inventoryVersion}
+                onDismiss={() => { if (!busy) setPhotosOpen(false); }}
             />
         </ScreenBackground>
     );

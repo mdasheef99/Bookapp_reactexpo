@@ -1512,3 +1512,25 @@ provider fallback, or create global alias authority.
   service. No new Render service was invented and no direct-SQL live proof was
   substituted for the required runtime path.
 - Live Publish -> Discover -> Pause -> Republish: `NOT_RUN/BLOCKED_RUNTIME`.
+
+## 2026-08-15 — Unit 7C WU4 validated-finding correction (local, uncommitted)
+
+- Scope was limited to the five independent WU4 findings F-01 through F-05.
+  M39–M44 remain byte-identical; the local M45 candidate now binds bounded
+  `add|replace` operation identity and the exact replacement link, orders and
+  limits history before aggregation with a positive detail/payload allowlist,
+  and reorders only approved/eligible media.
+- Verification: TypeScript (`npx.cmd tsc --noEmit --allowImportingTsExtensions`),
+  Deno (`deno check --config supabase/functions/phase9-owner-ingestion/deno.json
+  supabase/functions/phase9-owner-ingestion/index.ts`), focused Jest/Edge/client/UI
+  68 passed with 4 pre-existing skips, Unit 7B/Unit 7C WU1–WU3 disposable
+  regressions 30/30, and the exact M45 disposable PostgreSQL media/history
+  vertical 12/12. `git diff --check` passed.
+- External state: no connected Supabase or Storage access, migration application,
+  deployment, provider call, stage, commit, push, or PR occurred. `docs/codemap/`
+  remains user-owned, untracked, and untouched. The formal WU3 tracker status is
+  retained until this uncommitted WU4 candidate receives separate commit and
+  application authorization.
+- Exact next authorized action: stop for independent handoff; obtain separate
+  authorization before staging/committing or applying M45. Browser E2E and WU5
+  remain out of scope.
