@@ -530,7 +530,8 @@ if (
         $tracker.Contains('**Implementation status:** `unit7b_live_rollout_pass_ready_for_main_authorization`') -or
         $tracker.Contains('**Implementation status:** `unit7b_main_integrated_next_scope_authorization`') -or
         $tracker.Contains('**Implementation status:** `unit7c_wu5_store_view_cutover_locally_complete`') -or
-        $tracker.Contains('**Implementation status:** `unit7c_wu5_committed_m43_m44_m45_applied_review_pending`')
+        $tracker.Contains('**Implementation status:** `unit7c_wu5_committed_m43_m44_m45_applied_review_pending`') -or
+        $tracker.Contains('**Implementation status:** `unit7c_m46_correction_pass_connected_save_reproof_complete`')
     ) -or
     ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit7a_post_m39_feature_push_and_owner_edge_deployment|unit7a_create_only_commit_locally_complete_review_pending|unit7a_create_only_commit_red_tests_pending_separate_authorization|unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|phase9_multilingual_vision_response_resilience_review|unit6c_single_image_safe_remove|phase9_metadata_retry_provider_attempt_correction|unit6_complete|unit6_mobile_upload_transport_correction_local_complete|unit6_mobile_upload_transport_native_failure_diagnosed|unit6_mobile_filesystem_transport_live_proof_pending)`\r?$' -and
         -not $tracker.Contains('**Active work unit:** `unit7a_owner_edge_bundle_fix_narrow_review_pending`') -and
@@ -670,7 +671,8 @@ $draftMigrationNames = @(
     '20260814000042_marketplace_phase9_generated_authors_projection.sql',
     '20260814000043_marketplace_phase9_unit7c_inventory_management.sql',
     '20260814000044_marketplace_phase9_store_view_filter_contract.sql',
-    '20260815000045_marketplace_phase9_unit7c_media_history.sql'
+    '20260815000045_marketplace_phase9_unit7c_media_history.sql',
+    '20260816000046_marketplace_phase9_unit7c_private_save_revision_correction.sql'
 )
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
@@ -702,7 +704,8 @@ $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_in
     $tracker.Contains('**Implementation status:** `unit7b_main_integrated_next_scope_authorization`') -or
     $tracker.Contains('**Implementation status:** `unit7c_wu1_locally_complete`') -or
     $tracker.Contains('**Implementation status:** `unit7c_wu2a_filter_contract_locally_complete`') -or
-    $tracker.Contains('**Implementation status:** `unit7c_wu5_store_view_cutover_locally_complete`'))
+    $tracker.Contains('**Implementation status:** `unit7c_wu5_store_view_cutover_locally_complete`') -or
+    $tracker.Contains('**Implementation status:** `unit7c_m46_correction_pass_connected_save_reproof_complete`'))
 $expectedMigrationNames = @($migrationNames)
 if ($wu1AppliedStatus) { $expectedMigrationNames += $draftMigrationNames }
 $appliedPhase9Migrations = if ($wu1AppliedStatus) {
@@ -749,7 +752,7 @@ if ($actualMigrationNames.Count -ne $expectedMigrationCount -or
     $duplicateMigrationVersions.Count -ne 0 -or
     $unexpectedCorrectionMigrations.Count -ne 0 -or
     $phase9Migrations.Name -match '000009|quantity.*validat') {
-    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M45 exactly once; WU1/M32-M45 are included only when the tracker records the current structural handoff.'
+    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M46 exactly once; WU1/M32-M46 are included only when the tracker records the current structural handoff.'
 }
 $wu2aSql = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260814000044_marketplace_phase9_store_view_filter_contract.sql'))
 $wu2aIntegrationPath = Join-Path $repoRoot 'supabase/tests/phase9/phase9Unit7cStoreViewFilterContract.integration.test.mjs'
@@ -1016,8 +1019,9 @@ if (-not ($phaseReadme.Contains('**Status:** `unit6e_finalized_unit6f_separately
     $phaseReadme.Contains('**Status:** `unit7b_live_rollout_pass_ready_for_main_authorization`') -or
     $phaseReadme.Contains('**Status:** `unit7b_main_integrated_next_scope_authorization`') -or
     $phaseReadme.Contains('**Status:** `unit7c_wu5_store_view_cutover_locally_complete`') -or
-    $phaseReadme.Contains('**Status:** `unit7c_wu5_committed_m43_m44_m45_applied_review_pending`')) -or
-    -not ($phaseReadme.Contains('M01-M08/M10-M29 are live once') -or $phaseReadme.Contains('M01-M08/M10-M30 are live once') -or $phaseReadme.Contains('M01-M08/M10-M38 and WU1 are live once') -or $phaseReadme.Contains('M01-M08/M10-M42 are live once') -or $phaseReadme.Contains('M01-M08/M10-M45 are live once')) -or
+    $phaseReadme.Contains('**Status:** `unit7c_wu5_committed_m43_m44_m45_applied_review_pending`') -or
+    $phaseReadme.Contains('**Status:** `unit7c_m46_correction_pass_connected_save_reproof_complete`')) -or
+    -not ($phaseReadme.Contains('M01-M08/M10-M29 are live once') -or $phaseReadme.Contains('M01-M08/M10-M30 are live once') -or $phaseReadme.Contains('M01-M08/M10-M38 and WU1 are live once') -or $phaseReadme.Contains('M01-M08/M10-M42 are live once') -or $phaseReadme.Contains('M01-M08/M10-M45 are live once') -or $phaseReadme.Contains('M01-M08/M10-M46 are live once')) -or
     -not $phaseReadme.Contains('Unit 6B is merged at `9ef9eb3`') -or
     -not $phaseReadme.Contains('Unit 6D is') -or
     -not $phaseReadme.Contains('22-unit6d-candidate-review-evidence.md') -or

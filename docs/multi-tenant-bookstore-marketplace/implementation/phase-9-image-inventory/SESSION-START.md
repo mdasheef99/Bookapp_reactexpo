@@ -11,35 +11,38 @@ The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` �
 ## Current 2026-08-16 final resume overlay
 
 Current phase: Phase 9 — Image-Assisted Inventory.
-Planning/implementation status: Unit 7C normative design remains frozen; WU1,
-WU2A, WU2, WU3, WU4, and WU5 are locally complete. WU5 is committed as
-`380f2b3`; M43/M44/M45 are applied exactly once to the verified development
-project. Unit 7B remains live-verified and integrated into `main` at
+Planning/implementation status: Unit 7C M46 correction PASS; broader connected
+canary verification is paused. WU1 through WU5 remain locally complete;
+M43/M44/M45 are applied exactly once, M46 is applied exactly once as
+`20260816150126`, and exact HEAD
+`5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` is deployed only as Owner Edge
+version 8 with JWT verification enabled. Unit 7B remains live-verified and integrated into `main` at
 `53edbddc9c5417b34cb169599e8282b162e183b3`. Unit 6F native validation remains
 deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-Last completed milestone: Unit 7C WU5 Owner Store View cutover plus connected
-M43/M44/M45 application/readback. Fresh focused Jest is 10 suites/67 tests,
-disposable Unit 7C integration is 30/30, the continuity validator passes, and
-Expo web export passes.
-Active work unit: `unit7c_wu5_store_view_cutover`.
-Next authorized action: obtain separate authorization for integrated Unit 7C
-review and connected Edge→DB verification; deployment and push remain gated.
+Last completed milestone: M46 RED/GREEN correction, exact disposable M01→M46
+proof, one live M46 application/readback, and authenticated private-only Save
+reproof. The reproof changed only private `internalNotes`, preserved the
+customer projection, and left public revision count unchanged.
+Active work unit: `unit7c_m46_correction_pass_connected_save_reproof_complete`.
+Next authorized action: obtain separate authorization before resuming the
+remaining stale/stock/publication/media/history/browser canary checks.
 Blockers/gates: Playwright CLI remains `NOT_RUN_ENVIRONMENT`; full repository
-TypeScript has an unchanged WU4 E2E typing error; Edge deployment, live
-application verification, production rollout, payments, Phases 7/8, and M09
-remain separately gated. Unrelated worktree changes must be preserved.
-Supabase mutation authority for this handoff: M43/M44/M45 were explicitly
-authorized in the current session and are live as `20260816122822`,
-`20260816122901`, and `20260816122929`; no further connected mutation is
+TypeScript has an unchanged WU4 E2E typing error; production rollout, payments,
+Phases 7/8, M09, and the remaining canary matrix remain separately gated.
+Unrelated worktree changes must be preserved.
+Supabase mutation authority for this handoff: the single M46 application and
+bounded reproof are complete. No additional migration, second deployment,
+direct SQL repair, historical-row rewrite, or further connected mutation is
 authorized by this document.
-Files changed in WU5: Owner navigation/cutover, Store Profile compatibility
-route, Inventory recovery handoff, Add-to-Store-View CTA, focused tests, E2E
-spec, and required handoff records. No Edge deployment or push occurred.
+Connected side effects: Owner Edge advanced from version 7 to 8; canary inventory
+version advanced from 1 to 2; private `internalNotes` received the canary marker;
+one false public revision was appended. Inventory/listing/media-link counts are
+otherwise unchanged at `10/9/0`. No push occurred.
 
 Exact live target: Supabase project `Bookconnect_reactexpo`, ref
 `ahntbtktjjmvfosgkmgn`, host `https://ahntbtktjjmvfosgkmgn.supabase.co`,
 `ACTIVE_HEALTHY`, region `ap-southeast-2`. The checked-out branch is
-`codex/unit7c-wu5-store-view-cutover` at commit `380f2b3`; preserve unrelated
+`codex/unit7c-wu5-store-view-cutover` at commit `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882`; preserve unrelated
 untracked `.zcode/` and `docs/codemap/` changes.
 
 M39 (`20260812003419`), M40 (`20260813000040`), M41 (`20260813070104`), and
@@ -69,7 +72,10 @@ live as `20260816122929`. It adds bounded media/history authorization and
 read/reorder/remove/replace functions, exact replacement targets, and the
 allowlisted Owner history read. The exact M45 media/history vertical passed
 12/12 locally; final live readback shows the expected public functions and
-media capability columns. No business rows or Storage objects were changed.
+media capability columns. M46 is live exactly once as
+`20260816150126 marketplace_phase9_unit7c_private_save_revision_correction`.
+Its focused correction and connected private-only Save reproof passed; no
+business-row repair, Storage mutation, or Edge redeploy occurred.
 
 ### Live Unit 7B proof and current development configuration
 

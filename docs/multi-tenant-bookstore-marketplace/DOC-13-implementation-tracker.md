@@ -26,6 +26,20 @@ Every coding session must update tracking before ending if it changes any of the
 - handoff notes
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
 
+> **2026-08-16 Unit 7C connected-verification blocker (corrected):** Exact HEAD
+> `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` was deployed only to
+> `phase9-owner-ingestion`, once, as ACTIVE version 8 with JWT verification.
+> Authenticated Store View reads and non-enumeration passed. The first and only
+> canary mutation changed private `internalNotes` and inventory version but
+> incorrectly seeded append-only public revision 1 for a pre-existing published
+> item with no revision baseline. No private data leaked and the customer
+> listing did not change. M46 was then applied once as live migration
+> `20260816150126`, with no Edge redeploy, repair, reset, or historical-row
+> modification. A fresh authenticated private-only Save advanced version
+> `2 -> 3`, changed only `internalNotes`, left the listing/public DTO and
+> revision count unchanged (`1 -> 1`), and added one audit/event pair. Status is
+> `unit7c_m46_correction_pass_connected_save_reproof_complete`.
+
 > 2026-08-09 Phase 9 schema-free Gemini JSON correction is locally complete.
 > Gemini now receives JSON MIME mode and the flat `vision` prompt with no provider
 > response schema; BookConnect retains strict local validation and unchanged
@@ -842,12 +856,42 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C WU5 committed; M43/M44/M45 applied; integrated review pending** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C M46 correction PASS; broader connected canary paused** |
 | Overall status | `in_progress` |
 | Last updated | 2026-08-16 |
-| Latest handoff | Unit 7C WU5 is committed as `380f2b3` on `codex/unit7c-wu5-store-view-cutover`: primary Owner navigation is Dashboard/Inventory/Store View/Orders/Subscription, Inventory is intake/review/recovery context, and successful Add hands off by returned `inventoryId` to the existing Store View detail. M43/M44/M45 are live exactly once as `20260816122822`, `20260816122901`, and `20260816122929`; no M46 exists. |
+| Latest handoff | Unit 7C WU5 is committed as `380f2b3` on `codex/unit7c-wu5-store-view-cutover`; M43/M44/M45 remain immutable and M46 is live exactly once as `20260816150126`. The bounded private-Save correction and connected reproof passed; the original false revision is preserved. |
 | Current risk level | The project Playwright CLI is `NOT_RUN_ENVIRONMENT` because Node failed with `EPERM` while `lstat`-ing `C:\Users\user`; in-app local browser/manual mobile checks pass. Full repository TypeScript remains blocked by the unchanged WU4 E2E typing error. Connected Edge→DB verification, deployment, and integrated Unit 7C review remain separately gated. Unit 6F native debt remains unrelated. The untracked `.zcode/` and `docs/codemap/` directories remain preserved and untouched. |
-| Next recommended task | Obtain separate authorization for integrated Unit 7C review and connected Edge→DB verification. Do not deploy, push, or mutate business rows without a separate explicit authorization. |
+| Next recommended task | Obtain separate authorization to resume only the remaining stale/stock/publication/media/history/browser canary checks. Do not apply another migration, redeploy Edge, repair/reset the historical revision, push, merge, or broaden scope. |
+
+### 2026-08-16 Unit 7C M46 bounded correction PASS
+
+- The confirmed defect was the unconditional M43 Save call to the append-only
+  publication-revision helper. When no prior revision existed, the helper's
+  NULL-baseline comparison treated a private-only Save as a first public
+  revision even though `v_public_changed=false`.
+- M46 is the single forward-only migration
+  `20260816000046_marketplace_phase9_unit7c_private_save_revision_correction.sql`.
+  It preserves the M43 transaction, idempotency, audit/event, projection, and
+  security boundaries and calls the revision helper only when
+  `v_public_changed`; private-only Save returns no revision.
+- RED-first isolated proof reproduced the pre-M46 defect (`expected 0,
+  actual 1`). Post-correction disposable inventory management is 18/18; the
+  M01→M46 real-PostgreSQL proof is PASS; existing filter/media-history
+  regressions are 15/15; static migration contracts are 20/20; focused
+  Owner Edge/client contracts are 30/30.
+- Exact project `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` was
+  re-verified before application. M46 applied once as live version
+  `20260816150126`. Function readback confirms postgres owner,
+  `SECURITY DEFINER`, empty `search_path`, authenticated/service execution,
+  anonymous denial, and the corrected `IF v_public_changed ... ELSE NULL`
+  branch. M39–M45 remain byte-immutable.
+- Authenticated Store View reproof through deployed Owner Edge v8 saved only
+  `internalNotes` on `Individuals`: version `2 -> 3`, listing identity and
+  public DTO unchanged, quantity `1/1/0/0/0` unchanged, revision count `1 -> 1`,
+  and audit/event counts `3 -> 4`. The historical false revision was not
+  deleted or modified. Edge redeploy count is zero.
+- Exact next action: obtain separate authorization before resuming the
+  remaining connected canary matrix. This correction stops here.
 
 ### 2026-08-14 Unit 7C WU3 local completion
 
@@ -950,7 +994,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit7c_wu5_committed_m43_m44_m45_applied_review_pending` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7C SDD](./implementation/phase-9-image-inventory/work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | WU5 is committed at `380f2b3`; M43/M44/M45 are live exactly once at `20260816122822`, `20260816122901`, and `20260816122929`. Fresh focused tests and disposable Unit 7C integration pass; next is separately authorized integrated Unit 7C review/connected Edge→DB verification. |
+| Phase 9: Image-to-LLM Inventory | `unit7c_connected_verification_blocked_private_save_false_public_revision` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7C SDD](./implementation/phase-9-image-inventory/work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | Owner Edge v8 is active with JWT verification. Connected reads passed; the first private-only Save created a false append-only public revision, so all further canary actions stopped pending correction review and fresh authorization. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

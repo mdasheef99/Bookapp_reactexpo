@@ -1,7 +1,45 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit7c_wu5_committed_m43_m44_m45_applied_review_pending`; **last updated:** 2026-08-16
+**Status:** `unit7c_m46_correction_pass_connected_save_reproof_complete`; **last updated:** 2026-08-16
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit7c_wu5_store_view_cutover`. The WU5 Owner navigation/Inventory handoff vertical is committed at `380f2b3`; M43/M44/M45 are applied exactly once as live versions `20260816122822`, `20260816122901`, and `20260816122929`. Unit 7B remains live-verified and integrated into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`.
+**Active work unit:** `unit7c_m46_correction_pass_connected_save_reproof_complete`. Exact HEAD `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` remains deployed only as Owner Edge version 8; M46 is live once as `20260816150126` and the bounded private-only Save reproof passed.
+
+### 2026-08-16 — Unit 7C M46 bounded correction PASS
+
+- Root cause confirmed: M43 unconditionally called the append-only public
+  revision helper after Save. With no prior revision, the helper's NULL
+  comparison seeded revision 1 even when `v_public_changed=false`.
+- M46 is exactly
+  `20260816000046_marketplace_phase9_unit7c_private_save_revision_correction.sql`.
+  The only behavioral change is the `IF v_public_changed` gate around the
+  revision helper; private-only Save returns no revision. M39–M45 are unchanged.
+- RED-first reproduced the old behavior (`expected 0, actual 1`). Post-M46
+  disposable inventory management is 18/18; exact M01→M46 real PostgreSQL is
+  PASS; filter/media-history regressions are 15/15; static migration contracts
+  are 20/20; and focused Owner Edge/client contracts are 30/30.
+- Exact project `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn` was re-verified before one application. M46 live
+  version is `20260816150126`. Readback confirms the corrected function branch,
+  postgres ownership, `SECURITY DEFINER`, empty `search_path`, authenticated/
+  service execution, and anonymous denial.
+- Connected authenticated Store View reproof through existing Edge v8 changed
+  only `internalNotes` on `Individuals`: inventory version `2 -> 3`, quantity
+  `1/1/0/0/0` unchanged, listing identity/public DTO unchanged, public
+  revisions `1 -> 1`, audits/events `3 -> 4`. The false historical revision
+  remains preserved; no SQL repair/reset, row deletion/update, or Edge redeploy
+  occurred.
+- Stop boundary: remaining stale/stock/publication/media/history/browser checks
+  require separate authorization.
+
+### 2026-08-16 — Unit 7C connected Edge-to-DB verification BLOCKED
+
+- Verified exact project `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`, M43-M45 live once, no M46, and baseline counts inventory/listing/revision/media-link/media-asset `10/9/0/0/20`.
+- Deployed only `phase9-owner-ingestion` from exact HEAD, once, as ACTIVE version 8 with JWT verification enabled. Exact 25-file source readback matched after line-ending normalization; OPTIONS returned 200. No Render service, other function, secret, or migration changed.
+- Authenticated Store View returned five own-store rows; canary detail and generic non-enumeration behavior passed.
+- Sole mutation: Save inventory `5f5a2bc9-d702-4aeb-af55-2a9df6c16478` with only `internalNotes=UNIT7C_CONNECTED_CANARY_20260816`. Inventory version changed `1 -> 2`; quantity, public state/intent, listing ID, listing timestamp, and public projection were unchanged. Audit/event rows record command `386967a1-05b2-4d96-814e-ef6635b7e076` and only `internalNotes` as changed.
+- Defect evidence: revision count changed `0 -> 1`; revision `b4d0624f-0f16-4ac9-8dfa-b14f2eb62e11` has `source_action=save_details` and an unchanged customer-safe snapshot. Root cause is the no-baseline branch in `phase9_append_publication_revision_v1`: with no previous revision, `v_previous IS NOT DISTINCT FROM v_snapshot` is false, so the unconditional Save helper call appends despite private-only `v_public_changed=false`. Severity MEDIUM; no privacy leak or customer projection mutation.
+- Stop boundary honored: no stale/replay, stock, lifecycle, media, restoration, M46, direct SQL write, repair, second deployment, push, or merge.
+- Verification: Deno entrypoint check passed; Store View/Edge Jest reported 15 suites/83 tests passed, then retained an open handle and was terminated; continuity and `git diff --check` passed before this handoff update.
+- Next exact authorized action: independent defect review, then explicit authorization or rejection of one forward-only correction and a fresh bounded retest.
 
 ### 2026-08-16 — Unit 7C WU5 commit and M43–M45 connected application
 
@@ -393,7 +431,7 @@ Historical status marker: **Status:** `unit7a_edge_deployment_blocked_by_source_
 | Wake dispatcher | [Automatic worker wake dispatcher](../work-units/automatic-worker-wake-dispatcher-sdd.md) | `live_active_verified` | M36 is live exactly once; its cron is active and automatically completed the final Unit 6 media, vision, and metadata path without manual invocation |
 | 7A | [Create-only per-candidate private inventory commit](../work-units/07a-create-only-inventory-commit-sdd.md), server-held review snapshot, exact replay/concurrency, one-to-one provenance, and Unit 6 duplicate-contract transition | [`edge_deployment_blocked_by_source_routing_mismatch`](./29-unit7a-create-only-commit-evidence.md) | M39 application/readback pass; the one Owner Edge deployment attempt failed before activation on an extensionless import; no retry, source repair, or business effect |
 | 7B | [Safe publication/projection after private inventory creation](../work-units/07b-publication-sdd.md) | `live_verified_main_integrated` | closed at merge `53edbddc9c5417b34cb169599e8282b162e183b3`; lifecycle contracts are reused unchanged by Unit 7C |
-| 7C | [Owner Store View and post-commit inventory management](../work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | `unit7c_wu5_committed_m43_m44_m45_applied_review_pending` | WU5 is committed at `380f2b3`; M43/M44/M45 are live exactly once with recorded versions; fresh focused tests and disposable Unit 7C integration pass; obtain separate integrated-review/Edge→DB authorization next |
+| 7C | [Owner Store View and post-commit inventory management](../work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | `unit7c_m46_correction_pass_connected_save_reproof_complete` | M46 live once as `20260816150126`; RED/GREEN, exact M01→M46 proof, function/grant readback, and authenticated private-only Save reproof pass; remaining canary matrix needs separate authorization |
 
 Historical Unit 7B local correction matrix (2026-08-12; superseded by the live
 closeout above): expanded disposable Unit 7B is

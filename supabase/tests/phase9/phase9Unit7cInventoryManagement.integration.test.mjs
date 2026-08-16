@@ -8,10 +8,69 @@ import {
   seedUnit7cInventory, storeViewDetail, storeViewPage, unit7cState,
 } from './unit7cFixture.mjs';
 
-async function withDb(run) {
-  const db = await createUnit7cDatabase();
+async function withDb(run, options = {}) {
+  const db = await createUnit7cDatabase(options);
   try { await run(db); } finally { await db.close(); }
 }
+
+async function seedPublishedWithoutRevision(db) {
+  const fixture = await seedUnit7cInventory(db, {
+    visibilityStatus: 'published', publicationStatus: 'published',
+  });
+  await resetActor(db);
+  await db.exec(`UPDATE public.store_inventory
+    SET updated_at=transaction_timestamp() WHERE id='${fixture.inventoryId}'`);
+  await setActor(db, fixture.ownerId);
+  const state = await unit7cState(db, fixture);
+  assert.equal(state.listings.length, 1);
+  assert.equal(state.revisions.length, 0);
+  return fixture;
+}
+
+test('U7C-M46-01 private-only Save on a published zero-revision item keeps public history empty', () => withDb(async (db) => {
+  const f = await seedPublishedWithoutRevision(db);
+  const before = await unit7cState(db, f);
+  const result = await saveDetails(db, f, { internalNotes: 'M46 private-only correction' });
+  const after = await unit7cState(db, f);
+  assert.equal(result.inventoryVersion, 2);
+  assert.equal(after.inventory.internal_notes, 'M46 private-only correction');
+  assert.equal(after.inventory.version, before.inventory.version + 1);
+  assert.deepEqual(after.listings[0], before.listings[0]);
+  assert.equal(after.revisions.length, 0);
+  assert.equal(after.audits, before.audits + 1);
+  assert.equal(after.events, before.events + 1);
+}, { includeM46: process.env.PHASE9_M46_PRE_MIGRATION !== '1' }));
+
+test('U7C-M46-02 public Save on a published zero-revision item creates the first valid revision', () => withDb(async (db) => {
+  const f = await seedPublishedWithoutRevision(db);
+  const before = await unit7cState(db, f);
+  await saveDetails(db, f, { sellingPriceMinor: 999 });
+  const after = await unit7cState(db, f);
+  assert.equal(after.inventory.version, before.inventory.version + 1);
+  assert.equal(after.listings[0].id, before.listings[0].id);
+  assert.equal(after.listings[0].selling_price_minor, 999);
+  assert.equal(after.revisions.length, 1);
+  assert.equal(after.revisions[0].revision_number, 1);
+  assert.equal(after.revisions[0].public_snapshot.priceMinor, 999);
+}, { includeM46: true }));
+
+test('U7C-M46-03 exact replay of a private-only Save adds no second effect', () => withDb(async (db) => {
+  const f = await seedPublishedWithoutRevision(db);
+  const commandId = randomUUID();
+  const idempotencyKey = `m46-private-replay-${f.inventoryId}`;
+  const first = await saveDetails(db, f, { internalNotes: 'M46 replay note' }, {
+    commandId, idempotencyKey,
+  });
+  const replay = await saveDetails(db, f, { internalNotes: 'M46 replay note' }, {
+    commandId, idempotencyKey, inventoryVersion: 1,
+  });
+  assert.deepEqual(replay, first);
+  const state = await unit7cState(db, f);
+  assert.equal(state.inventory.version, 2);
+  assert.equal(state.revisions.length, 0);
+  assert.equal(state.audits, 1);
+  assert.equal(state.events, 1);
+}, { includeM46: true }));
 
 test('U7C-WU1-01 Save Changes atomically updates the frozen field set once with one audit and event', () => withDb(async (db) => {
   const f = await seedUnit7cInventory(db);

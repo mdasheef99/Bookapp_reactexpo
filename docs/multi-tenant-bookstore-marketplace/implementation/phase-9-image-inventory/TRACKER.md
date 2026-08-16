@@ -1,20 +1,56 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit7c_normative_sdd_frozen`
-**Implementation status:** `unit7c_wu5_committed_m43_m44_m45_applied_review_pending`
+**Implementation status:** `unit7c_m46_correction_pass_connected_save_reproof_complete`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-16
-**Current milestone:** Unit 7C WU5 is committed as `380f2b3` on `codex/unit7c-wu5-store-view-cutover`: Owner primary navigation now exposes Dashboard, Inventory, Store View, Orders, and Subscription; Inventory is limited to intake/review/recovery context; and successful Add to Inventory hands off by returned `inventoryId` to the existing Store View detail route. M43, M44, and M45 are applied exactly once to the verified development project as `20260816122822`, `20260816122901`, and `20260816122929`.
-**Active work unit:** `unit7c_wu5_store_view_cutover`
+**Current milestone:** The exact HEAD `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` Owner Edge closure remains deployed once as `phase9-owner-ingestion` version 8 with JWT verification enabled. M46 is live exactly once as `20260816150126`; its bounded correction and connected private-only Save reproof pass, while the original false revision remains preserved.
+**Active work unit:** `unit7c_m46_correction_pass_connected_save_reproof_complete`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** WU5 is committed; fresh focused Jest is 10 suites/67 tests, disposable Unit 7C M43–M45 integration is 30/30, the continuity validator passes, and Expo web export passes. The in-app browser previously verified the five primary tabs and mobile-sized Inventory/Store View surfaces. The Playwright CLI remains `NOT_RUN_ENVIRONMENT` because Node could not `lstat C:\Users\user`; full repository TypeScript remains blocked only by the unchanged WU4 E2E typing error. No deployment, push, Edge change, or business-row mutation occurred.
-**Next authorized action:** obtain separate authorization for integrated Unit 7C review and connected Edge→DB verification; do not deploy, push, or mutate business rows without a separate explicit authorization.
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`; M43 is live exactly once as `20260816122822 marketplace_phase9_unit7c_inventory_management`; M44 is live exactly once as `20260816122901 marketplace_phase9_store_view_filter_contract`; and M45 is live exactly once as `20260816122929 marketplace_phase9_unit7c_media_history`. M39–M45 remain byte-immutable; no M46 exists.
+**Last completed:** The M46 RED/GREEN correction, exact disposable M01→M46 proof, focused regressions, one live M46 application, function/grant readback, and authenticated private-only Save reproof completed. The reproof advanced the canary inventory version `2 -> 3`, changed only `internalNotes`, preserved listing identity/public DTO/quantity, and kept public revisions at `1 -> 1`; audit/events advanced `3 -> 4`.
+**Next authorized action:** obtain separate authorization before resuming only the remaining stale/stock/publication/media/history/browser canary checks. No M47, second deployment, repair/reset, historical-row rewrite, push, merge, or broader mutation is authorized by this closeout.
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`; M43 is live exactly once as `20260816122822 marketplace_phase9_unit7c_inventory_management`; M44 is live exactly once as `20260816122901 marketplace_phase9_store_view_filter_contract`; M45 is live exactly once as `20260816122929 marketplace_phase9_unit7c_media_history`; and M46 is live exactly once as `20260816150126 marketplace_phase9_unit7c_private_save_revision_correction`. M39–M45 remain byte-immutable.
 **Scope boundary:** WU5 is limited to Owner navigation, Inventory role demotion, Store Profile compatibility positioning, post-Add success CTAs, route/test coverage, and bounded browser/mobile verification. No backend, Edge, database, publication, media/history, quantity, canonical, or capability authority changed.
-**Implementation authority:** the attached WU5 request and the current user instruction authorized the local route/client/UI/test commit and exact-project application of M43/M44/M45. Push, deployment, connected Edge→DB proof, and integrated Unit 7C review remain separately gated.
-**Migration creation/application authority:** M39–M45 are live and immutable on `ahntbtktjjmvfosgkmgn`; no further migration application is authorized by this handoff.
-**Current gate:** `UNIT_7C_WU5_COMMITTED_M43_M44_M45_APPLIED_INTEGRATED_REVIEW_NOT_AUTHORIZED`; deployed Owner Edge version 7 and the Unit 7B worker/runtime remain unchanged. Native Unit 6F remains deferred and is not a Unit 7C blocker.
+**Implementation authority:** the one-function Edge deployment was completed before this correction and was not repeated. The bounded M46 correction authority is exhausted after one application and one reproof; the remaining canary matrix requires separate authorization.
+**Migration creation/application authority:** M46 is live exactly once on `ahntbtktjjmvfosgkmgn`; no additional migration application is authorized by this handoff.
+**Current gate:** `UNIT_7C_M46_CORRECTION_PASS_CONNECTED_SAVE_REPROOF_COMPLETE`; Owner Edge version 8 is ACTIVE with JWT verification enabled. No other function/service changed. Native Unit 6F remains deferred and is unrelated.
+
+## 2026-08-16 — Unit 7C connected verification stopped on private-Save revision defect
+
+- Deployed only `phase9-owner-ingestion` from exact HEAD `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882`; live version 8 is ACTIVE, JWT verification is enabled, and all 25 deployed files match HEAD after line-ending normalization.
+- Authenticated Store View listed five Owner rows, canary detail readback was authoritative, and a nonexistent inventory ID returned the generic non-enumerating unavailable state.
+- The sole business mutation changed `Individuals` inventory `5f5a2bc9-d702-4aeb-af55-2a9df6c16478` only by setting private `internalNotes` to the canary marker. Inventory version became 2; quantity, publication intent/status, visibility, listing identity, and listing timestamp were unchanged.
+- Defect: append-only public revision `b4d0624f-0f16-4ac9-8dfa-b14f2eb62e11` was inserted with `source_action=save_details` and unchanged customer-safe snapshot. With no prior revision, `phase9_append_publication_revision_v1(..., false)` compares the live snapshot with NULL and seeds revision 1 despite `v_public_changed=false`. No private field leaked and no customer projection changed, but public-history truth is false. Severity: MEDIUM; merge-blocking under SDD §§6 and 11.
+- The affected flow stopped immediately. No stock/lifecycle/media/stale/replay/restoration mutation, M46, direct SQL write, repair, second deployment, push, or merge occurred.
+
+## 2026-08-16 — Unit 7C M46 bounded correction PASS
+
+- RED-first isolated the pre-M46 defect on a published zero-revision fixture:
+  private-only Save succeeded but inserted revision 1 (`expected 0, actual 1`).
+  The local correction is exactly
+  `20260816000046_marketplace_phase9_unit7c_private_save_revision_correction.sql`.
+  It preserves M43's transaction and calls the append-only revision helper only
+  when `v_public_changed`; the private-only branch returns `NULL`.
+- The three M46 integration cases pass: private-only Save keeps zero public
+  revisions, the first public Save creates exactly one valid revision, and
+  exact private Save replay adds no second effect. The post-M46 inventory
+  suite is 18/18; the existing filter/media-history regressions are 15/15;
+  static migration contracts are 20/20; focused Owner Edge/client contracts
+  are 30/30; and the exact disposable M01→M46 real-PostgreSQL proof passes.
+- Exact project `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn` was re-verified before the one application. M46 is
+  live once as `20260816150126`. Function readback confirms the corrected
+  branch, postgres owner, `SECURITY DEFINER`, empty `search_path`, authenticated
+  and service execution, and anonymous denial. M39–M45 are byte-immutable.
+- Connected reproof used the existing deployed Owner Edge v8; no Edge
+  redeploy occurred. The actual Store View private-only Save changed only
+  `internalNotes` on `Individuals`: version `2 -> 3`, quantity
+  `1/1/0/0/0` unchanged, listing identity/public DTO unchanged, revisions
+  `1 -> 1`, and audit/events `3 -> 4`. The original false revision remains
+  preserved; no repair/reset or historical-row delete/update was performed.
+- Correction boundary: stop after this reproof. Resume of stale/stock/
+  publication/media/history/browser canary checks needs separate authorization.
 
 ## 2026-08-14 — Unit 7C WU3 Store View management vertical
 

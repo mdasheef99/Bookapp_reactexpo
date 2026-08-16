@@ -1,6 +1,6 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit7c_wu5_committed_m43_m44_m45_applied_review_pending`
+**Status:** `unit7c_m46_correction_pass_connected_save_reproof_complete`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
 **Last updated:** 2026-08-16
 **Current handoff:** Unit 7C's normative Owner Store View/post-commit inventory
@@ -9,16 +9,18 @@ complete. WU5 exposes Store View as a primary Owner destination, keeps Inventory
 as intake/review/recovery context, and routes successful Add handoff by returned
 `inventoryId`. Unit 7B remains live-verified and integrated into `main` at merge commit
 `53edbddc9c5417b34cb169599e8282b162e183b3`.
-M39 through M45 are now live exactly once on the verified development project;
+M39 through M46 are now live exactly once on the verified development project;
 M43/M44/M45 read back as `20260816122822`, `20260816122901`, and
-`20260816122929`. Owner Edge v7 and the Render publication worker remain
-live/ready; the connected Unit 7B proof is recorded. The M43–M45 disposable
-Unit 7C integration proof is 30/30, fresh focused Jest is 10 suites/67 tests,
-the continuity validator passes, and Expo web export passes. The Playwright CLI
-remains `NOT_RUN_ENVIRONMENT`; the full repository TypeScript check still has
-the unchanged WU4 E2E typing error. No deployment, push, Edge change, or
-business-row mutation occurred. No M46 exists. Integrated Unit 7C review and
-connected Edge→DB verification remain separately gated.
+`20260816122929`, and M46 read back as `20260816150126`. Owner Edge v8 remains
+ACTIVE with JWT verification; M46 was database-only and the existing connected
+Unit 7B proof remains recorded. The M46 disposable Unit 7C inventory proof is
+18/18, filter/media-history regressions are 15/15, focused Owner Edge/client
+contracts are 30/30, the continuity validator passes, and the authenticated
+private-only Save reproof passed. The Playwright CLI remains
+`NOT_RUN_ENVIRONMENT`; the full repository TypeScript check still has the
+unchanged WU4 E2E typing error. No second deployment, push, Edge change, repair,
+or historical-row rewrite occurred. Remaining connected Unit 7C canary checks
+require separate authorization.
 **Historical implementation status (superseded):** Unit 6's automatic/functional pipeline is **PASS**.
 M01-M08/M10-M38 are live-verified at their recorded levels; approved `main` SHA
 `a138baa7d3bbc086da019bc052a5ae31d0e15882` is published and deployed to
@@ -39,19 +41,22 @@ documented import flag. M39 remains unapplied; deployment, live smoke, and Git
 publication require separate authorization.
 Unit 6B is merged at `9ef9eb3`; Unit 6D is implemented at `c363b60`; their
 recorded evidence remains authoritative beneath this final closure checkpoint.
-**Supabase mutation status:** M01-M08/M10-M45 are live once at their recorded
+**Supabase mutation status:** M01-M08/M10-M46 are live once at their recorded
 versions on `ahntbtktjjmvfosgkmgn`; M09 remains absent. M43/M44/M45 are live as
-`20260816122822`, `20260816122901`, and `20260816122929`. M42 remains the
+`20260816122822`, `20260816122901`, and `20260816122929`; M46 is live as
+`20260816150126`. M42 remains the
 forward-only generated-author projection correction. Unit 7B deployment and
 live proof are complete; commit `9f3e646` is integrated into `main` at merge
 commit `53edbddc9c5417b34cb169599e8282b162e183b3`; WU5 is committed locally as
-`380f2b3`. No deployment, push, Edge change, or business-row mutation occurred
-in the WU5/migration session.
-**Database checkpoint:** the exact project is `ACTIVE_HEALTHY`; M39–M45 are live
-exactly once, the selected listing remains published with one active public
-projection and zero outstanding publication retries, and the new publication
-revision table is empty. The development `active_listing_limit` is 10 from
-source `unit7b_dev_rollout`.
+`380f2b3`. M46 was applied once; the normal authenticated reproof Save changed
+only private `internalNotes`, and no second deployment, push, repair, or
+historical-row rewrite occurred in the correction session.
+**Database checkpoint:** the exact project is `ACTIVE_HEALTHY`; M39–M45 remain
+immutable and M46 is live exactly once. The selected listing remains published
+with one active public projection and zero outstanding publication retries; its
+revision count is unchanged by the reproof and the original false revision is
+preserved. The development `active_listing_limit` is 10 from source
+`unit7b_dev_rollout`.
 M30 was applied exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.

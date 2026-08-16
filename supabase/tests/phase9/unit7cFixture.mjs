@@ -10,8 +10,9 @@ export const M42 = '20260814000042_marketplace_phase9_generated_authors_projecti
 export const M43 = '20260814000043_marketplace_phase9_unit7c_inventory_management.sql';
 export const M44 = '20260814000044_marketplace_phase9_store_view_filter_contract.sql';
 export const M45 = '20260815000045_marketplace_phase9_unit7c_media_history.sql';
+export const M46 = '20260816000046_marketplace_phase9_unit7c_private_save_revision_correction.sql';
 
-export async function createUnit7cDatabase() {
+export async function createUnit7cDatabase(options = {}) {
   const db = await createUnit7bDatabase();
   await db.exec(fs.readFileSync(migrationPath(M41), 'utf8'));
   await db.exec(`
@@ -40,6 +41,9 @@ export async function createUnit7cDatabase() {
     }
     if (fs.existsSync(migrationPath(M45))) {
       await db.exec(fs.readFileSync(migrationPath(M45), 'utf8'));
+    }
+    if (options.includeM46 !== false && fs.existsSync(migrationPath(M46))) {
+      await db.exec(fs.readFileSync(migrationPath(M46), 'utf8'));
     }
   }
   return db;

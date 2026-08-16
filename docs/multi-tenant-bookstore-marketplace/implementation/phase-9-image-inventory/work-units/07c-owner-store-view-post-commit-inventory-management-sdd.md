@@ -1,9 +1,9 @@
 # Unit 7C SDD: Owner Store View and Post-Commit Inventory Management
 
-**Status:** normative design frozen 2026-08-14; WU1/WU2A/WU2/WU3 locally complete
+**Status:** normative design frozen 2026-08-14; WU1-WU5 locally complete; M46 correction PASS with bounded connected Save reproof 2026-08-16; broader canary paused
 **Authority:** final Owner contract reconciliation ending `UNIT_7C_READY_FOR_SDD`; DOC-3 §§5.3, 6–9, 14–16; DOC-4 §§2, 9–11, 14–15; DOC-5 §§5, 10–15; DOC-8 §§2–5, 8, 14–15; Phase 9 master SDD §§3–7, 9, 12–14; Unit 7A §§11, 13–20; Unit 7B §§2–15, 18–21.
-**Implementation checkpoint:** The attached 2026-08-14 authorizations completed WU1/WU2A/WU2/WU3 locally: Store View page/detail reads, atomic details Save, stock adjustment v2, safe public revisions, filtered page-v2 pagination, strict Edge/client read and mutation contracts, focused edit/stock UI, and reuse of Unit 7B lifecycle/retry commands. Focused/static/web-export/intercepted-browser evidence passes. Media/history, final cutover, migration application, deployment, connected Edge→DB proof, and live verification remain unimplemented and require separate authorization.
-**Migration authority:** M39–M43 are immutable. Local candidates M43 and forward correction M44 (`20260814000044_marketplace_phase9_store_view_filter_contract.sql`) are not applied to Supabase; this SDD does not authorize connected application.
+**Implementation checkpoint:** WU1-WU5 are locally complete; M43-M45 remain byte-immutable and M46 is live exactly once as `20260816150126`. Exact HEAD `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` remains deployed only as `phase9-owner-ingestion` version 8 with JWT verification enabled. M46 gates public-revision insertion on `v_public_changed`; the exact M01→M46 proof and the authenticated private-only Save reproof passed. The original false revision is preserved intentionally; no repair/reset or historical rewrite occurred.
+**Migration authority:** M46 application authority is exhausted after the single approved application. No additional migration, Edge redeploy, or broader connected canary action is authorized by this correction handoff.
 
 ## 1. Decision and scope
 
