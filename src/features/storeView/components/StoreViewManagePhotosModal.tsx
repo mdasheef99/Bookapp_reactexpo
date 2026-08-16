@@ -147,53 +147,57 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, inventoryVer
     };
 
     const pickAndUpload = async (role: PublicMediaRole, order: number, operation: MediaOperation) => {
-        let permission = await ImagePicker.getMediaLibraryPermissionsAsync();
-        if (!permission.granted && permission.canAskAgain) {
-            permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        }
-        if (!permission.granted) throw new Error('Media-library permission is required.');
-        const picked = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'], allowsEditing: false, quality: 1,
-            exif: false, base64: false, allowsMultipleSelection: false,
-        });
-        if (picked.canceled) return;
-        const selected = validateSelectedMedia(picked.assets[0], 'gallery');
-        if (!selected.ok) throw new Error(selected.message);
-        const envelopeSha256 = await Crypto.digestStringAsync(
-            Crypto.CryptoDigestAlgorithm.SHA256,
-            `${selected.media.mimeType}|${selected.media.fileSize}|${role}`,
-        );
-        const authorize = createCaptureAttempt('public-copy-authorize');
-        const prepared = await publicationService.preparePublicCopyUpload({
-            inventoryId, role, ordinal: order, media: selected.media, envelopeSha256,
-            idempotencyKey: authorize.key, commandId: authorize.commandId,
-            operationKind: operation.operationKind,
-            ...(operation.targetLinkId ? { targetLinkId: operation.targetLinkId } : {}),
-        });
-        await prepared.upload(() => undefined).promise;
-        const complete = createCaptureAttempt('public-copy-complete');
-        const registered = await prepared.complete(complete.key, complete.commandId);
-        const status = registered.state === 'approved'
-            ? registered
-            : await publicationService.readPublicCopyStatus(registered.mediaAssetId);
-        if (status.state === 'processing') {
-            setPendingUpload({
-                capabilityId: prepared.capabilityId,
-                sourceMediaAssetId: registered.mediaAssetId,
+        try {
+            let permission = await ImagePicker.getMediaLibraryPermissionsAsync();
+            if (!permission.granted && permission.canAskAgain) {
+                permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            }
+            if (!permission.granted) throw new Error('Media-library permission is required.');
+            const picked = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'], allowsEditing: false, quality: 1,
+                exif: false, base64: false, allowsMultipleSelection: false,
+            });
+            if (picked.canceled) return;
+            const selected = validateSelectedMedia(picked.assets[0], 'gallery');
+            if (!selected.ok) throw new Error(selected.message);
+            const envelopeSha256 = await Crypto.digestStringAsync(
+                Crypto.CryptoDigestAlgorithm.SHA256,
+                `${selected.media.mimeType}|${selected.media.fileSize}|${role}`,
+            );
+            const authorize = createCaptureAttempt('public-copy-authorize');
+            const prepared = await publicationService.preparePublicCopyUpload({
+                inventoryId, role, ordinal: order, media: selected.media, envelopeSha256,
+                idempotencyKey: authorize.key, commandId: authorize.commandId,
+                operationKind: operation.operationKind,
+                ...(operation.targetLinkId ? { targetLinkId: operation.targetLinkId } : {}),
+            });
+            await prepared.upload(() => undefined).promise;
+            const complete = createCaptureAttempt('public-copy-complete');
+            const registered = await prepared.complete(complete.key, complete.commandId);
+            const status = registered.state === 'approved'
+                ? registered
+                : await publicationService.readPublicCopyStatus(registered.mediaAssetId);
+            if (status.state === 'processing') {
+                setPendingUpload({
+                    capabilityId: prepared.capabilityId,
+                    sourceMediaAssetId: registered.mediaAssetId,
+                    role, publicOrder: order, ...operation,
+                });
+                setMessage('Photo uploaded. Safety processing is running; check again shortly.');
+                await refetchMedia();
+                return;
+            }
+            if (status.state === 'failed') {
+                setMessage('The photo failed safety validation. Choose another image.');
+                return;
+            }
+            await linkApprovedPublicCopy({
+                capabilityId: prepared.capabilityId, mediaAssetId: status.mediaAssetId,
                 role, publicOrder: order, ...operation,
             });
-            setMessage('Photo uploaded. Safety processing is running; check again shortly.');
-            await refetchMedia();
-            return;
+        } catch (failure) {
+            setMessage(failure instanceof Error ? failure.message : 'The photo could not be uploaded.');
         }
-        if (status.state === 'failed') {
-            setMessage('The photo failed safety validation. Choose another image.');
-            return;
-        }
-        await linkApprovedPublicCopy({
-            capabilityId: prepared.capabilityId, mediaAssetId: status.mediaAssetId,
-            role, publicOrder: order, ...operation,
-        });
     };
 
     const checkPendingStatus = () => void runLocked(async () => {

@@ -8,6 +8,11 @@ import { useStoreViewHistory } from '../queries/storeViewHistoryQueries';
 import { StoreViewDetailContent } from '../screens/StoreViewDetailScreen';
 
 jest.mock('expo-image', () => ({ Image: 'Image' }));
+jest.mock('expo-image-picker', () => ({
+    getMediaLibraryPermissionsAsync: jest.fn(),
+    requestMediaLibraryPermissionsAsync: jest.fn(),
+    launchImageLibraryAsync: jest.fn(),
+}));
 jest.mock('@/features/imageInventory/queries/publicationQueries', () => ({ usePublicationCommands: jest.fn() }));
 jest.mock('../queries/storeViewManagementQueries', () => ({ useStoreViewManagementCommands: jest.fn() }));
 jest.mock('../queries/storeViewQueries', () => ({ useStoreViewDetail: jest.fn() }));
@@ -194,6 +199,28 @@ describe('Unit 7C WU4 Store View media and history UI', () => {
             mediaAssetId: '00000000-0000-4000-8000-000000000022',
             targetLinkId: linkA,
         }));
+    });
+
+    it('surfaces picker rejection, releases busy, and keeps approved media when an upload attempt fails', async () => {
+        const picker = require('expo-image-picker');
+        picker.getMediaLibraryPermissionsAsync.mockResolvedValue({ granted: false, canAskAgain: false });
+        const screen = render(<StoreViewDetailContent identity={identity} inventoryId={inventoryId} />);
+        fireEvent.press(screen.getByTestId('store-view-manage-photos'));
+        const addPhoto = screen.getByTestId('store-view-media-add-photo');
+        expect(addPhoto).toBeEnabled();
+        fireEvent.press(addPhoto);
+        await waitFor(() => expect(screen.getByTestId('store-view-media-message')).toHaveTextContent(
+            'Media-library permission is required.',
+        ));
+        expect(picker.launchImageLibraryAsync).not.toHaveBeenCalled();
+        expect(mediaMutate).not.toHaveBeenCalled();
+        expect(screen.queryByText('Replacement photo installed.')).toBeNull();
+        expect(screen.queryByText('Approved sanitized public-copy photo linked.')).toBeNull();
+        expect(screen.getByText('Add approved photo')).toBeTruthy();
+        expect(screen.getAllByText('Primary photo').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Actual copy').length).toBeGreaterThan(0);
+        fireEvent.press(screen.getByTestId('store-view-media-add-photo'));
+        await waitFor(() => expect(picker.getMediaLibraryPermissionsAsync).toHaveBeenCalledTimes(2));
     });
 
     it('renders activity and public revisions from the authoritative history read with no undo controls', () => {
