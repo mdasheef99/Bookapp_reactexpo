@@ -1,7 +1,32 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit7c_wu3_store_view_management_locally_complete`; **last updated:** 2026-08-14
+**Status:** `unit7c_wu5_store_view_cutover_locally_complete`; **last updated:** 2026-08-15
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit7c_wu3_store_view_management_locally_complete`. The uncommitted WU3 Save/stock/Unit 7B command-reuse vertical is locally complete; M43/M44 remain unapplied. Unit 7B remains live-verified and integrated into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`.
+**Active work unit:** `unit7c_wu5_store_view_cutover`. The uncommitted WU5 Owner navigation/Inventory handoff vertical is locally complete; M43/M44/M45 remain unapplied. Unit 7B remains live-verified and integrated into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`.
+
+### 2026-08-15 — Unit 7C WU5 Owner Store View cutover
+
+- Scope: exposed the existing Store View list as a primary Owner destination,
+  corrected the primary Orders route registration, demoted Storefront to a
+  compatibility redirect toward Store Profile, removed duplicate rich
+  publication/media management from Owner Inventory, and retained a bounded
+  recovery/context card that routes committed items by `inventoryId`.
+- Post-Add: successful authoritative Add responses retain the returned
+  `inventoryId` and show `Continue Reviewing` plus `View in Store View`; no
+  success CTA appears before commit resolution, and failure/retry behavior is
+  unchanged. No `listingId` lookup or route was introduced.
+- Verification: focused Owner/Store View/Inventory coverage is 10 suites/53
+  tests; the in-app browser verified the five primary tabs, Inventory's intake
+  presentation, Store View access, and a mobile-sized viewport. Expo web export
+  passed. The project Playwright CLI was `NOT_RUN_ENVIRONMENT` because Node
+  failed with `EPERM` while `lstat`-ing `C:\Users\user`; the browser skill's
+  local manual checks passed.
+- Boundary: no production backend/Edge/database behavior, migration bytes,
+  connected Supabase/Storage state, deployment, provider call, stage, commit,
+  or push changed. M39–M44 remain byte-identical; M45 remains the exact WU4
+  migration candidate; no M46 exists; and `docs/codemap/` remains untouched.
+- Exact next authorized action: obtain separate authorization to commit the
+  exact proven WU5 vertical; do not apply M43/M44/M45, mutate connected
+  Supabase/Storage, deploy, push, or begin integrated Unit 7C review.
 
 ### 2026-08-14 — Unit 7C WU3 Store View management vertical
 

@@ -48,19 +48,25 @@ export default function StoreOwnerLayout() {
             />
             <Tabs.Screen
                 name="store-view"
-                options={{ href: null }}
-            />
-            <Tabs.Screen
-                name="storefront"
                 options={{
-                    title: 'Storefront',
+                    title: 'Store View',
                     tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-                        <Ionicons name="storefront-outline" size={size} color={color} />
+                        <Ionicons name="albums-outline" size={size} color={color} />
                     ),
                 }}
             />
             <Tabs.Screen
-                name="orders"
+                name="storefront"
+                options={{
+                    href: null,
+                }}
+            />
+            <Tabs.Screen
+                name="store-profile"
+                options={{ href: null }}
+            />
+            <Tabs.Screen
+                name="orders/index"
                 options={{
                     title: 'Orders',
                     tabBarIcon: ({ color, size }: { color: string; size: number }) => (

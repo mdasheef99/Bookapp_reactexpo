@@ -222,7 +222,8 @@ if (-not ($doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6e_finalized
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit7a_m39_live_runtime_deployment_pending`') -or
      $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit7a_edge_deployment_blocked_by_source_routing_mismatch`') -or
      $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit7b_live_rollout_pass_ready_for_main_authorization`') -or
-     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit7b_main_integrated_next_scope_authorization`')) -or
+     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit7b_main_integrated_next_scope_authorization`') -or
+     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit7c_wu5_store_view_cutover_locally_complete`')) -or
     -not $doc13.Contains('20260727222159 marketplace_phase9_metadata_foundation') -or
     -not $doc13.Contains('20260727231217 marketplace_phase9_sensitive_table_acl_correction') -or
     -not $doc13.Contains('20260727233457 marketplace_phase9_maintain_acl_correction') -or
@@ -269,7 +270,8 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
     $implementationTracker.Contains('**Status:** `unit7a_m39_live_runtime_deployment_pending`') -or
      $implementationTracker.Contains('**Status:** `unit7a_edge_deployment_blocked_by_source_routing_mismatch`') -or
      $implementationTracker.Contains('**Status:** `unit7b_live_rollout_pass_ready_for_main_authorization`') -or
-     $implementationTracker.Contains('**Status:** `unit7b_main_integrated_next_scope_authorization`')) -or
+     $implementationTracker.Contains('**Status:** `unit7b_main_integrated_next_scope_authorization`') -or
+     $implementationTracker.Contains('**Status:** `unit7c_wu5_store_view_cutover_locally_complete`')) -or
     -not ($implementationTracker.Contains('**Active work unit:** `unit6f_awaiting_separate_authorization`') -or
     $implementationTracker.Contains('**Active work unit:** `unit6f_browser_verified_native_gate_pending`') -or
     $implementationTracker.Contains('**Active work unit:** `owner_inventory_read_boundary_wu1`') -or
@@ -291,6 +293,7 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
      $implementationTracker.Contains('**Active work unit:** `phase9_multilingual_vision_response_resilience_review`') -or
      $implementationTracker.Contains('**Active work unit:** `unit7b_main_authorization_preparation`') -or
      $implementationTracker.Contains('**Active work unit:** `phase9_post_unit7b_handoff`') -or
+     $implementationTracker.Contains('**Active work unit:** `unit7c_wu5_store_view_cutover`') -or
     $implementationTracker.Contains('**Active work unit:** `unit7a_create_only_commit_red_tests_pending_separate_authorization`') -or
     $implementationTracker.Contains('**Active work unit:** `unit7a_create_only_commit_locally_complete_review_pending`') -or
     $implementationTracker.Contains('**Active work unit:** `unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`') -or
@@ -525,7 +528,8 @@ if (
         $tracker.Contains('**Implementation status:** `unit7b_edge_deployed_render_worker_authorization_required`') -or
         $tracker.Contains('**Implementation status:** `unit7b_live_rollout_blocked_generated_authors_projection`') -or
         $tracker.Contains('**Implementation status:** `unit7b_live_rollout_pass_ready_for_main_authorization`') -or
-        $tracker.Contains('**Implementation status:** `unit7b_main_integrated_next_scope_authorization`')
+        $tracker.Contains('**Implementation status:** `unit7b_main_integrated_next_scope_authorization`') -or
+        $tracker.Contains('**Implementation status:** `unit7c_wu5_store_view_cutover_locally_complete`')
     ) -or
     ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit7a_post_m39_feature_push_and_owner_edge_deployment|unit7a_create_only_commit_locally_complete_review_pending|unit7a_create_only_commit_red_tests_pending_separate_authorization|unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|phase9_multilingual_vision_response_resilience_review|unit6c_single_image_safe_remove|phase9_metadata_retry_provider_attempt_correction|unit6_complete|unit6_mobile_upload_transport_correction_local_complete|unit6_mobile_upload_transport_native_failure_diagnosed|unit6_mobile_filesystem_transport_live_proof_pending)`\r?$' -and
         -not $tracker.Contains('**Active work unit:** `unit7a_owner_edge_bundle_fix_narrow_review_pending`') -and
@@ -536,7 +540,8 @@ if (
         -not $tracker.Contains('**Active work unit:** `unit7b_luna_xhigh_review`') -and
          -not $tracker.Contains('**Active work unit:** `unit7b_runtime_rollout`') -and
          -not $tracker.Contains('**Active work unit:** `unit7b_main_authorization_preparation`') -and
-         -not $tracker.Contains('**Active work unit:** `phase9_post_unit7b_handoff`') -and
+        -not $tracker.Contains('**Active work unit:** `phase9_post_unit7b_handoff`') -and
+        -not $tracker.Contains('**Active work unit:** `unit7c_wu5_store_view_cutover`') -and
         -not $tracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -and
         -not $tracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
     -not (
@@ -588,7 +593,8 @@ if (
         $tracker.Contains('**Next authorized action:** rerun the outstanding real-PostgreSQL concurrency, Docker container, and Deno graph gates in a capable local environment') -or
         $tracker.Contains('**Next authorized action:** create and push one intentional Unit 7B-only review candidate for Luna xhigh review') -or
         $tracker.Contains('**Next authorized action:** Luna xhigh review of the committed and pushed Unit 7B candidate') -or
-        $tracker.Contains('**Next authorized action:** obtain explicit authorization for the next Phase 9 scope')
+        $tracker.Contains('**Next authorized action:** obtain explicit authorization for the next Phase 9 scope') -or
+        $tracker.Contains('**Next authorized action:** obtain separate authorization to commit the exact proven WU5 vertical; do not apply M43/M44/M45, mutate connected Supabase/Storage, deploy, push, or begin integrated Unit 7C review.')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
@@ -694,7 +700,8 @@ $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_in
     $tracker.Contains('**Implementation status:** `unit7b_live_rollout_pass_ready_for_main_authorization`') -or
     $tracker.Contains('**Implementation status:** `unit7b_main_integrated_next_scope_authorization`') -or
     $tracker.Contains('**Implementation status:** `unit7c_wu1_locally_complete`') -or
-    $tracker.Contains('**Implementation status:** `unit7c_wu2a_filter_contract_locally_complete`'))
+    $tracker.Contains('**Implementation status:** `unit7c_wu2a_filter_contract_locally_complete`') -or
+    $tracker.Contains('**Implementation status:** `unit7c_wu5_store_view_cutover_locally_complete`'))
 $expectedMigrationNames = @($migrationNames)
 if ($wu1AppliedStatus) { $expectedMigrationNames += $draftMigrationNames }
 $appliedPhase9Migrations = if ($wu1AppliedStatus) {
@@ -1006,7 +1013,8 @@ if (-not ($phaseReadme.Contains('**Status:** `unit6e_finalized_unit6f_separately
     $phaseReadme.Contains('**Status:** `unit6_pre_main_integration_reconciliation_in_progress`') -or
     $phaseReadme.Contains('**Status:** `unit6_complete_live_verified`') -or
     $phaseReadme.Contains('**Status:** `unit7b_live_rollout_pass_ready_for_main_authorization`') -or
-    $phaseReadme.Contains('**Status:** `unit7b_main_integrated_next_scope_authorization`')) -or
+    $phaseReadme.Contains('**Status:** `unit7b_main_integrated_next_scope_authorization`') -or
+    $phaseReadme.Contains('**Status:** `unit7c_wu5_store_view_cutover_locally_complete`')) -or
     -not ($phaseReadme.Contains('M01-M08/M10-M29 are live once') -or $phaseReadme.Contains('M01-M08/M10-M30 are live once') -or $phaseReadme.Contains('M01-M08/M10-M38 and WU1 are live once') -or $phaseReadme.Contains('M01-M08/M10-M42 are live once')) -or
     -not $phaseReadme.Contains('Unit 6B is merged at `9ef9eb3`') -or
     -not $phaseReadme.Contains('Unit 6D is') -or

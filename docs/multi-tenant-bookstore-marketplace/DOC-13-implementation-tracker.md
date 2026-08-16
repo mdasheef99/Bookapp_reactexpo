@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-08-14
+**Date:** 2026-08-15
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -826,12 +826,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C WU3 Store View management locally complete; M43/M44 unapplied** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C WU5 Owner Store View cutover locally complete; M43/M44/M45 unapplied** |
 | Overall status | `in_progress` |
 | Last updated | 2026-08-14 |
-| Latest handoff | Unit 7C WU3 is locally complete but uncommitted on `codex/unit7c-wu3-store-view-management`: strict separate Save/stock commands consume unchanged M43, capability-driven Store View detail reuses Unit 7B publication/retry, and focused/static/intercepted-browser gates pass. M39–M44 are unchanged; M43/M44 are not applied. |
-| Current risk level | Local Edge→DB is `NOT_RUN_ENVIRONMENT` because no repository-supported local Edge→M43/M44 environment is available. Connected M43/M44 application, deployment/live verification, media/history, and final navigation cutover remain unimplemented/unauthorized. Unit 6F native debt remains unrelated. The untracked `docs/codemap/` directory remains preserved and uninspected. |
-| Next recommended task | Obtain separate authorization to commit the exact WU3 vertical. M43/M44 application, Supabase/Storage mutation, deployment, live verification, media/history, and final navigation cutover remain separate gates. |
+| Latest handoff | Unit 7C WU5 is locally complete but uncommitted on `codex/unit7c-wu5-store-view-cutover`: primary Owner navigation is Dashboard/Inventory/Store View/Orders/Subscription, Inventory is intake/review/recovery context, and successful Add hands off by returned `inventoryId` to the existing Store View detail. Focused tests and local browser/mobile checks pass; M39–M44 remain byte-identical, M45 is the exact unapplied WU4 candidate, and no M46 exists. |
+| Current risk level | The project Playwright CLI is `NOT_RUN_ENVIRONMENT` because Node failed with `EPERM` while `lstat`-ing `C:\Users\user`; in-app local browser/manual mobile checks pass. Connected M43/M44/M45 application, deployment/live verification, and integrated Unit 7C review remain unauthorized. Unit 6F native debt remains unrelated. The untracked `docs/codemap/` directory remains preserved and untouched. |
+| Next recommended task | Obtain separate authorization to commit the exact WU5 vertical. Do not apply M43/M44/M45, mutate connected Supabase/Storage, deploy, push, or begin integrated Unit 7C review. |
 
 ### 2026-08-14 Unit 7C WU3 local completion
 

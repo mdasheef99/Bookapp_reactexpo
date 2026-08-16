@@ -3,24 +3,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { useTheme } from '@/hooks/useTheme';
 import {
     OwnerInventoryReadError,
-    type OwnerInventoryListItem,
-    type OwnerInventoryPublicationStatus,
 } from '../api/ownerInventoryReadService';
-
-export function ownerInventoryPresentationItem(item: OwnerInventoryListItem) {
-    return {
-        id: item.id,
-        title: item.title,
-        condition: item.condition,
-        quantity_available: item.quantityAvailable,
-        selling_price_minor: item.sellingPriceMinor,
-        visibility_status: item.visibilityStatus,
-        listing_quality_status: item.listingQualityStatus,
-        publication_status: item.publicationStatus,
-        publication_retryable: item.publicationRetryable,
-        publication_failure_reason: item.publicationFailureReason,
-    };
-}
 
 export function ownerInventoryErrorCopy(error: OwnerInventoryReadError | null) {
     if (error?.category === 'unauthorized') return {
@@ -83,23 +66,6 @@ export function OwnerInventoryStateCard({
     );
 }
 
-export function PublicationFilterBar({
-    onSelect,
-}: {
-    onSelect: (status: OwnerInventoryPublicationStatus | 'all') => void;
-}) {
-    const { colors } = useTheme();
-    return <>{(['all', 'private', 'published', 'paused', 'publication_failed'] as const).map((status) => (
-        <Pressable
-            key={status}
-            testID={`publication-filter-${status}`}
-            onPress={() => onSelect(status)}
-            style={[styles.filterChip, { borderColor: colors.border }]}
-        >
-            <Text style={{ color: colors.textPrimary }}>{status.replace('_', ' ')}</Text>
-        </Pressable>
-    ))}</>;
-}
 
 const styles = StyleSheet.create({
     stateTitle: { fontSize: 18, fontWeight: '800' },
@@ -107,9 +73,5 @@ const styles = StyleSheet.create({
     secondaryAction: {
         minHeight: 42, borderWidth: 1, borderRadius: 8, marginTop: 14,
         alignItems: 'center', justifyContent: 'center',
-    },
-    filterChip: {
-        minHeight: 36, borderWidth: 1, borderRadius: 18,
-        paddingHorizontal: 12, justifyContent: 'center',
     },
 });
