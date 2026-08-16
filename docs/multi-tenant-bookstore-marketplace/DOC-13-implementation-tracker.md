@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-08-15
+**Date:** 2026-08-16
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -72,6 +72,22 @@ Every material session must also leave one exact active work unit and next autho
 If implementation changes product or architecture behavior, update the relevant source spec and record the reason in this tracker.
 ---
 ## 2. Current Status
+
+> **2026-08-16 Unit 7C WU5 commit and M43–M45 application checkpoint:**
+> The proven WU5 Owner Store View cutover is committed locally as `380f2b3` on
+> `codex/unit7c-wu5-store-view-cutover`. The exact development project
+> `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` remained `ACTIVE_HEALTHY`;
+> M43, M44, and M45 were applied exactly once as live versions
+> `20260816122822`, `20260816122901`, and `20260816122929`. Readback found the
+> RLS-enabled publication-revision table with zero rows, 11 public Unit 7C
+> functions, 5 security helpers, both media capability columns, and unchanged
+> inventory/listing counts `10/9`. No deployment, push, Edge change, Storage
+> mutation, or business-row mutation occurred. Fresh focused Jest is 10 suites/
+> 67 tests, disposable Unit 7C integration is 30/30, Expo export and continuity
+> validation pass. Integrated Unit 7C review and connected Edge→DB verification
+> remain separately gated. Advisor readback retains expected RLS/no-policy and
+> authenticated SECURITY DEFINER notices, media FK index notices, and the
+> pre-existing `spatial_ref_sys` RLS error; no remediation was applied.
 
 > **2026-08-12 Unit 7A live proof completion checkpoint (04:41–~05:00 UTC):**
 > `phase9-owner-ingestion` is ACTIVE as version 5. The deployed bundle contains
@@ -826,12 +842,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C WU5 Owner Store View cutover locally complete; M43/M44/M45 unapplied** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C WU5 committed; M43/M44/M45 applied; integrated review pending** |
 | Overall status | `in_progress` |
-| Last updated | 2026-08-14 |
-| Latest handoff | Unit 7C WU5 is locally complete but uncommitted on `codex/unit7c-wu5-store-view-cutover`: primary Owner navigation is Dashboard/Inventory/Store View/Orders/Subscription, Inventory is intake/review/recovery context, and successful Add hands off by returned `inventoryId` to the existing Store View detail. Focused tests and local browser/mobile checks pass; M39–M44 remain byte-identical, M45 is the exact unapplied WU4 candidate, and no M46 exists. |
-| Current risk level | The project Playwright CLI is `NOT_RUN_ENVIRONMENT` because Node failed with `EPERM` while `lstat`-ing `C:\Users\user`; in-app local browser/manual mobile checks pass. Connected M43/M44/M45 application, deployment/live verification, and integrated Unit 7C review remain unauthorized. Unit 6F native debt remains unrelated. The untracked `docs/codemap/` directory remains preserved and untouched. |
-| Next recommended task | Obtain separate authorization to commit the exact WU5 vertical. Do not apply M43/M44/M45, mutate connected Supabase/Storage, deploy, push, or begin integrated Unit 7C review. |
+| Last updated | 2026-08-16 |
+| Latest handoff | Unit 7C WU5 is committed as `380f2b3` on `codex/unit7c-wu5-store-view-cutover`: primary Owner navigation is Dashboard/Inventory/Store View/Orders/Subscription, Inventory is intake/review/recovery context, and successful Add hands off by returned `inventoryId` to the existing Store View detail. M43/M44/M45 are live exactly once as `20260816122822`, `20260816122901`, and `20260816122929`; no M46 exists. |
+| Current risk level | The project Playwright CLI is `NOT_RUN_ENVIRONMENT` because Node failed with `EPERM` while `lstat`-ing `C:\Users\user`; in-app local browser/manual mobile checks pass. Full repository TypeScript remains blocked by the unchanged WU4 E2E typing error. Connected Edge→DB verification, deployment, and integrated Unit 7C review remain separately gated. Unit 6F native debt remains unrelated. The untracked `.zcode/` and `docs/codemap/` directories remain preserved and untouched. |
+| Next recommended task | Obtain separate authorization for integrated Unit 7C review and connected Edge→DB verification. Do not deploy, push, or mutate business rows without a separate explicit authorization. |
 
 ### 2026-08-14 Unit 7C WU3 local completion
 
@@ -934,7 +950,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit7c_wu3_store_view_management_locally_complete` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7C SDD](./implementation/phase-9-image-inventory/work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | WU3 strict Save/stock plus reused Unit 7B lifecycle controls pass locally; M43/M44 are unapplied and M39–M44 remain unchanged. Next: separately authorize WU3 commit. |
+| Phase 9: Image-to-LLM Inventory | `unit7c_wu5_committed_m43_m44_m45_applied_review_pending` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7C SDD](./implementation/phase-9-image-inventory/work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | WU5 is committed at `380f2b3`; M43/M44/M45 are live exactly once at `20260816122822`, `20260816122901`, and `20260816122929`. Fresh focused tests and disposable Unit 7C integration pass; next is separately authorized integrated Unit 7C review/connected Edge→DB verification. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

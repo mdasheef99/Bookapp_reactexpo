@@ -1,43 +1,46 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-08-14
+**Last updated:** 2026-08-16
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-## Current 2026-08-14 final resume overlay
+## Current 2026-08-16 final resume overlay
 
 Current phase: Phase 9 — Image-Assisted Inventory.
 Planning/implementation status: Unit 7C normative design remains frozen; WU1,
-WU2A, WU2, and the WU3 Store View management vertical are locally complete. Unit 7B remains live-verified and integrated
-into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`. Unit 6F native
-validation remains deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-Last completed milestone: Unit 7C WU3 Store View management vertical; strict
-separate M43 Save/stock Edge and client commands, focused edit/stock UI,
-capability-driven Unit 7B publication/retry reuse, and fully intercepted browser
-management smoke pass.
-Active work unit: `unit7c_wu3_store_view_management_locally_complete`.
-Next authorized action: obtain separate authorization to commit the exact proven WU3 vertical.
-Blockers/gates: M43/M44 connected application, media/history work, final navigation cutover,
-deployment/live verification, production rollout, payments, Phases 7/8, and
-M09 remain separately gated. Unrelated worktree changes must be preserved.
-Supabase mutation authority for this handoff: M42 is already live exactly once;
-M43/M44 are local-only candidates and no connected migration or business-row mutation
-is authorized by this document.
-Files changed in WU3: Owner Edge Store View management contracts/actions, strict
-client mutation contracts/service/query layer, edit/stock/action UI, focused
-tests/browser smoke, and required handoff records. No commit or application
-is authorized until a separate approval.
+WU2A, WU2, WU3, WU4, and WU5 are locally complete. WU5 is committed as
+`380f2b3`; M43/M44/M45 are applied exactly once to the verified development
+project. Unit 7B remains live-verified and integrated into `main` at
+`53edbddc9c5417b34cb169599e8282b162e183b3`. Unit 6F native validation remains
+deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
+Last completed milestone: Unit 7C WU5 Owner Store View cutover plus connected
+M43/M44/M45 application/readback. Fresh focused Jest is 10 suites/67 tests,
+disposable Unit 7C integration is 30/30, the continuity validator passes, and
+Expo web export passes.
+Active work unit: `unit7c_wu5_store_view_cutover`.
+Next authorized action: obtain separate authorization for integrated Unit 7C
+review and connected Edge→DB verification; deployment and push remain gated.
+Blockers/gates: Playwright CLI remains `NOT_RUN_ENVIRONMENT`; full repository
+TypeScript has an unchanged WU4 E2E typing error; Edge deployment, live
+application verification, production rollout, payments, Phases 7/8, and M09
+remain separately gated. Unrelated worktree changes must be preserved.
+Supabase mutation authority for this handoff: M43/M44/M45 were explicitly
+authorized in the current session and are live as `20260816122822`,
+`20260816122901`, and `20260816122929`; no further connected mutation is
+authorized by this document.
+Files changed in WU5: Owner navigation/cutover, Store Profile compatibility
+route, Inventory recovery handoff, Add-to-Store-View CTA, focused tests, E2E
+spec, and required handoff records. No Edge deployment or push occurred.
 
 Exact live target: Supabase project `Bookconnect_reactexpo`, ref
 `ahntbtktjjmvfosgkmgn`, host `https://ahntbtktjjmvfosgkmgn.supabase.co`,
 `ACTIVE_HEALTHY`, region `ap-southeast-2`. The checked-out branch is
-`codex/unit7c-wu3-store-view-management` from exact WU2 commit
-`db7d118651eed4f5fca4a9109b4c091e391df5e9`; preserve unrelated untracked
-`docs/codemap/` changes.
+`codex/unit7c-wu5-store-view-cutover` at commit `380f2b3`; preserve unrelated
+untracked `.zcode/` and `docs/codemap/` changes.
 
 M39 (`20260812003419`), M40 (`20260813000040`), M41 (`20260813070104`), and
 M42 (`20260814013536 marketplace_phase9_generated_authors_projection`) are
@@ -47,19 +50,26 @@ provenance-qualified candidate-derived development rows from
 listing-sync assignment to generated `marketplace_book_listings.authors_text`
 and leaves the generated column database-owned.
 
-Local-only M43 (`20260814000043_marketplace_phase9_unit7c_inventory_management.sql`)
-adds WU1 Store View reads, atomic Save, stock v2, safe public revisions, and the
-Unit 7B lifecycle/projection integration. It passed 15/15 Unit 7C integration,
-5/5 migration assertions, 40/40 focused Unit 7A/7B regression, and exact
-M01–M43 disposable PostgreSQL vertical proof. Read-only project verification
-found M42 still the remote tail; no connected mutation occurred.
+M43 (`20260814000043_marketplace_phase9_unit7c_inventory_management.sql`) is
+applied live as `20260816122822`. It adds WU1 Store View reads, atomic Save,
+stock v2, safe public revisions, and the Unit 7B lifecycle/projection
+integration. The exact M43 disposable PostgreSQL vertical passed, and live
+readback shows the revision table with RLS enabled and zero rows.
 
-Local-only M44 (`20260814000044_marketplace_phase9_store_view_filter_contract.sql`)
-adds authenticated page v2 with actor/store/filter-bound cursors; it uses
+M44 (`20260814000044_marketplace_phase9_store_view_filter_contract.sql`) is
+applied live as `20260816122901`. It adds authenticated page v2 with
+actor/store/filter-bound cursors; it uses
 `attentionState = action_required` for `needs_attention` and `effectiveState`
 for the other named state filters. The corrected WU2A integration is 3/3,
 M44 migration Jest is 5/5, M43 regression is 15/15, and exact M01–M44 plus both
-real PostgreSQL verticals pass. M39–M43 are unchanged; M43/M44 are not applied.
+real PostgreSQL verticals pass. M39–M44 remain byte-immutable.
+
+M45 (`20260815000045_marketplace_phase9_unit7c_media_history.sql`) is applied
+live as `20260816122929`. It adds bounded media/history authorization and
+read/reorder/remove/replace functions, exact replacement targets, and the
+allowlisted Owner history read. The exact M45 media/history vertical passed
+12/12 locally; final live readback shows the expected public functions and
+media capability columns. No business rows or Storage objects were changed.
 
 ### Live Unit 7B proof and current development configuration
 

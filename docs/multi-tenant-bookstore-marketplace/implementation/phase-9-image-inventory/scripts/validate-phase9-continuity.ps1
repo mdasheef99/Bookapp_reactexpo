@@ -529,7 +529,8 @@ if (
         $tracker.Contains('**Implementation status:** `unit7b_live_rollout_blocked_generated_authors_projection`') -or
         $tracker.Contains('**Implementation status:** `unit7b_live_rollout_pass_ready_for_main_authorization`') -or
         $tracker.Contains('**Implementation status:** `unit7b_main_integrated_next_scope_authorization`') -or
-        $tracker.Contains('**Implementation status:** `unit7c_wu5_store_view_cutover_locally_complete`')
+        $tracker.Contains('**Implementation status:** `unit7c_wu5_store_view_cutover_locally_complete`') -or
+        $tracker.Contains('**Implementation status:** `unit7c_wu5_committed_m43_m44_m45_applied_review_pending`')
     ) -or
     ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit7a_post_m39_feature_push_and_owner_edge_deployment|unit7a_create_only_commit_locally_complete_review_pending|unit7a_create_only_commit_red_tests_pending_separate_authorization|unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|phase9_multilingual_vision_response_resilience_review|unit6c_single_image_safe_remove|phase9_metadata_retry_provider_attempt_correction|unit6_complete|unit6_mobile_upload_transport_correction_local_complete|unit6_mobile_upload_transport_native_failure_diagnosed|unit6_mobile_filesystem_transport_live_proof_pending)`\r?$' -and
         -not $tracker.Contains('**Active work unit:** `unit7a_owner_edge_bundle_fix_narrow_review_pending`') -and
@@ -1014,8 +1015,9 @@ if (-not ($phaseReadme.Contains('**Status:** `unit6e_finalized_unit6f_separately
     $phaseReadme.Contains('**Status:** `unit6_complete_live_verified`') -or
     $phaseReadme.Contains('**Status:** `unit7b_live_rollout_pass_ready_for_main_authorization`') -or
     $phaseReadme.Contains('**Status:** `unit7b_main_integrated_next_scope_authorization`') -or
-    $phaseReadme.Contains('**Status:** `unit7c_wu5_store_view_cutover_locally_complete`')) -or
-    -not ($phaseReadme.Contains('M01-M08/M10-M29 are live once') -or $phaseReadme.Contains('M01-M08/M10-M30 are live once') -or $phaseReadme.Contains('M01-M08/M10-M38 and WU1 are live once') -or $phaseReadme.Contains('M01-M08/M10-M42 are live once')) -or
+    $phaseReadme.Contains('**Status:** `unit7c_wu5_store_view_cutover_locally_complete`') -or
+    $phaseReadme.Contains('**Status:** `unit7c_wu5_committed_m43_m44_m45_applied_review_pending`')) -or
+    -not ($phaseReadme.Contains('M01-M08/M10-M29 are live once') -or $phaseReadme.Contains('M01-M08/M10-M30 are live once') -or $phaseReadme.Contains('M01-M08/M10-M38 and WU1 are live once') -or $phaseReadme.Contains('M01-M08/M10-M42 are live once') -or $phaseReadme.Contains('M01-M08/M10-M45 are live once')) -or
     -not $phaseReadme.Contains('Unit 6B is merged at `9ef9eb3`') -or
     -not $phaseReadme.Contains('Unit 6D is') -or
     -not $phaseReadme.Contains('22-unit6d-candidate-review-evidence.md') -or

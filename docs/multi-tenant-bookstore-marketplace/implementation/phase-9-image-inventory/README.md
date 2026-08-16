@@ -1,29 +1,24 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit7c_wu5_store_view_cutover_locally_complete`
+**Status:** `unit7c_wu5_committed_m43_m44_m45_applied_review_pending`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
-**Last updated:** 2026-08-15
+**Last updated:** 2026-08-16
 **Current handoff:** Unit 7C's normative Owner Store View/post-commit inventory
 management SDD remains frozen; WU1, WU2A, WU2, WU3, WU4, and WU5 are locally
 complete. WU5 exposes Store View as a primary Owner destination, keeps Inventory
 as intake/review/recovery context, and routes successful Add handoff by returned
 `inventoryId`. Unit 7B remains live-verified and integrated into `main` at merge commit
 `53edbddc9c5417b34cb169599e8282b162e183b3`.
-M39, M40, M41, and M42 are live exactly once; Owner Edge v7 and the Render
-publication worker are live/ready; and the connected Publish -> Discover ->
-Pause -> Republish, transient retry, stale-intent fencing, and final readback
-proof are recorded. The current development `active_listing_limit` is 10 from
-the existing `unit7b_dev_rollout` entitlement row. Local M43 passed bounded
-RED/GREEN, focused Unit 7A/7B regression, and real-PostgreSQL vertical proof.
-Local M44 adds authoritative filtered page-v2 keyset pagination; its
-`needs_attention` bucket uses server-composed `attentionState = action_required`
-so publication-failed cards remain distinct while appearing in that bucket. It
-passes exact M01–M44 plus focused WU1/WU2A proofs. The WU2 read vertical and WU3
-strict Save/stock plus reused Unit 7B lifecycle controls pass focused, static,
-web-export, and intercepted browser gates. WU4's exact M45 candidate remains
-unapplied, and WU5's focused navigation/handoff tests and local browser/mobile
-checks pass. M43/M44/M45 are not applied; no M46 exists. Migration application,
-deployment, and live verification remain separately gated.
+M39 through M45 are now live exactly once on the verified development project;
+M43/M44/M45 read back as `20260816122822`, `20260816122901`, and
+`20260816122929`. Owner Edge v7 and the Render publication worker remain
+live/ready; the connected Unit 7B proof is recorded. The M43–M45 disposable
+Unit 7C integration proof is 30/30, fresh focused Jest is 10 suites/67 tests,
+the continuity validator passes, and Expo web export passes. The Playwright CLI
+remains `NOT_RUN_ENVIRONMENT`; the full repository TypeScript check still has
+the unchanged WU4 E2E typing error. No deployment, push, Edge change, or
+business-row mutation occurred. No M46 exists. Integrated Unit 7C review and
+connected Edge→DB verification remain separately gated.
 **Historical implementation status (superseded):** Unit 6's automatic/functional pipeline is **PASS**.
 M01-M08/M10-M38 are live-verified at their recorded levels; approved `main` SHA
 `a138baa7d3bbc086da019bc052a5ae31d0e15882` is published and deployed to
@@ -44,16 +39,19 @@ documented import flag. M39 remains unapplied; deployment, live smoke, and Git
 publication require separate authorization.
 Unit 6B is merged at `9ef9eb3`; Unit 6D is implemented at `c363b60`; their
 recorded evidence remains authoritative beneath this final closure checkpoint.
-**Supabase mutation status:** M01-M08/M10-M42 are live once at their recorded
-versions on `ahntbtktjjmvfosgkmgn`; M09 remains absent. M42 is the forward-only
-generated-author projection correction. Unit 7B deployment and live proof are
-complete; commit `9f3e646` is integrated into `main` at merge commit
-`53edbddc9c5417b34cb169599e8282b162e183b3`; Unit 7C WU1 is local-only and no
-additional live migration/business-row mutation was performed.
-**Database checkpoint:** the exact project is `ACTIVE_HEALTHY`; M39/M40/M41/M42
-are live exactly once; the selected listing is published with one active public
-projection and zero outstanding publication retries. The development
-`active_listing_limit` is 10 from source `unit7b_dev_rollout`.
+**Supabase mutation status:** M01-M08/M10-M45 are live once at their recorded
+versions on `ahntbtktjjmvfosgkmgn`; M09 remains absent. M43/M44/M45 are live as
+`20260816122822`, `20260816122901`, and `20260816122929`. M42 remains the
+forward-only generated-author projection correction. Unit 7B deployment and
+live proof are complete; commit `9f3e646` is integrated into `main` at merge
+commit `53edbddc9c5417b34cb169599e8282b162e183b3`; WU5 is committed locally as
+`380f2b3`. No deployment, push, Edge change, or business-row mutation occurred
+in the WU5/migration session.
+**Database checkpoint:** the exact project is `ACTIVE_HEALTHY`; M39–M45 are live
+exactly once, the selected listing remains published with one active public
+projection and zero outstanding publication retries, and the new publication
+revision table is empty. The development `active_listing_limit` is 10 from
+source `unit7b_dev_rollout`.
 M30 was applied exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`.
 
 This folder is the implementation-planning source for Phase 9. It turns the product decisions in DOC-1, DOC-3, DOC-4, DOC-5, DOC-6, DOC-8, DOC-13, and DOC-14 into a reviewable set of software design documents (SDDs). It does not authorize implementation by itself.
