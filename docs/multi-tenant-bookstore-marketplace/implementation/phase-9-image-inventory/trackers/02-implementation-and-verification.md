@@ -1,7 +1,7 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit7c_m46_correction_pass_connected_save_reproof_complete`; **last updated:** 2026-08-16
+**Status:** `unit7c_resumed_connected_canary_pass_publish_merge`; **last updated:** 2026-08-17
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit7c_m46_correction_pass_connected_save_reproof_complete`. Exact HEAD `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` remains deployed only as Owner Edge version 8; M46 is live once as `20260816150126` and the bounded private-only Save reproof passed.
+**Active work unit:** `unit7c_resumed_connected_canary_pass_publish_merge`. Branch HEAD `f4a9e858396474dcd08123eb976a47b019ef26f8` contains the proven M46 correction; exact source HEAD `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` remains deployed only as Owner Edge version 8; M46 is live once as `20260816150126`.
 
 ### 2026-08-16 — Unit 7C M46 bounded correction PASS
 
@@ -30,7 +30,33 @@
 - Stop boundary: remaining stale/stock/publication/media/history/browser checks
   require separate authorization.
 
-### 2026-08-16 — Unit 7C connected Edge-to-DB verification BLOCKED
+### 2026-08-16 — Unit 7C resumed connected canary PASS
+
+- Authenticated in-app Browser → existing Owner Edge v8 → DB verification
+  completed against `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` without
+  mocks, request interception, direct SQL business writes, manual worker
+  claims, migration application, or Edge redeploy.
+- Private-only Save advanced the canary inventory version `3 -> 4` and did not
+  add a public revision. A deliberate stale `version=3` Save returned the
+  refreshed-details conflict and produced zero side effects.
+- Stock `1 -> 0 -> 1`, Pause → Republish, Store View history/privacy reads,
+  Inventory demotion, Store Profile routing, and final Store View refetch all
+  passed. Final state: inventory version `6`, publication intent version `4`,
+  published/active/low-stock, quantity `1/1/0/0/0`, stable listing ID
+  `ef9752e5-e696-4246-b9f4-0c092e2a0e3e`, four revisions, and audit/event
+  counts `9/9`.
+- Real Manage Photos ADD completed through the existing U7B authorization,
+  upload, validation, sanitized derivative, and link path. Final media is one
+  approved public link with a private validated source and public approved WebP
+  derivative. The reused U7B ADD path emits no separate Unit 7C audit/event or
+  revision; this was recorded as an expected path boundary.
+- Public revision snapshots remained allowlisted with no `internalNotes`, raw
+  storage path, upload token, or provider payload. No migration/Edge source
+  changed and no repair/reset was performed. The current repository handoff is
+  publication and merge to `main`; no further Unit 7C connected mutation is
+  authorized without separate approval.
+
+### 2026-08-16 — Unit 7C initial connected Edge-to-DB verification BLOCKED (superseded by M46 correction)
 
 - Verified exact project `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`, M43-M45 live once, no M46, and baseline counts inventory/listing/revision/media-link/media-asset `10/9/0/0/20`.
 - Deployed only `phase9-owner-ingestion` from exact HEAD, once, as ACTIVE version 8 with JWT verification enabled. Exact 25-file source readback matched after line-ending normalization; OPTIONS returned 200. No Render service, other function, secret, or migration changed.

@@ -26,6 +26,20 @@ Every coding session must update tracking before ending if it changes any of the
 - handoff notes
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
 
+> **2026-08-17 Unit 7C resumed connected-canary and publication handoff:** The
+> bounded continuation completed through authenticated in-app Browser → existing
+> Owner Edge v8 → DB against `Bookconnect_reactexpo` /
+> `ahntbtktjjmvfosgkmgn`. Private-only Save advanced inventory version `3 -> 4`
+> without a new public revision; a deliberate stale Save returned the refreshed-
+> details conflict with zero side effects; stock `1 -> 0 -> 1`, Pause → Republish,
+> approved media ADD through the existing U7B path, history/privacy, and browser
+> routing all passed. Final readback is inventory version `6`, publication intent
+> version `4`, quantity `1/1/0/0/0`, stable active/low-stock listing, four public
+> revisions, nine audit/events, and one approved public media link. No migration,
+> Edge redeploy, direct SQL business write, repair/reset, or manual worker claim
+> occurred. The proven correction is committed as `f4a9e858396474dcd08123eb976a47b019ef26f8`;
+> the current exact action is publish this branch and merge it into `main`.
+
 > **2026-08-16 Unit 7C connected-verification blocker (corrected):** Exact HEAD
 > `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` was deployed only to
 > `phase9-owner-ingestion`, once, as ACTIVE version 8 with JWT verification.
@@ -856,12 +870,30 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C M46 correction PASS; broader connected canary paused** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C resumed connected canary PASS; publication/merge handoff pending** |
 | Overall status | `in_progress` |
-| Last updated | 2026-08-16 |
-| Latest handoff | Unit 7C WU5 is committed as `380f2b3` on `codex/unit7c-wu5-store-view-cutover`; M43/M44/M45 remain immutable and M46 is live exactly once as `20260816150126`. The bounded private-Save correction and connected reproof passed; the original false revision is preserved. |
-| Current risk level | The project Playwright CLI is `NOT_RUN_ENVIRONMENT` because Node failed with `EPERM` while `lstat`-ing `C:\Users\user`; in-app local browser/manual mobile checks pass. Full repository TypeScript remains blocked by the unchanged WU4 E2E typing error. Connected Edge→DB verification, deployment, and integrated Unit 7C review remain separately gated. Unit 6F native debt remains unrelated. The untracked `.zcode/` and `docs/codemap/` directories remain preserved and untouched. |
-| Next recommended task | Obtain separate authorization to resume only the remaining stale/stock/publication/media/history/browser canary checks. Do not apply another migration, redeploy Edge, repair/reset the historical revision, push, merge, or broaden scope. |
+| Last updated | 2026-08-17 |
+| Latest handoff | Unit 7C M46 correction is committed as `f4a9e858396474dcd08123eb976a47b019ef26f8` on `codex/unit7c-wu5-store-view-cutover`; M43–M46 remain immutable/live exactly once, existing Edge v8 still serves source HEAD `5cfc08e`, and the resumed connected canary passed with final inventory version `6`, publication intent version `4`, four revisions, nine audit/events, and one approved public media link. |
+| Current risk level | The project Playwright CLI is `NOT_RUN_ENVIRONMENT` because Node failed with `EPERM` while `lstat`-ing `C:\Users\user`; the bounded in-app authenticated Browser canary passed. Full repository TypeScript remains blocked by the unchanged WU4 E2E typing error. Unit 6F native debt remains unrelated. The untracked `.zcode/` and `docs/codemap/` directories remain preserved and untouched. |
+| Next recommended task | Publish this branch and merge it into `main`. After that handoff, obtain separate authorization for the next Phase 9 work unit; do not apply another migration, redeploy Edge, repair/reset the historical revision, or perform further Unit 7C connected mutation without approval. |
+
+### 2026-08-16 Unit 7C resumed connected canary PASS
+
+- The bounded continuation used the authenticated in-app Browser through the
+  existing Owner Edge v8 and the exact development project
+  `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`. It covered private-only
+  Save, deliberate stale Save rejection, stock `1 -> 0 -> 1`, Pause → Republish,
+  approved media ADD, history/privacy, and Store View/Inventory/Store Profile
+  routing.
+- Final readback: canary inventory version `6`; publication intent version `4`;
+  published/active/low-stock; quantity `1/1/0/0/0`; stable listing identity;
+  four revisions; audit/events `9/9`; one approved public media link; and two
+  relevant media assets. Public snapshots remained allowlisted without private
+  notes, raw storage paths, upload tokens, or provider payloads.
+- Media ADD deliberately reused the existing U7B authorization/upload/link path,
+  so it emitted no separate Unit 7C audit/event/revision. No migration, Edge
+  redeploy, direct SQL business write, repair/reset, or manual worker claim
+  occurred. The current repository action is publication and merge to `main`.
 
 ### 2026-08-16 Unit 7C M46 bounded correction PASS
 

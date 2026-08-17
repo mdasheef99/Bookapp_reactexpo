@@ -1,48 +1,54 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-08-16
+**Last updated:** 2026-08-17
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-## Current 2026-08-16 final resume overlay
+## Current 2026-08-17 post-canary overlay
 
 Current phase: Phase 9 — Image-Assisted Inventory.
-Planning/implementation status: Unit 7C M46 correction PASS; broader connected
-canary verification is paused. WU1 through WU5 remain locally complete;
-M43/M44/M45 are applied exactly once, M46 is applied exactly once as
-`20260816150126`, and exact HEAD
-`5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` is deployed only as Owner Edge
-version 8 with JWT verification enabled. Unit 7B remains live-verified and integrated into `main` at
-`53edbddc9c5417b34cb169599e8282b162e183b3`. Unit 6F native validation remains
-deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
+Planning/implementation status: Unit 7C M46 correction and the resumed
+connected canary are PASS. WU1 through WU5 remain locally complete; M43/M44/
+M45 are applied exactly once, M46 is applied exactly once as `20260816150126`,
+and exact source HEAD `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` remains
+deployed only as Owner Edge version 8 with JWT verification enabled. The
+proven M46 correction is committed at
+`f4a9e858396474dcd08123eb976a47b019ef26f8`. Unit 7B remains live-verified and
+integrated into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`. Unit 6F
+native validation remains deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
 Last completed milestone: M46 RED/GREEN correction, exact disposable M01→M46
-proof, one live M46 application/readback, and authenticated private-only Save
-reproof. The reproof changed only private `internalNotes`, preserved the
-customer projection, and left public revision count unchanged.
-Active work unit: `unit7c_m46_correction_pass_connected_save_reproof_complete`.
-Next authorized action: obtain separate authorization before resuming the
-remaining stale/stock/publication/media/history/browser canary checks.
+proof, one live M46 application/readback, authenticated private-only Save
+reproof, and the bounded stale/stock/publication/media/history/browser canary.
+The final canary preserved the customer projection and ended at inventory
+version `6`, publication intent version `4`, four revisions, nine audit/events,
+one approved public media link, and stable listing identity.
+Active work unit: `unit7c_resumed_connected_canary_pass_publish_merge`.
+Next authorized action: publish this branch and complete the authorized merge
+into `main`; after that handoff, obtain separate approval before any further
+Unit 7C connected mutation.
 Blockers/gates: Playwright CLI remains `NOT_RUN_ENVIRONMENT`; full repository
 TypeScript has an unchanged WU4 E2E typing error; production rollout, payments,
-Phases 7/8, M09, and the remaining canary matrix remain separately gated.
+Phases 7/8, M09, and unrelated Unit 6F native validation remain separately
+gated. The connected Unit 7C canary matrix is complete for this bounded proof.
 Unrelated worktree changes must be preserved.
 Supabase mutation authority for this handoff: the single M46 application and
-bounded reproof are complete. No additional migration, second deployment,
-direct SQL repair, historical-row rewrite, or further connected mutation is
-authorized by this document.
-Connected side effects: Owner Edge advanced from version 7 to 8; canary inventory
-version advanced from 1 to 2; private `internalNotes` received the canary marker;
-one false public revision was appended. Inventory/listing/media-link counts are
-otherwise unchanged at `10/9/0`. No push occurred.
+bounded connected canary are complete. No additional migration, second
+deployment, direct SQL repair, historical-row rewrite, or further connected
+mutation is authorized by this document.
+Connected side effects: the earlier M46 reproof preserved the historical false
+revision; the resumed canary ended at inventory version `6`, publication-intent
+version `4`, published/active/low-stock, quantity `1/1/0/0/0`, one stable
+listing, four revisions, nine audit/events, one approved public media link, and
+two relevant media assets. No Edge redeploy occurred.
 
 Exact live target: Supabase project `Bookconnect_reactexpo`, ref
 `ahntbtktjjmvfosgkmgn`, host `https://ahntbtktjjmvfosgkmgn.supabase.co`,
 `ACTIVE_HEALTHY`, region `ap-southeast-2`. The checked-out branch is
-`codex/unit7c-wu5-store-view-cutover` at commit `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882`; preserve unrelated
+`codex/unit7c-wu5-store-view-cutover` at commit `f4a9e858396474dcd08123eb976a47b019ef26f8`; preserve unrelated
 untracked `.zcode/` and `docs/codemap/` changes.
 
 M39 (`20260812003419`), M40 (`20260813000040`), M41 (`20260813070104`), and
