@@ -38,7 +38,9 @@ Every material session must also leave one exact active work unit and next autho
 > revisions, nine audit/events, and one approved public media link. No migration,
 > Edge redeploy, direct SQL business write, repair/reset, or manual worker claim
 > occurred. The proven correction is committed as `f4a9e858396474dcd08123eb976a47b019ef26f8`;
-> the current exact action is publish this branch and merge it into `main`.
+> publication and merge are complete at merge commit
+> `2be793e6212b1b485737c5045d701c99169490e4`; the next exact action is separate
+> authorization for the next Phase 9 work unit.
 
 > **2026-08-16 Unit 7C connected-verification blocker (corrected):** Exact HEAD
 > `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` was deployed only to
@@ -870,12 +872,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C resumed connected canary PASS; publication/merge handoff pending** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C resumed connected canary PASS; main integrated** |
 | Overall status | `in_progress` |
 | Last updated | 2026-08-17 |
-| Latest handoff | Unit 7C M46 correction is committed as `f4a9e858396474dcd08123eb976a47b019ef26f8` on `codex/unit7c-wu5-store-view-cutover`; M43–M46 remain immutable/live exactly once, existing Edge v8 still serves source HEAD `5cfc08e`, and the resumed connected canary passed with final inventory version `6`, publication intent version `4`, four revisions, nine audit/events, and one approved public media link. |
+| Latest handoff | Unit 7C M46 correction is committed as `f4a9e858396474dcd08123eb976a47b019ef26f8` and integrated into `main` at merge commit `2be793e6212b1b485737c5045d701c99169490e4`; M43–M46 remain immutable/live exactly once, existing Edge v8 still serves source HEAD `5cfc08e`, and the resumed connected canary passed with final inventory version `6`, publication intent version `4`, four revisions, nine audit/events, and one approved public media link. |
 | Current risk level | The project Playwright CLI is `NOT_RUN_ENVIRONMENT` because Node failed with `EPERM` while `lstat`-ing `C:\Users\user`; the bounded in-app authenticated Browser canary passed. Full repository TypeScript remains blocked by the unchanged WU4 E2E typing error. Unit 6F native debt remains unrelated. The untracked `.zcode/` and `docs/codemap/` directories remain preserved and untouched. |
-| Next recommended task | Publish this branch and merge it into `main`. After that handoff, obtain separate authorization for the next Phase 9 work unit; do not apply another migration, redeploy Edge, repair/reset the historical revision, or perform further Unit 7C connected mutation without approval. |
+| Next recommended task | Obtain separate authorization for the next Phase 9 work unit. Do not apply another migration, redeploy Edge, repair/reset the historical revision, or perform further Unit 7C connected mutation without approval. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 
@@ -893,7 +895,20 @@ If implementation changes product or architecture behavior, update the relevant 
 - Media ADD deliberately reused the existing U7B authorization/upload/link path,
   so it emitted no separate Unit 7C audit/event/revision. No migration, Edge
   redeploy, direct SQL business write, repair/reset, or manual worker claim
-  occurred. The current repository action is publication and merge to `main`.
+  occurred. Publication and merge to `main` are complete at merge commit
+  `2be793e6212b1b485737c5045d701c99169490e4`; no further Unit 7C connected
+  mutation is authorized without separate approval.
+
+### 2026-08-17 Unit 7C publication and main integration
+
+- Documentation closeout commit `e8a4d46` was pushed on
+  `codex/unit7c-wu5-store-view-cutover`; the branch was merged into `main` as
+  `2be793e6212b1b485737c5045d701c99169490e4`.
+- GitHub PR creation was blocked by the connector's `403 Resource not
+  accessible by integration`; the authorized local merge path completed.
+- No Supabase migration, Edge deployment, secret, service, or unrelated
+  worktree entry changed. The next gate is separate authorization for the next
+  Phase 9 work unit.
 
 ### 2026-08-16 Unit 7C M46 bounded correction PASS
 

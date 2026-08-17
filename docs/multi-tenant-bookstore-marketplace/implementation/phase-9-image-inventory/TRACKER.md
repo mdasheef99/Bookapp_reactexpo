@@ -1,20 +1,20 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit7c_normative_sdd_frozen`
-**Implementation status:** `unit7c_resumed_connected_canary_pass_publish_merge`
+**Implementation status:** `unit7c_resumed_connected_canary_pass_main_integrated`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-17
-**Current milestone:** The proven M46 correction is committed as `f4a9e858396474dcd08123eb976a47b019ef26f8`. M43–M46 remain live exactly once; existing Owner Edge v8 still serves source HEAD `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` with JWT verification enabled. The resumed authenticated connected canary is PASS, including stale, stock, publication, media, history, and browser checks.
-**Active work unit:** `unit7c_resumed_connected_canary_pass_publish_merge`
+**Current milestone:** The proven M46 correction is committed as `f4a9e858396474dcd08123eb976a47b019ef26f8`, and the branch is integrated into `main` at merge commit `2be793e6212b1b485737c5045d701c99169490e4`. M43–M46 remain live exactly once; existing Owner Edge v8 still serves source HEAD `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` with JWT verification enabled. The resumed authenticated connected canary is PASS, including stale, stock, publication, media, history, and browser checks.
+**Active work unit:** `unit7c_resumed_connected_canary_pass_main_integrated`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** The M46 RED/GREEN correction, exact disposable M01→M46 proof, focused regressions, one live M46 application, function/grant readback, and the full bounded authenticated connected canary completed. Final canary readback is inventory version `6`, publication intent version `4`, published/active/low-stock state, quantity `1/1/0/0/0`, four public revisions, nine audit/events, one approved public media link, and the same listing identity. The original false revision remains preserved.
-**Next authorized action:** publish this branch and complete the authorized merge into `main`. No M47, second deployment, additional migration, repair/reset, historical-row rewrite, or further Unit 7C connected mutation is authorized after that handoff without separate approval.
+**Next authorized action:** obtain separate authorization for the next Phase 9 work unit. No M47, second deployment, additional migration, repair/reset, historical-row rewrite, or further Unit 7C connected mutation is authorized without separate approval.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`; M43 is live exactly once as `20260816122822 marketplace_phase9_unit7c_inventory_management`; M44 is live exactly once as `20260816122901 marketplace_phase9_store_view_filter_contract`; M45 is live exactly once as `20260816122929 marketplace_phase9_unit7c_media_history`; and M46 is live exactly once as `20260816150126 marketplace_phase9_unit7c_private_save_revision_correction`. M39–M45 remain byte-immutable.
 **Scope boundary:** WU5 source scope remains limited to Owner navigation, Inventory role demotion, Store Profile compatibility positioning, post-Add success CTAs, route/test coverage, and bounded browser/mobile verification. The separately authorized resumed canary exercised existing M43–M46 commands and its business-row effects are recorded below; no new backend, Edge, migration, publication, media/history, quantity, canonical, or capability authority was introduced.
 **Implementation authority:** the one-function Edge deployment was completed before this correction and was not repeated. M46 application authority is exhausted after one application; the bounded connected canary is complete, and no further Unit 7C connected mutation is authorized by this handoff.
 **Migration creation/application authority:** M46 is live exactly once on `ahntbtktjjmvfosgkmgn`; no additional migration application is authorized by this handoff.
-**Current gate:** `UNIT_7C_RESUMED_CONNECTED_CANARY_PASS_PENDING_MAIN_MERGE`; Owner Edge version 8 is ACTIVE with JWT verification enabled. No other function/service changed. Native Unit 6F remains deferred and is unrelated.
+**Current gate:** `UNIT_7C_RESUMED_CONNECTED_CANARY_PASS_MAIN_INTEGRATED`; Owner Edge version 8 is ACTIVE with JWT verification enabled. No other function/service changed. Native Unit 6F remains deferred and is unrelated.
 
 ## 2026-08-16 — Unit 7C connected verification stopped on private-Save revision defect
 
@@ -85,6 +85,19 @@
 - This canary did not alter the migration ledger or deployed Edge source. The
   exact next action is repository publication and merge to `main`; after that,
   obtain separate authorization before any further Phase 9 Unit 7C mutation.
+
+## 2026-08-17 — Unit 7C publication and main integration
+
+- The documentation closeout was committed as `e8a4d46` and the branch
+  `codex/unit7c-wu5-store-view-cutover` was pushed to `origin`.
+- GitHub connector PR creation was unavailable with `403 Resource not
+  accessible by integration`; the explicitly authorized local non-fast-forward
+  merge completed as `2be793e6212b1b485737c5045d701c99169490e4`.
+- The merged scope contains the proven Unit 7C implementation, M46 correction,
+  focused evidence, and Phase 9 handoff updates only. No Supabase migration,
+  Edge deployment, secret, service, or unrelated worktree entry was changed.
+- Exact next action: obtain separate authorization for the next Phase 9 work
+  unit. Do not resume Unit 7C connected mutation in this handoff.
 
 ## 2026-08-14 — Unit 7C WU3 Store View management vertical
 

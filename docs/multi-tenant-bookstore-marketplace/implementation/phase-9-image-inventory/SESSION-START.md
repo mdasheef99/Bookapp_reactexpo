@@ -26,10 +26,11 @@ reproof, and the bounded stale/stock/publication/media/history/browser canary.
 The final canary preserved the customer projection and ended at inventory
 version `6`, publication intent version `4`, four revisions, nine audit/events,
 one approved public media link, and stable listing identity.
-Active work unit: `unit7c_resumed_connected_canary_pass_publish_merge`.
-Next authorized action: publish this branch and complete the authorized merge
-into `main`; after that handoff, obtain separate approval before any further
-Unit 7C connected mutation.
+Active work unit: `unit7c_resumed_connected_canary_pass_main_integrated`.
+The authorized branch publication and merge are complete at merge commit
+`2be793e6212b1b485737c5045d701c99169490e4`. Next authorized action: obtain
+separate approval for the next Phase 9 work unit before any further Unit 7C
+connected mutation.
 Blockers/gates: Playwright CLI remains `NOT_RUN_ENVIRONMENT`; full repository
 TypeScript has an unchanged WU4 E2E typing error; production rollout, payments,
 Phases 7/8, M09, and unrelated Unit 6F native validation remain separately
@@ -48,7 +49,7 @@ two relevant media assets. No Edge redeploy occurred.
 Exact live target: Supabase project `Bookconnect_reactexpo`, ref
 `ahntbtktjjmvfosgkmgn`, host `https://ahntbtktjjmvfosgkmgn.supabase.co`,
 `ACTIVE_HEALTHY`, region `ap-southeast-2`. The checked-out branch is
-`codex/unit7c-wu5-store-view-cutover` at commit `f4a9e858396474dcd08123eb976a47b019ef26f8`; preserve unrelated
+`main` containing merge commit `2be793e6212b1b485737c5045d701c99169490e4`; preserve unrelated
 untracked `.zcode/` and `docs/codemap/` changes.
 
 M39 (`20260812003419`), M40 (`20260813000040`), M41 (`20260813070104`), and

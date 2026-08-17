@@ -1,7 +1,7 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit7c_resumed_connected_canary_pass_publish_merge`; **last updated:** 2026-08-17
+**Status:** `unit7c_resumed_connected_canary_pass_main_integrated`; **last updated:** 2026-08-17
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit7c_resumed_connected_canary_pass_publish_merge`. Branch HEAD `f4a9e858396474dcd08123eb976a47b019ef26f8` contains the proven M46 correction; exact source HEAD `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` remains deployed only as Owner Edge version 8; M46 is live once as `20260816150126`.
+**Active work unit:** `unit7c_resumed_connected_canary_pass_main_integrated`. M46 correction commit `f4a9e858396474dcd08123eb976a47b019ef26f8` is integrated into `main` at merge commit `2be793e6212b1b485737c5045d701c99169490e4`; exact source HEAD `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` remains deployed only as Owner Edge version 8; M46 is live once as `20260816150126`.
 
 ### 2026-08-16 — Unit 7C M46 bounded correction PASS
 
@@ -52,9 +52,20 @@
   revision; this was recorded as an expected path boundary.
 - Public revision snapshots remained allowlisted with no `internalNotes`, raw
   storage path, upload token, or provider payload. No migration/Edge source
-  changed and no repair/reset was performed. The current repository handoff is
-  publication and merge to `main`; no further Unit 7C connected mutation is
-  authorized without separate approval.
+  changed and no repair/reset was performed. The branch is now integrated into
+  `main` at merge commit `2be793e6212b1b485737c5045d701c99169490e4`; no further
+  Unit 7C connected mutation is authorized without separate approval.
+
+### 2026-08-17 — Unit 7C publication and main integration
+
+- Documentation closeout commit `e8a4d46` was pushed on
+  `codex/unit7c-wu5-store-view-cutover`; the branch was merged into `main` as
+  `2be793e6212b1b485737c5045d701c99169490e4`.
+- GitHub PR creation was blocked by the connector's `403 Resource not
+  accessible by integration`; the authorized local merge path completed.
+- No Supabase migration, Edge deployment, secret, service, or unrelated
+  worktree entry changed. Next exact action: separate authorization for the
+  next Phase 9 work unit.
 
 ### 2026-08-16 — Unit 7C initial connected Edge-to-DB verification BLOCKED (superseded by M46 correction)
 
