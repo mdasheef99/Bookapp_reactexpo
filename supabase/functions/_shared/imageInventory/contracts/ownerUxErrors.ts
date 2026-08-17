@@ -5,6 +5,7 @@ export type OwnerUxErrorCode =
   | 'P9_INPUT_HAS_CANDIDATES' | 'P9_SINGLE_IMAGE_LIMIT'
   | 'P9_IDEMPOTENCY_MISMATCH' | 'P9_MEDIA_NOT_APPROVED'
   | 'P9_PUBLICATION_INELIGIBLE' | 'P9_PUBLICATION_FAILED'
+  | 'P9_NO_CHANGES' | 'P9_QUANTITY_INVARIANT_FAILED'
   | 'P9_INTERNAL_ERROR';
 
 const safeErrors: Record<OwnerUxErrorCode, {
@@ -24,6 +25,8 @@ const safeErrors: Record<OwnerUxErrorCode, {
   P9_MEDIA_NOT_APPROVED: { status: 422, retryable: false, message: 'Add approved public-copy photos before publishing.' },
   P9_PUBLICATION_INELIGIBLE: { status: 422, retryable: false, message: 'Correct the inventory details before publishing.' },
   P9_PUBLICATION_FAILED: { status: 202, retryable: true, message: 'The book is private while publication is retried.' },
+  P9_NO_CHANGES: { status: 422, retryable: false, message: 'There are no changes to save.' },
+  P9_QUANTITY_INVARIANT_FAILED: { status: 422, retryable: false, message: 'The stock adjustment is not allowed.' },
   P9_INTERNAL_ERROR: { status: 500, retryable: true, message: 'The request could not be completed.' },
 };
 

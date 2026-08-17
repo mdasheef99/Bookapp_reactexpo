@@ -24,7 +24,19 @@ const schemas = {
     declaredBytes: z.number().int().positive().max(10_485_760),
     envelopeSha256: z.string().regex(/^[a-f0-9]{64}$/u),
     idempotencyKey: key, commandId: uuid,
-  }).strict(),
+    operationKind: z.enum(['add', 'replace']).optional(),
+    targetLinkId: uuid.optional(),
+  }).strict().superRefine((value, context) => {
+    if (value.operationKind === 'replace' && !value.targetLinkId) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['targetLinkId'], message: 'replace requires targetLinkId' });
+    }
+    if (value.operationKind === 'add' && value.targetLinkId) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['targetLinkId'], message: 'add cannot target a link' });
+    }
+    if (!value.operationKind && value.targetLinkId) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['operationKind'], message: 'targetLinkId requires operationKind' });
+    }
+  }),
   complete_public_copy_upload: z.object({
     ...base, action: z.literal('complete_public_copy_upload'),
     capabilityId: uuid, idempotencyKey: key, commandId: uuid,

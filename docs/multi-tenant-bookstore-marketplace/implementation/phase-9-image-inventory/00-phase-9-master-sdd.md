@@ -113,6 +113,8 @@ flowchart LR
     Candidates --> Review["Owner review"]
     Review --> Commit["Idempotent per-candidate commit command"]
     Commit --> Inventory["Private store inventory"]
+    App --> StoreView["Unit 7C Owner Store View"]
+    StoreView --> Inventory
     Inventory --> Projection["Separate Unit 7B safe listing projection"]
     Projection --> Market["Bookstore-first marketplace"]
     Commit --> PublicMedia["Approved public media"]
@@ -146,7 +148,7 @@ flowchart LR
     creates exactly one new private inventory row. It never targets or increments
     existing inventory. Unit 7B separately performs safe projection.
 12. Owner closes the session only when every input is terminal. The summary separates committed, published, private, needs-review, failed, and skipped candidates.
-13. Lifecycle workers delete scan/raw/staged objects by policy and record deletion evidence. Committed inventory remains editable through controlled commands.
+13. Lifecycle workers delete scan/raw/staged objects by policy and record deletion evidence. Unit 7C manages committed inventory through Store View and controlled commands keyed by stable `inventoryId`; Inventory remains the acquisition/review/session/recovery workspace.
 
 ## 6. State ownership
 

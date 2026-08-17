@@ -69,25 +69,29 @@ Store Owner Console
   -> Inventory
      -> Image-to-LLM Add Books
      -> Manual Add Book
-     -> Inventory List
-     -> Draft Listings
+     -> Review and Recovery
+     -> Session Summary
+  -> Store View
+     -> Committed Inventory List
+     -> Book Management Detail
   -> Orders
      -> Requests Awaiting Confirmation
      -> Paid Orders
      -> Pickup/Delivery Fulfillment
-  -> Storefront
-     -> Public Profile
-     -> Featured Books
-     -> Hours and Policies
   -> Subscription
      -> Plan
      -> Quota Usage
      -> Billing Status
-  -> Insights
-     -> Sales Summary
-     -> Demand Signals
-     -> Inventory Health
+  -> Store Profile (secondary settings)
+     -> Public Profile
+     -> Hours and Policies
 ```
+
+Unit 7C freezes the primary tabs as Dashboard, Inventory, Store View, Orders,
+and Subscription. Store Profile is secondary settings; the older Storefront
+route may remain only as a compatibility redirect during cutover. Inventory
+owns acquisition/review/session/recovery. Store View is the sole rich
+post-commit management surface keyed by stable `inventoryId`.
 
 Deferred sections:
 
@@ -121,7 +125,8 @@ The first screen should prioritize operational tasks over decorative analytics.
 
 ## 5. Inventory Module
 
-Inventory is the console's core value for local bookstores.
+Inventory is the console's acquisition, review, session, and recovery workspace.
+After the Unit 7C cutover, rich committed-book management belongs to Store View.
 
 MVP features:
 
@@ -129,12 +134,7 @@ MVP features:
 - manual add book
 - legacy/deferred duplicate-resolution surfaces; no duplicate action affects the
   Unit 7A scanned-candidate commit
-- inventory list
-- edit price, quantity, condition, notes, location
-- publish/unpublish listing
-- save draft listing
-- condition photo upload where enabled
-- low-stock and zero-stock indicators
+- post-commit list/edit/stock/publication/media operations in Store View
 - 15-spine camera/gallery sessions with Start/Close summary; current runtime
   requires selected language, while the approved target uses optional hints and
   per-field detection

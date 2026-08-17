@@ -1,4 +1,5 @@
 import { type ReactNode, useState } from 'react';
+import { useRouter } from 'expo-router';
 import {
     ActivityIndicator,
     Pressable,
@@ -11,7 +12,6 @@ import {
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import InventoryFilterPanel from '@/features/stores/components/InventoryFilterPanel';
-import InventoryItem from '@/features/stores/components/InventoryItem';
 import { useTheme } from '@/hooks/useTheme';
 import {
     OwnerInventoryReadError,
@@ -19,21 +19,17 @@ import {
     type OwnerInventoryDateAdded,
     type OwnerInventoryEntryMethod,
     type OwnerInventoryFilters,
-    type OwnerInventoryListItem,
     type OwnerInventoryQuantityState,
     type OwnerInventoryVisibilityStatus,
 } from '../api/ownerInventoryReadService';
-import { PublicationClientError } from '../api/publicationService';
+import { InventoryRecoveryCard } from '../components/InventoryRecoveryCard';
 import { useOwnerInventoryRead } from '../queries/ownerInventoryReadQueries';
-import { usePublicationCommands } from '../queries/publicationQueries';
 import type { ImageInventoryIdentity } from '../queries/ownerUxQueries';
 import {
     OwnerInventoryStateCard,
-    PublicationFilterBar,
     ownerInventoryErrorCopy,
-    ownerInventoryPresentationItem,
 } from '../components/OwnerInventoryPresentation';
-import { PublicCopyMediaManager } from '../components/PublicCopyMediaManager';
+import { storeViewRoutes } from '@/features/storeView/navigation/storeViewRoutes';
 
 type Props = {
     identity: ImageInventoryIdentity;
@@ -52,11 +48,9 @@ const INITIAL_FILTERS: Required<OwnerInventoryFilters> = {
 
 export function OwnerInventoryReadScreen({ identity, scanHeader }: Props) {
     const { colors } = useTheme();
+    const router = useRouter();
     const [filters, setFilters] = useState(INITIAL_FILTERS);
     const inventory = useOwnerInventoryRead(identity, filters);
-    const publication = usePublicationCommands(identity);
-    const [publicationMessage, setPublicationMessage] = useState<string | null>(null);
-    const [mediaManagerInventoryId, setMediaManagerInventoryId] = useState<string | null>(null);
     const error = inventory.error instanceof OwnerInventoryReadError ? inventory.error : null;
     const initialError = inventory.isError && inventory.items.length === 0;
     const initialLoading = inventory.isPending && inventory.items.length === 0;
@@ -96,31 +90,6 @@ export function OwnerInventoryReadScreen({ identity, scanHeader }: Props) {
                         ? resetFiltersAndPagination()
                         : inventory.loadNextPage()
         );
-    const runPublication = async (
-        item: OwnerInventoryListItem,
-        intent: 'publish' | 'pause' | 'private' | 'retry',
-    ) => {
-        setPublicationMessage(null);
-        try {
-            const result = await publication.mutateAsync({
-                inventoryId: item.id,
-                inventoryVersion: item.version,
-                publicationIntentVersion: item.publicationIntentVersion,
-                intent,
-            });
-            setPublicationMessage(result.outcome === 'committed_publication_failed'
-                ? 'Publication is temporarily unavailable. Use Retry publication.'
-                : 'Publication state updated.');
-        } catch (failure) {
-            const code = failure instanceof PublicationClientError ? failure.code : null;
-            setPublicationMessage(code === 'P9_MEDIA_NOT_APPROVED'
-                ? 'Add approved damage photos before publishing.'
-                : code === 'P9_PUBLICATION_INELIGIBLE'
-                    ? 'Correct the price, stock, sellability, or required metadata before publishing.'
-                    : failure instanceof Error ? failure.message : 'Publication could not be updated.');
-        }
-    };
-
     return (
         <ScreenBackground>
             <ScrollView
@@ -148,19 +117,8 @@ export function OwnerInventoryReadScreen({ identity, scanHeader }: Props) {
                 {scanHeader}
 
                 <Text selectable style={[styles.readOnlyNote, { color: colors.textSecondary }]}>
-                    Publication controls use the server-authoritative inventory state.
+                    Scan, review, and recovery stay here. Committed items are managed in Store View.
                 </Text>
-                {publicationMessage ? (
-                    <Text testID="publication-message" selectable style={[styles.body, { color: colors.textSecondary }]}>
-                        {publicationMessage}
-                    </Text>
-                ) : null}
-                {mediaManagerInventoryId ? (
-                    <PublicCopyMediaManager
-                        inventoryId={mediaManagerInventoryId}
-                        onDone={() => setMediaManagerInventoryId(null)}
-                    />
-                ) : null}
                 <TextInput
                     testID="owner-inventory-search"
                     accessibilityLabel="Search inventory"
@@ -169,11 +127,6 @@ export function OwnerInventoryReadScreen({ identity, scanHeader }: Props) {
                     onChangeText={(query) => setFilters((current) => ({ ...current, query }))}
                     style={[styles.searchInput, { borderColor: colors.border, color: colors.textPrimary }]}
                 />
-                <View style={styles.publicationFilters}>
-                    <PublicationFilterBar onSelect={(publicationStatus) => setFilters((current) => ({
-                        ...current, publicationStatus,
-                    }))} />
-                </View>
                 <InventoryFilterPanel
                     mode="ownerRead"
                     conditionFilter={filters.condition}
@@ -239,14 +192,10 @@ export function OwnerInventoryReadScreen({ identity, scanHeader }: Props) {
                     <View style={styles.list}>
                         <Text selectable style={[styles.sectionTitle, { color: colors.textPrimary }]}>Inventory ({inventory.items.length})</Text>
                         {inventory.items.map((item) => (
-                            <InventoryItem
+                            <InventoryRecoveryCard
                                 key={item.id}
-                                item={ownerInventoryPresentationItem(item)}
-                                onPublish={() => void runPublication(item, 'publish')}
-                                onPause={() => void runPublication(item, 'pause')}
-                                onPrivate={() => void runPublication(item, 'private')}
-                                onRetryPublication={() => void runPublication(item, 'retry')}
-                                onManagePublicMedia={() => setMediaManagerInventoryId(item.id)}
+                                item={item}
+                                onOpenStoreView={() => router.push(storeViewRoutes.detail(item.id))}
                             />
                         ))}
                     </View>
@@ -309,5 +258,4 @@ const styles = StyleSheet.create({
     sectionTitle: { fontSize: 18, fontWeight: '800' },
     primaryAction: { minHeight: 46, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
     primaryActionText: { color: '#FFFFFF', fontWeight: '800' },
-    publicationFilters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });

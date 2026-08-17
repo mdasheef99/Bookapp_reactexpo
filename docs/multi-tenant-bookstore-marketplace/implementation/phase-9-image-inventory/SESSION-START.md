@@ -1,37 +1,55 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-08-14
+**Last updated:** 2026-08-17
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-## Current 2026-08-14 final resume overlay
+## Current 2026-08-17 post-canary overlay
 
 Current phase: Phase 9 — Image-Assisted Inventory.
-Planning/implementation status: Unit 7B live rollout PASS and integrated into
-`main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`. Unit 6F native validation remains deferred
-`NOT_RUN`/`UNRESOLVED`, not PASS.
-Last completed milestone: M42 corrected the generated-author column projection;
-the live Unit 7B publication, pause, republish, transient retry, stale-intent
-fencing, and final connected-state proof completed successfully.
-Active work unit: `phase9_post_unit7b_handoff`.
-Next authorized action: obtain explicit authorization for the next Phase 9
-scope. Do not start Unit 7C automatically.
-Blockers/gates: Unit 7C, production rollout, payments, Phases 7/8, and M09
-remain separately gated. Unrelated worktree changes must be preserved.
-Supabase mutation authority for this handoff: M42 is already live exactly once;
-no further migration or business-row mutation is authorized by this document.
-Files expected to change: current Phase 9 status/evidence documentation only
-until the next scope is explicitly authorized.
+Planning/implementation status: Unit 7C M46 correction and the resumed
+connected canary are PASS. WU1 through WU5 remain locally complete; M43/M44/
+M45 are applied exactly once, M46 is applied exactly once as `20260816150126`,
+and exact source HEAD `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` remains
+deployed only as Owner Edge version 8 with JWT verification enabled. The
+proven M46 correction is committed at
+`f4a9e858396474dcd08123eb976a47b019ef26f8`. Unit 7B remains live-verified and
+integrated into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`. Unit 6F
+native validation remains deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
+Last completed milestone: M46 RED/GREEN correction, exact disposable M01→M46
+proof, one live M46 application/readback, authenticated private-only Save
+reproof, and the bounded stale/stock/publication/media/history/browser canary.
+The final canary preserved the customer projection and ended at inventory
+version `6`, publication intent version `4`, four revisions, nine audit/events,
+one approved public media link, and stable listing identity.
+Active work unit: `unit7c_resumed_connected_canary_pass_publish_merge`.
+Next authorized action: publish this branch and complete the authorized merge
+into `main`; after that handoff, obtain separate approval before any further
+Unit 7C connected mutation.
+Blockers/gates: Playwright CLI remains `NOT_RUN_ENVIRONMENT`; full repository
+TypeScript has an unchanged WU4 E2E typing error; production rollout, payments,
+Phases 7/8, M09, and unrelated Unit 6F native validation remain separately
+gated. The connected Unit 7C canary matrix is complete for this bounded proof.
+Unrelated worktree changes must be preserved.
+Supabase mutation authority for this handoff: the single M46 application and
+bounded connected canary are complete. No additional migration, second
+deployment, direct SQL repair, historical-row rewrite, or further connected
+mutation is authorized by this document.
+Connected side effects: the earlier M46 reproof preserved the historical false
+revision; the resumed canary ended at inventory version `6`, publication-intent
+version `4`, published/active/low-stock, quantity `1/1/0/0/0`, one stable
+listing, four revisions, nine audit/events, one approved public media link, and
+two relevant media assets. No Edge redeploy occurred.
 
 Exact live target: Supabase project `Bookconnect_reactexpo`, ref
 `ahntbtktjjmvfosgkmgn`, host `https://ahntbtktjjmvfosgkmgn.supabase.co`,
-`ACTIVE_HEALTHY`, region `ap-southeast-2`. The checked-out branch is `main` at
-merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`, integrating Unit 7B
-commit `9f3e646`; preserve unrelated untracked `docs/codemap/` changes.
+`ACTIVE_HEALTHY`, region `ap-southeast-2`. The checked-out branch is
+`codex/unit7c-wu5-store-view-cutover` at commit `f4a9e858396474dcd08123eb976a47b019ef26f8`; preserve unrelated
+untracked `.zcode/` and `docs/codemap/` changes.
 
 M39 (`20260812003419`), M40 (`20260813000040`), M41 (`20260813070104`), and
 M42 (`20260814013536 marketplace_phase9_generated_authors_projection`) are
@@ -40,6 +58,30 @@ provenance-qualified candidate-derived development rows from
 `missing_metadata` to `ready`; all remained draft/private. M42 removes the
 listing-sync assignment to generated `marketplace_book_listings.authors_text`
 and leaves the generated column database-owned.
+
+M43 (`20260814000043_marketplace_phase9_unit7c_inventory_management.sql`) is
+applied live as `20260816122822`. It adds WU1 Store View reads, atomic Save,
+stock v2, safe public revisions, and the Unit 7B lifecycle/projection
+integration. The exact M43 disposable PostgreSQL vertical passed, and live
+readback shows the revision table with RLS enabled and zero rows.
+
+M44 (`20260814000044_marketplace_phase9_store_view_filter_contract.sql`) is
+applied live as `20260816122901`. It adds authenticated page v2 with
+actor/store/filter-bound cursors; it uses
+`attentionState = action_required` for `needs_attention` and `effectiveState`
+for the other named state filters. The corrected WU2A integration is 3/3,
+M44 migration Jest is 5/5, M43 regression is 15/15, and exact M01–M44 plus both
+real PostgreSQL verticals pass. M39–M44 remain byte-immutable.
+
+M45 (`20260815000045_marketplace_phase9_unit7c_media_history.sql`) is applied
+live as `20260816122929`. It adds bounded media/history authorization and
+read/reorder/remove/replace functions, exact replacement targets, and the
+allowlisted Owner history read. The exact M45 media/history vertical passed
+12/12 locally; final live readback shows the expected public functions and
+media capability columns. M46 is live exactly once as
+`20260816150126 marketplace_phase9_unit7c_private_save_revision_correction`.
+Its focused correction and connected private-only Save reproof passed; no
+business-row repair, Storage mutation, or Edge redeploy occurred.
 
 ### Live Unit 7B proof and current development configuration
 
@@ -360,6 +402,7 @@ Do not describe an action as authorized merely because it is listed as a future 
 | WU1/WU2 Owner inventory read boundary/client | [WU1](./work-units/owner-inventory-read-boundary-wu1-sdd.md); [WU2](./work-units/owner-inventory-read-client-wu2-sdd.md); 00 Master; 03 Review | [tracker 25](./trackers/25-owner-inventory-read-boundary-wu1-evidence.md), [tracker 26](./trackers/26-owner-inventory-read-client-wu2-evidence.md), DOC-8 §5, current-vs-target audit, requirements traceability |
 | 7A Create-only private inventory commit | [Unit 7A SDD](./work-units/07a-create-only-inventory-commit-sdd.md); 00 Master; 01 Data; 03 Review | Unit 6 SDD/contract transition, DOC-3/4/8, quantity/hold invariants, current-vs-target audit, traceability |
 | 7B Publication/projection | 03 Review; 05 Marketplace | private/public projection and current trigger audit; separately authorized after 7A |
+| 7C Owner Store View/post-commit management | [Unit 7C SDD](./work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md); [Unit 7B SDD](./work-units/07b-publication-sdd.md); 00 Master; 01 Data; 03 Review; 04 Security; 05 Marketplace | DOC-3/4/5/8; Unit 7A; current trigger/RPC/media code and migrations; current-vs-target audit; traceability; implementation tracker |
 | 8 Marketplace | 05 Marketplace; 01 Data | DOC-0, DOC-3, DOC-5, public/private tests |
 | 9 Damage/request photos | 04 Security; 06 Photo Request; 03 Review | DOC-1, DOC-6, DOC-14, retention matrix |
 | 10 Lifecycle worker | 04 Security; 02 Pipeline | retention/deletion fields and ops checks |

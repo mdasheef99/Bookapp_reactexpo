@@ -17,6 +17,13 @@ service-only public metadata-context wrapper. It exposes only a bounded claim
 attempt number, grants no client execution, and does not widen table, payload,
 credential, provider, store, or candidate access. Live readback confirms empty
 `search_path`, postgres ownership, and postgres/service-role-only execution.
+**Unit 7C M46 security checkpoint (live once 2026-08-16):** The bounded
+private-Save correction gates append-only public revision insertion on the
+server-derived `v_public_changed` value. M46 preserves postgres ownership,
+`SECURITY DEFINER`, empty `search_path`, authenticated/service execution, and
+anonymous denial for the Owner Save function. The exact M01→M46 disposable
+proof and authenticated private-only Save reproof passed; no private field was
+returned, no historical revision was rewritten, and no Edge redeploy occurred.
 **Unit 7A security checkpoint (local, unapplied 2026-08-12):** M39 adds one
 authenticated-only create command with server-derived Owner/store authority,
 current candidate/review/metadata revision fences, fixed object qualification,

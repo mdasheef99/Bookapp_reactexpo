@@ -1,6 +1,6 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** current/live and approved-target representations separated; Unit 7B live rollout PASS and integrated into `main`
+**Status:** current/live and approved-target representations separated; Unit 7C WU1/WU2A local database candidates complete, not live
 **Last updated:** 2026-08-14
 
 Unit 6A adds only local, unapplied Owner UX presentation/review support; it grants no Unit 7 inventory/publication mutation authority. See [tracker 19](../trackers/19-unit6a-owner-safe-backend-evidence.md).
@@ -192,6 +192,39 @@ leaving the database-generated projection authoritative. `inventory_media_links`
 permits at most one
 `primary_fallback` per inventory, and eligible public links require an approved
 sanitized `public_copy` derivative in `inventory-photos`.
+
+### Unit 7C WU1 local database delta (not live)
+
+`inventoryId` is the stable Owner identity and `store_inventory` remains the
+Owner-effective authority. Local M43 Store View page/detail RPCs expose versioned
+domain aggregates with server-derived lifecycle, effective state, attention,
+capabilities, versions, stock, safe media, public state, and history summary.
+Unit 7C adds no direct client table access.
+
+The local append-only `phase9_publication_revisions` relation contains `id`,
+`store_id`, `inventory_id`, monotonic `revision_number`, `inventory_version`,
+`publication_intent_version`, nullable `listing_id`, `source_action`,
+`command_id`, positive-allowlist `public_snapshot`, and `created_at`. It stores
+only snapshots that successfully became live and excludes private quantity
+buckets, shelf/location, internal notes, actor PII, provider payloads, and media
+storage paths/tokens. Activity/audit remains separate.
+
+M43 defines controlled `phase9_update_store_inventory_details_v1`,
+`phase9_adjust_inventory_stock_v2`, `phase9_store_view_page_v1`, and
+`phase9_store_view_detail_v1` boundaries. Its forward trigger correction makes a
+published `1 -> 0` become out-of-stock/unavailable without rejecting the stock
+transaction; initial publication at zero remains ineligible. Owner media
+list/reorder/remove/replace is not in WU1 and remains a separately authorized
+target. M39–M42 are immutable; M43 is locally verified and not live.
+
+Forward-only M44 adds no table or stored derived-state field. It defines only
+`phase9_store_view_page_v2(page_size,cursor,filter)`: the allowed filter enum is
+`all|private|live|paused|needs_attention|out_of_stock`; authoritative item
+composition occurs before filtering and keyset pagination; `needs_attention`
+selects `attentionState = action_required` while the other named state filters
+select `effectiveState`; and the opaque cursor binds contract version,
+authenticated actor/store, filter, `updated_at`, and `inventoryId`. M39–M43 remain
+immutable, and M44 is locally verified but not live.
 
 ### Unit 7A create-only commit boundary
 

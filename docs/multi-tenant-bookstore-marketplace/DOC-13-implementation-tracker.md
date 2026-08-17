@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-08-14
+**Date:** 2026-08-16
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -25,6 +25,34 @@ Every coding session must update tracking before ending if it changes any of the
 - next recommended task
 - handoff notes
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
+
+> **2026-08-17 Unit 7C resumed connected-canary and publication handoff:** The
+> bounded continuation completed through authenticated in-app Browser → existing
+> Owner Edge v8 → DB against `Bookconnect_reactexpo` /
+> `ahntbtktjjmvfosgkmgn`. Private-only Save advanced inventory version `3 -> 4`
+> without a new public revision; a deliberate stale Save returned the refreshed-
+> details conflict with zero side effects; stock `1 -> 0 -> 1`, Pause → Republish,
+> approved media ADD through the existing U7B path, history/privacy, and browser
+> routing all passed. Final readback is inventory version `6`, publication intent
+> version `4`, quantity `1/1/0/0/0`, stable active/low-stock listing, four public
+> revisions, nine audit/events, and one approved public media link. No migration,
+> Edge redeploy, direct SQL business write, repair/reset, or manual worker claim
+> occurred. The proven correction is committed as `f4a9e858396474dcd08123eb976a47b019ef26f8`;
+> the current exact action is publish this branch and merge it into `main`.
+
+> **2026-08-16 Unit 7C connected-verification blocker (corrected):** Exact HEAD
+> `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` was deployed only to
+> `phase9-owner-ingestion`, once, as ACTIVE version 8 with JWT verification.
+> Authenticated Store View reads and non-enumeration passed. The first and only
+> canary mutation changed private `internalNotes` and inventory version but
+> incorrectly seeded append-only public revision 1 for a pre-existing published
+> item with no revision baseline. No private data leaked and the customer
+> listing did not change. M46 was then applied once as live migration
+> `20260816150126`, with no Edge redeploy, repair, reset, or historical-row
+> modification. A fresh authenticated private-only Save advanced version
+> `2 -> 3`, changed only `internalNotes`, left the listing/public DTO and
+> revision count unchanged (`1 -> 1`), and added one audit/event pair. Status is
+> `unit7c_m46_correction_pass_connected_save_reproof_complete`.
 
 > 2026-08-09 Phase 9 schema-free Gemini JSON correction is locally complete.
 > Gemini now receives JSON MIME mode and the flat `vision` prompt with no provider
@@ -72,6 +100,22 @@ Every material session must also leave one exact active work unit and next autho
 If implementation changes product or architecture behavior, update the relevant source spec and record the reason in this tracker.
 ---
 ## 2. Current Status
+
+> **2026-08-16 Unit 7C WU5 commit and M43–M45 application checkpoint:**
+> The proven WU5 Owner Store View cutover is committed locally as `380f2b3` on
+> `codex/unit7c-wu5-store-view-cutover`. The exact development project
+> `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` remained `ACTIVE_HEALTHY`;
+> M43, M44, and M45 were applied exactly once as live versions
+> `20260816122822`, `20260816122901`, and `20260816122929`. Readback found the
+> RLS-enabled publication-revision table with zero rows, 11 public Unit 7C
+> functions, 5 security helpers, both media capability columns, and unchanged
+> inventory/listing counts `10/9`. No deployment, push, Edge change, Storage
+> mutation, or business-row mutation occurred. Fresh focused Jest is 10 suites/
+> 67 tests, disposable Unit 7C integration is 30/30, Expo export and continuity
+> validation pass. Integrated Unit 7C review and connected Edge→DB verification
+> remain separately gated. Advisor readback retains expected RLS/no-policy and
+> authenticated SECURITY DEFINER notices, media FK index notices, and the
+> pre-existing `spatial_ref_sys` RLS error; no remediation was applied.
 
 > **2026-08-12 Unit 7A live proof completion checkpoint (04:41–~05:00 UTC):**
 > `phase9-owner-ingestion` is ACTIVE as version 5. The deployed bundle contains
@@ -826,12 +870,125 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7B live rollout PASS; integrated into `main`** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C resumed connected canary PASS; publication/merge handoff pending** |
 | Overall status | `in_progress` |
-| Last updated | 2026-08-14 |
-| Latest handoff | M39, M40, M41, and M42 are live exactly once on `ahntbtktjjmvfosgkmgn`. M42 forward-corrects the listing-sync trigger so the database owns generated `marketplace_book_listings.authors_text`. Owner Edge v7 and Render publication worker `srv-d9v6gsc9v7es73f1d6o0` are live/ready on exact commit `c3c2726f4ec1455aa7f8cc2f16d206a9021d3649`. Unit 7B completed the live Publish -> Discover -> Pause -> Republish, transient retry, stale-intent fencing, and final connected-state proof. Commit `9f3e646` is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`. |
-| Current risk level | Unit 6F native validation remains `NOT_RUN`/`UNRESOLVED` deferred debt. Unit 7C has not started. The unrelated untracked `docs/codemap/` directory remains preserved; no further Phase 9 live mutation is authorized without a new scope decision. |
-| Next recommended task | Obtain explicit authorization for the next Phase 9 scope. Do not start Unit 7C, production rollout, payment work, or Phases 7/8 from this handoff. |
+| Last updated | 2026-08-17 |
+| Latest handoff | Unit 7C M46 correction is committed as `f4a9e858396474dcd08123eb976a47b019ef26f8` on `codex/unit7c-wu5-store-view-cutover`; M43–M46 remain immutable/live exactly once, existing Edge v8 still serves source HEAD `5cfc08e`, and the resumed connected canary passed with final inventory version `6`, publication intent version `4`, four revisions, nine audit/events, and one approved public media link. |
+| Current risk level | The project Playwright CLI is `NOT_RUN_ENVIRONMENT` because Node failed with `EPERM` while `lstat`-ing `C:\Users\user`; the bounded in-app authenticated Browser canary passed. Full repository TypeScript remains blocked by the unchanged WU4 E2E typing error. Unit 6F native debt remains unrelated. The untracked `.zcode/` and `docs/codemap/` directories remain preserved and untouched. |
+| Next recommended task | Publish this branch and merge it into `main`. After that handoff, obtain separate authorization for the next Phase 9 work unit; do not apply another migration, redeploy Edge, repair/reset the historical revision, or perform further Unit 7C connected mutation without approval. |
+
+### 2026-08-16 Unit 7C resumed connected canary PASS
+
+- The bounded continuation used the authenticated in-app Browser through the
+  existing Owner Edge v8 and the exact development project
+  `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`. It covered private-only
+  Save, deliberate stale Save rejection, stock `1 -> 0 -> 1`, Pause → Republish,
+  approved media ADD, history/privacy, and Store View/Inventory/Store Profile
+  routing.
+- Final readback: canary inventory version `6`; publication intent version `4`;
+  published/active/low-stock; quantity `1/1/0/0/0`; stable listing identity;
+  four revisions; audit/events `9/9`; one approved public media link; and two
+  relevant media assets. Public snapshots remained allowlisted without private
+  notes, raw storage paths, upload tokens, or provider payloads.
+- Media ADD deliberately reused the existing U7B authorization/upload/link path,
+  so it emitted no separate Unit 7C audit/event/revision. No migration, Edge
+  redeploy, direct SQL business write, repair/reset, or manual worker claim
+  occurred. The current repository action is publication and merge to `main`.
+
+### 2026-08-16 Unit 7C M46 bounded correction PASS
+
+- The confirmed defect was the unconditional M43 Save call to the append-only
+  publication-revision helper. When no prior revision existed, the helper's
+  NULL-baseline comparison treated a private-only Save as a first public
+  revision even though `v_public_changed=false`.
+- M46 is the single forward-only migration
+  `20260816000046_marketplace_phase9_unit7c_private_save_revision_correction.sql`.
+  It preserves the M43 transaction, idempotency, audit/event, projection, and
+  security boundaries and calls the revision helper only when
+  `v_public_changed`; private-only Save returns no revision.
+- RED-first isolated proof reproduced the pre-M46 defect (`expected 0,
+  actual 1`). Post-correction disposable inventory management is 18/18; the
+  M01→M46 real-PostgreSQL proof is PASS; existing filter/media-history
+  regressions are 15/15; static migration contracts are 20/20; focused
+  Owner Edge/client contracts are 30/30.
+- Exact project `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` was
+  re-verified before application. M46 applied once as live version
+  `20260816150126`. Function readback confirms postgres owner,
+  `SECURITY DEFINER`, empty `search_path`, authenticated/service execution,
+  anonymous denial, and the corrected `IF v_public_changed ... ELSE NULL`
+  branch. M39–M45 remain byte-immutable.
+- Authenticated Store View reproof through deployed Owner Edge v8 saved only
+  `internalNotes` on `Individuals`: version `2 -> 3`, listing identity and
+  public DTO unchanged, quantity `1/1/0/0/0` unchanged, revision count `1 -> 1`,
+  and audit/event counts `3 -> 4`. The historical false revision was not
+  deleted or modified. Edge redeploy count is zero.
+- Exact next action: obtain separate authorization before resuming the
+  remaining connected canary matrix. This correction stops here.
+
+### 2026-08-14 Unit 7C WU3 local completion
+
+- Added strict separate Save and stock Edge/client commands over unchanged M43,
+  exact command identity, no mutation retry, authoritative cache refresh, stale
+  refetch without replay, and bounded edit/stock Store View interactions.
+- Store View lifecycle controls are server-capability-driven and reuse existing
+  Unit 7B publication/retry services/hooks for Publish, Pause, Republish, Make
+  Private, and Retry; no second lifecycle path was introduced.
+- Store View/Edge is 63/63; Unit 7C migration contracts are 10/10; selected Unit
+  7B/WU2/routing/worker/legacy Inventory regressions are 102 passed with 4
+  pre-existing skips. TypeScript, Deno, Expo web export, and the fully
+  intercepted management browser flow pass.
+- Local Edge→DB remains `NOT_RUN_ENVIRONMENT`; the browser proof is not database
+  mutation evidence. No migration, connected Supabase/Storage mutation,
+  deployment, stage, commit, or push occurred. `docs/codemap/` remains untouched.
+
+### 2026-08-14 Unit 7C WU2 local completion
+
+- Added the controlled Store View page/detail read vertical from unchanged
+  M43/M44 through the existing Owner Edge router, strict client decoding/query
+  identity, hidden routes, and read-only list/detail UI. Publication-failed rows
+  remain distinct under Needs Attention and routing uses `inventoryId` only.
+- Focused WU2 is 31/31; combined Owner/routing regression is 274/274;
+  TypeScript, Deno check, Expo web export, and intercepted Edge browser smoke
+  pass. Local Edge→DB is accurately `NOT_RUN_ENVIRONMENT`.
+- No migration, connected Supabase/Storage mutation, deployment, stage, commit,
+  or push occurred. Read-only Supabase MCP reconfirmed the exact healthy project
+  and M42 remote tail; `docs/codemap/` remains untouched.
+
+### 2026-08-14 Unit 7C WU2A local completion
+
+- Corrected only local M44: Store View page v2 keeps `private|live|paused|out_of_stock`
+  on `effectiveState`, uses `attentionState = action_required` for
+  `needs_attention`, and binds opaque cursor context to actor, store, and filter.
+  Publication-failed rows remain a distinct returned state with their
+  server-composed retry capability.
+- Affected evidence is WU2A integration 3/3, M44 migration Jest 5/5, M43 WU1
+  regression 15/15, exact M01–M44 replay, unchanged WU1 real vertical, and
+  `UNIT_7C_WU2A_REAL_POSTGRES_FILTER_PASS` across all filters and two stores.
+- Exact-project read-only verification still shows M42 as the remote tail. No
+  connected mutation, deployment, application work, stage, commit, or push occurred.
+
+### 2026-08-14 Unit 7C Work Unit 1 local completion
+
+- Added local-only forward candidate M43 for Store View reads, atomic Save,
+  stock v2, safe public revisions, and Unit 7B lifecycle/projection reuse.
+- Expected RED was 0/11. Final evidence is Unit 7C integration 15/15,
+  migration Jest 5/5, focused Unit 7A/7B regression 40/40, and exact final
+  M01–M43 disposable PostgreSQL vertical/readback PASS.
+- Read-only exact-project preflight reconfirmed `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn` healthy with M42 as the remote tail. No connected
+  migration, database/Storage/business-row mutation, deployment, stage,
+  commit, or push occurred.
+- Media management is deferred to the next separately authorized work unit.
+
+### 2026-08-14 Unit 7C normative SDD completion
+
+- Froze the Owner Store View/post-commit management contract in one 293-line
+  SDD, including stable inventory identity, atomic Save, separate stock/media,
+  Unit 7B lifecycle reuse, safe revisions, IA cutover, and acceptance A–H.
+- Documentation only: no production code/test, migration file, Supabase/Storage
+  mutation, deployment, live verification, stage, commit, or push.
+- No contradiction/blocker found. The next gate is explicit authorization for
+  Unit 7C forward database-contract/red-test implementation.
 
 ### 2026-08-14 Unit 7B live-rollout closeout
 
@@ -869,7 +1026,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit7b_main_integrated_next_scope_authorization` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7B SDD](./implementation/phase-9-image-inventory/work-units/07b-publication-sdd.md) · [Unit 7B evidence](./implementation/phase-9-image-inventory/trackers/30-unit7b-safe-publication-evidence.md) | Unit 7A/M39 remain live and byte-unchanged. M40/M41/M42 are live exactly once; M42 corrected the generated-author projection. Owner Edge v7 and the Render publication worker are live/ready. Unit 7B Publish -> Discover -> Pause -> Republish, transient retry, stale-intent fencing, and final connected readback passed. Commit `9f3e646` is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`; Unit 7C remains separately gated. |
+| Phase 9: Image-to-LLM Inventory | `unit7c_connected_verification_blocked_private_save_false_public_revision` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7C SDD](./implementation/phase-9-image-inventory/work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | Owner Edge v8 is active with JWT verification. Connected reads passed; the first private-only Save created a false append-only public revision, so all further canary actions stopped pending correction review and fresh authorization. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -890,8 +1047,9 @@ If implementation changes product or architecture behavior, update the relevant 
 - Phase 9 Unit 6 automatic/functional pipeline is complete/PASS; native Unit 6F
   validation remains deferred `NOT_RUN`/`UNRESOLVED` debt and is not marked
   PASS. Unit 7B live rollout is PASS and integrated into `main` at merge commit
-  `53edbddc9c5417b34cb169599e8282b162e183b3`; Unit 7C remains out of scope
-  until separately authorized.
+  `53edbddc9c5417b34cb169599e8282b162e183b3`; Unit 7C WU1/WU2A/WU2/WU3 are
+  locally complete, while connected M43/M44 application, media/history, final
+  cutover, deployment, and commit/push remain separately gated.
 
 ---
 
@@ -976,8 +1134,10 @@ Documentation milestones completed:
   publication worker are live/ready; Publish -> Discover -> Pause -> Republish,
   transient retry, stale-intent fencing, and final connected readback passed.
   The development active-listing entitlement is now 10; main integration is
-  complete at `53edbddc9c5417b34cb169599e8282b162e183b3`, while Unit 7C
-  remains separately gated.
+  complete at `53edbddc9c5417b34cb169599e8282b162e183b3`.
+- Phase 9 Unit 7C WU1 local completion (2026-08-14): M43 and bounded database
+  evidence pass locally, including real PostgreSQL replay/readback. M43 remains
+  unapplied; media, client/UI, deployment, and connected proof remain gated.
 - Expert review findings incorporated: platform support/disputes are core ops, founding-store trial model added, Bangalore locality pilot added, seller-of-record decision added, post-payment unavailable flow clarified, minors/school users marked out of pilot scope.
 - DOC-14 Commerce State Machines created.
 - DOC-15 Finance, Tax, and Settlement Operating Model created.
@@ -987,16 +1147,18 @@ Documentation milestones completed:
 
 ## 8. Next Recommended Task
 
-**Current 2026-08-14 handoff:** Phase 9 Unit 7B live rollout is PASS and is
-integrated into `main` at merge commit
-`53edbddc9c5417b34cb169599e8282b162e183b3`. M39, M40, M41, and M42 are live
-exactly once on the verified development project; the publication worker and
-Owner Edge are live; and the connected Publish -> Discover -> Pause ->
-Republish, transient retry, stale-intent fencing, and final readback proof are
-recorded.
+**Current 2026-08-14 handoff:** Phase 9 Unit 7C WU3 is locally complete. The
+Store View management vertical consumes unchanged M43 Save/stock through strict
+separate Owner Edge/client/query/UI layers and reuses Unit 7B publication/retry;
+focused, regression, TypeScript, Deno, web export, and intercepted browser
+proofs pass. Unit 7B
+remains live-verified and integrated into `main`; M39–M43 are immutable, and
+M43/M44 are not applied.
 
-Next work requires explicit authorization for the next Phase 9 scope. Unit 7C,
-production rollout, payments, Phases 7/8, and M09 remain separately gated. The
+Next work requires separate authorization to commit the exact WU3 vertical.
+M43/M44 application, Supabase or
+Storage mutation, media/history work, final cutover, deployment, live verification, production
+rollout, payments, Phases 7/8, and M09 remain separately gated. The
 deferred native Unit 6F validation debt remains `NOT_RUN`/`UNRESOLVED` and is
 not silently converted to PASS.
 

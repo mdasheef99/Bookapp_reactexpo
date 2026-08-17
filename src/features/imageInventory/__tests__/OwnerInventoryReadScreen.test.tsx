@@ -2,13 +2,15 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { OwnerInventoryReadError } from '../api/ownerInventoryReadService';
 import { useOwnerInventoryRead } from '../queries/ownerInventoryReadQueries';
 import { OwnerInventoryReadScreen } from '../screens/OwnerInventoryReadScreen';
-import { usePublicationCommands } from '../queries/publicationQueries';
 
+const mockPush = jest.fn();
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
+jest.mock('expo-router', () => ({
+    useRouter: () => ({ push: mockPush }),
+}));
 jest.mock('../queries/ownerInventoryReadQueries', () => ({
     useOwnerInventoryRead: jest.fn(),
 }));
-jest.mock('../queries/publicationQueries', () => ({ usePublicationCommands: jest.fn() }));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
         colors: {
@@ -86,7 +88,6 @@ describe('OwnerInventoryReadScreen', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         readHook.mockReturnValue(hookState());
-        (usePublicationCommands as jest.Mock).mockReturnValue({ mutateAsync: jest.fn() });
     });
 
     it('distinguishes loading from a successful empty inventory', () => {
@@ -137,23 +138,34 @@ describe('OwnerInventoryReadScreen', () => {
         expect(screen.queryByText('No inventory items found')).toBeNull();
     });
 
-    it('renders controlled publication and public-media controls without legacy edit writes', () => {
+    it('renders contextual committed rows without rich management controls', () => {
         readHook.mockReturnValue(hookState({ items: [row] }));
         const screen = render(<OwnerInventoryReadScreen identity={identity} />);
 
         expect(screen.getByText('The Bookshop')).toBeTruthy();
         expect(screen.getByTestId('filter-condition-very_good')).toBeTruthy();
         expect(screen.getByTestId('filter-source-metadata_import')).toBeTruthy();
+        expect(screen.getByText('Committed inventory · draft')).toBeTruthy();
+        expect(screen.getByTestId(`inventory-open-store-view-${row.id}`)).toBeTruthy();
         expect(screen.queryByText('Manual book entry')).toBeNull();
         expect(screen.queryByTestId('save-inventory-draft')).toBeNull();
         expect(screen.queryByTestId('check-duplicates')).toBeNull();
-        expect(screen.getByTestId(`publish-${row.id}`)).toBeTruthy();
+        expect(screen.queryByTestId(`publish-${row.id}`)).toBeNull();
         expect(screen.queryByTestId(`pause-${row.id}`)).toBeNull();
-        expect(screen.getByTestId(`manage-public-media-${row.id}`)).toBeTruthy();
+        expect(screen.queryByTestId(`manage-public-media-${row.id}`)).toBeNull();
+        expect(screen.queryByTestId(`private-${row.id}`)).toBeNull();
+        expect(screen.queryByTestId(`retry-publication-${row.id}`)).toBeNull();
         expect(screen.queryByTestId(`edit-modal-${row.id}`)).toBeNull();
         expect(screen.queryByTestId(`save-edit-${row.id}`)).toBeNull();
         expect(screen.queryByTestId('bulk-publish')).toBeNull();
         expect(screen.queryByTestId('bulk-pause')).toBeNull();
+        expect(screen.queryByTestId('publication-filter-published')).toBeNull();
+
+        fireEvent.press(screen.getByTestId(`inventory-open-store-view-${row.id}`));
+        expect(mockPush).toHaveBeenCalledWith({
+            pathname: '/(store-owner)/store-view/[inventoryId]',
+            params: { inventoryId: row.id },
+        });
     });
 
     it('does not offer retry when Owner access is unauthorized', () => {

@@ -1,5 +1,5 @@
-import StoreProfileScreen from '@/features/stores/screens/StoreProfileScreen';
+import { Redirect } from 'expo-router';
 
 export default function StorefrontRoute() {
-    return <StoreProfileScreen />;
+    return <Redirect href="/(store-owner)/store-profile" />;
 }

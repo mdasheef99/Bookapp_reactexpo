@@ -11,7 +11,29 @@ import {
   parsePublicationResponse, PUBLICATION_CONTRACT_VERSION,
   PublicationRequest,
 } from '../contracts/publication.ts';
+import {
+  parseStoreViewRpcResponse,
+  STORE_VIEW_CONTRACT_VERSION,
+  StoreViewRequest,
+} from '../contracts/storeView.ts';
+import {
+  STORE_VIEW_MANAGEMENT_CONTRACT_VERSION,
+  StoreViewManagementRequest,
+} from '../contracts/storeViewManagement.ts';
+import {
+  parseStoreViewMediaRequest,
+  STORE_VIEW_MEDIA_CONTRACT_VERSION,
+  StoreViewMediaRequest,
+} from '../contracts/storeViewMedia.ts';
+import {
+  parseStoreViewHistoryRequest,
+  STORE_VIEW_HISTORY_CONTRACT_VERSION,
+  StoreViewHistoryRequest,
+} from '../contracts/storeViewHistory.ts';
 import { sha256Hex, StoredImageObject, storedImageEnvelope } from '../media/sourceIdentity.ts';
+import { executeStoreViewManagement } from './storeViewManagement.ts';
+import { executeStoreViewMedia } from './storeViewMedia.ts';
+import { executeStoreViewHistory } from './storeViewHistory.ts';
 
 type RpcResult = { data: any; error: { message?: string } | null };
 type Client = {
@@ -34,7 +56,7 @@ type SignedUploadTransportResponse = Readonly<{
 
 function unwrap(result: RpcResult): any {
   if (result.error) {
-    const safeCode = result.error.message?.match(/\b(P9_(?:AUTH_REQUIRED|OWNER_NOT_AUTHORIZED|REQUEST_INVALID|CURSOR_INVALID|NOT_FOUND|STATE_CONFLICT|VERSION_CONFLICT|CANDIDATE_VERSION_CONFLICT|INPUT_HAS_CANDIDATES|SINGLE_IMAGE_LIMIT|IDEMPOTENCY_MISMATCH|MEDIA_NOT_APPROVED|PUBLICATION_INELIGIBLE|PUBLICATION_FAILED|INTERNAL_ERROR))\b/u)?.[1];
+    const safeCode = result.error.message?.match(/\b(P9_(?:AUTH_REQUIRED|OWNER_NOT_AUTHORIZED|REQUEST_INVALID|CURSOR_INVALID|NOT_FOUND|STATE_CONFLICT|VERSION_CONFLICT|CANDIDATE_VERSION_CONFLICT|INPUT_HAS_CANDIDATES|SINGLE_IMAGE_LIMIT|IDEMPOTENCY_MISMATCH|MEDIA_NOT_APPROVED|MEDIA_CHANGE_UNSAFE|MEDIA_LINK_NOT_FOUND|MEDIA_ALREADY_LINKED|PUBLICATION_INELIGIBLE|PUBLICATION_FAILED|NO_CHANGES|QUANTITY_INVARIANT_FAILED|INTERNAL_ERROR))\b/u)?.[1];
     throw new Error(safeCode ?? 'P9_INTERNAL_ERROR');
   }
   return result.data;
@@ -110,6 +132,46 @@ export async function executeOwnerIngestion(
   userClient: Client,
   serviceClient: Client,
 ): Promise<Record<string, unknown>> {
+  if (request.contractVersion === STORE_VIEW_MANAGEMENT_CONTRACT_VERSION) {
+    return executeStoreViewManagement(
+      request as StoreViewManagementRequest,
+      userClient,
+      unwrap,
+    );
+  }
+
+  if (request.contractVersion === STORE_VIEW_MEDIA_CONTRACT_VERSION) {
+    return executeStoreViewMedia(
+      request as StoreViewMediaRequest,
+      userClient,
+      unwrap,
+    );
+  }
+
+  if (request.contractVersion === STORE_VIEW_HISTORY_CONTRACT_VERSION) {
+    return executeStoreViewHistory(
+      request as StoreViewHistoryRequest,
+      userClient,
+      unwrap,
+    );
+  }
+
+  if (request.contractVersion === STORE_VIEW_CONTRACT_VERSION) {
+    const storeView = request as StoreViewRequest;
+    if (storeView.action === 'read_store_view_page') {
+      const data = unwrap(await userClient.rpc('phase9_store_view_page_v2', {
+        p_page_size: storeView.pageSize ?? 20,
+        p_cursor: storeView.cursor ?? null,
+        p_filter: storeView.filter ?? 'all',
+      }));
+      return parseStoreViewRpcResponse(storeView.action, data) as Record<string, unknown>;
+    }
+    const data = unwrap(await userClient.rpc('phase9_store_view_detail_v1', {
+      p_inventory_id: storeView.inventoryId,
+    }));
+    return parseStoreViewRpcResponse(storeView.action, data) as Record<string, unknown>;
+  }
+
   if (request.contractVersion === PUBLICATION_CONTRACT_VERSION) {
     const publication = request as PublicationRequest;
     let data: unknown;
@@ -135,14 +197,25 @@ export async function executeOwnerIngestion(
       }));
     } else if (publication.action === 'authorize_public_copy') {
       const expiresAt = new Date(Date.now() + 15 * 60_000).toISOString();
-      const issued = unwrap(await userClient.rpc('phase9_authorize_public_copy_upload_v2', {
-        p_inventory_id: publication.inventoryId, p_role: publication.role,
-        p_ordinal: publication.ordinal, p_declared_mime: publication.declaredMime,
-        p_declared_bytes: publication.declaredBytes,
-        p_envelope_sha256: publication.envelopeSha256,
-        p_expires_at: expiresAt, p_idempotency_key: publication.idempotencyKey,
-        p_command_id: publication.commandId,
-      }));
+      const issued = publication.operationKind
+        ? unwrap(await userClient.rpc('phase9_authorize_store_view_media_upload_v1', {
+          p_inventory_id: publication.inventoryId, p_role: publication.role,
+          p_ordinal: publication.ordinal, p_operation_kind: publication.operationKind,
+          p_target_media_link_id: publication.targetLinkId ?? null,
+          p_declared_mime: publication.declaredMime,
+          p_declared_bytes: publication.declaredBytes,
+          p_envelope_sha256: publication.envelopeSha256,
+          p_expires_at: expiresAt, p_idempotency_key: publication.idempotencyKey,
+          p_command_id: publication.commandId,
+        }))
+        : unwrap(await userClient.rpc('phase9_authorize_public_copy_upload_v2', {
+          p_inventory_id: publication.inventoryId, p_role: publication.role,
+          p_ordinal: publication.ordinal, p_declared_mime: publication.declaredMime,
+          p_declared_bytes: publication.declaredBytes,
+          p_envelope_sha256: publication.envelopeSha256,
+          p_expires_at: expiresAt, p_idempotency_key: publication.idempotencyKey,
+          p_command_id: publication.commandId,
+        }));
       const signed = unwrap(await serviceClient.storage.from(issued.bucket)
         .createSignedUploadUrl(issued.path));
       data = {

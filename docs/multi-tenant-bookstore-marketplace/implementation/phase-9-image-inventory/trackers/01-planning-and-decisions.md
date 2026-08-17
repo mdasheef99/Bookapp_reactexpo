@@ -1,7 +1,7 @@
 # Phase 9 Planning and Decision Tracker
 
-**Status:** `approved_baseline`
-**Last updated:** 2026-08-12
+**Status:** `unit7c_normative_design_frozen`
+**Last updated:** 2026-08-14
 **Purpose:** retain detailed product decisions, audit evidence, reconciliations, and deferred choices without inflating the master tracker
 
 ## Decision register
@@ -80,6 +80,8 @@
 | P9-D70 | A Start/Close session has one current image. The Owner may explicitly remove it only before candidate lineage exists, canceling only exact input work and scheduling hold-aware private cleanup; only then may one replacement be uploaded. No candidate, inventory, listing, or immediate Storage cascade is allowed. | founder decision 2026-08-10; supersedes P9-D04 multiple-image portion |
 | P9-D71 | Unit 7A is create-only: each explicit commit of an eligible reviewed candidate creates exactly one new private inventory row from the current server-held saved review. It never performs duplicate lookup, merge, quantity increment, manual match, or “keep separate” choice. The row starts with `total_quantity=available_quantity=q` and `reserved_quantity=sold_quantity=removed_quantity=0`; publication is Unit 7B. | owner-frozen 2026-08-12; supersedes P9-D19–P9-D21 and Unit 6 duplicate-action semantics for Unit 7A |
 | P9-D72 | Unit 7A guarantees quantity-bucket equality for each row it creates but does not strengthen the global historical inventory constraint; M09/global constraint work remains separately assessed and authorized. Valid uncommitted candidates stay uncommitted, and `skipped_false_detection` remains the only skipped candidate disposition. | owner-frozen 2026-08-12 |
+| P9-D73 | Unit 7C makes Store View the sole rich post-commit Owner-management surface, with `inventoryId` stable across private/live/paused/attention/out-of-stock states. Inventory remains acquisition/review/session/recovery; Store Profile is secondary settings. | owner-frozen 2026-08-14; Unit 7C SDD §§1–5/12 |
+| P9-D74 | Unit 7C keeps `store_inventory` authoritative and listings projection-only; ordinary Save is synchronous/transactional, Stock and Media are separate controlled commands, Unit 7B lifecycle commands are reused, and activity history remains distinct from safe public revisions. | owner-frozen 2026-08-14; Unit 7C SDD §§2/6–11/13–16 |
 
 ## Source reconciliation
 
@@ -140,6 +142,15 @@ Audit performed read-only on 2026-07-19 after `get_project` verification.
 - [ ] Supabase application authorization and exact-project re-verification.
 
 ## Append-only planning log
+
+### 2026-08-14 — Unit 7C normative SDD
+
+- Converted the final contract reconciliation into one bounded 293-line SDD.
+- Reconciled the newer Owner IA decision against DOC-8's older recommended
+  layout without changing unrelated console behavior.
+- No implementation, migration, database, deployment, or live verification was
+  authorized or performed. The next gate is explicit approval for forward
+  database-contract/red-test work.
 
 ### 2026-07-29 — Unit 5C Lite documentation reconciliation
 
