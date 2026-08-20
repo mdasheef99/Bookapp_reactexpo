@@ -93,4 +93,19 @@ describe('booksSearchCache', () => {
         const result = getCachedSearchResults('update query');
         expect(result?.items[0].id).toBe('updated-book');
     });
+
+    it('differentiates cache keys by startIndex (page 0 vs 20)', () => {
+        setCachedSearchResults('paged query', [mockBook], undefined, 0, 20);
+        expect(getCachedSearchResults('paged query', undefined, 0, 20)).not.toBeNull();
+        expect(getCachedSearchResults('paged query', undefined, 20, 20)).toBeNull();
+        setCachedSearchResults('paged query', [{ ...mockBook, id: 'page-20-book' }], undefined, 20, 20);
+        expect(getCachedSearchResults('paged query', undefined, 20, 20)?.items[0].id).toBe('page-20-book');
+    });
+
+    it('differentiates cache keys by filters (language/priceType)', () => {
+        setCachedSearchResults('filtered query', [mockBook], { language: 'en' } as any, 0, 20);
+        expect(getCachedSearchResults('filtered query', { language: 'en' } as any, 0, 20)).not.toBeNull();
+        expect(getCachedSearchResults('filtered query', { language: 'hi' } as any, 0, 20)).toBeNull();
+        expect(getCachedSearchResults('filtered query', { language: 'en', priceType: 'free' } as any, 0, 20)).toBeNull();
+    });
 });

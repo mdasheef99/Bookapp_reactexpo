@@ -365,8 +365,8 @@ export async function searchGoogleBooksCached(
 ): Promise<PaginatedResult & { fromCache: boolean }> {
     const trimmed = query.trim();
 
-    // Check cache first
-    const cached = getCachedSearchResults(trimmed);
+    // Check cache first - key includes filters + pagination to avoid wrong results
+    const cached = getCachedSearchResults(trimmed, filters as Record<string, unknown>, startIndex, maxResults);
     if (cached && !cached.isStale) {
         return {
             items: cached.items,
@@ -406,8 +406,8 @@ export async function searchGoogleBooksCached(
         const items = data.items || [];
         const totalItems = data.totalItems || 0;
 
-        // Cache successful Google results.
-        setCachedSearchResults(trimmed, items);
+        // Cache successful Google results - keyed by filters + pagination
+        setCachedSearchResults(trimmed, items, filters as Record<string, unknown>, startIndex, maxResults);
 
         return {
             items,
