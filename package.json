@@ -17,6 +17,8 @@
     "sentry:upload-sourcemaps:web": "npm run export:web && npm run sentry:upload-sourcemaps",
     "test": "jest",
     "test:phase9:db": "node --experimental-vm-modules --test supabase/tests/phase9/*.integration.test.mjs",
+    "test:phase9:u8b:postgres": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File supabase/tests/phase9/run-phase9-bookstore-first-postgres.ps1",
+    "test:phase9:u8c:postgres": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File supabase/tests/phase9/run-phase9-bookstore-first-postgres.ps1 -IncludeU8C",
     "benchmark:phase9:sanitizer": "node scripts/benchmark-phase9-sanitizer.mjs",
     "build:phase9:media-worker": "tsc -p workers/phase9-media-validation-worker/tsconfig.json",
     "start:phase9:media-worker": "node .phase9-dist/workers/phase9-media-validation-worker/server.js",
