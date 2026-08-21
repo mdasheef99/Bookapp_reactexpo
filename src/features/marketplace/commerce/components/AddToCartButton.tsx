@@ -26,7 +26,8 @@ export function AddToCartButton({ listingId, title }: { listingId: string; title
         }
     };
     return <Pressable accessibilityRole="button" accessibilityLabel={`Add ${title} to marketplace cart`}
-        disabled={pending} onPress={(event) => { event.stopPropagation(); void add(); }}>
+        disabled={pending} onPress={(event) => { event.stopPropagation(); void add(); }}
+        style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}>
         <Text style={{ color: colors.accent, fontWeight: '800' }}>{pending ? 'Adding…' : 'Add to cart'}</Text>
         {error ? <Text style={{ color: colors.error, fontSize: 12 }}>{error}</Text> : null}
     </Pressable>;

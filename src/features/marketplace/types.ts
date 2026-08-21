@@ -96,3 +96,132 @@ export interface PublicStoreProfile {
 export interface MarketplaceSearchInput {
     query: string;
 }
+
+export type PublicBookCondition = 'new' | 'like_new' | 'very_good' | 'good' | 'acceptable';
+
+export interface PublicBookstoreSummary {
+    publicStoreId: string;
+    displayName: string;
+    logo: string | null;
+    locality: string | null;
+    city: string | null;
+    state: string | null;
+    pickup: boolean;
+    delivery: boolean;
+    returnPolicy: StoreReturnPolicyType;
+}
+
+export interface BookstoreSearchResult {
+    store: PublicBookstoreSummary;
+    matchedBook: {
+        matchContext: string;
+        originalTitle: string;
+        authors: string[];
+        language: string | null;
+        publicIsbn: string | null;
+        cover: string;
+        boundedMatchKind: string;
+    };
+    offerSummary: {
+        offerCount: number;
+        lowestPriceMinor: number;
+        currency: 'INR';
+        conditionSummary: {
+            best: PublicBookCondition;
+            worst: PublicBookCondition;
+            distinct: PublicBookCondition[];
+        };
+        damageSummary: {
+            hasUndamagedOffers: boolean;
+            hasDamagedOffers: boolean;
+        };
+        fulfillmentSummary: {
+            pickupOfferCount: number;
+            deliveryOfferCount: number;
+        };
+        availabilityBand: Exclude<ListingAvailabilityStatus, 'unavailable'>;
+        confirmationBeforePayment: true;
+    };
+}
+
+export interface BookstoreSearchPage {
+    contractVersion: string;
+    rankingVersion: string;
+    bookstoreCount: number;
+    items: BookstoreSearchResult[];
+    pageInfo: { nextCursor: string | null; hasNextPage: boolean };
+}
+
+export interface StorefrontProfile extends PublicBookstoreSummary {
+    description: string | null;
+    cover: string | null;
+    operatingHours: Record<string, unknown>;
+}
+
+export interface StorefrontOffer {
+    listingId: string;
+    priceMinor: number;
+    currency: 'INR';
+    condition: PublicBookCondition;
+    hasDamage: boolean;
+    publicDamageNote: string | null;
+    damageTypes: string[];
+    availabilityStatus: Exclude<ListingAvailabilityStatus, 'unavailable'>;
+    fulfillmentOptions: string[];
+    confirmationBeforePayment: true;
+}
+
+export interface StorefrontTitleGroup {
+    safeTitlePresentation: {
+        originalTitle: string;
+        authors: string[];
+        language: string | null;
+        publicIsbn: string | null;
+        cover: string;
+    };
+    offers: StorefrontOffer[];
+}
+
+export interface StorefrontCataloguePage {
+    contractVersion: 'q09-v1';
+    storeProfile: StorefrontProfile;
+    titleCount: number;
+    matchContextState: 'none' | 'active' | 'unavailable';
+    highlightedTitleGroup: StorefrontTitleGroup | null;
+    titleGroups: StorefrontTitleGroup[];
+    pageInfo: { nextCursor: string | null; hasNextPage: boolean };
+}
+
+export interface PublicGalleryItem {
+    url: string;
+    role: 'damage' | 'actual_copy' | 'primary_fallback';
+    order: number;
+    width: number | null;
+    height: number | null;
+}
+
+export interface PublicListingDetail {
+    contractVersion: 'q10-v1';
+    listingId: string;
+    store: PublicBookstoreSummary & { description: string | null; cover: string | null };
+    title: string;
+    authors: string[];
+    language: string | null;
+    description: string | null;
+    editionStatement: string | null;
+    volume: string | null;
+    format: string | null;
+    isbn10: string | null;
+    isbn13: string | null;
+    cover: string;
+    priceMinor: number;
+    currency: 'INR';
+    condition: PublicBookCondition;
+    hasDamage: boolean;
+    publicDamageNote: string | null;
+    damageTypes: string[];
+    availabilityStatus: Exclude<ListingAvailabilityStatus, 'unavailable'>;
+    fulfillmentOptions: string[];
+    confirmationBeforePayment: true;
+    gallery: PublicGalleryItem[];
+}

@@ -1,5 +1,12 @@
 import { supabase } from '@/lib/supabase';
-import type { GroupedBookResult, MarketplaceListingOffer, PublicStoreProfile } from '../types';
+import type {
+    BookstoreSearchPage,
+    GroupedBookResult,
+    MarketplaceListingOffer,
+    PublicListingDetail,
+    PublicStoreProfile,
+    StorefrontCataloguePage,
+} from '../types';
 import {
     cleanText,
     groupOffers,
@@ -13,6 +20,25 @@ import {
     safePublicationDtoSchema,
     type SafePublicationDto,
 } from './discoverySchemas';
+import {
+    parseBookstoreSearchPage,
+    parsePublicListingDetail,
+    parseStorefrontCatalogue,
+} from './unit8Schemas';
+
+export interface BookstoreSearchOptions {
+    cursor?: string | null;
+    pageSize?: number;
+    filters?: Record<string, boolean> | null;
+    locality?: Record<string, string> | null;
+}
+
+export interface StorefrontCatalogueInput {
+    storeId: string;
+    cursor?: string | null;
+    matchContext?: string | null;
+    pageSize?: number;
+}
 
 const PUBLIC_STORE_PROFILE_SELECT = [
     'store_id', 'display_name', 'description', 'logo_url', 'cover_url', 'city', 'state',
@@ -86,6 +112,51 @@ async function recordUnavailableSearch(query: string): Promise<void> {
 }
 
 export const consumerDiscoveryService = {
+    async searchBookstores(
+        query: string,
+        options: BookstoreSearchOptions = {},
+    ): Promise<BookstoreSearchPage> {
+        const term = cleanText(query);
+        if (!term) throw new Error('Enter a title, author, or ISBN.');
+        const { data, error } = await supabase.rpc('phase9_bookstore_search_v1', {
+            p_query: term,
+            p_page_size: Math.min(50, Math.max(1, Math.trunc(options.pageSize ?? 20))),
+            p_cursor: options.cursor ?? null,
+            p_filters: options.filters ?? null,
+            p_locality: options.locality ?? null,
+        });
+        if (error) throw error;
+        return parseBookstoreSearchPage(data);
+    },
+
+    async getStorefrontCatalogue(
+        input: StorefrontCatalogueInput,
+    ): Promise<StorefrontCataloguePage> {
+        const { data, error } = await supabase.rpc('phase9_storefront_catalogue_v1', {
+            p_store_id: input.storeId,
+            p_page_size: Math.min(50, Math.max(1, Math.trunc(input.pageSize ?? 20))),
+            p_cursor: input.cursor ?? null,
+            p_match_context: input.matchContext ?? null,
+        });
+        if (error) throw error;
+        if (data == null) throw new Error('This bookstore is currently unavailable.');
+        return parseStorefrontCatalogue(data);
+    },
+
+    async getPublicListingDetail(listingId: string): Promise<PublicListingDetail> {
+        const { data, error } = await supabase.rpc('phase9_public_listing_detail_v3', {
+            p_listing_id: listingId,
+        });
+        if (error) throw error;
+        if (data == null) throw new Error('This book is no longer available.');
+        return parsePublicListingDetail(data);
+    },
+
+    async recordUnavailableSearch(query: string): Promise<void> {
+        const term = cleanText(query);
+        if (term) await recordUnavailableSearch(term);
+    },
+
     async searchMarketplaceBooks(
         query: string,
         options: MarketplacePageOptions = {},

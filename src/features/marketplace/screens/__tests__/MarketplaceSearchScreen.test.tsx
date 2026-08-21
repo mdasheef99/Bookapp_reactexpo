@@ -23,7 +23,7 @@ jest.mock('@/hooks/useTheme', () => ({
     }),
 }));
 jest.mock('@/components/search/SearchBar', () => ({
-    SearchBar: ({ query, onQueryChange, onSubmit, autoFocus, placeholder }: any) => {
+    SearchBar: ({ query, onQueryChange, onSubmit, autoFocus, placeholder, maxLength }: any) => {
         const React = require('react');
         const { Pressable, Text, TextInput } = require('react-native');
         return (
@@ -35,6 +35,7 @@ jest.mock('@/components/search/SearchBar', () => ({
                     onChangeText={onQueryChange}
                     testID="marketplace-search-input"
                     data-autofocus={String(autoFocus)}
+                    maxLength={maxLength}
                 />
                 <Pressable accessibilityRole="button" accessibilityLabel="submit-search" onPress={onSubmit}>
                     <Text>Search</Text>
@@ -61,6 +62,7 @@ describe('MarketplaceSearchScreen', () => {
 
         expect(screen.getByText(/Search by title, author, or ISBN to compare local bookstore availability/i)).toBeOnTheScreen();
         expect(screen.getByTestId('marketplace-search-input').props['data-autofocus']).toBe('false');
+        expect(screen.getByTestId('marketplace-search-input').props.maxLength).toBe(200);
     });
 
     it('runs an immediate search when the keyboard submit action fires', () => {

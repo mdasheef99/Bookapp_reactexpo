@@ -13,6 +13,7 @@ interface SearchBarProps {
     placeholder?: string;
     onFocus?: () => void;
     onBlur?: () => void;
+    maxLength?: number;
 }
 
 export const SearchBar = ({
@@ -25,6 +26,7 @@ export const SearchBar = ({
     placeholder = "Search books, authors...",
     onFocus,
     onBlur,
+    maxLength,
 }: SearchBarProps) => {
     const { colors } = useTheme();
     const handleClear = () => {
@@ -69,6 +71,7 @@ export const SearchBar = ({
                 onBlur={onBlur}
                 returnKeyType="search"
                 autoFocus={autoFocus}
+                maxLength={maxLength}
                 accessibilityLabel="Search books"
                 accessibilityHint="Enter a book title or author to search"
             />
@@ -79,6 +82,10 @@ export const SearchBar = ({
                         backgroundColor: colors.bgSecondary,
                         borderRadius: 12,
                         padding: 6,
+                        minWidth: 44,
+                        minHeight: 44,
+                        alignItems: 'center',
+                        justifyContent: 'center',
                     }}
                     accessibilityLabel="Clear search"
                     accessibilityHint="Clears the search input"

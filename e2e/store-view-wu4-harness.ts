@@ -92,7 +92,7 @@ export function makeMediaRecord(
   };
 }
 
-export function makeHistory(activity = [
+export function makeHistory(activity: Array<Record<string, unknown>> = [
   { kind: 'audit', action: 'phase9.publication.publish', createdAt, details: {} },
   { kind: 'audit', action: 'phase9.inventory.media_reordered', createdAt, details: {} },
   { kind: 'publication_retry', status: 'dead_letter', attemptCount: 5, maxAttempts: 5,
