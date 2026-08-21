@@ -1,7 +1,7 @@
 # Phase 9 Planning and Decision Tracker
 
-**Status:** `unit8_marketplace_design_frozen`
-**Last updated:** 2026-08-20
+**Status:** `unit6g_group1_contract_persistence_locally_complete`
+**Last updated:** 2026-08-21
 **Purpose:** retain detailed product decisions, audit evidence, reconciliations, and deferred choices without inflating the master tracker
 
 ## Decision register
@@ -88,6 +88,11 @@
 | P9-D78 | M47/M48 customer denial on the unsafe legacy projection-row RPCs is a satisfied prerequisite. The known local/live migration-history mismatch is parked but must be reconciled before any future Unit 8 migration application. The freeze grants no implementation or migration authority. | owner-frozen 2026-08-20; Unit 8 SDD §§1/18/22 |
 | P9-D79 | The explicitly authorized smallest U8B correction is repository-only: provenance-qualified cover fallback, effective relevant policy cursor binding, bounded malformed-cursor handling, and disposable acceptance tests. M49 remains unapplied; migration-history reconciliation, Vault provisioning, live Supabase verification, and U8C are separately gated. | user-authorized 2026-08-20; Unit 8 SDD §§8–12/15/18–22 |
 | P9-D80 | Every publicly eligible inventory-media link has a unique non-null `public_order` in `1..3`. Both link changes and later asset-lifecycle transitions fail closed; pending/rejected links and private/staging assets may remain unordered. Q10/client expose at most three. `canonical_edition_exact` is reserved/unreachable in text-query v1. | user-authorized 2026-08-21; Unit 7B §6; Unit 8 §§7/15/20 |
+| P9-D81 | Unit 6G pre-scan setup requires location, initially selects English as a non-authoritative language hint, permits nullable condition and selling-price defaults, fixes quantity at 1 and currency to INR/whole-rupee UI, retains private/publish-later intent, and adds an optional durable session-only batch label. Remember-last-used settings and named presets remain deferred. | Owner-approved Group 1 target; contract/persistence locally verified 2026-08-21; UI remains pending |
+| P9-D82 | Unit 6G uses one bounded session page with at most 15 compact cards. Every card shows all final review values, source indicators, a bounded metadata sheet, Remove, and Add; inherited values are subdued and exceptions are emphasized. Notes and Choose another match are absent from this UI. | Owner-approved target; Group 1 contracts only locally implemented; UI/card projection remains pending |
+| P9-D83 | Per-card Add and top-level Add all ready books are the only submit actions. Each explicitly confirms displayed values, performs strict canonical Save, and then invokes the existing independent M39 commit. Bulk work is bounded client orchestration with partial success, never an automatic or atomic batch database commit. | Owner-approved target; Group 1 preserves M39 seam; orchestration remains pending |
+| P9-D84 | General Remove from this scan requires a new persisted `owner_removed_from_scan` candidate disposition, distinct from false detection, input removal, inventory deletion, and stock removal. It has no cascade and no Unit 6G Undo/Restore. | Owner-approved; Group 1 persistence/RPC fence locally verified in un-applied M52 |
+| P9-D85 | Unit 6G preserves M39's one-private-row `q/q/0/0/0` contract and Unit 7C as the sole post-commit management surface. Publication intent does not auto-publish, batch label does not enter inventory, and successful commits must invalidate Store View list caches. | Owner-approved target; Group 1 confirms M39/Unit 7C unchanged; cache invalidation remains pending |
 
 ## Source reconciliation
 
@@ -148,6 +153,32 @@ Audit performed read-only on 2026-07-19 after `get_project` verification.
 - [ ] Live migration application authorization and exact-project re-verification.
 
 ## Append-only planning log
+
+### 2026-08-21 — Unit 6G Group 1 approval and local implementation
+
+- Owner approved continuing on the existing branch/worktree and authorized
+  only Group 1 contract/persistence foundation.
+- The strict contracts/runtime and un-applied M52 candidate are locally green;
+  Groups 2–4 remain separately gated.
+- No M52 application, deployment, external service, database/Storage/business
+  row mutation, stage, commit, push, or PR occurred.
+- Next authorized action: independent review of the Group 1 diff and M52
+  candidate; application and Git publication require separate authorization.
+
+### 2026-08-21 — Unit 6G Owner defaults and batch-review SDD draft
+
+- Recorded P9-D81–P9-D85 from the Owner's pre-scan, compact-card,
+  save-then-commit, Add all, durable-removal, and Unit 7C handoff decisions.
+- Created the Unit 6G SDD and exact supporting contract/screen matrix as
+  `draft_for_owner_review`; they grant no implementation or migration authority.
+- Reconciled the current code/migrations: session price and batch label are
+  absent, current start hardcodes several defaults, current candidate summary is
+  too small, M39 is reusable, and general candidate removal needs a new
+  disposition.
+- No product source, test, migration, database/Storage, deployment, provider,
+  fixture, business-row, commit, or push action occurred.
+- Next gate: explicit Owner approval/correction of the SDD and matrix, followed
+  only by separately authorized 6G-A contract/red-test work.
 
 ### 2026-08-20 — U8B bounded corrective scope
 

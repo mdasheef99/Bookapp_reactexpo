@@ -2,6 +2,10 @@ import { z } from 'zod';
 import { assertNoPrivacySensitiveKeys } from './privacy.ts';
 import { OwnerUxRequest, parseOwnerUxRequest } from './ownerUx.ts';
 import {
+  OwnerBatchReviewRequest,
+  parseOwnerBatchReviewRequest,
+} from './ownerBatchReview.ts';
+import {
   isPublicationAction, parsePublicationRequest, PublicationRequest,
 } from './publication.ts';
 import {
@@ -72,6 +76,7 @@ const dedicatedWorkerRequest = z.object({
 }).strict();
 
 export type OwnerIngestionRequest = z.infer<typeof ownerRequest> | OwnerUxRequest
+  | OwnerBatchReviewRequest
   | PublicationRequest | StoreViewRequest | StoreViewManagementRequest
   | StoreViewMediaRequest | StoreViewHistoryRequest;
 export type WorkerIngestionRequest = z.infer<typeof workerRequest>;
@@ -89,6 +94,10 @@ export function parseOwnerIngestionRequest(value: unknown): OwnerIngestionReques
       'list_scan_candidates', 'read_scan_candidate', 'update_candidate_review',
       'add_candidate_to_inventory', 'read_scan_readiness', 'close_scan_session',
     ].includes(action)) return parseOwnerUxRequest(value);
+    if (typeof action === 'string' && [
+      'start_scan_session_v2', 'read_scan_session_v3', 'read_scan_batch_review',
+      'remove_candidate_from_scan', 'close_scan_session_v3',
+    ].includes(action)) return parseOwnerBatchReviewRequest(value);
     if (isStoreViewManagementAction(action)) return parseStoreViewManagementRequest(value);
     if (isStoreViewMediaAction(action)) return parseStoreViewMediaRequest(value);
     if (action === 'read_store_view_history') return parseStoreViewHistoryRequest(value);

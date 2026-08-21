@@ -26,6 +26,17 @@ This checkpoint changes no behavior or acceptance criterion in the frozen Unit
 7A SDD. M39 application, deployment, authenticated live smoke, and Unit 7B/7C
 remain separately gated. See [tracker 29](./trackers/29-unit7a-create-only-commit-evidence.md).
 
+**Unit 6G specialization (2026-08-21):** the Owner-directed design is now
+approved for Group 1 contract/persistence implementation. The
+[Unit 6G](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md)
+keeps this SDD's strict review and create-only authority while replacing the
+long-form primary path with one compact session page. Per-card Add and Add all
+ready books explicitly Save each displayed review before independently invoking
+M39. It also proposes nullable condition/price defaults, a session-only batch
+label, and `owner_removed_from_scan`. Group 1 M52 is a local-only migration
+candidate; M39 application/deployment, Groups 2–4, and live mutation remain
+separately gated.
+
 ## 1. Decision
 
 Make Owner review the only gateway from staged AI/provider output into store

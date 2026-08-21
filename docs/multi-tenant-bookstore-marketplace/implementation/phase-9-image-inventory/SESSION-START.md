@@ -8,6 +8,23 @@ This is the deterministic resume procedure for Phase 9. A new session should rec
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
+## Current 2026-08-21 Unit 6G Group 1 implementation overlay
+
+Unit 8 remains live-verified and integrated into pushed `main`. The selected
+Phase 9 work unit is Unit 6G; Group 1 contract/persistence foundation is
+locally complete on the approved existing branch/worktree. The SDD and matrix
+[Unit 6G SDD](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md)
+and [contract matrix](./work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md)
+They define optional pre-scan defaults, one compact bounded review page,
+save-then-commit Add/Add all orchestration over M39, a distinct durable Owner
+candidate-removal disposition, and the unchanged Unit 7C post-commit boundary.
+Status is `group1_approved_locally_complete_groups2_4_pending`. The M52
+migration candidate is not applied; no deployment, Supabase/Storage mutation,
+or connected fixture/business-row proof occurred. Groups 2–4 remain out of
+scope. The exact next action is independent review of the Group 1 diff and M52
+candidate; application, deployment, and Git publication require separate
+authorization.
+
 ## Current 2026-08-21 Unit 8 closure overlay
 
 Unit 8 is live-verified on the development Supabase project. M49, M50, and M51
@@ -440,6 +457,7 @@ Do not describe an action as authorized merely because it is listed as a future 
 | Service deployment/live fixture verification | 02 Pipeline; 04 Security | [Unit 4A deployment-runtime SDD](./work-units/04a-deployment-runtime-scaffolding-sdd.md), [M11/M12 live-application evidence](./trackers/05-m11-m12-live-application-evidence.md), current-vs-target audit, migration ledger, current worker/Owner entrypoints, environment loaders, container/deployment validators, hosting configuration, and fresh exact-project service/function readback |
 | 5 Metadata/aliases | 01 Data; 02 Pipeline; 03 Review; 04 Security; 05 Marketplace | Unit 5A/5B handoffs/evidence, [Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md), data dictionary, current-vs-target audit, requirements traceability, complexity register, provider audit/fixtures |
 | 6 Owner UX | [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md); [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md); 03 Review; 02 Pipeline | [tracker 18](./trackers/18-unit6-owner-ux-design-evidence.md), DOC-8, accessibility/verification matrix |
+| 6G Owner defaults/batch review/commit handoff | [Unit 6G SDD](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md); [Unit 6G matrix](./work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md); Unit 6; Unit 7A; Unit 7C; 00 Master; 02 Pipeline; 03 Review | P9-D81–P9-D85; DOC-3/4/8; [tracker 31](./trackers/31-unit6g-owner-batch-review-design-evidence.md); data dictionary; current-vs-target audit; traceability; complexity register; current capture/review/commit/Store View code and M02/M29/M35/M39/M43 |
 | WU1/WU2 Owner inventory read boundary/client | [WU1](./work-units/owner-inventory-read-boundary-wu1-sdd.md); [WU2](./work-units/owner-inventory-read-client-wu2-sdd.md); 00 Master; 03 Review | [tracker 25](./trackers/25-owner-inventory-read-boundary-wu1-evidence.md), [tracker 26](./trackers/26-owner-inventory-read-client-wu2-evidence.md), DOC-8 §5, current-vs-target audit, requirements traceability |
 | 7A Create-only private inventory commit | [Unit 7A SDD](./work-units/07a-create-only-inventory-commit-sdd.md); 00 Master; 01 Data; 03 Review | Unit 6 SDD/contract transition, DOC-3/4/8, quantity/hold invariants, current-vs-target audit, traceability |
 | 7B Publication/projection | 03 Review; 05 Marketplace | private/public projection and current trigger audit; separately authorized after 7A |

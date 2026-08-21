@@ -1,21 +1,84 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `unit8_live_verified_release_handoff`
-**Implementation status:** `unit8_live_verified_main_integrated`
+**Planning status:** `unit6g_group1_approved_locally_complete`
+**Implementation status:** `unit6g_group1_contract_persistence_locally_complete`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-21
-**Current milestone:** Unit 8 is live-verified on the development Supabase project and integrated into pushed `main` at release commit `4c1d98d`. M49, M50, and M51 are applied exactly once and the connected Q08/Q09/Q10, security/privacy, cursor, legacy-compatibility, and media-invariant checks pass.
-**Active work unit:** `unit8_live_verified_main_integrated`
+**Current milestone:** Unit 8 remains live-verified and integrated into pushed `main`; Unit 6G Group 1 contract/persistence foundation and the bounded review-correction pass are locally implemented and verified on the approved branch.
+**Active work unit:** `unit6g_group1_correction_only_rereview`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** The authorized M49-M51 connected rollout and final Unit 8 acceptance. The prior M47/M48 remediation remains a satisfied prerequisite.
-**Next authorized action:** select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services.
+**Last completed:** Unit 6G Group 1 bounded correction: v2 Close bytes preserved through a separate nullable-session fence, automatic removal presentation revision regression-proven, per-field source derivation corrected, and null command IDs rejected at all new command RPCs. Unit 8 remains live-verified and unchanged.
+**Next authorized action:** Independent correction-only rereview of M52 and its direct regressions. Migration application, Edge deployment, commit, push, and Groups 2–4 remain separately unauthorized.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`; M43 is live exactly once as `20260816122822 marketplace_phase9_unit7c_inventory_management`; M44 is live exactly once as `20260816122901 marketplace_phase9_store_view_filter_contract`; M45 is live exactly once as `20260816122929 marketplace_phase9_unit7c_media_history`; M46 is live exactly once as `20260816150126 marketplace_phase9_unit7c_private_save_revision_correction`; M47 is live exactly once as `20260817073341 marketplace_phase9_legacy_rpc_security_remediation`; M48 is live exactly once as `20260817075825 marketplace_phase9_legacy_rpc_service_role_compatibility`; M49 is live exactly once as `20260821060156 marketplace_phase9_bookstore_first_discovery`; M50 is live exactly once as `20260821060742 marketplace_phase9_storefront_detail`; and M51 is live exactly once as `20260821061213 marketplace_phase9_public_media_order_invariant`. M39-M51 remain byte-immutable after application.
-**Scope boundary:** Unit 8 implementation, Vault provisioning, M49-M51 application, connected verification, and documentation closure are complete. No historical migration repair, unrelated migration, Storage/business-data fixture mutation, or unrelated deployment occurred.
-**Implementation authority:** Unit 8 is live-verified; M47-M51 are not reopened. Native Unit 6F validation remains deferred and unrelated.
+**Scope boundary:** Only Unit 6G Group 1 contract/persistence foundation is implemented. Groups 2–4, UI, card composition, Add/Add-all orchestration, Store View/cache changes, and Unit 6F remain out of scope. Unit 8 implementation, Vault provisioning, M49-M51 application, connected verification, and closure remain complete. No database/Storage/business-row mutation or deployment occurred for Unit 6G.
+**Implementation authority:** Group 1 local implementation and migration-file creation were explicitly authorized; applying M52, deploying Edge/mobile, and Git publication remain unauthorized. Unit 8 remains live-verified; M39-M51 are not reopened. Native Unit 6F validation remains deferred and unrelated.
 **Migration creation/application authority:** M49-M51 were applied only through the explicitly authorized forward rollout; no normal `db push`, historical replay, or `schema_migrations` repair was used.
 **Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
-**Current gate:** `UNIT8_LIVE_ROLLOUT_PASS_MAIN_INTEGRATED`; connected project `ahntbtktjjmvfosgkmgn` remains healthy. Native Unit 6F remains deferred and unrelated.
+**Current gate:** `UNIT6G_GROUP1_CORRECTION_ONLY_REREVIEW`; the prior `UNIT8_LIVE_ROLLOUT_PASS_MAIN_INTEGRATED` remains satisfied. Native Unit 6F remains deferred and unrelated.
+
+## 2026-08-21 — Unit 6G Group 1 contract and persistence foundation
+
+- Owner approval was received to continue on this existing branch/worktree and
+  implement only Group 1.
+- Red-first tests were added before implementation and failed for the absent
+  contract modules and M52 migration; after implementation the focused contract
+  suites pass 36/36, the expanded Jest regression passes 215/215, the new
+  PGlite persistence suite passes 9/9, the expanded Phase 9 PGlite regression
+  passes 54/54, and `npx.cmd tsc --noEmit` passes.
+- Added strict versioned server/mobile contracts and Owner ingestion dispatch;
+  added local migration candidate
+  `20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql`.
+  It makes condition nullable, adds bounded price/batch defaults, persists the
+  irreversible `owner_removed_from_scan` disposition, adds v2-compatible/v3
+  session helpers, bounded batch review/removal RPCs, event/audit registration,
+  and narrow authenticated grants while preserving M39 and Unit 7C.
+- The migration was not applied. No Supabase, Storage, business data, Edge,
+  mobile deployment, provider, stage, commit, push, or PR mutation occurred.
+- Exact next gate: independent review of the Group 1 diff and M52 candidate;
+  application/deployment/Git publication and Groups 2–4 require separate
+  authorization.
+
+### Bounded independent-review correction
+
+- Corrected only the four reported findings. The applied v2 Close definition is
+  no longer replaced; nullable Unit 6G sessions fail closed through a separate
+  v3 transaction marker plus session trigger.
+- Removal already advanced `presentation_revision` through the existing
+  candidate presentation trigger; the new regression proves exact pre/post
+  advancement without adding a duplicate session update.
+- Persisted field sources now compare each review value against selected,
+  observed, and session-default authority independently. Start, Remove, and
+  Close v3 reject null command IDs at the SQL boundary.
+- Red-first evidence: the migration contract failed 2 tests and PGlite failed
+  the presentation assertion, source derivation, and null-command checks before
+  correction. Final focused Jest is 38/38; Unit 6G PGlite is 11/11.
+- M52 remains unapplied. No database/Storage, deployment, provider, stage,
+  commit, push, PR, UI, Groups 2–4, M39, or Unit 7C change occurred.
+- Exact next gate: independent correction-only rereview.
+
+## 2026-08-21 — Unit 6G SDD and contract-matrix draft
+
+- Created the specialized Unit 6G SDD and exact pre-scan/post-scan/server/
+  lifecycle matrix on isolated branch
+  `codex/phase9-unit6g-owner-batch-review-commit-handoff`.
+- Reconciled Units 6/7A/7C and current code/migrations. The draft requires a
+  category 4 forward lifecycle change for `owner_removed_from_scan` plus the
+  category 3 session price/batch-label fields; M39 and Unit 7C remain unchanged.
+- Owner-review corrections now freeze `close_scan_session_v3` with bounded
+  `ownerRemovedCandidates` and unchanged v2 Close; existing `manual`/null
+  metadata choice for Use detected details; `matched|detected`→Detected source
+  presentation; one candidate command slot with Busy skip/no queue; and strict
+  bounded aggregate/observed/metadata/blocker/attention DTOs.
+- Migration classification is explicit: nullable condition, resumable price/
+  label, disposition lifecycle/count/audit/event/RPC/grants, and v3 Close need a
+  future forward migration. INR, quantity 1, M39, `store_inventory`, Unit 7C,
+  and Store View invalidation do not.
+- Product source, tests, migration files, database/Storage, provider, business
+  data, deployments, commits, pushes, and external services were not changed.
+- Detailed evidence is [tracker 31](./trackers/31-unit6g-owner-batch-review-design-evidence.md).
+- Exact next gate: Owner review and explicit approval/correction of the draft;
+  6G-A red-test/contract work remains separately unauthorized.
 
 ## 2026-08-21 — Connected Unit 8 rollout and live verification
 

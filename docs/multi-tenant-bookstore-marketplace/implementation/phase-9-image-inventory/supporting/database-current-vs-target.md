@@ -14,6 +14,35 @@ lifecycle transitions without changing nullable private/unapproved state.
 
 The durable connected evidence is [unit8-connected-rollout-2026-08-21.md](./unit8-connected-rollout-2026-08-21.md).
 
+## Unit 6G repository/read-only current-to-target assessment — 2026-08-21
+
+This assessment was the Group 1 design baseline. The current repository now
+contains the locally verified Group 1 contract/runtime and un-applied M52
+migration candidate. It uses the current repository, immutable applied-
+migration sources, and the final same-day live checkpoint above; no connected
+Unit 6G mutation was performed.
+
+| Area | Observed current contract | Proposed Unit 6G target | Migration impact |
+| --- | --- | --- | --- |
+| Session defaults | M02 persists language/script, `default_condition NOT NULL`, location, quantity, and publication; it has no price or batch label. Current Owner Edge Start accepts language/script/condition and hardcodes location=`default`, quantity=1, publication=private. | Versioned Start accepts required location, nullable condition/price, publication and optional `1..80` batch label; English is the initial language hint and quantity remains server-fixed at 1. | **Forward migration required:** make the Unit 6G condition representation nullable and add nullable bounded `default_price_minor`/`batch_label` session fields. Existing non-null rows remain readable; strict v2 responses are not widened or coerced and Unit 6G uses v3 summary/Close. Category 3 portion. |
+| Candidate dispositions/lifecycle | M02 CHECK permits only `reviewed` and `skipped_false_detection`; M29 active/readiness/summary/action predicates know only false detection; M39 commits only `reviewed`. | Add exact `owner_removed_from_scan`; exclude it from active/review/readiness/commit sets, fence worker completion, count it separately, and register bounded `phase9.candidate.owner_removed_from_scan` audit/event evidence. | **Forward migration required:** CHECK plus every lifecycle/readiness/count/action/worker/audit/event helper and controlled grant. No existing-row inference/backfill. Category 4. M39's reviewed-only/private create-only contract remains unchanged and already denies the new disposition. |
+| Close response | M29 `phase9_close_session_v2` returns the current strict readiness/close summary with no Owner-removed count. | Add `close_scan_session_v3` / `phase9_close_session_v3` and versioned summary/readiness helpers returning bounded `ownerRemovedCandidates`; no removed-candidate list/raw detail. | **Forward RPC migration required.** Preserve v2 function and strict response unchanged; v3 uses the same lock/version/terminal-input/idempotency rules and narrow authenticated grant. |
+| Review cards/DTOs | Candidate summary lacks cover, review values, field sources, blockers, and commit/remove actions; full detail is per candidate. Existing schemas bound observed identity, selected metadata, attention/blocker codes, cover URLs, and strict review. | One initiating-Owner-only aggregate returns at most 15 compact strict cards; internal `matched` displays as Detected; all nested fields/arrays/enums/nulls are exact; full bounded metadata remains on demand with no raw provider/model/scan data. | New read RPC/Edge/client contracts; no business table. Aggregate/card source composition is application/API work. |
+| Metadata choice | Existing strict review enum is only `selected|manual`; M39 selected mode uses the candidate-owned snapshot while manual mode keeps canonical/provider/cover values nullable. | `Use detected details` copies usable observed identity, confirms it, and sets existing `{mode:"manual",selectionId:null}`; incomplete identity requires Edit manually. | No enum/schema mode migration and no M39 edit; strict Save/client behavior only. |
+| Save/commit concurrency | Review update v2 returns canonical review/version state. Live M39 performs one create-only private commit and locks/rechecks the candidate. | Reuse both sequentially under one shared candidate command slot; Add all claims idle cards only, reports locked cards Busy, never queues, and runs at concurrency three with partial success. Remove and commit serialize; removal-first makes M39 ineligible, commit-first makes removal fail. | Application coordinator plus new removal predicate/RPC work; no batch RPC/transaction and no M39 rewrite. |
+| General removal | Input removal requires no candidate lineage; false-detection skip has different semantics. | Versioned candidate removal command persists the new disposition with candidate/version/replay/audit/presentation fencing and no cascade/Undo. | New controlled mutation RPC and grant plus disposition/lifecycle delta; candidate/input/media/inventory/listing rows are not deleted. |
+| Unit 7C/cache handoff | M39 returns `inventoryId`; Store View list caches are not currently invalidated by candidate commit synchronization. Existing `store_inventory` and M43–M46 commands own post-commit values. | Coalesce `storeViewKeys.all` invalidation after canonical commit success. Batch label remains session-only; Store View remains the sole post-commit editor. | Application/query change only; no `store_inventory`, Unit 7C table/command, or cache-invalidation migration. |
+
+**Verdict:** `MIGRATION_REQUIRED` for the complete target; Group 1's forward
+candidate is locally implemented but unapplied. Full Unit 6G
+is category 4 because of candidate lifecycle/readiness/count/audit/RPC/grant
+changes; nullable condition plus durable price/batch defaults is the category 3
+session component. No migration is required for fixed INR, pre-scan quantity 1,
+M39 create-only `q/q/0/0/0`, `store_inventory`, Unit 7C tables/commands, or
+Store View cache invalidation. The work is a bounded forward extension, not a
+database rewrite. Exact-project reverification and M52 application remain
+separate approvals; Groups 2–4 remain out of scope.
+
 ## Migration-history reconciliation — read-only 2026-08-21
 
 The connected project reports 150 rows in `supabase_migrations.schema_migrations`;

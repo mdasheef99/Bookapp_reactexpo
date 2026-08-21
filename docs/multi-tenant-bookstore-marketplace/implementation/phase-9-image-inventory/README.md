@@ -1,9 +1,18 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit8_live_verified_main_integrated`
+**Status:** `unit6g_group1_contract_persistence_locally_complete`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
 **Last updated:** 2026-08-21
-**Current handoff:** Unit 8 is live-verified on the development Supabase
+**Current handoff:** Unit 8 remains live-verified and integrated into pushed
+`main`. Unit 6G Group 1 contract/persistence foundation is locally complete on
+the approved existing branch/worktree. The selected work unit is the
+[`Unit 6G SDD`](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md)
+and [contract matrix](./work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md).
+Group 1 implementation/tests and the un-applied M52 candidate are complete;
+they grant no migration application, deployment, or Groups 2–4 authority.
+Exact next action is independent review of the Group 1 diff and M52 candidate.
+
+Historical Unit 8 handoff: Unit 8 is live-verified on the development Supabase
 project. M49, M50, and M51 were
 applied exactly once as `20260821060156`, `20260821060742`, and
 `20260821061213`; the dedicated `phase9_q08_cursor_secret` is provisioned
@@ -125,6 +134,7 @@ After the repository entrypoint, read in this order:
 | [Unit 7A create-only commit](./work-units/07a-create-only-inventory-commit-sdd.md) | One reviewed candidate to one new private inventory row, server-held review/revision authority, quantity buckets, replay/concurrency, one-to-one provenance, false-only skip semantics, Unit 6 duplicate-contract transition, and migration verdict. |
 | [Unit 7B safe publication](./work-units/07b-publication-sdd.md) | Existing publish/pause/private/retry lifecycle, public eligibility/projection, approved media, retry worker, and live completion contract. |
 | [Unit 7C Owner Store View](./work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | Stable post-commit Owner identity, Store View IA and reads, atomic Save, separate stock/media operations, Unit 7B lifecycle reuse, public revisions, UI cutover, database delta, and acceptance A–H. |
+| [Unit 6G Owner defaults and batch review](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md) | Draft pre-scan defaults, one compact bounded review page, metadata sheet, save-then-commit Add/Add all, durable candidate removal, partial success, and unchanged Unit 7A/7C handoff. |
 | [Unit 8 bookstore-first Marketplace](./work-units/08-marketplace-bookstore-first-sdd.md) | Frozen Q07-Q10 customer architecture: safe identity/grouping/counts, bookstore grouping before pagination, deterministic ranking/cursors, complete title-group storefront, detail/gallery, availability, privacy, and U8B/U8C/U8D handoff. |
 
 ## Supporting set

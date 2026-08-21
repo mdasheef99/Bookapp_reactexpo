@@ -18,6 +18,14 @@ none is marked PASS. The project owner accepts this deferred native-validation
 risk and authorizes Unit 7 to begin. This changes sequencing only; it does not
 alter Unit 6 requirements or acceptance criteria.
 
+**Unit 6G Group 1 overlay (2026-08-21):** the Owner approved local contract/
+persistence foundation for optional pre-scan defaults, one compact bounded review page,
+save-then-commit Add/Add all orchestration, and a distinct durable general
+candidate-removal disposition. The proposed specialization preserves mandatory
+human review, independent M39 private commits, partial failure, and Unit 7C
+post-commit ownership. Group 1 contracts/runtime and the forward M52 migration
+candidate are locally verified; M52 application and Groups 2–4 remain gated.
+
 **Unit 4B local checkpoint (2026-07-27):** the configuration-driven
 `gemini-3.5-flash-lite` adapter is locally implemented behind the same
 `SpineImageAnalyzer` contract and awaits independent review. It has made no live

@@ -2,6 +2,27 @@
 
 **Last updated:** 2026-08-21
 
+## Unit 6G Owner defaults, compact review, and commit handoff draft
+
+The controlling proposal is [Unit 6G](../work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md)
+and its [contract matrix](../work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md).
+It was approved for Group 1 implementation on the existing branch. Group 1 is
+locally complete with strict contract/runtime tests and an un-applied M52
+migration candidate; Groups 2–4 remain separately unauthorized. See [tracker
+31](../trackers/31-unit6g-owner-batch-review-design-evidence.md) §8.2.
+
+| Requirement | Owning source and acceptance |
+| --- | --- |
+| Required location, English initial hint, optional condition/price, fixed quantity 1 and INR whole-rupee UI, optional session-only batch label | P9-D81; DOC-4 §§5/9; DOC-8 §5; Unit 6G §§5–7; U6G-AC01–AC04; IMG-20 |
+| One bounded session page, at most 15 compact cards, all final values, on-demand metadata, no notes/Choose another match, and one source mapping (`matched|detected`→Detected, `default`→Default, `custom`→Custom, `missing`→Missing) | P9-D82; DOC-4 §9; DOC-8 §5/CON-17; Unit 6G §§7–10; U6G-AC05–AC09; IMG-21 |
+| `Use detected details` reuses existing `metadataChoice.mode="manual"` with null selection, copies only usable observed identity, commits no selected canonical/provider/cover fields through M39, and requires Edit manually when incomplete | Unit 6 strict review schema; Unit 7A §§5/7/11; Unit 6G §§10/18; matrix §§3.2/4.4; U6G-AC08 |
+| Per-card Add and Add all are explicit review actions; strict Save/current versions/server readiness precede each independent M39 commit; one candidate has one command slot and Add all skips/reports Busy rather than queueing locked cards | P9-D83; MAS-05/06; REV-01/04/05; DOC-3 §9; DOC-4 §§9–11; Unit 7A §§2–9; Unit 6G §§11–14; U6G-AC10–AC14; IMG-22; INV-19 |
+| General candidate removal uses `owner_removed_from_scan`, distinct from false/input/inventory removal, with no cascade or Undo; lock/disposition order prevents removal from racing into a successful commit | P9-D84; DOC-3 §9A; DOC-4 §9; Unit 6G §15; U6G-AC15/16; IMG-23; INV-18 |
+| Versioned `close_scan_session_v3` / `phase9_close_session_v3` returns strict v3 readiness with bounded `ownerRemovedCandidates`; v2 Close/summary remains unchanged | Unit 6 Close contract; Unit 6G §§16–19; matrix §4.6; U6G-AC16/18 |
+| M39 remains private create-only `q/q/0/0/0`; publication/stock/media/post-commit edit stay Unit 7B/7C; Store View cache refresh closes the application handoff | P9-D85; P9-D71–P9-D74; Unit 7A §§5–13; Unit 7C §§1–9/12–13; Unit 6G §§14/17–18; U6G-AC17/18/24 |
+| Existing initiator-only authorization, exact bounded aggregate/observed/metadata/blocker/attention DTOs, offline read-only behavior, privacy, accessibility, and 15-card performance remain load-bearing | MAS-02/07/12; REV-19/21; MED-08/09/21/23; Unit 6 §§7/13/18/21–28; Unit 6G §§16/20–24; matrix §4; U6G-AC05/19–AC23 |
+| Forward migration is required for nullable condition, session-resumable `default_price_minor`/`batch_label`, disposition lifecycle/count/audit/event/RPC/grants, and v3 Close; no migration is required for INR, quantity 1, M39, `store_inventory`, Unit 7C, or Store View invalidation | Unit 6G §17; matrix §9; current-vs-target Unit 6G assessment; U6G-AC01–AC04/15–AC18/24 |
+
 ## Multilingual vision-response resilience correction
 
 | Requirement | Owning source | Evidence/status |

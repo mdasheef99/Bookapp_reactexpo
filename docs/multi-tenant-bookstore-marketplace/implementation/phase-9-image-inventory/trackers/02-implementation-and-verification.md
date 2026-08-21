@@ -1,7 +1,26 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit8_live_verified_main_integrated`; **last updated:** 2026-08-21
+**Status:** `unit6g_sdd_owner_review_pending`; **last updated:** 2026-08-21
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit8_live_verified_main_integrated`. Unit 8 is live-verified; M49-M51 are applied exactly once to the verified development project and release commit `4c1d98d` is integrated into and pushed on `main`.
+**Active work unit:** `unit6g_sdd_owner_review_pending`. Unit 8 remains live-verified/integrated; Unit 6G is documentation-only and grants no implementation or migration authority.
+
+### 2026-08-21 — Unit 6G documentation-only SDD draft
+
+- Authorized scope: create the Unit 6G SDD carefully after read-only
+  reconciliation of the active documentation system, Units 6/7A/7C, current
+  review/commit/Store View code, and relevant immutable migrations.
+- Completed: specialized SDD, exact contract/screen matrix, P9-D81–P9-D85,
+  root-spec proposal overlays, schema current-to-target assessment,
+  traceability, complexity containment, routing, and tracker/evidence handoff.
+- Design verdict: full scope is category 4 because general candidate removal
+  needs `owner_removed_from_scan`; durable default price/batch label and nullable
+  condition add a category 3 session delta. M39 is reused per candidate; no
+  batch database RPC/transaction or Unit 7C migration is proposed.
+- External state: none. No product source/test/migration, Supabase/Storage,
+  provider, fixture/business-row, deployment, commit, push, or PR action.
+- Verification: documentation links/continuity/diff checks are recorded in
+  [tracker 31](./31-unit6g-owner-batch-review-design-evidence.md).
+- Next action: Owner review and explicit approval/correction of the SDD/matrix.
+  Do not start 6G-A, create/apply migration, change product source, or deploy.
 
 ### 2026-08-21 — Connected Unit 8 rollout and live acceptance
 
@@ -2412,3 +2431,50 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
   cleaned. Browser E2E and WU5 remain unauthorized.
 - Exact next authorized action: independent handoff; separately authorize any
   staging/commit/application step for this WU4 candidate.
+
+## Unit 6G Group 1 contract and persistence foundation — 2026-08-21
+
+- Authority: the Owner approved continuing on the existing
+  `codex/phase9-unit6g-owner-batch-review-commit-handoff` branch/worktree and
+  authorized only Group 1. Groups 2–4 remain out of scope.
+- Red-first: the new contract/migration test run failed before implementation
+  because the Group 1 modules and M52 migration did not exist.
+- Local implementation: strict server/mobile contracts, Owner ingestion
+  dispatch, and
+  `20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql`.
+  M52 is a forward candidate only and was not applied.
+- Verification: focused new Jest 36/36; expanded contract/M29 regression
+  215/215; new PGlite persistence 9/9; expanded Phase 9 PGlite regression
+  54/54; `npx.cmd tsc --noEmit` PASS.
+- Persistence boundary: nullable condition, bounded resumable price/batch
+  defaults, irreversible `owner_removed_from_scan`, v3 readiness/summary/
+  Close, batch review/removal RPCs, event/audit registration, and narrow
+  authenticated grants. M39 private create-only `q/q/0/0/0` and Unit 7C
+  tables/commands are unchanged.
+- External state: read-only Supabase preflight only; no database/Storage/
+  business-row mutation, deployment, provider call, stage, commit, push, or PR.
+  Preexisting RLS advisory on `spatial_ref_sys` and the two registry tables was
+  observed and not remediated.
+- Exact next authorized action: independent review of the complete Group 1
+  diff and un-applied M52 candidate. Applying M52, deployment, Git publication,
+  and Groups 2–4 require separate authorization.
+
+### Unit 6G local migration ledger entry
+
+| Local filename | Live version | Project/preflight | Authority/effect | Verification/status |
+| --- | --- | --- | --- | --- |
+| `20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql` | **not applied** | `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`; M51 `20260821061213` tail read-only verified | Owner-authorized Group 1 forward candidate: nullable/resumable session defaults, `owner_removed_from_scan` lifecycle fence/count/audit/event, v3 summary/readiness/Close, batch review/removal RPCs, authenticated grants; M39/Unit 7C unchanged | Red-first structural test then green migration contract; corrected Unit 6G PGlite 11/11 and prior expanded Phase 9 PGlite 54/54; **local-only, pending correction-only rereview and separate application authorization** |
+
+### Unit 6G Group 1 bounded review correction — 2026-08-21
+
+- Scope: only the four independent-review findings and direct regressions.
+- Red evidence: structural migration test 7/9 with two expected failures;
+  PGlite 8/11 with expected presentation/source/null-command failures.
+- Correction: preserve the applied v2 Close definition; add a separate
+  nullable-session close trigger authorized only by the v3 transaction marker;
+  prove the existing automatic presentation revision; derive sources per field;
+  reject null command IDs in Start, Remove, and Close v3.
+- Final evidence: focused Jest 3 suites, 38/38; Unit 6G PGlite 11/11.
+- External/Git state: M52 not applied; no database/Storage, deployment, provider,
+  stage, commit, push, PR, Groups 2–4, M39, or Unit 7C action.
+- Exact next action: independent correction-only rereview.

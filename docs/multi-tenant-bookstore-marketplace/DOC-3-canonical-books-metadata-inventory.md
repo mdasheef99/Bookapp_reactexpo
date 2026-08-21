@@ -339,6 +339,22 @@ Legacy/deferred resolution rules:
 7. Image/photo comparison is explicitly excluded from duplicate detection. Exact image hash is only replay/double-charge protection.
 8. Private customer-request photos are request-scoped evidence created after inventory identity; they never influence duplicate matching or quantity compatibility.
 
+### 9A. Proposed Unit 6G candidate disposition and batch handoff
+
+The Owner-directed Unit 6G draft adds a third review disposition,
+`owner_removed_from_scan`, for a genuine detected book that the Owner does not
+want to keep in the current scan. It is not false detection, input deletion,
+inventory deletion, or stock removal. It creates no cascade, cannot commit, and
+has no Unit 6G Undo/Restore path.
+
+The same draft permits one explicit Owner **Add all ready books** action to
+orchestrate the existing independent Unit 7A commands. Every candidate is first
+saved and revalidated separately; each successful commit still creates one new
+private row and one candidate failure cannot roll back or block another. No
+session-wide commit RPC or automatic model/worker/Close commit is introduced.
+
+The proposed controlling contract is [Unit 6G](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md).
+
 ### 9.1 Search Alias Limits
 
 The earlier post-metadata method that generated a single bundle of up to three
@@ -618,6 +634,8 @@ listing_moderation_flags
 | INV-15 | Complete metadata-provider outage or ambiguity preserves reviewed manual unmatched inventory. |
 | INV-16 | Every successful Unit 7A scanned-candidate commit creates one new private inventory row from the current server-held review and never targets or mutates an existing inventory row. |
 | INV-17 | A Unit 7A-created row starts with `total_quantity=available_quantity=q` and reserved/sold/removed quantities of zero; post-commit quantity changes are separately controlled. |
+| INV-18 | A genuine uncommitted candidate may be removed from its scan through a distinct persisted Owner disposition without deleting scan evidence, inventory, listing, or audit history. |
+| INV-19 | One explicit bulk Owner action may save and independently commit ready candidates with partial success; it never becomes an automatic or atomic session commit. |
 
 ---
 

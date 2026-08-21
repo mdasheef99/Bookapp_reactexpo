@@ -26,6 +26,29 @@ Every coding session must update tracking before ending if it changes any of the
 - handoff notes
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
 
+> **2026-08-21 Unit 6G Group 1 implementation:** The Owner approved continuing
+> on the existing `codex/phase9-unit6g-owner-batch-review-commit-handoff`
+> branch/worktree and authorized only Group 1 contract/persistence foundation.
+> Strict server/mobile contracts, Owner ingestion dispatch, and the forward
+> M52 migration candidate are implemented locally. Red-first contract,
+> migration-structure, and PGlite persistence tests are green, with the
+> existing M39/Owner UX/Unit 7A regressions preserved. M52 is not applied;
+> no database/Storage/business-data, deployment, provider, stage, commit,
+> push, or PR mutation occurred. Groups 2–4 (UI, card composition, Add/Add-all
+> orchestration, and Store View/cache work) remain out of scope. Exact next
+> action: independent review of the Group 1 diff and M52 candidate; application,
+> deployment, and Git publication remain separately unauthorized.
+
+> **2026-08-21 Unit 6G Group 1 bounded review correction:** The four review
+> findings were corrected without expanding scope. M52 no longer replaces the
+> applied v2 Close function; a separate transaction-marked trigger rejects v2
+> Close for nullable Unit 6G sessions. Removal presentation authority is
+> regression-proven through the existing automatic revision trigger, field
+> sources are derived per field, and all three new command RPCs reject null
+> command IDs. Red tests failed first; focused Jest is 38/38 and Unit 6G PGlite
+> is 11/11. M52 remains unapplied, Groups 2–4 remain untouched, and no external
+> or Git-publication action occurred. Exact next action: correction-only rereview.
+
 > **2026-08-21 Unit 8 repository closure ready:** The final bounded Unit 7/8
 > reconciliation is complete locally. Repository-only M51 fails closed on
 > existing publicly eligible NULL/out-of-range/duplicate orders or cardinality
@@ -971,12 +994,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 8 live-verified and main-integrated** |
-| Overall status | `unit8_live_verified_main_integrated` |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6G Group 1 locally complete pending handoff review; Unit 8 remains live/main-integrated** |
+| Overall status | `unit6g_group1_contract_persistence_locally_complete` |
 | Last updated | 2026-08-21 |
-| Latest handoff | Q07-Q10, M49-M51, the strict client integration, final media-order invariant, Vault-backed cursors, connected acceptance, and closure documentation are complete. M49/M50/M51 are live exactly once; U8B `63/63`, U8C `8/8`, Marketplace Jest `140/140`, disposable PostgreSQL sentinels, TypeScript, export, diff, and continuity are green. Release commit `4c1d98d` is integrated into and pushed on `main`. |
-| Current risk level | Unit 8 has no remaining connected rollout blocker. The current live dataset has no zero-stock rows, so no destructive stock fixture was created; native Unit 6F debt remains separately deferred. `.zcode/` and `docs/codemap/` remain preserved and untouched. |
-| Next recommended task | Select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services. |
+| Latest handoff | Group 1 contracts/runtime and the bounded four-finding correction are locally complete on `codex/phase9-unit6g-owner-batch-review-commit-handoff`; M52 remains unapplied and Unit 8 remains live/main-integrated at `4c1d98d`. |
+| Current risk level | M52 is an un-applied category 4/3 forward migration candidate pending correction-only rereview and exact-project preflight. Migration application, deployment, and native/UI Groups 2–4 work remain gated. Preexisting live advisory: RLS is disabled on `public.spatial_ref_sys`, `public.marketplace_event_schema_registry`, and `public.marketplace_notification_type_registry`; no remediation was authorized. |
+| Next recommended task | Independently rereview only the four corrected Group 1 findings and their direct regressions. Do not apply M52, deploy, stage/commit/push, or begin Groups 2–4 without separate authorization. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 
@@ -1140,7 +1163,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit8_live_verified_main_integrated` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 8 SDD](./implementation/phase-9-image-inventory/work-units/08-marketplace-bookstore-first-sdd.md) · [connected rollout evidence](./implementation/phase-9-image-inventory/supporting/unit8-connected-rollout-2026-08-21.md) | Unit 8 Q07-Q10, M49-M51, Vault-backed cursors, client integration, final media-order invariant, connected acceptance, and release documentation are live-verified and integrated into `main` at `4c1d98d`; historical migration IDs remain untouched. |
+| Phase 9: Image-to-LLM Inventory | `unit6g_group1_contract_persistence_locally_complete` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6G SDD](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md) · [Unit 6G matrix](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md) | Group 1 contracts/runtime and un-applied M52 candidate are locally verified on the approved branch; independent review is next. M52 application, deployment, Git publication, and Groups 2–4 remain separately gated. Unit 8 remains live-verified and integrated into `main` at `4c1d98d`. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

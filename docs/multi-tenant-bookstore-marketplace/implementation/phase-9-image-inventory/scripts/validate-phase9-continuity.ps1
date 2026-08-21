@@ -74,6 +74,7 @@ $requiredPhaseFiles = @(
     'trackers/21-unit6c-capture-upload-recovery-evidence.md',
     'trackers/22-unit6d-candidate-review-evidence.md', 'trackers/23-unit6e-review-corrections-evidence.md', 'trackers/24-unit6f-readiness-quality-gates-evidence.md', 'trackers/25-owner-inventory-read-boundary-wu1-evidence.md', 'trackers/26-owner-inventory-read-client-wu2-evidence.md',
     'trackers/29-unit7a-create-only-commit-evidence.md',
+    'trackers/31-unit6g-owner-batch-review-design-evidence.md',
     'work-units/00-contracts-threat-migration-plan.md', 'work-units/00b-backend-api-technical-design-plan.md',
     'work-units/00b-technical-design/00-overview-authority-and-file-map.md', 'work-units/00b-technical-design/01-command-query-and-dto-catalogue.md',
     'work-units/00b-technical-design/02-authorization-tenancy-and-privacy.md', 'work-units/00b-technical-design/03-state-transactions-idempotency-and-publication.md',
@@ -84,6 +85,8 @@ $requiredPhaseFiles = @(
     'work-units/04b-gemini-vision-adapter-handoff.md',
     'work-units/05c-lite-multilingual-search-variants-sdd.md',
     'work-units/06-owner-capture-review-recovery-ux-sdd.md',
+    'work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md',
+    'work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md',
     'work-units/owner-inventory-read-boundary-wu1-sdd.md',
     'work-units/owner-inventory-read-client-wu2-sdd.md',
     'work-units/06-owner-capture-review-recovery-contract-matrix.md',
@@ -202,7 +205,8 @@ if (-not ($legacyM32Handoff -or $liveM32Handoff -or $metadataSafetyHandoff -or $
 }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
-if (-not ($doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6e_finalized_unit6f_separately_gated`') -or
+if (-not ($doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_sdd_owner_review_pending`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6e_finalized_unit6f_separately_gated`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6f_browser_verified_native_gate_pending`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `wu1_owner_inventory_read_boundary_locally_complete_unapplied`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
@@ -559,6 +563,7 @@ if (
         -not $tracker.Contains('**Active work unit:** `unit8_migration_history_reconciliation_read_only_complete`') -and
         -not $tracker.Contains('**Active work unit:** `unit8_live_verified_main_integration_pending`') -and
         -not $tracker.Contains('**Active work unit:** `unit8_live_verified_main_integrated`') -and
+        -not $tracker.Contains('**Active work unit:** `unit6g_sdd_owner_review_pending`') -and
         -not $tracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -and
         -not $tracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
     -not (
@@ -617,7 +622,8 @@ if (
         $tracker.Contains('**Next authorized action:** none in this bounded session; Unit 8 repository closure is ready. Any migration-history repair, Vault provisioning, live migration application, deployment, commit, or push requires separate authorization.') -or
         $tracker.Contains('**Next authorized action:** independently review the read-only migration reconciliation and approve a canonical mapping/plan. Do not repair migration history, provision Vault, or apply M49-M51 until that plan is approved.') -or
         $tracker.Contains('**Next authorized action:** merge this live-verified Unit 8 branch into `main`, push the resulting `main`, and then select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services.') -or
-        $tracker.Contains('**Next authorized action:** select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services.')
+        $tracker.Contains('**Next authorized action:** select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services.') -or
+        $tracker.Contains('**Next authorized action:** Owner review and explicit approval or correction of the Unit 6G SDD and contract matrix. Do not begin 6G-A red tests, create/apply a migration, change product source, deploy, or mutate Supabase/Storage without separate authorization.')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
@@ -698,7 +704,8 @@ $draftMigrationNames = @(
     '20260817000048_marketplace_phase9_legacy_rpc_service_role_compatibility.sql',
     '20260818000049_marketplace_phase9_bookstore_first_discovery.sql',
     '20260820000050_marketplace_phase9_storefront_detail.sql',
-    '20260821000051_marketplace_phase9_public_media_order_invariant.sql'
+    '20260821000051_marketplace_phase9_public_media_order_invariant.sql',
+    '20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql'
 )
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
@@ -731,7 +738,8 @@ $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_in
     $tracker.Contains('**Implementation status:** `unit7c_wu1_locally_complete`') -or
     $tracker.Contains('**Implementation status:** `unit7c_wu2a_filter_contract_locally_complete`') -or
     $tracker.Contains('**Implementation status:** `unit7c_wu5_store_view_cutover_locally_complete`') -or
-    $tracker.Contains('**Implementation status:** `unit7c_m46_correction_pass_connected_save_reproof_complete`'))
+    $tracker.Contains('**Implementation status:** `unit7c_m46_correction_pass_connected_save_reproof_complete`') -or
+    $tracker.Contains('**Implementation status:** `unit6g_group1_contract_persistence_locally_complete`'))
 $expectedMigrationNames = @($migrationNames)
 if ($wu1AppliedStatus) { $expectedMigrationNames += $draftMigrationNames }
 $appliedPhase9Migrations = if ($wu1AppliedStatus) {

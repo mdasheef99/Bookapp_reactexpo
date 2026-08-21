@@ -103,6 +103,13 @@ Before Start, preselect:
 
 First-session publication defaults private; a prior explicit preference may be reused. Server persistence recovers from backgrounding/network/app closure. The initiating Owner may mutate/resume the session during the Owner-only pilot; support intervention is separately authorized and audited. Close succeeds only after every submitted input is ready, failed, or skipped. A short internal `closing` transition seals new inputs and finalizes the summary, but Close while processing leaves the session active with an actionable message. Logout clears local cached state.
 
+The proposed Unit 6G specialization makes location required; preselects English
+as a non-authoritative language hint; makes condition and selling-price defaults
+optional; fixes quantity at 1 before scan; uses fixed INR/whole-rupee UI over
+integer minor-unit storage; and adds an optional durable session-only batch
+label. Currency, paise, and script are not setup controls. Remember-last-used
+settings and named presets remain deferred.
+
 ---
 
 ## 6. Vision adapter
@@ -208,6 +215,14 @@ Mandatory minimal fields:
 
 Extended bibliographic/acquisition fields are collapsed. Owner may add a missed candidate, remove a false candidate, correct metadata/aliases, and preview the future marketplace card.
 
+The proposed Unit 6G review surface is one bounded session page with at most 15
+compact cards. Every card shows the final review values, source/default markers,
+a bounded metadata sheet, general Remove, and Add. Notes and Choose another
+match are absent from this UI. Per-card Add and Add all ready books explicitly
+confirm the displayed values, perform strict canonical Save, and only then call
+the existing independent Unit 7A commit. Bulk partial success is expected; no
+automatic or session-atomic commit is introduced.
+
 Conditions are New, Like New, Very Good, Good, and Acceptable, with an accessible explanation for all except New. Damage is separate. A sellable damaged copy requires a public note, damage types, and 1-3 approved actual-copy photos; an unsafe/incomplete/unreadable copy remains private.
 
 ---
@@ -247,6 +262,11 @@ Unit 7A creates private inventory only. Unit 7B separately owns publication,
 public projection/media, and idempotent publication failure/retry.
 
 Mobile does not insert model output directly. Post-push price, quantity, condition, damage, location, notes, photos, and visibility remain editable through controlled commands; store edits do not mutate shared canonical truth.
+
+One deliberate top-level Owner action may orchestrate several candidate commits
+only when each candidate independently passes the same saved-review, version,
+readiness, authorization, transaction, and idempotency gates. Publication intent
+is provenance only at this boundary; every Unit 7A result remains private.
 
 ---
 
@@ -322,6 +342,10 @@ recorded live versions; M36 remains local and unapplied.
 | IMG-17 | Unit 7A ends with one private inventory effect; Unit 7B retries only publication idempotently. |
 | IMG-18 | Provider field reuse rights are enforced separately from provenance. |
 | IMG-19 | Private customer-request photos and scan media never become public listing media through Unit 7A. |
+| IMG-20 | Pre-scan location is required; optional condition/price and session-only batch label reduce repeated entry without changing detected identity or inventory authority. |
+| IMG-21 | One bounded page presents all candidate review values compactly and keeps full metadata on demand rather than mounting expanded forms. |
+| IMG-22 | Per-card and bulk Add always persist and revalidate each candidate before its independent create-only commit; partial success cannot become an atomic or automatic batch effect. |
+| IMG-23 | General Owner removal is persisted separately from false detection/input removal and cannot delete evidence, inventory, listings, or audit history. |
 
 ---
 

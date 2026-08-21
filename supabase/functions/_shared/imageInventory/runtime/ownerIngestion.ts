@@ -1,16 +1,11 @@
-import {
-  assertSafeIngestionResponse,
-  OwnerIngestionRequest,
-} from '../contracts/ingestion.ts';
+import { assertSafeIngestionResponse, OwnerIngestionRequest } from '../contracts/ingestion.ts';
 import {
   OWNER_UX_CONTRACT_VERSION,
   OwnerUxAction,
   parseOwnerUxResponse,
 } from '../contracts/ownerUx.ts';
-import {
-  parsePublicationResponse, PUBLICATION_CONTRACT_VERSION,
-  PublicationRequest,
-} from '../contracts/publication.ts';
+import { OWNER_BATCH_REVIEW_CONTRACT_VERSION } from '../contracts/ownerBatchReview.ts';
+import { parsePublicationResponse, PUBLICATION_CONTRACT_VERSION, PublicationRequest } from '../contracts/publication.ts';
 import {
   parseStoreViewRpcResponse,
   STORE_VIEW_CONTRACT_VERSION,
@@ -34,6 +29,7 @@ import { sha256Hex, StoredImageObject, storedImageEnvelope } from '../media/sour
 import { executeStoreViewManagement } from './storeViewManagement.ts';
 import { executeStoreViewMedia } from './storeViewMedia.ts';
 import { executeStoreViewHistory } from './storeViewHistory.ts';
+import { executeOwnerBatchReview } from './ownerBatchReviewIngestion.ts';
 
 type RpcResult = { data: any; error: { message?: string } | null };
 type Client = {
@@ -132,6 +128,9 @@ export async function executeOwnerIngestion(
   userClient: Client,
   serviceClient: Client,
 ): Promise<Record<string, unknown>> {
+  if (request.contractVersion === OWNER_BATCH_REVIEW_CONTRACT_VERSION) {
+    return executeOwnerBatchReview(request as any, userClient, unwrap);
+  }
   if (request.contractVersion === STORE_VIEW_MANAGEMENT_CONTRACT_VERSION) {
     return executeStoreViewManagement(
       request as StoreViewManagementRequest,
