@@ -10,14 +10,18 @@ The one startup chain is repository `AGENTS.md` â†’ `implementation/ACTIVE.md` â
 
 ## Current 2026-08-21 Unit 8 closure overlay
 
-Unit 8 is repository-complete and ready for closure. M49-M51 remain
-repository-only and unapplied. The final media invariant requires each publicly
+Unit 8 is live-verified on the development Supabase project. M49, M50, and M51
+are applied exactly once as live versions `20260821060156`, `20260821060742`,
+and `20260821061213`; the dedicated Q08 cursor secret is provisioned without
+its value being exposed. The final media invariant requires each publicly
 eligible link to occupy a unique non-null `public_order` in `1..3`; Q10 returns
 at most three in `public_order,id` order, and the client enforces the same
 contract. `canonical_edition_exact` is reserved/unreachable in text-query v1.
-Four logical local commits were prepared. No push/merge, migration-history
-repair, Vault provisioning, live application, or deployment is authorized by
-this handoff.
+Connected Q08/Q09/Q10, security/privacy, cursor, legacy-compatibility, and
+media-invariant checks pass. Full evidence is in
+[unit8-connected-rollout-2026-08-21.md](./supporting/unit8-connected-rollout-2026-08-21.md).
+The feature branch is ready for authorized integration into `main`; historical
+migration IDs remain preserved and unrepaired.
 
 ## Prior 2026-08-20 Unit 8 design-freeze overlay
 

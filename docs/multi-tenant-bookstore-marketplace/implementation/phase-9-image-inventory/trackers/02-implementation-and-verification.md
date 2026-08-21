@@ -1,7 +1,35 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit8_repository_complete_closure_ready_operationally_pending`; **last updated:** 2026-08-21
+**Status:** `unit8_live_verified_main_integration_pending`; **last updated:** 2026-08-21
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit8_closure_ready`. Unit 8 is repository-complete; M48 remains the live migration tail and M49-M51 are repository-only and unapplied.
+**Active work unit:** `unit8_live_verified_main_integration_pending`. Unit 8 is live-verified; M49-M51 are applied exactly once to the verified development project and the next repository action is authorized main integration.
+
+### 2026-08-21 — Connected Unit 8 rollout and live acceptance
+
+- Authorized scope: provision the dedicated Q08 Vault secret, apply only M49,
+  M50, and M51 individually to `Bookconnect_reactexpo`, verify each gate, and
+  run bounded connected Unit 8 acceptance. Historical migration replay/repair,
+  unrelated migration, Storage/business-data fixture mutation, and unrelated
+  deployment were excluded.
+- Exact project/readback: `ahntbtktjjmvfosgkmgn` was `ACTIVE_HEALTHY` before
+  and after the rollout. Vault metadata confirms one resolvable
+  `phase9_q08_cursor_secret`; the value was never exposed.
+- Applied migration ledger: M49 `20260821060156`, M50 `20260821060742`, and
+  M51 `20260821061213`, each exactly once. No `schema_migrations` repair or
+  historical replay occurred.
+- Connected verification: Q08 search/no-result/cursor crypto and policy
+  binding; Q09 storefront grouping, continuation, and stale/expired/wrong-store
+  context degradation; Q10 detail/gallery/max-three ordering; anon/auth grants;
+  private-table denial; privacy fields; legacy v2 compatibility; and continuity
+  all passed. The current dataset has no zero-stock rows, so no destructive
+  stock fixture was created.
+- M51 live readback confirms the nullable `public_order` column, existing
+  `1..3` check, unique `(inventory_id,public_order)` index, link guard,
+  asset-lifecycle guard, and zero invalid/duplicate/NULL-eligible/over-three
+  rows. `canonical_edition_exact` remains reserved/unreachable in text-query v1.
+- Evidence: [unit8-connected-rollout-2026-08-21.md](../supporting/unit8-connected-rollout-2026-08-21.md).
+- No source edit, commit, push, merge, deployment, or unrelated data mutation
+  occurred during connected validation. The next authorized action is the
+  separate feature-branch merge into `main`.
 
 ### 2026-08-21 — Final Unit 7/8 media invariant reconciliation
 
@@ -630,6 +658,9 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260815000045_marketplace_phase9_unit7c_media_history.sql` | `20260816122929 marketplace_phase9_unit7c_media_history` | exact target `ahntbtktjjmvfosgkmgn` and live M43/M44 re-verified before application | current-user-authorized M45 application via Supabase MCP | forward-only Store View media/history commands, bounded activity projection, exact replacement target, and approved-media reorder; M39–M44 unchanged | migration history/readback; exact M45 disposable media/history vertical 12/12; public function/column readback; no business/Storage mutation | `live_verified` |
 | `20260817000047_marketplace_phase9_legacy_rpc_security_remediation.sql` | `20260817073341 marketplace_phase9_legacy_rpc_security_remediation` | exact target `ahntbtktjjmvfosgkmgn` re-verified before application | current-user-authorized bounded security remediation via Supabase MCP | exact two legacy RPC signatures only; revoke-only `ALL` from `PUBLIC`, `anon`, `authenticated`, `service_role`; no function/table/view/data/Storage rewrite | pre-change full projection-row/`inventory_id` evidence; post-change customer/service denial; v2 ACL/path preserved; static red/green plus client tests | `live_verified_superseded_by_forward_compatibility_correction` |
 | `20260817000048_marketplace_phase9_legacy_rpc_service_role_compatibility.sql` | `20260817075825 marketplace_phase9_legacy_rpc_service_role_compatibility` | exact target `ahntbtktjjmvfosgkmgn` and M47 tail re-verified before application | current-user-authorized forward correction via Supabase MCP | exact two legacy RPC signatures only; precise `REVOKE EXECUTE` from `PUBLIC, anon, authenticated` plus `GRANT EXECUTE` to `service_role`; no function/table/view/data/Storage rewrite | repository/12 Edge Function/SQL dependency review; explicit anon/auth denied, service-role allowed, direct view denied; v2 anon/auth JSON calls pass; focused 3 suites/15 tests | `live_verified` |
+| `20260818000049_marketplace_phase9_bookstore_first_discovery.sql` | `20260821060156 marketplace_phase9_bookstore_first_discovery` | exact target `ahntbtktjjmvfosgkmgn` re-verified healthy before application | user-authorized explicit Supabase migration application | Q08 bookstore-first search, Vault-backed cursor crypto, policy-bound cursors, safe public DTOs; no historical replay | migration once; Vault secret metadata; Q08 search/no-result/cursor/ISBN/privacy/grant readback; anon/auth call probes | `live_verified` |
+| `20260820000050_marketplace_phase9_storefront_detail.sql` | `20260821060742 marketplace_phase9_storefront_detail` | exact target and M49 live version re-verified before application | user-authorized explicit Supabase migration application | Q08 wrapper/match context, Q09 storefront grouping/pagination, Q10 detail/gallery; private tables remain denied | migration once; Q08→Q09 context; Q09 continuation zero overlap; stale/expired/wrong-store degradation; Q10 safe detail/gallery; legacy compatibility | `live_verified` |
+| `20260821000051_marketplace_phase9_public_media_order_invariant.sql` | `20260821061213 marketplace_phase9_public_media_order_invariant` | exact target and M49/M50 live versions re-verified; eligible media preconditions remained zero | user-authorized explicit Supabase migration application | fail-closed public-media order guard at link and asset lifecycle seams; existing nullable/1..3/unique slot mechanism preserved; no cardinality redesign | migration once; guard/trigger/check/index readback; eligible invalid/duplicate/NULL/over-three counts zero; Q10 max-three/order readback; continuity PASS | `live_verified` |
 Rules: re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
 - Use forward corrections; record every schema, grant, Storage, data, and verification effect.
 ## Required verification matrix

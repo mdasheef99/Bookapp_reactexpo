@@ -223,7 +223,7 @@ post-5C/7A/7B/7C implementation contract explicit.
 | `canonical_edition_exact` is reserved/unreachable in text-query v1 | P9-D80; Unit 8 §7; no authoritative edition-context input exists in Q07 v1 |
 | Zero-stock/paused/history states cannot remain customer-discoverable or addressable | Unit 7C §§7/9/11; Unit 8 §§6/13/16; MKT-07/15 |
 | Legacy unsafe RPCs remain customer-denied while safe v2 compatibility remains | P9-D78; Unit 8 §§3/18/20; M47/M48 security evidence in implementation tracker |
-| U8B/U8C/U8D and migration-history reconciliation are future separately authorized gates | P9-D78; Unit 8 §§21–22 |
+| U8B/U8C/U8D and migration-history reconciliation are separately authorized gates; U8B/U8C/U8D connected closure is now live-verified | P9-D78; Unit 8 §§21–22; [connected rollout evidence](./unit8-connected-rollout-2026-08-21.md) |
 
 ## U8B bounded corrective trace (2026-08-20)
 
@@ -234,10 +234,10 @@ post-5C/7A/7B/7C implementation contract explicit.
 | Malformed decrypted cursor payloads fail closed with the bounded public cursor error | Unit 8 §19; M49 Q08 cursor validation; U8B-CURSOR-04b |
 | Real PostgreSQL accepts the production SQL/security boundary without applying M49 to Supabase | Unit 8 §§18/20/22; `phase9_bookstore_first_postgres.sql`; `run-phase9-bookstore-first-postgres.ps1`; `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` |
 
-The U8B integration suite completed `63/63`. The real-PostgreSQL result is
-disposable local evidence, not live Supabase verification. Migration-history
-reconciliation, Vault provisioning, M49 application, and U8C remain separate
-gates.
+The U8B integration suite completed `63/63`. The disposable real-PostgreSQL
+result was followed by the authorized connected M49-M51 rollout and Q08/Q09/Q10
+acceptance; the live evidence is recorded in
+[unit8-connected-rollout-2026-08-21.md](./unit8-connected-rollout-2026-08-21.md).
 
 ## Unit 7C Owner Store View trace (2026-08-14)
 

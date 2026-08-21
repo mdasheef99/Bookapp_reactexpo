@@ -1,9 +1,9 @@
 # PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `unit7a_create_only_locally_complete_review_pending`
-**Planning set:** `unit7a_frozen_implemented_locally`
-**Implementation:** M01-M38 are live at their recorded levels; local M39 is unapplied. The automatic/functional Unit 6 upload-to-Owner-review path remains PASS with no inventory/listing effects. Unit 7A is locally implemented as one eligible candidate to one new private inventory row from server-held review state, with no duplicate branch and Unit 7B publication separate. Dedicated PGlite is 13/13, Phase 9 Edge/mobile/migration regression is 479/479, and TypeScript passes with the documented import flag. Review is next; live application/deployment and Git publication remain separately gated. Native Unit 6F validation remains deferred accepted debt, not PASS.
-**Last updated:** 2026-08-12
+**Status:** `unit8_live_verified_main_integration_pending`
+**Planning set:** `unit8_live_verified_release_handoff`
+**Implementation:** Unit 8 is live-verified on the development Supabase project. M49, M50, and M51 were applied exactly once as `20260821060156`, `20260821060742`, and `20260821061213`; the dedicated `phase9_q08_cursor_secret` is provisioned without disclosure. Connected Q08/Q09/Q10, cursor/policy binding, anon/authenticated grants, privacy, legacy compatibility, and the public-media invariant pass. See the [connected rollout evidence](./phase-9-image-inventory/supporting/unit8-connected-rollout-2026-08-21.md). Main integration is the next repository action; historical migration IDs remain preserved and unrepaired. Native Unit 6F validation remains deferred accepted debt, not PASS.
+**Last updated:** 2026-08-21
 
 This stable phase handoff points to the detailed planning set:
 

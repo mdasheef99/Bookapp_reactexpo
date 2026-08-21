@@ -1,20 +1,24 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit8_repository_complete_closure_ready_operationally_pending`
+**Status:** `unit8_live_verified_main_integration_pending`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
 **Last updated:** 2026-08-21
-**Current handoff:** Unit 8 is repository-complete and ready for closure. It
-preserves the existing Marketplace baseline for the completed Unit
+**Current handoff:** Unit 8 is live-verified on the development Supabase
+project and ready for authorized main integration. M49, M50, and M51 were
+applied exactly once as `20260821060156`, `20260821060742`, and
+`20260821061213`; the dedicated `phase9_q08_cursor_secret` is provisioned
+without its value being exposed. Connected Q08/Q09/Q10, cursor crypto and
+policy binding, anon/authenticated grants, privacy, legacy compatibility, and
+the public-media invariant all pass. Full evidence is in
+[`unit8-connected-rollout-2026-08-21.md`](./supporting/unit8-connected-rollout-2026-08-21.md).
+It preserves the existing Marketplace baseline for the completed Unit
 5C/7A/7B/7C architecture: `inventoryId` remains private Owner identity;
 `listingId` is current customer-safe offer identity; Q07 is internal; Q08 groups
 stores before deterministic cursor pagination; Q09 paginates complete public
 title groups; and Q10 uses a forward allowlisted public detail/media boundary.
 The local correction covers provenance-qualified provider/actual-copy fallback,
 effective-policy cursor binding, and bounded malformed-cursor handling. M47/M48
-remain the satisfied legacy-RPC customer-boundary prerequisite. M49-M51 are
-repository-only and unapplied to Supabase. Repository closure is ready;
-migration-history reconciliation, Vault provisioning, live Supabase verification,
-M49-M51 application remain separately authorized. The final media contract is
+remain the satisfied legacy-RPC customer-boundary prerequisite. The final media contract is
 unique non-null public order `1..3` for every publicly eligible link, Q10 is
 bounded to three, and private/unapproved media remains excluded.
 **Historical implementation status (superseded):** Unit 6's automatic/functional pipeline is **PASS**.

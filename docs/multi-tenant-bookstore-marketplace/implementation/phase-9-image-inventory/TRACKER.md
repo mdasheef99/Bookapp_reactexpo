@@ -1,21 +1,74 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `unit8_repository_complete_closure_ready`
-**Implementation status:** `unit8_repository_complete_closure_ready_operationally_pending`
+**Planning status:** `unit8_live_verified_release_handoff`
+**Implementation status:** `unit8_live_verified_main_integration_pending`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-21
-**Current milestone:** Unit 8 is repository-complete and ready for closure. M49-M51, Q08-Q10, the strict client contracts, and disposable PostgreSQL/PGlite coverage are locally validated. M49-M51 remain repository-only and unapplied to Supabase.
-**Active work unit:** `unit8_closure_ready`
+**Current milestone:** Unit 8 is live-verified on the development Supabase project. M49, M50, and M51 are applied exactly once and the connected Q08/Q09/Q10, security/privacy, cursor, legacy-compatibility, and media-invariant checks pass. The feature branch is ready for the authorized main integration.
+**Active work unit:** `unit8_live_verified_main_integration_pending`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** The final bounded Unit 7/8 media invariant reconciliation across M51, Q10, strict client schemas, PostgreSQL/PGlite tests, and closure documentation. The prior M47/M48 remediation remains a satisfied prerequisite.
-**Next authorized action:** review the four prepared logical Unit 8 commits. Any amendment, push/merge, migration-history repair, Vault provisioning, live migration application, or deployment requires separate authorization.
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`; M43 is live exactly once as `20260816122822 marketplace_phase9_unit7c_inventory_management`; M44 is live exactly once as `20260816122901 marketplace_phase9_store_view_filter_contract`; M45 is live exactly once as `20260816122929 marketplace_phase9_unit7c_media_history`; M46 is live exactly once as `20260816150126 marketplace_phase9_unit7c_private_save_revision_correction`; M47 is live exactly once as `20260817073341 marketplace_phase9_legacy_rpc_security_remediation`; and M48 is live exactly once as `20260817075825 marketplace_phase9_legacy_rpc_service_role_compatibility`. M39–M48 remain byte-immutable.
-**Scope boundary:** the authorized repository-only Unit 8 implementation and final Unit 7/8 media invariant correction are complete. No live Supabase, Vault, migration-history, deployment, Storage, or business-data work occurred.
-**Implementation authority:** limited to local Unit 8 code, tests, one forward M51 migration, and continuity documentation. M47/M48 security corrections are not reopened.
-**Migration creation/application authority:** M49-M51 are present for local/disposable verification only and were not applied to Supabase. M47/M48 remain the live tail on `ahntbtktjjmvfosgkmgn`; this handoff grants no live migration authority.
-**Migration-history prerequisite:** the known local/live migration-version mismatch remains parked and must be safely reconciled before any future Unit 8 migration is applied; it was not investigated or changed during this bounded U8B task.
-**Current gate:** `READY_FOR_UNIT8_CLOSURE_REPOSITORY_ONLY`; Owner Edge version 8 and the connected database remain unchanged by this task. Native Unit 6F remains deferred and unrelated.
+**Last completed:** The authorized M49-M51 connected rollout and final Unit 8 acceptance. The prior M47/M48 remediation remains a satisfied prerequisite.
+**Next authorized action:** merge this live-verified Unit 8 branch into `main`, push the resulting `main`, and then select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services.
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`; M43 is live exactly once as `20260816122822 marketplace_phase9_unit7c_inventory_management`; M44 is live exactly once as `20260816122901 marketplace_phase9_store_view_filter_contract`; M45 is live exactly once as `20260816122929 marketplace_phase9_unit7c_media_history`; M46 is live exactly once as `20260816150126 marketplace_phase9_unit7c_private_save_revision_correction`; M47 is live exactly once as `20260817073341 marketplace_phase9_legacy_rpc_security_remediation`; M48 is live exactly once as `20260817075825 marketplace_phase9_legacy_rpc_service_role_compatibility`; M49 is live exactly once as `20260821060156 marketplace_phase9_bookstore_first_discovery`; M50 is live exactly once as `20260821060742 marketplace_phase9_storefront_detail`; and M51 is live exactly once as `20260821061213 marketplace_phase9_public_media_order_invariant`. M39-M51 remain byte-immutable after application.
+**Scope boundary:** Unit 8 implementation, Vault provisioning, M49-M51 application, connected verification, and documentation closure are complete. No historical migration repair, unrelated migration, Storage/business-data fixture mutation, or unrelated deployment occurred.
+**Implementation authority:** Unit 8 is live-verified; M47-M51 are not reopened. Native Unit 6F validation remains deferred and unrelated.
+**Migration creation/application authority:** M49-M51 were applied only through the explicitly authorized forward rollout; no normal `db push`, historical replay, or `schema_migrations` repair was used.
+**Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
+**Current gate:** `UNIT8_LIVE_ROLLOUT_PASS_MAIN_INTEGRATION_PENDING`; connected project `ahntbtktjjmvfosgkmgn` remains healthy. Native Unit 6F remains deferred and unrelated.
+
+## 2026-08-21 — Connected Unit 8 rollout and live verification
+
+- The exact project was reverified healthy before each authorized step. A new
+  dedicated `phase9_q08_cursor_secret` was created and verified without
+  exposing its value.
+- M49, M50, and M51 were applied individually as live versions
+  `20260821060156`, `20260821060742`, and `20260821061213`; each appears once
+  in the live migration ledger. No historical migration was replayed or
+  repaired.
+- Connected Q08/Q09/Q10 checks passed, including no-result behavior, cursor
+  crypto and policy binding, Q09 continuation with zero overlap, stale/expired/
+  wrong-store context degradation, Q10 public gallery ordering/max-three,
+  anon/authenticated grants, private-table denial, privacy checks, and legacy
+  v2 compatibility. The current dataset has no zero-stock rows, so no
+  destructive stock fixture was created.
+- M51 readback confirms the existing `1..3` check and unique
+  `(inventory_id,public_order)` index, link and asset-lifecycle guards,
+  nullable private/staging orders, and zero invalid/duplicate/NULL-eligible/
+  over-three rows. `canonical_edition_exact` remains reserved/unreachable in
+  text-query v1.
+- Continuity validation passed. Full evidence is recorded in
+  [unit8-connected-rollout-2026-08-21.md](./supporting/unit8-connected-rollout-2026-08-21.md).
+- No source edit, commit, push, merge, deployment, or unrelated data mutation
+  occurred in the connected validation itself; this handoff now authorizes the
+  separate repository main-integration step.
+
+## 2026-08-21 — Read-only migration-history reconciliation
+
+- Branch `phase9-unit8-u8b-bookstore-discovery` is pushed to
+  `origin/phase9-unit8-u8b-bookstore-discovery` at `a47ac76`; `main` was not
+  touched.
+- Connected project `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) reports 150
+  migration rows; the repository has 153 migration files. 143 logical names
+  are shared: 30 retain the same version and 113 have the same name with a
+  different live version. This proves the local filename timestamps and live
+  application-version timestamps are different ledgers; they must not be
+  reconciled by replaying local files or editing applied history.
+- Seven live names have no local source: three older club/notification grants
+  and four post-M48 unrelated wishlist/reading-notes/library migrations.
+  Seven local pre-Unit-8 files have no live name, and M49-M51 are also absent
+  live. The live tail is M48 at `20260817075825`, followed by those four
+  unrelated migrations.
+- Read-only schema checks show the M49 upstream tables/helpers and pgcrypto/Vault
+  table exist, but the Q08 cursor functions, Q08/Q09/Q10 public functions, and
+  M51 asset guard do not. The dedicated `phase9_q08_cursor_secret` row is
+  absent. No migration, repair, Vault write, or other external mutation was
+  performed.
+- The complete canonical local/live version and source-hash mapping is recorded
+  in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md):
+  4 exact version/source matches, 93 same-logical/different-timestamp matches,
+  and 46 divergent-content review flags. This is evidence only; it does not
+  authorize ledger repair or migration application.
 
 ## 2026-08-21 — Final Unit 7/8 media invariant reconciliation
 

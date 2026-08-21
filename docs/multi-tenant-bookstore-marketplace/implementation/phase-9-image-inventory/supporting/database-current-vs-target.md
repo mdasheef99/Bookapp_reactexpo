@@ -1,17 +1,52 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-08-21 final Unit 7/8 media-order read-only reconciliation
-**Audit mode:** exact-project read-only schema/data/trigger inspection plus local disposable implementation verification
+**Audit date:** 2026-08-21 final Unit 8 connected rollout readback
+**Audit mode:** exact-project preflight, individually authorized forward migration application, connected acceptance, and post-rollout schema/data/trigger inspection
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**2026-08-21 read-only result:** the live project has one publicly eligible
-inventory-media link, with zero eligible NULL orders and zero eligible
-out-of-range orders. `public_order` remains nullable, with the existing `1..3`
-check and `(inventory_id,public_order)` uniqueness. M51 is repository-only and
-unapplied; it adds fail-closed preflight plus guards at link approval and asset
+**2026-08-21 connected result:** the live project has one publicly eligible
+inventory-media link, with zero eligible NULL, out-of-range, duplicate, or
+over-three cases. M49, M50, and M51 are each live exactly once; the dedicated
+Q08 Vault secret resolves without disclosure; Q08/Q09/Q10, grants/privacy,
+legacy compatibility, cursor behavior, and continuity all pass. `public_order`
+remains nullable, with the existing `1..3` check and
+`(inventory_id,public_order)` uniqueness. M51 guards link approval and asset
 lifecycle transitions without changing nullable private/unapproved state.
-**Mutation status:** M01-M08/M10-M48 are live at their separately recorded checkpoints; M09 is absent. M39-M46 remain byte-immutable, M47 is live exactly once as `20260817073341`, and M48 is live exactly once as `20260817075825`. M47/M48 changed only the exact legacy Marketplace RPC EXECUTE ACLs; no table, row, view body, RLS, trigger, Storage, v2 RPC, Edge, or Unit 7C behavior changed. The development `active_listing_limit` entitlement is 10 from source `unit7b_dev_rollout`. The Unit 7B implementation/documentation commit `9f3e646` is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`.
 
-**Application ledger:** The exact project `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`, `ACTIVE_HEALTHY`) and live M47 tail `20260817073341` were re-verified immediately before M48 application. Local M47 `20260817000047_marketplace_phase9_legacy_rpc_security_remediation.sql` applied once as `20260817073341`; local M48 `20260817000048_marketplace_phase9_legacy_rpc_service_role_compatibility.sql` applied once as `20260817075825` through Supabase MCP. M48 uses precise customer-role `REVOKE EXECUTE` plus trusted `service_role` `GRANT EXECUTE`. Final ACL/readback and explicit role probes pass; no Storage object or unrelated service/function changed.
+The durable connected evidence is [unit8-connected-rollout-2026-08-21.md](./unit8-connected-rollout-2026-08-21.md).
+
+## Migration-history reconciliation — read-only 2026-08-21
+
+The connected project reports 150 rows in `supabase_migrations.schema_migrations`;
+the repository contains 153 migration files. Comparing logical migration names
+found 143 shared names: 30 have identical version IDs and 113 have different
+version IDs. The shared-name/version drift is systematic: local files use planned
+timestamps (for example M47 `20260817000047` and M48 `20260817000048`), while the
+connected project records their application timestamps (`20260817073341` and
+`20260817075825`).
+
+The live-only names are `harden_clubs_maintenance_rpc_execute_grants`,
+`schedule_expired_club_member_actions_cleanup`,
+`add_invitation_reminder_notifications`, and the four post-M48 unrelated
+`marketplace_wishlist_notify_unify`, `reading_notes_fk_and_cleanup`,
+`library_user_book_pages_vault`, and `library_word_limit_hardening`. The local-only
+pre-Unit-8 names are `017_user_credit_balances_lockdown`,
+`018_listings_city_visibility_policy`, `019_book_public_reviews_contract`,
+`016_set_current_book_from_nomination`, `transfer_club_admin_rpc`,
+`add_exchange_pickup_venue`, and `harden_club_primary_and_exchange_city`.
+M49, M50, and M51 are intentionally pending local-only files.
+
+The safe plan was to create an evidence-backed name/version/hash mapping and
+classify every live-only and local-only migration before any action. That mapping
+was independently reviewed before the bounded M49-M51 rollout. A normal
+migration push, replay of the 113 shared files, or edit to `schema_migrations`
+was not used. The complete 153-row local/150-row live mapping is recorded in
+[migration-canonical-reconciliation-2026-08-21.md](./migration-canonical-reconciliation-2026-08-21.md).
+Its normalized source comparison classifies 4 exact version/source matches,
+93 same-logical/different-timestamp matches, and 46 divergent-content review
+flags. No historical repair or unrelated migration was performed.
+**Mutation status:** M01-M08/M10-M51 are live at their separately recorded checkpoints; M09 is absent. M39-M46 remain byte-immutable, M47 is live exactly once as `20260817073341`, M48 is live exactly once as `20260817075825`, M49 is live exactly once as `20260821060156`, M50 is live exactly once as `20260821060742`, and M51 is live exactly once as `20260821061213`. The Unit 8 rollout changed only the approved Q08/Q09/Q10/Vault/media-guard scope; no historical migration IDs, unrelated tables, Storage objects, business rows, Edge deployment, or unrelated service/function changed. The development `active_listing_limit` entitlement is 10 from source `unit7b_dev_rollout`. The Unit 7B implementation/documentation commit `9f3e646` is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`.
+
+**Application ledger:** The exact project `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`, `ACTIVE_HEALTHY`) and live M48 tail were re-verified before each Unit 8 step. Local M49 `20260818000049_marketplace_phase9_bookstore_first_discovery.sql` applied once as `20260821060156`; local M50 `20260820000050_marketplace_phase9_storefront_detail.sql` applied once as `20260821060742`; and local M51 `20260821000051_marketplace_phase9_public_media_order_invariant.sql` applied once as `20260821061213` through the explicit Supabase migration path. Vault metadata, function/trigger/constraint/index readback, Q08/Q09/Q10 connected acceptance, final ACLs, and explicit anon/authenticated role probes pass; no historical repair, Storage object, business-row, or unrelated service/function changed.
 
 **Unit 7C WU1 applied state:** exact-project readback reconfirmed generated/default
 listing-field ownership, the Unit 7C sync/projection functions, RLS, function
