@@ -1,45 +1,68 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-08-17
+**Last updated:** 2026-08-21
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-## Current 2026-08-17 post-canary overlay
+## Current 2026-08-21 Unit 8 closure overlay
+
+Unit 8 is repository-complete and ready for closure. M49-M51 remain
+repository-only and unapplied. The final media invariant requires each publicly
+eligible link to occupy a unique non-null `public_order` in `1..3`; Q10 returns
+at most three in `public_order,id` order, and the client enforces the same
+contract. `canonical_edition_exact` is reserved/unreachable in text-query v1.
+Four logical local commits were prepared. No push/merge, migration-history
+repair, Vault provisioning, live application, or deployment is authorized by
+this handoff.
+
+## Prior 2026-08-20 Unit 8 design-freeze overlay
 
 Current phase: Phase 9 — Image-Assisted Inventory.
-Planning/implementation status: Unit 7C M46 correction and the resumed
-connected canary are PASS. WU1 through WU5 remain locally complete; M43/M44/
-M45 are applied exactly once, M46 is applied exactly once as `20260816150126`,
+Planning/implementation status: Unit 7C M46 correction, the resumed connected
+canary, and the bounded legacy Marketplace RPC security correction are PASS;
+the authoritative Unit 8 Marketplace SDD is frozen and the smallest authorized
+U8B corrective scope is locally complete, operationally pending independent
+review.
+WU1 through WU5 remain locally complete; M43/M44/M45 are applied exactly once,
+M46 is applied exactly once as `20260816150126`, M47 is applied exactly once
+as `20260817073341`, and M48 is applied exactly once as `20260817075825`,
 and exact source HEAD `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` remains
 deployed only as Owner Edge version 8 with JWT verification enabled. The
 proven M46 correction is committed at
 `f4a9e858396474dcd08123eb976a47b019ef26f8`. Unit 7B remains live-verified and
 integrated into `main` at `53edbddc9c5417b34cb169599e8282b162e183b3`. Unit 6F
 native validation remains deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-Last completed milestone: M46 RED/GREEN correction, exact disposable M01→M46
-proof, one live M46 application/readback, authenticated private-only Save
-reproof, and the bounded stale/stock/publication/media/history/browser canary.
+Last completed milestone: the bounded U8B correction after the M47/M48
+customer-boundary prerequisite: provenance-qualified cover fallback, effective
+policy cursor binding, bounded malformed-cursor errors, full U8B tests, and a
+disposable real-PostgreSQL acceptance path. M49 remains unapplied live. The
+earlier M48 trusted-role compatibility correction after the M47
+RED/GREEN correction, exact disposable M01→M46 proof, one live M46
+application/readback, authenticated private-only Save reproof, and the bounded
+stale/stock/publication/media/history/browser canary.
 The final canary preserved the customer projection and ended at inventory
 version `6`, publication intent version `4`, four revisions, nine audit/events,
 one approved public media link, and stable listing identity.
-Active work unit: `unit7c_resumed_connected_canary_pass_main_integrated`.
+Active work unit: `unit8_u8b_independent_rereview_pending`.
 The authorized branch publication and merge are complete at merge commit
-`2be793e6212b1b485737c5045d701c99169490e4`. Next authorized action: obtain
-separate approval for the next Phase 9 work unit before any further Unit 7C
-connected mutation.
+`2be793e6212b1b485737c5045d701c99169490e4`. Next exact action: independent
+U8B re-review/closure. Migration-history reconciliation, dedicated Q08 Vault
+provisioning, live Supabase verification, M49 application, and U8C remain
+separately authorized work.
 Blockers/gates: Playwright CLI remains `NOT_RUN_ENVIRONMENT`; full repository
 TypeScript has an unchanged WU4 E2E typing error; production rollout, payments,
 Phases 7/8, M09, and unrelated Unit 6F native validation remain separately
 gated. The connected Unit 7C canary matrix is complete for this bounded proof.
 Unrelated worktree changes must be preserved.
-Supabase mutation authority for this handoff: the single M46 application and
-bounded connected canary are complete. No additional migration, second
-deployment, direct SQL repair, historical-row rewrite, or further connected
-mutation is authorized by this document.
+Supabase mutation authority for this handoff: none. M47/M48 remain the live tail;
+M49 is repository-only and was exercised only in disposable databases. No
+migration-history repair, Vault provisioning, M49 application, second deployment,
+direct SQL repair, historical-row rewrite, U8C implementation, or further
+connected mutation is authorized by this document.
 Connected side effects: the earlier M46 reproof preserved the historical false
 revision; the resumed canary ended at inventory version `6`, publication-intent
 version `4`, published/active/low-stock, quantity `1/1/0/0/0`, one stable
@@ -83,6 +106,18 @@ media capability columns. M46 is live exactly once as
 `20260816150126 marketplace_phase9_unit7c_private_save_revision_correction`.
 Its focused correction and connected private-only Save reproof passed; no
 business-row repair, Storage mutation, or Edge redeploy occurred.
+M47 (`20260817000047_marketplace_phase9_legacy_rpc_security_remediation.sql`)
+is applied exactly once as `20260817073341`. It revokes all non-owner execution
+on the obsolete projection-row catalogue/detail RPCs; the safe v2 JSON RPCs,
+business rows, Storage, and Edge deployments are unchanged.
+
+M48 (`20260817000048_marketplace_phase9_legacy_rpc_service_role_compatibility.sql`)
+is applied exactly once as `20260817075825`. It precisely reasserts customer-role
+denial with `REVOKE EXECUTE` and restores only trusted `service_role` execution.
+No repository, SQL-function, or live Edge Function caller was found; the grant
+is retained as a narrow compatibility allowance. Explicit anon/authenticated
+calls fail with `42501`, service-role detail execution succeeds, and both safe
+v2 JSON functions remain callable without `inventory_id`.
 
 ### Live Unit 7B proof and current development configuration
 
@@ -404,7 +439,7 @@ Do not describe an action as authorized merely because it is listed as a future 
 | 7A Create-only private inventory commit | [Unit 7A SDD](./work-units/07a-create-only-inventory-commit-sdd.md); 00 Master; 01 Data; 03 Review | Unit 6 SDD/contract transition, DOC-3/4/8, quantity/hold invariants, current-vs-target audit, traceability |
 | 7B Publication/projection | 03 Review; 05 Marketplace | private/public projection and current trigger audit; separately authorized after 7A |
 | 7C Owner Store View/post-commit management | [Unit 7C SDD](./work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md); [Unit 7B SDD](./work-units/07b-publication-sdd.md); 00 Master; 01 Data; 03 Review; 04 Security; 05 Marketplace | DOC-3/4/5/8; Unit 7A; current trigger/RPC/media code and migrations; current-vs-target audit; traceability; implementation tracker |
-| 8 Marketplace | 05 Marketplace; 01 Data | DOC-0, DOC-3, DOC-5, public/private tests |
+| 8 Marketplace | [Unit 8 bookstore-first SDD](./work-units/08-marketplace-bookstore-first-sdd.md); 05 Marketplace; 01 Data | DOC-0, DOC-3, DOC-5, Unit 5C, Units 7A/7B/7C, WU0B Q07-Q10, public/private tests |
 | 9 Damage/request photos | 04 Security; 06 Photo Request; 03 Review | DOC-1, DOC-6, DOC-14, retention matrix |
 | 10 Lifecycle worker | 04 Security; 02 Pipeline | retention/deletion fields and ops checks |
 | 11 Pilot verification | all seven SDDs | traceability, full verification tracker, rollout gates |

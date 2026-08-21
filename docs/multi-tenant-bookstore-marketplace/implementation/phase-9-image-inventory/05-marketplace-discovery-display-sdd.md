@@ -4,7 +4,32 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
-**Implementation checkpoint (2026-07-22):** M07's 24-field public projection and three named discovery RPCs are live. Forward M10 restores anonymous execution only to those RPCs, sets the internal projection to `security_invoker=true`, and revokes direct view access; live checks show no private fields or underlying-table grants and the prior advisor error is resolved.
+**Unit 8 closure checkpoint (repository-only 2026-08-21):** Q10 selects only
+the shared approved-public media predicate, orders by `public_order,id`, and
+returns at most three gallery items. The strict client contract enforces gallery
+length `0..3` and integer order `1..3`. M50/M51 remain unapplied live.
+
+**Implementation checkpoint (2026-07-22):** M07's 24-field public projection and three named discovery RPCs are live. Forward M10 restored anonymous execution only to those RPCs, set the internal projection to `security_invoker=true`, and revoked direct view access; live checks showed no private fields or underlying-table grants and the prior advisor error was resolved.
+**Legacy RPC security correction (live once 2026-08-17):** M47 initially
+revoked all non-owner execution on the obsolete projection-row functions
+`phase9_storefront_catalogue` and `phase9_listing_detail`, which returned
+`inventory_id` through their `SETOF phase9_public_listing_projection` shape.
+Forward M48 precisely retains `PUBLIC`, `anon`, and `authenticated` denial while
+restoring only trusted `service_role` `EXECUTE` after dependency review. The
+current Marketplace client remains on the allowlisted v2 JSON functions; their
+customer-role grants and return contracts are unchanged.
+**Unit 8 specialization (frozen 2026-08-20):**
+[the Unit 8 bookstore-first Marketplace SDD](./work-units/08-marketplace-bookstore-first-sdd.md)
+is the implementation authority for the post-5C/7A/7B/7C Q07-Q10 contract.
+This broad SDD remains governing context and is not superseded outside that
+specialized work unit.
+**U8B local corrective evidence (2026-08-20):** The repository-only M49
+correction preserves the §10 provider/canonical → approved actual-copy →
+placeholder order using explicit source provenance rather than URL syntax;
+binds Q08 cursors to the effective relevant policy fingerprint under §12; and
+maps malformed cursor payloads to the bounded §19 error contract. The full U8B
+integration suite is `63/63` and the disposable real-PostgreSQL acceptance path
+passes. No U8C client work or live Supabase verification occurred.
 
 ## 1. Decision
 

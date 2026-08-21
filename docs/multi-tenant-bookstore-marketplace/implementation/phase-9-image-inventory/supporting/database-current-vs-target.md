@@ -1,11 +1,17 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-08-16 Unit 7C M46 correction application/readback
-**Audit mode:** exact-project Supabase MCP preflight/application/readback plus disposable PostgreSQL M01–M46 evidence
+**Audit date:** 2026-08-21 final Unit 7/8 media-order read-only reconciliation
+**Audit mode:** exact-project read-only schema/data/trigger inspection plus local disposable implementation verification
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
-**Mutation status:** M01-M08/M10-M46 are live at their separately recorded checkpoints; M09 is absent. M39-M45 remain byte-immutable and M46 is live exactly once as `20260816150126`. M43 is live as `20260816122822`, M44 as `20260816122901`, and M45 as `20260816122929`. The development `active_listing_limit` entitlement is 10 from source `unit7b_dev_rollout`. The Unit 7B implementation/documentation commit `9f3e646` is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`.
+**2026-08-21 read-only result:** the live project has one publicly eligible
+inventory-media link, with zero eligible NULL orders and zero eligible
+out-of-range orders. `public_order` remains nullable, with the existing `1..3`
+check and `(inventory_id,public_order)` uniqueness. M51 is repository-only and
+unapplied; it adds fail-closed preflight plus guards at link approval and asset
+lifecycle transitions without changing nullable private/unapproved state.
+**Mutation status:** M01-M08/M10-M48 are live at their separately recorded checkpoints; M09 is absent. M39-M46 remain byte-immutable, M47 is live exactly once as `20260817073341`, and M48 is live exactly once as `20260817075825`. M47/M48 changed only the exact legacy Marketplace RPC EXECUTE ACLs; no table, row, view body, RLS, trigger, Storage, v2 RPC, Edge, or Unit 7C behavior changed. The development `active_listing_limit` entitlement is 10 from source `unit7b_dev_rollout`. The Unit 7B implementation/documentation commit `9f3e646` is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`.
 
-**Application ledger:** The exact project `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`, `ACTIVE_HEALTHY`) was re-verified immediately before M46 application. Local M43 `20260814000043_marketplace_phase9_unit7c_inventory_management.sql` applied once as `20260816122822`; local M44 `20260814000044_marketplace_phase9_store_view_filter_contract.sql` applied once as `20260816122901`; local M45 `20260815000045_marketplace_phase9_unit7c_media_history.sql` applied once as `20260816122929`; local M46 `20260816000046_marketplace_phase9_unit7c_private_save_revision_correction.sql` applied exactly once as `20260816150126`. M46 readback confirms the corrected Save function and grants; M39–M45 remain byte-immutable. No Storage object or unrelated service/function changed.
+**Application ledger:** The exact project `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`, `ACTIVE_HEALTHY`) and live M47 tail `20260817073341` were re-verified immediately before M48 application. Local M47 `20260817000047_marketplace_phase9_legacy_rpc_security_remediation.sql` applied once as `20260817073341`; local M48 `20260817000048_marketplace_phase9_legacy_rpc_service_role_compatibility.sql` applied once as `20260817075825` through Supabase MCP. M48 uses precise customer-role `REVOKE EXECUTE` plus trusted `service_role` `GRANT EXECUTE`. Final ACL/readback and explicit role probes pass; no Storage object or unrelated service/function changed.
 
 **Unit 7C WU1 applied state:** exact-project readback reconfirmed generated/default
 listing-field ownership, the Unit 7C sync/projection functions, RLS, function
@@ -25,6 +31,46 @@ actor/store/filter cursor mismatches. Exact M01–M44 replay,
 the WU1 vertical, and the six-filter/two-tenant real PostgreSQL proof pass.
 M44 readback confirms one `phase9_store_view_page_v2(integer,text,text)` function;
 M39–M45 are byte-immutable.
+
+## Legacy Marketplace RPC security correction (M47/M48)
+
+The live pre-change objects were exactly
+`public.phase9_storefront_catalogue(uuid,integer,jsonb)` and
+`public.phase9_listing_detail(uuid)`. Both were postgres-owned `SECURITY DEFINER`
+functions with `search_path=""`, returned `SETOF phase9_public_listing_projection`,
+and exposed private `inventory_id` in the row shape. The current repository
+Marketplace client uses only `phase9_public_listing_search_v2(text,uuid,integer)`
+and `phase9_public_listing_detail_v2(uuid)`.
+
+Repository search, all 12 live Edge Function readbacks, and the live SQL
+function-definition scan found no caller of either legacy RPC. M47 first
+revoked all non-owner execution. Because applied migrations are immutable, M48
+is the minimal forward correction: it reasserts `REVOKE EXECUTE` from
+`PUBLIC, anon, authenticated` and restores only `service_role` `EXECUTE`.
+Final ACLs are `{postgres=X/postgres,service_role=X/postgres}` for both legacy
+functions. Explicit customer-role calls and direct projection-view reads fail
+with `42501`; trusted service-role detail execution succeeds; v2 anon and
+authenticated search/detail calls remain allowed and return the allowlisted
+JSON shape without `inventory_id`.
+
+Post-M48 read-only counts are `store_inventory=10`,
+`marketplace_book_listings=9`, `phase9_public_listing_projection=9`, Storage
+buckets `10`, and Storage policies `19`.
+
+## U8B repository-only acceptance evidence (2026-08-20)
+
+M49, `20260818000049_marketplace_phase9_bookstore_first_discovery.sql`, is a
+repository migration and is **not live**. A fresh disposable PostgreSQL cluster
+replayed the local prerequisite chain through M49, used a test-only Vault
+compatibility bootstrap and test data, and passed the Q08 grouping, policy-bound
+cursor, malformed-cursor, cover-provenance, DTO-privacy, role/grant, and
+search-path assertions with `U8B_REAL_POSTGRES_ACCEPTANCE_PASS`. The bootstrap
+and cluster were temporary test artifacts and were removed by the runner.
+
+This does not update the verified Supabase state above: the live tail remains
+M48, no migration-history reconciliation was performed, no Q08 Vault secret was
+provisioned, and no live function, grant, table, Storage object, business row,
+or deployment changed. M49 application remains separately authorized.
 
 **Unit 7B live delta:** M40 adds the dual-version controlled publication
 commands, intent-keyed retry claim/token fencing, v2 Owner inventory page,

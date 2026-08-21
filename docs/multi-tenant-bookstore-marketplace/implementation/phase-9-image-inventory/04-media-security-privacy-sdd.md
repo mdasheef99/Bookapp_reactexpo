@@ -4,6 +4,13 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
+**Unit 7/8 closure checkpoint (repository-only 2026-08-21):** M51 makes public
+eligibility and media ordering one fail-closed boundary. Every link satisfying
+the shared public-media predicate must have a unique non-null `public_order` in
+`1..3`; link approval and later asset-lifecycle transitions are both guarded.
+Pending/rejected links and private/staging assets may retain NULL ordering. M51
+was not applied live.
+
 **Live implementation checkpoint (2026-07-27):** M11/M12/M13, Owner Edge intake, and separate free-plan media/fixture-vision workers are live-verified. They enforce server paths, content-hashed completion, immutable service-only source snapshots/evidence, initiating-Owner/store/purpose/session/source binding, opaque token plus attempt fencing, repeated lease revalidation, re-encode/strip/hash, and canonical replay. M13 required no `SECURITY DEFINER` wrapper: current `service_role` grants safely support 13 postgres-owned, empty-`search_path`, fully qualified static `SECURITY INVOKER` delegates with execute revoked from all client roles. Detailed deployment and fixture evidence is in [tracker 06](./trackers/06-fixture-pipeline-deployment-evidence.md).
 
 **Unit 4B local checkpoint (2026-07-27):** the Gemini adapter is implemented behind
@@ -24,6 +31,30 @@ server-derived `v_public_changed` value. M46 preserves postgres ownership,
 anonymous denial for the Owner Save function. The exact M01→M46 disposable
 proof and authenticated private-only Save reproof passed; no private field was
 returned, no historical revision was rewritten, and no Edge redeploy occurred.
+**Legacy Marketplace RPC security checkpoint (live once 2026-08-17):** M47
+revokes `PUBLIC`, `anon`, `authenticated`, and `service_role` execution on
+`phase9_storefront_catalogue(uuid,integer,jsonb)` and
+`phase9_listing_detail(uuid)`. Pre-change role calls returned the full
+projection-row shape including `inventory_id`; post-change calls fail with
+`42501`. Repository search found no application or service dependency, and
+the current v2 JSON discovery functions remain unchanged and callable by
+customer roles. This applies the §9 rule that customer reads use bounded safe
+commands/projections.
+**Trusted-role compatibility follow-up (live once 2026-08-17):** M48 restores
+only `service_role` `EXECUTE` on those two exact legacy signatures while
+retaining `PUBLIC`, `anon`, and `authenticated` denial. Repository search, all
+12 live Edge Functions, and the live SQL function-definition scan found no
+caller; this is an intentional trusted-role compatibility allowance. Direct
+projection-view access remains denied to customer roles, and v2 JSON RPCs remain
+the customer path.
+**U8B local security evidence (2026-08-20):** The repository-only M49 proof
+keeps Q07 internal and customer-denied, grants Q08 only to the intended public
+customer roles, and keeps the actual-copy helper service-role-only. The helper
+and Q08 use `SECURITY DEFINER` with an empty `search_path`; real PostgreSQL
+acceptance also verified the `extensions` pgcrypto placement, Q07 denial, Q08
+allow, and absence of private `inventory_id` in the DTO. This is disposable
+source/acceptance evidence only: no Supabase grant, function, Storage, Vault, or
+database object was changed.
 **Unit 7A security checkpoint (local, unapplied 2026-08-12):** M39 adds one
 authenticated-only create command with server-derived Owner/store authority,
 current candidate/review/metadata revision fences, fixed object qualification,

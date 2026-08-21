@@ -203,6 +203,42 @@ tables as recorded in tracker 10.
 | Distinct scan, public-copy, and request-photo media classes | 00 Master; 04 Media; 06 Photo request | MAS-08; MED-06–MED-12; PHO-09–PHO-12 |
 | Phase 7/8 independence | 00 Master; 06 Photo request | MAS-09; MAS-AC08; PHO-13 |
 
+## Unit 8 bookstore-first Marketplace trace (2026-08-20)
+
+The controlling specialized design is [Unit 8 bookstore-first customer
+Marketplace](../work-units/08-marketplace-bookstore-first-sdd.md). It preserves
+the broad Marketplace acceptance IDs and WU0B Q07-Q10 split while making the
+post-5C/7A/7B/7C implementation contract explicit.
+
+| Requirement | Authority and acceptance trace |
+| --- | --- |
+| Private Owner inventory identity never becomes customer identity | P9-D73/P9-D75; Unit 7C §§1–2; Unit 8 §§4/17–18; DISC-06; MKT-08/09/12 |
+| Offer identity/count is listing-based and never multiplied by quantity | P9-D75/P9-D77; DOC-5 §10.1; Unit 7B §§7/11; Unit 8 §5; MKT-11–13 |
+| Title identity is canonical edition → validated ISBN → listing-scoped; title/author/alias text never merges | P9-D67/P9-D76; Unit 5C §§3/6/10; Unit 8 §§4/14; MKT-05/16/17 |
+| Q07 remains internal and matches only eligible safe public candidates | WU0B Q07; Unit 8 §§6–7/18; RT-MARKET-01 |
+| Q08 groups stores before deterministic store-group pagination and binds cursor context | P9-D77; DOC-5 §§4.2/7; Unit 8 §§8–10; DISC-10/14; MKT-01/02/11/14; RT-MARKET-02/03 |
+| Q09 returns a complete title-group-paginated storefront with match pin/clear behavior | P9-D77; DOC-5 §4.3; Unit 8 §§11–12; DISC-10/12; MKT-03/04; RT-MARKET-04 |
+| Q10 rechecks current eligibility and exposes approved public detail/gallery only | P9-D77; Unit 7B §§6–7/11; Unit 7C §§7–9; Unit 8 §§13/15–18; DISC-13; MKT-06–10 |
+| Publicly eligible media has unique non-null order 1–3; Q10 orders by `public_order,id`, returns max three, and excludes private/unapproved media | P9-D80; Unit 7B §6; Unit 8 §§15/20; M50/M51; PostgreSQL/PGlite/client contract tests |
+| `canonical_edition_exact` is reserved/unreachable in text-query v1 | P9-D80; Unit 8 §7; no authoritative edition-context input exists in Q07 v1 |
+| Zero-stock/paused/history states cannot remain customer-discoverable or addressable | Unit 7C §§7/9/11; Unit 8 §§6/13/16; MKT-07/15 |
+| Legacy unsafe RPCs remain customer-denied while safe v2 compatibility remains | P9-D78; Unit 8 §§3/18/20; M47/M48 security evidence in implementation tracker |
+| U8B/U8C/U8D and migration-history reconciliation are future separately authorized gates | P9-D78; Unit 8 §§21–22 |
+
+## U8B bounded corrective trace (2026-08-20)
+
+| Corrective behavior | Authority and evidence |
+| --- | --- |
+| Provider/canonical cover provenance is distinct from approved actual-copy fallback; placeholder remains last | DOC-5 §§9–11; Unit 8 §§15/18/20; MKT-07/08; M49 `phase9_q08_actual_copy_cover`; U8B-FIX5-B/D and COVER-01 |
+| Q08 cursor binds to the effective relevant publication-policy state, including changes masked by unrelated policy versions | Unit 8 §§8–10/19–20; MKT-14; M49 `phase9_q08_current_policy_version`; U8B-FIX4-01 |
+| Malformed decrypted cursor payloads fail closed with the bounded public cursor error | Unit 8 §19; M49 Q08 cursor validation; U8B-CURSOR-04b |
+| Real PostgreSQL accepts the production SQL/security boundary without applying M49 to Supabase | Unit 8 §§18/20/22; `phase9_bookstore_first_postgres.sql`; `run-phase9-bookstore-first-postgres.ps1`; `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` |
+
+The U8B integration suite completed `63/63`. The real-PostgreSQL result is
+disposable local evidence, not live Supabase verification. Migration-history
+reconciliation, Vault provisioning, M49 application, and U8C remain separate
+gates.
+
 ## Unit 7C Owner Store View trace (2026-08-14)
 
 The controlling design is [Unit 7C Owner Store View and post-commit inventory

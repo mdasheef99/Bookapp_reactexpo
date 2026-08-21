@@ -1,7 +1,7 @@
 # Phase 9 Planning and Decision Tracker
 
-**Status:** `unit7c_normative_design_frozen`
-**Last updated:** 2026-08-14
+**Status:** `unit8_marketplace_design_frozen`
+**Last updated:** 2026-08-20
 **Purpose:** retain detailed product decisions, audit evidence, reconciliations, and deferred choices without inflating the master tracker
 
 ## Decision register
@@ -82,6 +82,12 @@
 | P9-D72 | Unit 7A guarantees quantity-bucket equality for each row it creates but does not strengthen the global historical inventory constraint; M09/global constraint work remains separately assessed and authorized. Valid uncommitted candidates stay uncommitted, and `skipped_false_detection` remains the only skipped candidate disposition. | owner-frozen 2026-08-12 |
 | P9-D73 | Unit 7C makes Store View the sole rich post-commit Owner-management surface, with `inventoryId` stable across private/live/paused/attention/out-of-stock states. Inventory remains acquisition/review/session/recovery; Store Profile is secondary settings. | owner-frozen 2026-08-14; Unit 7C SDD §§1–5/12 |
 | P9-D74 | Unit 7C keeps `store_inventory` authoritative and listings projection-only; ordinary Save is synchronous/transactional, Stock and Media are separate controlled commands, Unit 7B lifecycle commands are reused, and activity history remains distinct from safe public revisions. | owner-frozen 2026-08-14; Unit 7C SDD §§2/6–11/13–16 |
+| P9-D75 | Unit 8 begins only after Unit 7B's safe public publication boundary. `inventoryId` remains private permanent Owner identity; `listingId` is a customer-safe current offer identity. Customer store fields come only from the safe public profile boundary. | owner-frozen 2026-08-20; Unit 8 SDD §§2/4/6/17–18 |
+| P9-D76 | Public title-group identity is canonical edition, then validated ISBN, otherwise listing-scoped. Normalized title/author, fuzzy text, and linguistic aliases never establish identity; false splits are preferred to false merges. | owner-frozen 2026-08-20; Unit 8 SDD §§4/7/14 |
+| P9-D77 | Q07 is internal. Q08 groups eligible offers by bookstore before deterministic ranking/cursor pagination. Q09 paginates complete public title groups with opaque match context; Q10 rechecks current eligibility and exposes only allowlisted detail/gallery. Quantity stays private and never multiplies offers. | owner-frozen 2026-08-20; Unit 8 SDD §§5/7–16 |
+| P9-D78 | M47/M48 customer denial on the unsafe legacy projection-row RPCs is a satisfied prerequisite. The known local/live migration-history mismatch is parked but must be reconciled before any future Unit 8 migration application. The freeze grants no implementation or migration authority. | owner-frozen 2026-08-20; Unit 8 SDD §§1/18/22 |
+| P9-D79 | The explicitly authorized smallest U8B correction is repository-only: provenance-qualified cover fallback, effective relevant policy cursor binding, bounded malformed-cursor handling, and disposable acceptance tests. M49 remains unapplied; migration-history reconciliation, Vault provisioning, live Supabase verification, and U8C are separately gated. | user-authorized 2026-08-20; Unit 8 SDD §§8–12/15/18–22 |
+| P9-D80 | Every publicly eligible inventory-media link has a unique non-null `public_order` in `1..3`. Both link changes and later asset-lifecycle transitions fail closed; pending/rejected links and private/staging assets may remain unordered. Q10/client expose at most three. `canonical_edition_exact` is reserved/unreachable in text-query v1. | user-authorized 2026-08-21; Unit 7B §6; Unit 8 §§7/15/20 |
 
 ## Source reconciliation
 
@@ -138,10 +144,37 @@ Audit performed read-only on 2026-07-19 after `get_project` verification.
 - [x] WU0A contract/test foundation independent approval (2026-07-19).
 - [x] WU0B backend/API technical-design definition independent approval (2026-07-20 after corrections).
 - [ ] Overall Phase 9 implementation-sequence approval; WU0/WU0A completion and WU0B definition do not grant it.
-- [ ] Migration creation authorization.
-- [ ] Supabase application authorization and exact-project re-verification.
+- [x] Explicit bounded U8B corrective-scope authorization (2026-08-20): repository-only correction and disposable acceptance tests; no U8C or live operation.
+- [ ] Live migration application authorization and exact-project re-verification.
 
 ## Append-only planning log
+
+### 2026-08-20 — U8B bounded corrective scope
+
+- The user-authorized scope was limited to the three confirmed U8B corrections:
+  explicit provider/approved-actual-copy provenance for cover fallback,
+  effective relevant policy fingerprint binding for Q08 cursors, and bounded
+  malformed-cursor handling.
+- Added focused regression coverage and disposable real-PostgreSQL acceptance
+  coverage. The full U8B suite is `63/63`; the disposable runner reports
+  `U8B_REAL_POSTGRES_ACCEPTANCE_PASS`.
+- M49 remains a repository-only migration exercised in disposable databases.
+  Migration-history reconciliation, Vault provisioning, live Supabase
+  verification, M49 application, deployment, Storage/business-data mutation,
+  and U8C remain separately authorized.
+
+### 2026-08-20 — Unit 8 bookstore-first Marketplace SDD
+
+- Created the single authoritative Unit 8 work-unit SDD in the established
+  `work-units/` hierarchy; no prior Unit 8 SDD existed.
+- Reconciled the Marketplace baseline, Unit 5C and Units 7A/7B/7C without
+  reopening them. Frozen customer architecture is Q07 internal matching, Q08
+  group-before-pagination bookstore results, Q09 complete title-group
+  storefront, and Q10 allowlisted detail/media.
+- Recorded the M47/M48 remediation as satisfied and the migration-history
+  mismatch only as a future pre-migration prerequisite.
+- Documentation only: no implementation, test, migration, database/Storage,
+  deployment, fixture, or business-data action. U8B requires separate approval.
 
 ### 2026-08-14 — Unit 7C normative SDD
 

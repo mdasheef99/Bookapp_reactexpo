@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-08-16
+**Date:** 2026-08-21
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -25,6 +25,72 @@ Every coding session must update tracking before ending if it changes any of the
 - next recommended task
 - handoff notes
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
+
+> **2026-08-21 Unit 8 repository closure ready:** The final bounded Unit 7/8
+> reconciliation is complete locally. Repository-only M51 fails closed on
+> existing publicly eligible NULL/out-of-range/duplicate orders or cardinality
+> above three, and guards both link and asset-lifecycle eligibility transitions.
+> Q10 and the strict client contract are bounded to ordered public slots `1..3`.
+> `canonical_edition_exact` is reserved/unreachable in text-query v1. M49-M51
+> remain unapplied; no migration-history repair, Vault provisioning, deployment,
+> commit, push, Storage mutation, or business-data mutation occurred.
+
+> **2026-08-20 U8B bounded corrective scope locally complete:** Under the
+> explicit user authorization for the smallest corrective scope, M49 now
+> contains only the provenance-qualified cover fallback, effective relevant
+> policy-fingerprint cursor binding, and bounded malformed-cursor correction.
+> The updated U8B integration suite is `63/63` green, and the disposable
+> real-PostgreSQL acceptance path passes with
+> `U8B_REAL_POSTGRES_ACCEPTANCE_PASS`. M49 was exercised only in fresh local
+> disposable databases and remains unapplied to Supabase. No migration-history
+> reconciliation, Vault provisioning, live Supabase verification, deployment,
+> Storage/business-data mutation, or U8C work occurred. Next exact action:
+> independent U8B re-review/closure; operational prerequisites remain separately
+> authorized.
+
+> **2026-08-20 Unit 8 Marketplace SDD frozen:** The authoritative specialized
+> Unit 8 design now lives at
+> `implementation/phase-9-image-inventory/work-units/08-marketplace-bookstore-first-sdd.md`.
+> It freezes the post-5C/7A/7B/7C customer flow: safe publication → Q07 internal
+> matching → Q08 bookstore grouping before ranking/pagination → Q09 complete
+> public title-group storefront → Q10 current eligible detail/gallery. It keeps
+> `inventoryId` private/Owner-only, uses `listingId` as current customer offer
+> identity, and forbids title/author or alias-based identity merging. M47/M48 is
+> recorded as a satisfied customer-boundary prerequisite. The known local/live
+> migration-history mismatch remains parked and must be reconciled before any
+> future Unit 8 migration is applied. This was documentation-only: no Unit 8
+> source/test/migration work, DB/Storage/business-data mutation, fixture,
+> deployment, or external operation occurred. U8B is a proposed next work unit
+> and requires separate authorization.
+
+> **2026-08-17 legacy Marketplace RPC security remediation PASS:** The exact
+> development project `Bookconnect_reactexpo` /
+> `ahntbtktjjmvfosgkmgn` was re-verified healthy. M47 was applied once as live
+> version `20260817073341` through Supabase MCP. It revoked all non-owner
+> execution on `phase9_storefront_catalogue(uuid,integer,jsonb)` and
+> `phase9_listing_detail(uuid)`, removing the verified `inventory_id` exposure
+> without rewriting either function or changing business data. Explicit
+> `anon`, `authenticated`, and `service_role` calls now fail with `42501`;
+> safe v2 JSON search/detail calls remain allowed and unchanged. Focused
+> migration/client Jest is 2 suites/13 tests green. No Unit 8 implementation,
+> Storage change, Edge redeploy, or unrelated grant/API change occurred. Next
+> exact action: obtain separate authorization for the Unit 8 SDD/freeze.
+
+> **2026-08-17 M48 trusted-role compatibility correction PASS:** Because M47
+> was already applied and immutable, the exact forward migration
+> `20260817000048_marketplace_phase9_legacy_rpc_service_role_compatibility.sql`
+> was applied once as live version `20260817075825`. It uses precise
+> `REVOKE EXECUTE` from `PUBLIC`, `anon`, and `authenticated`, then restores
+> only `service_role` `EXECUTE`. Repository search, all 12 live Edge Function
+> readbacks, and the live SQL function-definition dependency scan found no
+> current legacy-RPC caller; retaining the trusted grant is therefore an
+> intentional compatibility allowance, not a customer path. Explicit role
+> tests show both customer roles receive `42501`, direct projection-view reads
+> remain denied, trusted service-role detail execution succeeds, and v2 JSON
+> search/detail remain callable without `inventory_id`. Focused static/client
+> Jest is 3 suites/15 tests green. No Unit 8 implementation, business-data or
+> Storage mutation, Edge redeploy, or unrelated grant/API change occurred. Next
+> exact action: obtain separate authorization for the Unit 8 SDD/freeze.
 
 > **2026-08-17 Unit 7C resumed connected-canary and publication handoff:** The
 > bounded continuation completed through authenticated in-app Browser → existing
@@ -872,12 +938,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 7C resumed connected canary PASS; main integrated** |
-| Overall status | `in_progress` |
-| Last updated | 2026-08-17 |
-| Latest handoff | Unit 7C M46 correction is committed as `f4a9e858396474dcd08123eb976a47b019ef26f8` and integrated into `main` at merge commit `2be793e6212b1b485737c5045d701c99169490e4`; M43–M46 remain immutable/live exactly once, existing Edge v8 still serves source HEAD `5cfc08e`, and the resumed connected canary passed with final inventory version `6`, publication intent version `4`, four revisions, nine audit/events, and one approved public media link. |
-| Current risk level | The project Playwright CLI is `NOT_RUN_ENVIRONMENT` because Node failed with `EPERM` while `lstat`-ing `C:\Users\user`; the bounded in-app authenticated Browser canary passed. Full repository TypeScript remains blocked by the unchanged WU4 E2E typing error. Unit 6F native debt remains unrelated. The untracked `.zcode/` and `docs/codemap/` directories remain preserved and untouched. |
-| Next recommended task | Obtain separate authorization for the next Phase 9 work unit. Do not apply another migration, redeploy Edge, repair/reset the historical revision, or perform further Unit 7C connected mutation without approval. |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 8 repository-complete and closure-ready** |
+| Overall status | `unit8_repository_complete_closure_ready_operationally_pending` |
+| Last updated | 2026-08-21 |
+| Latest handoff | Q07-Q10, M49-M51, the strict client integration, final media-order invariant, and closure documentation are locally complete. U8B `63/63`, U8C `8/8`, Marketplace Jest `140/140`, both disposable real-PostgreSQL sentinels, TypeScript, export, diff, and continuity are green. M49-M51 remain unapplied. |
+| Current risk level | Only operational gates remain for Unit 8: the known local/live migration-history mismatch, dedicated Q08 Vault secret, connected M49-M51 application/readback, and live verification. Unit 6F native debt remains separately deferred. `.zcode/` and `docs/codemap/` remain preserved and untouched. |
+| Next recommended task | Review the prepared logical Unit 8 commits. Push/merge, migration-history reconciliation, Vault provisioning, connected migration application, deployment, and live verification require separate authorization. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 
@@ -1041,7 +1107,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit7c_connected_verification_blocked_private_save_false_public_revision` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 7C SDD](./implementation/phase-9-image-inventory/work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | Owner Edge v8 is active with JWT verification. Connected reads passed; the first private-only Save created a false append-only public revision, so all further canary actions stopped pending correction review and fresh authorization. |
+| Phase 9: Image-to-LLM Inventory | `unit8_repository_complete_closure_ready_operationally_pending` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 8 SDD](./implementation/phase-9-image-inventory/work-units/08-marketplace-bookstore-first-sdd.md) | Unit 8 Q07-Q10, M49-M51, client integration, and final media-order invariant are repository-complete and validated. M49-M51 remain unapplied; operational reconciliation, Vault, connected apply/readback, and live verification remain separately gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -1162,20 +1228,15 @@ Documentation milestones completed:
 
 ## 8. Next Recommended Task
 
-**Current 2026-08-14 handoff:** Phase 9 Unit 7C WU3 is locally complete. The
-Store View management vertical consumes unchanged M43 Save/stock through strict
-separate Owner Edge/client/query/UI layers and reuses Unit 7B publication/retry;
-focused, regression, TypeScript, Deno, web export, and intercepted browser
-proofs pass. Unit 7B
-remains live-verified and integrated into `main`; M39–M43 are immutable, and
-M43/M44 are not applied.
+**Current 2026-08-21 handoff:** Phase 9 Unit 8 is repository-complete and ready
+to close. Q07-Q10, M49-M51, client integration, strict media cardinality, and
+closure evidence are locally green. `inventoryId` remains private Owner identity;
+customer paths use safe public identities and allowlisted DTOs only.
 
-Next work requires separate authorization to commit the exact WU3 vertical.
-M43/M44 application, Supabase or
-Storage mutation, media/history work, final cutover, deployment, live verification, production
-rollout, payments, Phases 7/8, and M09 remain separately gated. The
-deferred native Unit 6F validation debt remains `NOT_RUN`/`UNRESOLVED` and is
-not silently converted to PASS.
+M49-M51 are repository-only and unapplied. Push/merge, migration-history
+reconciliation, Vault provisioning, connected application/readback, deployment,
+production rollout, payments, Phases 7/8, M09, and deferred Unit 6F native
+evidence remain separately gated.
 
 The older Phase 6 recommendation below is retained as historical continuity
 and is superseded by this current handoff.

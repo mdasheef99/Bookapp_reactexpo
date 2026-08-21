@@ -4,6 +4,12 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
+**Unit 7/8 closure checkpoint (repository-only 2026-08-21):** M51 preserves
+nullable ordering for non-public media state but requires every link satisfying
+the shared public-media eligibility predicate to occupy a unique `public_order`
+in `1..3`. Its preflight rejects incompatible existing state; no live migration
+or data rewrite was performed.
+
 **Unit 7A override (2026-08-12):** the duplicate-choice and existing-row
 increment design below is **DEFERRED / LEGACY** for scanned-candidate commit.
 Unit 7A creates exactly one new private inventory row per explicitly committed

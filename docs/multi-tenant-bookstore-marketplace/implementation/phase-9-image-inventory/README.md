@@ -1,26 +1,22 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit7c_m46_correction_pass_connected_save_reproof_complete`
+**Status:** `unit8_repository_complete_closure_ready_operationally_pending`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
-**Last updated:** 2026-08-16
-**Current handoff:** Unit 7C's normative Owner Store View/post-commit inventory
-management SDD remains frozen; WU1, WU2A, WU2, WU3, WU4, and WU5 are locally
-complete. WU5 exposes Store View as a primary Owner destination, keeps Inventory
-as intake/review/recovery context, and routes successful Add handoff by returned
-`inventoryId`. Unit 7B remains live-verified and integrated into `main` at merge commit
-`53edbddc9c5417b34cb169599e8282b162e183b3`.
-M39 through M46 are now live exactly once on the verified development project;
-M43/M44/M45 read back as `20260816122822`, `20260816122901`, and
-`20260816122929`, and M46 read back as `20260816150126`. Owner Edge v8 remains
-ACTIVE with JWT verification; M46 was database-only and the existing connected
-Unit 7B proof remains recorded. The M46 disposable Unit 7C inventory proof is
-18/18, filter/media-history regressions are 15/15, focused Owner Edge/client
-contracts are 30/30, the continuity validator passes, and the authenticated
-private-only Save reproof passed. The Playwright CLI remains
-`NOT_RUN_ENVIRONMENT`; the full repository TypeScript check still has the
-unchanged WU4 E2E typing error. No second deployment, push, Edge change, repair,
-or historical-row rewrite occurred. Remaining connected Unit 7C canary checks
-require separate authorization.
+**Last updated:** 2026-08-21
+**Current handoff:** Unit 8 is repository-complete and ready for closure. It
+preserves the existing Marketplace baseline for the completed Unit
+5C/7A/7B/7C architecture: `inventoryId` remains private Owner identity;
+`listingId` is current customer-safe offer identity; Q07 is internal; Q08 groups
+stores before deterministic cursor pagination; Q09 paginates complete public
+title groups; and Q10 uses a forward allowlisted public detail/media boundary.
+The local correction covers provenance-qualified provider/actual-copy fallback,
+effective-policy cursor binding, and bounded malformed-cursor handling. M47/M48
+remain the satisfied legacy-RPC customer-boundary prerequisite. M49-M51 are
+repository-only and unapplied to Supabase. Repository closure is ready;
+migration-history reconciliation, Vault provisioning, live Supabase verification,
+M49-M51 application remain separately authorized. The final media contract is
+unique non-null public order `1..3` for every publicly eligible link, Q10 is
+bounded to three, and private/unapproved media remains excluded.
 **Historical implementation status (superseded):** Unit 6's automatic/functional pipeline is **PASS**.
 M01-M08/M10-M38 are live-verified at their recorded levels; approved `main` SHA
 `a138baa7d3bbc086da019bc052a5ae31d0e15882` is published and deployed to
@@ -41,18 +37,18 @@ documented import flag. M39 remains unapplied; deployment, live smoke, and Git
 publication require separate authorization.
 Unit 6B is merged at `9ef9eb3`; Unit 6D is implemented at `c363b60`; their
 recorded evidence remains authoritative beneath this final closure checkpoint.
-**Supabase mutation status:** M01-M08/M10-M46 are live once at their recorded
+**Supabase mutation status:** M01-M08/M10-M48 are live once at their recorded
 versions on `ahntbtktjjmvfosgkmgn`; M09 remains absent. M43/M44/M45 are live as
 `20260816122822`, `20260816122901`, and `20260816122929`; M46 is live as
-`20260816150126`. M42 remains the
+`20260816150126`, M47 as `20260817073341`, and M48 as `20260817075825`. M42 remains the
 forward-only generated-author projection correction. Unit 7B deployment and
 live proof are complete; commit `9f3e646` is integrated into `main` at merge
 commit `53edbddc9c5417b34cb169599e8282b162e183b3`; WU5 is committed locally as
 `380f2b3`. M46 was applied once; the normal authenticated reproof Save changed
 only private `internalNotes`, and no second deployment, push, repair, or
 historical-row rewrite occurred in the correction session.
-**Database checkpoint:** the exact project is `ACTIVE_HEALTHY`; M39–M45 remain
-immutable and M46 is live exactly once. The selected listing remains published
+**Database checkpoint:** the exact project was last verified `ACTIVE_HEALTHY`;
+M39–M48 remain immutable/live at their recorded versions. The selected listing remains published
 with one active public projection and zero outstanding publication retries; its
 revision count is unchanged by the reproof and the original false revision is
 preserved. The development `active_listing_limit` is 10 from source
@@ -123,6 +119,7 @@ After the repository entrypoint, read in this order:
 | [Unit 7A create-only commit](./work-units/07a-create-only-inventory-commit-sdd.md) | One reviewed candidate to one new private inventory row, server-held review/revision authority, quantity buckets, replay/concurrency, one-to-one provenance, false-only skip semantics, Unit 6 duplicate-contract transition, and migration verdict. |
 | [Unit 7B safe publication](./work-units/07b-publication-sdd.md) | Existing publish/pause/private/retry lifecycle, public eligibility/projection, approved media, retry worker, and live completion contract. |
 | [Unit 7C Owner Store View](./work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | Stable post-commit Owner identity, Store View IA and reads, atomic Save, separate stock/media operations, Unit 7B lifecycle reuse, public revisions, UI cutover, database delta, and acceptance A–H. |
+| [Unit 8 bookstore-first Marketplace](./work-units/08-marketplace-bookstore-first-sdd.md) | Frozen Q07-Q10 customer architecture: safe identity/grouping/counts, bookstore grouping before pagination, deterministic ranking/cursors, complete title-group storefront, detail/gallery, availability, privacy, and U8B/U8C/U8D handoff. |
 
 ## Supporting set
 

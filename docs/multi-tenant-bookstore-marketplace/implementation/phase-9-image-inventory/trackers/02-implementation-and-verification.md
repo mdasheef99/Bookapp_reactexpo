@@ -1,7 +1,87 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit7c_resumed_connected_canary_pass_main_integrated`; **last updated:** 2026-08-17
+**Status:** `unit8_repository_complete_closure_ready_operationally_pending`; **last updated:** 2026-08-21
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit7c_resumed_connected_canary_pass_main_integrated`. M46 correction commit `f4a9e858396474dcd08123eb976a47b019ef26f8` is integrated into `main` at merge commit `2be793e6212b1b485737c5045d701c99169490e4`; exact source HEAD `5cfc08ebbe8b20a94cbf6d0616d894a840bc8882` remains deployed only as Owner Edge version 8; M46 is live once as `20260816150126`.
+**Active work unit:** `unit8_closure_ready`. Unit 8 is repository-complete; M48 remains the live migration tail and M49-M51 are repository-only and unapplied.
+
+### 2026-08-21 — Final Unit 7/8 media invariant reconciliation
+
+- Created one forward repository-only migration, M51, with preflight rejection
+  of eligible NULL/out-of-range/duplicate orders and more than three eligible
+  rows per inventory. Existing `UNIQUE(inventory_id,public_order)` plus the
+  `1..3` check remains the bounded cardinality mechanism.
+- Replaced the link guard and added an asset-lifecycle BEFORE guard so either
+  transition into public eligibility requires a unique non-null order `1..3`.
+  Pending/rejected links and private/staging assets remain nullable.
+- Q10 now uses the shared public-media predicate, `ORDER BY public_order,id`,
+  and `LIMIT 3`; strict client schemas enforce gallery max three and order 1–3.
+- Verification actually run: U8B PGlite `63/63`; U8C PGlite `8/8`;
+  Marketplace Jest `140/140`; M50/M51 migration contracts `6/6`; U8B and U8C
+  disposable real-PostgreSQL acceptance sentinels PASS; `tsc --noEmit` and web
+  export PASS; repository diff and Phase 9 continuity checks PASS.
+- Prepared logical commits: `30b5b8b` legacy RPC security, `05a8b12`
+  bookstore-first backend/M49-M51, and `baf5e4f` client Q08-Q10 integration.
+- No connected database/Storage mutation, migration-history repair, Vault
+  provisioning, migration application, deployment, commit, or push occurred.
+
+### 2026-08-20 — U8B bounded corrective scope locally complete
+
+- Scope was limited to the three confirmed U8B corrections: authoritative
+  provider/approved-media provenance for cover precedence, effective relevant
+  policy fingerprint binding for Q08 cursors, and bounded malformed-cursor
+  error mapping. No U8C client/storefront work was started.
+- Production migration: `supabase/migrations/20260818000049_marketplace_phase9_bookstore_first_discovery.sql`.
+  Test support: `phase9BookstoreFirstDiscoveryTestHelpers.mjs`, the updated
+  U8B integration suite, and disposable PostgreSQL SQL/bootstrap/PowerShell
+  runner under `supabase/tests/phase9/`.
+- Verification actually run: focused regressions `3/3` and cover fallback
+  `4/4`; full U8B integration `63/63`; disposable real-PostgreSQL acceptance
+  through `npm.cmd run test:phase9:u8b:postgres`, including the sentinel
+  `U8B_REAL_POSTGRES_ACCEPTANCE_PASS`.
+- M49 was applied only to fresh disposable local PostgreSQL/PGlite databases.
+  No live Supabase migration, migration-history repair, Vault secret, Storage,
+  business-row, deployment, or external-service mutation occurred.
+- Residual gate: independent U8B re-review and, if approved separately,
+  migration-history reconciliation, dedicated Q08 Vault provisioning, and
+  live Supabase verification. M49 application and U8C remain out of scope.
+
+### 2026-08-20 — Unit 8 Marketplace SDD freeze
+
+- Created and froze the authoritative Unit 8 SDD under `work-units/`; no
+  source, test, migration, database, Storage, deployment, fixture, or business-
+  data change was made.
+- M47/M48 is recorded as the satisfied legacy-RPC security prerequisite. The
+  safe v2 customer path remains the current implementation.
+- U8B/U8C/U8D are future handoff slices only. The known local/live migration-
+  history mismatch must be reconciled before any future Unit 8 migration, and
+  no such reconciliation or migration work occurred here.
+- Documentation verification passed: all 22 required SDD sections are present;
+  the 462-line file received the validator's cohesion assessment (no split
+  advisory); requirement definitions/traceability and local links pass;
+  `PHASE9_CONTINUITY_CHECK=PASS`; and repository `git diff --check` passes.
+
+### 2026-08-17 — Legacy Marketplace RPC M47/M48 security correction PASS
+
+- Pre-change live inspection confirmed exact signatures
+  `phase9_storefront_catalogue(uuid,integer,jsonb)` and
+  `phase9_listing_detail(uuid)`, postgres ownership, `SECURITY DEFINER`,
+  `search_path=""`, `SETOF phase9_public_listing_projection` returns, and
+  `inventory_id` in the legacy row shape. The client uses only the v2 JSON path.
+- Repository/runtime dependency review found no caller. This includes all
+  source/worker/script/test-runtime search results, all 12 live Edge Function
+  readbacks, and the live `pg_proc` function-definition scan. M48 intentionally
+  restores only trusted `service_role` compatibility after M47's immutable
+  broad revoke.
+- M47 is live once as `20260817073341`; M48 is live once as `20260817075825`.
+  Final legacy ACLs are `{postgres=X/postgres,service_role=X/postgres}`; effective
+  `anon`/`authenticated` `EXECUTE` is false and service-role `EXECUTE` is true.
+- Explicit `SET ROLE` probes: anon/authenticated calls to both legacy RPCs and
+  direct projection-view reads fail with `42501`; service-role detail execution
+  succeeds and returns the trusted legacy row; v2 anon/auth search and detail
+  succeed with allowlisted JSON and no `inventory_id`.
+- Focused static/client Jest is 3 suites/15 tests green. Post-M48 read-only
+  counts are store inventory `10`, marketplace listings `9`, public projection
+  `9`, Storage buckets `10`, and Storage policies `19`. No Unit 8 implementation,
+  business-data/Storage mutation, Edge redeploy, or unrelated grant/API change.
 
 ### 2026-08-16 — Unit 7C M46 bounded correction PASS
 
@@ -548,6 +628,8 @@ Exact-project preflight passed on `ahntbtktjjmvfosgkmgn`. M01-M08/M10 applied in
 | `20260814000043_marketplace_phase9_unit7c_inventory_management.sql` | `20260816122822 marketplace_phase9_unit7c_inventory_management` | exact target `ahntbtktjjmvfosgkmgn` re-verified healthy immediately before application; M42 was remote tail | current-user-authorized M43 application via Supabase MCP | forward Store View reads, atomic Save, stock v2, revision ledger, and Unit 7B lifecycle/projection integration; M39–M42 unchanged | migration history/readback; M43 disposable vertical PASS; revision table RLS and zero rows; inventory/listing counts unchanged | `live_verified` |
 | `20260814000044_marketplace_phase9_store_view_filter_contract.sql` | `20260816122901 marketplace_phase9_store_view_filter_contract` | exact target `ahntbtktjjmvfosgkmgn` and live M43 re-verified before application | current-user-authorized M44 application via Supabase MCP | page v2 authoritative filters before keyset pagination (`needs_attention` uses action-required attention; other named states use effective state) with actor/store/filter-bound cursor; M39–M43 unchanged | migration history/readback; WU2A integration 3/3; M44 static 5/5; exact M01–M44 replay | `live_verified` |
 | `20260815000045_marketplace_phase9_unit7c_media_history.sql` | `20260816122929 marketplace_phase9_unit7c_media_history` | exact target `ahntbtktjjmvfosgkmgn` and live M43/M44 re-verified before application | current-user-authorized M45 application via Supabase MCP | forward-only Store View media/history commands, bounded activity projection, exact replacement target, and approved-media reorder; M39–M44 unchanged | migration history/readback; exact M45 disposable media/history vertical 12/12; public function/column readback; no business/Storage mutation | `live_verified` |
+| `20260817000047_marketplace_phase9_legacy_rpc_security_remediation.sql` | `20260817073341 marketplace_phase9_legacy_rpc_security_remediation` | exact target `ahntbtktjjmvfosgkmgn` re-verified before application | current-user-authorized bounded security remediation via Supabase MCP | exact two legacy RPC signatures only; revoke-only `ALL` from `PUBLIC`, `anon`, `authenticated`, `service_role`; no function/table/view/data/Storage rewrite | pre-change full projection-row/`inventory_id` evidence; post-change customer/service denial; v2 ACL/path preserved; static red/green plus client tests | `live_verified_superseded_by_forward_compatibility_correction` |
+| `20260817000048_marketplace_phase9_legacy_rpc_service_role_compatibility.sql` | `20260817075825 marketplace_phase9_legacy_rpc_service_role_compatibility` | exact target `ahntbtktjjmvfosgkmgn` and M47 tail re-verified before application | current-user-authorized forward correction via Supabase MCP | exact two legacy RPC signatures only; precise `REVOKE EXECUTE` from `PUBLIC, anon, authenticated` plus `GRANT EXECUTE` to `service_role`; no function/table/view/data/Storage rewrite | repository/12 Edge Function/SQL dependency review; explicit anon/auth denied, service-role allowed, direct view denied; v2 anon/auth JSON calls pass; focused 3 suites/15 tests | `live_verified` |
 Rules: re-verify the project before planning and applying; use `apply_migration`, never raw DDL or generated fixture IDs.
 - Use forward corrections; record every schema, grant, Storage, data, and verification effect.
 ## Required verification matrix
