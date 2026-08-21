@@ -20,8 +20,9 @@ contract. `canonical_edition_exact` is reserved/unreachable in text-query v1.
 Connected Q08/Q09/Q10, security/privacy, cursor, legacy-compatibility, and
 media-invariant checks pass. Full evidence is in
 [unit8-connected-rollout-2026-08-21.md](./supporting/unit8-connected-rollout-2026-08-21.md).
-The feature branch is ready for authorized integration into `main`; historical
-migration IDs remain preserved and unrepaired.
+Release commit `4c1d98d` is integrated into and pushed on `main`; historical
+migration IDs remain preserved and unrepaired. Select the next Phase 9 work
+unit separately.
 
 ## Prior 2026-08-20 Unit 8 design-freeze overlay
 

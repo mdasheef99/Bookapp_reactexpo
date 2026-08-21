@@ -57,8 +57,16 @@ Every material session must also leave one exact active work unit and next autho
 > complete evidence is [unit8-connected-rollout-2026-08-21.md](./implementation/phase-9-image-inventory/supporting/unit8-connected-rollout-2026-08-21.md).
 > No historical migration repair, unrelated migration, Storage/business-data
 > fixture mutation, or unrelated deployment occurred. Unit 8 is now
-> `UNIT8_LIVE_ROLLOUT_PASS`; the remaining repository action is the authorized
-> feature-branch integration into `main`.
+> `UNIT8_LIVE_ROLLOUT_PASS`; the feature branch was subsequently fast-forwarded
+> into `main` at release commit `4c1d98d` and pushed. The next Phase 9 scope is
+> a separate decision.
+
+> **2026-08-21 Unit 8 main integration:** `main` now contains the complete
+> Unit 8 implementation, migrations, tests, connected-rollout evidence, and
+> closure handoffs. The integration was a fast-forward from the pushed
+> `phase9-unit8-u8b-bookstore-discovery` branch; no migration history repair,
+> live database change, unrelated deployment, or protected housekeeping-file
+> change was made during integration.
 
 > **2026-08-20 U8B bounded corrective scope locally complete:** Under the
 > explicit user authorization for the smallest corrective scope, M49 now
@@ -963,12 +971,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 8 live-verified; main integration pending** |
-| Overall status | `unit8_live_verified_main_integration_pending` |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 8 live-verified and main-integrated** |
+| Overall status | `unit8_live_verified_main_integrated` |
 | Last updated | 2026-08-21 |
-| Latest handoff | Q07-Q10, M49-M51, the strict client integration, final media-order invariant, Vault-backed cursors, connected acceptance, and closure documentation are complete. M49/M50/M51 are live exactly once; U8B `63/63`, U8C `8/8`, Marketplace Jest `140/140`, disposable PostgreSQL sentinels, TypeScript, export, diff, and continuity are green. |
+| Latest handoff | Q07-Q10, M49-M51, the strict client integration, final media-order invariant, Vault-backed cursors, connected acceptance, and closure documentation are complete. M49/M50/M51 are live exactly once; U8B `63/63`, U8C `8/8`, Marketplace Jest `140/140`, disposable PostgreSQL sentinels, TypeScript, export, diff, and continuity are green. Release commit `4c1d98d` is integrated into and pushed on `main`. |
 | Current risk level | Unit 8 has no remaining connected rollout blocker. The current live dataset has no zero-stock rows, so no destructive stock fixture was created; native Unit 6F debt remains separately deferred. `.zcode/` and `docs/codemap/` remain preserved and untouched. |
-| Next recommended task | Merge the live-verified feature branch into `main`, push the resulting `main`, and select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services. |
+| Next recommended task | Select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 
@@ -1132,7 +1140,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit8_live_verified_main_integration_pending` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 8 SDD](./implementation/phase-9-image-inventory/work-units/08-marketplace-bookstore-first-sdd.md) · [connected rollout evidence](./implementation/phase-9-image-inventory/supporting/unit8-connected-rollout-2026-08-21.md) | Unit 8 Q07-Q10, M49-M51, Vault-backed cursors, client integration, final media-order invariant, and connected acceptance are live-verified. Main integration is the next repository action; historical migration IDs remain untouched. |
+| Phase 9: Image-to-LLM Inventory | `unit8_live_verified_main_integrated` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 8 SDD](./implementation/phase-9-image-inventory/work-units/08-marketplace-bookstore-first-sdd.md) · [connected rollout evidence](./implementation/phase-9-image-inventory/supporting/unit8-connected-rollout-2026-08-21.md) | Unit 8 Q07-Q10, M49-M51, Vault-backed cursors, client integration, final media-order invariant, connected acceptance, and release documentation are live-verified and integrated into `main` at `4c1d98d`; historical migration IDs remain untouched. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -1259,11 +1267,10 @@ integration, strict media cardinality, connected privacy/security acceptance,
 and legacy compatibility are green. `inventoryId` remains private Owner
 identity; customer paths use safe public identities and allowlisted DTOs only.
 
-The feature branch is ready for the authorized main integration. Historical
-migration IDs remain preserved; no schema-migrations repair or unrelated
-deployment is part of Unit 8. After the merge/push, select the next Phase 9
-work unit separately. Payments, Phases 7/8, M09, and deferred Unit 6F native
-evidence remain separately gated.
+Unit 8 is integrated into `main` at `4c1d98d`. Historical migration IDs
+remain preserved; no schema-migrations repair or unrelated deployment is part
+of Unit 8. Select the next Phase 9 work unit separately. Payments, Phases 7/8,
+M09, and deferred Unit 6F native evidence remain separately gated.
 
 The older Phase 6 recommendation below is retained as historical continuity
 and is superseded by this current handoff.

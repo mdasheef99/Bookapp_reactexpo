@@ -1,7 +1,7 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit8_live_verified_main_integration_pending`; **last updated:** 2026-08-21
+**Status:** `unit8_live_verified_main_integrated`; **last updated:** 2026-08-21
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit8_live_verified_main_integration_pending`. Unit 8 is live-verified; M49-M51 are applied exactly once to the verified development project and the next repository action is authorized main integration.
+**Active work unit:** `unit8_live_verified_main_integrated`. Unit 8 is live-verified; M49-M51 are applied exactly once to the verified development project and release commit `4c1d98d` is integrated into and pushed on `main`.
 
 ### 2026-08-21 — Connected Unit 8 rollout and live acceptance
 
@@ -28,8 +28,18 @@
   rows. `canonical_edition_exact` remains reserved/unreachable in text-query v1.
 - Evidence: [unit8-connected-rollout-2026-08-21.md](../supporting/unit8-connected-rollout-2026-08-21.md).
 - No source edit, commit, push, merge, deployment, or unrelated data mutation
-  occurred during connected validation. The next authorized action is the
-  separate feature-branch merge into `main`.
+  occurred during connected validation. The separate repository integration
+  was completed afterward as recorded below.
+
+### 2026-08-21 — Unit 8 main integration
+
+- The pushed `phase9-unit8-u8b-bookstore-discovery` branch was fast-forwarded
+  into `main` at `4c1d98d`, and `origin/main` was pushed successfully.
+- `main` now contains the complete Unit 8 source, migrations, client/tests,
+  connected rollout evidence, canonical migration mapping, and closure docs.
+- No migration-history repair, additional live database mutation, unrelated
+  deployment, or protected housekeeping-file change occurred during integration.
+- Next authorized action: select the next Phase 9 work unit separately.
 
 ### 2026-08-21 — Final Unit 7/8 media invariant reconciliation
 

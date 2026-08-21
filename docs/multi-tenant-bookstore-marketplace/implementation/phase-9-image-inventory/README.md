@@ -1,10 +1,10 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit8_live_verified_main_integration_pending`
+**Status:** `unit8_live_verified_main_integrated`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
 **Last updated:** 2026-08-21
 **Current handoff:** Unit 8 is live-verified on the development Supabase
-project and ready for authorized main integration. M49, M50, and M51 were
+project. M49, M50, and M51 were
 applied exactly once as `20260821060156`, `20260821060742`, and
 `20260821061213`; the dedicated `phase9_q08_cursor_secret` is provisioned
 without its value being exposed. Connected Q08/Q09/Q10, cursor crypto and
@@ -20,7 +20,9 @@ The local correction covers provenance-qualified provider/actual-copy fallback,
 effective-policy cursor binding, and bounded malformed-cursor handling. M47/M48
 remain the satisfied legacy-RPC customer-boundary prerequisite. The final media contract is
 unique non-null public order `1..3` for every publicly eligible link, Q10 is
-bounded to three, and private/unapproved media remains excluded.
+bounded to three, and private/unapproved media remains excluded. Release
+commit `4c1d98d` is integrated into and pushed on `main`; select the next
+Phase 9 work unit separately.
 **Historical implementation status (superseded):** Unit 6's automatic/functional pipeline is **PASS**.
 M01-M08/M10-M38 are live-verified at their recorded levels; approved `main` SHA
 `a138baa7d3bbc086da019bc052a5ae31d0e15882` is published and deployed to

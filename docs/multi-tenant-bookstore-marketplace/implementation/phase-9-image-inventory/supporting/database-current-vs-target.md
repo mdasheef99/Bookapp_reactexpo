@@ -33,7 +33,8 @@ pre-Unit-8 names are `017_user_credit_balances_lockdown`,
 `018_listings_city_visibility_policy`, `019_book_public_reviews_contract`,
 `016_set_current_book_from_nomination`, `transfer_club_admin_rpc`,
 `add_exchange_pickup_venue`, and `harden_club_primary_and_exchange_city`.
-M49, M50, and M51 are intentionally pending local-only files.
+M49, M50, and M51 were subsequently applied forward-only and are recorded in
+the connected rollout evidence below.
 
 The safe plan was to create an evidence-backed name/version/hash mapping and
 classify every live-only and local-only migration before any action. That mapping

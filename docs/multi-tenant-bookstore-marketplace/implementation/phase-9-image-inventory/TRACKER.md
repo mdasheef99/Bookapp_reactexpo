@@ -1,21 +1,21 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit8_live_verified_release_handoff`
-**Implementation status:** `unit8_live_verified_main_integration_pending`
+**Implementation status:** `unit8_live_verified_main_integrated`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-21
-**Current milestone:** Unit 8 is live-verified on the development Supabase project. M49, M50, and M51 are applied exactly once and the connected Q08/Q09/Q10, security/privacy, cursor, legacy-compatibility, and media-invariant checks pass. The feature branch is ready for the authorized main integration.
-**Active work unit:** `unit8_live_verified_main_integration_pending`
+**Current milestone:** Unit 8 is live-verified on the development Supabase project and integrated into pushed `main` at release commit `4c1d98d`. M49, M50, and M51 are applied exactly once and the connected Q08/Q09/Q10, security/privacy, cursor, legacy-compatibility, and media-invariant checks pass.
+**Active work unit:** `unit8_live_verified_main_integrated`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** The authorized M49-M51 connected rollout and final Unit 8 acceptance. The prior M47/M48 remediation remains a satisfied prerequisite.
-**Next authorized action:** merge this live-verified Unit 8 branch into `main`, push the resulting `main`, and then select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services.
+**Next authorized action:** select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`; M43 is live exactly once as `20260816122822 marketplace_phase9_unit7c_inventory_management`; M44 is live exactly once as `20260816122901 marketplace_phase9_store_view_filter_contract`; M45 is live exactly once as `20260816122929 marketplace_phase9_unit7c_media_history`; M46 is live exactly once as `20260816150126 marketplace_phase9_unit7c_private_save_revision_correction`; M47 is live exactly once as `20260817073341 marketplace_phase9_legacy_rpc_security_remediation`; M48 is live exactly once as `20260817075825 marketplace_phase9_legacy_rpc_service_role_compatibility`; M49 is live exactly once as `20260821060156 marketplace_phase9_bookstore_first_discovery`; M50 is live exactly once as `20260821060742 marketplace_phase9_storefront_detail`; and M51 is live exactly once as `20260821061213 marketplace_phase9_public_media_order_invariant`. M39-M51 remain byte-immutable after application.
 **Scope boundary:** Unit 8 implementation, Vault provisioning, M49-M51 application, connected verification, and documentation closure are complete. No historical migration repair, unrelated migration, Storage/business-data fixture mutation, or unrelated deployment occurred.
 **Implementation authority:** Unit 8 is live-verified; M47-M51 are not reopened. Native Unit 6F validation remains deferred and unrelated.
 **Migration creation/application authority:** M49-M51 were applied only through the explicitly authorized forward rollout; no normal `db push`, historical replay, or `schema_migrations` repair was used.
 **Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
-**Current gate:** `UNIT8_LIVE_ROLLOUT_PASS_MAIN_INTEGRATION_PENDING`; connected project `ahntbtktjjmvfosgkmgn` remains healthy. Native Unit 6F remains deferred and unrelated.
+**Current gate:** `UNIT8_LIVE_ROLLOUT_PASS_MAIN_INTEGRATED`; connected project `ahntbtktjjmvfosgkmgn` remains healthy. Native Unit 6F remains deferred and unrelated.
 
 ## 2026-08-21 — Connected Unit 8 rollout and live verification
 
@@ -42,6 +42,16 @@
 - No source edit, commit, push, merge, deployment, or unrelated data mutation
   occurred in the connected validation itself; this handoff now authorizes the
   separate repository main-integration step.
+
+## 2026-08-21 — Unit 8 main integration
+
+- The pushed `phase9-unit8-u8b-bookstore-discovery` branch was fast-forwarded
+  into `main` at `4c1d98d`, and `origin/main` was pushed successfully.
+- `main` now contains the Unit 8 implementation, M49-M51 source, client/tests,
+  connected-rollout evidence, migration reconciliation, and closure handoffs.
+- No migration-history repair, additional live database mutation, unrelated
+  deployment, or protected housekeeping-file change occurred during merge or
+  push. The next action is a separate Phase 9 work-unit decision.
 
 ## 2026-08-21 — Read-only migration-history reconciliation
 

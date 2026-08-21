@@ -82,3 +82,11 @@ project. The next action is repository integration/release handling; `main`
 must remain an operator-controlled merge target, and the next Phase 9 work unit
 requires a separate scope decision. Native Unit 6F validation remains deferred
 and unrelated.
+
+## Repository integration follow-up
+
+After this connected evidence was captured, the pushed
+`phase9-unit8-u8b-bookstore-discovery` branch was fast-forwarded into `main`
+at release commit `4c1d98d` and `origin/main` was pushed. No additional live
+database change, migration-history repair, unrelated deployment, or protected
+housekeeping-file change occurred during that repository integration.

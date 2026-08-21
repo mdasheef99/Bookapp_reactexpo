@@ -1,8 +1,8 @@
 # PHASE-9: Image-to-LLM Inventory Handoff
 
-**Status:** `unit8_live_verified_main_integration_pending`
+**Status:** `unit8_live_verified_main_integrated`
 **Planning set:** `unit8_live_verified_release_handoff`
-**Implementation:** Unit 8 is live-verified on the development Supabase project. M49, M50, and M51 were applied exactly once as `20260821060156`, `20260821060742`, and `20260821061213`; the dedicated `phase9_q08_cursor_secret` is provisioned without disclosure. Connected Q08/Q09/Q10, cursor/policy binding, anon/authenticated grants, privacy, legacy compatibility, and the public-media invariant pass. See the [connected rollout evidence](./phase-9-image-inventory/supporting/unit8-connected-rollout-2026-08-21.md). Main integration is the next repository action; historical migration IDs remain preserved and unrepaired. Native Unit 6F validation remains deferred accepted debt, not PASS.
+**Implementation:** Unit 8 is live-verified on the development Supabase project. M49, M50, and M51 were applied exactly once as `20260821060156`, `20260821060742`, and `20260821061213`; the dedicated `phase9_q08_cursor_secret` is provisioned without disclosure. Connected Q08/Q09/Q10, cursor/policy binding, anon/authenticated grants, privacy, legacy compatibility, and the public-media invariant pass. See the [connected rollout evidence](./phase-9-image-inventory/supporting/unit8-connected-rollout-2026-08-21.md). Release commit `4c1d98d` is integrated into and pushed on `main`; historical migration IDs remain preserved and unrepaired. Select the next Phase 9 work unit separately. Native Unit 6F validation remains deferred accepted debt, not PASS.
 **Last updated:** 2026-08-21
 
 This stable phase handoff points to the detailed planning set:

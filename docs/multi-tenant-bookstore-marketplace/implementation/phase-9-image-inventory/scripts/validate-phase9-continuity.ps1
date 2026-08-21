@@ -539,7 +539,8 @@ if (
         $tracker.Contains('**Implementation status:** `u8b_bounded_corrective_scope_locally_complete_operationally_pending`') -or
         $tracker.Contains('**Implementation status:** `unit8_repository_complete_closure_ready_operationally_pending`') -or
         $tracker.Contains('**Implementation status:** `unit8_repository_complete_migration_reconciliation_required`') -or
-        $tracker.Contains('**Implementation status:** `unit8_live_verified_main_integration_pending`')
+        $tracker.Contains('**Implementation status:** `unit8_live_verified_main_integration_pending`') -or
+        $tracker.Contains('**Implementation status:** `unit8_live_verified_main_integrated`')
     ) -or
     ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit7a_post_m39_feature_push_and_owner_edge_deployment|unit7a_create_only_commit_locally_complete_review_pending|unit7a_create_only_commit_red_tests_pending_separate_authorization|unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|phase9_multilingual_vision_response_resilience_review|unit6c_single_image_safe_remove|phase9_metadata_retry_provider_attempt_correction|unit6_complete|unit6_mobile_upload_transport_correction_local_complete|unit6_mobile_upload_transport_native_failure_diagnosed|unit6_mobile_filesystem_transport_live_proof_pending)`\r?$' -and
         -not $tracker.Contains('**Active work unit:** `unit7a_owner_edge_bundle_fix_narrow_review_pending`') -and
@@ -557,6 +558,7 @@ if (
         -not $tracker.Contains('**Active work unit:** `unit8_closure_ready`') -and
         -not $tracker.Contains('**Active work unit:** `unit8_migration_history_reconciliation_read_only_complete`') -and
         -not $tracker.Contains('**Active work unit:** `unit8_live_verified_main_integration_pending`') -and
+        -not $tracker.Contains('**Active work unit:** `unit8_live_verified_main_integrated`') -and
         -not $tracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -and
         -not $tracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
     -not (
@@ -614,7 +616,8 @@ if (
         $tracker.Contains('**Next authorized action:** independent U8B re-review/closure, followed only by separately authorized migration-history reconciliation, dedicated Q08 Vault provisioning, and live Supabase verification. Do not apply M49 or begin U8C.') -or
         $tracker.Contains('**Next authorized action:** none in this bounded session; Unit 8 repository closure is ready. Any migration-history repair, Vault provisioning, live migration application, deployment, commit, or push requires separate authorization.') -or
         $tracker.Contains('**Next authorized action:** independently review the read-only migration reconciliation and approve a canonical mapping/plan. Do not repair migration history, provision Vault, or apply M49-M51 until that plan is approved.') -or
-        $tracker.Contains('**Next authorized action:** merge this live-verified Unit 8 branch into `main`, push the resulting `main`, and then select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services.')
+        $tracker.Contains('**Next authorized action:** merge this live-verified Unit 8 branch into `main`, push the resulting `main`, and then select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services.') -or
+        $tracker.Contains('**Next authorized action:** select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services.')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
