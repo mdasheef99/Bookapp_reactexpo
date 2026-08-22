@@ -1,4 +1,13 @@
-# BookConnect Agent Continuity Contract
+﻿# BookConnect Agent Continuity Contract
+
+## Workspace split (2026-08-22)
+Two git worktrees share this repo. Bookconnect4_expo @ feat/clubs-ui-overhaul = clubs
+feature only. Bookconnect4_library @ feat/library-shelf-motion = library feature only.
+Each session edits only its own tree; never stage or commit sibling-feature paths.
+Ports: clubs 8081, library 8083+. Shared Supabase project ahntbtktjjmvfosgkmgn ΓÇö
+check both trackers before any migration.
+
+
 
 This file is the repository entrypoint for every new AI development or review session. Chat history and compacted conversation summaries are helpful context, but they are never the project source of truth.
 
@@ -82,7 +91,7 @@ but a cohesive file may remain longer when splitting would fragment authority.
 
 Create supporting documents only around a stable semantic responsibility that
 can be reviewed independently and is expected to grow; never create equal-sized
-“parts” solely to satisfy a line target. Do not remove required behavior,
+â€œpartsâ€ solely to satisfy a line target. Do not remove required behavior,
 security or trust rules, accessibility requirements, recovery behavior, edge
 cases, evidence, or acceptance criteria to shorten a document. Never change or
 split an already-applied migration for line-count reasons.
@@ -95,7 +104,7 @@ Before ending a session that changed files or external state:
 2. Record verification actually run; never imply an unrun test passed.
 3. Record database/storage mutations or explicitly state none.
 4. Record new decisions, deviations, blockers, and residual risk in their owning documents.
-5. Set one exact next authorized action and active work unit; do not leave vague “continue implementation” text.
+5. Set one exact next authorized action and active work unit; do not leave vague â€œcontinue implementationâ€ text.
 6. Update DOC-13 if the global handoff changed.
 7. Run the active phase documentation validator and relevant code/security tests.
 8. Report uncommitted changes and whether anything was staged, committed, pushed, deployed, or applied.
