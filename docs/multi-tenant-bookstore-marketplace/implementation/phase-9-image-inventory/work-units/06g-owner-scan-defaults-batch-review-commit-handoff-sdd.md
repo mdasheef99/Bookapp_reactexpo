@@ -194,10 +194,15 @@ The allowed source codes are explicit:
 
 | Displayed field | Allowed source codes | Missing/default rule |
 | --- | --- | --- |
-| Cover | `matched`, `detected`, `missing` | Selected/observed allowlisted metadata cover only; no scan-media fallback. |
+| Cover | `matched`, `missing` | Selected/observed allowlisted metadata cover only; no scan-media fallback. The server emits `matched` when the selected snapshot carries an approved cover and `missing` otherwise. |
 | Title, authors | `matched`, `detected`, `custom`, `missing` | No setup default; empty authors are `Missing` while the existing review schema still permits an empty confirmed author array. |
 | Language/script | `matched`, `detected`, `default`, `custom`, `missing` | The English hint is `Default` only until valid detected or explicit Owner language wins. |
-| Condition, price, quantity, location, publication, damage | `default`, `custom`, `missing` | An unset required final value is `Missing`; quantity starts as the server-fixed default `1`. |
+| Condition, price, location, publication | `default`, `custom`, `missing` | An unset required final value is `Missing`. |
+| Quantity, damage | `default`, `custom` | Quantity is server-fixed to `1` before scan, so it is never missing; damage is answered by the existing review schema and defaults to no-damage. |
+
+The response enums may admit additional values (for example `missing` for
+damage or `detected` for cover) as client-side supersets; the server never
+emits them. The emission table above is normative for display logic.
 
 Metadata state labels such as `Matched`, `Manual`, and `Pending` remain state
 labels in the metadata-status field. They are not source badges and must not
@@ -509,8 +514,13 @@ The strict nested DTO bounds are frozen in the contract matrix: observed title
 authors `1..20` entries of `1..256`, canonical language, and nullable approved
 HTTPS cover reference `1..512`; attention codes are the existing 12-value
 enum; blockers use the existing 17-value enum, one nullable bounded field name,
-exactly one candidate/input UUID, and safe message `1..240`; every aggregate
-count and array is bounded by the 15-candidate session cap. The saved review,
+exactly one candidate/input UUID, and safe message `1..240`; card ordinals,
+card arrays, and the aggregate item list are bounded by the 15-candidate
+session cap, while session-level counters (`counts`, blocker counts, and every
+close-summary total) are non-negative JSON-safe integers: SQL emits plain
+`count(*)` totals without a numeric ceiling, legacy multi-image sessions
+legitimately exceed 15 in lifetime totals, and any value above 2^53-1 fails
+closed at the decoder instead of losing precision. The saved review,
 when present, is exactly the existing strict review schema, including nullable
 bounded hidden notes for lossless round-trip only.
 
@@ -533,9 +543,10 @@ byte-immutable.
 | Durable default price and batch label | schema/additive, category 3 | Add nullable bounded session fields `default_price_minor` and `batch_label`; both must survive resume and remain session-only. No inventory column is added. |
 | Optional pre-scan condition | schema/compatibility, category 3 | M02 currently has non-null `default_condition`; a forward change is required to represent null. Existing non-null rows remain readable. Legacy v2 summary/close responses stay unchanged and must fail closed rather than coerce null when used against a Unit 6G nullable session; v3 summary/close is the paired contract. |
 | Candidate Owner removal | schema/state, category 4 | Extend the disposition CHECK with `owner_removed_from_scan`; update active/review/needs-review/readiness/commit predicates, candidate actions, session counters, presentation revisions, worker completion fences, and removal/commit state handling. |
-| Close/summary contract | controlled API/schema, category 4 | Add `close_scan_session_v3` / `phase9_close_session_v3` and the versioned close-summary/readiness path with bounded `ownerRemovedCandidates`; keep v2 close and its strict response unchanged. |
-| Audit/event and grants | controlled API/security, category 4 | Register `phase9.candidate.owner_removed_from_scan` as the bounded internal action/event; record candidate/session/version/actor-safe evidence without raw payload; expose only authenticated initiating-Owner RPC grants, with fixed search path and no direct table access. |
-| New session/start, batch-review, and remove RPCs | controlled API | Fixed search path, server-derived actor/store, initiator-only, strict DTOs/errors, exact version/replay fences, and no direct table access. |
+| Close/summary contract | controlled API/schema, category 4 | Add `close_scan_session_v3` / `phase9_close_session_v3` and the versioned close-summary/readiness path with bounded `ownerRemovedCandidates`; keep v2 close and its strict response unchanged. The v3 wrapper corrects the inherited needs-review count so a removed candidate is reported exactly once. |
+| Legacy page compatibility | controlled API, category 4 | Forward-replace `phase9_owner_candidates_page_v2` so the session scope excludes removed candidates; legacy clients stop seeing the card instead of failing strict decode on the new disposition value. Signature, grants, cursor semantics, and the `needs_review` scope are unchanged. |
+| Audit/event and grants | controlled API/security, category 4 | Register `phase9.candidate.owner_removed_from_scan` as the bounded internal action/event; record candidate/session/version/actor-safe evidence without raw payload; expose only authenticated initiating-Owner RPC grants, with fixed search path and no direct table access; deliberately withhold `service_role` EXECUTE because no service-role consumer exists. |
+| New session/start, batch-review, and remove RPCs | controlled API | Fixed search path, server-derived actor/store, initiator-only, strict DTOs/errors, exact version/replay fences with explicit NULL rejection for keys/command IDs/expected versions, and no direct table access. |
 | Compact mobile flow and bulk coordinator | application | strict schemas, form/reducer, virtualized cards, metadata sheet, save-then-commit orchestration |
 | Store View refresh | application/cache | invalidate/coalesce `storeViewKeys.all` after canonical commit success |
 
@@ -557,6 +568,19 @@ Existing rows remain unchanged: condition/price/batch defaults preserve their
 current values or null target values as applicable; no candidate is inferred as
 removed; no inventory/listing row is rewritten. A fresh exact-project read-only
 preflight and separate migration-file/application approvals are mandatory.
+
+Legacy-v2 caller failure contract: against a Unit 6G nullable-condition
+session, legacy `read_scan_session` decode fails closed by design and the
+client must refetch through v3; the v2 Close fails with `P9_STATE_CONFLICT`
+through the M52 fence. After a removal, legacy session-scope candidate pages
+exclude the removed card (forward replacement), so no legacy surface ever
+receives the new disposition value. Residual mixed-version exposure is limited
+to old builds reading sessions created through the new Start; Groups 2–4 must
+therefore ship promptly after M52 application to keep that window short.
+Removed candidates on v1 readiness paths (`read_scan_readiness`/
+`close_scan_session`) are still counted in `blockerCounts` until those callers
+move to v3; every mutation they attempt fails closed at the removal fence, so
+this is display-only debt recorded for the Group 2–4 cutover.
 
 ## 18. Unit 7A and Unit 7C compatibility
 

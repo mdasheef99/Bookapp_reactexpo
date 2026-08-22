@@ -9,7 +9,7 @@ export const OWNER_BATCH_REVIEW_CONTRACT_VERSION = 'phase9-owner-batch-review-v1
 export const ownerBatchUuid = z.string().uuid();
 export const ownerBatchVersion = z.number().int().positive().safe();
 export const ownerBatchTimestamp = z.string().datetime({ offset: true });
-export const ownerBatchCount = z.number().int().min(0).max(15).safe();
+export const ownerBatchCount = z.number().int().min(0).safe();
 export const ownerBatchCondition = z.enum([
   'new', 'like_new', 'very_good', 'good', 'acceptable',
 ]);

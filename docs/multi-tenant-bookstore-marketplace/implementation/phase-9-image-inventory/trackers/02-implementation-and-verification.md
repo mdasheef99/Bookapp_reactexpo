@@ -2478,3 +2478,82 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 - External/Git state: M52 not applied; no database/Storage, deployment, provider,
   stage, commit, push, PR, Groups 2–4, M39, or Unit 7C action.
 - Exact next action: independent correction-only rereview.
+
+### Unit 6G Group 1 independent-verification correction pass - 2026-08-21
+
+- Scope: the four defects confirmed by three independent audits (v3 close
+  summary double-count; NULL fail-open key/version validation; 15-bound on
+  session counters vs legacy multi-image totals; legacy session-scope page
+  decode exposure to the new disposition), plus documentation alignment only.
+- Correction: `phase9_unit6g_close_summary` overrides `candidatesNeedsReview`
+  active-only; Start/Remove/Close-v3 explicitly reject null idempotency keys
+  and null expected versions with `P9_REQUEST_INVALID`; session-level counters
+  widened to 0..999 in Edge and mobile contracts with card/item bounds kept at
+  15 and a server-side LIMIT 15 on aggregate input; M52 forward-replaces
+  `phase9_owner_candidates_page_v2` so the session scope excludes removed
+  candidates. SDD sections 7/16/17 and the contract matrix updated, including
+  six recorded correction decisions.
+- Verification actually run: focused new Jest 3 suites 42/42; expanded Owner
+  UX/capture regression suites recorded as 212/212 without an exact suite list
+  (superseded by the iteration-two record below, which records exact lists);
+  Unit 6G PGlite integration 13/13
+  (new G1-12 page-filter and G1-13 NULL-rejection tests); `tsc --noEmit` clean.
+- External/Git state: M52 still not applied; no database/Storage, deployment,
+  provider, stage, commit, push, PR, Groups 2-4, M39, or Unit 7C action.
+- Exact next action: independent correction-only rereview of the corrected
+  M52 and its regressions; application remains a separate authorization.
+
+### Unit 6G Group 1 rereview iteration two - 2026-08-21
+
+- Trigger: two completed external correction-only rereviews returned FAIL on
+  the same two findings (start-RPC NULL fail-open for required inputs;
+  SQL-side counter ceiling); a third PASS was withdrawn as interrupted. All
+  reviews confirmed C1/C4 effective, the exact 12-file scope, and green gates.
+- Correction:
+  1. `phase9_start_session_v2` explicitly rejects null `p_language_hint`,
+     `p_location`, and `p_publication` with `P9_REQUEST_INVALID` (all three are
+     required by the normalized v2 start contract; underlying NOT NULL columns
+     already failed closed but with non-canonical error codes).
+  2. Session-level counters changed from the interim `0..999` to non-negative
+     JSON-safe integers in Edge (`ownerBatchCount`) and mobile
+     (`boundedCount`) contracts: every realistic SQL count decodes exactly,
+     and any value above 2^53-1 fails closed at the decoder instead of losing
+     precision. Database counts are never clamped. Card/ordinal/array caps
+     unchanged at 15/12/17/6.
+  3. Encoding repair of the previous pass's own PS 5.1 damage: BOM removed
+     from the contract matrix and DOC-13 via byte surgery; 43 double-encoded
+     characters in the matrix restored via exact code-point replacement. No
+     file discarded; all approved content preserved.
+- Tests updated: structural test pins the three new guards; PGlite G1-13 adds
+  NULL language/location/publication rejections; both contract suites reject
+  an unsafe integer (9007199254740993) instead of a large-but-safe one.
+- Gates run after this iteration, with exact suite lists:
+  - Focused new suites (3): `src/features/imageInventory/__tests__/OwnerBatchReviewContracts.test.ts`,
+    `supabase/functions/__tests__/phase9_owner_batch_review_contracts.test.ts`,
+    `supabase/migrations/__tests__/marketplacePhase9Unit6gFoundation.test.ts`
+    — 3/3 suites, 42/42 tests.
+  - Regression suites (7, exact list): `src/features/imageInventory/__tests__/ownerUxContracts.test.ts`,
+    `.../ownerUxService.test.ts`, `.../ownerUxMutation.test.ts`,
+    `.../ownerUxOfflineGate.test.ts`, `.../phase9OwnerUxTelemetry.test.ts`,
+    `.../captureContracts.test.ts`,
+    `supabase/functions/__tests__/phase9_owner_ux_contracts.test.ts`
+    — 7/7 suites, 212/212 tests. (The earlier unlisted-composition "212/212"
+    coincidentally matches this exact-list run; prior compositions observed by
+    reviewers were 210 and 226 because their suite sets differed.)
+  - Unit 6G PGlite integration: 13/13 (tests, pass, fail respectively).
+  - `npx.cmd tsc --noEmit`: exit 0.
+  - Phase 9 continuity validator: PASS (195 definitions, 0 duplicates,
+    0 missing, 82 markdown files, 59 required files, diff checks PASS).
+  - `git diff --check`: exit 0.
+  - Encoding scan: all 12 modified files have no UTF-8 BOM and zero
+    double-encoded sequences.
+- External/Git state: M52 still not applied; no database/Storage, deployment,
+  provider, stage, commit, push, PR, Groups 2-4, M39, or Unit 7C action.
+- Exact next action: external correction-only rereview of iteration two;
+  then one local commit on explicit Owner authorization.
+
+### Unit 6G local migration ledger entry (updated)
+
+| Local filename | Live version | Project/preflight | Authority/effect | Verification/status |
+| --- | --- | --- | --- | --- |
+| `20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql` | **not applied** | unchanged preflight evidence (M51 tail) | Group 1 forward candidate plus verification-pass and iteration-two corrections: needs-review count override, NULL guards (keys, versions, required start inputs), safe-integer session counters with 15-card bounds, forward session-page filter | Focused Jest 42/42, exact-list regression 212/212, PGlite 13/13, TypeScript clean, continuity validator PASS, encoding scan clean; **local-only, pending iteration-two rereview and separate application authorization** |

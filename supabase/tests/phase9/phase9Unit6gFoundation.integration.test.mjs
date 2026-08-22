@@ -154,10 +154,28 @@ test('U6G-G1-04 removal is versioned, exactly replayed, audited and counted', as
   const batch = await scalar(db,
     `SELECT public.phase9_owner_batch_review_v1('${started.result.sessionId}')`);
   assert.equal(batch.counts.ownerRemoved, 1);
+  assert.equal(batch.counts.needsAttention, 0);
   assert.equal(batch.items.length, 0);
   const closed = await scalar(db, `SELECT public.phase9_close_session_v3(
     '${started.result.sessionId}',1,'unit6g-close-${randomUUID()}',gen_random_uuid())`);
   assert.equal(closed.closeSummary.ownerRemovedCandidates, 1);
+  assert.equal(closed.closeSummary.candidatesNeedsReview, 0);
+});
+
+test('U6G-G1-12 legacy session page excludes owner-removed candidates', async () => {
+  const fixture = await ownerFixture();
+  const started = await start(fixture);
+  const removedId = await candidate(fixture, started.result.sessionId, 'ready');
+  await setActor(db, fixture.ownerId);
+  await db.query(`SELECT public.phase9_owner_remove_candidate_v1(
+    '${started.result.sessionId}','${removedId}',1,'unit6g-page-${randomUUID()}',
+    gen_random_uuid())`);
+  const keptId = await candidate(fixture, started.result.sessionId, 'needs_review');
+  await setActor(db, fixture.ownerId);
+  const page = await scalar(db, `SELECT public.phase9_owner_candidates_page_v2(
+    'session','${started.result.sessionId}','all',20,NULL)`);
+  assert.equal(page.items.length, 1);
+  assert.equal(page.items[0].candidateId, keptId);
 });
 
 test('U6G-G1-05 removal fences stale, changed replay and any reactivation', async () => {
@@ -284,4 +302,42 @@ test('U6G-G1-11 direct RPCs reject null command IDs', async () => {
   await assert.rejects(db.query(`SELECT public.phase9_close_session_v3(
     '${started.result.sessionId}',1,'unit6g-null-command-close',NULL)`),
   /P9_REQUEST_INVALID/);
+});
+
+test('U6G-G1-13 direct RPCs reject null idempotency keys and expected versions', async () => {
+  const fixture = await ownerFixture();
+  await setActor(db, fixture.ownerId);
+  await assert.rejects(db.query(`SELECT public.phase9_start_session_v2(
+    'en','good','Shelf A',100,'private',NULL,NULL,gen_random_uuid())`),
+  /P9_REQUEST_INVALID/);
+  await assert.rejects(db.query(`SELECT public.phase9_start_session_v2(
+    NULL,'good','Shelf A',100,'private',NULL,'unit6g-null-lang-0001',gen_random_uuid())`),
+  /P9_REQUEST_INVALID/);
+  await assert.rejects(db.query(`SELECT public.phase9_start_session_v2(
+    'en','good',NULL,100,'private',NULL,'unit6g-null-loc-0001',gen_random_uuid())`),
+  /P9_REQUEST_INVALID/);
+  await assert.rejects(db.query(`SELECT public.phase9_start_session_v2(
+    'en','good','Shelf A',100,NULL,NULL,'unit6g-null-pub-0001',gen_random_uuid())`),
+  /P9_REQUEST_INVALID/);
+  const started = await start(fixture);
+  const candidateId = await candidate(fixture, started.result.sessionId);
+  await setActor(db, fixture.ownerId);
+  await assert.rejects(db.query(`SELECT public.phase9_owner_remove_candidate_v1(
+    '${started.result.sessionId}','${candidateId}',NULL,
+    'unit6g-null-key-remove-01',gen_random_uuid())`),
+  /P9_REQUEST_INVALID/);
+  await assert.rejects(db.query(`SELECT public.phase9_owner_remove_candidate_v1(
+    '${started.result.sessionId}','${candidateId}',1,NULL,gen_random_uuid())`),
+  /P9_REQUEST_INVALID/);
+  await assert.rejects(db.query(`SELECT public.phase9_close_session_v3(
+    '${started.result.sessionId}',NULL,'unit6g-null-version-close',gen_random_uuid())`),
+  /P9_REQUEST_INVALID/);
+  await assert.rejects(db.query(`SELECT public.phase9_close_session_v3(
+    '${started.result.sessionId}',1,NULL,gen_random_uuid())`),
+  /P9_REQUEST_INVALID/);
+  await resetActor(db);
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM public.image_extraction_candidates
+    WHERE id='${candidateId}' AND review_disposition IS NOT NULL`), 0);
+  assert.equal(await scalar(db, `SELECT status FROM public.image_extraction_sessions
+    WHERE id='${started.result.sessionId}'`), 'active');
 });

@@ -56,4 +56,44 @@ describe('Phase 9 Unit 6G Group 1 M52 structural contract', () => {
     ].forEach((marker) => expect(source).toContain(marker));
     expect(source).not.toMatch(/GRANT\s+(SELECT|INSERT|UPDATE|DELETE).*authenticated/iu);
   });
+
+  it('rejects null keys, expected versions, and required start inputs', () => {
+    const source = sql();
+    expect(source.match(/p_idempotency_key IS NULL/gu)?.length).toBe(3);
+    expect(source).toContain('p_expected_candidate_version IS NULL');
+    expect(source).toContain('p_expected_session_version IS NULL');
+    expect(source).toContain('p_language_hint IS NULL');
+    expect(source).toContain('p_location IS NULL');
+    expect(source).toContain('p_publication IS NULL');
+  });
+
+  it('bounds the batch aggregate and corrects the v3 needs-review count', () => {
+    const source = sql();
+    expect(source).toContain('LIMIT 15');
+    const summary = sql().match(
+      /CREATE FUNCTION marketplace_sec\.phase9_unit6g_close_summary\([\s\S]*?\$\$;/u,
+    );
+    expect(summary).not.toBeNull();
+    expect(summary?.[0]).toContain("'candidatesNeedsReview'");
+    expect(summary?.[0]).toContain(
+      "c.review_disposition IS DISTINCT FROM 'owner_removed_from_scan'",
+    );
+  });
+
+  it('filters owner-removed candidates from the legacy session page forward-only', () => {
+    const source = sql();
+    expect(source).toContain(
+      'CREATE OR REPLACE FUNCTION public.phase9_owner_candidates_page_v2',
+    );
+    expect(source).not.toContain(
+      'CREATE OR REPLACE FUNCTION public.phase9_close_session_v2',
+    );
+    const page = sql().match(
+      /CREATE OR REPLACE FUNCTION public\.phase9_owner_candidates_page_v2\([\s\S]*?\$\$;/u,
+    );
+    expect(page).not.toBeNull();
+    expect(page?.[0]).toContain(
+      "c.review_disposition IS DISTINCT FROM 'owner_removed_from_scan'",
+    );
+  });
 });

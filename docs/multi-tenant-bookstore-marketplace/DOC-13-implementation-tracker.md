@@ -49,6 +49,42 @@ Every material session must also leave one exact active work unit and next autho
 > is 11/11. M52 remains unapplied, Groups 2–4 remain untouched, and no external
 > or Git-publication action occurred. Exact next action: correction-only rereview.
 
+> **2026-08-21 Unit 6G Group 1 independent-verification correction pass:** Three
+> independent audits confirmed the foundation and surfaced four bounded defects,
+> all corrected inside the still-unapplied M52 and its tests: the v3 close
+> summary now overrides `candidatesNeedsReview` so a removed candidate is counted
+> exactly once; all three command RPCs explicitly reject null idempotency keys
+> and null expected versions (closing a PL/pgSQL NULL fail-open reachable by
+> direct authenticated RPC); session-level counters widened beyond 15 because
+> legacy multi-image sessions exceed 15, with card/item bounds kept at 15 plus a
+> server-side LIMIT 15; M52 forward-replaces `phase9_owner_candidates_page_v2`
+> so the legacy session scope excludes removed candidates instead of failing old
+> clients' strict decode. SDD §7/§16/§17 and the contract matrix were aligned,
+> including six recorded decisions (page filter, service_role withholding,
+> rollout constraint). Verification run: focused Jest 42/42, expanded regression
+> 212/212, Unit 6G PGlite 13/13, TypeScript clean. M52 remains unapplied; no
+> database/Storage, deployment, or Git-publication action occurred. Exact next
+> action: independent correction-only rereview of the corrected M52.
+
+> **2026-08-21 Unit 6G Group 1 rereview iteration two:** Two completed external
+> correction-only rereviews returned FAIL on the same two findings, and the
+> correction pass's own PS 5.1 documentation rewrite had introduced encoding
+> damage. The Owner approved a second bounded iteration: Start explicitly
+> rejects null `p_language_hint`/`p_location`/`p_publication` with
+> `P9_REQUEST_INVALID` (required v2 start inputs; the NOT NULL columns already
+> failed closed but with non-canonical codes); session-level counters replaced
+> the interim 0..999 cap with non-negative JSON-safe integers: every realistic
+> SQL count decodes exactly and any value above 2^53-1 fails closed at the
+> decoder rather than losing precision; database counts are never clamped. The
+> matrix and DOC-13 BOM
+> plus 43 double-encoded matrix characters were repaired in place with no file
+> discarded. Structural, PGlite (G1-13), and both contract test files were
+> extended to pin the new behavior. Gate results for this iteration are
+> recorded in the Phase 9 implementation tracker. M52 remains unapplied; no
+> database/Storage, deployment, or Git-publication action occurred. Exact next
+> action: external correction-only rereview of iteration two, then one local
+> commit on explicit Owner authorization.
+
 > **2026-08-21 Unit 8 repository closure ready:** The final bounded Unit 7/8
 > reconciliation is complete locally. Repository-only M51 fails closed on
 > existing publicly eligible NULL/out-of-range/duplicate orders or cardinality
@@ -994,10 +1030,10 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6G Group 1 locally complete pending handoff review; Unit 8 remains live/main-integrated** |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6G Group 1 verification-correction pass applied, rereview pending; Unit 8 remains live/main-integrated** |
 | Overall status | `unit6g_group1_contract_persistence_locally_complete` |
 | Last updated | 2026-08-21 |
-| Latest handoff | Group 1 contracts/runtime and the bounded four-finding correction are locally complete on `codex/phase9-unit6g-owner-batch-review-commit-handoff`; M52 remains unapplied and Unit 8 remains live/main-integrated at `4c1d98d`. |
+| Latest handoff | Group 1 contracts/runtime, the bounded four-finding correction, and the three-audit verification-correction pass are locally complete on `codex/phase9-unit6g-owner-batch-review-commit-handoff`; M52 remains unapplied and Unit 8 remains live/main-integrated at `4c1d98d`. |
 | Current risk level | M52 is an un-applied category 4/3 forward migration candidate pending correction-only rereview and exact-project preflight. Migration application, deployment, and native/UI Groups 2–4 work remain gated. Preexisting live advisory: RLS is disabled on `public.spatial_ref_sys`, `public.marketplace_event_schema_registry`, and `public.marketplace_notification_type_registry`; no remediation was authorized. |
 | Next recommended task | Independently rereview only the four corrected Group 1 findings and their direct regressions. Do not apply M52, deploy, stage/commit/push, or begin Groups 2–4 without separate authorization. |
 

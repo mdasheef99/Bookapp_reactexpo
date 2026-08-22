@@ -1,6 +1,6 @@
 # Phase 9 Unit 6G Owner Batch Review Design Evidence
 
-**Status:** `unit6g_group1_contract_persistence_locally_complete_handoff_review_pending`
+**Status:** `unit6g_group1_iteration2_corrections_applied_rereview_pending`
 **Date:** 2026-08-21
 **Branch:** `codex/phase9-unit6g-owner-batch-review-commit-handoff`
 **Worktree:** isolated from the user's `main` workspace
@@ -218,7 +218,8 @@ reported the preexisting advisory that RLS is disabled on
 - Representative low-end Android evidence is required for the new page even
   though older Unit 6F debt remains separate.
 
-**Exact next authorized action:** independent correction-only rereview of M52
+**Exact next authorized action:** independent correction-only rereview of the
+corrected M52 (double-count override, NULL guards, page filter, count bounds)
 and the direct four-finding regressions. Do not apply M52, deploy,
 stage/commit/push, or begin Groups 2–4 without separate authorization.
 
@@ -239,3 +240,63 @@ PGlite 8/11. The correction:
 Final focused Jest is 38/38 and Unit 6G PGlite is 11/11. M52 remains unapplied;
 no database/Storage, deployment, provider, Git publication, Groups 2–4, M39,
 or Unit 7C action occurred. The exact next action is correction-only rereview.
+
+### 8.3 Independent-verification correction pass — 2026-08-21
+
+Three independent audits (two external Codex reviews plus one repository
+review) confirmed the Group 1 foundation and surfaced four bounded defects.
+The Owner authorized the bounded correction pass; all fixes are inside the
+still-unapplied M52, its tests, and documentation. No applied migration,
+v2 response shape, live project, Git publication, or Group 2–4 scope changed.
+
+| Defect | Correction |
+| --- | --- |
+| v3 close summary double-counted a removed candidate in `candidatesNeedsReview` | `phase9_unit6g_close_summary` now overrides that key with an active-only count; removed candidates appear exactly once, in `ownerRemovedCandidates`. |
+| NULL fail-open validation: a null idempotency key or expected version bypassed format/range checks and version fences via PL/pgSQL three-valued logic on direct authenticated RPC calls | All three command RPCs explicitly reject null `p_idempotency_key` and null expected versions with `P9_REQUEST_INVALID`. |
+| Session-level counters were DTO-bounded at 15 while legacy multi-image sessions legitimately exceed 15 (one live session holds 13 candidates), so v3 reads of such sessions would fail decode | `counts`, `blockerCounts`, and all `CloseSummaryV3` fields widened in both Edge and mobile contracts; card ordinals and item arrays stay capped at 15; aggregate items query additionally bounds input to 15 server-side. Iteration two replaced the interim `0..999` cap with non-negative JSON-safe integers; SQL emits plain counts, every realistic count decodes exactly, and any value above 2^53-1 fails closed at the decoder. |
+| Legacy session-scope candidate page would hand old clients the new `owner_removed_from_scan` disposition and fail their strict decode (`CaptureProgressScreens` exposure) | M52 forward-replaces `phase9_owner_candidates_page_v2` with one added predicate excluding removed candidates from the session scope; signature/grants/cursor semantics unchanged; decision recorded in the contract matrix. |
+
+Documentation alignment: SDD §7 emission table corrected (quantity/damage
+never emit `missing`; cover never emits `detected`); §16 counter bounds
+corrected; §17 gained the legacy-v2 failure contract and rollout-constraint
+paragraph; contract matrix gained the six recorded correction decisions.
+
+Verification actually run in this pass: focused new Jest suites 3/3
+(42/42 tests), expanded Owner UX/capture regression suites 7/7 (212/212),
+Unit 6G PGlite integration 13/13 including new G1-12/G1-13 red-test coverage
+for the page filter and NULL rejection, `npx.cmd tsc --noEmit` clean. Red-first
+evidence: the pre-correction integration file contained no
+`candidatesNeedsReview` assertion and no NULL-key/version rejection (audit-
+confirmed absence); G1-13 failed against the pre-correction RPCs during
+development before the guards landed. M52 remains unapplied; no database,
+Storage, deployment, provider, or Git-publication action occurred.
+
+### 8.4 Rereview iteration two — 2026-08-21
+
+Two completed external correction-only rereviews returned FAIL with the same
+two findings (a third PASS was withdrawn as interrupted); both confirmed C1/C4
+effective, the exact 12-file scope, and all code gates green. The Owner
+approved a second bounded iteration:
+
+1. Start RPC NULL guards: `p_language_hint`, `p_location`, and
+   `p_publication` are explicitly rejected with `P9_REQUEST_INVALID`. All
+   three are required inputs in the normalized v2 start contract (non-nullable
+   schemas; SDD §5 location required without fallback; language/publication
+   always submitted by the UI), so rejection rather than normalization is
+   correct. This closes the reviews' residual fail-open finding even though
+   the underlying columns are NOT NULL (fail-closed constraint abort).
+2. Counter bound: interim `0..999` replaced by non-negative JSON-safe
+   integers in `ownerBatchCount` (Edge) and `boundedCount` (mobile). SQL
+   emits plain `count(*)` totals; any count within the safe-integer range
+   decodes exactly, and a hypothetical count above 2^53-1 fails closed at
+   the decoder rather than silently losing precision. Database counts are
+   never clamped.
+3. Encoding repair of the correction pass's own damage (PS 5.1 rewrite): UTF-8
+   BOM removed from this tracker set's matrix and DOC-13, and 43 double-encoded
+   characters in the matrix restored to — “ ” → ₹ via exact code-point
+   replacement. No file was discarded; content edits were preserved.
+
+Structural test now also pins the three start-input guards; G1-13 gained three
+NULL-start rejections; both contract suites reject an unsafe integer instead
+of a large-but-safe one. SDD §16 and the matrix notation updated to
+NonNegativeSafeInteger semantics.

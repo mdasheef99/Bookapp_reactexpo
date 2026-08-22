@@ -114,8 +114,22 @@ describe('Phase 9 Unit 6G Group 1 strict responses', () => {
       },
     };
     expect(() => decodeOwnerBatchReviewResponse('read_scan_batch_review', {
-      ...base, data: { ...base.data, counts: { ...base.data.counts, detected: 16 } },
+      ...base, data: { ...base.data, counts: { ...base.data.counts, detected: 9007199254740993 } },
     })).toThrow();
+    expect(() => decodeOwnerBatchReviewResponse('read_scan_batch_review', {
+      ...base,
+      data: {
+        ...base.data,
+        counts: { ...base.data.counts, detected: 40 },
+      },
+    })).not.toThrow();
+    expect(() => decodeOwnerBatchReviewResponse('read_scan_batch_review', {
+      ...base,
+      data: {
+        ...base.data,
+        counts: { ...base.data.counts, detected: 1000 },
+      },
+    })).not.toThrow();
     expect(() => decodeOwnerBatchReviewResponse('read_scan_batch_review', {
       ...base, data: { ...base.data, extra: true },
     })).toThrow();

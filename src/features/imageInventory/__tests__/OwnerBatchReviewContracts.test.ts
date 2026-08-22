@@ -41,10 +41,28 @@ describe('Unit 6G Group 1 mobile DTO foundation', () => {
         })).toEqual(data);
     });
 
+    it('decodes legacy multi-image session counters above the 15-card cap', () => {
+        for (const detected of [40, 1000]) {
+            const data = {
+                sessionId: uuid, status: 'active', sessionVersion: 1,
+                presentationRevision: 1, defaults, batchLabel: null,
+                counts: {
+                    detected, processing: 0, needsAttention: 12,
+                    reviewReadySaved: 8, committed: 22, ownerRemoved: 3,
+                    falseDetections: 5,
+                },
+                items: [], updatedAt: timestamp,
+            };
+            expect(decodeOwnerBatchReviewResponse('read_scan_batch_review', {
+                contractVersion: OWNER_BATCH_REVIEW_CONTRACT_VERSION, data,
+            })).toEqual(data);
+        }
+    });
+
     it.each([
         { extra: true },
         { providerPayload: { raw: true } },
-        { counts: { detected: 16 } },
+        { counts: { detected: 9007199254740993 } },
     ])('fails closed for unknown, private, or unbounded data', (override) => {
         const counts = {
             detected: 0, processing: 0, needsAttention: 0,

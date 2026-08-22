@@ -180,13 +180,13 @@ SessionDefaultsV2 {
 }
 
 BatchReviewCounts {
-  detected: Integer[0..15]
-  processing: Integer[0..15]
-  needsAttention: Integer[0..15]
-  reviewReadySaved: Integer[0..15]
-  committed: Integer[0..15]
-  ownerRemoved: Integer[0..15]
-  falseDetections: Integer[0..15]
+  detected: NonNegativeSafeInteger
+  processing: NonNegativeSafeInteger
+  needsAttention: NonNegativeSafeInteger
+  reviewReadySaved: NonNegativeSafeInteger
+  committed: NonNegativeSafeInteger
+  ownerRemoved: NonNegativeSafeInteger
+  falseDetections: NonNegativeSafeInteger
 }
 ```
 
@@ -194,7 +194,14 @@ Every object is strict: all listed keys are required unless marked nullable,
 unknown keys fail decoding, integers must be safe, and timestamps require an
 explicit offset. The seven counts are one-snapshot server derivations and each
 candidate belongs to the appropriate lifecycle bucket without caller-provided
-count authority. `batchLabel` and location are Owner-private session values;
+count authority. Session-level counters (`counts`, `blockerCounts`, and every
+`CloseSummaryV3` field) are non-negative JSON-safe integers rather than a
+tight numeric cap: SQL emits plain `count(*)` totals, legacy multi-image
+sessions legitimately exceed 15 in lifetime totals such as `imagesSubmitted`
+or `committedInventoryItems`, and any value above 2^53-1 fails closed at the
+decoder instead of silently losing precision. Only per-card ordinals,
+card arrays, and aggregate item lists remain bounded by the 15-candidate cap.
+`batchLabel` and location are Owner-private session values;
 they may be rendered here but are forbidden from public DTOs and telemetry.
 
 `Ready` over mounted drafts is not returned as business authority. The server
@@ -404,7 +411,7 @@ OwnerSessionReadinessV3 {
   sessionVersion: PositiveInteger
   allInputsTerminal: boolean
   closeSummary: CloseSummaryV3
-  blockerCounts: ExactRecord<BlockerCode, Integer[0..15]>
+  blockerCounts: ExactRecord<BlockerCode, NonNegativeSafeInteger>
   nextBlockingCandidateId: uuid | null
   closeState: "not_closeable" | "closeable" | "closed" | "expired"
   closeAllowed: boolean
@@ -412,24 +419,24 @@ OwnerSessionReadinessV3 {
 }
 
 CloseSummaryV3 {
-  imagesSubmitted: Integer[0..15]
-  imagesProcessed: Integer[0..15]
-  imagesFailed: Integer[0..15]
-  imagesSkipped: Integer[0..15]
-  candidatesDetected: Integer[0..15]
-  candidatesReviewReady: Integer[0..15]
-  candidatesNeedsReview: Integer[0..15]
-  candidatesFailed: Integer[0..15]
-  falseDetections: Integer[0..15]
-  ownerRemovedCandidates: Integer[0..15]
-  manualMissedCandidates: Integer[0..15]
-  committedInventoryItems: Integer[0..15]
-  quantitiesAddedToExisting: Integer[0..15]
-  privateItems: Integer[0..15]
-  publishedItems: Integer[0..15]
-  languageSkips: Integer[0..15]
-  candidateCapSkips: Integer[0..15]
-  qualitySkips: Integer[0..15]
+  imagesSubmitted: NonNegativeSafeInteger
+  imagesProcessed: NonNegativeSafeInteger
+  imagesFailed: NonNegativeSafeInteger
+  imagesSkipped: NonNegativeSafeInteger
+  candidatesDetected: NonNegativeSafeInteger
+  candidatesReviewReady: NonNegativeSafeInteger
+  candidatesNeedsReview: NonNegativeSafeInteger
+  candidatesFailed: NonNegativeSafeInteger
+  falseDetections: NonNegativeSafeInteger
+  ownerRemovedCandidates: NonNegativeSafeInteger
+  manualMissedCandidates: NonNegativeSafeInteger
+  committedInventoryItems: NonNegativeSafeInteger
+  quantitiesAddedToExisting: NonNegativeSafeInteger
+  privateItems: NonNegativeSafeInteger
+  publishedItems: NonNegativeSafeInteger
+  languageSkips: NonNegativeSafeInteger
+  candidateCapSkips: NonNegativeSafeInteger
+  qualitySkips: NonNegativeSafeInteger
 }
 ```
 
@@ -440,6 +447,35 @@ same canonical post-close snapshot. The one new summary field is the bounded
 count; Close returns no removed-candidate list or private/raw details. Legacy
 v2 callers never receive an unknown key or null-incompatible condition; a v2
 call against a Unit 6G nullable session fails closed and the client uses v3.
+
+### Group 1 correction decisions (2026-08-21 rereview pass)
+
+1. `phase9_unit6g_close_summary` overrides the inherited v2
+   `candidatesNeedsReview` with an active-only count, so an owner-removed
+   candidate is reported exactly once, in `ownerRemovedCandidates`, and never
+   also as needing review. The unchanged v2 close summary is untouched.
+2. All three command RPCs explicitly reject a null `p_idempotency_key`,
+   `p_command_id`, and (for remove/close) a null expected version with
+   `P9_REQUEST_INVALID`; PL/pgSQL NULL-comparison fail-open is closed.
+3. The batch-review items query bounds its input to 15 rows server-side,
+   matching the DTO cap independently of creation-time caps.
+4. M52 forward-replaces `public.phase9_owner_candidates_page_v2` so the
+   legacy session-scope page excludes `owner_removed_from_scan` candidates;
+   legacy clients stop seeing the card instead of failing strict decode on an
+   unknown disposition value. Grants, ownership, signature, cursor semantics,
+   and the `needs_review` scope behavior are unchanged.
+5. `service_role` EXECUTE is deliberately withheld from all five new public
+   RPCs (unlike the M47/M48 compatibility restorations): no worker, scheduler,
+   or service-role consumer exists; every caller is the authenticated
+   Owner-scoped Edge path.
+6. Rollout constraint: old app builds still decode-fail against Unit 6G
+   nullable-condition sessions through legacy `read_scan_session`, by design
+   (SDD §17). Groups 2–4 should ship promptly after M52 application to keep
+   the mixed-version window short.
+
+Source-emission note: the server never emits `missing` for quantity or damage
+and never emits `detected` for cover; response enums admit these values only
+as harmless client-side supersets of the SDD §7 emission table.
 
 ## 5. Candidate removal contract
 

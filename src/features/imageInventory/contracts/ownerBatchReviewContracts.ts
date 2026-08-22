@@ -14,7 +14,7 @@ import {
 import { languageSchema, nullableSafeTextSchema, safeTextSchema } from './ownerUxValidation';
 
 export const OWNER_BATCH_REVIEW_CONTRACT_VERSION = 'phase9-owner-batch-review-v1' as const;
-const boundedCount = z.number().int().min(0).max(15).safe();
+const boundedCount = z.number().int().min(0).safe();
 const unique = <Schema extends z.ZodTypeAny>(schema: Schema, maximum: number) => z.array(schema)
     .max(maximum).refine((items) => new Set(items.map((item) => JSON.stringify(item))).size === items.length,
         'array values must be unique');

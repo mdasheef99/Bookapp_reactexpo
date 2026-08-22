@@ -91,10 +91,18 @@ CREATE FUNCTION marketplace_sec.phase9_unit6g_defaults(
   )
 $$;
 
+-- Overrides candidatesNeedsReview so an owner-removed candidate is reported
+-- exactly once, in ownerRemovedCandidates, never also as needing review.
 CREATE FUNCTION marketplace_sec.phase9_unit6g_close_summary(p_session_id uuid)
 RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
   SELECT marketplace_sec.phase9_owner_ux_close_summary(p_session_id)
-    || jsonb_build_object('ownerRemovedCandidates',(
+    || jsonb_build_object('candidatesNeedsReview',(
+      SELECT count(*) FROM public.image_extraction_candidates c
+      WHERE c.session_id=p_session_id
+        AND c.review_disposition IS DISTINCT FROM 'skipped_false_detection'
+        AND c.review_disposition IS DISTINCT FROM 'owner_removed_from_scan'
+        AND NOT c.review_ready
+    ),'ownerRemovedCandidates',(
       SELECT count(*) FROM public.image_extraction_candidates c
       WHERE c.session_id=p_session_id
         AND c.review_disposition='owner_removed_from_scan'
@@ -112,7 +120,8 @@ BEGIN
   v_label:=CASE WHEN p_batch_label IS NULL OR btrim(p_batch_label)='' THEN NULL
     ELSE normalize(btrim(p_batch_label),NFC) END;
   v_location:=normalize(btrim(p_location),NFC);
-  IF p_language_hint !~ '^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$'
+  IF p_language_hint IS NULL OR p_location IS NULL OR p_publication IS NULL
+    OR p_language_hint !~ '^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$'
     OR (p_condition IS NOT NULL AND p_condition NOT IN
       ('new','like_new','very_good','good','acceptable'))
     OR char_length(v_location) NOT BETWEEN 1 AND 120
@@ -122,6 +131,7 @@ BEGIN
     OR (v_label IS NOT NULL AND (char_length(v_label)>80
       OR v_label ~ '[\u0000-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]'))
     OR p_command_id IS NULL
+    OR p_idempotency_key IS NULL
     OR p_idempotency_key !~ '^[A-Za-z0-9._:-]{16,128}$'
   THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;
   v_fingerprint:=encode(extensions.digest(concat_ws('|',v_store,p_language_hint,
@@ -283,11 +293,16 @@ BEGIN
     'ownerRemoved',count(*) FILTER(WHERE c.review_disposition='owner_removed_from_scan'),
     'falseDetections',count(*) FILTER(WHERE c.review_disposition='skipped_false_detection'))
   INTO v_counts FROM public.image_extraction_candidates c WHERE c.session_id=p_session_id;
-  SELECT coalesce(jsonb_agg(marketplace_sec.phase9_unit6g_batch_card(v_session,c)
-    ORDER BY c.candidate_index,c.id),'[]'::jsonb) INTO v_items
-  FROM public.image_extraction_candidates c WHERE c.session_id=p_session_id
-    AND marketplace_sec.phase9_unit6g_candidate_active(c)
-    AND c.state<>'committed';
+  SELECT coalesce(jsonb_agg(marketplace_sec.phase9_unit6g_batch_card(v_session,b)
+    ORDER BY b.candidate_index,b.id),'[]'::jsonb) INTO v_items
+  FROM (
+    SELECT * FROM public.image_extraction_candidates c
+    WHERE c.session_id=p_session_id
+      AND marketplace_sec.phase9_unit6g_candidate_active(c)
+      AND c.state<>'committed'
+    ORDER BY c.candidate_index,c.id
+    LIMIT 15
+  ) b;
   RETURN jsonb_build_object(
     'sessionId',v_session.id,'status',v_session.status,
     'sessionVersion',v_session.version,
@@ -308,7 +323,8 @@ BEGIN
   SELECT * INTO v_candidate FROM public.image_extraction_candidates c
     WHERE c.id=p_candidate_id AND c.session_id=p_session_id FOR UPDATE;
   IF v_candidate.id IS NULL THEN RAISE EXCEPTION 'P9_NOT_FOUND'; END IF;
-  IF p_expected_candidate_version<1 OR p_command_id IS NULL
+  IF p_expected_candidate_version IS NULL OR p_expected_candidate_version<1
+    OR p_command_id IS NULL OR p_idempotency_key IS NULL
     OR p_idempotency_key !~ '^[A-Za-z0-9._:-]{16,128}$'
   THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;
   v_fingerprint:=encode(extensions.digest(concat_ws('|',p_session_id,p_candidate_id,
@@ -416,7 +432,8 @@ BEGIN
   PERFORM marketplace_sec.phase9_owner_ux_assert_session(p_session_id);
   SELECT * INTO v_session FROM public.image_extraction_sessions s
     WHERE s.id=p_session_id FOR UPDATE;
-  IF p_expected_session_version<1 OR p_command_id IS NULL
+  IF p_expected_session_version IS NULL OR p_expected_session_version<1
+    OR p_command_id IS NULL OR p_idempotency_key IS NULL
     OR p_idempotency_key !~ '^[A-Za-z0-9._:-]{16,128}$'
   THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;
   v_fingerprint:=encode(extensions.digest(concat_ws('|',p_session_id,
@@ -440,6 +457,107 @@ BEGIN
   PERFORM marketplace_sec.phase9_finish_replay(auth.uid()::text,'U6GC03',
     p_idempotency_key,v_response,'session_closed_no_unit7_effect');
   RETURN v_response;
+END$$;
+
+-- Forward replacement of the M29 session-scope candidate page so legacy
+-- clients stop receiving owner-removed candidates instead of failing their
+-- strict decode. The needs_review scope already excludes removals through
+-- phase9_owner_ux_needs_review. Body matches M29 exactly except the one
+-- added predicate; grants/ownership on the function are unchanged.
+CREATE OR REPLACE FUNCTION public.phase9_owner_candidates_page_v2(
+  p_scope text,p_session_id uuid DEFAULT NULL,p_attention text DEFAULT 'all',
+  p_page_size integer DEFAULT 20,p_cursor text DEFAULT NULL
+) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
+DECLARE v_store uuid; v_session public.image_extraction_sessions; v_scope_version bigint;
+  v_payload jsonb; v_after_index integer; v_after_at timestamptz; v_after_id uuid;
+  v_rows jsonb; v_has_more boolean; v_next text; v_session_version integer;
+  v_as_of timestamptz:=transaction_timestamp();
+BEGIN
+  v_store:=marketplace_sec.phase9_owner_ux_assert_owner();
+  IF p_scope NOT IN ('session','needs_review') OR p_page_size NOT BETWEEN 1 AND 50
+    OR p_attention NOT IN ('all','needs_attention','review_ready')
+    OR (p_scope='session') IS DISTINCT FROM (p_session_id IS NOT NULL)
+  THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;
+  IF p_scope='session' THEN
+    v_session:=marketplace_sec.phase9_owner_ux_assert_session(p_session_id);
+    v_scope_version:=v_session.session_scope_version; v_session_version:=v_session.version;
+  ELSE
+    SELECT coalesce((SELECT r.review_scope_version FROM public.phase9_owner_review_scopes r
+      WHERE r.actor_user_id=auth.uid()),1) INTO v_scope_version;
+    v_session_version:=NULL;
+  END IF;
+  IF p_cursor IS NOT NULL THEN
+    BEGIN
+      v_payload:=marketplace_sec.phase9_owner_ux_cursor_payload(p_cursor);
+      IF v_payload->>'kind'<>'candidates' OR (v_payload->>'actor')::uuid<>auth.uid()
+        OR v_payload->>'scope'<>p_scope OR coalesce(v_payload->>'session','')<>coalesce(p_session_id::text,'')
+        OR v_payload->>'attention'<>p_attention OR (v_payload->>'size')::integer<>p_page_size
+        OR (v_payload->>'revision')::bigint<>v_scope_version
+        OR (p_scope='needs_review' AND (v_payload->>'asOf') IS NULL)
+        OR v_payload->>'contract'<>'phase9-owner-ux-v1'
+      THEN RAISE EXCEPTION 'P9_CURSOR_INVALID'; END IF;
+      v_after_id:=(v_payload->>'id')::uuid;
+      IF p_scope='session' THEN v_after_index:=(v_payload->>'position')::integer;
+      ELSE
+        v_after_at:=(v_payload->>'position')::timestamptz;
+        v_as_of:=(v_payload->>'asOf')::timestamptz;
+      END IF;
+    EXCEPTION WHEN others THEN RAISE EXCEPTION 'P9_CURSOR_INVALID';
+    END;
+  ELSIF p_scope='needs_review' AND p_attention NOT IN ('all','needs_attention') THEN
+    RAISE EXCEPTION 'P9_REQUEST_INVALID';
+  END IF;
+  WITH eligible AS (
+    SELECT c.*,s.started_at,s.expires_at session_expires_at,s.status session_status,
+      s.id sid,s.session_scope_version
+    FROM public.image_extraction_candidates c JOIN public.image_extraction_sessions s ON s.id=c.session_id
+    WHERE s.store_id=v_store AND s.created_by=auth.uid()
+      AND ((p_scope='session' AND s.id=p_session_id
+        AND s.status IN ('active','closing','closed')
+        AND c.review_disposition IS DISTINCT FROM 'owner_removed_from_scan'
+        AND (p_attention='all' OR (p_attention='review_ready' AND c.review_ready)
+          OR (p_attention='needs_attention' AND NOT c.review_ready)))
+       OR (p_scope='needs_review' AND marketplace_sec.phase9_owner_ux_needs_review(c,s,v_as_of)))
+      AND (p_cursor IS NULL OR
+        (p_scope='session' AND (c.candidate_index,c.id)>(v_after_index,v_after_id))
+        OR (p_scope='needs_review' AND (c.updated_at,c.id)<(v_after_at,v_after_id)))
+  ), page AS (
+    SELECT * FROM eligible ORDER BY
+      CASE WHEN p_scope='session' THEN candidate_index END ASC,
+      CASE WHEN p_scope='needs_review' THEN updated_at END DESC,
+      CASE WHEN p_scope='session' THEN id END ASC,
+      CASE WHEN p_scope='needs_review' THEN id END DESC LIMIT p_page_size+1
+  ), sliced AS (
+    SELECT * FROM page ORDER BY
+      CASE WHEN p_scope='session' THEN candidate_index END ASC,
+      CASE WHEN p_scope='needs_review' THEN updated_at END DESC,
+      CASE WHEN p_scope='session' THEN id END ASC,
+      CASE WHEN p_scope='needs_review' THEN id END DESC LIMIT p_page_size
+  )
+  SELECT coalesce(jsonb_agg(marketplace_sec.phase9_owner_ux_candidate_summary(
+      (SELECT c FROM public.image_extraction_candidates c WHERE c.id=s.id),
+      (SELECT x FROM public.image_extraction_sessions x WHERE x.id=s.sid))
+      ORDER BY CASE WHEN p_scope='session' THEN candidate_index END ASC,
+        CASE WHEN p_scope='needs_review' THEN updated_at END DESC,
+        CASE WHEN p_scope='session' THEN id END ASC,
+        CASE WHEN p_scope='needs_review' THEN id END DESC),'[]'::jsonb),
+    (SELECT count(*)>p_page_size FROM page),
+    (SELECT marketplace_sec.phase9_owner_ux_cursor(jsonb_build_object(
+      'kind','candidates','actor',auth.uid(),'scope',p_scope,'session',p_session_id,
+      'attention',p_attention,'size',p_page_size,'revision',v_scope_version,
+      'contract','phase9-owner-ux-v1','asOf',
+        CASE WHEN p_scope='needs_review' THEN v_as_of::text ELSE NULL END,'position',
+        CASE WHEN p_scope='session' THEN candidate_index::text ELSE updated_at::text END,'id',id))
+      FROM sliced ORDER BY
+        CASE WHEN p_scope='session' THEN candidate_index END DESC,
+        CASE WHEN p_scope='needs_review' THEN updated_at END ASC,
+        CASE WHEN p_scope='session' THEN id END DESC,
+        CASE WHEN p_scope='needs_review' THEN id END ASC LIMIT 1)
+  INTO v_rows,v_has_more,v_next FROM sliced s;
+  IF NOT v_has_more THEN v_next:=NULL; END IF;
+  RETURN jsonb_build_object('items',v_rows,'pageInfo',jsonb_build_object(
+    'nextCursor',v_next,'hasMore',v_has_more),'scopeVersion',v_scope_version,
+    'sessionVersion',v_session_version);
 END$$;
 
 INSERT INTO public.marketplace_event_schema_registry(
