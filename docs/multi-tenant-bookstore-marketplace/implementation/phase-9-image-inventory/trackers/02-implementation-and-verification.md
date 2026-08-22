@@ -2556,4 +2556,46 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 
 | Local filename | Live version | Project/preflight | Authority/effect | Verification/status |
 | --- | --- | --- | --- | --- |
-| `20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql` | **not applied** | unchanged preflight evidence (M51 tail) | Group 1 forward candidate plus verification-pass and iteration-two corrections: needs-review count override, NULL guards (keys, versions, required start inputs), safe-integer session counters with 15-card bounds, forward session-page filter | Focused Jest 42/42, exact-list regression 212/212, PGlite 13/13, TypeScript clean, continuity validator PASS, encoding scan clean; **local-only, pending iteration-two rereview and separate application authorization** |
+| `20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql` | **applied live as `20260822025712`** on `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) directly after M51 `20260821061213`; name is canonical per the timestamp/name-ledger convention | Read-only preflight PASS (dependency signatures, ACL snapshot, data compatibility) then Owner-authorized application | Group 1 forward candidate plus verification-pass and iteration-two corrections: needs-review count override, NULL guards (keys, versions, required start inputs), safe-integer session counters with 15-card bounds, forward session-page filter | Focused Jest 42/42, exact-list regression 212/212, PGlite 13/13, TypeScript clean, continuity validator PASS; **applied and live-verified 2026-08-22, see the M52 application proof record below** |
+
+### Unit 6G-B M52 application and connected proof - 2026-08-22
+
+- Authorization: Owner-approved application prompt with stop gates; preflight
+  had returned READY_FOR_OWNER_M52_APPLICATION_AUTHORIZATION.
+- Stop gate: worktree clean at `1c090b9`; live tail still M51
+  `20260821061213`; zero M52 objects present; no drift.
+- Application: applied exactly once via Supabase MCP as live version
+  `20260822025712`, name canonical, directly after M51.
+- Readback results (all PASS):
+  - schema: `default_condition` nullable; `default_price_minor`/`batch_label`
+    present with CHECK bounds; no currency column;
+  - disposition CHECK now includes `owner_removed_from_scan`; zero invalid rows;
+  - five new RPCs owned by postgres, EXECUTE authenticated only (service_role/
+    anon/PUBLIC revoked);
+  - `phase9_owner_candidates_page_v2` ACL preserved identically through CREATE
+    OR REPLACE (`authenticated, postgres, service_role`) matching the preflight
+    snapshot;
+  - both fence triggers present, no collisions; registry row exactly once;
+    `phase9_owner_ux_needs_review` still a single overload.
+- Connected proofs (Owner impersonation via transaction-local SET ROLE +
+  request.jwt.claims against fixture Owner `cf70d099...`, store
+  `a0d2a071...`; proof rows persisted as evidence):
+  - G: Start v2 created session `33c3f6fb-e364-46c9-8384-ab144edf4c98` with
+    null condition/batch label/price; legacy v2 Close on it failed closed with
+    `P9_STATE_CONFLICT` via the nullable-close fence;
+  - H: manual candidate `50de2017-2e1d-413c-86d1-14d616fb02c0` removed via RPC:
+    disposition `owner_removed_from_scan/v2`, zero inventory rows, one audit +
+    one event, nothing deleted;
+  - I: page-v2 session scope returns zero items (removed candidate excluded);
+    grants verified above;
+  - J: Close v3 returned `ownerRemovedCandidates=1` with
+    `candidatesNeedsReview=0` (no double-counting), false-detection accounting
+    distinct, session closed coherently;
+  - fence: privileged direct reactivation attempt raised `P9_STATE_CONFLICT`
+    and rolled back; M39 ineligibility structurally guaranteed.
+- Post-application regression: focused+regression Jest 10 suites 254/254,
+  PGlite 13/13, TypeScript exit 0, continuity validator PASS,
+  `git diff --check` clean.
+- External/Git state: working tree clean at `1c090b9` (no source changes were
+  needed); nothing pushed, merged, or deployed; no Groups 2-4/M39/Unit 7C work.
+- Exact next action: Owner review of this record, then 6G-C authorization.
