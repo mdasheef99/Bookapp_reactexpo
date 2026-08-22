@@ -85,6 +85,27 @@ Every material session must also leave one exact active work unit and next autho
 > action: external correction-only rereview of iteration two, then one local
 > commit on explicit Owner authorization.
 
+> **2026-08-22 Unit 6G-B M52 application and connected proof:** The read-only
+> exact-project preflight returned PASS (live tail M51, all nine dependency
+> functions signature-matched, zero object/name collisions, ACL snapshots
+> captured, 12 sessions/62 candidates fully compatible, no registry conflict).
+> On explicit Owner authorization M52 was applied exactly once via Supabase
+> MCP as live version `20260822025712`, directly after M51. Readback verified
+> nullable condition, both new bounded session columns with CHECKs, the
+> extended disposition CHECK, five new authenticated-only RPCs, preserved
+> `phase9_owner_candidates_page_v2` ownership/grants through CREATE OR
+> REPLACE, both fence triggers, and the registry row. Connected proofs with
+> transaction-local Owner impersonation: nullable-condition session
+> `33c3f6fb…` created through Start v2; legacy v2 Close failed closed with
+> `P9_STATE_CONFLICT`; candidate `50de2017…` removed irreversibly with zero
+> inventory effect and one audit + one event; page-v2 excluded the removed
+> candidate; Close v3 returned `ownerRemovedCandidates=1` with
+> `candidatesNeedsReview=0` (no double-counting live). Post-application gates:
+> Jest 10 suites 254/254, PGlite 13/13, TypeScript clean, continuity validator
+> PASS. Evidence commit `6313067` records the proof in tracker 02. No push,
+> merge, Edge/mobile deploy, M39, Unit 7C, or Groups 2–4 work occurred. Exact
+> next action: Owner authorization of 6G-C.
+
 > **2026-08-21 Unit 8 repository closure ready:** The final bounded Unit 7/8
 > reconciliation is complete locally. Repository-only M51 fails closed on
 > existing publicly eligible NULL/out-of-range/duplicate orders or cardinality
@@ -1030,10 +1051,10 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6G Group 1 verification-correction pass applied, rereview pending; Unit 8 remains live/main-integrated** |
-| Overall status | `unit6g_group1_contract_persistence_locally_complete` |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6G-B complete: M52 applied and live-verified, awaiting 6G-C authorization; Unit 8 remains live/main-integrated** |
+| Overall status | `unit6g_group1_complete_m52_applied_awaiting_6gc_authorization` |
 | Last updated | 2026-08-21 |
-| Latest handoff | Group 1 contracts/runtime, the bounded four-finding correction, and the three-audit verification-correction pass are locally complete on `codex/phase9-unit6g-owner-batch-review-commit-handoff`; M52 remains unapplied and Unit 8 remains live/main-integrated at `4c1d98d`. |
+| Latest handoff | Group 1 is complete through two correction iterations (commits `20b5916`, `1c090b9`) on `codex/phase9-unit6g-owner-batch-review-commit-handoff`; M52 is applied live exactly once as `20260822025712` directly after M51, with all connected proofs passed and recorded in tracker 02 (evidence commit `6313067`). Next: Owner authorization of 6G-C. Unit 8 remains live/main-integrated at `4c1d98d`. |
 | Current risk level | M52 is an un-applied category 4/3 forward migration candidate pending correction-only rereview and exact-project preflight. Migration application, deployment, and native/UI Groups 2–4 work remain gated. Preexisting live advisory: RLS is disabled on `public.spatial_ref_sys`, `public.marketplace_event_schema_registry`, and `public.marketplace_notification_type_registry`; no remediation was authorized. |
 | Next recommended task | Independently rereview only the four corrected Group 1 findings and their direct regressions. Do not apply M52, deploy, stage/commit/push, or begin Groups 2–4 without separate authorization. |
 
@@ -1199,7 +1220,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6g_group1_contract_persistence_locally_complete` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6G SDD](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md) · [Unit 6G matrix](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md) | Group 1 contracts/runtime and un-applied M52 candidate are locally verified on the approved branch; independent review is next. M52 application, deployment, Git publication, and Groups 2–4 remain separately gated. Unit 8 remains live-verified and integrated into `main` at `4c1d98d`. |
+| Phase 9: Image-to-LLM Inventory | `unit6g_group1_complete_m52_applied_awaiting_6gc_authorization` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6G SDD](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md) · [Unit 6G matrix](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md) | Group 1 is implemented through two rereviewed correction iterations (commits `20b5916`, `1c090b9`, evidence commit `6313067`), and M52 is applied live exactly once as `20260822025712` with all connected proofs passed. Next: Owner authorization of 6G-C. Edge/mobile deployment of new client code and Groups 2–4 remain separately gated. Unit 8 remains live-verified and integrated into `main` at `4c1d98d`. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

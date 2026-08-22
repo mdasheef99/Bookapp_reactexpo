@@ -12,17 +12,25 @@ The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` �
 
 Unit 8 remains live-verified and integrated into pushed `main`. The selected
 Phase 9 work unit is Unit 6G; Group 1 contract/persistence foundation is
-locally complete on the approved existing branch/worktree. The SDD and matrix
+implemented on the approved existing branch/worktree and **M52 is applied and
+live-verified**. The SDD and matrix
 [Unit 6G SDD](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md)
 and [contract matrix](./work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md)
 They define optional pre-scan defaults, one compact bounded review page,
 save-then-commit Add/Add all orchestration over M39, a distinct durable Owner
 candidate-removal disposition, and the unchanged Unit 7C post-commit boundary.
-Status is `group1_approved_locally_complete_groups2_4_pending`. The M52
-migration candidate is not applied; no deployment, Supabase/Storage mutation,
-or connected fixture/business-row proof occurred. Groups 2–4 remain out of
-scope. The exact next action is independent review of the Group 1 diff and M52
-candidate; application, deployment, and Git publication require separate
+Status is `group1_complete_m52_applied_awaiting_6gc_authorization`. M52 is live
+exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation`
+directly after M51 `20260821061213`; the read-only preflight passed (dependency
+signatures, ACL snapshot, data compatibility), and connected proofs verified
+nullable-condition Start v2 with legacy-v2 fail-closed fence, irreversible
+Owner removal excluded from batch review and page-v2, Close v3 accounting
+without double-counting, and preserved page-v2 ownership/grants. Full evidence
+is in [tracker 02](./trackers/02-implementation-and-verification.md) §Unit 6G-B
+M52 application. Local branch commits: `20b5916` (Group 1 foundation),
+`1c090b9` (correction iterations), `6313067` (application evidence). Groups
+2–4 remain out of scope. The exact next action is separate Owner authorization
+of 6G-C; Edge/mobile deployment of new client code requires separate
 authorization.
 
 ## Current 2026-08-21 Unit 8 closure overlay

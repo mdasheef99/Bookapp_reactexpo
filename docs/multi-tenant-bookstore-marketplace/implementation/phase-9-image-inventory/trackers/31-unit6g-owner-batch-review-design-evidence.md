@@ -1,6 +1,6 @@
 # Phase 9 Unit 6G Owner Batch Review Design Evidence
 
-**Status:** `unit6g_group1_iteration2_corrections_applied_rereview_pending`
+**Status:** `unit6g_group1_complete_m52_applied_awaiting_6gc_authorization` — superseded by the application record in [tracker 02](./02-implementation-and-verification.md) (M52 live as `20260822025712` with connected proofs, 2026-08-22)
 **Date:** 2026-08-21
 **Branch:** `codex/phase9-unit6g-owner-batch-review-commit-handoff`
 **Worktree:** isolated from the user's `main` workspace
