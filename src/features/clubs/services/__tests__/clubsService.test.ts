@@ -132,7 +132,7 @@ describe('clubsService', () => {
         expect(result[0].voteCount).toBe(1);
         expect(result[0].replies[0].voteCount).toBe(1);
         expect(result[0].replies[0].viewerVote).toBe('upvote');
-        expect(result[0].replies[0].reactions).toEqual([{ emoji: '🔥', count: 1, viewerReacted: true }]);
+        expect(result[0].replies[0].reactions).toEqual([{ emoji: '🔥', count: 1, viewerReacted: true, users: [{ userId: 'viewer-1', displayName: 'A club member', username: null }] }]);
     });
 
     it('reads public club browse results from club_public_details', async () => {

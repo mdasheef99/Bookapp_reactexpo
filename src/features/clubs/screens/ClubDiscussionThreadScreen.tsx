@@ -39,7 +39,8 @@ import {
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
 import { useTheme } from '@/hooks/useTheme';
 
-const REACTION_OPTIONS = ['👍', '👎', '❤️', '🔥', '👏', '😂', '😍', '😮', '😢', '🤔', '📚'] as ClubDiscussionReactionEmoji[];
+// TYPE-03: mirrors the DB CHECK club_discussion_reactions_emoji_canonical (11 values)
+const REACTION_OPTIONS: ClubDiscussionReactionEmoji[] = ['👍', '👎', '❤️', '🔥', '👏', '😂', '😍', '😮', '😢', '🤔', '📚'];
 const MAX_VISIBLE_REPLY_DEPTH = 2;
 
 type ReplyTreeNode = ClubDiscussionReplyWithDetails & {
@@ -252,7 +253,7 @@ export default function ClubDiscussionThreadScreen() {
             setReactionDetailState({ emoji: summary.emoji, users: getReactionUsers(summary) });
             return;
         }
-        const isKnownEmoji = (REACTION_OPTIONS as string[]).includes(summary.emoji);
+        const isKnownEmoji = REACTION_OPTIONS.includes(summary.emoji as ClubDiscussionReactionEmoji);
         try {
             setFeedback(null);
             await removeReactionMutation.mutateAsync({

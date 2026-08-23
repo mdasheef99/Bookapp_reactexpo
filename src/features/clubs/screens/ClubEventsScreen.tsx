@@ -4,10 +4,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { navigateBackOrFallback } from '@/lib/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { profileService } from '@/features/auth/services/profileService';
+import { useViewerMembershipTier } from '@/features/clubs/hooks/useViewerMembershipTier';
 import { useCancelClubEvent, useClubEvents, useClubMembership, useClubPublicDetail, useDeleteClubEvent, useUpsertClubEventRsvp } from '@/features/clubs/hooks/useClubs';
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
-import type { MembershipTier } from '@/features/clubs/services/clubsService';
 import { useTheme } from '@/hooks/useTheme';
 import { canCreateClubEvents, canManageClubEvent, canRsvpToClubEvents, canViewClubEvents, formatClubEventStatus, formatClubEventTiming, formatClubEventType, getClubEventLocationLabel } from './clubEvents.shared';
 
@@ -24,20 +23,9 @@ export default function ClubEventsScreen() {
     const rsvpMutation = useUpsertClubEventRsvp();
     const cancelMutation = useCancelClubEvent();
     const deleteMutation = useDeleteClubEvent();
-    const [viewerMembershipTier, setViewerMembershipTier] = useState<MembershipTier | null>(null);
+    // CACHE-02: shared cached hook instead of imperative per-mount fetch
+    const { tier: viewerMembershipTier } = useViewerMembershipTier(userId);
     const [feedback, setFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
-
-    useEffect(() => {
-        let active = true;
-        if (!userId) {
-            setViewerMembershipTier(null);
-            return;
-        }
-        profileService.getProfileSummary(userId)
-            .then((profile) => { if (active) setViewerMembershipTier(profile?.membership_tier ?? null); })
-            .catch(() => { if (active) setViewerMembershipTier(null); });
-        return () => { active = false; };
-    }, [userId]);
 
     const canCreate = canCreateClubEvents({ userId, club, role: membership?.role, status: membership?.status, membershipTier: viewerMembershipTier });
 
