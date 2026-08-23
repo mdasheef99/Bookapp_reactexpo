@@ -133,6 +133,24 @@ mutations, no new dependencies. All existing contracts preserved.
   TS union ClubDiscussionReactionEmoji still declares 5 — widening to
   the same 11 is client-side follow-up under T-stream. Local migration
   file: `20260822235000_clubs_t03_emoji_canonical_set.sql`.
+- 2026-08-23 small-items batch COMPLETE (committed 3d671f9, pushed):
+  TYPE-03 client follow-up — emoji union widened 5→11 matching DB CHECK,
+  REACTION_OPTIONS typed directly (no cast) · CLUB-TYPE-04 —
+  ReactionSummary.users now plain enumerable field (defineProperty trap
+  removed; clubsService test asserts users content) · CLUB-TYPE-05 —
+  replyId! assertions replaced with guarded casts · CLUB-CACHE-02 — new
+  shared useViewerMembershipTier hook (React Query, staleTime 5min)
+  replaces imperative getProfileSummary effects in ClubDetail/
+  ClubEventEditor/ClubEvents screens; screen tests mock the hook.
+  Verified: clubs Jest 18/18 suites 190/190 PASS, tsc --noEmit 0 errors.
+- 2026-08-23 HIER-01 CORRECTION (user-challenged, Muse Spark re-check):
+  club_members_role_check already existed live since ~March 2026 via
+  untracked manual DDL — register finding was stale. Today's earlier
+  club_members_role_canonical is a redundant duplicate (harmless;
+  candidate to drop). BACKEND-06 also closed NO-ACTION: transfer_club_admin
+  does not exist live and has zero references. Tooling note: OpenCode Go
+  free quota exhausted mid-session ("Insufficient balance" on ox-alpha-free);
+  DB work continued on opencode/muse-spark-1.2-contributor-free.
 
 ## Rules
 - Existing 18 suites must stay green after every phase; new primitives get tests.
