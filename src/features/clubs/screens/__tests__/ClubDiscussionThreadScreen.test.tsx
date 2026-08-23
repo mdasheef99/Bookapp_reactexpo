@@ -8,7 +8,10 @@ const mockUseClubMembership = jest.fn();
 const mockUseClubDiscussionTopic = jest.fn();
 const mockUseCreateClubDiscussionReply = jest.fn();
 const mockUseSetClubDiscussionVote = jest.fn();
+const mockUseRemoveClubDiscussionVote = jest.fn();
 const mockUseSetClubDiscussionReaction = jest.fn();
+const mockUseRemoveClubDiscussionReaction = jest.fn();
+const mockUseReportClubDiscussionContent = jest.fn();
 const mockUseMarkClubDiscussionTopicRead = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
@@ -37,7 +40,10 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useClubDiscussionTopic: (...args: unknown[]) => mockUseClubDiscussionTopic(...args),
     useCreateClubDiscussionReply: (...args: unknown[]) => mockUseCreateClubDiscussionReply(...args),
     useSetClubDiscussionVote: (...args: unknown[]) => mockUseSetClubDiscussionVote(...args),
+    useRemoveClubDiscussionVote: (...args: unknown[]) => mockUseRemoveClubDiscussionVote(...args),
     useSetClubDiscussionReaction: (...args: unknown[]) => mockUseSetClubDiscussionReaction(...args),
+    useRemoveClubDiscussionReaction: (...args: unknown[]) => mockUseRemoveClubDiscussionReaction(...args),
+    useReportClubDiscussionContent: (...args: unknown[]) => mockUseReportClubDiscussionContent(...args),
     useMarkClubDiscussionTopicRead: (...args: unknown[]) => mockUseMarkClubDiscussionTopicRead(...args),
 }));
 jest.mock('@/lib/navigation', () => ({
@@ -109,7 +115,10 @@ beforeEach(() => {
     mockUseClubDiscussionTopic.mockReturnValue({ data: baseTopic, isLoading: false, isError: false, error: null, refetch: jest.fn() });
     mockUseCreateClubDiscussionReply.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ topic_id: 'topic-1' }), isPending: false });
     mockUseSetClubDiscussionVote.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({}), isPending: false });
+    mockUseRemoveClubDiscussionVote.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({}), isPending: false });
     mockUseSetClubDiscussionReaction.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({}), isPending: false });
+    mockUseRemoveClubDiscussionReaction.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({}), isPending: false });
+    mockUseReportClubDiscussionContent.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({}), isPending: false });
     mockUseMarkClubDiscussionTopicRead.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({}), isPending: false });
 });
 

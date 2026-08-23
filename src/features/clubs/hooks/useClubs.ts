@@ -446,12 +446,44 @@ export function useSetClubDiscussionVote() {
     });
 }
 
+export function useRemoveClubDiscussionVote() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ clubId, topicId, replyId, userId }: { clubId: string; topicId?: string | null; replyId?: string | null; userId?: string | null }) =>
+            clubsService.removeClubDiscussionVote(topicId, replyId),
+        onSuccess: async (_result, variables) => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: clubKeys.discussionRoot(variables.clubId) }),
+                variables.topicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(variables.topicId) }) : Promise.resolve(),
+                variables.topicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(variables.topicId, variables.userId) }) : Promise.resolve(),
+            ]);
+        },
+    });
+}
+
 export function useSetClubDiscussionReaction() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: ({ clubId, topicId, replyId, emoji, userId }: { clubId: string; topicId?: string | null; replyId?: string | null; emoji: ClubDiscussionReactionEmoji; userId?: string | null }) =>
             clubsService.setClubDiscussionReaction({ topicId, replyId, emoji }),
+        onSuccess: async (_result, variables) => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: clubKeys.discussionRoot(variables.clubId) }),
+                variables.topicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(variables.topicId) }) : Promise.resolve(),
+                variables.topicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(variables.topicId, variables.userId) }) : Promise.resolve(),
+            ]);
+        },
+    });
+}
+
+export function useRemoveClubDiscussionReaction() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ clubId, topicId, replyId, emoji, userId }: { clubId: string; topicId?: string | null; replyId?: string | null; emoji: ClubDiscussionReactionEmoji | string; userId?: string | null }) =>
+            clubsService.removeClubDiscussionReaction(emoji, topicId, replyId),
         onSuccess: async (_result, variables) => {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.discussionRoot(variables.clubId) }),
@@ -683,6 +715,7 @@ export function useUpdateClub() {
         onSuccess: async (_result, variables) => {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(variables.clubId) }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.manageDetail(variables.clubId), refetchType: 'all' }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.browseRoot }),
             ]);
         },

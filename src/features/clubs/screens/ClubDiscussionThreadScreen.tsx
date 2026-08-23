@@ -22,6 +22,9 @@ import {
     useClubMembership,
     useClubPublicDetail,
     useMarkClubDiscussionTopicRead,
+    useRemoveClubDiscussionReaction,
+    useRemoveClubDiscussionVote,
+    useReportClubDiscussionContent,
     useSetClubDiscussionReaction,
     useSetClubDiscussionVote,
 } from '@/features/clubs/hooks/useClubs';
@@ -30,6 +33,7 @@ import {
     type ClubDiscussionReactionSummary,
     type ClubDiscussionReplyWithDetails,
     type ClubDiscussionTopicWithDetails,
+    type ClubDiscussionReportReason,
     type ClubDiscussionVoteType,
 } from '@/features/clubs/services/clubsService';
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
@@ -122,13 +126,44 @@ export default function ClubDiscussionThreadScreen() {
     const { data: topic, isLoading: isTopicLoading, isError: isTopicError, error: topicError, refetch } = useClubDiscussionTopic(topicId ?? null, userId, canViewDiscussion);
     const createReplyMutation = useCreateClubDiscussionReply();
     const voteMutation = useSetClubDiscussionVote();
+    const removeVoteMutation = useRemoveClubDiscussionVote();
     const reactionMutation = useSetClubDiscussionReaction();
+    const removeReactionMutation = useRemoveClubDiscussionReaction();
     const markReadMutation = useMarkClubDiscussionTopicRead();
 
     const [replyDraft, setReplyDraft] = useState('');
     const [replyComposerState, setReplyComposerState] = useState<ReplyComposerState | null>(null);
     const [reactionPickerState, setReactionPickerState] = useState<ReactionPickerState | null>(null);
     const [reactionDetailState, setReactionDetailState] = useState<ReactionDetailState | null>(null);
+    // SDD decision PRODUCT-10: overflow (⋯) menu is the report entry point.
+    const [reportMenuState, setReportMenuState] = useState<{ replyId: string | null; itemId: string } | null>(null);
+    const reportMutation = useReportClubDiscussionContent();
+    const REPORT_REASONS: { reason: ClubDiscussionReportReason; label: string }[] = [
+        { reason: 'spam', label: 'Spam' },
+        { reason: 'abuse', label: 'Abuse or harassment' },
+        { reason: 'off_topic', label: 'Off topic' },
+        { reason: 'spoiler', label: 'Spoiler' },
+        { reason: 'other', label: 'Other' },
+    ];
+
+    const handleReport = async (reason: ClubDiscussionReportReason) => {
+        if (!clubId || !reportMenuState || !canViewDiscussion) return;
+        try {
+            setFeedback(null);
+            await reportMutation.mutateAsync({
+                clubId,
+                topicId: reportMenuState.replyId ? undefined : topicId,
+                replyId: reportMenuState.replyId,
+                reason,
+                userId,
+            });
+            setFeedback({ type: 'success', message: 'Report submitted. A moderator will review it.' });
+        } catch (error) {
+            setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to submit this report right now.') });
+        } finally {
+            setReportMenuState(null);
+        }
+    };
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
     const activeReplyTarget = useMemo(
@@ -172,6 +207,24 @@ export default function ClubDiscussionThreadScreen() {
         }
     };
 
+    // SDD decision PRODUCT-11: tapping the active vote toggles it off (un-vote).
+    const handleVoteToggle = async ({ replyId, voteType, viewerVote }: { replyId?: string; voteType: ClubDiscussionVoteType; viewerVote: ClubDiscussionVoteType | null }) => {
+        if (!clubId || !canParticipate) {
+            setFeedback({ type: 'error', message: 'Only active club members can vote in discussion.' });
+            return;
+        }
+        if (viewerVote === voteType) {
+            try {
+                setFeedback(null);
+                await removeVoteMutation.mutateAsync({ clubId, topicId: replyId ? undefined : topicId, replyId, userId });
+            } catch (error) {
+                setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to remove your discussion vote right now.') });
+            }
+            return;
+        }
+        await handleVote({ replyId, voteType });
+    };
+
     const handleReaction = async (emoji: ClubDiscussionReactionEmoji) => {
         if (!clubId || !canParticipate || !reactionPickerState) {
             setFeedback({ type: 'error', message: 'Only active club members can react in discussion.' });
@@ -193,6 +246,27 @@ export default function ClubDiscussionThreadScreen() {
         }
     };
 
+    // SDD decision PRODUCT-12: tapping the viewer's own active reaction removes it (un-react).
+    const handleReactionToggle = async (summary: ClubDiscussionReactionSummary) => {
+        if (!clubId || !canParticipate || !summary.viewerReacted) {
+            setReactionDetailState({ emoji: summary.emoji, users: getReactionUsers(summary) });
+            return;
+        }
+        const isKnownEmoji = (REACTION_OPTIONS as string[]).includes(summary.emoji);
+        try {
+            setFeedback(null);
+            await removeReactionMutation.mutateAsync({
+                clubId,
+                topicId,
+                replyId: null,
+                emoji: isKnownEmoji ? (summary.emoji as ClubDiscussionReactionEmoji) : summary.emoji,
+                userId,
+            });
+        } catch (error) {
+            setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to remove this reaction right now.') });
+        }
+    };
+
     const handleMarkRead = async () => {
         if (!clubId || !topicId || !userId || !canViewDiscussion) return;
         try {
@@ -210,7 +284,7 @@ export default function ClubDiscussionThreadScreen() {
                 {reactions.map((summary) => (
                     <TouchableOpacity
                         key={`${itemId}-${summary.emoji}`}
-                        onPress={() => setReactionDetailState({ emoji: summary.emoji, users: getReactionUsers(summary) })}
+                        onPress={() => handleReactionToggle(summary)}
                         style={[
                             styles.reactionSummaryChip,
                             {
@@ -250,17 +324,22 @@ export default function ClubDiscussionThreadScreen() {
                 <Ionicons name="chatbubble-outline" size={15} color={colors.textSecondary} />
                 <Text style={[styles.actionChipLabel, { color: colors.textSecondary }]}>Reply</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleVote({ replyId: replyId ?? undefined, voteType: 'upvote' })} disabled={disabled} style={[styles.iconActionChip, { borderColor: viewerVote === 'upvote' ? colors.accent : colors.border, backgroundColor: viewerVote === 'upvote' ? colors.bgSecondary : colors.bgCard }]} testID={replyId ? `discussion-reply-upvote-${itemId}` : `discussion-topic-upvote-${topicId}`}>
+            <TouchableOpacity onPress={() => handleVoteToggle({ replyId: replyId ?? undefined, voteType: 'upvote', viewerVote })} disabled={disabled} style={[styles.iconActionChip, { borderColor: viewerVote === 'upvote' ? colors.accent : colors.border, backgroundColor: viewerVote === 'upvote' ? colors.bgSecondary : colors.bgCard }]} testID={replyId ? `discussion-reply-upvote-${itemId}` : `discussion-topic-upvote-${topicId}`}>
                 <Ionicons name="thumbs-up-outline" size={16} color={viewerVote === 'upvote' ? colors.accent : colors.textSecondary} />
                 <Text style={[styles.iconActionCount, { color: viewerVote === 'upvote' ? colors.accent : colors.textSecondary }]}>{upvoteCount}</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleVote({ replyId: replyId ?? undefined, voteType: 'downvote' })} disabled={disabled} style={[styles.iconActionChip, { borderColor: viewerVote === 'downvote' ? colors.accent : colors.border, backgroundColor: viewerVote === 'downvote' ? colors.bgSecondary : colors.bgCard }]} testID={replyId ? `discussion-reply-downvote-${itemId}` : `discussion-topic-downvote-${topicId}`}>
+            <TouchableOpacity onPress={() => handleVoteToggle({ replyId: replyId ?? undefined, voteType: 'downvote', viewerVote })} disabled={disabled} style={[styles.iconActionChip, { borderColor: viewerVote === 'downvote' ? colors.accent : colors.border, backgroundColor: viewerVote === 'downvote' ? colors.bgSecondary : colors.bgCard }]} testID={replyId ? `discussion-reply-downvote-${itemId}` : `discussion-topic-downvote-${topicId}`}>
                 <Ionicons name="thumbs-down-outline" size={16} color={viewerVote === 'downvote' ? colors.accent : colors.textSecondary} />
                 <Text style={[styles.iconActionCount, { color: viewerVote === 'downvote' ? colors.accent : colors.textSecondary }]}>{downvoteCount}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setReactionPickerState({ replyId, itemId })} disabled={disabled} style={[styles.iconActionChip, { borderColor: colors.border }]} testID={`discussion-reaction-picker-open-${itemId}`}>
                 <Ionicons name="happy-outline" size={17} color={colors.textSecondary} />
             </TouchableOpacity>
+            {canViewDiscussion ? (
+                <TouchableOpacity onPress={() => setReportMenuState({ replyId, itemId })} disabled={disabled} style={[styles.iconActionChip, { borderColor: colors.border }]} testID={replyId ? `discussion-reply-report-open-${itemId}` : `discussion-topic-report-open-${topicId}`} accessibilityLabel="Report this content">
+                    <Ionicons name="ellipsis-horizontal" size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
+            ) : null}
         </View>
     );
 
@@ -409,6 +488,31 @@ export default function ClubDiscussionThreadScreen() {
                 </Pressable>
             </Modal>
 
+            <Modal visible={!!reportMenuState} transparent animationType="fade" onRequestClose={() => setReportMenuState(null)}>
+                <Pressable style={styles.sheetOverlay} onPress={() => setReportMenuState(null)} testID="discussion-report-menu-overlay">
+                    <Pressable onPress={(event) => event.stopPropagation()} style={styles.sheetPressable}>
+                        <View style={[styles.sheet, styles.reactionPickerSheet, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="discussion-report-menu">
+                            <View style={styles.sheetHandleWrap}><View style={[styles.sheetHandle, { backgroundColor: colors.border }]} /></View>
+                            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>Report this content</Text>
+                            {REPORT_REASONS.map(({ reason, label }) => (
+                                <TouchableOpacity
+                                    key={reason}
+                                    onPress={() => handleReport(reason)}
+                                    disabled={reportMutation.isPending}
+                                    style={[styles.reportReasonOption, { borderColor: colors.border, opacity: reportMutation.isPending ? 0.6 : 1 }]}
+                                    testID={`discussion-report-reason-${reason}`}
+                                >
+                                    <Text style={[styles.reportReasonLabel, { color: colors.textPrimary }]}>{label}</Text>
+                                </TouchableOpacity>
+                            ))}
+                            <TouchableOpacity onPress={() => setReportMenuState(null)} testID="discussion-report-cancel">
+                                <Text style={[styles.sheetCancel, { color: colors.accent }]}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </Pressable>
+                </Pressable>
+            </Modal>
+
             <Modal visible={!!reactionDetailState} transparent animationType="fade" onRequestClose={() => setReactionDetailState(null)}>
                 <Pressable style={styles.sheetOverlay} onPress={() => setReactionDetailState(null)} testID="discussion-reaction-detail-overlay">
                     <Pressable onPress={(event) => event.stopPropagation()} style={styles.sheetPressable}>
@@ -477,6 +581,8 @@ const styles = StyleSheet.create({
     reactionSummaryCount: { fontSize: 11, fontWeight: '700' },
     markReadButton: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
     markReadText: { fontSize: 12, fontWeight: '700' },
+    reportReasonOption: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginTop: 8 },
+    reportReasonLabel: { fontSize: 14, fontWeight: '600' },
     input: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, marginTop: 10 },
     textArea: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, minHeight: 120, textAlignVertical: 'top', marginTop: 10 },
     primaryActionButton: { marginTop: 16, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },

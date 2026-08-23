@@ -3,7 +3,6 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOp
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
 import { navigateBackOrFallback } from '@/lib/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -40,7 +39,6 @@ export default function ClubCreateScreen() {
     const [accessLevel, setAccessLevel] = useState<AccessLevel>('all');
     const [meetingType, setMeetingType] = useState<MeetingType | null>(null);
     const [maxMembers, setMaxMembers] = useState('');
-    const [isUploadingCover, setIsUploadingCover] = useState(false);
     const [feedback, setFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
     const clubTypeOptions = useMemo(() => profile?.is_verified_author ? [...BASE_CLUB_TYPE_OPTIONS, 'author_club' as const] : BASE_CLUB_TYPE_OPTIONS, [profile?.is_verified_author]);
 
@@ -98,50 +96,10 @@ export default function ClubCreateScreen() {
         }
     };
 
-    const pickCoverImage = async () => {
-        if (!user?.id) {
-            setFeedback({ type: 'error', message: 'Sign in before selecting a cover image.' });
-            return;
-        }
-
-        try {
-            setFeedback(null);
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') {
-                setFeedback({ type: 'error', message: 'Permission denied. Please allow photo access to select a cover image, or enter a URL.' });
-                return;
-            }
-
-            const result = await ImagePicker.launchImageLibraryAsync({
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                mediaTypes: (ImagePicker as any).MediaType?.Images ?? ImagePicker.MediaTypeOptions.Images,
-                quality: 0.85,
-                allowsEditing: true,
-                aspect: [3, 4],
-            });
-
-            if (result.canceled || !result.assets?.length) return;
-
-            setIsUploadingCover(true);
-            const asset = result.assets[0];
-            const response = await fetch(asset.uri);
-            if (!response.ok) throw new Error(`Fetch failed: ${response.status} ${response.statusText}`);
-
-            const blob = await response.blob();
-            const contentType = asset.mimeType || blob.type || 'image/jpeg';
-            const ext = contentType === 'image/png' ? 'png' : contentType === 'image/webp' ? 'webp' : 'jpg';
-            const path = `drafts/${user.id}-${Date.now()}.${ext}`;
-            const { error: uploadError } = await supabase.storage.from('club-banners').upload(path, blob, { contentType, upsert: true });
-            if (uploadError) throw uploadError;
-
-            const { data } = supabase.storage.from('club-banners').getPublicUrl(path);
-            setCoverUrl(data.publicUrl);
-        } catch (error) {
-            setFeedback({ type: 'error', message: getErrorMessage(error, 'Unable to upload this cover image. You can still enter an image URL.') });
-        } finally {
-            setIsUploadingCover(false);
-        }
-    };
+    // PRODUCT-14: no pre-creation banner upload. Banners are club-owned and
+    // uploaded from manage settings after the club exists; here only a URL
+    // may be pasted. The old drafts/{uid}-{ts} upload path was removed with
+    // the club-banners Storage lockdown (CLUB-BACKEND-01).
 
     const renderOption = <T extends string | null>({
         value,
@@ -219,14 +177,7 @@ export default function ClubCreateScreen() {
                     {coverUrl.trim() ? (
                         <Image source={{ uri: coverUrl.trim() }} style={[styles.coverPreview, { borderColor: colors.border }]} contentFit="cover" testID="create-club-cover-preview" />
                     ) : null}
-                    <TouchableOpacity
-                        onPress={pickCoverImage}
-                        disabled={isUploadingCover}
-                        style={[styles.coverButton, { borderColor: colors.accent, opacity: isUploadingCover ? 0.65 : 1 }]}
-                        testID="create-club-pick-cover"
-                    >
-                        {isUploadingCover ? <ActivityIndicator size="small" color={colors.accent} /> : <Text style={[styles.coverButtonText, { color: colors.accent }]}>{coverUrl.trim() ? 'Change cover image' : 'Select cover image'}</Text>}
-                    </TouchableOpacity>
+                    <Text style={[styles.coverHint, { color: colors.textTertiary }]}>Banners are uploaded from club settings after the club is created. Paste an image URL here or add the banner later.</Text>
                     <TextInput
                         value={coverUrl}
                         onChangeText={setCoverUrl}
@@ -329,8 +280,7 @@ const styles = StyleSheet.create({
     input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11, fontSize: 15 },
     textArea: { minHeight: 96, textAlignVertical: 'top' },
     coverPreview: { alignSelf: 'center', width: 120, height: 160, borderRadius: 10, borderWidth: 1, marginBottom: 10 },
-    coverButton: { borderWidth: 1.5, borderRadius: 12, paddingVertical: 12, alignItems: 'center', marginBottom: 10 },
-    coverButtonText: { fontSize: 14, fontWeight: '800' },
+    coverHint: { fontSize: 12, marginBottom: 10 },
     optionGroup: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     option: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 9 },
     optionText: { fontSize: 13, fontWeight: '800' },
