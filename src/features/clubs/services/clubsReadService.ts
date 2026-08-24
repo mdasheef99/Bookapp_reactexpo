@@ -3,6 +3,20 @@ import { profileService } from '@/features/auth/services/profileService';
 import { CLUB_PUBLIC_DETAILS_SELECT, CLUB_WITH_BOOK_SELECT } from './clubsService.shared';
 import type { ClubFilters, ClubManageDetails, ClubPublicDetails, ClubWithBook, ClubWithDetails } from './clubsService.types';
 
+// The shared Supabase client is created without a `Database` generic, so its
+// builders are untyped. We capture the exact builder type produced by the
+// real `.select()` call (no `any` in our own code) and use it for the filter
+// helper's parameter/return.
+type PublicClubQuery = ReturnType<typeof getPublicClubsQuery>;
+
+function getPublicClubsQuery(filters: ClubFilters = {}) {
+    const { limit = 20, offset = 0 } = filters;
+    return supabase
+        .from('club_public_details')
+        .select(CLUB_PUBLIC_DETAILS_SELECT)
+        .range(offset, offset + limit - 1);
+}
+
 type RelatedOne<T> = T | T[] | null;
 type ClubWithBookRow = Omit<ClubWithBook, 'current_book'> & { current_book: RelatedOne<ClubWithBook['current_book']>; };
 
@@ -70,7 +84,7 @@ async function mapClubWithBookToManageDetails(row: ClubWithBookRow): Promise<Clu
     };
 }
 
-function applyPublicClubFilters(query: any, filters: ClubFilters) {
+function applyPublicClubFilters(query: PublicClubQuery, filters: ClubFilters) {
     const { clubType, meetingType, accessLevel, search } = filters;
     if (clubType) query = query.eq('club_type', clubType);
     if (meetingType) query = query.eq('meeting_type', meetingType);
@@ -83,9 +97,7 @@ function applyPublicClubFilters(query: any, filters: ClubFilters) {
 }
 
 export async function getPublicClubs(filters: ClubFilters = {}): Promise<ClubPublicDetails[]> {
-    const { limit = 20, offset = 0 } = filters;
-    let query = supabase.from('club_public_details').select(CLUB_PUBLIC_DETAILS_SELECT)
-        .order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+    let query = getPublicClubsQuery(filters).order('created_at', { ascending: false });
     query = applyPublicClubFilters(query, filters);
     const { data, error } = await query;
     if (error) throw error;

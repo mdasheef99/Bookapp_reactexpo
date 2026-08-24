@@ -1,5 +1,6 @@
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ClubVenueLink } from '@/features/clubs/services/clubsService';
+import type { ThemeColors } from '@/hooks/useTheme';
 
 export function ClubManageVenuesSection({
     venues,
@@ -13,7 +14,7 @@ export function ClubManageVenuesSection({
     venues: ClubVenueLink[];
     isLoading: boolean;
     isSaving: boolean;
-    colors: any;
+    colors: ThemeColors;
     onAddVenue: () => void;
     onRemoveVenue: (venueId: string) => void;
     onSetPrimaryVenue: (venueId: string) => void;
