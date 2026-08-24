@@ -1,14 +1,40 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-08-21
+**Last updated:** 2026-08-24
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-## Current 2026-08-21 Unit 6G Group 1 implementation overlay
+## Current 2026-08-24 Unit 6G recomposition overlay
+
+The Unit 6G design authority was recomposed on
+`codex/phase9-unit6g-recomposition` (clean baseline `714607f`). The revised
+[Unit 6G SDD](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md),
+[contract matrix](./work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md),
+and [tracker 31](./trackers/31-unit6g-owner-batch-review-design-evidence.md)
+are the current single-image authority: the complete 40-row Unit 6 predecessor
+ledger (`INHERITED_UNCHANGED=30`, `SUPERSEDED_BY_6G=7`,
+`DEFERRED_WITH_EXPLICIT_OWNER=3`, `0/0`) and contiguous U6G-AC01..AC34. Unit 6
+is the immutable lifecycle backbone; its over-limit behavior is unchanged. M52
+remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation`
+(retained 6G A/B foundation) and is not reopened. Historical commit `e7ed166`
+old 6G-C work and the frozen old 6G-D implementation are superseded evidence,
+not authority. Status is
+`unit6g_recomposed_authority_pending_owner_checkpoint_disposition`.
+Independent final rereview of the recomposed three-document authority is
+COMPLETE (verdict PASS_WITH_P3; the P3 cleanup and router/status
+reconciliation are applied in this working tree pending the local
+documentation checkpoint commit). The exact next action is Owner checkpoint
+disposition; NEW 6G-C remains composition-only pre-commit client work over
+the retained M52 foundation and begins only on explicit approval. NEW 6G-D
+later owns commit orchestration, and 6G-E owns Edge deployment/live/native
+closure. No product source, SQL/M52, database/Storage,
+deployment, stage, commit, or push action occurred in the recomposition.
+
+## Prior 2026-08-21 Unit 6G Group 1 implementation overlay
 
 Unit 8 remains live-verified and integrated into pushed `main`. The selected
 Phase 9 work unit is Unit 6G; Group 1 contract/persistence foundation is
@@ -19,7 +45,7 @@ and [contract matrix](./work-units/06g-owner-scan-defaults-batch-review-contract
 They define optional pre-scan defaults, one compact bounded review page,
 save-then-commit Add/Add all orchestration over M39, a distinct durable Owner
 candidate-removal disposition, and the unchanged Unit 7C post-commit boundary.
-Status is `group1_complete_m52_applied_awaiting_6gc_authorization`. M52 is live
+Status at that historical checkpoint was `group1_complete_m52_applied_awaiting_6gc_authorization`. M52 is live
 exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation`
 directly after M51 `20260821061213`; the read-only preflight passed (dependency
 signatures, ACL snapshot, data compatibility), and connected proofs verified

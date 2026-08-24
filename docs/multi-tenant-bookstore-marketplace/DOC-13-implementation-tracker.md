@@ -26,6 +26,21 @@ Every coding session must update tracking before ending if it changes any of the
 - handoff notes
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
 
+> **2026-08-24 Unit 6G predecessor-inheritance recomposition:** The Unit 6G
+> design authority was recomposed on `codex/phase9-unit6g-recomposition`. The
+> revised SDD, contract matrix, and tracker 31 now carry the complete 40-row
+> Unit 6 predecessor ledger (`INHERITED_UNCHANGED=30`, `SUPERSEDED_BY_6G=7`,
+> `DEFERRED_WITH_EXPLICIT_OWNER=3`, `0/0`) with U6G-AC01..AC34; Unit 6 remains
+> the immutable lifecycle backbone. M52 stays live exactly once as
+> `20260822025712` (retained 6G A/B foundation) and is not reopened. Historical
+> commit `e7ed166`-style old 6G-C work and the frozen old 6G-D implementation
+> are superseded evidence, not authority. NEW 6G-C (composition-only pre-commit
+> client work) follows only after Owner checkpoint disposition of the
+> recomposed authority (its independent final review is COMPLETE, verdict
+> PASS_WITH_P3) plus separate explicit Owner authorization; NEW 6G-D later owns commit orchestration and 6G-E owns
+> Edge deployment/live/native closure. Documentation-only: no product source,
+> SQL/M52, database/Storage, deployment, stage, commit, or push action.
+
 > **2026-08-21 Unit 6G Group 1 implementation:** The Owner approved continuing
 > on the existing `codex/phase9-unit6g-owner-batch-review-commit-handoff`
 > branch/worktree and authorized only Group 1 contract/persistence foundation.
@@ -1051,12 +1066,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6G-B complete: M52 applied and live-verified, awaiting 6G-C authorization; Unit 8 remains live/main-integrated** |
-| Overall status | `unit6g_group1_complete_m52_applied_awaiting_6gc_authorization` |
-| Last updated | 2026-08-21 |
-| Latest handoff | Group 1 is complete through two correction iterations (commits `20b5916`, `1c090b9`) on `codex/phase9-unit6g-owner-batch-review-commit-handoff`; M52 is applied live exactly once as `20260822025712` directly after M51, with all connected proofs passed and recorded in tracker 02 (evidence commit `6313067`). Next: Owner authorization of 6G-C. Unit 8 remains live/main-integrated at `4c1d98d`. |
-| Current risk level | M52 is an un-applied category 4/3 forward migration candidate pending correction-only rereview and exact-project preflight. Migration application, deployment, and native/UI Groups 2–4 work remain gated. Preexisting live advisory: RLS is disabled on `public.spatial_ref_sys`, `public.marketplace_event_schema_registry`, and `public.marketplace_notification_type_registry`; no remediation was authorized. |
-| Next recommended task | Independently rereview only the four corrected Group 1 findings and their direct regressions. Do not apply M52, deploy, stage/commit/push, or begin Groups 2–4 without separate authorization. |
+| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 6G design authority recomposed 2026-08-24; M52 live as `20260822025712`; NEW 6G-C composition-only work is next after Owner checkpoint disposition; Unit 8 remains live/main-integrated** |
+| Overall status | `unit6g_recomposed_authority_pending_owner_checkpoint_disposition` |
+| Last updated | 2026-08-24 |
+| Latest handoff | Unit 6G design authority was recomposed on `codex/phase9-unit6g-recomposition`: the revised SDD, contract matrix, and tracker 31 are the current single-image authority with the complete 40-row predecessor ledger (30/7/3/0/0) and U6G-AC01..AC34. Unit 6 is the immutable lifecycle backbone. M52 remains live exactly once as `20260822025712` (retained 6G A/B foundation); old `e7ed166`-style 6G-C/D implementation is historical/superseded evidence, not authority. NEW 6G-C is composition-only pre-commit work and is next on explicit approval; NEW 6G-D later owns commit orchestration; 6G-E owns Edge deployment/live/native closure. Unit 8 remains live/main-integrated at `4c1d98d`. |
+| Current risk level | M52 is live exactly once as `20260822025712`; there is no unapplied migration candidate pending rereview. Remaining gates: Owner checkpoint disposition of the recomposed Unit 6G authority (independent final review COMPLETE, verdict PASS_WITH_P3), then separately authorized NEW 6G-C implementation, NEW 6G-D commit orchestration, and 6G-E Edge deployment/live/native closure; no migration application or deployment is currently authorized. Preexisting live advisory: RLS is disabled on `public.spatial_ref_sys`, `public.marketplace_event_schema_registry`, and `public.marketplace_notification_type_registry`; no remediation was authorized. |
+| Next recommended task | Return the recomposed three-document single-image Unit 6G authority (SDD/matrix/tracker 31) for Owner checkpoint disposition; independent final review is COMPLETE (verdict PASS_WITH_P3). Do not begin NEW 6G-C implementation, migration work, deployment, stage/commit/push, or broader Phase 9 scope changes without separate authorization. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 
@@ -1220,7 +1235,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6g_group1_complete_m52_applied_awaiting_6gc_authorization` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6G SDD](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md) · [Unit 6G matrix](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md) | Group 1 is implemented through two rereviewed correction iterations (commits `20b5916`, `1c090b9`, evidence commit `6313067`), and M52 is applied live exactly once as `20260822025712` with all connected proofs passed. Next: Owner authorization of 6G-C. Edge/mobile deployment of new client code and Groups 2–4 remain separately gated. Unit 8 remains live-verified and integrated into `main` at `4c1d98d`. |
+| Phase 9: Image-to-LLM Inventory | `unit6g_recomposed_authority_pending_owner_checkpoint_disposition` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6G SDD](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md) · [Unit 6G matrix](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md) | The recomposed three-document Unit 6G design authority (SDD/matrix/tracker 31) passed independent final review (PASS_WITH_P3) and awaits Owner checkpoint disposition. M52 is live/applied exactly once as `20260822025712` as the retained Unit 6G A/B foundation. Next: NEW 6G-C, composition-only pre-commit client work over the retained foundation, only on explicit Owner authorization; NEW 6G-D later owns commit orchestration, and 6G-E owns Edge deployment/live/native closure. Old `e7ed166`-style 6G-C/D implementation is historical/superseded evidence, not authority. Groups 2–4 remain separately gated. Unit 8 remains live-verified and integrated into `main` at `4c1d98d`. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -1341,7 +1356,7 @@ Documentation milestones completed:
 
 ## 8. Next Recommended Task
 
-**Current 2026-08-21 handoff:** Phase 9 Unit 8 is live-verified on the exact
+**2026-08-21 handoff (historical checkpoint; superseded by the current handoff in the status table above):** Phase 9 Unit 8 is live-verified on the exact
 development project. Q07-Q10, M49-M51, Vault-backed cursor crypto, client
 integration, strict media cardinality, connected privacy/security acceptance,
 and legacy compatibility are green. `inventoryId` remains private Owner
@@ -1353,7 +1368,7 @@ of Unit 8. Select the next Phase 9 work unit separately. Payments, Phases 7/8,
 M09, and deferred Unit 6F native evidence remain separately gated.
 
 The older Phase 6 recommendation below is retained as historical continuity
-and is superseded by this current handoff.
+and is superseded by these dated handoff records.
 
 **Phase 6 remains complete with comprehensive browser E2E deferred; Phases 7 and 8 remain deferred; the bounded Phase 9 fixture pipeline is deployed and live-verified.**
 

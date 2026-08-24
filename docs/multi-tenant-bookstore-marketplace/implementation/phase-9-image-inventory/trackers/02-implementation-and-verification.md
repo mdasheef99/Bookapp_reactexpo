@@ -1,7 +1,35 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit6g_sdd_owner_review_pending`; **last updated:** 2026-08-21
+**Status:** `unit6g_recomposed_authority_pending_owner_checkpoint_disposition`; **last updated:** 2026-08-24
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit6g_sdd_owner_review_pending`. Unit 8 remains live-verified/integrated; Unit 6G is documentation-only and grants no implementation or migration authority.
+**Active work unit:** `unit6g_recomposed_authority_pending_owner_checkpoint_disposition`. Unit 8 remains live-verified/integrated; the 2026-08-24 recomposition made the revised SDD/matrix/tracker 31 the sole NEW 6G-C/6G-D design authority (independent final review COMPLETE, verdict PASS_WITH_P3); NEW 6G-C composition-only/pre-commit implementation remains unauthorized until Owner checkpoint disposition plus separate explicit Owner authorization.
+
+### 2026-08-24 — Unit 6G predecessor-inheritance recomposition checkpoint
+
+- Authorized scope: documentation-only recomposition of Unit 6G design authority
+  on `codex/phase9-unit6g-recomposition` at clean baseline `714607f`, plus
+  router/status reconciliation. No product source, SQL/M52, tests, fixtures,
+  deployment config, database/Storage, or Edge changes were authorized or made.
+- Completed: revised SDD/matrix/tracker 31 carry the complete 40-row Unit 6
+  predecessor ledger (`INHERITED_UNCHANGED=30`, `SUPERSEDED_BY_6G=7`,
+  `DEFERRED_WITH_EXPLICIT_OWNER=3`, `INTENTIONALLY_REMOVED=0`,
+  `NOT_APPLICABLE=0`; superseded set U6-AC06/17/18/21/23/29/40; deferred set
+  U6-AC36/37/39) and contiguous U6G-AC01..AC34; M52 live exactly once as
+  `20260822025712` (retained 6G A/B foundation, not reopened); old `e7ed166`
+  6G-C/D implementation recorded as historical/superseded evidence only.
+- Routing/status reconciliation: ACTIVE.md work-unit plan, DOC-13 current
+  status table (dated blockquotes preserved), Phase 9 master TRACKER.md header
+  fields plus dated entry, SESSION-START current overlay, and this tracker were
+  updated so no present-tense document still claims M52 is unapplied or points
+  at authorizing the old 6G-C.
+- Verification actually run: Phase 9 continuity validator
+  (`PHASE9_CONTINUITY_CHECK=PASS`), `git diff --check` exit 0, predecessor
+  ledger recount in both authorities, U6G-AC01..AC34 contiguity check.
+- External/Git state: nothing staged, committed, pushed, deployed, or applied;
+  no migration application or provider action.
+- Exact next action: Owner checkpoint disposition of the corrected
+  three-document single-image authority; independent final review is COMPLETE
+  (verdict PASS_WITH_P3). Stop before NEW 6G-C implementation, migration work,
+  deployment, or Git publication without separate authorization.
 
 ### 2026-08-21 — Unit 6G documentation-only SDD draft
 

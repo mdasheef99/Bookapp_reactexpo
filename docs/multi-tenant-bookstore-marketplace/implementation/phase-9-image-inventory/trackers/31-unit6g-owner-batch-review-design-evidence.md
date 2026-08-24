@@ -1,9 +1,20 @@
 # Phase 9 Unit 6G Owner Batch Review Design Evidence
 
-**Status:** `unit6g_group1_complete_m52_applied_awaiting_6gc_authorization` — superseded by the application record in [tracker 02](./02-implementation-and-verification.md) (M52 live as `20260822025712` with connected proofs, 2026-08-22)
-**Date:** 2026-08-21
-**Branch:** `codex/phase9-unit6g-owner-batch-review-commit-handoff`
-**Worktree:** isolated from the user's `main` workspace
+**Status:** `unit6g_recomposed_authority_pending_owner_checkpoint_disposition`
+**Date:** 2026-08-24
+**Branch:** `codex/phase9-unit6g-recomposition`
+**Worktree:** `C:\Users\user\Documents\augment-projects\Bookconnect_expo\.worktrees\phase9-unit6g-recomposition`
+**Current evidence:** §10 supersedes older “next action” statements without
+rewriting or deleting their historical record. M52 remains live as
+`20260822025712` with its recorded connected proofs.
+
+> **HISTORICAL SCOPE BANNER — §§1–9:** Sections 1 through 9 preserve evidence
+> recorded during the 2026-08-21 Group 1 design, implementation, and correction
+> passes. Their phrases “current boundary,” “current implementation,” “M52
+> remains unapplied,” structural counts, and “exact next action” are current
+> only at those dated historical checkpoints and are not present authority.
+> Section 10 is the current 2026-08-24 recomposition status, boundary correction, and next
+> action.
 
 ## 1. Authorization and boundary
 
@@ -32,7 +43,8 @@ Performed within Group 1:
 No external state was mutated.
 
 Historical design-gate notes later in this file are retained as evidence of the
-prior review pass; the authorization above is the current boundary.
+prior review pass; the authorization above was current at that historical
+checkpoint.
 
 ## 2. Starting state
 
@@ -57,7 +69,7 @@ prior review pass; the authorization above is the current boundary.
 - current capture/list/review/card/form/query/contract/Store View code; and
 - M02, M05, M29, M35, M39, and M43 migration seams.
 
-## 4. Verified current implementation findings
+## 4. Verified implementation findings current at the historical checkpoint
 
 | Finding | Evidence/consequence |
 | --- | --- |
@@ -80,7 +92,8 @@ prior review pass; the authorization above is the current boundary.
 - Unit 6G traceability, data dictionary, current-to-target, and complexity entry
 - active Phase 9 routing/status/next-action reconciliation
 
-The SDD contains 27 sections and 24 acceptance criteria. The matrix fixes the
+At that historical pre-recomposition checkpoint, the SDD contained 27 sections
+and 24 acceptance criteria. The matrix fixed the
 pre-scan controls/presets, compact-card fields, bounded aggregate DTO, removal
 command, save/commit coordinator, cache effects, state mapping, migration delta,
 and implementation split.
@@ -103,7 +116,7 @@ and implementation split.
    detection/input removal/inventory deletion, cascades nothing, and has no Undo.
 9. Unit 7A remains private/create-only and Unit 7C remains the post-commit owner.
 10. Close is versioned as `close_scan_session_v3` / `phase9_close_session_v3`;
-    it returns strict readiness with bounded `ownerRemovedCandidates`, while v2
+    it returns strict readiness with safe-integer `ownerRemovedCandidates`, while v2
     Close remains unchanged.
 11. `Use detected details` reuses the existing `manual` metadata mode with null
     selection, so selected canonical/cover/provider fields are not committed;
@@ -138,7 +151,7 @@ must remain unclaimed.
 
 | Check | Result |
 | --- | --- |
-| New SDD/matrix structural review | PASS: 27 SDD sections, 24 unique acceptance rows, exact pre/post/server/removal/coordinator matrices present |
+| New SDD/matrix structural review | HISTORICAL PASS for the pre-recomposition structure: 27 SDD sections, 24 unique acceptance rows, exact pre/post/server/removal/coordinator matrices present |
 | Local Markdown links | PASS through continuity validator (`MARKDOWN_FILES_CHECKED=82`) |
 | Phase 9 continuity validator | PASS: `REQUIREMENT_DEFINITIONS=195`, duplicates/missing `0/0`, `REQUIRED_PHASE_FILES=59`, regression probes PASS |
 | Repository tracked diff check | PASS through direct `git diff --check` and continuity validator; line-ending notices are warnings only |
@@ -161,7 +174,7 @@ are recorded in §8.2.
 
 | Finding | Correction evidence |
 | --- | --- |
-| Close-response versioning | SDD §§16–19 and matrix §4.6 define `close_scan_session_v3` / `phase9_close_session_v3`, strict `OwnerSessionReadinessV3`/`CloseSummaryV3`, bounded `ownerRemovedCandidates`, and unchanged v2 Close. |
+| Close-response versioning | SDD §§16–19 and matrix §4.6 define `close_scan_session_v3` / `phase9_close_session_v3`, strict `OwnerSessionReadinessV3`/`CloseSummaryV3`, safe-integer `ownerRemovedCandidates`, and unchanged v2 Close. |
 | Use detected details | SDD §§10/18 and matrix §3.2 define exact existing `manual`/null-selection transition, selected canonical/cover/provider non-authority, M39 manual provenance, and incomplete-identity fallback. |
 | Source indicators | SDD §§7/9 and matrix §§3/4.5 define `matched|detected`→Detected, `default`→Default, `custom`→Custom, `missing`→Missing for every displayed field. |
 | Concurrent card commands | SDD §§11–15 and matrix §6 define one shared slot, Busy skip/report/no queue, max-three bulk work, duplicate suppression, and removal/commit lock ordering. |
@@ -205,41 +218,6 @@ currently non-null, and no existing M52 fields/disposition. The preflight also
 reported the preexisting advisory that RLS is disabled on
 `public.spatial_ref_sys`, `public.marketplace_event_schema_registry`, and
 `public.marketplace_notification_type_registry`; it was not changed.
-
-## 9. Residual risks and next action
-
-- The nullable-condition transition and legacy v2 behavior need exact-project
-  compatibility/readback proof before M52 application.
-- Worker/removal races require candidate-lock/disposition-fence proof.
-- The compact aggregate must prove bounded payload and no hidden notes/private
-  data reaches rendering/telemetry.
-- Add all interruption/idempotency and Store View invalidation need dedicated
-  tests before implementation approval.
-- Representative low-end Android evidence is required for the new page even
-  though older Unit 6F debt remains separate.
-
-**Exact next authorized action:** independent correction-only rereview of the
-corrected M52 (double-count override, NULL guards, page filter, count bounds)
-and the direct four-finding regressions. Do not apply M52, deploy,
-stage/commit/push, or begin Groups 2–4 without separate authorization.
-
-### 9.1 Bounded review-correction evidence
-
-The user authorized correction of the four independent-review findings and
-nothing else. Red-first results were migration structure 7/9 and Unit 6G
-PGlite 8/11. The correction:
-
-1. removes the prohibited v2 Close replacement and uses a separate
-   transaction-marked nullable-session trigger;
-2. proves the existing candidate presentation trigger advances removal
-   authority exactly once, without a duplicate update;
-3. derives saved field sources independently against matched, detected, and
-   session-default values; and
-4. rejects null command IDs in all three new command RPCs.
-
-Final focused Jest is 38/38 and Unit 6G PGlite is 11/11. M52 remains unapplied;
-no database/Storage, deployment, provider, Git publication, Groups 2–4, M39,
-or Unit 7C action occurred. The exact next action is correction-only rereview.
 
 ### 8.3 Independent-verification correction pass — 2026-08-21
 
@@ -300,3 +278,164 @@ Structural test now also pins the three start-input guards; G1-13 gained three
 NULL-start rejections; both contract suites reject an unsafe integer instead
 of a large-but-safe one. SDD §16 and the matrix notation updated to
 NonNegativeSafeInteger semantics.
+
+## 9. Residual risks and next action
+
+- The nullable-condition transition and legacy v2 behavior need exact-project
+  compatibility/readback proof before M52 application.
+- Worker/removal races require candidate-lock/disposition-fence proof.
+- The compact aggregate must prove bounded payload and no hidden notes/private
+  data reaches rendering/telemetry.
+- Add all interruption/idempotency and Store View invalidation need dedicated
+  tests before implementation approval.
+- Representative low-end Android evidence is required for the new page even
+  though older Unit 6F debt remains separate.
+
+**Exact next authorized action:** independent correction-only rereview of the
+corrected M52 (double-count override, NULL guards, page filter, count bounds)
+and the direct four-finding regressions. Do not apply M52, deploy,
+stage/commit/push, or begin Groups 2–4 without separate authorization.
+
+### 9.1 Bounded review-correction evidence
+
+The user authorized correction of the four independent-review findings and
+nothing else. Red-first results were migration structure 7/9 and Unit 6G
+PGlite 8/11. The correction:
+
+1. removes the prohibited v2 Close replacement and uses a separate
+   transaction-marked nullable-session trigger;
+2. proves the existing candidate presentation trigger advances removal
+   authority exactly once, without a duplicate update;
+3. derives saved field sources independently against matched, detected, and
+   session-default values; and
+4. rejects null command IDs in all three new command RPCs.
+
+Final focused Jest is 38/38 and Unit 6G PGlite is 11/11. M52 remains unapplied;
+no database/Storage, deployment, provider, Git publication, Groups 2–4, M39,
+or Unit 7C action occurred. The exact next action is correction-only rereview.
+
+## 10. 2026-08-24 — Unit 6G predecessor-inheritance recomposition
+
+This dated section is the current superseding evidence. All earlier design,
+Group 1, review/correction, implementation, and “next action” records above are
+preserved as historical truth, including the old Group 1 review/correction
+evidence.
+
+- **OBSERVED by predecessor audit/source inspection:** historical commit
+  `e7ed166` changed the mounted session presentation from the proven Unit 6
+  lifecycle/progress controller to a candidate-oriented batch-review
+  controller. Historical 6G-D work then began on top of that old C line. This
+  established the route/controller composition defect; the old C/D work is
+  evidence, not implementation authority for the clean recomposition.
+- **OBSERVED by live verification:** the deployed Owner Edge and client
+  contract versions did not match. The repository evidence does not prove that
+  the exact mounted candidate-processing failure described above was executed
+  live. The controller defect is therefore not attributed to live verification.
+- Core Unit 6G product direction remains valid. Unit 6 is the authoritative
+  lifecycle backbone; Unit 6G composes defaults, compact candidate review,
+  general candidate removal, and explicit private commit behavior onto it.
+- Unit 6G-A is retained. Unit 6G-B and exact M52 source/application/readback are
+  retained. The batch aggregate remains candidate/review authority and is not
+  input-processing authority.
+- The current post-M52 foundation is live exactly once as
+  `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation`.
+  It includes durable nullable price/batch fields, nullable condition with the
+  v2 fence, `owner_removed_from_scan`, Start v2, session/readiness/Close v3,
+  batch-review/removal seams, safe-integer lifetime counters, and the retained
+  paged session-candidate RPC with Owner-removed rows excluded. NEW 6G-C is
+  composition/client work over that foundation; M52 is not reopened.
+- The exact clean pre-C baseline is
+  `714607fdbac827cd38ca2a145efbaf2b8b9f31ad` on
+  `codex/phase9-unit6g-recomposition`.
+- Prior 6G-C commit `e7ed166` is historical, superseded implementation. The
+  prior dirty 6G-D implementation is frozen reference only. Neither is part of
+  the new authoritative implementation line.
+- New 6G-C/6G-D implementation authority comes only from the revised SDD and
+  matrix after Owner checkpoint disposition of this recomposed authority
+  (independent final review COMPLETE, verdict PASS_WITH_P3) plus separate
+  explicit Owner authorization. No new
+  6G-C implementation has begun.
+- The 2026-08-24 recomposition used the completed predecessor audit as
+  **Owner-supplied review evidence**. No repository artifact containing that
+  completed audit was found, so no repository path is claimed. To remove that
+  dependency, the revised SDD and matrix now each contain the full 40-row
+  ledger. Exact disposition arithmetic: `INHERITED_UNCHANGED=30`,
+  `SUPERSEDED_BY_6G=7`, `DEFERRED_WITH_EXPLICIT_OWNER=3`,
+  `INTENTIONALLY_REMOVED=0`, `NOT_APPLICABLE=0`, total `40`. The superseded
+  criteria are U6-AC06, U6-AC17, U6-AC18, U6-AC21, U6-AC23, U6-AC29, and
+  U6-AC40. The deferred criteria are U6-AC36, U6-AC37, and U6-AC39.
+- NEW 6G-C is the recomposed pre-commit experience. It must retain or delegate
+  Unit 6 lifecycle ownership intact, present ONE current input, preserve
+  zero-input recovery and stable Start replay, combine Unit 6 progress with
+  Unit 6G compact review, keep deep correction reachable, cut session/
+  readiness/Close UI consistently to v3, and integrate new query roots into
+  identity cleanup immediately.
+- NEW 6G-D alone owns per-card Save → Add, exact-N Add-all with at most three
+  concurrent candidate chains, command-slot arbitration, unchanged M39 private
+  commit, partial reconciliation, canonical cache synchronization, and Store
+  View handoff.
+- Mounted production-route predecessor regression is mandatory. Isolated old
+  Unit 6 tests or isolated new Unit 6G tests cannot close composition.
+- The mounted gate now has two executable branches rather than one impossible
+  combined lifecycle: Scenario A covers successful candidate arrival through
+  enrichment/recovery/full correction/v3 Close; Scenario B covers terminal
+  pre-lineage input failure through deliberate replacement and resumed
+  processing. Zero-input Resume, ambiguous Start, identity cleanup, stale
+  Reapply, false detection, variants, and missed book remain separate tests.
+- **Owner single-image clarification:** supported NEW Unit 6G intentionally has
+  exactly one current image/input and a 0..15 current-scan candidate/card set.
+  It has no image accumulation, append-image action, multi-image workflow, or
+  normal-scan pagination. NEW 6G-C does not change Unit 6 candidate-limit
+  semantics.
+- Historical multi-input sessions with more than 15 active candidates are
+  unsupported compatibility data. NEW 6G-C does not add pagination for them;
+  they must fail closed rather than silently truncate into a seemingly complete
+  supported session. Hidden candidates are never inferred reviewed/handled,
+  and v3 readiness/Close remains server-authoritative. The former requirement
+  for complete `>15` client traversal before approval is superseded.
+- **Inherited over-limit authority:** 1..15 detected books continue through
+  existing Unit 6 processing normally. More than 15 detected books preserves
+  the existing `P9_VISION_OVER_LIMIT` input failure, creates zero candidates,
+  presents bounded failure guidance, and keeps Unit 6 replacement/recovery
+  reachable so a replacement image with 1..15 books can continue normally.
+  No first/best/top 15 is retained, no retained-15 selection rule is needed,
+  and `candidateCapSkips` is not reinterpreted.
+- Any future candidate-limit UX optimization such as “process 15 and skip the
+  remainder” is explicitly deferred to a separate later work unit and product/
+  design decision. It is not a NEW 6G-C prerequisite or scope item.
+- All Unit 6G session/readiness/Close client surfaces use v3; the nullable-v2
+  fence remains compatibility protection only.
+- 6G-E cannot declare live client verification PASS until the exact reviewed
+  Owner Edge bundle is deployed/read back with all five Unit 6G actions.
+- This recomposition pass changes only the Unit 6G SDD, matrix, and this
+  historical evidence tracker. It does not update broader Phase 9 routers or
+  status trackers before Owner review.
+- Current recomposed structure: the revised SDD defines U6G-AC01 through
+  U6G-AC34 and contains the complete 40-row Unit 6 predecessor ledger. The old
+  27-section/24-acceptance count in §§5/8 is historical pre-recomposition
+  evidence, not current validation.
+- No product code, SQL/M52, Edge/mobile runtime, migration, database/Storage,
+  deployment, external service, business data, stage, commit, push, merge, or
+  PR mutation occurred. The frozen old C/D worktree and original main workspace
+  were not mutated.
+- Documentation verification after this bounded correction pass:
+  - Phase 9 continuity validator with semantic negative probes: PASS;
+  - requirement definitions `195`, duplicates `0`, missing traceability `0`;
+  - requirement validator regression/boundary probes PASS
+    (`REQUIREMENT_VALIDATOR_REGRESSION_PROBES=PASS`);
+  - predecessor-ledger equality PASS in both authorities: 40 rows with exact
+    `30/7/3/0/0` arithmetic and exact superseded/deferred sets;
+  - U6G acceptance structure PASS: 34 unique rows, contiguous
+    `U6G-AC01..U6G-AC34`; single-image semantic probes and three-file UTF-8 BOM
+    scan PASS;
+  - Markdown files checked `82`, required Phase 9 files `59`;
+  - repository `git diff --check`: PASS;
+  - document-size results are advisory only under repository policy; the
+    corrected SDD/matrix/tracker are 1148/892/438 lines and remain cohesive
+    owning authorities; they were not pruned or mechanically split.
+
+**Current next action:** Owner checkpoint disposition of the corrected three-document
+single-image authority and unchanged Unit 6 over-limit behavior (its independent
+final review is COMPLETE, verdict PASS_WITH_P3). Stop before NEW 6G-C (which additionally
+requires separate explicit Owner authorization and remains composition-only/pre-commit),
+migration work, deployment, Git publication, or broader Phase 9 routing/status reconciliation.

@@ -1,16 +1,22 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit6g_group1_contract_persistence_locally_complete`
+**Status:** `unit6g_recomposed_authority_pending_owner_checkpoint_disposition`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
-**Last updated:** 2026-08-21
-**Current handoff:** Unit 8 remains live-verified and integrated into pushed
-`main`. Unit 6G Group 1 contract/persistence foundation is locally complete on
-the approved existing branch/worktree. The selected work unit is the
-[`Unit 6G SDD`](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md)
-and [contract matrix](./work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md).
-Group 1 implementation/tests and the un-applied M52 candidate are complete;
-they grant no migration application, deployment, or Groups 2–4 authority.
-Exact next action is independent review of the Group 1 diff and M52 candidate.
+**Last updated:** 2026-08-24
+**Current handoff:** Unit 8 remains live-verified on pushed
+`main`. Unit 6G Group 1/B contracts and M52 (`20260822025712`) are
+live/applied exactly once as the retained Unit 6G A/B foundation. The Unit 6G
+design authority was recomposed 2026-08-24: the
+[`Unit 6G SDD`](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md),
+[contract matrix](./work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md),
+and [tracker 31](./trackers/31-unit6g-owner-batch-review-design-evidence.md)
+are the current authority, with Unit 6 as the immutable lifecycle backbone.
+The recomposed authority passed independent final review (PASS_WITH_P3).
+Exact next action is Owner checkpoint disposition, then NEW 6G-C
+(composition-only pre-commit client work over the retained foundation) only on
+explicit authorization; NEW 6G-D later owns commit orchestration, and 6G-E
+owns Edge deployment/live/native closure. Old `e7ed166`-style 6G-C/D
+implementation is historical/superseded evidence, not authority.
 
 Historical Unit 8 handoff: Unit 8 is live-verified on the development Supabase
 project. M49, M50, and M51 were

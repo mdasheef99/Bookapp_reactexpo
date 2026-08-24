@@ -1,21 +1,43 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `unit6g_group1_approved_locally_complete`
-**Implementation status:** `unit6g_group1_contract_persistence_locally_complete`
+**Planning status:** `unit6g_recomposed_authority_pending_owner_checkpoint_disposition`
+**Implementation status:** `unit6g_group1_contract_persistence_locally_complete_m52_live`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
-**Last updated:** 2026-08-21
-**Current milestone:** Unit 8 remains live-verified and integrated into pushed `main`; Unit 6G Group 1 contract/persistence foundation and the bounded review-correction pass are locally implemented and verified on the approved branch.
-**Active work unit:** `unit6g_group1_complete_m52_applied_awaiting_6gc_authorization`
+**Last updated:** 2026-08-24
+**Current milestone:** Unit 6G design authority recomposed 2026-08-24 (revised SDD/matrix/tracker 31 are current); M52 remains live exactly once as `20260822025712`; Unit 8 remains live-verified and integrated into pushed `main`.
+**Active work unit:** `unit6g_recomposed_authority_pending_owner_checkpoint_disposition`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** Unit 6G-B: Group 1 implemented through two correction iterations (both externally rereviewed; one PASS, one FAIL whose two P2 findings were then fixed and gate-verified), M52 applied live as `20260822025712`, and all connected proofs passed — nullable-condition Start v2 with legacy-v2 fail-closed fence, irreversible Owner removal excluded from batch review and page-v2, Close v3 without double-counting, page-v2 ACL preserved through CREATE OR REPLACE. Local commits `20b5916`, `1c090b9`, `6313067`. Unit 8 remains live-verified and unchanged.
-**Next authorized action:** separate Owner authorization of 6G-C (pre-scan defaults form + compact batch review UI), with the agreed forward-plan conditions: accessibility smokes during 6G-C implementation, an early 15-card connected performance checkpoint once the aggregate UI exists, and red-first bulk-interruption/resume tests as the 6G-D entry gate.
+**Next authorized action:** Owner checkpoint disposition of the recomposed three-document single-image Unit 6G authority (independent final review COMPLETE, verdict PASS_WITH_P3). NEW 6G-C (composition-only pre-commit client work over the retained M52 foundation) begins only on explicit approval; NEW 6G-D later owns commit orchestration and 6G-E owns Edge deployment/live/native closure.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`; M43 is live exactly once as `20260816122822 marketplace_phase9_unit7c_inventory_management`; M44 is live exactly once as `20260816122901 marketplace_phase9_store_view_filter_contract`; M45 is live exactly once as `20260816122929 marketplace_phase9_unit7c_media_history`; M46 is live exactly once as `20260816150126 marketplace_phase9_unit7c_private_save_revision_correction`; M47 is live exactly once as `20260817073341 marketplace_phase9_legacy_rpc_security_remediation`; M48 is live exactly once as `20260817075825 marketplace_phase9_legacy_rpc_service_role_compatibility`; M49 is live exactly once as `20260821060156 marketplace_phase9_bookstore_first_discovery`; M50 is live exactly once as `20260821060742 marketplace_phase9_storefront_detail`; M51 is live exactly once as `20260821061213 marketplace_phase9_public_media_order_invariant`; and **M52 is live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation`** (name canonical per the timestamp/name-ledger convention). M39-M52 remain byte-immutable after application.
 **Scope boundary:** Only Unit 6G Group 1 contract/persistence foundation is implemented and live. Groups 2–4, UI, card composition, Add/Add-all orchestration, Store View/cache changes, and Unit 6F remain out of scope. Proof rows created during the connected M52 verification (session `33c3f6fb…`, candidate `50de2017…`, their audit/event/replay records) are intentionally persisted evidence on the development project. Unit 8 remains complete; no deployment occurred for Unit 6G.
-**Implementation authority:** Group 1 local implementation, migration-file creation, correction iterations, and the Owner-authorized M52 application with connected proofs are complete; 6G-C, Edge/mobile deployment of new client code, and Git publication beyond this branch remain unauthorized. Unit 8 remains live-verified; M39-M51 are not reopened. Native Unit 6F validation remains deferred and unrelated.
+**Implementation authority:** Group 1/B local implementation, migration-file creation, correction iterations, and the Owner-authorized M52 application with connected proofs are complete and retained. The 2026-08-24 recomposition made the revised SDD/matrix/tracker 31 the sole NEW 6G-C/6G-D design authority following completed independent final review (verdict PASS_WITH_P3); the exact next action is Owner checkpoint disposition. Historical `e7ed166`-style old 6G-C work and the frozen old 6G-D implementation are superseded evidence, not authority. Edge/mobile deployment of new client code and Git publication beyond this branch remain unauthorized. Unit 8 remains live-verified; M39-M52 are not reopened. Native Unit 6F validation remains deferred and unrelated.
 **Migration creation/application authority:** M49-M51 were applied only through the explicitly authorized forward rollout; M52 was applied through the explicitly authorized Supabase MCP application after a PASS read-only preflight; no normal `db push`, historical replay, or `schema_migrations` repair was used.
 **Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
-**Current gate:** `UNIT6G_GROUP1_M52_APPLIED_AWAITING_6GC_AUTHORIZATION`; the prior `UNIT8_LIVE_ROLLOUT_PASS_MAIN_INTEGRATED` remains satisfied. Native Unit 6F remains deferred and unrelated.
+**Current gate:** `UNIT6G_RECOMPOSED_AUTHORITY_PENDING_OWNER_CHECKPOINT_DISPOSITION` (independent final review COMPLETE, verdict PASS_WITH_P3); the prior `UNIT8_LIVE_ROLLOUT_PASS_MAIN_INTEGRATED` remains satisfied. Native Unit 6F remains deferred and unrelated.
+
+## 2026-08-24 — Unit 6G predecessor-inheritance recomposition
+
+- The Unit 6G design authority was recomposed on
+  `codex/phase9-unit6g-recomposition` at clean baseline
+  `714607fdbac827cd38ca2a145efbaf2b8b9f31ad`. The revised SDD, contract matrix,
+  and [tracker 31](./trackers/31-unit6g-owner-batch-review-design-evidence.md)
+  are the current single-image authority with the complete 40-row Unit 6
+  predecessor ledger (`30/7/3/0/0`) and contiguous U6G-AC01..AC34; Unit 6 is the
+  immutable lifecycle backbone and its over-limit behavior is unchanged.
+- M52 remains live exactly once as `20260822025712` (retained 6G A/B
+  foundation) and is not reopened. Historical commit `e7ed166`-style old 6G-C
+  work and the frozen old 6G-D implementation are superseded evidence, not
+  authority.
+- NEW 6G-C is composition-only pre-commit client work and is next only after
+  Owner checkpoint disposition of the recomposed authority (its independent
+  final review is COMPLETE, verdict PASS_WITH_P3) plus separate explicit
+  Owner authorization.
+  NEW 6G-D later owns commit orchestration; 6G-E owns Edge deployment/live/
+  native closure.
+- Documentation-only pass: no product source, SQL/M52, database/Storage,
+  deployment, provider, stage, commit, push, or merge action occurred.
 
 ## 2026-08-21 — Unit 6G Group 1 contract and persistence foundation
 
