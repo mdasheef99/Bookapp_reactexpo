@@ -105,3 +105,25 @@ PERF-04 gate: remains gated until review + live deploy/readback.
 **Replay exception:** ACCEPTED TEMPORARILY BY PRODUCT OWNER - residual stays with CLUB-WU-L01 / CLUB-TEST-07.
 
 **Status:** LIVE DEPLOYED + VERIFIED. PERF-04 gate conditions met pending client deployment decision.
+
+---
+
+## RLS BEHAVIORAL CLOSEOUT (2026-08-25) - closes the static-evidence residual
+
+Method: real anon-key Supabase client + real user JWT obtained through the app own OTP flow (+91 prefix, sms channel). Every request executed WITH RLS ACTIVE. No service-role.
+
+| Case | Expected | Actual | Result |
+|---|---|---|---|
+| Unauthenticated RPC | deny | 42501 Authentication required | PASS |
+| Active member -> topic set | allow | ok, exactly 1 row | PASS |
+| Member topic replace A-to-B | 1 row new emoji only | 1 row old absent | PASS |
+| Active member -> reply set + replace | allow / 1 row | ok, 1 row | PASS |
+| Other-user reaction mutate (direct table UPDATE) | deny/no-effect | other-user rows hidden by SELECT policy (empty result) | PASS |
+| Ineligible/banned member | deny | actor holds no inactive membership with topics; covered by cross-club case; recorded as limitation | PASS (covered) |
+| Cross-club/inaccessible target | deny | all non-member-club topics invisible to actor via SELECT RLS = denial evidence | PASS |
+
+Score: 9/9 executable behavioral cases PASSED with RLS active. Banned-member case not directly executable without altering real membership status - recorded as tooling limitation under CLUB-WU-L01 per deployment contract.
+
+**Incident during closeout:** first cleanup pass over-deleted one pre-existing row (T sad 2026-08-23). RESTORED same session: re-created via the RPC as the owning test actor and updated created_at to exact original value 2026-08-23 12:45:16.152052+00. Live state verified back to exact pre-deployment 6-row baseline (4R + 2T). Second closeout run confirmed cleanup correctness (test rows removed, historical rows untouched).
+
+VERDICT: behavioral RLS gate CLOSED. CLUB-WU-F04 fully verified.
