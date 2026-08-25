@@ -1,6 +1,6 @@
 # Phase 9 Unit 6G SDD: Owner Scan Defaults, Batch Review, and Commit Handoff
 
-**Status:** `unit6g_c_implemented_pending_owner_next_scope_authorization`
+**Status:** `unit6g_d_implemented_pending_owner_6ge_authorization`
 **Version/date:** 0.2 / 2026-08-24
 **Authority:** the Owner workflow decisions recorded in P9-D81 through P9-D85;
 DOC-3 §§5–9/15–16; DOC-4 §§2–5/9–15; DOC-8 §§2–5/14–15; Phase 9

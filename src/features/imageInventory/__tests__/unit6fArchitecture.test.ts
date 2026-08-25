@@ -3,14 +3,32 @@ import path from 'node:path';
 
 describe('Phase 9 Unit 6F privacy, media-purpose, and Unit 7 boundary', () => {
     const root = path.join(__dirname, '..');
-    const production = fs.readdirSync(root, { recursive: true })
+    const productionSources = fs.readdirSync(root, { recursive: true })
         .filter((name) => /\.(ts|tsx)$/u.test(String(name)) && !String(name).includes('__tests__'))
-        .map((name) => fs.readFileSync(path.join(root, String(name)), 'utf8'))
+        .map((name) => ({
+            name: String(name).replaceAll('\\', '/'),
+            source: fs.readFileSync(path.join(root, String(name)), 'utf8'),
+        }));
+    const production = productionSources.map(({ source }) => source).join('\n');
+    const authorizedUnit6gDCommitSurfaces = new Set([
+        'commit/inventoryCommitCoordinator.ts',
+        'commit/inventoryCommitTypes.ts',
+        'commit/useInventoryCommitCoordinator.ts',
+        'components/AddCandidateToInventoryAction.tsx',
+        'components/BatchInventoryCommitControls.tsx',
+        'components/BatchReviewCard.tsx',
+        'screens/CaptureProgressScreens.tsx',
+    ]);
+    const productionOutsideUnit6gDCommit = productionSources
+        .filter(({ name }) => !authorizedUnit6gDCommitSurfaces.has(name))
+        .map(({ source }) => source)
         .join('\n');
 
     it('has no direct table, Unit 7 adapter, inventory/publication, or commerce mutation', () => {
         expect(production).not.toMatch(/supabase\s*\.\s*from\s*\(/u);
-        expect(production).not.toMatch(/(?:commit|publish)(?:Candidate|Inventory)|inventoryCommit|commerceMutation/u);
+        expect(productionOutsideUnit6gDCommit).not.toMatch(
+            /(?:commit|publish)(?:Candidate|Inventory)|inventoryCommit|commerceMutation/u,
+        );
         expect(production).not.toMatch(/from\s+['"][^'"]*(?:unit7|commitAdapter|publicationAdapter)/iu);
     });
 

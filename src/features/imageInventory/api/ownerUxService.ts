@@ -285,8 +285,12 @@ export const ownerUxService = {
             cursor: request.cursor ?? null,
         });
     },
-    readCandidate(sessionId: string, candidateId: string): Promise<OwnerCandidateDetail> {
-        return invoke('read_scan_candidate', { sessionId, candidateId });
+    readCandidate(
+        sessionId: string,
+        candidateId: string,
+        signal?: AbortSignal,
+    ): Promise<OwnerCandidateDetail> {
+        return invoke('read_scan_candidate', { sessionId, candidateId }, signal);
     },
     updateCandidateReview(
         request: UpdateCandidateReviewRequest,

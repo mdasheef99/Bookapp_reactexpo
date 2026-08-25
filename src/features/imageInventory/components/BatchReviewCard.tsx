@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useTheme } from '@/hooks/useTheme';
 import { OwnerConfirmationDialog } from './OwnerConfirmationDialog';
+import { AddCandidateToInventoryAction } from './AddCandidateToInventoryAction';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
+import type { CandidateCommitOutcome } from '../commit/inventoryCommitCoordinator';
 import type {
     ScanCondition,
     ScanSetupFormState,
@@ -125,15 +127,21 @@ export function BatchReviewCard({
     isOffline,
     canMutate,
     removePending,
+    addPending,
+    addOutcome,
     onOpenFullCorrection,
     onRemove,
     onSaveEdits,
+    onAdd,
+    onDraftChange,
 }: {
     card: OwnerBatchReviewCard;
     defaults: ScanSetupFormState;
     isOffline: boolean;
     canMutate: boolean;
     removePending: boolean;
+    addPending: boolean;
+    addOutcome?: CandidateCommitOutcome;
     onOpenFullCorrection: () => void;
     onRemove: (candidateId: string) => void;
     onSaveEdits: (
@@ -142,6 +150,11 @@ export function BatchReviewCard({
         expectedCandidateVersion: number,
         expectedMetadataRevision: number,
     ) => void;
+    onAdd: (
+        card: OwnerBatchReviewCard,
+        edits: CompactReviewEdits,
+    ) => Promise<unknown>;
+    onDraftChange: (candidateId: string, edits: CompactReviewEdits) => void;
 }) {
     const { colors } = useTheme();
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -149,6 +162,10 @@ export function BatchReviewCard({
     // Mounted draft overrides are presentation-only; they never manufacture a
     // persisted server source, readiness, or commit eligibility.
     const [mountedEdits, setMountedEdits] = useState<CompactReviewEdits>({});
+    const replaceMountedEdits = (next: CompactReviewEdits) => {
+        setMountedEdits(next);
+        onDraftChange(card.candidateId, next);
+    };
     const editable = card.review !== null && card.reviewVersion !== null;
     // Identity precedence follows the approved contract order: saved custom ->
     // selected/accepted metadata -> observed detection. Raw observed values
@@ -176,7 +193,7 @@ export function BatchReviewCard({
             card.candidateVersion,
             card.metadataRevision,
         );
-        setMountedEdits({});
+        replaceMountedEdits({});
     };
 
     const attentionSummary = useMemo(() => {
@@ -314,10 +331,8 @@ export function BatchReviewCard({
                             title={choice.label}
                             variant="secondary"
                             onPress={() => {
-                                setMountedEdits((current) => ({
-                                    ...current,
-                                    baseCondition: choice.value,
-                                }));
+                                const next = { ...mountedEdits, baseCondition: choice.value };
+                                replaceMountedEdits(next);
                                 setConditionPickerOpen(false);
                             }}
                             disabled={!canMutate || isOffline}
@@ -341,6 +356,22 @@ export function BatchReviewCard({
                         ) : null}
                     </>
                 ) : null}
+                <AddCandidateToInventoryAction
+                    card={card}
+                    hasUnsavedReview={Object.keys(mountedEdits).length > 0}
+                    disabled={!canMutate}
+                    isOffline={isOffline}
+                    pending={addPending}
+                    outcome={addOutcome}
+                    onAdd={async () => {
+                        const result = await onAdd(card, mountedEdits);
+                        if (
+                            result && typeof result === 'object'
+                            && 'status' in result && result.status === 'succeeded'
+                        ) replaceMountedEdits({});
+                        return result;
+                    }}
+                />
                 {card.allowedActions.includes('view_metadata') ? (
                     <Button
                         title="View metadata"

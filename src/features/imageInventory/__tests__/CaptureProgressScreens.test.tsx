@@ -5,6 +5,9 @@ import { InventorySessionProgressScreen } from '../screens/CaptureProgressScreen
 const mockRouter = { push: jest.fn(), replace: jest.fn() };
 const mockRefetch = jest.fn(() => Promise.resolve({ isError: false, error: null }));
 const mockRemoveMutate = jest.fn();
+const mockCandidateRemoveMutate = jest.fn();
+const mockClaimSlot = jest.fn<string | null, [string, string]>(() => 'slot-token');
+const mockReleaseSlot = jest.fn();
 let mockFocused = true;
 // NEW 6G-C composition: session authority is read through v3 and the compact
 // review aggregate is supplemental candidate authority alongside Unit 6 input
@@ -125,7 +128,10 @@ jest.mock('../queries/ownerUxQueries', () => ({
 jest.mock('../queries/ownerBatchReviewQueries', () => ({
     useOwnerSessionV3: () => mockSessionV3,
     useOwnerBatchReview: () => mockBatchReview,
-    useRemoveOwnerInventoryCandidate: () => ({ mutate: jest.fn(), isPending: false }),
+    useRemoveOwnerInventoryCandidate: () => ({
+        mutate: mockCandidateRemoveMutate,
+        isPending: false,
+    }),
     useSaveOwnerCandidateReview: () => ({ mutate: jest.fn(), isPending: false }),
 }));
 jest.mock('../queries/ownerUxInputQueries', () => ({
@@ -133,6 +139,20 @@ jest.mock('../queries/ownerUxInputQueries', () => ({
         mutate: mockRemoveMutate,
         isPending: false,
         error: null,
+    }),
+}));
+jest.mock('../commit/useInventoryCommitCoordinator', () => ({
+    useInventoryCommitCoordinator: () => ({
+        addCandidate: jest.fn(),
+        addAll: jest.fn(),
+        retryAddAll: jest.fn(),
+        inFlight: new Set(),
+        outcomes: new Map(),
+        bulkResult: null,
+        bulkPending: false,
+        claimSlot: mockClaimSlot,
+        releaseSlot: mockReleaseSlot,
+        isCommandActive: () => false,
     }),
 }));
 jest.mock('../capture/captureIds', () => ({
@@ -290,6 +310,43 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
             idempotencyKey: expect.stringMatching(/^remove-input:/u),
             commandId: expect.stringMatching(/^[0-9a-f-]{36}$/u),
         }), expect.any(Object));
+    });
+
+    it('F02: claims the shared command slot for candidate Remove and reports busy without a request when the slot is held', () => {
+        mockClaimSlot.mockReturnValue('remove-slot-token');
+        // Emulate react-query delivering a terminal success so release runs.
+        mockCandidateRemoveMutate.mockImplementation(
+            (_request: unknown, callbacks: { onSuccess?: () => void }) => {
+                callbacks?.onSuccess?.();
+            },
+        );
+        (mockBatchReview.data as Record<string, any>).items[0].allowedActions = ['remove_from_scan'];
+        const screen = render(
+            <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+
+        fireEvent.press(screen.getByText('Remove from this scan'));
+        fireEvent.press(screen.getByText('Remove book from scan'));
+        expect(mockClaimSlot).toHaveBeenCalledWith(
+            '00000000-0000-4000-8000-000000000002', 'remove',
+        );
+        expect(mockCandidateRemoveMutate).toHaveBeenCalledTimes(1);
+        // Terminal outcome releases the exact claimed slot token.
+        expect(mockReleaseSlot).toHaveBeenCalledWith(
+            '00000000-0000-4000-8000-000000000002', 'remove-slot-token',
+        );
+
+        mockCandidateRemoveMutate.mockClear();
+        mockClaimSlot.mockReturnValue(null);
+        const busyScreen = render(
+            <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+        fireEvent.press(busyScreen.getByText('Remove from this scan'));
+        fireEvent.press(busyScreen.getByText('Remove book from scan'));
+        // No second command may own the candidate; nothing is queued or sent.
+        expect(mockCandidateRemoveMutate).not.toHaveBeenCalled();
+        expect(busyScreen.getByText(/busy/iu)).toBeTruthy();
+        (mockBatchReview.data as Record<string, any>).items[0].allowedActions = [];
     });
 
     it('does not refresh or expose per-item live regions while the route is blurred', () => {

@@ -9,6 +9,8 @@ import {
 } from '../api/ownerUxService';
 import { createCaptureUuid, createSemanticKey } from '../capture/captureIds';
 import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
+import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
+import type { CandidateCommitOutcome } from '../commit/inventoryCommitCoordinator';
 import type { ImageInventoryIdentity } from '../queries/ownerUxQueries';
 import { useAddOwnerCandidateToInventory } from '../queries/ownerUxReviewQueries';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
@@ -16,21 +18,89 @@ import { storeViewRoutes } from '@/features/storeView/navigation/storeViewRoutes
 
 const conflictCodes = new Set(['P9_CANDIDATE_VERSION_CONFLICT', 'P9_VERSION_CONFLICT', 'P9_STATE_CONFLICT']);
 
-export function AddCandidateToInventoryAction({
-    identity,
-    detail,
-    disabled,
-    hasUnsavedReview,
-    isOffline,
-    refetchCandidate,
-}: {
+type LegacyAddProps = Readonly<{
     identity: ImageInventoryIdentity;
     detail: OwnerCandidateDetail;
     disabled: boolean;
     hasUnsavedReview: boolean;
     isOffline: boolean;
     refetchCandidate: () => Promise<unknown>;
-}) {
+}>;
+
+type CoordinatedAddProps = Readonly<{
+    card: OwnerBatchReviewCard;
+    hasUnsavedReview: boolean;
+    disabled: boolean;
+    isOffline: boolean;
+    pending: boolean;
+    outcome?: CandidateCommitOutcome;
+    onAdd: () => Promise<unknown>;
+}>;
+
+function CoordinatedAddCandidateAction({
+    card,
+    hasUnsavedReview,
+    disabled,
+    isOffline,
+    pending,
+    outcome,
+    onAdd,
+}: CoordinatedAddProps) {
+    const { colors } = useTheme();
+    const router = useRouter();
+    const authorized = card.review !== null && (
+        (card.reviewReady && card.allowedActions.includes('add_to_inventory'))
+        || (hasUnsavedReview && card.allowedActions.includes('save_review'))
+    );
+    if (!authorized) return null;
+    if (outcome?.status === 'succeeded' && outcome.result) {
+        return (
+            <View testID={`add-to-inventory-success-${card.candidateId}`} style={{ gap: 8 }}>
+                <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.accent, fontWeight: '800' }}>
+                    Added to Inventory
+                </Text>
+                <Button
+                    title="View in Store View"
+                    onPress={() => router.push(storeViewRoutes.detail(outcome.result!.inventoryId))}
+                />
+            </View>
+        );
+    }
+    const retry = outcome?.status === 'failed_retryable' || outcome?.status === 'still_pending';
+    return (
+        <View style={{ gap: 6 }}>
+            {outcome?.status === 'no_longer_eligible' ? (
+                <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error }}>
+                    This book is no longer eligible. Review the latest saved details.
+                </Text>
+            ) : outcome?.status === 'still_pending' ? (
+                <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error }}>
+                    The add result is unclear. Retry reconciles the same command.
+                </Text>
+            ) : outcome?.status === 'failed_retryable' ? (
+                <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error }}>
+                    This book was not added. It can be retried safely.
+                </Text>
+            ) : null}
+            <Button
+                title={retry ? 'Retry add to inventory' : 'Add to inventory'}
+                onPress={() => { void onAdd(); }}
+                loading={pending}
+                disabled={disabled || isOffline || pending || outcome?.status === 'no_longer_eligible'}
+                accessibilityHint="Saves displayed review changes, revalidates authority, then creates one private inventory item."
+            />
+        </View>
+    );
+}
+
+function LegacyAddCandidateToInventoryAction({
+    identity,
+    detail,
+    disabled,
+    hasUnsavedReview,
+    isOffline,
+    refetchCandidate,
+}: LegacyAddProps) {
     const { colors } = useTheme();
     const router = useRouter();
     const mutation = useAddOwnerCandidateToInventory(
@@ -158,4 +228,10 @@ export function AddCandidateToInventoryAction({
             ) : null}
         </View>
     );
+}
+
+export function AddCandidateToInventoryAction(props: LegacyAddProps | CoordinatedAddProps) {
+    return 'card' in props
+        ? <CoordinatedAddCandidateAction {...props} />
+        : <LegacyAddCandidateToInventoryAction {...props} />;
 }

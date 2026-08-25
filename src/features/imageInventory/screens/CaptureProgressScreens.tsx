@@ -12,6 +12,8 @@ import {
     applyCompactEdits,
     BatchReviewCard,
 } from '../components/BatchReviewCard';
+import { BatchInventoryCommitControls } from '../components/BatchInventoryCommitControls';
+import { useInventoryCommitCoordinator } from '../commit/useInventoryCommitCoordinator';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 import {
     type ImageInventoryIdentity,
@@ -70,6 +72,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const batchReview = useOwnerBatchReview(identity, sessionId, isFocused);
     const saveReview = useSaveOwnerCandidateReview(identity);
     const removeCandidate = useRemoveOwnerInventoryCandidate(identity, sessionId);
+    const inventoryCommit = useInventoryCommitCoordinator(identity, sessionId);
     const { isOffline } = useNetworkStatus();
     const { colors } = useTheme();
     const removeMutation = useRemoveOwnerInventoryInput(identity, sessionId);
@@ -78,6 +81,9 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     } | null>(null);
     const [removeMessage, setRemoveMessage] = useState<string | null>(null);
     const [candidateMessage, setCandidateMessage] = useState<string | null>(null);
+    const [candidateDrafts, setCandidateDrafts] = useState<Map<string, CompactReviewEdits>>(
+        new Map(),
+    );
     const pendingRemoval = useRef<RemoveScanInputRequest | null>(null);
     const unavailable = session.data?.status === 'expired' || [session.error, inputs.error].some(
         (error) => error && 'code' in error
@@ -190,6 +196,14 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
         expectedCandidateVersion: number,
     ) => {
         if (isOffline || removeCandidate.isPending) return;
+        // SDD U6G-AC11: one candidate has one active command slot. Remove
+        // claims the same shared slot as Add/Add-all/Save or fails closed
+        // busy without sending a request.
+        const slotToken = inventoryCommit.claimSlot(candidateId, 'remove');
+        if (!slotToken) {
+            setCandidateMessage('That book is busy. Wait for its current action to finish.');
+            return;
+        }
         removeCandidate.mutate({
             sessionId,
             candidateId,
@@ -197,10 +211,16 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
             idempotencyKey: createSemanticKey('remove-candidate'),
             commandId: createCaptureUuid(),
         }, {
-            onSuccess: () => setCandidateMessage('Book removed from this scan.'),
-            onError: () => setCandidateMessage(
-                'The book could not be removed. Refresh and try again.',
-            ),
+            onSuccess: () => {
+                inventoryCommit.releaseSlot(candidateId, slotToken);
+                setCandidateMessage('Book removed from this scan.');
+            },
+            onError: () => {
+                inventoryCommit.releaseSlot(candidateId, slotToken);
+                setCandidateMessage(
+                    'The book could not be removed. Refresh and try again.',
+                );
+            },
         });
     };
     const handleSaveEdits = (
@@ -212,6 +232,13 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
         const card = batchReview.data?.items.find((item) => item.candidateId === candidateId);
         const saved = card?.review;
         if (!card || !saved || isOffline || saveReview.isPending) return;
+        // The standalone Save participates in the shared per-candidate command
+        // slot; it can never race Add/Add-all/Remove for the same candidate.
+        const slotToken = inventoryCommit.claimSlot(candidateId, 'save');
+        if (!slotToken) {
+            setCandidateMessage('That book is busy. Wait for its current action to finish.');
+            return;
+        }
         saveReview.mutate({
             sessionId,
             candidateId,
@@ -223,14 +250,24 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
             idempotencyKey: createSemanticKey('save-review'),
             commandId: createCaptureUuid(),
         }, {
-            onSuccess: () => setCandidateMessage('Saved changes for this book.'),
-            onError: () => setCandidateMessage(
-                'Changes were not saved. Refresh to compare before trying again.',
-            ),
+            onSuccess: () => {
+                inventoryCommit.releaseSlot(candidateId, slotToken);
+                setCandidateMessage('Saved changes for this book.');
+            },
+            onError: () => {
+                inventoryCommit.releaseSlot(candidateId, slotToken);
+                setCandidateMessage(
+                    'Changes were not saved. Refresh to compare before trying again.',
+                );
+            },
         });
     };
 
     const cards = batchReview.data?.items ?? [];
+    const commitDrafts = cards.map((card) => ({
+        card,
+        edits: candidateDrafts.get(card.candidateId) ?? {},
+    }));
 
     return (
         <ScreenBackground>
@@ -256,8 +293,12 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                             batchLabel: batchReview.data?.batchLabel ?? '',
                         }}
                         isOffline={isOffline}
-                        canMutate={session.data?.status === 'active' && !isOffline}
+                        canMutate={session.data?.status === 'active' && !isOffline
+                            && !inventoryCommit.inFlight.has(item.candidateId)
+                            && !inventoryCommit.isCommandActive(item.candidateId)}
                         removePending={removeCandidate.isPending}
+                        addPending={inventoryCommit.inFlight.has(item.candidateId)}
+                        addOutcome={inventoryCommit.outcomes.get(item.candidateId)}
                         onOpenFullCorrection={() => router.push(inventoryRoutes.candidate(
                             sessionId,
                             item.candidateId,
@@ -271,6 +312,15 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                             item.candidateVersion,
                             item.metadataRevision,
                         )}
+                        onAdd={(card, edits) => inventoryCommit.addCandidate({ card, edits })}
+                        onDraftChange={(candidateId, edits) => {
+                            setCandidateDrafts((current) => {
+                                const next = new Map(current);
+                                if (Object.keys(edits).length === 0) next.delete(candidateId);
+                                else next.set(candidateId, edits);
+                                return next;
+                            });
+                        }}
                     />
                 )}
                 ListHeaderComponent={(
@@ -324,14 +374,24 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                                 ) : (
                                     <>
                                         {batchReview.data ? (
-                                            <Text
-                                                selectable
-                                                accessibilityLiveRegion="polite"
-                                                accessibilityLabel="Book count summary"
-                                                style={{ color: colors.textPrimary, fontWeight: '700' }}
-                                            >
-                                                {countSummaryLine(batchReview.data.counts)}
-                                            </Text>
+                                            <>
+                                                <Text
+                                                    selectable
+                                                    accessibilityLiveRegion="polite"
+                                                    accessibilityLabel="Book count summary"
+                                                    style={{ color: colors.textPrimary, fontWeight: '700' }}
+                                                >
+                                                    {countSummaryLine(batchReview.data.counts)}
+                                                </Text>
+                                                <BatchInventoryCommitControls
+                                                    candidates={commitDrafts}
+                                                    disabled={isOffline || session.data?.status !== 'active'}
+                                                    pending={inventoryCommit.bulkPending}
+                                                    result={inventoryCommit.bulkResult}
+                                                    onAddAll={inventoryCommit.addAll}
+                                                    onRetry={inventoryCommit.retryAddAll}
+                                                />
+                                            </>
                                         ) : null}
                                         <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>
                                             Books found: {cards.length}

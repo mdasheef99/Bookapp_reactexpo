@@ -1,4 +1,4 @@
-import { fireEvent, render, within } from '@testing-library/react-native';
+import { act, fireEvent, render, within } from '@testing-library/react-native';
 import {
     applyCompactEdits,
     BatchReviewCard,
@@ -17,6 +17,8 @@ jest.mock('expo-image', () => ({
 const onOpenFullCorrection = jest.fn();
 const onRemove = jest.fn();
 const onSaveEdits = jest.fn();
+const onAdd = jest.fn(() => Promise.resolve({ status: 'succeeded' as const }));
+const onDraftChange = jest.fn();
 
 function card(overrides: Record<string, unknown> = {}): OwnerBatchReviewCard {
     return {
@@ -93,7 +95,10 @@ function renderCard(overrides: Record<string, unknown> = {}) {
             onOpenFullCorrection={onOpenFullCorrection}
             onRemove={onRemove}
             onSaveEdits={onSaveEdits}
+            onAdd={onAdd}
             removePending={false}
+            addPending={false}
+            onDraftChange={onDraftChange}
         />,
     );
 }
@@ -175,12 +180,42 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
     });
 
     it('navigates to the existing Unit 6 full-correction controller without inventing new actions', () => {
-        const screen = renderCard();
+        const screen = renderCard({ allowedActions: ['view_metadata', 'remove_from_scan'] });
         fireEvent.press(screen.getByText('Open full correction'));
         expect(onOpenFullCorrection).toHaveBeenCalledTimes(1);
         expect(screen.queryByText('Choose another match')).toBeNull();
         expect(screen.queryByText('Add to inventory')).toBeNull();
         expect(screen.queryByText(/Add all/iu)).toBeNull();
+    });
+
+    it('surfaces per-card Add only from server Save/Add authority and passes the exact mounted draft', async () => {
+        const saveOnly = renderCard({ allowedActions: ['save_review'] });
+        expect(saveOnly.queryByText('Add to inventory')).toBeNull();
+        fireEvent.press(saveOnly.getByTestId('card-condition-open'));
+        fireEvent.press(saveOnly.getByText('Acceptable'));
+        expect(saveOnly.getByText('Add to inventory')).toBeTruthy();
+
+        const staleReadiness = renderCard({
+            allowedActions: ['add_to_inventory'],
+            reviewReady: false,
+        });
+        expect(staleReadiness.queryByText('Add to inventory')).toBeNull();
+
+        const allowed = renderCard({
+            allowedActions: ['save_review', 'add_to_inventory'],
+        });
+        fireEvent.press(allowed.getByTestId('card-condition-open'));
+        fireEvent.press(allowed.getByText('Acceptable'));
+        await act(async () => {
+            fireEvent.press(allowed.getByText('Add to inventory'));
+            await Promise.resolve();
+        });
+        expect(onAdd).toHaveBeenCalledWith(
+            expect.objectContaining({ candidateId: card().candidateId }),
+            { baseCondition: 'acceptable' },
+        );
+        const visibleButUnauthorized = renderCard({ allowedActions: ['view_metadata'] });
+        expect(visibleButUnauthorized.queryByText('Add to inventory')).toBeNull();
     });
 
     it('hides compact editing when no saved review exists and defers to full correction', () => {

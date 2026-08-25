@@ -1,6 +1,6 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit6g_c_implemented_pending_owner_next_scope_authorization`
+**Status:** `unit6g_d_implemented_pending_owner_6ge_authorization`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
 **Last updated:** 2026-08-24
 **Current handoff:** Unit 8 remains live-verified on pushed

@@ -1,6 +1,6 @@
 # Phase 9 Unit 6G Contract and Screen Matrix
 
-**Status:** `unit6g_c_implemented_pending_owner_next_scope_authorization`
+**Status:** `unit6g_d_implemented_pending_owner_6ge_authorization`
 **Date:** 2026-08-24
 **Owner:** [Unit 6G SDD](./06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md)
 

@@ -15,6 +15,7 @@ import {
     imageInventoryKeys,
     type ImageInventoryIdentity,
 } from './ownerUxQueries';
+import { synchronizeInventoryCommitSuccess } from './ownerInventoryCommitQueries';
 
 const identityToken = (identity: ImageInventoryIdentity | null) => (
     identity ? `${identity.userId}:${identity.storeId}` : null
@@ -164,17 +165,5 @@ export async function synchronizeCandidateCommitSuccess(
         || result.sessionId !== sessionId
         || result.candidateId !== candidateId
     ) return;
-    await Promise.all([
-        client.invalidateQueries({
-            queryKey: imageInventoryKeys.candidate(identity, sessionId, candidateId),
-        }),
-        client.invalidateQueries({
-            queryKey: [...imageInventoryKeys.identity(identity), 'candidates'],
-        }),
-        client.invalidateQueries({ queryKey: imageInventoryKeys.discovery(identity) }),
-        client.invalidateQueries({ queryKey: imageInventoryKeys.readiness(identity, sessionId) }),
-        client.invalidateQueries({
-            queryKey: [...imageInventoryKeys.identity(identity), 'ownerRead'],
-        }),
-    ]);
+    await synchronizeInventoryCommitSuccess(client, identity, sessionId, [result]);
 }
