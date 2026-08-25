@@ -350,16 +350,28 @@ export async function removeClubDiscussionVote(topicId?: string | null, replyId?
 }
 
 export async function setClubDiscussionReaction(input: SetClubDiscussionReactionInput): Promise<ClubDiscussionReaction> {
-    const userId = await getCurrentUserId();
     if (!input.topicId && !input.replyId) throw new Error('A discussion topic or reply target is required.');
-    const { data, error } = await supabase
-        .from('club_discussion_reactions')
-        .upsert({ topic_id: input.topicId ?? null, reply_id: input.replyId ?? null, user_id: userId, emoji: input.emoji }, { onConflict: input.topicId ? 'topic_id,user_id,emoji' : 'reply_id,user_id,emoji' })
-        .select(CLUB_DISCUSSION_REACTION_SELECT)
-        .single();
+    // CLUB-WU-F04: replacement is atomic server-side (set_club_discussion_reaction
+    // RPC, SECURITY INVOKER). Actor identity is derived by auth.uid() inside the
+    // RPC — user_id is intentionally not sent. The RPC replaces any prior reaction
+    // for the same actor/target (PRODUCT-12), preserving created_at.
+    const { data, error } = await supabase.rpc('set_club_discussion_reaction', {
+        p_topic_id: input.topicId ?? null,
+        p_reply_id: input.replyId ?? null,
+        p_emoji: input.emoji,
+    });
 
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to save this discussion reaction right now.'));
-    return data as ClubDiscussionReaction;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) throw new Error(getClubsEntitlementErrorMessage(new Error('No reaction row returned.'), 'Unable to save this discussion reaction right now.'));
+    return {
+        id: row.id,
+        topic_id: row.topic_id,
+        reply_id: row.reply_id,
+        user_id: row.user_id,
+        emoji: row.emoji,
+        created_at: row.created_at,
+    };
 }
 
 export async function removeClubDiscussionReaction(emoji: string, topicId?: string | null, replyId?: string | null): Promise<void> {
