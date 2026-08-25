@@ -1,25 +1,33 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useTheme } from '@/hooks/useTheme';
-import { OwnerUxClientError, type CloseScanSessionRequest } from '../api/ownerUxService';
+import { OwnerUxClientError } from '../api/ownerUxService';
+import type {
+    CloseScanSessionV3Request,
+    OwnerSessionSummaryV3,
+} from '../api/ownerBatchReviewService';
+import type { OwnerSessionReadinessV3 } from '../contracts/ownerBatchReviewContracts';
 import { createCaptureUuid, createSemanticKey } from '../capture/captureIds';
 import { OwnerConfirmationDialog } from '../components/OwnerConfirmationDialog';
-import type { OwnerSessionReadiness } from '../contracts/ownerUxContracts';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 import { useOwnerUxOfflineGate } from '../offline/ownerUxOfflineGate';
 import {
     type ImageInventoryIdentity,
-    useOwnerInventoryReadiness,
 } from '../queries/ownerUxQueries';
-import { useCloseOwnerInventorySession } from '../queries/ownerUxCloseQueries';
+import {
+    useOwnerBatchReview,
+    useOwnerSessionV3,
+    useCloseOwnerInventorySessionV3,
+} from '../queries/ownerBatchReviewQueries';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
 
-const summaryLabels: ReadonlyArray<[keyof OwnerSessionReadiness['closeSummary'], string]> = [
+const summaryLabels: ReadonlyArray<[keyof OwnerSessionReadinessV3['closeSummary'], string]> = [
     ['imagesSubmitted', 'Images submitted'],
     ['imagesProcessed', 'Images processed'],
     ['imagesFailed', 'Images failed'],
@@ -29,6 +37,7 @@ const summaryLabels: ReadonlyArray<[keyof OwnerSessionReadiness['closeSummary'],
     ['candidatesNeedsReview', 'Books needing review'],
     ['candidatesFailed', 'Books failed'],
     ['falseDetections', 'False detections'],
+    ['ownerRemovedCandidates', 'Removed from scan'],
     ['manualMissedCandidates', 'Missed books added'],
     ['languageSkips', 'Language skips'],
     ['candidateCapSkips', 'Candidate limit skips'],
@@ -39,7 +48,7 @@ const summaryLabels: ReadonlyArray<[keyof OwnerSessionReadiness['closeSummary'],
     ['publishedItems', 'Published items'],
 ];
 
-const blockerLabels: Record<keyof OwnerSessionReadiness['blockerCounts'], string> = {
+const blockerLabels: Record<keyof OwnerSessionReadinessV3['blockerCounts'], string> = {
     input_processing: 'Image processing', candidate_processing: 'Book processing',
     candidate_failed: 'Book failed', review_missing: 'Review missing',
     title_unconfirmed: 'Title confirmation missing',
@@ -55,13 +64,18 @@ const blockerLabels: Record<keyof OwnerSessionReadiness['blockerCounts'], string
 function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; sessionId: string }) {
     const { colors } = useTheme();
     const router = useRouter();
+    const isFocused = useIsFocused();
     const { isOffline } = useNetworkStatus();
-    const query = useOwnerInventoryReadiness(identity, sessionId);
-    const closeMutation = useCloseOwnerInventorySession(identity, sessionId);
-    const [canonical, setCanonical] = useState<OwnerSessionReadiness | null>(null);
+    // NEW 6G-C runtime uses the v3 family exclusively for session/readiness/Close.
+    // The batch aggregate is supplemental review presentation only; it can never
+    // grant or deny Close, which stays server-authoritative v3 readiness.
+    const query = useOwnerSessionV3(identity, sessionId);
+    const batchReview = useOwnerBatchReview(identity, sessionId, isFocused);
+    const closeMutation = useCloseOwnerInventorySessionV3(identity, sessionId);
+    const [canonical, setCanonical] = useState<OwnerSessionReadinessV3 | null>(null);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
-    const pending = useRef<CloseScanSessionRequest | null>(null);
+    const pending = useRef<CloseScanSessionV3Request | null>(null);
     const inFlight = useRef(false);
     const closeTriggerRef = useRef<View>(null);
     const scope = `${identity.userId}:${identity.storeId}:${sessionId}`;
@@ -74,7 +88,7 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
         inFlight.current = false;
         return () => { activeScope.current = ''; };
     }, [scope]);
-    const readiness = canonical ?? query.data ?? null;
+    const session = query.data as OwnerSessionSummaryV3 | undefined;
     const refresh = useCallback(async () => {
         const expectedScope = activeScope.current;
         const result = await query.refetch();
@@ -87,11 +101,11 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
         scope,
         isOffline,
         refresh,
-        hasAuthoritativeData: Boolean(readiness && !query.error && readiness.sessionId === sessionId),
+        hasAuthoritativeData: Boolean(session && !query.error && session.sessionId === sessionId),
         currentAuthorityVerified: query.isFetchedAfterMount,
     });
 
-    const runClose = async (command: CloseScanSessionRequest) => {
+    const runClose = async (command: CloseScanSessionV3Request) => {
         if (inFlight.current || !gate.canMutate || command.sessionId !== sessionId) return;
         inFlight.current = true;
         const callScope = activeScope.current;
@@ -124,13 +138,25 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
             inFlight.current = false;
         }
     };
+    // Pre-close availability derives from server-authoritative v3 closeState;
+    // post-close canonical readiness carries the exact closeAllowed verdict.
+    const sessionAllowsClose = Boolean(
+        session
+        && session.status === 'active'
+        && session.allInputsTerminal
+        && session.closeState === 'closeable',
+    );
+    const closeAvailable = canonical
+        ? canonical.closeAllowed
+        : sessionAllowsClose;
+
     const confirmClose = () => {
-        if (!readiness?.closeAllowed || !gate.canMutate || closeMutation.isPending) return;
-        const command = pending.current && pending.current.expectedSessionVersion === readiness.sessionVersion
+        if (!closeAvailable || !gate.canMutate || closeMutation.isPending) return;
+        const command = pending.current && pending.current.expectedSessionVersion === session?.sessionVersion
             ? pending.current
             : {
                 sessionId,
-                expectedSessionVersion: readiness.sessionVersion,
+                expectedSessionVersion: session?.sessionVersion ?? 0,
                 idempotencyKey: createSemanticKey('close-session'),
                 commandId: createCaptureUuid(),
             };
@@ -141,12 +167,31 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
     const unavailable = query.error instanceof OwnerUxClientError
         && ['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND'].includes(query.error.code);
     const authoritativeError = Boolean(query.error);
-    const allZero = readiness
-        ? summaryLabels.every(([key]) => readiness.closeSummary[key] === 0)
+    const closeSummary = canonical?.closeSummary ?? session?.closeSummary ?? null;
+    const allZero = closeSummary
+        ? summaryLabels.every(([key]) => closeSummary[key] === 0)
         : false;
-    const blockers = readiness
-        ? Object.entries(readiness.blockerCounts).filter(([, count]) => count > 0)
-        : [];
+    const blockers = Object.entries(canonical?.blockerCounts ?? {})
+        .filter(([, count]) => count > 0);
+    // Pre-close review blockers are presentation composed from the
+    // supplemental aggregate; they never substitute for v3 readiness.
+    const preCloseCards = canonical || batchReview.error || !batchReview.data
+        ? []
+        : batchReview.data.items;
+    const preCloseBlockers = useMemo(() => {
+        const counts = new Map<string, { count: number; candidateId: string }>();
+        for (const card of preCloseCards) {
+            for (const blocker of card.blockers) {
+                const existing = counts.get(blocker.code);
+                counts.set(blocker.code, {
+                    count: (existing?.count ?? 0) + 1,
+                    candidateId: existing?.candidateId ?? blocker.candidateId ?? card.candidateId,
+                });
+            }
+        }
+        return [...counts.entries()];
+    }, [preCloseCards]);
+    const aggregateDegraded = Boolean(batchReview.error) && !canonical;
 
     return (
         <ScreenBackground>
@@ -155,22 +200,22 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                     <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800' }}>
                         Session summary
                     </Text>
-                    {query.isLoading && !readiness ? <ActivityIndicator color={colors.accent} style={{ marginTop: 16 }} /> : null}
+                    {query.isLoading && !session ? <ActivityIndicator color={colors.accent} style={{ marginTop: 16 }} /> : null}
                     {unavailable ? <Text selectable accessibilityLiveRegion="assertive" style={{ color: colors.error, marginTop: 10 }}>This private scan session is unavailable.</Text> : null}
                     {authoritativeError && !unavailable ? (
                         <Text selectable accessibilityLiveRegion="assertive" style={{ color: colors.error, marginTop: 10 }}>
                             Current readiness could not be verified. Close remains disabled.
                         </Text>
                     ) : null}
-                    {readiness ? (
+                    {session ? (
                         <>
                             <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary, marginTop: 10 }}>
-                                Session state: {readiness.sessionStatus}
+                                Session state: {canonical?.sessionStatus ?? session.status}
                             </Text>
                             {allZero ? <Text selectable style={{ color: colors.textPrimary, fontWeight: '700', marginTop: 12 }}>No images or books yet</Text> : null}
                             <View accessibilityRole="summary" style={{ gap: 7, marginTop: 14 }}>
                                 {summaryLabels.map(([key, label]) => (
-                                    <Text selectable key={key} style={{ color: colors.textSecondary }}>{label}: {readiness.closeSummary[key]}</Text>
+                                    <Text selectable key={key} style={{ color: colors.textSecondary }}>{label}: {closeSummary ? closeSummary[key] : 0}</Text>
                                 ))}
                             </View>
                             {blockers.length ? (
@@ -179,18 +224,51 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                                     {blockers.map(([key, count]) => <Text selectable key={key} style={{ color: colors.textSecondary }}>{blockerLabels[key as keyof typeof blockerLabels]}: {count}</Text>)}
                                 </View>
                             ) : null}
-                            {!readiness.allInputsTerminal ? (
+                            {!canonical && (session.status === 'active' || session.status === 'closing') ? (
+                                aggregateDegraded ? (
+                                    <View style={{ gap: 8, marginTop: 16 }}>
+                                        <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error }}>
+                                            Book review status could not be loaded.
+                                        </Text>
+                                        <Button
+                                            title="Retry book review"
+                                            variant="secondary"
+                                            onPress={() => { void batchReview.refetch(); }}
+                                            disabled={isOffline}
+                                        />
+                                    </View>
+                                ) : preCloseBlockers.length ? (
+                                    <View testID="pre-close-review-blockers" style={{ gap: 7, marginTop: 16 }}>
+                                        <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontWeight: '800' }}>Needs attention before Close</Text>
+                                        {preCloseBlockers.map(([code, entry]) => (
+                                            <Text selectable key={code} style={{ color: colors.textSecondary }}>
+                                                {blockerLabels[code as keyof typeof blockerLabels] ?? code}: {entry.count}
+                                            </Text>
+                                        ))}
+                                        <Button
+                                            title="Review next blocker"
+                                            variant="secondary"
+                                            style={{ marginTop: 4 }}
+                                            onPress={() => router.push(inventoryRoutes.candidate(
+                                                sessionId,
+                                                preCloseBlockers[0][1].candidateId,
+                                            ))}
+                                        />
+                                    </View>
+                                ) : null
+                            ) : null}
+                            {!(canonical?.allInputsTerminal ?? session.allInputsTerminal) ? (
                                 <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary, marginTop: 16 }}>
                                     Some images are still processing
                                 </Text>
                             ) : null}
-                            {readiness.nextBlockingCandidateId ? (
-                                <Button title="Review next blocker" variant="secondary" style={{ marginTop: 14 }} onPress={() => router.push(inventoryRoutes.candidate(sessionId, readiness.nextBlockingCandidateId!))} />
+                            {canonical?.nextBlockingCandidateId ? (
+                                <Button title="Review next blocker" variant="secondary" style={{ marginTop: 14 }} onPress={() => router.push(inventoryRoutes.candidate(sessionId, canonical.nextBlockingCandidateId!))} />
                             ) : null}
-                            {!readiness.allInputsTerminal ? (
+                            {!closeAvailable ? (
                                 <Button title="Refresh processing status" variant="secondary" style={{ marginTop: 12 }} onPress={() => { void refresh(); }} disabled={isOffline || query.isFetching} />
                             ) : null}
-                            {readiness.closeAllowed ? (
+                            {closeAvailable ? (
                                 <Pressable
                                     ref={closeTriggerRef}
                                     accessibilityRole="button"
@@ -204,7 +282,7 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                                     <Text style={{ color: '#fff', fontWeight: '800' }}>Close session</Text>
                                 </Pressable>
                             ) : null}
-                            {readiness.sessionStatus === 'closed' ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textPrimary, fontWeight: '700', marginTop: 14 }}>Session closed</Text> : null}
+                            {(canonical?.sessionStatus ?? session.status) === 'closed' ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textPrimary, fontWeight: '700', marginTop: 14 }}>Session closed</Text> : null}
                         </>
                     ) : null}
                     {gate.isOffline ? <Text selectable style={{ color: colors.error, marginTop: 12 }}>Offline · summary is read-only and may be out of date.</Text> : null}

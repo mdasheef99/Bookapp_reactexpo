@@ -1,7 +1,7 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit6g_recomposed_authority_pending_owner_checkpoint_disposition`; **last updated:** 2026-08-24
+**Status:** `unit6g_c_implemented_pending_owner_next_scope_authorization`; **last updated:** 2026-08-24
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit6g_recomposed_authority_pending_owner_checkpoint_disposition`. Unit 8 remains live-verified/integrated; the 2026-08-24 recomposition made the revised SDD/matrix/tracker 31 the sole NEW 6G-C/6G-D design authority (independent final review COMPLETE, verdict PASS_WITH_P3); NEW 6G-C composition-only/pre-commit implementation remains unauthorized until Owner checkpoint disposition plus separate explicit Owner authorization.
+**Active work unit:** `unit6g_c_implemented_pending_owner_next_scope_authorization`. Unit 8 remains live-verified/integrated; the 2026-08-24 recomposition made the revised SDD/matrix/tracker 31 the sole NEW 6G-C/6G-D design authority (independent final review COMPLETE, verdict PASS_WITH_P3); NEW 6G-C implementation is COMPLETE and locally checkpointed (review PASS_WITH_P3; known P3 N1 module-size deferred); NEW 6G-D is next ONLY on separate Owner authorization.
 
 ### 2026-08-24 — Unit 6G predecessor-inheritance recomposition checkpoint
 

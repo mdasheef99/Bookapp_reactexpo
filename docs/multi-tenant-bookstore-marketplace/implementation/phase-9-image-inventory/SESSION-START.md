@@ -23,13 +23,8 @@ remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_
 (retained 6G A/B foundation) and is not reopened. Historical commit `e7ed166`
 old 6G-C work and the frozen old 6G-D implementation are superseded evidence,
 not authority. Status is
-`unit6g_recomposed_authority_pending_owner_checkpoint_disposition`.
-Independent final rereview of the recomposed three-document authority is
-COMPLETE (verdict PASS_WITH_P3; the P3 cleanup and router/status
-reconciliation are applied in this working tree pending the local
-documentation checkpoint commit). The exact next action is Owner checkpoint
-disposition; NEW 6G-C remains composition-only pre-commit client work over
-the retained M52 foundation and begins only on explicit approval. NEW 6G-D
+`unit6g_c_implemented_pending_owner_next_scope_authorization`.
+Independent final review of the recomposed three-document authority is COMPLETE (verdict PASS_WITH_P3), and NEW 6G-C implementation passed through its own correction cycle under the same final verdict (known P3 N1 module-size deferred), locally checkpointed. The exact next action is a separate Owner authorization decision: NEW 6G-D commit orchestration or connected live verification under the 6G-E Edge-deployment gate. NEW 6G-C was composition-only pre-commit client work over the retained M52 foundation. NEW 6G-D
 later owns commit orchestration, and 6G-E owns Edge deployment/live/native
 closure. No product source, SQL/M52, database/Storage,
 deployment, stage, commit, or push action occurred in the recomposition.

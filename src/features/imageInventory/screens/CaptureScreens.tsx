@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
-import { Linking, ScrollView, Text, View } from 'react-native';
+import { Linking, ScrollView, Text, View, TextInput } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -19,7 +19,7 @@ import {
     type CaptureSource,
 } from '../capture/captureState';
 import { createCaptureAttempt, type CaptureAttempt } from '../capture/captureIds';
-import { captureDefaults, hasCurrentCaptureIdentity } from '../capture/captureAuthority';
+import { hasCurrentCaptureIdentity } from '../capture/captureAuthority';
 import { useCaptureWorkflow } from '../capture/CaptureWorkflowContext';
 import { registerCaptureCancellation } from '../capture/captureCancellation';
 import type { UploadHandle } from '../capture/uploadTransport';
@@ -29,9 +29,158 @@ import {
     useOwnerInventoryDiscovery,
     useOwnerInventoryInputs,
 } from '../queries/ownerUxQueries';
+import { useStartScanSessionV2 } from '../queries/ownerBatchReviewQueries';
+import {
+    CONDITION_CHOICES,
+    LANGUAGE_OPTIONS,
+    PRICE_PRESET_MINOR_OPTIONS,
+    PUBLICATION_CHOICES,
+    buildStartScanSessionV2Request,
+    formatInrFromMinor,
+    initialScanSetupForm,
+    isStartEnabled,
+    rupeesToPriceMinor,
+    type ScanSetupFormState,
+} from '../scanSetup/scanSetupForm';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
 import { useOwnerQueryMutationGate } from '../offline/ownerUxOfflineGate';
+
+function DefaultsForm({
+    form,
+    onChange,
+}: {
+    form: ScanSetupFormState;
+    onChange: (next: ScanSetupFormState) => void;
+}) {
+    const { colors } = useTheme();
+    const [customPrice, setCustomPrice] = useState('');
+    return (
+        <View style={{ gap: 12, marginTop: 14 }}>
+            <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontWeight: '700' }}>
+                Before you scan
+            </Text>
+            <View>
+                <Text selectable accessibilityRole="text" style={{ color: colors.textSecondary }}>
+                    Shelf location (required)
+                </Text>
+                <TextInput
+                    testID="setup-location"
+                    accessibilityLabel="Shelf location"
+                    value={form.location}
+                    onChangeText={(location) => onChange({ ...form, location })}
+                    placeholder="Choose or enter a location"
+                    maxLength={120}
+                    style={{
+                        borderWidth: 1, borderColor: colors.border, borderRadius: 10,
+                        paddingHorizontal: 10, paddingVertical: 8,
+                        color: colors.textPrimary, marginTop: 6,
+                    }}
+                />
+            </View>
+            <View>
+                <Text selectable style={{ color: colors.textSecondary }}>Language (hint only)</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                    {LANGUAGE_OPTIONS.map((option) => (
+                        <Button
+                            key={option.value}
+                            title={option.label === 'English' && form.languageHint === option.value
+                                ? `${option.label} (selected)`
+                                : option.label}
+                            variant={form.languageHint === option.value ? 'secondary' : 'ghost'}
+                            onPress={() => onChange({ ...form, languageHint: option.value })}
+                            disabled={false}
+                        />
+                    ))}
+                </View>
+            </View>
+            <View>
+                <Text selectable style={{ color: colors.textSecondary }}>Default condition</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                    {CONDITION_CHOICES.map((choice) => (
+                        <Button
+                            key={choice.label}
+                            title={form.condition === choice.value ? `${choice.label} (selected)` : choice.label}
+                            variant={form.condition === choice.value ? 'secondary' : 'ghost'}
+                            onPress={() => onChange({ ...form, condition: choice.value })}
+                        />
+                    ))}
+                </View>
+            </View>
+            <View>
+                <Text selectable style={{ color: colors.textSecondary }}>
+                    Default price ({formatInrFromMinor(form.priceMinor)})
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                    {PRICE_PRESET_MINOR_OPTIONS.map((minor) => (
+                        <Button
+                            key={`price-${minor ?? 'unset'}`}
+                            title={minor === null ? 'Not set' : formatInrFromMinor(minor)}
+                            variant={form.priceMinor === minor ? 'secondary' : 'ghost'}
+                            onPress={() => onChange({ ...form, priceMinor: minor })}
+                            testID={`setup-price-${minor ?? 'unset'}`}
+                        />
+                    ))}
+                </View>
+                <TextInput
+                    testID="setup-price-custom"
+                    accessibilityLabel="Custom whole-rupee price"
+                    value={customPrice}
+                    onChangeText={(value) => {
+                        setCustomPrice(value);
+                        const parsed = Number.parseInt(value, 10);
+                        onChange({
+                            ...form,
+                            priceMinor: Number.isNaN(parsed) ? null : rupeesToPriceMinor(parsed),
+                        });
+                    }}
+                    placeholder="Custom whole rupees"
+                    keyboardType="number-pad"
+                    style={{
+                        borderWidth: 1, borderColor: colors.border, borderRadius: 10,
+                        paddingHorizontal: 10, paddingVertical: 8,
+                        color: colors.textPrimary, marginTop: 6,
+                    }}
+                />
+            </View>
+            <View>
+                <Text selectable style={{ color: colors.textSecondary }}>Publication intent</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                    {PUBLICATION_CHOICES.map((choice) => (
+                        <Button
+                            key={choice.value}
+                            title={form.publication === choice.value
+                                ? `${choice.label} (selected)`
+                                : choice.label}
+                            variant={form.publication === choice.value ? 'secondary' : 'ghost'}
+                            onPress={() => onChange({ ...form, publication: choice.value })}
+                            testID={`setup-publication-${choice.value}`}
+                        />
+                    ))}
+                </View>
+                <Text selectable style={{ color: colors.textSecondary, marginTop: 4 }}>
+                    Books are always committed privately; this choice is recorded intent only.
+                </Text>
+            </View>
+            <View>
+                <Text selectable style={{ color: colors.textSecondary }}>Batch label (optional)</Text>
+                <TextInput
+                    testID="setup-batch-label"
+                    accessibilityLabel="Optional batch label"
+                    value={form.batchLabel}
+                    onChangeText={(batchLabel) => onChange({ ...form, batchLabel })}
+                    placeholder="e.g. Box 7"
+                    maxLength={80}
+                    style={{
+                        borderWidth: 1, borderColor: colors.border, borderRadius: 10,
+                        paddingHorizontal: 10, paddingVertical: 8,
+                        color: colors.textPrimary, marginTop: 6,
+                    }}
+                />
+            </View>
+        </View>
+    );
+}
 
 function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
     const router = useRouter();
@@ -44,7 +193,17 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
     const operationGeneration = useRef(0);
     const [sourceStep, setSourceStep] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
-    const [startAttempt] = useState(() => createCaptureAttempt('start-session'));
+    // One logical Start attempt owns one stable semantic identity AND one
+    // frozen immutable request payload. A lost or ambiguous response replays
+    // the exact original request; only a reconciled new Start may mint a
+    // different identity, and later form edits never mutate an in-flight
+    // replay's meaning.
+    const [startAttempt] = useState(() => createCaptureAttempt('start-scan-session-v2'));
+    const startRequestRef = useRef<ReturnType<typeof buildStartScanSessionV2Request> | null>(null);
+    const startReconciledRef = useRef(false);
+    const startedSessionIdRef = useRef<string | null>(null);
+    const [form, setForm] = useState<ScanSetupFormState>(initialScanSetupForm);
+    const startV2 = useStartScanSessionV2(identity);
     const gate = useOwnerQueryMutationGate({
         scope: `${identity.userId}:${identity.storeId}:capture-setup`,
         isOffline,
@@ -58,6 +217,48 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
         setBusy(false);
         setSourceStep(false);
     }), []);
+
+    async function beginStart() {
+        if (busyRef.current || !gate.canMutate || !hasCurrentCaptureIdentity(identity)) return;
+        if (!isStartEnabled(form)) {
+            setMessage('Choose or enter a shelf location before starting.');
+            return;
+        }
+        busyRef.current = true;
+        const attempt = ++operationGeneration.current;
+        setBusy(true);
+        setMessage(null);
+        try {
+            if (!discovery.data?.activeSession) {
+                if (!startReconciledRef.current) {
+                    const request = startRequestRef.current
+                        ?? buildStartScanSessionV2Request(form, startAttempt);
+                    startRequestRef.current = request;
+                    await new Promise<void>((resolve, reject) => {
+                        startV2.mutate(request, {
+                            onSuccess: (canonical) => {
+                                startedSessionIdRef.current = canonical.sessionId;
+                                resolve();
+                            },
+                            onError: (error) => reject(error),
+                        });
+                    });
+                }
+                startReconciledRef.current = true;
+            }
+            if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
+            setSourceStep(true);
+        } catch {
+            // The semantic identity is intentionally retained so the next
+            // press replays the SAME idempotency key and command ID.
+            setMessage('Starting did not finish clearly. Press Start scanning again to continue.');
+        } finally {
+            if (attempt === operationGeneration.current) {
+                busyRef.current = false;
+                setBusy(false);
+            }
+        }
+    }
 
     async function choose(source: CaptureSource) {
         if (busyRef.current || !gate.canMutate) return;
@@ -100,12 +301,12 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
             }
             if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             const sessionId = discovery.data?.activeSession?.sessionId
-                ?? await captureService.startSession(
-                    captureDefaults,
-                    startAttempt.key,
-                    startAttempt.commandId,
-                );
-            if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
+                ?? startedSessionIdRef.current;
+            if (!sessionId) throw new CaptureClientError(
+                'P9_INTERNAL_ERROR',
+                true,
+                'The session could not be started. Press Start scanning again.',
+            );
             workflow.select(validated.media);
             router.push(inventoryRoutes.preview(sessionId));
         } catch (error) {
@@ -127,18 +328,25 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
                     <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800' }}>
                         Scan book spines
                     </Text>
-                    <Text selectable style={{ color: colors.textSecondary, lineHeight: 21, marginTop: 8 }}>
-                        Language: English · Script: Latin · Condition: Good
-                    </Text>
-                    <Text selectable style={{ color: colors.textSecondary, lineHeight: 21, marginTop: 4 }}>
-                        Shelf: default · Quantity: 1 · Publication: Private
-                    </Text>
-                    <Text selectable style={{ color: colors.textSecondary, lineHeight: 21, marginTop: 8 }}>
+                    <DefaultsForm form={form} onChange={setForm} />
+                    <Text selectable style={{ color: colors.textSecondary, lineHeight: 21, marginTop: 14 }}>
                         Frame up to 15 visible spines, avoid glare, and keep titles readable.
                     </Text>
                     <View style={{ gap: 12, marginTop: 18 }}>
                         {!sourceStep ? (
-                            <Button title="Start scanning" onPress={() => setSourceStep(true)} disabled={busy || !gate.canMutate || discovery.isLoading} testID="capture-start" />
+                            <>
+                                <Button
+                                    title="Start scanning"
+                                    onPress={() => void beginStart()}
+                                    disabled={busy || !gate.canMutate || discovery.isLoading || !isStartEnabled(form)}
+                                    testID="capture-start"
+                                />
+                                {!isStartEnabled(form) ? (
+                                    <Text selectable style={{ color: colors.textSecondary }}>
+                                        Choose or enter a shelf location before starting.
+                                    </Text>
+                                ) : null}
+                            </>
                         ) : (
                             <>
                                 <Button title="Open camera" onPress={() => void choose('camera')} disabled={busy || !gate.canMutate} testID="capture-camera" />

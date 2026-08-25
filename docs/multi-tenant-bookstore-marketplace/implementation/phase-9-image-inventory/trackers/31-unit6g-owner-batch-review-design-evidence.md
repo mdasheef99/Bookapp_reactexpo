@@ -1,6 +1,6 @@
 # Phase 9 Unit 6G Owner Batch Review Design Evidence
 
-**Status:** `unit6g_recomposed_authority_pending_owner_checkpoint_disposition`
+**Status:** `unit6g_c_implemented_pending_owner_next_scope_authorization`
 **Date:** 2026-08-24
 **Branch:** `codex/phase9-unit6g-recomposition`
 **Worktree:** `C:\Users\user\Documents\augment-projects\Bookconnect_expo\.worktrees\phase9-unit6g-recomposition`

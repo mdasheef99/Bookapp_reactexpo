@@ -7,15 +7,23 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useTheme } from '@/hooks/useTheme';
+import {
+    type CompactReviewEdits,
+    applyCompactEdits,
+    BatchReviewCard,
+} from '../components/BatchReviewCard';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
-import { CandidateCard } from '../components/CandidateCard';
 import {
     type ImageInventoryIdentity,
-    useOwnerInventoryCandidates,
     useOwnerInventoryDiscovery,
     useOwnerInventoryInputs,
-    useOwnerInventorySession,
 } from '../queries/ownerUxQueries';
+import {
+    useOwnerBatchReview,
+    useOwnerSessionV3,
+    useRemoveOwnerInventoryCandidate,
+    useSaveOwnerCandidateReview,
+} from '../queries/ownerBatchReviewQueries';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
 import { coalesceOwnerUxRefresh } from '../offline/ownerUxOfflineGate';
 import { createCaptureUuid, createSemanticKey } from '../capture/captureIds';
@@ -37,16 +45,31 @@ function inputLabel(item: { presentationState: string; retryState: string; safeC
     }[item.presentationState] ?? 'Image status unavailable';
 }
 
+function countSummaryLine(counts: {
+    reviewReadySaved: number;
+    processing: number;
+    needsAttention: number;
+    committed: number;
+}): string {
+    return [
+        `Ready: ${counts.reviewReadySaved}`,
+        `Processing: ${counts.processing}`,
+        `Needs attention: ${counts.needsAttention}`,
+        `Added: ${counts.committed}`,
+    ].join(' · ');
+}
+
 function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIdentity; sessionId: string }) {
     const router = useRouter();
     const isFocused = useIsFocused();
-    const session = useOwnerInventorySession(identity, sessionId);
+    // Unit 6 session/input lifecycle authority (read through the retained v3
+    // session contract; never the legacy nullable-v2 surface for this runtime).
+    const session = useOwnerSessionV3(identity, sessionId);
     const inputs = useOwnerInventoryInputs(identity, sessionId, isFocused);
-    const candidates = useOwnerInventoryCandidates(identity, {
-        scope: 'session',
-        sessionId,
-        attention: 'all',
-    });
+    // Supplemental 6G candidate/review aggregate authority.
+    const batchReview = useOwnerBatchReview(identity, sessionId, isFocused);
+    const saveReview = useSaveOwnerCandidateReview(identity);
+    const removeCandidate = useRemoveOwnerInventoryCandidate(identity, sessionId);
     const { isOffline } = useNetworkStatus();
     const { colors } = useTheme();
     const removeMutation = useRemoveOwnerInventoryInput(identity, sessionId);
@@ -54,19 +77,63 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
         inputId: string; ordinal: number; inputVersion: number;
     } | null>(null);
     const [removeMessage, setRemoveMessage] = useState<string | null>(null);
+    const [candidateMessage, setCandidateMessage] = useState<string | null>(null);
     const pendingRemoval = useRef<RemoveScanInputRequest | null>(null);
     const unavailable = session.data?.status === 'expired' || [session.error, inputs.error].some(
         (error) => error && 'code' in error
             && ['P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND'].includes(String(error.code)),
     );
     const loading = session.isLoading || inputs.isLoading;
-    const retryableError = !unavailable && (session.error || inputs.error || candidates.error);
+    // Unit 6 lifecycle errors stay authoritative for the whole-screen error
+    // branch; a supplemental batch-review aggregate failure may never suppress
+    // or replace Unit 6 and only degrades the compact-review subsection.
+    const lifecycleError = session.error || inputs.error;
+    const retryableError = !unavailable && Boolean(lifecycleError);
+    const aggregateFailed = !unavailable && !loading && !retryableError
+        && Boolean(batchReview.error);
+    // NEW 6G-C supports ONE current image/input only. Historical multi-input
+    // sessions and aggregates whose active-review counts exceed the returned
+    // compact projection are unsupported compatibility data: they must fail
+    // closed rather than ever present the compact set as complete. No
+    // pagination, no multi-image recreation, no hidden-candidate handling.
+    const inputCount = inputs.data?.items.length ?? 0;
+    const activeReviewCandidates = batchReview.data
+        ? batchReview.data.counts.processing
+            + batchReview.data.counts.needsAttention
+            + batchReview.data.counts.reviewReadySaved
+        : 0;
+    // counts.detected is the lifetime detected-candidate count. NEW 6G-C
+    // support is ONE image with 1..15 books, so a detected count of 16 or
+    // more can only come from unsupported historical data UNLESS it has a
+    // legitimate current explanation:
+    // - detected >= 16 AND no valid current over-limit explanation =>
+    //   unsupported historical session => fail closed.
+    // - detected >= 16 AND the session's ONE current input is a terminal
+    //   failure whose safeCode is P9_VISION_OVER_LIMIT => NOT legacy
+    //   overflow: Unit 6 intentionally produced zero candidates and its
+    //   existing failure/guidance/replacement path stays authoritative;
+    //   this compatibility fence must never mask that lifecycle state.
+    // - When an over-limit input is removed/replaced, this predicate
+    //   re-evaluates each render: with no live explanation left and
+    //   detected still >= 16, the count is unsupportable and fails closed.
+    const currentInputs = inputs.data?.items;
+    const currentOverLimitFailure = currentInputs?.length === 1
+        && currentInputs[0].terminal
+        && currentInputs[0].retryState === 'new_upload_required'
+        && currentInputs[0].safeCode === 'P9_VISION_OVER_LIMIT';
+    const unsupportedLegacyOverflow = !loading && !unavailable && !retryableError
+        && (inputCount > 1
+            || (batchReview.data !== undefined
+                && (activeReviewCandidates > (batchReview.data.items.length ?? 0)
+                    || (batchReview.data.counts.detected > 15 && !currentOverLimitFailure))));;
     const refreshScope = `${identity.userId}:${identity.storeId}:${sessionId}:progress`;
     const refreshAll = useCallback(() => coalesceOwnerUxRefresh(refreshScope, async () => {
         if (!isFocused) return false;
-        const results = await Promise.all([session.refetch(), inputs.refetch(), candidates.refetch()]);
+        const results = await Promise.all([
+            session.refetch(), inputs.refetch(), batchReview.refetch(),
+        ]);
         return results.every((result) => !result.isError && result.error === null);
-    }), [candidates.refetch, inputs.refetch, isFocused, refreshScope, session.refetch]);
+    }), [batchReview.refetch, inputs.refetch, isFocused, refreshScope, session.refetch]);
     useEffect(() => {
         const subscription = AppState.addEventListener('change', (next) => {
             if (next === 'active' && isFocused) {
@@ -118,27 +185,92 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
             },
         });
     };
+    const handleCandidateRemove = (
+        candidateId: string,
+        expectedCandidateVersion: number,
+    ) => {
+        if (isOffline || removeCandidate.isPending) return;
+        removeCandidate.mutate({
+            sessionId,
+            candidateId,
+            expectedCandidateVersion,
+            idempotencyKey: createSemanticKey('remove-candidate'),
+            commandId: createCaptureUuid(),
+        }, {
+            onSuccess: () => setCandidateMessage('Book removed from this scan.'),
+            onError: () => setCandidateMessage(
+                'The book could not be removed. Refresh and try again.',
+            ),
+        });
+    };
+    const handleSaveEdits = (
+        candidateId: string,
+        edits: CompactReviewEdits,
+        expectedCandidateVersion: number,
+        expectedMetadataRevision: number,
+    ) => {
+        const card = batchReview.data?.items.find((item) => item.candidateId === candidateId);
+        const saved = card?.review;
+        if (!card || !saved || isOffline || saveReview.isPending) return;
+        saveReview.mutate({
+            sessionId,
+            candidateId,
+            expectedCandidateVersion,
+            expectedMetadataRevision,
+            // Strict canonical Save over the complete saved review; hidden
+            // notes round-trip unchanged because compact UI never edits them.
+            review: applyCompactEdits(saved, edits) as never,
+            idempotencyKey: createSemanticKey('save-review'),
+            commandId: createCaptureUuid(),
+        }, {
+            onSuccess: () => setCandidateMessage('Saved changes for this book.'),
+            onError: () => setCandidateMessage(
+                'Changes were not saved. Refresh to compare before trying again.',
+            ),
+        });
+    };
+
+    const cards = batchReview.data?.items ?? [];
 
     return (
         <ScreenBackground>
             <FlatList
                 contentInsetAdjustmentBehavior="automatic"
                 contentContainerStyle={{ padding: 24, gap: 12, flexGrow: 1 }}
-                data={!loading && !unavailable && !retryableError
-                    ? candidates.data?.items ?? []
-                    : []}
+                data={!loading && !unavailable && !retryableError && !aggregateFailed
+                    && !unsupportedLegacyOverflow ? cards : []}
                 initialNumToRender={6}
                 maxToRenderPerBatch={6}
                 windowSize={5}
                 removeClippedSubviews
                 keyExtractor={(item) => item.candidateId}
                 renderItem={({ item }) => (
-                    <CandidateCard
-                        candidate={item}
-                        onPress={() => router.push(inventoryRoutes.candidate(
+                    <BatchReviewCard
+                        card={item}
+                        defaults={{
+                            languageHint: batchReview.data?.defaults.languageHint ?? 'en',
+                            condition: batchReview.data?.defaults.condition ?? null,
+                            location: batchReview.data?.defaults.location ?? '',
+                            priceMinor: batchReview.data?.defaults.priceMinor ?? null,
+                            publication: batchReview.data?.defaults.publication ?? 'private',
+                            batchLabel: batchReview.data?.batchLabel ?? '',
+                        }}
+                        isOffline={isOffline}
+                        canMutate={session.data?.status === 'active' && !isOffline}
+                        removePending={removeCandidate.isPending}
+                        onOpenFullCorrection={() => router.push(inventoryRoutes.candidate(
                             sessionId,
                             item.candidateId,
                         ))}
+                        onRemove={(candidateId) => handleCandidateRemove(
+                            candidateId, item.candidateVersion,
+                        )}
+                        onSaveEdits={(candidateId, edits) => handleSaveEdits(
+                            candidateId,
+                            edits,
+                            item.candidateVersion,
+                            item.metadataRevision,
+                        )}
                     />
                 )}
                 ListHeaderComponent={(
@@ -160,8 +292,65 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         <>
                             <Text selectable style={{ color: colors.textSecondary, marginTop: 8 }}>Saved on server. Processing continues if you leave.</Text>
                             <View style={{ gap: 10, marginTop: 16 }}>
+                                {aggregateFailed ? (
+                                    <View testID="batch-review-degraded" style={{ gap: 8 }}>
+                                        <Text
+                                            selectable
+                                            accessibilityLiveRegion="polite"
+                                            style={{ color: colors.error }}
+                                        >
+                                            Book review could not be loaded right now.
+                                        </Text>
+                                        <Button
+                                            title="Retry book review"
+                                            variant="secondary"
+                                            onPress={() => { void batchReview.refetch(); }}
+                                            disabled={isOffline}
+                                        />
+                                    </View>
+                                ) : unsupportedLegacyOverflow ? (
+                                    <View testID="batch-review-unsupported" style={{ gap: 6 }}>
+                                        <Text
+                                            selectable
+                                            accessibilityLiveRegion="polite"
+                                            style={{ color: colors.error }}
+                                        >
+                                            This scan contains more saved books than single-image review supports.
+                                        </Text>
+                                        <Text selectable style={{ color: colors.textSecondary }}>
+                                            Nothing was deleted. The session summary keeps the authoritative status.
+                                        </Text>
+                                    </View>
+                                ) : (
+                                    <>
+                                        {batchReview.data ? (
+                                            <Text
+                                                selectable
+                                                accessibilityLiveRegion="polite"
+                                                accessibilityLabel="Book count summary"
+                                                style={{ color: colors.textPrimary, fontWeight: '700' }}
+                                            >
+                                                {countSummaryLine(batchReview.data.counts)}
+                                            </Text>
+                                        ) : null}
+                                        <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>
+                                            Books found: {cards.length}
+                                        </Text>
+                                        {cards[0] ? (
+                                            <Button
+                                                title="Continue to book review"
+                                                variant="secondary"
+                                                onPress={() => router.push(inventoryRoutes.candidate(
+                                                    sessionId,
+                                                    cards[0].candidateId,
+                                                ))}
+                                            />
+                                        ) : null}
+                                    </>
+                                )}
                                 {inputAnnouncement ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{inputAnnouncement}</Text> : null}
                                 {removeMessage ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{removeMessage}</Text> : null}
+                                {candidateMessage ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{candidateMessage}</Text> : null}
                                 {inputs.data?.items.map((item) => (
                                     <View key={item.inputId} accessibilityLabel={`Image ${item.ordinal}. ${inputLabel(item)}`} style={{ padding: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 12 }}>
                                         <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>Image {item.ordinal}</Text>
@@ -191,20 +380,6 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                                     ? <Text selectable style={{ color: colors.textSecondary }}>No registered images yet.</Text>
                                     : null}
                             </View>
-                            <Text selectable style={{ color: colors.textPrimary, fontWeight: '700', marginTop: 18 }}>
-                                Books found: {candidates.data?.items.length ?? 0}
-                            </Text>
-                            {candidates.data?.items[0] ? (
-                                <Button
-                                    title="Continue to book review"
-                                    variant="secondary"
-                                    style={{ marginTop: 12 }}
-                                    onPress={() => router.push(inventoryRoutes.candidate(
-                                        sessionId,
-                                        candidates.data.items[0].candidateId,
-                                    ))}
-                                />
-                            ) : null}
                         </>
                     )}
                     </GlassCard>
@@ -216,13 +391,15 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                             <Button title="Choose replacement image" onPress={() => router.push(inventoryRoutes.scan())} disabled={isOffline} />
                         ) : null}
                         <Button title="View session summary" variant="secondary" onPress={() => router.push(inventoryRoutes.summary(sessionId))} />
-                        <Button
-                            title="Add missed book"
-                            variant="secondary"
-                            onPress={() => router.push(inventoryRoutes.missed(sessionId))}
-                            disabled={isOffline || (candidates.data?.items.length ?? 0) >= 15}
-                            accessibilityHint="Creates one staged manual candidate without running image analysis"
-                        />
+                        {!unsupportedLegacyOverflow ? (
+                            <Button
+                                title="Add missed book"
+                                variant="secondary"
+                                onPress={() => router.push(inventoryRoutes.missed(sessionId))}
+                                disabled={isOffline || cards.length >= 15}
+                                accessibilityHint="Creates one staged manual candidate without running image analysis"
+                            />
+                        ) : null}
                     </View>
                 ) : null}
             />

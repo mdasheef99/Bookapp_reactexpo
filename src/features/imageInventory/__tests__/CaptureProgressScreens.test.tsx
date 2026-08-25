@@ -6,7 +6,28 @@ const mockRouter = { push: jest.fn(), replace: jest.fn() };
 const mockRefetch = jest.fn(() => Promise.resolve({ isError: false, error: null }));
 const mockRemoveMutate = jest.fn();
 let mockFocused = true;
-const mockSession = { data: { status: 'active' }, error: null, refetch: mockRefetch };
+// NEW 6G-C composition: session authority is read through v3 and the compact
+// review aggregate is supplemental candidate authority alongside Unit 6 input
+// observation.
+const mockSessionV3: Record<string, unknown> = {
+    data: {
+        sessionId: '00000000-0000-4000-8000-000000000010',
+        status: 'active', sessionVersion: 4,
+        startedAt: '2026-07-31T00:00:00.000Z',
+        updatedAt: '2026-07-31T00:00:00.000Z',
+        closedAt: null, expiresAt: '2026-08-30T00:00:00.000Z',
+        defaults: {
+            languageHint: 'en', condition: null, location: 'Front shelf',
+            priceMinor: null, quantity: 1, publication: 'private', script: null,
+        },
+        batchLabel: null,
+        closeSummary: {}, allInputsTerminal: false,
+        closeState: 'not_closeable', presentationRevision: 5,
+    },
+    isLoading: false,
+    error: null,
+    refetch: mockRefetch,
+};
 const mockInputs = {
     data: {
         presentationRevision: 2,
@@ -24,26 +45,55 @@ const mockInputs = {
     error: null,
     refetch: mockRefetch,
 };
-const mockCandidates = {
-    data: { items: [{
+const mockBatchReview: Record<string, unknown> = {
+    data: {
         sessionId: '00000000-0000-4000-8000-000000000010',
-        sessionStartedAt: '2026-07-31T00:00:00.000Z',
-        sessionExpiresAt: '2026-08-30T00:00:00.000Z',
-        sessionStatus: 'active',
-        candidateId: '00000000-0000-4000-8000-000000000002',
-        inputId: null,
-        ordinal: 1,
-        title: 'Original book',
-        authors: ['Original author'],
-        language: 'en',
-        candidateState: 'needs_review',
-        candidateVersion: 1,
-        metadataState: 'manual',
-        reviewDisposition: null,
-        attentionCodes: ['metadata_manual_required'],
-        reviewReady: false,
+        status: 'active', sessionVersion: 4, presentationRevision: 5,
+        defaults: {
+            languageHint: 'en', condition: null, location: 'Front shelf',
+            priceMinor: null, quantity: 1, publication: 'private', script: null,
+        },
+        batchLabel: null,
+        counts: {
+            detected: 1, processing: 0, needsAttention: 1, reviewReadySaved: 0,
+            committed: 0, ownerRemoved: 0, falseDetections: 0,
+        },
+        items: [{
+            sessionId: '00000000-0000-4000-8000-000000000010',
+            candidateId: '00000000-0000-4000-8000-000000000002',
+            inputId: null,
+            ordinal: 1,
+            title: 'Original book',
+            authors: ['Original author'],
+            language: 'en',
+            candidateState: 'needs_review',
+            candidateVersion: 1,
+            metadataState: 'manual',
+            metadataRevision: 1,
+            reviewDisposition: null,
+            observed: {
+                title: 'Original book',
+                authors: ['Original author'],
+                language: 'en',
+                script: null,
+            },
+            metadataSummary: null,
+            review: null,
+            reviewVersion: null,
+            fieldSources: {
+                cover: 'missing', title: 'detected', authors: 'detected',
+                language: 'detected', condition: 'missing', price: 'missing',
+                quantity: 'default', location: 'missing', publication: 'default',
+                damage: 'default',
+            },
+            attentionCodes: ['metadata_manual_required'],
+            blockers: [],
+            reviewReady: false,
+            allowedActions: [],
+            updatedAt: '2026-07-31T00:00:00.000Z',
+        }],
         updatedAt: '2026-07-31T00:00:00.000Z',
-    }] },
+    },
     isLoading: false,
     error: null as Error | null,
     refetch: mockRefetch,
@@ -70,9 +120,13 @@ jest.mock('../screens/InventoryAccessBoundary', () => ({
 }));
 jest.mock('../queries/ownerUxQueries', () => ({
     useOwnerInventoryDiscovery: jest.fn(),
-    useOwnerInventorySession: () => mockSession,
     useOwnerInventoryInputs: () => mockInputs,
-    useOwnerInventoryCandidates: () => mockCandidates,
+}));
+jest.mock('../queries/ownerBatchReviewQueries', () => ({
+    useOwnerSessionV3: () => mockSessionV3,
+    useOwnerBatchReview: () => mockBatchReview,
+    useRemoveOwnerInventoryCandidate: () => ({ mutate: jest.fn(), isPending: false }),
+    useSaveOwnerCandidateReview: () => ({ mutate: jest.fn(), isPending: false }),
 }));
 jest.mock('../queries/ownerUxInputQueries', () => ({
     useRemoveOwnerInventoryInput: () => ({
@@ -152,26 +206,71 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
     });
 
     it('fails safely for an expired session', () => {
-        mockSession.data.status = 'expired';
+        mockSessionV3.data = { ...mockSessionV3.data as object, status: 'expired' };
         const screen = render(
             <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
         );
         expect(screen.getByText('This scan session is unavailable.')).toBeTruthy();
         fireEvent.press(screen.getByText('Return to Inventory'));
         expect(mockRouter.replace).toHaveBeenCalledWith('/(store-owner)/inventory');
-        mockSession.data.status = 'active';
+        mockSessionV3.data = { ...mockSessionV3.data as object, status: 'active' };
     });
 
-    it('shows a retry instead of zero books when candidate loading fails', () => {
-        mockCandidates.error = new Error('private candidate query detail');
+    it('keeps Unit 6 progress mounted with only bounded review degradation on aggregate failure', () => {
+        mockBatchReview.error = new Error('private candidate query detail');
         const screen = render(
             <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
         );
-        expect(screen.getByText('Saved scan progress could not be loaded.')).toBeTruthy();
+        // Unit 6 lifecycle/progress surface remains mounted and usable.
+        expect(screen.getByText('Saved on server. Processing continues if you leave.')).toBeTruthy();
+        expect(screen.getByText(/More than 15 books/u)).toBeTruthy();
+        expect(screen.getByText('Remove image')).toBeTruthy();
+        // The whole-screen lifecycle error branch must not be hijacked by the
+        // supplemental aggregate.
+        expect(screen.queryByText('Saved scan progress could not be loaded.')).toBeNull();
+        // Only the compact-review subsection shows bounded degraded treatment.
+        expect(screen.getByTestId('batch-review-degraded')).toBeTruthy();
         expect(screen.queryByText('private candidate query detail')).toBeNull();
-        fireEvent.press(screen.getByText('Retry'));
-        expect(mockRefetch).toHaveBeenCalled();
-        mockCandidates.error = null;
+        fireEvent.press(screen.getByText('Retry book review'));
+        expect(mockBatchReview.refetch).toHaveBeenCalled();
+        mockBatchReview.error = null;
+    });
+
+    it('fails closed instead of looking complete for a historical multi-input session', () => {
+        const singleInput = mockInputs.data.items[0];
+        mockInputs.data.items = [
+            singleInput,
+            { ...singleInput, inputId: '00000000-0000-4000-8000-000000000007', ordinal: 2 },
+        ];
+        const screen = render(
+            <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+        // Unit 6 surface remains authoritative...
+        expect(screen.getByText('Saved on server. Processing continues if you leave.')).toBeTruthy();
+        expect(screen.getAllByText(/More than 15 books/u).length).toBeGreaterThan(0);
+        expect(screen.getByText('View session summary')).toBeTruthy();
+        // ...but the compact projection must never present as complete.
+        expect(screen.getByTestId('batch-review-unsupported')).toBeTruthy();
+        expect(screen.queryByText(/Books found:/u)).toBeNull();
+        expect(screen.queryByText('Continue to book review')).toBeNull();
+        expect(screen.queryByText('Original book')).toBeNull();
+        expect(screen.queryByText('Add missed book')).toBeNull();
+        mockInputs.data.items = [singleInput];
+    });
+
+    it('fails closed when active-review counts exceed the returned compact projection', () => {
+        const originalCounts = (mockBatchReview.data as Record<string, any>).counts;
+        (mockBatchReview.data as Record<string, any>).counts = {
+            ...originalCounts,
+            processing: 16,
+        };
+        const screen = render(
+            <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+        expect(screen.getByTestId('batch-review-unsupported')).toBeTruthy();
+        expect(screen.queryByText(/Books found: 1/u)).toBeNull();
+        expect(screen.getByText('Saved on server. Processing continues if you leave.')).toBeTruthy();
+        (mockBatchReview.data as Record<string, any>).counts = originalCounts;
     });
 
     it('requires confirmation and sends the exact registered input version for removal', () => {
