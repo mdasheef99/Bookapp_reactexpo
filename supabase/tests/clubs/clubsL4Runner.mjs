@@ -94,6 +94,14 @@ const F04_CONCURRENCY_SCRIPT = join(REPO_ROOT, 'supabase', 'tests', 'f04_concurr
 const F04_MIGRATION = '20260824100000_clubs_f04_reaction_single_reaction_invariant.sql';
 const B02_MIGRATION = '20260822234500_clubs_b02_creation_cap_race_fix.sql';
 
+/** L01-B wave2 extras (applied after B02 chain on wave2 DB) */
+const WAVE2_EXTRA_MIGRATIONS = [
+  '20260310170000_014_clubs_events_schema_policy_alignment.sql',
+  '20260529154500_club_moderation_author_lifecycle_rpc.sql',
+  '20260822230000_clubs_wave2_attribution_guards_expiry.sql',
+];
+const WAVE2_MIGRATION = '20260822230000_clubs_wave2_attribution_guards_expiry.sql';
+
 class InfraError extends Error {}
 
 function docker(args, opts = {}) {
@@ -192,6 +200,35 @@ async function applyPlatformAndChain(database) {
   }
 }
 
+async function applyWave2Extension(database) {
+  guardLocalDisposable(database);
+  for (const file of WAVE2_EXTRA_MIGRATIONS) {
+    // Pre-drop for issue_club_member_action to allow CREATE OR REPLACE to remove DEFAULT (see 20260822230000 hint).
+    // ─────────────────────────────────────────────────────────────────────
+    // TEMPORARY L01 TEST COMPATIBILITY
+    // NOT REPLAY PROOF
+    // NOT TEST-07 CLOSURE
+    //
+    // Why this pre-drop exists: the prior migration
+    // 20260529154500 defines issue_club_member_action with
+    // `p_duration_hours integer DEFAULT NULL`; the wave2 migration
+    // 20260822230000 re-CREATEs it WITHOUT that default. PostgreSQL
+    // refuses `CREATE OR REPLACE` that removes an existing parameter
+    // default, so a clean replay of repository history would FAIL at
+    // the wave2 step. This pre-drop is a temporary contract-substrate
+    // workaround ONLY. The authoritative replay break is logged as a
+    // known repository migration replay failure owned by L01-D / TEST-07.
+    // ─────────────────────────────────────────────────────────────────────
+    if (file === '20260822230000_clubs_wave2_attribution_guards_expiry.sql') {
+      psqlSql(database,
+        'DROP FUNCTION IF EXISTS public.issue_club_member_action(uuid, uuid, text, text, integer);',
+        'pre-drop issue_club_member_action for wave2 DEFAULT removal (live-known replay break — L01-D/TEST-07 owns authoritative fix)');
+    }
+    psqlFile(database, `/repo/supabase/migrations/${file}`, `wave2 migration ${file}`);
+  }
+  console.log('[runner] wave2 extension applied (B03/B04 triggers + HIER guards + expiry)');
+}
+
 async function createExtraDatabase(fromDatabase, newDatabase) {
   guardLocalDisposable(newDatabase);
   psqlSql(fromDatabase, `CREATE DATABASE ${newDatabase}`, `created database ${newDatabase}`);
@@ -271,7 +308,8 @@ async function main() {
   const suites = [];
   if (argv.includes('b02')) suites.push('b02');
   if (argv.includes('f04')) suites.push('f04');
-  if (suites.length === 0) suites.push('b02', 'f04');
+  if (argv.includes('wave2') || argv.includes('wave2_attribution') || argv.includes('wave2_invitation') || argv.includes('wave2_moderation') || argv.includes('wave2:all')) suites.push('wave2');
+  if (suites.length === 0) suites.push('b02', 'f04', 'wave2');
   const mutationArg = argv.includes('--mutation') ? argv[argv.indexOf('--mutation') + 1] : null;
   const noLockMutation = mutationArg === 'no-lock'; // B02 RED proof
   const noRepairMutation = mutationArg === 'no-repair'; // F04 migration-boundary RED proof
@@ -285,6 +323,7 @@ async function main() {
   const password = randomBytes(16).toString('hex');
   const dbB02 = `clubs_l4_b02_${suffix}`;
   const dbF04 = `clubs_l4_f04_${suffix}`;
+  const dbWave2 = `clubs_l4_wave2_${suffix}`;
   const dbMut = `clubs_l4_mut_${suffix}`;
   const dbF04Mut = `clubs_l4_f04mut_${suffix}`;
 
@@ -428,6 +467,23 @@ async function main() {
         }
       }
     }
+
+    if (suites.includes('wave2')) {
+      console.log('[runner] ── WAVE2 backend contracts (B03/B04/B05/HIER) ──');
+      await createExtraDatabase(dbB02, dbWave2);
+      await applyPlatformAndChain(dbWave2);
+      await applyWave2Extension(dbWave2);
+      const wave2Scripts = [
+        [join(HERE, 'contracts', 'wave2_attribution.test.mjs'), 'wave2 attribution (B03+B04)'],
+        [join(HERE, 'contracts', 'wave2_invitation_expiry.test.mjs'), 'wave2 invitation expiry (B05)'],
+        [join(HERE, 'contracts', 'wave2_moderation.test.mjs'), 'wave2 moderation (HIER-02/HIER-03)'],
+      ];
+      for (const [scriptPath, label] of wave2Scripts) {
+        const code = await runNodeScript(scriptPath, { CLUBS_L4_DATABASE_URL: urlFor(dbWave2) }, `suite ${label}`);
+        if (code !== 0) contractFailures += 1;
+        else console.log(`[runner] suite ${label} PASS`);
+      }
+    }
   } finally {
     console.log('[runner] tearing down disposable environment');
     if (CURRENT?.container) {
@@ -441,10 +497,10 @@ async function main() {
   }
 
   if (contractFailures > 0) {
-    console.error(`[runner] L01-A result: FAIL (${contractFailures} suite(s) failed)`);
+    console.error(`[runner] L01 result: FAIL (${contractFailures} suite(s) failed)`);
     process.exit(1);
   }
-  console.log(`[runner] L01-A result: PASS (${suites.join(' + ')})`);
+  console.log(`[runner] L01 result: PASS (${suites.join(' + ')})`);
 }
 
 main().catch((e) => {

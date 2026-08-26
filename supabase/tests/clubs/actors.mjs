@@ -8,6 +8,9 @@
  * REAL repository objects only (auth.users shim row, user_profiles,
  * public.create_club). No production data is referenced; all ids are
  * generated UUIDs.
+ *
+ * L01-B extends with ADMIN, MODERATOR, ACTIVE MEMBER, OUTSIDER,
+ * CROSS-CLUB MEMBER helpers. All helpers preserve L01-A behavior.
  */
 import { randomUUID } from 'node:crypto';
 
@@ -100,4 +103,18 @@ export async function countQualifyingClubs(client, actorUserId) {
     [actorUserId],
   );
   return res.rows[0].n;
+}
+
+/**
+ * Ensure an active club membership for `userId` in `clubId`.
+ * Direct INSERT to bypass RLS; validates against enforce_club_member_entitlement.
+ * Caller must ensure tier satisfies access_level.
+ */
+export async function ensureClubMember(client, clubId, userId, role = 'member', status = 'active') {
+  await client.query(
+    `INSERT INTO public.club_members (club_id, user_id, role, status)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (club_id, user_id) DO UPDATE SET role = EXCLUDED.role, status = EXCLUDED.status`,
+    [clubId, userId, role, status],
+  );
 }
