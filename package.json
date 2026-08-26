@@ -34,7 +34,10 @@
     "smoke:phase9:worker-containers": "node scripts/smoke-phase9-worker-containers.js",
     "validate:phase9:deployment-runtime": "node scripts/validate-phase9-deployment-runtime.js",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:clubs:l4": "node supabase/tests/clubs/clubsL4Runner.mjs",
+    "test:clubs:l4:b02": "node supabase/tests/clubs/clubsL4Runner.mjs b02",
+    "test:clubs:l4:f04": "node supabase/tests/clubs/clubsL4Runner.mjs f04"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -90,6 +93,7 @@
     "@types/react": "~19.1.0",
     "babel-preset-expo": "~54.0.10",
     "jest-expo": "~54.0.17",
+    "pg": "^8.23.0",
     "react-test-renderer": "^19.1.0",
     "typescript": "~5.9.2"
   },

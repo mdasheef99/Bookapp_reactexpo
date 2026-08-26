@@ -33,6 +33,59 @@ Not run here (requires environment not available/approved in this session):
 - `f04_contract_tests.sql` against a replayed disposable instance (fixture documented in file header).
 - `f04_concurrency.mjs` (needs a disposable Postgres 17 with fixture + F04 migration applied; see its header for exact commands).
 
+## Assurance-record correction (2026-08-26, L01-A closeout)
+
+The row above describes `f04_contract_tests.sql` as part of F04 automated
+evidence. Correction of the record: until 2026-08-26 that script had **never
+actually executed** — it was first run for real through the CLUB-WU-L01
+disposable-PG17 runner after an owner-authorized minimal syntax repair
+(two bare side-effect-only `SELECT set_config(...)` statements inside
+PL/pgSQL DO blocks changed to `PERFORM`, CASE 7 + CASE 13; nothing else).
+
+Real execution result: fixture PASS, F04 migration PASS, contract cases
+1–13 execute cleanly, then the script **fails at CASE 14**: its seeded-
+duplicate INSERT violates `club_discussion_reactions_topic_user_unique`
+— the non-deferrable partial unique index created by THIS SAME F04
+migration (Step 3). Script and migration were authored in the same commit
+(`e213977`), so the suite was never executable end-to-end against the
+invariant it validates. Per the L01-A stop rule no assertion was rewritten;
+the CASE 14 discrepancy awaits a new bounded owner decision.
+
+Status distinction (authoritative):
+
+- **PRODUCT FIX:** remains **CLOSED** (live migration + RPC verified previously).
+- **TEST-HARNESS DEFECT:** syntax portion fixed during L01-A; deeper CASE 14
+  design defect newly confirmed — owned by **CLUB-WU-L01**.
+- **AUTOMATED SQL CONTRACT:** actually executed and repeatably green only
+  after a future authorized CASE 14 resolution; it is NOT green today.
+
+## Assurance-record FINAL correction (2026-08-26, L01-A closeout — supersedes the block above)
+
+CASE 14 was resolved by owner decision (F04 CASE 14, 2026-08-26) at the
+MIGRATION BOUNDARY; the automated SQL contract is now GREEN:
+
+- The historical post-migration CASE 14 was removed from
+  `supabase/tests/f04_contract_tests.sql` (in-file pointer comment records
+  why; number retired, not reused). Remaining post-migration contracts:
+  **CASE 1–13, unchanged** — no reaction semantics, RPC behavior, canonical
+  emoji domain, uniqueness expectation, concurrency behavior, or expected
+  authorization behavior was altered.
+- Migration-repair coverage now lives in two L01-A-owned artifacts executed
+  by `supabase/tests/clubs/clubsL4Runner.mjs`:
+  `f04_pre_migration_duplicate_seed.sql` (deterministic legacy duplicates,
+  legal pre-F04, seeded BEFORE the actual migration) and
+  `f04_migration_repair_contract.sql` (asserts what THE MIGRATION ITSELF did:
+  losers deleted, newest winner retained with values preserved, exactly one
+  row left, both partial UNIQUE indexes created and enforcing).
+- Real execution on disposable PostgreSQL 17 (exit 0): fixture PASS ·
+  pre-migration seed PASS · ACTUAL F04 migration 20260824100000 unchanged
+  PASS · migration-repair contract PASS · CASE 1–13 PASS · concurrency
+  A/B/C/D PASS.
+- RED sensitivity proven via runtime temp copy of the real migration with
+  only its duplicate-repair machinery bypassed: mutated migration FAILED at
+  CREATE UNIQUE INDEX `club_discussion_reactions_topic_user_unique` because
+  duplicate rows remained. Repository migration never modified for the test.
+
 ## What remains manual
 
 - **Live deployment:** applying `20260824100000_clubs_f04_reaction_single_reaction_invariant.sql` to Supabase project `ahntbtktjjmvfosgkmgn` requires explicit user approval. Per the workspace-split rule, the library tracker must be checked for migration conflicts before any application.

@@ -83,7 +83,7 @@ END $$;
 DO $$
 BEGIN
     PERFORM set_club_discussion_reaction('aaaaaaaa-0000-4000-8000-000000000001'::uuid, NULL, '📚'); -- actor still user1
-    SELECT set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', false);
+    PERFORM set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', false);
     PERFORM set_club_discussion_reaction('aaaaaaaa-0000-4000-8000-000000000001'::uuid, NULL, '📚'); -- user2
     IF (SELECT count(DISTINCT user_id) FROM club_discussion_reactions WHERE topic_id='aaaaaaaa-0000-4000-8000-000000000001'::uuid AND emoji='📚') <> 2 THEN
         RAISE EXCEPTION 'CASE7 FAIL: per-user independence broken';
@@ -143,7 +143,7 @@ END $$;
 -- ============ CASE 13: unauthenticated denied ============
 DO $$
 BEGIN
-    SELECT set_config('request.jwt.claim.sub', '', false);
+    PERFORM set_config('request.jwt.claim.sub', '', false);
     BEGIN
         PERFORM set_club_discussion_reaction('aaaaaaaa-0000-4000-8000-000000000001'::uuid, NULL, '👍');
         RAISE EXCEPTION 'AUTH FAIL: unauthenticated accepted';
@@ -153,27 +153,22 @@ BEGIN
     END;
 END $$;
 
--- ============ CASE 14: data-repair determinism (seeded dupes) ============
-DO $$
-DECLARE winner text; cnt integer;
-BEGIN
-    -- Seed duplicates for user2/topic2 (fresh target): 👍(older), ❤️(newest), 🔥(middle)
-    INSERT INTO club_discussion_reactions (topic_id, reply_id, user_id, emoji, created_at) VALUES
-        ('aaaaaaaa-0000-4000-8000-000000000001'::uuid, NULL, '22222222-2222-4222-8222-222222222222'::uuid, '👍', now() - interval '3 days'),
-        ('aaaaaaaa-0000-4000-8000-000000000001'::uuid, NULL, '22222222-2222-4222-8222-222222222222'::uuid, '❤️', now() - interval '1 hour'),
-        ('aaaaaaaa-0000-4000-8000-000000000001'::uuid, NULL, '22222222-2222-4222-8222-222222222222'::uuid, '🔥', now() - interval '2 days');
-    -- Run the exact repair CTE from the migration
-    WITH ranked AS (
-        SELECT id, ROW_NUMBER() OVER (PARTITION BY topic_id, user_id ORDER BY created_at DESC, id DESC) rn
-        FROM club_discussion_reactions WHERE topic_id IS NOT NULL
-    ), losers AS (SELECT id FROM ranked WHERE rn > 1)
-    DELETE FROM club_discussion_reactions WHERE id IN (SELECT id FROM losers);
-    SELECT emoji, count(*) INTO winner, cnt FROM club_discussion_reactions
-    WHERE topic_id='aaaaaaaa-0000-4000-8000-000000000001'::uuid AND user_id='22222222-2222-4222-8222-222222222222'
-    GROUP BY emoji;
-    IF cnt <> 1 OR winner <> '❤️' THEN
-        RAISE EXCEPTION 'REPAIR FAIL: survivor=% count=% (expected ❤️ x1)', winner, cnt;
-    END IF;
-END $$;
+-- ============================================================================
+-- CASE 14 REMOVED — CLUB-WU-L01-A owner decision (F04 CASE 14), 2026-08-26.
+-- The historical CASE 14 was structurally misplaced: it seeded legacy
+-- duplicate reactions AFTER this script's own F04 migration had already
+-- installed the non-deferrable `club_discussion_reactions_topic_user_unique`
+-- index, so its INSERT was correctly rejected before any repair logic could
+-- be observed — and its "proof" then re-ran a COPY of the repair CTE instead
+-- of the migration itself.
+-- Migration-repair coverage moved to the migration boundary:
+--   supabase/tests/f04_pre_migration_duplicate_seed.sql   (seeded BEFORE the
+--       actual F04 migration 20260824100000)
+--   supabase/tests/f04_migration_repair_contract.sql      (asserts the actual
+--       migration's repair + invariant effects)
+-- orchestrated in that order by supabase/tests/clubs/clubsL4Runner.mjs.
+-- The historical number 14 is retired, not reused; remaining post-migration
+-- SQL contracts are CASE 1–13, unchanged.
+-- ============================================================================
 
 \echo 'ALL_L4_CONTRACT_CASES_PASSED'
