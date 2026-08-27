@@ -4,6 +4,9 @@ import {
     BatchReviewCard,
 } from '../components/BatchReviewCard';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
+import { candidateDetailFixture, testUuid } from '../testing/ownerUxTestFixtures';
+
+let mockMetadataDetail = candidateDetailFixture();
 
 // Presentation-boundary stand-in so cover rendering stays assertable.
 jest.mock('expo-image', () => ({
@@ -12,6 +15,14 @@ jest.mock('expo-image', () => ({
         const { createElement } = require('react') as typeof import('react');
         return createElement(Text, null, String(props.accessibilityLabel));
     },
+}));
+jest.mock('../queries/ownerUxQueries', () => ({
+    useOwnerInventoryCandidate: () => ({
+        data: mockMetadataDetail,
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+    }),
 }));
 
 const onOpenFullCorrection = jest.fn();
@@ -88,13 +99,13 @@ const defaults = {
 function renderCard(overrides: Record<string, unknown> = {}) {
     return render(
         <BatchReviewCard
+            identity={{ userId: testUuid(90), storeId: testUuid(91) }}
             card={card(overrides)}
             defaults={defaults}
             isOffline={false}
             canMutate
             onOpenFullCorrection={onOpenFullCorrection}
             onRemove={onRemove}
-            onSaveEdits={onSaveEdits}
             onAdd={onAdd}
             removePending={false}
             addPending={false}
@@ -106,6 +117,11 @@ function renderCard(overrides: Record<string, unknown> = {}) {
 describe('Phase 9 NEW 6G-C compact review card', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockMetadataDetail = candidateDetailFixture({
+            sessionId: card().sessionId,
+            candidateId: card().candidateId,
+            observed: card().observed,
+        });
     });
 
     it('maps every retained source code to the canonical visible badge', () => {
@@ -139,19 +155,23 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         const locationRow = screen.getByTestId('card-location-sources');
         expect(within(locationRow).queryByText('Detected')).toBeNull();
         expect(within(locationRow).queryByText('Matched')).toBeNull();
-        expect(within(locationRow).getByText('Default')).toBeTruthy();
+        expect(within(locationRow).getAllByText('Default').length).toBeGreaterThan(0);
     });
 
-    it('saves common-field edits through the retained strict review seam with hidden notes round-tripped', () => {
+    it('keeps compact edits local until Add and round-trips hidden notes through that strict Save', async () => {
         const screen = renderCard();
         fireEvent.press(screen.getByTestId('card-condition-open'));
         fireEvent.press(screen.getByText('Acceptable'));
-        fireEvent.press(screen.getByText('Save changes'));
-        expect(onSaveEdits).toHaveBeenCalledWith(
-            '00000000-0000-4000-8000-000000000021',
+        expect(screen.queryByText('Save changes')).toBeNull();
+        expect(onSaveEdits).not.toHaveBeenCalled();
+        await act(async () => {
+            fireEvent.press(screen.getByText('Add to inventory'));
+            await Promise.resolve();
+        });
+        expect(onAdd).toHaveBeenCalledWith(
+            expect.objectContaining({ candidateId: card().candidateId }),
             { baseCondition: 'acceptable' },
-            2,
-            3,
+            expect.objectContaining({ baseCondition: 'acceptable' }),
         );
         // The parent applies compact edits onto the complete saved review so
         // hidden notes round-trip unchanged through the strict Save.
@@ -213,20 +233,135 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         expect(onAdd).toHaveBeenCalledWith(
             expect.objectContaining({ candidateId: card().candidateId }),
             { baseCondition: 'acceptable' },
+            expect.objectContaining({ baseCondition: 'acceptable' }),
         );
         const visibleButUnauthorized = renderCard({ allowedActions: ['view_metadata'] });
         expect(visibleButUnauthorized.queryByText('Add to inventory')).toBeNull();
     });
 
-    it('hides compact editing when no saved review exists and defers to full correction', () => {
+    it('lets a review:null card reach missing condition and price editors', () => {
+        const screen = renderCard({
+            reviewVersion: null,
+            review: null,
+            fieldSources: {
+                ...card().fieldSources,
+                condition: 'missing',
+                price: 'missing',
+            },
+            blockers: [
+                { code: 'condition_missing', candidateId: card().candidateId, inputId: null,
+                    field: 'baseCondition', safeMessage: 'Condition is required.' },
+                { code: 'price_invalid', candidateId: card().candidateId, inputId: null,
+                    field: 'priceMinor', safeMessage: 'Price is required.' },
+            ],
+        });
+        expect(screen.getByTestId('card-condition-open')).toBeTruthy();
+        fireEvent.press(screen.getByTestId('card-condition-open'));
+        expect(screen.getByText('Good')).toBeTruthy();
+        fireEvent.press(screen.getByText('Edit price'));
+        expect(screen.getByTestId('compact-price-picker')).toBeTruthy();
+    });
+
+    it('lets review:null metadata Edit manually open identity editing', () => {
+        const screen = renderCard({
+            reviewVersion: null,
+            review: null,
+            metadataState: 'no_match',
+            metadataSummary: null,
+            allowedActions: ['save_review', 'view_metadata'],
+        });
+        fireEvent.press(screen.getByText('View metadata'));
+        fireEvent.press(screen.getByText('Edit manually'));
+        expect(screen.getByTestId('compact-identity-editor')).toBeTruthy();
+        expect(onDraftChange).toHaveBeenLastCalledWith(card().candidateId, {
+            metadataChoice: { mode: 'manual', selectionId: null },
+        });
+    });
+
+    it('builds a valid local review:null draft without autosave and keeps Add Save-gated', async () => {
+        const screen = renderCard({
+            reviewVersion: null,
+            review: null,
+            metadataState: 'no_match',
+            metadataSummary: null,
+            allowedActions: ['save_review', 'view_metadata'],
+            fieldSources: {
+                ...card().fieldSources,
+                title: 'detected', authors: 'detected', language: 'detected',
+                condition: 'missing', price: 'missing',
+            },
+        });
+        expect(screen.queryByText('Add to inventory')).toBeNull();
+        fireEvent.press(screen.getByText('View metadata'));
+        fireEvent.press(screen.getByText('Use detected details'));
+        fireEvent.press(screen.getByTestId('card-condition-open'));
+        fireEvent.press(screen.getByText('Good'));
+        fireEvent.press(screen.getByText('Edit price'));
+        fireEvent.press(screen.getByText('₹25'));
+        expect(screen.queryByText('Save changes')).toBeNull();
+        expect(onAdd).not.toHaveBeenCalled();
+        expect(screen.getByText('Add to inventory')).toBeTruthy();
+        await act(async () => {
+            fireEvent.press(screen.getByText('Add to inventory'));
+            await Promise.resolve();
+        });
+        expect(onAdd).toHaveBeenCalledWith(
+            expect.objectContaining({ review: null, reviewVersion: null }),
+            expect.objectContaining({
+                metadataChoice: { mode: 'manual', selectionId: null },
+                baseCondition: 'good', priceMinor: 2500,
+            }),
+            expect.objectContaining({
+                originalTitle: 'Observed Title', baseCondition: 'good', priceMinor: 2500,
+                metadataChoice: { mode: 'manual', selectionId: null },
+            }),
+        );
+    });
+
+    it('retains Open full correction as the review:null deep-correction escape route', () => {
         const screen = renderCard({ reviewVersion: null, review: null });
-        expect(screen.queryByTestId('card-condition-open')).toBeNull();
-        expect(screen.getAllByText(/full correction/iu).length).toBeGreaterThan(0);
+        fireEvent.press(screen.getByText('Open full correction'));
+        expect(onOpenFullCorrection).toHaveBeenCalledTimes(1);
     });
 
     it('shows whole-rupee INR presentation derived from integer minor units', () => {
         const screen = renderCard();
         expect(screen.getByText(/₹250/u)).toBeTruthy();
+    });
+
+    it.each([
+        ['', null],
+        ['   ', null],
+        ['0', 0],
+        ['125', 12_500],
+    ])('treats custom whole-rupee input %p as %p minor units', (raw, expected) => {
+        const screen = renderCard();
+        fireEvent.press(screen.getByText('Edit price'));
+        fireEvent.changeText(screen.getByTestId('compact-custom-rupees'), raw);
+        fireEvent.press(screen.getByText('Use custom price'));
+        expect(onDraftChange).toHaveBeenLastCalledWith(card().candidateId, {
+            priceMinor: expected,
+        });
+    });
+
+    it.each(['12.5', '-1', '21474837'])(
+        'rejects invalid custom whole-rupee input %p without changing the draft',
+        (raw) => {
+            const screen = renderCard();
+            fireEvent.press(screen.getByText('Edit price'));
+            fireEvent.changeText(screen.getByTestId('compact-custom-rupees'), raw);
+            fireEvent.press(screen.getByText('Use custom price'));
+            expect(onDraftChange).not.toHaveBeenCalled();
+        },
+    );
+
+    it('serializes the explicit Not set price choice as null', () => {
+        const screen = renderCard();
+        fireEvent.press(screen.getByText('Edit price'));
+        fireEvent.press(screen.getByText('Not set'));
+        expect(onDraftChange).toHaveBeenLastCalledWith(card().candidateId, {
+            priceMinor: null,
+        });
     });
 
     it('prefers accepted selected metadata over raw observed values for title and authors', () => {
@@ -268,6 +403,31 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         expect(screen.getAllByText(/Owner Corrected Title/u).length).toBeGreaterThan(0);
         expect(screen.queryByText(/Selected Metadata Title/u)).toBeNull();
         expect(screen.getAllByText(/Corrected Author/u).length).toBeGreaterThan(0);
+    });
+
+    it('renders every SDD-required compact editor and never renders standalone Save changes', () => {
+        const screen = renderCard();
+        [
+            'Edit title and authors', 'Edit language', 'Edit condition',
+            'Edit price', 'Edit quantity', 'Edit location',
+            'Edit publication', 'Edit damage',
+        ].forEach((label) => expect(screen.getByText(label)).toBeTruthy());
+
+        fireEvent.press(screen.getByText('Edit condition'));
+        fireEvent.press(screen.getByText('Acceptable'));
+        expect(screen.queryByText('Save changes')).toBeNull();
+        expect(screen.getByText('Add to inventory')).toBeTruthy();
+    });
+
+    it('uses saved/custom language before selected and observed language', () => {
+        const screen = renderCard({
+            observed: { ...card().observed, language: 'fr' },
+            metadataSummary: { ...card().metadataSummary!, language: 'de' },
+            review: { ...(card().review as Record<string, unknown>), originalLanguage: 'hi' },
+            fieldSources: { ...card().fieldSources, language: 'custom' },
+        });
+        expect(screen.getByText('Language: hi')).toBeTruthy();
+        expect(screen.queryByText('Language: fr')).toBeNull();
     });
 
     it('renders a bounded cover thumbnail or an explicit Missing placeholder, never scan media', () => {
@@ -315,12 +475,125 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         expect(damaged.getByText('Damage: Has damage')).toBeTruthy();
     });
 
-    it('opens the existing full-correction entry from View metadata when allowed', () => {
+    it('shows private publication when an unsafe damage edit forces strict private serialization', async () => {
+        const screen = renderCard({
+            review: {
+                ...(card().review as Record<string, unknown>),
+                publicationIntent: 'publish',
+            },
+        });
+        expect(screen.getByText('Publication: publish')).toBeTruthy();
+
+        fireEvent.press(screen.getByText('Edit damage'));
+        fireEvent.press(screen.getByText('Has damage'));
+        fireEvent.press(screen.getByText('Cover'));
+        fireEvent.changeText(screen.getByTestId('compact-damage-note'), 'Bent corner');
+        fireEvent.press(screen.getByText('Sellable copy'));
+
+        expect(screen.getByText('Publication: private')).toBeTruthy();
+        expect(screen.queryByText('Publication: publish')).toBeNull();
+
+        await act(async () => {
+            fireEvent.press(screen.getByText('Add to inventory'));
+            await Promise.resolve();
+        });
+        expect(onAdd).toHaveBeenCalledWith(
+            expect.objectContaining({ candidateId: card().candidateId }),
+            expect.objectContaining({
+                damageDisclosure: expect.objectContaining({ isSellable: false }),
+            }),
+            expect.objectContaining({
+                publicationIntent: 'private',
+                damageDisclosure: expect.objectContaining({ isSellable: false }),
+            }),
+        );
+    });
+
+    it('opens bounded metadata separately while full correction keeps its retained route callback', () => {
         const allowed = renderCard({ allowedActions: ['view_metadata'] });
         fireEvent.press(allowed.getByText('View metadata'));
+        expect(allowed.getByText('Book metadata')).toBeTruthy();
+        expect(allowed.getByTestId('metadata-no-selected-details')).toBeTruthy();
+        expect(allowed.getByText('Use detected details')).toBeTruthy();
+        expect(allowed.getByText('Edit manually')).toBeTruthy();
+        expect(onOpenFullCorrection).not.toHaveBeenCalled();
+
+        fireEvent.press(allowed.getByText('Close metadata'));
+        fireEvent.press(allowed.getByText('Open full correction'));
         expect(onOpenFullCorrection).toHaveBeenCalledTimes(1);
 
         const notAllowed = renderCard({ allowedActions: [] });
         expect(notAllowed.queryByText('View metadata')).toBeNull();
+    });
+
+    it('keeps Use detected and Edit manually bounded to explicit manual/null identity edits', () => {
+        const detected = renderCard({ allowedActions: ['view_metadata'] });
+        fireEvent.press(detected.getByText('View metadata'));
+        fireEvent.press(detected.getByText('Use detected details'));
+        expect(onDraftChange).toHaveBeenLastCalledWith(card().candidateId, expect.objectContaining({
+            originalTitle: mockMetadataDetail.observed.title,
+            metadataChoice: { mode: 'manual', selectionId: null },
+        }));
+
+        const manual = renderCard({ allowedActions: ['view_metadata'] });
+        fireEvent.press(manual.getByText('View metadata'));
+        fireEvent.press(manual.getByText('Edit manually'));
+        expect(manual.getByTestId('compact-identity-editor')).toBeTruthy();
+        expect(onDraftChange).toHaveBeenLastCalledWith(card().candidateId, {
+            metadataChoice: { mode: 'manual', selectionId: null },
+        });
+    });
+
+    it('shows only the bounded selected metadata snapshot fields when one exists', () => {
+        mockMetadataDetail = candidateDetailFixture({
+            metadata: {
+                state: 'selected', revision: 7, selectionVersion: 1,
+                selectionId: testUuid(99), canonicalEditionId: testUuid(98),
+                snapshot: {
+                    title: 'Selected detail title', authors: ['Selected detail author'],
+                    language: 'en', subtitle: null, description: null,
+                    isbn10: '1234567890', isbn13: '1234567890123',
+                    publisher: 'Bounded Publisher', publishedDate: '2026',
+                    script: 'Latn', editionStatement: 'First', series: null,
+                    volume: null, format: 'Paperback', pageCount: 240,
+                    categories: [], coverReference: null,
+                },
+            },
+        });
+        const screen = renderCard({ allowedActions: ['view_metadata'] });
+        fireEvent.press(screen.getByText('View metadata'));
+        expect(screen.getByTestId('selected-metadata-details')).toBeTruthy();
+        expect(screen.getByText('Title: Selected detail title')).toBeTruthy();
+        expect(screen.getByText('Publisher: Bounded Publisher')).toBeTruthy();
+        expect(screen.queryByTestId('metadata-no-selected-details')).toBeNull();
+    });
+
+    it('requires an explicit choice when canonical authority changes under mounted edits', () => {
+        const initial = card();
+        const screen = render(
+            <BatchReviewCard
+                identity={{ userId: testUuid(90), storeId: testUuid(91) }}
+                card={initial} defaults={defaults} isOffline={false} canMutate
+                onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove}
+                onAdd={onAdd} removePending={false} addPending={false}
+                onDraftChange={onDraftChange}
+            />,
+        );
+        fireEvent.press(screen.getByTestId('card-condition-open'));
+        fireEvent.press(screen.getByText('Acceptable'));
+        screen.rerender(
+            <BatchReviewCard
+                identity={{ userId: testUuid(90), storeId: testUuid(91) }}
+                card={{ ...initial, candidateVersion: 3 }} defaults={defaults}
+                isOffline={false} canMutate onOpenFullCorrection={onOpenFullCorrection}
+                onRemove={onRemove} onAdd={onAdd} removePending={false}
+                addPending={false} onDraftChange={onDraftChange}
+            />,
+        );
+        expect(screen.getByTestId('compact-authority-changed')).toBeTruthy();
+        expect(screen.getByText('Add to inventory')).toBeDisabled();
+        fireEvent.press(screen.getByText('Reapply compact edits'));
+        expect(screen.getByText('Add to inventory')).not.toBeDisabled();
+        expect(screen.getByText('Condition: acceptable')).toBeTruthy();
     });
 });

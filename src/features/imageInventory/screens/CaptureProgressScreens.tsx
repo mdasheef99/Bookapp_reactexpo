@@ -7,11 +7,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useTheme } from '@/hooks/useTheme';
-import {
-    type CompactReviewEdits,
-    applyCompactEdits,
-    BatchReviewCard,
-} from '../components/BatchReviewCard';
+import { BatchReviewCard } from '../components/BatchReviewCard';
 import { BatchInventoryCommitControls } from '../components/BatchInventoryCommitControls';
 import { useInventoryCommitCoordinator } from '../commit/useInventoryCommitCoordinator';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
@@ -24,8 +20,11 @@ import {
     useOwnerBatchReview,
     useOwnerSessionV3,
     useRemoveOwnerInventoryCandidate,
-    useSaveOwnerCandidateReview,
 } from '../queries/ownerBatchReviewQueries';
+import {
+    buildCompactReview,
+    type CompactReviewEdits,
+} from '../review/compactReviewDraft';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
 import { coalesceOwnerUxRefresh } from '../offline/ownerUxOfflineGate';
 import { createCaptureUuid, createSemanticKey } from '../capture/captureIds';
@@ -70,7 +69,6 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const inputs = useOwnerInventoryInputs(identity, sessionId, isFocused);
     // Supplemental 6G candidate/review aggregate authority.
     const batchReview = useOwnerBatchReview(identity, sessionId, isFocused);
-    const saveReview = useSaveOwnerCandidateReview(identity);
     const removeCandidate = useRemoveOwnerInventoryCandidate(identity, sessionId);
     const inventoryCommit = useInventoryCommitCoordinator(identity, sessionId);
     const { isOffline } = useNetworkStatus();
@@ -223,51 +221,20 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
             },
         });
     };
-    const handleSaveEdits = (
-        candidateId: string,
-        edits: CompactReviewEdits,
-        expectedCandidateVersion: number,
-        expectedMetadataRevision: number,
-    ) => {
-        const card = batchReview.data?.items.find((item) => item.candidateId === candidateId);
-        const saved = card?.review;
-        if (!card || !saved || isOffline || saveReview.isPending) return;
-        // The standalone Save participates in the shared per-candidate command
-        // slot; it can never race Add/Add-all/Remove for the same candidate.
-        const slotToken = inventoryCommit.claimSlot(candidateId, 'save');
-        if (!slotToken) {
-            setCandidateMessage('That book is busy. Wait for its current action to finish.');
-            return;
-        }
-        saveReview.mutate({
-            sessionId,
-            candidateId,
-            expectedCandidateVersion,
-            expectedMetadataRevision,
-            // Strict canonical Save over the complete saved review; hidden
-            // notes round-trip unchanged because compact UI never edits them.
-            review: applyCompactEdits(saved, edits) as never,
-            idempotencyKey: createSemanticKey('save-review'),
-            commandId: createCaptureUuid(),
-        }, {
-            onSuccess: () => {
-                inventoryCommit.releaseSlot(candidateId, slotToken);
-                setCandidateMessage('Saved changes for this book.');
-            },
-            onError: () => {
-                inventoryCommit.releaseSlot(candidateId, slotToken);
-                setCandidateMessage(
-                    'Changes were not saved. Refresh to compare before trying again.',
-                );
-            },
-        });
-    };
-
     const cards = batchReview.data?.items ?? [];
-    const commitDrafts = cards.map((card) => ({
-        card,
-        edits: candidateDrafts.get(card.candidateId) ?? {},
-    }));
+    const setupDefaults = {
+        languageHint: batchReview.data?.defaults.languageHint ?? 'en',
+        condition: batchReview.data?.defaults.condition ?? null,
+        location: batchReview.data?.defaults.location ?? '',
+        priceMinor: batchReview.data?.defaults.priceMinor ?? null,
+        publication: batchReview.data?.defaults.publication ?? 'private',
+        batchLabel: batchReview.data?.batchLabel ?? '',
+    };
+    const commitDrafts = cards.map((card) => {
+        const edits = candidateDrafts.get(card.candidateId) ?? {};
+        const review = buildCompactReview(card, setupDefaults, edits);
+        return { card, edits, ...(review ? { review } : {}) };
+    });
 
     return (
         <ScreenBackground>
@@ -283,15 +250,9 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                 keyExtractor={(item) => item.candidateId}
                 renderItem={({ item }) => (
                     <BatchReviewCard
+                        identity={identity}
                         card={item}
-                        defaults={{
-                            languageHint: batchReview.data?.defaults.languageHint ?? 'en',
-                            condition: batchReview.data?.defaults.condition ?? null,
-                            location: batchReview.data?.defaults.location ?? '',
-                            priceMinor: batchReview.data?.defaults.priceMinor ?? null,
-                            publication: batchReview.data?.defaults.publication ?? 'private',
-                            batchLabel: batchReview.data?.batchLabel ?? '',
-                        }}
+                        defaults={setupDefaults}
                         isOffline={isOffline}
                         canMutate={session.data?.status === 'active' && !isOffline
                             && !inventoryCommit.inFlight.has(item.candidateId)
@@ -306,13 +267,9 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         onRemove={(candidateId) => handleCandidateRemove(
                             candidateId, item.candidateVersion,
                         )}
-                        onSaveEdits={(candidateId, edits) => handleSaveEdits(
-                            candidateId,
-                            edits,
-                            item.candidateVersion,
-                            item.metadataRevision,
-                        )}
-                        onAdd={(card, edits) => inventoryCommit.addCandidate({ card, edits })}
+                        onAdd={(card, edits, review) => inventoryCommit.addCandidate({
+                            card, edits, review,
+                        })}
                         onDraftChange={(candidateId, edits) => {
                             setCandidateDrafts((current) => {
                                 const next = new Map(current);

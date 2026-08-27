@@ -16,6 +16,7 @@ import {
     type ImageInventoryIdentity,
 } from './ownerUxQueries';
 import { synchronizeInventoryCommitSuccess } from './ownerInventoryCommitQueries';
+import { ownerBatchReviewKeys } from './ownerBatchReviewQueries';
 
 const identityToken = (identity: ImageInventoryIdentity | null) => (
     identity ? `${identity.userId}:${identity.storeId}` : null
@@ -98,6 +99,15 @@ export async function synchronizeCandidateReviewSuccess(
         }),
         client.invalidateQueries({
             queryKey: imageInventoryKeys.readiness(identity, sessionId),
+        }),
+        client.invalidateQueries({
+            queryKey: ownerBatchReviewKeys.sessionV3(identity, sessionId),
+        }),
+        client.invalidateQueries({
+            queryKey: ownerBatchReviewKeys.batchReview(identity, sessionId),
+        }),
+        client.invalidateQueries({
+            queryKey: ownerBatchReviewKeys.readinessV3(identity, sessionId),
         }),
     ]);
 }

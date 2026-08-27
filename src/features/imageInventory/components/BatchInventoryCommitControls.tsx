@@ -26,7 +26,10 @@ export function BatchInventoryCommitControls({
         command: FrozenAddAllCommand;
         result: AddAllResult;
     }>;
-    onRetry: (command: FrozenAddAllCommand) => Promise<AddAllResult>;
+    onRetry: (
+        command: FrozenAddAllCommand,
+        candidates: readonly CandidateCommitDraft[],
+    ) => Promise<AddAllResult>;
 }) {
     const { colors } = useTheme();
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -35,11 +38,14 @@ export function BatchInventoryCommitControls({
         () => candidates.filter(candidateCanStartCommit),
         [candidates],
     );
-    const retryable = Boolean(result && (result.failedRetryable > 0 || result.stillPending > 0));
+    const retryable = Boolean(result && (
+        result.failedRetryable > 0 || result.stillPending > 0 || result.needsAttention > 0
+    ));
     const summary = result ? [
         `Added ${result.succeeded}`,
         `Retryable ${result.failedRetryable}`,
         `No longer eligible ${result.noLongerEligible}`,
+        `Needs attention ${result.needsAttention}`,
         `Still pending ${result.stillPending}`,
         `Busy ${result.busy}`,
     ].join(' · ') : null;
@@ -85,7 +91,7 @@ export function BatchInventoryCommitControls({
                     title="Retry unresolved books"
                     variant="secondary"
                     disabled={disabled || pending}
-                    onPress={() => { void onRetry(lastCommand); }}
+                    onPress={() => { void onRetry(lastCommand, candidates); }}
                     accessibilityHint="Retries only unresolved command identities; succeeded books are never recommitted."
                 />
             ) : null}

@@ -143,6 +143,7 @@ export function useInventoryCommitCoordinator(
 
     const retryAddAll = async (
         command: ReturnType<InventoryCommitCoordinator['freezeAddAll']>,
+        currentDrafts: readonly CandidateCommitDraft[] = [],
     ) => {
         const retryIds = command.candidateIds.filter((candidateId) => {
             const status = command.outcomes.get(candidateId)?.status;
@@ -151,7 +152,7 @@ export function useInventoryCommitCoordinator(
         markInFlight(retryIds, true);
         setBulkPending(true);
         try {
-            const result = await coordinator.retryAddAll(command);
+            const result = await coordinator.retryAddAll(command, currentDrafts);
             record(result.outcomes);
             setBulkResult(result);
             return result;

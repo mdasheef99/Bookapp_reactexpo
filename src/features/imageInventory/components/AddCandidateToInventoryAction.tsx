@@ -30,6 +30,7 @@ type LegacyAddProps = Readonly<{
 type CoordinatedAddProps = Readonly<{
     card: OwnerBatchReviewCard;
     hasUnsavedReview: boolean;
+    draftReady: boolean;
     disabled: boolean;
     isOffline: boolean;
     pending: boolean;
@@ -40,6 +41,7 @@ type CoordinatedAddProps = Readonly<{
 function CoordinatedAddCandidateAction({
     card,
     hasUnsavedReview,
+    draftReady,
     disabled,
     isOffline,
     pending,
@@ -48,7 +50,7 @@ function CoordinatedAddCandidateAction({
 }: CoordinatedAddProps) {
     const { colors } = useTheme();
     const router = useRouter();
-    const authorized = card.review !== null && (
+    const authorized = draftReady && (
         (card.reviewReady && card.allowedActions.includes('add_to_inventory'))
         || (hasUnsavedReview && card.allowedActions.includes('save_review'))
     );

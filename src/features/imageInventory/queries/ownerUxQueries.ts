@@ -227,6 +227,7 @@ export function useOwnerInventoryCandidate(
     identity: ImageInventoryIdentity | null,
     sessionId: string | null,
     candidateId: string | null,
+    enabled = true,
 ) {
     return useQuery({
         ...commonQueryOptions,
@@ -236,7 +237,7 @@ export function useOwnerInventoryCandidate(
             candidateId ?? 'unresolved',
         ),
         queryFn: () => ownerUxService.readCandidate(sessionId as string, candidateId as string),
-        enabled: Boolean(identity && sessionId && candidateId),
+        enabled: Boolean(enabled && identity && sessionId && candidateId),
     });
 }
 

@@ -27,8 +27,8 @@ import {
 import {
     getResolvedImageInventoryIdentity,
     type ImageInventoryIdentity,
-    useOwnerInventorySession,
 } from '../queries/ownerUxQueries';
+import { useOwnerSessionV3 } from '../queries/ownerBatchReviewQueries';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
 import { useOwnerUxOfflineGate } from '../offline/ownerUxOfflineGate';
 
@@ -49,7 +49,7 @@ function MissedBookForm({
     const navigation = useNavigation();
     const router = useRouter();
     const client = useCorrectionQueryClient();
-    const sessionQuery = useOwnerInventorySession(identity, sessionId);
+    const sessionQuery = useOwnerSessionV3(identity, sessionId);
     const mutation = useAddManualCandidate(identity);
     const initial = useMemo(() => ({ ...createEmptyMissedBookDraft(), authors: [''] }), []);
     const [draft, setDraft] = useState<MissedBookDraft>(initial);

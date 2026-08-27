@@ -1,10 +1,6 @@
-import {
-    OwnerUxClientError,
-    type AddCandidateToInventoryRequest,
-} from '../api/ownerUxService';
+import type { AddCandidateToInventoryRequest } from '../api/ownerUxService';
 import type {
     OwnerCandidateCommitResult,
-    OwnerCandidateDetail,
 } from '../contracts/ownerUxContracts';
 import {
     ownerCandidateReviewSchema,
@@ -18,6 +14,15 @@ import {
     type FrozenCandidateCommand,
     type InventoryCommitCoordinatorDependencies,
 } from './inventoryCommitTypes';
+import {
+    aggregate,
+    candidateCanStartCommit,
+    canonicalEligible,
+    classifyFailure,
+    draftMatchesCommand,
+} from './inventoryCommitPolicy';
+
+export { candidateCanStartCommit } from './inventoryCommitPolicy';
 
 export {
     CandidateCommandRegistry,
@@ -28,82 +33,11 @@ export {
     type InventoryCommitCoordinatorDependencies,
 } from './inventoryCommitTypes';
 
-const conflictCodes = new Set([
-    'P9_CANDIDATE_VERSION_CONFLICT',
-    'P9_VERSION_CONFLICT',
-    'P9_STATE_CONFLICT',
-    'P9_NOT_FOUND',
-    'P9_OWNER_NOT_AUTHORIZED',
-]);
-
 type RetryState = {
     command: FrozenCandidateCommand;
     commitRequest?: AddCandidateToInventoryRequest;
     ambiguousCommit: boolean;
 };
-
-export function candidateCanStartCommit(value: CandidateCommitDraft): boolean {
-    if (!value.card.review) return false;
-    const merged = { ...value.card.review, ...value.edits };
-    if (!ownerCandidateReviewSchema.safeParse(merged).success) return false;
-    const hasEdits = Object.keys(value.edits).length > 0;
-    return hasEdits
-        ? value.card.allowedActions.includes('save_review')
-        : value.card.reviewReady
-            && value.card.allowedActions.includes('add_to_inventory');
-}
-
-function canonicalEligible(detail: OwnerCandidateDetail): boolean {
-    return detail.candidateState === 'ready'
-        && detail.review.value !== null
-        && detail.review.reviewVersion !== null
-        && detail.readiness.reviewReady
-        && detail.allowedActions.includes('add_to_inventory');
-}
-
-// A refreshed draft matches the frozen retry command only when the merged
-// Owner-visible review is identical. Any newer mounted edit supersedes the
-// frozen command and must never be silently replayed.
-function draftMatchesCommand(
-    refreshed: CandidateCommitDraft,
-    command: FrozenCandidateCommand,
-): boolean {
-    if (!refreshed.card.review) return false;
-    const merged = { ...refreshed.card.review, ...refreshed.edits };
-    return JSON.stringify(merged) === JSON.stringify(command.draft);
-}
-
-function classifyFailure(candidateId: string, stage: CandidateCommitOutcome['stage'], error: unknown) {
-    const code = error instanceof OwnerUxClientError ? error.code : undefined;
-    if (stage === 'commit' && code === 'P9_INTERNAL_ERROR') {
-        return { candidateId, status: 'still_pending' as const, stage, code };
-    }
-    if (code && conflictCodes.has(code)) {
-        return { candidateId, status: 'no_longer_eligible' as const, stage, code };
-    }
-    if (!(error instanceof OwnerUxClientError) || error.retryable) {
-        return { candidateId, status: 'failed_retryable' as const, stage, code };
-    }
-    return { candidateId, status: 'no_longer_eligible' as const, stage, code };
-}
-
-function aggregate(command: FrozenAddAllCommand): AddAllResult {
-    const outcomes = command.candidateIds.map((candidateId) => command.outcomes.get(candidateId)
-        ?? { candidateId, status: 'still_pending' as const, stage: 'claim' as const });
-    const count = (status: CandidateCommitOutcome['status']) => (
-        outcomes.filter((outcome) => outcome.status === status).length
-    );
-    return {
-        exactN: command.exactN,
-        candidateIds: command.candidateIds,
-        outcomes,
-        succeeded: count('succeeded'),
-        failedRetryable: count('failed_retryable'),
-        noLongerEligible: count('no_longer_eligible'),
-        stillPending: count('still_pending'),
-        busy: count('busy'),
-    };
-}
 
 export class InventoryCommitCoordinator {
     private readonly retries = new Map<string, RetryState>();
@@ -115,11 +49,15 @@ export class InventoryCommitCoordinator {
     ) {}
 
     private freezeCandidate(value: CandidateCommitDraft, claimToken: string): FrozenCandidateCommand {
-        const hasEdits = Object.keys(value.edits).length > 0;
+        const draft = ownerCandidateReviewSchema.parse(
+            value.review ?? { ...value.card.review!, ...value.edits },
+        );
+        const hasEdits = value.card.review === null
+            || JSON.stringify(draft) !== JSON.stringify(value.card.review);
         return {
             candidateId: value.card.candidateId,
             sessionId: value.card.sessionId,
-            draft: { ...value.card.review!, ...value.edits },
+            draft,
             needsSave: hasEdits,
             candidateVersion: value.card.candidateVersion,
             metadataRevision: value.card.metadataRevision,
@@ -237,15 +175,43 @@ export class InventoryCommitCoordinator {
         return this.executeClaimed(command, true);
     }
 
-    async retryAddAll(command: FrozenAddAllCommand): Promise<AddAllResult> {
+    async retryAddAll(
+        command: FrozenAddAllCommand,
+        refreshed: readonly CandidateCommitDraft[] = [],
+    ): Promise<AddAllResult> {
+        const refreshedById = new Map(refreshed.map((value) => [value.card.candidateId, value]));
         const retryable = command.commands.filter((item) => {
             const outcome = command.outcomes.get(item.candidateId);
-            return outcome?.status === 'failed_retryable' || outcome?.status === 'still_pending';
+            return outcome?.status === 'failed_retryable'
+                || outcome?.status === 'still_pending'
+                || outcome?.status === 'needs_attention';
         });
-        await this.runBounded(retryable.map((item) => {
+        const retryCommands = retryable.flatMap((item) => {
             const token = `bulk-retry:${command.commandId}`;
-            return { ...item, claimToken: token, claimed: this.registry.claim(item.candidateId, token) };
-        }), command, true);
+            const retry = this.retries.get(item.candidateId);
+            const current = refreshedById.get(item.candidateId);
+            if (retry && current && !draftMatchesCommand(current, retry.command)) {
+                // Mirror per-card supersede semantics: changed Owner draft B
+                // receives a fresh Save/commit identity; frozen A is discarded.
+                if (!candidateCanStartCommit(current)) {
+                    command.outcomes.set(item.candidateId, {
+                        candidateId: item.candidateId,
+                        status: 'needs_attention',
+                        stage: 'claim',
+                    });
+                    return [];
+                }
+                this.retries.delete(item.candidateId);
+                return [this.freezeCandidate(current, token)];
+            }
+            const frozen = retry?.command ?? item;
+            return [{
+                ...frozen,
+                claimToken: token,
+                claimed: this.registry.claim(item.candidateId, token),
+            }];
+        });
+        await this.runBounded(retryCommands, command, true);
         const successes = retryable.flatMap((item) => {
             const result = command.outcomes.get(item.candidateId)?.result;
             return result ? [result] : [];

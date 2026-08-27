@@ -12,6 +12,7 @@ describe('Phase 9 Unit 6F privacy, media-purpose, and Unit 7 boundary', () => {
     const production = productionSources.map(({ source }) => source).join('\n');
     const authorizedUnit6gDCommitSurfaces = new Set([
         'commit/inventoryCommitCoordinator.ts',
+        'commit/inventoryCommitPolicy.ts',
         'commit/inventoryCommitTypes.ts',
         'commit/useInventoryCommitCoordinator.ts',
         'components/AddCandidateToInventoryAction.tsx',

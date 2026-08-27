@@ -1,7 +1,40 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit6g_d_implemented_pending_owner_6ge_authorization`; **last updated:** 2026-08-24
+**Status:** `unit6g_d_implemented_pending_owner_6ge_authorization`; **last updated:** 2026-08-26
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
 **Active work unit:** `unit6g_d_implemented_pending_owner_6ge_authorization`. Unit 8 remains live-verified/integrated; the 2026-08-24 recomposition made the revised SDD/matrix/tracker 31 the sole NEW 6G-C/6G-D design authority (independent final review COMPLETE, verdict PASS_WITH_P3); NEW 6G-C implementation is COMPLETE and locally checkpointed (review PASS_WITH_P3; known P3 N1 module-size deferred); NEW 6G-D implementation is COMPLETE and locally checkpointed (final verdict PASS). Next: 6G-E Edge deployment/live/native closure ONLY on separate Owner authorization; nothing deployed.
+
+### 2026-08-26 — Unit 6G targeted F4 correction
+
+- Date/session: 2026-08-26, targeted post-scan frozen-diff rereview correction
+  on `codex/phase9-unit6g-recomposition`.
+- Authorized work unit and scope: NEW Unit 6G compact review display/save
+  parity only. The existing Unit 6G §3.1 damage rule and §9 card contract
+  remain the authority; no SDD, matrix, schema, or migration change was
+  needed.
+- Completed: `compactReviewDisplay` now derives the effective publication
+  after applying the unsafe/incomplete damage rule, and `buildCompactReview`
+  reuses that same value. The mounted regression covers Has damage, Cover,
+  note entry, unsellable copy, visible `private`, and the private Add payload.
+- Files/components: `src/features/imageInventory/review/compactReviewDraft.ts`
+  and the mounted regression in
+  `src/features/imageInventory/__tests__/batchReviewCard.test.tsx`. No
+  migration or database/storage file changed.
+- Verification actually run: red regression failed before the source fix;
+  focused compact-draft/card suites 40/40; full image-inventory Jest 56
+  suites, 434 passed, 4 skipped; `npx.cmd tsc --noEmit` exit 0; `npm.cmd run
+  export:web` exit 0; Phase 9 continuity validator PASS; `git diff --check`
+  exit 0.
+- Supabase/external mutations: none. M52 remains live exactly once; no
+  database, Storage, provider, Edge, deployment, stage, commit, push, merge,
+  or PR action occurred.
+- Decisions/deviations/risks: no new deviation. The correction removes the
+  confirmed F4 P2 display/save mismatch; the known deferred P3s and native
+  Unit 6F gate are unchanged.
+- Tracker/source-doc updates: this entry and the Phase 9 master tracker were
+  updated; the SDD and contract matrix remain unchanged because the code now
+  enforces their existing rule.
+- Next authorized action and gate: unchanged separate Owner authorization for
+  6G-E Edge deployment, connected live verification, and native closure.
 
 ### 2026-08-24 — Unit 6G predecessor-inheritance recomposition checkpoint
 

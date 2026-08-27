@@ -3,7 +3,7 @@
 **Planning status:** `unit6g_d_implemented_pending_owner_6ge_authorization`
 **Implementation status:** `unit6g_group1_contract_persistence_locally_complete_m52_live`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
-**Last updated:** 2026-08-24
+**Last updated:** 2026-08-26
 **Current milestone:** Unit 6G design authority recomposed 2026-08-24 (revised SDD/matrix/tracker 31 are current); M52 remains live exactly once as `20260822025712`; Unit 8 remains live-verified and integrated into pushed `main`.
 **Active work unit:** `unit6g_d_implemented_pending_owner_6ge_authorization`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
@@ -16,6 +16,32 @@
 **Migration creation/application authority:** M49-M51 were applied only through the explicitly authorized forward rollout; M52 was applied through the explicitly authorized Supabase MCP application after a PASS read-only preflight; no normal `db push`, historical replay, or `schema_migrations` repair was used.
 **Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
 **Current gate:** `UNIT6G_D_IMPLEMENTED_PENDING_OWNER_6GE_AUTHORIZATION` (NEW 6G-C implemented and locally checkpointed; independent review COMPLETE, final verdict PASS_WITH_P3; known P3 N1 module-size deferred); the prior `UNIT8_LIVE_ROLLOUT_PASS_MAIN_INTEGRATED` remains satisfied. Native Unit 6F remains deferred and unrelated.
+
+## 2026-08-26 — Unit 6G targeted F4 correction
+
+- Authorized scope: targeted post-scan frozen-diff correction for the compact
+  review publication-display mismatch only; no work-unit transition or
+  migration/deployment scope was added.
+- Correction: shared compact-review derivation now applies the existing
+  unsafe/incomplete damage rule before deriving publication. When a damage
+  answer is unsellable or not complete, readable, and safe, the visible card
+  and the strict Add review both use `private`; safe damage retains the
+  selected/default publication intent. Authority: Unit 6G matrix §3.1 and
+  SDD §9.
+- Regression: the mounted `BatchReviewCard` test drives Has damage, Cover,
+  note entry, and unsellable copy, then asserts both visible `private` and the
+  exact private review payload passed to Add.
+- Verification: the new test failed before the source correction because
+  `Publication: private` was absent; focused Unit 6G suites passed 40/40;
+  full `src/features/imageInventory` passed 56 suites / 434 tests (4 skipped);
+  TypeScript passed; web export passed; Phase 9 continuity passed; and
+  `git diff --check` passed.
+- External/Git state: no database, Storage, migration, provider, or deployment
+  mutation occurred. Nothing was staged, committed, pushed, or merged.
+- Current status and next authorized action are unchanged:
+  `unit6g_d_implemented_pending_owner_6ge_authorization`; obtain separate
+  Owner authorization for 6G-E Edge deployment, connected live verification,
+  and native closure.
 
 ## 2026-08-24 — NEW Unit 6G-D implementation checkpoint
 

@@ -24,6 +24,8 @@ let mockRemoveCandidateMutate: jest.Mock;
 let mockCloseV3Mutate: jest.Mock;
 let mockSaveReviewMutate: jest.Mock;
 let mockRemoveInputMutate: jest.Mock;
+let mockAddCandidate: jest.Mock;
+let mockCandidateDetail: any;
 
 function processingCounts(overrides: Record<string, number> = {}) {
     return {
@@ -124,6 +126,14 @@ function resetMocks() {
     mockCloseV3Mutate = jest.fn();
     mockSaveReviewMutate = jest.fn();
     mockRemoveInputMutate = jest.fn();
+    mockAddCandidate = jest.fn().mockResolvedValue({ status: 'succeeded' });
+    mockCandidateDetail = {
+        observed: {
+            title: 'Detected Book One', authors: ['Author One'],
+            language: 'en', script: 'Latn',
+        },
+        metadata: { snapshot: null },
+    };
     mockRouter.push.mockReset();
     mockRouter.replace.mockReset();
     mockRouter.back.mockReset();
@@ -184,6 +194,20 @@ jest.mock('../queries/ownerUxQueries', () => ({
     },
     useOwnerInventoryDiscovery: () => mockDiscovery,
     useOwnerInventoryInputs: () => mockInputs,
+    useOwnerInventoryCandidate: () => ({
+        data: mockCandidateDetail, isLoading: false, error: null,
+        refetch: jest.fn(),
+    }),
+}));
+jest.mock('../commit/useInventoryCommitCoordinator', () => ({
+    useInventoryCommitCoordinator: () => ({
+        addCandidate: mockAddCandidate,
+        addAll: jest.fn(), retryAddAll: jest.fn(),
+        claimSlot: jest.fn(() => 'slot'), releaseSlot: jest.fn(),
+        isCommandActive: jest.fn(() => false),
+        inFlight: new Set(), outcomes: new Map(),
+        bulkResult: null, bulkPending: false,
+    }),
 }));
 jest.mock('../queries/ownerUxInputQueries', () => ({
     useRemoveOwnerInventoryInput: () => ({
@@ -439,6 +463,71 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
         expect(screen.getAllByText(/Detected Book One/u).length).toBeGreaterThan(0);
         expect(screen.getByText('Finding books')).toBeTruthy();
         mockInputs.data.items = [];
+    });
+
+    it('mounts the complete compact-to-metadata-to-deep-correction-to-Add journey with nullable v3 defaults', async () => {
+        const review = {
+            originalTitle: 'Detected Book One', authors: ['Author One'],
+            originalLanguage: 'en', script: 'Latn',
+            metadataChoice: { mode: 'manual', selectionId: null },
+            quantity: 1, priceMinor: 25000, baseCondition: 'good',
+            damageDisclosure: {
+                hasDamage: false, damageTypes: [], damageNote: null,
+                isSellable: true, completeReadableSafe: true,
+            },
+            shelfLocation: 'Front shelf',
+            notes: { publicNote: null, internalNote: null },
+            publicationIntent: 'private', duplicateIntent: null,
+            originalFieldConfirmation: { title: true, authors: [true] },
+            candidateDisposition: 'reviewed',
+        };
+        const initial = cardFixture({
+            metadataState: 'manual', reviewVersion: 1, review,
+            allowedActions: ['view_metadata', 'remove_from_scan'],
+        });
+        mockBatchReview = batchReviewFixture([initial], { detected: 1 });
+        const screen = render(
+            <InventorySessionFoundationScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+
+        expect(screen.getByText('Edit title and authors')).toBeTruthy();
+        expect(screen.getByText('Edit language')).toBeTruthy();
+        expect(screen.getByText('Edit price')).toBeTruthy();
+        expect(screen.getByText('Edit quantity')).toBeTruthy();
+        expect(screen.getByText('Edit location')).toBeTruthy();
+        expect(screen.getByText('Edit publication')).toBeTruthy();
+        expect(screen.getByText('Edit damage')).toBeTruthy();
+        expect(screen.queryByText('Save changes')).toBeNull();
+        expect(screen.queryByText('Add to inventory')).toBeNull();
+
+        fireEvent.press(screen.getByTestId('card-condition-open'));
+        fireEvent.press(screen.getByText('Acceptable'));
+        fireEvent.press(screen.getByText('View metadata'));
+        expect(screen.getByText('Book metadata')).toBeTruthy();
+        expect(screen.getByTestId('metadata-no-selected-details')).toBeTruthy();
+        fireEvent.press(screen.getByText('Close metadata'));
+        fireEvent.press(screen.getByText('Open full correction'));
+        expect(mockRouter.push).toHaveBeenCalledWith(
+            '/(store-owner)/inventory/scan/00000000-0000-4000-8000-000000000010/candidate/00000000-0000-4000-8000-000000000021',
+        );
+
+        mockBatchReview = batchReviewFixture([cardFixture({
+            metadataState: 'manual', candidateVersion: 3, reviewVersion: 2,
+            review: { ...review, quantity: 2 }, reviewReady: true,
+            allowedActions: ['view_metadata', 'remove_from_scan', 'add_to_inventory'],
+        })], { detected: 1, reviewReadySaved: 1 });
+        screen.rerender(
+            <InventorySessionFoundationScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+        fireEvent.press(screen.getByText('Use latest saved review'));
+        expect(screen.getByText('Quantity: 2')).toBeTruthy();
+        await act(async () => {
+            fireEvent.press(screen.getByText('Add to inventory'));
+            await Promise.resolve();
+        });
+        expect(mockAddCandidate).toHaveBeenCalledWith(expect.objectContaining({
+            review: expect.objectContaining({ quantity: 2 }),
+        }));
     });
 
     it('fails closed on a historical multi-input session instead of presenting a complete compact review', () => {

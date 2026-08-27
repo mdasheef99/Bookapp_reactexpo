@@ -97,7 +97,7 @@ export type StartScanSessionV2Result = Readonly<{
     sessionVersion: number;
     defaults: {
         languageHint: string;
-        condition: string | null;
+        condition: 'new' | 'like_new' | 'very_good' | 'good' | 'acceptable' | null;
         location: string;
         priceMinor: number | null;
         quantity: 1;
@@ -117,7 +117,7 @@ export type OwnerSessionSummaryV3 = Readonly<{
     expiresAt: string;
     defaults: {
         languageHint: string;
-        condition: string | null;
+        condition: 'new' | 'like_new' | 'very_good' | 'good' | 'acceptable' | null;
         location: string;
         priceMinor: number | null;
         quantity: 1;

@@ -299,6 +299,105 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
         ))).toHaveLength(1);
     });
 
+    it('bulk retry supersedes frozen draft A with the Owner current draft B', async () => {
+        const saveReview = jest.fn()
+            .mockRejectedValueOnce(new Error('flaky transport failure'))
+            .mockImplementation(async (request) => readyDetail(request.candidateId));
+        const test = harness({ saveReview });
+        const draftA = { ...draft(1), edits: { baseCondition: 'acceptable' as const } };
+        const command = test.coordinator.freezeAddAll([draftA]);
+        await expect(test.coordinator.runAddAll(command)).resolves.toMatchObject({
+            failedRetryable: 1,
+        });
+
+        const draftB = {
+            ...draft(1),
+            edits: { baseCondition: 'acceptable' as const, quantity: 4 },
+        };
+        await expect(test.coordinator.retryAddAll(command, [draftB]))
+            .resolves.toMatchObject({ succeeded: 1 });
+        expect(saveReview.mock.calls[1][0].review.quantity).toBe(4);
+        expect(saveReview.mock.calls[1][0].idempotencyKey)
+            .not.toBe(saveReview.mock.calls[0][0].idempotencyKey);
+    });
+
+    it('bulk retry keeps a changed local-invalid draft in Needs attention without server requests', async () => {
+        const saveReview = jest.fn().mockRejectedValueOnce(new Error('flaky transport failure'));
+        const test = harness({ saveReview });
+        const draftA = { ...draft(1), edits: { baseCondition: 'acceptable' as const } };
+        const command = test.coordinator.freezeAddAll([draftA]);
+        await test.coordinator.runAddAll(command);
+
+        const invalidCurrent = { ...draft(1), edits: { priceMinor: null } };
+        await expect(test.coordinator.retryAddAll(command, [invalidCurrent]))
+            .resolves.toMatchObject({ needsAttention: 1, noLongerEligible: 0, succeeded: 0 });
+        expect(saveReview).toHaveBeenCalledTimes(1);
+        expect(test.commitCandidate).not.toHaveBeenCalled();
+        expect(test.synchronizeIneligible).not.toHaveBeenCalled();
+        expect(command.outcomes.get(invalidCurrent.card.candidateId)).toMatchObject({
+            status: 'needs_attention', stage: 'claim',
+        });
+
+        const fixedCurrent = { ...draft(1), edits: { quantity: 3 } };
+        await expect(test.coordinator.retryAddAll(command, [fixedCurrent]))
+            .resolves.toMatchObject({ needsAttention: 0, succeeded: 1 });
+        expect(saveReview).toHaveBeenCalledTimes(2);
+        expect(saveReview.mock.calls[1][0].review.quantity).toBe(3);
+        expect(test.commitCandidate).toHaveBeenCalledTimes(1);
+    });
+
+    it('reuses Save identity only for the same values and candidate/metadata revisions', async () => {
+        const saveReview = jest.fn()
+            .mockRejectedValueOnce(new Error('flaky transport failure'))
+            .mockImplementation(async (request) => readyDetail(request.candidateId));
+        const test = harness({ saveReview });
+        const item = { ...draft(1), edits: { baseCondition: 'acceptable' as const } };
+        await test.coordinator.addCandidate(item);
+        await test.coordinator.retryCandidate(item.card.candidateId, item);
+        const [firstSave, retrySave] = saveReview.mock.calls.map(([request]) => request);
+        expect(retrySave.idempotencyKey).toBe(firstSave.idempotencyKey);
+        expect(retrySave.commandId).toBe(firstSave.commandId);
+    });
+
+    it.each([
+        ['candidateVersion', { candidateVersion: 5 }],
+        ['metadataRevision', { metadataRevision: 8 }],
+    ] as const)('creates fresh Save/commit identities when only %s changes', async (_label, cardPatch) => {
+        const saveReview = jest.fn()
+            .mockRejectedValueOnce(new Error('flaky transport failure'))
+            .mockImplementation(async (request) => readyDetail(request.candidateId));
+        const test = harness({ saveReview });
+        const item = { ...draft(1), edits: { baseCondition: 'acceptable' as const } };
+        await test.coordinator.addCandidate(item);
+        const refreshed = {
+            ...item,
+            card: { ...item.card, ...cardPatch },
+        };
+        await test.coordinator.retryCandidate(item.card.candidateId, refreshed);
+        const [firstSave, retrySave] = saveReview.mock.calls.map(([request]) => request);
+        expect(retrySave.idempotencyKey).not.toBe(firstSave.idempotencyKey);
+        expect(retrySave.commandId).not.toBe(firstSave.commandId);
+        expect(retrySave.expectedCandidateVersion).toBe(refreshed.card.candidateVersion);
+        expect(retrySave.expectedMetadataRevision).toBe(refreshed.card.metadataRevision);
+    });
+
+    it('replays the same ambiguous M39 identity when values and base revisions are unchanged', async () => {
+        const commitCandidate = jest.fn()
+            .mockRejectedValueOnce(new OwnerUxClientError('P9_INTERNAL_ERROR', true, 'unclear'))
+            .mockImplementation(async (request) => ({
+                sessionId: request.sessionId, candidateId: request.candidateId,
+                candidateVersion: 6, inventoryId, inventoryVersion: 1,
+                outcome: 'committed_private' as const,
+            }));
+        const test = harness({ commitCandidate });
+        const item = draft(1);
+        await test.coordinator.addCandidate(item);
+        await test.coordinator.retryCandidate(item.card.candidateId, item);
+        const [firstCommit, retryCommit] = commitCandidate.mock.calls.map(([request]) => request);
+        expect(retryCommit.idempotencyKey).toBe(firstCommit.idempotencyKey);
+        expect(retryCommit.commandId).toBe(firstCommit.commandId);
+    });
+
     it('F01-A: retry with a refreshed draft saves the refreshed draft, never the frozen stale draft', async () => {
         const saveReview = jest.fn()
             .mockRejectedValueOnce(new Error('flaky transport failure'))

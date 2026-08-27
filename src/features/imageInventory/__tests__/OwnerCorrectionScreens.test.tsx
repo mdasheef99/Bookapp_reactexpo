@@ -4,6 +4,7 @@ import { CandidateCorrectionActions } from '../components/CandidateCorrectionAct
 import { InventoryMissedBookScreen } from '../screens/MissedBookScreen';
 import { OwnerCorrectionClientError } from '../api/ownerCorrectionService';
 import { candidateDetailFixture, sessionSummaryFixture, testUuid } from '../testing/ownerUxTestFixtures';
+import type { OwnerSessionSummaryV3 } from '../api/ownerBatchReviewService';
 
 const mockPush = jest.fn();
 const mockAddListener = jest.fn(() => jest.fn());
@@ -15,7 +16,7 @@ const mockCandidateRefetch = jest.fn();
 const mockUserId = '00000000-0000-4000-8000-000000000090';
 const mockStoreId = '00000000-0000-4000-8000-000000000008';
 let mockOffline = false;
-let mockSession = sessionSummaryFixture();
+let mockSession: OwnerSessionSummaryV3;
 
 jest.mock('expo-router', () => ({
     useRouter: () => ({ push: mockPush }),
@@ -52,20 +53,42 @@ jest.mock('../queries/ownerCorrectionQueries', () => ({
 }));
 jest.mock('../queries/ownerUxQueries', () => ({
     useOwnerInventorySession: () => ({
+        data: undefined,
+        isLoading: false,
+        error: new Error('legacy nullable session contract rejected'),
+        isFetchedAfterMount: true,
+        refetch: jest.fn().mockResolvedValue({ data: mockSession, isError: false, error: null }),
+    }),
+    getResolvedImageInventoryIdentity: () => ({ userId: mockUserId, storeId: mockStoreId }),
+}));
+jest.mock('../queries/ownerBatchReviewQueries', () => ({
+    useOwnerSessionV3: () => ({
         data: mockSession,
         isLoading: false,
         error: null,
         isFetchedAfterMount: true,
         refetch: jest.fn().mockResolvedValue({ data: mockSession, isError: false, error: null }),
     }),
-    getResolvedImageInventoryIdentity: () => ({ userId: mockUserId, storeId: mockStoreId }),
 }));
 
 describe('Phase 9 Unit 6E false and missed-book screens', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mockOffline = false;
-        mockSession = sessionSummaryFixture();
+        const session = sessionSummaryFixture();
+        mockSession = {
+            ...session,
+            batchLabel: null,
+            defaults: {
+                languageHint: session.defaults.language,
+                condition: null,
+                location: session.defaults.location,
+                priceMinor: null,
+                quantity: 1,
+                publication: session.defaults.publication,
+                script: session.defaults.script,
+            },
+        };
         mockCandidateRefetch.mockResolvedValue({
             data: candidateDetailFixture({ candidateVersion: 5, allowedActions: ['view_readiness'] }),
             isError: false,
@@ -74,6 +97,13 @@ describe('Phase 9 Unit 6E false and missed-book screens', () => {
         mockReadCandidate.mockResolvedValue(candidateDetailFixture({ candidateId: testUuid(30) }));
         mockFalse.mockResolvedValue({ candidateId: testUuid(2), authenticatedUserId: testUuid(90) });
         mockAdd.mockResolvedValue({ candidateId: testUuid(30), authenticatedUserId: testUuid(90) });
+    });
+
+    it('loads the missed-book route from nullable v3 session authority while legacy v2 fails closed', () => {
+        const screen = render(<InventoryMissedBookScreen sessionId={testUuid(1)} />);
+        expect(screen.getByText('Add missed book')).toBeTruthy();
+        expect(screen.getByText('Add candidate')).toBeTruthy();
+        expect(screen.queryByText(/cannot accept a missed book/iu)).toBeNull();
     });
 
     it('requires destructive confirmation, cancel does nothing, and duplicate confirmation dispatches once', async () => {

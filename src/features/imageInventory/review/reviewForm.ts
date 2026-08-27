@@ -1,7 +1,4 @@
-import type {
-    OwnerCandidateDetail,
-    OwnerSessionSummary,
-} from '../contracts/ownerUxContracts';
+import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
 import {
     ownerCandidateReviewSchema,
     type OwnerCandidateReview,
@@ -56,7 +53,12 @@ function stringValue(value: string | null): string {
 
 export function createReviewDraft(
     detail: OwnerCandidateDetail,
-    defaults: OwnerSessionSummary['defaults'],
+    defaults: Readonly<{
+        condition: Condition | null;
+        location: string;
+        quantity: number;
+        publication: PublicationIntent;
+    }>,
 ): ReviewDraft {
     const saved = detail.review.value;
     const selected = detail.metadata.state === 'selected'
@@ -72,7 +74,7 @@ export function createReviewDraft(
         currentMetadataSelectionId: selected,
         quantity: String(saved?.quantity ?? defaults.quantity),
         priceMinor: saved ? String(saved.priceMinor) : '',
-        baseCondition: saved?.baseCondition ?? defaults.condition,
+        baseCondition: saved?.baseCondition ?? defaults.condition ?? '',
         hasDamage: saved?.damageDisclosure.hasDamage ?? false,
         damageTypes: [...(saved?.damageDisclosure.damageTypes ?? [])],
         damageNote: stringValue(saved?.damageDisclosure.damageNote ?? null),

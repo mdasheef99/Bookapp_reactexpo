@@ -58,7 +58,7 @@ describe('Phase 9 NEW 6G-D Add-all controls', () => {
             result: {
                 exactN: values.length, candidateIds: values.map((value) => value.card.candidateId),
                 outcomes: [], succeeded: values.length, failedRetryable: 0,
-                noLongerEligible: 0, stillPending: 0, busy: 0,
+                noLongerEligible: 0, needsAttention: 0, stillPending: 0, busy: 0,
             },
         }));
         const props = {
@@ -89,15 +89,37 @@ describe('Phase 9 NEW 6G-D Add-all controls', () => {
                 result={{
                     exactN: 3, candidateIds: [testUuid(11), testUuid(12), testUuid(13)],
                     outcomes: [], succeeded: 1, failedRetryable: 1,
-                    noLongerEligible: 1, stillPending: 0, busy: 0,
+                    noLongerEligible: 1, needsAttention: 0, stillPending: 0, busy: 0,
                 }}
                 onAddAll={jest.fn()}
                 onRetry={jest.fn()}
             />,
         );
         expect(screen.getByTestId('add-all-result').props.children).toBe(
-            'Added 1 · Retryable 1 · No longer eligible 1 · Still pending 0 · Busy 0',
+            'Added 1 · Retryable 1 · No longer eligible 1 · Needs attention 0 · Still pending 0 · Busy 0',
         );
         expect(screen.queryByText(/published successfully/iu)).toBeNull();
+    });
+
+    it('keeps local-invalid retry members visible as Needs attention and retryable', () => {
+        const onRetry = jest.fn();
+        const screen = render(
+            <BatchInventoryCommitControls
+                candidates={[candidate(1)]}
+                disabled={false}
+                pending={false}
+                result={{
+                    exactN: 1, candidateIds: [testUuid(11)], outcomes: [],
+                    succeeded: 0, failedRetryable: 0, noLongerEligible: 0,
+                    needsAttention: 1, stillPending: 0, busy: 0,
+                }}
+                onAddAll={jest.fn()}
+                onRetry={onRetry}
+            />,
+        );
+        expect(screen.getByTestId('add-all-result').props.children).toContain('Needs attention 1');
+        // A local validation issue remains correctable and does not render the
+        // false server-authority statement used for canonical ineligibility.
+        expect(screen.queryByText(/This book is no longer eligible/iu)).toBeNull();
     });
 });

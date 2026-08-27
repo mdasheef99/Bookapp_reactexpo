@@ -8,15 +8,18 @@ import type {
     OwnerCandidateDetail,
 } from '../contracts/ownerUxContracts';
 import type { OwnerCandidateReview } from '../contracts/ownerUxReviewSchema';
+import type { CompactReviewEdits } from '../review/compactReviewDraft';
 
 export type CandidateCommitDraft = Readonly<{
     card: OwnerBatchReviewCard;
-    edits: Partial<OwnerCandidateReview>;
+    edits: CompactReviewEdits;
+    review?: OwnerCandidateReview;
 }>;
 
 export type CandidateCommitOutcome = Readonly<{
     candidateId: string;
-    status: 'succeeded' | 'failed_retryable' | 'no_longer_eligible' | 'still_pending' | 'busy';
+    status: 'succeeded' | 'failed_retryable' | 'no_longer_eligible'
+        | 'needs_attention' | 'still_pending' | 'busy';
     stage: 'claim' | 'save' | 'revalidate' | 'commit' | 'complete';
     result?: OwnerCandidateCommitResult;
     code?: string;
@@ -52,6 +55,7 @@ export type AddAllResult = Readonly<{
     succeeded: number;
     failedRetryable: number;
     noLongerEligible: number;
+    needsAttention: number;
     stillPending: number;
     busy: number;
 }>;
