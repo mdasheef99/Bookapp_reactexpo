@@ -38,7 +38,8 @@
     "test:clubs:l4": "node supabase/tests/clubs/clubsL4Runner.mjs",
     "test:clubs:l4:b02": "node supabase/tests/clubs/clubsL4Runner.mjs b02",
     "test:clubs:l4:f04": "node supabase/tests/clubs/clubsL4Runner.mjs f04",
-    "test:clubs:l4:wave2": "node supabase/tests/clubs/clubsL4Runner.mjs wave2"
+    "test:clubs:l4:wave2": "node supabase/tests/clubs/clubsL4Runner.mjs wave2",
+    "test:clubs:l4:rls": "node supabase/tests/clubs/clubsL4Runner.mjs rls"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

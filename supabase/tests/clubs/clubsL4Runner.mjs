@@ -70,6 +70,8 @@ const REPO_ROOT = resolve(HERE, '..', '..', '..');
 const PINNED_IMAGE = 'postgis/postgis:17-3.5';
 const BOOTSTRAP_FILE = '/repo/supabase/tests/clubs/fixtures/clubs_l4_platform_bootstrap.sql';
 const BRIDGE_FILE = '/repo/supabase/tests/clubs/fixtures/clubs_l4_replay_bridge.sql';
+const STORAGE_SUBSTRATE_FILE = '/repo/supabase/tests/clubs/fixtures/clubs_l4_storage_substrate.sql';
+const B01_MIGRATION_FILE = '20260822233000_clubs_b01_banner_storage_lockdown.sql';
 
 /** Minimal dependency sequence of ACTUAL repository migrations for B02. */
 const B02_MIGRATION_SEQUENCE = [
@@ -101,6 +103,26 @@ const WAVE2_EXTRA_MIGRATIONS = [
   '20260822230000_clubs_wave2_attribution_guards_expiry.sql',
 ];
 const WAVE2_MIGRATION = '20260822230000_clubs_wave2_attribution_guards_expiry.sql';
+
+/** L01-C RLS chain: ordered dependency including chat RLS + B01.
+ *  Minimal for RLS contracts: includes 009 (club_messages/messages RLS) which
+ *  B02 chain omitted. 006/007/008 not required for club_messages/storage RLS
+ *  and would pull exchange tables (002) not needed here.
+ */
+const RLS_MIGRATION_SEQUENCE = [
+  '20251228083154_001_initial_schema.sql',
+  '20251228114057_003_venues_and_clubs.sql',
+  '20251228114118_004_chat_and_moderation.sql',
+  '20251228114143_005_add_missing_user_profile_fields.sql',
+  '20251228114516_009_rls_policies_chat_moderation.sql',
+  '20251231141336_add_all_google_books_fields.sql',
+  '20251231142005_add_price_to_books.sql',
+  '20260307000500_010_clubs_identity_invitations_public_contract.sql',
+  '20260308222500_011_fix_club_members_select_policy_recursion.sql',
+  '20260310153000_013_clubs_entitlement_enforcement.sql',
+  '20260523054932_create_club_rpc.sql',
+  '20260822234500_clubs_b02_creation_cap_race_fix.sql',
+];
 
 class InfraError extends Error {}
 
@@ -198,6 +220,20 @@ async function applyPlatformAndChain(database) {
     }
     psqlFile(database, `/repo/supabase/migrations/${file}`, `migration ${file}`);
   }
+}
+
+async function applyRlsChain(database) {
+  guardLocalDisposable(database);
+  psqlFile(database, BOOTSTRAP_FILE, 'platform bootstrap');
+  for (const file of RLS_MIGRATION_SEQUENCE) {
+    if (file === '20251228114118_004_chat_and_moderation.sql') {
+      psqlFile(database, BRIDGE_FILE, 'FLAGGED replay bridge (live-verified untracked historical DDL)');
+    }
+    psqlFile(database, `/repo/supabase/migrations/${file}`, `migration ${file}`);
+  }
+  psqlFile(database, STORAGE_SUBSTRATE_FILE, 'SUPABASE PLATFORM TEST SUBSTRATE (storage.objects compatibility)');
+  psqlFile(database, `/repo/supabase/migrations/${B01_MIGRATION_FILE}`, `ACTUAL B01 migration ${B01_MIGRATION_FILE}`);
+  console.log('[runner] RLS chain applied (RLS policies + storage substrate + B01)');
 }
 
 async function applyWave2Extension(database) {
@@ -309,7 +345,8 @@ async function main() {
   if (argv.includes('b02')) suites.push('b02');
   if (argv.includes('f04')) suites.push('f04');
   if (argv.includes('wave2') || argv.includes('wave2_attribution') || argv.includes('wave2_invitation') || argv.includes('wave2_moderation') || argv.includes('wave2:all')) suites.push('wave2');
-  if (suites.length === 0) suites.push('b02', 'f04', 'wave2');
+  if (argv.includes('rls') || argv.includes('b01') || argv.includes('l01c')) suites.push('rls');
+  if (suites.length === 0) suites.push('b02', 'f04', 'wave2', 'rls');
   const mutationArg = argv.includes('--mutation') ? argv[argv.indexOf('--mutation') + 1] : null;
   const noLockMutation = mutationArg === 'no-lock'; // B02 RED proof
   const noRepairMutation = mutationArg === 'no-repair'; // F04 migration-boundary RED proof
@@ -324,6 +361,7 @@ async function main() {
   const dbB02 = `clubs_l4_b02_${suffix}`;
   const dbF04 = `clubs_l4_f04_${suffix}`;
   const dbWave2 = `clubs_l4_wave2_${suffix}`;
+  const dbRls = `clubs_l4_rls_${suffix}`;
   const dbMut = `clubs_l4_mut_${suffix}`;
   const dbF04Mut = `clubs_l4_f04mut_${suffix}`;
 
@@ -480,6 +518,21 @@ async function main() {
       ];
       for (const [scriptPath, label] of wave2Scripts) {
         const code = await runNodeScript(scriptPath, { CLUBS_L4_DATABASE_URL: urlFor(dbWave2) }, `suite ${label}`);
+        if (code !== 0) contractFailures += 1;
+        else console.log(`[runner] suite ${label} PASS`);
+      }
+    }
+
+    if (suites.includes('rls')) {
+      console.log('[runner] ── L01-C RLS contracts (B01 Storage + representative Clubs) ──');
+      await createExtraDatabase(dbB02, dbRls);
+      await applyRlsChain(dbRls);
+      const rlsScripts = [
+        [join(HERE, 'contracts', 'b01_storage_rls.test.mjs'), 'B01 Storage RLS (club-banners)'],
+        [join(HERE, 'contracts', 'representative_clubs_rls.test.mjs'), 'representative Clubs RLS (club_messages active vs muted)'],
+      ];
+      for (const [scriptPath, label] of rlsScripts) {
+        const code = await runNodeScript(scriptPath, { CLUBS_L4_DATABASE_URL: urlFor(dbRls) }, `suite ${label}`);
         if (code !== 0) contractFailures += 1;
         else console.log(`[runner] suite ${label} PASS`);
       }

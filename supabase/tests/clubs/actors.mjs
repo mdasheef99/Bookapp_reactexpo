@@ -11,10 +11,12 @@
  *
  * L01-B extends with ADMIN, MODERATOR, ACTIVE MEMBER, OUTSIDER,
  * CROSS-CLUB MEMBER helpers. All helpers preserve L01-A behavior.
+ * L01-C adds MUTED MEMBER where needed for status-RLS isolation.
  */
 import { randomUUID } from 'node:crypto';
 
 const ACTOR_GUC = 'request.jwt.claim.sub';
+const ROLE_GUC = 'request.jwt.claim.role';
 
 /**
  * Set the acting auth user on a connection using the agreed
@@ -24,6 +26,31 @@ const ACTOR_GUC = 'request.jwt.claim.sub';
  */
 export async function actAs(client, userId) {
   await client.query('SELECT set_config($1, $2, false)', [ACTOR_GUC, userId]);
+}
+
+/**
+ * Set DB role + acting user for real RLS evaluation.
+ * Uses SET ROLE authenticated/anon via SET LOCAL ROLE compatible path
+ * (SET ROLE requires superuser privilege on session; we use SET ROLE via SQL).
+ * Preferred for L01-C RLS contracts: guarantees policy evaluation as intended role.
+ * @param {import('pg').Client} client
+ * @param {'authenticated' | 'anon' | 'service_role'} role
+ * @param {string | null} userId - null clears sub claim (anon)
+ */
+export async function actAsRole(client, role, userId) {
+  // Reset both GUCs first
+  await client.query('SELECT set_config($1, $2, false)', [ACTOR_GUC, userId ?? '']);
+  await client.query('SELECT set_config($1, $2, false)', [ROLE_GUC, role]);
+  // SET ROLE is session-local; caller must RESET ROLE when done if needed.
+  // We use `SET ROLE` (requires membership) — the runner connects as superuser-like owner,
+  // so SET ROLE to anon/authenticated succeeds after bootstrap creates the roles.
+  await client.query(`SET ROLE ${role}`);
+}
+
+export async function resetRole(client) {
+  await client.query('RESET ROLE');
+  await client.query('SELECT set_config($1, $2, false)', [ACTOR_GUC, '']);
+  await client.query('SELECT set_config($1, $2, false)', [ROLE_GUC, '']);
 }
 
 /**
@@ -117,4 +144,12 @@ export async function ensureClubMember(client, clubId, userId, role = 'member', 
      ON CONFLICT (club_id, user_id) DO UPDATE SET role = EXCLUDED.role, status = EXCLUDED.status`,
     [clubId, userId, role, status],
   );
+}
+
+/**
+ * L01-C: ensure MUTED member for status-RLS isolation (active can write, muted cannot).
+ * Canonical: club_members row exists, status='muted'.
+ */
+export async function ensureMutedMember(client, clubId, userId, role = 'member') {
+  return ensureClubMember(client, clubId, userId, role, 'muted');
 }
