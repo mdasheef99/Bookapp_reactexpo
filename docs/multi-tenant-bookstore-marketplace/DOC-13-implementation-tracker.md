@@ -26,6 +26,26 @@ Every coding session must update tracking before ending if it changes any of the
 - handoff notes
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
 
+> **2026-08-27 U6G-FA-001 correction complete locally:** The Owner-authorized
+> minimal correction projects each unusable selected compact-summary member as
+> null and retains the existing per-field source fallback. Mirrored strict
+> contracts and compact draft derivation are aligned. Focused contract/structure
+> Jest is 53/53, PGlite is 25/25, compact UI/draft assertions are 53/53, and
+> TypeScript passes. M53 remains unapplied; M52/M39 and Unit 6 lifecycle remain
+> unchanged. Exact next action: independent review. Application/deployment
+> requires separate authorization.
+>
+> **Historical 2026-08-27 U6G-FA-001 correction stop:** The frozen M53 package's sole
+> independent-review finding was reproduced through the real PGlite batch
+> projection: malformed selected authors, cover, title, and language still
+> receive `matched`. Source-only fallback is insufficient because the unchanged
+> strict Edge and mobile decoders reject the complete DTO at `metadataSummary`
+> before source/backing coherence can make it valid. Per the bounded correction
+> instruction, production changes stopped. M53 remains byte-unchanged and
+> unapplied; M52/M39 and Unit 6 lifecycle remain unchanged. Exact next action:
+> Owner disposition of a scope expansion covering the selected-metadata DTO
+> representation/projection boundary and both mirrored strict contracts.
+
 > **2026-08-24 Unit 6G predecessor-inheritance recomposition:** The Unit 6G
 > design authority was recomposed on `codex/phase9-unit6g-recomposition`. The
 > revised SDD, contract matrix, and tracker 31 now carry the complete 40-row
@@ -1066,12 +1086,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **NEW 6G-C and NEW 6G-D implemented and locally checkpointed (independent reviews COMPLETE; 6G-D final verdict PASS); M52 live as `20260822025712`; NEW 6G-D checkpoint recorded; 6G-E (Edge deployment, connected live verification, native closure) next only on separate Owner authorization; Unit 8 remains live/main-integrated** |
-| Overall status | `unit6g_d_implemented_pending_owner_6ge_authorization` |
-| Last updated | 2026-08-24 |
-| Latest handoff | Unit 6G design authority was recomposed on `codex/phase9-unit6g-recomposition`: the revised SDD, contract matrix, and tracker 31 are the current single-image authority with the complete 40-row predecessor ledger (30/7/3/0/0) and U6G-AC01..AC34. Unit 6 is the immutable lifecycle backbone. M52 remains live exactly once as `20260822025712` (retained 6G A/B foundation); old `e7ed166`-style 6G-C/D implementation is historical/superseded evidence, not authority. NEW 6G-C is composition-only pre-commit work and is next on explicit approval; NEW 6G-D later owns commit orchestration; 6G-E owns Edge deployment/live/native closure. Unit 8 remains live/main-integrated at `4c1d98d`. |
-| Current risk level | M52 is live exactly once as `20260822025712`; there is no unapplied migration candidate pending rereview. NEW 6G-C is implemented and locally checkpointed (review verdict PASS_WITH_P3; known P3 N1 module-size deferred). Remaining gates: separately authorized NEW 6G-C implementation, NEW 6G-D commit orchestration, and 6G-E Edge deployment/live/native closure; no migration application or deployment is currently authorized. Preexisting live advisory: RLS is disabled on `public.spatial_ref_sys`, `public.marketplace_event_schema_registry`, and `public.marketplace_notification_type_registry`; no remediation was authorized. |
-| Next recommended task | Separate Owner authorization for 6G-E Edge deployment and connected live/native closure verification. NEW 6G-C and NEW 6G-D are implemented and locally checkpointed (6G-D verdict PASS). |
+| Current phase | Phase 9: Image-to-LLM Inventory — **bounded Unit 6G field-authority correction locally verified; M53 forward candidate unapplied; M52 remains live and byte-immutable; prior 6G-C/6G-D checkpoints and Unit 8 remain intact** |
+| Overall status | `unit6g_field_authority_correction_ready_for_independent_review` |
+| Last updated | 2026-08-27 |
+| Latest handoff | The bounded correction fixes JSON-null/invalid review authority and partial selected metadata: unusable compact-summary members project as null, mirrored strict contracts accept the nullable members, and existing matched/detected/default/missing precedence supplies fallback. It also preserves source/backing parity, mounted recoverable failure behavior, and local publication safety coercion as Custom. M53 replaces internal safe-summary/source/batch-card projection helpers and is not applied. |
+| Current risk level | M52 remains live exactly once as `20260822025712` and unchanged. M53 is an unapplied forward candidate pending independent review and separate application authorization. No server/client deployment or connected verification has occurred; existing native/6G-E gates remain open. |
+| Next recommended task | Independent review of the frozen bounded correction diff. Any M53 application or Edge/client deployment requires separate Owner authorization. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 
@@ -1235,7 +1255,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6g_d_implemented_pending_owner_6ge_authorization` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6G SDD](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md) · [Unit 6G matrix](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md) | The recomposed three-document Unit 6G design authority (SDD/matrix/tracker 31) passed independent final review (PASS_WITH_P3); NEW 6G-C is implemented and locally checkpointed under final verdict PASS_WITH_P3 (known P3 N1 module-size deferred). M52 is live/applied exactly once as `20260822025712` as the retained Unit 6G A/B foundation. Next: separate Owner authorization for NEW 6G-D commit orchestration or connected live verification under the 6G-E Edge-deployment gate; NEW 6G-D later owns commit orchestration, and 6G-E owns Edge deployment/live/native closure. Old `e7ed166`-style 6G-C/D implementation is historical/superseded evidence, not authority. Groups 2–4 remain separately gated. Unit 8 remains live-verified and integrated into `main` at `4c1d98d`. |
+| Phase 9: Image-to-LLM Inventory | `unit6g_field_authority_correction_ready_for_independent_review` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6G SDD](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md) · [Unit 6G matrix](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md) | The bounded field-authority and partial selected-metadata correction is implemented RED-first and locally verified. Local forward M53 replaces internal safe-summary/source/batch-card projection helpers and remains unapplied; mirrored strict contracts accept nullable unusable summary members; M52 remains live and byte-immutable. Prior Unit 6G-C/6G-D and Unit 8 checkpoints remain intact. Next: independent correction review; M53 application and Edge/client deployment remain separately gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

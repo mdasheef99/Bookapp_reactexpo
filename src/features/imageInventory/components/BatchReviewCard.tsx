@@ -8,7 +8,8 @@ import type { CandidateCommitOutcome } from '../commit/inventoryCommitCoordinato
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
 import type { ImageInventoryIdentity } from '../queries/ownerUxQueries';
 import {
-    buildCompactReview, compactReviewDisplay, type CompactReviewEdits,
+    buildCompactReview, compactReviewDisplay, publicationHasEffectiveOverride,
+    type CompactReviewEdits,
 } from '../review/compactReviewDraft';
 import type { ScanSetupFormState } from '../scanSetup/scanSetupForm';
 import { AddCandidateToInventoryAction } from './AddCandidateToInventoryAction';
@@ -89,6 +90,7 @@ export function BatchReviewCard({
         || card.allowedActions.includes('save_review');
     const disabled = !canMutate || isOffline || authorityChanged;
     const display = compactReviewDisplay(card, defaults, mountedEdits);
+    const publicationOverride = publicationHasEffectiveOverride(card, defaults, mountedEdits);
     const review = buildCompactReview(card, defaults, mountedEdits);
     const title = display.title;
     const authors = display.authors.join(', ') || 'Author unknown';
@@ -139,7 +141,7 @@ export function BatchReviewCard({
             <FieldRow label="Quantity" value={String(display.quantity)} sourceCode={card.fieldSources.quantity} local={mountedEdits.quantity !== undefined} testSuffix="quantity" />
             <View testID="card-location-sources">
                 <FieldRow label="Location" value={display.location || 'Not set'} sourceCode={card.fieldSources.location} local={mountedEdits.shelfLocation !== undefined} testSuffix="location" />
-                <FieldRow label="Publication" value={display.publication} sourceCode={card.fieldSources.publication} local={mountedEdits.publicationIntent !== undefined} testSuffix="publication" />
+                <FieldRow label="Publication" value={display.publication} sourceCode={card.fieldSources.publication} local={mountedEdits.publicationIntent !== undefined || publicationOverride} testSuffix="publication" />
             </View>
             <FieldRow label="Language" value={display.language} sourceCode={card.fieldSources.language} local={mountedEdits.originalLanguage !== undefined} testSuffix="language" />
             <FieldRow label="Damage" value={display.damage.hasDamage ? 'Has damage' : 'No damage'} sourceCode={card.fieldSources.damage} local={mountedEdits.damageDisclosure !== undefined} testSuffix="damage" />

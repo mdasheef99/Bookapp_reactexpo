@@ -93,9 +93,10 @@ function expectDisplayAndSave(
     value: OwnerBatchReviewCard,
     field: keyof ReturnType<typeof compactReviewDisplay>,
     expected: unknown,
+    edits: Parameters<typeof compactReviewDisplay>[2] = {},
 ) {
-    const display = compactReviewDisplay(value, defaults, {});
-    const review = buildCompactReview(value, defaults, {});
+    const display = compactReviewDisplay(value, defaults, edits);
+    const review = buildCompactReview(value, defaults, edits);
     expect(display[field]).toEqual(expected);
     expect(review).not.toBeNull();
     const reviewField = {
@@ -142,6 +143,48 @@ describe('Phase 9 Unit 6G compact draft field/source authority', () => {
         expectDisplayAndSave(card({
             fieldSources: { ...card().fieldSources, [field]: 'custom' },
         }), field, expected);
+    });
+
+    it.each([
+        ['title', 'Selected title'],
+        ['authors', ['Selected author']],
+        ['language', 'de'],
+    ] as const)('uses selected %s when the server source is matched', (field, expected) => {
+        expectDisplayAndSave(card({
+            review: null,
+            reviewVersion: null,
+            reviewDisposition: null,
+            fieldSources: { ...card().fieldSources, [field]: 'matched' },
+        }), field, expected, {
+            metadataChoice: { mode: 'selected', selectionId: savedReview.metadataChoice.selectionId },
+        });
+    });
+
+    it('keeps every saved commercial value identical between display and strict Save', () => {
+        expectDisplayAndSave(card(), 'condition', 'good');
+        expectDisplayAndSave(card(), 'priceMinor', 30_000);
+        expectDisplayAndSave(card(), 'quantity', 2);
+        expectDisplayAndSave(card(), 'location', 'Saved shelf');
+        expectDisplayAndSave(card(), 'publication', 'private');
+        expectDisplayAndSave(card(), 'damage', savedReview.damageDisclosure);
+    });
+
+    it('blocks strict Save when a missing identity source has no usable value', () => {
+        const value = card({
+            review: null,
+            reviewVersion: null,
+            reviewDisposition: null,
+            metadataState: 'pending',
+            metadataSummary: null,
+            fieldSources: {
+                ...card().fieldSources,
+                title: 'missing', authors: 'missing', language: 'missing',
+            },
+        });
+        expect(compactReviewDisplay(value, defaults, {})).toMatchObject({
+            title: '', authors: [], language: '',
+        });
+        expect(buildCompactReview(value, defaults, {})).toBeNull();
     });
 
     it('uses only applicable session defaults for non-metadata fields', () => {

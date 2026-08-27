@@ -278,6 +278,40 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         });
     });
 
+    it.each(['pending', 'no_match', 'ambiguous'] as const)(
+        'keeps never-reviewed observed identity visible while metadata is %s',
+        (metadataState) => {
+            const screen = renderCard({
+                reviewVersion: null, review: null, metadataState, metadataSummary: null,
+                observed: {
+                    title: 'Live observed title', authors: ['Live observed author'],
+                    language: 'fr', script: 'Latn',
+                },
+                fieldSources: {
+                    ...card().fieldSources,
+                    cover: 'missing', title: 'detected', authors: 'detected',
+                    language: 'detected',
+                },
+            });
+            expect(screen.getAllByText(/Live observed title/u).length).toBeGreaterThan(0);
+            expect(screen.getAllByText(/Live observed author/u).length).toBeGreaterThan(0);
+            expect(screen.getByText('Language: fr')).toBeTruthy();
+        },
+    );
+
+    it('shows selected metadata identity on a never-reviewed card', () => {
+        const screen = renderCard({
+            reviewVersion: null, review: null, reviewDisposition: null,
+            metadataState: 'selected',
+            fieldSources: {
+                ...card().fieldSources,
+                title: 'matched', authors: 'matched', language: 'matched',
+            },
+        });
+        expect(screen.getAllByText(/Matched Metadata Title/u).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/Author A/u).length).toBeGreaterThan(0);
+    });
+
     it('builds a valid local review:null draft without autosave and keeps Add Save-gated', async () => {
         const screen = renderCard({
             reviewVersion: null,
@@ -492,6 +526,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
 
         expect(screen.getByText('Publication: private')).toBeTruthy();
         expect(screen.queryByText('Publication: publish')).toBeNull();
+        expect(screen.getByTestId('card-publication-overlay').props.children).toBe('Custom');
 
         await act(async () => {
             fireEvent.press(screen.getByText('Add to inventory'));

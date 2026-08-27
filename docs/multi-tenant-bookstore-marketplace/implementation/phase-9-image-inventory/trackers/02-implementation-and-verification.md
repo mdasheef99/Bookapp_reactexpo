@@ -1,7 +1,75 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit6g_d_implemented_pending_owner_6ge_authorization`; **last updated:** 2026-08-26
+**Status:** `unit6g_fa_001_ready_for_independent_review`; **last updated:** 2026-08-27
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit6g_d_implemented_pending_owner_6ge_authorization`. Unit 8 remains live-verified/integrated; the 2026-08-24 recomposition made the revised SDD/matrix/tracker 31 the sole NEW 6G-C/6G-D design authority (independent final review COMPLETE, verdict PASS_WITH_P3); NEW 6G-C implementation is COMPLETE and locally checkpointed (review PASS_WITH_P3; known P3 N1 module-size deferred); NEW 6G-D implementation is COMPLETE and locally checkpointed (final verdict PASS). Next: 6G-E Edge deployment/live/native closure ONLY on separate Owner authorization; nothing deployed.
+**Active work unit:** `unit6g_fa_001_independent_review`. The Owner-authorized minimal selected-metadata projection and mirrored-contract correction is locally verified. Exact next action: independent review. M53 application and every deployment/live/native gate remain unauthorized.
+
+### 2026-08-27 — U6G-FA-001 partial selected-metadata correction
+
+- Authorized scope: the smallest coherent correction at the compact selected-
+  metadata projection and both mirrored strict contracts. No DTO version,
+  candidate-detail expansion, lifecycle/commit change, or external mutation.
+- RED-first evidence: focused contracts/M53 structure produced 8 expected
+  failures / 45 passes.
+- Implementation: M53 independently validates compact selected title, authors,
+  language, and cover, projects unusable members as null, and retains the
+  existing per-field source fallback. Edge/mobile contracts accept those
+  nullable members; compact draft derivation treats null as absent.
+- Verification: focused contracts/M53 structure 53/53; Unit 6G PGlite 25/25;
+  compact draft/card/mounted-route assertions 53/53 (manual termination after
+  completion for the existing Jest open handle); full image-inventory Jest 56
+  suites / 454 passed / 4 skipped; `tsc --noEmit` PASS; Phase 9 continuity
+  validator PASS; `git diff --check` PASS.
+- M52/M39 and Unit 6 lifecycle remain unchanged. M53 is unapplied. No database,
+  Storage, deployment, provider, stage, commit, push, merge, or PR action.
+- Exact next action: independent review. M53 application and Edge/client
+  deployment require separate Owner authorization.
+
+### 2026-08-27 — U6G-FA-001 RED reproduction and scope stop
+
+- Authorized scope: the single U6G-FA-001 review finding, focused RED tests,
+  and the mandatory scope checkpoint. No M52/M39, lifecycle, metadata worker,
+  provider, RLS, Storage, deployment, or live mutation authority.
+- RED evidence: the real M52→M53 PGlite projection passes 20 existing/control
+  cases and fails 5 new assertions. Blank selected authors, an unapproved cover,
+  an unsafe selected title, and invalid language all remain `matched`; blank
+  authors with no observed authority also remain `matched` instead of missing.
+- Contract checkpoint: focused Edge/mobile tests pass 49/49 while proving all
+  four complete malformed DTOs are rejected even after the affected source is
+  set to its intended fallback. Rejections are owned by strict
+  `metadataSummary` title/authors/language/cover validation, not the source
+  coherence refinement.
+- Stop decision: M53-only source classification is insufficient. Production
+  code and validators were not changed or weakened. M53 SHA-256 remains
+  `dead0a7f...10b`; M52 blob remains `49a3d9...69269`.
+- Verification actually run: Unit 6G PGlite 20 pass / 5 intentional RED fail;
+  focused strict decoders 2 suites / 49 tests PASS; `git diff --check` PASS.
+- Supabase/external mutations: none. Nothing staged, committed, pushed, merged,
+  applied, deployed, or written to Supabase/Storage.
+- Exact next action: obtain Owner authorization for the smallest coherent scope
+  expansion at the batch-card selected-metadata representation/projection and
+  both mirrored strict contracts; then resume RED-first. M53 application and
+  deployment remain separately gated.
+
+### 2026-08-27 — bounded Unit 6G field-authority correction
+
+- Scope: correct shared field-source authority for never-reviewed and reviewed
+  candidates, add source/backing validation in both strict decoders, expose
+  local publication safety coercion as Custom, and create exactly one
+  forward-only migration. No M39, lifecycle, worker, provider, public DTO, or
+  applied migration was changed.
+- Red-first evidence: focused Jest failed 7 assertions across client, Edge, and
+  card coverage; PGlite failed 5 projection cases; mounted malformed-payload
+  coverage failed before production edits.
+- Green evidence: focused Jest 6/6 suites and 98/98 tests; mobile contract
+  rerun 12/12; Unit 6G PGlite 19/19; full image-inventory Jest 56/56 executed
+  suites with 450 passed and 4 skipped; TypeScript and web export exit 0.
+- Migration: local `20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql`
+  replaces only the internal source helper, performs no DML/backfill, preserves
+  the public DTO/signature/privilege contract, and is unapplied.
+- External/Git state: no database, Storage, provider, Edge, deployment, stage,
+  commit, push, merge, or PR action.
+- Exact next action: independent review of the frozen correction diff. Do not
+  apply M53 or deploy server/client code without separate authorization.
 
 ### 2026-08-26 — Unit 6G targeted F4 correction
 
@@ -2618,6 +2686,7 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 | Local filename | Live version | Project/preflight | Authority/effect | Verification/status |
 | --- | --- | --- | --- | --- |
 | `20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql` | **applied live as `20260822025712`** on `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) directly after M51 `20260821061213`; name is canonical per the timestamp/name-ledger convention | Read-only preflight PASS (dependency signatures, ACL snapshot, data compatibility) then Owner-authorized application | Group 1 forward candidate plus verification-pass and iteration-two corrections: needs-review count override, NULL guards (keys, versions, required start inputs), safe-integer session counters with 15-card bounds, forward session-page filter | Focused Jest 42/42, exact-list regression 212/212, PGlite 13/13, TypeScript clean, continuity validator PASS; **applied and live-verified 2026-08-22, see the M52 application proof record below** |
+| `20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql` | **not applied**; M52 remains the live tail relevant to Unit 6G | No connected project call in this session; application explicitly unauthorized | Forward-only replacement of internal `marketplace_sec.phase9_unit6g_field_sources`; no DML/backfill/public RPC/DTO/grant change; M52/M39 byte-immutable | RED reproduced; focused Jest 98/98, Unit 6G PGlite 19/19, full image-inventory 450 passed/4 skipped, TypeScript/export pass; `local_verified_pending_independent_review_and_separate_application_authorization` |
 
 ### Unit 6G-B M52 application and connected proof - 2026-08-22
 

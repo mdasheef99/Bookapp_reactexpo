@@ -8,7 +8,9 @@ import {
 } from './unit7aFixture.mjs';
 
 const M52 = '20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql';
+const M53 = '20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql';
 let db;
+const sqlJson = (value) => JSON.stringify(value).replaceAll("'", "''");
 
 before(async () => {
   db = await createUnit7aDatabase();
@@ -28,6 +30,7 @@ before(async () => {
       ADD COLUMN IF NOT EXISTS privacy_classification text NOT NULL DEFAULT 'internal',
       ADD COLUMN IF NOT EXISTS schema_version integer NOT NULL DEFAULT 1;`);
   await db.exec(fs.readFileSync(migrationPath(M52), 'utf8'));
+  await db.exec(fs.readFileSync(migrationPath(M53), 'utf8'));
 });
 after(async () => db?.close());
 
@@ -340,4 +343,205 @@ test('U6G-G1-13 direct RPCs reject null idempotency keys and expected versions',
     WHERE id='${candidateId}' AND review_disposition IS NOT NULL`), 0);
   assert.equal(await scalar(db, `SELECT status FROM public.image_extraction_sessions
     WHERE id='${started.result.sessionId}'`), 'active');
+});
+
+test('U6G-FA-RED-01 never-reviewed observed/default authority is not custom', async () => {
+  const fixture = await ownerFixture();
+  const started = await start(fixture);
+  const candidateId = await candidate(fixture, started.result.sessionId);
+  await setActor(db, fixture.ownerId);
+  const batch = await scalar(db,
+    `SELECT public.phase9_owner_batch_review_v1('${started.result.sessionId}')`);
+  assert.equal(batch.items[0].candidateId, candidateId);
+  assert.deepEqual(batch.items[0].fieldSources, {
+    cover: 'missing', title: 'detected', authors: 'detected',
+    language: 'detected', condition: 'default', price: 'default',
+    quantity: 'default', location: 'default', publication: 'default',
+    damage: 'default',
+  });
+});
+
+test('U6G-FA-RED-02 selected metadata without review is matched per usable field', async () => {
+  const fixture = await seedReviewedCandidate(db, { selectedMetadata: true });
+  await resetActor(db);
+  await db.exec(`UPDATE public.image_extraction_candidates SET
+    owner_review_snapshot=NULL,review_disposition=NULL,review_version=NULL,
+    review_ready=false,state='needs_review' WHERE id='${fixture.candidateId}'`);
+  await setActor(db, fixture.ownerId);
+  const card = (await scalar(db,
+    `SELECT public.phase9_owner_batch_review_v1('${fixture.sessionId}')`)).items[0];
+  assert.equal(card.review, null);
+  assert.equal(card.metadataState, 'selected');
+  assert.deepEqual({
+    cover: card.fieldSources.cover, title: card.fieldSources.title,
+    authors: card.fieldSources.authors, language: card.fieldSources.language,
+  }, { cover: 'matched', title: 'matched', authors: 'matched', language: 'matched' });
+});
+
+test('U6G-FA-RED-03 malformed partial review cannot create custom authority', async () => {
+  const fixture = await ownerFixture();
+  const started = await start(fixture);
+  const candidateId = await candidate(fixture, started.result.sessionId);
+  await resetActor(db);
+  await db.exec(`UPDATE public.image_extraction_candidates SET
+    owner_review_snapshot='{"value":{"originalTitle":"partial"}}'::jsonb,
+    review_disposition='reviewed',review_version=1 WHERE id='${candidateId}'`);
+  await setActor(db, fixture.ownerId);
+  const sources = (await scalar(db,
+    `SELECT public.phase9_owner_batch_review_v1('${started.result.sessionId}')`))
+    .items[0].fieldSources;
+  assert.equal(Object.values(sources).includes('custom'), false);
+  assert.equal(sources.title, 'detected');
+  assert.equal(sources.condition, 'default');
+});
+
+test('U6G-FA-RED-04 confirmed empty authors use missing authority', async () => {
+  const fixture = await seedReviewedCandidate(db, { review: { authors: [] } });
+  await resetActor(db);
+  await db.exec(`UPDATE public.image_extraction_candidates
+    SET observed_authors=ARRAY[]::text[] WHERE id='${fixture.candidateId}'`);
+  await setActor(db, fixture.ownerId);
+  const card = (await scalar(db,
+    `SELECT public.phase9_owner_batch_review_v1('${fixture.sessionId}')`)).items[0];
+  assert.deepEqual(card.review.authors, []);
+  assert.equal(card.fieldSources.authors, 'missing');
+});
+
+test('U6G-FA-RED-05 historical never-reviewed rows normalize on read without backfill', async () => {
+  const fixture = await ownerFixture();
+  const started = await start(fixture);
+  const candidateId = await candidate(fixture, started.result.sessionId);
+  await resetActor(db);
+  const before = (await db.query(`SELECT version,owner_review_snapshot,review_version
+    FROM public.image_extraction_candidates WHERE id='${candidateId}'`)).rows[0];
+  await setActor(db, fixture.ownerId);
+  const card = (await scalar(db,
+    `SELECT public.phase9_owner_batch_review_v1('${started.result.sessionId}')`)).items[0];
+  await resetActor(db);
+  const afterRead = (await db.query(`SELECT version,owner_review_snapshot,review_version
+    FROM public.image_extraction_candidates WHERE id='${candidateId}'`)).rows[0];
+  assert.equal(card.fieldSources.title, 'detected');
+  assert.equal(card.fieldSources.condition, 'default');
+  assert.deepEqual(afterRead, before);
+});
+
+test('U6G-FA-GREEN-06 reviewed values preserve matched/detected/default/custom provenance', async () => {
+  const selectedFixture = await seedReviewedCandidate(db, { selectedMetadata: true });
+  const selectedReview = {
+    ...selectedFixture.review,
+    originalTitle: `Selected canonical title ${selectedFixture.candidateId}`,
+    authors: ['Canonical Author'],
+    originalLanguage: 'en',
+    originalFieldConfirmation: { title: true, authors: [true] },
+  };
+  await resetActor(db);
+  await db.exec(`UPDATE public.image_extraction_candidates SET
+    owner_review_snapshot='${sqlJson({
+      value: selectedReview,
+      confirmed_title: { value: selectedReview.originalTitle },
+      confirmed_authors: selectedReview.authors,
+    })}'::jsonb WHERE id='${selectedFixture.candidateId}'`);
+  await setActor(db, selectedFixture.ownerId);
+  const matched = (await scalar(db,
+    `SELECT public.phase9_owner_batch_review_v1('${selectedFixture.sessionId}')`))
+    .items[0];
+  assert.deepEqual({
+    title: matched.fieldSources.title,
+    authors: matched.fieldSources.authors,
+    language: matched.fieldSources.language,
+  }, { title: 'matched', authors: 'matched', language: 'matched' });
+  assert.equal(matched.review.originalTitle, matched.metadataSummary.title);
+  assert.deepEqual(matched.review.authors, matched.metadataSummary.authors);
+
+  const inheritedFixture = await seedReviewedCandidate(db, { review: {
+    originalTitle: 'Observed title', authors: ['Observed Author'],
+    originalLanguage: 'en', baseCondition: 'good', shelfLocation: 'Default Shelf',
+    publicationIntent: 'private', quantity: 2, priceMinor: 999,
+  } });
+  const inherited = (await scalar(db,
+    `SELECT public.phase9_owner_batch_review_v1('${inheritedFixture.sessionId}')`))
+    .items[0];
+  assert.deepEqual({
+    title: inherited.fieldSources.title,
+    authors: inherited.fieldSources.authors,
+    language: inherited.fieldSources.language,
+    condition: inherited.fieldSources.condition,
+    location: inherited.fieldSources.location,
+    publication: inherited.fieldSources.publication,
+    quantity: inherited.fieldSources.quantity,
+    price: inherited.fieldSources.price,
+  }, {
+    title: 'detected', authors: 'detected', language: 'detected',
+    condition: 'default', location: 'default', publication: 'default',
+    quantity: 'custom', price: 'custom',
+  });
+});
+
+async function projectedSelectedMetadataCard({
+  title = 'Selected title', authors = ['Selected Author'], language = 'en',
+  cover = 'https://books.google.com/cover.jpg', observedAuthors,
+} = {}) {
+  const fixture = await seedReviewedCandidate(db, { selectedMetadata: true });
+  const sqlText = (value) => String(value).replaceAll("'", "''");
+  const sqlTextArray = (values) => `ARRAY[${values.map((value) => `'${sqlText(value)}'`).join(',')}]::text[]`;
+  await resetActor(db);
+  await db.exec(`UPDATE public.canonical_editions SET
+    title='${sqlText(title)}',authors=${sqlTextArray(authors)},
+    language='${sqlText(language)}',cover_url='${sqlText(cover)}'
+    WHERE id='${fixture.canonicalEditionId}'`);
+  await db.exec(`UPDATE public.image_extraction_candidates SET
+    owner_review_snapshot=NULL,review_disposition=NULL,review_version=NULL,
+    review_ready=false,state='needs_review'
+    ${observedAuthors === undefined ? '' : `,observed_authors=${sqlTextArray(observedAuthors)}`}
+    WHERE id='${fixture.candidateId}'`);
+  await setActor(db, fixture.ownerId);
+  return (await scalar(db,
+    `SELECT public.phase9_owner_batch_review_v1('${fixture.sessionId}')`)).items[0];
+}
+
+test('U6G-FA-001 RED-01 blank selected authors fall back per field', async () => {
+  const card = await projectedSelectedMetadataCard({ authors: [''] });
+  assert.equal(card.metadataSummary.authors, null);
+  assert.equal(card.fieldSources.authors, 'detected');
+  assert.equal(card.fieldSources.title, 'matched');
+  assert.equal(card.fieldSources.language, 'matched');
+  assert.equal(card.fieldSources.cover, 'matched');
+});
+
+test('U6G-FA-001 RED-02 unapproved selected cover is never matched', async () => {
+  const card = await projectedSelectedMetadataCard({
+    cover: 'https://evil.example/cover.jpg',
+  });
+  assert.equal(card.metadataSummary.coverReference, null);
+  assert.equal(card.fieldSources.cover, 'missing');
+});
+
+test('U6G-FA-001 RED-03 unsafe selected title falls back per field', async () => {
+  const card = await projectedSelectedMetadataCard({
+    title: 'https://evil.example/active-title',
+  });
+  assert.equal(card.metadataSummary.title, null);
+  assert.equal(card.fieldSources.title, 'detected');
+  assert.equal(card.fieldSources.authors, 'matched');
+});
+
+test('U6G-FA-001 RED-04 invalid selected language falls back per field', async () => {
+  const card = await projectedSelectedMetadataCard({ language: 'english' });
+  assert.equal(card.metadataSummary.language, null);
+  assert.equal(card.fieldSources.language, 'detected');
+  assert.equal(card.fieldSources.title, 'matched');
+});
+
+test('U6G-FA-001 RED-05 valid selected metadata remains matched', async () => {
+  const card = await projectedSelectedMetadataCard();
+  assert.deepEqual({
+    cover: card.fieldSources.cover, title: card.fieldSources.title,
+    authors: card.fieldSources.authors, language: card.fieldSources.language,
+  }, { cover: 'matched', title: 'matched', authors: 'matched', language: 'matched' });
+});
+
+test('U6G-FA-001 RED-07 unusable selected field with no lower authority is missing', async () => {
+  const card = await projectedSelectedMetadataCard({ authors: [''], observedAuthors: [] });
+  assert.equal(card.fieldSources.authors, 'missing');
+  assert.equal(card.fieldSources.title, 'matched');
 });

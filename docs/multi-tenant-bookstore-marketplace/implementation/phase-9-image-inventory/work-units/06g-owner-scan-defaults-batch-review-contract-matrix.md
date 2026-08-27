@@ -332,16 +332,20 @@ ObservedIdentitySummary {
 }
 
 MetadataCardSummary {
-  title: SafeText[1..512]
-  authors: UniqueSafeText[1..20] each [1..256]
-  language: CanonicalBcp47[2..35]
+  title: SafeText[1..512] | null
+  authors: UniqueSafeText[1..20] each [1..256] | null
+  language: CanonicalBcp47[2..35] | null
   coverReference: ApprovedCoverReference[1..512] | null
 }
 ```
 
-`metadataSummary` is non-null only for a current complete `selected` metadata
-snapshot; otherwise it is null and `metadataState` carries the exact existing
-state. `ApprovedCoverReference` is HTTPS, host exactly `books.google.com`, has
+`metadataSummary` is non-null only for a current `selected` metadata snapshot;
+otherwise it is null and `metadataState` carries the exact existing state. A
+selected snapshot does not make every compact-card member usable: each summary
+member is projected independently and is null when its value fails that
+member's bound or allowlist. `fieldSources` then selects the existing detected,
+default, or missing fallback for that field. The canonical selected snapshot is
+unchanged. `ApprovedCoverReference` is HTTPS, host exactly `books.google.com`, has
 no username/password, and is never a scan-media URL. The summary contains no
 selection/canonical/provider IDs, description, ISBN, publisher/date, format,
 pages, categories, confidence, provenance payload, or raw provider response;
@@ -441,6 +445,10 @@ CardFieldSources {
 
 The server composes sources for saved/current values. The client may overlay
 `custom` on a mounted edit but cannot claim server readiness from that label.
+`matched` is valid only when the corresponding selected compact-summary member
+is non-null. Usability is evaluated independently per member, so one unusable
+selected value cannot confer `matched` authority on itself or invalidate usable
+siblings.
 
 Location source is exactly `default|custom|missing`; it can never be
 `detected|matched`. After a mounted Owner override, presentation displays a
@@ -450,7 +458,7 @@ allowed actions, or commit eligibility.
 
 | Internal source | Visible badge | Canonical meaning |
 | --- | --- | --- |
-| `matched` | Detected | Current selected metadata/identity match; never a separate visible Matched source badge |
+| `matched` | Detected | Current selected metadata/identity match contains a usable value for this field; never a separate visible Matched source badge |
 | `detected` | Detected | Current bounded observed identity |
 | `default` | Default | Persisted session default |
 | `custom` | Custom | Saved/mounted per-card override |

@@ -52,7 +52,7 @@ export function compactReviewDisplay(
     const title = edits.originalTitle ?? identityValue(
         card.fieldSources.title,
         card.review?.originalTitle,
-        card.metadataSummary?.title,
+        card.metadataSummary?.title ?? undefined,
         card.observed.title,
         '',
         '',
@@ -60,7 +60,7 @@ export function compactReviewDisplay(
     const authors = edits.authors ?? identityValue(
         card.fieldSources.authors,
         card.review?.authors,
-        card.metadataSummary?.authors,
+        card.metadataSummary?.authors ?? undefined,
         card.observed.authors,
         [],
         [],
@@ -68,7 +68,7 @@ export function compactReviewDisplay(
     const language = edits.originalLanguage ?? identityValue(
         card.fieldSources.language,
         card.review?.originalLanguage,
-        card.metadataSummary?.language,
+        card.metadataSummary?.language ?? undefined,
         card.observed.language,
         defaults.languageHint,
         '',
@@ -93,6 +93,17 @@ export function compactReviewDisplay(
         publication,
         damage,
     };
+}
+
+export function publicationHasEffectiveOverride(
+    card: OwnerBatchReviewCard,
+    defaults: ScanSetupFormState,
+    edits: CompactReviewEdits,
+): boolean {
+    const damage = edits.damageDisclosure ?? card.review?.damageDisclosure ?? NO_DAMAGE;
+    const requested = edits.publicationIntent ?? card.review?.publicationIntent
+        ?? defaults.publication;
+    return (!damage.isSellable || !damage.completeReadableSafe) && requested !== 'private';
 }
 
 export function buildCompactReview(

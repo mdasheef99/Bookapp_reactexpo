@@ -88,7 +88,7 @@ function cardFixture(overrides: Partial<Record<string, unknown>> = {}) {
         review: null,
         fieldSources: {
             cover: 'missing', title: 'detected', authors: 'detected',
-            language: 'detected', condition: 'default', price: 'default',
+            language: 'detected', condition: 'missing', price: 'missing',
             quantity: 'default', location: 'default', publication: 'default',
             damage: 'default',
         },
@@ -299,6 +299,27 @@ describe('Phase 9 NEW 6G-C genuine mounted production-route composition', () => 
         expect(screen.getByText('View session summary')).toBeTruthy();
     });
 
+    it('turns malformed source/backing authority into a recoverable review error', async () => {
+        serverState.batchReview = {
+            counts: { ...zeroCounts(), detected: 1, needsAttention: 1 },
+            items: [cardFixture({
+                review: null,
+                reviewVersion: null,
+                fieldSources: {
+                    ...cardFixture().fieldSources,
+                    title: 'custom',
+                },
+            })],
+        };
+        const screen = render(<SessionRoute />, { wrapper });
+        await waitFor(() => expect(screen.getByTestId('batch-review-degraded')).toBeTruthy());
+        expect(screen.getByText('Book review could not be loaded right now.')).toBeTruthy();
+        expect(screen.getByText('Retry book review')).toBeTruthy();
+        expect(screen.getByText('Finding books')).toBeTruthy();
+        expect(screen.getByText('View session summary')).toBeTruthy();
+        expect(screen.queryByText('Add to inventory')).toBeNull();
+    });
+
     it('fails closed on detected-count volume beyond single-image support even with small active states', async () => {
         // Historical session whose extra candidates sit OUTSIDE the active
         // review states (previously committed/dispositioned legacy rows):
@@ -330,6 +351,7 @@ describe('Phase 9 NEW 6G-C genuine mounted production-route composition', () => 
                     candidateId: '00000000-0000-4000-8000-000000000022',
                     ordinal: 2,
                     observed: { title: 'Detected Book Two', authors: [], language: 'en', script: null },
+                    fieldSources: { ...cardFixture().fieldSources, authors: 'missing' },
                 }),
             ],
         };

@@ -1,10 +1,10 @@
 # Phase 9 Unit 6G Owner Batch Review Design Evidence
 
-**Status:** `unit6g_d_implemented_pending_owner_6ge_authorization`
-**Date:** 2026-08-24
+**Status:** `unit6g_fa_001_ready_for_independent_review`
+**Date:** 2026-08-27
 **Branch:** `codex/phase9-unit6g-recomposition`
 **Worktree:** `C:\Users\user\Documents\augment-projects\Bookconnect_expo\.worktrees\phase9-unit6g-recomposition`
-**Current evidence:** §10 supersedes older “next action” statements without
+**Current evidence:** §11 supersedes older “next action” statements without
 rewriting or deleting their historical record. M52 remains live as
 `20260822025712` with its recorded connected proofs.
 
@@ -13,8 +13,7 @@ rewriting or deleting their historical record. M52 remains live as
 > passes. Their phrases “current boundary,” “current implementation,” “M52
 > remains unapplied,” structural counts, and “exact next action” are current
 > only at those dated historical checkpoints and are not present authority.
-> Section 10 is the current 2026-08-24 recomposition status, boundary correction, and next
-> action.
+> Section 11 is the current 2026-08-27 correction status and next action.
 
 ## 1. Authorization and boundary
 
@@ -439,3 +438,28 @@ single-image authority and unchanged Unit 6 over-limit behavior (its independent
 final review is COMPLETE, verdict PASS_WITH_P3). Stop before NEW 6G-C (which additionally
 requires separate explicit Owner authorization and remains composition-only/pre-commit),
 migration work, deployment, Git publication, or broader Phase 9 routing/status reconciliation.
+
+## 11. 2026-08-27 — U6G-FA-001 partial selected-metadata correction
+
+The Owner authorized the minimal representation/projection correction identified
+by the prior bounded RED checkpoint. The correction does not add a DTO version,
+expand candidate detail, or alter lifecycle/commit behavior.
+
+- RED-first focused verification produced 8 expected failures / 45 passes.
+- M53 adds an internal safe-summary helper and replaces the internal source and
+  batch-card projection helpers. Each unusable selected title, authors,
+  language, or cover member projects as null; the canonical selected snapshot
+  remains unchanged and existing `fieldSources` chooses the per-field fallback.
+- Mirrored Edge/mobile strict DTOs accept those nullable compact members, and
+  compact draft derivation treats null as absent.
+- Focused contract/M53 structure Jest is 53/53; Unit 6G PGlite is 25/25;
+  compact draft/card/mounted-route assertions are 53/53, with the command
+  manually terminated after completion because of the existing Jest open
+  handle; full image-inventory Jest is 56 suites / 454 passed / 4 skipped;
+  `tsc --noEmit`, the Phase 9 continuity validator, and `git diff --check` pass.
+- M52/M39, Unit 6 lifecycle, public RPC signatures, tables, business rows, and
+  connected state are unchanged. M53 remains unapplied. Nothing was staged,
+  committed, pushed, merged, deployed, or applied.
+
+**Current next action:** independent review of this minimal correction. M53
+application and Edge/client deployment require separate Owner authorization.

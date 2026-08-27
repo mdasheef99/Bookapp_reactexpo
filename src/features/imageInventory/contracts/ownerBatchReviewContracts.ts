@@ -78,9 +78,10 @@ const observed = z.object({
     script: z.string().regex(/^[A-Z][a-z]{3}$/u).nullable(),
 }).strict();
 const metadataSummary = z.object({
-    title: safeTextSchema(1, 512),
-    authors: unique(safeTextSchema(1, 256), 20).refine((items) => items.length > 0),
-    language: languageSchema, coverReference: cover.nullable(),
+    title: safeTextSchema(1, 512).nullable(),
+    authors: unique(safeTextSchema(1, 256), 20)
+        .refine((items) => items.length > 0).nullable(),
+    language: languageSchema.nullable(), coverReference: cover.nullable(),
 }).strict();
 const card = z.object({
     sessionId: uuidSchema, candidateId: uuidSchema, inputId: uuidSchema.nullable(),
@@ -105,7 +106,95 @@ const card = z.object({
     if ((value.metadataState === 'selected') !== (value.metadataSummary !== null)) {
         context.addIssue({ code: 'custom', message: 'metadata summary is inconsistent' });
     }
+    if (value.review !== null && value.reviewDisposition !== 'reviewed') {
+        context.addIssue({ code: 'custom', message: 'review disposition is inconsistent' });
+    }
 });
+type BatchCard = z.infer<typeof card>;
+type BatchDefaults = z.infer<typeof defaults>;
+const equalStrings = (left: string[], right: string[]) => (
+    left.length === right.length && left.every((entry, index) => entry === right[index])
+);
+function validateFieldAuthority(
+    value: BatchCard,
+    rootDefaults: BatchDefaults,
+    context: z.RefinementCtx,
+    index: number,
+): void {
+    const review = value.review;
+    const selected = value.metadataState === 'selected' ? value.metadataSummary : null;
+    const issue = (field: keyof BatchCard['fieldSources'], valid: boolean) => {
+        if (!valid) context.addIssue({
+            code: 'custom',
+            message: `${field} source has no coherent backing value`,
+            path: ['items', index, 'fieldSources', field],
+        });
+    };
+    const title = value.fieldSources.title;
+    issue('title', title === 'custom' ? Boolean(review
+        && review.originalTitle !== selected?.title
+        && review.originalTitle !== value.observed.title)
+        : title === 'matched' ? Boolean(selected
+            && (!review || review.originalTitle === selected.title))
+            : title === 'detected' ? Boolean(value.observed.title
+                && (!review || (review.originalTitle === value.observed.title
+                    && review.originalTitle !== selected?.title)))
+                : false);
+    const authors = value.fieldSources.authors;
+    issue('authors', authors === 'custom' ? Boolean(review?.authors.length
+        && (!selected?.authors || !equalStrings(review.authors, selected.authors))
+        && !equalStrings(review.authors, value.observed.authors))
+        : authors === 'matched' ? Boolean(selected?.authors
+            && (!review || equalStrings(review.authors, selected.authors)))
+        : authors === 'detected' ? Boolean(value.observed.authors.length
+            && (!review || (equalStrings(review.authors, value.observed.authors)
+                && (!selected?.authors || !equalStrings(review.authors, selected.authors)))))
+        : authors === 'missing' ? Boolean(review?.authors.length === 0
+            || (!review && !selected?.authors && value.observed.authors.length === 0))
+                    : false);
+    const language = value.fieldSources.language;
+    issue('language', language === 'custom' ? Boolean(review
+        && review.originalLanguage !== selected?.language
+        && review.originalLanguage !== value.observed.language
+        && review.originalLanguage !== rootDefaults.languageHint)
+        : language === 'matched' ? Boolean(selected
+            && (!review || review.originalLanguage === selected.language))
+            : language === 'detected' ? Boolean(value.observed.language
+                && (!review || review.originalLanguage === value.observed.language))
+                : language === 'default' ? Boolean(rootDefaults.languageHint
+                    && (!review || review.originalLanguage === rootDefaults.languageHint))
+                    : false);
+    issue('cover', value.fieldSources.cover === 'matched'
+        ? Boolean(selected?.coverReference)
+        : value.fieldSources.cover === 'missing' ? !selected?.coverReference : false);
+    issue('condition', value.fieldSources.condition === 'custom'
+        ? Boolean(review && review.baseCondition !== rootDefaults.condition)
+        : value.fieldSources.condition === 'default'
+            ? Boolean(rootDefaults.condition && (!review || review.baseCondition === rootDefaults.condition))
+            : !review && rootDefaults.condition === null);
+    issue('price', value.fieldSources.price === 'custom'
+        ? Boolean(review && review.priceMinor !== rootDefaults.priceMinor)
+        : value.fieldSources.price === 'default'
+            ? rootDefaults.priceMinor !== null && (!review || review.priceMinor === rootDefaults.priceMinor)
+            : !review && rootDefaults.priceMinor === null);
+    issue('quantity', value.fieldSources.quantity === 'custom'
+        ? Boolean(review && review.quantity !== 1) : !review || review.quantity === 1);
+    issue('location', value.fieldSources.location === 'custom'
+        ? Boolean(review && review.shelfLocation !== rootDefaults.location)
+        : value.fieldSources.location === 'default'
+            ? Boolean(rootDefaults.location && (!review || review.shelfLocation === rootDefaults.location))
+            : !review && !rootDefaults.location);
+    issue('publication', value.fieldSources.publication === 'custom'
+        ? Boolean(review && review.publicationIntent !== rootDefaults.publication)
+        : value.fieldSources.publication === 'default'
+            ? !review || review.publicationIntent === rootDefaults.publication
+            : false);
+    issue('damage', value.fieldSources.damage === 'custom'
+        ? Boolean(review?.damageDisclosure.hasDamage)
+        : value.fieldSources.damage === 'default'
+            ? !review || !review.damageDisclosure.hasDamage
+            : false);
+}
 const blockerCounts = z.object(Object.fromEntries(
     blockerCodes.map((code) => [code, boundedCount]),
 ) as Record<typeof blockerCodes[number], typeof boundedCount>).strict();
@@ -137,7 +226,11 @@ const schemas = {
             ownerRemoved: boundedCount, falseDetections: boundedCount,
         }).strict(),
         items: z.array(card).max(15), updatedAt: timestampSchema,
-    }).strict(),
+    }).strict().superRefine((value, context) => {
+        value.items.forEach((item, index) => validateFieldAuthority(
+            item, value.defaults, context, index,
+        ));
+    }),
     remove_candidate_from_scan: z.object({
         sessionId: uuidSchema, candidateId: uuidSchema, candidateVersion: versionSchema,
         sessionVersion: versionSchema, presentationRevision: versionSchema,

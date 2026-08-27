@@ -1,21 +1,90 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `unit6g_d_implemented_pending_owner_6ge_authorization`
-**Implementation status:** `unit6g_group1_contract_persistence_locally_complete_m52_live`
+**Planning status:** `unit6g_fa_001_minimal_contract_correction_complete`
+**Implementation status:** `unit6g_fa_001_locally_verified_unapplied`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
-**Last updated:** 2026-08-26
-**Current milestone:** Unit 6G design authority recomposed 2026-08-24 (revised SDD/matrix/tracker 31 are current); M52 remains live exactly once as `20260822025712`; Unit 8 remains live-verified and integrated into pushed `main`.
-**Active work unit:** `unit6g_d_implemented_pending_owner_6ge_authorization`
+**Last updated:** 2026-08-27
+**Current milestone:** U6G-FA-001 minimal selected-metadata projection correction is locally verified. Unusable selected summary members project as null, and existing per-field source precedence supplies detected/default/missing fallback. M53 remains unapplied; M52 remains live and byte-immutable.
+**Active work unit:** `unit6g_fa_001_independent_review`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Unit 6G-B: Group 1 implemented through two correction iterations (both externally rereviewed; one PASS, one FAIL whose two P2 findings were then fixed and gate-verified), M52 applied live as `20260822025712`, and all connected proofs passed — nullable-condition Start v2 with legacy-v2 fail-closed fence, irreversible Owner removal excluded from batch review and page-v2, Close v3 without double-counting, page-v2 ACL preserved through CREATE OR REPLACE. Local commits `20b5916`, `1c090b9`, `6313067`. Unit 8 remains live-verified and unchanged.
-**Next authorized action:** separate Owner authorization for 6G-E Edge deployment (resolving pre-6G live v8), connected live verification, and native closure. Nothing deployed. NEW 6G-D is implemented and locally checkpointed (dual-model review cycle complete; final verdict PASS after corrections). NEW 6G-C (composition-only pre-commit client work over the retained M52 foundation) begins only on explicit approval; NEW 6G-D later owns commit orchestration and 6G-E owns Edge deployment/live/native closure.
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M37 are live at their recorded versions; M38 is live exactly once as `20260810130638 marketplace_phase9_metadata_retry_correction`; M39 is live exactly once as `20260812003419 marketplace_phase9_create_only_inventory_commit`; M40 is live exactly once as `20260813000040 marketplace_phase9_safe_publication`; M41 is live exactly once as `20260813070104 marketplace_phase9_unit7a_quality_handoff`; M42 is live exactly once as `20260814013536 marketplace_phase9_generated_authors_projection`; M43 is live exactly once as `20260816122822 marketplace_phase9_unit7c_inventory_management`; M44 is live exactly once as `20260816122901 marketplace_phase9_store_view_filter_contract`; M45 is live exactly once as `20260816122929 marketplace_phase9_unit7c_media_history`; M46 is live exactly once as `20260816150126 marketplace_phase9_unit7c_private_save_revision_correction`; M47 is live exactly once as `20260817073341 marketplace_phase9_legacy_rpc_security_remediation`; M48 is live exactly once as `20260817075825 marketplace_phase9_legacy_rpc_service_role_compatibility`; M49 is live exactly once as `20260821060156 marketplace_phase9_bookstore_first_discovery`; M50 is live exactly once as `20260821060742 marketplace_phase9_storefront_detail`; M51 is live exactly once as `20260821061213 marketplace_phase9_public_media_order_invariant`; and **M52 is live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation`** (name canonical per the timestamp/name-ledger convention). M39-M52 remain byte-immutable after application.
+**Last completed:** RED-first U6G-FA-001 correction across M53, mirrored strict contracts, compact draft fallback, and real PGlite projection. Focused contract/structure Jest is 53/53, PGlite is 25/25, compact UI/draft assertions are 53/53, and TypeScript passes.
+**Next authorized action:** independent review of the minimal correction. No M53 application, deployment, connected verification, or native work is authorized.
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. Local forward migration `20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql` is verified but **unapplied**.
 **Scope boundary:** Only Unit 6G Group 1 contract/persistence foundation is implemented and live. Groups 2–4, UI, card composition, Add/Add-all orchestration, Store View/cache changes, and Unit 6F remain out of scope. Proof rows created during the connected M52 verification (session `33c3f6fb…`, candidate `50de2017…`, their audit/event/replay records) are intentionally persisted evidence on the development project. Unit 8 remains complete; no deployment occurred for Unit 6G.
 **Implementation authority:** Group 1/B local implementation, migration-file creation, correction iterations, and the Owner-authorized M52 application with connected proofs are complete and retained. The 2026-08-24 recomposition made the revised SDD/matrix/tracker 31 the sole NEW 6G-C/6G-D design authority following completed independent final review (verdict PASS_WITH_P3); the exact next action is Owner checkpoint disposition. Historical `e7ed166`-style old 6G-C work and the frozen old 6G-D implementation are superseded evidence, not authority. Edge/mobile deployment of new client code and Git publication beyond this branch remain unauthorized. Unit 8 remains live-verified; M39-M52 are not reopened. Native Unit 6F validation remains deferred and unrelated.
-**Migration creation/application authority:** M49-M51 were applied only through the explicitly authorized forward rollout; M52 was applied through the explicitly authorized Supabase MCP application after a PASS read-only preflight; no normal `db push`, historical replay, or `schema_migrations` repair was used.
+**Migration creation/application authority:** the current Owner request authorized the bounded local M53 correction. It did not authorize applying M53, deployment, connected mutation, `db push`, historical replay, or `schema_migrations` repair.
 **Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
-**Current gate:** `UNIT6G_D_IMPLEMENTED_PENDING_OWNER_6GE_AUTHORIZATION` (NEW 6G-C implemented and locally checkpointed; independent review COMPLETE, final verdict PASS_WITH_P3; known P3 N1 module-size deferred); the prior `UNIT8_LIVE_ROLLOUT_PASS_MAIN_INTEGRATED` remains satisfied. Native Unit 6F remains deferred and unrelated.
+**Current gate:** `U6G_FA_001_READY_FOR_INDEPENDENT_REVIEW`; M53 remains unapplied and deployment/live/native gates remain closed. The prior Unit 6G-D and Unit 8 checkpoints remain satisfied.
+
+## 2026-08-27 — U6G-FA-001 minimal selected-metadata correction
+
+- The Owner authorized the smallest coherent correction after the bounded RED
+  checkpoint: no candidate-detail/version expansion and no lifecycle or commit
+  redesign.
+- RED-first focused verification produced the expected 8 failures / 45 passes:
+  six mirrored decoder failures and two M53 structure failures.
+- M53 now projects each selected compact-summary member independently. Unsafe
+  title, authors, language, or cover values become null without rewriting the
+  canonical selected snapshot; the existing field-source helper then chooses
+  matched, detected, default, or missing per field.
+- Edge and mobile strict contracts accept only the new nullable summary members.
+  Compact draft derivation treats null as absent and retains the existing
+  source-governed fallback behavior.
+- Verification: focused contracts/M53 structure 53/53; real PGlite projection
+  25/25; compact draft/card/mounted-route assertions 53/53 (the Jest process was
+  manually terminated after all passes because of its existing open handle);
+  full image-inventory Jest 56 suites / 454 passed / 4 skipped; `tsc --noEmit`
+  PASS; Phase 9 continuity validator PASS; `git diff --check` PASS.
+- M52, M39, Unit 6 lifecycle, public RPC signatures, tables, grants, and
+  business rows remain unchanged. M53 is unapplied. No Supabase/Storage,
+  deployment, staging, commit, push, merge, or PR mutation occurred.
+- Exact next action: independent review. Applying M53 or deploying Edge/client
+  code requires separate Owner authorization.
+
+## 2026-08-27 — U6G-FA-001 bounded correction stop
+
+- The reviewed 17-file freeze was verified exactly before edits: base HEAD
+  `d136de6`, aggregate `adb0067f...12ce`, nothing staged, and immutable M52 blob
+  `49a3d9...69269`.
+- Added focused SQL-projection RED cases for blank selected authors, unapproved
+  cover, unsafe title, invalid language, valid selected metadata, field-level
+  observed fallback, unrelated-field preservation, and no-lower-authority
+  missing behavior. The real PGlite suite is 20 pass / 5 fail; every failure is
+  false `matched`, while the valid control passes.
+- Both real strict decoders reject all four complete malformed DTOs even when
+  the affected source is changed to `detected`/`missing`: the owning rejection
+  is the required all-valid `metadataSummary` object itself.
+- Per the correction boundary, M53 and all production contracts/projections
+  remain unchanged. No validator was weakened and no external/Git publication
+  mutation occurred.
+- Exact next action: obtain Owner approval for the smallest coherent contract/
+  projection scope expansion; do not apply M53 or deploy.
+
+## 2026-08-27 — bounded Unit 6G field-authority correction
+
+- RED evidence reproduced false `custom` authority and blank identity for
+  never-reviewed JSON-null review values, source/backing mismatches accepted by
+  both decoders, missing local publication provenance, and malformed mounted
+  payloads rendering as ordinary cards.
+- Forward-only M53 replaces only
+  `marketplace_sec.phase9_unit6g_field_sources`; it recognizes a saved review
+  only when disposition/version/detail validity agree, preserves exact
+  matched/detected/default/custom provenance, treats empty authors as missing,
+  and performs no backfill or business-row write. M52 is unchanged.
+- Mobile and Edge decoders now enforce source/value authority parity. The
+  mounted route rejects malformed payloads into its existing recoverable
+  contract-error/retry state. Unsafe-damage publication coercion is visibly
+  marked as a local Custom override.
+- Verification: focused Jest 6 suites/98 tests; corrected mobile contract 12/12;
+  Unit 6G PGlite 19/19; full image-inventory Jest 56 suites/450 passed/4
+  skipped; TypeScript and web export pass. Continuity/diff/freeze evidence is
+  recorded at session close.
+- External state: no Supabase/database/Storage/provider/deployment mutation;
+  nothing staged, committed, pushed, merged, or deployed.
+- Exact next action: independent review of this frozen bounded correction.
+  Applying M53 or deploying any server/client bundle requires separate Owner
+  authorization.
 
 ## 2026-08-26 — Unit 6G targeted F4 correction
 

@@ -30,6 +30,59 @@ const defaults = {
   quantity: 1, publication: 'private', script: null,
 };
 
+function authorityCard(overrides: Record<string, unknown> = {}) {
+  return {
+    sessionId: uuid(2), candidateId: uuid(3), inputId: null, ordinal: 1,
+    candidateState: 'needs_review', candidateVersion: 1, metadataState: 'pending',
+    metadataRevision: 1, reviewVersion: null, reviewDisposition: null,
+    observed: {
+      title: 'Observed title', authors: ['Observed author'],
+      language: 'en', script: 'Latn',
+    },
+    metadataSummary: null, review: null,
+    fieldSources: {
+      cover: 'missing', title: 'detected', authors: 'detected', language: 'detected',
+      condition: 'missing', price: 'missing', quantity: 'default', location: 'default',
+      publication: 'default', damage: 'default',
+    },
+    attentionCodes: [], blockers: [], reviewReady: false,
+    allowedActions: ['save_review', 'view_metadata'], updatedAt: timestamp,
+    ...overrides,
+  };
+}
+
+function authorityPayload(value: ReturnType<typeof authorityCard>) {
+  return {
+    contractVersion,
+    data: {
+      sessionId: uuid(2), status: 'active', sessionVersion: 1,
+      presentationRevision: 1, defaults, batchLabel: null,
+      counts: {
+        detected: 1, processing: 0, needsAttention: 1,
+        reviewReadySaved: 0, committed: 0, ownerRemoved: 0, falseDetections: 0,
+      },
+      items: [value], updatedAt: timestamp,
+    },
+  };
+}
+
+function reviewValue(overrides: Record<string, unknown> = {}) {
+  return {
+    originalTitle: 'Owner title', authors: ['Observed author'],
+    originalLanguage: 'en', script: 'Latn',
+    metadataChoice: { mode: 'manual', selectionId: null },
+    quantity: 1, priceMinor: 100, baseCondition: 'good',
+    damageDisclosure: {
+      hasDamage: false, damageTypes: [], damageNote: null,
+      isSellable: true, completeReadableSafe: true,
+    },
+    shelfLocation: 'Shelf A', notes: { publicNote: null, internalNote: null },
+    publicationIntent: 'private', duplicateIntent: null,
+    originalFieldConfirmation: { title: true, authors: [true] },
+    candidateDisposition: 'reviewed', ...overrides,
+  };
+}
+
 describe('Phase 9 Unit 6G Group 1 request contracts', () => {
   it.each([
     {
@@ -157,6 +210,95 @@ describe('Phase 9 Unit 6G Group 1 strict responses', () => {
       items: [card], updatedAt: timestamp,
     };
     expect(() => decodeOwnerBatchReviewResponse('read_scan_batch_review', { contractVersion, data })).toThrow();
+  });
+
+  it.each([
+    ['blank selected authors', { authors: [''] }, { authors: 'detected' }],
+    ['unapproved selected cover', {
+      coverReference: 'https://evil.example/cover.jpg',
+    }, { cover: 'missing' }],
+    ['unsafe selected title', {
+      title: 'https://evil.example/active-title',
+    }, { title: 'detected' }],
+    ['invalid selected language', { language: 'english' }, { language: 'detected' }],
+  ])('accepts a complete DTO when an unusable selected field is projected as null: %s', (
+    label, metadataOverride, sourceOverride,
+  ) => {
+    const base = authorityCard();
+    const field = label.includes('authors') ? 'authors'
+      : label.includes('cover') ? 'coverReference'
+        : label.includes('title') ? 'title' : 'language';
+    const selected = authorityCard({
+      metadataState: 'selected',
+      metadataSummary: {
+        title: 'Selected title', authors: ['Selected Author'], language: 'en',
+        coverReference: 'https://books.google.com/cover.jpg', ...metadataOverride,
+        [field]: null,
+      },
+      fieldSources: {
+        ...base.fieldSources, cover: 'matched', title: 'matched',
+        authors: 'matched', language: 'matched', ...sourceOverride,
+      },
+    });
+    expect(() => decodeOwnerBatchReviewResponse(
+      'read_scan_batch_review', authorityPayload(selected),
+    )).not.toThrow();
+  });
+
+  it.each([
+    ['custom without review', authorityCard({
+      fieldSources: { ...authorityCard().fieldSources, title: 'custom' },
+    })],
+    ['matched without metadata', authorityCard({
+      fieldSources: { ...authorityCard().fieldSources, title: 'matched' },
+    })],
+    ['default without condition default', authorityCard({
+      fieldSources: { ...authorityCard().fieldSources, condition: 'default' },
+    })],
+  ])('rejects semantic source/backing mismatch: %s', (_label, value) => {
+    expect(() => decodeOwnerBatchReviewResponse(
+      'read_scan_batch_review', authorityPayload(value),
+    )).toThrow();
+  });
+
+  it('accepts coherent review-null detected and selected metadata authority', () => {
+    expect(() => decodeOwnerBatchReviewResponse(
+      'read_scan_batch_review', authorityPayload(authorityCard()),
+    )).not.toThrow();
+    const selected = authorityCard({
+      metadataState: 'selected',
+      metadataSummary: {
+        title: 'Matched title', authors: ['Matched author'],
+        language: 'fr', coverReference: null,
+      },
+      fieldSources: {
+        ...authorityCard().fieldSources,
+        title: 'matched', authors: 'matched', language: 'matched',
+      },
+    });
+    expect(() => decodeOwnerBatchReviewResponse(
+      'read_scan_batch_review', authorityPayload(selected),
+    )).not.toThrow();
+  });
+
+  it('rejects reviewed custom labels when the value is inherited', () => {
+    const value = authorityCard({
+      review: reviewValue({ originalTitle: 'Observed title' }),
+      reviewVersion: 1, reviewDisposition: 'reviewed',
+      fieldSources: {
+        ...authorityCard().fieldSources,
+        title: 'custom', condition: 'custom', price: 'custom',
+      },
+    });
+    expect(() => decodeOwnerBatchReviewResponse(
+      'read_scan_batch_review', authorityPayload(value),
+    )).toThrow();
+    expect(() => decodeOwnerBatchReviewResponse(
+      'read_scan_batch_review', authorityPayload({
+        ...value,
+        fieldSources: { ...value.fieldSources, title: 'detected' },
+      }),
+    )).not.toThrow();
   });
 });
 

@@ -310,7 +310,7 @@ displayed business field. The internal code-to-badge mapping is normative:
 
 | Internal source code | Visible badge | Meaning |
 | --- | --- | --- |
-| `matched` | `Detected` | The current selected metadata/identity match is the source; the internal `matched` code is never rendered as a separate `Matched` badge. |
+| `matched` | `Detected` | The current selected metadata/identity match contains a usable value for this field; the internal `matched` code is never rendered as a separate `Matched` badge. |
 | `detected` | `Detected` | The current bounded observed identity is the source. |
 | `default` | `Default` | The value is inherited from the persisted session default. |
 | `custom` | `Custom` | The Owner's saved per-card value overrides the observed/selected/default value. |
@@ -323,6 +323,12 @@ review/metadata/default relationship; the client cannot replace a server
 source label with an equality comparison or a caller-supplied badge. A valid
 detected language that differs from the English hint is accepted and is
 `Detected`, not an error.
+
+Selected metadata state and compact-field usability are separate. A current
+selected snapshot may contain an unusable value for one member while its other
+members remain usable. The compact projection emits null only for that member;
+the canonical selected snapshot is unchanged, and this precedence table governs
+the detected/default/missing fallback for the affected field.
 
 The allowed source codes are explicit:
 
@@ -743,9 +749,12 @@ revision and `items`. Each item contains only:
 
 The strict nested DTO bounds are frozen in the contract matrix: observed title
 `1..512`, authors `0..20` entries of `1..256`, canonical BCP 47 language
-`2..35`, nullable ISO 15924 script; selected metadata summary title `1..512`,
-authors `1..20` entries of `1..256`, canonical language, and nullable approved
-HTTPS cover reference `1..512`; attention codes are the existing 12-value
+`2..35`, nullable ISO 15924 script; selected metadata summary members are
+independently nullable, with non-null title `1..512`, authors `1..20` entries
+of `1..256`, canonical language, and approved HTTPS cover reference `1..512`.
+The selected canonical snapshot is not rewritten; the compact projection emits
+null for an unusable member and `fieldSources` governs that field's fallback.
+Attention codes are the existing 12-value
 enum; blockers use the existing 17-value enum, one nullable bounded field name,
 exactly one candidate/input UUID, and safe message `1..240`; for a supported NEW
 Unit 6G single-image scan, card ordinals, card arrays, and the aggregate item
