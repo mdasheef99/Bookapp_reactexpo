@@ -1,7 +1,31 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit6g_fa_001_ready_for_independent_review`; **last updated:** 2026-08-27
+**Status:** `unit6g_fa_001_live_verified_m53_applied`; **last updated:** 2026-08-28
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit6g_fa_001_independent_review`. The Owner-authorized minimal selected-metadata projection and mirrored-contract correction is locally verified. Exact next action: independent review. M53 application and every deployment/live/native gate remain unauthorized.
+**Active work unit:** `unit6g_fa_001_post_apply_live_verification`. The Owner-authorized minimal selected-metadata projection and mirrored-contract correction is live-verified. Exact next action: Owner review of the M53 live proof. Edge/client/native deployment remains separately gated.
+
+### 2026-08-28 — U6G-FA-001 M53 application and connected browser verification
+
+- Exact-project preflight passed for `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn` (`ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`,
+  `ap-southeast-2`); M52 `20260822025712` was the live tail and the required
+  dependency signatures were present.
+- After explicit Owner authorization, Supabase MCP applied
+  `marketplace_phase9_unit6g_field_authority_correction` exactly once. Live
+  readback records version `20260828081324`, directly after M52. The forward
+  migration replaces internal projection functions only; it performs no DML,
+  backfill, public RPC/signature, table, RLS, grant, Storage, or business-row
+  change.
+- Post-apply function readback passed the `SECURITY DEFINER` field-source
+  helper and its reviewed-disposition, review-version, valid-review, and
+  valid-review-derived-source gates.
+- The Codex in-app browser rendered the scan review page with 15 candidate
+  cards. `Book review could not be loaded right now.` and its retry control were
+  absent; the page summary was `Ready: 0 · Processing: 0 · Needs attention: 15
+  · Added: 0`. No review save, add, remove, or inventory action was clicked.
+- Verification: narrowed post-apply M53 Jest 4/4. Previously recorded local
+  M53 contract/structure 53/53, PGlite 25/25, compact UI/draft 53/53,
+  TypeScript, export, and continuity checks remain valid. The source migration
+  is committed in `831649d`; this evidence update is the scoped closeout.
 
 ### 2026-08-27 — U6G-FA-001 partial selected-metadata correction
 
@@ -2686,7 +2710,7 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 | Local filename | Live version | Project/preflight | Authority/effect | Verification/status |
 | --- | --- | --- | --- | --- |
 | `20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql` | **applied live as `20260822025712`** on `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) directly after M51 `20260821061213`; name is canonical per the timestamp/name-ledger convention | Read-only preflight PASS (dependency signatures, ACL snapshot, data compatibility) then Owner-authorized application | Group 1 forward candidate plus verification-pass and iteration-two corrections: needs-review count override, NULL guards (keys, versions, required start inputs), safe-integer session counters with 15-card bounds, forward session-page filter | Focused Jest 42/42, exact-list regression 212/212, PGlite 13/13, TypeScript clean, continuity validator PASS; **applied and live-verified 2026-08-22, see the M52 application proof record below** |
-| `20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql` | **not applied**; M52 remains the live tail relevant to Unit 6G | No connected project call in this session; application explicitly unauthorized | Forward-only replacement of internal `marketplace_sec.phase9_unit6g_field_sources`; no DML/backfill/public RPC/DTO/grant change; M52/M39 byte-immutable | RED reproduced; focused Jest 98/98, Unit 6G PGlite 19/19, full image-inventory 450 passed/4 skipped, TypeScript/export pass; `local_verified_pending_independent_review_and_separate_application_authorization` |
+| `20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql` | **applied live as `20260828081324`** on `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) directly after M52 `20260822025712`; name `marketplace_phase9_unit6g_field_authority_correction` | Exact-project preflight PASS (healthy project, M52 live tail, dependency signatures) followed by explicit Owner-authorized Supabase MCP application and post-apply readback | Forward-only replacement of internal `marketplace_sec.phase9_unit6g_field_sources`, `phase9_unit6g_batch_card`, and safe-summary helper; no DML/backfill/public RPC/DTO/grant/table/RLS change; M52/M39 byte-immutable | Local focused contract/structure 53/53, PGlite 25/25, compact UI/draft 53/53, narrowed post-apply migration test 4/4, TypeScript/export/continuity pass; Codex browser rendered 15 review cards and no review-load error |
 
 ### Unit 6G-B M52 application and connected proof - 2026-08-22
 

@@ -1,6 +1,6 @@
 # Active Marketplace Phase Router
 
-**Last updated:** 2026-08-24
+**Last updated:** 2026-08-28
 **Routing status:** authoritative
 
 This file answers only “where does a new development session start?” DOC-13 owns global status; the active phase tracker owns the detailed current milestone and next authorized action.
@@ -8,7 +8,7 @@ This file answers only “where does a new development session start?” DOC-13 
 ## Active route
 
 - **Phase:** Phase 9 — Image-Assisted Inventory
-- **Latest runtime state:** M43-M48 remain live at their recorded versions; Unit 8 is live exactly once as M49 `20260821060156`, M50 `20260821060742`, and M51 `20260821061213`; and Unit 6G-B is live exactly once as **M52 `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation`** (name canonical per the timestamp/name-ledger convention). M52 was applied 2026-08-22 after a PASS read-only preflight, with full readback and connected proofs: nullable-condition Start v2 with legacy-v2 fail-closed fence verified live, Owner removal (`owner_removed_from_scan`) irreversible and excluded from batch-review/page-v2, Close v3 accounting without double-counting, page-v2 ACL preserved identically through CREATE OR REPLACE. Edge v8 remains the only deployed `phase9-owner-ingestion` version with JWT verification enabled; no Edge redeploy or unrelated service change occurred.
+- **Latest runtime state:** M43-M48 remain live at their recorded versions; Unit 8 is live exactly once as M49 `20260821060156`, M50 `20260821060742`, and M51 `20260821061213`; Unit 6G-B is live exactly once as **M52 `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation`**; and the explicitly authorized U6G-FA-001 correction is live exactly once as **M53 `20260828081324 marketplace_phase9_unit6g_field_authority_correction`**. M53 was applied after exact-project preflight and read back through the required internal function signatures/gates. It changed function definitions only; no business rows, Storage, public RPC signatures, tables, RLS policies, grants, or Edge/client deployment were changed. Edge v8 remains the only deployed `phase9-owner-ingestion` version with JWT verification enabled.
 - **Stable handoff:** [PHASE-9-image-to-LLM-inventory.md](./PHASE-9-image-to-llm-inventory.md)
 - **Session entrypoint:** [Phase 9 SESSION-START](./phase-9-image-inventory/SESSION-START.md)
 - **Local current-state authority:** [Phase 9 master tracker](./phase-9-image-inventory/TRACKER.md)

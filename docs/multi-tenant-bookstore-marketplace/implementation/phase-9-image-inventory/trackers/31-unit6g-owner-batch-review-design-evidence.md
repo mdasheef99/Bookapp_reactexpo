@@ -1,19 +1,20 @@
 # Phase 9 Unit 6G Owner Batch Review Design Evidence
 
-**Status:** `unit6g_fa_001_ready_for_independent_review`
-**Date:** 2026-08-27
+**Status:** `unit6g_fa_001_live_verified_m53_applied`
+**Date:** 2026-08-28
 **Branch:** `codex/phase9-unit6g-recomposition`
 **Worktree:** `C:\Users\user\Documents\augment-projects\Bookconnect_expo\.worktrees\phase9-unit6g-recomposition`
-**Current evidence:** §11 supersedes older “next action” statements without
+**Current evidence:** §12 supersedes older “next action” statements without
 rewriting or deleting their historical record. M52 remains live as
-`20260822025712` with its recorded connected proofs.
+`20260822025712` with its recorded connected proofs, and M53 is live exactly
+once as `20260828081324` with post-apply readback and browser proof.
 
 > **HISTORICAL SCOPE BANNER — §§1–9:** Sections 1 through 9 preserve evidence
 > recorded during the 2026-08-21 Group 1 design, implementation, and correction
 > passes. Their phrases “current boundary,” “current implementation,” “M52
 > remains unapplied,” structural counts, and “exact next action” are current
 > only at those dated historical checkpoints and are not present authority.
-> Section 11 is the current 2026-08-27 correction status and next action.
+> Section 12 is the current 2026-08-28 correction status and next action.
 
 ## 1. Authorization and boundary
 
@@ -463,3 +464,35 @@ expand candidate detail, or alter lifecycle/commit behavior.
 
 **Current next action:** independent review of this minimal correction. M53
 application and Edge/client deployment require separate Owner authorization.
+
+## 12. 2026-08-28 — U6G-FA-001 live application and browser proof
+
+The Owner explicitly authorized exact-project application and connected
+verification after the bounded correction checkpoint.
+
+- Preflight passed for `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn` (`ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`,
+  `ap-southeast-2`), with M52 `20260822025712` as the live tail and required
+  dependency signatures present.
+- Supabase MCP applied the local M53 migration exactly once as live version
+  `20260828081324 marketplace_phase9_unit6g_field_authority_correction`,
+  directly after M52. Post-apply readback confirmed the internal
+  field-source helper remains `SECURITY DEFINER` and gates on reviewed
+  disposition, review version, valid review detail, and valid-review-derived
+  sources.
+- The migration changed internal function definitions only. No DML/backfill,
+  business rows, Storage objects, public RPC signatures, tables, RLS policies,
+  grants, or Edge/client deployment were performed.
+- The Codex in-app browser rendered the scan review page with 15 candidate
+  cards. The previous `Book review could not be loaded right now.` state and
+  retry control were absent; the summary was `Ready: 0 · Processing: 0 ·
+  Needs attention: 15 · Added: 0`. No review save, add, remove, or inventory
+  action was clicked.
+- Narrowed post-apply M53 Jest verification passed 4/4. Existing local
+  correction contract/structure 53/53, PGlite 25/25, compact UI/draft 53/53,
+  TypeScript, export, and continuity evidence remain recorded. The source
+  migration is committed in `831649d`; this current evidence is the scoped
+  closeout.
+
+**Current next action:** Owner review of the M53 live proof. Edge/client/native
+deployment remains separately gated.

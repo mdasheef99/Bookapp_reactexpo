@@ -1,8 +1,8 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit6g_fa_001_ready_for_independent_review`
+**Status:** `unit6g_fa_001_live_verified_m53_applied`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
-**Last updated:** 2026-08-27
+**Last updated:** 2026-08-28
 **Current handoff:** Unit 8 remains live-verified on pushed
 `main`. Unit 6G Group 1/B contracts and M52 (`20260822025712`) are
 live/applied exactly once as the retained Unit 6G A/B foundation. The Unit 6G
@@ -12,11 +12,12 @@ design authority was recomposed 2026-08-24: the
 and [tracker 31](./trackers/31-unit6g-owner-batch-review-design-evidence.md)
 are the current authority, with Unit 6 as the immutable lifecycle backbone.
 The recomposed authority passed independent final review (PASS_WITH_P3).
-U6G-FA-001's minimal partial-selected-metadata correction is locally verified:
+U6G-FA-001's minimal partial-selected-metadata correction is live-verified:
 unusable compact-summary members project as null and existing per-field source
-precedence supplies fallback. M53 remains unapplied and M52 remains
-byte-immutable. Exact next action is independent correction review; M53
-application and Edge/client deployment require separate Owner authorization.
+precedence supplies fallback. M53 is live exactly once as
+`20260828081324 marketplace_phase9_unit6g_field_authority_correction`, and M52
+remains byte-immutable. Exact next action is Owner review of the live proof;
+Edge/client/native deployment remains separately gated.
 
 Historical Unit 8 handoff: Unit 8 is live-verified on the development Supabase
 project. M49, M50, and M51 were

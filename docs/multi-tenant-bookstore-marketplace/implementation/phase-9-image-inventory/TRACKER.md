@@ -1,21 +1,49 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit6g_fa_001_minimal_contract_correction_complete`
-**Implementation status:** `unit6g_fa_001_locally_verified_unapplied`
+**Implementation status:** `unit6g_fa_001_live_verified_m53_applied`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
-**Last updated:** 2026-08-27
-**Current milestone:** U6G-FA-001 minimal selected-metadata projection correction is locally verified. Unusable selected summary members project as null, and existing per-field source precedence supplies detected/default/missing fallback. M53 remains unapplied; M52 remains live and byte-immutable.
-**Active work unit:** `unit6g_fa_001_independent_review`
+**Last updated:** 2026-08-28
+**Current milestone:** U6G-FA-001 minimal selected-metadata projection correction is live-verified. Unusable selected summary members project as null, and existing per-field source precedence supplies detected/default/missing fallback. M53 is live exactly once as `20260828081324`; M52 remains live and byte-immutable.
+**Active work unit:** `unit6g_fa_001_post_apply_live_verification`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** RED-first U6G-FA-001 correction across M53, mirrored strict contracts, compact draft fallback, and real PGlite projection. Focused contract/structure Jest is 53/53, PGlite is 25/25, compact UI/draft assertions are 53/53, and TypeScript passes.
-**Next authorized action:** independent review of the minimal correction. No M53 application, deployment, connected verification, or native work is authorized.
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. Local forward migration `20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql` is verified but **unapplied**.
+**Last completed:** RED-first U6G-FA-001 correction across M53, mirrored strict contracts, compact draft fallback, and real PGlite projection; exact-project M53 application/readback; and Codex-browser review-page verification. Focused contract/structure Jest is 53/53, the narrowed post-apply migration test is 4/4, PGlite is 25/25, compact UI/draft assertions are 53/53, and TypeScript passes.
+**Next authorized action:** Owner review of the M53 live proof. Edge/client/native deployment remains separately gated.
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. Local forward migration `20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql` is live exactly once as `20260828081324 marketplace_phase9_unit6g_field_authority_correction`.
 **Scope boundary:** Only Unit 6G Group 1 contract/persistence foundation is implemented and live. Groups 2–4, UI, card composition, Add/Add-all orchestration, Store View/cache changes, and Unit 6F remain out of scope. Proof rows created during the connected M52 verification (session `33c3f6fb…`, candidate `50de2017…`, their audit/event/replay records) are intentionally persisted evidence on the development project. Unit 8 remains complete; no deployment occurred for Unit 6G.
 **Implementation authority:** Group 1/B local implementation, migration-file creation, correction iterations, and the Owner-authorized M52 application with connected proofs are complete and retained. The 2026-08-24 recomposition made the revised SDD/matrix/tracker 31 the sole NEW 6G-C/6G-D design authority following completed independent final review (verdict PASS_WITH_P3); the exact next action is Owner checkpoint disposition. Historical `e7ed166`-style old 6G-C work and the frozen old 6G-D implementation are superseded evidence, not authority. Edge/mobile deployment of new client code and Git publication beyond this branch remain unauthorized. Unit 8 remains live-verified; M39-M52 are not reopened. Native Unit 6F validation remains deferred and unrelated.
-**Migration creation/application authority:** the current Owner request authorized the bounded local M53 correction. It did not authorize applying M53, deployment, connected mutation, `db push`, historical replay, or `schema_migrations` repair.
+**Migration creation/application authority:** the current Owner request authorized the bounded local M53 correction, its exact-project application, and connected verification. It did not authorize deployment, connected business-data mutation, `db push`, historical replay, or `schema_migrations` repair.
 **Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
-**Current gate:** `U6G_FA_001_READY_FOR_INDEPENDENT_REVIEW`; M53 remains unapplied and deployment/live/native gates remain closed. The prior Unit 6G-D and Unit 8 checkpoints remain satisfied.
+**Current gate:** `U6G_FA_001_LIVE_VERIFIED`; M53 application and browser verification are complete; deployment/live Edge/client and native gates remain closed. The prior Unit 6G-D and Unit 8 checkpoints remain satisfied.
+
+## 2026-08-28 — U6G-FA-001 M53 live application and browser proof
+
+- The Owner explicitly authorized the bounded M53 application and connected
+  verification after the local correction and independent review checkpoint.
+- Exact-project preflight passed for `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn` (`ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`,
+  `ap-southeast-2`); the live tail was M52 `20260822025712` and the required
+  dependency signatures were present.
+- Supabase MCP applied `marketplace_phase9_unit6g_field_authority_correction`
+  exactly once. Readback records live version `20260828081324`, directly after
+  M52. The migration only replaces internal projection functions and performs
+  no DML, backfill, public RPC/signature, table, RLS, grant, Storage, or
+  business-row change.
+- Post-apply function readback passed: the field-source helper remains
+  `SECURITY DEFINER` and contains review-disposition, review-version, valid-
+  review, and valid-review-derived-source gates.
+- The Codex in-app browser review URL rendered the scan page and 15 candidate
+  cards. The former `Book review could not be loaded right now.` state and its
+  retry control were absent; the page summary was `Ready: 0 · Processing: 0 ·
+  Needs attention: 15 · Added: 0`. No review save, add, remove, or inventory
+  action was clicked.
+- Verification: narrowed M53 post-apply Jest 4/4; prior local correction
+  contract/structure 53/53, PGlite 25/25, compact UI/draft 53/53, TypeScript,
+  export, and continuity gates remain recorded. The M53 source is committed in
+  `831649d`; this connected evidence is being committed separately.
+- Exact next action: Owner review of this live proof. No Edge/client/native
+  deployment or unrelated database/storage mutation is authorized.
 
 ## 2026-08-27 — U6G-FA-001 minimal selected-metadata correction
 

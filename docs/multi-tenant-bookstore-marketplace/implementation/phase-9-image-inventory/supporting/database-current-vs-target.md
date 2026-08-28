@@ -14,7 +14,7 @@ lifecycle transitions without changing nullable private/unapproved state.
 
 The durable connected evidence is [unit8-connected-rollout-2026-08-21.md](./unit8-connected-rollout-2026-08-21.md).
 
-## Unit 6G field-authority forward correction — 2026-08-27
+## Historical Unit 6G field-authority forward correction checkpoint — 2026-08-27
 
 The live M52 source is immutable. Local forward migration
 `20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql`
@@ -26,9 +26,29 @@ It performs no DML or backfill and does not change a public RPC signature,
 table, RLS policy, or externally callable privilege. The mirrored Edge/mobile
 DTOs now permit null for those four summary members. Historical never-reviewed
 rows and partial selected metadata therefore normalize on read. Local PGlite
-proof is 25/25. M53 is **unapplied**; no live
+proof is 25/25. At this historical checkpoint M53 was **unapplied**; no live
 project read or mutation was performed, and exact-project preflight plus
 separate Owner authorization remain mandatory before any future application.
+
+## Current live state — Unit 6G field-authority correction — 2026-08-28
+
+The exact-project preflight identified `Bookconnect_reactexpo` /
+`ahntbtktjjmvfosgkmgn` as `ACTIVE_HEALTHY` in `ap-southeast-2` with PostgreSQL
+`17.6.1.063`. The live migration tail was M52
+`20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation`.
+
+After explicit Owner authorization, Supabase MCP applied the local forward
+file `20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql`
+once as live version `20260828081324
+marketplace_phase9_unit6g_field_authority_correction`, directly after M52.
+Migration readback confirmed the expected internal
+`phase9_unit6g_field_sources(image_extraction_sessions,image_extraction_candidates,jsonb)`
+helper remains `SECURITY DEFINER` and now gates on reviewed disposition,
+non-null review version, valid review detail, and valid-review-derived sources.
+
+The application changed function definitions only: no DML/backfill, public RPC
+signature, table, RLS policy, grant, Storage object, inventory row, or other
+business data was changed. M52 remains byte-immutable and live exactly once.
 
 ## Unit 6G repository/read-only current-to-target assessment — 2026-08-21
 

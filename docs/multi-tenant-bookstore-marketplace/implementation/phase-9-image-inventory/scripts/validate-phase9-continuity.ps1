@@ -218,6 +218,7 @@ if (-not ($doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_sdd_owner
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `m33_local_complete_awaiting_review_and_application`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_pre_main_integration_reconciliation`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_complete_live_verified`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_fa_001_live_verified_m53_applied`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_upload_transport_correction_locally_verified`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_upload_transport_native_failed_diagnosed`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
@@ -268,6 +269,7 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
     $implementationTracker.Contains('**Status:** `unit6_pre_main_candidate_corrections_verified_rereview_pending`') -or
     $implementationTracker.Contains('**Status:** `metadata_retry_correction_locally_complete_approved`') -or
     $implementationTracker.Contains('**Status:** `unit6_complete_live_verified`') -or
+    $implementationTracker.Contains('**Status:** `unit6g_fa_001_live_verified_m53_applied`') -or
     $implementationTracker.Contains('**Status:** `unit6_mobile_upload_transport_correction_locally_verified`') -or
     $implementationTracker.Contains('**Status:** `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
     $implementationTracker.Contains('**Status:** `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`') -or
@@ -564,6 +566,7 @@ if (
         -not $tracker.Contains('**Active work unit:** `unit8_live_verified_main_integration_pending`') -and
         -not $tracker.Contains('**Active work unit:** `unit8_live_verified_main_integrated`') -and
         -not $tracker.Contains('**Active work unit:** `unit6g_sdd_owner_review_pending`') -and
+        -not $tracker.Contains('**Active work unit:** `unit6g_fa_001_post_apply_live_verification`') -and
         -not $tracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -and
         -not $tracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
     -not (
@@ -623,7 +626,8 @@ if (
         $tracker.Contains('**Next authorized action:** independently review the read-only migration reconciliation and approve a canonical mapping/plan. Do not repair migration history, provision Vault, or apply M49-M51 until that plan is approved.') -or
         $tracker.Contains('**Next authorized action:** merge this live-verified Unit 8 branch into `main`, push the resulting `main`, and then select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services.') -or
         $tracker.Contains('**Next authorized action:** select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services.') -or
-        $tracker.Contains('**Next authorized action:** Owner review and explicit approval or correction of the Unit 6G SDD and contract matrix. Do not begin 6G-A red tests, create/apply a migration, change product source, deploy, or mutate Supabase/Storage without separate authorization.')
+        $tracker.Contains('**Next authorized action:** Owner review and explicit approval or correction of the Unit 6G SDD and contract matrix. Do not begin 6G-A red tests, create/apply a migration, change product source, deploy, or mutate Supabase/Storage without separate authorization.') -or
+        $tracker.Contains('**Next authorized action:** Owner review of the M53 live proof. Edge/client/native deployment remains separately gated.')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
@@ -741,7 +745,8 @@ $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_in
     $tracker.Contains('**Implementation status:** `unit7c_wu5_store_view_cutover_locally_complete`') -or
     $tracker.Contains('**Implementation status:** `unit7c_m46_correction_pass_connected_save_reproof_complete`') -or
     $tracker.Contains('**Implementation status:** `unit6g_group1_contract_persistence_locally_complete`') -or
-    $tracker.Contains('**Implementation status:** `unit6g_field_authority_correction_locally_verified_m53_unapplied`'))
+    $tracker.Contains('**Implementation status:** `unit6g_field_authority_correction_locally_verified_m53_unapplied`') -or
+    $tracker.Contains('**Implementation status:** `unit6g_fa_001_live_verified_m53_applied`'))
 $expectedMigrationNames = @($migrationNames)
 if ($wu1AppliedStatus) { $expectedMigrationNames += $draftMigrationNames }
 $appliedPhase9Migrations = if ($wu1AppliedStatus) {
@@ -1066,7 +1071,8 @@ if (-not ($phaseReadme.Contains('**Status:** `unit6e_finalized_unit6f_separately
     $phaseReadme.Contains('**Status:** `unit7c_m46_correction_pass_connected_save_reproof_complete`') -or
     $phaseReadme.Contains('**Status:** `unit8_marketplace_sdd_frozen`') -or
     $phaseReadme.Contains('**Status:** `u8b_bounded_corrective_scope_locally_complete_operationally_pending`') -or
-    $phaseReadme.Contains('**Status:** `unit8_repository_complete_closure_ready_operationally_pending`')) -or
+    $phaseReadme.Contains('**Status:** `unit8_repository_complete_closure_ready_operationally_pending`') -or
+    $phaseReadme.Contains('**Status:** `unit6g_fa_001_live_verified_m53_applied`')) -or
     -not ($phaseReadme.Contains('M01-M08/M10-M29 are live once') -or $phaseReadme.Contains('M01-M08/M10-M30 are live once') -or $phaseReadme.Contains('M01-M08/M10-M38 and WU1 are live once') -or $phaseReadme.Contains('M01-M08/M10-M42 are live once') -or $phaseReadme.Contains('M01-M08/M10-M45 are live once') -or $phaseReadme.Contains('M01-M08/M10-M46 are live once') -or $phaseReadme.Contains('M01-M08/M10-M48 are live once')) -or
     -not $phaseReadme.Contains('Unit 6B is merged at `9ef9eb3`') -or
     -not $phaseReadme.Contains('Unit 6D is') -or
