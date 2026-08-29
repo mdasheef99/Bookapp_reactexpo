@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
-import { Linking, ScrollView, Text, View, TextInput } from 'react-native';
+import { Linking, ScrollView, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -31,156 +31,15 @@ import {
 } from '../queries/ownerUxQueries';
 import { useStartScanSessionV2 } from '../queries/ownerBatchReviewQueries';
 import {
-    CONDITION_CHOICES,
-    LANGUAGE_OPTIONS,
-    PRICE_PRESET_MINOR_OPTIONS,
-    PUBLICATION_CHOICES,
     buildStartScanSessionV2Request,
-    formatInrFromMinor,
     initialScanSetupForm,
     isStartEnabled,
-    rupeesToPriceMinor,
     type ScanSetupFormState,
 } from '../scanSetup/scanSetupForm';
+import { ScanSetupForm, ScanSetupSummary } from '../components/ScanSetupForm';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
 import { useOwnerQueryMutationGate } from '../offline/ownerUxOfflineGate';
-
-function DefaultsForm({
-    form,
-    onChange,
-}: {
-    form: ScanSetupFormState;
-    onChange: (next: ScanSetupFormState) => void;
-}) {
-    const { colors } = useTheme();
-    const [customPrice, setCustomPrice] = useState('');
-    return (
-        <View style={{ gap: 12, marginTop: 14 }}>
-            <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontWeight: '700' }}>
-                Before you scan
-            </Text>
-            <View>
-                <Text selectable accessibilityRole="text" style={{ color: colors.textSecondary }}>
-                    Shelf location (required)
-                </Text>
-                <TextInput
-                    testID="setup-location"
-                    accessibilityLabel="Shelf location"
-                    value={form.location}
-                    onChangeText={(location) => onChange({ ...form, location })}
-                    placeholder="Choose or enter a location"
-                    maxLength={120}
-                    style={{
-                        borderWidth: 1, borderColor: colors.border, borderRadius: 10,
-                        paddingHorizontal: 10, paddingVertical: 8,
-                        color: colors.textPrimary, marginTop: 6,
-                    }}
-                />
-            </View>
-            <View>
-                <Text selectable style={{ color: colors.textSecondary }}>Language (hint only)</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                    {LANGUAGE_OPTIONS.map((option) => (
-                        <Button
-                            key={option.value}
-                            title={option.label === 'English' && form.languageHint === option.value
-                                ? `${option.label} (selected)`
-                                : option.label}
-                            variant={form.languageHint === option.value ? 'secondary' : 'ghost'}
-                            onPress={() => onChange({ ...form, languageHint: option.value })}
-                            disabled={false}
-                        />
-                    ))}
-                </View>
-            </View>
-            <View>
-                <Text selectable style={{ color: colors.textSecondary }}>Default condition</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                    {CONDITION_CHOICES.map((choice) => (
-                        <Button
-                            key={choice.label}
-                            title={form.condition === choice.value ? `${choice.label} (selected)` : choice.label}
-                            variant={form.condition === choice.value ? 'secondary' : 'ghost'}
-                            onPress={() => onChange({ ...form, condition: choice.value })}
-                        />
-                    ))}
-                </View>
-            </View>
-            <View>
-                <Text selectable style={{ color: colors.textSecondary }}>
-                    Default price ({formatInrFromMinor(form.priceMinor)})
-                </Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                    {PRICE_PRESET_MINOR_OPTIONS.map((minor) => (
-                        <Button
-                            key={`price-${minor ?? 'unset'}`}
-                            title={minor === null ? 'Not set' : formatInrFromMinor(minor)}
-                            variant={form.priceMinor === minor ? 'secondary' : 'ghost'}
-                            onPress={() => onChange({ ...form, priceMinor: minor })}
-                            testID={`setup-price-${minor ?? 'unset'}`}
-                        />
-                    ))}
-                </View>
-                <TextInput
-                    testID="setup-price-custom"
-                    accessibilityLabel="Custom whole-rupee price"
-                    value={customPrice}
-                    onChangeText={(value) => {
-                        setCustomPrice(value);
-                        const parsed = Number.parseInt(value, 10);
-                        onChange({
-                            ...form,
-                            priceMinor: Number.isNaN(parsed) ? null : rupeesToPriceMinor(parsed),
-                        });
-                    }}
-                    placeholder="Custom whole rupees"
-                    keyboardType="number-pad"
-                    style={{
-                        borderWidth: 1, borderColor: colors.border, borderRadius: 10,
-                        paddingHorizontal: 10, paddingVertical: 8,
-                        color: colors.textPrimary, marginTop: 6,
-                    }}
-                />
-            </View>
-            <View>
-                <Text selectable style={{ color: colors.textSecondary }}>Publication intent</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                    {PUBLICATION_CHOICES.map((choice) => (
-                        <Button
-                            key={choice.value}
-                            title={form.publication === choice.value
-                                ? `${choice.label} (selected)`
-                                : choice.label}
-                            variant={form.publication === choice.value ? 'secondary' : 'ghost'}
-                            onPress={() => onChange({ ...form, publication: choice.value })}
-                            testID={`setup-publication-${choice.value}`}
-                        />
-                    ))}
-                </View>
-                <Text selectable style={{ color: colors.textSecondary, marginTop: 4 }}>
-                    Books are always committed privately; this choice is recorded intent only.
-                </Text>
-            </View>
-            <View>
-                <Text selectable style={{ color: colors.textSecondary }}>Batch label (optional)</Text>
-                <TextInput
-                    testID="setup-batch-label"
-                    accessibilityLabel="Optional batch label"
-                    value={form.batchLabel}
-                    onChangeText={(batchLabel) => onChange({ ...form, batchLabel })}
-                    placeholder="e.g. Box 7"
-                    maxLength={80}
-                    style={{
-                        borderWidth: 1, borderColor: colors.border, borderRadius: 10,
-                        paddingHorizontal: 10, paddingVertical: 8,
-                        color: colors.textPrimary, marginTop: 6,
-                    }}
-                />
-            </View>
-        </View>
-    );
-}
 
 function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
     const router = useRouter();
@@ -323,44 +182,99 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
 
     return (
         <ScreenBackground>
-            <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 24, gap: 16 }}>
-                <GlassCard padding={20} borderRadius={16}>
-                    <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800' }}>
-                        Scan book spines
-                    </Text>
-                    <DefaultsForm form={form} onChange={setForm} />
-                    <Text selectable style={{ color: colors.textSecondary, lineHeight: 21, marginTop: 14 }}>
-                        Frame up to 15 visible spines, avoid glare, and keep titles readable.
-                    </Text>
-                    <View style={{ gap: 12, marginTop: 18 }}>
-                        {!sourceStep ? (
-                            <>
-                                <Button
-                                    title="Start scanning"
-                                    onPress={() => void beginStart()}
-                                    disabled={busy || !gate.canMutate || discovery.isLoading || !isStartEnabled(form)}
-                                    testID="capture-start"
-                                />
-                                {!isStartEnabled(form) ? (
-                                    <Text selectable style={{ color: colors.textSecondary }}>
-                                        Choose or enter a shelf location before starting.
-                                    </Text>
-                                ) : null}
-                            </>
-                        ) : (
-                            <>
-                                <Button title="Open camera" onPress={() => void choose('camera')} disabled={busy || !gate.canMutate} testID="capture-camera" />
-                                <Button title="Choose from gallery" variant="secondary" onPress={() => void choose('gallery')} disabled={busy || !gate.canMutate} testID="capture-gallery" />
-                            </>
-                        )}
-                        {message?.includes('settings') ? (
-                            <Button title="Open settings" variant="ghost" onPress={() => void Linking.openSettings()} />
-                        ) : null}
+            <View style={{ flex: 1 }}>
+                <ScrollView
+                    contentInsetAdjustmentBehavior="automatic"
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 28, gap: 18 }}
+                >
+                    <View style={{ gap: 8 }}>
+                        <Text
+                            selectable
+                            accessibilityRole="header"
+                            style={{ color: colors.textPrimary, fontSize: 30, lineHeight: 35, fontWeight: '800', letterSpacing: -0.7 }}
+                        >
+                            Scan books
+                        </Text>
+                        <Text selectable style={{ color: colors.textSecondary, fontSize: 15, lineHeight: 22 }}>
+                            Set defaults for this scan. You can change any detected book during review.
+                        </Text>
                     </View>
-                    {isOffline ? <Text selectable style={{ color: colors.error, marginTop: 12 }}>Reconnect before choosing an image.</Text> : null}
-                    {message ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error, marginTop: 12 }}>{message}</Text> : null}
-                </GlassCard>
-            </ScrollView>
+
+                    <View style={{
+                        alignSelf: 'flex-start',
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderRadius: 999,
+                        paddingHorizontal: 12,
+                        paddingVertical: 7,
+                        backgroundColor: colors.bgCard,
+                    }}>
+                        <Text selectable style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
+                            Up to 15 visible book spines per image
+                        </Text>
+                    </View>
+
+                    <ScanSetupForm form={form} onChange={setForm} />
+
+                    <View style={{
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderRadius: 16,
+                        padding: 16,
+                        backgroundColor: colors.bgCard,
+                        gap: 5,
+                    }}>
+                        <Text selectable style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '800' }}>
+                            Before taking the photo
+                        </Text>
+                        <Text selectable style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19 }}>
+                            Keep titles sharp and upright, avoid glare, and make sure no more than 15 spines are visible.
+                        </Text>
+                    </View>
+
+                    {isOffline ? <Text selectable style={{ color: colors.error }}>Reconnect before choosing an image.</Text> : null}
+                    {message ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error }}>{message}</Text> : null}
+                </ScrollView>
+
+                <View style={{
+                    paddingHorizontal: 20,
+                    paddingTop: 14,
+                    paddingBottom: 18,
+                    borderTopWidth: 1,
+                    borderTopColor: colors.border,
+                    backgroundColor: colors.bgCard,
+                    gap: 12,
+                }}>
+                    <ScanSetupSummary form={form} />
+                    {!sourceStep ? (
+                        <>
+                            <Button
+                                title="Start scanning"
+                                onPress={() => void beginStart()}
+                                disabled={busy || !gate.canMutate || discovery.isLoading || !isStartEnabled(form)}
+                                testID="capture-start"
+                            />
+                            {!isStartEnabled(form) ? (
+                                <Text selectable style={{ color: colors.textSecondary, fontSize: 12, textAlign: 'center' }}>
+                                    Choose or enter a shelf location before starting.
+                                </Text>
+                            ) : null}
+                        </>
+                    ) : (
+                        <View style={{ gap: 10 }}>
+                            <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '800' }}>
+                                Choose the image source
+                            </Text>
+                            <Button title="Open camera" onPress={() => void choose('camera')} disabled={busy || !gate.canMutate} testID="capture-camera" />
+                            <Button title="Choose from gallery" variant="secondary" onPress={() => void choose('gallery')} disabled={busy || !gate.canMutate} testID="capture-gallery" />
+                        </View>
+                    )}
+                    {message?.includes('settings') ? (
+                        <Button title="Open settings" variant="ghost" onPress={() => void Linking.openSettings()} />
+                    ) : null}
+                </View>
+            </View>
         </ScreenBackground>
     );
 }

@@ -1,7 +1,7 @@
 # Phase 9 Unit 6G SDD: Owner Scan Defaults, Batch Review, and Commit Handoff
 
 **Status:** `unit6g_d_implemented_pending_owner_6ge_authorization`
-**Version/date:** 0.2 / 2026-08-24
+**Version/date:** 0.3 / 2026-08-29
 **Authority:** the Owner workflow decisions recorded in P9-D81 through P9-D85;
 DOC-3 §§5–9/15–16; DOC-4 §§2–5/9–15; DOC-8 §§2–5/14–15; Phase 9
 Master §§2–9/14; Owner Review SDD §§2–6/8–16; Unit 6 §§8–35; Unit 7A
@@ -12,9 +12,11 @@ Unit 7C.
 **Implementation authority:** Unit 6G-A and Unit 6G-B, including the exact M52
 foundation and its recorded live application/readback, are retained. Historical
 6G-C commit `e7ed166` and the frozen dirty 6G-D work are superseded as
-implementation authority. The recomposed 6G-C/6G-D design below is pending
-Owner approval; no new 6G-C implementation has begun. Deployment, migration,
-database/Storage mutation, and Git publication remain separately unauthorized.
+implementation authority. The recomposed 6G-C/6G-D design below remains the
+behavioral authority; its composition-only 6G-C UI checkpoint was implemented
+locally on 2026-08-29 in the recomposition worktree and remains uncommitted and
+undeployed. Deployment, migration, database/Storage mutation, and Git
+publication remain separately unauthorized.
 
 ## 1. Decision and intended outcome
 
@@ -200,10 +202,12 @@ provides the completed 6G-A/B foundation:
   Owner-removed candidates while retaining its signature, authorization,
   cursor, and page-size semantics.
 
-The remaining NEW 6G-C work is route/controller composition and client
-integration over this live foundation. The composition defect does not justify
-another migration. Any independently proven new schema defect must be reported
-for separate authority and must not be repaired in this documentation pass.
+The NEW 6G-C route/controller composition and client integration checkpoint is
+implemented locally over this live foundation. The composition defect does not
+justify another migration. Any independently proven new schema defect must be
+reported for separate authority and must not be repaired in this documentation
+pass. The local checkpoint is not a connected deployment or business-data
+proof.
 
 ## 4. End-to-end flow
 
@@ -310,8 +314,8 @@ displayed business field. The internal code-to-badge mapping is normative:
 
 | Internal source code | Visible badge | Meaning |
 | --- | --- | --- |
-| `matched` | `Detected` | The current selected metadata/identity match contains a usable value for this field; the internal `matched` code is never rendered as a separate `Matched` badge. |
-| `detected` | `Detected` | The current bounded observed identity is the source. |
+| `matched` | `Provider matched` | The current selected metadata/identity match contains a usable value for this field; the provider match is explicitly distinguished from vision output. |
+| `detected` | `Vision detected` | The current bounded observed identity is the source. |
 | `default` | `Default` | The value is inherited from the persisted session default. |
 | `custom` | `Custom` | The Owner's saved per-card value overrides the observed/selected/default value. |
 | `missing` | `Missing` | The final value is absent or cannot yet be used. |
@@ -446,17 +450,17 @@ default.
 
 | Card element | Display/edit behavior |
 | --- | --- |
-| Cover | Allowlisted metadata cover thumbnail with the `Detected` source badge when its internal source is `matched` or `detected`, or a `Missing` placeholder; never scan media |
+| Cover | Allowlisted metadata cover thumbnail with the `Provider matched` or `Vision detected` source badge when its internal source is `matched` or `detected`, or a `Missing` placeholder; never scan media |
 | Title and authors | Full accessible value, visually bounded summary; tap opens simple inline/manual edit |
 | Metadata status | Matched, Manual, No match, Pending, or Needs attention; opens metadata sheet |
-| Language | Searchable dropdown; source chip shows Detected, Default, or Custom |
+| Language | Searchable dropdown; source chip shows Provider matched, Vision detected, Default, or Custom |
 | Condition | Exact five-value dropdown with accessible explanations |
 | Selling price | Whole-rupee preset/custom picker from §6 |
 | Quantity | Stepper, initial default 1, existing server bound enforced |
 | Location | `Use batch location` or `Custom`; custom uses bounded text input |
 | Publication intent | `Private` or `Prepare to publish`; explanatory text says commit remains private |
 | Damage | No damage / Has damage segmented control; Yes expands exact existing type/note/sellability/complete-readable-safe fields |
-| Source markers | Default, Detected, Custom, or Missing per §7; internal `matched` always presents as `Detected` |
+| Source markers | Default, Provider matched, Vision detected, Custom, or Missing per §7; provider and vision sources remain distinct |
 | Metadata action | `View metadata` |
 | Full correction action | `Open full correction`; routes to the existing Unit 6 candidate-detail controller for false detection, variants, stale compare/Reapply, and edits unsafe for compact controls |
 | Removal action | `Remove from this scan`, visually secondary/destructive and confirmation-gated |
@@ -466,6 +470,34 @@ Public and internal notes are not rendered or editable in Unit 6G. When an
 existing saved review contains notes, every Unit 6G Save must round-trip those
 unchanged. A new review submits the existing canonical null-note object. Hiding
 the fields must never erase existing data.
+
+### 9.1 Local UI field-placement checkpoint (2026-08-29)
+
+The local composition checkpoint preserves the SDD's two-surface model and
+places edits as follows:
+
+- **Pre-scan setup:** optional batch label, required select-or-enter location,
+  searchable language hint, optional condition, optional whole-rupee selling
+  price (quick presets/full presets/custom), and publication intent. Quantity
+  has no pre-scan editor and remains the server-fixed value `1`.
+- **Compact post-scan card:** title, authors (add/remove), language, condition,
+  selling price, quantity, location, publication intent, and damage disclosure
+  (types, note, complete/readable/safe, and sellable flags). The metadata sheet
+  provides the existing Use detected details/Edit manually decisions. Notes and
+  script remain outside the compact card, as required above.
+- **Full correction route:** original title/authors and confirmations, language
+  tag, script, matched/manual metadata choice, quantity, price in minor units,
+  shelf location, condition, damage details, public/internal notes, publication
+  intent, and the existing false-detection/variant/stale-review actions.
+
+The compact editor is rendered only when the card has a saved review or the
+server exposes `save_review`, and mutation controls additionally require the
+active-session/online authority gate. Closed or offline sessions therefore
+remain read-only. This checkpoint changes client presentation only; it does not
+change Unit 6 lifecycle ownership, the 15-book cap, server contracts, or the
+Add/Save mutation boundary. A batch quantity selector or “apply quantity to all”
+prompt is not part of the current pre-scan contract; any such future behavior
+requires a separate product/SDD decision.
 
 ## 10. Metadata sheet
 
@@ -1060,9 +1092,10 @@ Every slice requires separate authorization and independent review:
    closure, and rollout/provenance evidence.
 
 Any new database preflight/migration work, Edge/mobile deployment, and connected
-business-row proof remain distinct authorities. NEW 6G-C starts only after
-Owner checkpoint disposition of this recomposed design (its independent final
-review is COMPLETE, verdict PASS_WITH_P3) plus separate explicit Owner authorization.
+business-row proof remain distinct authorities. The 2026-08-29 composition-only
+6G-C checkpoint is local and pending Owner review; it does not authorize any of
+those external actions. Its independent design review remains COMPLETE (verdict
+PASS_WITH_P3), and 6G-D/6G-E gates remain unchanged.
 
 ## 26. Maintainability boundaries
 
@@ -1102,7 +1135,8 @@ The SDD fixes the formerly ambiguous points as follows:
 - `Use detected details` means existing `manual` metadata choice with a null
   selection, so canonical/selected cover and provider provenance are not
   committed; unusable observed identity stays manual-required;
-- `matched` is an internal source code whose only visible badge is `Detected`;
+- `matched` and `detected` are distinct source codes whose visible badges are
+  `Provider matched` and `Vision detected` respectively;
 - one candidate has one active command slot; Add all skips and reports busy
   cards, and server disposition/version fences prevent removal/commit races;
 - v3 Close returns the safe-integer owner-removed lifetime count while v2 Close stays
@@ -1155,5 +1189,6 @@ unit, not a prerequisite or hidden requirement for NEW 6G-C.
 **Next gate:** Owner checkpoint disposition of this corrected three-document
 authority set, including exact Unit 6 over-limit inheritance; its independent
 final review is COMPLETE (verdict PASS_WITH_P3).
-No NEW 6G-C implementation, migration, deployment, or Git publication may begin
-without the checkpoint plus separate explicit Owner authorization.
+No 6G-E deployment, connected business-row proof, migration application, or Git
+publication may begin without the applicable separate explicit Owner
+authorization. The local 6G-C composition checkpoint is not release evidence.

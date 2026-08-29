@@ -496,3 +496,71 @@ verification after the bounded correction checkpoint.
 
 **Current next action:** Owner review of the M53 live proof. Edge/client/native
 deployment remains separately gated.
+
+## 13. 2026-08-29 — local pre-scan UI composition and browser verification
+
+This checkpoint records the bounded pre-scan composition work in the
+recomposition worktree. It does not change the live M53 gate or authorize
+deployment, Git publication, or a scan run.
+
+- The old single-card defaults block was replaced with grouped Batch, Location,
+  Book defaults, and Publication sections while preserving the existing Start
+  and capture handlers.
+- Location supports both the bounded shelf-code path (A-Z plus 1-9, producing
+  values such as `C9`) and free-form text entry. Language is a searchable hint;
+  condition and selling price remain optional; price supports quick presets,
+  the complete contract preset list, and whole-rupee custom entry; quantity is
+  represented only as the fixed `1 copy per detected book` summary. These are
+  the Unit 6G SDD §§5–6/21 rules and U6G-AC01–U6G-AC05, not new backend
+  behavior.
+- Focused local verification passed **3 Jest suites / 33 tests**, TypeScript
+  `--noEmit`, and `git diff --check`. In the authenticated local browser,
+  `/inventory/scan` rendered without console errors; shelf code/manual entry,
+  language filtering, condition, custom price, publication intent, summary,
+  and location-gated Start were exercised successfully.
+- No scan Start, image selection/upload, review save/add/remove, Close, or
+  inventory mutation occurred. Apart from the authorized local authentication
+  flow, no Supabase database/Storage/business-data or provider operation,
+  deployment, stage, commit, push, merge, or PR action occurred.
+
+**Current next action:** Owner review of this local UI diff; the existing M53
+live-proof review and separately gated 6G-E deployment/native closure remain
+unchanged.
+
+## 14. 2026-08-29 — local post-scan review UI and read-only browser verification
+
+This checkpoint records the composition-only post-scan UI work in the
+recomposition worktree. It does not change Unit 6 lifecycle ownership, the
+15-book current-image cap, M53, or the external deployment/database gates.
+
+- The mounted review surface now separates session/lifetime totals from active
+  review counts, presents source-aware compact cards, keeps full correction
+  reachable, and uses a sticky Add/commit action area. `Provider matched` and
+  `Vision detected` are distinct visible source labels; metadata state remains
+  a separate status label.
+- Editable placement is explicit: pre-scan owns batch label, select-or-enter
+  location, language hint, optional condition/price, and publication intent;
+  compact cards own title/authors (add/remove), language, condition, price,
+  quantity, location, publication, and damage disclosure; the metadata sheet
+  owns the existing detected/manual choice; full correction owns script,
+  confirmations, metadata choice, notes, and deeper correction actions.
+- Quantity remains fixed at `1` in pre-scan and is stepped per card after
+  detection. No batch quantity selector or “apply quantity to all” prompt was
+  added because it is not in the current contract; it requires a separate
+  product/SDD decision.
+- Focused verification passed **6 Jest suites / 69 tests**, TypeScript
+  `--noEmit`, and `git diff --check`. The authenticated local browser loaded
+  the existing closed session, rendered the summary/cards, opened and closed
+  metadata, confirmed Edit/Remove/Add-missed were disabled, and reported no
+  browser console errors.
+- Known residuals: the image progress line reported `0 need attention` while
+  candidate summary/cards reported `15 need review`; the metadata sheet still
+  uses generic `Status: Matched`. These are observed count/copy risks, not
+  silently treated as resolved.
+- No scan Start, image selection/upload, review Save, Add, Remove, Close,
+  provider call, Supabase/Storage/business-data mutation, migration,
+  deployment, staging, commit, push, merge, or PR action occurred.
+
+**Current next action:** Owner review of the local UI diff and the recorded
+count/copy risks; Edge/client/native deployment and any fresh scan remain
+separately gated.

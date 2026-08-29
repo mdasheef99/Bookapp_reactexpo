@@ -3,17 +3,17 @@ import { AppState, FlatList, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { Button } from '@/components/ui/Button';
-import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useTheme } from '@/hooks/useTheme';
 import { BatchReviewCard } from '../components/BatchReviewCard';
 import { BatchInventoryCommitControls } from '../components/BatchInventoryCommitControls';
+import { PostScanSessionHeader } from '../components/post-scan-session-header';
+import { candidateCanStartCommit } from '../commit/inventoryCommitCoordinator';
 import { useInventoryCommitCoordinator } from '../commit/useInventoryCommitCoordinator';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 import {
     type ImageInventoryIdentity,
-    useOwnerInventoryDiscovery,
     useOwnerInventoryInputs,
 } from '../queries/ownerUxQueries';
 import {
@@ -30,35 +30,6 @@ import { coalesceOwnerUxRefresh } from '../offline/ownerUxOfflineGate';
 import { createCaptureUuid, createSemanticKey } from '../capture/captureIds';
 import { useRemoveOwnerInventoryInput } from '../queries/ownerUxInputQueries';
 import type { RemoveScanInputRequest } from '../api/ownerUxService';
-
-function inputLabel(item: { presentationState: string; retryState: string; safeCode: string | null }) {
-    if (item.retryState === 'server_retrying') return 'Trying again';
-    if (item.retryState === 'new_upload_required') {
-        return item.safeCode === 'P9_VISION_OVER_LIMIT'
-            ? 'More than 15 books were visible. Take a new photo or add the book manually.'
-            : 'Image needs attention. Select a new image.';
-    }
-    return {
-        checking_image: 'Checking image',
-        finding_books: 'Finding books',
-        ready: 'Image processed',
-        needs_attention: 'Image needs attention',
-    }[item.presentationState] ?? 'Image status unavailable';
-}
-
-function countSummaryLine(counts: {
-    reviewReadySaved: number;
-    processing: number;
-    needsAttention: number;
-    committed: number;
-}): string {
-    return [
-        `Ready: ${counts.reviewReadySaved}`,
-        `Processing: ${counts.processing}`,
-        `Needs attention: ${counts.needsAttention}`,
-        `Added: ${counts.committed}`,
-    ].join(' · ');
-}
 
 function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIdentity; sessionId: string }) {
     const router = useRouter();
@@ -235,12 +206,17 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
         const review = buildCompactReview(card, setupDefaults, edits);
         return { card, edits, ...(review ? { review } : {}) };
     });
+    const showBulkControls = !loading && !unavailable && !retryableError
+        && !aggregateFailed && !unsupportedLegacyOverflow
+        && (commitDrafts.some(candidateCanStartCommit) || inventoryCommit.bulkResult !== null);
 
     return (
         <ScreenBackground>
+            <View style={{ flex: 1 }}>
             <FlatList
+                style={{ flex: 1 }}
                 contentInsetAdjustmentBehavior="automatic"
-                contentContainerStyle={{ padding: 24, gap: 12, flexGrow: 1 }}
+                contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 16, flexGrow: 1 }}
                 data={!loading && !unavailable && !retryableError && !aggregateFailed
                     && !unsupportedLegacyOverflow ? cards : []}
                 initialNumToRender={6}
@@ -281,131 +257,39 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                     />
                 )}
                 ListHeaderComponent={(
-                    <GlassCard padding={20} borderRadius={16}>
-                    <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800' }}>Scan session</Text>
-                    {loading ? (
-                        <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary, marginTop: 8 }}>Loading saved scan progress…</Text>
-                    ) : unavailable ? (
-                        <>
-                            <Text selectable style={{ color: colors.textSecondary, marginTop: 8 }}>This scan session is unavailable.</Text>
-                            <Button title="Return to Inventory" style={{ marginTop: 16 }} onPress={() => router.replace(inventoryRoutes.root())} />
-                        </>
-                    ) : retryableError ? (
-                        <>
-                            <Text selectable accessibilityLiveRegion="assertive" style={{ color: colors.textSecondary, marginTop: 8 }}>Saved scan progress could not be loaded.</Text>
-                            <Button title="Retry" style={{ marginTop: 16 }} onPress={() => { void refreshAll(); }} />
-                        </>
-                    ) : (
-                        <>
-                            <Text selectable style={{ color: colors.textSecondary, marginTop: 8 }}>Saved on server. Processing continues if you leave.</Text>
-                            <View style={{ gap: 10, marginTop: 16 }}>
-                                {aggregateFailed ? (
-                                    <View testID="batch-review-degraded" style={{ gap: 8 }}>
-                                        <Text
-                                            selectable
-                                            accessibilityLiveRegion="polite"
-                                            style={{ color: colors.error }}
-                                        >
-                                            Book review could not be loaded right now.
-                                        </Text>
-                                        <Button
-                                            title="Retry book review"
-                                            variant="secondary"
-                                            onPress={() => { void batchReview.refetch(); }}
-                                            disabled={isOffline}
-                                        />
-                                    </View>
-                                ) : unsupportedLegacyOverflow ? (
-                                    <View testID="batch-review-unsupported" style={{ gap: 6 }}>
-                                        <Text
-                                            selectable
-                                            accessibilityLiveRegion="polite"
-                                            style={{ color: colors.error }}
-                                        >
-                                            This scan contains more saved books than single-image review supports.
-                                        </Text>
-                                        <Text selectable style={{ color: colors.textSecondary }}>
-                                            Nothing was deleted. The session summary keeps the authoritative status.
-                                        </Text>
-                                    </View>
-                                ) : (
-                                    <>
-                                        {batchReview.data ? (
-                                            <>
-                                                <Text
-                                                    selectable
-                                                    accessibilityLiveRegion="polite"
-                                                    accessibilityLabel="Book count summary"
-                                                    style={{ color: colors.textPrimary, fontWeight: '700' }}
-                                                >
-                                                    {countSummaryLine(batchReview.data.counts)}
-                                                </Text>
-                                                <BatchInventoryCommitControls
-                                                    candidates={commitDrafts}
-                                                    disabled={isOffline || session.data?.status !== 'active'}
-                                                    pending={inventoryCommit.bulkPending}
-                                                    result={inventoryCommit.bulkResult}
-                                                    onAddAll={inventoryCommit.addAll}
-                                                    onRetry={inventoryCommit.retryAddAll}
-                                                />
-                                            </>
-                                        ) : null}
-                                        <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>
-                                            Books found: {cards.length}
-                                        </Text>
-                                        {cards[0] ? (
-                                            <Button
-                                                title="Continue to book review"
-                                                variant="secondary"
-                                                onPress={() => router.push(inventoryRoutes.candidate(
-                                                    sessionId,
-                                                    cards[0].candidateId,
-                                                ))}
-                                            />
-                                        ) : null}
-                                    </>
-                                )}
-                                {inputAnnouncement ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{inputAnnouncement}</Text> : null}
-                                {removeMessage ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{removeMessage}</Text> : null}
-                                {candidateMessage ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{candidateMessage}</Text> : null}
-                                {inputs.data?.items.map((item) => (
-                                    <View key={item.inputId} accessibilityLabel={`Image ${item.ordinal}. ${inputLabel(item)}`} style={{ padding: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 12 }}>
-                                        <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>Image {item.ordinal}</Text>
-                                        <Text selectable style={{ color: colors.textSecondary, marginTop: 4 }}>{inputLabel(item)}</Text>
-                                        {removeTarget?.inputId === item.inputId ? (
-                                            <View style={{ gap: 8, marginTop: 12 }}>
-                                                <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>Remove Image {item.ordinal}?</Text>
-                                                <Text selectable style={{ color: colors.textSecondary }}>This removes the image from this scan, cancels its processing, and schedules private media cleanup.</Text>
-                                                <Button title="Remove image now" onPress={confirmRemove} disabled={isOffline || removeMutation.isPending || session.data?.status !== 'active'} />
-                                                <Button title="Cancel" variant="secondary" onPress={() => setRemoveTarget(null)} disabled={removeMutation.isPending} />
-                                            </View>
-                                        ) : item.acceptedCandidateCount === 0 ? (
-                                            <Button
-                                                title="Remove image"
-                                                variant="secondary"
-                                                style={{ marginTop: 10 }}
-                                                onPress={() => beginRemove(item)}
-                                                disabled={isOffline || removeMutation.isPending || session.data?.status !== 'active'}
-                                                accessibilityHint="Removes this uploaded image after confirmation"
-                                            />
-                                        ) : (
-                                            <Text selectable style={{ color: colors.textSecondary, marginTop: 10 }}>Review the books found from this image instead of removing it.</Text>
-                                        )}
-                                    </View>
-                                ))}
-                                {!inputs.isLoading && inputs.data?.items.length === 0
-                                    ? <Text selectable style={{ color: colors.textSecondary }}>No registered images yet.</Text>
-                                    : null}
-                            </View>
-                        </>
-                    )}
-                    </GlassCard>
+                    <PostScanSessionHeader
+                        loading={loading}
+                        unavailable={unavailable}
+                        lifecycleFailed={retryableError}
+                        aggregateFailed={aggregateFailed}
+                        unsupportedOverflow={unsupportedLegacyOverflow}
+                        isOffline={isOffline}
+                        sessionActive={session.data?.status === 'active'}
+                        batch={batchReview.data}
+                        inputItems={inputs.data?.items ?? []}
+                        firstCandidateId={cards[0]?.candidateId ?? null}
+                        inputAnnouncement={inputAnnouncement}
+                        removeMessage={removeMessage}
+                        candidateMessage={candidateMessage}
+                        removeTarget={removeTarget}
+                        removePending={removeMutation.isPending}
+                        onReturnToInventory={() => router.replace(inventoryRoutes.root())}
+                        onRetryLifecycle={() => { void refreshAll(); }}
+                        onRetryReview={() => { void batchReview.refetch(); }}
+                        onOpenFirstCandidate={() => {
+                            if (cards[0]) router.push(inventoryRoutes.candidate(sessionId, cards[0].candidateId));
+                        }}
+                        onBeginRemove={beginRemove}
+                        onConfirmRemove={confirmRemove}
+                        onCancelRemove={() => setRemoveTarget(null)}
+                    />
                 )}
                 ListFooterComponent={!loading && !unavailable && !retryableError ? (
                     <View style={{ gap: 12, paddingTop: 4 }}>
                         {isOffline && (inputs.data?.items.length ?? 0) === 0 ? <Text selectable style={{ color: colors.textSecondary }}>Reconnect to choose a replacement image.</Text> : null}
                         {(inputs.data?.items.length ?? 0) === 0 ? (
-                            <Button title="Choose replacement image" onPress={() => router.push(inventoryRoutes.scan())} disabled={isOffline} />
+                            <Button title="Choose replacement image" onPress={() => router.push(inventoryRoutes.scan())}
+                                disabled={isOffline || session.data?.status !== 'active'} />
                         ) : null}
                         <Button title="View session summary" variant="secondary" onPress={() => router.push(inventoryRoutes.summary(sessionId))} />
                         {!unsupportedLegacyOverflow ? (
@@ -413,13 +297,39 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                                 title="Add missed book"
                                 variant="secondary"
                                 onPress={() => router.push(inventoryRoutes.missed(sessionId))}
-                                disabled={isOffline || cards.length >= 15}
+                                disabled={isOffline || cards.length >= 15 || session.data?.status !== 'active'}
                                 accessibilityHint="Creates one staged manual candidate without running image analysis"
                             />
                         ) : null}
                     </View>
                 ) : null}
             />
+            {showBulkControls ? (
+                <View testID="post-scan-bulk-action" style={{
+                    gap: 8,
+                    paddingHorizontal: 16,
+                    paddingTop: 12,
+                    paddingBottom: 16,
+                    borderTopWidth: 1,
+                    borderTopColor: colors.border,
+                    backgroundColor: colors.bgPrimary,
+                }}>
+                    <BatchInventoryCommitControls
+                        candidates={commitDrafts}
+                        disabled={isOffline || session.data?.status !== 'active'}
+                        pending={inventoryCommit.bulkPending}
+                        result={inventoryCommit.bulkResult}
+                        onAddAll={inventoryCommit.addAll}
+                        onRetry={inventoryCommit.retryAddAll}
+                    />
+                    {batchReview.data && batchReview.data.counts.needsAttention > 0 ? (
+                        <Text selectable style={{ color: colors.textSecondary, textAlign: 'center', fontSize: 12 }}>
+                            {batchReview.data.counts.needsAttention} book{batchReview.data.counts.needsAttention === 1 ? '' : 's'} will remain in review.
+                        </Text>
+                    ) : null}
+                </View>
+            ) : null}
+            </View>
         </ScreenBackground>
     );
 }
@@ -428,41 +338,4 @@ export function InventorySessionProgressScreen({ sessionId }: { sessionId: strin
     return <InventoryAccessBoundary>{(identity) => <SessionProgress identity={identity} sessionId={sessionId} />}</InventoryAccessBoundary>;
 }
 
-export function InventoryHubRecoveryCard({ identity }: { identity: ImageInventoryIdentity }) {
-    const router = useRouter();
-    const discovery = useOwnerInventoryDiscovery(identity);
-    const { isOffline } = useNetworkStatus();
-    const { colors } = useTheme();
-    const active = discovery.data?.activeSession;
-    return (
-        <GlassCard padding={18} borderRadius={16}>
-            <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '800' }}>Scan book spines</Text>
-            {discovery.error ? (
-                <>
-                    <Text selectable style={{ color: colors.textSecondary, marginTop: 6 }}>Saved scan status could not be loaded.</Text>
-                    <Button title="Retry scan status" variant="secondary" style={{ marginTop: 14 }} onPress={() => void discovery.refetch()} disabled={isOffline} />
-                </>
-            ) : (
-                <>
-                    <Text selectable style={{ color: colors.textSecondary, marginTop: 6 }}>
-                        {active ? `${active.inputCount} images · ${active.attentionCount} need attention` : 'Capture or choose a shelf photo.'}
-                    </Text>
-                    <Button
-                        title={active ? 'Resume scan' : 'Start scan'}
-                        style={{ marginTop: 14 }}
-                        onPress={() => router.push(active ? inventoryRoutes.session(active.sessionId) : inventoryRoutes.scan())}
-                        disabled={discovery.isLoading || isOffline || !discovery.data}
-                    />
-                    <Button
-                        title={`Review books (${discovery.data?.needsReviewCount ?? 0})`}
-                        variant="secondary"
-                        style={{ marginTop: 10 }}
-                        onPress={() => router.push(inventoryRoutes.reviews())}
-                        disabled={discovery.isLoading || !discovery.data}
-                        accessibilityHint="Opens the bounded needs-review queue"
-                    />
-                </>
-            )}
-        </GlassCard>
-    );
-}
+export { InventoryHubRecoveryCard } from '../components/inventory-hub-recovery-card';

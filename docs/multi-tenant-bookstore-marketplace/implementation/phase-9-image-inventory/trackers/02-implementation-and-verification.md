@@ -1,7 +1,68 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit6g_fa_001_live_verified_m53_applied`; **last updated:** 2026-08-28
+**Status:** `unit6g_fa_001_live_verified_m53_applied`; **last updated:** 2026-08-29
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit6g_fa_001_post_apply_live_verification`. The Owner-authorized minimal selected-metadata projection and mirrored-contract correction is live-verified. Exact next action: Owner review of the M53 live proof. Edge/client/native deployment remains separately gated.
+**Active work unit:** `unit6g_fa_001_post_apply_live_verification`. The Owner-authorized minimal selected-metadata projection and mirrored-contract correction is live-verified. The composition-only pre/post-scan UI checkpoint is locally implemented and pending Owner review. Edge/client/native deployment remains separately gated.
+
+### 2026-08-29 — local post-scan review UI and read-only browser verification
+
+- Scope: composition-only post-scan UI over the retained Unit 6 lifecycle and
+  M53 contracts. Changed `BatchReviewCard`, `CaptureProgressScreens`, and the
+  extracted post-scan header/summary/input-list and recovery presentation;
+  retained the existing candidate detail/full-correction route and commit
+  coordinator. No backend, worker, migration, or server contract changed.
+- Field placement: the compact card exposes title/authors (including add/remove),
+  language, condition, price presets/custom, quantity, location, publication
+  intent, and damage disclosure. The metadata sheet exposes Use detected
+  details/Edit manually. Full correction retains script, confirmations,
+  metadata choice, notes, and deeper correction actions. Pre-scan remains the
+  owner of batch label, location, language hint, optional condition/price, and
+  publication intent; quantity remains fixed to `1` before scan. A batch
+  quantity/apply-to-all prompt is not part of the current contract.
+- Source/status presentation now distinguishes `Provider matched` from `Vision
+  detected`, while metadata state remains a separate state label. Closed and
+  offline sessions remain read-only through the existing session/authority gate;
+  compact edits are local drafts until the existing Save/Add boundary.
+- Verification: targeted image-inventory Jest **6 suites / 69 tests passed**;
+  TypeScript `--noEmit` passed. The authenticated local browser loaded the
+  existing closed session, rendered the review summary/cards, opened and closed
+  metadata, confirmed Edit/Remove/Add-missed controls were disabled, and found
+  no browser console errors.
+- Browser observation: the image-level progress line reported `0 need attention`
+  while candidate summary/cards reported `15 need review`; the metadata sheet
+  still displayed generic `Status: Matched`. Both are recorded as residual
+  count/copy risks and were not changed in this checkpoint.
+- External/Git state: no scan start, image selection/upload, review save,
+  Add/Remove/Close, provider operation, Supabase/Storage/business-data
+  mutation, migration, deployment, staging, commit, push, merge, or PR action
+  occurred.
+- Exact next action: Owner review of the local UI diff and the recorded
+  count/copy risks; Edge/client/native deployment and any fresh scan remain
+  separately gated.
+
+### 2026-08-29 — local pre-scan UI composition and browser verification
+
+- Scope: composition-only pre-scan UI work in the recomposition worktree. The
+  existing Start, capture, session, and server contracts were not changed.
+- Completed: grouped Batch, Location, Book defaults, and Publication sections;
+  A-Z plus 1-9 shelf-code selectors with free-form location entry; searchable
+  language hint; optional condition and selling-price defaults; compact quick
+  prices plus full presets/custom whole-rupee entry; fixed pre-scan quantity
+  summary; and a sticky summary/action footer. The location gate remains the
+  only pre-scan Start requirement. Authority: Unit 6G SDD §§5–6 and §21,
+  acceptance criteria U6G-AC01–U6G-AC05.
+- Verification: focused image-inventory Jest **3 suites / 33 tests passed**;
+  `tsc --noEmit` passed; `git diff --check` passed. The authenticated local
+  browser rendered `/inventory/scan`, exercised shelf-code/manual location,
+  language search, condition, custom price, and publication intent; the
+  summary and Start enablement updated correctly, with no browser console
+  errors.
+- External/Git state: no scan was started, no image was selected or uploaded,
+  and no review/close/inventory action was clicked. Apart from the authorized
+  local authentication flow, no Supabase database/Storage/business-data or
+  provider mutation, deployment, staging, commit, push, merge, or PR action
+  occurred.
+- Exact next action: Owner review of the local pre-scan UI diff. The live M53
+  review and separately gated Edge/client/native deployment remain unchanged.
 
 ### 2026-08-28 — U6G-FA-001 M53 application and connected browser verification
 

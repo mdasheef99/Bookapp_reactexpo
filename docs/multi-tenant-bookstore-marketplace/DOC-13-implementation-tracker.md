@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-08-21
+**Date:** 2026-08-29
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -36,6 +36,31 @@ Every material session must also leave one exact active work unit and next autho
 > signatures, tables, RLS policies, or grants were changed. Exact next action:
 > Owner review of the live proof. Edge/client/native deployment remains
 > separately gated.
+>
+> **2026-08-29 Unit 6G local pre/post-scan UI checkpoint:** The composition-only
+> Owner experience is implemented in the `codex/phase9-unit6g-recomposition`
+> worktree and remains uncommitted and undeployed. Pre-scan now groups batch,
+> location, book-default, and publication controls; post-scan now has the
+> consolidated review summary, source-distinct card presentation, compact edit
+> sections, full-correction reachability, and sticky commit controls. The
+> editable field placement follows the Unit 6G SDD: pre-scan owns batch label,
+> location, language hint, optional condition/price, and publication intent;
+> compact cards own title/authors, language, condition, price, quantity,
+> location, publication, and damage; full correction retains script, metadata
+> choice, confirmations, notes, and deeper correction actions. Quantity remains
+> fixed at `1` before scan; no batch quantity/apply-to-all prompt was introduced.
+> Provider-matched and vision-detected sources are now visibly distinct.
+> Targeted Jest completed **6 suites / 69 tests passed** and TypeScript passed.
+> The read-only browser check loaded the existing closed session, opened and
+> closed metadata, and confirmed Edit/Remove/Add-missed controls were disabled;
+> no browser console errors occurred. It also reproduced the known image-level
+> `0 need attention` versus candidate-level `15 need review` count mismatch and
+> the metadata sheet's generic `Status: Matched` copy; neither was changed in
+> this checkpoint. No scan start, image upload, review save, Add/Remove/Close,
+> provider call, Supabase/Storage/business-data mutation, deployment, staging,
+> commit, push, merge, or PR action occurred. Exact next action: Owner review of
+> this local UI diff and the recorded count/copy risks; Edge/client/native
+> deployment and any fresh scan remain separately gated.
 >
 > **2026-08-27 U6G-FA-001 correction complete locally:** The Owner-authorized
 > minimal correction projects each unusable selected compact-summary member as

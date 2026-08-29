@@ -269,7 +269,8 @@ describe('Phase 9 NEW 6G-C genuine mounted production-route composition', () => 
         await refetchAll();
         await waitFor(() => expect(screen.getAllByText(/Detected Book One/u).length).toBeGreaterThan(0));
         expect(screen.getByText('Finding books')).toBeTruthy();
-        expect(screen.getByText('Books found: 1')).toBeTruthy();
+        expect(screen.getByTestId('post-scan-review-summary')).toBeTruthy();
+        expect(screen.getByText('In review')).toBeTruthy();
 
         // Full-correction navigation stays reachable through the composed path.
         fireEvent.press(screen.getAllByText('Open full correction')[0]);
@@ -313,7 +314,7 @@ describe('Phase 9 NEW 6G-C genuine mounted production-route composition', () => 
         };
         const screen = render(<SessionRoute />, { wrapper });
         await waitFor(() => expect(screen.getByTestId('batch-review-degraded')).toBeTruthy());
-        expect(screen.getByText('Book review could not be loaded right now.')).toBeTruthy();
+        expect(screen.getByText('Book review is temporarily unavailable.')).toBeTruthy();
         expect(screen.getByText('Retry book review')).toBeTruthy();
         expect(screen.getByText('Finding books')).toBeTruthy();
         expect(screen.getByText('View session summary')).toBeTruthy();
@@ -358,7 +359,8 @@ describe('Phase 9 NEW 6G-C genuine mounted production-route composition', () => 
         const screen = render(<SessionRoute />, { wrapper });
         await waitFor(() => expect(screen.getAllByText(/Detected Book One/u).length).toBeGreaterThan(0));
         expect(screen.queryByTestId('batch-review-unsupported')).toBeNull();
-        expect(screen.getByText('Books found: 2')).toBeTruthy();
+        expect(screen.getByTestId('post-scan-review-summary')).toBeTruthy();
+        expect(screen.getByText('In review')).toBeTruthy();
     });
 
 });

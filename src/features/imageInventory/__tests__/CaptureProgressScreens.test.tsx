@@ -209,7 +209,7 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
             <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
         );
         expect(screen.getByText(/More than 15 books/u)).toBeTruthy();
-        fireEvent.press(screen.getByText('Continue to book review'));
+        fireEvent.press(screen.getByText('Open first book in full review'));
         expect(mockRouter.push).toHaveBeenCalledWith(
             '/(store-owner)/inventory/scan/00000000-0000-4000-8000-000000000010/candidate/00000000-0000-4000-8000-000000000002',
         );

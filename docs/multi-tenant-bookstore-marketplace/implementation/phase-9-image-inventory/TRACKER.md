@@ -3,19 +3,71 @@
 **Planning status:** `unit6g_fa_001_minimal_contract_correction_complete`
 **Implementation status:** `unit6g_fa_001_live_verified_m53_applied`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
-**Last updated:** 2026-08-28
-**Current milestone:** U6G-FA-001 minimal selected-metadata projection correction is live-verified. Unusable selected summary members project as null, and existing per-field source precedence supplies detected/default/missing fallback. M53 is live exactly once as `20260828081324`; M52 remains live and byte-immutable.
+**Last updated:** 2026-08-29
+**Current milestone:** U6G-FA-001 minimal selected-metadata projection correction is live-verified. Unusable selected summary members project as null, and existing per-field source precedence supplies detected/default/missing fallback. M53 is live exactly once as `20260828081324`; M52 remains live and byte-immutable. A composition-only pre/post-scan UI checkpoint is implemented locally and remains uncommitted/undeployed.
 **Active work unit:** `unit6g_fa_001_post_apply_live_verification`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** RED-first U6G-FA-001 correction across M53, mirrored strict contracts, compact draft fallback, and real PGlite projection; exact-project M53 application/readback; and Codex-browser review-page verification. Focused contract/structure Jest is 53/53, the narrowed post-apply migration test is 4/4, PGlite is 25/25, compact UI/draft assertions are 53/53, and TypeScript passes.
-**Next authorized action:** Owner review of the M53 live proof. Edge/client/native deployment remains separately gated.
+**Last completed:** RED-first U6G-FA-001 correction across M53, mirrored strict contracts, compact draft fallback, and real PGlite projection; exact-project M53 application/readback; Codex-browser review-page verification; and the local pre/post-scan UI composition checkpoint. Focused contract/structure Jest is 53/53, the narrowed post-apply migration test is 4/4, PGlite is 25/25, compact UI/draft assertions are 53/53, the final UI target set is 69/69, and TypeScript passes.
+**Next authorized action:** Owner review of the local pre/post-scan UI diff and recorded browser count/copy risks. Edge/client/native deployment, fresh scan/upload, and other Supabase mutations remain separately gated.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. Local forward migration `20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql` is live exactly once as `20260828081324 marketplace_phase9_unit6g_field_authority_correction`.
-**Scope boundary:** Only Unit 6G Group 1 contract/persistence foundation is implemented and live. Groups 2–4, UI, card composition, Add/Add-all orchestration, Store View/cache changes, and Unit 6F remain out of scope. Proof rows created during the connected M52 verification (session `33c3f6fb…`, candidate `50de2017…`, their audit/event/replay records) are intentionally persisted evidence on the development project. Unit 8 remains complete; no deployment occurred for Unit 6G.
-**Implementation authority:** Group 1/B local implementation, migration-file creation, correction iterations, and the Owner-authorized M52 application with connected proofs are complete and retained. The 2026-08-24 recomposition made the revised SDD/matrix/tracker 31 the sole NEW 6G-C/6G-D design authority following completed independent final review (verdict PASS_WITH_P3); the exact next action is Owner checkpoint disposition. Historical `e7ed166`-style old 6G-C work and the frozen old 6G-D implementation are superseded evidence, not authority. Edge/mobile deployment of new client code and Git publication beyond this branch remain unauthorized. Unit 8 remains live-verified; M39-M52 are not reopened. Native Unit 6F validation remains deferred and unrelated.
+**Scope boundary:** Only the Unit 6G Group 1 contract/persistence foundation and M53 correction are implemented and live. A composition-only pre/post-scan UI checkpoint is implemented locally in this worktree, but it is not deployed or connected release evidence. Add/Add-all orchestration remains locally retained under its existing gate; no new backend behavior was introduced by the UI checkpoint. Proof rows created during the connected M52 verification (session `33c3f6fb…`, candidate `50de2017…`, their audit/event/replay records) are intentionally persisted evidence on the development project. Unit 8 remains complete; no new deployment occurred for Unit 6G.
+**Implementation authority:** Group 1/B local implementation, migration-file creation, correction iterations, and the Owner-authorized M52 application with connected proofs are complete and retained. The 2026-08-24 recomposition made the revised SDD/matrix/tracker 31 the sole NEW 6G-C/6G-D design authority following completed independent final review (verdict PASS_WITH_P3); the composition-only pre/post-scan UI checkpoint is now locally implemented and pending Owner review. Historical `e7ed166`-style old 6G-C work and the frozen old 6G-D implementation are superseded evidence, not authority. Edge/mobile deployment of new client code and Git publication beyond this branch remain unauthorized. Unit 8 remains live-verified; M39-M52 are not reopened. Native Unit 6F validation remains deferred and unrelated.
 **Migration creation/application authority:** the current Owner request authorized the bounded local M53 correction, its exact-project application, and connected verification. It did not authorize deployment, connected business-data mutation, `db push`, historical replay, or `schema_migrations` repair.
 **Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
-**Current gate:** `U6G_FA_001_LIVE_VERIFIED`; M53 application and browser verification are complete; deployment/live Edge/client and native gates remain closed. The prior Unit 6G-D and Unit 8 checkpoints remain satisfied.
+**Current gate:** `U6G_FA_001_LIVE_VERIFIED`; M53 application and browser verification are complete, and the local UI checkpoint is pending Owner review. Deployment/live Edge/client and native gates remain closed. The prior Unit 6G-D and Unit 8 checkpoints remain satisfied.
+
+## 2026-08-29 — local post-scan review UI and read-only browser verification
+
+- Implemented the composition-only post-scan review surface in the recomposition
+  worktree: a distinct session header/summary, lifetime-versus-active review
+  counts, source-aware compact cards, compact edit sections, the existing full
+  correction route, and sticky Add/commit controls. Provider-matched and
+  vision-detected values now have separate visible source labels. The 15-book
+  current-image cap and existing mutation/lifecycle boundaries are unchanged.
+- Editable placement is recorded in the Unit 6G SDD: pre-scan owns batch label,
+  location, language hint, optional condition/price, and publication intent;
+  compact cards own title/authors, language, condition, price, quantity,
+  location, publication, and damage; full correction retains script, metadata
+  choice, confirmations, notes, and deeper correction actions. Quantity remains
+  fixed at `1` before scan; no batch quantity/apply-to-all prompt was added.
+- Verification: targeted image-inventory Jest **6 suites / 69 tests passed**;
+  TypeScript `--noEmit` passed. The authenticated local browser rendered the
+  existing closed session, opened/closed metadata, confirmed Edit/Remove/Add
+  missed controls were disabled, and reported no browser console errors. No
+  fresh scan or image upload was started.
+- Observed residuals: the image row reported `0 need attention` while the
+  candidate summary/cards reported `15 need review`; the metadata sheet still
+  uses generic `Status: Matched`. These are recorded for the next UI/data-copy
+  decision and were not changed in this checkpoint.
+- No review save, Add, Remove, Close, provider call, Supabase/Storage/business
+  data mutation, migration, deployment, staging, commit, push, merge, or PR
+  action occurred.
+- Exact next action: Owner review of this local UI diff and the recorded
+  count/copy risks. Edge/client/native deployment and any fresh scan remain
+  separately gated.
+
+## 2026-08-29 — local pre-scan UI composition and browser verification
+
+- Implemented a composition-only pre-scan UI checkpoint in the Unit 6G
+  recomposition worktree: grouped Batch, Location, Book defaults, and
+  Publication sections; A-Z/1-9 shelf-code selectors plus free-form location;
+  searchable language hint; optional condition and selling-price defaults;
+  quick/full/custom whole-rupee price entry; fixed quantity-one summary; and
+  a sticky summary/action footer. Existing Start/capture handlers and server
+  contracts are unchanged. Authority: Unit 6G SDD §§5–6 and §21,
+  U6G-AC01–U6G-AC05.
+- Verification: focused image-inventory Jest **3 suites / 33 tests passed**;
+  `tsc --noEmit` and `git diff --check` passed. The authenticated local
+  `/inventory/scan` browser check exercised selectors, manual location,
+  language search, condition, custom price, publication intent, summary, and
+  location-gated Start with no browser console errors.
+- No scan or image upload was started. No review/close/inventory action
+  occurred. Apart from the authorized local authentication flow, no Supabase
+  database/Storage/business-data or provider operation, deployment, staging,
+  commit, push, merge, or PR mutation occurred.
+- Exact next action: Owner review of the local UI diff; live M53 review and the
+  separately gated Edge/client/native deployment remain unchanged.
 
 ## 2026-08-28 — U6G-FA-001 M53 live application and browser proof
 

@@ -1,16 +1,20 @@
 # Phase 9 Unit 6G Contract and Screen Matrix
 
 **Status:** `unit6g_d_implemented_pending_owner_6ge_authorization`
-**Date:** 2026-08-24
+**Date:** 2026-08-29
 **Owner:** [Unit 6G SDD](./06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md)
 
 This matrix operationalizes the recomposed Unit 6G SDD. Unit 6G-A/B and the
 exact M52 foundation are retained; historical 6G-C commit `e7ed166` and frozen
 dirty 6G-D work are superseded as implementation authority. Independent final
 review of this recomposed three-document authority is COMPLETE (verdict
-PASS_WITH_P3); the exact next action is Owner checkpoint disposition. NEW
+PASS_WITH_P3); the local composition-only UI checkpoint is pending Owner
+review. NEW
 6G-C/6G-D each then require separate explicit Owner authorization; NEW 6G-C is
-composition-only/pre-commit. Root specifications and the SDD outrank this matrix.
+composition-only/pre-commit. The composition-only 6G-C UI checkpoint was
+implemented locally on 2026-08-29 in the recomposition worktree; it remains
+uncommitted and undeployed. Root specifications and the SDD outrank this
+matrix.
 
 ## 1. Pre-scan setup matrix
 
@@ -105,11 +109,11 @@ the route remains mounted as Unit 6 processing completes.
 
 | Field | Display | Editor | Draft source precedence | Required before Add | Source badge |
 | --- | --- | --- | --- | --- | --- |
-| Cover | 56–72 px bounded thumbnail/placeholder | None | selected metadata/observed allowlisted reference → missing | No | Detected or Missing; internal `matched` is displayed as Detected; never scan image |
-| Title | Full screen-reader value; visually bounded lines | Plain text inline/manual | saved custom → selected metadata/observed → missing | Yes | Custom, Detected, or Missing |
-| Authors | Ordered accessible list; “Author unknown” allowed | Simple ordered fields/add/remove | saved custom → selected metadata/observed → missing | Decision required; empty confirmed array permitted | Custom, Detected, or Missing |
+| Cover | 56–72 px bounded thumbnail/placeholder | None | selected metadata/observed allowlisted reference → missing | No | Provider matched, Vision detected, or Missing; never scan image |
+| Title | Full screen-reader value; visually bounded lines | Plain text inline/manual | saved custom → selected metadata/observed → missing | Yes | Custom, Provider matched, Vision detected, or Missing |
+| Authors | Ordered accessible list; “Author unknown” allowed | Simple ordered fields/add/remove | saved custom → selected metadata/observed → missing | Decision required; empty confirmed array permitted | Custom, Provider matched, Vision detected, or Missing |
 | Metadata status | Matched/Manual/No match/Pending/Needs attention | Metadata sheet | current metadata state/revision | Terminal selected/manual path | State label only; not a field-source badge |
-| Language | Canonical language label/code | Searchable dropdown | saved custom → selected metadata/observed → session hint → missing | Yes | Custom/Detected/Default/Missing |
+| Language | Canonical language label/code | Searchable dropdown | saved custom → selected metadata/observed → session hint → missing | Yes | Custom/Provider matched/Vision detected/Default/Missing |
 | Condition | Label plus help marker | Five-value dropdown | saved review → session default | Yes | Custom/Default/Missing |
 | Selling price | Locale-aware `₹` whole amount | Preset/custom picker | saved review → session default | Yes; 0 only private | Custom/Default/Missing |
 | Quantity | Integer | Stepper with accessible +/- and direct bounded entry fallback | saved custom → server-fixed 1 | Yes, 1..10,000 | Custom/Default |
@@ -458,8 +462,8 @@ allowed actions, or commit eligibility.
 
 | Internal source | Visible badge | Canonical meaning |
 | --- | --- | --- |
-| `matched` | Detected | Current selected metadata/identity match contains a usable value for this field; never a separate visible Matched source badge |
-| `detected` | Detected | Current bounded observed identity |
+| `matched` | Provider matched | Current selected metadata/identity match contains a usable value for this field; it remains distinct from vision output |
+| `detected` | Vision detected | Current bounded observed identity |
 | `default` | Default | Persisted session default |
 | `custom` | Custom | Saved/mounted per-card override |
 | `missing` | Missing | Final value absent/unusable |
@@ -900,4 +904,5 @@ removed. The exact next action is Owner checkpoint disposition of this corrected
 single-image authority and its unchanged Unit 6 over-limit behavior; its
 independent final review is COMPLETE (verdict PASS_WITH_P3). Candidate-limit
 UX optimization is deferred to a separate later
-work unit/design decision. NEW 6G-C has not begun.
+work unit/design decision. NEW 6G-C's composition-only UI checkpoint is locally
+implemented and pending Owner review; it remains uncommitted and undeployed.

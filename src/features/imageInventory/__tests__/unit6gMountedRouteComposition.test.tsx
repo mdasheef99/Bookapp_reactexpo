@@ -490,6 +490,12 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
             <InventorySessionFoundationScreen sessionId="00000000-0000-4000-8000-000000000010" />,
         );
 
+        expect(screen.getByText('Edit book details')).toBeTruthy();
+        expect(screen.queryByText('Edit title and authors')).toBeNull();
+        expect(screen.queryByText('Save changes')).toBeNull();
+        expect(screen.queryByText('Add to inventory')).toBeNull();
+
+        fireEvent.press(screen.getByText('Edit book details'));
         expect(screen.getByText('Edit title and authors')).toBeTruthy();
         expect(screen.getByText('Edit language')).toBeTruthy();
         expect(screen.getByText('Edit price')).toBeTruthy();
@@ -497,9 +503,6 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
         expect(screen.getByText('Edit location')).toBeTruthy();
         expect(screen.getByText('Edit publication')).toBeTruthy();
         expect(screen.getByText('Edit damage')).toBeTruthy();
-        expect(screen.queryByText('Save changes')).toBeNull();
-        expect(screen.queryByText('Add to inventory')).toBeNull();
-
         fireEvent.press(screen.getByTestId('card-condition-open'));
         fireEvent.press(screen.getByText('Acceptable'));
         fireEvent.press(screen.getByText('View metadata'));
@@ -598,7 +601,8 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
         );
         expect(screen.queryByTestId('batch-review-unsupported')).toBeNull();
         expect(screen.getAllByText(/Detected Book One/u).length).toBeGreaterThan(0);
-        expect(screen.getByText('Books found: 1')).toBeTruthy();
+        expect(screen.getByTestId('post-scan-review-summary')).toBeTruthy();
+        expect(screen.getByText('In review')).toBeTruthy();
         mockInputs.data.items = [];
     });
 
