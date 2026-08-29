@@ -9,6 +9,7 @@ import {
 
 const M52 = '20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql';
 const M53 = '20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql';
+const M54 = '20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql';
 let db;
 const sqlJson = (value) => JSON.stringify(value).replaceAll("'", "''");
 
@@ -31,6 +32,7 @@ before(async () => {
       ADD COLUMN IF NOT EXISTS schema_version integer NOT NULL DEFAULT 1;`);
   await db.exec(fs.readFileSync(migrationPath(M52), 'utf8'));
   await db.exec(fs.readFileSync(migrationPath(M53), 'utf8'));
+  await db.exec(fs.readFileSync(migrationPath(M54), 'utf8'));
 });
 after(async () => db?.close());
 

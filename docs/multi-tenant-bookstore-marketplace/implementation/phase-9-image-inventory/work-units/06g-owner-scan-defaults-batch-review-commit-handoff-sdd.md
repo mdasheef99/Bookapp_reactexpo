@@ -1,6 +1,6 @@
 # Phase 9 Unit 6G SDD: Owner Scan Defaults, Batch Review, and Commit Handoff
 
-**Status:** `unit6g_d_implemented_pending_owner_6ge_authorization`
+**Status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`
 **Version/date:** 0.3 / 2026-08-29
 **Authority:** the Owner workflow decisions recorded in P9-D81 through P9-D85;
 DOC-3 §§5–9/15–16; DOC-4 §§2–5/9–15; DOC-8 §§2–5/14–15; Phase 9
@@ -15,8 +15,11 @@ foundation and its recorded live application/readback, are retained. Historical
 implementation authority. The recomposed 6G-C/6G-D design below remains the
 behavioral authority; its composition-only 6G-C UI checkpoint was implemented
 locally on 2026-08-29 in the recomposition worktree and remains uncommitted and
-undeployed. Deployment, migration, database/Storage mutation, and Git
-publication remain separately unauthorized.
+undeployed. The Owner-authorized M54 lifecycle correction is live exactly once
+as `20260829142337`: current final Save/Add/Remove mutations require an active,
+unexpired session and non-mutable detail/batch projections are read-only.
+Edge/client deployment, further database/Storage mutation, and Git publication
+remain separately unauthorized.
 
 ## 1. Decision and intended outcome
 
@@ -493,11 +496,14 @@ places edits as follows:
 The compact editor is rendered only when the card has a saved review or the
 server exposes `save_review`, and mutation controls additionally require the
 active-session/online authority gate. Closed or offline sessions therefore
-remain read-only. This checkpoint changes client presentation only; it does not
-change Unit 6 lifecycle ownership, the 15-book cap, server contracts, or the
-Add/Save mutation boundary. A batch quantity selector or “apply quantity to all”
-prompt is not part of the current pre-scan contract; any such future behavior
-requires a separate product/SDD decision.
+remain read-only. M54 enforces the same rule at the database RPC boundary:
+current Save/Add/Remove first reconcile completed exact replay, then lock and
+require the initiating Owner's session to be `active` with future `expires_at`
+before any new effect. Non-mutable detail and batch projections must not
+advertise `save_review`, `remove_from_scan`, `add_missed`,
+`add_to_inventory`, or variant mutation actions. A batch quantity selector or
+“apply quantity to all” prompt is not part of the current pre-scan contract;
+any such future behavior requires a separate product/SDD decision.
 
 ## 10. Metadata sheet
 
@@ -703,7 +709,9 @@ candidate in this scan.” It is distinct from:
 - inventory deletion/stock removal — a post-commit Unit 7C operation.
 
 The command is initiating-Owner-only, candidate-version fenced, idempotent, and
-allowed for any uncommitted candidate after it exists. It locks the candidate,
+allowed only for an uncommitted candidate in an active, unexpired session. It
+locks the session before the candidate after completed exact-replay
+reconciliation, then
 records the disposition plus bounded audit/event evidence, increments the
 candidate/review-scope presentation revisions, and returns canonical removal
 state. It never deletes the candidate, metadata, analysis, input, media object,
@@ -986,7 +994,7 @@ business-outcome authority.
 | U6G-AC17 | M39 still creates one private row per candidate with exact `q/q/0/0/0`; publish intent does not auto-publish. |
 | U6G-AC18 | Successful commits invalidate/coalesce candidate/session/readiness/discovery and Store View list caches, and v3 session/Close responses return `ownerRemovedCandidates` as a `NonNegativeSafeInteger` lifetime count while v2 Close remains strict and unchanged. |
 | U6G-AC19 | Offline is read-only, drafts are memory-only, and reconnect refetches authority before any mutation. |
-| U6G-AC20 | Cross-store, same-store-noninitiator, random-ID, stale-version, changed-replay, and forbidden-field tests fail closed without effects. |
+| U6G-AC20 | Cross-store, same-store-noninitiator, random-ID, stale-version, changed-replay, forbidden-field, closed/closing/expired-status, and active-with-past-expiry mutation tests fail closed without effects; those non-mutable session reads advertise only read-only actions. |
 | U6G-AC21 | Scan/private/provider/job/attempt/cost data cannot leak through cards, metadata, logs, telemetry, or public media. |
 | U6G-AC22 | The supported 15-card maximum remains responsive with virtualized compact rendering, on-demand metadata, bounded polling, and bounded commits. |
 | U6G-AC23 | Screen reader, focus, 44×44 target, large-text, non-color status, busy/result announcement, and removal-dialog gates pass. |

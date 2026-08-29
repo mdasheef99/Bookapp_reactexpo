@@ -1,21 +1,53 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `unit6g_fa_001_minimal_contract_correction_complete`
-**Implementation status:** `unit6g_fa_001_live_verified_m53_applied`
+**Planning status:** `unit6g_session_lifecycle_fence_confirmed`
+**Implementation status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-08-29
-**Current milestone:** U6G-FA-001 minimal selected-metadata projection correction is live-verified. Unusable selected summary members project as null, and existing per-field source precedence supplies detected/default/missing fallback. M53 is live exactly once as `20260828081324`; M52 remains live and byte-immutable. A composition-only pre/post-scan UI checkpoint is implemented locally and remains uncommitted/undeployed.
-**Active work unit:** `unit6g_fa_001_post_apply_live_verification`
+**Current milestone:** The Unit 6G session-lifecycle fence is live-verified. M54 is live exactly once as `20260829142337`; final Save/Add/Remove require an active, unexpired session and closed/closing/expired detail and batch reads advertise only read-only actions. M52/M53 remain live and immutable. A composition-only pre/post-scan UI checkpoint is implemented and committed on this local branch, and remains undeployed.
+**Active work unit:** `unit6g_m54_owner_review_pending`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** RED-first U6G-FA-001 correction across M53, mirrored strict contracts, compact draft fallback, and real PGlite projection; exact-project M53 application/readback; Codex-browser review-page verification; and the local pre/post-scan UI composition checkpoint. Focused contract/structure Jest is 53/53, the narrowed post-apply migration test is 4/4, PGlite is 25/25, compact UI/draft assertions are 53/53, the final UI target set is 69/69, and TypeScript passes.
-**Next authorized action:** Owner review of the local pre/post-scan UI diff and recorded browser count/copy risks. Edge/client/native deployment, fresh scan/upload, and other Supabase mutations remain separately gated.
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. Local forward migration `20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql` is live exactly once as `20260828081324 marketplace_phase9_unit6g_field_authority_correction`.
-**Scope boundary:** Only the Unit 6G Group 1 contract/persistence foundation and M53 correction are implemented and live. A composition-only pre/post-scan UI checkpoint is implemented locally in this worktree, but it is not deployed or connected release evidence. Add/Add-all orchestration remains locally retained under its existing gate; no new backend behavior was introduced by the UI checkpoint. Proof rows created during the connected M52 verification (session `33c3f6fb…`, candidate `50de2017…`, their audit/event/replay records) are intentionally persisted evidence on the development project. Unit 8 remains complete; no new deployment occurred for Unit 6G.
+**Last completed:** RED-first M54 lifecycle tests and the forward-only shared active-session guard/read-only projection correction; local structural, PGlite, regression, and Unit 7A compatibility verification; exact-project M54 application/readback; and connected closed-candidate proof with zero effects. Focused M54 PGlite is 4/4, focused structural Jest is 7/7, sequential Unit 6G/7A PGlite is 42/42, and related migration/Edge contracts are 233/233.
+**Next authorized action:** Owner review of the M54 live proof and explicit disposition of older sibling correction/variant RPC closed-session compatibility. Edge/client/native deployment, fresh scan/upload, and further Supabase mutations remain separately gated.
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. M53 is live exactly once as `20260828081324 marketplace_phase9_unit6g_field_authority_correction`. Local forward migration `20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql` is live exactly once as `20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`.
+**Scope boundary:** M54 fixes the current final `phase9_update_candidate_review_v2`, `phase9_add_candidate_to_inventory_v1`, and `phase9_owner_remove_candidate_v1` mutation boundary plus candidate-detail/batch-card action projection. It does not change older sibling manual-candidate, false-detection, skip, or variant decision/replacement RPC behavior; their closed-session compatibility remains an explicit follow-up decision. A composition-only pre/post-scan UI checkpoint remains local and undeployed. Proof rows created during the connected M52 verification remain intentional evidence; M54's connected proof created no durable business effect. Unit 8 remains complete; no Edge/client deployment occurred.
 **Implementation authority:** Group 1/B local implementation, migration-file creation, correction iterations, and the Owner-authorized M52 application with connected proofs are complete and retained. The 2026-08-24 recomposition made the revised SDD/matrix/tracker 31 the sole NEW 6G-C/6G-D design authority following completed independent final review (verdict PASS_WITH_P3); the composition-only pre/post-scan UI checkpoint is now locally implemented and pending Owner review. Historical `e7ed166`-style old 6G-C work and the frozen old 6G-D implementation are superseded evidence, not authority. Edge/mobile deployment of new client code and Git publication beyond this branch remain unauthorized. Unit 8 remains live-verified; M39-M52 are not reopened. Native Unit 6F validation remains deferred and unrelated.
-**Migration creation/application authority:** the current Owner request authorized the bounded local M53 correction, its exact-project application, and connected verification. It did not authorize deployment, connected business-data mutation, `db push`, historical replay, or `schema_migrations` repair.
+**Migration creation/application authority:** the current Owner request authorized the bounded local M54 correction, its exact-project application, and connected verification. That authority is consumed. It did not authorize Edge/client deployment, fresh scan/upload, successful connected business-data mutation, `db push`, historical replay, or `schema_migrations` repair.
 **Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
-**Current gate:** `U6G_FA_001_LIVE_VERIFIED`; M53 application and browser verification are complete, and the local UI checkpoint is pending Owner review. Deployment/live Edge/client and native gates remain closed. The prior Unit 6G-D and Unit 8 checkpoints remain satisfied.
+**Current gate:** `U6G_M54_LIVE_VERIFIED`; M54 application/readback and connected zero-effect lifecycle proof are complete. The local UI checkpoint and M54 proof are pending Owner review. Deployment/live Edge/client and native gates remain closed. The prior Unit 6G-D and Unit 8 checkpoints remain satisfied.
+
+## 2026-08-29 — M54 session-lifecycle fence live verification
+
+- RED evidence reproduced BE-01/BE-02: without M54, closing/closed/expired
+  candidates still accepted current Save/Add/Remove calls or advertised mutation
+  actions. The active-session control remained valid.
+- M54 adds one shared active-and-unexpired session predicate, one Owner/session
+  row-lock guard, and one read-only detail sanitizer. Completed exact replay is
+  reconciled before the lifecycle fence; new effects require the locked session
+  to remain active and unexpired. Save replay is sanitized when the session is
+  no longer mutable; Add/Remove exact replay remains canonical.
+- Local verification: focused lifecycle PGlite **4/4**, focused structural Jest
+  **7/7**, sequential Unit 6G foundation + lifecycle + Unit 7A PGlite **42/42**,
+  and related migration/Edge contract Jest **6 suites / 233 tests**.
+- Exact-project preflight reverified `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn` healthy with M53 as the tail. Supabase MCP applied M54
+  once as `20260829142337`. Function/owner/search-path/grant readback passed.
+- Connected proof used an existing closed candidate under transaction-local
+  Owner claims. Detail actions were `view_readiness`; batch actions were
+  `view_metadata, view_readiness`; Save/Add/Remove each returned
+  `P9_STATE_CONFLICT`; candidate, session count, inventory, audit, event, and
+  idempotency state were unchanged.
+- Read-only browser verification on the Unit 6G worktree loaded the same closed
+  15-candidate session. The summary showed `Session state: closed`; candidate
+  detail showed `This candidate is read-only` with `Save review` disabled, and
+  `Add missed book` was disabled. No browser console errors occurred. The
+  visible text fields remain present for inspection but no mutation control is
+  enabled; this is a client UX residual, not a backend authorization failure.
+- No Edge/client/native deployment, fresh scan/upload, Storage operation,
+  provider operation, stage, push, merge, or PR action occurred. Older
+  sibling correction/variant RPC lifecycle compatibility was intentionally not
+  changed and remains a separate product decision.
 
 ## 2026-08-29 — local post-scan review UI and read-only browser verification
 

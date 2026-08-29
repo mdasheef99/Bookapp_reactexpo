@@ -1,7 +1,49 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit6g_fa_001_live_verified_m53_applied`; **last updated:** 2026-08-29
+**Status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`; **last updated:** 2026-08-29
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit6g_fa_001_post_apply_live_verification`. The Owner-authorized minimal selected-metadata projection and mirrored-contract correction is live-verified. The composition-only pre/post-scan UI checkpoint is locally implemented and pending Owner review. Edge/client/native deployment remains separately gated.
+**Active work unit:** `unit6g_m54_owner_review_pending`. M54 is live-verified for the current final Save/Add/Remove and detail/batch action boundary. The composition-only pre/post-scan UI checkpoint remains local and pending Owner review. Older sibling correction/variant RPC compatibility and Edge/client/native deployment remain separately gated.
+
+### 2026-08-29 — Unit 6G M54 lifecycle fence application and proof
+
+- Confirmed findings: BE-01 allowed current Save/Add/Remove RPCs to cross a
+  closed/closing/expired session boundary; BE-02 projected corresponding
+  mutation actions after the session was no longer mutable.
+- RED first: the focused lifecycle integration suite failed the closed detail,
+  closing Save, and closed replay/action cases while its active control passed;
+  the structural suite produced seven expected failures before M54 existed.
+- Implementation: local forward migration
+  `20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql` adds a
+  pure active/unexpired predicate, an Owner/session `FOR UPDATE` guard, and a
+  read-only candidate-detail sanitizer. It replaces only the current final
+  detail, Save, Add, Remove, and batch-card functions. Completed exact replay is
+  reconciled before the lifecycle check; new effects require the locked session
+  to remain active/unexpired. Active action order and public signatures/grants
+  remain unchanged.
+- Local green evidence: focused PGlite 4/4; focused migration-structure Jest
+  7/7; sequential Unit 6G foundation + M54 + Unit 7A PGlite 42/42; related M52,
+  M53, M54, Owner UX, and batch-review contract Jest 6 suites / 233 tests.
+- Exact-project preflight reverified `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn` healthy, PostgreSQL `17.6.1.063`, with M53 as live
+  tail. Supabase MCP applied M54 exactly once as `20260829142337
+  marketplace_phase9_unit6g_session_lifecycle_fence`.
+- Readback verified all eight helper/public function definitions, postgres
+  ownership, fixed empty search paths, the session `FOR UPDATE`, expected
+  lifecycle/sanitizer calls, private-helper client denial, and preserved public
+  grants.
+- Connected proof used an existing closed candidate under transaction-local
+  Owner claims: detail actions `view_readiness`; batch actions
+  `view_metadata,view_readiness`; nested variant actions empty; Save/Add/Remove
+  each `P9_STATE_CONFLICT`; zero candidate, session-count, inventory, audit,
+  event, or idempotency effects.
+- Scope/bypass review: no surviving path exists through the three named final
+  RPCs or their final detail/batch projections. Older directly callable manual,
+  false-detection/skip, and variant decision/replacement siblings were not
+  changed because predecessor compatibility and current Unit 6G read-only rules
+  require an explicit product decision. This residual must not be described as
+  globally immutable closed sessions.
+- External/Git state: one authorized Supabase migration application occurred.
+  No successful business-row mutation, Storage/provider operation, fresh scan,
+  Edge/client/native deployment, stage, commit, push, merge, or PR action.
 
 ### 2026-08-29 — local post-scan review UI and read-only browser verification
 
@@ -2772,6 +2814,7 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 | --- | --- | --- | --- | --- |
 | `20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql` | **applied live as `20260822025712`** on `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) directly after M51 `20260821061213`; name is canonical per the timestamp/name-ledger convention | Read-only preflight PASS (dependency signatures, ACL snapshot, data compatibility) then Owner-authorized application | Group 1 forward candidate plus verification-pass and iteration-two corrections: needs-review count override, NULL guards (keys, versions, required start inputs), safe-integer session counters with 15-card bounds, forward session-page filter | Focused Jest 42/42, exact-list regression 212/212, PGlite 13/13, TypeScript clean, continuity validator PASS; **applied and live-verified 2026-08-22, see the M52 application proof record below** |
 | `20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql` | **applied live as `20260828081324`** on `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) directly after M52 `20260822025712`; name `marketplace_phase9_unit6g_field_authority_correction` | Exact-project preflight PASS (healthy project, M52 live tail, dependency signatures) followed by explicit Owner-authorized Supabase MCP application and post-apply readback | Forward-only replacement of internal `marketplace_sec.phase9_unit6g_field_sources`, `phase9_unit6g_batch_card`, and safe-summary helper; no DML/backfill/public RPC/DTO/grant/table/RLS change; M52/M39 byte-immutable | Local focused contract/structure 53/53, PGlite 25/25, compact UI/draft 53/53, narrowed post-apply migration test 4/4, TypeScript/export/continuity pass; Codex browser rendered 15 review cards and no review-load error |
+| `20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql` | **applied live as `20260829142337`** on `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) directly after M53; name `marketplace_phase9_unit6g_session_lifecycle_fence` | Exact-project preflight PASS (healthy project, M53 live tail, baseline 18 sessions / 17 closed) followed by explicit Owner-authorized Supabase MCP application and post-apply readback | Forward-only helper/final-function replacement: active/unexpired session lock fence for current Save/Add/Remove and read-only closed detail/batch actions; no DML/backfill/public signature/table/RLS/Storage change | RED reproduced both defects; local 4/4 PGlite, 7/7 structural, 42/42 sequential Unit 6G/7A, 233/233 related contracts; live definition/grant readback and connected closed-candidate zero-effect proof PASS |
 
 ### Unit 6G-B M52 application and connected proof - 2026-08-22
 

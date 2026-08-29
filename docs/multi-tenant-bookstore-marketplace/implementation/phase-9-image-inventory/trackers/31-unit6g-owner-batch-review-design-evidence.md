@@ -1,20 +1,21 @@
 # Phase 9 Unit 6G Owner Batch Review Design Evidence
 
-**Status:** `unit6g_fa_001_live_verified_m53_applied`
-**Date:** 2026-08-28
+**Status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`
+**Date:** 2026-08-29
 **Branch:** `codex/phase9-unit6g-recomposition`
 **Worktree:** `C:\Users\user\Documents\augment-projects\Bookconnect_expo\.worktrees\phase9-unit6g-recomposition`
-**Current evidence:** §12 supersedes older “next action” statements without
+**Current evidence:** §15 supersedes older “next action” statements without
 rewriting or deleting their historical record. M52 remains live as
-`20260822025712` with its recorded connected proofs, and M53 is live exactly
-once as `20260828081324` with post-apply readback and browser proof.
+`20260822025712` with its recorded connected proofs, M53 is live exactly once
+as `20260828081324`, and M54 is live exactly once as `20260829142337` with
+post-apply readback and connected zero-effect lifecycle proof.
 
 > **HISTORICAL SCOPE BANNER — §§1–9:** Sections 1 through 9 preserve evidence
 > recorded during the 2026-08-21 Group 1 design, implementation, and correction
 > passes. Their phrases “current boundary,” “current implementation,” “M52
 > remains unapplied,” structural counts, and “exact next action” are current
 > only at those dated historical checkpoints and are not present authority.
-> Section 12 is the current 2026-08-28 correction status and next action.
+> Section 15 is the current 2026-08-29 lifecycle-fence status and next action.
 
 ## 1. Authorization and boundary
 
@@ -564,3 +565,26 @@ recomposition worktree. It does not change Unit 6 lifecycle ownership, the
 **Current next action:** Owner review of the local UI diff and the recorded
 count/copy risks; Edge/client/native deployment and any fresh scan remain
 separately gated.
+
+## 15. 2026-08-29 — M54 session-lifecycle fence
+
+BE-01 and BE-02 were reproduced RED against the real M52→M53 database path:
+the current Save/Add/Remove RPCs did not enforce active/unexpired state, and
+closed detail/batch projections still advertised mutation actions. M54 fixes
+that named boundary with a shared session predicate, an Owner/session row-lock
+guard, and read-only projection sanitizer while retaining completed exact
+replay and unchanged active-session behavior.
+
+Local evidence is focused PGlite 4/4, structural Jest 7/7, sequential Unit
+6G/7A PGlite 42/42, and related contract Jest 233/233. Supabase MCP applied M54
+once as `20260829142337`; definition, ownership, search-path, lock, and ACL
+readback passed. Connected closed-candidate proof returned
+`P9_STATE_CONFLICT` for Save/Add/Remove, exposed only read-only actions, and
+verified zero durable effects.
+
+The bypass review is PASS for the three named final mutation functions and
+their final detail/batch projections. It does not certify older manual,
+false-detection/skip, or variant decision/replacement siblings. Their lifecycle
+compatibility is the next explicit Owner decision. No Edge/client deployment,
+fresh scan/upload, successful business mutation, Storage operation, staging,
+commit, or push occurred.

@@ -10,6 +10,22 @@ The one startup chain is repository `AGENTS.md` â†’ `implementation/ACTIVE.md` â
 
 ## Current 2026-08-24 Unit 6G recomposition overlay
 
+**2026-08-29 M54 lifecycle-fence overlay:** The Owner-authorized forward
+migration `20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql`
+is live exactly once on `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as
+`20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`. The final
+Unit 6G Save/Add/Remove RPCs lock and require an active, unexpired session after
+completed exact-replay reconciliation; closed/closing/expired detail and batch
+reads retain only read-only actions. Connected proof against an existing closed
+candidate returned `P9_STATE_CONFLICT` for Save/Add/Remove and verified zero
+candidate, session-count, inventory, audit, event, or idempotency effects. M54
+does not change older sibling manual/false-detection/variant RPC behavior; that
+compatibility boundary needs a separate Owner decision. No Edge/client/native
+deployment, Storage operation, business-row write, stage, push, merge, or PR
+was performed; the local branch changes were committed only after the
+read-only browser verification. The exact next action is Owner review of this M54 proof and explicit
+disposition of that legacy compatibility boundary.
+
 The Unit 6G design authority was recomposed on
 `codex/phase9-unit6g-recomposition` (clean baseline `714607f`). The revised
 [Unit 6G SDD](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md),
@@ -24,10 +40,10 @@ remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_
 old 6G-C work and the frozen old 6G-D implementation are superseded evidence,
 not authority. Status is
 `unit6g_d_implemented_pending_owner_6ge_authorization`.
-Independent final review of the recomposed three-document authority is COMPLETE (verdict PASS_WITH_P3), and NEW 6G-C implementation passed through its own correction cycle under the same final verdict (known P3 N1 module-size deferred), locally checkpointed. The 2026-08-29 pre/post-scan composition-only UI checkpoint is also locally implemented and pending Owner review; it remains uncommitted and undeployed. NEW 6G-D commit orchestration subsequently passed its own dual-model review cycle (final verdict PASS after two bounded correction rounds) and is locally checkpointed; known deferred P3s are recorded in the tracker closeout. The exact next action is Owner review of the local UI diff and live proof; separate 6G-E Edge deployment (resolving pre-6G live v8), connected live verification, and native closure remain gated. Nothing is deployed. NEW 6G-C was composition-only pre-commit client work over the retained M52 foundation. NEW 6G-D
+Independent final review of the recomposed three-document authority is COMPLETE (verdict PASS_WITH_P3), and NEW 6G-C implementation passed through its own correction cycle under the same final verdict (known P3 N1 module-size deferred), locally checkpointed. The 2026-08-29 pre/post-scan composition-only UI checkpoint is also locally implemented and pending Owner review; it is committed on this local branch and remains undeployed. NEW 6G-D commit orchestration subsequently passed its own dual-model review cycle (final verdict PASS after two bounded correction rounds) and is locally checkpointed; known deferred P3s are recorded in the tracker closeout. The exact next action is Owner review of the local UI diff and live proof; separate 6G-E Edge deployment (resolving pre-6G live v8), connected live verification, and native closure remain gated. Nothing is deployed. NEW 6G-C was composition-only pre-commit client work over the retained M52 foundation. NEW 6G-D
 later owns commit orchestration, and 6G-E owns Edge deployment/live/native
 closure. No product source, SQL/M52, database/Storage,
-deployment, stage, commit, or push action occurred in the recomposition.
+deployment, stage, push, merge, or PR action occurred in the recomposition.
 
 ## Prior 2026-08-21 Unit 6G Group 1 implementation overlay
 

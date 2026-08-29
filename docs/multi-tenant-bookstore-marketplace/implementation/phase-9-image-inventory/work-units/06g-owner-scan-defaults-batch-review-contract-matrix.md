@@ -1,6 +1,6 @@
 # Phase 9 Unit 6G Contract and Screen Matrix
 
-**Status:** `unit6g_d_implemented_pending_owner_6ge_authorization`
+**Status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`
 **Date:** 2026-08-29
 **Owner:** [Unit 6G SDD](./06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md)
 
@@ -15,6 +15,15 @@ composition-only/pre-commit. The composition-only 6G-C UI checkpoint was
 implemented locally on 2026-08-29 in the recomposition worktree; it remains
 uncommitted and undeployed. Root specifications and the SDD outrank this
 matrix.
+
+**M54 implementation overlay (2026-08-29):** The current final Save/Add/Remove
+RPCs reconcile completed exact replay, then lock and require the initiating
+Owner's session to be active and unexpired before any new effect. Closed,
+closing, expired-status, and active-with-past-expiry detail/batch reads remain
+available but expose only `view_readiness` at detail and
+`view_metadata,view_readiness` at batch-card level; nested variant mutation
+actions are empty. M54 is live exactly once as `20260829142337`. It does not
+redefine older manual/false-detection/variant sibling RPC compatibility.
 
 ## 1. Pre-scan setup matrix
 
@@ -706,6 +715,12 @@ successful removal cannot race into a successful inventory commit.
 | `owner_removed_from_scan` or false | Removed from active list; separate summary count | None |
 
 ## 9. Migration current-to-target matrix
+
+| Delta | Current after M54 | Verification |
+| --- | --- | --- |
+| Session lifecycle command fence | `phase9_update_candidate_review_v2`, `phase9_add_candidate_to_inventory_v1`, and `phase9_owner_remove_candidate_v1` share one active/unexpired session lock fence after completed replay | closing/closed/expired/past-expiry zero-effect PGlite plus connected closed-candidate proof |
+| Non-mutable action projection | final detail/batch projections retain only read-only actions; nested variant actions empty | structural assertions, PGlite projection proof, live function readback |
+| Compatibility boundary | public signatures/grants and active behavior preserved; older sibling correction/variant lifecycle behavior unchanged | related contract regression and explicit residual review |
 
 | Area | Current | Unit 6G target | Compatibility rule |
 | --- | --- | --- | --- |

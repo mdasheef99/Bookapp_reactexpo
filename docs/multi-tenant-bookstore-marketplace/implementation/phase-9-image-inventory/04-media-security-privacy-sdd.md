@@ -47,6 +47,14 @@ retaining `PUBLIC`, `anon`, and `authenticated` denial. Repository search, all
 caller; this is an intentional trusted-role compatibility allowance. Direct
 projection-view access remains denied to customer roles, and v2 JSON RPCs remain
 the customer path.
+**Unit 6G lifecycle command checkpoint (live once 2026-08-29):** M54 preserves
+the initiating-Owner/store boundary and adds one locked active-and-unexpired
+session fence to the current final Save/Add/Remove RPCs after completed replay
+reconciliation. Closed/closing/expired reads expose no mutation capability.
+The new internal helpers are postgres-owned, fixed-empty-search-path, and denied
+to `PUBLIC`, `anon`, `authenticated`, and `service_role`; public function
+grants remain unchanged. Connected closed-candidate calls failed with
+`P9_STATE_CONFLICT` and zero durable effects.
 **U8B local security evidence (2026-08-20):** The repository-only M49 proof
 keeps Q07 internal and customer-denied, grants Q08 only to the intended public
 customer roles, and keeps the actual-copy helper service-role-only. The helper

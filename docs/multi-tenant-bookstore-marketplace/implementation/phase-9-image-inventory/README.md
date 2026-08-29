@@ -1,8 +1,8 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit6g_fa_001_live_verified_m53_applied`
+**Status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
-**Last updated:** 2026-08-28
+**Last updated:** 2026-08-29
 **Current handoff:** Unit 8 remains live-verified on pushed
 `main`. Unit 6G Group 1/B contracts and M52 (`20260822025712`) are
 live/applied exactly once as the retained Unit 6G A/B foundation. The Unit 6G
@@ -15,8 +15,14 @@ The recomposed authority passed independent final review (PASS_WITH_P3).
 U6G-FA-001's minimal partial-selected-metadata correction is live-verified:
 unusable compact-summary members project as null and existing per-field source
 precedence supplies fallback. M53 is live exactly once as
-`20260828081324 marketplace_phase9_unit6g_field_authority_correction`, and M52
-remains byte-immutable. Exact next action is Owner review of the live proof;
+`20260828081324 marketplace_phase9_unit6g_field_authority_correction`. M54 is
+live exactly once as `20260829142337
+marketplace_phase9_unit6g_session_lifecycle_fence`: the current final
+Save/Add/Remove RPCs now require an active, unexpired session and closed-session
+detail/batch reads advertise only read-only actions. Connected proof returned
+`P9_STATE_CONFLICT` for all three mutations with zero durable effects. M52 and
+M53 remain immutable. Exact next action is Owner review of the M54 proof and a
+separate compatibility decision for older sibling correction/variant RPCs;
 Edge/client/native deployment remains separately gated.
 
 Historical Unit 8 handoff: Unit 8 is live-verified on the development Supabase

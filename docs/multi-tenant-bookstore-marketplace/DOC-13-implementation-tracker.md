@@ -26,6 +26,21 @@ Every coding session must update tracking before ending if it changes any of the
 - handoff notes
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
 
+> **2026-08-29 Unit 6G M54 lifecycle fence live verification:** The
+> Owner-authorized forward migration was applied exactly once to
+> `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as live version
+> `20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`, directly
+> after M53. The current final Save/Add/Remove RPCs now lock and require an
+> active, unexpired Owner-initiated session; closed/closing/expired detail and
+> batch reads advertise only read-only actions. A connected proof against an
+> existing closed candidate returned `P9_STATE_CONFLICT` for all three commands
+> and verified zero candidate/session-count/inventory/audit/event/idempotency
+> effects. M54 changes function definitions only; no business rows, Storage,
+> public signatures, tables, RLS policies, or Edge/client deployment changed.
+> Older sibling manual/false-detection/variant RPC compatibility was not changed
+> and requires a separate Owner decision. Exact next action: Owner review of the
+> M54 proof and explicit disposition of that legacy boundary.
+
 > **2026-08-28 U6G-FA-001 live verification:** The explicitly authorized M53
 > field-authority correction was applied exactly once to
 > `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as live version
@@ -39,7 +54,7 @@ Every material session must also leave one exact active work unit and next autho
 >
 > **2026-08-29 Unit 6G local pre/post-scan UI checkpoint:** The composition-only
 > Owner experience is implemented in the `codex/phase9-unit6g-recomposition`
-> worktree and remains uncommitted and undeployed. Pre-scan now groups batch,
+> worktree and is committed on the local branch but remains undeployed. Pre-scan now groups batch,
 > location, book-default, and publication controls; post-scan now has the
 > consolidated review summary, source-distinct card presentation, compact edit
 > sections, full-correction reachability, and sticky commit controls. The
@@ -58,7 +73,7 @@ Every material session must also leave one exact active work unit and next autho
 > the metadata sheet's generic `Status: Matched` copy; neither was changed in
 > this checkpoint. No scan start, image upload, review save, Add/Remove/Close,
 > provider call, Supabase/Storage/business-data mutation, deployment, staging,
-> commit, push, merge, or PR action occurred. Exact next action: Owner review of
+> push, merge, or PR action occurred. Exact next action: Owner review of
 > this local UI diff and the recorded count/copy risks; Edge/client/native
 > deployment and any fresh scan remain separately gated.
 >
@@ -1122,12 +1137,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory — **bounded Unit 6G field-authority correction live-verified; M53 is live exactly once as `20260828081324`; M52 remains live and byte-immutable; prior 6G-C/6G-D checkpoints and Unit 8 remain intact** |
-| Overall status | `unit6g_fa_001_live_verified_m53_applied` |
-| Last updated | 2026-08-28 |
-| Latest handoff | The bounded correction fixes JSON-null/invalid review authority and partial selected metadata: unusable compact-summary members project as null, mirrored strict contracts accept the nullable members, and existing matched/detected/default/missing precedence supplies fallback. M53 replaces internal safe-summary/source/batch-card projection helpers and was applied/read back on the exact development project. The Codex browser review page rendered 15 cards without the previous review-load error. |
-| Current risk level | M52 remains live exactly once as `20260822025712` and unchanged. M53 is live exactly once as `20260828081324`; no Edge/client/native deployment has occurred, and those gates remain separately controlled. No business rows, Storage objects, public RPC signatures, tables, RLS policies, or grants were changed by M53. |
-| Next recommended task | Owner review of the M53 live proof. Any Edge/client/native deployment or unrelated database/Storage mutation requires separate authorization. |
+| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6G M54 lifecycle fence live-verified; final Save/Add/Remove are active/unexpired-only and closed-session projections are read-only; M52/M53 remain immutable; prior 6G-C/6G-D checkpoints and Unit 8 remain intact** |
+| Overall status | `unit6g_session_lifecycle_fence_live_verified_m54_applied` |
+| Last updated | 2026-08-29 |
+| Latest handoff | M54 is live exactly once as `20260829142337`. It adds one shared locked lifecycle boundary to the current final Save/Add/Remove RPCs and strips mutation capabilities from non-mutable detail/batch projections while preserving completed exact replay. Local verification passed 4/4 focused lifecycle PGlite, 7/7 structural Jest, 42/42 sequential Unit 6G/7A PGlite, and 233/233 related contract tests. Connected closed-candidate proof passed with `P9_STATE_CONFLICT` and zero durable effects. |
+| Current risk level | M54 fixes the reported current Unit 6G Save/Add/Remove and projection defects but intentionally does not redefine older sibling manual/false-detection/variant RPC closed-session compatibility. No Edge/client/native deployment occurred. M54 changes no table, RLS policy, Storage object, public signature, or business row. |
+| Next recommended task | Owner review of the M54 live proof and explicit disposition of older sibling correction/variant RPC closed-session compatibility. Any Edge/client/native deployment, fresh scan/upload, or further database/Storage mutation requires separate authorization. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 
@@ -1291,7 +1306,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6g_fa_001_live_verified_m53_applied` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6G SDD](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md) · [Unit 6G matrix](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md) | The bounded field-authority and partial selected-metadata correction is implemented RED-first, locally verified, and live-verified. Local M53 replaces internal safe-summary/source/batch-card projection helpers and is live exactly once as `20260828081324` on `Bookconnect_reactexpo`; mirrored strict contracts accept nullable unusable summary members; M52 remains live and byte-immutable. The Codex browser review page rendered 15 cards without the prior review-load error. Prior Unit 6G-C/6G-D and Unit 8 checkpoints remain intact. Next: Owner review of the live proof; Edge/client/native deployment remains separately gated. |
+| Phase 9: Image-to-LLM Inventory | `unit6g_session_lifecycle_fence_live_verified_m54_applied` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6G SDD](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md) · [Unit 6G matrix](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md) | M54 is live exactly once as `20260829142337` on `Bookconnect_reactexpo`. The current final Save/Add/Remove RPCs require an active, unexpired locked session; non-mutable detail/batch projections are read-only; completed exact replay remains supported. Local structural/PGlite/regression and connected zero-effect proof pass. M52/M53 remain immutable; prior Unit 6G-C/6G-D and Unit 8 checkpoints remain intact. Next: Owner review and an explicit compatibility decision for older sibling correction/variant RPCs; Edge/client/native deployment remains separately gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

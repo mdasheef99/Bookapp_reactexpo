@@ -1,7 +1,7 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-08-21 final Unit 8 connected rollout readback
-**Audit mode:** exact-project preflight, individually authorized forward migration application, connected acceptance, and post-rollout schema/data/trigger inspection
+**Audit date:** 2026-08-29 Unit 6G M54 lifecycle-fence readback
+**Audit mode:** exact-project preflight, individually authorized forward migration application, connected zero-effect acceptance, and post-rollout function/grant inspection
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
 **2026-08-21 connected result:** the live project has one publicly eligible
 inventory-media link, with zero eligible NULL, out-of-range, duplicate, or
@@ -13,6 +13,30 @@ remains nullable, with the existing `1..3` check and
 lifecycle transitions without changing nullable private/unapproved state.
 
 The durable connected evidence is [unit8-connected-rollout-2026-08-21.md](./unit8-connected-rollout-2026-08-21.md).
+
+## Current live state — Unit 6G session lifecycle fence — 2026-08-29
+
+Exact-project preflight reverified `Bookconnect_reactexpo` /
+`ahntbtktjjmvfosgkmgn` as healthy PostgreSQL `17.6.1.063` with M53 as the live
+tail. After explicit Owner authorization, Supabase MCP applied local forward
+migration `20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql`
+once as live version `20260829142337
+marketplace_phase9_unit6g_session_lifecycle_fence`.
+
+M54 creates/replaces only function definitions: a pure session-mutability
+predicate, an Owner/session `FOR UPDATE` guard, a read-only detail sanitizer,
+and the final detail/Save/Add/Remove/batch-card functions. It adds no table,
+column, constraint, index, trigger, RLS policy, or Storage object and performs no
+DML/backfill. Public signatures and grants are preserved; the new internal
+helpers deny every API role.
+
+Live definition/owner/search-path/grant readback passed. A transaction-local
+Owner proof against an existing closed candidate verified detail actions
+`view_readiness`, batch actions `view_metadata,view_readiness`, empty nested
+variant mutation actions, `P9_STATE_CONFLICT` from Save/Add/Remove, and zero
+candidate/session-count/inventory/audit/event/idempotency effects. Existing
+older manual/false-detection/variant sibling RPC lifecycle behavior is unchanged
+and remains a separate compatibility decision.
 
 ## Historical Unit 6G field-authority forward correction checkpoint — 2026-08-27
 
