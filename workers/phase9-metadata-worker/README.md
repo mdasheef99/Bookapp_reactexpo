@@ -6,6 +6,14 @@ loads fenced database context, runs local/cache/provider-neutral routing, and
 persists fenced outcomes. It does not schedule itself and contains no secondary
 provider implementation.
 
+The metadata endpoint accepts a run budget from 1 through 15. A run keeps at
+most three jobs active, claims only enough jobs to fill available slots, and
+refills a slot when one job finishes. Each job makes its own provider request;
+unrelated books are never combined into one Google Books request. Per-book
+outcomes are returned in claim order, while persisted database state remains
+authoritative. The HTTP service itself remains single-invocation
+(`PHASE9_WORKER_CONCURRENCY=1`).
+
 Build and run with `npm run build:phase9:metadata-worker` and
 `npm run start:phase9:metadata-worker`. Provider calls remain separately gated.
 

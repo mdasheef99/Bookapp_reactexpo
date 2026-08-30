@@ -81,7 +81,10 @@ export function metadataGateway(
     registerAttempt: jest.fn(async () => (
       calls.push('attempt'), { attemptId: 'attempt-1' }
     )),
-    deferFollower: jest.fn(async () => { calls.push('defer-follower'); }),
+    deferFollower: jest.fn(async () => {
+      calls.push('defer-follower');
+      return { status: 'retry_scheduled' as const };
+    }),
     resumeFinalizedAttempt: jest.fn(async () => null),
     validateEgress: jest.fn(async () => {
       calls.push('fence');
@@ -99,7 +102,10 @@ export function metadataGateway(
     finalizeAttempt: jest.fn(async () => { calls.push('finalize'); }),
     persistCache: jest.fn(async () => { calls.push('persist-cache'); }),
     persistSelection: jest.fn(async () => { calls.push('selection'); }),
-    completeManual: jest.fn(async () => { calls.push('manual'); }),
+    completeManual: jest.fn(async () => {
+      calls.push('manual');
+      return { status: 'resolved' as const };
+    }),
   };
   return { calls, value: Object.assign(base, overrides) };
 }

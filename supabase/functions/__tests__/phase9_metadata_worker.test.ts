@@ -1,5 +1,7 @@
-import { handlePhase9MetadataWorker }
+import { handlePhase9MetadataWorker, runMetadataWorkerBatch }
   from '../../../workers/phase9-metadata-worker';
+import { buildMetadataQueryIdentity }
+  from '../_shared/imageInventory/metadata';
 
 const workerId = 'metadata-worker-000001';
 const workerAuthToken = 'metadata-worker-ingress-A7z.49_xYp-001';
@@ -143,5 +145,191 @@ describe('Phase 9 runnable metadata worker', () => {
     expect(rpc).toHaveBeenLastCalledWith('phase9_fail_metadata_job', expect.objectContaining({
       p_job_id: 'job-1',p_failure_kind: 'provider_unavailable',p_retryable: true,
     }));
+  });
+
+  it('processes a fifteen-job run with three active provider calls and immediate slot refill', async () => {
+    const claims = Array.from({ length: 15 }, (_, index) => ({
+      id: `job-${index + 1}`,
+      attempt_count: 1,
+      lease_token: (index + 1).toString(16).padStart(64, '0'),
+    }));
+    const queryIdentity = buildMetadataQueryIdentity({
+      strategy: 'bibliographic',isbnClue: null,title: context.title,
+      authors: context.authors,language: context.language,editionClues: [],
+    }).key;
+    const contexts = new Map(claims.map((claim, index) => [claim.id, {
+      ...context,
+      jobId: claim.id,
+      claimToken: claim.lease_token,
+      candidateId: `candidate-${index + 1}`,
+      queryIdentity,
+      providerPolicies: [{
+        adapterKey: 'google_books',adapterVersion: '1.0.0',enabled: true,
+        matchingAllowed: true,storageAllowed: true,reuseAllowed: true,policyVersion: 1,
+      }],
+    }]));
+    let claimOffset = 0;
+    const claimSizes: number[] = [];
+    const rpc = jest.fn(async (name: string, parameters: any) => {
+      if (name === 'claim_phase9_metadata_jobs') {
+        claimSizes.push(parameters.p_batch_size);
+        const batch = claims.slice(claimOffset, claimOffset + parameters.p_batch_size);
+        claimOffset += batch.length;
+        return { data: batch,error: null };
+      }
+      if (name === 'phase9_metadata_job_context') {
+        return { data: contexts.get(parameters.p_job_id),error: null };
+      }
+      if (name === 'phase9_metadata_cache_reuse_context') {
+        return { data: { leaderLookupId: null,normalizedOutcome: null },error: null };
+      }
+      if (name === 'phase9_metadata_coalescing_context') {
+        return { data: { mode: 'leader',lookupId: `lookup-${parameters.p_job_id}` },error: null };
+      }
+      if (name === 'phase9_reserve_metadata_usage') {
+        return { data: { reservation_id: `reservation-${parameters.p_job_id}` },error: null };
+      }
+      if (name === 'phase9_register_structural_metadata_attempt') {
+        return { data: { attempt_id: `attempt-${parameters.p_job_id}` },error: null };
+      }
+      if (name === 'phase9_register_metadata_provider_call') {
+        return { data: { provider_call_id: `call-${parameters.p_job_id}` },error: null };
+      }
+      if (name === 'phase9_finalize_metadata_provider_call') {
+        return { data: { status: 'finalized' },error: null };
+      }
+      if (name === 'phase9_fail_metadata_job') {
+        const ordinal = Number(parameters.p_job_id.split('-')[1]);
+        return { data: { status: ordinal % 2 === 1
+          ? 'retry_scheduled' : 'resolved',manual_outcome: null },error: null };
+      }
+      throw new Error(`unexpected ${name}`);
+    });
+    let active = 0;
+    let maximumActive = 0;
+    const started: string[] = [];
+    const releases = new Map<string, () => void>();
+    let holdProviderCalls = true;
+    const primary = {
+      lookup: jest.fn(async ({ attemptId }: { attemptId: string }) => {
+        active += 1;
+        maximumActive = Math.max(maximumActive, active);
+        started.push(attemptId);
+        if (holdProviderCalls) {
+          await new Promise<void>((resolve) => { releases.set(attemptId, resolve); });
+        }
+        active -= 1;
+        throw new Error('controlled provider failure');
+      }),
+    } as any;
+    const capability = {
+      adapterKey: 'google_books',adapterVersion: '1.0.0',
+      capabilityVersion: 'cap-v1',enabled: true,
+    } as any;
+
+    const run = runMetadataWorkerBatch(15, {
+      workerId,workerAuthToken,serviceClient: { rpc },primary,primaryCapability: capability,
+    });
+    while (started.length < 3) await new Promise((resolve) => setTimeout(resolve, 0));
+    releases.get(started[0])!();
+    while (started.length < 4) await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(active).toBe(3);
+    holdProviderCalls = false;
+    for (const release of releases.values()) release();
+
+    await expect(run).resolves.toEqual({
+      claimed: 15,
+      results: Array.from({ length: 15 }, (_, index) => ({
+        outcome: index % 2 === 0 ? 'retry_scheduled' : 'manual_metadata_required',
+      })),
+    });
+    expect(maximumActive).toBe(3);
+    expect(claimSizes.length).toBeGreaterThan(1);
+    expect(Math.max(...claimSizes)).toBe(3);
+    expect(primary.lookup).toHaveBeenCalledTimes(15);
+  });
+
+  it('drains already-claimed jobs before surfacing a later claim failure', async () => {
+    const claims = Array.from({ length: 3 }, (_, index) => ({
+      id: `job-${index + 1}`,attempt_count: 1,
+      lease_token: (index + 1).toString(16).padStart(64, '0'),
+    }));
+    const queryIdentity = buildMetadataQueryIdentity({
+      strategy: 'bibliographic',isbnClue: null,title: context.title,
+      authors: context.authors,language: context.language,editionClues: [],
+    }).key;
+    let claimCalls = 0;
+    const rpc = jest.fn(async (name: string, parameters: any) => {
+      if (name === 'claim_phase9_metadata_jobs') {
+        claimCalls += 1;
+        if (claimCalls === 1) return { data: claims,error: null };
+        throw new Error('controlled incremental claim failure');
+      }
+      if (name === 'phase9_metadata_job_context') return {
+        data: { ...context,jobId: parameters.p_job_id,
+          candidateId: `candidate-${parameters.p_job_id}`,
+          claimToken: claims.find((claim) => claim.id === parameters.p_job_id)!.lease_token,
+          queryIdentity,providerPolicies: [{
+            adapterKey: 'google_books',adapterVersion: '1.0.0',enabled: true,
+            matchingAllowed: true,storageAllowed: true,reuseAllowed: true,policyVersion: 1,
+          }] },
+        error: null,
+      };
+      if (name === 'phase9_metadata_cache_reuse_context') return {
+        data: { leaderLookupId: null,normalizedOutcome: null },error: null,
+      };
+      if (name === 'phase9_metadata_coalescing_context') return {
+        data: { mode: 'leader',lookupId: `lookup-${parameters.p_job_id}` },error: null,
+      };
+      if (name === 'phase9_reserve_metadata_usage') return {
+        data: { reservation_id: `reservation-${parameters.p_job_id}` },error: null,
+      };
+      if (name === 'phase9_register_structural_metadata_attempt') return {
+        data: { attempt_id: `attempt-${parameters.p_job_id}` },error: null,
+      };
+      if (name === 'phase9_register_metadata_provider_call') return {
+        data: { provider_call_id: `call-${parameters.p_job_id}` },error: null,
+      };
+      if (name === 'phase9_finalize_metadata_provider_call') return {
+        data: { status: 'finalized' },error: null,
+      };
+      if (name === 'phase9_fail_metadata_job') return {
+        data: { status: 'retry_scheduled',manual_outcome: null },error: null,
+      };
+      throw new Error(`unexpected ${name}`);
+    });
+    const releases = new Map<string, () => void>();
+    const completed: string[] = [];
+    const primary = {
+      lookup: jest.fn(async ({ attemptId }: { attemptId: string }) => {
+        await new Promise<void>((resolve) => { releases.set(attemptId, resolve); });
+        completed.push(attemptId);
+        throw new Error('controlled provider failure');
+      }),
+    } as any;
+    const capability = {
+      adapterKey: 'google_books',adapterVersion: '1.0.0',
+      capabilityVersion: 'cap-v1',enabled: true,
+    } as any;
+    const run = runMetadataWorkerBatch(4, {
+      workerId,workerAuthToken,serviceClient: { rpc },primary,primaryCapability: capability,
+    });
+    let settled = false;
+    let failure: unknown;
+    const observed = run.catch((error) => { failure = error; })
+      .finally(() => { settled = true; });
+    while (releases.size < 3) await new Promise((resolve) => setTimeout(resolve, 0));
+    releases.get('attempt-job-1')!();
+    while (claimCalls < 2) await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const settledBeforeDrain = settled;
+    releases.get('attempt-job-2')!();
+    releases.get('attempt-job-3')!();
+    await observed;
+    expect(settledBeforeDrain).toBe(false);
+    expect(failure).toEqual(expect.objectContaining({
+      message: 'controlled incremental claim failure',
+    }));
+    expect(completed).toHaveLength(3);
   });
 });

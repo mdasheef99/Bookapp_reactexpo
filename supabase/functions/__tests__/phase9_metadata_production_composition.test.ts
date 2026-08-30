@@ -185,6 +185,23 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
     ]);
   });
 
+  it('reports a retry when the durable completion schedules one', async () => {
+    const fixture = gateway({
+      invokePrimary: jest.fn(async () => {
+        throw new Error('controlled provider failure');
+      }),
+      completeManual: jest.fn(async () => ({
+        status: 'retry_scheduled' as const,
+      })) as any,
+    });
+
+    await expect(runMetadataProductionComposition(request, fixture.value))
+      .resolves.toEqual({ outcome: 'retry_scheduled' });
+    expect(fixture.value.completeManual).toHaveBeenCalledWith(expect.objectContaining({
+      outcome: 'provider_unavailable', retryable: true,
+    }));
+  });
+
   it('makes zero provider calls after stale claim rejection', async () => {
     const fixture = gateway({
       validateEgress: jest.fn(async () => false),

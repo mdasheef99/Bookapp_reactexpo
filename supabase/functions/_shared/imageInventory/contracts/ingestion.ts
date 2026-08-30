@@ -74,6 +74,10 @@ const dedicatedWorkerRequest = z.object({
   contractVersion,
   batchSize: z.number().int().min(1).max(10),
 }).strict();
+const dedicatedMetadataWorkerRequest = z.object({
+  contractVersion,
+  batchSize: z.number().int().min(1).max(15),
+}).strict();
 
 export type OwnerIngestionRequest = z.infer<typeof ownerRequest> | OwnerUxRequest
   | OwnerBatchReviewRequest
@@ -81,6 +85,7 @@ export type OwnerIngestionRequest = z.infer<typeof ownerRequest> | OwnerUxReques
   | StoreViewMediaRequest | StoreViewHistoryRequest;
 export type WorkerIngestionRequest = z.infer<typeof workerRequest>;
 export type DedicatedWorkerRequest = z.infer<typeof dedicatedWorkerRequest>;
+export type DedicatedMetadataWorkerRequest = z.infer<typeof dedicatedMetadataWorkerRequest>;
 
 export function parseOwnerIngestionRequest(value: unknown): OwnerIngestionRequest {
   const result = ownerRequest.safeParse(value);
@@ -123,6 +128,19 @@ export function parseDedicatedWorkerRequest(value: unknown): DedicatedWorkerRequ
   if (!result.success) {
     const unknown = result.error.issues.some((issue) => issue.code === 'unrecognized_keys');
     throw new Error(unknown ? 'unknown keys in dedicated worker request' : 'invalid dedicated worker request');
+  }
+  return result.data;
+}
+
+export function parseDedicatedMetadataWorkerRequest(
+  value: unknown,
+): DedicatedMetadataWorkerRequest {
+  const result = dedicatedMetadataWorkerRequest.safeParse(value);
+  if (!result.success) {
+    const unknown = result.error.issues.some((issue) => issue.code === 'unrecognized_keys');
+    throw new Error(unknown
+      ? 'unknown keys in dedicated metadata worker request'
+      : 'invalid dedicated metadata worker request');
   }
   return result.data;
 }

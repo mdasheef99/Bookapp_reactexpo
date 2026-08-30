@@ -404,6 +404,32 @@ describe('Phase 9 manual invocation and deployment validation', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
+  it('allows a fifteen-job manual metadata run without widening other services', async () => {
+    const metadataToken = 'metadata-worker-ingress-C9x.51_wVq-003-strong';
+    const configuration = selectedConfiguration({
+      PHASE9_METADATA_WORKER_URL: 'http://127.0.0.1:8093',
+      PHASE9_METADATA_WORKER_INGRESS_TOKEN: metadataToken,
+    }, 'metadata');
+    const fetchImpl = jest.fn(async (_url, init) => {
+      expect(init?.body).toBe(JSON.stringify({ contractVersion: 'phase9-v1', batchSize: 15 }));
+      return new Response(JSON.stringify({
+        claimed: 15,results: Array.from({ length: 15 }, () => ({ outcome: 'resolved' })),
+      }));
+    });
+
+    await expect(invokePhase9Worker({ ...configuration, batchSize: 15, fetchImpl }))
+      .resolves.toEqual({
+        service: 'metadata',status: 200,claimed: 15,
+        outcomes: Array(15).fill('resolved'),
+      });
+    const mediaConfiguration = selectedConfiguration({
+      PHASE9_MEDIA_WORKER_URL: 'http://127.0.0.1:8091',
+      PHASE9_MEDIA_WORKER_INGRESS_TOKEN: 'media-worker-ingress-A7z.49_xYp-001-strong',
+    }, 'media');
+    await expect(invokePhase9Worker({ ...mediaConfiguration, batchSize: 11, fetchImpl }))
+      .rejects.toThrow('P9_WORKER_INVOCATION_CONFIGURATION_INVALID');
+  });
+
   it('rejects an unknown selector and redacts metadata response details', () => {
     expect(() => selectedConfiguration({}, 'scheduler'))
       .toThrow('P9_WORKER_INVOCATION_CONFIGURATION_INVALID');
