@@ -1,21 +1,190 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `unit6g_session_lifecycle_fence_confirmed`
-**Implementation status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`
+**Planning status:** `unit6g_direct_add_closeout_confirmed`
+**Implementation status:** `unit6g_metadata_throughput_local_complete_rollout_gated`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
-**Last updated:** 2026-08-29
-**Current milestone:** The Unit 6G session-lifecycle fence is live-verified. M54 is live exactly once as `20260829142337`; final Save/Add/Remove require an active, unexpired session and closed/closing/expired detail and batch reads advertise only read-only actions. M52/M53 remain live and immutable. A composition-only pre/post-scan UI checkpoint is implemented and committed on this local branch, and remains undeployed.
-**Active work unit:** `unit6g_m54_owner_review_pending`
+**Last updated:** 2026-08-30
+**Current milestone:** The bounded metadata-throughput correction is locally implemented and verified: a metadata run budget is 15, no more than three jobs are active, claims refill available slots incrementally, each book keeps an independent Google Books request and durable outcome, and generic workers remain unchanged. Forward M56 changes only the metadata dispatcher payload and is local/unapplied. Unit 6G direct-Add/closeout and metadata-quality work remain local; M55 is live exactly once, while the matching client/worker changes remain undeployed. M52/M53/M54 remain live and immutable.
+**Active work unit:** `unit6g_metadata_throughput_preflight_review`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** RED-first M54 lifecycle tests and the forward-only shared active-session guard/read-only projection correction; local structural, PGlite, regression, and Unit 7A compatibility verification; exact-project M54 application/readback; and connected closed-candidate proof with zero effects. Focused M54 PGlite is 4/4, focused structural Jest is 7/7, sequential Unit 6G/7A PGlite is 42/42, and related migration/Edge contracts are 233/233.
-**Next authorized action:** Owner review of the M54 live proof and explicit disposition of older sibling correction/variant RPC closed-session compatibility. Edge/client/native deployment, fresh scan/upload, and further Supabase mutations remain separately gated.
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. M53 is live exactly once as `20260828081324 marketplace_phase9_unit6g_field_authority_correction`. Local forward migration `20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql` is live exactly once as `20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`.
-**Scope boundary:** M54 fixes the current final `phase9_update_candidate_review_v2`, `phase9_add_candidate_to_inventory_v1`, and `phase9_owner_remove_candidate_v1` mutation boundary plus candidate-detail/batch-card action projection. It does not change older sibling manual-candidate, false-detection, skip, or variant decision/replacement RPC behavior; their closed-session compatibility remains an explicit follow-up decision. A composition-only pre/post-scan UI checkpoint remains local and undeployed. Proof rows created during the connected M52 verification remain intentional evidence; M54's connected proof created no durable business effect. Unit 8 remains complete; no Edge/client deployment occurred.
+**Last completed:** Local bounded metadata worker and dispatcher preflight. Focused Jest is 7 suites / 72 tests (including the metadata-only invoker bound), the metadata worker production TypeScript build passes, and the M35→M38 plus live-M40 dispatcher seam plus local M56 PGlite suite is 30/30. No live state changed.
+**Next authorized action:** Owner review of this preflight, followed by separate authorization to commit and deploy the metadata worker first with the dispatcher still sending batch size one. Verify the deployed request pattern, Google Books timeout at or below the 10-second rollout ceiling, quota/rate-limit behavior, memory/connections, and per-book outcomes before separately authorizing M56 application. Do not apply M56 or deploy from this checkpoint.
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. M53 is live exactly once as `20260828081324 marketplace_phase9_unit6g_field_authority_correction`. M54 is live exactly once as `20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`. Local M55 is live exactly once as `20260830084323 marketplace_phase9_unit6g_metadata_add_authority_correction`. Forward M56 `20260830000056_marketplace_phase9_metadata_throughput.sql` is local, tested, unapplied, and not authorized for application.
+**Scope boundary:** The throughput patch changes only metadata worker orchestration, metadata-specific request/telemetry bounds, persisted retry-state reporting, dispatcher tests, and local forward M56. It does not combine books into a provider request, alter the metadata claim RPC maximum 10, increase concurrency above three, change leases/retries/dead letters/idempotency/duplicate protection, change the scheduler frequency, or modify UI/inventory/session behavior. M54 fixes the current final `phase9_update_candidate_review_v2`, `phase9_add_candidate_to_inventory_v1`, and `phase9_owner_remove_candidate_v1` mutation boundary plus candidate-detail/batch-card action projection. M55 remains limited to its recorded metadata/Add authority correction. Older sibling lifecycle and close-audit work remain separately gated. Unit 8 remains complete.
 **Implementation authority:** Group 1/B local implementation, migration-file creation, correction iterations, and the Owner-authorized M52 application with connected proofs are complete and retained. The 2026-08-24 recomposition made the revised SDD/matrix/tracker 31 the sole NEW 6G-C/6G-D design authority following completed independent final review (verdict PASS_WITH_P3); the composition-only pre/post-scan UI checkpoint is now locally implemented and pending Owner review. Historical `e7ed166`-style old 6G-C work and the frozen old 6G-D implementation are superseded evidence, not authority. Edge/mobile deployment of new client code and Git publication beyond this branch remain unauthorized. Unit 8 remains live-verified; M39-M52 are not reopened. Native Unit 6F validation remains deferred and unrelated.
-**Migration creation/application authority:** the current Owner request authorized the bounded local M54 correction, its exact-project application, and connected verification. That authority is consumed. It did not authorize Edge/client deployment, fresh scan/upload, successful connected business-data mutation, `db push`, historical replay, or `schema_migrations` repair.
+**Migration creation/application authority:** Creation of the narrow forward M56 candidate was authorized as part of this implementation. Its application was explicitly withheld and remains unauthorized. M55 application authority is consumed; close actor/source audit and older-RPC lifecycle work remain outside this task.
 **Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
-**Current gate:** `U6G_M54_LIVE_VERIFIED`; M54 application/readback and connected zero-effect lifecycle proof are complete. The local UI checkpoint and M54 proof are pending Owner review. Deployment/live Edge/client and native gates remain closed. The prior Unit 6G-D and Unit 8 checkpoints remain satisfied.
+**Current gate:** `METADATA_THROUGHPUT_PREFLIGHT_READY_ROLLOUT_GATED`; local worker/SQL gates pass. Worker deployment must occur before any M56 application, and both require separate authorization. Positive all-12 automatic Close remains automated-only, while connected negative proof confirms 1/12 does not close. Close audit and older sibling RPC lifecycle fences remain migration-gated.
+
+## 2026-08-30 — bounded metadata-throughput implementation (local, unapplied)
+
+- Read-only baseline reverified `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn`: the scheduler wakes approximately once per minute;
+  the live dispatcher sends metadata `batchSize=1`; the metadata claim function
+  permits at most 10 and grants a five-minute lease; one worker instance and
+  one HTTP invocation run at a time; jobs were processed serially. The queue
+  had zero actionable metadata jobs and one historical dead letter. Thirty-day
+  evidence showed 103 metadata jobs, 102 resolved, one dead letter, and 46
+  successful metadata dispatches at batch size one. Observed provider latency
+  ranged approximately 0.8–6.7 seconds. The exact deployed provider timeout and
+  provider quota were not available through the read-only surfaces.
+- The metadata-only HTTP contract accepts a run budget from 1 through 15;
+  generic worker contracts retain their existing maximum 10. The worker keeps
+  at most three active jobs, initially claims only enough to fill those slots,
+  and claims one replacement as each slot frees. It therefore never leases all
+  15 up front. Already-claimed jobs drain before a later claim error is exposed.
+- Every job retains independent Google Books egress, fencing, finalization,
+  retry/dead-letter handling, and failure isolation. Result entries are stored
+  in claim order despite out-of-order completion. A durable
+  `retry_scheduled` completion is now reported as such; database state remains
+  authoritative.
+- Forward M56 replaces only the private wake-dispatcher definition. It sends
+  `batchSize=15` for `metadata_enrich`, preserves `batchSize=1` for media,
+  vision, and publication retry, preserves the 120-second timeout and existing
+  one-wake-per-stage/tick fence, and does not replace a claim function or
+  mutate queue rows. Applied migrations M36, M40, and M55 were not edited.
+- RED evidence covered the absent M56, metadata contract bound, telemetry
+  truncation, serial processing, durable retry reporting, and in-flight drain
+ behavior. Green evidence currently includes focused Jest **7 suites / 72 tests**
+  (including the metadata-only invoker bound), metadata worker production
+  TypeScript build, M56 structural Jest **3/3** (included in the focused total),
+  and dispatcher PGlite **30/30**.
+- Rollout remains gated: deploy the worker first while live dispatch stays at
+  one, canary the changed title/author-first request path and three-slot pool,
+  and verify a Google Books timeout no greater than 10 seconds plus quota,
+  latency, memory, database connections, retry/dead-letter, and duplicate-call
+  signals. Only after that evidence may M56 application be separately reviewed.
+  No migration, deployment, provider call, business-data/Storage mutation,
+  staging, commit, push, merge, or PR action occurred in this implementation.
+
+## 2026-08-30 — bounded post-scan Add-all state correction (local)
+
+- Scope is limited to the mounted Unit 6G post-scan commit presentation. The
+  parent now receives each card's authority-conflict state, while Add-all also
+  filters in-flight candidates and candidates with a non-busy prior outcome.
+  A stale `no_longer_eligible` result therefore cannot keep advertising that
+  candidate in the Add-all count. Card status also reflects committed and
+  non-busy Add outcomes, and `needs_attention` bulk retries are marked busy
+  for their full retry lifetime.
+- No backend/RPC, migration, metadata provider, session lifecycle, inventory
+  data, Storage, deployment, or browser mutation was performed. Existing
+  working-tree changes were preserved; nothing was staged, committed, pushed,
+  or merged.
+- Verification: the affected Unit 6G client regression run passed **6 suites /
+  76 tests** with `--forceExit`; TypeScript `--noEmit` passed; Phase 9
+  continuity passed; and `git diff --check` passed. The Jest run retains the
+  pre-existing React Native `VirtualizedList` `act(...)` console warnings.
+- Exact next action remains independent review/Owner review followed by the
+  separate matching client deployment gate; no migration application is
+  authorized by this correction.
+
+## 2026-08-30 — bounded metadata/Add authority correction (M55 applied)
+
+- Scope is limited to the selected metadata snapshot UUID in compact Add
+  preparation; an author is required only at the final Add/commit boundary
+  while empty-author review saves remain valid; durable metadata query identity
+  is bibliographic whenever title or author evidence exists, with ISBN-only
+  lookup retained for ISBN-only input; the Google request no longer hard-filters
+  language; and batch cards advertise Add only when the full commit-eligibility
+  helper passes.
+- Local forward migration
+  `20260830000055_marketplace_phase9_unit6g_metadata_add_authority_correction.sql`
+  replaces only internal summary/blocker/batch-card function definitions. It
+  performs no DML/backfill and changes no table, policy, Storage object, or
+  public RPC signature; touched internal helper ACLs remain restricted and no
+  public grant is added. It was applied exactly once
+  through Supabase MCP as `20260830084323` directly after M54; no business-row
+  DML/backfill occurred.
+- Green evidence: affected-scope Jest **64 passed suites / 690 passed tests**
+  with one skipped suite/four skipped tests, M54+M55 PGlite **7/7**, and
+  read-only post-apply definition verification passed. TypeScript, continuity,
+  and `git diff --check` are the remaining session-close gates.
+- This correction does not redesign Add all, change the local canonical
+  resolver's evidence model, deploy client/Edge code, or address close audit
+  and older sibling RPC compatibility.
+
+## 2026-08-30 — direct Add, strict auto-close, and partial-close semantics
+
+- The existing per-card Add coordinator remains the sole individual submit
+  path: strict Save, canonical reread, readiness/action check, and one M39
+  private inventory commit. No separate card Submit or automatic inventory
+  commit was introduced.
+- The mounted session route now invokes the same version-fenced v3 Close only
+  after authoritative state proves `committed = detected > 0`, all inputs are
+  terminal, no processing/review/removed/false-detection remainder exists, no
+  cards remain visible, commands are idle, and the route is online/focused.
+- Manual partial Close remains Owner-controlled. The summary warns that already
+  added inventory stays unchanged and remaining candidates become read-only;
+  Close neither adds the remainder nor deletes successful inventory.
+- The input announcement is explicitly image-scoped and candidate review copy
+  explains its independent book scope. Consequently `0` image inputs needing
+  attention and `15` books needing review are no longer presented as the same
+  metric.
+- RED-first mounted/policy/summary/count tests failed before implementation.
+  Green evidence currently includes full Image Inventory Jest **59 suites / 478
+  tests**, TypeScript, and focused field-preservation/lifecycle PGlite **17/17**.
+- Existing M39 replay/concurrency tests prove one candidate produces one
+  inventory identity under exact or overlapping retry. The strengthened Unit
+  7A integration assertion pins condition, selling price, quantity, location,
+  damage, publication intent, and private publication after Add.
+- Read-only live preflight reverified project `ahntbtktjjmvfosgkmgn`, M54 as the
+  live migration tail, Edge v9 active, and one active session with 12
+  needs-review candidates and zero committed rows.
+- Connected browser proof then selected detected identity for Book 1, exposed
+  exactly one enabled individual Add button, and pressed it once. Canonical
+  idempotency response returned inventory ID
+  `332ad909-47dc-4256-963a-3878c3081337`; candidate
+  `d6a18694-a004-437f-95e8-352b64f579e1` is `committed_private` and has exactly
+  one inventory row. Readback preserves title/author/language, condition
+  `good`, ₹175 (`17500` minor), quantity `1/1/0/0/0`, location `2`, no damage,
+  sellable true, publication decision `publish`, and private/draft inventory.
+  One audit and one event carry the same actor/command/candidate/inventory
+  identity. Reload retained Added `1`, Need review `11`, and removed Book 1.
+- The session remains `active`, `closed_at` null, committed count `1`, detected
+  `12`, and uncommitted `11`, proving the new policy does not close a partial
+  session. Positive strict all-committed Close is covered by mounted/policy
+  tests without mutating the other eleven books.
+- Close actor/source observability and lifecycle fences on manual-candidate,
+  skip/false-detection, and variant decision/replacement RPCs require a forward
+  migration. That migration has not been created or applied because separate
+  migration authority is pending.
+- Remote deployment result: Edge v9 already contains the five Unit 6G actions,
+  and no changed file in this pass belongs to its deployed 30-file bundle, so a
+  no-op Edge version bump was not performed. Production web export passes, but
+  `app.json` has no EAS project ID/owner/updates URL and the repository has no
+  Sites/other web-hosting target; therefore remote client deployment is blocked
+  on release-target configuration rather than code.
+- External/Git state: exactly one authorized inventory business effect plus its
+  candidate/idempotency/audit/event/session-count records; no Storage,
+  migration, remote deployment, staging, commit, push, merge, or PR action.
+
+## 2026-08-30 — local Google Books and metadata-sheet quality correction
+
+- Google Books egress now prefers normalized title plus first author whenever
+  bibliographic evidence exists; validated ISBN remains only an ISBN-query
+  fallback when title/author terms are absent.
+- The deterministic ranker requires exact normalized title and author overlap
+  before a provider volume is eligible. ISBN, compatible base language, and
+  edition clues are secondary tie-break evidence and cannot override a
+  title/author conflict. Whole-volume coherence and ambiguity fail-closed
+  behavior remain intact.
+- Safe cover decoding now considers `extraLarge`, `large`, `medium`, `small`,
+  `thumbnail`, and `smallThumbnail` in descending order, retaining the first
+  valid allowlisted Google Books HTTPS URL and falling through unsafe/malformed
+  larger values.
+- The metadata sheet now renders selected cover, subtitle, bounded plain-text
+  description, categories/genre, and explicit state labels such as `Provider
+  metadata selected` and `Multiple possible matches`. No cover toggle,
+  scan-image fallback, rematch action, or new mutation authority was added.
+- RED evidence reproduced all four old behaviors. Focused Jest then passed
+  **3 suites / 74 tests**; wider metadata regression passed **10 suites / 133
+  tests**; affected Unit 6G UI regression passed **6 suites / 82 tests** with
+  its pre-existing VirtualizedList `act(...)` warnings and `--forceExit`;
+  TypeScript `--noEmit`, `git diff --check`, and Phase 9 continuity passed.
+- No provider call, Supabase/database/Storage mutation, migration, credential
+  change, deployment, fresh scan/upload, inventory action, staging, commit,
+  push, merge, or PR action occurred.
 
 ## 2026-08-29 — M54 session-lifecycle fence live verification
 

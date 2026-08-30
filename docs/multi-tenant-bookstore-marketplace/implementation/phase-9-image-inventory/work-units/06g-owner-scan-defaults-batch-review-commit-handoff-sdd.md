@@ -1,7 +1,7 @@
 # Phase 9 Unit 6G SDD: Owner Scan Defaults, Batch Review, and Commit Handoff
 
-**Status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`
-**Version/date:** 0.3 / 2026-08-29
+**Status:** `unit6g_metadata_quality_local_complete_pending_review`
+**Version/date:** 0.4 / 2026-08-30
 **Authority:** the Owner workflow decisions recorded in P9-D81 through P9-D85;
 DOC-3 §§5–9/15–16; DOC-4 §§2–5/9–15; DOC-8 §§2–5/14–15; Phase 9
 Master §§2–9/14; Owner Review SDD §§2–6/8–16; Unit 6 §§8–35; Unit 7A
@@ -13,9 +13,11 @@ Unit 7C.
 foundation and its recorded live application/readback, are retained. Historical
 6G-C commit `e7ed166` and the frozen dirty 6G-D work are superseded as
 implementation authority. The recomposed 6G-C/6G-D design below remains the
-behavioral authority; its composition-only 6G-C UI checkpoint was implemented
-locally on 2026-08-29 in the recomposition worktree and remains uncommitted and
-undeployed. The Owner-authorized M54 lifecycle correction is live exactly once
+behavioral authority; its composition-only 6G-C UI checkpoint is committed on
+the local recomposition branch and remains undeployed. The 2026-08-30
+title/author-first Google Books, safe cover, and metadata-sheet quality changes
+are locally implemented and uncommitted. The Owner-authorized M54 lifecycle
+correction is live exactly once
 as `20260829142337`: current final Save/Add/Remove mutations require an active,
 unexpired session and non-mutable detail/batch projections are read-only.
 Edge/client deployment, further database/Storage mutation, and Git publication
@@ -236,12 +238,17 @@ Inventory -> Start scan
        -> existing M39 Unit 7A create-only private commit
        -> remove successful card from active review
   -> continue reviewing
-  -> v3 summary/readiness/Close when input-terminal
+  -> when every detected candidate was explicitly and successfully committed:
+       -> invoke the same version-fenced v3 Close automatically
+  -> otherwise v3 summary/readiness/manual Close when input-terminal
   -> optional View in Store View by returned inventoryId
 ```
 
 Close remains independent. It never commits, adds, removes, discards, or
-publishes a remaining candidate.
+publishes a remaining candidate. Automatic Close is a client convenience after
+the complete detected set is already committed; it is not an automatic
+inventory action. Manual partial Close keeps confirmed inventory rows unchanged
+and leaves uncommitted candidates as read-only session history.
 
 ## 5. Pre-scan values
 
@@ -393,7 +400,10 @@ not render zero cards as a dead end.
 The page contains:
 
 - session/batch label and capture progress;
-- count summary: Ready, Processing, Needs attention, and Added;
+- an input-progress summary from Unit 6 authority, explicitly labelled image
+  processing, whose `need attention` count refers only to image/input failures;
+- a separate candidate-review summary from Unit 6G authority: Ready,
+  Processing, Need review, and Added;
 - top action **Add all ready books (N)** when `N > 0`;
 - a virtualized, stable-ordinal list of 0..15 cards for the supported NEW Unit
   6G current-image scan; and
@@ -455,7 +465,7 @@ default.
 | --- | --- |
 | Cover | Allowlisted metadata cover thumbnail with the `Provider matched` or `Vision detected` source badge when its internal source is `matched` or `detected`, or a `Missing` placeholder; never scan media |
 | Title and authors | Full accessible value, visually bounded summary; tap opens simple inline/manual edit |
-| Metadata status | Matched, Manual, No match, Pending, or Needs attention; opens metadata sheet |
+| Metadata status | Provider metadata selected, Manual metadata, No provider match, Metadata processing, Multiple possible matches, Metadata temporarily unavailable, or Metadata failed; opens metadata sheet |
 | Language | Searchable dropdown; source chip shows Provider matched, Vision detected, Default, or Custom |
 | Condition | Exact five-value dropdown with accessible explanations |
 | Selling price | Whole-rupee preset/custom picker from §6 |
@@ -512,13 +522,21 @@ larger layouts. It fetches the current candidate detail on demand and shows only
 the bounded Owner-safe metadata:
 
 - title and authors;
+- provider cover when the selected snapshot contains an allowlisted reference;
+- subtitle and bounded plain-text description;
 - language;
 - ISBN-10/13;
 - publisher and published date;
 - edition/volume/format;
-- page count; and
-- metadata status/provenance category without provider payload, confidence,
+- page count;
+- categories/genre; and
+- explicit metadata status/provenance wording without provider payload, confidence,
   attempt, cost, or raw evidence.
+
+The cover is automatic display of the already selected, allowlisted provider
+reference. This sheet does not add a cover checkbox, scan-image fallback,
+provider rematch, or new mutation authority. Missing optional fields are simply
+omitted; they do not make title/author-invalid metadata acceptable.
 
 Actions are:
 
@@ -617,6 +635,14 @@ Rules:
 5. No optimistic inventory effect or card removal is allowed.
 6. Success returns `inventoryId`, removes the card after cache synchronization,
    keeps the Owner in review, and may offer **View in Store View**.
+7. The Add path preserves the complete canonical review payload. In particular,
+   condition, selling price, quantity, shelf location, damage, publication
+   intent, and hidden retained notes are neither dropped nor re-derived by the
+   commit coordinator.
+8. If the final active detected candidate is committed and the refreshed
+   session proves all inputs terminal, zero remaining review/removal/false-
+   detection dispositions, zero visible cards, and `committed = detected > 0`,
+   the mounted client invokes the same version-fenced v3 Close automatically.
 
 The Add command owns the candidate slot from its initial validation through
 Save, readiness, M39, and reconciliation. A separately attempted internal
@@ -679,6 +705,21 @@ For each candidate:
 - successful commit is final and idempotently reflected on resume; and
 - an app interruption is reconciled from candidate state and the canonical M39
   result, never from a persisted local queue.
+
+An individual failed Add remains editable and retryable while the session is
+active. A retry with the unchanged draft reuses the same ambiguous command
+identity; a deliberate changed draft starts a new Save/commit sequence after
+canonical reread. In either case M39's candidate/idempotency fences guarantee
+that a successful prior commit is returned as the same inventory result rather
+than creating a duplicate row.
+
+Partial completion is not rolled back. Successfully added books remain private
+inventory rows and leave the active card list; failed, stale, or still-
+processing books remain editable and retryable while the session stays active.
+If the Owner manually closes that session, those remaining candidates are kept
+as read-only session records and cannot be added or retried from the closed
+session. Close itself neither adds the remainder nor deletes confirmed
+inventory.
 
 After each successful commit, candidate/detail/readiness/discovery/session
 caches are synchronized. Store View list caches are invalidated once after a
@@ -900,7 +941,14 @@ returned `inventoryId`.
 
 ## 19. State and count definitions
 
-The page uses four primary display buckets:
+The page uses two deliberately separate count authorities. Unit 6 input counts
+describe image processing: an input needs attention only when the image/input
+lifecycle reaches its terminal attention state. Unit 6G candidate counts
+describe individual detected books and their review state. Therefore `0` image
+inputs needing attention and `15` books needing review can both be correct; the
+UI must label the scopes rather than present them as one inconsistent count.
+
+The candidate-review summary uses four primary display buckets:
 
 | Bucket | Definition |
 | --- | --- |
@@ -967,6 +1015,14 @@ Allowlisted events may record:
 - Owner removal versus false-detection category; and
 - Store View cache synchronization outcome.
 
+Every successful explicit or automatic v3 Close must persist bounded business
+evidence identifying the initiating authenticated Owner, store/session, close
+command and idempotency identity, source action (`manual_close` or
+`auto_close_after_all_committed`), prior/resulting session version, and server
+timestamp. Exact replay must return the canonical prior result without adding a
+second close audit/event. This is server-side evidence; client telemetry is not
+the authority for determining who closed a session.
+
 Never record title, author, ISBN, price, location, batch-label text, notes,
 damage note, media reference, or raw error. Server audit/events remain the
 business-outcome authority.
@@ -979,22 +1035,22 @@ business-outcome authority.
 | U6G-AC02 | Condition and selling-price defaults may be unset; quantity is fixed to 1 before scan and editable per card. |
 | U6G-AC03 | INR is fixed, the UI accepts whole rupees only, preset intervals are exact, and storage remains integer minor units. |
 | U6G-AC04 | Optional batch label survives session resume, is session-only, and never affects inventory/readiness/public data. |
-| U6G-AC05 | For a supported NEW Unit 6G single-image scan, one bounded review aggregate returns 0..15 strict compact cards without N+1 full metadata reads; observed identity, metadata summary, blockers, attention codes, counts, actions, and privacy bounds are exact and schema-tied. Historical lifetime counters remain safe integers rather than being capped at 15. |
+| U6G-AC05 | For a supported NEW Unit 6G single-image scan, one bounded review aggregate returns 0..15 strict compact cards without N+1 full metadata reads; observed identity, metadata summary, blockers, attention codes, counts, actions, and privacy bounds are exact and schema-tied. Input-level image `need attention` and candidate-level `need review` are separately labelled authorities. Historical lifetime counters remain safe integers rather than being capped at 15. |
 | U6G-AC06 | Every card displays cover/placeholder, title/authors, metadata status, all final review values, canonical source indicators, View metadata, Remove, and Add. |
 | U6G-AC07 | The one source mapping is `matched`/`detected` → Detected, `default` → Default, `custom` → Custom, and `missing` → Missing; inherited values are visible/subdued and custom/missing/stale values are explicit and non-color-coded. |
-| U6G-AC08 | Metadata sheet shows the bounded list, supports Use detected details/Edit manually, has no Choose another match, and Use detected details performs the existing `manual`/null-selection transition with no selected canonical cover/provenance commit; incomplete observed identity falls back to manual editing. |
+| U6G-AC08 | Metadata sheet shows the selected allowlisted cover plus bounded title, subtitle, authors, plain-text description, language, ISBNs, publisher/date, edition/volume/format, page count, categories/genre, and explicit status wording; it supports Use detected details/Edit manually, has no Choose another match or cover toggle, and Use detected details performs the existing `manual`/null-selection transition with no selected canonical cover/provenance commit; incomplete observed identity falls back to manual editing. |
 | U6G-AC09 | Notes are absent from Unit 6G UI and existing saved notes survive every unrelated Save unchanged. |
 | U6G-AC10 | Per-card Add is the only submit action and performs strict Save, canonical version adoption, readiness/capability check, then M39 commit. |
 | U6G-AC11 | Add all includes only its frozen ready set, performs the same independent save-then-commit state machine with concurrency at most three, and skips/report cards whose one command slot is already busy rather than queueing them. |
-| U6G-AC12 | No model, worker, poll, default, navigation, or Close action commits inventory. |
-| U6G-AC13 | Bulk partial success removes only confirmed successes; stale/failed/processing cards remain recoverable with exact results. |
-| U6G-AC14 | Same-command replay and ambiguous retries cannot create a second inventory row; no session-wide transaction is claimed. |
+| U6G-AC12 | No model, worker, poll, default, navigation, or Close action commits inventory. After explicit commits account for every detected candidate, the mounted client may invoke the unchanged v3 Close automatically only when the strict all-committed/terminal/idle policy passes. |
+| U6G-AC13 | Per-card or bulk partial success removes only confirmed successes; stale/failed/processing cards remain editable and retryable while active. Manual Close preserves successes and freezes uncommitted candidates as read-only session history. |
+| U6G-AC14 | Same-command replay and ambiguous retries return the same canonical inventory result and cannot create a second inventory row; a changed draft starts a new deliberate sequence after canonical reread. No session-wide transaction is claimed. |
 | U6G-AC15 | General removal persists `owner_removed_from_scan`, remains distinct from false detection/input removal/inventory deletion, has no Undo, and cannot race into a successful inventory commit. |
 | U6G-AC16 | Removed candidates cannot re-enter active/readiness/commit sets after worker completion and are counted separately. |
-| U6G-AC17 | M39 still creates one private row per candidate with exact `q/q/0/0/0`; publish intent does not auto-publish. |
-| U6G-AC18 | Successful commits invalidate/coalesce candidate/session/readiness/discovery and Store View list caches, and v3 session/Close responses return `ownerRemovedCandidates` as a `NonNegativeSafeInteger` lifetime count while v2 Close remains strict and unchanged. |
+| U6G-AC17 | M39 still creates one private row per candidate with exact `q/q/0/0/0`; canonical condition, selling price, quantity, location, damage, publication intent, and hidden retained notes survive Add unchanged; publish intent does not auto-publish. |
+| U6G-AC18 | Successful commits invalidate/coalesce candidate/session/readiness/discovery and Store View list caches; strict all-committed state invokes version-fenced v3 Close once; every successful manual/automatic Close records actor, command/source, versions, and server time exactly once; and v3 responses return `ownerRemovedCandidates` as a `NonNegativeSafeInteger` lifetime count while v2 Close remains strict and unchanged. |
 | U6G-AC19 | Offline is read-only, drafts are memory-only, and reconnect refetches authority before any mutation. |
-| U6G-AC20 | Cross-store, same-store-noninitiator, random-ID, stale-version, changed-replay, forbidden-field, closed/closing/expired-status, and active-with-past-expiry mutation tests fail closed without effects; those non-mutable session reads advertise only read-only actions. |
+| U6G-AC20 | Cross-store, same-store-noninitiator, random-ID, stale-version, changed-replay, forbidden-field, closed/closing/expired-status, and active-with-past-expiry mutation tests fail closed without effects. This lifecycle fence covers final Save/Add/Remove plus manual-candidate, skip/false-detection, and variant decision/replacement RPCs; non-mutable session reads advertise only read-only actions. |
 | U6G-AC21 | Scan/private/provider/job/attempt/cost data cannot leak through cards, metadata, logs, telemetry, or public media. |
 | U6G-AC22 | The supported 15-card maximum remains responsive with virtualized compact rendering, on-demand metadata, bounded polling, and bounded commits. |
 | U6G-AC23 | Screen reader, focus, 44×44 target, large-text, non-color status, busy/result announcement, and removal-dialog gates pass. |
@@ -1007,7 +1063,7 @@ business-outcome authority.
 | U6G-AC30 | Unit 6G uses `read_scan_session_v3` and `close_scan_session_v3` consistently for session/readiness/Close surfaces; nullable-v2 fencing is compatibility only, `languageHint` is required/non-null, and script is server-derived/nullable rather than setup input. |
 | U6G-AC31 | Every new private Unit 6G query root joins Unit 6 identity/store/logout cancellation, removal, request fencing, and stale-result rejection in NEW 6G-C, not a later work unit. |
 | U6G-AC32 | An unsaved mounted field override displays a local Custom marker instead of a stale persisted source badge, but the marker cannot manufacture server readiness or commit authority; location source remains exactly default/custom/missing. |
-| U6G-AC33 | The currently mounted production route proves two executable branches: (A) Start through candidate arrival/enrichment, recovery refreshes, compact/full review, readiness, and Close; and (B) a separate pre-lineage terminal input failure through deliberate replacement and resumed processing. The over-limit case proves one image with >15 detected books returns `P9_VISION_OVER_LIMIT`, creates zero candidates, shows bounded failure guidance, and preserves Unit 6 replacement/recovery so a replacement image with <=15 books can continue normally. |
+| U6G-AC33 | The currently mounted production route proves two executable branches: (A) Start through candidate arrival/enrichment, recovery refreshes, compact/full review, per-book Add with returned `inventoryId` and canonical inventory readback, partial-failure retry, strict all-committed automatic v3 Close, and manual partial Close; and (B) a separate pre-lineage terminal input failure through deliberate replacement and resumed processing. The over-limit case proves one image with >15 detected books returns `P9_VISION_OVER_LIMIT`, creates zero candidates, shows bounded failure guidance, and preserves Unit 6 replacement/recovery so a replacement image with <=15 books can continue normally. |
 | U6G-AC34 | No live client verification is PASS until the exact reviewed Owner Edge bundle is deployed and read back with all five Unit 6G actions; local source, M52 application, or a client build is not deployment evidence. |
 
 ## 24. Required red-test groups
@@ -1027,7 +1083,9 @@ business-outcome authority.
 4. **Draft derivation:** saved > metadata/detected > default > missing,
    detected-language divergence, hidden-note preservation, and stale revisions.
 5. **Per-card state machine:** Save fail/non-ready/stale/ambiguous/commit fail/
-   success, no optimistic effect, and canonical versions only.
+   success, no optimistic effect, canonical versions only, returned inventory
+   identity/readback, complete review-field preservation, same-result retry,
+   and no duplicate inventory row.
 6. **Bulk coordinator:** frozen membership, concurrency cap, one-slot busy
    arbitration, completion order, partial success, interruption/resume, no
    duplicate/refetch storm, and exact retry identity.
@@ -1070,6 +1128,12 @@ business-outcome authority.
    `read_scan_batch_review`, `remove_candidate_from_scan`, and
    `close_scan_session_v3`. Local source, migration application, and successful
    client build are explicitly insufficient.
+14. **Close lifecycle and observability:** strict all-committed automatic Close,
+    no automatic Close for zero/partial/processing/removed/false-detection/
+    offline/busy/stale states, manual partial-Close warning and read-only
+    remainder, exact actor/source/command/version/time audit once, and closed/
+    expired zero-effect coverage for Save/Add/Remove/manual-candidate/skip/
+    false-detection/variant decision/replacement RPCs.
 
 ## 25. Bounded implementation order
 

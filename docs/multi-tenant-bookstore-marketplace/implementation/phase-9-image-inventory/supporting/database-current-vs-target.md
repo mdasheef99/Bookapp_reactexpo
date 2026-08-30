@@ -1,7 +1,7 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-08-29 Unit 6G M54 lifecycle-fence readback
-**Audit mode:** exact-project preflight, individually authorized forward migration application, connected zero-effect acceptance, and post-rollout function/grant inspection
+**Audit date:** 2026-08-30 bounded metadata-throughput read-only preflight
+**Audit mode:** exact-project read-only scheduler/queue/latency/capacity baseline plus prior individually authorized migration evidence; no M56 application or live mutation
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
 **2026-08-21 connected result:** the live project has one publicly eligible
 inventory-media link, with zero eligible NULL, out-of-range, duplicate, or
@@ -37,6 +37,61 @@ variant mutation actions, `P9_STATE_CONFLICT` from Save/Add/Remove, and zero
 candidate/session-count/inventory/audit/event/idempotency effects. Existing
 older manual/false-detection/variant sibling RPC lifecycle behavior is unchanged
 and remains a separate compatibility decision.
+
+## Current live state — Unit 6G M55 bounded correction — 2026-08-30
+
+Local forward migration
+`20260830000055_marketplace_phase9_unit6g_metadata_add_authority_correction.sql`
+was applied exactly once through Supabase MCP to `Bookconnect_reactexpo` /
+`ahntbtktjjmvfosgkmgn` as live version `20260830084323
+marketplace_phase9_unit6g_metadata_add_authority_correction`, directly after
+M54 `20260829142337`. M55 replaces only internal metadata-summary,
+review-blocker, and batch-card function definitions: selected provider cards
+carry a safe metadata snapshot UUID, author presence is required only at the
+final Add/commit boundary while empty-author review saves remain valid,
+title/author evidence selects bibliographic query identity when present, hard
+Google language filtering is removed, exact ISBN fallback is retained for
+ISBN-only input, and the batch card exposes Add only after full commit
+eligibility. It performs no DML/backfill and changes no table, policy, Storage
+object, or public RPC signature. Touched internal helper ACLs remain restricted;
+no public grant is added.
+
+Pre-application read-only checks confirmed the exact healthy project, M54 live
+tail, and no open/retrying metadata jobs. Post-application readback confirmed
+the identity strategy, final author guard, batch-card eligibility gate, and
+closed-session read-only projection. Affected-scope Jest passed 64 suites/690
+tests (one suite/four tests skipped), M54+M55 PGlite passed 7/7. The matching
+client/Edge bundle is not deployed; the local canonical resolver, Add-all
+redesign, close audit, and older sibling RPC compatibility remain outside this
+bounded correction.
+
+## Local target — bounded metadata throughput M56 — 2026-08-30
+
+Read-only Supabase evidence reverified project `ahntbtktjjmvfosgkmgn` and the
+live once-per-minute dispatcher. The current live metadata wake payload is one;
+the claim RPC maximum remains 10 with a five-minute lease. The actionable
+metadata queue was empty, with one historical dead letter. The 30-day baseline
+was 103 jobs (102 resolved, one dead letter) and 46 successful batch-one
+dispatches. Observed provider duration was approximately 0.8–6.7 seconds. The
+exact deployed provider-timeout environment value and Google quota were not
+available through read-only surfaces.
+
+Local forward migration
+`20260830000056_marketplace_phase9_metadata_throughput.sql` replaces only
+`marketplace_sec.dispatch_phase9_worker_wakes()`. It changes the metadata body
+to `batchSize=15`; media, vision, and publication retry remain one. It preserves
+the 120-second pg_net timeout, one-dispatch-per-stage/tick conflict fence,
+private security-definer boundary, and existing scheduler. It performs no job
+DML, does not replace `claim_phase9_metadata_jobs`, and does not alter any
+table, policy, grant, Storage object, lease, retry/dead-letter rule, or applied
+migration. Local structural Jest passed 3/3 and the dispatcher PGlite suite
+passed 30/30.
+
+M56 is **unapplied**. Required rollout order is worker first while the live
+dispatcher remains at one, then a canary proving the changed metadata request
+path, timeout no greater than 10 seconds, quota/rate-limit headroom, bounded
+memory/database connections, and stable retry/dead-letter/duplicate signals.
+Only after that evidence may M56 application be separately authorized.
 
 ## Historical Unit 6G field-authority forward correction checkpoint — 2026-08-27
 

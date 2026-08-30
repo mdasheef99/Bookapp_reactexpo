@@ -1,21 +1,25 @@
 # Phase 9 Unit 6G Owner Batch Review Design Evidence
 
-**Status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`
-**Date:** 2026-08-29
+**Status:** `unit6g_metadata_throughput_local_complete_rollout_gated`
+**Date:** 2026-08-30
 **Branch:** `codex/phase9-unit6g-recomposition`
 **Worktree:** `C:\Users\user\Documents\augment-projects\Bookconnect_expo\.worktrees\phase9-unit6g-recomposition`
-**Current evidence:** §15 supersedes older “next action” statements without
+**Current evidence:** §18 supersedes older “next action” statements without
 rewriting or deleting their historical record. M52 remains live as
 `20260822025712` with its recorded connected proofs, M53 is live exactly once
 as `20260828081324`, and M54 is live exactly once as `20260829142337` with
-post-apply readback and connected zero-effect lifecycle proof.
+post-apply readback and connected zero-effect lifecycle proof. M55 is live
+exactly once as `20260830084323`; M56 is local, tested, and unapplied.
 
 > **HISTORICAL SCOPE BANNER — §§1–9:** Sections 1 through 9 preserve evidence
 > recorded during the 2026-08-21 Group 1 design, implementation, and correction
 > passes. Their phrases “current boundary,” “current implementation,” “M52
 > remains unapplied,” structural counts, and “exact next action” are current
 > only at those dated historical checkpoints and are not present authority.
-> Section 15 is the current 2026-08-29 lifecycle-fence status and next action.
+> Section 18 is the current 2026-08-30 throughput status and next action;
+> §17 retains direct-Add/closeout evidence, §16 retains metadata-quality
+> evidence, and §15 remains the
+> authoritative M54 live lifecycle evidence.
 
 ## 1. Authorization and boundary
 
@@ -588,3 +592,143 @@ false-detection/skip, or variant decision/replacement siblings. Their lifecycle
 compatibility is the next explicit Owner decision. No Edge/client deployment,
 fresh scan/upload, successful business mutation, Storage operation, staging,
 commit, or push occurred.
+
+## 16. 2026-08-30 — Google Books matching, cover, and metadata-sheet quality
+
+The Owner authorized exactly three local changes: title/author-primary Google
+Books matching, broader safe automatic cover retrieval/retention, and richer
+selected-metadata presentation. No cover checkbox or per-card provider-cover
+choice was introduced.
+
+- RED evidence showed that a validated ISBN replaced title/author in the Google
+  request, an exact ISBN could select an author-conflicting volume, only
+  `thumbnail`/`smallThumbnail` were decoded, and the sheet still rendered the
+  generic `Status: Matched` without subtitle, description, categories, or cover.
+- Google Books requests now use normalized title plus first author whenever
+  available. Ranking admits only exact normalized title plus author-overlap
+  candidates; validated ISBN, compatible base language, and normalized edition
+  clues are equal secondary tie-break evidence. A unique best whole volume is
+  selected; equal best evidence is ambiguous; exact ISBN never overrides a
+  title/author conflict.
+- Cover decoding checks `extraLarge`, `large`, `medium`, `small`, `thumbnail`,
+  and `smallThumbnail` in descending order. It upgrades the retained exact
+  `books.google.com` URL to HTTPS and continues past malformed, over-bound, or
+  unapproved larger values so they cannot suppress a safe smaller cover.
+- The on-demand metadata sheet displays the selected allowlisted cover,
+  subtitle, bounded plain-text description, and categories/genre in addition
+  to its existing fields. Metadata states use explicit provider/processing/
+  ambiguity/failure wording instead of generic `Matched`/`Pending` labels.
+- Focused Jest passed **3 suites / 74 tests** after implementation. The wider
+  metadata regression passed **10 suites / 133 tests**; affected Unit 6G UI
+  regression passed **6 suites / 82 tests** with its pre-existing
+  VirtualizedList `act(...)` warnings and `--forceExit`; TypeScript `--noEmit`,
+  `git diff --check`, and Phase 9 continuity passed.
+- No Google Books or other provider call, database/Storage mutation, migration,
+  credential change, Edge/client/native deployment, scan/upload, inventory
+  mutation, stage, commit, push, merge, or PR action occurred.
+
+**Current next action:** Owner review and separate deployment authorization.
+Existing M54 live evidence remains valid;
+the count-wording residual and older sibling lifecycle compatibility remain
+outside these three completed tasks.
+
+## 17. 2026-08-30 — direct Add, auto-close, and remaining backend boundary
+
+The Owner authorized the listed Unit 6G direct-Add/closeout implementation,
+deployment investigation, and one connected Add/readback. The per-card Add
+coordinator remains unchanged in authority and continues strict Save →
+canonical reread → readiness/action check → M39.
+
+- A pure policy plus mounted hook now invokes version-fenced v3 Close only when
+  every detected candidate was explicitly committed and all terminal/zero-
+  remainder/idle/online/focused conditions pass. Removed or false-detection
+  dispositions deliberately require manual Close and never masquerade as
+  inventory success.
+- The summary now gives an exact partial-close warning. Confirmed inventory is
+  retained; uncommitted candidates remain as read-only session history; Close
+  performs no Add, rollback, or inventory delete.
+- Input progress is labelled `Image processing`; the candidate summary explains
+  that Need review counts books. This preserves both correct authorities while
+  removing the apparent `0` versus `15` contradiction.
+- Existing retry/concurrency evidence proves exact and overlapping Add replay
+  cannot produce a second row. Unit 7A assertions now pin canonical condition,
+  price, quantity, location, damage, publication intent, private publication,
+  and returned inventory identity.
+- RED-first focused tests failed before the policy/mounted/copy changes. Full
+  Image Inventory Jest now passes **59 suites / 478 tests** (four skipped),
+  focused Unit 7A + lifecycle PGlite passes **17/17**, and TypeScript passes.
+- Read-only live preflight reverified project `ahntbtktjjmvfosgkmgn`, live M54,
+  Edge v9, and an active 12-candidate/zero-commit session. Connected browser
+  proof selected Book 1's detected identity and exposed exactly one enabled
+  individual Add. One press returned canonical inventory ID
+  `332ad909-47dc-4256-963a-3878c3081337`; database readback found exactly one
+  row for candidate `d6a18694-a004-437f-95e8-352b64f579e1`, with title/author/
+  language, condition `good`, ₹175, quantity `1/1/0/0/0`, location `2`, no
+  damage, sellable true, publication decision `publish`, and private/draft
+  state intact. Canonical idempotency, audit, and event evidence agree.
+- Reload kept Book 1 absent, Added `1`, and Need review `11`. The session remains
+  active with `closed_at` null, directly proving partial completion does not
+  auto-close. Positive exact-all-committed Close remains covered by mounted and
+  pure-policy tests; the other eleven books were not mutated.
+- The deployed v3 Close still lacks dedicated close actor/source audit, and the
+  older manual-candidate, skip/false-detection, and variant decision/replacement
+  RPCs still lack the complete active/unexpired fence. The required forward
+  migration remains paused for explicit migration creation/application
+  authority; no migration bytes have been created.
+- Edge v9 already carries all five Unit 6G actions; none of this pass's changed
+  files belongs to its deployed 30-file bundle, so no no-op Edge version was
+  created. Production web export passes. The Expo project has `eas.json` but no
+  discoverable EAS project ID/owner/updates URL or Sites/other web-hosting
+  target, so remote client deployment provenance remains target-blocked.
+- External state: exactly one authorized inventory business effect plus its
+  canonical candidate/idempotency/audit/event/session-count records. No
+  Storage, migration, remote deployment, staging, commit, push, merge, or PR.
+
+**Current next action:** obtain explicit authority for the M55-class close-audit
+and older-RPC lifecycle migration, then create/test/apply/read back it. Remote
+client deployment additionally requires the intended EAS/web target to be
+identified or configured.
+
+## 18. 2026-08-30 — bounded metadata-throughput implementation and preflight
+
+This correction is operational pipeline work adjacent to the Unit 6G metadata
+flow; it does not alter Unit 6G review, inventory, or session-close semantics.
+The Owner authorized implementation but explicitly withheld deployment and
+migration application.
+
+- The verified live baseline remains one scheduler wake per minute and a
+  metadata dispatcher payload of one. The claim RPC maximum is 10, leases last
+  five minutes, the worker service accepts one HTTP run at a time, and the old
+  worker loop processes claims serially. The live queue had zero actionable
+  metadata jobs and one historical dead letter; thirty-day readback showed 103
+  jobs, 102 resolved, one dead letter, and 46 successful batch-one dispatches.
+  Observed provider latency was approximately 0.8–6.7 seconds. The exact live
+  timeout setting and Google quota were not readable and remain rollout gates.
+- The local metadata contract now accepts a 15-job run budget while generic
+  worker contracts stay capped at 10. A three-slot pool initially claims three
+  and refills one slot at a time, so at most three leases/provider calls are
+  active and a worker crash does not strand 15 up-front claims. Every Google
+  Books request still represents one book.
+- Per-book errors remain isolated; ordered outcomes are retained even when jobs
+  finish out of order. Durable `retry_scheduled` state is propagated into the
+  response rather than being mislabeled manual, while database state remains
+  the authority. In-flight work drains before a later incremental-claim error
+  returns a run-level failure.
+- New forward M56 changes only the private live-M40 dispatcher definition:
+  metadata receives 15; media, vision, and publication retry remain one; the
+  once-per-minute cron and 120-second timeout remain unchanged. The metadata
+  claim function and applied migrations were not edited.
+- RED-first and green evidence is recorded in the master/implementation
+  trackers. Current green scope: focused Jest 7 suites/72 tests (including the
+  metadata-only invoker bound), metadata worker TypeScript production build,
+  and dispatcher PGlite 30/30.
+- No migration was applied, no worker/Edge/client was deployed, no provider
+  call or database/Storage/business mutation occurred, and nothing was staged,
+  committed, pushed, merged, or opened as a PR.
+
+**Current next action:** Owner review of the preflight, then separate authority
+to commit and deploy the worker first while dispatcher batch size remains one.
+Canary the request-pattern change and verify timeout ≤10 seconds, provider
+quota/rate limits, memory/database connections, retries/dead letters, and
+duplicate-call signals. M56 application requires a later, separate explicit
+authorization after that worker evidence.

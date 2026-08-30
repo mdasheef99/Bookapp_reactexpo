@@ -1,6 +1,7 @@
 # Phase 9 Unit 5B — Google Books Provider Audit
 
 **Inspected:** 2026-07-28
+**Behavior amended:** 2026-08-30 under the Owner's title/author-primary decision
 **Provider/API:** Google Books API v1
 **Scope:** descriptive provider evidence for the provider-neutral Unit 5B adapter
 
@@ -24,14 +25,16 @@ must identify the application with an API key or OAuth token. Unit 5B uses only
 a server-side API-key seam; it does not request Google user data or OAuth scopes.
 
 Official field operators include case-sensitive `isbn:`, `intitle:`, and
-`inauthor:`. The adapter uses a checksum-valid normalized ISBN-13 alone when
-available. Otherwise it sends only normalized original title and the first
-normalized author. `langRestrict` receives the base language when it is a
-two/three-letter tag. It sends no store/user identity, image, OCR payload,
-private note, internal ID, or credential inside `q`.
+`inauthor:`. The adapter sends normalized original title and the first
+normalized author whenever either is available. A checksum-valid normalized
+ISBN-13 is retained as secondary ranking evidence and is used as the request
+fallback only if no bibliographic term exists. The request does not send
+`langRestrict`; compatible base language remains bounded ranking evidence and
+cannot hard-reject a coherent title/author match. It sends no store/user identity,
+image, OCR payload, private note, internal ID, or credential inside `q`.
 
 The implementation fixes `startIndex=0`, `maxResults=10`, `orderBy=relevance`,
-`printType=books`, and `projection=lite`; it performs no pagination or parallel
+`printType=books`, and `projection=full`; it performs no pagination or parallel
 fan-out. Google permits `maxResults` from 0 through 40. URL encoding is delegated
 to the platform URL implementation.
 
@@ -59,7 +62,10 @@ The adapter therefore:
 - bounds strings and nested arrays;
 - accepts only checksum-valid coherent ISBN pairs;
 - strips description markup to bounded plain text;
-- upgrades only `books.google.com` cover links to HTTPS and rejects other hosts;
+- checks `extraLarge`, `large`, `medium`, `small`, `thumbnail`, and
+  `smallThumbnail` in descending size order, upgrades only `books.google.com`
+  links to HTTPS, rejects other hosts, and continues to a safe smaller link
+  when a larger field is absent, malformed, over-bound, or unapproved;
 - persists no raw response, `selfLink`, preview/buy link, access, sale, or
   provider-specific field.
 
@@ -68,12 +74,13 @@ The adapter therefore:
 Google volume IDs are stable provider identifiers, not universal edition
 identity. Search results may contain multiple volumes with incomplete,
 inconsistent, translated, or edition-conflicting metadata. The adapter keeps
-each result whole. Exact validated ISBN-13 dominates. Without ISBN, acceptance
-requires exact normalized original title, author overlap, and compatible base
-language with exactly one coherent result. Multiple equally coherent results
-are ambiguous. A conflicting supplied ISBN is material conflict. There is no
-cross-volume field stitching and no numeric acceptance threshold invented by
-Unit 5B.
+each result whole. Acceptance first requires exact normalized original title
+and author overlap. Validated ISBN-13, compatible base language, and normalized
+edition clues only rank candidates that already pass that primary identity
+gate. A unique highest secondary score selects one whole volume; equal best
+scores are ambiguous. An ISBN that points only to a title/author-conflicting
+volume is a material conflict and is never selected. There is no cross-volume
+field stitching and no numeric acceptance threshold invented by Unit 5B.
 
 ## Errors, quota, and retry
 

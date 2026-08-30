@@ -220,6 +220,7 @@ if (-not ($doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_sdd_owner
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_complete_live_verified`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_fa_001_live_verified_m53_applied`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_session_lifecycle_fence_live_verified_m54_applied`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_m55_applied_client_deploy_pending`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_upload_transport_correction_locally_verified`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_upload_transport_native_failed_diagnosed`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
@@ -272,6 +273,7 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
     $implementationTracker.Contains('**Status:** `unit6_complete_live_verified`') -or
     $implementationTracker.Contains('**Status:** `unit6g_fa_001_live_verified_m53_applied`') -or
     $implementationTracker.Contains('**Status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`') -or
+    $implementationTracker.Contains('**Status:** `unit6g_direct_add_closeout_connected_partial_pass_client_deploy_pending`') -or
     $implementationTracker.Contains('**Status:** `unit6_mobile_upload_transport_correction_locally_verified`') -or
     $implementationTracker.Contains('**Status:** `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
     $implementationTracker.Contains('**Status:** `unit6_multilingual_vision_response_resilience_locally_verified_review_pending`') -or
@@ -631,7 +633,8 @@ if (
         $tracker.Contains('**Next authorized action:** select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services.') -or
         $tracker.Contains('**Next authorized action:** Owner review and explicit approval or correction of the Unit 6G SDD and contract matrix. Do not begin 6G-A red tests, create/apply a migration, change product source, deploy, or mutate Supabase/Storage without separate authorization.') -or
         $tracker.Contains('**Next authorized action:** Owner review of the M53 live proof. Edge/client/native deployment remains separately gated.') -or
-        $tracker.Contains('**Next authorized action:** Owner review of the M54 live proof and explicit disposition of older sibling correction/variant RPC closed-session compatibility. Edge/client/native deployment, fresh scan/upload, and further Supabase mutations remain separately gated.')
+        $tracker.Contains('**Next authorized action:** Owner review of the M54 live proof and explicit disposition of older sibling correction/variant RPC closed-session compatibility. Edge/client/native deployment, fresh scan/upload, and further Supabase mutations remain separately gated.') -or
+        $tracker.Contains('**Next authorized action:** Owner review of this preflight, followed by separate authorization to commit and deploy the metadata worker first with the dispatcher still sending batch size one.')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
@@ -715,7 +718,9 @@ $draftMigrationNames = @(
     '20260821000051_marketplace_phase9_public_media_order_invariant.sql',
     '20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql',
     '20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql',
-    '20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql'
+    '20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql',
+    '20260830000055_marketplace_phase9_unit6g_metadata_add_authority_correction.sql',
+    '20260830000056_marketplace_phase9_metadata_throughput.sql'
 )
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
@@ -752,7 +757,9 @@ $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_in
     $tracker.Contains('**Implementation status:** `unit6g_group1_contract_persistence_locally_complete`') -or
     $tracker.Contains('**Implementation status:** `unit6g_field_authority_correction_locally_verified_m53_unapplied`') -or
     $tracker.Contains('**Implementation status:** `unit6g_fa_001_live_verified_m53_applied`') -or
-    $tracker.Contains('**Implementation status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`'))
+    $tracker.Contains('**Implementation status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`') -or
+    $tracker.Contains('**Implementation status:** `unit6g_direct_add_closeout_connected_partial_pass_client_deploy_pending`') -or
+    $tracker.Contains('**Implementation status:** `unit6g_metadata_throughput_local_complete_rollout_gated`'))
 $expectedMigrationNames = @($migrationNames)
 if ($wu1AppliedStatus) { $expectedMigrationNames += $draftMigrationNames }
 $appliedPhase9Migrations = if ($wu1AppliedStatus) {
@@ -799,7 +806,7 @@ if ($actualMigrationNames.Count -ne $expectedMigrationCount -or
     $duplicateMigrationVersions.Count -ne 0 -or
     $unexpectedCorrectionMigrations.Count -ne 0 -or
     $phase9Migrations.Name -match '000009|quantity.*validat') {
-    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M54 exactly once; WU1/M32-M54 are included only when the tracker records the current structural handoff.'
+    Write-Error 'Phase 9 migration set must contain M01-M08 plus normalized M10-M56 exactly once; WU1/M32-M56 are included only when the tracker records the current structural handoff.'
 }
 $wu2aSql = [IO.File]::ReadAllText((Join-Path $repoRoot 'supabase/migrations/20260814000044_marketplace_phase9_store_view_filter_contract.sql'))
 $wu2aIntegrationPath = Join-Path $repoRoot 'supabase/tests/phase9/phase9Unit7cStoreViewFilterContract.integration.test.mjs'

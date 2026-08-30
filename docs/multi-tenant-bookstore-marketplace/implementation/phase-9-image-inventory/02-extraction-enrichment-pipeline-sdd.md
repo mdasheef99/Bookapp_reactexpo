@@ -21,6 +21,31 @@ replay-safe, preserving accepted-state and cost/idempotency recovery. One final
 automatic Owner proof completed six metadata jobs on claim 1 with no natural
 retryable result and reached six Needs Review cards.
 
+**Google Books matching/display quality correction (local 2026-08-30):** the
+provider request now uses normalized title and first author when available,
+even when a validated ISBN clue exists. Ranking first requires coherent exact
+normalized title plus author overlap; validated ISBN, compatible base language,
+and edition clues are secondary tie-break evidence only. Cover decoding checks
+the documented image-size family from largest to smallest and skips an unsafe
+or malformed larger URL without suppressing a later allowlisted Google Books
+URL. No migration, provider call, or deployment is part of this local change.
+
+**Bounded metadata-throughput correction (local 2026-08-30, rollout
+gated):** one metadata worker invocation may accept a run budget of at most 15
+jobs while generic worker contracts remain capped at 10. The worker holds at
+most three active jobs, initially claims only three, and refills one available
+slot at a time until the run budget is exhausted or the queue is empty. Each
+book keeps its own provider request, lease/fence, retry/dead-letter decision,
+and outcome; no unrelated books are combined into one Google Books request.
+Results remain in claim order even when provider calls finish out of order, and
+persisted job state remains authoritative. M56 is a forward dispatcher-only
+migration candidate that sends `batchSize=15` only for `metadata_enrich` and
+preserves batch size one for media, vision, and publication retry. The existing
+once-per-minute schedule, 120-second dispatcher timeout, five-minute metadata
+lease, claim-RPC maximum 10, retry/dead-letter policy, and autoscaling state are
+unchanged. Worker deployment and live timeout/quota canary must precede any M56
+application; neither action is authorized or performed by this checkpoint.
+
 ## 1. Decision
 
 Use a persistent, asynchronous, provider-agnostic pipeline for spine images.
@@ -176,7 +201,10 @@ For every usable candidate:
 3. Otherwise search local original title + authors + language, exact before fuzzy.
 4. If no acceptable coherent local match, call the configured primary metadata adapter.
 5. If technical failure/no acceptable coherent match meets fallback policy, call the secondary adapter.
-6. Rank exact identifiers before normalized text; reject contradictory language/edition evidence.
+6. For Google Books, require coherent normalized title and author evidence
+   first; use validated ISBN, compatible language, and edition clues only to
+   break ties between those coherent candidates. An ISBN that points to a
+   title/author-conflicting volume is not accepted.
 7. Persist attempts/provenance and select one coherent edition snapshot.
 8. Reconcile optional bounded provisional variants against independently
    confirmed title/author source fields; deterministic keys remain separate.

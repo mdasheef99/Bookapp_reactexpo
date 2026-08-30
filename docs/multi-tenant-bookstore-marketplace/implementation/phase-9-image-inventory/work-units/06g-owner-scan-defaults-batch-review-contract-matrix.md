@@ -1,7 +1,7 @@
 # Phase 9 Unit 6G Contract and Screen Matrix
 
-**Status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`
-**Date:** 2026-08-29
+**Status:** `unit6g_metadata_quality_local_complete_pending_review`
+**Date:** 2026-08-30
 **Owner:** [Unit 6G SDD](./06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md)
 
 This matrix operationalizes the recomposed Unit 6G SDD. Unit 6G-A/B and the
@@ -102,12 +102,13 @@ responsibility previously owned by that route.
 | Region | Content | Server source | Local state | Actions and gates |
 | --- | --- | --- | --- | --- |
 | Header | Batch label when present; Unit 6 capture/session status | `read_scan_session_v3` plus Unit 6 session/input authority; aggregate supplies candidate-side additions only | Expansion only | Back uses dirty/busy guard |
-| Summary | Ready, Processing, Needs attention, Added | Aggregate states plus mounted draft validation for Ready | Current mounted draft fingerprints | Counts announced on meaningful changes only |
+| Input progress | `Image processing: R ready, A need attention, P processing` | Unit 6 input lifecycle only | None beyond mounted Unit 6 controller | `need attention` describes terminal image/input attention only; it is not a candidate-review count |
+| Summary | Ready, Processing, Need review, Added | Unit 6G aggregate states plus mounted draft validation for Ready | Current mounted draft fingerprints | Candidate counts are announced separately; `0` input attention and `15` candidate need-review may coexist correctly |
 | Bulk action | `Add all ready books (N)` | Candidate capabilities/versions plus strict-valid current drafts | Frozen run membership/results and shared per-candidate command slots | Visible when N>0; online/current authority; one confirmation for N>1; already locked cards are skipped and reported Busy, never queued |
-| Input progress | ONE current input: zero-input recoverable, uploading/registered, sanitation/vision processing, ready, terminal failure, deliberate removal/replacement | Unit 6 session/input queries only; the batch aggregate is never input-processing authority | Local upload progress/URI only before registration | Zero candidates never implies idle/complete/failure; existing Unit 6 remove/replacement and Resume rules remain authoritative |
+| Input lifecycle | ONE current input: zero-input recoverable, uploading/registered, sanitation/vision processing, ready, terminal failure, deliberate removal/replacement | Unit 6 session/input queries only; the batch aggregate is never input-processing authority | Local upload progress/URI only before registration | Zero candidates never implies idle/complete/failure; existing Unit 6 remove/replacement and Resume rules remain authoritative |
 | Card list | For a supported NEW Unit 6G single-image scan, 0..15 stable-ordinal compact cards | Batch aggregate | Per-card mounted draft/command reducer | FlatList virtualization, no expanded metadata mount, no sixteenth card or pagination |
 | Full correction | Existing candidate-detail route plus false/variant/stale comparison controls | Unit 6 candidate detail/correction contracts | Existing mounted full-correction draft | Reachable for false detection, variants, compare/Reapply, and edits unsafe for compact controls; no invented Choose another match |
-| Footer | Add missed, v3 Summary/Close | `read_scan_session_v3`, batch candidate state, and `close_scan_session_v3` | None | Missed flow remains reachable; Close never commits/removes/discards/publishes |
+| Footer | Add missed, v3 Summary/Close | `read_scan_session_v3`, batch candidate state, and `close_scan_session_v3` | Auto-close attempt identity and manual partial-close confirmation only | Missed flow remains reachable; Close never commits/removes/discards/publishes. Exact all-committed state invokes v3 Close automatically; otherwise manual Close remains available with an explicit read-only-remainder warning |
 
 The combined page observes Unit 6 lifecycle authority and Unit 6G candidate/
 review authority concurrently. An active session with zero current input must
@@ -121,7 +122,7 @@ the route remains mounted as Unit 6 processing completes.
 | Cover | 56–72 px bounded thumbnail/placeholder | None | selected metadata/observed allowlisted reference → missing | No | Provider matched, Vision detected, or Missing; never scan image |
 | Title | Full screen-reader value; visually bounded lines | Plain text inline/manual | saved custom → selected metadata/observed → missing | Yes | Custom, Provider matched, Vision detected, or Missing |
 | Authors | Ordered accessible list; “Author unknown” allowed | Simple ordered fields/add/remove | saved custom → selected metadata/observed → missing | Decision required; empty confirmed array permitted | Custom, Provider matched, Vision detected, or Missing |
-| Metadata status | Matched/Manual/No match/Pending/Needs attention | Metadata sheet | current metadata state/revision | Terminal selected/manual path | State label only; not a field-source badge |
+| Metadata status | Provider metadata selected / Manual metadata / No provider match / Metadata processing / Multiple possible matches / Metadata temporarily unavailable / Metadata failed | Metadata sheet | current metadata state/revision | Terminal selected/manual path | State label only; not a field-source badge |
 | Language | Canonical language label/code | Searchable dropdown | saved custom → selected metadata/observed → session hint → missing | Yes | Custom/Provider matched/Vision detected/Default/Missing |
 | Condition | Label plus help marker | Five-value dropdown | saved review → session default | Yes | Custom/Default/Missing |
 | Selling price | Locale-aware `₹` whole amount | Preset/custom picker | saved review → session default | Yes; 0 only private | Custom/Default/Missing |
@@ -162,6 +163,18 @@ continue to force private intent. Public damage-photo eligibility remains Unit
 
 No `Choose another match`, duplicate action, separate Save, separate Submit,
 Undo, or automatic commit action is rendered.
+
+The per-card Add path sends the complete strict review through Save before M39.
+Title/author metadata changes do not replace or reset Owner-entered condition,
+selling price, quantity, location, damage, publication intent, or retained
+notes. A successful response returns the canonical `inventoryId`; exact replay
+returns that same result rather than creating another inventory row.
+
+The on-demand sheet automatically renders an allowlisted selected cover when
+present, plus title, subtitle, authors, bounded plain-text description,
+language, ISBNs, publisher/date, edition/volume/format, page count, and
+categories/genre. Missing optional values are omitted. There is no cover
+checkbox, scan-media fallback, provider-rematch action, or new mutation seam.
 
 General Remove and false detection are different actions, contracts,
 dispositions, audit meanings, and UI copy. The existing missed-book route stays
@@ -678,6 +691,9 @@ successful removal cannot race into a successful inventory commit.
 | Commit stale/ineligible | Refetch; keep saved review | Failed/needs-attention result |
 | Commit ambiguous | Same-key retry/reconcile | No new-key automatic retry |
 | Commit success | Canonical cache sync, card leaves | Added count; continue queue |
+| Some commits succeed, another fails | Successful inventory rows remain; failed card stays editable/retryable while active | Continue unrelated cards; report exact Added/Failed/Needs-attention counts; no rollback |
+| Owner manually closes after partial success | Confirm that uncommitted candidates become read-only; confirmed inventory remains unchanged | Stop review; Close performs no remaining Add and no inventory delete |
+| Final detected candidate commits | Refetch exact session/batch authority; invoke v3 Close only when strict all-committed policy passes | No separate bulk rule; the same strict auto-close policy runs after canonical cache synchronization |
 | Store View invalidation failure | Inventory success remains; bounded refetch warning/retry | Never roll back/repeat commit |
 
 ## 7. Cache synchronization matrix
@@ -688,6 +704,7 @@ successful removal cannot race into a successful inventory commit.
 | Review Save | exact candidate detail + aggregate item; invalidate session candidate/readiness/discovery scopes |
 | Owner removal | remove from aggregate after canonical response; invalidate candidate pages, readiness, discovery, session summary |
 | Close v3 success | replace session/readiness v3 from canonical response; invalidate aggregate/session discovery; preserve v2 cache keys as separate contract data |
+| Automatic Close after all committed | same v3 Close cache effects; no inventory mutation; record one close command/audit result with source `auto_close_after_all_committed` |
 | Per-card commit success | exact candidate/detail/readiness/discovery/session plus legacy Owner inventory reads and `storeViewKeys.all` |
 | Bulk commit success set | per-candidate canonical updates; coalesce session/discovery/readiness and one Store View all invalidation after run |
 | Reconnect/foreground | refetch session aggregate before enabling mutations; no local result overwrites a newer aggregate revision |
@@ -712,6 +729,9 @@ successful removal cannot race into a successful inventory commit.
 | Offline | May be out of date | No mutation |
 | Save/commit/removal in flight | Busy with exact stage | No duplicate action/navigation without guard; Add all reports Busy if it cannot claim the slot |
 | Committed | Removed from active list; Added count | Optional View in Store View |
+| Every detected candidate committed; inputs terminal; no processing/review/removed/false-detection remainder; commands idle; online/focused | No active cards; closing/closed announcement | Invoke version-fenced v3 Close once |
+| Partial success, session still active | Added rows absent from cards; failed/uncommitted cards remain editable | Retry individual Add or open Summary for warned manual Close |
+| Partial success, session manually closed | Added inventory unchanged; uncommitted candidates retained as read-only history | No mutation; a new scan is required to revisit those books |
 | `owner_removed_from_scan` or false | Removed from active list; separate summary count | None |
 
 ## 9. Migration current-to-target matrix
@@ -729,6 +749,8 @@ successful removal cannot race into a successful inventory commit.
 | Batch label | Historically absent from M02 sessions | nullable safe text `1..80` `batch_label` | Retained M52 supplies the session-only resumable field. |
 | Candidate disposition | Historical M02 CHECK allowed null/`reviewed`/`skipped_false_detection` | exact `owner_removed_from_scan` | Retained M52 supplies the category-4 lifecycle, predicate, revision, worker, readiness, and commit fences with no row inference/backfill. |
 | Close summary/Close mutation | M29 helper/v2 Close has no owner-removed count | strict summary/readiness v3 and `close_scan_session_v3` / `phase9_close_session_v3` with `ownerRemovedCandidates` | Retained M52 supplies v3; existing v2 remains unchanged and Unit 6G uses v3 consistently. |
+| Close audit | Session records `closed_at` but the deployed v3 Close has no dedicated close business event/audit | one exact-replay-safe audit/event records authenticated actor, store/session, manual versus all-committed automatic source, command/idempotency identity, versions, and server time | Forward migration required; client telemetry is not actor authority and historical closes are not backfilled or guessed. |
+| Legacy candidate mutations | Manual-candidate, skip/false-detection, and variant decision/replacement siblings do not all enforce active plus unexpired session state | shared lifecycle fence matching final Save/Add/Remove | Forward migration required; preserve exact replay, signatures, grants, ownership, fixed search paths, and active-session behavior. |
 | Removal mutation/audit | Historically no general candidate-removal RPC or event | U6G-C02, exact `phase9.candidate.owner_removed_from_scan`, version/replay/presentation fences | Retained M52 supplies the controlled RPC/helper/registry/audit boundary; server-derived Owner/store; no delete cascade. |
 | RPC ownership/grants | M29 functions use fixed search path and narrow authenticated grants | new start/read/batch/remove/Close v3 functions follow the same pattern | Internal helpers revoke PUBLIC/anon/authenticated; public Owner RPCs revoke PUBLIC/anon and grant EXECUTE only to `authenticated`; direct tables remain denied. |
 | Card page | small summary, paged | bounded review aggregate | existing cross-session page remains entry/recovery compatibility |

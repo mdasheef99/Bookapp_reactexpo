@@ -1,7 +1,7 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-08-29
+**Last updated:** 2026-08-30
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
@@ -9,6 +9,44 @@ This is the deterministic resume procedure for Phase 9. A new session should rec
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
 ## Current 2026-08-24 Unit 6G recomposition overlay
+
+**2026-08-30 bounded metadata-throughput overlay:** The local metadata worker
+now accepts a metadata-specific run budget of 15, holds no more than three
+active jobs, and incrementally claims only enough to refill open slots. It
+continues to send one independent Google Books request per book and preserves
+per-book leases, retries/dead letters, idempotency, duplicate protection,
+failure isolation, and claim-ordered outcomes. Generic workers remain capped at
+10. Durable retry state is reflected in the response while the database remains
+authoritative. Forward M56 changes only the live-M40 dispatcher definition so
+metadata receives 15 and media/vision/publication remain one; it preserves the
+60-second cron, 120-second timeout, claim function, and applied migrations.
+Focused Jest 7/72 (including the metadata-only invoker bound), the metadata worker
+production build, and dispatcher PGlite 30/30 pass. M56 is local/unapplied. No
+deployment, provider call, database or Storage mutation, stage, commit, push,
+merge, or PR occurred. The exact next
+action is Owner review followed by separate authorization for commit and
+worker-first canary deployment. Verify live provider timeout ≤10 seconds,
+quota/rate limits, memory/connections, retries/dead letters, and duplicate-call
+signals before any separately authorized M56 application.
+
+**2026-08-30 M55 bounded-correction overlay:** The forward migration
+`20260830000055_marketplace_phase9_unit6g_metadata_add_authority_correction.sql`
+was applied exactly once through Supabase MCP to the verified development
+project `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as live version
+`20260830084323 marketplace_phase9_unit6g_metadata_add_authority_correction`,
+directly after M54. It is limited to selected metadata snapshot identity in
+compact Add preparation, author enforcement at the final Add/commit boundary
+while saved review remains empty-author compatible, title/author-primary
+durable query identity when bibliographic evidence exists, removal of the hard
+Google language filter, exact-ISBN fallback for ISBN-only queries, and full
+commit-eligibility gating for batch-card Add actions. A read-only post-apply
+definition readback confirmed the identity strategy, final author guard,
+batch-card eligibility gate, and closed-session read-only projection. The
+affected-scope Jest suite is 64 passed suites / 690 passed tests (one suite and
+four tests skipped), M54+M55 PGlite is 7/7, and the migration application
+returned success. No client/Edge deployment or business-data mutation occurred.
+Add-all redesign, close audit, and older sibling RPC compatibility are outside
+M55.
 
 **2026-08-29 M54 lifecycle-fence overlay:** The Owner-authorized forward
 migration `20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql`

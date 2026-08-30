@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-08-29
+**Date:** 2026-08-30
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -25,6 +25,88 @@ Every coding session must update tracking before ending if it changes any of the
 - next recommended task
 - handoff notes
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
+
+> **2026-08-30 bounded metadata-throughput implementation:** The local worker
+> now accepts a metadata-only 15-job run budget, keeps no more than three jobs
+> active, claims only enough to fill open slots, and returns outcomes in claim
+> order while preserving per-book provider calls, leases, retries, dead letters,
+> fencing, and failure isolation. Durable `retry_scheduled` state is propagated
+> into the diagnostic response; the database remains authoritative. New forward
+> M56 changes only the private dispatcher payload for `metadata_enrich` to 15;
+> media, vision, and publication retry remain one, and the cron frequency,
+> timeout, claim-RPC maximum, and applied migrations remain unchanged. Focused
+> Jest passed **7 suites / 72 tests** (including the metadata-only invoker
+> bound), the metadata worker production TypeScript build passed, and
+> dispatcher PGlite passed **30/30**. M56 is unapplied; no
+> deployment, provider call, database/Storage/business mutation, staging,
+> commit, push, merge, or PR action occurred. Next: review, then separately
+> authorize worker-first deployment/canary; M56 application remains a later
+> separate gate.
+
+> **2026-08-30 Unit 6G direct-Add/closeout implementation in progress:** The
+> Owner-authorized local client pass now keeps the existing per-book strict
+> Save → canonical reread → M39 Add, automatically invokes the unchanged v3
+> Close only after server counts prove every detected candidate was explicitly
+> committed, and warns that a manual partial Close preserves added inventory
+> while freezing uncommitted candidates as read-only history. Image-level
+> `need attention` and book-level `need review` are now separately labelled.
+> Retry/field-preservation regressions cover canonical inventory identity,
+> duplicate prevention, condition, price, quantity, location, damage, and
+> publication intent. Full Image Inventory Jest passes **59 suites / 478 tests**
+> and focused PGlite passes **17/17**; TypeScript, production web export,
+> continuity, and diff hygiene pass. The connected active-session proof exposed
+> exactly one enabled per-book Add, committed Book 1 once, persisted inventory
+> ID `332ad909-47dc-4256-963a-3878c3081337`, and read back exactly one canonical
+> private row. Condition `good`, ₹175, quantity `1`, location `2`, no damage,
+> and publication intent `publish` survived; the session remained active at
+> 1/12 committed after reload. Close actor/source
+> audit and lifecycle fences for manual-candidate, skip/false-detection, and
+> variant RPCs require a separately authorized forward migration; none has
+> been created or applied in this pass. The sole external business mutation was
+> that explicitly authorized inventory row plus its canonical candidate,
+> idempotency, audit, event, and session-count effects. No Storage mutation,
+> migration, remote client/Edge deployment, staging, commit, push, merge, or PR
+> action occurred. The repository has no configured EAS project ID/owner or web
+> hosting target, so no remote client deployment can yet be claimed.
+
+> **2026-08-30 Unit 6G metadata-quality correction:** The three
+> Owner-authorized local tasks are implemented on
+> `codex/phase9-unit6g-recomposition`. Google Books requests now prefer
+> normalized title plus first author; candidate acceptance requires exact
+> normalized title and author overlap, while validated ISBN, compatible
+> language, and edition clues are secondary tie-break evidence. The cover
+> decoder checks all bounded Google Books image sizes from largest to smallest
+> and retains the first allowlisted safe URL, continuing past unsafe larger
+> values. The on-demand metadata sheet now renders selected cover, subtitle,
+> bounded plain-text description, categories/genre, and explicit state wording.
+> No cover toggle, scan-image fallback, rematch action, migration, provider
+> call, Supabase/Storage/business-data mutation, credential change, deployment,
+> staging, commit, push, merge, or PR action occurred. Focused Jest passed
+> **3 suites / 74 tests**, wider metadata regression passed **10 suites / 133
+> tests**, affected Unit 6G UI regression passed **6 suites / 82 tests**, and
+> TypeScript/diff/continuity checks passed. Exact next action: Owner review and
+> separate deployment authority.
+
+> **2026-08-30 Unit 6G bounded metadata/Add-authority correction:** The
+> correction-only pass added safe selected-metadata snapshot identity to the
+> compact Add draft, kept empty-author review saves valid while requiring an
+> author only at the final Add/commit boundary, made title/author evidence
+> select bibliographic durable query identity when present, removed the hard
+> Google language filter, restored exact-ISBN fallback for ISBN-only queries,
+> and restricted batch-card Add advertisement to the full commit-eligibility
+> helper. Forward migration
+> `20260830000055_marketplace_phase9_unit6g_metadata_add_authority_correction.sql`
+> was applied exactly once through Supabase MCP to
+> `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as live version
+> `20260830084323 marketplace_phase9_unit6g_metadata_add_authority_correction`,
+> directly after M54. It changes only internal function definitions and
+> performs no DML/backfill or table/policy/Storage/public RPC signature
+> change; touched internal helper ACLs remain restricted and no public grant is
+> added. Affected-scope Jest passed **64 suites / 690 tests** (one suite and
+> four tests skipped), M54+M55 PGlite passed **7/7**, and read-only definition
+> readback passed. Exact next action: deploy or validate the matching client/
+> Edge bundle; Add-all redesign, close audit, older sibling RPC compatibility,
+> and fresh live browser proof remain out of scope.
 
 > **2026-08-29 Unit 6G M54 lifecycle fence live verification:** The
 > Owner-authorized forward migration was applied exactly once to
@@ -1137,12 +1219,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6G M54 lifecycle fence live-verified; final Save/Add/Remove are active/unexpired-only and closed-session projections are read-only; M52/M53 remain immutable; prior 6G-C/6G-D checkpoints and Unit 8 remain intact** |
-| Overall status | `unit6g_session_lifecycle_fence_live_verified_m54_applied` |
-| Last updated | 2026-08-29 |
-| Latest handoff | M54 is live exactly once as `20260829142337`. It adds one shared locked lifecycle boundary to the current final Save/Add/Remove RPCs and strips mutation capabilities from non-mutable detail/batch projections while preserving completed exact replay. Local verification passed 4/4 focused lifecycle PGlite, 7/7 structural Jest, 42/42 sequential Unit 6G/7A PGlite, and 233/233 related contract tests. Connected closed-candidate proof passed with `P9_STATE_CONFLICT` and zero durable effects. |
-| Current risk level | M54 fixes the reported current Unit 6G Save/Add/Remove and projection defects but intentionally does not redefine older sibling manual/false-detection/variant RPC closed-session compatibility. No Edge/client/native deployment occurred. M54 changes no table, RLS policy, Storage object, public signature, or business row. |
-| Next recommended task | Owner review of the M54 live proof and explicit disposition of older sibling correction/variant RPC closed-session compatibility. Any Edge/client/native deployment, fresh scan/upload, or further database/Storage mutation requires separate authorization. |
+| Current phase | Phase 9: Image-to-LLM Inventory — **bounded metadata throughput is locally implemented and rollout-gated; M56 is unapplied; Unit 6G M54/M55 lifecycle and metadata/Add corrections remain live-verified; prior checkpoints and Unit 8 remain intact** |
+| Overall status | `unit6g_metadata_throughput_local_complete_rollout_gated` |
+| Last updated | 2026-08-30 |
+| Latest handoff | The bounded metadata worker and M56 candidate are locally complete: focused Jest 7 suites / 72 tests, metadata worker build PASS, dispatcher PGlite 30/30. M54 remains live exactly once as `20260829142337`; M55 remains live exactly once as `20260830084323`. No live change occurred in the throughput pass. |
+| Current risk level | The exact deployed Google Books timeout and quota are not readable from current read-only surfaces. A 15-job run has five worst-case waves at concurrency three, so rollout requires timeout ≤10 seconds and canary evidence before M56. The worker/Edge/client bundle is still ahead of deployed runtime; older sibling Unit 6G compatibility remains unresolved. |
+| Next recommended task | Review this preflight, then separately authorize commit and worker-first deployment with live dispatcher batch size one. Verify request shape, timeout, quota/rate limits, memory/connections, retries/dead letters, and duplicate signals; only then separately review/apply M56. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 
@@ -1306,7 +1388,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6g_session_lifecycle_fence_live_verified_m54_applied` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6G SDD](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md) · [Unit 6G matrix](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md) | M54 is live exactly once as `20260829142337` on `Bookconnect_reactexpo`. The current final Save/Add/Remove RPCs require an active, unexpired locked session; non-mutable detail/batch projections are read-only; completed exact replay remains supported. Local structural/PGlite/regression and connected zero-effect proof pass. M52/M53 remain immutable; prior Unit 6G-C/6G-D and Unit 8 checkpoints remain intact. Next: Owner review and an explicit compatibility decision for older sibling correction/variant RPCs; Edge/client/native deployment remains separately gated. |
+| Phase 9: Image-to-LLM Inventory | `unit6g_metadata_throughput_local_complete_rollout_gated` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [pipeline SDD](./implementation/phase-9-image-inventory/02-extraction-enrichment-pipeline-sdd.md) · [Unit 6G tracker](./implementation/phase-9-image-inventory/trackers/31-unit6g-owner-batch-review-design-evidence.md) | Metadata throughput is locally bounded to a 15-job run budget with three active incremental claims and one provider request per book. M56 is a tested dispatcher-only forward migration candidate and is unapplied. Worker-first deployment/canary and later M56 application require separate authorizations. M54/M55 remain live exactly once; prior Unit 6G and Unit 8 checkpoints remain intact. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
