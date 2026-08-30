@@ -54,9 +54,10 @@ export function buildMetadataQueryIdentity(input: Readonly<{
   const normalizedEditionClues = [...new Set(
     input.editionClues.map(normalizeBibliographicText).filter(Boolean),
   )].sort();
-  const strategy: MetadataLookupStrategy = normalizedIsbn13 === null
-    ? 'bibliographic'
-    : input.strategy === 'approved_strong_evidence' ? input.strategy : 'isbn';
+  const hasBibliographicEvidence = normalizedTitle.length > 0 || normalizedAuthors.length > 0;
+  const strategy: MetadataLookupStrategy = input.strategy === 'approved_strong_evidence'
+    ? input.strategy
+    : hasBibliographicEvidence ? 'bibliographic' : 'isbn';
   const key = stableKey([
     METADATA_LOOKUP_CONTRACT_VERSION,
     METADATA_NORMALIZER_VERSION,

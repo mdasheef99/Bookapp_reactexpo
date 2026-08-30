@@ -26,6 +26,24 @@ function textualEvidence(query: MetadataQueryIdentity, edition: MetadataEdition)
   return evidence;
 }
 
+function hasPrimaryIdentityEvidence(evidence: readonly string[]): boolean {
+  return evidence.includes('exact_original_title') && evidence.includes('author_overlap');
+}
+
+function hasEditionClueOverlap(
+  query: MetadataQueryIdentity,
+  edition: MetadataEdition,
+): boolean {
+  if (query.normalizedEditionClues.length === 0) return false;
+  const providerClues = [
+    edition.editionStatement,
+    edition.series,
+    edition.volume,
+    edition.format,
+  ].filter((value): value is string => value !== null).map(normalized);
+  return query.normalizedEditionClues.some((clue) => providerClues.includes(clue));
+}
+
 export function rankGoogleBooksEditions(
   query: MetadataQueryIdentity,
   editions: readonly MetadataEdition[],
@@ -37,42 +55,67 @@ export function rankGoogleBooksEditions(
     const evidence = textualEvidence(query, edition);
     const exactIsbn = Boolean(query.normalizedIsbn13
       && edition.isbn13 === query.normalizedIsbn13);
-    const conflictingIsbn = Boolean(query.normalizedIsbn13 && edition.isbn13
-      && edition.isbn13 !== query.normalizedIsbn13);
-    return { edition, evidence, exactIsbn, conflictingIsbn };
+    const languageCompatible = evidence.includes('language_compatible');
+    const editionClueOverlap = hasEditionClueOverlap(query, edition);
+    if (exactIsbn) evidence.push('exact_validated_isbn');
+    if (editionClueOverlap) evidence.push('edition_clue_overlap');
+    const secondaryScore = Number(exactIsbn)
+      + Number(languageCompatible)
+      + Number(editionClueOverlap);
+    return {
+      edition,
+      evidence,
+      primaryMatch: hasPrimaryIdentityEvidence(evidence),
+      exactIsbn,
+      secondaryScore,
+    };
   }).sort((left, right) =>
-    Number(right.exactIsbn) - Number(left.exactIsbn)
-    || right.evidence.length - left.evidence.length
+    Number(right.primaryMatch) - Number(left.primaryMatch)
+    || right.secondaryScore - left.secondaryScore
     || left.edition.providerRecordId.localeCompare(right.edition.providerRecordId));
 
-  const best = ranked[0];
-  if (best.exactIsbn) {
-    const ties = ranked.filter((entry) => entry.exactIsbn);
+  const hasBibliographicEvidence = query.normalizedTitle.length > 0
+    || query.normalizedAuthors.length > 0;
+  const primaryMatches = ranked.filter((entry) => entry.primaryMatch);
+  if (primaryMatches.length > 0) {
+    const best = primaryMatches[0];
+    const ties = primaryMatches.filter((entry) =>
+      entry.secondaryScore === best.secondaryScore);
     if (ties.length > 1) {
-      return { outcome: 'ambiguous_match', selected: null, evidence: ['exact_isbn_tie'] };
+      return {
+        outcome: 'ambiguous_match',
+        selected: null,
+        evidence: ['title_author_secondary_tie'],
+      };
     }
     return {
       outcome: 'coherent_match',
       selected: best.edition,
-      evidence: Object.freeze(['exact_validated_isbn', ...best.evidence]),
+      evidence: Object.freeze(best.evidence),
     };
   }
-  if (ranked.some((entry) => entry.conflictingIsbn)) {
-    return { outcome: 'material_conflict', selected: null, evidence: ['conflicting_isbn'] };
+  if (!hasBibliographicEvidence) {
+    const exactIsbnMatches = ranked.filter((entry) => entry.exactIsbn);
+    if (exactIsbnMatches.length > 0) {
+      const best = exactIsbnMatches[0];
+      const ties = exactIsbnMatches.filter((entry) =>
+        entry.secondaryScore === best.secondaryScore);
+      if (ties.length > 1) {
+        return { outcome: 'ambiguous_match', selected: null, evidence: ['exact_isbn_tie'] };
+      }
+      return {
+        outcome: 'coherent_match',
+        selected: best.edition,
+        evidence: Object.freeze(best.evidence),
+      };
+    }
   }
-  const coherentText = ranked.filter((entry) =>
-    entry.evidence.includes('exact_original_title')
-    && entry.evidence.includes('author_overlap')
-    && entry.evidence.includes('language_compatible'));
-  if (coherentText.length === 1) {
+  if (ranked.some((entry) => entry.exactIsbn)) {
     return {
-      outcome: 'coherent_match',
-      selected: coherentText[0].edition,
-      evidence: Object.freeze(coherentText[0].evidence),
+      outcome: 'material_conflict',
+      selected: null,
+      evidence: ['isbn_identity_conflicts_with_title_author'],
     };
-  }
-  if (coherentText.length > 1) {
-    return { outcome: 'ambiguous_match', selected: null, evidence: ['coherent_text_tie'] };
   }
   return { outcome: 'no_acceptable_match', selected: null, evidence: [] };
 }

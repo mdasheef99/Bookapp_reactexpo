@@ -113,7 +113,7 @@ describe('Phase 9 provider-neutral metadata outcome validation', () => {
 
   it('accepts a valid Google Books normalized result through the same contract', () => {
     const query = buildMetadataQueryIdentity({
-      strategy: 'isbn',isbnClue: '9780306406157',title: 'ignored',authors: ['ignored'],
+      strategy: 'isbn',isbnClue: '9780306406157',title: 'The Fixture Book',authors: ['Fixture Author'],
       language: 'en',editionClues: [],
     });
     const editions = decodeGoogleBooksResponse(googleBooksMultipleVolumes, {

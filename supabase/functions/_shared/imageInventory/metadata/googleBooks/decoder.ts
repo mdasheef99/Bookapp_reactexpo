@@ -73,16 +73,25 @@ function isbnPair(value: unknown): { isbn10: string | null; isbn13: string | nul
 
 function cover(value: unknown): string | null {
   const links = record(value);
-  const candidate = text(links?.thumbnail, 512) ?? text(links?.smallThumbnail, 512);
-  if (!candidate) return null;
-  try {
-    const parsed = new URL(candidate);
-    if (parsed.protocol === 'http:') parsed.protocol = 'https:';
-    if (parsed.protocol !== 'https:' || parsed.hostname !== 'books.google.com') return null;
-    return parsed.toString();
-  } catch {
-    return null;
+  const sizeOrder = [
+    'extraLarge', 'large', 'medium', 'small', 'thumbnail', 'smallThumbnail',
+  ] as const;
+  for (const size of sizeOrder) {
+    const candidate = text(links?.[size], 512);
+    if (!candidate) continue;
+    try {
+      const parsed = new URL(candidate);
+      if (parsed.protocol === 'http:') parsed.protocol = 'https:';
+      if (parsed.protocol !== 'https:'
+        || parsed.hostname !== 'books.google.com'
+        || parsed.username
+        || parsed.password) continue;
+      return parsed.toString();
+    } catch {
+      // A malformed larger image must not suppress a safe smaller provider image.
+    }
   }
+  return null;
 }
 
 function decodeItem(value: unknown, context: Context): MetadataEdition | null {

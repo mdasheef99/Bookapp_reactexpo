@@ -55,7 +55,7 @@ describe('Phase 9 Unit 5A ISBN and query identity', () => {
     expect(JSON.stringify(first)).not.toMatch(/store|secret|credential|provider/i);
   });
 
-  it('derives ISBN strategy only from a valid normalized ISBN', () => {
+  it('uses bibliographic strategy when title or author clues accompany an ISBN', () => {
     const baseline = {
       strategy: 'bibliographic' as const,
       isbnClue: null,
@@ -71,9 +71,9 @@ describe('Phase 9 Unit 5A ISBN and query identity', () => {
     }).strategy).toBe('bibliographic');
     expect(buildMetadataQueryIdentity({
       ...baseline, strategy: 'approved_strong_evidence', isbnClue: '9780306406158',
-    }).strategy).toBe('bibliographic');
+    }).strategy).toBe('approved_strong_evidence');
     expect(buildMetadataQueryIdentity({
-      ...baseline, strategy: 'bibliographic', isbnClue: '0-306-40615-2',
+      ...baseline, strategy: 'isbn', isbnClue: '0-306-40615-2', title: '', authors: [],
     }).strategy).toBe('isbn');
   });
 
