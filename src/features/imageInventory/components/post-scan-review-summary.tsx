@@ -110,7 +110,7 @@ export function PostScanReviewSummary({
             </View>
 
             <Text selectable style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>
-                Detected is the session total. Cards below show active review only; added and removed books are not repeated.
+                Detected is the session total. Need review counts individual books; image attention above only describes scan processing. Cards below show active review only; added and removed books are not repeated.
             </Text>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>

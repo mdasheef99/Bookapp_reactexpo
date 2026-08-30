@@ -133,7 +133,14 @@ export function PostScanSessionHeader({
                         ) : firstCandidateId ? (
                             <Button title="Open first book in full review" variant="secondary" onPress={onOpenFirstCandidate} />
                         ) : null}
-                        {inputAnnouncement ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{inputAnnouncement}</Text> : null}
+                        {inputAnnouncement ? (
+                            <>
+                                <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{inputAnnouncement}</Text>
+                                <Text selectable style={{ color: colors.textSecondary }}>
+                                    Book review is counted separately below.
+                                </Text>
+                            </>
+                        ) : null}
                         {removeMessage ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{removeMessage}</Text> : null}
                         {candidateMessage ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{candidateMessage}</Text> : null}
                         <PostScanInputList

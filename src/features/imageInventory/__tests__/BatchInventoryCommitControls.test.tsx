@@ -1,6 +1,9 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { BatchInventoryCommitControls } from '../components/BatchInventoryCommitControls';
-import type { CandidateCommitDraft } from '../commit/inventoryCommitCoordinator';
+import type {
+    CandidateCommitDraft,
+    CandidateCommitOutcome,
+} from '../commit/inventoryCommitCoordinator';
 import type { OwnerCandidateReview } from '../contracts/ownerUxReviewSchema';
 import { testUuid } from '../testing/ownerUxTestFixtures';
 
@@ -121,5 +124,61 @@ describe('Phase 9 NEW 6G-D Add-all controls', () => {
         // A local validation issue remains correctable and does not render the
         // false server-authority statement used for canonical ineligibility.
         expect(screen.queryByText(/This book is no longer eligible/iu)).toBeNull();
+    });
+
+    it('excludes authority-blocked and terminal-outcome cards from the Add-all set', () => {
+        const blocked = candidate(1);
+        const noLongerEligible = candidate(2);
+        const ready = candidate(3);
+        const outcome: CandidateCommitOutcome = {
+            candidateId: noLongerEligible.card.candidateId,
+            status: 'no_longer_eligible',
+            stage: 'revalidate',
+        };
+        const screen = render(
+            <BatchInventoryCommitControls
+                candidates={[blocked, noLongerEligible, ready]}
+                blockedCandidateIds={new Set([blocked.card.candidateId])}
+                inFlightCandidateIds={new Set()}
+                outcomes={new Map([[outcome.candidateId, outcome]])}
+                disabled={false}
+                pending={false}
+                result={null}
+                onAddAll={jest.fn()}
+                onRetry={jest.fn()}
+            />,
+        );
+
+        expect(screen.getByText('Add all ready books (1)')).toBeTruthy();
+        expect(screen.queryByText('Add all ready books (3)')).toBeNull();
+    });
+
+    it('does not keep a no-longer-eligible card in the action count after bulk results', () => {
+        const stale = candidate(1);
+        const outcome: CandidateCommitOutcome = {
+            candidateId: stale.card.candidateId,
+            status: 'no_longer_eligible',
+            stage: 'revalidate',
+        };
+        const screen = render(
+            <BatchInventoryCommitControls
+                candidates={[stale]}
+                blockedCandidateIds={new Set()}
+                inFlightCandidateIds={new Set()}
+                outcomes={new Map([[outcome.candidateId, outcome]])}
+                disabled={false}
+                pending={false}
+                result={{
+                    exactN: 1, candidateIds: [stale.card.candidateId], outcomes: [outcome],
+                    succeeded: 0, failedRetryable: 0, noLongerEligible: 1,
+                    needsAttention: 0, stillPending: 0, busy: 0,
+                }}
+                onAddAll={jest.fn()}
+                onRetry={jest.fn()}
+            />,
+        );
+
+        expect(screen.queryByRole('button', { name: /Add all ready books/iu })).toBeNull();
+        expect(screen.getByTestId('add-all-result')).toBeTruthy();
     });
 });

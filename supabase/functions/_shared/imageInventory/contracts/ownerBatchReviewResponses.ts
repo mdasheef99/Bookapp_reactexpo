@@ -44,6 +44,7 @@ const metadataSummary = z.object({
     .refine((value) => value.length > 0).nullable(),
   language: ownerUxLanguageSchema.nullable(),
   coverReference: cover.nullable(),
+  selectionId: ownerBatchUuid.nullable().optional(),
 }).strict();
 const blockerField = z.enum([
   'originalTitle', 'authors', 'originalLanguage', 'metadataChoice', 'quantity',

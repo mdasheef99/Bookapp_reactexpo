@@ -41,7 +41,12 @@ export function metadataStatusLabel(state: OwnerBatchReviewCard['metadataState']
     return 'Metadata failed';
 }
 
-function reviewStatusLabel(card: OwnerBatchReviewCard): string {
+function reviewStatusLabel(
+    card: OwnerBatchReviewCard,
+    addOutcome?: CandidateCommitOutcome,
+): string {
+    if (addOutcome?.status === 'succeeded') return 'Added';
+    if (addOutcome && addOutcome.status !== 'busy') return 'Needs attention';
     if (card.candidateState === 'committed') return 'Added';
     if (card.candidateState === 'commit_in_progress') return 'Adding';
     if (card.candidateState === 'processing') return 'Processing';
@@ -107,6 +112,7 @@ function FieldSummary({ label, value, sourceCode, local, testSuffix, compact = f
 export function BatchReviewCard({
     identity, card, defaults, isOffline, canMutate, removePending, addPending,
     addOutcome, onOpenFullCorrection, onRemove, onAdd, onDraftChange,
+    onAuthorityStateChange,
 }: {
     identity: ImageInventoryIdentity;
     card: OwnerBatchReviewCard;
@@ -121,6 +127,7 @@ export function BatchReviewCard({
     onAdd: (card: OwnerBatchReviewCard, edits: CompactReviewEdits,
         review: NonNullable<ReturnType<typeof buildCompactReview>>) => Promise<unknown>;
     onDraftChange: (candidateId: string, edits: CompactReviewEdits) => void;
+    onAuthorityStateChange?: (candidateId: string, changed: boolean) => void;
 }) {
     const { colors } = useTheme();
     const [mountedEdits, setMountedEdits] = useState<CompactReviewEdits>({});
@@ -146,9 +153,14 @@ export function BatchReviewCard({
 
     useEffect(() => {
         if (acceptedAuthority.current === authorityKey) return;
-        if (hasEdits) setAuthorityChanged(true);
+        if (hasEdits) {
+            if (!authorityChanged) {
+                setAuthorityChanged(true);
+                onAuthorityStateChange?.(card.candidateId, true);
+            }
+        }
         else acceptedAuthority.current = authorityKey;
-    }, [authorityKey, hasEdits]);
+    }, [authorityChanged, authorityKey, card.candidateId, hasEdits, onAuthorityStateChange]);
 
     const replaceEdits = (next: CompactReviewEdits) => {
         setMountedEdits(next);
@@ -156,10 +168,16 @@ export function BatchReviewCard({
     };
     const updateEdits = (patch: CompactReviewEdits) => replaceEdits({ ...mountedEdits, ...patch });
     const clearEdits = () => replaceEdits({});
+    const resolveAuthorityChange = (keepEdits: boolean) => {
+        if (!keepEdits) clearEdits();
+        acceptedAuthority.current = authorityKey;
+        setAuthorityChanged(false);
+        onAuthorityStateChange?.(card.candidateId, false);
+    };
     const attention = useMemo(() => card.blockers.length === 0 ? null
         : `${card.blockers.length} item${card.blockers.length === 1 ? '' : 's'} need attention`,
     [card.blockers.length]);
-    const status = reviewStatusLabel(card);
+    const status = reviewStatusLabel(card, addOutcome);
     const needsAttention = status === 'Needs attention' || status === 'Failed';
 
     return (
@@ -273,12 +291,10 @@ export function BatchReviewCard({
                         <Text selectable style={{ color: colors.error }}>
                             The saved review changed while compact edits were open. Choose which draft to continue with.
                         </Text>
-                        <Button title="Use latest saved review" variant="secondary" onPress={() => {
-                            clearEdits(); acceptedAuthority.current = authorityKey; setAuthorityChanged(false);
-                        }} />
-                        <Button title="Reapply compact edits" variant="secondary" onPress={() => {
-                            acceptedAuthority.current = authorityKey; setAuthorityChanged(false);
-                        }} />
+                        <Button title="Use latest saved review" variant="secondary"
+                            onPress={() => resolveAuthorityChange(false)} />
+                        <Button title="Reapply compact edits" variant="secondary"
+                            onPress={() => resolveAuthorityChange(true)} />
                     </View>
                 ) : null}
 

@@ -217,7 +217,7 @@ describe('Phase 9 Unit 6A Owner UX request contracts', () => {
     },
   );
 
-  it('accepts zero authors and null script as explicit confirmed decisions', () => {
+  it('allows an explicitly confirmed empty author list for saved review state', () => {
     expect(() => parseOwnerUxRequest({
       action: 'update_candidate_review', contractVersion,
       sessionId: uuid(1), candidateId: uuid(2),

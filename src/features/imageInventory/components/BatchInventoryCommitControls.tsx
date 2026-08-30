@@ -3,9 +3,10 @@ import { Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { useTheme } from '@/hooks/useTheme';
 import {
-    candidateCanStartCommit,
+    candidateCanStartBulkCommit,
     type AddAllResult,
     type CandidateCommitDraft,
+    type CandidateCommitOutcome,
     type FrozenAddAllCommand,
 } from '../commit/inventoryCommitCoordinator';
 import { OwnerConfirmationDialog } from './OwnerConfirmationDialog';
@@ -15,6 +16,9 @@ export function BatchInventoryCommitControls({
     disabled,
     pending,
     result,
+    blockedCandidateIds,
+    inFlightCandidateIds,
+    outcomes,
     onAddAll,
     onRetry,
 }: {
@@ -22,6 +26,9 @@ export function BatchInventoryCommitControls({
     disabled: boolean;
     pending: boolean;
     result: AddAllResult | null;
+    blockedCandidateIds?: ReadonlySet<string>;
+    inFlightCandidateIds?: ReadonlySet<string>;
+    outcomes?: ReadonlyMap<string, CandidateCommitOutcome>;
     onAddAll: (candidates: readonly CandidateCommitDraft[]) => Promise<{
         command: FrozenAddAllCommand;
         result: AddAllResult;
@@ -35,8 +42,10 @@ export function BatchInventoryCommitControls({
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [lastCommand, setLastCommand] = useState<FrozenAddAllCommand | null>(null);
     const eligible = useMemo(
-        () => candidates.filter(candidateCanStartCommit),
-        [candidates],
+        () => candidates.filter((candidate) => candidateCanStartBulkCommit(
+            candidate, blockedCandidateIds, inFlightCandidateIds, outcomes,
+        )),
+        [blockedCandidateIds, candidates, inFlightCandidateIds, outcomes],
     );
     const retryable = Boolean(result && (
         result.failedRetryable > 0 || result.stillPending > 0 || result.needsAttention > 0

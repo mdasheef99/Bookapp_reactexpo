@@ -30,6 +30,24 @@ export function candidateCanStartCommit(value: CandidateCommitDraft): boolean {
             && value.card.allowedActions.includes('add_to_inventory');
 }
 
+const bulkExcludedOutcomeStatuses = new Set<CandidateCommitOutcome['status']>([
+    'succeeded', 'failed_retryable', 'no_longer_eligible',
+    'needs_attention', 'still_pending',
+]);
+
+export function candidateCanStartBulkCommit(
+    value: CandidateCommitDraft,
+    blockedCandidateIds?: ReadonlySet<string>,
+    inFlightCandidateIds?: ReadonlySet<string>,
+    outcomes?: ReadonlyMap<string, CandidateCommitOutcome>,
+): boolean {
+    if (blockedCandidateIds?.has(value.card.candidateId)
+        || inFlightCandidateIds?.has(value.card.candidateId)) return false;
+    const outcome = outcomes?.get(value.card.candidateId);
+    if (outcome && bulkExcludedOutcomeStatuses.has(outcome.status)) return false;
+    return candidateCanStartCommit(value);
+}
+
 export function canonicalEligible(detail: OwnerCandidateDetail): boolean {
     return detail.candidateState === 'ready'
         && detail.review.value !== null

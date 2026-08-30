@@ -174,6 +174,25 @@ describe('Phase 9 Unit 6F readiness summary and Close', () => {
         expect(screen.queryByText(/^Publish inventory$/i)).toBeNull();
     });
 
+    it('warns that a manual partial Close preserves added inventory but makes uncommitted books read-only', () => {
+        mockBatchReviewState = batchReviewFixture([
+            aggregateCard(),
+            aggregateCard({ candidateId: testUuid(22) }),
+        ], {
+            counts: {
+                detected: 3, processing: 0, needsAttention: 2,
+                reviewReadySaved: 0, committed: 1, ownerRemoved: 0,
+                falseDetections: 0,
+            },
+        });
+        const screen = render(<InventoryReadinessSummaryScreen sessionId={testUuid(1)} />);
+
+        expect(screen.getByText(/2 uncommitted books will become read-only/iu)).toBeTruthy();
+        expect(screen.getByText(/The 1 book already added to inventory stays unchanged/iu)).toBeTruthy();
+        fireEvent.press(screen.getByText('Close session'));
+        expect(screen.getByText(/cannot be added or retried from this session/iu)).toBeTruthy();
+    });
+
     it('composes pre-close blockers from the supplemental batch aggregate with review-next-blocker navigation', () => {
         mockState = {
             data: readiness({ allInputsTerminal: true, closeState: 'not_closeable' }),

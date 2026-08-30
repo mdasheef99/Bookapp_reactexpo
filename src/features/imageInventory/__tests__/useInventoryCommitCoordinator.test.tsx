@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, renderHook } from '@testing-library/react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { OwnerUxClientError, ownerUxService } from '../api/ownerUxService';
 import {
@@ -188,5 +188,53 @@ describe('Phase 9 NEW 6G-D commit hook retry routing (F01)', () => {
         expect(retrySave.idempotencyKey).toBe(firstSave.idempotencyKey);
         expect(retrySave.commandId).toBe(firstSave.commandId);
         expect(retrySave.review).toEqual(firstSave.review);
+    });
+
+    it('marks a repaired needs-attention bulk retry in flight', async () => {
+        updateReview.mockRejectedValueOnce(new Error('network hiccup'))
+            .mockImplementation(async (request) => readyDetail(request.candidateId));
+        const first = draft({ baseCondition: 'acceptable' });
+        const { result } = renderHook(
+            () => useInventoryCommitCoordinator(identity, sessionId),
+            { wrapper },
+        );
+
+        let bulk!: Awaited<ReturnType<typeof result.current.addAll>>;
+        await act(async () => {
+            bulk = await result.current.addAll([first]);
+        });
+        expect(bulk.result).toMatchObject({ failedRetryable: 1 });
+
+        const invalidCurrent = { ...draft({}), edits: { quantity: 0 } };
+        await act(async () => {
+            await result.current.retryAddAll(bulk.command, [invalidCurrent]);
+        });
+        expect(bulk.command.outcomes.get(first.card.candidateId)).toMatchObject({
+            status: 'needs_attention',
+        });
+
+        let releaseCommit!: (value: {
+            sessionId: string; candidateId: string; candidateVersion: number;
+            inventoryId: string; inventoryVersion: number; outcome: 'committed_private';
+        }) => void;
+        const commitGate = new Promise<{
+            sessionId: string; candidateId: string; candidateVersion: number;
+            inventoryId: string; inventoryVersion: number; outcome: 'committed_private';
+        }>((resolve) => { releaseCommit = resolve; });
+        addToInventory.mockImplementation(async () => commitGate);
+        const repaired = draft({ quantity: 3 });
+        let retryPromise!: Promise<unknown>;
+        await act(async () => {
+            retryPromise = result.current.retryAddAll(bulk.command, [repaired]);
+        });
+        await waitFor(() => expect(addToInventory).toHaveBeenCalledTimes(1));
+        expect(result.current.inFlight.has(first.card.candidateId)).toBe(true);
+
+        releaseCommit({
+            sessionId, candidateId: first.card.candidateId, candidateVersion: 6,
+            inventoryId, inventoryVersion: 1, outcome: 'committed_private',
+        });
+        await act(async () => { await retryPromise; });
+        expect(result.current.inFlight.has(first.card.candidateId)).toBe(false);
     });
 });

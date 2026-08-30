@@ -17,12 +17,16 @@ import {
 import {
     aggregate,
     candidateCanStartCommit,
+    candidateCanStartBulkCommit,
     canonicalEligible,
     classifyFailure,
     draftMatchesCommand,
 } from './inventoryCommitPolicy';
 
-export { candidateCanStartCommit } from './inventoryCommitPolicy';
+export {
+    candidateCanStartCommit,
+    candidateCanStartBulkCommit,
+} from './inventoryCommitPolicy';
 
 export {
     CandidateCommandRegistry,

@@ -4,6 +4,7 @@ import {
     BatchReviewCard,
 } from '../components/BatchReviewCard';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
+import type { CandidateCommitOutcome } from '../commit/inventoryCommitCoordinator';
 import { candidateDetailFixture, testUuid } from '../testing/ownerUxTestFixtures';
 
 let mockMetadataDetail = candidateDetailFixture();
@@ -596,32 +597,40 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         });
     });
 
-    it('shows only the bounded selected metadata snapshot fields when one exists', () => {
+    it('shows the bounded selected metadata snapshot, cover, and a clear provider status', () => {
         mockMetadataDetail = candidateDetailFixture({
             metadata: {
                 state: 'selected', revision: 7, selectionVersion: 1,
                 selectionId: testUuid(99), canonicalEditionId: testUuid(98),
                 snapshot: {
                     title: 'Selected detail title', authors: ['Selected detail author'],
-                    language: 'en', subtitle: null, description: null,
+                    language: 'en', subtitle: 'A selected subtitle',
+                    description: 'A selected description.',
                     isbn10: '1234567890', isbn13: '1234567890123',
                     publisher: 'Bounded Publisher', publishedDate: '2026',
                     script: 'Latn', editionStatement: 'First', series: null,
                     volume: null, format: 'Paperback', pageCount: 240,
-                    categories: [], coverReference: null,
+                    categories: ['Fiction', 'Mystery'],
+                    coverReference: 'https://books.google.com/books/content?id=selected',
                 },
             },
         });
         const screen = renderCard({ allowedActions: ['view_metadata'] });
         fireEvent.press(screen.getByText('View metadata'));
         expect(screen.getByTestId('selected-metadata-details')).toBeTruthy();
+        expect(screen.getByText('Status: Provider metadata selected')).toBeTruthy();
         expect(screen.getByText('Title: Selected detail title')).toBeTruthy();
+        expect(screen.getByText('Subtitle: A selected subtitle')).toBeTruthy();
+        expect(screen.getByText('Description: A selected description.')).toBeTruthy();
+        expect(screen.getByText('Categories / genre: Fiction, Mystery')).toBeTruthy();
+        expect(screen.getByText('Cover for Selected detail title')).toBeTruthy();
         expect(screen.getByText('Publisher: Bounded Publisher')).toBeTruthy();
         expect(screen.queryByTestId('metadata-no-selected-details')).toBeNull();
     });
 
     it('requires an explicit choice when canonical authority changes under mounted edits', () => {
         const initial = card();
+        const onAuthorityStateChange = jest.fn();
         const screen = render(
             <BatchReviewCard
                 identity={{ userId: testUuid(90), storeId: testUuid(91) }}
@@ -629,6 +638,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
                 onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove}
                 onAdd={onAdd} removePending={false} addPending={false}
                 onDraftChange={onDraftChange}
+                onAuthorityStateChange={onAuthorityStateChange}
             />,
         );
         fireEvent.press(screen.getByText('Edit book details'));
@@ -641,12 +651,35 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
                 isOffline={false} canMutate onOpenFullCorrection={onOpenFullCorrection}
                 onRemove={onRemove} onAdd={onAdd} removePending={false}
                 addPending={false} onDraftChange={onDraftChange}
+                onAuthorityStateChange={onAuthorityStateChange}
             />,
         );
         expect(screen.getByTestId('compact-authority-changed')).toBeTruthy();
+        expect(onAuthorityStateChange).toHaveBeenLastCalledWith(initial.candidateId, true);
         expect(screen.getByText('Add to inventory')).toBeDisabled();
         fireEvent.press(screen.getByText('Reapply compact edits'));
+        expect(onAuthorityStateChange).toHaveBeenLastCalledWith(initial.candidateId, false);
         expect(screen.getByText('Add to inventory')).not.toBeDisabled();
         expect(screen.getByText('Condition: Acceptable')).toBeTruthy();
+    });
+
+    it('does not display Ready after an add outcome makes the card ineligible', () => {
+        const outcome: CandidateCommitOutcome = {
+            candidateId: card().candidateId,
+            status: 'no_longer_eligible',
+            stage: 'revalidate',
+        };
+        const screen = render(
+            <BatchReviewCard
+                identity={{ userId: testUuid(90), storeId: testUuid(91) }}
+                card={card()} defaults={defaults} isOffline={false} canMutate
+                onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove}
+                onAdd={onAdd} removePending={false} addPending={false}
+                onDraftChange={onDraftChange} addOutcome={outcome}
+            />,
+        );
+
+        expect(screen.getByText('Needs attention')).toBeTruthy();
+        expect(screen.queryByText('Ready')).toBeNull();
     });
 });

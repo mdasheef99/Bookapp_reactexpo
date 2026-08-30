@@ -116,7 +116,7 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
             pending.current = null;
             setCanonical(result);
             setConfirmOpen(false);
-            setMessage('Session closed. Staged candidates were kept and no inventory was committed.');
+            setMessage('Session closed. Already added inventory remains unchanged. Uncommitted candidates were kept as read-only session records; Close did not add or delete inventory.');
         } catch (error) {
             if (activeScope.current !== callScope) return;
             if (error instanceof OwnerUxClientError && error.code === 'P9_INTERNAL_ERROR') {
@@ -192,6 +192,17 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
         return [...counts.entries()];
     }, [preCloseCards]);
     const aggregateDegraded = Boolean(batchReview.error) && !canonical;
+    const reviewCounts = batchReview.data?.counts;
+    const uncommittedCount = reviewCounts
+        ? Math.max(0, reviewCounts.detected - reviewCounts.committed
+            - reviewCounts.ownerRemoved - reviewCounts.falseDetections)
+        : null;
+    const committedCount = reviewCounts?.committed
+        ?? closeSummary?.committedInventoryItems
+        ?? 0;
+    const partialCloseDescription = uncommittedCount && uncommittedCount > 0
+        ? `Close ends capture and review activity. ${uncommittedCount} uncommitted book${uncommittedCount === 1 ? '' : 's'} will be kept as read-only session records and cannot be added or retried from this session. Already added inventory remains unchanged.`
+        : 'Close ends capture and review activity. It does not commit inventory, publish books, delete candidates, or discard staged work.';
 
     return (
         <ScreenBackground>
@@ -265,6 +276,16 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                             {canonical?.nextBlockingCandidateId ? (
                                 <Button title="Review next blocker" variant="secondary" style={{ marginTop: 14 }} onPress={() => router.push(inventoryRoutes.candidate(sessionId, canonical.nextBlockingCandidateId!))} />
                             ) : null}
+                            {!canonical && uncommittedCount && uncommittedCount > 0 ? (
+                                <View testID="partial-close-warning" style={{ gap: 6, marginTop: 16 }}>
+                                    <Text selectable accessibilityRole="header" style={{ color: colors.error, fontWeight: '800' }}>
+                                        {uncommittedCount} uncommitted book{uncommittedCount === 1 ? '' : 's'} will become read-only
+                                    </Text>
+                                    <Text selectable style={{ color: colors.textSecondary }}>
+                                        The {committedCount} book{committedCount === 1 ? '' : 's'} already added to inventory stay{committedCount === 1 ? 's' : ''} unchanged. Close will not add the remaining book{uncommittedCount === 1 ? '' : 's'}.
+                                    </Text>
+                                </View>
+                            ) : null}
                             {!closeAvailable ? (
                                 <Button title="Refresh processing status" variant="secondary" style={{ marginTop: 12 }} onPress={() => { void refresh(); }} disabled={isOffline || query.isFetching} />
                             ) : null}
@@ -292,7 +313,7 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                 <OwnerConfirmationDialog
                     visible={confirmOpen}
                     title="Close this scan session?"
-                    description="Close ends capture and review activity. It does not commit inventory, publish books, delete candidates, or discard staged work."
+                    description={partialCloseDescription}
                     confirmLabel={pending.current && message?.includes('unclear') ? 'Retry exact Close' : 'Close session'}
                     pending={closeMutation.isPending}
                     onCancel={() => setConfirmOpen(false)}

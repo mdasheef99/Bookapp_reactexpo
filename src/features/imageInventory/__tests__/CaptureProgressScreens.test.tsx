@@ -133,6 +133,7 @@ jest.mock('../queries/ownerBatchReviewQueries', () => ({
         isPending: false,
     }),
     useSaveOwnerCandidateReview: () => ({ mutate: jest.fn(), isPending: false }),
+    useCloseOwnerInventorySessionV3: () => ({ mutate: jest.fn(), isPending: false }),
 }));
 jest.mock('../queries/ownerUxInputQueries', () => ({
     useRemoveOwnerInventoryInput: () => ({
@@ -177,6 +178,35 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
         expect(screen.getByText('Remove image')).toBeTruthy();
         expect(screen.queryByText('Add another image')).toBeNull();
         expect(screen.queryByText('Choose replacement image')).toBeNull();
+    });
+
+    it('labels image attention separately from per-book review counts', () => {
+        const originalInput = mockInputs.data.items[0];
+        const originalCounts = (mockBatchReview.data as Record<string, any>).counts;
+        mockInputs.data.items = [{
+            ...originalInput,
+            presentationState: 'ready',
+            retryState: 'none',
+            safeCode: null,
+            terminal: true,
+            acceptedCandidateCount: 1,
+        }] as any;
+        (mockBatchReview.data as Record<string, any>).counts = {
+            ...originalCounts,
+            detected: 1,
+            processing: 0,
+            needsAttention: 1,
+        };
+        const screen = render(
+            <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+
+        expect(screen.getByText('Image processing: 1 ready, 0 need attention, 0 processing.')).toBeTruthy();
+        expect(screen.getByText(/Book review is counted separately below/iu)).toBeTruthy();
+        expect(screen.getByText(/Need review counts individual books/iu)).toBeTruthy();
+
+        mockInputs.data.items = [originalInput];
+        (mockBatchReview.data as Record<string, any>).counts = originalCounts;
     });
 
     it('offers a replacement only after the current image has disappeared', () => {

@@ -112,7 +112,12 @@ export function buildCompactReview(
     edits: CompactReviewEdits,
 ): OwnerCandidateReview | null {
     const display = compactReviewDisplay(card, defaults, edits);
-    const metadataChoice = edits.metadataChoice ?? card.review?.metadataChoice;
+    const selectedMetadataChoice = card.metadataState === 'selected'
+        && card.metadataSummary?.selectionId
+        ? { mode: 'selected' as const, selectionId: card.metadataSummary.selectionId }
+        : undefined;
+    const metadataChoice = edits.metadataChoice ?? card.review?.metadataChoice
+        ?? selectedMetadataChoice;
     const candidate = {
         originalTitle: display.title,
         authors: display.authors,

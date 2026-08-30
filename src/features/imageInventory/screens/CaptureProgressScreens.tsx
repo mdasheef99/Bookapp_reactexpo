@@ -9,7 +9,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { BatchReviewCard } from '../components/BatchReviewCard';
 import { BatchInventoryCommitControls } from '../components/BatchInventoryCommitControls';
 import { PostScanSessionHeader } from '../components/post-scan-session-header';
-import { candidateCanStartCommit } from '../commit/inventoryCommitCoordinator';
+import { candidateCanStartBulkCommit } from '../commit/inventoryCommitCoordinator';
 import { useInventoryCommitCoordinator } from '../commit/useInventoryCommitCoordinator';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 import {
@@ -28,6 +28,7 @@ import {
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
 import { coalesceOwnerUxRefresh } from '../offline/ownerUxOfflineGate';
 import { createCaptureUuid, createSemanticKey } from '../capture/captureIds';
+import { useCompletedScanAutoClose } from '../close/useCompletedScanAutoClose';
 import { useRemoveOwnerInventoryInput } from '../queries/ownerUxInputQueries';
 import type { RemoveScanInputRequest } from '../api/ownerUxService';
 
@@ -53,6 +54,9 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const [candidateDrafts, setCandidateDrafts] = useState<Map<string, CompactReviewEdits>>(
         new Map(),
     );
+    const [authorityChangedCandidates, setAuthorityChangedCandidates] = useState<Set<string>>(
+        new Set(),
+    );
     const pendingRemoval = useRef<RemoveScanInputRequest | null>(null);
     const unavailable = session.data?.status === 'expired' || [session.error, inputs.error].some(
         (error) => error && 'code' in error
@@ -66,21 +70,15 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const retryableError = !unavailable && Boolean(lifecycleError);
     const aggregateFailed = !unavailable && !loading && !retryableError
         && Boolean(batchReview.error);
-    // NEW 6G-C supports ONE current image/input only. Historical multi-input
-    // sessions and aggregates whose active-review counts exceed the returned
-    // compact projection are unsupported compatibility data: they must fail
-    // closed rather than ever present the compact set as complete. No
-    // pagination, no multi-image recreation, no hidden-candidate handling.
+    // SDD §8: ONE current input; historical/incomplete projections fail closed.
     const inputCount = inputs.data?.items.length ?? 0;
     const activeReviewCandidates = batchReview.data
         ? batchReview.data.counts.processing
             + batchReview.data.counts.needsAttention
             + batchReview.data.counts.reviewReadySaved
         : 0;
-    // counts.detected is the lifetime detected-candidate count. NEW 6G-C
-    // support is ONE image with 1..15 books, so a detected count of 16 or
-    // more can only come from unsupported historical data UNLESS it has a
-    // legitimate current explanation:
+    // SDD §8.1: 16+ is unsupported unless the current input carries the
+    // inherited over-limit failure:
     // - detected >= 16 AND no valid current over-limit explanation =>
     //   unsupported historical session => fail closed.
     // - detected >= 16 AND the session's ONE current input is a terminal
@@ -127,8 +125,11 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     useEffect(() => {
         if (isFocused && inputs.data?.presentationRevision) void refreshAll();
     }, [inputs.data?.presentationRevision, isFocused, refreshAll]);
+    useEffect(() => {
+        setAuthorityChangedCandidates(new Set());
+    }, [identity.storeId, identity.userId, sessionId]);
     const inputAnnouncement = inputs.data?.items.length
-        ? `${inputs.data.items.filter((item) => item.presentationState === 'ready').length} images processed. ${inputs.data.items.filter((item) => item.presentationState === 'needs_attention').length} need attention. ${inputs.data.items.filter((item) => ['checking_image', 'finding_books'].includes(item.presentationState)).length} processing.`
+        ? `Image processing: ${inputs.data.items.filter((item) => item.presentationState === 'ready').length} ready, ${inputs.data.items.filter((item) => item.presentationState === 'needs_attention').length} need attention, ${inputs.data.items.filter((item) => ['checking_image', 'finding_books'].includes(item.presentationState)).length} processing.`
         : null;
     const beginRemove = (target: { inputId: string; ordinal: number; inputVersion: number }) => {
         if (removeMutation.isPending) return;
@@ -206,9 +207,34 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
         const review = buildCompactReview(card, setupDefaults, edits);
         return { card, edits, ...(review ? { review } : {}) };
     });
+    const handleAuthorityStateChange = useCallback((candidateId: string, changed: boolean) => {
+        setAuthorityChangedCandidates((current) => {
+            if (current.has(candidateId) === changed) return current;
+            const next = new Set(current);
+            if (changed) next.add(candidateId);
+            else next.delete(candidateId);
+            return next;
+        });
+    }, []);
     const showBulkControls = !loading && !unavailable && !retryableError
         && !aggregateFailed && !unsupportedLegacyOverflow
-        && (commitDrafts.some(candidateCanStartCommit) || inventoryCommit.bulkResult !== null);
+        && (commitDrafts.some((candidate) => candidateCanStartBulkCommit(
+            candidate,
+            authorityChangedCandidates,
+            inventoryCommit.inFlight,
+            inventoryCommit.outcomes,
+        )) || inventoryCommit.bulkResult !== null);
+    const commandsIdle = inventoryCommit.inFlight.size === 0 && !inventoryCommit.bulkPending
+        && !removeCandidate.isPending && !removeMutation.isPending;
+    const autoClose = useCompletedScanAutoClose({
+        identity,
+        sessionId,
+        session: session.data,
+        batch: batchReview.data,
+        commandsIdle,
+        isOffline,
+        isFocused,
+    });
 
     return (
         <ScreenBackground>
@@ -236,6 +262,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         removePending={removeCandidate.isPending}
                         addPending={inventoryCommit.inFlight.has(item.candidateId)}
                         addOutcome={inventoryCommit.outcomes.get(item.candidateId)}
+                        onAuthorityStateChange={handleAuthorityStateChange}
                         onOpenFullCorrection={() => router.push(inventoryRoutes.candidate(
                             sessionId,
                             item.candidateId,
@@ -270,7 +297,8 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         firstCandidateId={cards[0]?.candidateId ?? null}
                         inputAnnouncement={inputAnnouncement}
                         removeMessage={removeMessage}
-                        candidateMessage={candidateMessage}
+                        candidateMessage={[candidateMessage, autoClose.message]
+                            .filter(Boolean).join(' ') || null}
                         removeTarget={removeTarget}
                         removePending={removeMutation.isPending}
                         onReturnToInventory={() => router.replace(inventoryRoutes.root())}
@@ -319,6 +347,9 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         disabled={isOffline || session.data?.status !== 'active'}
                         pending={inventoryCommit.bulkPending}
                         result={inventoryCommit.bulkResult}
+                        blockedCandidateIds={authorityChangedCandidates}
+                        inFlightCandidateIds={inventoryCommit.inFlight}
+                        outcomes={inventoryCommit.outcomes}
                         onAddAll={inventoryCommit.addAll}
                         onRetry={inventoryCommit.retryAddAll}
                     />

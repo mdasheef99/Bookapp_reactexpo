@@ -66,6 +66,7 @@ function card(overrides: Partial<OwnerBatchReviewCard> = {}): OwnerBatchReviewCa
             authors: ['Selected author'],
             language: 'de',
             coverReference: null,
+            selectionId: savedReview.metadataChoice.selectionId,
         },
         review: savedReview,
         fieldSources: {
@@ -160,6 +161,22 @@ describe('Phase 9 Unit 6G compact draft field/source authority', () => {
         });
     });
 
+    it('defaults a selected provider snapshot when no saved review exists', () => {
+        const value = card({
+            review: null,
+            reviewVersion: null,
+            reviewDisposition: null,
+        });
+        expect(buildCompactReview(value, defaults, {})).toMatchObject({
+            originalTitle: 'Selected title',
+            authors: ['Selected author'],
+            metadataChoice: {
+                mode: 'selected',
+                selectionId: savedReview.metadataChoice.selectionId,
+            },
+        });
+    });
+
     it('keeps every saved commercial value identical between display and strict Save', () => {
         expectDisplayAndSave(card(), 'condition', 'good');
         expectDisplayAndSave(card(), 'priceMinor', 30_000);
@@ -185,6 +202,22 @@ describe('Phase 9 Unit 6G compact draft field/source authority', () => {
             title: '', authors: [], language: '',
         });
         expect(buildCompactReview(value, defaults, {})).toBeNull();
+    });
+
+    it('blocks compact Add when no author is present', () => {
+        const base = card();
+        const value = card({
+            review: null,
+            reviewVersion: null,
+            reviewDisposition: null,
+            metadataState: 'manual',
+            metadataSummary: null,
+            observed: { ...base.observed, authors: [] },
+            fieldSources: { ...base.fieldSources, authors: 'missing' },
+        });
+        expect(buildCompactReview(value, defaults, {
+            metadataChoice: { mode: 'manual', selectionId: null },
+        })).toBeNull();
     });
 
     it('uses only applicable session defaults for non-metadata fields', () => {

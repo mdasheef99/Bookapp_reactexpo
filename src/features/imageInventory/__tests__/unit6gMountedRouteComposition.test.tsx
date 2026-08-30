@@ -465,6 +465,38 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
         mockInputs.data.items = [];
     });
 
+    it('automatically closes only after every detected book was explicitly committed', async () => {
+        mockInputs.data.items = [{
+            inputId: '00000000-0000-4000-8000-000000000001',
+            ordinal: 1, inputVersion: 2,
+            presentationState: 'ready', retryState: 'none',
+            safeCode: null, acceptedCandidateCount: 2, terminal: true,
+        }];
+        mockSessionV3 = {
+            ...mockSessionV3,
+            data: {
+                ...mockSessionV3.data,
+                allInputsTerminal: true,
+                closeState: 'closeable',
+            },
+        };
+        mockBatchReview = batchReviewFixture([], {
+            detected: 2,
+            processing: 0,
+            committed: 2,
+        });
+
+        render(
+            <InventorySessionFoundationScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+
+        await waitFor(() => expect(mockCloseV3Mutate).toHaveBeenCalledTimes(1));
+        expect(mockCloseV3Mutate.mock.calls[0][0]).toEqual(expect.objectContaining({
+            sessionId: '00000000-0000-4000-8000-000000000010',
+            expectedSessionVersion: 4,
+        }));
+    });
+
     it('mounts the complete compact-to-metadata-to-deep-correction-to-Add journey with nullable v3 defaults', async () => {
         const review = {
             originalTitle: 'Detected Book One', authors: ['Author One'],

@@ -147,7 +147,8 @@ export function useInventoryCommitCoordinator(
     ) => {
         const retryIds = command.candidateIds.filter((candidateId) => {
             const status = command.outcomes.get(candidateId)?.status;
-            return status === 'failed_retryable' || status === 'still_pending';
+            return status === 'failed_retryable' || status === 'still_pending'
+                || status === 'needs_attention';
         });
         markInFlight(retryIds, true);
         setBulkPending(true);

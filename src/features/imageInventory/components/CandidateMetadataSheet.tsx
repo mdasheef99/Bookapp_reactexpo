@@ -1,4 +1,5 @@
 import { Modal, ScrollView, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useTheme } from '@/hooks/useTheme';
@@ -10,13 +11,13 @@ import {
 } from '../queries/ownerUxQueries';
 
 const stateLabels = {
-    selected: 'Matched',
-    manual: 'Manual',
-    no_match: 'No match',
-    ambiguous: 'Ambiguous',
-    pending: 'Pending',
-    temporarily_unavailable: 'Unavailable',
-    failed: 'Failed',
+    selected: 'Provider metadata selected',
+    manual: 'Manual metadata',
+    no_match: 'No provider match',
+    ambiguous: 'Multiple possible matches',
+    pending: 'Metadata processing',
+    temporarily_unavailable: 'Metadata temporarily unavailable',
+    failed: 'Metadata failed',
 } as const;
 
 function MetadataValue({ label, value }: { label: string; value: string | number | null }) {
@@ -87,8 +88,20 @@ export function CandidateMetadataSheet({
                             <>
                                 {snapshot ? (
                                     <View style={{ gap: 4 }} testID="selected-metadata-details">
+                                        {snapshot.coverReference ? (
+                                            <Image
+                                                source={{ uri: snapshot.coverReference }}
+                                                contentFit="contain"
+                                                accessible
+                                                accessibilityRole="image"
+                                                accessibilityLabel={`Cover for ${snapshot.title}`}
+                                                style={{ width: 120, height: 180, alignSelf: 'center', borderRadius: 8 }}
+                                            />
+                                        ) : null}
                                         <MetadataValue label="Title" value={snapshot.title} />
+                                        <MetadataValue label="Subtitle" value={snapshot.subtitle} />
                                         <MetadataValue label="Authors" value={snapshot.authors.join(', ')} />
+                                        <MetadataValue label="Description" value={snapshot.description} />
                                         <MetadataValue label="Language" value={snapshot.language} />
                                         <MetadataValue label="ISBN-10" value={snapshot.isbn10} />
                                         <MetadataValue label="ISBN-13" value={snapshot.isbn13} />
@@ -98,6 +111,7 @@ export function CandidateMetadataSheet({
                                         <MetadataValue label="Volume" value={snapshot.volume} />
                                         <MetadataValue label="Format" value={snapshot.format} />
                                         <MetadataValue label="Page count" value={snapshot.pageCount} />
+                                        <MetadataValue label="Categories / genre" value={snapshot.categories.join(', ')} />
                                         <MetadataValue label="Source" value="Selected metadata" />
                                     </View>
                                 ) : (

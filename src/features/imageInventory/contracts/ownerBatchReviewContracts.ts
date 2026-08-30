@@ -82,6 +82,7 @@ const metadataSummary = z.object({
     authors: unique(safeTextSchema(1, 256), 20)
         .refine((items) => items.length > 0).nullable(),
     language: languageSchema.nullable(), coverReference: cover.nullable(),
+    selectionId: uuidSchema.nullable().optional(),
 }).strict();
 const card = z.object({
     sessionId: uuidSchema, candidateId: uuidSchema, inputId: uuidSchema.nullable(),

@@ -10,6 +10,7 @@ import {
 const M52 = '20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql';
 const M53 = '20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql';
 const M54 = '20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql';
+const M55 = '20260830000055_marketplace_phase9_unit6g_metadata_add_authority_correction.sql';
 const lifecycleCases = [
   { label: 'closing', status: 'closing', expired: false },
   { label: 'closed', status: 'closed', expired: false },
@@ -40,6 +41,7 @@ before(async () => {
   await db.exec(fs.readFileSync(migrationPath(M52), 'utf8'));
   await db.exec(fs.readFileSync(migrationPath(M53), 'utf8'));
   await db.exec(fs.readFileSync(migrationPath(M54), 'utf8'));
+  await db.exec(fs.readFileSync(migrationPath(M55), 'utf8'));
 });
 
 after(async () => db?.close());
@@ -172,4 +174,42 @@ test('M54-04 completed replays survive Close and Save replay becomes read-only',
   const removeResult = await scalar(db, removeCommand);
   await setLifecycle(removed, { status: 'closed', expired: false });
   assert.deepEqual(await scalar(db, removeCommand), removeResult);
+});
+
+test('M55 selected cards carry their snapshot identity for direct Add preparation', async () => {
+  const fixture = await seedReviewedCandidate(db, { selectedMetadata: true });
+  const batch = await scalar(db, `SELECT public.phase9_owner_batch_review_v1(
+    '${fixture.sessionId}')`);
+  assert.equal(batch.items[0].metadataSummary.selectionId, fixture.selectionId);
+});
+
+test('M55 uses bibliographic query identity when ISBN accompanies title and author', async () => {
+  const fixture = await seedReviewedCandidate(db);
+  await resetActor(db);
+  await db.exec(`UPDATE public.image_extraction_candidates
+    SET observed_isbn_clue='0-306-40615-2' WHERE id='${fixture.candidateId}'`);
+  const identity = JSON.parse(await scalar(db, `SELECT
+    marketplace_sec.phase9_metadata_candidate_query_identity(c)
+    FROM public.image_extraction_candidates c WHERE c.id='${fixture.candidateId}'`));
+  assert.equal(identity[2], 'bibliographic');
+  assert.equal(identity[3], '9780306406157');
+});
+
+test('M55 allows authorless Save but blocks the final Add boundary', async () => {
+  const fixture = await seedReviewedCandidate(db, {
+    review: { authors: [], originalFieldConfirmation: { title: true, authors: [] } },
+  });
+  const addKey = `m55-authorless-add-${randomUUID()}`;
+  await setActor(db, fixture.ownerId);
+  await assert.rejects(db.query(commitSql(fixture, { idempotencyKey: addKey })),
+    /P9_STATE_CONFLICT/);
+  const batch = await scalar(db, `SELECT public.phase9_owner_batch_review_v1(
+    '${fixture.sessionId}')`);
+  assert.equal(batch.items[0].allowedActions.includes('add_to_inventory'), false);
+  const saved = await scalar(db, saveSql(fixture));
+  assert.equal(saved.candidateId, fixture.candidateId);
+  assert.equal(saved.allowedActions.includes('add_to_inventory'), false);
+  await resetActor(db);
+  assert.equal(await scalar(db, `SELECT count(*)::int FROM public.store_inventory
+    WHERE created_from_candidate_id='${fixture.candidateId}'`), 0);
 });

@@ -32,6 +32,14 @@ test('U7A-01 saved review and current metadata are the sole materialization auth
   assert.equal(inventory.edition_statement, fixture.canonicalEditionStatement);
   assert.equal(inventory.volume, fixture.canonicalVolume);
   assert.equal(inventory.format, fixture.canonicalFormat);
+  const candidate = (await db.query(`SELECT publication_decision,commit_outcome
+    FROM public.image_extraction_candidates WHERE id='${fixture.candidateId}'`)).rows[0];
+  assert.equal(candidate.publication_decision, fixture.review.publicationIntent);
+  assert.equal(candidate.commit_outcome, 'committed_private');
+  assert.equal(await scalar(db, `SELECT details->>'publicationIntent'
+    FROM public.marketplace_audit_logs
+    WHERE action='phase9.candidate_commit' AND entity_id='${result.inventoryId}'`),
+  fixture.review.publicationIntent);
   assert.deepEqual(await scalar(db, `SELECT row_to_json(e)::jsonb
     FROM public.canonical_editions e WHERE id='${fixture.canonicalEditionId}'`), canonicalBefore);
   assert.deepEqual(await scalar(db, `SELECT proargnames FROM pg_proc
