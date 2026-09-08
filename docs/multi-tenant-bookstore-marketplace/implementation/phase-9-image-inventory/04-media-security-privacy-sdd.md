@@ -328,6 +328,15 @@ Raw provider/model payload persistence is disabled by default. Any exception req
 
 ## 12. Deletion, holds, and recovery
 
+**2026-09-08 Unit 6G correction:** The corrected worker no longer deletes based
+on its upload flag. Live M57–M59 implement the persisted
+[receipt/output-intent design](./supporting/unit6g-media-completion-correction.md):
+server-derived intent precedes upload; uncertain outcomes retain bounded
+reconciliation evidence; same-attempt reuse verifies Storage metadata and actual
+bytes; and only a fenced service cleanup claim authorizes object deletion.
+M57–M59 are live as `20260908073203`, `20260908073308`, and
+`20260908073425`; matching runtime deployment and scheduling remain gated.
+
 - Lifecycle worker selects due assets under lease, rechecks active links/holds, deletes object, then records `deleted_at`, reason, attempt, and object result.
 - Deletion is idempotent; already-missing object is a success with evidence.
 - Legal/dispute/security holds record type, authority, start/release, and prevent scheduled deletion.

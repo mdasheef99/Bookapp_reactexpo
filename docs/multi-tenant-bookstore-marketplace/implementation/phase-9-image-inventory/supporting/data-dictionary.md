@@ -1,13 +1,27 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** current/live and approved-target representations separated; Unit 6G Group 1 contract/persistence target is locally implemented with M52 unapplied
-**Last updated:** 2026-08-21
+**Status:** current/live and approved-target representations separated; Unit 6G M52–M59 live
+**Last updated:** 2026-09-08
 
-Unit 6A adds only local, unapplied Owner UX presentation/review support; it grants no Unit 7 inventory/publication mutation authority. Unit 6G Group 1 adds only local contract/runtime and forward migration-candidate seams; it does not apply M52 or implement UI/card/Add-all/Store View behavior. See [tracker 19](../trackers/19-unit6a-owner-safe-backend-evidence.md) and [tracker 31](../trackers/31-unit6g-owner-batch-review-design-evidence.md).
+Unit 6A adds only Owner UX presentation/review support; it grants no Unit 7 inventory/publication mutation authority. Unit 6G M52–M59 are live at their recorded versions; M57–M59 exact-project readback passed on 2026-09-08. See [tracker 19](../trackers/19-unit6a-owner-safe-backend-evidence.md), [tracker 31](../trackers/31-unit6g-owner-batch-review-design-evidence.md), and the [media-completion correction](./unit6g-media-completion-correction.md).
 
 M01-M08/M10-M42 are live-verified at their recorded levels. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. M14 adds dedicated service-only vision-provider attempts and is live once as `20260727183546`. M39/M40/M41/M42 are live exactly once; M42 keeps generated listing authors projection database-owned. Owner/media/fixture-vision/publication-worker services remain deployed. Unit 7B is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`; M09 quantity validation remains a separate live-data gate.
 
 The dictionary distinguishes canonical truth, store-owned snapshots, public projections, staged AI output, and media/evidence. A field must not be added to several layers merely because it is convenient; each copy needs a named owner and synchronization rule.
+
+## Unit 6G media-completion correction — M57–M59 live
+
+| Representation | Owner and visibility | Required meaning |
+| --- | --- | --- |
+| `marketplace_sec.phase9_media_output_intents` | PostgreSQL-owned private table; no direct API-role access | One server-derived record per media job attempt and output kind (`snapshot` or `sanitized`), binding store, job, attempt, worker/claim hash, bucket/path, immutable context, lifecycle state, and bounded cleanup lease/recheck fields before Storage upload |
+| `marketplace_sec.phase9_media_completion_receipts` | PostgreSQL-owned private table; no direct API-role access | Canonical completed command/result for exact replay after the job lease is cleared; binds the complete completion arguments and prevents a changed claim or payload from reusing the receipt |
+| cleanup claim/result functions | `service_role` only | Lock job then intent, recheck all references and holds, permanently reserve deletion before returning an object, fence completion/reference creation against that reservation, and move repeated/uncertain outcomes to bounded recheck or manual reconciliation |
+| duplicate sanitized-hash terminal result | database-owned job transition | Reject only the named per-store sanitized-hash conflict at attempt five with `P9_MEDIA_DUPLICATE_INPUT`; create no candidate, inventory, listing, or accepted output effect and leave unrelated max-attempt semantics unchanged |
+
+These representations are live as M57 `20260908073203`, M58
+`20260908073308`, and M59 `20260908073425`. Exact-project table, RLS, ACL,
+function, grant, trigger, dispatcher, and empty-state readback passed. Original
+input/session/Owner lineage and store isolation remain authoritative.
 
 ## Conventions
 

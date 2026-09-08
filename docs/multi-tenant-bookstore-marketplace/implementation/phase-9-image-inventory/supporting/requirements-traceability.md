@@ -1,14 +1,25 @@
 # Phase 9 Requirements Traceability
 
-**Last updated:** 2026-08-30
+**Last updated:** 2026-09-08
+
+## Unit 6G media-completion correction — M57–M59 live
+
+| Requirement | Owning source and acceptance |
+| --- | --- |
+| Persist server-derived output identity and policy/lineage context before any snapshot or sanitized upload | Media-completion correction §§4.1/6; Master SDD §3 MAS-03/MAS-08/MAS-17 and §8; Pipeline SDD §10; M57; output-preparation Jest and SQL correction cases |
+| Exact completion replay returns one canonical receipt only for the same command, claim, attempt, payload, policy, and lineage; a new or changed claim cannot inherit authority | Media-completion correction §4.2; Pipeline SDD §4/§10; M58; focused SQL replay/mismatch and distinct-connection PostgreSQL cases |
+| A per-store duplicate sanitized hash is rejected atomically at attempt five with no loser candidate/inventory effect and no change to unrelated max-attempt handling | Media-completion correction §§4.2/6; Security SDD MED-19; M58; duplicate-completion Jest, PGlite, and real-PostgreSQL concurrency cases |
+| Cleanup locks job then intent, rechecks references/holds, reserves deletion irreversibly before object removal, fences new references/completion, and bounds retries/unknown acknowledgements | Media-completion correction §4.3; Security SDD §§6/7/12; M59; cleanup/recovery Jest, PGlite, and both PostgreSQL race orders |
+| Original input/session/Owner lineage, store isolation, accepted output protection, and historical dead letters remain unchanged | Master SDD §8; Pipeline SDD §10; Security SDD MED-19; cross-store, accepted-object, and historical-dead-letter regression markers |
+| Rollout boundary | M57–M59 are live once as `20260908073203`, `20260908073308`, and `20260908073425`; exact-project readback passed. Independent review returned PASS with no actionable findings. Owner review of the live proof is next; runtime deployment, scheduling, connected mutation, commit, and push require separate authorization. |
 
 ## Unit 6G Owner defaults, compact review, and commit handoff draft
 
 The controlling proposal is [Unit 6G](../work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md)
 and its [contract matrix](../work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md).
 It was approved for Group 1 implementation on the existing branch. Group 1 is
-locally complete with strict contract/runtime tests and an un-applied M52
-migration candidate; Groups 2–4 remain separately unauthorized. See [tracker
+live at its recorded M52 version; later M53–M56 are also live at their recorded
+versions. Groups 2–4 remain governed by their recorded authority. See [tracker
 31](../trackers/31-unit6g-owner-batch-review-design-evidence.md) §8.2.
 
 | Requirement | Owning source and acceptance |

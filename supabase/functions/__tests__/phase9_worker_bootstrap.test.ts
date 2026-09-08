@@ -28,14 +28,21 @@ describe('Phase 9 dedicated worker authentication and bootstrap', () => {
       magickWasmPath: 'configured.wasm',
     })).not.toThrow();
     rpc.mockResolvedValueOnce({ data: [], error: null });
+    rpc.mockResolvedValueOnce({ data: [], error: null });
+    rpc.mockResolvedValueOnce({ data: { manual_reconciliation: 0, due_count: 0, oldest_due_seconds: 0 }, error: null });
     const response = await handlePhase9MediaValidationWorker(new Request('http://worker/run', {
       method: 'POST',
       headers: { authorization: `Bearer ${workerAuthToken}` },
       body: JSON.stringify({ contractVersion: 'phase9-v1', batchSize: 1 }),
     }), { workerId: 'worker-0000000001', workerAuthToken, serviceClient: client, mediaProcessor: {} as any });
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ claimed: 0, results: [] });
+    await expect(response.json()).resolves.toEqual({ claimed: 0, results: [], cleanup: {
+      claimed: 0, results: [], health: { manualReconciliation: 0, dueCount: 0, oldestDueSeconds: 0 },
+    } });
     expect(rpc).toHaveBeenCalledWith('claim_phase9_media_validation_jobs', {
+      p_batch_size: 1, p_worker: 'worker-0000000001',
+    });
+    expect(rpc).toHaveBeenCalledWith('claim_phase9_media_output_cleanup_jobs', {
       p_batch_size: 1, p_worker: 'worker-0000000001',
     });
   });

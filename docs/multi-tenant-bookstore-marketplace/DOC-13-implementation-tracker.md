@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-08-30
+**Date:** 2026-09-08
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -25,6 +25,78 @@ Every coding session must update tracking before ending if it changes any of the
 - next recommended task
 - handoff notes
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
+
+> **2026-09-08 Unit 6G M57–M59 live application/readback:** After exact-project
+> reverification and the passing preflight, M57, M58, and M59 were applied
+> separately and in order to `Bookconnect_reactexpo` /
+> `ahntbtktjjmvfosgkmgn` as live versions `20260908073203`, `20260908073308`,
+> and `20260908073425`. Table/RLS/ACL, index, function/grant, legacy-function
+> revocation, fence-trigger, dispatcher, empty-state, definition-marker, and
+> service-role cleanup-health readbacks pass; the media queue remains idle.
+> Post-DDL advisor findings for the new private tables are informational only:
+> RLS enabled with no direct policies and unindexed `store_id` foreign keys.
+> No business row, Storage object, job, deployment, provider call, stage,
+> commit, push, merge, or PR changed. Next: Owner review of the live proof;
+> runtime deployment, scheduling, connected business-data tests, commit, and
+> push require separate authorization.
+
+> **2026-09-08 connected Owner close/upload proof:** The authenticated Owner
+> closed the pre-existing active scan through the app; readback showed
+> `status=closed`, five committed inventory items preserved, and six uncommitted
+> candidates retained as read-only records. A fresh connected scan accepted the
+> repository PNG fixture through the in-app browser and advanced through preview
+> and `Registering image` into a live session. Exact-project readback shows one
+> valid `image/png` input in `failed` with
+> `P9_MEDIA_PROCESSING_RETRYABLE`, zero candidates, and zero committed
+> inventory rows. Its media-validation job retried five times and is now
+> `dead_letter` with `P9_MEDIA_PROCESSING_RETRYABLE` / `media_validation`; the
+> UI reports one image failed. Chrome's chooser-only `Not allowed` result is an
+> environment permission issue; the app upload path itself registered the PNG.
+> No manual queue mutation, migration, deployment, commit, push, or PR action
+> occurred. The blocker is the matching deployed media worker/runtime path;
+> separate authorization is required before deployment/scheduling correction and
+> a new connected proof.
+
+> **Pre-application 2026-09-08 Unit 6G media-completion correction integration:** The bounded
+> correction is integrated locally on
+> `codex/phase9-unit6g-media-correction-integrated`, based on verified
+> `origin/main` `573182267ddd79e08b0abfb348b5afd9fb0dc571`. M52–M56 were already
+> tracked by that baseline and read-only exact-project history confirms each is
+> live once, ending with M56 `20260830175651`. New M57–M59 remain local and
+> unapplied; they add durable output intents, canonical completion receipts,
+> exact duplicate-sanitized-hash terminal rejection, and fenced service-only
+> cleanup/recovery. Focused Jest 262/262, focused PGlite 21/21, worker
+> TypeScript, and disposable real-PostgreSQL concurrency/U8B gates pass. The
+> broad Phase 9 database invocation is 429/433; every M57–M59 case passes, while
+> three stale metadata-foundation fixtures and one missing prerequisite
+> `.phase9-dist` metadata-worker build artifact account for the four failures.
+> Independent review found no actionable issues and returned PASS for local
+> review. The ordered exact-project application preflight passed; Owner review
+> and explicit authorization for any local commit or ordered M57–M59 application
+> are next. No live
+> migration, deployment, Storage/job or
+> business-data mutation, provider call, stage, commit, push, merge, or PR
+> action occurred.
+
+> **Pre-application live read-only check 2026-09-08:** The exact project remains healthy and its
+> migration tail is M56 `20260830175651`; all M57–M59 objects are absent, as
+> expected. A separate Supabase advisory flags disabled RLS on the empty
+> `marketplace_sec.phase9_worker_wake_dispatches` table. Read-only ACL evidence
+> shows owner-only `postgres` privileges with no `anon`, `authenticated`, or
+> `service_role` SELECT/write grants. No remediation was applied; this is a
+> separate hardening decision.
+
+> **Ordered M57–M59 application preflight 2026-09-08:** The exact project was
+> reverified healthy at PostgreSQL `17.6.1.063` in `ap-southeast-2`; live history
+> still ends at M56. M57 tables/indexes/functions/triggers and M59 new cleanup
+> functions are absent. M58's current completion/snapshot functions and M59's
+> dispatcher helper are present as intended replacement targets, all four M58
+> `_legacy` destination names are absent, required schemas/`pgcrypto`/digest
+> and the context function are present, and the media queue has no active work
+> (`cancelled=16`, `dead_letter=5`, `resolved=29`). Local focused correction
+> tests pass 21/21 and no mutation occurred. Result: **preflight PASS;
+> application remains gated on explicit owner authorization and must run M57,
+> M58, then M59 in order**. The separate disabled-RLS advisory was not changed.
 
 > **2026-08-30 bounded metadata-throughput implementation:** The local worker
 > now accepts a metadata-only 15-job run budget, keeps no more than three jobs
@@ -1219,7 +1291,7 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory — **bounded metadata throughput is locally implemented and rollout-gated; M56 is unapplied; Unit 6G M54/M55 lifecycle and metadata/Add corrections remain live-verified; prior checkpoints and Unit 8 remain intact** |
+| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6G media-completion correction is integrated and independently approved on current origin/main; M52–M59 are live once and M57–M59 post-apply readback passed; runtime deployment and connected proof remain gated; prior checkpoints and Unit 8 remain intact** |
 | Overall status | `unit6g_metadata_throughput_local_complete_rollout_gated` |
 | Last updated | 2026-08-30 |
 | Latest handoff | The bounded metadata worker and M56 candidate are locally complete: focused Jest 7 suites / 72 tests, metadata worker build PASS, dispatcher PGlite 30/30. M54 remains live exactly once as `20260829142337`; M55 remains live exactly once as `20260830084323`. No live change occurred in the throughput pass. |
@@ -1388,7 +1460,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6g_metadata_throughput_local_complete_rollout_gated` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [pipeline SDD](./implementation/phase-9-image-inventory/02-extraction-enrichment-pipeline-sdd.md) · [Unit 6G tracker](./implementation/phase-9-image-inventory/trackers/31-unit6g-owner-batch-review-design-evidence.md) | Metadata throughput is locally bounded to a 15-job run budget with three active incremental claims and one provider request per book. M56 is a tested dispatcher-only forward migration candidate and is unapplied. Worker-first deployment/canary and later M56 application require separate authorizations. M54/M55 remain live exactly once; prior Unit 6G and Unit 8 checkpoints remain intact. |
+| Phase 9: Image-to-LLM Inventory | `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [correction design](./implementation/phase-9-image-inventory/supporting/unit6g-media-completion-correction.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | The duplicate-sanitized-hash media-completion correction is integrated and independently approved on current `origin/main`. M52–M59 are live once; M57–M59 exact-project readback passed. Owner review of the live proof is next; runtime deployment, scheduling, connected tests, commit, and push remain separately gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

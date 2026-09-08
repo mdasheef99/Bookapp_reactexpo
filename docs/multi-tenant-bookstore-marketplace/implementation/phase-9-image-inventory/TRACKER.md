@@ -1,23 +1,128 @@
 # Phase 9 Master Tracker
 
-**Planning status:** `unit6g_direct_add_closeout_confirmed`
-**Implementation status:** `unit6g_metadata_throughput_local_complete_rollout_gated`
+**Planning status:** `unit6g_media_completion_correction_confirmed`
+**Implementation status:** `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
-**Last updated:** 2026-08-30
-**Current milestone:** The bounded metadata-throughput correction is locally implemented and verified: a metadata run budget is 15, no more than three jobs are active, claims refill available slots incrementally, each book keeps an independent Google Books request and durable outcome, and generic workers remain unchanged. Forward M56 changes only the metadata dispatcher payload and is local/unapplied. Unit 6G direct-Add/closeout and metadata-quality work remain local; M55 is live exactly once, while the matching client/worker changes remain undeployed. M52/M53/M54 remain live and immutable.
-**Active work unit:** `unit6g_metadata_throughput_preflight_review`
+**Last updated:** 2026-09-08
+**Current milestone:** The Unit 6G media-completion correction is integrated locally on branch `codex/phase9-unit6g-media-correction-integrated` from verified `origin/main` commit `573182267ddd79e08b0abfb348b5afd9fb0dc571`. M57–M59 are applied live once on the exact development project and their schema, function, grant, RLS, trigger, dispatcher, and empty-state readbacks pass.
+**Active work unit:** `unit6g_media_completion_correction_post_apply_handoff`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Local bounded metadata worker and dispatcher preflight. Focused Jest is 7 suites / 72 tests (including the metadata-only invoker bound), the metadata worker production TypeScript build passes, and the M35→M38 plus live-M40 dispatcher seam plus local M56 PGlite suite is 30/30. No live state changed.
-**Next authorized action:** Owner review of this preflight, followed by separate authorization to commit and deploy the metadata worker first with the dispatcher still sending batch size one. Verify the deployed request pattern, Google Books timeout at or below the 10-second rollout ceiling, quota/rate-limit behavior, memory/connections, and per-book outcomes before separately authorizing M56 application. Do not apply M56 or deploy from this checkpoint.
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. M53 is live exactly once as `20260828081324 marketplace_phase9_unit6g_field_authority_correction`. M54 is live exactly once as `20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`. Local M55 is live exactly once as `20260830084323 marketplace_phase9_unit6g_metadata_add_authority_correction`. Forward M56 `20260830000056_marketplace_phase9_metadata_throughput.sql` is local, tested, unapplied, and not authorized for application.
-**Scope boundary:** The throughput patch changes only metadata worker orchestration, metadata-specific request/telemetry bounds, persisted retry-state reporting, dispatcher tests, and local forward M56. It does not combine books into a provider request, alter the metadata claim RPC maximum 10, increase concurrency above three, change leases/retries/dead letters/idempotency/duplicate protection, change the scheduler frequency, or modify UI/inventory/session behavior. M54 fixes the current final `phase9_update_candidate_review_v2`, `phase9_add_candidate_to_inventory_v1`, and `phase9_owner_remove_candidate_v1` mutation boundary plus candidate-detail/batch-card action projection. M55 remains limited to its recorded metadata/Add authority correction. Older sibling lifecycle and close-audit work remain separately gated. Unit 8 remains complete.
+**Last completed:** Applied M57, M58, and M59 in order after a passing exact-project preflight. Live readback confirms versions `20260908073203`, `20260908073308`, and `20260908073425`; all required objects, restrictions, and behavior markers are present, both new private tables are empty, and the media queue remains idle.
+**Next authorized action:** Owner review of the M57–M59 live application proof, followed by separate authorization to deploy/schedule the matching media-validation worker and rerun the connected upload proof. Do not manually claim, retry, or mutate the dead-lettered job. Commit and push remain separately gated.
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. M53 is live exactly once as `20260828081324 marketplace_phase9_unit6g_field_authority_correction`; M54 as `20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`; M55 as `20260830084323 marketplace_phase9_unit6g_metadata_add_authority_correction`; M56 as `20260830175651 marketplace_phase9_metadata_throughput`; M57 as `20260908073203 marketplace_phase9_media_output_intents`; M58 as `20260908073308 marketplace_phase9_media_completion_receipts`; and M59 as `20260908073425 marketplace_phase9_media_output_cleanup`.
+**Scope boundary:** The correction covers the media validation worker, durable pre-upload output intent, canonical completion replay receipts, exact duplicate-sanitized-hash terminal rejection, and service-only fenced cleanup/recovery. It preserves original input/session/Owner lineage, store isolation, accepted object references, unrelated max-attempt semantics, and historical dead letters. Unit 8 remains complete.
 **Implementation authority:** Group 1/B local implementation, migration-file creation, correction iterations, and the Owner-authorized M52 application with connected proofs are complete and retained. The 2026-08-24 recomposition made the revised SDD/matrix/tracker 31 the sole NEW 6G-C/6G-D design authority following completed independent final review (verdict PASS_WITH_P3); the composition-only pre/post-scan UI checkpoint is now locally implemented and pending Owner review. Historical `e7ed166`-style old 6G-C work and the frozen old 6G-D implementation are superseded evidence, not authority. Edge/mobile deployment of new client code and Git publication beyond this branch remain unauthorized. Unit 8 remains live-verified; M39-M52 are not reopened. Native Unit 6F validation remains deferred and unrelated.
-**Migration creation/application authority:** Creation of the narrow forward M56 candidate was authorized as part of this implementation. Its application was explicitly withheld and remains unauthorized. M55 application authority is consumed; close actor/source audit and older-RPC lifecycle work remain outside this task.
+**Migration creation/application authority:** Creation, local testing, and ordered exact-project application of forward M57–M59 were explicitly authorized and are complete. M52–M56 application history remains immutable live evidence; no historical migration was edited or replayed. Further schema, data, Storage, deployment, or job mutation requires separate authorization.
 **Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
-**Current gate:** `METADATA_THROUGHPUT_PREFLIGHT_READY_ROLLOUT_GATED`; local worker/SQL gates pass. Worker deployment must occur before any M56 application, and both require separate authorization. Positive all-12 automatic Close remains automated-only, while connected negative proof confirms 1/12 does not close. Close audit and older sibling RPC lifecycle fences remain migration-gated.
+**Current gate:** `UNIT6G_MEDIA_COMPLETION_CORRECTION_M57_M59_LIVE_VERIFIED_RUNTIME_GATED`; local gates, independent review, application, and exact-project readback pass. Deployment, scheduling, connected business-data tests, commit, and push require separate authorization.
 
-## 2026-08-30 — bounded metadata-throughput implementation (local, unapplied)
+## 2026-09-08 — connected Owner close/upload proof
+
+- Through the authenticated Owner web flow, the pre-existing active session was
+  closed after the app's confirmation step. The final readback was `status=closed`;
+  five committed inventory items were unchanged and six uncommitted candidates
+  remained read-only session records.
+- A fresh scan setup then created/reused one active test session. Chrome's file
+  chooser rejected the fixture with `Not allowed` before the app received a file;
+  the in-app browser accepted the repository PNG fixture (`image/png`, 22,380
+  bytes) and the app visibly advanced through preview and `Registering image` to
+  the live scan-session screen.
+- Exact-project readback for test session
+  `222ab8b1-bcd0-4145-aee1-a1abdc5b2c0b` shows one input in `failed` with
+  `validation_error_code=P9_MEDIA_PROCESSING_RETRYABLE`, zero candidates, and
+  zero committed inventory rows. Its
+  `media_validate_sanitize` job reached `dead_letter` at attempt `5/5` with
+  `last_safe_error_code=P9_MEDIA_PROCESSING_RETRYABLE` and
+  `last_safe_error_category=media_validation`. The app summary shows one image
+  failed and zero images processed.
+- Result: upload authorization, Storage/input registration, queue insertion, and
+  retry/dead-letter state are live-verified. Media worker completion is blocked
+  by the deployed worker/runtime path and requires a separately authorized
+  worker deployment/scheduling correction before a new connected proof. No
+  manual job claim, retry, data deletion, migration, deployment, commit, push,
+  or PR action was performed; the local Expo server was stopped after capture.
+
+## 2026-09-08 — M57–M59 live application and readback
+
+- Reverified exact project `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn` as `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, region
+  `ap-southeast-2`, with M56 as the live tail immediately before application.
+- Applied the three separate migrations in order: M57
+  `20260908073203 marketplace_phase9_media_output_intents`, M58
+  `20260908073308 marketplace_phase9_media_completion_receipts`, and M59
+  `20260908073425 marketplace_phase9_media_output_cleanup`.
+- Post-apply readback confirms both private tables exist, are empty, have RLS
+  enabled, and expose owner-only ACLs. M57's indexes, functions, and all three
+  fence triggers exist. M58's four guarded functions are service-role-only and
+  the four renamed legacy functions have no API-role execution. M59's cleanup
+  functions are service-role-only and its dispatcher helper includes cleanup
+  intent work.
+- Behavioral definition markers confirm prepared intents, canonical receipts,
+  exact duplicate rejection, `FOR UPDATE SKIP LOCKED`, bounded manual
+  reconciliation, and dispatcher wiring. The service-role health call returned
+  `due_count=0`, `oldest_due_seconds=0`, and `manual_reconciliation=0`; the
+  media queue remained idle.
+- Post-DDL advisors report informational no-policy notices for the two
+  owner-only/RLS-enabled private tables and informational unindexed `store_id`
+  foreign keys. These do not expose API access or block correctness; they are
+  retained as future performance/hardening review items.
+- External effects were limited to the authorized schema/function/trigger
+  migrations and migration-history records. No business row, Storage object,
+  job, deployment, provider call, stage, commit, push, merge, or PR changed.
+
+## Pre-application 2026-09-08 — Unit 6G correction integrated on current origin/main
+
+- Created an isolated worktree from verified `origin/main` commit
+  `573182267ddd79e08b0abfb348b5afd9fb0dc571`. The old dirty worktree was left
+  untouched. M52–M56 were present in the baseline; no migration restoration or
+  duplication was performed.
+- Read-only exact-project history confirms M52–M56 are live once, ending with
+  M56 live version `20260830175651`. M57–M59 are absent live and remain local.
+- Transferred only the bounded Unit 6G correction. Upstream runtime changes were
+  integrated manually in `httpService.ts` and the current post-scan input-list
+  component rather than overwriting newer `origin/main` behavior.
+- Local verification: focused Jest **10 suites / 262 tests**, focused PGlite
+  **21/21**, worker TypeScript PASS, and disposable real PostgreSQL M01–M59 plus
+  U8B/concurrency markers PASS. The broad Phase 9 database invocation completed
+  **429/433**: all M57–M59 tests passed; three failures are confined to stale
+  metadata-foundation fixtures, and one structural-metadata-worker test lacked
+  its prerequisite `.phase9-dist` build artifact.
+- External effects: none. No migration application, deployment, Storage/job or
+  business-data mutation, provider call, stage, commit, push, merge, or PR action.
+- Independent review: PASS for local review with no actionable findings. The
+  reviewer inspected the complete runtime/SQL/test/documentation diff but could
+  not start an additional Jest run because the Windows sandbox returned
+  `EPERM`; no extra test pass is claimed. Residual operational gates are M57–M59
+  exact-project application/readback, matching service/client deployment,
+  cleanup scheduling/alerts and recurring recheck proof, and fresh connected
+  scan/public-copy replay, duplicate, and cleanup proof.
+
+## 2026-09-08 — ordered M57–M59 application preflight (read-only)
+
+- Exact project reverified healthy: `Bookconnect_reactexpo` /
+  `ahntbtktjjmvfosgkmgn`, ref `ahntbtktjjmvfosgkmgn`, region
+  `ap-southeast-2`, PostgreSQL `17.6.1.063`.
+- Live migration history ends at M56 `20260830175651
+  marketplace_phase9_metadata_throughput`; M57–M59 are absent. M57 tables,
+  indexes, functions, and triggers plus M59 new cleanup/health functions are
+  absent. M58's current completion/snapshot functions and M59's
+  `has_claimable_phase9_work(text)` are present as intended replacement
+  targets; all four M58 `_legacy` destination names are absent.
+- The required context function, `marketplace_sec`/`extensions` schemas,
+  `pgcrypto`, and `extensions.digest(bytea,text)` are present. There is no
+  active or claimable media job: `cancelled=16`, `dead_letter=5`, and
+  `resolved=29`.
+- Base media tables have RLS enabled with service-role-only ACLs. The separate
+  empty `marketplace_sec.phase9_worker_wake_dispatches` table remains an
+  owner-only/RLS-disabled advisory and was not changed.
+- Local M57/M58/M59 hashes, `git diff --check`, and focused correction suites
+  21/21 are recorded in the current-vs-target audit. No migration, data,
+  Storage, worker, deployment, or other external mutation occurred. Result:
+  **preflight PASS; application remains gated on explicit owner authorization
+  and must run M57, then M58, then M59 in order**.
+
+## Historical 2026-08-30 — bounded metadata-throughput implementation (then local/unapplied)
 
 - Read-only baseline reverified `Bookconnect_reactexpo` /
   `ahntbtktjjmvfosgkmgn`: the scheduler wakes approximately once per minute;
@@ -39,7 +144,9 @@
   in claim order despite out-of-order completion. A durable
   `retry_scheduled` completion is now reported as such; database state remains
   authoritative.
-- Forward M56 replaces only the private wake-dispatcher definition. It sends
+- At that checkpoint, forward M56 replaced only the private wake-dispatcher
+  definition. The 2026-09-08 read-only history above supersedes its then-unapplied
+  status. It sends
   `batchSize=15` for `metadata_enrich`, preserves `batchSize=1` for media,
   vision, and publication retry, preserves the 120-second timeout and existing
   one-wake-per-stage/tick fence, and does not replace a claim function or

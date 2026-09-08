@@ -324,6 +324,8 @@ describe('Phase 9 worker HTTP service', () => {
           storagePath: 'store/private/path.webp',
           token: mediaToken,
         }],
+        cleanup: { health: { manualReconciliation: 1, dueCount: 3, oldestDueSeconds: 900,
+          objectPath: 'store/private/path.webp' } },
       }), { headers: { 'content-type': 'application/json' } }),
       readiness: () => true,
       log: (event) => events.push(event),
@@ -338,6 +340,9 @@ describe('Phase 9 worker HTTP service', () => {
     const serialized = JSON.stringify(events);
     expect(serialized).toContain('retry_scheduled');
     expect(serialized).toContain(dispatchId);
+    expect(events.find(event => event.event === 'invocation_completed')).toEqual(expect.objectContaining({
+      cleanupHealth: { manualReconciliation: 1, dueCount: 3, oldestDueSeconds: 900 },
+    }));
     expect(serialized).not.toMatch(/private-job-id|Private Fixture Clue|private\/path|token|A7z/);
   });
 

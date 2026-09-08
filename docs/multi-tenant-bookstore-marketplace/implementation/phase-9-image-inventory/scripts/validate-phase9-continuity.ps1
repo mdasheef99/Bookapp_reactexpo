@@ -60,6 +60,8 @@ $requiredPhaseFiles = @(
     '05-marketplace-discovery-display-sdd.md', '06-customer-photo-request-extension-sdd.md',
     'supporting/data-dictionary.md', 'supporting/database-current-vs-target.md',
     'supporting/requirements-traceability.md', 'supporting/complexity-and-scope-register.md',
+    'supporting/unit6g-media-completion-correction.md',
+    'supporting/unit6g-media-correction-plan.md',
     'trackers/01-planning-and-decisions.md', 'trackers/02-implementation-and-verification.md', 'trackers/03-unit4-implementation-evidence.md',
     'trackers/04-deployment-runtime-scaffolding-evidence.md', 'trackers/05-m11-m12-live-application-evidence.md',
     'trackers/06-fixture-pipeline-deployment-evidence.md',
@@ -220,6 +222,9 @@ if (-not ($doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_sdd_owner
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_complete_live_verified`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_fa_001_live_verified_m53_applied`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_session_lifecycle_fence_live_verified_m54_applied`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_media_completion_correction_integrated_review_pending`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_media_completion_correction_locally_verified_commit_authorization_pending`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_m55_applied_client_deploy_pending`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_upload_transport_correction_locally_verified`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_upload_transport_native_failed_diagnosed`') -or
@@ -273,6 +278,9 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
     $implementationTracker.Contains('**Status:** `unit6_complete_live_verified`') -or
     $implementationTracker.Contains('**Status:** `unit6g_fa_001_live_verified_m53_applied`') -or
     $implementationTracker.Contains('**Status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`') -or
+    $implementationTracker.Contains('**Status:** `unit6g_media_completion_correction_integrated_review_pending`') -or
+    $implementationTracker.Contains('**Status:** `unit6g_media_completion_correction_locally_verified_commit_authorization_pending`') -or
+    $implementationTracker.Contains('**Status:** `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`') -or
     $implementationTracker.Contains('**Status:** `unit6g_direct_add_closeout_connected_partial_pass_client_deploy_pending`') -or
     $implementationTracker.Contains('**Status:** `unit6_mobile_upload_transport_correction_locally_verified`') -or
     $implementationTracker.Contains('**Status:** `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
@@ -572,6 +580,9 @@ if (
         -not $tracker.Contains('**Active work unit:** `unit6g_sdd_owner_review_pending`') -and
         -not $tracker.Contains('**Active work unit:** `unit6g_fa_001_post_apply_live_verification`') -and
         -not $tracker.Contains('**Active work unit:** `unit6g_m54_owner_review_pending`') -and
+        -not $tracker.Contains('**Active work unit:** `unit6g_media_completion_correction_independent_review`') -and
+        -not $tracker.Contains('**Active work unit:** `unit6g_media_completion_correction_owner_handoff`') -and
+        -not $tracker.Contains('**Active work unit:** `unit6g_media_completion_correction_post_apply_handoff`') -and
         -not $tracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -and
         -not $tracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
     -not (
@@ -634,7 +645,11 @@ if (
         $tracker.Contains('**Next authorized action:** Owner review and explicit approval or correction of the Unit 6G SDD and contract matrix. Do not begin 6G-A red tests, create/apply a migration, change product source, deploy, or mutate Supabase/Storage without separate authorization.') -or
         $tracker.Contains('**Next authorized action:** Owner review of the M53 live proof. Edge/client/native deployment remains separately gated.') -or
         $tracker.Contains('**Next authorized action:** Owner review of the M54 live proof and explicit disposition of older sibling correction/variant RPC closed-session compatibility. Edge/client/native deployment, fresh scan/upload, and further Supabase mutations remain separately gated.') -or
-        $tracker.Contains('**Next authorized action:** Owner review of this preflight, followed by separate authorization to commit and deploy the metadata worker first with the dispatcher still sending batch size one.')
+        $tracker.Contains('**Next authorized action:** Owner review of this preflight, followed by separate authorization to commit and deploy the metadata worker first with the dispatcher still sending batch size one.') -or
+        $tracker.Contains('**Next authorized action:** Independent review of the uncommitted Unit 6G media-completion correction on the verified origin-main baseline. Do not apply M57–M59, deploy, stage, commit, or push from this checkpoint.') -or
+        $tracker.Contains('**Next authorized action:** Owner review of the live M57–M59 application preflight and explicit authorization for any local commit or ordered M57–M59 application. Do not deploy or push from this checkpoint.') -or
+        $tracker.Contains('**Next authorized action:** Owner review of the M57–M59 live application proof. Matching worker/Edge/client deployment, cleanup scheduling, connected business-data tests, commit, and push require separate authorization.') -or
+        $tracker.Contains('**Next authorized action:** Owner review of the independently approved correction and explicit decision whether to authorize one local commit. Do not apply M57–M59, deploy, or push from this checkpoint.')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
@@ -720,7 +735,10 @@ $draftMigrationNames = @(
     '20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql',
     '20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql',
     '20260830000055_marketplace_phase9_unit6g_metadata_add_authority_correction.sql',
-    '20260830000056_marketplace_phase9_metadata_throughput.sql'
+    '20260830000056_marketplace_phase9_metadata_throughput.sql',
+    '20260906000057_marketplace_phase9_media_output_intents.sql',
+    '20260906000058_marketplace_phase9_media_completion_receipts.sql',
+    '20260906000059_marketplace_phase9_media_output_cleanup.sql'
 )
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
@@ -759,7 +777,10 @@ $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_in
     $tracker.Contains('**Implementation status:** `unit6g_fa_001_live_verified_m53_applied`') -or
     $tracker.Contains('**Implementation status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`') -or
     $tracker.Contains('**Implementation status:** `unit6g_direct_add_closeout_connected_partial_pass_client_deploy_pending`') -or
-    $tracker.Contains('**Implementation status:** `unit6g_metadata_throughput_local_complete_rollout_gated`'))
+    $tracker.Contains('**Implementation status:** `unit6g_metadata_throughput_local_complete_rollout_gated`') -or
+    $tracker.Contains('**Implementation status:** `unit6g_media_completion_correction_integrated_review_pending`') -or
+    $tracker.Contains('**Implementation status:** `unit6g_media_completion_correction_locally_verified_commit_authorization_pending`') -or
+    $tracker.Contains('**Implementation status:** `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`'))
 $expectedMigrationNames = @($migrationNames)
 if ($wu1AppliedStatus) { $expectedMigrationNames += $draftMigrationNames }
 $appliedPhase9Migrations = if ($wu1AppliedStatus) {
@@ -1086,7 +1107,10 @@ if (-not ($phaseReadme.Contains('**Status:** `unit6e_finalized_unit6f_separately
     $phaseReadme.Contains('**Status:** `u8b_bounded_corrective_scope_locally_complete_operationally_pending`') -or
     $phaseReadme.Contains('**Status:** `unit8_repository_complete_closure_ready_operationally_pending`') -or
     $phaseReadme.Contains('**Status:** `unit6g_fa_001_live_verified_m53_applied`') -or
-    $phaseReadme.Contains('**Status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`')) -or
+    $phaseReadme.Contains('**Status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`') -or
+    $phaseReadme.Contains('**Status:** `unit6g_media_completion_correction_integrated_review_pending`') -or
+    $phaseReadme.Contains('**Status:** `unit6g_media_completion_correction_locally_verified_commit_authorization_pending`') -or
+    $phaseReadme.Contains('**Status:** `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`')) -or
     -not ($phaseReadme.Contains('M01-M08/M10-M29 are live once') -or $phaseReadme.Contains('M01-M08/M10-M30 are live once') -or $phaseReadme.Contains('M01-M08/M10-M38 and WU1 are live once') -or $phaseReadme.Contains('M01-M08/M10-M42 are live once') -or $phaseReadme.Contains('M01-M08/M10-M45 are live once') -or $phaseReadme.Contains('M01-M08/M10-M46 are live once') -or $phaseReadme.Contains('M01-M08/M10-M48 are live once')) -or
     -not $phaseReadme.Contains('Unit 6B is merged at `9ef9eb3`') -or
     -not $phaseReadme.Contains('Unit 6D is') -or

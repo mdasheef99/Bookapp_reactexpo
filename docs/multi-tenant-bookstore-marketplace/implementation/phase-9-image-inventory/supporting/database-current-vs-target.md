@@ -1,7 +1,7 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-08-30 bounded metadata-throughput read-only preflight
-**Audit mode:** exact-project read-only scheduler/queue/latency/capacity baseline plus prior individually authorized migration evidence; no M56 application or live mutation
+**Audit date:** 2026-09-08 Unit 6G media-completion correction integration
+**Audit mode:** exact-project M57–M59 application and post-apply schema/function/grant/RLS/trigger/dispatcher readback; no business-data, Storage, job, or deployment mutation
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
 **2026-08-21 connected result:** the live project has one publicly eligible
 inventory-media link, with zero eligible NULL, out-of-range, duplicate, or
@@ -13,6 +13,96 @@ remains nullable, with the existing `1..3` check and
 lifecycle transitions without changing nullable private/unapproved state.
 
 The durable connected evidence is [unit8-connected-rollout-2026-08-21.md](./unit8-connected-rollout-2026-08-21.md).
+
+## Current live Unit 6G media-completion correction — 2026-09-08
+
+Read-only exact-project history confirms M52–M56 are live once on
+`Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`, ending with M56 live version
+`20260830175651 marketplace_phase9_metadata_throughput`. The current
+`origin/main` baseline at `573182267ddd79e08b0abfb348b5afd9fb0dc571` tracks
+the matching M52–M56 source files. No migration file was restored or copied
+from the stale correction worktree.
+
+After the passing preflight, M57–M59 were applied separately and in order as
+M57 `20260908073203 marketplace_phase9_media_output_intents`, M58
+`20260908073308 marketplace_phase9_media_completion_receipts`, and M59
+`20260908073425 marketplace_phase9_media_output_cleanup`. Their live effects
+are: (M57) private per-attempt output intents created before Storage upload plus
+reference fences; (M58) canonical completion receipts, strict
+replay/claim/payload checks, and exact duplicate-sanitized-hash terminal
+rejection; (M59) service-only cleanup claim/finish/health functions with a
+permanent deletion reservation, reference/hold rechecks, bounded recovery, and
+dispatcher integration.
+
+Post-apply readback confirms both private tables exist, are empty, have RLS
+enabled, and expose owner-only ACLs. Both M57 indexes, all three fence triggers,
+the four guarded M58 functions, the four renamed/revoked legacy functions, and
+the three M59 cleanup functions exist with the intended ownership, empty
+search path, and API grants. Definition markers confirm intent persistence,
+receipt replay, exact duplicate handling, `FOR UPDATE SKIP LOCKED`, bounded
+manual reconciliation, and dispatcher cleanup wiring. The service-role health
+result is zero for due, oldest-due, and manual-reconciliation counts; the media
+queue remains idle. No business row, Storage object, job, deployment, or
+provider call changed.
+
+Post-DDL advisors report informational RLS-enabled/no-policy notices for the
+two private owner-only tables and informational unindexed `store_id` foreign
+keys. The absence of policies is intentional deny-all direct access; the
+foreign-key indexes are a future performance review item, not a correctness or
+security blocker.
+
+## Pre-application read-only live correction check — 2026-09-08
+
+The exact project was reverified as healthy `Bookconnect_reactexpo` /
+`ahntbtktjjmvfosgkmgn` in `ap-southeast-2`, PostgreSQL `17.6.1.063`. Live
+migration history ends at M56, `20260830175651
+marketplace_phase9_metadata_throughput`. The M57–M59 tables and completion,
+preparation, and cleanup functions all resolve to `NULL`, confirming that the
+duplicate/cleanup correction is not live and was not exercised against live
+business data.
+
+The same read-only check found `marketplace_sec.phase9_worker_wake_dispatches`
+empty with RLS disabled. Its ACL is owner-only (`postgres=arwdDxtm/postgres`),
+and `anon`, `authenticated`, and `service_role` have no SELECT or write
+privilege. Supabase nevertheless reports disabled RLS as a critical hardening
+advisory. This is a separate remediation decision; no policy, grant, or table
+change was applied during the check.
+
+## Ordered M57–M59 application preflight — 2026-09-08
+
+Before any application, the exact Supabase project was reverified as healthy:
+`Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`, ref
+`ahntbtktjjmvfosgkmgn`, region `ap-southeast-2`, PostgreSQL `17.6.1.063`.
+The live migration tail is still M56
+`20260830175651 marketplace_phase9_metadata_throughput`; M57, M58, and M59
+are not present in live migration history.
+
+The collision checks are clean for the three new tables, M57 indexes, M57
+lock/preparation/trigger objects, and M59 cleanup/health functions. M58's four
+current completion/snapshot functions and the M59 dispatcher helper are present
+as the intended replacement targets. The four `_legacy` names that M58 creates
+by renaming those current functions are absent, so the ordered rename has no
+destination collision. `public.phase9_media_validation_context_v2(uuid,text,text,integer)`
+is present. The `marketplace_sec` and `extensions` schemas, `pgcrypto`, and
+`extensions.digest(bytea,text)` are present.
+
+The media-validation queue has no active or claimable work: exact status counts
+are `cancelled=16`, `dead_letter=5`, and `resolved=29`, with no
+`open`, `retry_scheduled`, or `in_progress` row. The base tables used by the
+new fences (`image_extraction_inputs`, `image_extraction_jobs`, `media_assets`,
+and `phase9_upload_capabilities`) have RLS enabled and service-role-only ACLs.
+The separate empty `marketplace_sec.phase9_worker_wake_dispatches` table still
+has RLS disabled and owner-only ACLs; it remains a non-blocking, separate
+hardening decision and was not changed by this preflight.
+
+Local migration integrity is recorded by SHA-256: M57
+`B51120D4E2CA75A6656A90E755EE98A383BF652DE5FE2982D768682AAF30EB70`, M58
+`2DCDEA9681E39CA0E53A98587EA6E19D835D8455E2954947810C17ECE35B5481`, and M59
+`184DB8C6ACE2711A4D8DAC2192A435A20377416FAFB80DC23FB0B0F61ACF2FA9`.
+`git diff --check` is clean. The focused correction suites pass 21/21 in this
+preflight run. No migration, data, Storage, worker, deployment, or other live
+mutation occurred. The result is **preflight PASS; application remains gated on
+explicit owner authorization and must run M57, then M58, then M59 in order**.
 
 ## Current live state — Unit 6G session lifecycle fence — 2026-08-29
 

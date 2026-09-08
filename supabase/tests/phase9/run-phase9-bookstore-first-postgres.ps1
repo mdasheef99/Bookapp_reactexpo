@@ -1,10 +1,13 @@
 param(
   [int]$Port = 5450,
   [string]$DataDir = '',
-  [switch]$IncludeU8C
+  [switch]$IncludeU8C,
+  [switch]$IncludeUnit6gBaseline,
+  [switch]$IncludeMediaCorrection
 )
 
 $ErrorActionPreference = 'Stop'
+if ($IncludeMediaCorrection) { $IncludeUnit6gBaseline = $true }
 $env:PGCLIENTENCODING = 'UTF8'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
 $dbName = "bookconnect_u8b_$PID"
@@ -71,9 +74,25 @@ $migrations = @(
   '20260817000048_marketplace_phase9_legacy_rpc_service_role_compatibility.sql',
   '20260818000049_marketplace_phase9_bookstore_first_discovery.sql'
 )
-if ($IncludeU8C) {
+if ($IncludeU8C -or $IncludeUnit6gBaseline) {
   $migrations += '20260820000050_marketplace_phase9_storefront_detail.sql'
   $migrations += '20260821000051_marketplace_phase9_public_media_order_invariant.sql'
+}
+if ($IncludeUnit6gBaseline) {
+  $migrations += @(
+    '20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql',
+    '20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql',
+    '20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql',
+    '20260830000055_marketplace_phase9_unit6g_metadata_add_authority_correction.sql',
+    '20260830000056_marketplace_phase9_metadata_throughput.sql'
+  )
+}
+if ($IncludeMediaCorrection) {
+  $migrations += @(
+    '20260906000057_marketplace_phase9_media_output_intents.sql',
+    '20260906000058_marketplace_phase9_media_completion_receipts.sql',
+    '20260906000059_marketplace_phase9_media_output_cleanup.sql'
+  )
 }
 
 function Invoke-PsqlFile([string]$database, [string]$file) {
@@ -161,13 +180,24 @@ try {
   Invoke-PsqlFile $dbName (Join-Path $root 'supabase\tests\phase9\phase9_bookstore_first_postgres_bootstrap.sql') | Out-Null
   Write-Output 'U8B disposable baseline and bootstrap applied'
 
+  if ($IncludeUnit6gBaseline) {
+    Invoke-PsqlFile $dbName (Join-Path $root 'supabase\tests\phase9\unit6g_postgres_bootstrap.sql') | Out-Null
+  }
+
   foreach ($migration in $migrations) {
     Invoke-PsqlFile $dbName (Join-Path $root "supabase\migrations\$migration") | Out-Null
   }
-  if ($IncludeU8C) {
+  if ($IncludeUnit6gBaseline) {
+    Write-Output 'Unit 6G migration chain through M56 applied in the disposable database'
+  } elseif ($IncludeU8C) {
     Write-Output 'U8C migration chain through M51 applied in the disposable database'
   } else {
     Write-Output 'U8B migration chain through M49 applied in the disposable database'
+  }
+
+  if ($IncludeMediaCorrection) {
+    & node (Join-Path $PSScriptRoot 'phase9MediaConcurrency.postgres.mjs') $Port $dbName $psql
+    if ($LASTEXITCODE -ne 0) { throw 'Unit 6G media correction PostgreSQL acceptance failed' }
   }
 
   $acceptance = Invoke-PsqlFile $dbName (Join-Path $root 'supabase\tests\phase9\phase9_bookstore_first_postgres.sql')

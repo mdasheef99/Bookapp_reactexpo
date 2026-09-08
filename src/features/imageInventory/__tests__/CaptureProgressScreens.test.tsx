@@ -166,6 +166,7 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mockFocused = true;
+        registeredInput.safeCode = 'P9_VISION_OVER_LIMIT';
         registeredInput.acceptedCandidateCount = 0;
         mockInputs.data.items = [registeredInput];
     });
@@ -178,6 +179,16 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
         expect(screen.getByText('Remove image')).toBeTruthy();
         expect(screen.queryByText('Add another image')).toBeNull();
         expect(screen.queryByText('Choose replacement image')).toBeNull();
+    });
+
+    it('explains duplicate rejection without offering automatic retry or old-input reuse', () => {
+        mockInputs.data.items[0].safeCode = 'P9_MEDIA_DUPLICATE_INPUT';
+        const screen = render(
+            <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+        expect(screen.getByText('This image was already submitted. Remove it and choose a different image.')).toBeTruthy();
+        expect(screen.queryByText('Trying again')).toBeNull();
+        expect(screen.getByText('Remove image')).toBeTruthy();
     });
 
     it('labels image attention separately from per-book review counts', () => {

@@ -10,6 +10,7 @@ export type SafeOperationalEvent = Readonly<{
   batchSize?: number;
   claimed?: number;
   outcomes?: readonly string[];
+  cleanupHealth?: { manualReconciliation: number; dueCount: number; oldestDueSeconds: number };
   durationMs?: number;
   dispatchId?: string;
   category?: 'unauthorized' | 'busy' | 'body_too_large' | 'body_read_timeout'
@@ -79,6 +80,7 @@ function requestBatchSize(body: Uint8Array, maxBatchSize: number): number | unde
 async function responseSummary(response: Response, maxBatchSize: number): Promise<{
   claimed?: number;
   outcomes?: readonly string[];
+  cleanupHealth?: { manualReconciliation: number; dueCount: number; oldestDueSeconds: number };
 }> {
   try {
     const value = await response.clone().json();
@@ -93,7 +95,13 @@ async function responseSummary(response: Response, maxBatchSize: number): Promis
         typeof entry === 'string' && safeOutcome.test(entry)
       )).slice(0, maxBatchSize)
       : undefined;
-    return { claimed, outcomes };
+    const health = value?.cleanup?.health;
+    const counters = [health?.manualReconciliation, health?.dueCount, health?.oldestDueSeconds];
+    const cleanupHealth = counters.every(entry => typeof entry === 'number' && Number.isFinite(entry)
+      && entry >= 0 && entry <= Number.MAX_SAFE_INTEGER)
+      ? { manualReconciliation: counters[0], dueCount: counters[1], oldestDueSeconds: counters[2] }
+      : undefined;
+    return { claimed, outcomes, ...(cleanupHealth ? { cleanupHealth } : {}) };
   } catch {
     return {};
   }
@@ -221,6 +229,7 @@ export function createPhase9WorkerHttpService(
         batchSize,
         claimed: summary.claimed,
         outcomes: summary.outcomes,
+        ...(summary.cleanupHealth ? { cleanupHealth: summary.cleanupHealth } : {}),
         durationMs: Math.max(0, Math.round(performance.now() - started)),
         dispatchId,
         ...(handled.status === 403 ? { category: 'unauthorized' as const } : {}),

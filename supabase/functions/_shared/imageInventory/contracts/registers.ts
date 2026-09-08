@@ -94,6 +94,7 @@ export type Phase9ErrorCode =
   | 'P9_MEDIA_PIXEL_LIMIT'
   | 'P9_MEDIA_MULTIFRAME_UNSUPPORTED'
   | 'P9_MEDIA_OBJECT_CHANGED'
+  | 'P9_MEDIA_DUPLICATE_INPUT'
   | 'P9_MEDIA_PROCESSING_RETRYABLE'
   | 'P9_VISION_NO_BOOKS'
   | 'P9_VISION_LANGUAGE_MISMATCH'
@@ -149,6 +150,7 @@ export const PHASE9_ERROR_CATALOGUE: Record<Phase9ErrorCode, ErrorDefinition> = 
   P9_MEDIA_PIXEL_LIMIT: { code: 'P9_MEDIA_PIXEL_LIMIT', httpStatus: 422, retryable: false, safeOwnerMessage: 'This image has too many pixels.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
   P9_MEDIA_MULTIFRAME_UNSUPPORTED: { code: 'P9_MEDIA_MULTIFRAME_UNSUPPORTED', httpStatus: 422, retryable: false, safeOwnerMessage: 'Animated or multi-frame images are not supported.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
   P9_MEDIA_OBJECT_CHANGED: { code: 'P9_MEDIA_OBJECT_CHANGED', httpStatus: 409, retryable: false, safeOwnerMessage: 'The uploaded image changed; request a new upload.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: false },
+  P9_MEDIA_DUPLICATE_INPUT: { code: 'P9_MEDIA_DUPLICATE_INPUT', httpStatus: 409, retryable: false, safeOwnerMessage: 'This image was already submitted. Remove it and choose a different image.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: false },
   P9_MEDIA_PROCESSING_RETRYABLE: { code: 'P9_MEDIA_PROCESSING_RETRYABLE', httpStatus: 503, retryable: true, safeOwnerMessage: 'Image validation will retry.', severity: 'warning', survivingEffect: 'none', reuseIdempotencyKey: true },
   P9_VISION_NO_BOOKS: { code: 'P9_VISION_NO_BOOKS', httpStatus: 200, retryable: false, safeOwnerMessage: 'No books were detected in this image.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },
   P9_VISION_LANGUAGE_MISMATCH: { code: 'P9_VISION_LANGUAGE_MISMATCH', httpStatus: 200, retryable: false, safeOwnerMessage: 'No books matched the selected language.', severity: 'info', survivingEffect: 'none', reuseIdempotencyKey: true },

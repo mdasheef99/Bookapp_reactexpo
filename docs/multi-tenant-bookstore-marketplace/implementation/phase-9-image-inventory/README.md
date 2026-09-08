@@ -1,9 +1,21 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`
+**Status:** `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
-**Last updated:** 2026-08-29
-**Current handoff:** Unit 8 remains live-verified on pushed
+**Last updated:** 2026-09-08
+**Current handoff:** The Unit 6G media-completion correction is integrated
+locally on `codex/phase9-unit6g-media-correction-integrated`, based on verified
+`origin/main` `573182267ddd79e08b0abfb348b5afd9fb0dc571`. M52–M56 were present in
+that baseline and read-only exact-project migration history confirms each is
+live once, ending with M56 `20260830175651`. After independent approval and a
+passing exact-project preflight, M57–M59 were applied separately and in order as
+live versions `20260908073203`, `20260908073308`, and `20260908073425`. Readback
+passed for the private tables, RLS/ACLs, indexes, functions/grants, fence
+triggers, dispatcher wiring, empty state, and cleanup health. Owner review of
+the live proof is next. Runtime deployment, scheduling, connected business-data
+tests, staging, commit, and push remain separately gated.
+
+Prior handoff: Unit 8 remains live-verified on pushed
 `main`. Unit 6G Group 1/B contracts and M52 (`20260822025712`) are
 live/applied exactly once as the retained Unit 6G A/B foundation. The Unit 6G
 design authority was recomposed 2026-08-24: the

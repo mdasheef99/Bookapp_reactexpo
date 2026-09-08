@@ -1,16 +1,36 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-08-30
+**Last updated:** 2026-09-08
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-## Current 2026-08-24 Unit 6G recomposition overlay
+## Current 2026-09-08 Unit 6G media-completion correction overlay
 
-**2026-08-30 bounded metadata-throughput overlay:** The local metadata worker
+The active checkout is the isolated branch
+`codex/phase9-unit6g-media-correction-integrated`, based on verified
+`origin/main` commit `573182267ddd79e08b0abfb348b5afd9fb0dc571`.
+The old dirty correction checkout remains untouched. M52–M56 were already
+tracked by the baseline; no historical migration was restored or duplicated.
+Read-only exact-project history confirms M52–M56 live once, ending with M56
+`20260830175651 marketplace_phase9_metadata_throughput`. After independent
+approval and a passing exact-project preflight, M57–M59 were applied separately
+and in order as live versions `20260908073203`, `20260908073308`, and
+`20260908073425`. The correction implements durable output intent before
+upload, canonical completion replay, exact duplicate-sanitized-hash rejection,
+and fenced service-only cleanup/recovery. Focused Jest 262/262, focused PGlite
+21/21, worker TypeScript, and disposable real-PostgreSQL concurrency/U8B gates
+pass. Exact-project post-apply table, RLS/ACL, index, function/grant, trigger,
+dispatcher, empty-state, and cleanup-health readback also passes. Owner review
+of the live proof is the exact next action. Do not deploy, schedule cleanup,
+run connected business-data tests, commit, or push without separate authority.
+
+## Prior 2026-08-24 Unit 6G recomposition overlay
+
+**Historical 2026-08-30 bounded metadata-throughput overlay:** The local metadata worker
 now accepts a metadata-specific run budget of 15, holds no more than three
 active jobs, and incrementally claims only enough to refill open slots. It
 continues to send one independent Google Books request per book and preserves
@@ -21,7 +41,8 @@ authoritative. Forward M56 changes only the live-M40 dispatcher definition so
 metadata receives 15 and media/vision/publication remain one; it preserves the
 60-second cron, 120-second timeout, claim function, and applied migrations.
 Focused Jest 7/72 (including the metadata-only invoker bound), the metadata worker
-production build, and dispatcher PGlite 30/30 pass. M56 is local/unapplied. No
+production build, and dispatcher PGlite 30/30 passed. Later read-only migration
+history confirms M56 is live once as `20260830175651`. No
 deployment, provider call, database or Storage mutation, stage, commit, push,
 merge, or PR occurred. The exact next
 action is Owner review followed by separate authorization for commit and

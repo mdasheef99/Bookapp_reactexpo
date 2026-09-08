@@ -7,6 +7,9 @@ export function inputStatusLabel(item: Pick<OwnerInputProgress,
     'presentationState' | 'retryState' | 'safeCode'>): string {
     if (item.retryState === 'server_retrying') return 'Trying again';
     if (item.retryState === 'new_upload_required') {
+        if (item.safeCode === 'P9_MEDIA_DUPLICATE_INPUT') {
+            return 'This image was already submitted. Remove it and choose a different image.';
+        }
         return item.safeCode === 'P9_VISION_OVER_LIMIT'
             ? 'More than 15 books were visible. Take a new photo or add the book manually.'
             : 'Image needs attention. Select a new image.';
