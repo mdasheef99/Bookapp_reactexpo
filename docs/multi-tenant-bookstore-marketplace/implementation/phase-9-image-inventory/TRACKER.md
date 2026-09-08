@@ -1,21 +1,59 @@
 # Phase 9 Master Tracker
 
 **Planning status:** `unit6g_media_completion_correction_confirmed`
-**Implementation status:** `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`
+**Implementation status:** `unit6g_media_completion_correction_runtime_verified_connected`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-09-08
-**Current milestone:** The Unit 6G media-completion correction is integrated locally on branch `codex/phase9-unit6g-media-correction-integrated` from verified `origin/main` commit `573182267ddd79e08b0abfb348b5afd9fb0dc571`. M57–M59 are applied live once on the exact development project and their schema, function, grant, RLS, trigger, dispatcher, and empty-state readbacks pass.
-**Active work unit:** `unit6g_media_completion_correction_post_apply_handoff`
+**Current milestone:** The Unit 6G media-completion correction is committed and pushed at `ffdb1fc85af625bc98dcfc3af93d5530278144a9` on `origin/main`. M57–M59 are applied live once on the exact development project; the matching Render worker is live and the connected positive and duplicate-input proofs pass.
+**Active work unit:** `unit6g_media_completion_correction_runtime_closeout`
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** Applied M57, M58, and M59 in order after a passing exact-project preflight. Live readback confirms versions `20260908073203`, `20260908073308`, and `20260908073425`; all required objects, restrictions, and behavior markers are present, both new private tables are empty, and the media queue remains idle.
-**Next authorized action:** Owner review of the M57–M59 live application proof, followed by separate authorization to deploy/schedule the matching media-validation worker and rerun the connected upload proof. Do not manually claim, retry, or mutate the dead-lettered job. Commit and push remain separately gated.
+**Last completed:** M57–M59 were applied and read back; commit `ffdb1fc85af625bc98dcfc3af93d5530278144a9` was pushed to `origin/main`; Render deployment `dep-dafv4ogn74is73bq9lkg` for service `phase9-media-sanitation` is live; `/health` and `/ready` returned 200; `10testimage.jpeg` completed media and vision at attempt `1/5` with 10 candidates and a linked sanitized WebP; `testimage.jpeg` completed the duplicate-input guard at attempt `1/5` with a canonical duplicate receipt.
+**Next authorized action:** Owner review of this runtime closeout. Do not manually claim, retry, or mutate the historical dead-lettered job. A live duplicate-sanitized-hash collision proof would require a separately prepared fixture and explicit authorization; local M57–M59 race coverage already passes.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. M53 is live exactly once as `20260828081324 marketplace_phase9_unit6g_field_authority_correction`; M54 as `20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`; M55 as `20260830084323 marketplace_phase9_unit6g_metadata_add_authority_correction`; M56 as `20260830175651 marketplace_phase9_metadata_throughput`; M57 as `20260908073203 marketplace_phase9_media_output_intents`; M58 as `20260908073308 marketplace_phase9_media_completion_receipts`; and M59 as `20260908073425 marketplace_phase9_media_output_cleanup`.
 **Scope boundary:** The correction covers the media validation worker, durable pre-upload output intent, canonical completion replay receipts, exact duplicate-sanitized-hash terminal rejection, and service-only fenced cleanup/recovery. It preserves original input/session/Owner lineage, store isolation, accepted object references, unrelated max-attempt semantics, and historical dead letters. Unit 8 remains complete.
 **Implementation authority:** Group 1/B local implementation, migration-file creation, correction iterations, and the Owner-authorized M52 application with connected proofs are complete and retained. The 2026-08-24 recomposition made the revised SDD/matrix/tracker 31 the sole NEW 6G-C/6G-D design authority following completed independent final review (verdict PASS_WITH_P3); the composition-only pre/post-scan UI checkpoint is now locally implemented and pending Owner review. Historical `e7ed166`-style old 6G-C work and the frozen old 6G-D implementation are superseded evidence, not authority. Edge/mobile deployment of new client code and Git publication beyond this branch remain unauthorized. Unit 8 remains live-verified; M39-M52 are not reopened. Native Unit 6F validation remains deferred and unrelated.
 **Migration creation/application authority:** Creation, local testing, and ordered exact-project application of forward M57–M59 were explicitly authorized and are complete. M52–M56 application history remains immutable live evidence; no historical migration was edited or replayed. Further schema, data, Storage, deployment, or job mutation requires separate authorization.
 **Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
-**Current gate:** `UNIT6G_MEDIA_COMPLETION_CORRECTION_M57_M59_LIVE_VERIFIED_RUNTIME_GATED`; local gates, independent review, application, and exact-project readback pass. Deployment, scheduling, connected business-data tests, commit, and push require separate authorization.
+**Current gate:** `UNIT6G_MEDIA_COMPLETION_CORRECTION_RUNTIME_VERIFIED_CONNECTED`; local gates, independent review, ordered application/readback, Git publication, Render deployment, health/readiness, connected positive sanitization, downstream vision, and duplicate-input completion pass. Native Unit 6F validation remains deferred; live duplicate-sanitized-hash collision proof and any cleanup-scheduler/alert policy changes remain separately gated.
+
+## 2026-09-08 — runtime deployment and connected completion proof
+
+- Commit `ffdb1fc85af625bc98dcfc3af93d5530278144a9` was pushed to
+  `origin/main`. No migration application occurred in this checkpoint; M57–M59
+  remained at their verified live versions.
+- Render service `phase9-media-sanitation`
+  (`srv-d9jbmgf41pts73cecfl0`) deployed that exact commit as
+  `dep-dafv4ogn74is73bq9lkg` and reported `live`. The Docker build completed
+  `npm run build:phase9:media-worker`; operational logs emitted
+  `service_started`; read-only HTTP checks returned `/health=200 {"status":"alive"}`
+  and `/ready=200 {"status":"ready"}`.
+- The requested `testimage.jpeg` upload created session
+  `22fc2d93-4c6f-4cb1-8694-bc801d62f77f`, input
+  `078013d6-2a2d-4726-b3c1-8de4f442dae7`, and job
+  `e04b0d78-72c2-49ed-8516-77e2dd9d88d3`. The worker resolved it at attempt
+  `1/5` with a canonical receipt `duplicate_rejected` /
+  `P9_MEDIA_DUPLICATE_INPUT`; read-only lineage showed the same source hash had
+  already been used by an earlier input. The session was closed through the UI;
+  no candidate or inventory effect occurred.
+- A unique `10testimage.jpeg` upload created session
+  `6e9d05b2-1c36-4e74-ac47-949753a04898`, input
+  `fe81ddca-d616-4d49-94cf-1edcba117b8b`, media job
+  `be2a9a74-6963-4a78-bf02-0d70813ba310`, and vision job
+  `0b13c16c-abe0-427d-886a-36f104cc034d`. Both jobs resolved at attempt `1/5`;
+  the input is `ready`, 10 candidates were produced, and the linked sanitized
+  asset is an `image/webp` 1600x1600 object with 135,044 bytes,
+  `phase9-media-v1`, `magick-wasm-0.0.41-webp`, and
+  `magick-wasm-0.0.41-strip` markers. The session was closed with zero
+  committed inventory rows; its 10 candidates remain read-only history.
+- Verification: focused worker/runtime Jest **6 suites / 62 tests**; related
+  backend/Owner/UI Jest **5 suites / 219 tests**; worker build PASS; broad
+  disposable Phase 9 database run **429/433** with all M57–M59 cases passing
+  and four unrelated stale metadata-foundation/structural-artifact failures.
+- External effects: authorized Git push, Render deployment, two connected test
+  sessions and their uploads, and UI session closures. No live migration,
+  manual queue retry, historical dead-letter mutation, inventory commit, or
+  provider call occurred.
 
 ## 2026-09-08 — connected Owner close/upload proof
 

@@ -2,8 +2,9 @@
 
 Date: 2026-09-08. User approved baseline integration, forward migration
 creation/local implementation, and later the ordered M57–M59 live application.
-Application and exact-project readback are complete. Runtime deployment,
-Storage/business mutation, staging, committing, and pushing are not authorized.
+Application and exact-project readback are complete. Runtime deployment and
+bounded connected proof are complete; historical dead-letter reset and live
+collision-fixture proof remain outside this authorization.
 
 Authority: [approved design](./unit6g-media-completion-correction.md) §4;
 Master SDD §3 MAS-03/MAS-08/MAS-17 and §8; Pipeline SDD §4/§10;
@@ -102,5 +103,16 @@ Record exact verification, residual deployment gates and one next action.
   `20260908073203`, `20260908073308`, and `20260908073425`; exact-project
   readback passed. No business row, Storage object, job, deployment, stage,
   commit, or push changed.
-- Owner review of the live proof is next. Runtime deployment, cleanup
-  scheduling, connected business-data tests, commit, and push remain gated.
+- Runtime closeout is complete: commit `ffdb1fc85af625bc98dcfc3af93d5530278144a9`
+  is on `origin/main`; Render deployment `dep-dafv4ogn74is73bq9lkg` for
+  `phase9-media-sanitation` is live with health/readiness 200. The requested
+  duplicate-input proof resolved at attempt 1 with a canonical receipt, and a
+  unique connected image resolved media and vision at attempt 1, producing 10
+  candidates and a linked sanitized WebP. Both sessions closed with zero
+  committed inventory rows. Focused worker/runtime Jest is 62/62, related
+  backend/Owner/UI Jest is 219/219, and the worker build passes; the broad
+  database run is 429/433 with all M57–M59 cases passing and four unrelated
+  metadata-foundation/structural-artifact failures.
+- Owner review of this runtime closeout is next. Do not revive the historical
+  dead-lettered job. A live duplicate-sanitized-hash collision proof requires a
+  separately prepared distinct-source fixture and explicit authorization.

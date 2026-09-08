@@ -1,9 +1,8 @@
 # Unit 6G media completion correction — local containment and SQL handoff
 
 Date: 2026-09-08. Status: SQL/cleanup implementation integrated onto the current
-`origin/main` baseline, independently reviewed, and applied live as M57–M59
-with exact-project readback complete; Git publication and runtime deployment
-remain gated.
+`origin/main` baseline, independently reviewed, applied live as M57–M59, and
+runtime-verified through the deployed worker and connected proofs.
 
 ## 1. Authority and scope
 
@@ -12,10 +11,11 @@ This covers worker/test changes, read-only database lineage investigation, and a
 reviewable database/cleanup design. The subsequent explicit approval authorizes
 verification of the M52–M56 baseline and forward migration-file creation/local
 implementation and tests under [the execution plan](./unit6g-media-correction-plan.md).
-The later explicit authorization for ordered M57–M59 application is complete.
-Runtime deployment, live Storage/job mutation, dead-letter resets, and Git
-publication are not authorized. Unit 9 remains design-only and outside this
-correction.
+The later explicit authorization for ordered M57–M59 application, Git
+publication, Render deployment, and bounded connected proof is complete. The
+historical dead-letter reset remains prohibited; a live duplicate-sanitized-hash
+collision fixture and any cleanup scheduling/alert policy change require a new
+explicit decision. Unit 9 remains design-only and outside this correction.
 
 Requirements trace to Master SDD §3 MAS-03/MAS-08/MAS-17, §8, §9; Pipeline SDD §4
 image replay and §10 durable orchestration; Security SDD §6/§7/§12 and MED-19.

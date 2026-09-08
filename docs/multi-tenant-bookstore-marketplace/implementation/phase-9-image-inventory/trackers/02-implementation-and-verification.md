@@ -1,7 +1,43 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`; **last updated:** 2026-09-08
+**Status:** `unit6g_media_completion_correction_runtime_verified_connected`; **last updated:** 2026-09-08
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit6g_media_completion_correction_post_apply_handoff`. The correction is integrated and independently approved on verified current `origin/main`; M57–M59 are applied live once and exact-project readback passes. Owner review of the live proof is next. Runtime deployment, scheduling, connected business-data tests, commit, and push remain separately gated.
+**Active work unit:** `unit6g_media_completion_correction_runtime_closeout`. The correction is committed on `origin/main`, deployed to Render, and connected-verified. M57–M59 are applied live once and exact-project readback passes. Owner review of the runtime closeout is next; historical dead-letter retry and live collision-fixture proof remain separately gated.
+
+### 2026-09-08 — runtime deployment and connected completion proof
+
+- Git publication: commit `ffdb1fc85af625bc98dcfc3af93d5530278144a9` was
+  pushed to `origin/main`; no migration application occurred in this runtime
+  closeout.
+- Render readback: service `phase9-media-sanitation`
+  (`srv-d9jbmgf41pts73cecfl0`) deployed the exact commit as
+  `dep-dafv4ogn74is73bq9lkg` and is `live`. The Docker build completed the
+  media-worker TypeScript build; logs emitted `service_started`; read-only
+  `/health` and `/ready` checks returned 200 with `alive` and `ready` bodies.
+- Requested duplicate proof: `testimage.jpeg` produced input
+  `078013d6-2a2d-4726-b3c1-8de4f442dae7` and media job
+  `e04b0d78-72c2-49ed-8516-77e2dd9d88d3`. It resolved at attempt `1/5` with
+  canonical receipt `duplicate_rejected` / `P9_MEDIA_DUPLICATE_INPUT`; the
+  source hash already existed in an earlier input. The test session was closed
+  through the UI with zero candidate or inventory effects.
+- Positive proof: unique `10testimage.jpeg` produced session
+  `6e9d05b2-1c36-4e74-ac47-949753a04898`, input
+  `fe81ddca-d616-4d49-94cf-1edcba117b8b`, media job
+  `be2a9a74-6963-4a78-bf02-0d70813ba310`, and vision job
+  `0b13c16c-abe0-427d-886a-36f104cc034d`. Media and vision both resolved at
+  attempt `1/5`; the input is `ready`, 10 candidates were detected, and the
+  linked sanitized asset is `image/webp`, 1600x1600, 135,044 bytes, with
+  `phase9-media-v1`, `magick-wasm-0.0.41-webp`, and
+  `magick-wasm-0.0.41-strip` markers. The session was closed with zero
+  committed inventory rows.
+- Verification actually run: focused worker/runtime Jest **6 suites / 62
+  tests**; related backend/Owner/UI Jest **5 suites / 219 tests**; worker build
+  PASS; broad disposable Phase 9 database run **429/433**, with all M57–M59
+  cases passing and four unrelated stale metadata-foundation/structural-artifact
+  failures. No manual job claim/retry or historical dead-letter mutation.
+- Next exact action: Owner review of this closeout. A live
+  duplicate-sanitized-hash collision proof requires a separately prepared
+  distinct-source fixture and explicit authorization; local collision/race
+  coverage already passes.
 
 ### 2026-09-08 — connected Owner close/upload proof
 

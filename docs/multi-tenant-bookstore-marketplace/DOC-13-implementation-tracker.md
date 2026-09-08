@@ -26,6 +26,21 @@ Every coding session must update tracking before ending if it changes any of the
 - handoff notes
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
 
+> **2026-09-08 Unit 6G runtime closeout:** Commit
+> `ffdb1fc85af625bc98dcfc3af93d5530278144a9` is pushed to `origin/main`.
+> Render service `phase9-media-sanitation`
+> (`srv-d9jbmgf41pts73cecfl0`) deployed that exact commit as
+> `dep-dafv4ogn74is73bq9lkg` and is live; `/health` and `/ready` returned 200.
+> The requested `testimage.jpeg` completed the duplicate-input guard at attempt
+> 1 with a canonical `duplicate_rejected` receipt. A unique `10testimage.jpeg`
+> completed media and vision at attempt 1, produced 10 candidates and a linked
+> sanitized 1600x1600 WebP, and was closed with zero committed inventory rows.
+> Focused worker/runtime Jest is 6 suites/62 tests; related backend/Owner/UI
+> Jest is 5 suites/219 tests; the worker build passes. The broad database run is
+> 429/433 with all M57–M59 cases passing and four unrelated stale
+> metadata-foundation/structural-artifact failures. No migration was applied in
+> this closeout and no historical dead-letter job was retried or mutated.
+
 > **2026-09-08 Unit 6G M57–M59 live application/readback:** After exact-project
 > reverification and the passing preflight, M57, M58, and M59 were applied
 > separately and in order to `Bookconnect_reactexpo` /
@@ -1291,12 +1306,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6G media-completion correction is integrated and independently approved on current origin/main; M52–M59 are live once and M57–M59 post-apply readback passed; runtime deployment and connected proof remain gated; prior checkpoints and Unit 8 remain intact** |
-| Overall status | `unit6g_metadata_throughput_local_complete_rollout_gated` |
-| Last updated | 2026-08-30 |
-| Latest handoff | The bounded metadata worker and M56 candidate are locally complete: focused Jest 7 suites / 72 tests, metadata worker build PASS, dispatcher PGlite 30/30. M54 remains live exactly once as `20260829142337`; M55 remains live exactly once as `20260830084323`. No live change occurred in the throughput pass. |
-| Current risk level | The exact deployed Google Books timeout and quota are not readable from current read-only surfaces. A 15-job run has five worst-case waves at concurrency three, so rollout requires timeout ≤10 seconds and canary evidence before M56. The worker/Edge/client bundle is still ahead of deployed runtime; older sibling Unit 6G compatibility remains unresolved. |
-| Next recommended task | Review this preflight, then separately authorize commit and worker-first deployment with live dispatcher batch size one. Verify request shape, timeout, quota/rate limits, memory/connections, retries/dead letters, and duplicate signals; only then separately review/apply M56. |
+| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6G media-completion correction is runtime-verified on current `origin/main`; M52–M59 are live once, the matching Render worker is live, and connected positive/duplicate-input proofs pass; prior checkpoints and Unit 8 remain intact** |
+| Overall status | `unit6g_media_completion_correction_runtime_verified_connected` |
+| Last updated | 2026-09-08 |
+| Latest handoff | Commit `ffdb1fc85af625bc98dcfc3af93d5530278144a9` is on `origin/main`; Render deploy `dep-dafv4ogn74is73bq9lkg` is live; the unique connected proof produced 10 candidates and a linked sanitized WebP at attempt 1, while the requested duplicate source completed with a canonical duplicate receipt. |
+| Current risk level | Native Unit 6F validation remains deferred. A live duplicate-sanitized-hash collision proof and any cleanup-scheduler/alert policy change require a separately prepared fixture and explicit authorization; local race coverage passes. |
+| Next recommended task | Owner review of the runtime closeout. Do not revive the historical dead-lettered job. If live duplicate-sanitized-hash collision evidence is required, prepare a distinct-source/same-sanitized-output fixture under a new explicit authorization. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 
@@ -1460,7 +1475,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [correction design](./implementation/phase-9-image-inventory/supporting/unit6g-media-completion-correction.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | The duplicate-sanitized-hash media-completion correction is integrated and independently approved on current `origin/main`. M52–M59 are live once; M57–M59 exact-project readback passed. Owner review of the live proof is next; runtime deployment, scheduling, connected tests, commit, and push remain separately gated. |
+| Phase 9: Image-to-LLM Inventory | `unit6g_media_completion_correction_runtime_verified_connected` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [correction design](./implementation/phase-9-image-inventory/supporting/unit6g-media-completion-correction.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | The duplicate-sanitized-hash media-completion correction is committed on `origin/main`, deployed to Render `phase9-media-sanitation`, and connected-verified. The requested duplicate input completed at attempt 1 with a canonical receipt; a unique image completed media and vision at attempt 1 with 10 candidates and a linked sanitized WebP. Owner review is next; historical dead-letter retry and live collision-fixture proof remain separately gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

@@ -51,6 +51,23 @@ keys. The absence of policies is intentional deny-all direct access; the
 foreign-key indexes are a future performance review item, not a correctness or
 security blocker.
 
+## Connected runtime readback — 2026-09-08
+
+The matching Render worker was deployed from commit
+`ffdb1fc85af625bc98dcfc3af93d5530278144a9` as deployment
+`dep-dafv4ogn74is73bq9lkg` on service `phase9-media-sanitation`.
+Read-only `/health` and `/ready` checks returned 200. The requested
+`testimage.jpeg` source was already present in the development lineage; its new
+media job resolved at attempt `1/5` with a canonical `P9_MEDIA_DUPLICATE_INPUT`
+receipt and no candidate/inventory effect. A distinct `10testimage.jpeg` source
+then resolved media and vision at attempt `1/5`: its input is `ready`, ten
+candidates were detected, and the linked asset is a 1600x1600 `image/webp`
+with 135,044 bytes and the expected validation/re-encode/EXIF-strip markers.
+Both connected sessions were closed through the Owner UI with zero committed
+inventory rows. No historical dead-letter job was retried or changed. This is
+runtime/readback evidence; it does not authorize a live duplicate-sanitized-hash
+collision fixture or cleanup policy change.
+
 ## Pre-application read-only live correction check — 2026-09-08
 
 The exact project was reverified as healthy `Bookconnect_reactexpo` /

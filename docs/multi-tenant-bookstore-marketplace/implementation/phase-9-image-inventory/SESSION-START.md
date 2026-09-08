@@ -11,8 +11,8 @@ The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` �
 ## Current 2026-09-08 Unit 6G media-completion correction overlay
 
 The active checkout is the isolated branch
-`codex/phase9-unit6g-media-correction-integrated`, based on verified
-`origin/main` commit `573182267ddd79e08b0abfb348b5afd9fb0dc571`.
+`codex/phase9-unit6g-media-correction-integrated`, whose commit
+`ffdb1fc85af625bc98dcfc3af93d5530278144a9` is pushed to `origin/main`.
 The old dirty correction checkout remains untouched. M52–M56 were already
 tracked by the baseline; no historical migration was restored or duplicated.
 Read-only exact-project history confirms M52–M56 live once, ending with M56
@@ -21,12 +21,16 @@ approval and a passing exact-project preflight, M57–M59 were applied separatel
 and in order as live versions `20260908073203`, `20260908073308`, and
 `20260908073425`. The correction implements durable output intent before
 upload, canonical completion replay, exact duplicate-sanitized-hash rejection,
-and fenced service-only cleanup/recovery. Focused Jest 262/262, focused PGlite
-21/21, worker TypeScript, and disposable real-PostgreSQL concurrency/U8B gates
-pass. Exact-project post-apply table, RLS/ACL, index, function/grant, trigger,
-dispatcher, empty-state, and cleanup-health readback also passes. Owner review
-of the live proof is the exact next action. Do not deploy, schedule cleanup,
-run connected business-data tests, commit, or push without separate authority.
+and fenced service-only cleanup/recovery. Render service
+`phase9-media-sanitation` is live from that commit as deployment
+`dep-dafv4ogn74is73bq9lkg`; `/health` and `/ready` both returned 200. The
+requested `testimage.jpeg` completed the duplicate-input guard at attempt 1,
+and unique `10testimage.jpeg` completed media and vision at attempt 1 with 10
+candidates and a linked sanitized WebP. Both sessions were closed with zero
+committed inventory rows. Focused worker/runtime Jest is 62/62, related
+backend/Owner/UI Jest is 219/219, and the worker build passes. The exact next
+action is Owner review of this runtime closeout; do not revive the historical
+dead-lettered job.
 
 ## Prior 2026-08-24 Unit 6G recomposition overlay
 
