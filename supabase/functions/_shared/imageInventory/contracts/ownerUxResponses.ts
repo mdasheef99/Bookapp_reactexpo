@@ -83,14 +83,29 @@ const candidateSummary = z.object({
 }).strict();
 const inputProgress = z.object({
   inputId: uuid, ordinal, sourceKind: z.enum(['camera', 'gallery']),
-  inputState: z.enum(['uploaded', 'validating', 'queued', 'processing', 'ready', 'failed', 'skipped']),
+  inputState: z.enum(['uploaded', 'validating', 'awaiting_duplicate_confirmation', 'queued', 'processing', 'ready', 'failed', 'skipped']),
   inputVersion: version,
-  presentationState: z.enum(['checking_image', 'finding_books', 'ready', 'needs_attention']),
+  presentationState: z.enum(['checking_image', 'duplicate_confirmation_required', 'finding_books', 'ready', 'needs_attention']),
   safeCode: phase9ErrorCode.nullable(),
   retryState: z.enum(['none', 'server_retrying', 'new_upload_required']),
   terminal: z.boolean(), polling: z.boolean(), detectedCandidateCount: candidateCount.nullable(),
-  acceptedCandidateCount: candidateCount.nullable(), createdAt: timestamp, updatedAt: timestamp,
-}).strict();
+  acceptedCandidateCount: candidateCount.nullable(),
+  duplicateConfirmationVersion: version.nullable(),
+  duplicateConfirmationExpiresAt: timestamp.nullable(), createdAt: timestamp, updatedAt: timestamp,
+}).strict().superRefine((value, context) => {
+  const pending = value.inputState === 'awaiting_duplicate_confirmation';
+  if (pending && (value.terminal || value.polling
+    || value.presentationState !== 'duplicate_confirmation_required'
+    || value.safeCode !== 'P9_MEDIA_DUPLICATE_INPUT'
+    || value.duplicateConfirmationVersion === null
+    || value.duplicateConfirmationExpiresAt === null)) {
+    context.addIssue({ code: z.ZodIssueCode.custom, message: 'invalid duplicate confirmation state' });
+  }
+  if (!pending && (value.duplicateConfirmationVersion !== null
+    || value.duplicateConfirmationExpiresAt !== null)) {
+    context.addIssue({ code: z.ZodIssueCode.custom, message: 'unexpected duplicate confirmation authority' });
+  }
+});
 const coverReference = z.string().min(1).max(512).superRefine((value, context) => {
   try {
     const parsed = new URL(value);
@@ -208,6 +223,12 @@ const responseSchemas = {
   remove_scan_input: z.object({
     sessionId: uuid, inputId: uuid, inputState: z.literal('skipped'),
     inputVersion: version, sessionVersion: version, presentationRevision: version,
+  }).strict(),
+  resolve_duplicate_scan_input: z.object({
+    sessionId: uuid, inputId: uuid, decision: z.enum(['cancel', 'proceed']),
+    outcome: z.enum(['cancelled', 'processing_started']),
+    inputState: z.enum(['skipped', 'queued']), inputVersion: version,
+    sessionVersion: version, presentationRevision: version,
   }).strict(),
   list_scan_candidates: z.object({
     items: z.array(candidateSummary), pageInfo, scopeVersion: version, sessionVersion: version.nullable(),

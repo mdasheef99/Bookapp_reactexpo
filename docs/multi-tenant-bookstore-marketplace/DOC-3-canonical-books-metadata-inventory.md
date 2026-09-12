@@ -1,5 +1,8 @@
 # DOC-3: Canonical Books, Metadata, and Inventory
 
+> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+
+
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
@@ -9,6 +12,16 @@
 **Owns:** Canonical book identity, metadata provider rules, store inventory, public listing projection, duplicate resolution, and inventory visibility.
 
 ---
+
+> **Unit 6H correction checkpoint — 2026-09-12:** The duplicate-image confirmation
+> implementation is locally corrected but not rolled out. It preserves the
+> create-only inventory boundary: Proceed analyzes the new upload and still
+> requires normal Owner review and explicit Add to Inventory; it does not merge
+> existing inventory or reuse an older scan. M60 is local-only; F-01 is retracted
+> and F-02/F-03 are corrected locally. Disposable independent-connection
+> PostgreSQL verification passes; connected Edge/Storage remains a rollout gate.
+> This is status/evidence only and does not
+> change the canonical or inventory rules in this document.
 
 ## 1. Purpose
 

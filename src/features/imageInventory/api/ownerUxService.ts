@@ -9,6 +9,7 @@ import {
     type OwnerDiscovery,
     type OwnerInputPage,
     type OwnerRemoveInputResult,
+    type OwnerDuplicateInputResult,
     type OwnerSessionReadiness,
     type OwnerSessionSummary,
     type OwnerUxAction,
@@ -27,6 +28,7 @@ const errorCodes = z.enum([
     'P9_CANDIDATE_VERSION_CONFLICT',
     'P9_INPUT_HAS_CANDIDATES',
     'P9_SINGLE_IMAGE_LIMIT',
+    'P9_MEDIA_NOT_APPROVED',
     'P9_IDEMPOTENCY_MISMATCH',
     'P9_INTERNAL_ERROR',
 ]);
@@ -60,6 +62,7 @@ const errorRegistry: Record<OwnerUxErrorCode, { retryable: boolean; message: str
     P9_CANDIDATE_VERSION_CONFLICT: { retryable: true, message: 'The candidate changed. Refresh and try again.' },
     P9_INPUT_HAS_CANDIDATES: { retryable: false, message: 'This image already has detected books and cannot be removed.' },
     P9_SINGLE_IMAGE_LIMIT: { retryable: false, message: 'Remove the current image before choosing a replacement.' },
+    P9_MEDIA_NOT_APPROVED: { retryable: false, message: 'The verified image is no longer available.' },
     P9_IDEMPOTENCY_MISMATCH: { retryable: false, message: 'This retry does not match the original request.' },
     P9_INTERNAL_ERROR: { retryable: true, message: 'The request could not be completed.' },
 };
@@ -133,6 +136,11 @@ const operationErrors: Record<OwnerUxAction, ReadonlySet<OwnerUxErrorCode>> = {
         'P9_INPUT_HAS_CANDIDATES',
         'P9_IDEMPOTENCY_MISMATCH',
         'P9_INTERNAL_ERROR',
+    ]),
+    resolve_duplicate_scan_input: new Set([
+        'P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_REQUEST_INVALID',
+        'P9_NOT_FOUND', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT',
+        'P9_IDEMPOTENCY_MISMATCH', 'P9_MEDIA_NOT_APPROVED', 'P9_INTERNAL_ERROR',
     ]),
     close_scan_session: new Set([
         'P9_AUTH_REQUIRED',
@@ -257,6 +265,15 @@ export type RemoveScanInputRequest = Readonly<{
     idempotencyKey: string;
     commandId: string;
 }>;
+export type ResolveDuplicateScanInputRequest = Readonly<{
+    sessionId: string;
+    inputId: string;
+    decision: 'cancel' | 'proceed';
+    expectedInputVersion: number;
+    expectedConfirmationVersion: number;
+    idempotencyKey: string;
+    commandId: string;
+}>;
 
 export const ownerUxService = {
     discover(): Promise<OwnerDiscovery> {
@@ -277,6 +294,12 @@ export const ownerUxService = {
         signal?: AbortSignal,
     ): Promise<OwnerRemoveInputResult> {
         return invoke('remove_scan_input', request, signal);
+    },
+    resolveDuplicateInput(
+        request: ResolveDuplicateScanInputRequest,
+        signal?: AbortSignal,
+    ): Promise<OwnerDuplicateInputResult> {
+        return invoke('resolve_duplicate_scan_input', request, signal);
     },
     listCandidates(request: CandidatePageRequest): Promise<OwnerCandidatePage> {
         return invoke('list_scan_candidates', {

@@ -6,6 +6,9 @@ import type { OwnerInputProgress } from '../contracts/ownerUxContracts';
 export function inputStatusLabel(item: Pick<OwnerInputProgress,
     'presentationState' | 'retryState' | 'safeCode'>): string {
     if (item.retryState === 'server_retrying') return 'Trying again';
+    if (item.presentationState === 'duplicate_confirmation_required') {
+        return 'This image matches an earlier upload. Choose Cancel or Proceed.';
+    }
     if (item.retryState === 'new_upload_required') {
         if (item.safeCode === 'P9_MEDIA_DUPLICATE_INPUT') {
             return 'This image was already submitted. Remove it and choose a different image.';
@@ -31,6 +34,7 @@ export function PostScanInputList({
     onBeginRemove,
     onConfirmRemove,
     onCancelRemove,
+    onReviewDuplicate,
 }: {
     items: OwnerInputProgress[];
     removeTarget: { inputId: string; ordinal: number; inputVersion: number } | null;
@@ -40,6 +44,7 @@ export function PostScanInputList({
     onBeginRemove: (target: { inputId: string; ordinal: number; inputVersion: number }) => void;
     onConfirmRemove: () => void;
     onCancelRemove: () => void;
+    onReviewDuplicate: (item: OwnerInputProgress) => void;
 }) {
     const { colors } = useTheme();
     if (items.length === 0) {
@@ -59,7 +64,11 @@ export function PostScanInputList({
                 }}>
                     <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>Image {item.ordinal}</Text>
                     <Text selectable style={{ color: colors.textSecondary }}>{inputStatusLabel(item)}</Text>
-                    {removeTarget?.inputId === item.inputId ? (
+                    {item.presentationState === 'duplicate_confirmation_required' ? (
+                        <Button title="Review duplicate" variant="secondary" style={{ marginTop: 5 }}
+                            onPress={() => onReviewDuplicate(item)}
+                            disabled={isOffline || removePending || !sessionActive} />
+                    ) : removeTarget?.inputId === item.inputId ? (
                         <View style={{ gap: 8, paddingTop: 7 }}>
                             <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>Remove Image {item.ordinal}?</Text>
                             <Text selectable style={{ color: colors.textSecondary }}>

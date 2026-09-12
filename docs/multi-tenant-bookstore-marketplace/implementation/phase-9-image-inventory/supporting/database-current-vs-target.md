@@ -1,7 +1,10 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-09-08 Unit 6G media-completion correction integration
-**Audit mode:** exact-project M57–M59 application and post-apply schema/function/grant/RLS/trigger/dispatcher readback; no business-data, Storage, job, or deployment mutation
+> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+
+
+**Audit date:** 2026-09-08 Unit 6G media-completion correction integration; Unit 6H disposable PostgreSQL checkpoint 2026-09-12
+**Audit mode:** historical exact-project M57–M59 application/readback plus disposable local M01–M60 PostgreSQL verification; no remote business-data, Storage, job, or deployment mutation
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
 **2026-08-21 connected result:** the live project has one publicly eligible
 inventory-media link, with zero eligible NULL, out-of-range, duplicate, or
@@ -22,6 +25,31 @@ Read-only exact-project history confirms M52–M56 are live once on
 `origin/main` baseline at `573182267ddd79e08b0abfb348b5afd9fb0dc571` tracks
 the matching M52–M56 source files. No migration file was restored or copied
 from the stale correction worktree.
+
+## Unit 6H current-vs-target checkpoint — 2026-09-12
+
+The current remote evidence remains the historical M52–M59 readback above.
+M60 `20260911000060_marketplace_phase9_duplicate_confirmation.sql` was created
+locally on `codex/phase9-duplicate-confirmation` from baseline `8340647` and was
+**not applied remotely**. No fresh remote schema/function/grant/Storage readback
+was performed for M60, because this bounded task prohibited remote mutation and
+the local PostgreSQL harness would apply migrations and drop a local database.
+
+Local static, fixture, and disposable PostgreSQL evidence covers the intended target: canonical-only
+partial uniqueness, same-store/hash/version trigger relationships, pending
+confirmation protection, service-only resolution through minimum public
+delegates, exact private-object proof, cleanup/dispatch eligibility, and
+Proceed/Cancel contracts. F-01 was retracted after verification of M58's nested
+conflict handling; F-02 and F-03 are corrected locally. PostgreSQL 18.4 applied
+the baseline plus M01–M60 in disposable database `bookconnect_u8b_22652`; the
+independent-connection concurrency and existing U8B regression markers passed.
+The database and cluster were removed, port 55461 has no listener, and no matching
+process remains. This evidence does not replace connected Edge/Storage proof or
+target-version verification against the development project's PostgreSQL 17.6.
+No remote database, Storage, application data, dispatch, deployment, or
+development data was mutated.
+
+## Historical M57–M59 live readback continuation — 2026-09-08
 
 After the passing preflight, M57–M59 were applied separately and in order as
 M57 `20260908073203 marketplace_phase9_media_output_intents`, M58

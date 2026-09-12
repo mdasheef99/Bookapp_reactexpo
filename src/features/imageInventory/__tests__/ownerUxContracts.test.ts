@@ -8,6 +8,30 @@ import { decodeOwnerUxRequest } from '../contracts/ownerUxRequestContracts';
 const uuid = (digit: number) => `00000000-0000-4000-8000-${String(digit).padStart(12, '0')}`;
 
 describe('Phase 9 Unit 6B mobile Owner UX response contracts', () => {
+    it('strictly decodes duplicate confirmation and resolution without exposing canonical input details', () => {
+        const request = {
+            action: 'resolve_duplicate_scan_input' as const,
+            contractVersion: OWNER_UX_CONTRACT_VERSION,
+            sessionId: uuid(1), inputId: uuid(2), decision: 'proceed' as const,
+            expectedInputVersion: 3, expectedConfirmationVersion: 1,
+            idempotencyKey: 'duplicate-proceed:fixed-command-0001', commandId: uuid(9),
+        };
+        const result = {
+            sessionId: uuid(1), inputId: uuid(2), decision: 'proceed',
+            outcome: 'processing_started', inputState: 'queued', inputVersion: 4,
+            sessionVersion: 5, presentationRevision: 6,
+        };
+        expect(decodeOwnerUxRequest('resolve_duplicate_scan_input', request)).toEqual(request);
+        expect(decodeOwnerUxRequest('resolve_duplicate_scan_input', { ...request, storeId: uuid(8) })).toBeNull();
+        expect(decodeOwnerUxResponse('resolve_duplicate_scan_input', {
+            contractVersion: OWNER_UX_CONTRACT_VERSION, data: result,
+        })).toEqual(result);
+        expect(() => decodeOwnerUxResponse('resolve_duplicate_scan_input', {
+            contractVersion: OWNER_UX_CONTRACT_VERSION,
+            data: { ...result, canonicalInputId: uuid(7) },
+        })).toThrow(OwnerUxResponseContractError);
+    });
+
     it('strictly decodes the remove-image command and canonical skipped result', () => {
         const request = {
             action: 'remove_scan_input' as const,

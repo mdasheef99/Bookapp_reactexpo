@@ -12,6 +12,12 @@ export type StoredImageEnvelope = Readonly<{
   objectIdentity: string;
 }>;
 
+export function splitStoredObjectPath(path: string): { prefix: string; name: string } {
+  const index = path.lastIndexOf('/');
+  if (index < 1 || index === path.length - 1) throw new Error('P9_MEDIA_NOT_APPROVED');
+  return { prefix: path.slice(0, index), name: path.slice(index + 1) };
+}
+
 export async function sha256Hex(bytes: Uint8Array | string): Promise<string> {
   const input = typeof bytes === 'string' ? new TextEncoder().encode(bytes) : bytes;
   const stableBuffer = Uint8Array.from(input).buffer;

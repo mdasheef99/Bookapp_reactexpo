@@ -1,13 +1,31 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** current/live and approved-target representations separated; Unit 6G M52–M59 live
-**Last updated:** 2026-09-08
+> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+
+
+**Status:** current/live and approved-target representations separated; Unit 6G M52–M59 live; Unit 6H M60 disposable-PostgreSQL verified, not remotely applied, and connected-rollout gated
+**Last updated:** 2026-09-12
 
 Unit 6A adds only Owner UX presentation/review support; it grants no Unit 7 inventory/publication mutation authority. Unit 6G M52–M59 are live at their recorded versions; M57–M59 exact-project readback passed on 2026-09-08. See [tracker 19](../trackers/19-unit6a-owner-safe-backend-evidence.md), [tracker 31](../trackers/31-unit6g-owner-batch-review-design-evidence.md), and the [media-completion correction](./unit6g-media-completion-correction.md).
 
 M01-M08/M10-M42 are live-verified at their recorded levels. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. M14 adds dedicated service-only vision-provider attempts and is live once as `20260727183546`. M39/M40/M41/M42 are live exactly once; M42 keeps generated listing authors projection database-owned. Owner/media/fixture-vision/publication-worker services remain deployed. Unit 7B is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`; M09 quantity validation remains a separate live-data gate.
 
 The dictionary distinguishes canonical truth, store-owned snapshots, public projections, staged AI output, and media/evidence. A field must not be added to several layers merely because it is convenient; each copy needs a named owner and synchronization rule.
+
+## Unit 6H duplicate confirmation — M60 local target, not live
+
+| Representation | Owner and visibility | Required meaning and current evidence |
+| --- | --- | --- |
+| `image_extraction_inputs.duplicate_of_input_id` | PostgreSQL-owned private relationship; no client write authority | Nullable self-reference from a new duplicate input to the canonical same-store input. M60's trigger verifies canonicality, store, sanitized hash, and orchestration version. Locally defined; not present in remote migration history for this checkpoint. |
+| `image_extraction_inputs.state = awaiting_duplicate_confirmation` | PostgreSQL-owned lifecycle state | Keeps the new duplicate upload nonterminal until explicit Proceed or Cancel. Close/readiness must continue to treat it as unresolved. Local M60 target only. |
+| `phase9_input_canonical_sanitized_hash` | PostgreSQL partial unique index | Canonical rows only (`duplicate_of_input_id IS NULL`) are unique by `(store_id, sha256, orchestration_version)`; duplicate rows retain their own media/provenance. Local M60 target only. |
+| `marketplace_sec.phase9_duplicate_confirmations` | Private PostgreSQL table with deny-by-default RLS/ACL | Stores the pending confirmation, expiry, and resolution replay identity without exposing hashes, paths, or canonical identifiers to Owner projections. Local M60 target only. |
+| `marketplace_sec.phase9_duplicate_resolution_context` / `marketplace_sec.phase9_resolve_duplicate_scan_input` plus minimum public delegates | PostgreSQL-owned service-only functions | Context replay occurs before Storage access; Proceed proves the exact private object and links the new input, while Cancel skips vision and releases cleanup eligibility. M60 locally defines postgres-owned, empty-search-path public `SECURITY INVOKER` delegates granted only to `service_role`; authenticated direct execution is denied. Connected routing remains unverified. |
+
+M52–M59 remain the current live schema/runtime boundary. This table records
+M60's checked-in target representation plus disposable PostgreSQL verification;
+it is not a remote schema readback. The disposable M01–M60 database and cluster
+were removed after the concurrency and existing regression markers passed.
 
 ## Unit 6G media-completion correction — M57–M59 live
 

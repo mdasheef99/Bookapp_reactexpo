@@ -89,6 +89,7 @@ $requiredPhaseFiles = @(
     'work-units/06-owner-capture-review-recovery-ux-sdd.md',
     'work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md',
     'work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md',
+    'work-units/06h-duplicate-input-confirmation.md',
     'work-units/owner-inventory-read-boundary-wu1-sdd.md',
     'work-units/owner-inventory-read-client-wu2-sdd.md',
     'work-units/06-owner-capture-review-recovery-contract-matrix.md',
@@ -225,6 +226,7 @@ if (-not ($doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_sdd_owner
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_media_completion_correction_integrated_review_pending`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_media_completion_correction_locally_verified_commit_authorization_pending`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`') -or
+    $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_m55_applied_client_deploy_pending`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_upload_transport_correction_locally_verified`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6_mobile_upload_transport_native_failed_diagnosed`') -or
@@ -281,6 +283,7 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
     $implementationTracker.Contains('**Status:** `unit6g_media_completion_correction_integrated_review_pending`') -or
     $implementationTracker.Contains('**Status:** `unit6g_media_completion_correction_locally_verified_commit_authorization_pending`') -or
     $implementationTracker.Contains('**Status:** `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`') -or
+    $implementationTracker.Contains('**Status:** `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated`') -or
     $implementationTracker.Contains('**Status:** `unit6g_direct_add_closeout_connected_partial_pass_client_deploy_pending`') -or
     $implementationTracker.Contains('**Status:** `unit6_mobile_upload_transport_correction_locally_verified`') -or
     $implementationTracker.Contains('**Status:** `unit6_mobile_filesystem_transport_locally_verified_live_pending`') -or
@@ -317,9 +320,10 @@ if (-not ($implementationTracker.Contains('**Status:** `unit6e_finalized_unit6f_
      $implementationTracker.Contains('**Active work unit:** `unit8_closure_ready`') -or
     $implementationTracker.Contains('**Active work unit:** `unit7a_create_only_commit_red_tests_pending_separate_authorization`') -or
     $implementationTracker.Contains('**Active work unit:** `unit7a_create_only_commit_locally_complete_review_pending`') -or
-    $implementationTracker.Contains('**Active work unit:** `unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`') -or
-    $implementationTracker.Contains('**Active work unit:** `unit7a_post_m39_feature_push_and_owner_edge_deployment`') -or
-    $implementationTracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -or
+     $implementationTracker.Contains('**Active work unit:** `unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`') -or
+     $implementationTracker.Contains('**Active work unit:** `unit7a_post_m39_feature_push_and_owner_edge_deployment`') -or
+     $implementationTracker.Contains('**Active work unit:** `unit6h_duplicate_input_confirmation`') -or
+     $implementationTracker.Contains('**Active work unit:** [`automatic_worker_wake_dispatcher`') -or
     $implementationTracker.Contains('**Active work unit:** [`unit6_pre_main_integration_reconciliation`')) -or
     -not $implementationTracker.Contains('20-unit6b-route-query-cache-evidence.md') -or
     -not $implementationTracker.Contains('22-unit6d-candidate-review-evidence.md') -or
@@ -558,9 +562,10 @@ if (
         $tracker.Contains('**Implementation status:** `unit8_repository_complete_closure_ready_operationally_pending`') -or
         $tracker.Contains('**Implementation status:** `unit8_repository_complete_migration_reconciliation_required`') -or
         $tracker.Contains('**Implementation status:** `unit8_live_verified_main_integration_pending`') -or
-        $tracker.Contains('**Implementation status:** `unit8_live_verified_main_integrated`')
+        $tracker.Contains('**Implementation status:** `unit8_live_verified_main_integrated`') -or
+        $tracker.Contains('**Implementation status:** `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated`')
     ) -or
-    ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit7a_post_m39_feature_push_and_owner_edge_deployment|unit7a_create_only_commit_locally_complete_review_pending|unit7a_create_only_commit_red_tests_pending_separate_authorization|unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|phase9_multilingual_vision_response_resilience_review|unit6c_single_image_safe_remove|phase9_metadata_retry_provider_attempt_correction|unit6_complete|unit6_mobile_upload_transport_correction_local_complete|unit6_mobile_upload_transport_native_failure_diagnosed|unit6_mobile_filesystem_transport_live_proof_pending)`\r?$' -and
+    ($tracker -notmatch '(?m)^\*\*Active work unit:\*\* `(unit7a_post_m39_feature_push_and_owner_edge_deployment|unit7a_create_only_commit_locally_complete_review_pending|unit7a_create_only_commit_red_tests_pending_separate_authorization|unit6f_awaiting_separate_authorization|unit6f_browser_verified_native_gate_pending|owner_inventory_read_boundary_wu1|owner_inventory_read_client_wu2|phase9_core_pipeline_vertical_integration_audit|phase9_structural_metadata_integration|phase9_structural_metadata_integration_correction_pass|phase9_structural_metadata_integration_correction_pass_complete|phase9_controlled_live_metadata_vertical_proof|phase9_metadata_worker_configuration_safe_invocation_and_supabase_target_guard|phase9_m33_vision_reservation_correction|phase9_compact_gemini_multilingual_language_hint_correction|phase9_multilingual_vision_response_resilience_review|unit6c_single_image_safe_remove|phase9_metadata_retry_provider_attempt_correction|unit6_complete|unit6_mobile_upload_transport_correction_local_complete|unit6_mobile_upload_transport_native_failure_diagnosed|unit6_mobile_filesystem_transport_live_proof_pending|unit6h_duplicate_input_confirmation)`\r?$' -and
         -not $tracker.Contains('**Active work unit:** `unit7a_owner_edge_bundle_fix_narrow_review_pending`') -and
         -not $tracker.Contains('**Active work unit:** `unit7a_owner_edge_import_resolution_correction_requires_separate_authorization`') -and
         -not $tracker.Contains('**Active work unit:** `unit7b_independent_review`') -and
@@ -648,8 +653,9 @@ if (
         $tracker.Contains('**Next authorized action:** Owner review of this preflight, followed by separate authorization to commit and deploy the metadata worker first with the dispatcher still sending batch size one.') -or
         $tracker.Contains('**Next authorized action:** Independent review of the uncommitted Unit 6G media-completion correction on the verified origin-main baseline. Do not apply M57–M59, deploy, stage, commit, or push from this checkpoint.') -or
         $tracker.Contains('**Next authorized action:** Owner review of the live M57–M59 application preflight and explicit authorization for any local commit or ordered M57–M59 application. Do not deploy or push from this checkpoint.') -or
-        $tracker.Contains('**Next authorized action:** Owner review of the M57–M59 live application proof. Matching worker/Edge/client deployment, cleanup scheduling, connected business-data tests, commit, and push require separate authorization.') -or
-        $tracker.Contains('**Next authorized action:** Owner review of the independently approved correction and explicit decision whether to authorize one local commit. Do not apply M57–M59, deploy, or push from this checkpoint.')
+         $tracker.Contains('**Next authorized action:** Owner review of the M57–M59 live application proof. Matching worker/Edge/client deployment, cleanup scheduling, connected business-data tests, commit, and push require separate authorization.') -or
+        $tracker.Contains('**Next authorized action:** Owner review of the independently approved correction and explicit decision whether to authorize one local commit. Do not apply M57–M59, deploy, or push from this checkpoint.') -or
+        $tracker.Contains('**Next authorized action:** Review the Unit 6H disposable PostgreSQL proof and separately authorize connected Edge/Storage verification; M60 remote application, deployment, dispatch, and Git publication remain gated.')
     ) -or
     -not $tracker.Contains('M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`') -or
     -not $tracker.Contains('M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`') -or
@@ -738,7 +744,8 @@ $draftMigrationNames = @(
     '20260830000056_marketplace_phase9_metadata_throughput.sql',
     '20260906000057_marketplace_phase9_media_output_intents.sql',
     '20260906000058_marketplace_phase9_media_completion_receipts.sql',
-    '20260906000059_marketplace_phase9_media_output_cleanup.sql'
+    '20260906000059_marketplace_phase9_media_output_cleanup.sql',
+    '20260911000060_marketplace_phase9_duplicate_confirmation.sql'
 )
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
@@ -780,7 +787,8 @@ $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_in
     $tracker.Contains('**Implementation status:** `unit6g_metadata_throughput_local_complete_rollout_gated`') -or
     $tracker.Contains('**Implementation status:** `unit6g_media_completion_correction_integrated_review_pending`') -or
     $tracker.Contains('**Implementation status:** `unit6g_media_completion_correction_locally_verified_commit_authorization_pending`') -or
-    $tracker.Contains('**Implementation status:** `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`'))
+    $tracker.Contains('**Implementation status:** `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`') -or
+    $tracker.Contains('**Implementation status:** `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated`'))
 $expectedMigrationNames = @($migrationNames)
 if ($wu1AppliedStatus) { $expectedMigrationNames += $draftMigrationNames }
 $appliedPhase9Migrations = if ($wu1AppliedStatus) {
@@ -1110,7 +1118,8 @@ if (-not ($phaseReadme.Contains('**Status:** `unit6e_finalized_unit6f_separately
     $phaseReadme.Contains('**Status:** `unit6g_session_lifecycle_fence_live_verified_m54_applied`') -or
     $phaseReadme.Contains('**Status:** `unit6g_media_completion_correction_integrated_review_pending`') -or
     $phaseReadme.Contains('**Status:** `unit6g_media_completion_correction_locally_verified_commit_authorization_pending`') -or
-    $phaseReadme.Contains('**Status:** `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`')) -or
+    $phaseReadme.Contains('**Status:** `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`') -or
+    $phaseReadme.Contains('**Status:** `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated`')) -or
     -not ($phaseReadme.Contains('M01-M08/M10-M29 are live once') -or $phaseReadme.Contains('M01-M08/M10-M30 are live once') -or $phaseReadme.Contains('M01-M08/M10-M38 and WU1 are live once') -or $phaseReadme.Contains('M01-M08/M10-M42 are live once') -or $phaseReadme.Contains('M01-M08/M10-M45 are live once') -or $phaseReadme.Contains('M01-M08/M10-M46 are live once') -or $phaseReadme.Contains('M01-M08/M10-M48 are live once')) -or
     -not $phaseReadme.Contains('Unit 6B is merged at `9ef9eb3`') -or
     -not $phaseReadme.Contains('Unit 6D is') -or

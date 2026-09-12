@@ -1,7 +1,49 @@
 # Phase 9 Implementation and Verification Tracker
-**Status:** `unit6g_media_completion_correction_runtime_verified_connected`; **last updated:** 2026-09-08
+
+> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+
+**Status:** `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated`; **last updated:** 2026-09-12
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit6g_media_completion_correction_runtime_closeout`. The correction is committed on `origin/main`, deployed to Render, and connected-verified. M57–M59 are applied live once and exact-project readback passes. Owner review of the runtime closeout is next; historical dead-letter retry and live collision-fixture proof remain separately gated.
+**Active work unit:** `unit6h_duplicate_input_confirmation`. Unit 6H is locally implemented and corrected on baseline `8340647`; M60 is local-only. F-01 is retracted and F-02/F-03 are corrected locally. M52–M59 remain live once and unchanged with their historical connected evidence preserved.
+
+### 2026-09-12 — Unit 6H bounded correction and documentation closeout
+
+- Workspace review confirmed the expected repository, remote, branch, and
+  baseline. Tracked and untracked Unit 6H implementation, test, UI, Edge, and
+  M60 files were inspected. The Owner then authorized this bounded correction.
+- F-01 is retracted after proving M58's nested legacy-constraint handling feeds
+  M60's `confirmation_required` translation. F-02 is corrected through two
+  service-role-only public delegates to the private resolution functions. F-03
+  is corrected through local session/controller lifecycle fencing and response-
+  session validation.
+- Verification actually run after correction: focused Jest **4 suites / 181
+  tests passed**, including the three duplicate-resolution lifecycle tests;
+  local duplicate-confirmation Node fixture **5/5 passed**; TypeScript
+  validation passed; `git diff --check` passed.
+- Warning outcome: the focused screen suite still logs the React Native
+  `VirtualizedList` `act(...)` warning from the existing `FlatList` timer path;
+  the new dialog suite did not emit it. `--detectOpenHandles` and `--forceExit`
+  probes did not complete, so no open-handle identity is claimed. This is
+  classified as likely test cleanup/timer hygiene, not a confirmed production
+  defect.
+- The Owner subsequently authorized the disposable PostgreSQL gate. Local
+  PostgreSQL 18.4 ran at `127.0.0.1:55461` with exact data directory
+  `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912`
+  and PID-scoped database `bookconnect_u8b_22652`. The baseline plus M01–M60
+  applied successfully.
+- Independent `psql` connections passed
+  `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS`: one canonical
+  winner, one pending duplicate loser, canonical-only uniqueness, concurrent
+  Proceed/cleanup/replay fencing, exact replay, one vision job, and one media
+  asset belonging to the new session. The existing broad SQL regression passed
+  `U8B_REAL_POSTGRES_ACCEPTANCE_PASS`.
+- Teardown verification found the exact data directory absent, port 55461 with
+  no listener, and zero matching postgres processes. M60 remains locally
+  created and **not remotely applied**. No deployment, remote database/Storage
+  or application-data mutation, live dispatch, or development-data deletion
+  occurred.
+- Follow-up gate: review this local PostgreSQL proof and separately authorize
+  connected Edge/Storage verification before any M60 rollout decision.
 
 ### 2026-09-08 — runtime deployment and connected completion proof
 
@@ -3130,6 +3172,7 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 | `20260906000057_marketplace_phase9_media_output_intents.sql` | **live `20260908073203`** | Verified current origin-main M52–M56 baseline; RED-first correction implementation | Adds private per-attempt snapshot/sanitized output intents, immutable server-derived context, reference fences, cleanup state, indexes, RLS, and service-only preparation RPCs | Focused Jest/PGlite plus disposable M01–M59 PostgreSQL replay/race harness PASS; live table/index/function/trigger/RLS/ACL readback PASS |
 | `20260906000058_marketplace_phase9_media_completion_receipts.sql` | **live `20260908073308`** | Live M57 predecessor; exact replay, claim/payload mismatch, and duplicate-hash tests | Adds private canonical completion receipts and replaces scan/public-copy completion paths to require prepared intent, preserve exact replay, and atomically reject only the named per-store sanitized-hash conflict | Focused SQL 21/21 and distinct-connection duplicate completion PASS; live receipt/function/grant readback PASS |
 | `20260906000059_marketplace_phase9_media_output_cleanup.sql` | **live `20260908073425`** | Live M57–M58 predecessors; cleanup/completion and hold/reference race tests | Adds service-only cleanup claim/finish/health RPCs, permanent delete reservation, reference/hold rechecks, bounded retry/recheck/manual reconciliation, and dispatcher wake integration | Focused cleanup/recovery Jest/PGlite and both real-PostgreSQL race orders PASS; live function/dispatcher/health readback PASS; runtime scheduling remains gated |
+| `20260911000060_marketplace_phase9_duplicate_confirmation.sql` | **not applied remotely; disposable local application only** | Bounded correction and Owner-authorized local PostgreSQL verification on branch `codex/phase9-duplicate-confirmation`, baseline `8340647`; no remote preflight/application | Adds the duplicate confirmation state/table, canonical-only partial uniqueness, trigger relationship checks, private resolvers plus service-role-only public delegates, exact private-object proof, and pending-confirmation cleanup/dispatch fences; M52–M59 source is unchanged | Jest 181/181, PGlite 5/5, TypeScript PASS; PostgreSQL 18.4 baseline+M01–M60 application, independent-connection Unit 6H concurrency, and existing U8B regression PASS; disposable database/cluster fully removed; connected Edge/Storage proof not run; rollout remains separately gated |
 
 ### Unit 6G-B M52 application and connected proof - 2026-08-22
 

@@ -1,14 +1,21 @@
 # DOC-13: Implementation Tracker
 
+> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+
+
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-09-08
+**Date:** 2026-09-12
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
 
 ---
+
+> **Local Unit 6H overlay (not deployed):** On branch `codex/phase9-duplicate-confirmation`, the bounded local correction pass is complete. F-01 was retracted after verifying M58's nested conflict handling; F-02 and F-03 are corrected locally. Forward M60 and coordinated Edge/worker/app changes implement duplicate warning → Cancel or Proceed while preserving new-upload provenance and the normal review/Add pipeline. M52–M59 and live development state are unchanged. See the [Unit 6H work unit](./implementation/phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md).
+
+> **2026-09-12 Unit 6H local PostgreSQL checkpoint:** Correction-focused Jest passed 4 suites/181 tests, the PGlite fixture passed 5/5, and TypeScript passed. The Owner-authorized disposable PostgreSQL 18.4 harness applied the test baseline and M01–M60, then passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` and the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS`. Teardown was verified: its directory is absent, port 55461 has no listener, and no matching postgres process remains. The earlier `VirtualizedList` screen-test warning remains historical; it did not affect this run. M60 is local-only and no deployment, remote database/Storage or application-data mutation, live dispatch, or development-data deletion occurred. Connected Edge/Storage verification requires separate owner authorization.
 
 ## 1. Tracking Rules
 This file is the master status board. It should stay concise.
@@ -1306,12 +1313,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6G media-completion correction is runtime-verified on current `origin/main`; M52–M59 are live once, the matching Render worker is live, and connected positive/duplicate-input proofs pass; prior checkpoints and Unit 8 remain intact** |
-| Overall status | `unit6g_media_completion_correction_runtime_verified_connected` |
-| Last updated | 2026-09-08 |
-| Latest handoff | Commit `ffdb1fc85af625bc98dcfc3af93d5530278144a9` is on `origin/main`; Render deploy `dep-dafv4ogn74is73bq9lkg` is live; the unique connected proof produced 10 candidates and a linked sanitized WebP at attempt 1, while the requested duplicate source completed with a canonical duplicate receipt. |
-| Current risk level | Native Unit 6F validation remains deferred. A live duplicate-sanitized-hash collision proof and any cleanup-scheduler/alert policy change require a separately prepared fixture and explicit authorization; local race coverage passes. |
-| Next recommended task | Owner review of the runtime closeout. Do not revive the historical dead-lettered job. If live duplicate-sanitized-hash collision evidence is required, prepare a distinct-source/same-sanitized-output fixture under a new explicit authorization. |
+| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6H duplicate confirmation has completed its bounded local correction and disposable PostgreSQL verification; F-01 is retracted, F-02/F-03 are corrected locally, M52–M59 remain live and unchanged, and M60 plus coordinated code changes remain local only** |
+| Overall status | `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated` |
+| Last updated | 2026-09-12 |
+| Latest handoff | Baseline `8340647` matches the requested remote and branch. F-01 is retracted; F-02/F-03 are corrected. Disposable PostgreSQL 18.4 applied M01–M60 and passed Unit 6H concurrency plus the existing U8B regression acceptance, then fully tore down. M60 remains unapplied remotely. |
+| Current risk level | No local implementation or disposable PostgreSQL blocker remains from F-01 through F-03. PostgreSQL 18.4 is not the connected development project's recorded PostgreSQL 17.6, so connected Edge/Storage and target-version behavior remain unproven. The historical Jest `VirtualizedList` warning and incomplete open-handle probes remain separate verification warnings. |
+| Next recommended task | Review the Unit 6H disposable PostgreSQL proof and separately authorize connected Edge/Storage verification. Do not apply M60 remotely, deploy, dispatch, stage, commit, push, or mutate remote services from this checkpoint. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 
@@ -1475,7 +1482,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6g_media_completion_correction_runtime_verified_connected` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [correction design](./implementation/phase-9-image-inventory/supporting/unit6g-media-completion-correction.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | The duplicate-sanitized-hash media-completion correction is committed on `origin/main`, deployed to Render `phase9-media-sanitation`, and connected-verified. The requested duplicate input completed at attempt 1 with a canonical receipt; a unique image completed media and vision at attempt 1 with 10 candidates and a linked sanitized WebP. Owner review is next; historical dead-letter retry and live collision-fixture proof remain separately gated. |
+| Phase 9: Image-to-LLM Inventory | `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6H review](./implementation/phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | Unit 6H is locally implemented and corrected on baseline `8340647`; disposable PostgreSQL concurrency and existing regression acceptance pass. M60 remains unapplied remotely; connected Edge/Storage verification remains gated. M52–M59 remain live and unchanged. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

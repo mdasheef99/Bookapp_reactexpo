@@ -1,14 +1,42 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
+> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+
+
 **Status:** active continuity protocol
-**Last updated:** 2026-09-08
+**Last updated:** 2026-09-12
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
+## Current local Unit 6H overlay
+
+The bounded Unit 6H correction and disposable PostgreSQL verification are complete on `codex/phase9-duplicate-confirmation` at `C:\Users\user\Desktop\Bookconnect`, based on `8340647`. F-01 was retracted; F-02 and F-03 are corrected locally. The approved behavior and coordinated deployment procedure are in [Unit 6H](./work-units/06h-duplicate-input-confirmation.md). M52–M59 are immutable; M60 is local only. Do not apply, deploy, push, dispatch, or mutate development database/Storage without a separate authorization.
+
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
-## Current 2026-09-08 Unit 6G media-completion correction overlay
+## 2026-09-12 Unit 6H review checkpoint
+
+The correction-focused Jest run passed **4 suites / 181 tests**, including the
+three duplicate-resolution lifecycle tests; the local duplicate-confirmation
+fixture passed **5/5** scenarios, and TypeScript validation passed. F-01 is
+retracted because M58 catches the legacy
+constraint identity before M60 translates the canonical receipt. F-02 is
+corrected by service-role-only public delegates to the private resolution
+functions. F-03 is corrected by local session/controller lifecycle fencing and
+response-session validation. The earlier screen run still reported the existing
+React Native `VirtualizedList` `act(...)` warning; `--detectOpenHandles` and
+`--forceExit` probes did not complete, so no handle identity is established.
+The correction-focused runs exited normally. The subsequently authorized local
+PostgreSQL 18.4 harness applied M01–M60 in disposable database
+`bookconnect_u8b_22652`, passed the Unit 6H independent-connection concurrency
+marker and existing U8B regression marker, then removed the database and cluster;
+port 55461 has no listener and no matching postgres process remains. M60 was not
+applied remotely, and no deployment, remote database/Storage mutation, live
+dispatch, application-data mutation, or development-data deletion occurred.
+Connected Edge/Storage verification requires separate owner authorization.
+
+## Historical 2026-09-08 Unit 6G media-completion correction overlay
 
 The active checkout is the isolated branch
 `codex/phase9-unit6g-media-correction-integrated`, whose commit

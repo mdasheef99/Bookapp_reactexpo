@@ -1,5 +1,8 @@
 # SDD 03: Owner Review and Inventory Commit
 
+> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+
+
 **Unit 5C-5 backend checkpoint (2026-07-30):** the live backend defines the
 exceptional field-specific Owner variant read/decision contract with exact
 versioning, immutable audit, correction provenance, and no inventory commit or
@@ -10,6 +13,14 @@ proposal-second is the canonical lock order.
 **Status:** `approved_baseline`
 **Version:** 1.0
 **Date:** 2026-07-19
+
+**Unit 6H review checkpoint — 2026-09-12:** Local review confirms duplicate
+Proceed returns the new upload to the existing candidate/review/Add flow and
+does not auto-merge inventory; Cancel creates no vision job. The dialog remains
+reopenable after local dismissal and pending confirmation remains a close gate.
+M60 is local-only. Review blockers F-01 through F-03 and the unresolved test
+cleanup warning are recorded in the Unit 6H work unit and trackers; this
+checkpoint changes no normative review or commit rule.
 
 **Unit 7A normative override (2026-08-12):** the Owner froze scanned-candidate
 commit as create-only. Every explicitly committed reviewed candidate creates one
