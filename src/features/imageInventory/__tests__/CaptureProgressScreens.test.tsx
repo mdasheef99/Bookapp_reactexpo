@@ -169,6 +169,12 @@ jest.mock('../capture/captureIds', () => ({
 
 describe('Phase 9 Unit 6C server progress and handoff', () => {
     const registeredInput = mockInputs.data.items[0];
+    afterEach(async () => {
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 60));
+        });
+    });
+
     beforeEach(() => {
         jest.clearAllMocks();
         mockFocused = true;

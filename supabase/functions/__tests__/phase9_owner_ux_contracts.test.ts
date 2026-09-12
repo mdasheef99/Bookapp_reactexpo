@@ -8,6 +8,7 @@ import {
 } from '../_shared/imageInventory/contracts/ownerUx';
 import { executeOwnerIngestion } from '../_shared/imageInventory/runtime/ownerIngestion';
 import { ownerUxFailureResponse } from '../_shared/imageInventory/contracts/ownerUxHttp';
+import { OwnerBatchReviewContractError } from '../_shared/imageInventory/contracts/ownerBatchReview';
 
 const uuid = (n: number) => `92000000-0000-4000-8000-${n.toString().padStart(12, '0')}`;
 const contractVersion = 'phase9-owner-ux-v1';
@@ -761,6 +762,11 @@ describe('Phase 9 Unit 6A safe errors', () => {
       failure = error;
     }
     expect(ownerUxErrorFromException(failure))
+      .toEqual(ownerUxErrorEnvelope('P9_INTERNAL_ERROR'));
+  });
+
+  it('maps malformed batch-review RPC responses to a safe internal error', () => {
+    expect(ownerUxErrorFromException(new OwnerBatchReviewContractError()))
       .toEqual(ownerUxErrorEnvelope('P9_INTERNAL_ERROR'));
   });
 
