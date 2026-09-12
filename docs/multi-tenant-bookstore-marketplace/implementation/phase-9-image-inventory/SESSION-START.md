@@ -36,6 +36,19 @@ applied remotely, and no deployment, remote database/Storage mutation, live
 dispatch, application-data mutation, or development-data deletion occurred.
 Connected Edge/Storage verification requires separate owner authorization.
 
+## 2026-09-12 Gemini response-boundary correction
+
+The connected vision failure was isolated before the Books API: Gemini returned a
+malformed optional `isbn_clue`, and the local decoder rejected the entire vision
+response. The decoder now degrades malformed, non-string, or overlong optional ISBN
+clues to `null`, retains valid labelled ISBNs, and preserves title/author/language
+extraction for the existing metadata query path. This is a provider-boundary
+robustness correction; it does not change duplicate confirmation or inventory
+duplicate policy. Local Gemini/analyzer verification passed 2 suites/48 tests and
+metadata identity/gateway/Google Books adapter/worker verification passed 4 suites/49
+tests; TypeScript and `git diff --check` passed. No connected retry has run after this
+correction. Deployment and connected Edge/Storage verification remain gated.
+
 ## Historical 2026-09-08 Unit 6G media-completion correction overlay
 
 The active checkout is the isolated branch

@@ -20,6 +20,13 @@
   tests passed**, including the three duplicate-resolution lifecycle tests;
   local duplicate-confirmation Node fixture **5/5 passed**; TypeScript
   validation passed; `git diff --check` passed.
+- Follow-up provider-boundary correction: malformed, non-string, or overlong
+  optional Gemini `isbn_clue` values now degrade to `null` instead of rejecting
+  the complete vision response before metadata lookup. Valid labelled ISBNs
+  remain normalized; title/author query identity is unchanged. Gemini/analyzer
+  Jest passed **2 suites / 48 tests**; metadata identity, gateway, Google Books
+  adapter, and worker Jest passed **4 suites / 49 tests**; TypeScript validation
+  and `git diff --check` passed.
 - Warning outcome: the focused screen suite still logs the React Native
   `VirtualizedList` `act(...)` warning from the existing `FlatList` timer path;
   the new dialog suite did not emit it. `--detectOpenHandles` and `--forceExit`

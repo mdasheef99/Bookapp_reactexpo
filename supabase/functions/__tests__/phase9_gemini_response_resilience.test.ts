@@ -174,6 +174,32 @@ describe('Phase 9 Gemini multilingual response resilience', () => {
       status: 'rejected', value: null, reason: 'schema_invalid',
     });
   });
+
+  it.each([
+    ['provider prose', 'not visible on spine'],
+    ['non-string value', { value: 9780306406157 }],
+    ['overlong clue', '978030640615700000000000000000000000'],
+  ])('degrades malformed optional ISBN clue (%s) without rejecting vision', (_case, isbnClue) => {
+    const decoded = decode(providerOutput([observation(1, {
+      title_guess: 'A Book With Usable Identity',
+      author_guesses: ['A Known Author'],
+      isbn_clue: isbnClue,
+    })]));
+
+    expect(decoded.vision.observations[0]).toMatchObject({
+      titleGuess: 'A Book With Usable Identity',
+      authorGuesses: ['A Known Author'],
+      isbnClue: null,
+    });
+  });
+
+  it('normalizes a valid labelled ISBN clue while preserving the candidate identity', () => {
+    const decoded = decode(providerOutput([observation(1, {
+      isbn_clue: 'ISBN-13: 978-0-306-40615-7',
+    })]));
+
+    expect(decoded.vision.observations[0].isbnClue).toBe('978-0-306-40615-7');
+  });
 });
 
 describe('Phase 9 Gemini strictness and privacy-safe diagnostics', () => {

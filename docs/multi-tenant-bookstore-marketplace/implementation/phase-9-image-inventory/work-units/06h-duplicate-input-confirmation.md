@@ -7,6 +7,21 @@
 **Branch/baseline:** `codex/phase9-duplicate-confirmation` from `8340647`
 **Authority:** product decision recorded for this unit; Phase 9 master SDD §3 (MAS-08, MAS-17), pipeline SDD §§6–10, media security SDD §§6–7 and §12, Owner review SDD §§6–9.
 
+## 2026-09-12 — Gemini optional-ISBN boundary correction
+
+The connected test exposed a separate pre-metadata defect: Gemini returned a malformed
+optional `isbn_clue`, and the local response decoder rejected the entire vision result
+before a candidate or Books API job could be created. The decoder now converts
+malformed/non-string/overlong optional ISBN clues to `null`, while retaining valid
+labelled ISBNs and leaving title/author/language extraction and the existing metadata
+query identity unchanged. This correction does not change duplicate confirmation,
+inventory duplicate handling, M52–M60, or the Books API adapter contract.
+
+Focused local verification: Gemini/analyzer 2 suites/48 tests passed; metadata identity,
+gateway, Google Books adapter, and metadata worker 4 suites/49 tests passed; TypeScript
+validation and `git diff --check` passed. No connected retry has been run after this
+local correction; deployment and connected Edge/Storage verification remain gated.
+
 ## Settled flows
 
 - Normal input: validation links that upload's sanitized private media, queues one `vision_extract` job, creates new candidates, enters normal review, and requires explicit Add to Inventory.
