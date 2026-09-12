@@ -1,25 +1,72 @@
 # Phase 9 Master Tracker
 
-> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+> **2026-09-12 Unit 6H bounded correction closeout:** Exact-project source
+> readback proved `phase9-owner-ingestion` v10 used the pre-`selectionId` batch
+> decoder. Commit `6d05370` safely maps batch-response contract failures to
+> `P9_INTERNAL_ERROR` and closes the `VirtualizedList`/mounted-query test cleanup
+> defects. Seven focused suites/233 tests pass with `--detectOpenHandles` and no
+> earlier warning; TypeScript and deployment-runtime validation pass. Only the
+> Owner Edge function was deployed to `ahntbtktjjmvfosgkmgn`: v11 is ACTIVE,
+> JWT verification remains enabled, and the deployed hash is
+> `0af2f2ebde6019d5f10923141b279ae3a78a5ca0f5eeac6630b990030caddf55`.
+> The same authenticated session now renders both review cards. M60, Render,
+> database/Storage, dispatch, inventory, and existing data were not changed.
+> Next action: complete the remaining connected Unit 6H regression matrix under
+> connected-test authorization.
+
+> **Historical pre-correction 2026-09-12 connected Unit 6H diagnostic:** The authorized development
+> browser run used `6testimage.jpeg` in session
+> `f7573651-d155-4dd3-b62b-8e2751db54e4`. Duplicate confirmation appeared;
+> Proceed produced a fresh analysis result with one processed image, two
+> candidates (`Individuals` / `P. F. Strawson` and `Thinking, Fast and Slow` /
+> `Daniel Kahneman`), zero failed images, and zero committed inventory. The
+> UI's batch-review fallback reproduced after manual Retry. A read-only
+> authenticated check returned: `read_scan_session_v3` HTTP 200; Edge
+> `read_scan_batch_review` HTTP 400 `P9_REQUEST_INVALID`; direct PostgREST
+> `phase9_owner_batch_review_v1` HTTP 200 with two cards, each carrying the
+> live `metadataSummary.selectionId`. The checked-in Edge response contract
+> accepts that optional field. The route/RPC split proves a deployment-drift
+> blocker in the Owner batch-review read path; the recorded active Edge v9
+> bundle and commit `404aee0` provide the leading explanation, but exact
+> deployed source/version readback is still pending. It is not a Gemini/Books
+> API rejection. The secondary observability defect is
+> that `OwnerBatchReviewContractError` is not recognized by the generic Edge
+> error mapper and is therefore surfaced as `P9_REQUEST_INVALID`. Browser
+> console inspection added no error-level evidence. No production code, test,
+> migration SQL, deployment, dispatch, or M60 action changed; the live run
+> created only authorized development test-session/upload/job state, deleted
+> no existing data, and added no inventory. Read-only database readback
+> confirmed the new input owns exactly one resolved `vision_extract` job and
+> both candidates. The served Expo bundle and endpoint use the target project;
+> only the parent PowerShell environment has a foreign Supabase URL/key, which
+> did not drive this browser run. **Next exact action:** obtain rollout
+> authorization for deployed Owner-Edge source/version readback or a matching
+> `phase9-owner-ingestion` redeployment, then repeat the same Edge,
+> RPC, retry, and UI proof. M60 was applied before this diagnostic under the
+> preceding rollout authorization; no M60 migration action was taken here.
+> The older PostgreSQL-only checkpoint below is retained as historical
+> pre-connected evidence.
+
+> **Historical local PostgreSQL verification checkpoint (superseded by the connected closeout above) (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
 
 
 **Planning status:** `unit6h_duplicate_confirmation_approved`
-**Implementation status:** `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated`
+**Implementation status:** `unit6h_duplicate_confirmation_edge_reconciled_connected_regressions_pending`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-09-12
-**Current milestone:** Unit 6H bounded correction and disposable independent-connection PostgreSQL verification pass. F-01 is retracted; F-02 public delegates and F-03 session lifecycle fencing pass local tests. Connected Edge/Storage verification remains pending. M60 is unapplied remotely; M52–M59 are unchanged.
+**Current milestone:** Unit 6H bounded correction, disposable independent-connection PostgreSQL verification, exact Owner Edge source readback, v11 deployment, and the connected duplicate-Proceed-to-review handoff pass. F-01 is retracted; F-02 public delegates and F-03 session lifecycle fencing pass. M60 was applied before this correction under prior authorization; M52–M59 are unchanged.
 **Active work unit:** `unit6h_duplicate_input_confirmation`
-**Local-only overlay:** Unit 6H changes future duplicate inputs from terminal rejection to an Owner-confirmed warning. Local branch `codex/phase9-duplicate-confirmation` adds forward M60, direct Edge/client contract changes, cleanup/dispatch protection, and tests. M60 is locally created and **not remotely applied**; no migration, function, worker, app, database, or Storage deployment has occurred. See [Unit 6H](./work-units/06h-duplicate-input-confirmation.md).
+**Prior local-only overlay:** Unit 6H changes future duplicate inputs from terminal rejection to an Owner-confirmed warning. Local branch `codex/phase9-duplicate-confirmation` added forward M60, direct Edge/client contract changes, cleanup/dispatch protection, and tests. M60 was subsequently applied before this diagnostic under prior authorization; no migration action was taken in this diagnostic. See [Unit 6H](./work-units/06h-duplicate-input-confirmation.md).
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** The authorized disposable PostgreSQL 18.4 run applied the test baseline plus M01–M60 in PID-scoped database `bookconnect_u8b_22652`, passed the independent-connection Unit 6H concurrency marker and existing U8B regression marker, and fully tore down its database, cluster directory, listener, and processes. Earlier Unit 6H evidence remains Jest 181/181, PGlite 5/5, and TypeScript PASS. The prior screen run's `VirtualizedList` `act(...)` warning remains historical unresolved test-cleanup evidence.
-**Next authorized action:** Review the Unit 6H disposable PostgreSQL proof and separately authorize connected Edge/Storage verification; M60 remote application, deployment, dispatch, and Git publication remain gated.
-**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. M53 is live exactly once as `20260828081324 marketplace_phase9_unit6g_field_authority_correction`; M54 as `20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`; M55 as `20260830084323 marketplace_phase9_unit6g_metadata_add_authority_correction`; M56 as `20260830175651 marketplace_phase9_metadata_throughput`; M57 as `20260908073203 marketplace_phase9_media_output_intents`; M58 as `20260908073308 marketplace_phase9_media_completion_receipts`; and M59 as `20260908073425 marketplace_phase9_media_output_cleanup`. M60 is a local draft only and is **not** in remote migration history.
+**Next authorized action:** Complete the remaining connected normal upload, duplicate Cancel, dismissal/reopen, repeated Proceed, and explicit Add boundary regression matrix under the existing connected-test authorization or fresh authorization in a new session.
+**Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. M53 is live exactly once as `20260828081324 marketplace_phase9_unit6g_field_authority_correction`; M54 as `20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`; M55 as `20260830084323 marketplace_phase9_unit6g_metadata_add_authority_correction`; M56 as `20260830175651 marketplace_phase9_metadata_throughput`; M57 as `20260908073203 marketplace_phase9_media_output_intents`; M58 as `20260908073308 marketplace_phase9_media_completion_receipts`; and M59 as `20260908073425 marketplace_phase9_media_output_cleanup`. M60 was applied before this diagnostic under prior authorization; migration-history readback was not repeated in this diagnostic.
 **Scope boundary:** Unit 6H review covers the duplicate warning, new-upload Proceed/Cancel semantics, exact private-object verification, completion replay, cleanup/dispatch fencing, UI confirmation lifecycle, and disposable independent-connection PostgreSQL behavior. M52–M59 behavior remains unchanged; connected rollout and live Edge/Storage proof are not established. Unit 8 remains complete.
-**Implementation authority:** Unit 6H local implementation, bounded correction, and disposable PostgreSQL verification are complete for this checkpoint. F-01 is retracted; F-02 and F-03 are corrected locally. The Unit 6H work unit is the detailed authority; M52–M59 remain immutable live evidence. Connected Edge/Storage verification, Edge/mobile/worker deployment, M60 remote application, and Git publication beyond this branch remain unauthorized. Native Unit 6F validation remains deferred and unrelated.
-**Migration creation/application authority:** M60 was created locally for review and was not applied. M52–M59 application history remains immutable live evidence; no historical migration was edited or replayed. Any correction, schema, data, Storage, deployment, dispatch, or job mutation requires separate authorization.
+**Implementation authority:** Unit 6H local implementation, bounded correction, disposable PostgreSQL verification, exact Edge reconciliation, and duplicate-Proceed review handoff are complete for this checkpoint. F-01 is retracted; F-02 and F-03 are corrected. The Unit 6H work unit is the detailed authority; M52–M59 remain immutable live evidence. Further data/Storage, dispatch, or job mutation requires connected-test authorization. Native Unit 6F validation remains deferred and unrelated.
+**Migration creation/application authority:** M60 was applied before this diagnostic under prior authorization; no M60 migration action was taken here. M52–M59 application history remains immutable live evidence; no historical migration was edited or replayed. Any correction, schema, data, Storage, deployment, dispatch, or job mutation requires separate authorization.
 **Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
-**Current gate:** `UNIT6H_LOCAL_POSTGRES_VERIFIED_CONNECTED_ROLLOUT_GATED`; local correction and disposable PostgreSQL checks pass. M60 remote application, deployment, dispatch, and connected Edge/Storage proof remain separately gated.
+**Current gate:** `UNIT6H_CONNECTED_REGRESSION_MATRIX_PENDING`; local correction, disposable PostgreSQL checks, exact v10 source readback, v11 deployment, and connected duplicate-Proceed batch review pass without inventory effects.
 
 ## 2026-09-12 — Unit 6H bounded correction and documentation closeout
 

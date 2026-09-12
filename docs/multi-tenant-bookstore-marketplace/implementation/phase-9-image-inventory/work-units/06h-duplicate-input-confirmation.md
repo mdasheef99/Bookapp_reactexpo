@@ -1,9 +1,23 @@
 # Unit 6H — Duplicate Input Confirmation
 
-> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+> **2026-09-12 bounded correction closeout:** Exact project/source readback
+> proved active `phase9-owner-ingestion` v10 carried the older pre-`selectionId`
+> decoder. Commit `6d05370` corrects the safe error mapping and both isolated
+> Jest cleanup defects. Focused verification passes 7 suites/233 tests with
+> `--detectOpenHandles`, without the former `act(...)` or non-exit warning;
+> TypeScript and deployment-runtime validation pass. The Owner Edge function
+> alone was deployed to `ahntbtktjjmvfosgkmgn` as active v11 with JWT
+> verification and hash
+> `0af2f2ebde6019d5f10923141b279ae3a78a5ca0f5eeac6630b990030caddf55`.
+> The same authenticated duplicate-Proceed session now renders both normal
+> review cards. No Render, M60/migration, database/Storage, dispatch, inventory,
+> existing-data deletion, or reprocessing occurred. Next: complete the remaining
+> connected Unit 6H regression matrix under connected-test authorization.
+
+> **Historical pre-correction connected diagnostic checkpoint (2026-09-12):** M60 was subsequently applied once to development under the preceding rollout authorization. Live duplicate Proceed completed against the new upload: exactly one new vision job and two candidates were created, no older analysis/session was reused, and inventory remained unchanged. The remaining blocker is the deployed `phase9-owner-ingestion` batch-review response-contract drift: Edge returns HTTP 400 `P9_REQUEST_INVALID` while the same authenticated PostgREST RPC returns HTTP 200 with valid cards containing `metadataSummary.selectionId`. The checked-in Edge decoder accepts that optional field, but exact deployed source/version readback remains pending. No code, tests, migration SQL, deployment, dispatch, M60 action, data deletion, or inventory write occurred during this diagnostic. Exact next action: under rollout authorization, read back or deploy the matching Owner Edge bundle and repeat the Edge/RPC/UI proof.
 
 
-**Status:** bounded local correction and disposable independent-connection PostgreSQL verification complete; connected runtime verification and rollout remain gated
+**Status:** duplicate Proceed through normal review live-verified after Owner Edge v11 reconciliation; remaining connected regression matrix pending
 **Branch/baseline:** `codex/phase9-duplicate-confirmation` from `8340647`
 **Authority:** product decision recorded for this unit; Phase 9 master SDD §3 (MAS-08, MAS-17), pipeline SDD §§6–10, media security SDD §§6–7 and §12, Owner review SDD §§6–9.
 
@@ -40,7 +54,7 @@ Owner resolution has two service-role-only database calls behind the authenticat
 
 Cleanup claim, cleanup finish, dispatch eligibility, and cleanup health all recognize pending confirmation protection. The output intent remains pending, but its cleanup deadline is the session expiry. Cancel or expiry releases it; Proceed marks it accepted. Lease fencing and retry/dead-letter behavior are unchanged, and duplicate detection itself resolves the media job without retry.
 
-## Coordinated development deployment procedure (not yet authorized)
+## Coordinated development deployment procedure (historical plan; M60 is now live)
 
 1. Confirm the exact development project ref and read migration history; require M52–M59 once and M60 absent.
 2. Pause only the Phase 9 media/vision dispatchers for the short coordinated window; do not pause unrelated jobs.
@@ -70,8 +84,13 @@ No development-data cleanup is part of this unit.
 Correction verification passed 4 Jest suites/181 tests, including the focused
 lifecycle suite's 3 tests, the 5/5 duplicate-confirmation fixture scenarios,
 and TypeScript validation.
-The screen suite retains the existing `VirtualizedList` `act(...)` warning;
-open-handle/force-exit probes did not complete, so no handle identity is known.
+The screen suite retains the existing `VirtualizedList` `act(...)` warning. A
+2026-09-12 isolation rerun showed it only in `CaptureProgressScreens.test.tsx`,
+from React Native's deferred `VirtualizedList._updateCellsToRender` timer; that
+suite still exited normally. The non-exiting process was independently isolated
+to the older `unit6gMountedRouteIntegration.test.tsx`: 4/4 assertions passed,
+`--detectOpenHandles` named no handle, and `--forceExit` was required. The Unit
+6H dialog/lifecycle and non-UI contract groups exited normally.
 At the initial correction closeout the real PostgreSQL harness was not yet
 authorized; that historical gate is superseded by the run below. M60 remains
 unapplied remotely, and no deployment, remote database/Storage mutation, live

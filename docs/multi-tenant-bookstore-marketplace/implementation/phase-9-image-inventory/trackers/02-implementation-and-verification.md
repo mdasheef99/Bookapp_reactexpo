@@ -1,10 +1,52 @@
 # Phase 9 Implementation and Verification Tracker
 
+> **2026-09-12 Unit 6H bounded correction evidence:** Exact development-project
+> readback found active Owner Edge v10 and proved its downloaded decoder omitted
+> optional `metadataSummary.selectionId`. Red-first error-mapping coverage failed
+> as HTTP 400 `P9_REQUEST_INVALID`; commit `6d05370` makes batch response-contract
+> failures return retryable HTTP 500 `P9_INTERNAL_ERROR`. The same commit awaits
+> React Native's deferred `VirtualizedList` update and unmounts/cancels mounted
+> polling queries before client clear. The combined 7-suite/233-test run passes
+> with `--detectOpenHandles` and neither prior warning; TypeScript and executable
+> deployment-runtime validation pass. `phase9-owner-ingestion` v11 is ACTIVE on
+> `ahntbtktjjmvfosgkmgn`, JWT verification true, deployed hash
+> `0af2f2ebde6019d5f10923141b279ae3a78a5ca0f5eeac6630b990030caddf55`.
+> Authenticated browser readback now renders both candidates in the existing
+> session. No migration/M60, Render, database/Storage, dispatch, inventory, or
+> deletion action occurred. Remaining gate: complete the rest of the connected
+> Unit 6H regression matrix under connected-test authorization.
+
+> **Historical pre-correction Unit 6H diagnostic checkpoint (2026-09-12):** The
+> authorized development test reached duplicate confirmation and Proceed,
+> processed the new upload, produced two candidates, and committed no
+> inventory. `read_scan_session_v3` returned HTTP 200; the authenticated Edge
+> `read_scan_batch_review` call returned HTTP 400 `P9_REQUEST_INVALID`; the
+> same authenticated PostgREST RPC returned HTTP 200 with two cards carrying
+> `metadataSummary.selectionId`. The checked-in batch response contract
+> accepts that field. The route/RPC split proves deployed Owner-Edge/RPC
+> contract drift; the recorded active Edge v9 deployment and commit `404aee0`
+> are the leading explanation, while exact deployed source/version readback is
+> still pending. Retry reproduced the UI fallback. The
+> current error mapper also does not recognize `OwnerBatchReviewContractError`,
+> so a response-contract failure is exposed as request-invalid. No code,
+> tests, migration SQL, deployment, dispatch, or M60 action changed during
+> this diagnostic. The test created authorized development test state only;
+> no existing data was deleted and no inventory was added. Read-only database
+> readback confirmed the new input owns exactly one resolved vision job and
+> both candidates. The served Expo bundle and endpoint use the target project;
+> only the parent PowerShell environment has a foreign Supabase URL/key, which
+> did not drive this browser run. Next exact action: authorized Edge
+> source/version readback or matching redeployment, followed by connected
+> reproof. M60 was applied before this diagnostic under the
+> preceding rollout authorization; no M60 migration action was taken here.
+> The following PostgreSQL-only checkpoint is retained as historical
+> pre-connected evidence; its local-only rollout wording is not current.
+
 > **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
 
-**Status:** `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated`; **last updated:** 2026-09-12
+**Status:** `unit6h_duplicate_confirmation_edge_reconciled_connected_regressions_pending`; **last updated:** 2026-09-12
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit6h_duplicate_input_confirmation`. Unit 6H is locally implemented and corrected on baseline `8340647`; M60 is local-only. F-01 is retracted and F-02/F-03 are corrected locally. M52–M59 remain live once and unchanged with their historical connected evidence preserved.
+**Active work unit:** `unit6h_duplicate_input_confirmation`. Unit 6H is locally implemented and corrected on baseline `8340647`; M60 was applied before this diagnostic under prior authorization. F-01 is retracted and F-02/F-03 are corrected locally. M52–M59 remain live once and unchanged with their historical connected evidence preserved.
 
 ### 2026-09-12 — Unit 6H bounded correction and documentation closeout
 
@@ -3194,7 +3236,7 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 | `20260906000057_marketplace_phase9_media_output_intents.sql` | **live `20260908073203`** | Verified current origin-main M52–M56 baseline; RED-first correction implementation | Adds private per-attempt snapshot/sanitized output intents, immutable server-derived context, reference fences, cleanup state, indexes, RLS, and service-only preparation RPCs | Focused Jest/PGlite plus disposable M01–M59 PostgreSQL replay/race harness PASS; live table/index/function/trigger/RLS/ACL readback PASS |
 | `20260906000058_marketplace_phase9_media_completion_receipts.sql` | **live `20260908073308`** | Live M57 predecessor; exact replay, claim/payload mismatch, and duplicate-hash tests | Adds private canonical completion receipts and replaces scan/public-copy completion paths to require prepared intent, preserve exact replay, and atomically reject only the named per-store sanitized-hash conflict | Focused SQL 21/21 and distinct-connection duplicate completion PASS; live receipt/function/grant readback PASS |
 | `20260906000059_marketplace_phase9_media_output_cleanup.sql` | **live `20260908073425`** | Live M57–M58 predecessors; cleanup/completion and hold/reference race tests | Adds service-only cleanup claim/finish/health RPCs, permanent delete reservation, reference/hold rechecks, bounded retry/recheck/manual reconciliation, and dispatcher wake integration | Focused cleanup/recovery Jest/PGlite and both real-PostgreSQL race orders PASS; live function/dispatcher/health readback PASS; runtime scheduling remains gated |
-| `20260911000060_marketplace_phase9_duplicate_confirmation.sql` | **not applied remotely; disposable local application only** | Bounded correction and Owner-authorized local PostgreSQL verification on branch `codex/phase9-duplicate-confirmation`, baseline `8340647`; no remote preflight/application | Adds the duplicate confirmation state/table, canonical-only partial uniqueness, trigger relationship checks, private resolvers plus service-role-only public delegates, exact private-object proof, and pending-confirmation cleanup/dispatch fences; M52–M59 source is unchanged | Jest 181/181, PGlite 5/5, TypeScript PASS; PostgreSQL 18.4 baseline+M01–M60 application, independent-connection Unit 6H concurrency, and existing U8B regression PASS; disposable database/cluster fully removed; connected Edge/Storage proof not run; rollout remains separately gated |
+| `20260911000060_marketplace_phase9_duplicate_confirmation.sql` | **applied once to development under the preceding authorized rollout; exact live version/checksum readback remains a follow-up** | Bounded correction and disposable PostgreSQL verification on `codex/phase9-duplicate-confirmation`, followed by authorized development rollout to `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`; M52–M59 source remained unchanged | Adds the duplicate confirmation state/table, canonical-only partial uniqueness, trigger relationship checks, private resolvers plus service-role-only public delegates, exact private-object proof, and pending-confirmation cleanup/dispatch fences | Local Jest 181/181, PGlite 5/5, TypeScript PASS; PostgreSQL 18.4 independent-connection concurrency and U8B regression PASS. Live duplicate Proceed created exactly one new vision job and two candidates with no inventory write; Owner Edge v11 now renders both batch-review cards. No M60 action occurred during the later correction. |
 
 ### Unit 6G-B M52 application and connected proof - 2026-08-22
 

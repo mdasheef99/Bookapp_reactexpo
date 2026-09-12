@@ -1,6 +1,53 @@
 # DOC-13: Implementation Tracker
 
-> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+> **2026-09-12 Unit 6H bounded correction closeout:** Exact readback from
+> `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) proved active Owner Edge v10
+> had the older batch decoder and omitted optional
+> `metadataSummary.selectionId`. The reviewed correction is commit `6d05370`:
+> batch-response contract failures now map safely to retryable
+> `P9_INTERNAL_ERROR`, and the React Native list timer plus mounted-query test
+> lifecycle are awaited/torn down deterministically. Seven focused suites/233
+> tests pass with `--detectOpenHandles` and no prior `act(...)`/non-exit warning;
+> TypeScript and executable deployment-runtime validation pass. Only
+> `phase9-owner-ingestion` was deployed to the exact development project; v11 is
+> ACTIVE with JWT verification and hash
+> `0af2f2ebde6019d5f10923141b279ae3a78a5ca0f5eeac6630b990030caddf55`.
+> The previously blocked authenticated session now renders both review cards
+> through Edge. No Render, migration/M60, database/Storage, dispatch, inventory,
+> or data-deletion action occurred. Next: complete the remaining connected Unit
+> 6H regression matrix under connected-test authorization.
+
+> **Historical pre-correction Unit 6H diagnostic checkpoint (2026-09-12):** The
+> authorized development test confirmed duplicate warning → Proceed → fresh
+> analysis for session `f7573651-d155-4dd3-b62b-8e2751db54e4`: one image was
+> processed, two candidates were produced, and committed inventory remained
+> zero. Authenticated `read_scan_session_v3` returned 200, the Owner Edge
+> `read_scan_batch_review` route returned 400 `P9_REQUEST_INVALID`, and the
+> same authenticated PostgREST RPC returned 200 with two cards containing
+> `metadataSummary.selectionId`. The blocker is therefore deployed
+> `phase9-owner-ingestion` contract/version drift against the live RPC result,
+> not Gemini or Books API. Retry reproduced the fallback. The checked-in
+> response contract accepts `selectionId`. The route/RPC split proves functional
+> contract/version drift; the documented active Edge v9 bundle is the leading
+> explanation, but exact deployed source/version readback remains pending.
+> Database readback confirmed new input `331cf214-f2c6-4733-ac05-f4a37000050d`
+> is `ready`, points to the older canonical input only through
+> `duplicate_of_input_id`, has exactly one resolved `vision_extract` job keyed
+> to the new input, and owns both returned candidates; no inventory row was
+> added. `.env.local`, the served Expo bundle, and the read-only Supabase
+> endpoint resolve to project ref `ahntbtktjjmvfosgkmgn`; only the parent
+> PowerShell environment carried a foreign Supabase URL/key, so that
+> process-only mismatch did not cause this browser result. Next action:
+> authorized Edge source/version readback or matching redeployment, then repeat
+> connected proof. No code, tests, migration SQL, deployment, dispatch, or M60
+> action was performed in this diagnostic; only authorized development test
+> state was created, with no deletion or inventory commit. M60 was applied
+> before this diagnostic under the preceding rollout authorization; no M60
+> migration action was taken here. The following PostgreSQL-only checkpoint is
+> retained as historical pre-connected evidence; its local-only rollout wording
+> is not current.
+
+> **Historical local PostgreSQL verification checkpoint (superseded by the connected closeout above) (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
 
 
 **Product:** BookConnect
@@ -13,7 +60,7 @@
 
 ---
 
-> **Local Unit 6H overlay (not deployed):** On branch `codex/phase9-duplicate-confirmation`, the bounded local correction pass is complete. F-01 was retracted after verifying M58's nested conflict handling; F-02 and F-03 are corrected locally. Forward M60 and coordinated Edge/worker/app changes implement duplicate warning → Cancel or Proceed while preserving new-upload provenance and the normal review/Add pipeline. M52–M59 and live development state are unchanged. See the [Unit 6H work unit](./implementation/phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md).
+> **Historical local Unit 6H overlay (recorded before deployment):** On branch `codex/phase9-duplicate-confirmation`, the bounded local correction pass was complete. F-01 was retracted after verifying M58's nested conflict handling; F-02 and F-03 were corrected locally. Forward M60 and coordinated Edge/worker/app changes implement duplicate warning → Cancel or Proceed while preserving new-upload provenance and the normal review/Add pipeline. See the current closeout above and the [Unit 6H work unit](./implementation/phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md).
 
 > **2026-09-12 Unit 6H local PostgreSQL checkpoint:** Correction-focused Jest passed 4 suites/181 tests, the PGlite fixture passed 5/5, and TypeScript passed. The Owner-authorized disposable PostgreSQL 18.4 harness applied the test baseline and M01–M60, then passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` and the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS`. Teardown was verified: its directory is absent, port 55461 has no listener, and no matching postgres process remains. The earlier `VirtualizedList` screen-test warning remains historical; it did not affect this run. M60 is local-only and no deployment, remote database/Storage or application-data mutation, live dispatch, or development-data deletion occurred. Connected Edge/Storage verification requires separate owner authorization.
 
