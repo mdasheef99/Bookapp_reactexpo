@@ -36,6 +36,20 @@ applied remotely, and no deployment, remote database/Storage mutation, live
 dispatch, application-data mutation, or development-data deletion occurred.
 Connected Edge/Storage verification requires separate owner authorization.
 
+## 2026-09-12 Optional-ISBN correction deployment checkpoint
+
+The reviewed correction commit `428a8c17362d7a2c478c83b328ca8237b78bc79f` was
+pushed to `codex/phase9-duplicate-confirmation` and deployed only to the existing
+Render `phase9-fixture-vision` service (`srv-d9jbsjf41pts73cejqag`) as
+`dep-daih7ioae00c73egmcug`. Render reported `live`; `/health` and `/ready`
+returned 200, and unauthenticated `/run` returned 403 without claiming a job.
+The full authenticated image → Gemini → metadata/Books API test remains unrun
+because no approved Owner session or worker ingress token is available here.
+The next exact action is that fresh connected test; it requires the approved
+Owner test session, not another code or migration change. No Edge/client
+deployment, M60 application, migration, dispatch, database/Storage, or
+application-data mutation occurred in this correction deployment.
+
 ## 2026-09-12 Gemini response-boundary correction
 
 The connected vision failure was isolated before the Books API: Gemini returned a

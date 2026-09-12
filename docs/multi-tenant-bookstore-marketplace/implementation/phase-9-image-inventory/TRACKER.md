@@ -33,6 +33,26 @@
 - Teardown verification found the data directory absent, port 55461 without a listener, and zero matching postgres processes. No remote service, database, Storage, application data, dispatch, deployment, or development data was mutated.
 - Follow-up gate: review the disposable PostgreSQL proof and separately authorize connected Edge/Storage verification before considering M60 rollout.
 
+## 2026-09-12 — Optional-ISBN correction deployment
+
+- The reviewed correction commit `428a8c17362d7a2c478c83b328ca8237b78bc79f`
+  was pushed to `codex/phase9-duplicate-confirmation` and deployed only to the
+  existing Render `phase9-fixture-vision` service
+  (`srv-d9jbsjf41pts73cejqag`) as `dep-daih7ioae00c73egmcug`. Render reported
+  `live`; `/health` and `/ready` returned 200 (`alive`/`ready`), and an
+  unauthenticated `/run` returned 403 without claiming a job. The former live
+  worker deployment `af90ef5` was deactivated.
+- This deployment contains the provider-boundary correction only: malformed,
+  non-string, or overlong optional Gemini ISBN clues degrade to `null`; title,
+  author, language, and the existing metadata query identity are preserved.
+  No Edge/client deployment, M60 application, migration, dispatch change,
+  database/Storage mutation, or application-data mutation occurred.
+- Full authenticated image → Gemini → metadata/Books API verification remains
+  unrun because no approved Owner session or worker ingress token is available
+  in this environment. Exact next action: use the approved Owner session to run
+  one fresh connected image test and read back the candidate and metadata job;
+  no additional code or migration change is currently indicated.
+
 ## 2026-09-08 — runtime deployment and connected completion proof
 
 - Commit `ffdb1fc85af625bc98dcfc3af93d5530278144a9` was pushed to

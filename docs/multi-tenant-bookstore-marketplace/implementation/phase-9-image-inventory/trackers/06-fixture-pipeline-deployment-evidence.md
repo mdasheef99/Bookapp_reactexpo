@@ -153,3 +153,23 @@ Render's health gate produced the live deployment status; direct independent
 HTTP probes were unavailable from the local browser/TLS environment and are not
 claimed as separate receipts. The next gate is key rotation followed by a
 separately approved sanitized-media provider call.
+
+## 2026-09-12 Optional-ISBN correction deployment
+
+The reviewed correction commit `428a8c17362d7a2c478c83b328ca8237b78bc79f` was
+deployed to the existing `phase9-fixture-vision` service
+(`srv-d9jbsjf41pts73cejqag`) as Render deployment `dep-daih7ioae00c73egmcug`.
+Render reported `live`; read-only HTTPS checks returned `/health=200
+{"status":"alive"}` and `/ready=200 {"status":"ready"}`. An unauthenticated
+`POST /run` returned HTTP 403 `{"error":"forbidden"}` and therefore did not
+claim a job. The former live deployment `af90ef5` was deactivated.
+
+This deployment contains only the local Gemini response-boundary correction:
+malformed/non-string/overlong optional ISBN clues are converted to `null`, while
+valid labelled clues remain normalized. Local focused tests and TypeScript passed
+before deployment. No authenticated `/run`, real Gemini inference, Google Books
+request, Edge/client deployment, migration application, dispatch change,
+database/Storage mutation, or application-data mutation was performed. The next
+exact gate is one fresh authenticated Owner invocation with readback of the
+candidate and metadata job; an approved Owner session/worker ingress path is
+required.

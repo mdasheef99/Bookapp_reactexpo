@@ -89,3 +89,22 @@ and one new-session media asset. Teardown left the data directory absent, port
 55461 without a listener, and zero matching postgres processes. The next gate is
 review of this proof and separate authorization for connected Edge/Storage
 verification.
+
+## 2026-09-12 — Optional-ISBN correction deployment
+
+After local verification, the reviewed correction commit
+`428a8c17362d7a2c478c83b328ca8237b78bc79f` was deployed only to the existing
+Render `phase9-fixture-vision` service (`srv-d9jbsjf41pts73cejqag`) as
+`dep-daih7ioae00c73egmcug`. Render reported `live`; `/health` returned 200
+`{"status":"alive"}`, `/ready` returned 200 `{"status":"ready"}`, and an
+unauthenticated `/run` request returned 403 `{"error":"forbidden"}` without a
+job claim. The prior worker deployment `af90ef5` was deactivated.
+
+This was a correction-only worker deployment. No Edge/client deployment, M60
+application, migration, dispatch change, database/Storage mutation, or
+application-data mutation occurred. A full authenticated image → Gemini →
+metadata/Books API test remains unrun because this environment has no approved
+Owner session or worker ingress token available for a controlled invocation.
+The exact next action is to run that fresh authenticated connected test and read
+back one candidate/metadata path; it requires the approved Owner test session,
+but no further code or migration change.
