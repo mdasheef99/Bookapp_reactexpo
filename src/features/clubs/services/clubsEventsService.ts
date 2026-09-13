@@ -227,7 +227,7 @@ export async function updateClubEvent(eventId: string, input: UpdateClubEventInp
 export async function cancelClubEvent(eventId: string, cancelledBy: string): Promise<ClubEvent> {
     const { data, error } = await supabase
         .from('club_events')
-        .update({ status: 'cancelled' satisfies ClubEventStatus, cancelled_at: new Date().toISOString(), cancelled_by: cancelledBy })
+        .update({ status: 'cancelled' satisfies ClubEventStatus, cancelled_at: new Date().toISOString() })
         .eq('id', eventId)
         .select(CLUB_EVENT_MUTATION_SELECT)
         .single();

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import type { MediaType } from 'expo-image-picker';
 import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { type ClubPublicDetails, type AccessLevel, type ClubType, type MeetingType } from '@/features/clubs/services/clubsService';
@@ -62,8 +63,7 @@ export function ClubManageSettingsSection({ club, settings, setSettings, isSavin
             }
 
             const result = await ImagePicker.launchImageLibraryAsync({
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                mediaTypes: (ImagePicker as any).MediaType?.Images ?? ImagePicker.MediaTypeOptions.Images,
+                mediaTypes: (ImagePicker as { MediaType?: { Images: MediaType } }).MediaType?.Images ?? ImagePicker.MediaTypeOptions.Images,
                 quality: 0.85,
                 allowsEditing: true,
                 aspect: [3, 4],
@@ -93,8 +93,8 @@ export function ClubManageSettingsSection({ club, settings, setSettings, isSavin
 
             const { data } = supabase.storage.from('club-banners').getPublicUrl(path);
             updateField('coverUrl', data.publicUrl);
-        } catch (error: any) {
-            const message = error?.message || String(error);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
 
             if (message.toLowerCase().includes('row-level security') || message.toLowerCase().includes('rls') || message.toLowerCase().includes('new row violates')) {
                 setCoverError(

@@ -33,6 +33,12 @@ jest.mock('@/hooks/useTheme', () => ({
 }));
 jest.mock('@/features/auth/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'reader-1' } }) }));
 jest.mock('@/features/auth/services/profileService', () => ({ profileService: { getProfileSummary: jest.fn() } }));
+// CACHE-02: screen now consumes useViewerMembershipTier (React Query) instead of
+// calling profileService directly; mock the hook to keep these tests focused.
+const mockUseViewerMembershipTier = jest.fn();
+jest.mock('@/features/clubs/hooks/useViewerMembershipTier', () => ({
+    useViewerMembershipTier: (...args: unknown[]) => mockUseViewerMembershipTier(...args),
+}));
 jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useClubPublicDetail: (...args: unknown[]) => mockUseClubPublicDetail(...args),
     useClubMembership: (...args: unknown[]) => mockUseClubMembership(...args),
@@ -44,6 +50,7 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
 
 beforeEach(() => {
     jest.clearAllMocks();
+    mockUseViewerMembershipTier.mockReturnValue({ tier: 'pro_plus', isLoading: false });
     mockUseLocalSearchParams.mockReturnValue({ clubId: 'club-1' });
     mockUseClubPublicDetail.mockReturnValue({ data: { id: 'club-1', name: 'Author Circle', admin_id: 'admin-1', access_level: 'pro_plus' }, isLoading: false });
     mockUseClubMembership.mockReturnValue({ data: { role: 'moderator', status: 'active' }, isLoading: false });
@@ -61,7 +68,7 @@ describe('ClubEventEditorScreen', () => {
 
         const { getByTestId } = render(<ClubEventEditorScreen />);
 
-        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+        await waitFor(() => expect(mockUseViewerMembershipTier).toHaveBeenCalledWith('reader-1'));
 
         fireEvent.changeText(getByTestId('club-event-title'), 'Hybrid planning night');
         fireEvent.press(getByTestId('club-event-start-date'));
@@ -92,7 +99,7 @@ describe('ClubEventEditorScreen', () => {
 
         const { getByTestId } = render(<ClubEventEditorScreen />);
 
-        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+        await waitFor(() => expect(mockUseViewerMembershipTier).toHaveBeenCalledWith('reader-1'));
 
         fireEvent.changeText(getByTestId('club-event-title'), 'Manage-created event');
         fireEvent.press(getByTestId('club-event-start-date'));
@@ -111,7 +118,7 @@ describe('ClubEventEditorScreen', () => {
 
         const { UNSAFE_getAllByType } = render(<ClubEventEditorScreen />);
 
-        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+        await waitFor(() => expect(mockUseViewerMembershipTier).toHaveBeenCalledWith('reader-1'));
 
         const touchables = UNSAFE_getAllByType(require('react-native').TouchableOpacity);
         fireEvent.press(touchables[0]);
@@ -145,7 +152,7 @@ describe('ClubEventEditorScreen', () => {
 
         const { getByTestId, getByDisplayValue, getByText } = render(<ClubEventEditorScreen />);
 
-        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+        await waitFor(() => expect(mockUseViewerMembershipTier).toHaveBeenCalledWith('reader-1'));
 
         expect(getByTestId('club-event-title').props.value).toBe('Draft planning night');
         expect(getByDisplayValue('https://meet.example.com/draft-night')).toBeOnTheScreen();
@@ -162,7 +169,7 @@ describe('ClubEventEditorScreen', () => {
 
         const { getByTestId } = render(<ClubEventEditorScreen />);
 
-        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+        await waitFor(() => expect(mockUseViewerMembershipTier).toHaveBeenCalledWith('reader-1'));
 
         fireEvent.changeText(getByTestId('club-event-title'), 'Venue draft event');
         fireEvent.press(getByTestId('club-event-type-hybrid'));
@@ -188,14 +195,14 @@ describe('ClubEventEditorScreen', () => {
 
         const { getByText, queryByTestId } = render(<ClubEventEditorScreen />);
 
-        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+        await waitFor(() => expect(mockUseViewerMembershipTier).toHaveBeenCalledWith('reader-1'));
         expect(getByText('Manager access required')).toBeOnTheScreen();
         expect(queryByTestId('club-event-submit')).toBeNull();
     });
 
     it('shows error when submitting without a title', async () => {
         const { getByTestId, getByText } = render(<ClubEventEditorScreen />);
-        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+        await waitFor(() => expect(mockUseViewerMembershipTier).toHaveBeenCalledWith('reader-1'));
 
         fireEvent.press(getByTestId('club-event-start-date'));
         fireEvent(getByTestId('club-event-start-date-picker'), 'onChange', { type: 'set' }, new Date('2026-03-24T09:00:00.000Z'));
@@ -210,7 +217,7 @@ describe('ClubEventEditorScreen', () => {
 
     it('shows error when end time is before start time', async () => {
         const { getByTestId, getByText } = render(<ClubEventEditorScreen />);
-        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+        await waitFor(() => expect(mockUseViewerMembershipTier).toHaveBeenCalledWith('reader-1'));
 
         fireEvent.changeText(getByTestId('club-event-title'), 'Test event');
         fireEvent.press(getByTestId('club-event-start-date'));
@@ -230,7 +237,7 @@ describe('ClubEventEditorScreen', () => {
 
     it('shows error for hybrid event without meeting link', async () => {
         const { getByTestId, getByText } = render(<ClubEventEditorScreen />);
-        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+        await waitFor(() => expect(mockUseViewerMembershipTier).toHaveBeenCalledWith('reader-1'));
 
         fireEvent.changeText(getByTestId('club-event-title'), 'Hybrid event');
         fireEvent.press(getByTestId('club-event-start-date'));

@@ -21,7 +21,8 @@ export const clubKeys = {
     eventVenues: (clubId: string) => [...clubKeys.all, 'event-venues', clubId] as const,
     eventsRoot: (clubId: string) => [...clubKeys.all, 'events', clubId] as const,
     events: (clubId: string, userId?: string | null) => [...clubKeys.all, 'events', clubId, userId ?? 'anonymous'] as const,
-    event: (eventId: string, userId?: string | null) => [...clubKeys.all, 'event', eventId, userId ?? 'anonymous'] as const,
+    eventRoot: (eventId: string) => [...clubKeys.all, 'event', eventId] as const,
+    event: (eventId: string, userId?: string | null) => [...clubKeys.eventRoot(eventId), userId ?? 'anonymous'] as const,
     discussionRoot: (clubId: string) => [...clubKeys.all, 'discussion', clubId] as const,
     discussionReports: (clubId: string, status: 'open' | 'resolved' = 'open') => [...clubKeys.discussionRoot(clubId), 'reports', status] as const,
     complaints: (clubId: string, statuses: ClubComplaintStatus[] = ['pending', 'reviewing']) => [...clubKeys.all, 'complaints', clubId, statuses] as const,
@@ -434,13 +435,31 @@ export function useSetClubDiscussionVote() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ clubId, topicId, replyId, voteType, userId }: { clubId: string; topicId?: string | null; replyId?: string | null; voteType: ClubDiscussionVoteType; userId?: string | null }) =>
+        mutationFn: ({ clubId, parentTopicId, topicId, replyId, voteType, userId }: { clubId: string; parentTopicId?: string | null; topicId?: string | null; replyId?: string | null; voteType: ClubDiscussionVoteType; userId?: string | null }) =>
             clubsService.setClubDiscussionVote({ topicId, replyId, voteType }),
         onSuccess: async (_result, variables) => {
+            const threadTopicId = variables.parentTopicId ?? variables.topicId ?? null;
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.discussionRoot(variables.clubId) }),
-                variables.topicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(variables.topicId) }) : Promise.resolve(),
-                variables.topicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(variables.topicId, variables.userId) }) : Promise.resolve(),
+                threadTopicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(threadTopicId) }) : Promise.resolve(),
+                threadTopicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(threadTopicId, variables.userId) }) : Promise.resolve(),
+            ]);
+        },
+    });
+}
+
+export function useRemoveClubDiscussionVote() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ clubId, parentTopicId, topicId, replyId, userId }: { clubId: string; parentTopicId?: string | null; topicId?: string | null; replyId?: string | null; userId?: string | null }) =>
+            clubsService.removeClubDiscussionVote(topicId, replyId),
+        onSuccess: async (_result, variables) => {
+            const threadTopicId = variables.parentTopicId ?? variables.topicId ?? null;
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: clubKeys.discussionRoot(variables.clubId) }),
+                threadTopicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(threadTopicId) }) : Promise.resolve(),
+                threadTopicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(threadTopicId, variables.userId) }) : Promise.resolve(),
             ]);
         },
     });
@@ -450,13 +469,31 @@ export function useSetClubDiscussionReaction() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ clubId, topicId, replyId, emoji, userId }: { clubId: string; topicId?: string | null; replyId?: string | null; emoji: ClubDiscussionReactionEmoji; userId?: string | null }) =>
+        mutationFn: ({ clubId, parentTopicId, topicId, replyId, emoji, userId }: { clubId: string; parentTopicId?: string | null; topicId?: string | null; replyId?: string | null; emoji: ClubDiscussionReactionEmoji; userId?: string | null }) =>
             clubsService.setClubDiscussionReaction({ topicId, replyId, emoji }),
         onSuccess: async (_result, variables) => {
+            const threadTopicId = variables.parentTopicId ?? variables.topicId ?? null;
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.discussionRoot(variables.clubId) }),
-                variables.topicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(variables.topicId) }) : Promise.resolve(),
-                variables.topicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(variables.topicId, variables.userId) }) : Promise.resolve(),
+                threadTopicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(threadTopicId) }) : Promise.resolve(),
+                threadTopicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(threadTopicId, variables.userId) }) : Promise.resolve(),
+            ]);
+        },
+    });
+}
+
+export function useRemoveClubDiscussionReaction() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ clubId, parentTopicId, topicId, replyId, emoji, userId }: { clubId: string; parentTopicId?: string | null; topicId?: string | null; replyId?: string | null; emoji: ClubDiscussionReactionEmoji | string; userId?: string | null }) =>
+            clubsService.removeClubDiscussionReaction(emoji, topicId, replyId),
+        onSuccess: async (_result, variables) => {
+            const threadTopicId = variables.parentTopicId ?? variables.topicId ?? null;
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: clubKeys.discussionRoot(variables.clubId) }),
+                threadTopicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(threadTopicId) }) : Promise.resolve(),
+                threadTopicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(threadTopicId, variables.userId) }) : Promise.resolve(),
             ]);
         },
     });
@@ -534,7 +571,7 @@ export function useUpdateClubEvent() {
         onSuccess: async (_result, variables) => {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.eventsRoot(variables.clubId) }),
-                queryClient.invalidateQueries({ queryKey: clubKeys.event(variables.eventId) }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.eventRoot(variables.eventId) }),
             ]);
         },
     });
@@ -549,7 +586,7 @@ export function useCancelClubEvent() {
         onSuccess: async (_result, variables) => {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.eventsRoot(variables.clubId) }),
-                queryClient.invalidateQueries({ queryKey: clubKeys.event(variables.eventId) }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.eventRoot(variables.eventId) }),
             ]);
         },
     });
@@ -563,7 +600,7 @@ export function useDeleteClubEvent() {
         onSuccess: async (_result, variables) => {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.eventsRoot(variables.clubId) }),
-                queryClient.removeQueries({ queryKey: clubKeys.event(variables.eventId) }),
+                queryClient.removeQueries({ queryKey: clubKeys.eventRoot(variables.eventId) }),
             ]);
         },
     });
@@ -615,6 +652,7 @@ export function useFinalizeClubBookNomination() {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.nominationsRoot(result.id), refetchType: 'all' }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(result.id), refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.manageDetail(result.id), refetchType: 'all' }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.browseRoot, refetchType: 'all' }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(result.id), refetchType: 'all' }),
             ]);
@@ -631,6 +669,7 @@ export function useSetClubCurrentBookFromNomination() {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.nominationsRoot(result.id), refetchType: 'all' }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(result.id), refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.manageDetail(result.id), refetchType: 'all' }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.browseRoot, refetchType: 'all' }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(result.id), refetchType: 'all' }),
             ]);
@@ -683,6 +722,7 @@ export function useUpdateClub() {
         onSuccess: async (_result, variables) => {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(variables.clubId) }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.manageDetail(variables.clubId), refetchType: 'all' }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.browseRoot }),
             ]);
         },
@@ -754,13 +794,17 @@ export function useAcceptClubAdminTransferRequest() {
     return useMutation({
         mutationFn: ({ requestId }: { clubId: string; requestId: string }) =>
             clubsService.acceptClubAdminTransferRequest(requestId),
-        onSuccess: async (_result, variables) => {
+        onSuccess: async (result, variables) => {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.manageDetail(variables.clubId), refetchType: 'all' }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(variables.clubId), refetchType: 'all' }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.members(variables.clubId), refetchType: 'all' }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.adminTransferRequests(variables.clubId), refetchType: 'all' }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.browseRoot, refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(variables.clubId), refetchType: 'all' }),
+                result?.admin_id
+                    ? queryClient.invalidateQueries({ queryKey: clubKeys.membership(variables.clubId, result.admin_id), refetchType: 'all' })
+                    : Promise.resolve(),
             ]);
         },
     });
@@ -787,8 +831,11 @@ export function useUpdateClubMemberStatus() {
             clubsService.updateMemberStatus(clubId, userId, status),
         onSuccess: async (result) => {
             if (!result.club_id) return;
-            await queryClient.invalidateQueries({ queryKey: clubKeys.members(result.club_id) });
-            await queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(result.club_id) });
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: clubKeys.members(result.club_id) }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(result.club_id) }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(result.club_id), refetchType: 'all' }),
+            ]);
         },
     });
 }
@@ -804,6 +851,7 @@ export function useCreateClubMemberAction() {
                 queryClient.invalidateQueries({ queryKey: clubKeys.memberActions(variables.clubId), refetchType: 'all' }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.memberActions(variables.clubId, variables.userId), refetchType: 'all' }),
                 queryClient.invalidateQueries({ queryKey: clubKeys.membership(variables.clubId, variables.userId), refetchType: 'all' }),
+                queryClient.invalidateQueries({ queryKey: clubKeys.currentBookStatusRoot(variables.clubId), refetchType: 'all' }),
             ]);
         },
     });

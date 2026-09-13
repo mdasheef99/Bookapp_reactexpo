@@ -87,16 +87,17 @@ function getReactionSummary(
         });
     });
     return Array.from(counts.entries()).map(([emoji, value]) => {
-        const summary = {
+        // TYPE-04 fix: `users` is now a plain enumerable field. The previous
+        // non-enumerable defineProperty hid it from spread/JSON.stringify and
+        // from React Query's structural sharing — a latent trap (the runtime
+        // property "disappearing" contradicted the public type). Consumers
+        // that need privacy filtering should project explicitly instead.
+        const summary: ClubDiscussionReactionSummary = {
             emoji,
             count: value.count,
             viewerReacted: value.viewerReacted,
-        } as ClubDiscussionReactionSummary;
-        Object.defineProperty(summary, 'users', {
-            value: value.users,
-            enumerable: false,
-            writable: false,
-        });
+            users: value.users,
+        };
         return summary;
     });
 }
@@ -342,29 +343,42 @@ export async function removeClubDiscussionVote(topicId?: string | null, replyId?
     const userId = await getCurrentUserId();
     if (!topicId && !replyId) throw new Error('A discussion topic or reply target is required.');
     let query = supabase.from('club_discussion_votes').delete().eq('user_id', userId);
-    query = topicId ? query.eq('topic_id', topicId) : query.eq('reply_id', replyId!);
+    // TYPE-05: replyId is non-null here by the guard above (topicId absent ⟹ replyId present).
+    query = topicId ? query.eq('topic_id', topicId) : query.eq('reply_id', replyId as string);
     const { error } = await query;
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to remove your discussion vote right now.'));
 }
 
 export async function setClubDiscussionReaction(input: SetClubDiscussionReactionInput): Promise<ClubDiscussionReaction> {
-    const userId = await getCurrentUserId();
     if (!input.topicId && !input.replyId) throw new Error('A discussion topic or reply target is required.');
-    const { data, error } = await supabase
-        .from('club_discussion_reactions')
-        .upsert({ topic_id: input.topicId ?? null, reply_id: input.replyId ?? null, user_id: userId, emoji: input.emoji }, { onConflict: input.topicId ? 'topic_id,user_id,emoji' : 'reply_id,user_id,emoji' })
-        .select(CLUB_DISCUSSION_REACTION_SELECT)
-        .single();
+    // CLUB-WU-F04: replacement is atomic server-side (set_club_discussion_reaction
+    // RPC, SECURITY INVOKER). Actor identity is derived by auth.uid() inside the
+    // RPC — user_id is intentionally not sent. The RPC replaces any prior reaction
+    // for the same actor/target (PRODUCT-12), preserving created_at.
+    const { data, error } = await supabase.rpc('set_club_discussion_reaction', {
+        in_topic_id: input.topicId ?? null,
+        in_reply_id: input.replyId ?? null,
+        in_emoji: input.emoji,
+    });
 
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to save this discussion reaction right now.'));
-    return data as ClubDiscussionReaction;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) throw new Error(getClubsEntitlementErrorMessage(new Error('No reaction row returned.'), 'Unable to save this discussion reaction right now.'));
+    return {
+        id: row.id,
+        topic_id: row.topic_id,
+        reply_id: row.reply_id,
+        user_id: row.user_id,
+        emoji: row.emoji,
+        created_at: row.created_at,
+    };
 }
 
 export async function removeClubDiscussionReaction(emoji: string, topicId?: string | null, replyId?: string | null): Promise<void> {
     const userId = await getCurrentUserId();
     if (!topicId && !replyId) throw new Error('A discussion topic or reply target is required.');
     let query = supabase.from('club_discussion_reactions').delete().eq('user_id', userId).eq('emoji', emoji);
-    query = topicId ? query.eq('topic_id', topicId) : query.eq('reply_id', replyId!);
+    query = topicId ? query.eq('topic_id', topicId) : query.eq('reply_id', replyId as string);
     const { error } = await query;
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to remove this discussion reaction right now.'));
 }

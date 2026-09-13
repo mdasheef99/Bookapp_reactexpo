@@ -21,6 +21,12 @@ jest.mock('@/hooks/useTheme', () => ({
 }));
 jest.mock('@/features/auth/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'reader-1' } }) }));
 jest.mock('@/features/auth/services/profileService', () => ({ profileService: { getProfileSummary: jest.fn() } }));
+// CACHE-02: screen now consumes useViewerMembershipTier (React Query) instead of
+// calling profileService directly; mock the hook to keep these tests focused.
+const mockUseViewerMembershipTier = jest.fn();
+jest.mock('@/features/clubs/hooks/useViewerMembershipTier', () => ({
+    useViewerMembershipTier: (...args: unknown[]) => mockUseViewerMembershipTier(...args),
+}));
 jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useClubPublicDetail: (...args: unknown[]) => mockUseClubPublicDetail(...args),
     useClubMembership: (...args: unknown[]) => mockUseClubMembership(...args),
@@ -32,6 +38,7 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
 
 beforeEach(() => {
     jest.clearAllMocks();
+    mockUseViewerMembershipTier.mockReturnValue({ tier: 'pro_plus', isLoading: false });
     mockUseClubPublicDetail.mockReturnValue({ data: { id: 'club-1', name: 'Author Circle', admin_id: 'admin-1', access_level: 'pro_plus' }, isLoading: false });
     mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
     mockUseClubEvents.mockReturnValue({
@@ -60,7 +67,7 @@ describe('ClubEventsScreen', () => {
 
         const { getByTestId, getByText } = render(<ClubEventsScreen />);
 
-        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+        await waitFor(() => expect(mockUseViewerMembershipTier).toHaveBeenCalledWith('reader-1'));
         expect(getByText('March meetup')).toBeOnTheScreen();
 
         fireEvent.press(getByTestId('club-event-rsvp-going-event-1'));
@@ -73,7 +80,7 @@ describe('ClubEventsScreen', () => {
 
         const { getByText, queryByTestId } = render(<ClubEventsScreen />);
 
-        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+        await waitFor(() => expect(mockUseViewerMembershipTier).toHaveBeenCalledWith('reader-1'));
         expect(getByText('Read-only event access')).toBeOnTheScreen();
         expect(queryByTestId('club-event-rsvp-going-event-1')).toBeNull();
     });

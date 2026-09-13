@@ -8,7 +8,10 @@ const mockUseClubMembership = jest.fn();
 const mockUseClubDiscussionTopic = jest.fn();
 const mockUseCreateClubDiscussionReply = jest.fn();
 const mockUseSetClubDiscussionVote = jest.fn();
+const mockUseRemoveClubDiscussionVote = jest.fn();
 const mockUseSetClubDiscussionReaction = jest.fn();
+const mockUseRemoveClubDiscussionReaction = jest.fn();
+const mockUseReportClubDiscussionContent = jest.fn();
 const mockUseMarkClubDiscussionTopicRead = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
@@ -37,7 +40,10 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useClubDiscussionTopic: (...args: unknown[]) => mockUseClubDiscussionTopic(...args),
     useCreateClubDiscussionReply: (...args: unknown[]) => mockUseCreateClubDiscussionReply(...args),
     useSetClubDiscussionVote: (...args: unknown[]) => mockUseSetClubDiscussionVote(...args),
+    useRemoveClubDiscussionVote: (...args: unknown[]) => mockUseRemoveClubDiscussionVote(...args),
     useSetClubDiscussionReaction: (...args: unknown[]) => mockUseSetClubDiscussionReaction(...args),
+    useRemoveClubDiscussionReaction: (...args: unknown[]) => mockUseRemoveClubDiscussionReaction(...args),
+    useReportClubDiscussionContent: (...args: unknown[]) => mockUseReportClubDiscussionContent(...args),
     useMarkClubDiscussionTopicRead: (...args: unknown[]) => mockUseMarkClubDiscussionTopicRead(...args),
 }));
 jest.mock('@/lib/navigation', () => ({
@@ -109,7 +115,10 @@ beforeEach(() => {
     mockUseClubDiscussionTopic.mockReturnValue({ data: baseTopic, isLoading: false, isError: false, error: null, refetch: jest.fn() });
     mockUseCreateClubDiscussionReply.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ topic_id: 'topic-1' }), isPending: false });
     mockUseSetClubDiscussionVote.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({}), isPending: false });
+    mockUseRemoveClubDiscussionVote.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({}), isPending: false });
     mockUseSetClubDiscussionReaction.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({}), isPending: false });
+    mockUseRemoveClubDiscussionReaction.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({}), isPending: false });
+    mockUseReportClubDiscussionContent.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({}), isPending: false });
     mockUseMarkClubDiscussionTopicRead.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({}), isPending: false });
 });
 
@@ -134,11 +143,11 @@ describe('ClubDiscussionThreadScreen', () => {
         await waitFor(() => expect(createReply).toHaveBeenCalledWith({ clubId: 'club-1', input: { topicId: 'topic-1', parentReplyId: 'reply-1', body: 'I loved how tense it felt.' }, userId: 'reader-1' }));
 
         fireEvent.press(getByTestId('discussion-topic-upvote-topic-1'));
-        await waitFor(() => expect(setVote).toHaveBeenCalledWith({ clubId: 'club-1', topicId: 'topic-1', replyId: undefined, voteType: 'upvote', userId: 'reader-1' }));
+        await waitFor(() => expect(setVote).toHaveBeenCalledWith({ clubId: 'club-1', parentTopicId: 'topic-1', topicId: 'topic-1', replyId: undefined, voteType: 'upvote', userId: 'reader-1' }));
 
         fireEvent.press(getByTestId('discussion-reaction-picker-open-topic-1'));
         fireEvent.press(getByTestId('discussion-reaction-option-topic-1-👍'));
-        await waitFor(() => expect(setReaction).toHaveBeenCalledWith({ clubId: 'club-1', topicId: 'topic-1', replyId: null, emoji: '👍', userId: 'reader-1' }));
+        await waitFor(() => expect(setReaction).toHaveBeenCalledWith({ clubId: 'club-1', parentTopicId: 'topic-1', topicId: 'topic-1', replyId: null, emoji: '👍', userId: 'reader-1' }));
 
         fireEvent.press(getByTestId('discussion-topic-mark-read-topic-1'));
         await waitFor(() => expect(markRead).toHaveBeenCalledWith({ clubId: 'club-1', topicId: 'topic-1', userId: 'reader-1' }));
@@ -161,5 +170,64 @@ describe('ClubDiscussionThreadScreen', () => {
         expect(getByTestId('discussion-reply-node-reply-2')).toBeOnTheScreen();
         expect(getByText('Replying to Reader Two')).toBeOnTheScreen();
         expect(getByText('Same, especially the last page.')).toBeOnTheScreen();
+    });
+
+    it('targets the reply (not the route topic) when un-reacting to a reply reaction', async () => {
+        const removeReaction = jest.fn().mockResolvedValue({});
+        mockUseRemoveClubDiscussionReaction.mockReturnValue({ mutateAsync: removeReaction, isPending: false });
+        mockUseClubDiscussionTopic.mockReturnValue({
+            data: {
+                ...baseTopic,
+                replies: baseTopic.replies.map((reply) => reply.id === 'reply-1'
+                    ? { ...reply, reactions: [{ emoji: '🔥', count: 2, viewerReacted: true, users: [{ userId: 'reader-1', displayName: 'Reader One', username: 'readerone' }] }] }
+                    : reply),
+            },
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: jest.fn(),
+        });
+
+        const { getByTestId } = render(<ClubDiscussionThreadScreen />);
+
+        fireEvent.press(getByTestId('discussion-reaction-summary-reply-1-🔥'));
+
+        await waitFor(() => expect(removeReaction).toHaveBeenCalledWith({
+            clubId: 'club-1',
+            parentTopicId: 'topic-1',
+            topicId: undefined,
+            replyId: 'reply-1',
+            emoji: '🔥',
+            userId: 'reader-1',
+        }));
+        expect(removeReaction).not.toHaveBeenCalledWith(expect.objectContaining({ topicId: 'topic-1' }));
+    });
+
+    it('still targets the route topic when un-reacting to a topic reaction', async () => {
+        const removeReaction = jest.fn().mockResolvedValue({});
+        mockUseRemoveClubDiscussionReaction.mockReturnValue({ mutateAsync: removeReaction, isPending: false });
+        mockUseClubDiscussionTopic.mockReturnValue({
+            data: {
+                ...baseTopic,
+                reactions: [{ emoji: '👍', count: 2, viewerReacted: true, users: [{ userId: 'reader-1', displayName: 'Reader One', username: 'readerone' }] }],
+            },
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: jest.fn(),
+        });
+
+        const { getByTestId } = render(<ClubDiscussionThreadScreen />);
+
+        fireEvent.press(getByTestId('discussion-reaction-summary-topic-1-👍'));
+
+        await waitFor(() => expect(removeReaction).toHaveBeenCalledWith({
+            clubId: 'club-1',
+            parentTopicId: 'topic-1',
+            topicId: 'topic-1',
+            replyId: null,
+            emoji: '👍',
+            userId: 'reader-1',
+        }));
     });
 });

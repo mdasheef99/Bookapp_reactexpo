@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { navigateBackOrFallback } from '@/lib/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { profileService } from '@/features/auth/services/profileService';
+import { useViewerMembershipTier } from '@/features/clubs/hooks/useViewerMembershipTier';
 import { useClubEvent, useClubEventVenues, useClubMembership, useClubPublicDetail, useCreateClubEvent, useUpdateClubEvent } from '@/features/clubs/hooks/useClubs';
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
 import { type ClubEventFormat, type MembershipTier } from '@/features/clubs/services/clubsService';
@@ -151,7 +151,8 @@ export default function ClubEventEditorScreen() {
     const { data: linkedVenues = [], isLoading: isVenuesLoading } = useClubEventVenues(clubId ?? null, !!clubId);
     const createEventMutation = useCreateClubEvent();
     const updateEventMutation = useUpdateClubEvent();
-    const [viewerMembershipTier, setViewerMembershipTier] = useState<MembershipTier | null>(null);
+    // CACHE-02: shared cached hook instead of imperative per-mount fetch
+    const { tier: viewerMembershipTier } = useViewerMembershipTier(userId);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [eventType, setEventType] = useState<ClubEventFormat>('virtual');
@@ -167,18 +168,6 @@ export default function ClubEventEditorScreen() {
     const [hydratedEventId, setHydratedEventId] = useState<string | null>(null);
     const [activePicker, setActivePicker] = useState<PickerTarget | null>(null);
     const [hydratedDraft, setHydratedDraft] = useState<string | null>(null);
-
-    useEffect(() => {
-        let active = true;
-        if (!userId) {
-            setViewerMembershipTier(null);
-            return;
-        }
-        profileService.getProfileSummary(userId)
-            .then((profile) => { if (active) setViewerMembershipTier(profile?.membership_tier ?? null); })
-            .catch(() => { if (active) setViewerMembershipTier(null); });
-        return () => { active = false; };
-    }, [userId]);
 
     useEffect(() => {
         const parsedDraft = parseEventDraft(draft);
