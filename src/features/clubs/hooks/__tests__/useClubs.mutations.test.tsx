@@ -14,8 +14,11 @@ import {
     useFinalizeClubBookNomination,
     useLeaveClub,
     useNominateClubBook,
+    useRemoveClubDiscussionReaction,
+    useRemoveClubDiscussionVote,
     useSetClubCurrentBookFromNomination,
     useSetClubCurrentBookReadingStatus,
+    useSetClubDiscussionReaction,
     useSetClubDiscussionVote,
     useUnarchiveClub,
     useUpdateClubEvent,
@@ -41,6 +44,9 @@ jest.mock('../../services/clubsService', () => ({
         nominateClubBook: jest.fn(),
         setClubCurrentBookFromNomination: jest.fn(),
         setClubCurrentBookReadingStatus: jest.fn(),
+        setClubDiscussionReaction: jest.fn(),
+        removeClubDiscussionReaction: jest.fn(),
+        removeClubDiscussionVote: jest.fn(),
         setClubDiscussionVote: jest.fn(),
         unarchiveClub: jest.fn(),
         updateClubEvent: jest.fn(),
@@ -611,6 +617,181 @@ describe('WU-TC05 mutation cache contracts', () => {
         expect(invalidateQueries).toHaveBeenCalledWith({
             queryKey: clubKeys.discussionTopic('topic-vote-1', 'USER-A'),
         });
+    });
+
+    it('invalidates the open thread after setting a reply vote without touching other topics or clubs', async () => {
+        const queryClient = createQueryClient();
+        const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
+        const clubId = 'club-discussion-reply-1';
+        const otherClubId = 'club-discussion-reply-other';
+        const parentTopicId = 'topic-reply-parent-1';
+        const otherTopicId = 'topic-reply-other-1';
+        const replyId = 'reply-vote-1';
+        const userId = 'USER-A';
+        queryClient.setQueryData(clubKeys.discussionTopic(parentTopicId, userId), { id: parentTopicId });
+        queryClient.setQueryData(clubKeys.discussionTopic(otherTopicId, userId), { id: otherTopicId });
+        queryClient.setQueryData(clubKeys.discussionTopic(parentTopicId, 'USER-B'), { id: parentTopicId });
+        queryClient.setQueryData(clubKeys.discussionRoot(otherClubId), []);
+        (clubsService.setClubDiscussionVote as jest.Mock).mockResolvedValue({ reply_id: replyId });
+
+        const { result } = renderHook(() => useSetClubDiscussionVote(), { wrapper: createWrapper(queryClient) });
+
+        await act(async () => {
+            await result.current.mutateAsync({
+                clubId,
+                parentTopicId,
+                topicId: undefined,
+                replyId,
+                voteType: 'upvote',
+                userId,
+            });
+        });
+
+        await waitFor(() => {
+            expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionRoot(clubId) });
+        });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopicRoot(parentTopicId) });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopic(parentTopicId, userId) });
+        expect(isInvalidated(queryClient, clubKeys.discussionTopic(parentTopicId, userId))).toBe(true);
+        expect(isInvalidated(queryClient, clubKeys.discussionTopic(otherTopicId, userId))).toBe(false);
+        expect(isInvalidated(queryClient, clubKeys.discussionRoot(otherClubId))).toBe(false);
+        // Write target keeps the exactly-one-target contract: parentTopicId is cache-only.
+        expect(clubsService.setClubDiscussionVote).toHaveBeenCalledWith({ topicId: undefined, replyId, voteType: 'upvote' });
+    });
+
+    it('invalidates the open thread after removing a reply vote', async () => {
+        const queryClient = createQueryClient();
+        const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
+        const clubId = 'club-discussion-reply-2';
+        const parentTopicId = 'topic-reply-parent-2';
+        const otherTopicId = 'topic-reply-other-2';
+        const replyId = 'reply-vote-2';
+        const userId = 'USER-A';
+        queryClient.setQueryData(clubKeys.discussionTopic(parentTopicId, userId), { id: parentTopicId });
+        queryClient.setQueryData(clubKeys.discussionTopic(otherTopicId, userId), { id: otherTopicId });
+        (clubsService.removeClubDiscussionVote as jest.Mock).mockResolvedValue(undefined);
+
+        const { result } = renderHook(() => useRemoveClubDiscussionVote(), { wrapper: createWrapper(queryClient) });
+
+        await act(async () => {
+            await result.current.mutateAsync({
+                clubId,
+                parentTopicId,
+                topicId: undefined,
+                replyId,
+                userId,
+            });
+        });
+
+        await waitFor(() => {
+            expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionRoot(clubId) });
+        });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopicRoot(parentTopicId) });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopic(parentTopicId, userId) });
+        expect(isInvalidated(queryClient, clubKeys.discussionTopic(parentTopicId, userId))).toBe(true);
+        expect(isInvalidated(queryClient, clubKeys.discussionTopic(otherTopicId, userId))).toBe(false);
+        expect(clubsService.removeClubDiscussionVote).toHaveBeenCalledWith(undefined, replyId);
+    });
+
+    it('invalidates the open thread after setting a reply reaction without touching other topics or clubs', async () => {
+        const queryClient = createQueryClient();
+        const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
+        const clubId = 'club-discussion-reply-3';
+        const otherClubId = 'club-discussion-reply-other-3';
+        const parentTopicId = 'topic-reply-parent-3';
+        const otherTopicId = 'topic-reply-other-3';
+        const replyId = 'reply-reaction-1';
+        const userId = 'USER-A';
+        queryClient.setQueryData(clubKeys.discussionTopic(parentTopicId, userId), { id: parentTopicId });
+        queryClient.setQueryData(clubKeys.discussionTopic(otherTopicId, userId), { id: otherTopicId });
+        queryClient.setQueryData(clubKeys.discussionRoot(otherClubId), []);
+        (clubsService.setClubDiscussionReaction as jest.Mock).mockResolvedValue({ reply_id: replyId });
+
+        const { result } = renderHook(() => useSetClubDiscussionReaction(), { wrapper: createWrapper(queryClient) });
+
+        await act(async () => {
+            await result.current.mutateAsync({
+                clubId,
+                parentTopicId,
+                topicId: undefined,
+                replyId,
+                emoji: '🔥',
+                userId,
+            });
+        });
+
+        await waitFor(() => {
+            expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionRoot(clubId) });
+        });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopicRoot(parentTopicId) });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopic(parentTopicId, userId) });
+        expect(isInvalidated(queryClient, clubKeys.discussionTopic(parentTopicId, userId))).toBe(true);
+        expect(isInvalidated(queryClient, clubKeys.discussionTopic(otherTopicId, userId))).toBe(false);
+        expect(isInvalidated(queryClient, clubKeys.discussionRoot(otherClubId))).toBe(false);
+        // Write target keeps the exactly-one-target contract: parentTopicId is cache-only.
+        expect(clubsService.setClubDiscussionReaction).toHaveBeenCalledWith({ topicId: undefined, replyId, emoji: '🔥' });
+    });
+
+    it('invalidates the open thread after removing a reply reaction', async () => {
+        const queryClient = createQueryClient();
+        const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
+        const clubId = 'club-discussion-reply-4';
+        const parentTopicId = 'topic-reply-parent-4';
+        const otherTopicId = 'topic-reply-other-4';
+        const replyId = 'reply-reaction-2';
+        const userId = 'USER-A';
+        queryClient.setQueryData(clubKeys.discussionTopic(parentTopicId, userId), { id: parentTopicId });
+        queryClient.setQueryData(clubKeys.discussionTopic(otherTopicId, userId), { id: otherTopicId });
+        (clubsService.removeClubDiscussionReaction as jest.Mock).mockResolvedValue(undefined);
+
+        const { result } = renderHook(() => useRemoveClubDiscussionReaction(), { wrapper: createWrapper(queryClient) });
+
+        await act(async () => {
+            await result.current.mutateAsync({
+                clubId,
+                parentTopicId,
+                topicId: undefined,
+                replyId,
+                emoji: '🔥',
+                userId,
+            });
+        });
+
+        await waitFor(() => {
+            expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionRoot(clubId) });
+        });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopicRoot(parentTopicId) });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopic(parentTopicId, userId) });
+        expect(isInvalidated(queryClient, clubKeys.discussionTopic(parentTopicId, userId))).toBe(true);
+        expect(isInvalidated(queryClient, clubKeys.discussionTopic(otherTopicId, userId))).toBe(false);
+        expect(clubsService.removeClubDiscussionReaction).toHaveBeenCalledWith('🔥', undefined, replyId);
+    });
+
+    it('keeps topic-level reaction writes on the topic target with thread invalidation', async () => {
+        const queryClient = createQueryClient();
+        const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
+        const topicId = 'topic-reaction-1';
+        (clubsService.setClubDiscussionReaction as jest.Mock).mockResolvedValue({ topic_id: topicId });
+
+        const { result } = renderHook(() => useSetClubDiscussionReaction(), { wrapper: createWrapper(queryClient) });
+
+        await act(async () => {
+            await result.current.mutateAsync({
+                clubId: 'club-discussion-2',
+                parentTopicId: topicId,
+                topicId,
+                replyId: undefined,
+                emoji: '👍',
+                userId: 'USER-A',
+            });
+        });
+
+        await waitFor(() => {
+            expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionRoot('club-discussion-2') });
+        });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopicRoot(topicId) });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.discussionTopic(topicId, 'USER-A') });
+        expect(clubsService.setClubDiscussionReaction).toHaveBeenCalledWith({ topicId, replyId: undefined, emoji: '👍' });
     });
 
     it('isolates invitation creation to the club invitations cache', async () => {

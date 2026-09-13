@@ -435,13 +435,14 @@ export function useSetClubDiscussionVote() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ clubId, topicId, replyId, voteType, userId }: { clubId: string; topicId?: string | null; replyId?: string | null; voteType: ClubDiscussionVoteType; userId?: string | null }) =>
+        mutationFn: ({ clubId, parentTopicId, topicId, replyId, voteType, userId }: { clubId: string; parentTopicId?: string | null; topicId?: string | null; replyId?: string | null; voteType: ClubDiscussionVoteType; userId?: string | null }) =>
             clubsService.setClubDiscussionVote({ topicId, replyId, voteType }),
         onSuccess: async (_result, variables) => {
+            const threadTopicId = variables.parentTopicId ?? variables.topicId ?? null;
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.discussionRoot(variables.clubId) }),
-                variables.topicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(variables.topicId) }) : Promise.resolve(),
-                variables.topicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(variables.topicId, variables.userId) }) : Promise.resolve(),
+                threadTopicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(threadTopicId) }) : Promise.resolve(),
+                threadTopicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(threadTopicId, variables.userId) }) : Promise.resolve(),
             ]);
         },
     });
@@ -451,13 +452,14 @@ export function useRemoveClubDiscussionVote() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ clubId, topicId, replyId, userId }: { clubId: string; topicId?: string | null; replyId?: string | null; userId?: string | null }) =>
+        mutationFn: ({ clubId, parentTopicId, topicId, replyId, userId }: { clubId: string; parentTopicId?: string | null; topicId?: string | null; replyId?: string | null; userId?: string | null }) =>
             clubsService.removeClubDiscussionVote(topicId, replyId),
         onSuccess: async (_result, variables) => {
+            const threadTopicId = variables.parentTopicId ?? variables.topicId ?? null;
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.discussionRoot(variables.clubId) }),
-                variables.topicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(variables.topicId) }) : Promise.resolve(),
-                variables.topicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(variables.topicId, variables.userId) }) : Promise.resolve(),
+                threadTopicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(threadTopicId) }) : Promise.resolve(),
+                threadTopicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(threadTopicId, variables.userId) }) : Promise.resolve(),
             ]);
         },
     });
@@ -467,13 +469,14 @@ export function useSetClubDiscussionReaction() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ clubId, topicId, replyId, emoji, userId }: { clubId: string; topicId?: string | null; replyId?: string | null; emoji: ClubDiscussionReactionEmoji; userId?: string | null }) =>
+        mutationFn: ({ clubId, parentTopicId, topicId, replyId, emoji, userId }: { clubId: string; parentTopicId?: string | null; topicId?: string | null; replyId?: string | null; emoji: ClubDiscussionReactionEmoji; userId?: string | null }) =>
             clubsService.setClubDiscussionReaction({ topicId, replyId, emoji }),
         onSuccess: async (_result, variables) => {
+            const threadTopicId = variables.parentTopicId ?? variables.topicId ?? null;
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.discussionRoot(variables.clubId) }),
-                variables.topicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(variables.topicId) }) : Promise.resolve(),
-                variables.topicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(variables.topicId, variables.userId) }) : Promise.resolve(),
+                threadTopicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(threadTopicId) }) : Promise.resolve(),
+                threadTopicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(threadTopicId, variables.userId) }) : Promise.resolve(),
             ]);
         },
     });
@@ -483,13 +486,14 @@ export function useRemoveClubDiscussionReaction() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ clubId, topicId, replyId, emoji, userId }: { clubId: string; topicId?: string | null; replyId?: string | null; emoji: ClubDiscussionReactionEmoji | string; userId?: string | null }) =>
+        mutationFn: ({ clubId, parentTopicId, topicId, replyId, emoji, userId }: { clubId: string; parentTopicId?: string | null; topicId?: string | null; replyId?: string | null; emoji: ClubDiscussionReactionEmoji | string; userId?: string | null }) =>
             clubsService.removeClubDiscussionReaction(emoji, topicId, replyId),
         onSuccess: async (_result, variables) => {
+            const threadTopicId = variables.parentTopicId ?? variables.topicId ?? null;
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: clubKeys.discussionRoot(variables.clubId) }),
-                variables.topicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(variables.topicId) }) : Promise.resolve(),
-                variables.topicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(variables.topicId, variables.userId) }) : Promise.resolve(),
+                threadTopicId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopicRoot(threadTopicId) }) : Promise.resolve(),
+                threadTopicId && variables.userId ? queryClient.invalidateQueries({ queryKey: clubKeys.discussionTopic(threadTopicId, variables.userId) }) : Promise.resolve(),
             ]);
         },
     });

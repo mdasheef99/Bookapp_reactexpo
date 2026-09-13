@@ -143,11 +143,11 @@ describe('ClubDiscussionThreadScreen', () => {
         await waitFor(() => expect(createReply).toHaveBeenCalledWith({ clubId: 'club-1', input: { topicId: 'topic-1', parentReplyId: 'reply-1', body: 'I loved how tense it felt.' }, userId: 'reader-1' }));
 
         fireEvent.press(getByTestId('discussion-topic-upvote-topic-1'));
-        await waitFor(() => expect(setVote).toHaveBeenCalledWith({ clubId: 'club-1', topicId: 'topic-1', replyId: undefined, voteType: 'upvote', userId: 'reader-1' }));
+        await waitFor(() => expect(setVote).toHaveBeenCalledWith({ clubId: 'club-1', parentTopicId: 'topic-1', topicId: 'topic-1', replyId: undefined, voteType: 'upvote', userId: 'reader-1' }));
 
         fireEvent.press(getByTestId('discussion-reaction-picker-open-topic-1'));
         fireEvent.press(getByTestId('discussion-reaction-option-topic-1-👍'));
-        await waitFor(() => expect(setReaction).toHaveBeenCalledWith({ clubId: 'club-1', topicId: 'topic-1', replyId: null, emoji: '👍', userId: 'reader-1' }));
+        await waitFor(() => expect(setReaction).toHaveBeenCalledWith({ clubId: 'club-1', parentTopicId: 'topic-1', topicId: 'topic-1', replyId: null, emoji: '👍', userId: 'reader-1' }));
 
         fireEvent.press(getByTestId('discussion-topic-mark-read-topic-1'));
         await waitFor(() => expect(markRead).toHaveBeenCalledWith({ clubId: 'club-1', topicId: 'topic-1', userId: 'reader-1' }));
@@ -170,5 +170,64 @@ describe('ClubDiscussionThreadScreen', () => {
         expect(getByTestId('discussion-reply-node-reply-2')).toBeOnTheScreen();
         expect(getByText('Replying to Reader Two')).toBeOnTheScreen();
         expect(getByText('Same, especially the last page.')).toBeOnTheScreen();
+    });
+
+    it('targets the reply (not the route topic) when un-reacting to a reply reaction', async () => {
+        const removeReaction = jest.fn().mockResolvedValue({});
+        mockUseRemoveClubDiscussionReaction.mockReturnValue({ mutateAsync: removeReaction, isPending: false });
+        mockUseClubDiscussionTopic.mockReturnValue({
+            data: {
+                ...baseTopic,
+                replies: baseTopic.replies.map((reply) => reply.id === 'reply-1'
+                    ? { ...reply, reactions: [{ emoji: '🔥', count: 2, viewerReacted: true, users: [{ userId: 'reader-1', displayName: 'Reader One', username: 'readerone' }] }] }
+                    : reply),
+            },
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: jest.fn(),
+        });
+
+        const { getByTestId } = render(<ClubDiscussionThreadScreen />);
+
+        fireEvent.press(getByTestId('discussion-reaction-summary-reply-1-🔥'));
+
+        await waitFor(() => expect(removeReaction).toHaveBeenCalledWith({
+            clubId: 'club-1',
+            parentTopicId: 'topic-1',
+            topicId: undefined,
+            replyId: 'reply-1',
+            emoji: '🔥',
+            userId: 'reader-1',
+        }));
+        expect(removeReaction).not.toHaveBeenCalledWith(expect.objectContaining({ topicId: 'topic-1' }));
+    });
+
+    it('still targets the route topic when un-reacting to a topic reaction', async () => {
+        const removeReaction = jest.fn().mockResolvedValue({});
+        mockUseRemoveClubDiscussionReaction.mockReturnValue({ mutateAsync: removeReaction, isPending: false });
+        mockUseClubDiscussionTopic.mockReturnValue({
+            data: {
+                ...baseTopic,
+                reactions: [{ emoji: '👍', count: 2, viewerReacted: true, users: [{ userId: 'reader-1', displayName: 'Reader One', username: 'readerone' }] }],
+            },
+            isLoading: false,
+            isError: false,
+            error: null,
+            refetch: jest.fn(),
+        });
+
+        const { getByTestId } = render(<ClubDiscussionThreadScreen />);
+
+        fireEvent.press(getByTestId('discussion-reaction-summary-topic-1-👍'));
+
+        await waitFor(() => expect(removeReaction).toHaveBeenCalledWith({
+            clubId: 'club-1',
+            parentTopicId: 'topic-1',
+            topicId: 'topic-1',
+            replyId: null,
+            emoji: '👍',
+            userId: 'reader-1',
+        }));
     });
 });

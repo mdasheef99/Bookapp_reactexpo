@@ -202,7 +202,7 @@ export default function ClubDiscussionThreadScreen() {
 
         try {
             setFeedback(null);
-            await voteMutation.mutateAsync({ clubId, topicId: replyId ? undefined : topicId, replyId, voteType, userId });
+            await voteMutation.mutateAsync({ clubId, parentTopicId: topicId, topicId: replyId ? undefined : topicId, replyId, voteType, userId });
         } catch (error) {
             setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to update your discussion vote right now.') });
         }
@@ -217,7 +217,7 @@ export default function ClubDiscussionThreadScreen() {
         if (viewerVote === voteType) {
             try {
                 setFeedback(null);
-                await removeVoteMutation.mutateAsync({ clubId, topicId: replyId ? undefined : topicId, replyId, userId });
+                await removeVoteMutation.mutateAsync({ clubId, parentTopicId: topicId, topicId: replyId ? undefined : topicId, replyId, userId });
             } catch (error) {
                 setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to remove your discussion vote right now.') });
             }
@@ -236,6 +236,7 @@ export default function ClubDiscussionThreadScreen() {
             setFeedback(null);
             await reactionMutation.mutateAsync({
                 clubId,
+                parentTopicId: topicId,
                 topicId: reactionPickerState.replyId ? undefined : topicId,
                 replyId: reactionPickerState.replyId,
                 emoji,
@@ -248,7 +249,7 @@ export default function ClubDiscussionThreadScreen() {
     };
 
     // SDD decision PRODUCT-12: tapping the viewer's own active reaction removes it (un-react).
-    const handleReactionToggle = async (summary: ClubDiscussionReactionSummary) => {
+    const handleReactionToggle = async (summary: ClubDiscussionReactionSummary, replyId?: string | null) => {
         if (!clubId || !canParticipate || !summary.viewerReacted) {
             setReactionDetailState({ emoji: summary.emoji, users: getReactionUsers(summary) });
             return;
@@ -258,8 +259,9 @@ export default function ClubDiscussionThreadScreen() {
             setFeedback(null);
             await removeReactionMutation.mutateAsync({
                 clubId,
-                topicId,
-                replyId: null,
+                parentTopicId: topicId,
+                topicId: replyId ? undefined : topicId,
+                replyId: replyId ?? null,
                 emoji: isKnownEmoji ? (summary.emoji as ClubDiscussionReactionEmoji) : summary.emoji,
                 userId,
             });
@@ -278,14 +280,14 @@ export default function ClubDiscussionThreadScreen() {
         }
     };
 
-    const renderReactionSummaryRow = (reactions: ClubDiscussionReactionSummary[], itemId: string) => {
+    const renderReactionSummaryRow = (reactions: ClubDiscussionReactionSummary[], itemId: string, replyId: string | null = null) => {
         if (reactions.length === 0) return null;
         return (
             <View style={styles.reactionSummaryRow}>
                 {reactions.map((summary) => (
                     <TouchableOpacity
                         key={`${itemId}-${summary.emoji}`}
-                        onPress={() => handleReactionToggle(summary)}
+                        onPress={() => handleReactionToggle(summary, replyId)}
                         style={[
                             styles.reactionSummaryChip,
                             {
@@ -376,7 +378,7 @@ export default function ClubDiscussionThreadScreen() {
                             onReply: () => setReplyComposerState({ replyId: node.id }),
                             disabled: interactionDisabled,
                         }) : null}
-                        {!node.is_deleted ? renderReactionSummaryRow(node.reactions, node.id) : null}
+                        {!node.is_deleted ? renderReactionSummaryRow(node.reactions, node.id, node.id) : null}
                     </View>
                 </View>
                 {node.children.length > 0 ? <View style={styles.replyChildren}>{node.children.map((child) => renderReplyNode(child, activeReplyTarget?.id ?? null))}</View> : null}

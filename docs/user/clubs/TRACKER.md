@@ -97,7 +97,7 @@ mutations, no new dependencies. All existing contracts preserved.
   upload removed per PRODUCT-14 (URL paste only, hint text added);
   ClubManageSettingsSection already uploads {club.id}/cover.ext — matches
   new policy model. Local migration file:
-  `20260822230000_clubs_b01_banner_storage_lockdown.sql`. Verification:
+  `20260822233000_clubs_b01_banner_storage_lockdown.sql`. Verification:
   clubs Jest 190/190 PASS, tsc 0 errors post client changes. Nothing
   staged or committed. BACKEND-07 closed NO-ACTION (live-vs-replay RSVP
   policy drift audit returned zero drift — replay reproduces live exactly).
@@ -447,6 +447,15 @@ mutations, no new dependencies. All existing contracts preserved.
   vote; current-book-overview defensive empty-result handling; known
   Library/Clubs `user_books.reading_status` cache coupling; other previously
   documented deferred Clubs hardening items. CLOSED.
+
+- 2026-09-13 MIGRATION RECONCILIATION DEFERRED — migration-history
+  reconciliation was audited on 2026-09-13 and intentionally deferred because
+  the shared Supabase project has active parallel feature work. Authoritative
+  details: `docs/deployment/MIGRATION-RECONCILIATION-2026-09.md`. Normal
+  production migration deployment remains frozen until reconciliation is
+  resumed and completed. This does NOT block Clubs commit/push/PR/merge
+  because repository merge does not automatically deploy database migrations.
+  Clubs implementation status unchanged by this entry.
 
 ## Rules
 - Existing 18 suites must stay green after every phase; new primitives get tests.

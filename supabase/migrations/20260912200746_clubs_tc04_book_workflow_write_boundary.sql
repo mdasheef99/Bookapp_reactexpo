@@ -1,6 +1,8 @@
 -- WU-TC04 · clubs book-workflow write boundary + concurrency fix
 -- ============================================================
--- LOCAL ONLY — NOT APPLIED LIVE (ahntbtktjjmvfosgkmgn untouched).
+-- LIVE-APPLIED under ledger version 20260912200746 on
+-- project ahntbtktjjmvfosgkmgn. Previously drafted locally under the
+-- older timestamp/stem; executable SQL below is unchanged.
 --
 -- Confirmed defects fixed (exactly four, bounded scope):
 --   BWF-04 concurrent duplicate nomination 23505
