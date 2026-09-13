@@ -419,6 +419,34 @@ mutations, no new dependencies. All existing contracts preserved.
   implementation/review checkpoint: 20 suites / 219 tests; dual adversarial
   review passed. Cross-feature `user_books.reading_status` / Library cache
   coupling deferred separately. CLOSED.
+- 2026-09-13 WU-TC06 CLOSEOUT — Clubs books/discussion service coverage
+  (client-only, no backend/live operation, no DB migration): CONFIRMED
+  PRODUCT DEFECT — `setClubDiscussionReaction()` sent incorrect PostgREST
+  named RPC arguments (OLD/BROKEN: `p_topic_id`, `p_reply_id`, `p_emoji`;
+  CORRECT live/applied contract: `in_topic_id`, `in_reply_id`, `in_emoji`).
+  Production fix in `src/features/clubs/services/clubsDiscussionService.ts`
+  (argument names only; RPC name `set_club_discussion_reaction` unchanged, no
+  `user_id` argument, actor identity remains server-derived). NEW
+  `src/features/clubs/services/__tests__/clubsBooksService.test.ts` (44 tests)
+  and `src/features/clubs/services/__tests__/clubsDiscussionService.test.ts`
+  (39 tests); `clubsDiscussionReactionRpc.test.ts` corrected to `in_*` with
+  `p_*`/`user_id` regression guards. All 11 active Clubs book service exports
+  and all 12 active Clubs discussion service exports covered materially; no
+  dead exports found in scope. Verification: targeted TC06 3 suites / 91 tests
+  PASS; all Clubs service tests 4 suites / 138 tests PASS; broad Clubs 20
+  suites / 294 tests PASS; `npx tsc --noEmit` exit 0. Mutation sensitivity
+  independently verified (each RED then GREEN): M1 reaction RPC named
+  arguments, M2 current-book reading-status `p_status`, M3 reading-schedule
+  `book_id` filter, M4 discussion vote target/onConflict, M5 discussion report
+  club filter. Independent adversarial review PASS: 0 blockers, 0 majors,
+  0 unresolved material unknowns. Scope: no DB migration, no live DB writes,
+  no live mutating RPC invocation, no RLS change, no Edge change, no hook
+  change, no screen change, no Library change, no `user_books` cache change.
+  Non-blocking deferred items: optional Google `smallThumbnail` fallback test
+  coverage; missing-target guard coverage asymmetry for remove discussion
+  vote; current-book-overview defensive empty-result handling; known
+  Library/Clubs `user_books.reading_status` cache coupling; other previously
+  documented deferred Clubs hardening items. CLOSED.
 
 ## Rules
 - Existing 18 suites must stay green after every phase; new primitives get tests.

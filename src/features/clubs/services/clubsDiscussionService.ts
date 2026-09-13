@@ -356,9 +356,9 @@ export async function setClubDiscussionReaction(input: SetClubDiscussionReaction
     // RPC — user_id is intentionally not sent. The RPC replaces any prior reaction
     // for the same actor/target (PRODUCT-12), preserving created_at.
     const { data, error } = await supabase.rpc('set_club_discussion_reaction', {
-        p_topic_id: input.topicId ?? null,
-        p_reply_id: input.replyId ?? null,
-        p_emoji: input.emoji,
+        in_topic_id: input.topicId ?? null,
+        in_reply_id: input.replyId ?? null,
+        in_emoji: input.emoji,
     });
 
     if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to save this discussion reaction right now.'));

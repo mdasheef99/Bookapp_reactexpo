@@ -47,11 +47,16 @@ describe('CLUB-WU-F04 — setClubDiscussionReaction (replacement RPC)', () => {
 
         expect(mockedSupabase.rpc).toHaveBeenCalledTimes(1);
         expect(mockedSupabase.rpc).toHaveBeenCalledWith('set_club_discussion_reaction', {
-            p_topic_id: 'topic-1',
-            p_reply_id: null,
-            p_emoji: '❤️',
+            in_topic_id: 'topic-1',
+            in_reply_id: null,
+            in_emoji: '❤️',
         });
-        const argKeys = Object.keys((mockedSupabase.rpc as jest.Mock).mock.calls[0][1]);
+        const payload = (mockedSupabase.rpc as jest.Mock).mock.calls[0][1] as Record<string, unknown>;
+        const argKeys = Object.keys(payload);
+        expect(argKeys).toEqual(expect.arrayContaining(['in_topic_id', 'in_reply_id', 'in_emoji']));
+        expect(argKeys).not.toContain('p_topic_id');
+        expect(argKeys).not.toContain('p_reply_id');
+        expect(argKeys).not.toContain('p_emoji');
         expect(argKeys).not.toContain('p_user_id');
         expect(argKeys).not.toContain('user_id');
         // No direct table write path may be used anymore.
@@ -64,10 +69,15 @@ describe('CLUB-WU-F04 — setClubDiscussionReaction (replacement RPC)', () => {
         await setClubDiscussionReaction({ topicId: null, replyId: 'reply-1', emoji: '😂' });
 
         expect(mockedSupabase.rpc).toHaveBeenCalledWith('set_club_discussion_reaction', {
-            p_topic_id: null,
-            p_reply_id: 'reply-1',
-            p_emoji: '😂',
+            in_topic_id: null,
+            in_reply_id: 'reply-1',
+            in_emoji: '😂',
         });
+        const payload = (mockedSupabase.rpc as jest.Mock).mock.calls[0][1] as Record<string, unknown>;
+        expect(payload).not.toHaveProperty('p_topic_id');
+        expect(payload).not.toHaveProperty('p_reply_id');
+        expect(payload).not.toHaveProperty('p_emoji');
+        expect(payload).not.toHaveProperty('user_id');
     });
 
     it('maps the canonical returned row to the domain shape', async () => {
