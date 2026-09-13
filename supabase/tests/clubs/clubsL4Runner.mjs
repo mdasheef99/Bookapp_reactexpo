@@ -32,7 +32,7 @@
  * this harness.
  *
  * Usage:
- *   node supabase/tests/clubs/clubsL4Runner.mjs [b02|f04|all] [--mutation no-lock|no-repair]
+ *   node supabase/tests/clubs/clubsL4Runner.mjs [b02|f04|wave2|rls|downgrade|tc03|tc04|all] [--mutation no-lock|no-repair|tc04-mut1-no-recovery|tc04-mut2-single-fallback|tc04-mut3-vote-grant|tc04-mut4-nomination-grant|tc04-mut5-club-update]
  *   npm run test:clubs:l4 | test:clubs:l4:b02 | test:clubs:l4:f04
  *
  * Mutation demonstration (--mutation no-lock):
@@ -103,6 +103,50 @@ const WAVE2_EXTRA_MIGRATIONS = [
   '20260822230000_clubs_wave2_attribution_guards_expiry.sql',
 ];
 const WAVE2_MIGRATION = '20260822230000_clubs_wave2_attribution_guards_expiry.sql';
+
+/** WU-TC01 downgrade chain extras (applied after the B02 chain on the downgrade DB):
+ *  REC-2 archived_at reconstruction, then the downgrade/grace migration (PRE-FIX).
+ *  The forward bug-fix migration is applied by the runner BETWEEN the RED and
+ *  GREEN contract phases (migration-boundary RED→GREEN design). */
+const DOWNGRADE_EXTRA_MIGRATIONS = [
+  '20260529160000_clubs_book_clubs_archived_at_reconstruction.sql',
+  '20260529170000_club_downgrade_grace_period.sql',
+];
+const DOWNGRADE_FIX_MIGRATION = '20260830090435_clubs_fix_downgrade_grace_archived_club_ids_ambiguity.sql';
+
+/** WU-TC03 admin-transfer chain extras (applied after the B02 chain on the tc03 DB).
+ *  The request/accept RPCs + transfer-request table come from the moderation/
+ *  author-lifecycle migration; the repo-only direct RPC migration
+ *  20260527104248 is intentionally NOT applied (live-absent, unused by the
+ *  active request/accept path). The forward fix migration is applied by the
+ *  runner BETWEEN the RED and GREEN contract phases (migration-boundary
+ *  RED→GREEN design). */
+const TC03_BASE_MIGRATION = '20260529154500_club_moderation_author_lifecycle_rpc.sql';
+const TC03_FIX_MIGRATION = '20260830153413_clubs_tc03_admin_transfer_accept_revalidation.sql';
+
+/** WU-TC04 book-workflow chain extras (applied after the B02 chain on the tc04 DB).
+ *  Minimal faithful dependencies for the book-workflow write boundary:
+ *  012 workflow contract (nominate/vote/finalize + INSERT policies),
+ *  finalize manager-auth + status overview + early-selection RPCs,
+ *  harden RPC EXECUTE grants, REC-2 archived_at (GREEN-4B archive fields),
+ *  enterprise notification foundation + event routing (notification_events
+ *  substrate for the nomination-notification count proof).
+ *  The full 20260606142000 complete-notifications file is intentionally NOT
+ *  applied: it creates triggers on listings/club_events/reading_schedules/
+ *  downgrade tables absent from this minimal chain. Only its faithful
+ *  book-nomination excerpt (route_book_nomination_notification function +
+ *  trigger, verbatim) is applied inline by applyTc04Chain below.
+ *  The forward TC04 fix migration is applied by the runner BETWEEN the RED
+ *  and GREEN contract phases (migration-boundary RED→GREEN design). */
+const TC04_EXTRA_MIGRATIONS = [
+  '20260309143000_012_club_book_workflow_contract.sql',
+  '20260311113000_014_club_book_finalize_manager_authorization.sql',
+  '20260311143000_015_club_current_book_status_contract.sql',
+  '20260507120000_016_set_current_book_from_nomination.sql',
+  '20260529160000_clubs_book_clubs_archived_at_reconstruction.sql',
+  '20260606103405_enterprise_notifications.sql',
+];
+const TC04_FIX_MIGRATION = '20260912200746_clubs_tc04_book_workflow_write_boundary.sql';
 
 /** L01-C RLS chain: ordered dependency including chat RLS + B01.
  *  Minimal for RLS contracts: includes 009 (club_messages/messages RLS) which
@@ -222,6 +266,154 @@ async function applyPlatformAndChain(database) {
   }
 }
 
+/** WU-TC01: B02 base chain + REC-2 archived_at + downgrade/grace migration (pre-fix state). */
+async function applyDowngradeChain(database) {
+  guardLocalDisposable(database);
+  await applyPlatformAndChain(database);
+  for (const file of DOWNGRADE_EXTRA_MIGRATIONS) {
+    psqlFile(database, `/repo/supabase/migrations/${file}`, `downgrade migration ${file}`);
+  }
+  console.log('[runner] downgrade chain applied (B02 base + REC-2 archived_at + downgrade/grace PRE-FIX)');
+}
+
+/** WU-TC04: B02 base chain + book-workflow + notification substrate (pre-fix state).
+ *  TEMPORARY TC04 CHAIN COMPATIBILITY — NOT REPLAY PROOF.
+ *  The full 20260606142000 complete-notifications migration cannot replay on
+ *  this minimal chain (triggers on listings/club_events/reading_schedules/
+ *  downgrade tables absent here). Only its book-nomination excerpt is applied
+ *  inline below, VERBATIM from the real file (function +
+ *  DROP/CREATE TRIGGER), to provide the live-parity AFTER INSERT trigger the
+ *  GREEN-1 notification-count proof requires. Authoritative replay repair is
+ *  owned by L01-D / TEST-07 (same category as the wave2 pre-drop above). */
+async function applyTc04Chain(database) {
+  guardLocalDisposable(database);
+  await applyPlatformAndChain(database);
+  for (const file of TC04_EXTRA_MIGRATIONS) {
+    psqlFile(database, `/repo/supabase/migrations/${file}`, `tc04 migration ${file}`);
+  }
+  // Faithful book-RPC EXECUTE hardening excerpt (verbatim lines 17-32 of
+  // 20260523035706). The full file cannot replay here (it touches discussion/
+  // event helper functions absent from this minimal chain); only the book
+  // nomination/current-book RPC section is needed for the TC04 EXECUTE ACL.
+  psqlSql(
+    database,
+    `REVOKE EXECUTE ON FUNCTION public.nominate_club_book(uuid, uuid, text, text, text[], text, timestamptz) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.cast_club_book_vote(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.remove_club_book_vote(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.finalize_club_book_nomination(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.set_club_current_book_from_nomination(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.get_club_current_book_status_overview(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.set_club_current_book_reading_status(uuid, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.nominate_club_book(uuid, uuid, text, text, text[], text, timestamptz) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.cast_club_book_vote(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.remove_club_book_vote(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.finalize_club_book_nomination(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.set_club_current_book_from_nomination(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.get_club_current_book_status_overview(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.set_club_current_book_reading_status(uuid, text) TO authenticated, service_role;`,
+    'TEMPORARY tc04 chain-compat: faithful book-RPC EXECUTE excerpt (full harden file touches absent discussion/event helpers — L01-D/TEST-07 owns replay repair)',
+  );
+  // Faithful notification-substrate excerpts (verbatim from real files).
+  // Full 20260606103516 routing cannot replay here (route_transaction_*
+  // reference public.transactions from absent exchange migration 002);
+  // full 20260606142000 complete file cannot replay (triggers on
+  // listings/club_events/reading_schedules/downgrade tables absent here).
+  // Only the three live-parity objects the GREEN-1 notification-count proof
+  // needs are restored verbatim: notification_active_club_members (complete
+  // lines 3-13), create_notification_event + enqueue_notification_delivery
+  // (routing lines 3-128), route_book_nomination_notification + trigger
+  // (complete lines 189-254).
+  psqlSql(
+    database,
+    `CREATE OR REPLACE FUNCTION public.notification_active_club_members(p_club_id uuid)
+RETURNS TABLE(user_id uuid)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+  SELECT cm.user_id FROM public.club_members cm WHERE cm.club_id = p_club_id AND cm.status IN ('active', 'muted');
+$function$;
+CREATE OR REPLACE FUNCTION public.create_notification_event(p_event_type text, p_entity_type text, p_entity_id uuid, p_actor_user_id uuid, p_source text, p_idempotency_key text, p_severity text DEFAULT 'info', p_requires_action boolean DEFAULT false, p_payload jsonb DEFAULT '{}'::jsonb)
+RETURNS public.notification_events LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
+AS $function$
+DECLARE event_record public.notification_events;
+BEGIN
+  INSERT INTO public.notification_events (event_type, entity_type, entity_id, actor_user_id, source, severity, requires_action, payload, idempotency_key)
+  VALUES (p_event_type, p_entity_type, p_entity_id, p_actor_user_id, p_source, p_severity, p_requires_action, COALESCE(p_payload, '{}'::jsonb), p_idempotency_key)
+  ON CONFLICT (idempotency_key) DO NOTHING RETURNING * INTO event_record;
+  IF event_record.id IS NULL THEN SELECT * INTO event_record FROM public.notification_events WHERE idempotency_key = p_idempotency_key; END IF;
+  RETURN event_record;
+END;
+$function$;
+CREATE OR REPLACE FUNCTION public.enqueue_notification_delivery(p_event_id uuid, p_recipient_user_id uuid, p_category text, p_channels text[], p_title text, p_body text, p_deep_link text DEFAULT NULL, p_preference_key text DEFAULT NULL, p_mandatory boolean DEFAULT false)
+RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
+AS $function$
+DECLARE channel_value text; inserted_count integer := 0; preference_enabled boolean;
+BEGIN
+  IF p_recipient_user_id IS NULL THEN RETURN 0; END IF;
+  FOREACH channel_value IN ARRAY p_channels LOOP
+    IF channel_value NOT IN ('in_app', 'push') THEN CONTINUE; END IF;
+    SELECT enabled INTO preference_enabled FROM public.notification_preferences WHERE user_id = p_recipient_user_id AND preference_key = COALESCE(p_preference_key, p_category) AND channel = channel_value;
+    IF NOT p_mandatory AND COALESCE(preference_enabled, true) IS NOT TRUE THEN CONTINUE; END IF;
+    INSERT INTO public.notification_deliveries (event_id, recipient_user_id, category, channel, title, body, deep_link, status)
+    VALUES (p_event_id, p_recipient_user_id, p_category, channel_value, p_title, p_body, p_deep_link, 'pending')
+    ON CONFLICT (event_id, recipient_user_id, channel) DO NOTHING;
+    IF FOUND THEN inserted_count := inserted_count + 1; END IF;
+  END LOOP;
+  RETURN inserted_count;
+END;
+$function$;`,
+    'TEMPORARY tc04 chain-compat: faithful notification substrate excerpt (routing/complete transaction+listing triggers omitted — L01-D/TEST-07 owns replay repair)',
+  );
+  // Live-parity table grants (Supabase defaults): ordinary client roles need
+  // table privileges so RLS policies evaluate; the TC04 fix revokes exactly
+  // the write paths under test. Applied here (not only in-test) so MUTATED
+  // DBs (GREEN-only, no RED setup) share the identical privilege baseline —
+  // otherwise denials would pass trivially for lack of grants and MUT-3/4/5
+  // would be meaningless.
+  psqlSql(
+    database,
+    `GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.book_clubs, public.book_nominations, public.book_votes, public.books, public.club_members, public.user_profiles TO anon, authenticated, service_role;`,
+    'TEMPORARY tc04 chain-compat: live-parity table grants (Supabase defaults the fix revokes selectively)',
+  );
+  psqlSql(
+    database,
+    `CREATE OR REPLACE FUNCTION public.route_book_nomination_notification()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+DECLARE
+  event_record public.notification_events;
+  nominated_book public.books%ROWTYPE;
+  recipient record;
+BEGIN
+  IF TG_OP <> 'INSERT' OR NEW.status <> 'active' THEN
+    RETURN NEW;
+  END IF;
+  SELECT * INTO nominated_book FROM public.books WHERE id = NEW.book_id;
+  event_record := public.create_notification_event(
+    'club.book_nominated', 'book_nomination', NEW.id, NEW.nominated_by,
+    'book_nominations', 'book_nomination:' || NEW.id::text || ':created',
+    'info', false,
+    jsonb_build_object('club_id', NEW.club_id, 'nomination_id', NEW.id, 'book_id', NEW.book_id, 'title', nominated_book.title, 'voting_ends_at', NEW.voting_ends_at)
+  );
+  FOR recipient IN SELECT acm.user_id FROM public.notification_active_club_members(NEW.club_id) acm WHERE acm.user_id IS DISTINCT FROM NEW.nominated_by
+  LOOP
+    PERFORM public.enqueue_notification_delivery(event_record.id, recipient.user_id, 'clubs', ARRAY['in_app','push'], 'New club book nomination', 'A new book was nominated for your club.', '/(tabs)/clubs/' || NEW.club_id::text || '/nominate', 'clubs', false);
+  END LOOP;
+  RETURN NEW;
+END;
+$function$;
+DROP TRIGGER IF EXISTS route_book_nomination_notification ON public.book_nominations;
+CREATE TRIGGER route_book_nomination_notification AFTER INSERT ON public.book_nominations FOR EACH ROW EXECUTE FUNCTION public.route_book_nomination_notification();`,
+    'TEMPORARY tc04 chain-compat: faithful book-nomination notification excerpt (complete-file triggers on absent tables omitted — L01-D/TEST-07 owns replay repair)',
+  );
+  console.log('[runner] tc04 chain applied (B02 base + book workflow + notification substrate PRE-FIX)');
+}
+
 async function applyRlsChain(database) {
   guardLocalDisposable(database);
   psqlFile(database, BOOTSTRAP_FILE, 'platform bootstrap');
@@ -339,6 +531,85 @@ function buildNoRepairMutationOverlay(tempDir) {
   return overlayPath;
 }
 
+/**
+ * WU-TC04 mutation overlays, each derived FROM THE ACTUAL TC04 MIGRATION
+ * FILE with exactly one load-bearing guard removed. Written outside the
+ * repo; never committed; deleted by cleanup. Each overlay is applied to a
+ * FRESH disposable DB (base TC04 chain + mutated fix), then the GREEN
+ * contract is run EXPECTING failure — proving GREEN is sensitive to the
+ * exact regression it guards. No gratuitous matrix.
+ */
+function tc04MutationOverlay(tempDir, kind) {
+  const src = readFileSync(join(REPO_ROOT, 'supabase', 'migrations', TC04_FIX_MIGRATION), 'utf8');
+  let mutated = src;
+  let tag = '';
+  if (kind === 'tc04-mut1-no-recovery') {
+    // MUT-1: remove nomination conflict recovery → concurrency GREEN must fail with 23505.
+    // Replace targeted ON CONFLICT DO NOTHING with a plain INSERT (no conflict clause).
+    const needle = 'ON CONFLICT (club_id, book_id, status) DO NOTHING';
+    if (!src.includes(needle)) throw new InfraError('MUT-1 overlay refused: conflict target not found in real TC04 migration');
+    mutated = src.replaceAll(needle, '-- MUTATION(mut1): conflict recovery removed (plain INSERT, runtime temp copy)');
+    tag = 'tc04_mut1_no_recovery_overlay.sql';
+  } else if (kind === 'tc04-mut2-single-fallback') {
+    // MUT-2: replace bounded-loop recovery with insufficient single attempt.
+    // After a conflicted INSERT (zero rows), RETURN NULL immediately instead
+    // of looping to re-evaluate. Normal 2-caller race then yields A=id,
+    // B=NULL (deterministic GREEN-1 failure); the disappearance edge would
+    // likewise NULL. Proves the retry loop is load-bearing for both the
+    // ordinary duplicate race and the ACTIVE→SELECTED disappearance.
+    const needle = 'IF created_nomination.id IS NOT NULL THEN';
+    if (!src.includes(needle)) throw new InfraError('MUT-2 overlay refused: recovery return not found in real TC04 migration');
+    mutated = src.replaceAll(
+      `${needle}\n      RETURN created_nomination;\n    END IF;`,
+      `${needle}\n      RETURN created_nomination;\n    END IF;\n    RETURN NULL::public.book_nominations; -- MUTATION(mut2): no recovery loop, NULL on conflict (runtime temp copy)`,
+    );
+    tag = 'tc04_mut2_single_fallback_overlay.sql';
+  } else if (kind === 'tc04-mut3-vote-grant') {
+    // MUT-3: restore vote INSERT grant/policy → direct-vote denial GREEN fails.
+    const needle = 'REVOKE INSERT ON public.book_votes FROM PUBLIC, anon, authenticated;';
+    if (!src.includes(needle)) throw new InfraError('MUT-3 overlay refused: vote REVOKE not found in real TC04 migration');
+    mutated = src.replaceAll(needle, '-- MUTATION(mut3): vote INSERT revoke removed (runtime temp copy)');
+    const needle2 = 'DROP POLICY IF EXISTS "Members can vote" ON public.book_votes;';
+    if (!src.includes(needle2)) throw new InfraError('MUT-3 overlay refused: vote policy drop not found');
+    mutated = mutated.replaceAll(needle2, '-- MUTATION(mut3): vote INSERT policy retained (runtime temp copy)');
+    tag = 'tc04_mut3_vote_grant_overlay.sql';
+  } else if (kind === 'tc04-mut4-nomination-grant') {
+    // MUT-4: restore nomination INSERT grant/policy → direct-nomination denial GREEN fails.
+    const needle = 'REVOKE INSERT ON public.book_nominations FROM PUBLIC, anon, authenticated;';
+    if (!src.includes(needle)) throw new InfraError('MUT-4 overlay refused: nomination REVOKE not found in real TC04 migration');
+    mutated = src.replaceAll(needle, '-- MUTATION(mut4): nomination INSERT revoke removed (runtime temp copy)');
+    const needle2 = 'DROP POLICY IF EXISTS "Members can nominate books" ON public.book_nominations;';
+    if (!src.includes(needle2)) throw new InfraError('MUT-4 overlay refused: nomination policy drop not found');
+    mutated = mutated.replaceAll(needle2, '-- MUTATION(mut4): nomination INSERT policy retained (runtime temp copy)');
+    tag = 'tc04_mut4_nomination_grant_overlay.sql';
+  } else if (kind === 'tc04-mut5-club-update') {
+    // MUT-5: restore table-wide book_clubs UPDATE → current_book_id denial GREEN fails.
+    const needle = 'REVOKE UPDATE ON public.book_clubs FROM PUBLIC, anon, authenticated;';
+    if (!src.includes(needle)) throw new InfraError('MUT-5 overlay refused: club UPDATE revoke not found in real TC04 migration');
+    mutated = src.replaceAll(needle, '-- MUTATION(mut5): club table-wide UPDATE revoke removed (runtime temp copy)');
+    tag = 'tc04_mut5_club_update_overlay.sql';
+  } else {
+    throw new InfraError(`unknown TC04 mutation kind '${kind}'`);
+  }
+  if (mutated === src) throw new InfraError(`mutation overlay produced no change for kind '${kind}'`);
+  const overlayPath = join(tempDir, tag);
+  writeFileSync(overlayPath, mutated, 'utf8');
+  return overlayPath;
+}
+
+async function applyTc04MutationOverlay(database, overlayPath, label) {
+  const overlaySql = readFileSync(overlayPath, 'utf8');
+  const res = spawnSync('docker', [...psqlArgs(database), '-f', '-'], {
+    encoding: 'utf8',
+    input: overlaySql,
+    windowsHide: true,
+  });
+  if (res.status !== 0) {
+    throw new InfraError(`failed to apply TC04 mutation overlay ${label}:\n${res.stdout ?? ''}\n${res.stderr ?? ''}`);
+  }
+  console.log(`[runner] applied runtime TC04 mutation overlay ${label} (temp copy of real fix minus one guard)`);
+}
+
 async function main() {
   const argv = process.argv.slice(2);
   const suites = [];
@@ -346,10 +617,14 @@ async function main() {
   if (argv.includes('f04')) suites.push('f04');
   if (argv.includes('wave2') || argv.includes('wave2_attribution') || argv.includes('wave2_invitation') || argv.includes('wave2_moderation') || argv.includes('wave2:all')) suites.push('wave2');
   if (argv.includes('rls') || argv.includes('b01') || argv.includes('l01c')) suites.push('rls');
-  if (suites.length === 0) suites.push('b02', 'f04', 'wave2', 'rls');
+  if (argv.includes('downgrade') || argv.includes('tc01')) suites.push('downgrade');
+  if (argv.includes('tc03') || argv.includes('admin-transfer')) suites.push('tc03');
+  if (argv.includes('tc04') || argv.includes('book-workflow') || argv.includes('book_workflow')) suites.push('tc04');
+  if (suites.length === 0) suites.push('b02', 'f04', 'wave2', 'rls', 'downgrade', 'tc03');
   const mutationArg = argv.includes('--mutation') ? argv[argv.indexOf('--mutation') + 1] : null;
   const noLockMutation = mutationArg === 'no-lock'; // B02 RED proof
   const noRepairMutation = mutationArg === 'no-repair'; // F04 migration-boundary RED proof
+  const tc04Mutation = mutationArg && mutationArg.startsWith('tc04-') ? mutationArg : null; // TC04 sensitivity
 
   assertDockerAvailable();
   ensurePinnedImage();
@@ -520,6 +795,135 @@ async function main() {
         const code = await runNodeScript(scriptPath, { CLUBS_L4_DATABASE_URL: urlFor(dbWave2) }, `suite ${label}`);
         if (code !== 0) contractFailures += 1;
         else console.log(`[runner] suite ${label} PASS`);
+      }
+    }
+
+    if (suites.includes('downgrade')) {
+      console.log('[runner] ── WU-TC01 downgrade/grace contract (RED pre-fix → forward fix → GREEN) ──');
+      const dbDowngrade = `clubs_l4_downgrade_${suffix}`;
+      await createExtraDatabase(dbB02, dbDowngrade);
+      await applyDowngradeChain(dbDowngrade);
+
+      // RED control on the PRE-FIX chain: 42702 on repeat-before-deadline,
+      // expired remediation, and batch; persisted-state rollback proofs.
+      const redCode = await runNodeScript(
+        join(HERE, 'contracts', 'downgrade_grace.test.mjs'),
+        { CLUBS_L4_DATABASE_URL: urlFor(dbDowngrade), CLUBS_L4_DOWNGRADE_PHASE: 'red' },
+        'suite downgrade RED control (pre-fix 42702 + rollback proofs)',
+      );
+      if (redCode !== 0) contractFailures += 1;
+      else console.log('[runner] suite downgrade RED control PASS (42702 reproduced, rollback proven)');
+
+      if (redCode === 0) {
+        // Apply the ACTUAL forward fix migration to the SAME database/state,
+        // then run the GREEN lifecycle (same fixtures, fixed function).
+        psqlFile(dbDowngrade, `/repo/supabase/migrations/${DOWNGRADE_FIX_MIGRATION}`, `ACTUAL forward fix ${DOWNGRADE_FIX_MIGRATION}`);
+        const greenCode = await runNodeScript(
+          join(HERE, 'contracts', 'downgrade_grace.test.mjs'),
+          { CLUBS_L4_DATABASE_URL: urlFor(dbDowngrade), CLUBS_L4_DOWNGRADE_PHASE: 'green' },
+          'suite downgrade GREEN lifecycle (post-fix)',
+        );
+        if (greenCode !== 0) contractFailures += 1;
+        else console.log('[runner] suite downgrade GREEN lifecycle PASS');
+      }
+    }
+
+    if (suites.includes('tc03')) {
+      console.log('[runner] ── WU-TC03 admin-transfer contract (RED pre-fix → forward fix → GREEN) ──');
+      const dbTc03 = `clubs_l4_tc03_${suffix}`;
+      await createExtraDatabase(dbB02, dbTc03);
+      await applyPlatformAndChain(dbTc03);
+      psqlFile(dbTc03, `/repo/supabase/migrations/${TC03_BASE_MIGRATION}`, `TC03 base migration ${TC03_BASE_MIGRATION} (pre-fix state)`);
+      // ─────────────────────────────────────────────────────────────────────
+      // TEMPORARY TC03 CHAIN COMPATIBILITY — NOT REPLAY PROOF.
+      // The B02 chain carries book_clubs.author_id/meeting_type but NOT the
+      // author_club CHECK values; those come from the untracked REC-1
+      // reconciliation (20260213000000), which cannot replay on this chain
+      // (it renames lead_id, absent here). The LIVE project has author_club
+      // support (proven in the WU-TC03 context gate: live request RPC author
+      // branch + live clubs), so this step restores LIVE PARITY for the
+      // author-club contract tests. Authoritative replay repair is owned by
+      // L01-D / TEST-07 (same category as the wave2 pre-drop above).
+      // ─────────────────────────────────────────────────────────────────────
+      psqlSql(
+        dbTc03,
+        `ALTER TABLE public.book_clubs DROP CONSTRAINT IF EXISTS book_clubs_club_type_check;
+         ALTER TABLE public.book_clubs ADD CONSTRAINT book_clubs_club_type_check
+           CHECK (club_type IN ('public', 'approval', 'invite_only', 'author_club'));
+         ALTER TABLE public.book_clubs DROP CONSTRAINT IF EXISTS book_clubs_author_club_check;
+         ALTER TABLE public.book_clubs ADD CONSTRAINT book_clubs_author_club_check
+           CHECK ((club_type = 'author_club' AND author_id IS NOT NULL) OR (club_type <> 'author_club' AND author_id IS NULL));`,
+        'TEMPORARY tc03 chain-compat: author_club CHECK live-parity substrate (REC-1 gap — L01-D/TEST-07 owns replay repair)',
+      );
+
+      // RED control on the PRE-FIX chain: valid request works, valid accept
+      // hits the single-admin invariant, persisted state provably untouched.
+      const redCode = await runNodeScript(
+        join(HERE, 'contracts', 'admin_transfer.test.mjs'),
+        { CLUBS_L4_DATABASE_URL: urlFor(dbTc03), CLUBS_L4_TC03_PHASE: 'red' },
+        'suite tc03 RED control (pre-fix invariant failure + rollback proof)',
+      );
+      if (redCode !== 0) contractFailures += 1;
+      else console.log('[runner] suite tc03 RED control PASS (invariant failure reproduced, rollback proven)');
+
+      if (redCode === 0) {
+        // Apply the ACTUAL forward fix migration to the SAME database/state,
+        // then run the GREEN contract matrix (same fixtures, fixed function).
+        psqlFile(dbTc03, `/repo/supabase/migrations/${TC03_FIX_MIGRATION}`, `ACTUAL forward fix ${TC03_FIX_MIGRATION}`);
+        const greenCode = await runNodeScript(
+          join(HERE, 'contracts', 'admin_transfer.test.mjs'),
+          { CLUBS_L4_DATABASE_URL: urlFor(dbTc03), CLUBS_L4_TC03_PHASE: 'green' },
+          'suite tc03 GREEN contract matrix (post-fix)',
+        );
+        if (greenCode !== 0) contractFailures += 1;
+        else console.log('[runner] suite tc03 GREEN contract matrix PASS');
+      }
+    }
+
+    if (suites.includes('tc04')) {
+      console.log('[runner] ── WU-TC04 book-workflow contract (RED pre-fix → forward fix → GREEN) ──');
+      const dbTc04 = `clubs_l4_tc04_${suffix}`;
+      await createExtraDatabase(dbB02, dbTc04);
+      await applyTc04Chain(dbTc04);
+
+      const redCode = await runNodeScript(
+        join(HERE, 'contracts', 'book_workflow.test.mjs'),
+        { CLUBS_L4_DATABASE_URL: urlFor(dbTc04), CLUBS_L4_TC04_PHASE: 'red' },
+        'suite tc04 RED control (pre-fix 23505 + three bypasses)',
+      );
+      if (redCode !== 0) contractFailures += 1;
+      else console.log('[runner] suite tc04 RED control PASS (all four defects reproduced)');
+
+      if (redCode === 0) {
+        psqlFile(dbTc04, `/repo/supabase/migrations/${TC04_FIX_MIGRATION}`, `ACTUAL forward fix ${TC04_FIX_MIGRATION}`);
+        const greenCode = await runNodeScript(
+          join(HERE, 'contracts', 'book_workflow.test.mjs'),
+          { CLUBS_L4_DATABASE_URL: urlFor(dbTc04), CLUBS_L4_TC04_PHASE: 'green' },
+          'suite tc04 GREEN contract matrix (post-fix)',
+        );
+        if (greenCode !== 0) contractFailures += 1;
+        else console.log('[runner] suite tc04 GREEN contract matrix PASS');
+
+        if (greenCode === 0 && tc04Mutation) {
+          console.log(`[runner] ── RED-proof: --mutation ${tc04Mutation} ──`);
+          tempDir = mkdtempSync(join(tmpdir(), 'clubs-l4-mutation-'));
+          const overlayPath = tc04MutationOverlay(tempDir, tc04Mutation);
+          const dbMutName = `clubs_l4_tc04mut_${suffix}`;
+          await createExtraDatabase(dbB02, dbMutName);
+          await applyTc04Chain(dbMutName);
+          await applyTc04MutationOverlay(dbMutName, overlayPath, tc04Mutation);
+          const mutCode = await runNodeScript(
+            join(HERE, 'contracts', 'book_workflow.test.mjs'),
+            { CLUBS_L4_DATABASE_URL: urlFor(dbMutName), CLUBS_L4_TC04_PHASE: 'green' },
+            `suite tc04 MUTATED (${tc04Mutation}): GREEN expected to go RED`,
+          );
+          if (mutCode === 1) {
+            console.log(`[runner] RED PROOF PASS: GREEN correctly FAILED under ${tc04Mutation} (guard is load-bearing)`);
+          } else {
+            console.error(`[runner] RED PROOF FAIL: GREEN did NOT fail under ${tc04Mutation} — harness insensitive to the guarded regression`);
+            contractFailures += 1;
+          }
+        }
       }
     }
 
