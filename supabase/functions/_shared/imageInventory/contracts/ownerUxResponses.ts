@@ -115,6 +115,14 @@ const coverReference = z.string().min(1).max(512).superRefine((value, context) =
     context.addIssue({ code: z.ZodIssueCode.custom, message: 'cover host is not approved' });
   }
 });
+const representativeCover = z.object({
+  coverReference,
+  sourceRelation: z.literal('representative_edition'),
+  sourceAdapter: z.string().regex(/^[a-z][a-z0-9_-]{1,63}$/u),
+  sourceAdapterVersion: z.string().min(1).max(64),
+  sourceRecordId: z.string().min(1).max(256),
+  selectionPolicyVersion: z.literal('p9-representative-cover-v1'),
+}).strict();
 const metadataSnapshot = z.object({
   title: safeText(1, 512),
   authors: z.array(safeText(1, 256)).min(1).max(20), language,
@@ -150,7 +158,13 @@ const candidateDetail = z.object({
     state: z.enum(['pending', 'selected', 'manual', 'no_match', 'ambiguous', 'temporarily_unavailable', 'failed']),
     revision: version, selectionVersion: version.nullable(), selectionId: uuid.nullable(),
     canonicalEditionId: uuid.nullable(), snapshot: metadataSnapshot.nullable(),
-  }).strict(),
+    representativeCover: representativeCover.nullable().optional(),
+  }).strict().superRefine((value, context) => {
+    if (value.representativeCover && (!value.snapshot || value.snapshot.coverReference)) {
+      context.addIssue({ code: z.ZodIssueCode.custom,
+        message: 'representative cover requires a selected edition without an exact cover' });
+    }
+  }),
   review: z.object({ value: review.nullable(), reviewVersion: version.nullable() }).strict(),
   duplicateAdvice: z.object({
     state: z.enum(['none', 'possible_match', 'compatible_match', 'changed']),

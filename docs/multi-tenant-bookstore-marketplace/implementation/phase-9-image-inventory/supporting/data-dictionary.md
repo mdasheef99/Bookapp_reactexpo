@@ -1,10 +1,23 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
+> **2026-09-13 current follow-up:** M60, M61, and M62 are live in the verified
+> development project. M61 adds a private,
+> immutable `representative_edition` cover sidecar and a separate checked
+> `store_inventory.representative_cover` field. M62 projects that same
+> provenance through standalone Owner detail and review-save responses; its
+> remote version is `20260913162154`, with helper/ACL and zero-row readback
+> passed. The selected coherent edition and canonical/public `cover_url` remain
+> authoritative. [Evidence](./unit6h-representative-cover-correction.md).
+
+> The following 2026-09-12 PostgreSQL paragraph is historical; M60 was later
+> applied during the authorized development rollout. M61 was also later applied;
+> M62 was subsequently applied once and is recorded in the current ledger below.
+
 > **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
 
 
-**Status:** current/live and approved-target representations separated; Unit 6G M52–M59 live; Unit 6H M60 disposable-PostgreSQL verified, not remotely applied, and connected-rollout gated
-**Last updated:** 2026-09-12
+**Status:** current/live and approved-target representations separated; M52–M62 live once; matching runtime deployment and connected proof remain gated
+**Last updated:** 2026-09-13
 
 Unit 6A adds only Owner UX presentation/review support; it grants no Unit 7 inventory/publication mutation authority. Unit 6G M52–M59 are live at their recorded versions; M57–M59 exact-project readback passed on 2026-09-08. See [tracker 19](../trackers/19-unit6a-owner-safe-backend-evidence.md), [tracker 31](../trackers/31-unit6g-owner-batch-review-design-evidence.md), and the [media-completion correction](./unit6g-media-completion-correction.md).
 
@@ -12,20 +25,31 @@ M01-M08/M10-M42 are live-verified at their recorded levels. M11 provides bounded
 
 The dictionary distinguishes canonical truth, store-owned snapshots, public projections, staged AI output, and media/evidence. A field must not be added to several layers merely because it is convenient; each copy needs a named owner and synchronization rule.
 
-## Unit 6H duplicate confirmation — M60 local target, not live
+## Unit 6H duplicate confirmation — M60 live; representative-cover M61/M62 live
 
 | Representation | Owner and visibility | Required meaning and current evidence |
 | --- | --- | --- |
-| `image_extraction_inputs.duplicate_of_input_id` | PostgreSQL-owned private relationship; no client write authority | Nullable self-reference from a new duplicate input to the canonical same-store input. M60's trigger verifies canonicality, store, sanitized hash, and orchestration version. Locally defined; not present in remote migration history for this checkpoint. |
-| `image_extraction_inputs.state = awaiting_duplicate_confirmation` | PostgreSQL-owned lifecycle state | Keeps the new duplicate upload nonterminal until explicit Proceed or Cancel. Close/readiness must continue to treat it as unresolved. Local M60 target only. |
-| `phase9_input_canonical_sanitized_hash` | PostgreSQL partial unique index | Canonical rows only (`duplicate_of_input_id IS NULL`) are unique by `(store_id, sha256, orchestration_version)`; duplicate rows retain their own media/provenance. Local M60 target only. |
-| `marketplace_sec.phase9_duplicate_confirmations` | Private PostgreSQL table with deny-by-default RLS/ACL | Stores the pending confirmation, expiry, and resolution replay identity without exposing hashes, paths, or canonical identifiers to Owner projections. Local M60 target only. |
+| `image_extraction_inputs.duplicate_of_input_id` | PostgreSQL-owned private relationship; no client write authority | Nullable self-reference from a new duplicate input to the canonical same-store input. M60's trigger verifies canonicality, store, sanitized hash, and orchestration version. Live M60. |
+| `image_extraction_inputs.state = awaiting_duplicate_confirmation` | PostgreSQL-owned lifecycle state | Keeps the new duplicate upload nonterminal until explicit Proceed or Cancel. Close/readiness treats it as unresolved. Live M60. |
+| `phase9_input_canonical_sanitized_hash` | PostgreSQL partial unique index | Canonical rows only (`duplicate_of_input_id IS NULL`) are unique by `(store_id, sha256, orchestration_version)`; duplicate rows retain their own media/provenance. Live M60. |
+| `marketplace_sec.phase9_duplicate_confirmations` | Private PostgreSQL table with deny-by-default RLS/ACL | Stores the pending confirmation, expiry, and resolution replay identity without exposing hashes, paths, or canonical identifiers to Owner projections. Live M60. |
 | `marketplace_sec.phase9_duplicate_resolution_context` / `marketplace_sec.phase9_resolve_duplicate_scan_input` plus minimum public delegates | PostgreSQL-owned service-only functions | Context replay occurs before Storage access; Proceed proves the exact private object and links the new input, while Cancel skips vision and releases cleanup eligibility. M60 locally defines postgres-owned, empty-search-path public `SECURITY INVOKER` delegates granted only to `service_role`; authenticated direct execution is denied. Connected routing remains unverified. |
 
-M52–M59 remain the current live schema/runtime boundary. This table records
-M60's checked-in target representation plus disposable PostgreSQL verification;
-it is not a remote schema readback. The disposable M01–M60 database and cluster
-were removed after the concurrency and existing regression markers passed.
+M52–M60 are the current live schema/runtime boundary from the preceding
+authorized rollout. The M60 rows above retain their local verification history;
+the connected M60 application/readback is recorded in the earlier rollout
+evidence. M61 and M62 are live once as recorded above; M62's function/ACL
+readback showed no sidecar or representative-cover inventory rows.
+
+## Unit 6H representative-edition cover — M61/M62 live; runtime rollout pending
+
+| Representation | Owner and visibility | Required meaning and current evidence |
+| --- | --- | --- |
+| `marketplace_sec.phase9_metadata_representative_covers` | Private immutable sidecar; direct API/service table access denied | One accepted metadata attempt may carry one Google-hosted cover from a compatible alternate edition in the same provider response, with source record, adapter/version, policy version, and fixed match evidence. Live M61. |
+| `store_inventory.representative_cover` | Private inventory field; database-owned insert copy; immutable after insert | Explicit Add may copy the labelled sidecar cover separately from exact `cover_url`; caller-supplied or later-mutated values are rejected. Live M61. |
+| Owner `metadataSummary.representativeCover` / `fieldSources.cover=representative` | Owner-private batch projection | Exposed only when the selected exact cover is absent; exact selected metadata remains unchanged. Live M61. |
+| Owner `metadata.representativeCover` | Owner-private standalone detail/save projection | M62 adds the nullable provenance member to direct detail, fresh save, completed replay, and read-only replay. Edge/mobile decoders accept absence only for rollout ordering and strictly validate every present value. M62 is live once; matching runtime deployment remains pending. |
+| public listing/canonical `cover_url` | Existing exact/public projection | Never receives the representative fallback. No M61 public projection change. |
 
 ## Unit 6G media-completion correction — M57–M59 live
 

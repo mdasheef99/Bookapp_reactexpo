@@ -244,6 +244,47 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
     ]);
   });
 
+  it('persists a representative cover before selection and degrades safely if that optional write fails', async () => {
+    const selected = metadataEdition({ providerRecordId: 'selected', coverReference: null });
+    const representativeCover = {
+      coverReference: 'https://books.google.com/books/content?id=alternate',
+      sourceRelation: 'representative_edition' as const,
+      sourceProviderRecordId: 'alternate',
+      selectionPolicyVersion: 'p9-representative-cover-v1' as const,
+      matchEvidence: ['exact_title', 'exact_author_set', 'language_compatible'],
+    };
+    const fixture = gateway({
+      providerValidation: {
+        adapterKey: 'recorded_metadata', adapterVersion: '1.0.0',
+        hostPolicy: {
+          adapterKey: 'recorded_metadata', policyVersion: 'recorded-hosts-v1',
+          approvedCoverHosts: ['books.google.com'],
+        },
+      },
+      invokePrimary: jest.fn(async () => ({
+        outcome: 'coherent_match' as const,
+        candidates: [selected, metadataEdition({
+          providerRecordId: 'alternate', isbn10: null, isbn13: null,
+          coverReference: representativeCover.coverReference,
+        })],
+        selected, representativeCover, evidence: ['exact_validated_isbn'],
+        retryable: false, secondaryEligible: false, providerRequestId: 'safe-request-id',
+      })),
+      persistRepresentativeCover: jest.fn(async () => {
+        fixture.calls.push('representative-cover');
+        throw new Error('optional representative-cover storage unavailable');
+      }),
+    });
+    await expect(runMetadataProductionComposition(request, fixture.value))
+      .resolves.toEqual({ outcome: 'accepted_metadata_match' });
+    expect(fixture.value.persistRepresentativeCover).toHaveBeenCalledWith({
+      lookupId: 'lookup-1', attemptId: 'attempt-1', representativeCover,
+    });
+    expect(fixture.value.persistSelection).toHaveBeenCalledTimes(1);
+    expect(fixture.calls.indexOf('representative-cover'))
+      .toBeLessThan(fixture.calls.indexOf('selection'));
+  });
+
   it('resumes a durably finalized logical attempt without another physical call', async () => {
     const fixture = gateway({
       resumeFinalizedAttempt: jest.fn(async () => ({ outcome: 'accepted_metadata_match' })),

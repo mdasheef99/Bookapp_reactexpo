@@ -70,6 +70,15 @@ Selected metadata supports:
 - canonical/provider cover URL;
 - provider/record ID, fetch time, match strength/rationale, adapter/schema/normalizer version.
 
+The bounded P9-D86 fallback is separate from this selected-edition contract:
+when the selected edition has no cover, a compatible alternate cover already in
+the same provider response may be retained as Owner-private
+`representative_edition` provenance. It does not alter the selected snapshot,
+canonical/public `cover_url`, identity evidence, or provider request count.
+Provider volume/order evidence participates in conflict detection. Opaque series
+membership is not converted into a human series name; either record carrying
+unresolved series evidence suppresses fallback.
+
 The selector chooses one coherent edition response. A secondary provider may corroborate or replace an insufficient/failed primary result, but fields from conflicting editions are not silently combined. Raw/normalized provider evidence remains private and time-bounded according to SDD 04.
 
 Vision evidence is not a metadata selection. The image-level canonical analysis result and each ordered observation are immutable private evidence. A review candidate copies only normalized observed clues and links back to one observation; `selected_snapshot` remains owned by later coherent metadata selection, and `owner_review_snapshot` remains owned by later Owner edits. Model/provider confidence, publisher/ISBN clues, or image evidence never establish canonical identity.

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
-import { Image } from 'expo-image';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useTheme } from '@/hooks/useTheme';
@@ -17,6 +16,7 @@ import {
     type ScanSetupFormState,
 } from '../scanSetup/scanSetupForm';
 import { AddCandidateToInventoryAction } from './AddCandidateToInventoryAction';
+import { BookCoverThumbnail } from './BookCoverThumbnail';
 import { CandidateMetadataSheet } from './CandidateMetadataSheet';
 import { CompactReviewEditors } from './CompactReviewEditors';
 import { OwnerConfirmationDialog } from './OwnerConfirmationDialog';
@@ -25,6 +25,7 @@ export { applyCompactEdits, type CompactReviewEdits } from '../review/compactRev
 
 export function sourceBadgeLabel(code: string): string {
     if (code === 'matched') return 'Provider matched';
+    if (code === 'representative') return 'Representative edition';
     if (code === 'detected') return 'Vision detected';
     if (code === 'default') return 'Batch default';
     if (code === 'custom') return 'Custom';
@@ -184,27 +185,7 @@ export function BatchReviewCard({
         <GlassCard padding={0} borderRadius={16} style={needsAttention ? { borderLeftWidth: 4, borderLeftColor: colors.error } : undefined}>
             <View testID={`card-${card.candidateId}`} style={{ gap: 14, padding: 16 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
-                    {card.metadataSummary?.coverReference ? (
-                        <Image
-                            source={{ uri: card.metadataSummary.coverReference }}
-                            contentFit="cover"
-                            accessibilityLabel={`Book ${card.ordinal} cover`}
-                            style={{ width: 72, height: 104, borderRadius: 9 }}
-                        />
-                    ) : (
-                        <View accessibilityLabel={`Book ${card.ordinal} cover placeholder`} style={{
-                            width: 72,
-                            height: 104,
-                            borderRadius: 9,
-                            borderWidth: 1,
-                            borderColor: colors.border,
-                            backgroundColor: colors.bgSecondary,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}>
-                            <Text selectable style={{ color: colors.textSecondary, fontSize: 12 }}>No cover</Text>
-                        </View>
-                    )}
+                    <BookCoverThumbnail ordinal={card.ordinal} metadataSummary={card.metadataSummary} />
                     <View style={{ flex: 1, gap: 6 }}>
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 6 }}>
                             <Text selectable style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>

@@ -1,5 +1,32 @@
 # DOC-13: Implementation Tracker
 
+> **2026-09-13 representative-cover rollout closeout:** Exact-project preflight
+> reconfirmed `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` healthy, then the
+> hash-verified M61 artifact was applied once as remote version
+> `20260913111342`. Schema/security readback passed with zero representative-
+> cover sidecar rows and zero inventory rows carrying the new field. Owner Edge
+> v12 is ACTIVE with JWT verification and hash
+> `ad75a08f3624f543f904cf2bf6833bcca132dfc1727e5868d52022365aacea14`;
+> its M61 response contract matches the local source. The bounded local follow-up
+> decodes Google Books volume evidence, suppresses representative fallback when
+> either edition carries unresolved series evidence, and adds forward-only M62
+> so standalone Owner detail and review-save responses carry the same private
+> provenance as batch review. M62 was then applied once as remote version
+> `20260913162154`; its SHA-256 is
+> `E8CAAC179363D1E709F071BBF81436B7ED4B24968E0979ADA7A402C8C435066F`.
+> Its response fields are rollout-tolerant while present
+> values remain strict, allowing Owner Edge to deploy before M62 without a
+> contract outage. Fresh TypeScript and worker build pass; affected Jest is
+> 8 suites/310 tests, structural metadata 14/14, M55 control 7/7, and full
+> M52–M62 representative-cover integration 2/2. No `act(...)`, open-handle, or
+> force-exit warning reproduced; only the known Expo/Node `DEP0040` warning did.
+> Metadata-worker/client rollout and the connected no-cover scan/Add remain unrun.
+> Post-apply readback confirms the private helper ACL and zero sidecar/inventory
+> representative-cover rows. No Git publication occurred.
+> [Evidence](./implementation/phase-9-image-inventory/supporting/unit6h-representative-cover-correction.md).
+> Next action requires authorization to deploy the matching tolerant Owner Edge,
+> metadata-worker, and client runtime, then run connected proof.
+
 > **2026-09-12 Unit 6H bounded correction closeout:** Exact readback from
 > `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) proved active Owner Edge v10
 > had the older batch decoder and omitted optional
@@ -1364,12 +1391,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6H duplicate confirmation has completed its bounded local correction and disposable PostgreSQL verification; F-01 is retracted, F-02/F-03 are corrected locally, M52–M59 remain live and unchanged, and M60 plus coordinated code changes remain local only** |
-| Overall status | `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated` |
-| Last updated | 2026-09-12 |
-| Latest handoff | Baseline `8340647` matches the requested remote and branch. F-01 is retracted; F-02/F-03 are corrected. Disposable PostgreSQL 18.4 applied M01–M60 and passed Unit 6H concurrency plus the existing U8B regression acceptance, then fully tore down. M60 remains unapplied remotely. |
-| Current risk level | No local implementation or disposable PostgreSQL blocker remains from F-01 through F-03. PostgreSQL 18.4 is not the connected development project's recorded PostgreSQL 17.6, so connected Edge/Storage and target-version behavior remain unproven. The historical Jest `VirtualizedList` warning and incomplete open-handle probes remain separate verification warnings. |
-| Next recommended task | Review the Unit 6H disposable PostgreSQL proof and separately authorize connected Edge/Storage verification. Do not apply M60 remotely, deploy, dispatch, stage, commit, push, or mutate remote services from this checkpoint. |
+| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6H duplicate confirmation and the representative-cover correction are locally verified; M60, M61, and M62 are live once, while matching runtime deployment and connected no-cover proof are pending** |
+| Overall status | `unit6h_representative_cover_m62_applied_runtime_rollout_pending` |
+| Last updated | 2026-09-13 |
+| Latest handoff | Baseline `8340647` matches the requested remote and branch; the current local HEAD is `80e7db965e4d6c74799be53036ab128bbd3b9fba` with the reviewed working tree preserved. F-01 is retracted; F-02/F-03 are corrected. M60 is live once as `20260912072815`; M61 is live once as `20260913111342`; M62 is live once as `20260913162154`. Post-apply readback passed; no connected no-cover proof has run. |
+| Current risk level | No local implementation blocker remains. The disposable proof used PostgreSQL 18.4 while the connected project reports PostgreSQL 17.6, so target-version behavior is not fully reproduced locally. Matching metadata-worker/client deployment and connected Edge/Storage no-cover verification remain unproven. |
+| Next recommended task | With explicit rollout authorization, deploy the matching tolerant Owner Edge, metadata-worker, and client code, then run the connected no-cover review/Add/public-projection proof. Do not merge to `main`; do not mutate existing development data. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 

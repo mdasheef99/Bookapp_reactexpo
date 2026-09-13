@@ -176,6 +176,38 @@ describe('Unit 6G Group 1 mobile DTO foundation', () => {
         )).not.toThrow();
     });
 
+    it('accepts a separately labelled representative-edition cover only when the exact cover is absent', () => {
+        const selected = batchCard({
+            metadataState: 'selected',
+            metadataSummary: {
+                title: 'Matched title', authors: ['Matched author'], language: 'en',
+                coverReference: null,
+                representativeCover: {
+                    coverReference: 'https://books.google.com/books/content?id=alternate',
+                    sourceRelation: 'representative_edition',
+                    sourceAdapter: 'google_books', sourceAdapterVersion: '1.0.0',
+                    sourceRecordId: 'alternate-volume',
+                    selectionPolicyVersion: 'p9-representative-cover-v1',
+                },
+            },
+            fieldSources: {
+                ...batchCard().fieldSources,
+                cover: 'representative', title: 'matched', authors: 'matched',
+                language: 'matched',
+            },
+        });
+        expect(() => decodeOwnerBatchReviewResponse(
+            'read_scan_batch_review', batchPayload(selected),
+        )).not.toThrow();
+        expect(() => decodeOwnerBatchReviewResponse('read_scan_batch_review', batchPayload({
+            ...selected,
+            metadataSummary: {
+                ...(selected.metadataSummary as unknown as Record<string, unknown>),
+                coverReference: 'https://books.google.com/exact',
+            },
+        }))).toThrow();
+    });
+
     it.each([
         ['blank selected authors', { authors: [''] }, { authors: 'detected' }],
         ['unapproved selected cover', {

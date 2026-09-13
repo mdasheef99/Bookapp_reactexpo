@@ -120,6 +120,100 @@ describe('Phase 9 Unit 5B Google Books adapter', () => {
       .toBe('https://books.google.com/books/content?id=cover&zoom=3');
   });
 
+  it('decodes Google series order as volume without inventing a series title', () => {
+    const decoded = decodeGoogleBooksResponse({
+      totalItems: 1,
+      items: [{
+        id: 'series-volume',
+        volumeInfo: {
+          title: 'Series Fixture', authors: ['Fixture Author'], language: 'en',
+          seriesInfo: {
+            bookDisplayNumber: 'Vol. 2',
+            volumeSeries: [{ seriesId: 'opaque-google-series-id', orderNumber: 2 }],
+          },
+        },
+      }],
+    }, {
+      correlationId: 'series-correlation', attemptId: 'series-attempt',
+      fetchedAt: '2026-09-13T00:00:00.000Z',
+    });
+    expect(decoded[0]).toMatchObject({ series: null, volume: 'Vol. 2' });
+  });
+
+  it('does not reuse a representative cover when Google reports series evidence', async () => {
+    const response = new Response(JSON.stringify({
+      totalItems: 2,
+      items: [{
+        id: 'selected-without-cover',
+        volumeInfo: {
+          title: 'Series Fixture', authors: ['Fixture Author'], language: 'en',
+          industryIdentifiers: [{ type: 'ISBN_13', identifier: '9780306406157' }],
+        },
+      }, {
+        id: 'series-alternate-with-cover',
+        volumeInfo: {
+          title: 'Series Fixture', authors: ['Fixture Author'], language: 'en',
+          imageLinks: { thumbnail: 'https://books.google.com/books/content?id=series-cover' },
+          seriesInfo: {
+            bookDisplayNumber: 'Vol. 2',
+            volumeSeries: [{ seriesId: 'opaque-google-series-id', orderNumber: 2 }],
+          },
+        },
+      }],
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
+    const adapter = new GoogleBooksAdapter({
+      mode: 'real', apiKey: 'server-only-key', fetcher: async () => response.clone(),
+      timeoutMs: 1_000, maxResponseBytes: 100_000,
+    });
+    const result = await adapter.lookup({
+      query: buildMetadataQueryIdentity({
+        strategy: 'isbn', isbnClue: '9780306406157', title: 'Series Fixture',
+        authors: ['Fixture Author'], language: 'en', editionClues: [],
+      }),
+      correlationId: 'series-correlation', attemptId: 'series-attempt',
+      signal: new AbortController().signal,
+    });
+    expect(result.outcome).toBe('coherent_match');
+    expect(result.selected?.providerRecordId).toBe('selected-without-cover');
+    expect(result.representativeCover).toBeNull();
+
+    const selectedSeriesResponse = new Response(JSON.stringify({
+      totalItems: 2,
+      items: [{
+        id: 'selected-series-without-cover',
+        volumeInfo: {
+          title: 'Series Fixture', authors: ['Fixture Author'], language: 'en',
+          industryIdentifiers: [{ type: 'ISBN_13', identifier: '9780306406157' }],
+          seriesInfo: {
+            bookDisplayNumber: 'Vol. 1',
+            volumeSeries: [{ seriesId: 'opaque-google-series-id', orderNumber: 1 }],
+          },
+        },
+      }, {
+        id: 'alternate-with-cover',
+        volumeInfo: {
+          title: 'Series Fixture', authors: ['Fixture Author'], language: 'en',
+          imageLinks: { thumbnail: 'https://books.google.com/books/content?id=series-cover' },
+        },
+      }],
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
+    const selectedSeriesAdapter = new GoogleBooksAdapter({
+      mode: 'real', apiKey: 'server-only-key',
+      fetcher: async () => selectedSeriesResponse.clone(),
+      timeoutMs: 1_000, maxResponseBytes: 100_000,
+    });
+    const selectedSeriesResult = await selectedSeriesAdapter.lookup({
+      query: buildMetadataQueryIdentity({
+        strategy: 'isbn', isbnClue: '9780306406157', title: 'Series Fixture',
+        authors: ['Fixture Author'], language: 'en', editionClues: [],
+      }),
+      correlationId: 'selected-series-correlation', attemptId: 'selected-series-attempt',
+      signal: new AbortController().signal,
+    });
+    expect(selectedSeriesResult.selected?.providerRecordId).toBe('selected-series-without-cover');
+    expect(selectedSeriesResult.representativeCover).toBeNull();
+  });
+
   it('preserves Unicode/original script and maps empty responses to no match', () => {
     const editions = decodeGoogleBooksResponse(
       googleBooksMultipleVolumes,

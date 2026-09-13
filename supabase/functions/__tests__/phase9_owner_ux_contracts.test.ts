@@ -373,6 +373,7 @@ describe('Phase 9 Unit 6A Owner UX response contracts', () => {
     metadata: {
       state: 'manual', revision: 1, selectionVersion: null,
       selectionId: null, canonicalEditionId: null, snapshot: null,
+      representativeCover: null,
     },
     review: { value: null, reviewVersion: null },
     duplicateAdvice: {
@@ -562,6 +563,41 @@ describe('Phase 9 Unit 6A Owner UX response contracts', () => {
 
   it('keeps the owner UX version distinct from the ingestion transport version', () => {
     expect(OWNER_UX_CONTRACT_VERSION).toBe(contractVersion);
+  });
+
+  it('accepts labelled representative-cover provenance only without an exact cover', () => {
+    const representativeCover = {
+      coverReference: 'https://books.google.com/books/content?id=alternate',
+      sourceRelation: 'representative_edition', sourceAdapter: 'google_books',
+      sourceAdapterVersion: '1.0.0', sourceRecordId: 'alternate-volume',
+      selectionPolicyVersion: 'p9-representative-cover-v1',
+    };
+    const selected = {
+      ...candidateDetail,
+      metadata: {
+        ...candidateDetail.metadata, state: 'selected', selectionVersion: 1,
+        selectionId: uuid(4), representativeCover,
+        snapshot: {
+          title: 'The Book', authors: ['One Author'], language: 'en', subtitle: null,
+          description: null, isbn10: null, isbn13: null, publisher: null,
+          publishedDate: null, script: null, editionStatement: null, series: null,
+          volume: null, format: null, pageCount: null, categories: [], coverReference: null,
+        },
+      },
+    };
+    expect(parseOwnerUxResponse('read_scan_candidate', {
+      contractVersion, data: selected,
+    }).data).toEqual(selected);
+    expect(() => parseOwnerUxResponse('read_scan_candidate', {
+      contractVersion,
+      data: {
+        ...selected,
+        metadata: {
+          ...selected.metadata,
+          snapshot: { ...selected.metadata.snapshot, coverReference: representativeCover.coverReference },
+        },
+      },
+    })).toThrow(/invalid/i);
   });
 });
 

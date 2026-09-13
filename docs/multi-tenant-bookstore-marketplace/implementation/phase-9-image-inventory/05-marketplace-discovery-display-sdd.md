@@ -4,6 +4,12 @@
 **Version:** 1.0
 **Date:** 2026-07-19
 
+**2026-09-13 cover-boundary note:** Live M61 and M62 representative-edition
+cover work is Owner-private review/inventory presentation only. It never enters
+the canonical/public `cover_url` or public listing projection, so the existing
+marketplace cover priority and public media allowlist remain unchanged. Matching
+runtime deployment and connected proof remain pending.
+
 **Unit 8 closure checkpoint (repository-only 2026-08-21):** Q10 selects only
 the shared approved-public media predicate, orders by `public_order,id`, and
 returns at most three gallery items. The strict client contract enforces gallery

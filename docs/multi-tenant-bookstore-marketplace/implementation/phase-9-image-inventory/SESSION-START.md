@@ -1,6 +1,32 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
-> **Current Unit 6H correction/deployment checkpoint (2026-09-12):** Supabase
+> **Current 2026-09-13 representative-cover rollout closeout:** M61 was applied once
+> to verified development project `ahntbtktjjmvfosgkmgn` as remote version
+> `20260913111342` after exact-project and SHA-256 reverification. Readback
+> confirms the sidecar/table/column, RLS, service-only delegate, triggers, and
+> zero new-data effects. Owner Edge v12 is ACTIVE, JWT verification enabled,
+> hash `ad75a08f3624f543f904cf2bf6833bcca132dfc1727e5868d52022365aacea14`,
+> with its M61 contract file matching local source. On
+> `codex/phase9-duplicate-confirmation` at `80e7db9`, the local follow-up now
+> decodes Google Books volume evidence, suppresses fallback where unresolved
+> series evidence could select a different series, and adds forward-only M62 for
+> standalone Owner detail/review-save provenance. M62 was applied once as remote
+> version `20260913162154` from the SHA-256-verified local artifact
+> `E8CAAC179363D1E709F071BBF81436B7ED4B24968E0979ADA7A402C8C435066F`.
+> Post-apply readback confirms the postgres-owned helper, authenticated-only
+> Owner entrypoints, and zero sidecar/inventory representative-cover rows.
+> Fresh TypeScript, worker build, affected Jest 310/310,
+> structural 14/14, M55 7/7, M52–M62 integration 2/2, migration contract 4/4,
+> deployment-runtime validation, and continuity validation pass. No `act(...)`,
+> open-handle, or force-exit warning reproduced; only known dependency warning
+> `DEP0040` did. No worker/client deployment or Git publication occurred in this
+> step.
+> [Detailed evidence](./supporting/unit6h-representative-cover-correction.md).
+> Exact next action: with explicit rollout authorization, deploy the matching
+> tolerant Owner Edge, metadata-worker, and client runtime, then run the
+> connected no-cover proof.
+
+> **Historical Unit 6H correction/deployment checkpoint (2026-09-12):** Supabase
 > CLI preflight and source readback against exact project
 > `ahntbtktjjmvfosgkmgn` proved active Owner Edge v10 contained the older batch
 > decoder without optional `metadataSummary.selectionId`. Bounded commit
@@ -53,14 +79,14 @@
 
 
 **Status:** active continuity protocol
-**Last updated:** 2026-09-12
+**Last updated:** 2026-09-13
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
 ## Current Unit 6H overlay
 
-The bounded Unit 6H correction, disposable PostgreSQL verification, exact Owner Edge readback, v11 deployment, and authenticated duplicate-Proceed review handoff are complete on `codex/phase9-duplicate-confirmation` at `C:\Users\user\Desktop\Bookconnect`, based on `8340647`. F-01 was retracted; F-02 and F-03 are corrected. The approved behavior and coordinated deployment procedure are in [Unit 6H](./work-units/06h-duplicate-input-confirmation.md). M52–M59 are immutable; M60 was applied earlier under prior authorization. Do not redeploy or mutate development database/Storage without separate authorization.
+The bounded Unit 6H duplicate-confirmation correction and its development proof are complete on `codex/phase9-duplicate-confirmation` at `C:\Users\user\Desktop\Bookconnect`. M60, M61, and M62 are live once; Owner Edge v12 is active. M62 closes representative-cover standalone detail/save projection without changing duplicate behavior, selected metadata, or public cover projection. Matching worker/client runtime deployment and connected proof remain pending. Do not redeploy or mutate development database/Storage without separate authorization.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 

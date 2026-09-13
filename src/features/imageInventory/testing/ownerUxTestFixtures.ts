@@ -32,6 +32,7 @@ export function candidateDetailFixture(
             selectionId: null,
             canonicalEditionId: null,
             snapshot: null,
+            representativeCover: null,
         },
         review: { value: null, reviewVersion: null },
         duplicateAdvice: {

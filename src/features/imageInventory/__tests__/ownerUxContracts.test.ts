@@ -178,6 +178,7 @@ describe('Phase 9 Unit 6B mobile Owner UX response contracts', () => {
                 selectionId: null,
                 canonicalEditionId: null,
                 snapshot: null,
+                representativeCover: null,
             },
             review: { value: null, reviewVersion: null },
             duplicateAdvice: {
@@ -284,6 +285,32 @@ describe('Phase 9 Unit 6B mobile Owner UX response contracts', () => {
                 observed: { ...candidate.observed, language: 'EN_us' },
             },
         })).toThrow(OwnerUxResponseContractError);
+
+        const representativeCover = {
+            coverReference: 'https://books.google.com/books/content?id=alternate',
+            sourceRelation: 'representative_edition' as const,
+            sourceAdapter: 'google_books', sourceAdapterVersion: '1.0.0',
+            sourceRecordId: 'alternate-volume',
+            selectionPolicyVersion: 'p9-representative-cover-v1' as const,
+        };
+        const representativeCandidate = {
+            ...candidate,
+            metadata: {
+                ...candidate.metadata,
+                state: 'selected' as const, selectionVersion: 1, selectionId: uuid(4),
+                representativeCover,
+                snapshot: {
+                    title: 'The Book', authors: ['One Author'], language: 'en', subtitle: null,
+                    description: null, isbn10: null, isbn13: null, publisher: null,
+                    publishedDate: null, script: null, editionStatement: null, series: null,
+                    volume: null, format: null, pageCount: null, categories: [], coverReference: null,
+                },
+            },
+        };
+        expect(decodeOwnerUxResponse('read_scan_candidate', {
+            contractVersion: OWNER_UX_CONTRACT_VERSION,
+            data: representativeCandidate,
+        })).toEqual(representativeCandidate);
         expect(() => decodeOwnerUxResponse('read_scan_candidate', {
             contractVersion: OWNER_UX_CONTRACT_VERSION,
             data: {

@@ -38,6 +38,7 @@ const structuralSignatures={
   phase9_finalize_structural_metadata_attempt:['p_attempt_id','p_job_id','p_worker','p_lease_token','p_attempt_count','p_candidate_id','p_candidate_version','p_disposition','p_normalized_outcome','p_provider_request_id','p_cache_status','p_latency_ms','p_pricing_policy_version','p_pricing_evidence','p_calculated_cost_units','p_normalized_candidate'],
   phase9_select_structural_metadata_snapshot:['p_lookup_id','p_job_id','p_worker','p_lease_token','p_attempt_count','p_candidate_id','p_candidate_version','p_selected_attempt_id','p_outcome_source_attempt_id','p_snapshot_version','p_selection_policy_version','p_coherent_edition','p_match_evidence','p_manual_outcome','p_canonical_edition_id'],
   phase9_store_metadata_cache:['p_lookup_id','p_worker','p_lease_token','p_attempt_count','p_outcome','p_normalized_snapshot','p_provider_record_id','p_source_fetched_at','p_expires_at'],
+  phase9_store_metadata_representative_cover_v1:['p_attempt_id','p_lookup_id','p_job_id','p_worker','p_lease_token','p_attempt_count','p_candidate_id','p_candidate_version','p_cover_reference','p_source_provider_record_id','p_source_relation','p_selection_policy_version','p_match_evidence'],
   phase9_fail_metadata_job:['p_job_id','p_worker','p_lease_token','p_attempt_count','p_candidate_id','p_candidate_version','p_query_identity','p_failure_kind','p_retryable'],
 };
 const serviceClientFor=(rpcErrors=[])=>({rpc:async(name,p)=>{try{
@@ -90,10 +91,54 @@ const fullEdition=({correlationId,attemptId,title,providerRecordId})=>({
 before(async()=>{
   db=await createPhase9Database({throughMigration:
     '20260810000035_marketplace_phase9_single_image_removal.sql'});
-  await db.exec(fs.readFileSync(migrationPath(
-    '20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql'), 'utf8'));
-  await db.exec(fs.readFileSync(migrationPath(
-    '20260810000038_marketplace_phase9_metadata_retry_correction.sql'), 'utf8'));
+  for(const migration of [
+    '20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql',
+    '20260810000038_marketplace_phase9_metadata_retry_correction.sql',
+    '20260812000039_marketplace_phase9_create_only_inventory_commit.sql',
+  ]) {
+    await db.exec(fs.readFileSync(migrationPath(migration), 'utf8'));
+  }
+  await db.exec(`CREATE TABLE IF NOT EXISTS public.marketplace_event_schema_registry(
+    event_type text NOT NULL,schema_version integer NOT NULL CHECK(schema_version>=1),
+    entity_type text NOT NULL,is_transition boolean NOT NULL,
+    privacy_classification text NOT NULL CHECK(privacy_classification IN('internal','confidential')),
+    PRIMARY KEY(event_type,schema_version));
+    ALTER TABLE public.marketplace_events
+      ADD COLUMN IF NOT EXISTS actor_role text,
+      ADD COLUMN IF NOT EXISTS source text NOT NULL DEFAULT 'system_job',
+      ADD COLUMN IF NOT EXISTS idempotency_key text,
+      ADD COLUMN IF NOT EXISTS command_id uuid,
+      ADD COLUMN IF NOT EXISTS correlation_id uuid,
+      ADD COLUMN IF NOT EXISTS causation_event_id uuid,
+      ADD COLUMN IF NOT EXISTS privacy_classification text NOT NULL DEFAULT 'internal',
+      ADD COLUMN IF NOT EXISTS schema_version integer NOT NULL DEFAULT 1;
+    CREATE FUNCTION public.phase9_complete_media_validation_v2(
+      uuid,text,text,integer,text,text,text,text,text,bigint,integer,integer)
+    RETURNS jsonb LANGUAGE sql SECURITY INVOKER SET search_path='' AS $$
+      SELECT marketplace_sec.phase9_complete_media_validation($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+    $$;
+    CREATE FUNCTION public.phase9_bind_media_validation_snapshot_v2(
+      uuid,text,text,integer,text,text,bigint,text)
+    RETURNS boolean LANGUAGE sql SECURITY INVOKER SET search_path='' AS $$
+      SELECT marketplace_sec.phase9_bind_media_validation_snapshot($1,$2,$3,$4,$5,$6,$7,$8)
+    $$;`);
+  for(const migration of [
+    '20260817000047_marketplace_phase9_legacy_rpc_security_remediation.sql',
+    '20260817000048_marketplace_phase9_legacy_rpc_service_role_compatibility.sql',
+    '20260821000052_marketplace_phase9_unit6g_contract_persistence_foundation.sql',
+    '20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql',
+    '20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql',
+    '20260830000055_marketplace_phase9_unit6g_metadata_add_authority_correction.sql',
+    '20260830000056_marketplace_phase9_metadata_throughput.sql',
+    '20260906000057_marketplace_phase9_media_output_intents.sql',
+    '20260906000058_marketplace_phase9_media_completion_receipts.sql',
+    '20260906000059_marketplace_phase9_media_output_cleanup.sql',
+    '20260911000060_marketplace_phase9_duplicate_confirmation.sql',
+    '20260913000061_marketplace_phase9_representative_edition_cover.sql',
+    '20260913000062_marketplace_phase9_representative_cover_detail_projection.sql',
+  ]) {
+    await db.exec(fs.readFileSync(migrationPath(migration), 'utf8'));
+  }
   await db.exec(`INSERT INTO public.stores(id,display_name) VALUES('${STORE}','Structural Store');
     INSERT INTO public.store_administrators(store_id,user_id,role,status)
     VALUES('${STORE}','${OWNER}','owner','active');
@@ -179,6 +224,7 @@ test('vision persistence auto-enqueues and runnable worker completes SAME-candid
     phase9_select_metadata_snapshot:['p_lookup_id','p_job_id','p_worker','p_lease_token','p_attempt_count','p_selected_attempt_id','p_outcome_source_attempt_id','p_snapshot_version','p_selection_policy_version','p_coherent_edition','p_match_evidence','p_manual_outcome','p_canonical_edition_id'],
     phase9_select_structural_metadata_snapshot:['p_lookup_id','p_job_id','p_worker','p_lease_token','p_attempt_count','p_candidate_id','p_candidate_version','p_selected_attempt_id','p_outcome_source_attempt_id','p_snapshot_version','p_selection_policy_version','p_coherent_edition','p_match_evidence','p_manual_outcome','p_canonical_edition_id'],
     phase9_store_metadata_cache:['p_lookup_id','p_worker','p_lease_token','p_attempt_count','p_outcome','p_normalized_snapshot','p_provider_record_id','p_source_fetched_at','p_expires_at'],
+    phase9_store_metadata_representative_cover_v1:['p_attempt_id','p_lookup_id','p_job_id','p_worker','p_lease_token','p_attempt_count','p_candidate_id','p_candidate_version','p_cover_reference','p_source_provider_record_id','p_source_relation','p_selection_policy_version','p_match_evidence'],
     phase9_fail_metadata_job:['p_job_id','p_worker','p_lease_token','p_attempt_count','p_candidate_id','p_candidate_version','p_query_identity','p_failure_kind','p_retryable'],
   };
   const rpcErrors=[]; let cacheFailures=0;
@@ -198,7 +244,9 @@ test('vision persistence auto-enqueues and runnable worker completes SAME-candid
     throw new Error(`unexpected RPC ${name}`);
   }catch(error){rpcErrors.push({name,message:String(error)});return {data:null,error};}}};
   let providerCalls=0;
-  const primary={lookup:async({correlationId,attemptId})=>{
+  const primary={normalizedEditionHostPolicy:{adapterKey:'recorded_metadata',
+    policyVersion:'recorded-hosts-v1',approvedCoverHosts:['books.google.com']},
+    lookup:async({correlationId,attemptId})=>{
     providerCalls+=1;
     const selected={contractVersion:'p9-contract-v1',schemaVersion:'p9-metadata-v1',
       adapterKey:'recorded_metadata',adapterVersion:'1.0.0',normalizerVersion:'p9-bibliographic-normalizer-v1',
@@ -207,7 +255,13 @@ test('vision persistence auto-enqueues and runnable worker completes SAME-candid
       isbn10:null,isbn13:null,publisher:null,publishedDate:null,language:'en',script:null,
       editionStatement:null,series:null,volume:null,format:null,pageCount:null,categories:[],
       coverReference:null,matchRationale:'exact_original_title_author_language',confidence:1};
-    return {outcome:'coherent_match',candidates:[selected],selected,
+    const alternate={...selected,providerRecordId:'fixture-volume-cover',
+      isbn10:null,isbn13:null,coverReference:'https://books.google.com/books/content?id=structural-cover'};
+    const representativeCover={coverReference:alternate.coverReference,
+      sourceRelation:'representative_edition',sourceProviderRecordId:alternate.providerRecordId,
+      selectionPolicyVersion:'p9-representative-cover-v1',
+      matchEvidence:['exact_title','exact_author_set','language_compatible']};
+    return {outcome:'coherent_match',candidates:[selected,alternate],selected,representativeCover,
       evidence:['exact_original_title_author_language'],retryable:false,
       secondaryEligible:false,providerRequestId:'fixture-request-1'};
   }};
@@ -226,42 +280,52 @@ test('vision persistence auto-enqueues and runnable worker completes SAME-candid
     WHERE id='${candidateId}'`),'ready');
   assert.equal(await scalar(db,`SELECT count(*)::int FROM public.phase9_selected_metadata_snapshots
     WHERE candidate_id='${candidateId}' AND manual_outcome='accepted_metadata_match'`),1);
+  await resetActor(db);
+  assert.equal(await scalar(db,`SELECT count(*)::int
+    FROM marketplace_sec.phase9_metadata_representative_covers
+    WHERE source_candidate_id='${candidateId}'`),1);
   await setActor(db,OWNER,'authenticated');
   const owner=await scalar(db,`SELECT public.phase9_owner_candidate_detail_v2(
     '${SESSION}','${candidateId}')`);
   assert.equal(owner.candidateId,candidateId);
   assert.equal(owner.metadata.state,'selected');
+  assert.equal(owner.metadata.representativeCover.coverReference,
+    'https://books.google.com/books/content?id=structural-cover');
   await resetActor(db);
   assert.equal(await scalar(db,'SELECT count(*)::int FROM public.store_inventory'),0);
   assert.equal(await scalar(db,'SELECT count(*)::int FROM public.marketplace_book_listings'),0);
 });
 
 test('database and runtime metadata identities are byte-equivalent across normalization vectors',async()=>{
-  await setActor(db,OWNER,'service_role');
   const candidate='b1000000-0000-4000-8000-000000000001';
-  await db.exec(`INSERT INTO public.image_extraction_candidates
-    (id,session_id,input_id,store_id,candidate_index,observed_title,observed_authors,
-      observed_isbn_clue,observed_language,observed_publisher_clue,state)
-    VALUES('${candidate}','${SESSION}','${INPUT}','${STORE}',15,'placeholder',ARRAY['author'],
-      NULL,'en',NULL,'needs_review')`);
-  await resetActor(db);
-  const vectors=[
-    {isbnClue:'0-306-40615-2',title:'  Cafe\u0301   Book ',authors:[' Author  One ','AUTHOR TWO'],language:'EN-us',editionClues:[' Publisher  One ']},
-    {isbnClue:'9780306406157',title:'Caf\u00e9 Book',authors:['author one','author two'],language:'en-US',editionClues:['publisher one']},
-    {isbnClue:'9780306406158',title:'Title',authors:['Author'],language:'hi-deva-IN',editionClues:[]},
-  ];
-  for(const vector of vectors){
-    await db.query(`UPDATE public.image_extraction_candidates SET observed_title=$1,
-      observed_authors=$2,observed_isbn_clue=$3,observed_language=$4,
-      observed_publisher_clue=$5 WHERE id='${candidate}'`,[
-      vector.title,vector.authors,vector.isbnClue,vector.language,vector.editionClues[0]??null,
-    ]);
-    const sql=await scalar(db,`SELECT marketplace_sec.phase9_metadata_candidate_query_identity(c)
-      FROM public.image_extraction_candidates c WHERE c.id='${candidate}'`);
-    const strategy=vector.isbnClue==='9780306406158'?'bibliographic':'isbn';
-    assert.equal(sql,buildMetadataQueryIdentity({...vector,strategy}).key);
+  try {
+    await setActor(db,OWNER,'service_role');
+    await db.exec(`INSERT INTO public.image_extraction_candidates
+      (id,session_id,input_id,store_id,candidate_index,observed_title,observed_authors,
+        observed_isbn_clue,observed_language,observed_publisher_clue,state)
+      VALUES('${candidate}','${SESSION}','${INPUT}','${STORE}',15,'placeholder',ARRAY['author'],
+        NULL,'en',NULL,'needs_review')`);
+    await resetActor(db);
+    const vectors=[
+      {isbnClue:'0-306-40615-2',title:'  Cafe\u0301   Book ',authors:[' Author  One ','AUTHOR TWO'],language:'EN-us',editionClues:[' Publisher  One ']},
+      {isbnClue:'9780306406157',title:'Caf\u00e9 Book',authors:['author one','author two'],language:'en-US',editionClues:['publisher one']},
+      {isbnClue:'9780306406158',title:'Title',authors:['Author'],language:'hi-deva-IN',editionClues:[]},
+    ];
+    for(const vector of vectors){
+      await db.query(`UPDATE public.image_extraction_candidates SET observed_title=$1,
+        observed_authors=$2,observed_isbn_clue=$3,observed_language=$4,
+        observed_publisher_clue=$5 WHERE id='${candidate}'`,[
+        vector.title,vector.authors,vector.isbnClue,vector.language,vector.editionClues[0]??null,
+      ]);
+      const sql=await scalar(db,`SELECT marketplace_sec.phase9_metadata_candidate_query_identity(c)
+        FROM public.image_extraction_candidates c WHERE c.id='${candidate}'`);
+      const strategy=vector.isbnClue==='9780306406158'?'bibliographic':'isbn';
+      assert.equal(sql,buildMetadataQueryIdentity({...vector,strategy}).key);
+    }
+  } finally {
+    await resetActor(db);
+    await db.exec(`DELETE FROM public.image_extraction_candidates WHERE id='${candidate}'`);
   }
-  await db.exec(`DELETE FROM public.image_extraction_candidates WHERE id='${candidate}'`);
   await resetActor(db);
 });
 
@@ -491,7 +555,7 @@ test('concurrent identical cache misses atomically reserve one in-flight leader'
   const leaderRun=runMetadataWorkerBatch(1,dependencies);
   await providerStarted;
   const pending=await runMetadataWorkerBatch(1,dependencies);
-  assert.deepEqual(pending,{claimed:1,results:[{outcome:'manual_metadata_required'}]});
+  assert.deepEqual(pending,{claimed:1,results:[{outcome:'retry_scheduled'}]});
   releaseProvider();
   assert.deepEqual(await leaderRun,{claimed:1,results:[{outcome:'accepted_metadata_match'}]});
   await resetActor(db);
@@ -874,7 +938,7 @@ test('later claim retries provider after finalized transient result and complete
     }});
   const first=await runMetadataWorkerBatch(1,{workerId:METADATA_WORKER,
     workerAuthToken:'unused',serviceClient,primary,primaryCapability:GOOGLE_BOOKS_CAPABILITY});
-  assert.deepEqual(first,{claimed:1,results:[{outcome:'manual_metadata_required'}]});
+  assert.deepEqual(first,{claimed:1,results:[{outcome:'retry_scheduled'}]});
   await resetActor(db);
   assert.equal(await scalar(db,`SELECT status FROM public.phase9_metadata_provider_calls
     WHERE candidate_id='${candidate}'`),'finalized');

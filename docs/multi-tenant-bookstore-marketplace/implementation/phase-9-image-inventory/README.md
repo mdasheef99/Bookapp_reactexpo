@@ -1,21 +1,42 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
+> **Current 2026-09-13 handoff:** M61 and M62 are live once in the verified
+> development project and Owner Edge v12 is active. The bounded follow-up on
+> `codex/phase9-duplicate-confirmation` at `80e7db9` decodes Google Books volume
+> evidence, suppresses representative fallback for unresolved series evidence,
+> and adds M62 so standalone detail/save carry the same private provenance as
+> batch review. M62 was applied once as remote version `20260913162154`; its
+> private helper/ACL and zero-row readback passed. M52–M61 are unchanged.
+> Fresh TypeScript/build, affected Jest 310/310, structural 14/14, M55 7/7,
+> and M52–M62 integration 2/2 pass. No worker/client deployment or Git
+> publication occurred in this step; connected no-cover verification remains
+> unrun. [Evidence](./supporting/unit6h-representative-cover-correction.md).
+> Next action: separately authorize matching Owner Edge/metadata-worker/client
+> deployment, then run connected no-cover review/Add verification.
+
 > **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
 
 
-**Status:** `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated`
+> **Status correction (2026-09-13):** The preceding 2026-09-12 paragraph is
+> historical. M60 was subsequently applied during the authorized development
+> rollout; the current bounded M61 representative-cover follow-up is local-only.
+
+**Status:** `unit6h_representative_cover_m62_applied_runtime_rollout_pending`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
-**Last updated:** 2026-09-12
+**Last updated:** 2026-09-13
 **Current handoff:** Unit 6H duplicate confirmation is locally implemented and
-corrected on `codex/phase9-duplicate-confirmation` from baseline `8340647`.
+corrected on `codex/phase9-duplicate-confirmation`; the current local follow-up
+is at `80e7db9`.
 F-01 is retracted after verification of M58's nested conflict handling; F-02 and
 F-03 are corrected locally and their focused checks pass. The disposable local
 PostgreSQL 18.4 run applied M01–M60 and passed the independent-connection Unit 6H
 concurrency and existing U8B regression markers, then fully tore down. M60 is
-locally created and **not remotely applied**; M52–M59 remain live and unchanged.
-No deployment, remote database/Storage mutation, live dispatch, application-data
-mutation, or development-data deletion occurred. Connected Edge/Storage proof
-remains the outstanding rollout gate.
+already applied to development under prior authorization; M61 and M62 are live
+once, with M62 read back as remote version `20260913162154`. M52–M61 remain
+unchanged for this follow-up. No worker/client deployment, live dispatch,
+application-data mutation, Storage mutation, or development-data deletion
+occurred in the current follow-up. Connected M62 detail/save plus worker/UI
+proof remains the outstanding rollout gate.
 
 The preceding Unit 6G media-completion correction remains historical live
 evidence: M57–M59 are applied once on the development project and its matching

@@ -30,6 +30,16 @@ the documented image-size family from largest to smallest and skips an unsafe
 or malformed larger URL without suppressing a later allowlisted Google Books
 URL. No migration, provider call, or deployment is part of this local change.
 
+**Representative-edition cover correction (M61/M62 live; runtime rollout gated,
+2026-09-13):** The provider adapter may select one cover from the same already-returned
+candidate set when the selected coherent edition has no cover, requiring exact
+normalized title/full author-set/base-language compatibility and no conflicting
+subtitle/series/volume. The fallback carries separate source/policy provenance,
+is Owner-private, and never changes the selected edition or public cover. Google
+Books volume/order evidence is decoded; opaque series membership is not treated
+as a series name and instead suppresses fallback. M62 only aligns standalone
+Owner detail/save projection with M61 batch projection.
+
 **Bounded metadata-throughput correction (local 2026-08-30, rollout
 gated):** one metadata worker invocation may accept a run budget of at most 15
 jobs while generic worker contracts remain capped at 10. The worker holds at

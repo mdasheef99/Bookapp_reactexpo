@@ -2,6 +2,10 @@ import { MetadataEdition, parseNormalizedMetadataEdition } from '../contracts/me
 import { ProviderHostPolicy } from '../contracts/providerReuse';
 import { asRecord, assertKnownKeys } from '../domain/validation';
 import { MetadataQueryIdentity } from './queryIdentity';
+import {
+  MetadataRepresentativeCover,
+  selectRepresentativeEditionCover,
+} from './representativeCover';
 
 export type MetadataNormalizedOutcome =
   | 'coherent_match'
@@ -59,6 +63,7 @@ export type MetadataProviderOutcome = Readonly<{
   retryable: boolean;
   secondaryEligible: boolean;
   providerRequestId: string | null;
+  representativeCover: MetadataRepresentativeCover | null;
 }>;
 
 const normalizedOutcomes = new Set<MetadataNormalizedOutcome>([
@@ -85,6 +90,7 @@ const candidateOutcomes = new Set<MetadataNormalizedOutcome>([
 
 const PROVIDER_OUTCOME_KEYS = [
   'outcome','candidates','selected','evidence','retryable','secondaryEligible','providerRequestId',
+  'representativeCover',
 ] as const;
 
 const EVIDENCE_TOKEN = /^[a-z][a-z0-9_]{0,63}$/u;
@@ -143,6 +149,15 @@ export function failClosedMetadataProviderOutcome(
     } else if (row.selected !== null) {
       return invalidProviderOutcome();
     }
+    let representativeCover: MetadataRepresentativeCover | null = null;
+    if (row.representativeCover !== null && row.representativeCover !== undefined) {
+      if (selected === null) return invalidProviderOutcome();
+      const expected = selectRepresentativeEditionCover(selected, candidates);
+      if (expected === null || JSON.stringify(row.representativeCover) !== JSON.stringify(expected)) {
+        return invalidProviderOutcome();
+      }
+      representativeCover = expected;
+    }
     return Object.freeze({
       outcome,
       candidates: Object.freeze(candidates),
@@ -151,6 +166,7 @@ export function failClosedMetadataProviderOutcome(
       retryable: row.retryable,
       secondaryEligible: row.secondaryEligible,
       providerRequestId: row.providerRequestId,
+      representativeCover,
     });
   } catch {
     return invalidProviderOutcome();
@@ -162,6 +178,7 @@ function invalidProviderOutcome(): MetadataProviderOutcome {
     outcome: 'schema_invalid', candidates: Object.freeze([]), selected: null,
     evidence: Object.freeze([]), retryable: false,
     secondaryEligible: true, providerRequestId: null,
+    representativeCover: null,
   });
 }
 

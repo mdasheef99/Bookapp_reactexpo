@@ -32,6 +32,14 @@ const cover = z.string().min(1).max(512).superRefine((value, context) => {
     context.addIssue({ code: z.ZodIssueCode.custom, message: 'cover host is not approved' });
   }
 });
+const representativeCover = z.object({
+  coverReference: cover,
+  sourceRelation: z.literal('representative_edition'),
+  sourceAdapter: z.string().regex(/^[a-z][a-z0-9_-]{1,63}$/u),
+  sourceAdapterVersion: z.string().min(1).max(64),
+  sourceRecordId: z.string().min(1).max(256),
+  selectionPolicyVersion: z.literal('p9-representative-cover-v1'),
+}).strict();
 const observed = z.object({
   title: ownerUxSafeTextSchema(1, 512),
   authors: uniqueBoundedArray(ownerUxSafeTextSchema(1, 256), 20),
@@ -45,7 +53,12 @@ const metadataSummary = z.object({
   language: ownerUxLanguageSchema.nullable(),
   coverReference: cover.nullable(),
   selectionId: ownerBatchUuid.nullable().optional(),
-}).strict();
+  representativeCover: representativeCover.nullable().optional(),
+}).strict().superRefine((value, context) => {
+  if (value.coverReference && value.representativeCover) context.addIssue({
+    code: z.ZodIssueCode.custom, message: 'exact and representative covers cannot coexist',
+  });
+});
 const blockerField = z.enum([
   'originalTitle', 'authors', 'originalLanguage', 'metadataChoice', 'quantity',
   'priceMinor', 'baseCondition', 'damageDisclosure', 'shelfLocation',
@@ -61,7 +74,7 @@ const blocker = z.object({
   }
 });
 const sources = z.object({
-  cover: z.enum(['detected', 'matched', 'missing']),
+  cover: z.enum(['detected', 'matched', 'representative', 'missing']),
   title: z.enum(['detected', 'matched', 'custom', 'missing']),
   authors: z.enum(['detected', 'matched', 'custom', 'missing']),
   language: z.enum(['detected', 'matched', 'default', 'custom', 'missing']),
@@ -154,9 +167,13 @@ function validateFieldAuthority(
         : language === 'default' ? Boolean(rootDefaults.languageHint
           && (!review || review.originalLanguage === rootDefaults.languageHint))
           : false);
+  const representative = selected?.representativeCover ?? null;
   issue('cover', value.fieldSources.cover === 'matched'
-    ? Boolean(selected?.coverReference)
-    : value.fieldSources.cover === 'missing' ? !selected?.coverReference : false);
+    ? Boolean(selected?.coverReference && !representative)
+    : value.fieldSources.cover === 'representative'
+      ? Boolean(!selected?.coverReference && representative)
+      : value.fieldSources.cover === 'missing'
+        ? !selected?.coverReference && !representative : false);
   issue('condition', value.fieldSources.condition === 'custom'
     ? Boolean(review && review.baseCondition !== rootDefaults.condition)
     : value.fieldSources.condition === 'default'

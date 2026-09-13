@@ -4,6 +4,7 @@ import {
   failClosedMetadataProviderOutcome, MetadataNormalizedOutcome, MetadataProviderOutcome,
   MetadataProviderValidationContext,
 } from '../metadata/providerAdapter';
+import type { MetadataRepresentativeCover } from '../metadata/representativeCover';
 
 export type MetadataProviderPolicy = Readonly<{
   enabled: boolean;
@@ -121,6 +122,11 @@ export type MetadataProductionGateway = Readonly<{
     selected: MetadataEdition;
     evidence: readonly string[];
   }>): Promise<void>;
+  persistRepresentativeCover(input: Readonly<{
+    lookupId: string;
+    attemptId: string;
+    representativeCover: MetadataRepresentativeCover;
+  }>): Promise<void>;
   completeManual(input: Readonly<{
     lookupId?: string;
     attemptId?: string;
@@ -150,6 +156,15 @@ async function persistCacheAfterTerminal(
     await gateway.persistCache(input);
   } catch {
     // Cache is derived reuse state and cannot reverse durable terminalization.
+  }
+}
+
+async function persistRepresentativeCoverAfterTerminal(
+  gateway: MetadataProductionGateway,
+  input: Parameters<MetadataProductionGateway['persistRepresentativeCover']>[0],
+): Promise<void> {
+  try { await gateway.persistRepresentativeCover(input); } catch {
+    // Optional owner-private presentation data cannot reverse accepted metadata.
   }
 }
 
@@ -318,6 +333,11 @@ export async function runMetadataProductionComposition(
         retryable: false,
       });
       return resultForManualCompletion(completion);
+    }
+    if (provider.representativeCover !== null) {
+      await persistRepresentativeCoverAfterTerminal(gateway, {
+        lookupId, attemptId, representativeCover: provider.representativeCover,
+      });
     }
     await gateway.persistSelection({
       lookupId,

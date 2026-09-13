@@ -25,3 +25,4 @@ export * from './adapter';
 export * from './decoder';
 export * from './ranking';
 export * from './request';
+export * from '../representativeCover';

@@ -1,6 +1,76 @@
 # Phase 9 Implementation and Verification Tracker
 
-> **2026-09-12 Unit 6H bounded correction evidence:** Exact development-project
+> **2026-09-13 M61 partial rollout evidence:** Exact-project readback verified
+> `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` healthy and M60 present;
+> hash-verified M61 was applied once as remote version `20260913111342`.
+> Readback confirms the sidecar, JSONB inventory field, RLS, service-only
+> delegate, triggers, and zero new-data effects. Owner Edge v12 is ACTIVE with
+> JWT verification and hash
+> `ad75a08f3624f543f904cf2bf6833bcca132dfc1727e5868d52022365aacea14`;
+> the deployed M61 response-contract source matches local. Fresh TypeScript,
+> metadata-worker build, deployment-runtime validation, and M61 contract Jest
+> 3/3 pass. Metadata worker/client deployment and connected scan/Add remain
+> unrun because Render is Git-backed at commit `5731822` while the matching
+> runtime is uncommitted. No provider, Storage, inventory, listing, or other
+> business-row mutation occurred.
+
+> **2026-09-13 representative-cover rollout closeout:** The bounded follow-up
+> decodes Google Books volume evidence, suppresses fallback for either record
+> carrying unresolved series evidence, and adds forward-only M62 so standalone
+> Owner detail and review-save project M61 provenance. After exact-project and
+> SHA-256 preflight, M62 was applied once to `Bookconnect_reactexpo` /
+> `ahntbtktjjmvfosgkmgn` as remote version `20260913162154`.
+> Post-apply readback confirms the postgres-owned private helper, authenticated
+> Owner detail/save entrypoints, denied API-role access to the helper, and zero
+> sidecar/inventory representative-cover rows. Fresh verification: TypeScript
+> PASS, worker build PASS, affected Jest 8 suites/310 tests, structural
+> M47/M48+M52–M62 14/14, M55 7/7, M52–M62 representative-cover integration
+> 2/2, migration contract 4/4, deployment-runtime validation, and continuity
+> validation. No `act(...)`, open-handle, or force-exit warning reproduced; only
+> known dependency warning `DEP0040` did. No worker/client deployment or Git
+> publication occurred; connected no-cover review/Add proof remains unrun.
+>
+> **Historical 2026-09-13 pre-rollout representative-cover evidence:** A red-first bounded
+> local implementation now keeps the selected coherent metadata edition intact
+> and adds a separately labelled compatible-edition cover only when that edition
+> has no exact cover. M61 (SHA-256
+> `A2A8F9191E29C9813DEBC4E35EA8170F00538288079FFA2E7014621A4D90D463`)
+> creates private immutable persistence, a service-only public delegate, Owner
+> projection, and a separate private inventory field populated only by explicit
+> Add. Public/canonical `cover_url`, M52–M60, and duplicate behavior are
+> unchanged. Fresh checks: TypeScript PASS; metadata-worker build PASS; focused
+> Jest 132/132; `--detectOpenHandles` groups 72/72 and 55/55; M61 PGlite 2/2;
+> existing Unit 6G/7A database cases 45/45. The four investigated structural-
+> metadata test defects are now corrected test-only; fresh structural, M55, and
+> M61 controls pass 14/14, 7/7, and 2/2. No `act(...)`, open-handle, or force-exit warning reproduced; the
+> sole `DEP0040` warning traces to Expo/`whatwg-url-without-unicode`. At that
+> checkpoint M61 was not remotely applied; it was applied later as recorded
+> above. The Phase 9 continuity/documentation validator passed after registering
+> M61 as an unapplied draft, and no external or Git publication
+> action occurred.
+> [Full evidence](../supporting/unit6h-representative-cover-correction.md).
+
+### Historical 2026-09-13 — structural metadata test-debt correction
+
+- Authorized scope: correct only the four reproduced structural-test defects;
+  production code and migration SQL were out of scope and unchanged.
+- Red baseline: `phase9StructuralMetadataWorker.integration.test.mjs` reproduced
+  10/14 with one pre-M55 identity fixture mismatch, two stale
+  `manual_metadata_required` expectations whose actual current outcome was
+  `retry_scheduled`, and one duplicate-key cascade after the identity assertion
+  bypassed cleanup.
+- Correction: the fixture now follows the existing tested M39 and M52–M55
+  prerequisite chain, the identity row is removed in `finally`, and the two
+  retry assertions match the existing retry contract.
+- Fresh verification: structural metadata integration 14/14 PASS; M55 lifecycle/
+  identity control 7/7 PASS; M61 representative-cover integration 2/2 PASS. No
+  test emitted an `act(...)`, open-handle, force-exit, or Node warning.
+- External/Git state at that checkpoint: no Supabase/database/Storage, Render, dispatch, application-
+  data, or development-data mutation; no migration application or Git stage,
+  commit, push, merge, or deployment. M61 was local/unapplied at that checkpoint
+  and was applied later as recorded above.
+
+> **Historical 2026-09-12 Unit 6H bounded correction evidence:** Exact development-project
 > readback found active Owner Edge v10 and proved its downloaded decoder omitted
 > optional `metadataSummary.selectionId`. Red-first error-mapping coverage failed
 > as HTTP 400 `P9_REQUEST_INVALID`; commit `6d05370` makes batch response-contract
@@ -44,9 +114,35 @@
 
 > **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
 
-**Status:** `unit6h_duplicate_confirmation_edge_reconciled_connected_regressions_pending`; **last updated:** 2026-09-12
+**Status:** `unit6h_representative_cover_m62_applied_runtime_rollout_pending`; **last updated:** 2026-09-13
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit6h_duplicate_input_confirmation`. Unit 6H is locally implemented and corrected on baseline `8340647`; M60 was applied before this diagnostic under prior authorization. F-01 is retracted and F-02/F-03 are corrected locally. M52–M59 remain live once and unchanged with their historical connected evidence preserved.
+**Active work unit:** `unit6h_representative_cover_m62_rollout_follow_up`. Unit 6H duplicate confirmation retains its historical development proof. M61 and M62 are live once and Owner Edge v12 is active; matching metadata-worker/client deployment plus connected proof remain pending.
+
+### 2026-09-13 — Representative-edition cover correction
+
+- Implemented deterministic same-response fallback selection requiring exact
+  normalized title, full author-set match, compatible base language, and no
+  subtitle/series/volume conflict. No second provider call or metadata-field
+  stitching is permitted.
+- Added M61 private sidecar/service delegate, strict Owner response contracts,
+  labelled card/detail rendering, and database-owned copy into the separate
+  private inventory field at explicit Add. Public listing cover remains
+  unchanged.
+- Bounded review correction decodes Google Books volume/order evidence, blocks
+  representative fallback for unresolved series evidence, and adds M62 to
+  project the same provenance through standalone detail/save and replays.
+  M62 changes no table/data/public projection and its private helper is denied
+  to every API role.
+- Verification and the four unrelated structural-suite failures are recorded in
+  the linked evidence document. Representative persistence is best-effort after
+  accepted metadata terminalization; a narrow crash/RPC-failure window may leave
+  the placeholder, but cannot corrupt selected metadata or public projection.
+- M61 is live once from the earlier authorized rollout. M62 was applied once as
+  remote version `20260913162154`, with post-apply function/ACL and zero-row
+  readback. No Render, worker/client, dispatch, application-data, Storage,
+  stage, commit, push, merge, or deploy action occurred in this correction.
+- Next gate: separately authorized matching Owner Edge/metadata-worker/client
+  deployment and connected no-cover review/Add proof.
 
 ### 2026-09-12 — Unit 6H bounded correction and documentation closeout
 
@@ -3236,7 +3332,9 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 | `20260906000057_marketplace_phase9_media_output_intents.sql` | **live `20260908073203`** | Verified current origin-main M52–M56 baseline; RED-first correction implementation | Adds private per-attempt snapshot/sanitized output intents, immutable server-derived context, reference fences, cleanup state, indexes, RLS, and service-only preparation RPCs | Focused Jest/PGlite plus disposable M01–M59 PostgreSQL replay/race harness PASS; live table/index/function/trigger/RLS/ACL readback PASS |
 | `20260906000058_marketplace_phase9_media_completion_receipts.sql` | **live `20260908073308`** | Live M57 predecessor; exact replay, claim/payload mismatch, and duplicate-hash tests | Adds private canonical completion receipts and replaces scan/public-copy completion paths to require prepared intent, preserve exact replay, and atomically reject only the named per-store sanitized-hash conflict | Focused SQL 21/21 and distinct-connection duplicate completion PASS; live receipt/function/grant readback PASS |
 | `20260906000059_marketplace_phase9_media_output_cleanup.sql` | **live `20260908073425`** | Live M57–M58 predecessors; cleanup/completion and hold/reference race tests | Adds service-only cleanup claim/finish/health RPCs, permanent delete reservation, reference/hold rechecks, bounded retry/recheck/manual reconciliation, and dispatcher wake integration | Focused cleanup/recovery Jest/PGlite and both real-PostgreSQL race orders PASS; live function/dispatcher/health readback PASS; runtime scheduling remains gated |
-| `20260911000060_marketplace_phase9_duplicate_confirmation.sql` | **applied once to development under the preceding authorized rollout; exact live version/checksum readback remains a follow-up** | Bounded correction and disposable PostgreSQL verification on `codex/phase9-duplicate-confirmation`, followed by authorized development rollout to `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`; M52–M59 source remained unchanged | Adds the duplicate confirmation state/table, canonical-only partial uniqueness, trigger relationship checks, private resolvers plus service-role-only public delegates, exact private-object proof, and pending-confirmation cleanup/dispatch fences | Local Jest 181/181, PGlite 5/5, TypeScript PASS; PostgreSQL 18.4 independent-connection concurrency and U8B regression PASS. Live duplicate Proceed created exactly one new vision job and two candidates with no inventory write; Owner Edge v11 now renders both batch-review cards. No M60 action occurred during the later correction. |
+| `20260911000060_marketplace_phase9_duplicate_confirmation.sql` | **applied live as `20260912072815`** on `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`; exact artifact checksum remains unavailable from connected readback | Bounded correction and disposable PostgreSQL verification on `codex/phase9-duplicate-confirmation`, followed by authorized development rollout to `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`; M52–M59 source remained unchanged | Adds the duplicate confirmation state/table, canonical-only partial uniqueness, trigger relationship checks, private resolvers plus service-role-only public delegates, exact private-object proof, and pending-confirmation cleanup/dispatch fences | Local Jest 181/181, PGlite 5/5, TypeScript PASS; PostgreSQL 18.4 independent-connection concurrency and U8B regression PASS. Live duplicate Proceed created exactly one new vision job and two candidates with no inventory write; Owner Edge v11 rendered both batch-review cards. M60 was applied before the later correction. |
+| `20260913000061_marketplace_phase9_representative_edition_cover.sql` | **applied live as `20260913111342`** on `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` | Exact-project and artifact-hash preflight PASS; applied once after M60 | Adds the private representative-cover sidecar, checked private inventory field, service-only write delegate, RLS, immutable/copy triggers, and Owner batch projection; exact/public cover and duplicate handling remain unchanged | M61 contract/integration and readback PASS; zero sidecar/inventory rows; Owner Edge v12 active and source-matched; worker/client deployment and connected no-cover proof remain pending |
+| `20260913000062_marketplace_phase9_representative_cover_detail_projection.sql` | **applied live as `20260913162154`** on `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` | Exact-project and artifact-hash preflight PASS; applied once after M61 | Adds only the postgres-owned private projection helper and replaces authenticated Owner standalone detail/review-save functions so M61 provenance is available consistently; no table/column/data/Storage/public projection change | Migration contract 4/4; post-apply helper/ACL readback PASS; authenticated Owner entrypoints present, API roles denied helper access, and sidecar/inventory counts zero; matching runtime deployment and connected proof remain pending |
 
 ### Unit 6G-B M52 application and connected proof - 2026-08-22
 

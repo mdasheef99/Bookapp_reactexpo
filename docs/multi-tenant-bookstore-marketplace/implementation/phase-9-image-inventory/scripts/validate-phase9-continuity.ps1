@@ -745,7 +745,9 @@ $draftMigrationNames = @(
     '20260906000057_marketplace_phase9_media_output_intents.sql',
     '20260906000058_marketplace_phase9_media_completion_receipts.sql',
     '20260906000059_marketplace_phase9_media_output_cleanup.sql',
-    '20260911000060_marketplace_phase9_duplicate_confirmation.sql'
+    '20260911000060_marketplace_phase9_duplicate_confirmation.sql',
+    '20260913000061_marketplace_phase9_representative_edition_cover.sql',
+    '20260913000062_marketplace_phase9_representative_cover_detail_projection.sql'
 )
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
@@ -788,7 +790,8 @@ $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_in
     $tracker.Contains('**Implementation status:** `unit6g_media_completion_correction_integrated_review_pending`') -or
     $tracker.Contains('**Implementation status:** `unit6g_media_completion_correction_locally_verified_commit_authorization_pending`') -or
     $tracker.Contains('**Implementation status:** `unit6g_media_completion_correction_m57_m59_live_verified_runtime_deployment_pending`') -or
-    $tracker.Contains('**Implementation status:** `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated`'))
+    $tracker.Contains('**Implementation status:** `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated`') -or
+    $tracker.Contains('**Implementation status:** `unit6h_representative_cover_m62_locally_verified_rollout_pending`'))
 $expectedMigrationNames = @($migrationNames)
 if ($wu1AppliedStatus) { $expectedMigrationNames += $draftMigrationNames }
 $appliedPhase9Migrations = if ($wu1AppliedStatus) {

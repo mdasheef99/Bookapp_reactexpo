@@ -1,5 +1,32 @@
 # Active Marketplace Phase Router
 
+> **2026-09-13 representative-cover rollout closeout:** After exact-project
+> reverification, M61 SHA-256
+> `A2A8F9191E29C9813DEBC4E35EA8170F00538288079FFA2E7014621A4D90D463`
+> was applied once to development project `Bookconnect_reactexpo`
+> (`ahntbtktjjmvfosgkmgn`) as remote version `20260913111342`. Readback proves
+> the private sidecar, JSONB inventory field, RLS, service-only delegate, and
+> immutability/copy triggers; `anon`/`authenticated` cannot execute the write
+> delegate, and both new-data counts remain zero. Owner Edge v12 is ACTIVE with
+> JWT verification, hash
+> `ad75a08f3624f543f904cf2bf6833bcca132dfc1727e5868d52022365aacea14`,
+> and exact local M61 contract-source readback. The bounded local follow-up now
+> decodes Google Books volume evidence, fails closed on unresolved series
+> evidence, and adds M62 to project representative-cover provenance through
+> standalone Owner detail and review-save responses. M62 was then applied once
+> as remote version `20260913162154`. Readback confirms the postgres-owned
+> private helper, authenticated-only detail/save entrypoints, M62 delegation,
+> and zero sidecar/inventory representative rows. The new response member is
+> rollout-tolerant while present values remain strict. Fresh verification passes
+> TypeScript, worker build, affected Jest 310/310, structural 14/14, M55 7/7,
+> M52–M62 integration 2/2, migration contract 4/4, deployment-runtime
+> validation, and the continuity validator. No worker/client deployment,
+> connected no-cover proof, dispatch change, or Git publication occurred in this
+> step. [Evidence](./phase-9-image-inventory/supporting/unit6h-representative-cover-correction.md).
+> Next: deploy the matching tolerant Owner Edge/worker/client runtime under
+> explicit rollout authorization, then run the connected no-cover review/Add/
+> public-projection proof.
+
 > **2026-09-12 bounded correction closeout:** Exact-project CLI preflight for
 > `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) found active
 > `phase9-owner-ingestion` v10. Source readback proved v10 carried the older
@@ -44,14 +71,14 @@
 > **Historical local PostgreSQL verification checkpoint (superseded by the connected closeout above) (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
 
 
-**Last updated:** 2026-09-12
+**Last updated:** 2026-09-13
 **Routing status:** authoritative
 
 This file answers only “where does a new development session start?” DOC-13 owns global status; the active phase tracker owns the detailed current milestone and next authorized action.
 
 ## Active route
 
-- **Unit 6H development overlay:** Unit 6H duplicate confirmation has completed its bounded correction and disposable independent-connection PostgreSQL verification on `codex/phase9-duplicate-confirmation` from baseline `8340647`. F-01 was retracted; F-02 and F-03 are corrected. M60 was applied before the current correction under prior authorization. Owner Edge v11 clears the former batch-review contract-drift blocker; the remaining gate is the connected regression matrix recorded above. [Unit 6H authority and deployment procedure](./phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md).
+- **Unit 6H development overlay:** Unit 6H duplicate confirmation has completed its bounded correction and disposable independent-connection PostgreSQL verification on `codex/phase9-duplicate-confirmation` from baseline `8340647`. F-01 was retracted; F-02 and F-03 are corrected. M60 is live once as `20260912072815`; M61 is live once as `20260913111342`; M62 is live once as `20260913162154`. Owner Edge v12 is active with JWT verification; the remaining gate is matching metadata-worker/client deployment and connected no-cover proof. [Unit 6H authority and deployment procedure](./phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md).
 
 ## 2026-09-12 Unit 6H review closeout
 
