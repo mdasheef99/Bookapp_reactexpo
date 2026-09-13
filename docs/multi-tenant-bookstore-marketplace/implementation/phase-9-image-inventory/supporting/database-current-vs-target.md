@@ -1,7 +1,7 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-08-21 final Unit 8 connected rollout readback
-**Audit mode:** exact-project preflight, individually authorized forward migration application, connected acceptance, and post-rollout schema/data/trigger inspection
+**Audit date:** 2026-09-08 Unit 6G media-completion correction integration
+**Audit mode:** exact-project M57–M59 application and post-apply schema/function/grant/RLS/trigger/dispatcher readback; no business-data, Storage, job, or deployment mutation
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
 **2026-08-21 connected result:** the live project has one publicly eligible
 inventory-media link, with zero eligible NULL, out-of-range, duplicate, or
@@ -13,6 +13,257 @@ remains nullable, with the existing `1..3` check and
 lifecycle transitions without changing nullable private/unapproved state.
 
 The durable connected evidence is [unit8-connected-rollout-2026-08-21.md](./unit8-connected-rollout-2026-08-21.md).
+
+## Current live Unit 6G media-completion correction — 2026-09-08
+
+Read-only exact-project history confirms M52–M56 are live once on
+`Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`, ending with M56 live version
+`20260830175651 marketplace_phase9_metadata_throughput`. The current
+`origin/main` baseline at `573182267ddd79e08b0abfb348b5afd9fb0dc571` tracks
+the matching M52–M56 source files. No migration file was restored or copied
+from the stale correction worktree.
+
+After the passing preflight, M57–M59 were applied separately and in order as
+M57 `20260908073203 marketplace_phase9_media_output_intents`, M58
+`20260908073308 marketplace_phase9_media_completion_receipts`, and M59
+`20260908073425 marketplace_phase9_media_output_cleanup`. Their live effects
+are: (M57) private per-attempt output intents created before Storage upload plus
+reference fences; (M58) canonical completion receipts, strict
+replay/claim/payload checks, and exact duplicate-sanitized-hash terminal
+rejection; (M59) service-only cleanup claim/finish/health functions with a
+permanent deletion reservation, reference/hold rechecks, bounded recovery, and
+dispatcher integration.
+
+Post-apply readback confirms both private tables exist, are empty, have RLS
+enabled, and expose owner-only ACLs. Both M57 indexes, all three fence triggers,
+the four guarded M58 functions, the four renamed/revoked legacy functions, and
+the three M59 cleanup functions exist with the intended ownership, empty
+search path, and API grants. Definition markers confirm intent persistence,
+receipt replay, exact duplicate handling, `FOR UPDATE SKIP LOCKED`, bounded
+manual reconciliation, and dispatcher cleanup wiring. The service-role health
+result is zero for due, oldest-due, and manual-reconciliation counts; the media
+queue remains idle. No business row, Storage object, job, deployment, or
+provider call changed.
+
+Post-DDL advisors report informational RLS-enabled/no-policy notices for the
+two private owner-only tables and informational unindexed `store_id` foreign
+keys. The absence of policies is intentional deny-all direct access; the
+foreign-key indexes are a future performance review item, not a correctness or
+security blocker.
+
+## Connected runtime readback — 2026-09-08
+
+The matching Render worker was deployed from commit
+`ffdb1fc85af625bc98dcfc3af93d5530278144a9` as deployment
+`dep-dafv4ogn74is73bq9lkg` on service `phase9-media-sanitation`.
+Read-only `/health` and `/ready` checks returned 200. The requested
+`testimage.jpeg` source was already present in the development lineage; its new
+media job resolved at attempt `1/5` with a canonical `P9_MEDIA_DUPLICATE_INPUT`
+receipt and no candidate/inventory effect. A distinct `10testimage.jpeg` source
+then resolved media and vision at attempt `1/5`: its input is `ready`, ten
+candidates were detected, and the linked asset is a 1600x1600 `image/webp`
+with 135,044 bytes and the expected validation/re-encode/EXIF-strip markers.
+Both connected sessions were closed through the Owner UI with zero committed
+inventory rows. No historical dead-letter job was retried or changed. This is
+runtime/readback evidence; it does not authorize a live duplicate-sanitized-hash
+collision fixture or cleanup policy change.
+
+## Pre-application read-only live correction check — 2026-09-08
+
+The exact project was reverified as healthy `Bookconnect_reactexpo` /
+`ahntbtktjjmvfosgkmgn` in `ap-southeast-2`, PostgreSQL `17.6.1.063`. Live
+migration history ends at M56, `20260830175651
+marketplace_phase9_metadata_throughput`. The M57–M59 tables and completion,
+preparation, and cleanup functions all resolve to `NULL`, confirming that the
+duplicate/cleanup correction is not live and was not exercised against live
+business data.
+
+The same read-only check found `marketplace_sec.phase9_worker_wake_dispatches`
+empty with RLS disabled. Its ACL is owner-only (`postgres=arwdDxtm/postgres`),
+and `anon`, `authenticated`, and `service_role` have no SELECT or write
+privilege. Supabase nevertheless reports disabled RLS as a critical hardening
+advisory. This is a separate remediation decision; no policy, grant, or table
+change was applied during the check.
+
+## Ordered M57–M59 application preflight — 2026-09-08
+
+Before any application, the exact Supabase project was reverified as healthy:
+`Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`, ref
+`ahntbtktjjmvfosgkmgn`, region `ap-southeast-2`, PostgreSQL `17.6.1.063`.
+The live migration tail is still M56
+`20260830175651 marketplace_phase9_metadata_throughput`; M57, M58, and M59
+are not present in live migration history.
+
+The collision checks are clean for the three new tables, M57 indexes, M57
+lock/preparation/trigger objects, and M59 cleanup/health functions. M58's four
+current completion/snapshot functions and the M59 dispatcher helper are present
+as the intended replacement targets. The four `_legacy` names that M58 creates
+by renaming those current functions are absent, so the ordered rename has no
+destination collision. `public.phase9_media_validation_context_v2(uuid,text,text,integer)`
+is present. The `marketplace_sec` and `extensions` schemas, `pgcrypto`, and
+`extensions.digest(bytea,text)` are present.
+
+The media-validation queue has no active or claimable work: exact status counts
+are `cancelled=16`, `dead_letter=5`, and `resolved=29`, with no
+`open`, `retry_scheduled`, or `in_progress` row. The base tables used by the
+new fences (`image_extraction_inputs`, `image_extraction_jobs`, `media_assets`,
+and `phase9_upload_capabilities`) have RLS enabled and service-role-only ACLs.
+The separate empty `marketplace_sec.phase9_worker_wake_dispatches` table still
+has RLS disabled and owner-only ACLs; it remains a non-blocking, separate
+hardening decision and was not changed by this preflight.
+
+Local migration integrity is recorded by SHA-256: M57
+`B51120D4E2CA75A6656A90E755EE98A383BF652DE5FE2982D768682AAF30EB70`, M58
+`2DCDEA9681E39CA0E53A98587EA6E19D835D8455E2954947810C17ECE35B5481`, and M59
+`184DB8C6ACE2711A4D8DAC2192A435A20377416FAFB80DC23FB0B0F61ACF2FA9`.
+`git diff --check` is clean. The focused correction suites pass 21/21 in this
+preflight run. No migration, data, Storage, worker, deployment, or other live
+mutation occurred. The result is **preflight PASS; application remains gated on
+explicit owner authorization and must run M57, then M58, then M59 in order**.
+
+## Current live state — Unit 6G session lifecycle fence — 2026-08-29
+
+Exact-project preflight reverified `Bookconnect_reactexpo` /
+`ahntbtktjjmvfosgkmgn` as healthy PostgreSQL `17.6.1.063` with M53 as the live
+tail. After explicit Owner authorization, Supabase MCP applied local forward
+migration `20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql`
+once as live version `20260829142337
+marketplace_phase9_unit6g_session_lifecycle_fence`.
+
+M54 creates/replaces only function definitions: a pure session-mutability
+predicate, an Owner/session `FOR UPDATE` guard, a read-only detail sanitizer,
+and the final detail/Save/Add/Remove/batch-card functions. It adds no table,
+column, constraint, index, trigger, RLS policy, or Storage object and performs no
+DML/backfill. Public signatures and grants are preserved; the new internal
+helpers deny every API role.
+
+Live definition/owner/search-path/grant readback passed. A transaction-local
+Owner proof against an existing closed candidate verified detail actions
+`view_readiness`, batch actions `view_metadata,view_readiness`, empty nested
+variant mutation actions, `P9_STATE_CONFLICT` from Save/Add/Remove, and zero
+candidate/session-count/inventory/audit/event/idempotency effects. Existing
+older manual/false-detection/variant sibling RPC lifecycle behavior is unchanged
+and remains a separate compatibility decision.
+
+## Current live state — Unit 6G M55 bounded correction — 2026-08-30
+
+Local forward migration
+`20260830000055_marketplace_phase9_unit6g_metadata_add_authority_correction.sql`
+was applied exactly once through Supabase MCP to `Bookconnect_reactexpo` /
+`ahntbtktjjmvfosgkmgn` as live version `20260830084323
+marketplace_phase9_unit6g_metadata_add_authority_correction`, directly after
+M54 `20260829142337`. M55 replaces only internal metadata-summary,
+review-blocker, and batch-card function definitions: selected provider cards
+carry a safe metadata snapshot UUID, author presence is required only at the
+final Add/commit boundary while empty-author review saves remain valid,
+title/author evidence selects bibliographic query identity when present, hard
+Google language filtering is removed, exact ISBN fallback is retained for
+ISBN-only input, and the batch card exposes Add only after full commit
+eligibility. It performs no DML/backfill and changes no table, policy, Storage
+object, or public RPC signature. Touched internal helper ACLs remain restricted;
+no public grant is added.
+
+Pre-application read-only checks confirmed the exact healthy project, M54 live
+tail, and no open/retrying metadata jobs. Post-application readback confirmed
+the identity strategy, final author guard, batch-card eligibility gate, and
+closed-session read-only projection. Affected-scope Jest passed 64 suites/690
+tests (one suite/four tests skipped), M54+M55 PGlite passed 7/7. The matching
+client/Edge bundle is not deployed; the local canonical resolver, Add-all
+redesign, close audit, and older sibling RPC compatibility remain outside this
+bounded correction.
+
+## Local target — bounded metadata throughput M56 — 2026-08-30
+
+Read-only Supabase evidence reverified project `ahntbtktjjmvfosgkmgn` and the
+live once-per-minute dispatcher. The current live metadata wake payload is one;
+the claim RPC maximum remains 10 with a five-minute lease. The actionable
+metadata queue was empty, with one historical dead letter. The 30-day baseline
+was 103 jobs (102 resolved, one dead letter) and 46 successful batch-one
+dispatches. Observed provider duration was approximately 0.8–6.7 seconds. The
+exact deployed provider-timeout environment value and Google quota were not
+available through read-only surfaces.
+
+Local forward migration
+`20260830000056_marketplace_phase9_metadata_throughput.sql` replaces only
+`marketplace_sec.dispatch_phase9_worker_wakes()`. It changes the metadata body
+to `batchSize=15`; media, vision, and publication retry remain one. It preserves
+the 120-second pg_net timeout, one-dispatch-per-stage/tick conflict fence,
+private security-definer boundary, and existing scheduler. It performs no job
+DML, does not replace `claim_phase9_metadata_jobs`, and does not alter any
+table, policy, grant, Storage object, lease, retry/dead-letter rule, or applied
+migration. Local structural Jest passed 3/3 and the dispatcher PGlite suite
+passed 30/30.
+
+M56 is **unapplied**. Required rollout order is worker first while the live
+dispatcher remains at one, then a canary proving the changed metadata request
+path, timeout no greater than 10 seconds, quota/rate-limit headroom, bounded
+memory/database connections, and stable retry/dead-letter/duplicate signals.
+Only after that evidence may M56 application be separately authorized.
+
+## Historical Unit 6G field-authority forward correction checkpoint — 2026-08-27
+
+The live M52 source is immutable. Local forward migration
+`20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql`
+replaces the internal field-source helper and batch-card projection and adds an
+internal safe-summary helper. JSON `null` or otherwise invalid review detail
+cannot be treated as saved Owner authority; unusable selected compact-summary
+members project as null and fall back independently through `fieldSources`.
+It performs no DML or backfill and does not change a public RPC signature,
+table, RLS policy, or externally callable privilege. The mirrored Edge/mobile
+DTOs now permit null for those four summary members. Historical never-reviewed
+rows and partial selected metadata therefore normalize on read. Local PGlite
+proof is 25/25. At this historical checkpoint M53 was **unapplied**; no live
+project read or mutation was performed, and exact-project preflight plus
+separate Owner authorization remain mandatory before any future application.
+
+## Current live state — Unit 6G field-authority correction — 2026-08-28
+
+The exact-project preflight identified `Bookconnect_reactexpo` /
+`ahntbtktjjmvfosgkmgn` as `ACTIVE_HEALTHY` in `ap-southeast-2` with PostgreSQL
+`17.6.1.063`. The live migration tail was M52
+`20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation`.
+
+After explicit Owner authorization, Supabase MCP applied the local forward
+file `20260827000053_marketplace_phase9_unit6g_field_authority_correction.sql`
+once as live version `20260828081324
+marketplace_phase9_unit6g_field_authority_correction`, directly after M52.
+Migration readback confirmed the expected internal
+`phase9_unit6g_field_sources(image_extraction_sessions,image_extraction_candidates,jsonb)`
+helper remains `SECURITY DEFINER` and now gates on reviewed disposition,
+non-null review version, valid review detail, and valid-review-derived sources.
+
+The application changed function definitions only: no DML/backfill, public RPC
+signature, table, RLS policy, grant, Storage object, inventory row, or other
+business data was changed. M52 remains byte-immutable and live exactly once.
+
+## Unit 6G repository/read-only current-to-target assessment — 2026-08-21
+
+This assessment was the Group 1 design baseline. The current repository now
+contains the locally verified Group 1 contract/runtime and un-applied M52
+migration candidate. It uses the current repository, immutable applied-
+migration sources, and the final same-day live checkpoint above; no connected
+Unit 6G mutation was performed.
+
+| Area | Observed current contract | Proposed Unit 6G target | Migration impact |
+| --- | --- | --- | --- |
+| Session defaults | M02 persists language/script, `default_condition NOT NULL`, location, quantity, and publication; it has no price or batch label. Current Owner Edge Start accepts language/script/condition and hardcodes location=`default`, quantity=1, publication=private. | Versioned Start accepts required location, nullable condition/price, publication and optional `1..80` batch label; English is the initial language hint and quantity remains server-fixed at 1. | **Forward migration required:** make the Unit 6G condition representation nullable and add nullable bounded `default_price_minor`/`batch_label` session fields. Existing non-null rows remain readable; strict v2 responses are not widened or coerced and Unit 6G uses v3 summary/Close. Category 3 portion. |
+| Candidate dispositions/lifecycle | M02 CHECK permits only `reviewed` and `skipped_false_detection`; M29 active/readiness/summary/action predicates know only false detection; M39 commits only `reviewed`. | Add exact `owner_removed_from_scan`; exclude it from active/review/readiness/commit sets, fence worker completion, count it separately, and register bounded `phase9.candidate.owner_removed_from_scan` audit/event evidence. | **Forward migration required:** CHECK plus every lifecycle/readiness/count/action/worker/audit/event helper and controlled grant. No existing-row inference/backfill. Category 4. M39's reviewed-only/private create-only contract remains unchanged and already denies the new disposition. |
+| Close response | M29 `phase9_close_session_v2` returns the current strict readiness/close summary with no Owner-removed count. | Add `close_scan_session_v3` / `phase9_close_session_v3` and versioned summary/readiness helpers returning bounded `ownerRemovedCandidates`; no removed-candidate list/raw detail. | **Forward RPC migration required.** Preserve v2 function and strict response unchanged; v3 uses the same lock/version/terminal-input/idempotency rules and narrow authenticated grant. |
+| Review cards/DTOs | Candidate summary lacks cover, review values, field sources, blockers, and commit/remove actions; full detail is per candidate. Existing schemas bound observed identity, selected metadata, attention/blocker codes, cover URLs, and strict review. | One initiating-Owner-only aggregate returns at most 15 compact strict cards; internal `matched` displays as Detected; selected compact-summary members are independently nullable when unusable and `fieldSources` governs fallback; all other nested fields/arrays/enums/nulls are exact; full bounded metadata remains on demand with no raw provider/model/scan data. | New read RPC/Edge/client contracts; no business table. M53 corrects the internal safe-summary/source/card projection without changing the public RPC signature. |
+| Metadata choice | Existing strict review enum is only `selected|manual`; M39 selected mode uses the candidate-owned snapshot while manual mode keeps canonical/provider/cover values nullable. | `Use detected details` copies usable observed identity, confirms it, and sets existing `{mode:"manual",selectionId:null}`; incomplete identity requires Edit manually. | No enum/schema mode migration and no M39 edit; strict Save/client behavior only. |
+| Save/commit concurrency | Review update v2 returns canonical review/version state. Live M39 performs one create-only private commit and locks/rechecks the candidate. | Reuse both sequentially under one shared candidate command slot; Add all claims idle cards only, reports locked cards Busy, never queues, and runs at concurrency three with partial success. Remove and commit serialize; removal-first makes M39 ineligible, commit-first makes removal fail. | Application coordinator plus new removal predicate/RPC work; no batch RPC/transaction and no M39 rewrite. |
+| General removal | Input removal requires no candidate lineage; false-detection skip has different semantics. | Versioned candidate removal command persists the new disposition with candidate/version/replay/audit/presentation fencing and no cascade/Undo. | New controlled mutation RPC and grant plus disposition/lifecycle delta; candidate/input/media/inventory/listing rows are not deleted. |
+| Unit 7C/cache handoff | M39 returns `inventoryId`; Store View list caches are not currently invalidated by candidate commit synchronization. Existing `store_inventory` and M43–M46 commands own post-commit values. | Coalesce `storeViewKeys.all` invalidation after canonical commit success. Batch label remains session-only; Store View remains the sole post-commit editor. | Application/query change only; no `store_inventory`, Unit 7C table/command, or cache-invalidation migration. |
+
+**Verdict:** `MIGRATION_REQUIRED` for the complete target; Group 1's forward
+candidate is locally implemented but unapplied. Full Unit 6G
+is category 4 because of candidate lifecycle/readiness/count/audit/RPC/grant
+changes; nullable condition plus durable price/batch defaults is the category 3
+session component. No migration is required for fixed INR, pre-scan quantity 1,
+M39 create-only `q/q/0/0/0`, `store_inventory`, Unit 7C tables/commands, or
+Store View cache invalidation. The work is a bounded forward extension, not a
+database rewrite. Exact-project reverification and M52 application remain
+separate approvals; Groups 2–4 remain out of scope.
 
 ## Migration-history reconciliation — read-only 2026-08-21
 

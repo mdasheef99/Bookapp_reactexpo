@@ -217,7 +217,7 @@ describe('Phase 9 Unit 6A Owner UX request contracts', () => {
     },
   );
 
-  it('accepts zero authors and null script as explicit confirmed decisions', () => {
+  it('allows an explicitly confirmed empty author list for saved review state', () => {
     expect(() => parseOwnerUxRequest({
       action: 'update_candidate_review', contractVersion,
       sessionId: uuid(1), candidateId: uuid(2),
@@ -437,6 +437,11 @@ describe('Phase 9 Unit 6A Owner UX response contracts', () => {
 
   it.each([
     ['read_scan_session', sessionSummary],
+    ['list_scan_inputs', {
+      items: [{ ...inputProgress, inputState: 'failed', presentationState: 'needs_attention',
+        safeCode: 'P9_MEDIA_DUPLICATE_INPUT', retryState: 'new_upload_required', terminal: true, polling: false }],
+      pageInfo, sessionVersion: 1, presentationRevision: 1,
+    }],
     ['list_scan_inputs', {
       items: [inputProgress], pageInfo, sessionVersion: 1, presentationRevision: 1,
     }],

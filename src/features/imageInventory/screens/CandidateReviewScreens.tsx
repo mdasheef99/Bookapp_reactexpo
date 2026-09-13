@@ -29,8 +29,8 @@ import {
 import {
     type ImageInventoryIdentity,
     useOwnerInventoryCandidate,
-    useOwnerInventorySession,
 } from '../queries/ownerUxQueries';
+import { useOwnerSessionV3 } from '../queries/ownerBatchReviewQueries';
 import { useUpdateOwnerCandidateReview } from '../queries/ownerUxReviewQueries';
 import { useOwnerUxOfflineGate } from '../offline/ownerUxOfflineGate';
 
@@ -51,7 +51,9 @@ export function CandidateReview({
     const navigation = useNavigation();
     const { isOffline } = useNetworkStatus();
     const candidateQuery = useOwnerInventoryCandidate(identity, sessionId, candidateId);
-    const sessionQuery = useOwnerInventorySession(identity, sessionId);
+    // Retained candidate detail stays on its valid v2 contract, while every
+    // current Unit 6G session/default dependency uses nullable-safe v3.
+    const sessionQuery = useOwnerSessionV3(identity, sessionId);
     const mutation = useUpdateOwnerCandidateReview(identity, sessionId, candidateId);
     const [canonicalOverride, setCanonicalOverride] = useState<OwnerCandidateDetail | null>(null);
     const detail = canonicalOverride ?? candidateQuery.data ?? null;

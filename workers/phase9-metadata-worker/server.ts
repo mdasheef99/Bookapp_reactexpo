@@ -13,6 +13,7 @@ export async function startPhase9MetadataWorker(
   const service = createPhase9WorkerHttpService({
     serviceName: 'phase9-metadata-worker',host: configuration.host,port: configuration.port,
     concurrency: configuration.concurrency,workerAuthToken: configuration.workerAuthToken,
+    maxBatchSize: 15,
     handler: createPhase9MetadataService(configuration),readiness: () => true,
     log: createJsonOperationalLogger(),
   });

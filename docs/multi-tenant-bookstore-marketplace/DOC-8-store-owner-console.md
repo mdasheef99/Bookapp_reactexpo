@@ -147,6 +147,17 @@ MVP features:
   existing row
 - five public conditions with accessible explanations and separate damage disclosure/photo flow
 
+The proposed Unit 6G refinement keeps this Inventory ownership while simplifying
+the active scan: required batch location; English-default optional language
+hint; optional condition/selling-price defaults; fixed quantity 1 and INR;
+optional session-only batch label; and one scrollable page of compact cards.
+Cards show every final value with Default/Detected/Custom/Missing cues; the
+internal `matched` source code is displayed as Detected rather than a separate
+Matched source badge,
+use a bounded metadata sheet, and provide Remove plus one Add action. A top Add
+all ready books action runs independent save-then-commit commands with partial
+success. Store View remains the only rich post-commit management surface.
+
 Required filters:
 
 - search title/author/ISBN
@@ -461,6 +472,7 @@ Activity logs should be append-only from the client perspective.
 | CON-14 | Owner can edit controlled inventory fields after commit without mutating shared canonical metadata. |
 | CON-15 | Requested-photo items require 1-3 private current-copy photos or an unavailable/unfulfilled outcome. |
 | CON-16 | Only the initiating Owner mutates/resumes a pilot scan session; support intervention is separately controlled and audited. |
+| CON-17 | Owner can apply optional scan defaults once, review all candidates compactly on one bounded page, remove an unwanted candidate distinctly, and add one or all ready books without a separate Save button or automatic/atomic batch commit. |
 
 ---
 

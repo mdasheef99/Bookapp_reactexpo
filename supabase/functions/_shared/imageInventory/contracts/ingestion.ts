@@ -2,6 +2,10 @@ import { z } from 'zod';
 import { assertNoPrivacySensitiveKeys } from './privacy.ts';
 import { OwnerUxRequest, parseOwnerUxRequest } from './ownerUx.ts';
 import {
+  OwnerBatchReviewRequest,
+  parseOwnerBatchReviewRequest,
+} from './ownerBatchReview.ts';
+import {
   isPublicationAction, parsePublicationRequest, PublicationRequest,
 } from './publication.ts';
 import {
@@ -70,12 +74,18 @@ const dedicatedWorkerRequest = z.object({
   contractVersion,
   batchSize: z.number().int().min(1).max(10),
 }).strict();
+const dedicatedMetadataWorkerRequest = z.object({
+  contractVersion,
+  batchSize: z.number().int().min(1).max(15),
+}).strict();
 
 export type OwnerIngestionRequest = z.infer<typeof ownerRequest> | OwnerUxRequest
+  | OwnerBatchReviewRequest
   | PublicationRequest | StoreViewRequest | StoreViewManagementRequest
   | StoreViewMediaRequest | StoreViewHistoryRequest;
 export type WorkerIngestionRequest = z.infer<typeof workerRequest>;
 export type DedicatedWorkerRequest = z.infer<typeof dedicatedWorkerRequest>;
+export type DedicatedMetadataWorkerRequest = z.infer<typeof dedicatedMetadataWorkerRequest>;
 
 export function parseOwnerIngestionRequest(value: unknown): OwnerIngestionRequest {
   const result = ownerRequest.safeParse(value);
@@ -89,6 +99,10 @@ export function parseOwnerIngestionRequest(value: unknown): OwnerIngestionReques
       'list_scan_candidates', 'read_scan_candidate', 'update_candidate_review',
       'add_candidate_to_inventory', 'read_scan_readiness', 'close_scan_session',
     ].includes(action)) return parseOwnerUxRequest(value);
+    if (typeof action === 'string' && [
+      'start_scan_session_v2', 'read_scan_session_v3', 'read_scan_batch_review',
+      'remove_candidate_from_scan', 'close_scan_session_v3',
+    ].includes(action)) return parseOwnerBatchReviewRequest(value);
     if (isStoreViewManagementAction(action)) return parseStoreViewManagementRequest(value);
     if (isStoreViewMediaAction(action)) return parseStoreViewMediaRequest(value);
     if (action === 'read_store_view_history') return parseStoreViewHistoryRequest(value);
@@ -114,6 +128,19 @@ export function parseDedicatedWorkerRequest(value: unknown): DedicatedWorkerRequ
   if (!result.success) {
     const unknown = result.error.issues.some((issue) => issue.code === 'unrecognized_keys');
     throw new Error(unknown ? 'unknown keys in dedicated worker request' : 'invalid dedicated worker request');
+  }
+  return result.data;
+}
+
+export function parseDedicatedMetadataWorkerRequest(
+  value: unknown,
+): DedicatedMetadataWorkerRequest {
+  const result = dedicatedMetadataWorkerRequest.safeParse(value);
+  if (!result.success) {
+    const unknown = result.error.issues.some((issue) => issue.code === 'unrecognized_keys');
+    throw new Error(unknown
+      ? 'unknown keys in dedicated metadata worker request'
+      : 'invalid dedicated metadata worker request');
   }
   return result.data;
 }

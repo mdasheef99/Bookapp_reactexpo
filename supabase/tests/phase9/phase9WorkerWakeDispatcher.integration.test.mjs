@@ -9,6 +9,7 @@ const M35 = '20260810000035_marketplace_phase9_single_image_removal.sql';
 const M36 = '20260810000036_marketplace_phase9_worker_wake_dispatcher.sql';
 const M37 = '20260810000037_marketplace_phase9_owner_discovery_scope_correction.sql';
 const M38 = '20260810000038_marketplace_phase9_metadata_retry_correction.sql';
+const M56 = '20260830000056_marketplace_phase9_metadata_throughput.sql';
 const STORE = 'ad000000-0000-0000-0000-000000000001';
 const ENTITY = 'ad000000-0000-0000-0000-000000000002';
 const WORKER = 'phase9-parity-worker-0001';
@@ -107,6 +108,26 @@ before(async () => {
   await db.exec(fs.readFileSync(migrationPath(M36), 'utf8'));
   await db.exec(fs.readFileSync(migrationPath(M37), 'utf8'));
   await db.exec(fs.readFileSync(migrationPath(M38), 'utf8'));
+  // Reproduce the already-live M40 publication extension without loading its
+  // unrelated publication schema into this dispatcher-focused harness.
+  await db.exec(`
+    ALTER TABLE marketplace_sec.phase9_worker_wake_dispatches
+      DROP CONSTRAINT phase9_worker_wake_dispatches_job_kind_check,
+      ADD CONSTRAINT phase9_worker_wake_dispatches_job_kind_check CHECK(job_kind IN (
+        'media_validate_sanitize','vision_extract','metadata_enrich','publication_retry'));
+    CREATE OR REPLACE FUNCTION marketplace_sec.has_claimable_phase9_work(p_job_kind text)
+    RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
+    BEGIN
+      IF p_job_kind NOT IN ('media_validate_sanitize','vision_extract','metadata_enrich','publication_retry')
+        THEN RAISE EXCEPTION 'P9_DISPATCH_KIND_INVALID'; END IF;
+      RETURN EXISTS(SELECT 1 FROM public.image_extraction_jobs j
+        WHERE j.job_kind=p_job_kind AND j.status IN ('open','retry_scheduled','in_progress')
+          AND j.next_attempt_at<=transaction_timestamp()
+          AND (j.status<>'in_progress' OR j.lease_expires_at<=transaction_timestamp())
+          AND j.attempt_count<j.max_attempts);
+    END$$;
+  `);
+  await db.exec(fs.readFileSync(migrationPath(M56), 'utf8'));
 });
 
 beforeEach(async () => {
@@ -124,7 +145,7 @@ test('M36 creates exactly one inactive 60-second cron job', async () => {
     [{ jobname: 'phase9-worker-wake-dispatcher', schedule: '* * * * *', active: false }]);
 });
 
-test('full M35 through M38 tail preserves dispatcher and installs metadata context v2', async () => {
+test('M56 tail preserves the dispatcher schedule and metadata context v2', async () => {
   assert.equal(await scalar(db, `SELECT to_regprocedure(
     'marketplace_sec.phase9_metadata_job_context_v2(uuid,text,text,integer)') IS NOT NULL`), true);
   assert.equal(await scalar(db, `SELECT has_function_privilege(
@@ -168,7 +189,10 @@ for (const [stage, kind] of [
       FROM net.test_requests`)).rows;
     assert.equal(requests.length, 1);
     assert.equal(requests[0].url, `https://phase9-${stage}.onrender.com/run`);
-    assert.deepEqual(requests[0].body, { batchSize: 1, contractVersion: 'phase9-v1' });
+    assert.deepEqual(requests[0].body, {
+      batchSize: kind === 'metadata_enrich' ? 15 : 1,
+      contractVersion: 'phase9-v1',
+    });
     assert.equal(requests[0].timeout_milliseconds, 120000);
     assert.match(requests[0].headers['x-phase9-dispatch-id'],
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u);
@@ -187,14 +211,23 @@ test('empty and nonclaimable queues dispatch nothing', async () => {
   assert.equal((await scalar(db, 'SELECT marketplace_sec.dispatch_phase9_worker_wakes()')).dispatched, 0);
 });
 
-test('120-second timeout budget covers measured cold wake and provider ceiling with bounded margin', () => {
+test('120-second timeout requires the rollout provider ceiling for five bounded waves', () => {
   const measuredColdWakeMs = Math.max(23_423, 22_598);
-  const configuredProviderCeilingMs = 30_000;
+  const rolloutRequiredProviderCeilingMs = 10_000;
+  const waves = Math.ceil(15 / 3);
   const claimProcessingAndResponseMarginMs = 45_000;
   const dispatcherTimeoutMs = 120_000;
   assert.ok(dispatcherTimeoutMs
-    > measuredColdWakeMs + configuredProviderCeilingMs + claimProcessingAndResponseMarginMs);
+    > measuredColdWakeMs + waves * rolloutRequiredProviderCeilingMs
+      + claimProcessingAndResponseMarginMs);
   assert.equal(dispatcherTimeoutMs, 2 * 60_000);
+});
+
+test('M56 keeps publication retry in the live dispatcher definition', async () => {
+  const definition = await scalar(db, `SELECT pg_get_functiondef(
+    'marketplace_sec.dispatch_phase9_worker_wakes()'::regprocedure)`);
+  assert.match(definition, /publication_retry/u);
+  assert.match(definition, /phase9_publication_worker_url/u);
 });
 
 test('Vault values are absent from dispatcher output and persisted observability', async () => {

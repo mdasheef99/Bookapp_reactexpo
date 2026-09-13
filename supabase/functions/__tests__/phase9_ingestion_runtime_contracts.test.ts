@@ -2,6 +2,7 @@ import {
   assertSafeIngestionResponse,
   parseOwnerIngestionRequest,
   parseDedicatedWorkerRequest,
+  parseDedicatedMetadataWorkerRequest,
   parseWorkerIngestionRequest,
 } from '../_shared/imageInventory/contracts/ingestion';
 
@@ -66,6 +67,18 @@ describe('Phase 9 ingestion-runtime transport contracts', () => {
     })).toThrow(/unknown keys/i);
     expect(parseDedicatedWorkerRequest({ contractVersion: 'phase9-v1', batchSize: 2 })).toEqual({ contractVersion: 'phase9-v1', batchSize: 2 });
     expect(() => parseDedicatedWorkerRequest({ contractVersion: 'phase9-v1', batchSize: 2, leaseOwner: 'forged-worker-id' })).toThrow(/unknown keys/i);
+  });
+
+  it('widens only the metadata run budget to fifteen', () => {
+    expect(parseDedicatedMetadataWorkerRequest({
+      contractVersion: 'phase9-v1', batchSize: 15,
+    })).toEqual({ contractVersion: 'phase9-v1', batchSize: 15 });
+    expect(() => parseDedicatedMetadataWorkerRequest({
+      contractVersion: 'phase9-v1', batchSize: 16,
+    })).toThrow(/invalid dedicated metadata worker request/i);
+    expect(() => parseDedicatedWorkerRequest({
+      contractVersion: 'phase9-v1', batchSize: 11,
+    })).toThrow(/invalid dedicated worker request/i);
   });
 
   it('recursively rejects capabilities and private media fields from ordinary responses', () => {

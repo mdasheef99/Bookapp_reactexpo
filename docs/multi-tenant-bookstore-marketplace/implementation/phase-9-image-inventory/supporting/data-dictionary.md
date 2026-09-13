@@ -1,13 +1,27 @@
 # Phase 9 Metadata and Inventory Data Dictionary
 
-**Status:** current/live and approved-target representations separated; Unit 7C WU1/WU2A local database candidates complete, not live
-**Last updated:** 2026-08-14
+**Status:** current/live and approved-target representations separated; Unit 6G M52–M59 live
+**Last updated:** 2026-09-08
 
-Unit 6A adds only local, unapplied Owner UX presentation/review support; it grants no Unit 7 inventory/publication mutation authority. See [tracker 19](../trackers/19-unit6a-owner-safe-backend-evidence.md).
+Unit 6A adds only Owner UX presentation/review support; it grants no Unit 7 inventory/publication mutation authority. Unit 6G M52–M59 are live at their recorded versions; M57–M59 exact-project readback passed on 2026-09-08. See [tracker 19](../trackers/19-unit6a-owner-safe-backend-evidence.md), [tracker 31](../trackers/31-unit6g-owner-batch-review-design-evidence.md), and the [media-completion correction](./unit6g-media-completion-correction.md).
 
 M01-M08/M10-M42 are live-verified at their recorded levels. M11 provides bounded ingestion/media leases; M12 implements immutable evidence, lineage, reconciliation, and private service RPCs; M13 adds only minimum postgres-owned `SECURITY INVOKER` public delegates for PostgREST, executable solely by `service_role`. M14 adds dedicated service-only vision-provider attempts and is live once as `20260727183546`. M39/M40/M41/M42 are live exactly once; M42 keeps generated listing authors projection database-owned. Owner/media/fixture-vision/publication-worker services remain deployed. Unit 7B is integrated into `main` at merge commit `53edbddc9c5417b34cb169599e8282b162e183b3`; M09 quantity validation remains a separate live-data gate.
 
 The dictionary distinguishes canonical truth, store-owned snapshots, public projections, staged AI output, and media/evidence. A field must not be added to several layers merely because it is convenient; each copy needs a named owner and synchronization rule.
+
+## Unit 6G media-completion correction — M57–M59 live
+
+| Representation | Owner and visibility | Required meaning |
+| --- | --- | --- |
+| `marketplace_sec.phase9_media_output_intents` | PostgreSQL-owned private table; no direct API-role access | One server-derived record per media job attempt and output kind (`snapshot` or `sanitized`), binding store, job, attempt, worker/claim hash, bucket/path, immutable context, lifecycle state, and bounded cleanup lease/recheck fields before Storage upload |
+| `marketplace_sec.phase9_media_completion_receipts` | PostgreSQL-owned private table; no direct API-role access | Canonical completed command/result for exact replay after the job lease is cleared; binds the complete completion arguments and prevents a changed claim or payload from reusing the receipt |
+| cleanup claim/result functions | `service_role` only | Lock job then intent, recheck all references and holds, permanently reserve deletion before returning an object, fence completion/reference creation against that reservation, and move repeated/uncertain outcomes to bounded recheck or manual reconciliation |
+| duplicate sanitized-hash terminal result | database-owned job transition | Reject only the named per-store sanitized-hash conflict at attempt five with `P9_MEDIA_DUPLICATE_INPUT`; create no candidate, inventory, listing, or accepted output effect and leave unrelated max-attempt semantics unchanged |
+
+These representations are live as M57 `20260908073203`, M58
+`20260908073308`, and M59 `20260908073425`. Exact-project table, RLS, ACL,
+function, grant, trigger, dispatcher, and empty-state readback passed. Original
+input/session/Owner lineage and store isolation remain authoritative.
 
 ## Conventions
 
@@ -288,8 +302,8 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | `id`, `store_id`, `created_by` | Tenant/initiating-actor identity; during the pilot only this Owner mutates/resumes. Interactive support intervention is excluded. |
 | `status` | `active`, `closing`, `closed`, `expired`; `closing` begins only after inputs are terminal, rejects new inputs, and finalizes summary. No user-visible pause/early-close state. |
 | `selected_language`, `selected_script` | Current runtime: required batch language, English default. Approved target: optional hints; per-field detection is authoritative. |
-| default fields | condition, shelf/location, quantity=1, publication preference. |
-| summary counters | input/candidate/ready/review/committed/private/published/skipped/failed counts. |
+| default fields | Current M02: non-null condition, shelf/location, quantity=1, publication preference; no price or batch label. Proposed Unit 6G: nullable condition, nullable integer `default_price_minor` `0..2147483647`, required location `1..120`, quantity=1, publication preference, and nullable safe-text `batch_label` `1..80`. The three nullable/resumable changes require a forward session migration and v3 read/Close compatibility; no value propagates a label or currency field to inventory. |
+| summary counters | Current: input/candidate/ready/review/committed/private/published/skipped/failed/false counts. Proposed Unit 6G v3 adds bounded `ownerRemovedCandidates`; the existing strict v2 summary remains unchanged. |
 | policy/version fields | quota policy, orchestration schema, prompt/model/provider selection versions. |
 | lifecycle timestamps | started, close requested, closed, expires. |
 
@@ -350,7 +364,7 @@ Public projection never contains shelf location, acquisition data, exact quantit
 | immutable evidence | owned by linked analysis observation; it is not stored in `selected_snapshot` or `owner_review_snapshot`. |
 | normalized selection | later selected metadata snapshot, canonical match nullable, metadata source/attempt. |
 | variants | M18 proposals relate through analysis/observation/candidate/source field and remain private/proposed/non-searchable; live `book_search_aliases` remains unchanged until later activation/search projection. |
-| review fields | owner edits/defaults, add/remove action, duplicate choice, publication choice. |
+| review fields | owner edits/defaults and publication choice. Unit 7A duplicate choice is legacy/non-actionable. Proposed Unit 6G keeps `reviewed` and `skipped_false_detection` and adds `owner_removed_from_scan` for a genuine book omitted from this scan; it is not a candidate state or delete cascade. It is excluded from active/readiness/commit predicates, counted only in v3 summary, fenced against worker completion, and audited as `phase9.candidate.owner_removed_from_scan`. |
 | status | `processing`, `ready`, `needs_review`, `possible_duplicate`, `commit_in_progress`, `committed`, `failed`. A projection failure leaves this value `committed`, sets inventory publication status to `publication_failed`, and returns API outcome `committed_publication_failed`. |
 | commit linkage | committed inventory/listing IDs and idempotency identity. |
 | retention | unresolved candidate expiry; committed normalized evidence may reduce to audit-safe provenance. |

@@ -42,7 +42,7 @@ describe('Phase 9 production metadata gateway boundary', () => {
       .toThrow('P9_METADATA_QUERY_IDENTITY_MISMATCH');
     const canonical = requestFromMetadataContext(decodeMetadataJobContext({
       ...context,
-      queryIdentity: '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "isbn", "9780306406157", "fixture book", ["fixture author"], "en", []]',
+      queryIdentity: '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "bibliographic", "9780306406157", "fixture book", ["fixture author"], "en", []]',
     }));
     expect(canonical).toMatchObject({
       candidateId: 'candidate-1', jobId: 'job-1',
@@ -82,7 +82,7 @@ describe('Phase 9 production metadata gateway boundary', () => {
       title: 'Fixture Book', authors: ['Fixture Author'] };
     const recovered = decodeMetadataJobContext({
       ...context,currentLookupId: 'lookup-1',currentAttemptId: 'attempt-1',
-      queryIdentity: '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "isbn", "9780306406157", "fixture book", ["fixture author"], "en", []]',
+      queryIdentity: '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "bibliographic", "9780306406157", "fixture book", ["fixture author"], "en", []]',
       currentAttemptDisposition: 'unresolved',currentPhysicalStatus: 'finalized',
       currentPhysicalClaimAttempt: 1,
       currentPhysicalOutcome: 'coherent_match',currentPhysicalProviderRequestId: 'request-1',
@@ -114,7 +114,7 @@ describe('Phase 9 production metadata gateway boundary', () => {
   it('reconciles a known finalized retryable result without authorizing another egress', async () => {
     const recovered = decodeMetadataJobContext({
       ...context,currentLookupId: 'lookup-1',currentAttemptId: 'attempt-1',
-      queryIdentity: '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "isbn", "9780306406157", "fixture book", ["fixture author"], "en", []]',
+      queryIdentity: '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "bibliographic", "9780306406157", "fixture book", ["fixture author"], "en", []]',
       currentAttemptDisposition: 'unresolved',currentPhysicalStatus: 'finalized',
       currentPhysicalClaimAttempt: 1,
       currentPhysicalOutcome: 'timeout',currentPhysicalLogicalOutcome: 'timeout',
@@ -135,7 +135,7 @@ describe('Phase 9 production metadata gateway boundary', () => {
     await expect(gateway.resumeFinalizedAttempt({
       ...requestFromMetadataContext(recovered),claimWorker: 'metadata-worker-0001',
       lookupId: 'lookup-1',attemptId: 'attempt-1',
-    })).resolves.toEqual({ outcome: 'manual_metadata_required' });
+    })).resolves.toEqual({ outcome: 'retry_scheduled' });
     expect(primary.lookup).not.toHaveBeenCalled();
   });
 
@@ -143,7 +143,7 @@ describe('Phase 9 production metadata gateway boundary', () => {
     for (const [attempt, physicalAttempt] of [[2, 1], [3, 2]] as const) {
       const recovered = decodeMetadataJobContext({
         ...context,attempt,currentLookupId: 'lookup-1',currentAttemptId: 'attempt-1',
-        queryIdentity: '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "isbn", "9780306406157", "fixture book", ["fixture author"], "en", []]',
+        queryIdentity: '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "bibliographic", "9780306406157", "fixture book", ["fixture author"], "en", []]',
         currentAttemptDisposition: 'unresolved',currentPhysicalStatus: 'finalized',
         currentPhysicalClaimAttempt: physicalAttempt,currentPhysicalOutcome: 'provider_unavailable',
         currentPhysicalLogicalOutcome: 'provider_unavailable',currentPhysicalProviderRequestId: null,

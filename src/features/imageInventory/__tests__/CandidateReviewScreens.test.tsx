@@ -39,6 +39,15 @@ let mockMutationPending = false;
 let mockIdentity = { userId: 'owner-1', storeId: 'store-1' };
 let mockCandidateData = candidateDetailFixture();
 const mockSessionData = sessionSummaryFixture();
+type MockSessionV3 = Omit<typeof mockSessionData, 'defaults'> & {
+    defaults: Omit<typeof mockSessionData.defaults, 'condition'> & {
+        condition: typeof mockSessionData.defaults.condition | null;
+    };
+};
+let mockSessionV3Data: MockSessionV3 = {
+    ...mockSessionData,
+    defaults: { ...mockSessionData.defaults },
+};
 let mockCandidatesState: Record<string, unknown>;
 let mockCandidateState: Record<string, unknown>;
 
@@ -74,8 +83,19 @@ jest.mock('../screens/InventoryAccessBoundary', () => ({
 jest.mock('../queries/ownerUxQueries', () => ({
     useOwnerInventoryCandidates: () => mockCandidatesState,
     useOwnerInventoryCandidate: () => mockCandidateState,
+    // The legacy v2 sibling deliberately fails for a valid nullable 6G
+    // session. Candidate-detail v2 remains independently successful.
     useOwnerInventorySession: () => ({
-        data: mockSessionData,
+        data: undefined,
+        isLoading: false,
+        error: new Error('legacy nullable session contract rejected'),
+        refetch: mockSessionRefetch,
+        isFetchedAfterMount: true,
+    }),
+}));
+jest.mock('../queries/ownerBatchReviewQueries', () => ({
+    useOwnerSessionV3: () => ({
+        data: mockSessionV3Data,
         isLoading: false,
         error: null,
         refetch: mockSessionRefetch,
@@ -129,6 +149,10 @@ describe('Phase 9 Unit 6D candidate list and strict review screens', () => {
         mockMutationPending = false;
         mockIdentity = { userId: 'owner-1', storeId: 'store-1' };
         mockCandidateData = candidateDetailFixture();
+        mockSessionV3Data = {
+            ...mockSessionData,
+            defaults: { ...mockSessionData.defaults },
+        };
         mockCandidatesState = {
             data: {
                 items: [summary(2), summary(4)],
@@ -166,6 +190,21 @@ describe('Phase 9 Unit 6D candidate list and strict review screens', () => {
             sessionId: testUuid(1), candidateId: testUuid(2), candidateVersion: 5,
             inventoryId: testUuid(8), inventoryVersion: 1, outcome: 'committed_private',
         });
+    });
+
+    it('loads full correction from candidate detail v2 plus nullable session/default authority v3', () => {
+        mockCandidateData = candidateDetailFixture({ ordinal: 2 });
+        mockCandidateState = { ...mockCandidateState, data: mockCandidateData };
+        mockSessionV3Data = {
+            ...mockSessionV3Data,
+            defaults: { ...mockSessionV3Data.defaults, condition: null },
+        };
+        const screen = render(
+            <InventoryCandidateReviewScreen sessionId={testUuid(1)} candidateId={testUuid(2)} />,
+        );
+        expect(screen.getByText('Book 2 · Review')).toBeTruthy();
+        expect(screen.getByText('Save review')).toBeTruthy();
+        expect(screen.queryByText('Candidate details could not be loaded.')).toBeNull();
     });
 
     afterEach(() => {

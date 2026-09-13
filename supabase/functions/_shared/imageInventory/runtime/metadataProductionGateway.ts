@@ -9,6 +9,7 @@ import {
   MetadataProductionGateway,
   MetadataProductionRequest,
   MetadataReuseCompletion,
+  resultForManualCompletion,
 } from './metadataProductionComposition';
 import {
   loadMetadataJobContext, metadataObject as object, metadataText as text,
@@ -21,10 +22,12 @@ import {
   metadataGatewayRpc,
   metadataLookupParameters,
 } from './metadataGatewayContext';
+import { completeMetadataJobManually } from './metadataCompletionGateway';
 export { decodeMetadataJobContext, loadMetadataJobContext } from './metadataJobContext';
 export type { MetadataJobContext, MetadataRpcClient } from './metadataJobContext';
 export { requestFromMetadataContext } from './metadataGatewayContext';
 export type { MetadataGatewayConfiguration } from './metadataGatewayContext';
+
 export class SupabaseMetadataProductionGateway implements MetadataProductionGateway {
   readonly providerValidation;
   private readonly providerCalls = new Map<string, string>();
@@ -102,7 +105,7 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
     return { mode: 'follower' as const, leaderLookupId: text(data.leaderLookupId) };
   }
   async deferFollower(request: MetadataProductionRequest) {
-    await this.completeManual({ outcome: 'provider_unavailable',retryable: true });
+    return this.completeManual({ outcome: 'provider_unavailable',retryable: true });
   }
   async registerFollower(request: MetadataProductionRequest, leader: string) {
     return this.completeReuse(request, leader, 'coalesced_follower');
@@ -178,9 +181,10 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
         evidence: current.currentPhysicalEvidence ?? [],retryable: current.currentPhysicalRetryable,
       });
       if (current.currentPhysicalRetryable) {
-        await this.completeManual({ lookupId: input.lookupId,attemptId: input.attemptId,
+        const completion = await this.completeManual({
+          lookupId: input.lookupId,attemptId: input.attemptId,
           outcome: logicalOutcome ?? normalizedOutcome,retryable: true });
-        return { outcome: 'manual_metadata_required' as const };
+        return resultForManualCompletion(completion);
       }
       if (accepted) {
         await this.persistSelection({
@@ -190,9 +194,10 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
         });
         return { outcome: 'accepted_metadata_match' as const };
       }
-      await this.completeManual({ lookupId: input.lookupId,attemptId: input.attemptId,
+      const completion = await this.completeManual({
+        lookupId: input.lookupId,attemptId: input.attemptId,
         outcome: logicalOutcome ?? normalizedOutcome,retryable: false });
-      return { outcome: 'manual_metadata_required' as const };
+      return resultForManualCompletion(completion);
     }
     if (current.currentAttemptDisposition === 'stale') return { outcome: 'stale_claim' as const };
     if (current.currentAttemptDisposition === 'accepted') {
@@ -205,11 +210,11 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
       });
       return { outcome: 'accepted_metadata_match' as const };
     }
-    await this.completeManual({
+    const completion = await this.completeManual({
       lookupId: input.lookupId,attemptId: input.attemptId,
       outcome: current.currentAttemptOutcome ?? 'provider_unavailable',retryable: false,
     });
-    return { outcome: 'manual_metadata_required' as const };
+    return resultForManualCompletion(completion);
   }
   async validateEgress(input: MetadataProductionRequest & { attemptId: string }) {
     const context = await loadMetadataJobContext(this.client, {
@@ -338,14 +343,6 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
   async completeManual(input: Readonly<{
     lookupId?: string; attemptId?: string; outcome: string; retryable: boolean;
   }>) {
-    await metadataGatewayRpc(this.client, 'phase9_fail_metadata_job', {
-      p_job_id: this.configuration.context.jobId,p_worker: this.configuration.worker,
-      p_lease_token: this.configuration.context.claimToken,
-      p_attempt_count: this.configuration.context.attempt,
-      p_candidate_id: this.configuration.context.candidateId,
-      p_candidate_version: this.configuration.context.candidateVersion,
-      p_query_identity: this.configuration.context.queryIdentity,
-      p_failure_kind: input.outcome,p_retryable: input.retryable,
-    });
+    return completeMetadataJobManually(this.client, this.configuration, input);
   }
 }

@@ -10,6 +10,7 @@ export type SafeOperationalEvent = Readonly<{
   batchSize?: number;
   claimed?: number;
   outcomes?: readonly string[];
+  cleanupHealth?: { manualReconciliation: number; dueCount: number; oldestDueSeconds: number };
   durationMs?: number;
   dispatchId?: string;
   category?: 'unauthorized' | 'busy' | 'body_too_large' | 'body_read_timeout'
@@ -29,6 +30,7 @@ export type WorkerHttpServiceOptions = Readonly<{
   log?: SafeLog;
   maxBodyBytes?: number;
   bodyReadTimeoutMs?: number;
+  maxBatchSize?: number;
 }>;
 
 export type StartedWorkerAddress = Readonly<{
@@ -64,23 +66,26 @@ function requestHeaders(headers: IncomingHttpHeaders): Headers {
   return result;
 }
 
-function requestBatchSize(body: Uint8Array): number | undefined {
+function requestBatchSize(body: Uint8Array, maxBatchSize: number): number | undefined {
   try {
     const value = JSON.parse(new TextDecoder().decode(body));
-    return Number.isInteger(value?.batchSize) && value.batchSize >= 1 && value.batchSize <= 10
+    return Number.isInteger(value?.batchSize)
+      && value.batchSize >= 1 && value.batchSize <= maxBatchSize
       ? value.batchSize : undefined;
   } catch {
     return undefined;
   }
 }
 
-async function responseSummary(response: Response): Promise<{
+async function responseSummary(response: Response, maxBatchSize: number): Promise<{
   claimed?: number;
   outcomes?: readonly string[];
+  cleanupHealth?: { manualReconciliation: number; dueCount: number; oldestDueSeconds: number };
 }> {
   try {
     const value = await response.clone().json();
-    const claimed = Number.isInteger(value?.claimed) && value.claimed >= 0 && value.claimed <= 10
+    const claimed = Number.isInteger(value?.claimed)
+      && value.claimed >= 0 && value.claimed <= maxBatchSize
       ? value.claimed : undefined;
     const outcomes = Array.isArray(value?.results)
       ? value.results.map((entry: unknown) => (
@@ -88,9 +93,15 @@ async function responseSummary(response: Response): Promise<{
           ? (entry as { outcome?: unknown }).outcome : undefined
       )).filter((entry: unknown): entry is string => (
         typeof entry === 'string' && safeOutcome.test(entry)
-      )).slice(0, 10)
+      )).slice(0, maxBatchSize)
       : undefined;
-    return { claimed, outcomes };
+    const health = value?.cleanup?.health;
+    const counters = [health?.manualReconciliation, health?.dueCount, health?.oldestDueSeconds];
+    const cleanupHealth = counters.every(entry => typeof entry === 'number' && Number.isFinite(entry)
+      && entry >= 0 && entry <= Number.MAX_SAFE_INTEGER)
+      ? { manualReconciliation: counters[0], dueCount: counters[1], oldestDueSeconds: counters[2] }
+      : undefined;
+    return { claimed, outcomes, ...(cleanupHealth ? { cleanupHealth } : {}) };
   } catch {
     return {};
   }
@@ -117,9 +128,13 @@ export function createPhase9WorkerHttpService(
   const log = options.log ?? createJsonOperationalLogger();
   const maxBodyBytes = options.maxBodyBytes ?? 16_384;
   const bodyReadTimeoutMs = options.bodyReadTimeoutMs ?? 10_000;
+  const maxBatchSize = options.maxBatchSize ?? 10;
   if (!Number.isInteger(maxBodyBytes) || maxBodyBytes < 1
     || !Number.isInteger(bodyReadTimeoutMs) || bodyReadTimeoutMs < 100
-    || bodyReadTimeoutMs > 60_000) throw new Error('P9_WORKER_CONFIGURATION_INVALID');
+    || bodyReadTimeoutMs > 60_000 || !Number.isInteger(maxBatchSize)
+    || maxBatchSize < 1 || maxBatchSize > 15) {
+    throw new Error('P9_WORKER_CONFIGURATION_INVALID');
+  }
   let server: Server | undefined;
   let active = 0;
   let stopping = false;
@@ -193,7 +208,7 @@ export function createPhase9WorkerHttpService(
     const started = performance.now();
     try {
       const body = await readBoundedBody(request, maxBodyBytes, bodyReadTimeoutMs);
-      const batchSize = requestBatchSize(body);
+      const batchSize = requestBatchSize(body, maxBatchSize);
       log({
         event: 'invocation_accepted',
         service: options.serviceName,
@@ -206,7 +221,7 @@ export function createPhase9WorkerHttpService(
         body: body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength) as ArrayBuffer,
       });
       const handled = await options.handler(webRequest);
-      const summary = await responseSummary(handled);
+      const summary = await responseSummary(handled, maxBatchSize);
       log({
         event: handled.status === 403 ? 'invocation_denied' : 'invocation_completed',
         service: options.serviceName,
@@ -214,6 +229,7 @@ export function createPhase9WorkerHttpService(
         batchSize,
         claimed: summary.claimed,
         outcomes: summary.outcomes,
+        ...(summary.cleanupHealth ? { cleanupHealth: summary.cleanupHealth } : {}),
         durationMs: Math.max(0, Math.round(performance.now() - started)),
         dispatchId,
         ...(handled.status === 403 ? { category: 'unauthorized' as const } : {}),

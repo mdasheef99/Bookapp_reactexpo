@@ -1,10 +1,21 @@
 # Phase 9 Automatic Worker Wake Dispatcher
 
-**Status:** `local_implementation_reviewed_corrections_applied`
+**Status:** `live_active_m56_local_unapplied`
 **Authorized:** 2026-08-10
 **Live activation:** prohibited until separate deployment/external-mutation approval
 **Owning authority:** the user's 2026-08-10 narrow work-unit decision; Phase 9
 master SDD §§8–10; pipeline SDD §§10, 14–15; security SDD §§9, 13, 15
+
+**2026-08-30 bounded metadata-throughput overlay:** M36 is live and active at
+its recorded version; M40 subsequently added the `publication_retry` stage.
+Local forward M56 preserves that four-stage live definition and the 60-second
+schedule, but changes only `metadata_enrich` to send a 15-job run budget. Media,
+vision, and publication remain one. The worker itself limits active metadata
+jobs to three through incremental claims, so the dispatcher does not claim or
+lease work. M56 is locally tested and unapplied; worker-first deployment/canary
+and M56 application require separate authorizations. The historical
+pre-activation scope below remains evidence for M36, not the current live
+status.
 
 ## 1. Narrow decision
 

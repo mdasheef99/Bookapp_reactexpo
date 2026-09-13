@@ -1,9 +1,42 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-**Status:** `unit8_live_verified_main_integrated`
+**Status:** `unit6g_media_completion_correction_runtime_verified_connected`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
-**Last updated:** 2026-08-21
-**Current handoff:** Unit 8 is live-verified on the development Supabase
+**Last updated:** 2026-09-08
+**Current handoff:** The Unit 6G media-completion correction is committed and
+pushed on `origin/main` at `ffdb1fc85af625bc98dcfc3af93d5530278144a9`. M52–M56
+were present in that baseline; M57–M59 are live once as
+`20260908073203`, `20260908073308`, and `20260908073425`, with exact-project
+readback passing. Render `phase9-media-sanitation` deployment
+`dep-dafv4ogn74is73bq9lkg` is live and health/readiness are green. The requested
+duplicate-input proof and a unique positive sanitization/vision proof both
+passed at attempt 1; the positive session produced 10 candidates and a linked
+sanitized WebP, then closed with zero committed inventory rows. Owner review of
+the runtime closeout is next. Do not revive the historical dead-lettered job.
+
+Prior handoff: Unit 8 remains live-verified on pushed
+`main`. Unit 6G Group 1/B contracts and M52 (`20260822025712`) are
+live/applied exactly once as the retained Unit 6G A/B foundation. The Unit 6G
+design authority was recomposed 2026-08-24: the
+[`Unit 6G SDD`](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md),
+[contract matrix](./work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md),
+and [tracker 31](./trackers/31-unit6g-owner-batch-review-design-evidence.md)
+are the current authority, with Unit 6 as the immutable lifecycle backbone.
+The recomposed authority passed independent final review (PASS_WITH_P3).
+U6G-FA-001's minimal partial-selected-metadata correction is live-verified:
+unusable compact-summary members project as null and existing per-field source
+precedence supplies fallback. M53 is live exactly once as
+`20260828081324 marketplace_phase9_unit6g_field_authority_correction`. M54 is
+live exactly once as `20260829142337
+marketplace_phase9_unit6g_session_lifecycle_fence`: the current final
+Save/Add/Remove RPCs now require an active, unexpired session and closed-session
+detail/batch reads advertise only read-only actions. Connected proof returned
+`P9_STATE_CONFLICT` for all three mutations with zero durable effects. M52 and
+M53 remain immutable. Exact next action is Owner review of the M54 proof and a
+separate compatibility decision for older sibling correction/variant RPCs;
+Edge/client/native deployment remains separately gated.
+
+Historical Unit 8 handoff: Unit 8 is live-verified on the development Supabase
 project. M49, M50, and M51 were
 applied exactly once as `20260821060156`, `20260821060742`, and
 `20260821061213`; the dedicated `phase9_q08_cursor_secret` is provisioned
@@ -125,6 +158,7 @@ After the repository entrypoint, read in this order:
 | [Unit 7A create-only commit](./work-units/07a-create-only-inventory-commit-sdd.md) | One reviewed candidate to one new private inventory row, server-held review/revision authority, quantity buckets, replay/concurrency, one-to-one provenance, false-only skip semantics, Unit 6 duplicate-contract transition, and migration verdict. |
 | [Unit 7B safe publication](./work-units/07b-publication-sdd.md) | Existing publish/pause/private/retry lifecycle, public eligibility/projection, approved media, retry worker, and live completion contract. |
 | [Unit 7C Owner Store View](./work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md) | Stable post-commit Owner identity, Store View IA and reads, atomic Save, separate stock/media operations, Unit 7B lifecycle reuse, public revisions, UI cutover, database delta, and acceptance A–H. |
+| [Unit 6G Owner defaults and batch review](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md) | Draft pre-scan defaults, one compact bounded review page, metadata sheet, save-then-commit Add/Add all, durable candidate removal, partial success, and unchanged Unit 7A/7C handoff. |
 | [Unit 8 bookstore-first Marketplace](./work-units/08-marketplace-bookstore-first-sdd.md) | Frozen Q07-Q10 customer architecture: safe identity/grouping/counts, bookstore grouping before pagination, deterministic ranking/cursors, complete title-group storefront, detail/gallery, availability, privacy, and U8B/U8C/U8D handoff. |
 
 ## Supporting set

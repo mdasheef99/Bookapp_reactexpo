@@ -19,7 +19,7 @@ import {
     type CaptureSource,
 } from '../capture/captureState';
 import { createCaptureAttempt, type CaptureAttempt } from '../capture/captureIds';
-import { captureDefaults, hasCurrentCaptureIdentity } from '../capture/captureAuthority';
+import { hasCurrentCaptureIdentity } from '../capture/captureAuthority';
 import { useCaptureWorkflow } from '../capture/CaptureWorkflowContext';
 import { registerCaptureCancellation } from '../capture/captureCancellation';
 import type { UploadHandle } from '../capture/uploadTransport';
@@ -29,6 +29,14 @@ import {
     useOwnerInventoryDiscovery,
     useOwnerInventoryInputs,
 } from '../queries/ownerUxQueries';
+import { useStartScanSessionV2 } from '../queries/ownerBatchReviewQueries';
+import {
+    buildStartScanSessionV2Request,
+    initialScanSetupForm,
+    isStartEnabled,
+    type ScanSetupFormState,
+} from '../scanSetup/scanSetupForm';
+import { ScanSetupForm, ScanSetupSummary } from '../components/ScanSetupForm';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
 import { useOwnerQueryMutationGate } from '../offline/ownerUxOfflineGate';
@@ -44,7 +52,17 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
     const operationGeneration = useRef(0);
     const [sourceStep, setSourceStep] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
-    const [startAttempt] = useState(() => createCaptureAttempt('start-session'));
+    // One logical Start attempt owns one stable semantic identity AND one
+    // frozen immutable request payload. A lost or ambiguous response replays
+    // the exact original request; only a reconciled new Start may mint a
+    // different identity, and later form edits never mutate an in-flight
+    // replay's meaning.
+    const [startAttempt] = useState(() => createCaptureAttempt('start-scan-session-v2'));
+    const startRequestRef = useRef<ReturnType<typeof buildStartScanSessionV2Request> | null>(null);
+    const startReconciledRef = useRef(false);
+    const startedSessionIdRef = useRef<string | null>(null);
+    const [form, setForm] = useState<ScanSetupFormState>(initialScanSetupForm);
+    const startV2 = useStartScanSessionV2(identity);
     const gate = useOwnerQueryMutationGate({
         scope: `${identity.userId}:${identity.storeId}:capture-setup`,
         isOffline,
@@ -58,6 +76,48 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
         setBusy(false);
         setSourceStep(false);
     }), []);
+
+    async function beginStart() {
+        if (busyRef.current || !gate.canMutate || !hasCurrentCaptureIdentity(identity)) return;
+        if (!isStartEnabled(form)) {
+            setMessage('Choose or enter a shelf location before starting.');
+            return;
+        }
+        busyRef.current = true;
+        const attempt = ++operationGeneration.current;
+        setBusy(true);
+        setMessage(null);
+        try {
+            if (!discovery.data?.activeSession) {
+                if (!startReconciledRef.current) {
+                    const request = startRequestRef.current
+                        ?? buildStartScanSessionV2Request(form, startAttempt);
+                    startRequestRef.current = request;
+                    await new Promise<void>((resolve, reject) => {
+                        startV2.mutate(request, {
+                            onSuccess: (canonical) => {
+                                startedSessionIdRef.current = canonical.sessionId;
+                                resolve();
+                            },
+                            onError: (error) => reject(error),
+                        });
+                    });
+                }
+                startReconciledRef.current = true;
+            }
+            if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
+            setSourceStep(true);
+        } catch {
+            // The semantic identity is intentionally retained so the next
+            // press replays the SAME idempotency key and command ID.
+            setMessage('Starting did not finish clearly. Press Start scanning again to continue.');
+        } finally {
+            if (attempt === operationGeneration.current) {
+                busyRef.current = false;
+                setBusy(false);
+            }
+        }
+    }
 
     async function choose(source: CaptureSource) {
         if (busyRef.current || !gate.canMutate) return;
@@ -100,12 +160,12 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
             }
             if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
             const sessionId = discovery.data?.activeSession?.sessionId
-                ?? await captureService.startSession(
-                    captureDefaults,
-                    startAttempt.key,
-                    startAttempt.commandId,
-                );
-            if (attempt !== operationGeneration.current || !hasCurrentCaptureIdentity(identity) || !mutationAuthority.current) return;
+                ?? startedSessionIdRef.current;
+            if (!sessionId) throw new CaptureClientError(
+                'P9_INTERNAL_ERROR',
+                true,
+                'The session could not be started. Press Start scanning again.',
+            );
             workflow.select(validated.media);
             router.push(inventoryRoutes.preview(sessionId));
         } catch (error) {
@@ -122,37 +182,99 @@ function CaptureSetup({ identity }: { identity: ImageInventoryIdentity }) {
 
     return (
         <ScreenBackground>
-            <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 24, gap: 16 }}>
-                <GlassCard padding={20} borderRadius={16}>
-                    <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800' }}>
-                        Scan book spines
-                    </Text>
-                    <Text selectable style={{ color: colors.textSecondary, lineHeight: 21, marginTop: 8 }}>
-                        Language: English · Script: Latin · Condition: Good
-                    </Text>
-                    <Text selectable style={{ color: colors.textSecondary, lineHeight: 21, marginTop: 4 }}>
-                        Shelf: default · Quantity: 1 · Publication: Private
-                    </Text>
-                    <Text selectable style={{ color: colors.textSecondary, lineHeight: 21, marginTop: 8 }}>
-                        Frame up to 15 visible spines, avoid glare, and keep titles readable.
-                    </Text>
-                    <View style={{ gap: 12, marginTop: 18 }}>
-                        {!sourceStep ? (
-                            <Button title="Start scanning" onPress={() => setSourceStep(true)} disabled={busy || !gate.canMutate || discovery.isLoading} testID="capture-start" />
-                        ) : (
-                            <>
-                                <Button title="Open camera" onPress={() => void choose('camera')} disabled={busy || !gate.canMutate} testID="capture-camera" />
-                                <Button title="Choose from gallery" variant="secondary" onPress={() => void choose('gallery')} disabled={busy || !gate.canMutate} testID="capture-gallery" />
-                            </>
-                        )}
-                        {message?.includes('settings') ? (
-                            <Button title="Open settings" variant="ghost" onPress={() => void Linking.openSettings()} />
-                        ) : null}
+            <View style={{ flex: 1 }}>
+                <ScrollView
+                    contentInsetAdjustmentBehavior="automatic"
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 28, gap: 18 }}
+                >
+                    <View style={{ gap: 8 }}>
+                        <Text
+                            selectable
+                            accessibilityRole="header"
+                            style={{ color: colors.textPrimary, fontSize: 30, lineHeight: 35, fontWeight: '800', letterSpacing: -0.7 }}
+                        >
+                            Scan books
+                        </Text>
+                        <Text selectable style={{ color: colors.textSecondary, fontSize: 15, lineHeight: 22 }}>
+                            Set defaults for this scan. You can change any detected book during review.
+                        </Text>
                     </View>
-                    {isOffline ? <Text selectable style={{ color: colors.error, marginTop: 12 }}>Reconnect before choosing an image.</Text> : null}
-                    {message ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error, marginTop: 12 }}>{message}</Text> : null}
-                </GlassCard>
-            </ScrollView>
+
+                    <View style={{
+                        alignSelf: 'flex-start',
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderRadius: 999,
+                        paddingHorizontal: 12,
+                        paddingVertical: 7,
+                        backgroundColor: colors.bgCard,
+                    }}>
+                        <Text selectable style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
+                            Up to 15 visible book spines per image
+                        </Text>
+                    </View>
+
+                    <ScanSetupForm form={form} onChange={setForm} />
+
+                    <View style={{
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderRadius: 16,
+                        padding: 16,
+                        backgroundColor: colors.bgCard,
+                        gap: 5,
+                    }}>
+                        <Text selectable style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '800' }}>
+                            Before taking the photo
+                        </Text>
+                        <Text selectable style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19 }}>
+                            Keep titles sharp and upright, avoid glare, and make sure no more than 15 spines are visible.
+                        </Text>
+                    </View>
+
+                    {isOffline ? <Text selectable style={{ color: colors.error }}>Reconnect before choosing an image.</Text> : null}
+                    {message ? <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error }}>{message}</Text> : null}
+                </ScrollView>
+
+                <View style={{
+                    paddingHorizontal: 20,
+                    paddingTop: 14,
+                    paddingBottom: 18,
+                    borderTopWidth: 1,
+                    borderTopColor: colors.border,
+                    backgroundColor: colors.bgCard,
+                    gap: 12,
+                }}>
+                    <ScanSetupSummary form={form} />
+                    {!sourceStep ? (
+                        <>
+                            <Button
+                                title="Start scanning"
+                                onPress={() => void beginStart()}
+                                disabled={busy || !gate.canMutate || discovery.isLoading || !isStartEnabled(form)}
+                                testID="capture-start"
+                            />
+                            {!isStartEnabled(form) ? (
+                                <Text selectable style={{ color: colors.textSecondary, fontSize: 12, textAlign: 'center' }}>
+                                    Choose or enter a shelf location before starting.
+                                </Text>
+                            ) : null}
+                        </>
+                    ) : (
+                        <View style={{ gap: 10 }}>
+                            <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '800' }}>
+                                Choose the image source
+                            </Text>
+                            <Button title="Open camera" onPress={() => void choose('camera')} disabled={busy || !gate.canMutate} testID="capture-camera" />
+                            <Button title="Choose from gallery" variant="secondary" onPress={() => void choose('gallery')} disabled={busy || !gate.canMutate} testID="capture-gallery" />
+                        </View>
+                    )}
+                    {message?.includes('settings') ? (
+                        <Button title="Open settings" variant="ghost" onPress={() => void Linking.openSettings()} />
+                    ) : null}
+                </View>
+            </View>
         </ScreenBackground>
     );
 }

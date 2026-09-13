@@ -16,6 +16,7 @@ import {
     useUpdateOwnerCandidateReview,
 } from '../queries/ownerUxReviewQueries';
 import { ownerInventoryReadKeys } from '../queries/ownerInventoryReadQueries';
+import { ownerBatchReviewKeys } from '../queries/ownerBatchReviewQueries';
 import { candidateDetailFixture, testUuid } from '../testing/ownerUxTestFixtures';
 
 jest.mock('../api/ownerUxService', () => {
@@ -80,6 +81,27 @@ describe('Phase 9 Unit 6F Review Save request authority fence', () => {
             networkMode: 'always', retry: false,
         });
         expect(client.getMutationCache().getAll()[0].state.isPaused).toBe(false);
+        hook.unmount();
+    });
+
+    it('reconciles every current 6G v3 root after retained full/manual Save', async () => {
+        const canonical = candidateDetailFixture({ candidateVersion: 5 });
+        updateCandidateReview.mockResolvedValue(canonical);
+        const v3Keys = [
+            ownerBatchReviewKeys.sessionV3(identity, request.sessionId),
+            ownerBatchReviewKeys.batchReview(identity, request.sessionId),
+            ownerBatchReviewKeys.readinessV3(identity, request.sessionId),
+        ];
+        v3Keys.forEach((key) => client.setQueryData(key, { staleCanonical: true }));
+        const hook = renderHook(
+            () => useUpdateOwnerCandidateReview(identity, request.sessionId, request.candidateId),
+            { wrapper },
+        );
+
+        await act(async () => expect(hook.result.current.mutateAsync(request)).resolves.toEqual(canonical));
+        v3Keys.forEach((key) => {
+            expect(client.getQueryState(key)?.isInvalidated).toBe(true);
+        });
         hook.unmount();
     });
 

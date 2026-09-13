@@ -1,12 +1,137 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
 **Status:** active continuity protocol
-**Last updated:** 2026-08-21
+**Last updated:** 2026-09-08
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
+
+## Current 2026-09-08 Unit 6G media-completion correction overlay
+
+The active checkout is the isolated branch
+`codex/phase9-unit6g-media-correction-integrated`, whose commit
+`ffdb1fc85af625bc98dcfc3af93d5530278144a9` is pushed to `origin/main`.
+The old dirty correction checkout remains untouched. M52–M56 were already
+tracked by the baseline; no historical migration was restored or duplicated.
+Read-only exact-project history confirms M52–M56 live once, ending with M56
+`20260830175651 marketplace_phase9_metadata_throughput`. After independent
+approval and a passing exact-project preflight, M57–M59 were applied separately
+and in order as live versions `20260908073203`, `20260908073308`, and
+`20260908073425`. The correction implements durable output intent before
+upload, canonical completion replay, exact duplicate-sanitized-hash rejection,
+and fenced service-only cleanup/recovery. Render service
+`phase9-media-sanitation` is live from that commit as deployment
+`dep-dafv4ogn74is73bq9lkg`; `/health` and `/ready` both returned 200. The
+requested `testimage.jpeg` completed the duplicate-input guard at attempt 1,
+and unique `10testimage.jpeg` completed media and vision at attempt 1 with 10
+candidates and a linked sanitized WebP. Both sessions were closed with zero
+committed inventory rows. Focused worker/runtime Jest is 62/62, related
+backend/Owner/UI Jest is 219/219, and the worker build passes. The exact next
+action is Owner review of this runtime closeout; do not revive the historical
+dead-lettered job.
+
+## Prior 2026-08-24 Unit 6G recomposition overlay
+
+**Historical 2026-08-30 bounded metadata-throughput overlay:** The local metadata worker
+now accepts a metadata-specific run budget of 15, holds no more than three
+active jobs, and incrementally claims only enough to refill open slots. It
+continues to send one independent Google Books request per book and preserves
+per-book leases, retries/dead letters, idempotency, duplicate protection,
+failure isolation, and claim-ordered outcomes. Generic workers remain capped at
+10. Durable retry state is reflected in the response while the database remains
+authoritative. Forward M56 changes only the live-M40 dispatcher definition so
+metadata receives 15 and media/vision/publication remain one; it preserves the
+60-second cron, 120-second timeout, claim function, and applied migrations.
+Focused Jest 7/72 (including the metadata-only invoker bound), the metadata worker
+production build, and dispatcher PGlite 30/30 passed. Later read-only migration
+history confirms M56 is live once as `20260830175651`. No
+deployment, provider call, database or Storage mutation, stage, commit, push,
+merge, or PR occurred. The exact next
+action is Owner review followed by separate authorization for commit and
+worker-first canary deployment. Verify live provider timeout ≤10 seconds,
+quota/rate limits, memory/connections, retries/dead letters, and duplicate-call
+signals before any separately authorized M56 application.
+
+**2026-08-30 M55 bounded-correction overlay:** The forward migration
+`20260830000055_marketplace_phase9_unit6g_metadata_add_authority_correction.sql`
+was applied exactly once through Supabase MCP to the verified development
+project `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as live version
+`20260830084323 marketplace_phase9_unit6g_metadata_add_authority_correction`,
+directly after M54. It is limited to selected metadata snapshot identity in
+compact Add preparation, author enforcement at the final Add/commit boundary
+while saved review remains empty-author compatible, title/author-primary
+durable query identity when bibliographic evidence exists, removal of the hard
+Google language filter, exact-ISBN fallback for ISBN-only queries, and full
+commit-eligibility gating for batch-card Add actions. A read-only post-apply
+definition readback confirmed the identity strategy, final author guard,
+batch-card eligibility gate, and closed-session read-only projection. The
+affected-scope Jest suite is 64 passed suites / 690 passed tests (one suite and
+four tests skipped), M54+M55 PGlite is 7/7, and the migration application
+returned success. No client/Edge deployment or business-data mutation occurred.
+Add-all redesign, close audit, and older sibling RPC compatibility are outside
+M55.
+
+**2026-08-29 M54 lifecycle-fence overlay:** The Owner-authorized forward
+migration `20260829000054_marketplace_phase9_unit6g_session_lifecycle_fence.sql`
+is live exactly once on `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as
+`20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`. The final
+Unit 6G Save/Add/Remove RPCs lock and require an active, unexpired session after
+completed exact-replay reconciliation; closed/closing/expired detail and batch
+reads retain only read-only actions. Connected proof against an existing closed
+candidate returned `P9_STATE_CONFLICT` for Save/Add/Remove and verified zero
+candidate, session-count, inventory, audit, event, or idempotency effects. M54
+does not change older sibling manual/false-detection/variant RPC behavior; that
+compatibility boundary needs a separate Owner decision. No Edge/client/native
+deployment, Storage operation, business-row write, stage, push, merge, or PR
+was performed; the local branch changes were committed only after the
+read-only browser verification. The exact next action is Owner review of this M54 proof and explicit
+disposition of that legacy compatibility boundary.
+
+The Unit 6G design authority was recomposed on
+`codex/phase9-unit6g-recomposition` (clean baseline `714607f`). The revised
+[Unit 6G SDD](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md),
+[contract matrix](./work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md),
+and [tracker 31](./trackers/31-unit6g-owner-batch-review-design-evidence.md)
+are the current single-image authority: the complete 40-row Unit 6 predecessor
+ledger (`INHERITED_UNCHANGED=30`, `SUPERSEDED_BY_6G=7`,
+`DEFERRED_WITH_EXPLICIT_OWNER=3`, `0/0`) and contiguous U6G-AC01..AC34. Unit 6
+is the immutable lifecycle backbone; its over-limit behavior is unchanged. M52
+remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation`
+(retained 6G A/B foundation) and is not reopened. Historical commit `e7ed166`
+old 6G-C work and the frozen old 6G-D implementation are superseded evidence,
+not authority. Status is
+`unit6g_d_implemented_pending_owner_6ge_authorization`.
+Independent final review of the recomposed three-document authority is COMPLETE (verdict PASS_WITH_P3), and NEW 6G-C implementation passed through its own correction cycle under the same final verdict (known P3 N1 module-size deferred), locally checkpointed. The 2026-08-29 pre/post-scan composition-only UI checkpoint is also locally implemented and pending Owner review; it is committed on this local branch and remains undeployed. NEW 6G-D commit orchestration subsequently passed its own dual-model review cycle (final verdict PASS after two bounded correction rounds) and is locally checkpointed; known deferred P3s are recorded in the tracker closeout. The exact next action is Owner review of the local UI diff and live proof; separate 6G-E Edge deployment (resolving pre-6G live v8), connected live verification, and native closure remain gated. Nothing is deployed. NEW 6G-C was composition-only pre-commit client work over the retained M52 foundation. NEW 6G-D
+later owns commit orchestration, and 6G-E owns Edge deployment/live/native
+closure. No product source, SQL/M52, database/Storage,
+deployment, stage, push, merge, or PR action occurred in the recomposition.
+
+## Prior 2026-08-21 Unit 6G Group 1 implementation overlay
+
+Unit 8 remains live-verified and integrated into pushed `main`. The selected
+Phase 9 work unit is Unit 6G; Group 1 contract/persistence foundation is
+implemented on the approved existing branch/worktree and **M52 is applied and
+live-verified**. The SDD and matrix
+[Unit 6G SDD](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md)
+and [contract matrix](./work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md)
+They define optional pre-scan defaults, one compact bounded review page,
+save-then-commit Add/Add all orchestration over M39, a distinct durable Owner
+candidate-removal disposition, and the unchanged Unit 7C post-commit boundary.
+Status at that historical checkpoint was `group1_complete_m52_applied_awaiting_6gc_authorization`. M52 is live
+exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation`
+directly after M51 `20260821061213`; the read-only preflight passed (dependency
+signatures, ACL snapshot, data compatibility), and connected proofs verified
+nullable-condition Start v2 with legacy-v2 fail-closed fence, irreversible
+Owner removal excluded from batch review and page-v2, Close v3 accounting
+without double-counting, and preserved page-v2 ownership/grants. Full evidence
+is in [tracker 02](./trackers/02-implementation-and-verification.md) §Unit 6G-B
+M52 application. Local branch commits: `20b5916` (Group 1 foundation),
+`1c090b9` (correction iterations), `6313067` (application evidence). Groups
+2–4 remain out of scope. The exact next action is separate Owner authorization
+of 6G-C; Edge/mobile deployment of new client code requires separate
+authorization.
 
 ## Current 2026-08-21 Unit 8 closure overlay
 
@@ -440,6 +565,7 @@ Do not describe an action as authorized merely because it is listed as a future 
 | Service deployment/live fixture verification | 02 Pipeline; 04 Security | [Unit 4A deployment-runtime SDD](./work-units/04a-deployment-runtime-scaffolding-sdd.md), [M11/M12 live-application evidence](./trackers/05-m11-m12-live-application-evidence.md), current-vs-target audit, migration ledger, current worker/Owner entrypoints, environment loaders, container/deployment validators, hosting configuration, and fresh exact-project service/function readback |
 | 5 Metadata/aliases | 01 Data; 02 Pipeline; 03 Review; 04 Security; 05 Marketplace | Unit 5A/5B handoffs/evidence, [Unit 5C Lite](./work-units/05c-lite-multilingual-search-variants-sdd.md), data dictionary, current-vs-target audit, requirements traceability, complexity register, provider audit/fixtures |
 | 6 Owner UX | [Unit 6 SDD](./work-units/06-owner-capture-review-recovery-ux-sdd.md); [contract matrix](./work-units/06-owner-capture-review-recovery-contract-matrix.md); 03 Review; 02 Pipeline | [tracker 18](./trackers/18-unit6-owner-ux-design-evidence.md), DOC-8, accessibility/verification matrix |
+| 6G Owner defaults/batch review/commit handoff | [Unit 6G SDD](./work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md); [Unit 6G matrix](./work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md); Unit 6; Unit 7A; Unit 7C; 00 Master; 02 Pipeline; 03 Review | P9-D81–P9-D85; DOC-3/4/8; [tracker 31](./trackers/31-unit6g-owner-batch-review-design-evidence.md); data dictionary; current-vs-target audit; traceability; complexity register; current capture/review/commit/Store View code and M02/M29/M35/M39/M43 |
 | WU1/WU2 Owner inventory read boundary/client | [WU1](./work-units/owner-inventory-read-boundary-wu1-sdd.md); [WU2](./work-units/owner-inventory-read-client-wu2-sdd.md); 00 Master; 03 Review | [tracker 25](./trackers/25-owner-inventory-read-boundary-wu1-evidence.md), [tracker 26](./trackers/26-owner-inventory-read-client-wu2-evidence.md), DOC-8 §5, current-vs-target audit, requirements traceability |
 | 7A Create-only private inventory commit | [Unit 7A SDD](./work-units/07a-create-only-inventory-commit-sdd.md); 00 Master; 01 Data; 03 Review | Unit 6 SDD/contract transition, DOC-3/4/8, quantity/hold invariants, current-vs-target audit, traceability |
 | 7B Publication/projection | 03 Review; 05 Marketplace | private/public projection and current trigger audit; separately authorized after 7A |

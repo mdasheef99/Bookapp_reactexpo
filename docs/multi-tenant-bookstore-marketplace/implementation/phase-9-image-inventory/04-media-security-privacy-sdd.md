@@ -47,6 +47,14 @@ retaining `PUBLIC`, `anon`, and `authenticated` denial. Repository search, all
 caller; this is an intentional trusted-role compatibility allowance. Direct
 projection-view access remains denied to customer roles, and v2 JSON RPCs remain
 the customer path.
+**Unit 6G lifecycle command checkpoint (live once 2026-08-29):** M54 preserves
+the initiating-Owner/store boundary and adds one locked active-and-unexpired
+session fence to the current final Save/Add/Remove RPCs after completed replay
+reconciliation. Closed/closing/expired reads expose no mutation capability.
+The new internal helpers are postgres-owned, fixed-empty-search-path, and denied
+to `PUBLIC`, `anon`, `authenticated`, and `service_role`; public function
+grants remain unchanged. Connected closed-candidate calls failed with
+`P9_STATE_CONFLICT` and zero durable effects.
 **U8B local security evidence (2026-08-20):** The repository-only M49 proof
 keeps Q07 internal and customer-denied, grants Q08 only to the intended public
 customer roles, and keeps the actual-copy helper service-role-only. The helper
@@ -319,6 +327,15 @@ Provider/model credentials and secrets cannot enter client and build bundles, pr
 Raw provider/model payload persistence is disabled by default. Any exception requires separately approved, private, schema-bounded, positive-allowlist diagnostic capture that excludes credentials, secrets, signed URLs, reusable capabilities, PII, raw media, or unrestricted prompts/responses. Diagnostic records have a maximum seven-day deletion deadline and use idempotent deletion, bounded retries, alerts, and failed-deletion reconciliation.
 
 ## 12. Deletion, holds, and recovery
+
+**2026-09-08 Unit 6G correction:** The corrected worker no longer deletes based
+on its upload flag. Live M57–M59 implement the persisted
+[receipt/output-intent design](./supporting/unit6g-media-completion-correction.md):
+server-derived intent precedes upload; uncertain outcomes retain bounded
+reconciliation evidence; same-attempt reuse verifies Storage metadata and actual
+bytes; and only a fenced service cleanup claim authorizes object deletion.
+M57–M59 are live as `20260908073203`, `20260908073308`, and
+`20260908073425`; matching runtime deployment and scheduling remain gated.
 
 - Lifecycle worker selects due assets under lease, rechecks active links/holds, deletes object, then records `deleted_at`, reason, attempt, and object result.
 - Deletion is idempotent; already-missing object is a success with evidence.

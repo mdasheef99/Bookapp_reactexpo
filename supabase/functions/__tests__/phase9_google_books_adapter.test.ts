@@ -15,8 +15,8 @@ import { buildMetadataQueryIdentity } from '../_shared/imageInventory/metadata';
 const isbnQuery = buildMetadataQueryIdentity({
   strategy: 'isbn',
   isbnClue: '0-306-40615-2',
-  title: 'ignored title',
-  authors: ['ignored author'],
+  title: 'The Fixture Book',
+  authors: ['Fixture Author'],
   language: 'en',
   editionClues: [],
 });
@@ -35,11 +35,13 @@ describe('Phase 9 Unit 5B Google Books adapter', () => {
     expect(GOOGLE_BOOKS_CAPABILITY.supportedStrategies).toEqual(['isbn', 'bibliographic']);
   });
 
-  it('constructs a deterministic bounded identifier-first request without private data', () => {
+  it('constructs a deterministic bounded title/author-first request without private data', () => {
     const request = buildGoogleBooksRequest(isbnQuery, 'server-only-key');
     expect(request.url.origin + request.url.pathname)
       .toBe('https://www.googleapis.com/books/v1/volumes');
-    expect(request.url.searchParams.get('q')).toBe('isbn:9780306406157');
+    expect(request.url.searchParams.get('q')).toBe('intitle:the fixture book inauthor:fixture author');
+    expect(request.url.searchParams.get('q')).not.toContain('isbn:');
+    expect(request.url.searchParams.get('langRestrict')).toBeNull();
     expect(request.url.searchParams.get('maxResults')).toBe('10');
     expect(request.url.searchParams.get('startIndex')).toBe('0');
     expect(request.url.searchParams.get('printType')).toBe('books');
@@ -60,8 +62,18 @@ describe('Phase 9 Unit 5B Google Books adapter', () => {
     });
     const request = buildGoogleBooksRequest(query, 'server-only-key');
     expect(request.url.searchParams.get('q')).toBe('intitle:गोदान inauthor:प्रेमचंद');
-    expect(request.url.searchParams.get('langRestrict')).toBe('hi');
+    expect(request.url.searchParams.get('langRestrict')).toBeNull();
     expect(request.url.searchParams.get('q')).not.toContain('isbn:');
+  });
+
+  it('uses ISBN only when no title or author evidence exists', () => {
+    const query = buildMetadataQueryIdentity({
+      strategy: 'isbn', isbnClue: '0-306-40615-2', title: '', authors: [],
+      language: 'en', editionClues: [],
+    });
+    const request = buildGoogleBooksRequest(query, 'server-only-key');
+    expect(request.url.searchParams.get('q')).toBe('isbn:9780306406157');
+    expect(request.url.searchParams.get('langRestrict')).toBeNull();
   });
 
   it('decodes bounded coherent editions, strips description markup, validates ISBNs, and skips a malformed sibling', () => {
@@ -79,6 +91,33 @@ describe('Phase 9 Unit 5B Google Books adapter', () => {
       language: 'en',
     });
     expect(JSON.stringify(editions[0])).not.toContain('volumeInfo');
+  });
+
+  it('selects the largest safe Google Books cover and falls back past unsafe larger links', () => {
+    const decoded = decodeGoogleBooksResponse({
+      totalItems: 1,
+      items: [{
+        id: 'cover-volume',
+        volumeInfo: {
+          title: 'Cover Fixture',
+          authors: ['Fixture Author'],
+          language: 'en',
+          imageLinks: {
+            extraLarge: 'https://user:secret@books.google.com/unsafe.jpg',
+            large: 'https://example.com/unsafe.jpg',
+            small: 'not a url',
+            medium: 'http://books.google.com/books/content?id=cover&zoom=3',
+            thumbnail: 'https://books.google.com/books/content?id=cover&zoom=1',
+          },
+        },
+      }],
+    }, {
+      correlationId: 'cover-correlation',
+      attemptId: 'cover-attempt',
+      fetchedAt: '2026-07-28T00:00:00.000Z',
+    });
+    expect(decoded[0].coverReference)
+      .toBe('https://books.google.com/books/content?id=cover&zoom=3');
   });
 
   it('preserves Unicode/original script and maps empty responses to no match', () => {
@@ -104,6 +143,115 @@ describe('Phase 9 Unit 5B Google Books adapter', () => {
     expect(ranked.selected?.providerRecordId).toBe('volume-exact-isbn');
     expect(ranked.selected?.authors).toEqual(['Fixture Author']);
     expect(rankGoogleBooksEditions(isbnQuery, editions)).toEqual(ranked);
+  });
+
+  it('accepts an exact ISBN when bibliographic evidence is unavailable', () => {
+    const query = buildMetadataQueryIdentity({
+      strategy: 'isbn', isbnClue: '0-306-40615-2', title: '', authors: [],
+      language: 'en', editionClues: [],
+    });
+    const editions = decodeGoogleBooksResponse(
+      googleBooksMultipleVolumes,
+      { correlationId: 'isbn-only', attemptId: 'attempt-isbn-only',
+        fetchedAt: '2026-07-28T00:00:00.000Z' },
+    );
+    const ranked = rankGoogleBooksEditions(query, editions);
+    expect(ranked.outcome).toBe('coherent_match');
+    expect(ranked.selected?.providerRecordId).toBe('volume-exact-isbn');
+    expect(ranked.evidence).toContain('exact_validated_isbn');
+  });
+
+  it('keeps title and author primary when an ISBN points at a conflicting provider edition', () => {
+    const query = buildMetadataQueryIdentity({
+      strategy: 'isbn',
+      isbnClue: '9781861972712',
+      title: 'The Fixture Book',
+      authors: ['Fixture Author'],
+      language: 'en',
+      editionClues: [],
+    });
+    const editions = decodeGoogleBooksResponse(
+      googleBooksMultipleVolumes,
+      { correlationId: 'title-author-primary', attemptId: 'attempt', fetchedAt: '2026-07-28T00:00:00.000Z' },
+    );
+    const ranked = rankGoogleBooksEditions(query, editions);
+    expect(ranked.outcome).toBe('coherent_match');
+    expect(ranked.selected?.providerRecordId).toBe('volume-exact-isbn');
+    expect(ranked.evidence).toEqual(expect.arrayContaining([
+      'exact_original_title',
+      'author_overlap',
+    ]));
+  });
+
+  it('uses language and ISBN only to break ties between title/author matches', () => {
+    const editions = decodeGoogleBooksResponse({
+      totalItems: 2,
+      items: [
+        {
+          id: 'secondary-weaker',
+          volumeInfo: {
+            title: 'The Fixture Book', authors: ['Fixture Author'], language: 'fr',
+            industryIdentifiers: [{ type: 'ISBN_13', identifier: '9781861972712' }],
+          },
+        },
+        {
+          id: 'secondary-stronger',
+          volumeInfo: {
+            title: 'The Fixture Book', authors: ['Fixture Author'], language: 'en',
+            industryIdentifiers: [{ type: 'ISBN_13', identifier: '9780306406157' }],
+          },
+        },
+      ],
+    }, {
+      correlationId: 'secondary-ranking',
+      attemptId: 'attempt',
+      fetchedAt: '2026-07-28T00:00:00.000Z',
+    });
+    const ranked = rankGoogleBooksEditions(isbnQuery, editions);
+    expect(ranked.outcome).toBe('coherent_match');
+    expect(ranked.selected?.providerRecordId).toBe('secondary-stronger');
+    expect(ranked.evidence).toEqual(expect.arrayContaining([
+      'exact_validated_isbn',
+      'language_compatible',
+    ]));
+  });
+
+  it('uses edition clues only to break a tie between title/author matches', () => {
+    const query = buildMetadataQueryIdentity({
+      strategy: 'bibliographic',
+      isbnClue: null,
+      title: 'The Fixture Book',
+      authors: ['Fixture Author'],
+      language: 'en',
+      editionClues: ['book'],
+    });
+    const editions = decodeGoogleBooksResponse({
+      totalItems: 2,
+      items: [
+        {
+          id: 'edition-weaker',
+          volumeInfo: {
+            title: 'The Fixture Book', authors: ['Fixture Author'],
+            language: 'en', printType: 'MAGAZINE',
+          },
+        },
+        {
+          id: 'edition-stronger',
+          volumeInfo: {
+            title: 'The Fixture Book', authors: ['Fixture Author'],
+            language: 'en', printType: 'BOOK',
+          },
+        },
+      ],
+    }, {
+      correlationId: 'edition-ranking',
+      attemptId: 'attempt',
+      fetchedAt: '2026-07-28T00:00:00.000Z',
+    });
+    const ranked = rankGoogleBooksEditions(query, editions);
+    expect(ranked.outcome).toBe('coherent_match');
+    expect(ranked.selected?.providerRecordId).toBe('edition-stronger');
+    expect(ranked.evidence).toContain('edition_clue_overlap');
   });
 
   it('fails closed with missing configuration and makes no HTTP call', async () => {

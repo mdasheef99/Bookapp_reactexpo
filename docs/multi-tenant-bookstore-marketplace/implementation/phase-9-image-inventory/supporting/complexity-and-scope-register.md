@@ -1,6 +1,28 @@
 # Phase 9 Complexity and Scope Register
 
-**Last updated:** 2026-07-29
+**Last updated:** 2026-08-21
+**Implementation checkpoint:** Group 1 contract/persistence foundation is locally
+verified on the approved branch; M52 is unapplied. UI/card/Add-all/Store View
+work remains Groups 2–4 and is not authorized.
+
+## Unit 6G complexity assessment
+
+The proposed Unit 6G feature is bounded medium-high work, not a rewrite. Most
+business validation and the atomic commit already exist. Complexity is
+concentrated in one versioned session/card projection, one new durable candidate
+disposition, lossless compact-form state, and partial-success orchestration.
+
+| Concern | Containment decision | Complexity effect |
+| --- | --- | --- |
+| Repeated setup entry | Required location plus optional nullable defaults; no last-used/preset system | Small additive session schema and form |
+| Fifteen full detail forms/N+1 | One strict aggregate capped at 15; observed/metadata/blocker/attention DTOs reuse existing bounds; metadata detail only when sheet opens | Predictable payload/render/privacy cost |
+| Save versus commit safety | Reuse strict review Save and M39 sequentially | No duplicate validation or second commit path |
+| Add all/concurrent controls | One shared command slot per candidate; client coordinator runs independent commands at concurrency three, skips/reports Busy, and preserves partial success | No queue, duplicate commit, batch SQL transaction/RPC, or rollback protocol |
+| Metadata identity choice | Reuse existing `selected|manual`; Use detected details is exact manual/null-selection and M39 manual provenance | No new enum, rematcher, canonical mutation, or second commit path |
+| Unwanted real candidate | One disposition, v3 Close count, candidate-lock/commit fence, no delete cascade/Undo | Lifecycle/RPC/audit/grant migration is material but bounded |
+| Close compatibility | New v3 Close/readiness summary; v2 strict shape unchanged | One forward contract instead of widening existing clients |
+| Post-commit reconciliation | One shared Store View list invalidation after success | No Unit 7C schema/command change |
+| UI maintainability | New small modules; do not grow the existing ~340-line screens/runtime | Keeps form, card, coordinator, and server authority separate |
 
 ## Complexity outcome
 

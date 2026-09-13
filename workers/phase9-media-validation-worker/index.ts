@@ -1,6 +1,7 @@
 import { assertSafeIngestionResponse, parseDedicatedWorkerRequest } from '../../supabase/functions/_shared/imageInventory/contracts/ingestion';
 import { MediaProcessor } from '../../supabase/functions/_shared/imageInventory/media/imageMagickMediaProcessor';
 import { runMediaValidationWorker } from '../../supabase/functions/_shared/imageInventory/runtime/mediaValidationWorker';
+import { runMediaOutputCleanup, readMediaOutputCleanupHealth } from '../../supabase/functions/_shared/imageInventory/runtime/mediaOutputCleanup';
 
 export type DedicatedWorkerDependencies = Readonly<{
   workerId: string;
@@ -40,8 +41,13 @@ export async function handlePhase9MediaValidationWorker(
       dependencies.serviceClient,
       dependencies.mediaProcessor,
     );
-    assertSafeIngestionResponse(result);
-    return response(result);
+    const cleanup = await runMediaOutputCleanup(
+      { ...body, leaseOwner: dependencies.workerId }, dependencies.serviceClient,
+    );
+    const health = await readMediaOutputCleanupHealth(dependencies.serviceClient);
+    const responseBody = { ...result, cleanup: { ...cleanup, health } };
+    assertSafeIngestionResponse(responseBody);
+    return response(responseBody);
   } catch {
     return response({ error: 'P9_WORKER_REQUEST_INVALID' }, 400);
   }

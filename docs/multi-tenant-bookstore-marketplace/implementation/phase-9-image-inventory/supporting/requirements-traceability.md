@@ -1,6 +1,50 @@
 # Phase 9 Requirements Traceability
 
-**Last updated:** 2026-08-21
+**Last updated:** 2026-09-08
+
+## Unit 6G media-completion correction — M57–M59 live
+
+| Requirement | Owning source and acceptance |
+| --- | --- |
+| Persist server-derived output identity and policy/lineage context before any snapshot or sanitized upload | Media-completion correction §§4.1/6; Master SDD §3 MAS-03/MAS-08/MAS-17 and §8; Pipeline SDD §10; M57; output-preparation Jest and SQL correction cases |
+| Exact completion replay returns one canonical receipt only for the same command, claim, attempt, payload, policy, and lineage; a new or changed claim cannot inherit authority | Media-completion correction §4.2; Pipeline SDD §4/§10; M58; focused SQL replay/mismatch and distinct-connection PostgreSQL cases |
+| A per-store duplicate sanitized hash is rejected atomically at attempt five with no loser candidate/inventory effect and no change to unrelated max-attempt handling | Media-completion correction §§4.2/6; Security SDD MED-19; M58; duplicate-completion Jest, PGlite, and real-PostgreSQL concurrency cases |
+| Cleanup locks job then intent, rechecks references/holds, reserves deletion irreversibly before object removal, fences new references/completion, and bounds retries/unknown acknowledgements | Media-completion correction §4.3; Security SDD §§6/7/12; M59; cleanup/recovery Jest, PGlite, and both PostgreSQL race orders |
+| Original input/session/Owner lineage, store isolation, accepted output protection, and historical dead letters remain unchanged | Master SDD §8; Pipeline SDD §10; Security SDD MED-19; cross-store, accepted-object, and historical-dead-letter regression markers |
+| Rollout boundary | M57–M59 are live once as `20260908073203`, `20260908073308`, and `20260908073425`; exact-project readback passed. Independent review returned PASS with no actionable findings. Owner review of the live proof is next; runtime deployment, scheduling, connected mutation, commit, and push require separate authorization. |
+
+## Unit 6G Owner defaults, compact review, and commit handoff draft
+
+The controlling proposal is [Unit 6G](../work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md)
+and its [contract matrix](../work-units/06g-owner-scan-defaults-batch-review-contract-matrix.md).
+It was approved for Group 1 implementation on the existing branch. Group 1 is
+live at its recorded M52 version; later M53–M56 are also live at their recorded
+versions. Groups 2–4 remain governed by their recorded authority. See [tracker
+31](../trackers/31-unit6g-owner-batch-review-design-evidence.md) §8.2.
+
+| Requirement | Owning source and acceptance |
+| --- | --- |
+| Required location, English initial hint, optional condition/price, fixed quantity 1 and INR whole-rupee UI, optional session-only batch label | P9-D81; DOC-4 §§5/9; DOC-8 §5; Unit 6G §§5–7; U6G-AC01–AC04; IMG-20 |
+| One bounded session page, at most 15 compact cards, all final values, on-demand metadata, no notes/Choose another match, and one source mapping (`matched|detected`→Detected, `default`→Default, `custom`→Custom, `missing`→Missing) | P9-D82; DOC-4 §9; DOC-8 §5/CON-17; Unit 6G §§7–10; U6G-AC05–AC09; IMG-21 |
+| Selected metadata sheet displays allowlisted cover, subtitle, bounded plain-text description, categories/genre, and explicit provider/processing/ambiguity/failure wording; it adds no cover toggle or scan-image fallback | Owner decision 2026-08-30; Unit 6G §§10/20; U6G-AC08; focused `batchReviewCard` metadata-sheet test |
+| `Use detected details` reuses existing `metadataChoice.mode="manual"` with null selection, copies only usable observed identity, commits no selected canonical/provider/cover fields through M39, and requires Edit manually when incomplete | Unit 6 strict review schema; Unit 7A §§5/7/11; Unit 6G §§10/18; matrix §§3.2/4.4; U6G-AC08 |
+| Per-card Add and Add all are explicit review actions; strict Save/current versions/server readiness precede each independent M39 commit; one candidate has one command slot and Add all skips/reports Busy rather than queueing locked cards | P9-D83; MAS-05/06; REV-01/04/05; DOC-3 §9; DOC-4 §§9–11; Unit 7A §§2–9; Unit 6G §§11–14; U6G-AC10–AC14; IMG-22; INV-19 |
+| General candidate removal uses `owner_removed_from_scan`, distinct from false/input/inventory removal, with no cascade or Undo; lock/disposition order prevents removal from racing into a successful commit | P9-D84; DOC-3 §9A; DOC-4 §9; Unit 6G §15; U6G-AC15/16; IMG-23; INV-18 |
+| Versioned `close_scan_session_v3` / `phase9_close_session_v3` returns strict v3 readiness with bounded `ownerRemovedCandidates`; v2 Close/summary remains unchanged | Unit 6 Close contract; Unit 6G §§16–19; matrix §4.6; U6G-AC16/18 |
+| M39 remains private create-only `q/q/0/0/0`; publication/stock/media/post-commit edit stay Unit 7B/7C; Store View cache refresh closes the application handoff | P9-D85; P9-D71–P9-D74; Unit 7A §§5–13; Unit 7C §§1–9/12–13; Unit 6G §§14/17–18; U6G-AC17/18/24 |
+| Existing initiator-only authorization, exact bounded aggregate/observed/metadata/blocker/attention DTOs, offline read-only behavior, privacy, accessibility, and 15-card performance remain load-bearing | MAS-02/07/12; REV-19/21; MED-08/09/21/23; Unit 6 §§7/13/18/21–28; Unit 6G §§16/20–24; matrix §4; U6G-AC05/19–AC23 |
+| Current final Save/Add/Remove reconcile completed exact replay, then require a locked active/unexpired initiating-Owner session; closed/closing/expired detail and batch reads advertise only read-only actions and create no mutation effects | Unit 6G §§9.1/11–15/22; U6G-AC20; Owner Review §9; Security §9; M54; lifecycle PGlite M54-01..04; connected closed-candidate zero-effect proof |
+| Forward migration is required for nullable condition, session-resumable `default_price_minor`/`batch_label`, disposition lifecycle/count/audit/event/RPC/grants, and v3 Close; no migration is required for INR, quantity 1, M39, `store_inventory`, Unit 7C, or Store View invalidation | Unit 6G §17; matrix §9; current-vs-target Unit 6G assessment; U6G-AC01–AC04/15–AC18/24 |
+
+### Unit 6G bounded M55 metadata/Add-authority correction — applied 2026-08-30
+
+| Requirement/correction | Owning source and evidence/status |
+| --- | --- |
+| Selected provider metadata cards carry a safe snapshot identity so compact Add preparation can preserve the selected metadata choice when no saved review exists | Unit 6G §§10–14; U6G-AC06/U6G-AC08/U6G-AC10; local M55 summary projection; compact-draft regression |
+| Add readiness requires a title and at least one author at the final Add/commit boundary; title-only cards remain blocked while empty-author review saves remain valid | Unit 6G §§11–14; U6G-AC10/U6G-AC20; owner-review schemas and M55 blocker regression |
+| Durable metadata query identity uses bibliographic evidence when title or author exists; ISBN remains secondary, with ISBN-only input retaining ISBN lookup; the Google request does not hard-filter language | Unit 6G metadata/provider authority; local query-identity and production-gateway regressions |
+| Batch-card Add is advertised only when the complete commit-eligibility helper passes | Unit 6G §§11–14; U6G-AC10/U6G-AC20; M55 batch-card regression |
+| Rollout boundary | M55 was applied exactly once through Supabase MCP as live version `20260830084323` on `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`, directly after M54. Affected-scope Jest passed 64 suites/690 tests (one suite/four tests skipped), M54+M55 PGlite passed 7/7, and read-only function-definition verification passed. No client/Edge deployment or business-data DML occurred. |
 
 ## Multilingual vision-response resilience correction
 
@@ -20,6 +64,15 @@
 | Scheduler creation is safe by default and bounded | Pipeline SDD §§14–15; dispatcher SDD §§4.1, 5 | One named 60-second cron created inactive; one stage/tick fence; explicit 120-second timeout backed by measured cold wake, provider ceiling, margin arithmetic, and scaled delayed HTTP-service proof |
 | Timeout and duplicate wake behavior preserves normal provider idempotency | Pipeline SDD §§10, 14–15 | Dispatcher timeout/active-lease suppression plus full Phase 9 exact vision replay and finalized metadata physical-call reconstruction regressions |
 | No activation or operational mutation occurs in the local work unit | Dispatcher SDD §§2, 5, 7 | M36 unapplied; no live Cron/Vault/Render/worker/provider/Storage/job/inventory/publication mutation |
+
+### Bounded metadata-throughput correction — local 2026-08-30
+
+| Requirement | Owning source | Evidence/status |
+| --- | --- | --- |
+| One metadata run may cover 15 jobs, but at most three are active and claims refill available slots rather than leasing all 15 up front | Pipeline SDD §§10/14–15; EXT-30–37 | Metadata worker concurrency/refill and later-claim-drain tests; focused Jest 54/54 |
+| Each book retains one independent provider request, lease/fence, retry/dead-letter decision, and ordered diagnostic outcome; persisted state is authoritative | Pipeline SDD §§8–10/14–15; EXT-25–33 | Production composition/gateway retry-state tests plus 15-job out-of-order worker regression |
+| Only metadata receives dispatcher batch size 15; media, vision, publication retry, cron frequency, timeout, and claim RPC remain unchanged | Pipeline SDD §§10/14–15; dispatcher SDD §§4–5 | Local M56 structural Jest 3/3 and dispatcher PGlite 30/30; M56 unapplied |
+| Rollout is worker-first and evidence-gated | Pipeline SDD §§14–15; EXT-33/35–39 | Deploy worker while live dispatcher remains one; verify timeout ≤10 seconds, provider quota/rate limits, latency, memory/connections, retry/dead-letter, and duplicate signals before separately authorizing M56 |
 
 ## Compact provider/language-hint correction
 
@@ -154,8 +207,9 @@ and global alias authority remain deferred.
 | Provider output is parsed as one exact complete coherent edition before persistence | 00 Master; 01 Data; 02 Extraction | MAS-13/15; MAS-AC12/13; DAT-05–09/33; EXT-11/26–28 |
 | Raw provider payload disabled by default and credentials excluded from every unsafe surface | 02 Extraction; 04 Media; P9 decisions | EXT-15/17; MED-09/17/18/28/29; P9-D63 |
 | Autoscaling disabled until fixed multi-replica evidence | 00 Master; 02 Extraction | MAS-AC14; EXT-36 |
-| Title/author priority; visible ISBN only as clue | 02 Extraction; 01 Data | EXT-12; DAT-03 |
+| Title/author priority; visible ISBN only as clue; Google Books language/edition/ISBN are secondary tie-break evidence | 02 Extraction §8; 01 Data; Unit 5B provider audit | EXT-12; DAT-03; focused Google Books request/ranking tests |
 | Description, ISBN-10/13, rich metadata, cover | 01 Data | DAT-01–DAT-04 |
+| Google Books cover selection checks bounded image sizes largest-to-smallest and retains the first allowlisted safe URL without scan-media fallback | 02 Extraction §§8–9; Unit 5B provider audit; Unit 6G §§10/20 | EXT-12; DAT-01–DAT-04; focused decoder fallback test |
 
 ### Unit 5A implementation mapping (2026-07-28)
 
@@ -344,7 +398,7 @@ schema, Storage, or client behavior requirement changed.
 | Requirement | Local implementation evidence |
 | --- | --- |
 | MAS-06/13/17; EXT-10/22/30 | M32 atomic candidate/job trigger, unique semantic dedupe, fenced context, reclaim-safe logical/physical lineage |
-| DAT-05/28/30/33; EXT-11/28 | provider-neutral fail-closed gateway/adapter contract, exact-ISBN-first local/cache/primary order, atomic leader reservation and durable follower attachment, Google Books contained in its adapter |
+| DAT-05/28/30/33; EXT-11/28 | provider-neutral fail-closed gateway/adapter contract, unchanged exact-ISBN-first local/cache order, title/author-first Google Books request/ranking, atomic leader reservation and durable follower attachment, Google Books contained in its adapter |
 | REV-04/20/21; EXT-12/16 | existing M15 degraded outcomes, SAME-candidate snapshot/transition, corrected Owner metadata-state/read DTO |
 | MED-21/23/24/26 | service-only RPC grants, cross-store/stale-claim denial, no raw scan/provider payload in context or lineage |
 | MAS-05/07/09 | central worker/PGlite test proves zero inventory, listing, publication, or Unit 7 effect |

@@ -3,7 +3,7 @@
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
-**Date:** 2026-08-21
+**Date:** 2026-09-08
 **Status:** Live implementation tracker
 **Depends On:** DOC-12 and all phase trackers in `implementation/`
 **Purpose:** Track live implementation progress, blockers, deviations, and handoff state without turning source specifications into status logs.
@@ -25,6 +25,341 @@ Every coding session must update tracking before ending if it changes any of the
 - next recommended task
 - handoff notes
 Every material session must also leave one exact active work unit and next authorized action in the active phase tracker, record verification/external mutations in its detailed log, and run the active continuity validator. When the active phase changes, update DOC-13, `implementation/ACTIVE.md`, both README handoffs, the outgoing/incoming phase trackers, and the current pointer in repository `AGENTS.md` together.
+
+> **2026-09-08 Unit 6G runtime closeout:** Commit
+> `ffdb1fc85af625bc98dcfc3af93d5530278144a9` is pushed to `origin/main`.
+> Render service `phase9-media-sanitation`
+> (`srv-d9jbmgf41pts73cecfl0`) deployed that exact commit as
+> `dep-dafv4ogn74is73bq9lkg` and is live; `/health` and `/ready` returned 200.
+> The requested `testimage.jpeg` completed the duplicate-input guard at attempt
+> 1 with a canonical `duplicate_rejected` receipt. A unique `10testimage.jpeg`
+> completed media and vision at attempt 1, produced 10 candidates and a linked
+> sanitized 1600x1600 WebP, and was closed with zero committed inventory rows.
+> Focused worker/runtime Jest is 6 suites/62 tests; related backend/Owner/UI
+> Jest is 5 suites/219 tests; the worker build passes. The broad database run is
+> 429/433 with all M57–M59 cases passing and four unrelated stale
+> metadata-foundation/structural-artifact failures. No migration was applied in
+> this closeout and no historical dead-letter job was retried or mutated.
+
+> **2026-09-08 Unit 6G M57–M59 live application/readback:** After exact-project
+> reverification and the passing preflight, M57, M58, and M59 were applied
+> separately and in order to `Bookconnect_reactexpo` /
+> `ahntbtktjjmvfosgkmgn` as live versions `20260908073203`, `20260908073308`,
+> and `20260908073425`. Table/RLS/ACL, index, function/grant, legacy-function
+> revocation, fence-trigger, dispatcher, empty-state, definition-marker, and
+> service-role cleanup-health readbacks pass; the media queue remains idle.
+> Post-DDL advisor findings for the new private tables are informational only:
+> RLS enabled with no direct policies and unindexed `store_id` foreign keys.
+> No business row, Storage object, job, deployment, provider call, stage,
+> commit, push, merge, or PR changed. Next: Owner review of the live proof;
+> runtime deployment, scheduling, connected business-data tests, commit, and
+> push require separate authorization.
+
+> **2026-09-08 connected Owner close/upload proof:** The authenticated Owner
+> closed the pre-existing active scan through the app; readback showed
+> `status=closed`, five committed inventory items preserved, and six uncommitted
+> candidates retained as read-only records. A fresh connected scan accepted the
+> repository PNG fixture through the in-app browser and advanced through preview
+> and `Registering image` into a live session. Exact-project readback shows one
+> valid `image/png` input in `failed` with
+> `P9_MEDIA_PROCESSING_RETRYABLE`, zero candidates, and zero committed
+> inventory rows. Its media-validation job retried five times and is now
+> `dead_letter` with `P9_MEDIA_PROCESSING_RETRYABLE` / `media_validation`; the
+> UI reports one image failed. Chrome's chooser-only `Not allowed` result is an
+> environment permission issue; the app upload path itself registered the PNG.
+> No manual queue mutation, migration, deployment, commit, push, or PR action
+> occurred. The blocker is the matching deployed media worker/runtime path;
+> separate authorization is required before deployment/scheduling correction and
+> a new connected proof.
+
+> **Pre-application 2026-09-08 Unit 6G media-completion correction integration:** The bounded
+> correction is integrated locally on
+> `codex/phase9-unit6g-media-correction-integrated`, based on verified
+> `origin/main` `573182267ddd79e08b0abfb348b5afd9fb0dc571`. M52–M56 were already
+> tracked by that baseline and read-only exact-project history confirms each is
+> live once, ending with M56 `20260830175651`. New M57–M59 remain local and
+> unapplied; they add durable output intents, canonical completion receipts,
+> exact duplicate-sanitized-hash terminal rejection, and fenced service-only
+> cleanup/recovery. Focused Jest 262/262, focused PGlite 21/21, worker
+> TypeScript, and disposable real-PostgreSQL concurrency/U8B gates pass. The
+> broad Phase 9 database invocation is 429/433; every M57–M59 case passes, while
+> three stale metadata-foundation fixtures and one missing prerequisite
+> `.phase9-dist` metadata-worker build artifact account for the four failures.
+> Independent review found no actionable issues and returned PASS for local
+> review. The ordered exact-project application preflight passed; Owner review
+> and explicit authorization for any local commit or ordered M57–M59 application
+> are next. No live
+> migration, deployment, Storage/job or
+> business-data mutation, provider call, stage, commit, push, merge, or PR
+> action occurred.
+
+> **Pre-application live read-only check 2026-09-08:** The exact project remains healthy and its
+> migration tail is M56 `20260830175651`; all M57–M59 objects are absent, as
+> expected. A separate Supabase advisory flags disabled RLS on the empty
+> `marketplace_sec.phase9_worker_wake_dispatches` table. Read-only ACL evidence
+> shows owner-only `postgres` privileges with no `anon`, `authenticated`, or
+> `service_role` SELECT/write grants. No remediation was applied; this is a
+> separate hardening decision.
+
+> **Ordered M57–M59 application preflight 2026-09-08:** The exact project was
+> reverified healthy at PostgreSQL `17.6.1.063` in `ap-southeast-2`; live history
+> still ends at M56. M57 tables/indexes/functions/triggers and M59 new cleanup
+> functions are absent. M58's current completion/snapshot functions and M59's
+> dispatcher helper are present as intended replacement targets, all four M58
+> `_legacy` destination names are absent, required schemas/`pgcrypto`/digest
+> and the context function are present, and the media queue has no active work
+> (`cancelled=16`, `dead_letter=5`, `resolved=29`). Local focused correction
+> tests pass 21/21 and no mutation occurred. Result: **preflight PASS;
+> application remains gated on explicit owner authorization and must run M57,
+> M58, then M59 in order**. The separate disabled-RLS advisory was not changed.
+
+> **2026-08-30 bounded metadata-throughput implementation:** The local worker
+> now accepts a metadata-only 15-job run budget, keeps no more than three jobs
+> active, claims only enough to fill open slots, and returns outcomes in claim
+> order while preserving per-book provider calls, leases, retries, dead letters,
+> fencing, and failure isolation. Durable `retry_scheduled` state is propagated
+> into the diagnostic response; the database remains authoritative. New forward
+> M56 changes only the private dispatcher payload for `metadata_enrich` to 15;
+> media, vision, and publication retry remain one, and the cron frequency,
+> timeout, claim-RPC maximum, and applied migrations remain unchanged. Focused
+> Jest passed **7 suites / 72 tests** (including the metadata-only invoker
+> bound), the metadata worker production TypeScript build passed, and
+> dispatcher PGlite passed **30/30**. M56 is unapplied; no
+> deployment, provider call, database/Storage/business mutation, staging,
+> commit, push, merge, or PR action occurred. Next: review, then separately
+> authorize worker-first deployment/canary; M56 application remains a later
+> separate gate.
+
+> **2026-08-30 Unit 6G direct-Add/closeout implementation in progress:** The
+> Owner-authorized local client pass now keeps the existing per-book strict
+> Save → canonical reread → M39 Add, automatically invokes the unchanged v3
+> Close only after server counts prove every detected candidate was explicitly
+> committed, and warns that a manual partial Close preserves added inventory
+> while freezing uncommitted candidates as read-only history. Image-level
+> `need attention` and book-level `need review` are now separately labelled.
+> Retry/field-preservation regressions cover canonical inventory identity,
+> duplicate prevention, condition, price, quantity, location, damage, and
+> publication intent. Full Image Inventory Jest passes **59 suites / 478 tests**
+> and focused PGlite passes **17/17**; TypeScript, production web export,
+> continuity, and diff hygiene pass. The connected active-session proof exposed
+> exactly one enabled per-book Add, committed Book 1 once, persisted inventory
+> ID `332ad909-47dc-4256-963a-3878c3081337`, and read back exactly one canonical
+> private row. Condition `good`, ₹175, quantity `1`, location `2`, no damage,
+> and publication intent `publish` survived; the session remained active at
+> 1/12 committed after reload. Close actor/source
+> audit and lifecycle fences for manual-candidate, skip/false-detection, and
+> variant RPCs require a separately authorized forward migration; none has
+> been created or applied in this pass. The sole external business mutation was
+> that explicitly authorized inventory row plus its canonical candidate,
+> idempotency, audit, event, and session-count effects. No Storage mutation,
+> migration, remote client/Edge deployment, staging, commit, push, merge, or PR
+> action occurred. The repository has no configured EAS project ID/owner or web
+> hosting target, so no remote client deployment can yet be claimed.
+
+> **2026-08-30 Unit 6G metadata-quality correction:** The three
+> Owner-authorized local tasks are implemented on
+> `codex/phase9-unit6g-recomposition`. Google Books requests now prefer
+> normalized title plus first author; candidate acceptance requires exact
+> normalized title and author overlap, while validated ISBN, compatible
+> language, and edition clues are secondary tie-break evidence. The cover
+> decoder checks all bounded Google Books image sizes from largest to smallest
+> and retains the first allowlisted safe URL, continuing past unsafe larger
+> values. The on-demand metadata sheet now renders selected cover, subtitle,
+> bounded plain-text description, categories/genre, and explicit state wording.
+> No cover toggle, scan-image fallback, rematch action, migration, provider
+> call, Supabase/Storage/business-data mutation, credential change, deployment,
+> staging, commit, push, merge, or PR action occurred. Focused Jest passed
+> **3 suites / 74 tests**, wider metadata regression passed **10 suites / 133
+> tests**, affected Unit 6G UI regression passed **6 suites / 82 tests**, and
+> TypeScript/diff/continuity checks passed. Exact next action: Owner review and
+> separate deployment authority.
+
+> **2026-08-30 Unit 6G bounded metadata/Add-authority correction:** The
+> correction-only pass added safe selected-metadata snapshot identity to the
+> compact Add draft, kept empty-author review saves valid while requiring an
+> author only at the final Add/commit boundary, made title/author evidence
+> select bibliographic durable query identity when present, removed the hard
+> Google language filter, restored exact-ISBN fallback for ISBN-only queries,
+> and restricted batch-card Add advertisement to the full commit-eligibility
+> helper. Forward migration
+> `20260830000055_marketplace_phase9_unit6g_metadata_add_authority_correction.sql`
+> was applied exactly once through Supabase MCP to
+> `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as live version
+> `20260830084323 marketplace_phase9_unit6g_metadata_add_authority_correction`,
+> directly after M54. It changes only internal function definitions and
+> performs no DML/backfill or table/policy/Storage/public RPC signature
+> change; touched internal helper ACLs remain restricted and no public grant is
+> added. Affected-scope Jest passed **64 suites / 690 tests** (one suite and
+> four tests skipped), M54+M55 PGlite passed **7/7**, and read-only definition
+> readback passed. Exact next action: deploy or validate the matching client/
+> Edge bundle; Add-all redesign, close audit, older sibling RPC compatibility,
+> and fresh live browser proof remain out of scope.
+
+> **2026-08-29 Unit 6G M54 lifecycle fence live verification:** The
+> Owner-authorized forward migration was applied exactly once to
+> `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as live version
+> `20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`, directly
+> after M53. The current final Save/Add/Remove RPCs now lock and require an
+> active, unexpired Owner-initiated session; closed/closing/expired detail and
+> batch reads advertise only read-only actions. A connected proof against an
+> existing closed candidate returned `P9_STATE_CONFLICT` for all three commands
+> and verified zero candidate/session-count/inventory/audit/event/idempotency
+> effects. M54 changes function definitions only; no business rows, Storage,
+> public signatures, tables, RLS policies, or Edge/client deployment changed.
+> Older sibling manual/false-detection/variant RPC compatibility was not changed
+> and requires a separate Owner decision. Exact next action: Owner review of the
+> M54 proof and explicit disposition of that legacy boundary.
+
+> **2026-08-28 U6G-FA-001 live verification:** The explicitly authorized M53
+> field-authority correction was applied exactly once to
+> `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as live version
+> `20260828081324`, directly after M52 `20260822025712`. Post-apply function
+> readback passed, and the Codex browser review page rendered 15 candidate cards
+> without the previous review-load error. The migration changed internal
+> function definitions only; no business rows, Storage objects, public RPC
+> signatures, tables, RLS policies, or grants were changed. Exact next action:
+> Owner review of the live proof. Edge/client/native deployment remains
+> separately gated.
+>
+> **2026-08-29 Unit 6G local pre/post-scan UI checkpoint:** The composition-only
+> Owner experience is implemented in the `codex/phase9-unit6g-recomposition`
+> worktree and is committed on the local branch but remains undeployed. Pre-scan now groups batch,
+> location, book-default, and publication controls; post-scan now has the
+> consolidated review summary, source-distinct card presentation, compact edit
+> sections, full-correction reachability, and sticky commit controls. The
+> editable field placement follows the Unit 6G SDD: pre-scan owns batch label,
+> location, language hint, optional condition/price, and publication intent;
+> compact cards own title/authors, language, condition, price, quantity,
+> location, publication, and damage; full correction retains script, metadata
+> choice, confirmations, notes, and deeper correction actions. Quantity remains
+> fixed at `1` before scan; no batch quantity/apply-to-all prompt was introduced.
+> Provider-matched and vision-detected sources are now visibly distinct.
+> Targeted Jest completed **6 suites / 69 tests passed** and TypeScript passed.
+> The read-only browser check loaded the existing closed session, opened and
+> closed metadata, and confirmed Edit/Remove/Add-missed controls were disabled;
+> no browser console errors occurred. It also reproduced the known image-level
+> `0 need attention` versus candidate-level `15 need review` count mismatch and
+> the metadata sheet's generic `Status: Matched` copy; neither was changed in
+> this checkpoint. No scan start, image upload, review save, Add/Remove/Close,
+> provider call, Supabase/Storage/business-data mutation, deployment, staging,
+> push, merge, or PR action occurred. Exact next action: Owner review of
+> this local UI diff and the recorded count/copy risks; Edge/client/native
+> deployment and any fresh scan remain separately gated.
+>
+> **2026-08-27 U6G-FA-001 correction complete locally:** The Owner-authorized
+> minimal correction projects each unusable selected compact-summary member as
+> null and retains the existing per-field source fallback. Mirrored strict
+> contracts and compact draft derivation are aligned. Focused contract/structure
+> Jest is 53/53, PGlite is 25/25, compact UI/draft assertions are 53/53, and
+> TypeScript passes. M53 remains unapplied; M52/M39 and Unit 6 lifecycle remain
+> unchanged. Exact next action: independent review. Application/deployment
+> requires separate authorization.
+>
+> **Historical 2026-08-27 U6G-FA-001 correction stop:** The frozen M53 package's sole
+> independent-review finding was reproduced through the real PGlite batch
+> projection: malformed selected authors, cover, title, and language still
+> receive `matched`. Source-only fallback is insufficient because the unchanged
+> strict Edge and mobile decoders reject the complete DTO at `metadataSummary`
+> before source/backing coherence can make it valid. Per the bounded correction
+> instruction, production changes stopped. M53 remains byte-unchanged and
+> unapplied; M52/M39 and Unit 6 lifecycle remain unchanged. Exact next action:
+> Owner disposition of a scope expansion covering the selected-metadata DTO
+> representation/projection boundary and both mirrored strict contracts.
+
+> **2026-08-24 Unit 6G predecessor-inheritance recomposition:** The Unit 6G
+> design authority was recomposed on `codex/phase9-unit6g-recomposition`. The
+> revised SDD, contract matrix, and tracker 31 now carry the complete 40-row
+> Unit 6 predecessor ledger (`INHERITED_UNCHANGED=30`, `SUPERSEDED_BY_6G=7`,
+> `DEFERRED_WITH_EXPLICIT_OWNER=3`, `0/0`) with U6G-AC01..AC34; Unit 6 remains
+> the immutable lifecycle backbone. M52 stays live exactly once as
+> `20260822025712` (retained 6G A/B foundation) and is not reopened. Historical
+> commit `e7ed166`-style old 6G-C work and the frozen old 6G-D implementation
+> are superseded evidence, not authority. NEW 6G-C (composition-only pre-commit
+> client work) follows only after Owner checkpoint disposition of the
+> recomposed authority (its independent final review is COMPLETE, verdict
+> PASS_WITH_P3) plus separate explicit Owner authorization; NEW 6G-D later owns commit orchestration and 6G-E owns
+> Edge deployment/live/native closure. Documentation-only: no product source,
+> SQL/M52, database/Storage, deployment, stage, commit, or push action.
+
+> **2026-08-21 Unit 6G Group 1 implementation:** The Owner approved continuing
+> on the existing `codex/phase9-unit6g-owner-batch-review-commit-handoff`
+> branch/worktree and authorized only Group 1 contract/persistence foundation.
+> Strict server/mobile contracts, Owner ingestion dispatch, and the forward
+> M52 migration candidate are implemented locally. Red-first contract,
+> migration-structure, and PGlite persistence tests are green, with the
+> existing M39/Owner UX/Unit 7A regressions preserved. M52 is not applied;
+> no database/Storage/business-data, deployment, provider, stage, commit,
+> push, or PR mutation occurred. Groups 2–4 (UI, card composition, Add/Add-all
+> orchestration, and Store View/cache work) remain out of scope. Exact next
+> action: independent review of the Group 1 diff and M52 candidate; application,
+> deployment, and Git publication remain separately unauthorized.
+
+> **2026-08-21 Unit 6G Group 1 bounded review correction:** The four review
+> findings were corrected without expanding scope. M52 no longer replaces the
+> applied v2 Close function; a separate transaction-marked trigger rejects v2
+> Close for nullable Unit 6G sessions. Removal presentation authority is
+> regression-proven through the existing automatic revision trigger, field
+> sources are derived per field, and all three new command RPCs reject null
+> command IDs. Red tests failed first; focused Jest is 38/38 and Unit 6G PGlite
+> is 11/11. M52 remains unapplied, Groups 2–4 remain untouched, and no external
+> or Git-publication action occurred. Exact next action: correction-only rereview.
+
+> **2026-08-21 Unit 6G Group 1 independent-verification correction pass:** Three
+> independent audits confirmed the foundation and surfaced four bounded defects,
+> all corrected inside the still-unapplied M52 and its tests: the v3 close
+> summary now overrides `candidatesNeedsReview` so a removed candidate is counted
+> exactly once; all three command RPCs explicitly reject null idempotency keys
+> and null expected versions (closing a PL/pgSQL NULL fail-open reachable by
+> direct authenticated RPC); session-level counters widened beyond 15 because
+> legacy multi-image sessions exceed 15, with card/item bounds kept at 15 plus a
+> server-side LIMIT 15; M52 forward-replaces `phase9_owner_candidates_page_v2`
+> so the legacy session scope excludes removed candidates instead of failing old
+> clients' strict decode. SDD §7/§16/§17 and the contract matrix were aligned,
+> including six recorded decisions (page filter, service_role withholding,
+> rollout constraint). Verification run: focused Jest 42/42, expanded regression
+> 212/212, Unit 6G PGlite 13/13, TypeScript clean. M52 remains unapplied; no
+> database/Storage, deployment, or Git-publication action occurred. Exact next
+> action: independent correction-only rereview of the corrected M52.
+
+> **2026-08-21 Unit 6G Group 1 rereview iteration two:** Two completed external
+> correction-only rereviews returned FAIL on the same two findings, and the
+> correction pass's own PS 5.1 documentation rewrite had introduced encoding
+> damage. The Owner approved a second bounded iteration: Start explicitly
+> rejects null `p_language_hint`/`p_location`/`p_publication` with
+> `P9_REQUEST_INVALID` (required v2 start inputs; the NOT NULL columns already
+> failed closed but with non-canonical codes); session-level counters replaced
+> the interim 0..999 cap with non-negative JSON-safe integers: every realistic
+> SQL count decodes exactly and any value above 2^53-1 fails closed at the
+> decoder rather than losing precision; database counts are never clamped. The
+> matrix and DOC-13 BOM
+> plus 43 double-encoded matrix characters were repaired in place with no file
+> discarded. Structural, PGlite (G1-13), and both contract test files were
+> extended to pin the new behavior. Gate results for this iteration are
+> recorded in the Phase 9 implementation tracker. M52 remains unapplied; no
+> database/Storage, deployment, or Git-publication action occurred. Exact next
+> action: external correction-only rereview of iteration two, then one local
+> commit on explicit Owner authorization.
+
+> **2026-08-22 Unit 6G-B M52 application and connected proof:** The read-only
+> exact-project preflight returned PASS (live tail M51, all nine dependency
+> functions signature-matched, zero object/name collisions, ACL snapshots
+> captured, 12 sessions/62 candidates fully compatible, no registry conflict).
+> On explicit Owner authorization M52 was applied exactly once via Supabase
+> MCP as live version `20260822025712`, directly after M51. Readback verified
+> nullable condition, both new bounded session columns with CHECKs, the
+> extended disposition CHECK, five new authenticated-only RPCs, preserved
+> `phase9_owner_candidates_page_v2` ownership/grants through CREATE OR
+> REPLACE, both fence triggers, and the registry row. Connected proofs with
+> transaction-local Owner impersonation: nullable-condition session
+> `33c3f6fb…` created through Start v2; legacy v2 Close failed closed with
+> `P9_STATE_CONFLICT`; candidate `50de2017…` removed irreversibly with zero
+> inventory effect and one audit + one event; page-v2 excluded the removed
+> candidate; Close v3 returned `ownerRemovedCandidates=1` with
+> `candidatesNeedsReview=0` (no double-counting live). Post-application gates:
+> Jest 10 suites 254/254, PGlite 13/13, TypeScript clean, continuity validator
+> PASS. Evidence commit `6313067` records the proof in tracker 02. No push,
+> merge, Edge/mobile deploy, M39, Unit 7C, or Groups 2–4 work occurred. Exact
+> next action: Owner authorization of 6G-C.
 
 > **2026-08-21 Unit 8 repository closure ready:** The final bounded Unit 7/8
 > reconciliation is complete locally. Repository-only M51 fails closed on
@@ -971,12 +1306,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory - **Unit 8 live-verified and main-integrated** |
-| Overall status | `unit8_live_verified_main_integrated` |
-| Last updated | 2026-08-21 |
-| Latest handoff | Q07-Q10, M49-M51, the strict client integration, final media-order invariant, Vault-backed cursors, connected acceptance, and closure documentation are complete. M49/M50/M51 are live exactly once; U8B `63/63`, U8C `8/8`, Marketplace Jest `140/140`, disposable PostgreSQL sentinels, TypeScript, export, diff, and continuity are green. Release commit `4c1d98d` is integrated into and pushed on `main`. |
-| Current risk level | Unit 8 has no remaining connected rollout blocker. The current live dataset has no zero-stock rows, so no destructive stock fixture was created; native Unit 6F debt remains separately deferred. `.zcode/` and `docs/codemap/` remain preserved and untouched. |
-| Next recommended task | Select the next Phase 9 work unit separately. Do not repair historical migration IDs or deploy unrelated services. |
+| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6G media-completion correction is runtime-verified on current `origin/main`; M52–M59 are live once, the matching Render worker is live, and connected positive/duplicate-input proofs pass; prior checkpoints and Unit 8 remain intact** |
+| Overall status | `unit6g_media_completion_correction_runtime_verified_connected` |
+| Last updated | 2026-09-08 |
+| Latest handoff | Commit `ffdb1fc85af625bc98dcfc3af93d5530278144a9` is on `origin/main`; Render deploy `dep-dafv4ogn74is73bq9lkg` is live; the unique connected proof produced 10 candidates and a linked sanitized WebP at attempt 1, while the requested duplicate source completed with a canonical duplicate receipt. |
+| Current risk level | Native Unit 6F validation remains deferred. A live duplicate-sanitized-hash collision proof and any cleanup-scheduler/alert policy change require a separately prepared fixture and explicit authorization; local race coverage passes. |
+| Next recommended task | Owner review of the runtime closeout. Do not revive the historical dead-lettered job. If live duplicate-sanitized-hash collision evidence is required, prepare a distinct-source/same-sanitized-output fixture under a new explicit authorization. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 
@@ -1140,7 +1475,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit8_live_verified_main_integrated` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 8 SDD](./implementation/phase-9-image-inventory/work-units/08-marketplace-bookstore-first-sdd.md) · [connected rollout evidence](./implementation/phase-9-image-inventory/supporting/unit8-connected-rollout-2026-08-21.md) | Unit 8 Q07-Q10, M49-M51, Vault-backed cursors, client integration, final media-order invariant, connected acceptance, and release documentation are live-verified and integrated into `main` at `4c1d98d`; historical migration IDs remain untouched. |
+| Phase 9: Image-to-LLM Inventory | `unit6g_media_completion_correction_runtime_verified_connected` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [correction design](./implementation/phase-9-image-inventory/supporting/unit6g-media-completion-correction.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | The duplicate-sanitized-hash media-completion correction is committed on `origin/main`, deployed to Render `phase9-media-sanitation`, and connected-verified. The requested duplicate input completed at attempt 1 with a canonical receipt; a unique image completed media and vision at attempt 1 with 10 candidates and a linked sanitized WebP. Owner review is next; historical dead-letter retry and live collision-fixture proof remain separately gated. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
@@ -1261,7 +1596,7 @@ Documentation milestones completed:
 
 ## 8. Next Recommended Task
 
-**Current 2026-08-21 handoff:** Phase 9 Unit 8 is live-verified on the exact
+**2026-08-21 handoff (historical checkpoint; superseded by the current handoff in the status table above):** Phase 9 Unit 8 is live-verified on the exact
 development project. Q07-Q10, M49-M51, Vault-backed cursor crypto, client
 integration, strict media cardinality, connected privacy/security acceptance,
 and legacy compatibility are green. `inventoryId` remains private Owner
@@ -1273,7 +1608,7 @@ of Unit 8. Select the next Phase 9 work unit separately. Payments, Phases 7/8,
 M09, and deferred Unit 6F native evidence remain separately gated.
 
 The older Phase 6 recommendation below is retained as historical continuity
-and is superseded by this current handoff.
+and is superseded by these dated handoff records.
 
 **Phase 6 remains complete with comprehensive browser E2E deferred; Phases 7 and 8 remain deferred; the bounded Phase 9 fixture pipeline is deployed and live-verified.**
 

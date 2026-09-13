@@ -54,6 +54,13 @@ export type MetadataReuseCompletion =
   | Readonly<{ status: 'policy_denied'; normalizedOutcome?: string }>
   | Readonly<{ status: 'stale_rejected'; normalizedOutcome?: string }>;
 
+export type MetadataManualCompletion =
+  | Readonly<{ status: 'retry_scheduled' | 'resolved' | 'dead_letter' }>
+  | Readonly<{
+    status: 'replayed';
+    jobStatus: 'open' | 'retry_scheduled' | 'in_progress' | 'resolved' | 'dead_letter';
+  }>;
+
 export type MetadataProductionGateway = Readonly<{
   providerValidation?: Omit<MetadataProviderValidationContext, 'correlationId' | 'attemptId'>;
   resolveLocal(request: MetadataProductionRequest): Promise<
@@ -74,7 +81,10 @@ export type MetadataProductionGateway = Readonly<{
     | { mode: 'follower'; leaderLookupId: string }
     | { mode: 'follower_pending'; leaderLookupId: string }
   >;
-  deferFollower(request: MetadataProductionRequest, leaderLookupId: string): Promise<void>;
+  deferFollower(
+    request: MetadataProductionRequest,
+    leaderLookupId: string,
+  ): Promise<MetadataManualCompletion>;
   registerFollower(
     request: MetadataProductionRequest,
     leaderLookupId: string,
@@ -116,12 +126,13 @@ export type MetadataProductionGateway = Readonly<{
     attemptId?: string;
     outcome: string;
     retryable: boolean;
-  }>): Promise<void>;
+  }>): Promise<MetadataManualCompletion>;
 }>;
 
 export type MetadataCompositionResult = Readonly<{
   outcome: 'local_canonical_match' | 'manual_metadata_required'
-    | 'coalesced_follower' | 'stale_claim' | 'accepted_metadata_match';
+    | 'coalesced_follower' | 'stale_claim' | 'accepted_metadata_match'
+    | 'retry_scheduled';
 }>;
 
 const isPositiveOutcome = (outcome: string) =>
@@ -180,6 +191,15 @@ function resultForReuseCompletion(
   };
 }
 
+export function resultForManualCompletion(
+  completion: MetadataManualCompletion,
+): MetadataCompositionResult {
+  const persistedStatus = completion.status === 'replayed'
+    ? completion.jobStatus : completion.status;
+  return { outcome: persistedStatus === 'retry_scheduled'
+    ? 'retry_scheduled' : 'manual_metadata_required' };
+}
+
 export async function runMetadataProductionComposition(
   request: MetadataProductionRequest,
   gateway: MetadataProductionGateway,
@@ -216,18 +236,18 @@ export async function runMetadataProductionComposition(
       return resultForReuseCompletion(completion, policy);
     }
     if (coalescing.mode === 'follower_pending') {
-      await gateway.deferFollower(request, coalescing.leaderLookupId);
-      return { outcome: 'manual_metadata_required' };
+      const completion = await gateway.deferFollower(request, coalescing.leaderLookupId);
+      return resultForManualCompletion(completion);
     }
     reservedLookupId = coalescing.lookupId ?? null;
   }
 
   if (!policy.allowFreshProviderCall) {
-    await gateway.completeManual({
+    const completion = await gateway.completeManual({
       outcome: policy.requiredDegradationOutcome,
       retryable: false,
     });
-    return { outcome: 'manual_metadata_required' };
+    return resultForManualCompletion(completion);
   }
 
   const lookupId = reservedLookupId ?? (await gateway.registerLookup(request)).lookupId;
@@ -269,10 +289,10 @@ export async function runMetadataProductionComposition(
       disposition: 'rejected',providerRequestId: null,normalizedCandidate: null,
       retryable: true,physicalStatus: 'outcome_unknown',
     });
-    await gateway.completeManual({
+    const completion = await gateway.completeManual({
       lookupId,attemptId,outcome: 'provider_unavailable',retryable: true,
     });
-    return { outcome: 'manual_metadata_required' };
+    return resultForManualCompletion(completion);
   }
   const accepted = provider.outcome === 'coherent_match' && provider.selected !== null;
   const retainAccepted = accepted && policy.allowPositiveRetention;
@@ -291,13 +311,13 @@ export async function runMetadataProductionComposition(
   });
   if (accepted) {
     if (!policy.allowPositiveRetention) {
-      await gateway.completeManual({
+      const completion = await gateway.completeManual({
         lookupId,
         attemptId,
         outcome: policy.requiredDegradationOutcome,
         retryable: false,
       });
-      return { outcome: 'manual_metadata_required' };
+      return resultForManualCompletion(completion);
     }
     await gateway.persistSelection({
       lookupId,
@@ -313,7 +333,7 @@ export async function runMetadataProductionComposition(
     }
     return { outcome: 'accepted_metadata_match' };
   }
-  await gateway.completeManual({
+  const completion = await gateway.completeManual({
     lookupId, attemptId, outcome: provider.outcome, retryable: provider.retryable,
   });
   if (!provider.retryable && policy.allowCacheWrite && isCacheableOutcome(provider.outcome)) {
@@ -321,5 +341,5 @@ export async function runMetadataProductionComposition(
       lookupId, attemptId, normalizedOutcome: provider.outcome, selected: null,
     });
   }
-  return { outcome: 'manual_metadata_required' };
+  return resultForManualCompletion(completion);
 }

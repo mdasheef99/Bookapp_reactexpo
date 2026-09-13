@@ -135,3 +135,16 @@ requests `projection=full`; the focused suite passes 26/26, the metadata worker
 build passes, and a bounded live response decoded 8 of 10 editions. Commit
 `e4f2b34` is pushed. Existing terminal no-match snapshots remain immutable and
 route to manual Owner review rather than being rewritten.
+
+### 2026-08-30 title/author and cover quality amendment
+
+The Owner-authorized local amendment removes ISBN-first Google Books egress and
+acceptance. Requests now prefer normalized title plus first author, while
+ranking requires exact normalized title and author overlap before ISBN,
+language, or edition clues can break a tie. A title/author-conflicting exact
+ISBN is not selected. Cover decoding now evaluates `extraLarge`, `large`,
+`medium`, `small`, `thumbnail`, and `smallThumbnail` from largest to smallest,
+continuing past malformed or unapproved larger values to retain a safe
+allowlisted Google Books URL. Focused adapter/provider/UI verification is
+recorded in tracker 31 §16. No live provider call, migration, Supabase/Storage
+mutation, credential change, or deployment occurred.

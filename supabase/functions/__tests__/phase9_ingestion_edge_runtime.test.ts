@@ -88,7 +88,7 @@ describe('Phase 9 ingestion Edge orchestration', () => {
     const claim = { id: 'job', attempt_count: 1, lease_token: 'a'.repeat(64) };
     rpc.mockResolvedValueOnce({ data: [claim], error: null });
     rpc.mockResolvedValueOnce({ data: {
-      source_bucket: 'staging', source_path: 'store/file.png', source_object_identity: identity,
+      output_intent_version: 1, source_bucket: 'staging', source_path: 'store/file.png', source_object_identity: identity,
       source_sha256: sourceSha256, source_bytes: 3, source_mime: 'image/png',
       snapshot_bucket: 'private', snapshot_path: 'store/source-attempt-1.bin',
       source_snapshot_path: null, source_snapshot_sha256: null, source_snapshot_bytes: null,
@@ -126,7 +126,7 @@ describe('Phase 9 ingestion Edge orchestration', () => {
     const claim = { id: 'public-copy-job', attempt_count: 1, lease_token: '9'.repeat(64) };
     rpc.mockResolvedValueOnce({ data: [claim], error: null });
     rpc.mockResolvedValueOnce({ data: {
-      source_bucket: 'marketplace-media-staging', source_path: 'store/public_copy/inventory/photo.png',
+      output_intent_version: 1, source_bucket: 'marketplace-media-staging', source_path: 'store/public_copy/inventory/photo.png',
       source_object_identity: identity, source_sha256: sourceSha256,
       source_bytes: 3, source_mime: 'image/png', snapshot_bucket: 'image-extraction-inputs',
       snapshot_path: 'store/public_copy/source/source-attempt-1.bin',
@@ -168,7 +168,7 @@ describe('Phase 9 ingestion Edge orchestration', () => {
     const sourceSha256 = await sha256Hex(sourceBytes);
     rpc.mockResolvedValueOnce({ data: [{ id: 'job', attempt_count: 1, lease_token: 'b'.repeat(64) }], error: null });
     rpc.mockResolvedValueOnce({ data: {
-      source_bucket: 'staging', source_path: 'store/file.png', source_object_identity: identity,
+      output_intent_version: 1, source_bucket: 'staging', source_path: 'store/file.png', source_object_identity: identity,
       source_sha256: sourceSha256, source_bytes: 3, source_mime: 'image/png',
       snapshot_bucket: 'private', snapshot_path: 'source-attempt-1.bin',
       source_snapshot_path: null, source_snapshot_sha256: null, source_snapshot_bytes: null,
@@ -193,14 +193,13 @@ describe('Phase 9 ingestion Edge orchestration', () => {
       id: 'job', attempt_count: 1, lease_token: 'c'.repeat(64),
     }], error: null });
     rpc.mockResolvedValueOnce({ data: {
-      source_bucket: 'staging', source_path: 'store/file.png', source_object_identity: 'd'.repeat(64),
+      output_intent_version: 1, source_bucket: 'staging', source_path: 'store/file.png', source_object_identity: 'd'.repeat(64),
       source_sha256: sourceSha256, source_bytes: 3, source_mime: 'image/png',
       snapshot_bucket: 'private', snapshot_path: 'source-attempt-1.bin',
       source_snapshot_path: 'source-attempt-1.bin', source_snapshot_sha256: sourceSha256, source_snapshot_bytes: 3,
       target_bucket: 'private', target_path: 'attempt-1.webp',
     }, error: null });
-    rpc.mockResolvedValueOnce({ data: null, error: { message: 'stale' } });
-    rpc.mockResolvedValueOnce({ data: null, error: { message: 'stale' } });
+    rpc.mockResolvedValueOnce({ data: null, error: { code: 'P0001', message: 'P9_STATE_CONFLICT' } });
     download.mockResolvedValue({ data: new Blob([sourceBytes]), error: null });
     const processor: any = { sanitize: jest.fn().mockResolvedValue({
       bytes: new Uint8Array([4]), outputMime: 'image/webp', sha256: 'a'.repeat(64), width: 1, height: 1,
@@ -208,6 +207,7 @@ describe('Phase 9 ingestion Edge orchestration', () => {
     const result = await runMediaValidationWorker({ contractVersion: 'phase9-v1', leaseOwner: 'worker-0000000001', batchSize: 1 }, client, processor);
     expect(upload).not.toHaveBeenCalled();
     expect(result.results[0].outcome).toBe('stale_lease');
+    expect(rpc).not.toHaveBeenCalledWith('phase9_fail_media_validation', expect.anything());
     expect(rpc).toHaveBeenCalledWith('phase9_revalidate_media_validation_lease', expect.objectContaining({
       p_worker: 'worker-0000000001',
       p_attempt_count: 1,
@@ -221,7 +221,7 @@ describe('Phase 9 ingestion Edge orchestration', () => {
       id: 'job', attempt_count: 2, lease_token: 'f'.repeat(64),
     }], error: null });
     rpc.mockResolvedValueOnce({ data: {
-      source_bucket: 'staging', source_path: 'store/file.png',
+      output_intent_version: 1, source_bucket: 'staging', source_path: 'store/file.png',
       source_object_identity: 'a'.repeat(64), source_sha256: expectedSha,
       source_bytes: 3, source_mime: 'image/png',
       snapshot_bucket: 'private', snapshot_path: 'source-attempt-1.bin',
@@ -251,7 +251,7 @@ describe('Phase 9 ingestion Edge orchestration', () => {
       id: 'job', attempt_count: 1, lease_token: 'e'.repeat(64),
     }], error: null });
     rpc.mockResolvedValueOnce({ data: {
-      source_bucket: 'staging', source_path: 'store/file.png',
+      output_intent_version: 1, source_bucket: 'staging', source_path: 'store/file.png',
       source_object_identity: identity, source_sha256: sourceSha256,
       source_bytes: 3, source_mime: 'image/png',
       snapshot_bucket: 'private', snapshot_path: 'source-attempt-1.bin',
@@ -284,7 +284,7 @@ describe('Phase 9 ingestion Edge orchestration', () => {
       id: 'job', attempt_count: 1, lease_token: '1'.repeat(64),
     }], error: null });
     rpc.mockResolvedValueOnce({ data: {
-      source_bucket: 'staging', source_path: 'store/file.png',
+      output_intent_version: 1, source_bucket: 'staging', source_path: 'store/file.png',
       source_object_identity: identity, source_sha256: sourceSha256,
       source_bytes: 3, source_mime: 'image/png',
       snapshot_bucket: 'private', snapshot_path: 'source-attempt-1.bin',
@@ -311,7 +311,7 @@ describe('Phase 9 ingestion Edge orchestration', () => {
       id: 'job', attempt_count: 2, lease_token: '2'.repeat(64),
     }], error: null });
     rpc.mockResolvedValueOnce({ data: {
-      source_bucket: 'staging', source_path: 'store/file.png',
+      output_intent_version: 1, source_bucket: 'staging', source_path: 'store/file.png',
       source_object_identity: 'a'.repeat(64), source_sha256: sourceSha256,
       source_bytes: 3, source_mime: 'image/png',
       snapshot_bucket: 'private', snapshot_path: 'source-attempt-1.bin',

@@ -1,7 +1,24 @@
 # Auth Hardening Verification
 
 **Status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Date:** 2026-07-22
+**Date:** 2026-08-29
+
+## Unit 6G M54 lifecycle/grant verification — 2026-08-29
+
+- Exact project: `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`, healthy
+  PostgreSQL `17.6.1.063`; M54 live once as `20260829142337` after M53.
+- New internal session predicate/lock/sanitizer functions are postgres-owned,
+  fixed-empty-search-path, and not executable by `PUBLIC`, `anon`,
+  `authenticated`, or `service_role`.
+- Current final detail/Save/Add/Remove and batch-card definitions contain the
+  expected lifecycle or read-only projection fence. Existing public grants are
+  preserved exactly.
+- Connected transaction-local Owner proof on one existing closed candidate:
+  Save/Add/Remove each `P9_STATE_CONFLICT`; detail/batch mutation actions absent;
+  zero candidate/session-count/inventory/audit/event/idempotency effects.
+- Advisor rerun returned broad existing RLS/performance notices. M54 creates no
+  table, RLS policy, index, or other advisor-target object. No advisor remediation
+  was in this bounded function-only scope.
 **Branch:** `codex/auth-hardening-core`
 **Authority:** Work Units 1 and 2 only; no external mutation
 

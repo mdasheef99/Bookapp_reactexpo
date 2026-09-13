@@ -25,13 +25,19 @@ function parseWorkerUrl(value) {
   }
 }
 
+function maxBatchSizeForService(service) {
+  return service === 'metadata' ? 15 : 10;
+}
+
 function summarizeWorkerResponse(service, status, value) {
-  const claimed = Number.isInteger(value?.claimed) && value.claimed >= 0 && value.claimed <= 10
+  const maxBatchSize = maxBatchSizeForService(service);
+  const claimed = Number.isInteger(value?.claimed) && value.claimed >= 0
+    && value.claimed <= maxBatchSize
     ? value.claimed : 0;
   const outcomes = Array.isArray(value?.results)
     ? value.results.map((entry) => entry?.outcome)
       .filter((outcome) => typeof outcome === 'string' && SAFE_OUTCOME.test(outcome))
-      .slice(0, 10)
+      .slice(0, maxBatchSize)
     : [];
   return { service, status, claimed, outcomes };
 }
@@ -80,7 +86,7 @@ async function invokePhase9Worker({
   if (!SUPPORTED_SERVICES.includes(service)
     || typeof token !== 'string' || token.length < 32) invalid();
   const endpoint = parseWorkerUrl(url);
-  const safeBatchSize = parseInteger(batchSize, 1, 10);
+  const safeBatchSize = parseInteger(batchSize, 1, maxBatchSizeForService(service));
   const safeTimeout = parseInteger(timeoutMs, 100, 300_000);
   const safeResponseLimit = parseInteger(maxResponseBytes, 64, 65_536);
   const controller = new AbortController();

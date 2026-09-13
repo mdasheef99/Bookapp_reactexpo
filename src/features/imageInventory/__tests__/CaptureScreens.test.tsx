@@ -85,6 +85,10 @@ jest.mock('../queries/ownerUxQueries', () => ({
         data: { status: 'active' }, error: null, refetch: jest.fn(),
     })),
 }));
+const mockStartV2 = jest.fn();
+jest.mock('../queries/ownerBatchReviewQueries', () => ({
+    useStartScanSessionV2: () => ({ mutate: mockStartV2, isPending: false }),
+}));
 
 const picker = ImagePicker as jest.Mocked<typeof ImagePicker>;
 const randomUUID = Crypto.randomUUID as jest.MockedFunction<typeof Crypto.randomUUID>;
@@ -104,7 +108,27 @@ describe('Phase 9 Unit 6C capture routes', () => {
         picker.getCameraPermissionsAsync.mockResolvedValue({
             granted: true, canAskAgain: true, status: 'granted', expires: 'never',
         } as never);
+        // NEW 6G-C: Start v2 composes ahead of source selection and reconciles
+        // synchronously in these suites.
+        mockStartV2.mockImplementation((_request: unknown, options?: {
+            onSuccess?: (canonical: unknown) => void;
+        }) => {
+            options?.onSuccess?.({
+                sessionId: '00000000-0000-4000-8000-000000000001',
+                sessionVersion: 1,
+                defaults: {},
+                batchLabel: null,
+            });
+        });
     });
+
+    async function openSourceStep(screen: ReturnType<typeof render>) {
+        fireEvent.changeText(screen.getByTestId('setup-location'), 'Front shelf');
+        const start = screen.getByTestId('capture-start');
+        await waitFor(() => expect(start.props.accessibilityState?.disabled).toBe(false));
+        fireEvent.press(start);
+        await waitFor(() => expect(screen.getByTestId('capture-camera')).toBeTruthy());
+    }
 
     it('keeps the setup attempt identity stable across rerenders', () => {
         const screen = render(<InventoryCaptureSetupScreen />);
@@ -113,6 +137,41 @@ describe('Phase 9 Unit 6C capture routes', () => {
         screen.rerender(<InventoryCaptureSetupScreen />);
 
         expect(randomUUID).toHaveBeenCalledTimes(initialUuidCalls);
+    });
+
+    it('bounds the batch-label input to the 80-code-point contract limit at the UI layer', () => {
+        const screen = render(<InventoryCaptureSetupScreen />);
+        expect(screen.getByTestId('setup-batch-label').props.maxLength).toBe(80);
+    });
+
+    it('replays an ambiguous Start with the frozen original payload, not later form edits', async () => {
+        mockStartV2.mockImplementation((_request: unknown, options?: {
+            onError?: (error: unknown) => void;
+        }) => {
+            options?.onError?.(new Error('ambiguous'));
+        });
+        const screen = render(<InventoryCaptureSetupScreen />);
+        fireEvent.changeText(screen.getByTestId('setup-location'), 'Front shelf');
+        const start = screen.getByTestId('capture-start');
+        await waitFor(() => expect(start.props.accessibilityState?.disabled).toBe(false));
+        fireEvent.press(start);
+        await waitFor(() => expect(mockStartV2).toHaveBeenCalledTimes(1));
+        const originalRequest = mockStartV2.mock.calls[0][0];
+
+        // The owner edits defaults while the Start outcome is ambiguous.
+        fireEvent.changeText(screen.getByTestId('setup-location'), 'Back shelf');
+        fireEvent.press(screen.getByTestId('setup-price-2500'));
+
+        fireEvent.press(start);
+        await waitFor(() => expect(mockStartV2).toHaveBeenCalledTimes(2));
+        const replayRequest = mockStartV2.mock.calls[1][0];
+        // Same semantic identity AND the same immutable request payload.
+        expect(replayRequest.idempotencyKey).toBe(originalRequest.idempotencyKey);
+        expect(replayRequest.commandId).toBe(originalRequest.commandId);
+        expect(replayRequest.location).toBe(originalRequest.location);
+        expect(replayRequest.location).toBe('Front shelf');
+        expect(replayRequest.priceMinor).toBe(originalRequest.priceMinor);
+        expect(replayRequest).toEqual(originalRequest);
     });
 
     it('keeps upload attempt identities stable across rerenders', () => {
@@ -132,13 +191,13 @@ describe('Phase 9 Unit 6C capture routes', () => {
         expect(randomUUID).toHaveBeenCalledTimes(initialUuidCalls);
     });
 
-    it('treats picker cancellation as normal and creates no session', async () => {
+    it('treats picker cancellation as normal and creates no second session', async () => {
         picker.launchCameraAsync.mockResolvedValue({ canceled: true, assets: null });
         const screen = render(<InventoryCaptureSetupScreen />);
-        fireEvent.press(screen.getByTestId('capture-start'));
+        await openSourceStep(screen);
         fireEvent.press(screen.getByTestId('capture-camera'));
         await waitFor(() => expect(picker.launchCameraAsync).toHaveBeenCalledTimes(1));
-        expect(captureService.startSession).not.toHaveBeenCalled();
+        expect(mockStartV2).toHaveBeenCalledTimes(1);
         expect(mockWorkflow.select).not.toHaveBeenCalled();
     });
 
@@ -147,19 +206,17 @@ describe('Phase 9 Unit 6C capture routes', () => {
             granted: false, canAskAgain: false, status: 'denied', expires: 'never',
         } as never);
         const screen = render(<InventoryCaptureSetupScreen />);
-        fireEvent.press(screen.getByTestId('capture-start'));
+        await openSourceStep(screen);
         fireEvent.press(screen.getByTestId('capture-camera'));
         expect(await screen.findByText(/device settings/u)).toBeTruthy();
         expect(picker.launchCameraAsync).not.toHaveBeenCalled();
-        expect(captureService.startSession).not.toHaveBeenCalled();
     });
 
     it('locks repeated source taps and starts only after valid selection', async () => {
         let resolvePicker!: (value: any) => void;
         picker.launchCameraAsync.mockReturnValue(new Promise((resolve) => { resolvePicker = resolve; }));
-        (captureService.startSession as jest.Mock).mockResolvedValue('00000000-0000-4000-8000-000000000001');
         const screen = render(<InventoryCaptureSetupScreen />);
-        fireEvent.press(screen.getByTestId('capture-start'));
+        await openSourceStep(screen);
         fireEvent.press(screen.getByTestId('capture-camera'));
         fireEvent.press(screen.getByTestId('capture-camera'));
         await waitFor(() => expect(picker.launchCameraAsync).toHaveBeenCalledTimes(1));
@@ -173,16 +230,16 @@ describe('Phase 9 Unit 6C capture routes', () => {
                 height: 200,
             }],
         });
-        await waitFor(() => expect(captureService.startSession).toHaveBeenCalledTimes(1));
-        expect(mockWorkflow.select).toHaveBeenCalledWith(expect.objectContaining({ source: 'camera' }));
+        await waitFor(() => expect(mockWorkflow.select).toHaveBeenCalledWith(expect.objectContaining({ source: 'camera' })));
         expect(mockRouter.push).toHaveBeenCalled();
+        expect(mockStartV2).toHaveBeenCalledTimes(1);
     });
 
     it('drops a delayed picker completion before any mutation after identity replacement', async () => {
         let resolvePicker!: (value: any) => void;
         picker.launchCameraAsync.mockReturnValue(new Promise((resolve) => { resolvePicker = resolve; }));
         const screen = render(<InventoryCaptureSetupScreen />);
-        fireEvent.press(screen.getByTestId('capture-start'));
+        await openSourceStep(screen);
         fireEvent.press(screen.getByTestId('capture-camera'));
         await waitFor(() => expect(picker.launchCameraAsync).toHaveBeenCalled());
         mockCurrentIdentity = { userId: 'owner-2', storeId: 'store-2' };
@@ -197,8 +254,8 @@ describe('Phase 9 Unit 6C capture routes', () => {
             }],
         });
         await waitFor(() => expect(screen.getByTestId('capture-camera')).toBeEnabled());
-        expect(captureService.startSession).not.toHaveBeenCalled();
         expect(mockWorkflow.select).not.toHaveBeenCalled();
+        expect(mockRouter.push).not.toHaveBeenCalled();
     });
 
     it('uploads, registers, clears local media, and routes to server progress', async () => {
