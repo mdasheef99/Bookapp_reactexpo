@@ -1,5 +1,19 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
+> **Current 2026-09-14 runtime rollout checkpoint:** The verified development
+> project has Owner Edge v14 active with JWT verification, and the matching
+> metadata worker is live on Render deployment
+> `dep-dak2nmjl550s73bqb7jg` at reviewed commit
+> `bb91428048ca9028c5592cbbc52c982bd6843946`; `/health` and `/ready` returned
+> 200. The client was run locally from the same reviewed code. The authenticated
+> Owner flow reached scan preview with a selected gallery image, but the session
+> was the existing `LIVE-TEST-20260912-REPRO` scan containing one processed image
+> and 15 candidates, so the app disabled `Upload image`. No new input or
+> duplicate Proceed/Cancel proof was created. Connected no-cover verification is
+> blocked pending a clean Owner session/store or explicit authorization to remove
+> the existing image; no migration, Storage deletion, inventory Add, or dispatch
+> change was made.
+
 > **Current 2026-09-14 handoff:** M61 and M62 are live once in the verified
 > development project and Owner Edge v12 is active. The committed bounded
 > follow-up on `codex/phase9-duplicate-confirmation` at HEAD
@@ -26,7 +40,7 @@
 > historical. M60 was subsequently applied during the authorized development
 > rollout; the current bounded M61 representative-cover follow-up is local-only.
 
-**Status:** `unit6h_representative_cover_m62_applied_runtime_rollout_pending`
+**Status:** `unit6h_runtime_rollout_complete_connected_proof_blocked_by_existing_active_scan`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
 **Last updated:** 2026-09-14
 **Current handoff:** Unit 6H duplicate confirmation is locally implemented and

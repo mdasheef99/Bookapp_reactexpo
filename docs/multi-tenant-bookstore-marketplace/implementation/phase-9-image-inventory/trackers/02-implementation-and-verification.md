@@ -1,5 +1,18 @@
 # Phase 9 Implementation and Verification Tracker
 
+> **2026-09-14 authorized runtime rollout / connected proof checkpoint:**
+> `phase9-owner-ingestion` v14 is active in verified development project
+> `ahntbtktjjmvfosgkmgn` with JWT verification preserved. Render metadata-worker
+> deployment `dep-dak2nmjl550s73bqb7jg` is live at reviewed commit
+> `bb91428048ca9028c5592cbbc52c982bd6843946`; `/health` and `/ready` returned
+> 200. The local client reached the authenticated Owner scan preview, but the
+> active session was the existing `LIVE-TEST-20260912-REPRO` scan with one
+> processed image and 15 candidates, so `Upload image` was disabled for the
+> selected gallery image. No new input, duplicate Proceed/Cancel, Add,
+> migration, Storage deletion, or dispatch change occurred. Remaining proof
+> requires a clean Owner session/store or explicit authorization to remove the
+> existing image.
+
 > **2026-09-14 final read-only review:** HEAD is
 > `bb91428048ca9028c5592cbbc52c982bd6843946` on
 > `codex/phase9-duplicate-confirmation`; the code correction is committed and
@@ -132,9 +145,9 @@
 
 > **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
 
-**Status:** `unit6h_representative_cover_m62_applied_runtime_rollout_pending`; **last updated:** 2026-09-13
+**Status:** `unit6h_runtime_rollout_complete_connected_proof_blocked_by_existing_active_scan`; **last updated:** 2026-09-14
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit6h_representative_cover_m62_rollout_follow_up`. Unit 6H duplicate confirmation retains its historical development proof. M61 and M62 are live once and Owner Edge v12 is active; matching metadata-worker/client deployment plus connected proof remain pending.
+**Active work unit:** `unit6h_representative_cover_m62_rollout_follow_up`. Unit 6H duplicate confirmation retains its historical development proof. M61 and M62 are live once, Owner Edge v14 and the matching metadata worker are active, and the local client reached the existing `LIVE-TEST-20260912-REPRO` scan. Connected proof remains blocked because its one processed image and 15 candidates disable a new upload; use a clean Owner session/store or obtain explicit authorization to remove the existing image.
 
 ### 2026-09-13 — Representative-edition cover correction
 
@@ -3438,33 +3451,35 @@ Keep `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING`; the prior instruction to
 commit and push the verified local correction is no longer applicable because
 that correction is already committed.
 
-## 2026-09-14 - Final read-only PR review and handoff synchronization
+## 2026-09-14 - Authorized runtime rollout and connected-proof boundary
 
-Date/session: 2026-09-14 Phase 9 final read-only PR review.
-Authorized scope: Correct stale Unit 6H/M61/M62 handoff status only; preserve the
-no-runtime, no-remote-service, no-migration-application, and no-Git-publication
-boundaries.
-Completed: Updated the current handoff records from stale HEAD `4ab3e5c` and
-uncommitted-correction wording to committed code correction HEAD
-`bb91428048ca9028c5592cbbc52c982bd6843946`. Recorded that the first exact full
-handle run had one non-reproducible owner-query retry assertion, while its
-isolated rerun and second exact full run passed 303 suites/2,479 tests with the
-documented skips.
+Date/session: 2026-09-14 Phase 9 authorized runtime rollout.
+Authorized scope: Deploy the matching reviewed Owner Edge and metadata worker,
+run the client against the verified development project, and continue the
+connected no-cover proof without applying migrations or deleting existing data.
+Completed: `phase9-owner-ingestion` v14 is active with JWT verification
+preserved. Render deployment `dep-dak2nmjl550s73bqb7jg` is live at reviewed
+code commit `bb91428048ca9028c5592cbbc52c982bd6843946`; the local client
+reached authenticated Owner scan preview. The existing
+`LIVE-TEST-20260912-REPRO` session already contains one processed image and 15
+candidates, so the selected gallery image could not be registered and the
+duplicate proof stopped before Proceed/Cancel or Add.
 Verification actually run: focused privacy Jest 29/29; focused Unit 6H group
 12 suites/269 tests; second exact full Jest 303 suites/2,479 tests with four
 skipped; TypeScript PASS; Phase 9 continuity validator PASS; diff check PASS;
 PGlite 7/7; independent PostgreSQL concurrency/U8B markers PASS; `.pyc` count
-0.
-Supabase/external mutations: None. No migration, database, Storage, provider,
-dispatch, deployment, staging, commit, push, merge, or reset occurred. The
-current uncommitted worktree changes are documentation-only handoff updates.
+0; Render `/health` and `/ready` 200; Supabase function listing shows the
+active Owner Edge v14.
+Supabase/external mutations: Owner Edge deployment and Render worker deployment
+only. No migration application, database-row mutation, Storage deletion,
+provider dispatch, inventory Add, staging, push, merge, or reset occurred.
 Decisions/deviations/risks: F-01 remains retracted; F-02/F-03 remain corrected.
 Optional sidecar persistence remains best-effort without durable retry/outbox or
-backfill; matching worker/client rollout and connected no-cover proof remain
-pending.
+backfill. The connected proof is blocked by the existing active scan; removing
+its image is a destructive remote action and has not been authorized.
 Tracker/source-doc updates: ACTIVE, DOC-13, SESSION-START, Phase 9 TRACKER,
 README, this implementation tracker, and the Unit 6H supporting correction were
 updated.
-Next authorized action and gate: With separate explicit rollout authorization,
-deploy the matching tolerant Owner Edge, metadata-worker, and client runtime,
-then run the connected no-cover review/Add/public-projection proof.
+Next authorized action and gate: Use a clean Owner session/store, or obtain
+explicit authorization to remove the existing image, then run the connected
+no-cover review/Add/public-projection proof.

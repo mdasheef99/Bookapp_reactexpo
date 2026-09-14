@@ -1,5 +1,23 @@
 # Active Marketplace Phase Router
 
+> **2026-09-14 authorized runtime rollout / connected-proof checkpoint:** The
+> verified development project `Bookconnect_reactexpo`
+> (`ahntbtktjjmvfosgkmgn`) now has the checked-in `phase9-owner-ingestion`
+> bundle active as Edge v14; JWT verification was preserved. The matching
+> metadata worker is live on Render deployment `dep-dak2nmjl550s73bqb7jg` at
+> reviewed code commit `bb91428048ca9028c5592cbbc52c982bd6843946`, and its
+> `/health` and `/ready` endpoints returned 200. The client runtime was run
+> locally from the same reviewed code against the verified project. The
+> connected Owner UI reached scan preview, but its active session is the
+> existing `LIVE-TEST-20260912-REPRO` session with one processed image and 15
+> candidates; the selected gallery image therefore showed `Upload image`
+> disabled. No new input registration, duplicate Proceed/Cancel, inventory
+> Add, migration, Storage deletion, or dispatch change occurred in this
+> attempt. Connected no-cover proof is blocked until an approved clean Owner
+> session/store is available or the existing image is explicitly authorized
+> for removal. [Render deployment API](https://api-docs.render.com/reference/create-deploy)
+> was used only to select the reviewed commit.
+
 > **2026-09-13 representative-cover rollout closeout:** After exact-project
 > reverification, M61 SHA-256
 > `A2A8F9191E29C9813DEBC4E35EA8170F00538288079FFA2E7014621A4D90D463`
@@ -87,7 +105,7 @@ This file answers only “where does a new development session start?” DOC-13 
 
 ## Active route
 
-- **Unit 6H development overlay:** Unit 6H duplicate confirmation has completed its bounded correction and disposable independent-connection PostgreSQL verification on `codex/phase9-duplicate-confirmation`, at HEAD `bb91428048ca9028c5592cbbc52c982bd6843946` from baseline `8340647`; the M61 sidecar-persistence observability correction is committed and the only pending local changes from this handoff are documentation updates. F-01 was retracted; F-02 and F-03 are corrected. M60 is live once as `20260912072815`; M61 is live once as `20260913111342`; M62 is live once as `20260913162154`. The first exact full handle run exposed one non-reproducible owner-query retry assertion; the isolated rerun and second exact full run passed. Owner Edge v12 is active with JWT verification; the remaining gate is matching metadata-worker/client deployment and connected no-cover proof, requiring explicit rollout authorization. [Unit 6H authority and deployment procedure](./phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md).
+- **Unit 6H development overlay:** Unit 6H duplicate confirmation has completed its bounded correction and disposable independent-connection PostgreSQL verification on `codex/phase9-duplicate-confirmation`; the code correction is `bb91428048ca9028c5592cbbc52c982bd6843946` from baseline `8340647`, with documentation synchronized in the follow-up commit. F-01 was retracted; F-02 and F-03 are corrected. M60 is live once as `20260912072815`; M61 is live once as `20260913111342`; M62 is live once as `20260913162154`. The matching Owner Edge v14 and metadata worker are live, while the local client reached the existing active `LIVE-TEST-20260912-REPRO` scan and could not register a new image because one processed image and 15 candidates already exist. The connected no-cover proof is therefore blocked by the required explicit authorization to remove that existing image or use a clean Owner session/store. [Unit 6H authority and deployment procedure](./phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md).
 
 ## 2026-09-12 Unit 6H review closeout
 

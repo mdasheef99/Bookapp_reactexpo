@@ -1,5 +1,18 @@
 # DOC-13: Implementation Tracker
 
+> **2026-09-14 authorized runtime rollout / proof blocker:** The verified
+> development project `ahntbtktjjmvfosgkmgn` has `phase9-owner-ingestion` v14
+> active with JWT verification preserved. Render metadata-worker deployment
+> `dep-dak2nmjl550s73bqb7jg` is live on reviewed commit
+> `bb91428048ca9028c5592cbbc52c982bd6843946`; `/health` and `/ready` both
+> returned 200. The local client reached the authenticated Owner scan flow and
+> a selected gallery image, but the resolved session was the existing
+> `LIVE-TEST-20260912-REPRO` scan with one processed image and 15 candidates,
+> so `Upload image` was disabled. No new input, Proceed/Cancel, Add, migration,
+> Storage deletion, or dispatch change was performed. The remaining connected
+> no-cover proof requires an approved clean Owner session/store or explicit
+> authorization to remove the existing image.
+
 > **2026-09-14 M61 warning-privacy correction:** The bounded representative-cover
 > persistence warning now logs only `lookupId`, `attemptId`, and the fixed
 > `P9_REPRESENTATIVE_COVER_PERSISTENCE_FAILED` code; raw exception text is not
@@ -1422,8 +1435,8 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6H duplicate confirmation and the representative-cover correction are locally verified; M60, M61, and M62 are live once, while matching runtime deployment and connected no-cover proof are pending** |
-| Overall status | `unit6h_representative_cover_m62_applied_runtime_rollout_pending` |
+| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6H duplicate confirmation and the representative-cover correction are locally verified; M60, M61, and M62 are live once, Owner Edge v14 and the matching metadata worker are live, while connected no-cover proof is blocked by the existing active scan** |
+| Overall status | `unit6h_runtime_rollout_complete_connected_proof_blocked_by_existing_active_scan` |
 | Last updated | 2026-09-14 |
 | Latest handoff | `8340647` is the merge base; current local HEAD is `bb91428048ca9028c5592cbbc52c982bd6843946` on `codex/phase9-duplicate-confirmation`; the bounded M61 sidecar-persistence failure-observability/test correction is committed and this handoff synchronization changes documentation only. F-01 is retracted; F-02/F-03 are corrected. M60 is live once as `20260912072815`; M61 is live once as `20260913111342`; M62 is live once as `20260913162154`. The first exact full handle run had one non-reproducible owner-query retry assertion; its isolated rerun and the second exact full run passed. Post-apply readback remains prior documented evidence; no connected no-cover proof has run in this review. |
 | Current risk level | No local product-implementation blocker was identified for the corrected feature. React `act(...)`, NetInfo dynamic-import, and Node `DEP0040` warnings remain unresolved test/tooling hygiene evidence even though full Jest exits normally and the independent handle run finds no persistent handle. The disposable proof used PostgreSQL 18.4 while the connected project reports PostgreSQL 17.6, so target-version behavior is not fully reproduced locally. Matching metadata-worker/client deployment and connected Edge/Storage no-cover verification remain unproven. |

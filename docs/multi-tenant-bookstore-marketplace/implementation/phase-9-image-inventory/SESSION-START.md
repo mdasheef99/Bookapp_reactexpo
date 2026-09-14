@@ -1,5 +1,18 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
+> **Current 2026-09-14 runtime rollout checkpoint:** The verified development
+> project has Owner Edge v14 active with JWT verification preserved. Render
+> metadata worker deployment `dep-dak2nmjl550s73bqb7jg` is live on reviewed
+> commit `bb91428048ca9028c5592cbbc52c982bd6843946`; `/health` and `/ready`
+> both returned 200. A local Expo client from that code reached the
+> authenticated Owner scan flow. The connected test then resolved the existing
+> `LIVE-TEST-20260912-REPRO` session, which already has one processed image and
+> 15 candidates; the selected gallery image was visible in preview but `Upload
+> image` was disabled. No new input registration, duplicate resolution, Add,
+> migration, Storage deletion, or dispatch change occurred. Next action is
+> blocked pending a clean Owner session/store or explicit authorization to
+> remove the existing image.
+
 > **Current 2026-09-14 local Jest closeout:** The rollout branch's reported
 > 12 failed suites/17 failed tests and post-run non-exit warning are corrected
 > locally. The exact reproduction passes 5 suites/48 tests; the complete
@@ -114,7 +127,7 @@ This is the deterministic resume procedure for Phase 9. A new session should rec
 
 ## Current Unit 6H overlay
 
-The bounded Unit 6H duplicate-confirmation correction and its development proof are complete on `codex/phase9-duplicate-confirmation` at `C:\Users\user\Desktop\Bookconnect`, at HEAD `bb91428048ca9028c5592cbbc52c982bd6843946` from baseline `8340647`; the M61 sidecar-persistence observability correction is committed and this handoff synchronization changes documentation only. M60, M61, and M62 are live once; Owner Edge v12 is active. M62 closes representative-cover standalone detail/save projection without changing duplicate behavior, selected metadata, or public cover projection. Matching worker/client runtime deployment and connected proof remain pending. Do not redeploy or mutate development database/Storage without separate authorization.
+The bounded Unit 6H duplicate-confirmation correction and its development proof are complete on `codex/phase9-duplicate-confirmation` at `C:\Users\user\Desktop\Bookconnect`; the code correction is `bb91428048ca9028c5592cbbc52c982bd6843946` from baseline `8340647`, with documentation synchronized separately. M60, M61, and M62 are live once; Owner Edge v14 and the matching metadata worker are active. M62 closes representative-cover standalone detail/save projection without changing duplicate behavior, selected metadata, or public cover projection. The local client reached an existing active scan and the connected no-cover proof is blocked pending a clean Owner session/store or explicit authorization to remove its existing image. Do not delete or mutate development database/Storage data without that explicit authorization.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 

@@ -1,5 +1,18 @@
 # Phase 9 Master Tracker
 
+> **2026-09-14 authorized runtime rollout / connected proof checkpoint:**
+> Owner Edge v14 is active in verified development project
+> `ahntbtktjjmvfosgkmgn` with JWT verification preserved. The matching
+> metadata worker is live on Render deployment `dep-dak2nmjl550s73bqb7jg` at
+> reviewed commit `bb91428048ca9028c5592cbbc52c982bd6843946`; `/health` and
+> `/ready` returned 200. The local client reached the authenticated Owner scan
+> preview with a selected gallery image, but the active session was the
+> existing `LIVE-TEST-20260912-REPRO` scan containing one processed image and
+> 15 candidates, so `Upload image` was disabled. No new input, duplicate
+> Proceed/Cancel, Add, migration, Storage deletion, or dispatch change
+> occurred. Connected no-cover proof is blocked pending a clean Owner
+> session/store or explicit authorization to remove the existing image.
+
 > **2026-09-14 final read-only review:** HEAD is
 > `bb91428048ca9028c5592cbbc52c982bd6843946`; the narrowly scoped M61 observability
 > assertion for representative-cover sidecar persistence failures is committed,
@@ -115,22 +128,22 @@
 
 
 **Planning status:** `unit6h_representative_cover_correction_approved`
-**Implementation status:** `unit6h_representative_cover_m62_locally_verified_rollout_pending`
+**Implementation status:** `unit6h_runtime_rollout_complete_connected_proof_blocked_by_existing_active_scan`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
 **Last updated:** 2026-09-14
-**Current milestone:** Unit 6H duplicate confirmation remains live through its recorded development proof. M60, M61, and M62 are live once and Owner Edge v12 is active; matching runtime deployment and connected representative-cover proof remain pending.
+**Current milestone:** Unit 6H duplicate confirmation remains live through its recorded development proof. M60, M61, and M62 are live once, Owner Edge v14 and the matching metadata worker are active, and the local client reached the existing `LIVE-TEST-20260912-REPRO` scan. Connected representative-cover proof remains blocked because the existing scan already contains one processed image and 15 candidates, so a new upload requires a clean Owner session/store or explicit authorization to remove that image.
 **Active work unit:** `unit6h_representative_cover_m62_rollout_follow_up`
 **Prior local-only overlay:** Unit 6H changes future duplicate inputs from terminal rejection to an Owner-confirmed warning. Local branch `codex/phase9-duplicate-confirmation` added forward M60, direct Edge/client contract changes, cleanup/dispatch protection, and tests. M60 was subsequently applied before this diagnostic under prior authorization; no migration action was taken in this diagnostic. See [Unit 6H](./work-units/06h-duplicate-input-confirmation.md).
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
 **Last completed:** The full-Jest correction passes the reporter's exact 5-suite/48-test reproduction, image-inventory 61 suites/494 tests with one suite/four tests skipped, and the complete 304-suite/2,483-test run with only the same skips; Jest exits normally. A separate `--detectOpenHandles --silent` run has the same totals with no persistent handle/force-exit/one-second non-exit warning. TypeScript and diff hygiene pass. The bounded M62/runtime correction evidence remains unchanged: affected Jest 310/310, worker build, structural metadata 14/14, M55 7/7, and full M52–M62 PGlite 2/2. The normal full run still emits existing React `act(...)` and NetInfo warnings plus Node `DEP0040`; these remain unresolved test/tooling hygiene warnings, not product-test failures.
-**Next authorized action:** With explicit rollout/Git authority, deploy the matching tolerant Owner Edge, metadata worker, and client code, then run one connected selected-edition-without-cover detail/save/review plus explicit Add/public-projection readback.
+**Next authorized action:** Obtain a clean Owner session/store or explicit authorization to remove the existing `LIVE-TEST-20260912-REPRO` image; then run one connected selected-edition-without-cover detail/save/review plus explicit Add/public-projection readback.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. M53 is live exactly once as `20260828081324 marketplace_phase9_unit6g_field_authority_correction`; M54 as `20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`; M55 as `20260830084323 marketplace_phase9_unit6g_metadata_add_authority_correction`; M56 as `20260830175651 marketplace_phase9_metadata_throughput`; M57 as `20260908073203 marketplace_phase9_media_output_intents`; M58 as `20260908073308 marketplace_phase9_media_completion_receipts`; M59 as `20260908073425 marketplace_phase9_media_output_cleanup`; M60 as `20260912072815 marketplace_phase9_duplicate_confirmation`; M61 as `20260913111342 marketplace_phase9_representative_edition_cover`; and M62 as `20260913162154 marketplace_phase9_representative_cover_detail_projection`.
 **Scope boundary:** Unit 6H review covers the duplicate warning, new-upload Proceed/Cancel semantics, exact private-object verification, completion replay, cleanup/dispatch fencing, UI confirmation lifecycle, and disposable independent-connection PostgreSQL behavior. M52–M59 behavior remains unchanged; connected rollout and live Edge/Storage proof are not established. Unit 8 remains complete.
 **Implementation authority:** Unit 6H local implementation, bounded correction, disposable PostgreSQL verification, exact Edge reconciliation, and duplicate-Proceed review handoff are complete for this checkpoint. F-01 is retracted; F-02 and F-03 are corrected. The Unit 6H work unit is the detailed authority; M52–M59 remain immutable live evidence. Further data/Storage, dispatch, or job mutation requires connected-test authorization. Native Unit 6F validation remains deferred and unrelated.
 **Migration creation/application authority:** M61 and M62 application are complete and verified. M52–M62 application history remains immutable live evidence; no historical migration was edited or replayed. Further schema, data, Storage, dispatch, or job mutation requires separate authorization.
 **Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
-**Current gate:** `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING`; M60–M62 and Owner Edge v12 are live, while compatible metadata-worker/client deployment plus connected proof remain unrun.
+**Current gate:** `M62_CONNECTED_PROOF_BLOCKED_BY_EXISTING_ACTIVE_SCAN`; M60–M62, Owner Edge v14, and the matching metadata worker are live, while the local client proof cannot register a new input until the existing active scan is cleared through an approved path.
 
 ## 2026-09-12 — Unit 6H bounded correction and documentation closeout
 
