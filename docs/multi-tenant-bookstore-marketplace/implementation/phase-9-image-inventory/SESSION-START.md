@@ -1,5 +1,24 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
+> **Current 2026-09-14 local Jest closeout:** The rollout branch's reported
+> 12 failed suites/17 failed tests and post-run non-exit warning are corrected
+> locally. The exact reproduction passes 5 suites/48 tests; the complete
+> `npm.cmd test -- --runInBand` run passes 303 suites/2,479 tests with one
+> suite/four tests skipped (304 suites, 2,483 tests total) and exits normally.
+> A separate `--detectOpenHandles --silent` run has the same pass/skip totals
+> and no persistent open-handle, forced-exit, or one-second non-exit warning.
+> TypeScript and diff hygiene pass. The normal full run still emits React
+> `act(...)` warnings in existing VirtualizedList/timer, CandidateReview state,
+> search/query, and subscription-query paths, plus the NetInfo dynamic-import
+> fallback warning and Node dependency warning `DEP0040`; these are recorded as
+> unresolved test/tooling hygiene warnings, not passing-assertion evidence of a
+> clean warning-free run. The local follow-up is limited to Jest discovery,
+> test fixtures/teardown, package configuration, and documentation; production
+> behavior and migration SQL are unchanged. No external service or Git
+> publication action occurred in this follow-up. The current gate remains
+> `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING`; matching runtime rollout
+> and connected proof still require explicit authorization.
+
 > **Current 2026-09-13 representative-cover rollout closeout:** M61 was applied once
 > to verified development project `ahntbtktjjmvfosgkmgn` as remote version
 > `20260913111342` after exact-project and SHA-256 reverification. Readback
@@ -7,7 +26,7 @@
 > zero new-data effects. Owner Edge v12 is ACTIVE, JWT verification enabled,
 > hash `ad75a08f3624f543f904cf2bf6833bcca132dfc1727e5868d52022365aacea14`,
 > with its M61 contract file matching local source. On
-> `codex/phase9-duplicate-confirmation` at `80e7db9`, the local follow-up now
+> `codex/phase9-duplicate-confirmation` at `30c9658`, the local follow-up now
 > decodes Google Books volume evidence, suppresses fallback where unresolved
 > series evidence could select a different series, and adds forward-only M62 for
 > standalone Owner detail/review-save provenance. M62 was applied once as remote
@@ -15,12 +34,13 @@
 > `E8CAAC179363D1E709F071BBF81436B7ED4B24968E0979ADA7A402C8C435066F`.
 > Post-apply readback confirms the postgres-owned helper, authenticated-only
 > Owner entrypoints, and zero sidecar/inventory representative-cover rows.
-> Fresh TypeScript, worker build, affected Jest 310/310,
-> structural 14/14, M55 7/7, M52–M62 integration 2/2, migration contract 4/4,
-> deployment-runtime validation, and continuity validation pass. No `act(...)`,
-> open-handle, or force-exit warning reproduced; only known dependency warning
-> `DEP0040` did. No worker/client deployment or Git publication occurred in this
-> step.
+> Fresh TypeScript, worker build, focused affected Jest 310/310, structural
+> 14/14, M55 7/7, M52–M62 integration 2/2, migration contract 4/4,
+> deployment-runtime validation, and continuity validation pass. Those focused
+> runs did not emit `act(...)`, open-handle, or force-exit warnings; the later
+> full-run closeout above did emit the existing React `act(...)`, NetInfo, and
+> `DEP0040` warnings, while the independent handle run exited normally. No
+> worker/client deployment or Git publication occurred in this step.
 > [Detailed evidence](./supporting/unit6h-representative-cover-correction.md).
 > Exact next action: with explicit rollout authorization, deploy the matching
 > tolerant Owner Edge, metadata-worker, and client runtime, then run the
@@ -79,14 +99,14 @@
 
 
 **Status:** active continuity protocol
-**Last updated:** 2026-09-13
+**Last updated:** 2026-09-14
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
 ## Current Unit 6H overlay
 
-The bounded Unit 6H duplicate-confirmation correction and its development proof are complete on `codex/phase9-duplicate-confirmation` at `C:\Users\user\Desktop\Bookconnect`. M60, M61, and M62 are live once; Owner Edge v12 is active. M62 closes representative-cover standalone detail/save projection without changing duplicate behavior, selected metadata, or public cover projection. Matching worker/client runtime deployment and connected proof remain pending. Do not redeploy or mutate development database/Storage without separate authorization.
+The bounded Unit 6H duplicate-confirmation correction and its development proof are complete on `codex/phase9-duplicate-confirmation` at `C:\Users\user\Desktop\Bookconnect`, currently at `30c9658` with the local correction set uncommitted. M60, M61, and M62 are live once; Owner Edge v12 is active. M62 closes representative-cover standalone detail/save projection without changing duplicate behavior, selected metadata, or public cover projection. Matching worker/client runtime deployment and connected proof remain pending. Do not redeploy or mutate development database/Storage without separate authorization.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 

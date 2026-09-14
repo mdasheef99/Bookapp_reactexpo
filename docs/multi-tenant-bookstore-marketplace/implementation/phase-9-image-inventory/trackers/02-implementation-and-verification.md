@@ -23,11 +23,15 @@
 > Post-apply readback confirms the postgres-owned private helper, authenticated
 > Owner detail/save entrypoints, denied API-role access to the helper, and zero
 > sidecar/inventory representative-cover rows. Fresh verification: TypeScript
-> PASS, worker build PASS, affected Jest 8 suites/310 tests, structural
+> PASS, worker build PASS, focused affected Jest 8 suites/310 tests, structural
 > M47/M48+M52–M62 14/14, M55 7/7, M52–M62 representative-cover integration
 > 2/2, migration contract 4/4, deployment-runtime validation, and continuity
-> validation. No `act(...)`, open-handle, or force-exit warning reproduced; only
-> known dependency warning `DEP0040` did. No worker/client deployment or Git
+> validation. Those focused runs did not emit `act(...)`, open-handle, or
+> force-exit warnings. A later full Jest run passed 303/304 suites and
+> 2,479/2,483 tests with the documented skips and exited normally; its separate
+> handle run found no persistent handle/force-exit or one-second non-exit
+> warning. The normal full run still emits existing React `act(...)`, NetInfo
+> dynamic-import, and `DEP0040` warnings. No worker/client deployment or Git
 > publication occurred; connected no-cover review/Add proof remains unrun.
 >
 > **Historical 2026-09-13 pre-rollout representative-cover evidence:** A red-first bounded
@@ -3377,3 +3381,45 @@ Rules: re-verify the project before planning and applying; use `apply_migration`
 - External/Git state: working tree clean at `1c090b9` (no source changes were
   needed); nothing pushed, merged, or deployed; no Groups 2-4/M39/Unit 7C work.
 - Exact next action: Owner review of this record, then 6G-C authorization.
+
+## 2026-09-14 - Full Jest failure and retained-timer correction
+
+Date/session: 2026-09-14 Phase 9 rollout Jest correction
+Authorized work unit and scope: Correct the investigated local Jest failures and
+post-run non-exit warning only; preserve the current branch and external-state
+boundaries.
+Completed: Restricted Jest discovery to conventional test/spec files; aligned
+the mounted-route mock and M13 runtime-wrapper expectation with current source;
+made SQL text assertions CRLF-independent; and corrected test-only TanStack
+query/mutation teardown so removed queries and cleared mutations cannot retain
+five-minute GC timers.
+Files/components/migrations: `package.json`; five image-inventory test fixtures;
+one Store View query test fixture; four migration contract tests. No migration
+SQL or production source changed.
+Verification actually run: reporter's exact command 5 suites/48 tests PASS;
+image-inventory 61 suites/494 tests PASS with one suite/four tests skipped; full
+Jest 303 suites/2,479 tests PASS with one suite/four tests skipped (304 suites,
+2,483 tests total), normal process exit; a separate
+`--detectOpenHandles --silent` run has the same totals with no persistent
+open-handle/force-exit/one-second non-exit warning; TypeScript PASS; continuity
+validator PASS; `git diff --check` PASS. The normal full run emitted existing
+React `act(...)` warnings, the NetInfo dynamic-import fallback warning, and
+Node dependency warning `DEP0040`; these remain unresolved test/tooling
+hygiene warnings.
+Supabase/external mutations: None. No Supabase/Storage access, database or
+application-data mutation, deployment, provider call, stage, commit, push,
+merge, reset, or branch switch occurred.
+Decisions/deviations/risks: No product or migration behavior changed. The seven
+helper/fixture collectors were discovery defects, the mounted-route and four SQL
+failures were stale/platform-sensitive test expectations, and the prior
+non-exit warning was test teardown retaining TanStack GC timers. The remaining
+React `act(...)` and NetInfo warnings were observed in the normal full run and
+remain unresolved test-harness/environment hygiene items; `DEP0040` is unchanged
+dependency noise. Passing assertions do not claim those warnings resolved.
+Tracker/source-doc updates: ACTIVE, DOC-13, SESSION-START, Phase 9 TRACKER, the
+Unit 6H work unit, and the Unit 6H representative-cover correction evidence
+were updated with this closeout.
+Next authorized action and gate: Keep
+`M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING`; using the previously granted
+development rollout/Git authority, commit and push the verified local correction,
+deploy the matching runtime, and run the connected representative-cover proof.

@@ -6,11 +6,16 @@
 > edition already in the same response when the selected coherent edition has
 > no cover. It does not stitch metadata, change selected/public `cover_url`,
 > change duplicate handling, or make a second provider call. Local TypeScript,
-> worker build, affected Jest 310/310, structural 14/14, M55 7/7, and M52–M62
-> PGlite 2/2 pass. M62 was applied once to the verified development project as
-> remote version `20260913162154`; post-apply helper/ACL and zero-row readback
-> passed. Matching worker/client deployment and connected no-cover proof remain
-> pending. [Evidence](../supporting/unit6h-representative-cover-correction.md).
+> worker build, focused affected Jest 310/310, structural 14/14, M55 7/7, and
+> M52–M62 PGlite 2/2 pass. The later full Jest run passes 303/304 suites and
+> 2,479/2,483 tests with the documented skips and exits normally; its separate
+> handle run found no persistent handle/force-exit or one-second non-exit
+> warning. The normal full run still emits existing React `act(...)`, NetInfo
+> dynamic-import, and Node `DEP0040` warnings. M62 was applied once to the
+> verified development project as remote version `20260913162154`; post-apply
+> helper/ACL and zero-row readback passed. Matching worker/client deployment and
+> connected no-cover proof remain pending.
+> [Evidence](../supporting/unit6h-representative-cover-correction.md).
 
 > **2026-09-12 bounded correction closeout:** Exact project/source readback
 > proved active `phase9-owner-ingestion` v10 carried the older pre-`selectionId`
@@ -29,7 +34,7 @@
 > **Historical pre-correction connected diagnostic checkpoint (2026-09-12):** M60 was subsequently applied once to development under the preceding rollout authorization. Live duplicate Proceed completed against the new upload: exactly one new vision job and two candidates were created, no older analysis/session was reused, and inventory remained unchanged. The remaining blocker is the deployed `phase9-owner-ingestion` batch-review response-contract drift: Edge returns HTTP 400 `P9_REQUEST_INVALID` while the same authenticated PostgREST RPC returns HTTP 200 with valid cards containing `metadataSummary.selectionId`. The checked-in Edge decoder accepts that optional field, but exact deployed source/version readback remains pending. No code, tests, migration SQL, deployment, dispatch, M60 action, data deletion, or inventory write occurred during this diagnostic. Exact next action: under rollout authorization, read back or deploy the matching Owner Edge bundle and repeat the Edge/RPC/UI proof.
 
 
-**Status:** duplicate Proceed through normal review live-verified; M61/M62 and Owner Edge v12 live once; matching worker/client deployment and connected no-cover proof pending
+**Status:** duplicate Proceed through normal review live-verified; M61/M62 and Owner Edge v12 live once; local correction verification complete with documented test/tooling warnings; matching worker/client deployment and connected no-cover proof pending
 **Branch/baseline:** `codex/phase9-duplicate-confirmation` from `8340647`
 **Authority:** product decision recorded for this unit; Phase 9 master SDD §3 (MAS-08, MAS-17), pipeline SDD §§6–10, media security SDD §§6–7 and §12, Owner review SDD §§6–9.
 

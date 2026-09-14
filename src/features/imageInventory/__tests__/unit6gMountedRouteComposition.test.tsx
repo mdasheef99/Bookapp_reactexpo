@@ -24,6 +24,7 @@ let mockRemoveCandidateMutate: jest.Mock;
 let mockCloseV3Mutate: jest.Mock;
 let mockSaveReviewMutate: jest.Mock;
 let mockRemoveInputMutate: jest.Mock;
+let mockResolveDuplicateMutate: jest.Mock;
 let mockAddCandidate: jest.Mock;
 let mockCandidateDetail: any;
 
@@ -126,6 +127,7 @@ function resetMocks() {
     mockCloseV3Mutate = jest.fn();
     mockSaveReviewMutate = jest.fn();
     mockRemoveInputMutate = jest.fn();
+    mockResolveDuplicateMutate = jest.fn();
     mockAddCandidate = jest.fn().mockResolvedValue({ status: 'succeeded' });
     mockCandidateDetail = {
         observed: {
@@ -212,6 +214,9 @@ jest.mock('../commit/useInventoryCommitCoordinator', () => ({
 jest.mock('../queries/ownerUxInputQueries', () => ({
     useRemoveOwnerInventoryInput: () => ({
         mutate: mockRemoveInputMutate, isPending: false, error: null,
+    }),
+    useResolveDuplicateOwnerInventoryInput: () => ({
+        mutate: mockResolveDuplicateMutate, isPending: false, error: null,
     }),
 }));
 // NEW 6G-C composition roots. At the checkpoint baseline these modules do not

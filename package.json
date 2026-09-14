@@ -108,6 +108,9 @@
       "<rootDir>/.wt",
       "[\\\\/]e2e[\\\\/]"
     ],
+    "testMatch": [
+      "**/?(*.)+(spec|test).[jt]s?(x)"
+    ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"
     }

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { act, cleanupAsync, renderHook, waitFor } from '@testing-library/react-native';
 import type { PropsWithChildren } from 'react';
 import { ownerUxService, type CloseScanSessionRequest } from '../api/ownerUxService';
 import {
@@ -34,7 +34,11 @@ describe('Phase 9 Unit 6F Close request authority fence', () => {
         resetImageInventoryIdentityForTests(identity);
     });
 
-    afterEach(() => client.clear());
+    afterEach(async () => {
+        await cleanupAsync();
+        client.getMutationCache().getAll().forEach((mutation) => mutation.destroy());
+        client.clear();
+    });
 
     it('uses always-online execution with retry disabled and aborts transport on unmount', async () => {
         closeSession.mockImplementation((_command: CloseScanSessionRequest, signal: AbortSignal) => (

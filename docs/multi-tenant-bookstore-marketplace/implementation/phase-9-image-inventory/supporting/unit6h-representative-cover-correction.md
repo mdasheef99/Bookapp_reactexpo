@@ -1,8 +1,8 @@
 # Unit 6H Follow-up — Representative-Edition Cover Correction
 
 **Date:** 2026-09-13
-**Branch / HEAD reviewed:** `codex/phase9-duplicate-confirmation` / `80e7db9`
-**Status:** M61/M62 and Owner Edge v12 live-verified at the database/function layer; matching worker/client rollout and connected proof pending authorization
+**Branch / HEAD reviewed:** `codex/phase9-duplicate-confirmation` / `30c9658`
+**Status:** M61/M62 and Owner Edge v12 live-verified at the database/function layer; local test/config/documentation correction is verified but uncommitted; matching worker/client rollout and connected proof pending authorization
 **Scope:** cover presentation only; duplicate confirmation, selected-edition identity, inventory duplicate handling, and public discovery remain unchanged
 
 ## Decision and boundary
@@ -83,6 +83,24 @@ connected proof remain separately gated.
 
 ## Verification actually run
 
+- 2026-09-14 full-Jest corrective follow-up: Jest discovery was restricted to
+  conventional test/spec filenames, removing seven helper/fixture collectors;
+  stale mounted-route/M13-wrapper and CRLF-sensitive SQL fixtures were aligned
+  with current source; and retained TanStack query/mutation GC timers were
+  eliminated through explicit test-instance teardown. The reporter's exact
+  command passes 5 suites/48 tests. Image-inventory passes 61 suites/494 tests
+  with one suite/four tests skipped. The complete run passes 303 suites/2,479
+  tests with one suite/four tests skipped (304 suites/2,483 tests total) and
+  exits normally without the earlier non-exit warning. A separate
+  `--detectOpenHandles --silent` run has the same totals and no persistent
+  open-handle, force-exit, or one-second non-exit warning. TypeScript and
+  `git diff --check` pass. The normal full run still emits React `act(...)`
+  warnings in existing VirtualizedList/timer, CandidateReview state,
+  search/query, and subscription-query paths, plus the NetInfo dynamic-import
+  fallback warning and Node `DEP0040`; these remain unresolved test/tooling
+  hygiene warnings. No production source, migration SQL, external state,
+  deployment, or Git publication changed; the rollout/connected-proof gate is
+  unchanged.
 - Initial red run failed because the helper, contract fields, UI rendering, and
   M61 did not yet exist.
 - Fresh `npx.cmd tsc --noEmit`: PASS.
@@ -125,11 +143,18 @@ connected proof remain separately gated.
   migration contract Jest 4/4 PASS. Connected no-cover review/Add proof was not
   run because the matching runtime has not been deployed.
 
-The current affected Jest runs emitted no React `act(...)`, open-handle, or
-force-exit warning. The only warning was Node `DEP0040`; a traced run locates it
-in Expo's `winter/url` loading `whatwg-url-without-unicode`, which requires
-Node's deprecated built-in `punycode`. This is dependency/tooling noise, not a
-representative-cover implementation or test-cleanup failure.
+The focused affected Jest runs emitted no React `act(...)`, open-handle, or
+force-exit warning. The later normal full run did emit React `act(...)`
+warnings from existing VirtualizedList/timer, CandidateReview state-update,
+search/query, and subscription-query paths. It also emitted the NetInfo warning
+that its dynamic-import callback was unavailable under this Jest invocation and
+it fell back to assuming connected, plus Node `DEP0040` from Expo's
+`whatwg-url-without-unicode` loading deprecated built-in `punycode`. The
+independent `--detectOpenHandles --silent` run exited normally with no
+persistent-handle or force-exit warning. The evidence supports a remaining test
+harness/dependency warning set, not a representative-cover implementation
+failure; the warnings are not suppressed or claimed resolved by passing
+assertions.
 
 The broader structural-metadata integration file initially finished 10/14 and
 exposed four test defects/debts. They were investigated individually before the
@@ -183,17 +208,20 @@ remote-artifact checksum claim. The unrelated existing
 `marketplace_sec.phase9_worker_wake_dispatches` RLS hardening note is also left
 out of this bounded correction.
 
-The exact next action is to obtain explicit rollout/Git publication authority,
-deploy the tolerant Owner Edge contract and matching metadata worker/client,
-then run one connected no-cover scan through standalone detail, review-save,
-explicit Add, and public-projection readback. The Render worker is
-Git-backed at commit `573182267ddd79e08b0abfb348b5afd9fb0dc571`; the matching
-runtime remains uncommitted on `codex/phase9-duplicate-confirmation`.
+The exact next action, using the previously granted development rollout/Git
+authority, is to commit and push the verified local test/config/documentation
+correction on `codex/phase9-duplicate-confirmation`, deploy the tolerant Owner
+Edge contract and matching metadata worker/client, then run one connected
+no-cover scan through standalone detail, review-save, explicit Add, and
+public-projection readback. The Render worker is Git-backed at commit
+`573182267ddd79e08b0abfb348b5afd9fb0dc571`; the matching runtime remains
+uncommitted on the current branch.
 
 Historical external mutations were limited to the already-recorded M61 schema
-application and Owner Edge v12 deployment. In this bounded correction, M62 was
-the sole new remote mutation: it changed only the recorded PostgreSQL function
-definitions/ACLs. There was no Supabase data/Storage/provider/dispatch or
-application-data mutation or deletion, and no Render deployment. Nothing was
-staged, committed, pushed, or merged; metadata-worker/client deployment and
-connected proof did not run.
+application and Owner Edge v12 deployment. In the representative-cover rollout,
+M62 was the sole new remote migration mutation: it changed only the recorded
+PostgreSQL function definitions/ACLs. In this 2026-09-14 verification and
+documentation follow-up there was no Supabase data/Storage/provider/dispatch or
+application-data mutation or deletion, and no Render deployment. The feature
+baseline `30c9658` is already present on the remote branch; the current
+test/config/documentation correction remains uncommitted and unstaged.

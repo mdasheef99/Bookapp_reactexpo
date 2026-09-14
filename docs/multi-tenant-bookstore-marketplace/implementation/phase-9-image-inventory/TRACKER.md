@@ -1,5 +1,26 @@
 # Phase 9 Master Tracker
 
+> **2026-09-14 full-Jest correction closeout:** The Phase 9 rollout branch's
+> reported 12-suite/17-test failure set is corrected locally. Jest now discovers
+> only conventional `*.test.*`/`*.spec.*` files, excluding seven helper/fixture
+> modules; the mounted-route fixture supplies the current duplicate-resolution
+> hook; SQL contract readers normalize Windows CRLF; and the M13 wrapper test
+> distinguishes its preserved historical wrapper set from the one superseded
+> runtime caller. The separate non-exit warning was traced to TanStack Query GC
+> timers retained by orphaned queries and cleared-but-undestroyed mutations;
+> test teardown now destroys those instances explicitly. The reporter's exact
+> command passes 5 suites/48 tests, image-inventory passes 61 suites/494 tests
+> with one suite/four tests skipped, and the complete run exits normally with
+> 303 suites/2,479 tests passed plus one suite/four tests skipped (304 suites,
+> 2,483 tests total). TypeScript and `git diff --check` pass. The normal full
+> run still emits the existing React `act(...)` warnings, the NetInfo
+> dynamic-import fallback warning, and dependency warning `DEP0040`; a separate
+> `--detectOpenHandles --silent` run has the same totals and exits without a
+> persistent open-handle/force-exit/one-second non-exit warning. No runtime
+> behavior, migration SQL, external state, database/Storage, deployment, stage,
+> commit, push, or merge changed in this follow-up. The gate remains
+> `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING`.
+
 > **2026-09-13 representative-cover rollout closeout:** Exact-project and artifact-hash preflight
 > passed; M61 was applied once to `ahntbtktjjmvfosgkmgn` as remote version
 > `20260913111342`. Readback proves the new private schema, RLS, service-only
@@ -16,9 +37,11 @@
 > rows. M52–M61 remain unchanged. Fresh verification passed TypeScript, worker
 > build, affected Jest 310/310, structural 14/14, M55 7/7, M52–M62 integration
 > 2/2, migration contract 4/4, deployment-runtime validation, and continuity
-> validation. The sole
-> warning is known Expo/Node `DEP0040`; no `act(...)`, open-handle, or force-exit
-> warning reproduced. No external or Git publication action occurred.
+> validation. Those focused runs did not emit `act(...)`, open-handle, or
+> force-exit warnings; the later full-run closeout recorded existing React
+> `act(...)`, NetInfo dynamic-import, and Expo/Node `DEP0040` warnings, while
+> the independent handle run exited normally. No external or Git publication
+> action occurred.
 > [Evidence](./supporting/unit6h-representative-cover-correction.md).
 > Next authorized action: with explicit rollout authorization, deploy the
 > matching tolerant Owner Edge, metadata-worker, and client runtime, then run
@@ -77,13 +100,13 @@
 **Planning status:** `unit6h_representative_cover_correction_approved`
 **Implementation status:** `unit6h_representative_cover_m62_locally_verified_rollout_pending`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
-**Last updated:** 2026-09-13
+**Last updated:** 2026-09-14
 **Current milestone:** Unit 6H duplicate confirmation remains live through its recorded development proof. M60, M61, and M62 are live once and Owner Edge v12 is active; matching runtime deployment and connected representative-cover proof remain pending.
 **Active work unit:** `unit6h_representative_cover_m62_rollout_follow_up`
 **Prior local-only overlay:** Unit 6H changes future duplicate inputs from terminal rejection to an Owner-confirmed warning. Local branch `codex/phase9-duplicate-confirmation` added forward M60, direct Edge/client contract changes, cleanup/dispatch protection, and tests. M60 was subsequently applied before this diagnostic under prior authorization; no migration action was taken in this diagnostic. See [Unit 6H](./work-units/06h-duplicate-input-confirmation.md).
 **Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** The bounded M62/runtime correction passes fresh affected Jest 310/310, TypeScript, worker build, structural metadata 14/14, M55 7/7, and full M52–M62 PGlite 2/2. No `act(...)`, open-handle, or force-exit warning reproduced; known Expo/Node `DEP0040` remains dependency noise. The earlier independent-connection Unit 6H PostgreSQL and connected duplicate-Proceed evidence remain historical proof.
+**Last completed:** The full-Jest correction passes the reporter's exact 5-suite/48-test reproduction, image-inventory 61 suites/494 tests with one suite/four tests skipped, and the complete 304-suite/2,483-test run with only the same skips; Jest exits normally. A separate `--detectOpenHandles --silent` run has the same totals with no persistent handle/force-exit/one-second non-exit warning. TypeScript and diff hygiene pass. The bounded M62/runtime correction evidence remains unchanged: affected Jest 310/310, worker build, structural metadata 14/14, M55 7/7, and full M52–M62 PGlite 2/2. The normal full run still emits existing React `act(...)` and NetInfo warnings plus Node `DEP0040`; these remain unresolved test/tooling hygiene warnings, not product-test failures.
 **Next authorized action:** With explicit rollout/Git authority, deploy the matching tolerant Owner Edge, metadata worker, and client code, then run one connected selected-edition-without-cover detail/save/review plus explicit Add/public-projection readback.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. M53 is live exactly once as `20260828081324 marketplace_phase9_unit6g_field_authority_correction`; M54 as `20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`; M55 as `20260830084323 marketplace_phase9_unit6g_metadata_add_authority_correction`; M56 as `20260830175651 marketplace_phase9_metadata_throughput`; M57 as `20260908073203 marketplace_phase9_media_output_intents`; M58 as `20260908073308 marketplace_phase9_media_completion_receipts`; M59 as `20260908073425 marketplace_phase9_media_output_cleanup`; M60 as `20260912072815 marketplace_phase9_duplicate_confirmation`; M61 as `20260913111342 marketplace_phase9_representative_edition_cover`; and M62 as `20260913162154 marketplace_phase9_representative_cover_detail_projection`.
 **Scope boundary:** Unit 6H review covers the duplicate warning, new-upload Proceed/Cancel semantics, exact private-object verification, completion replay, cleanup/dispatch fencing, UI confirmation lifecycle, and disposable independent-connection PostgreSQL behavior. M52–M59 behavior remains unchanged; connected rollout and live Edge/Storage proof are not established. Unit 8 remains complete.

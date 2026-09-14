@@ -1,5 +1,23 @@
 # DOC-13: Implementation Tracker
 
+> **2026-09-14 Phase 9 full-Jest correction:** The reported 12 failed suites and
+> 17 failed tests are corrected locally without changing production behavior or
+> migration SQL. Seven helper/fixture modules are no longer collected as tests;
+> the mounted-route and migration contract fixtures now match current runtime
+> composition and cross-platform SQL text; and TanStack query/mutation test
+> teardown explicitly destroys retained GC timers. The exact reproduction is
+> 5 suites/48 tests PASS. The complete `npm.cmd test -- --runInBand` run is 303
+> passed suites plus one skipped and 2,479 passed tests plus four skipped (304
+> suites/2,483 tests total), exits normally, and the separate
+> `--detectOpenHandles --silent` run has the same totals with no persistent
+> open-handle/force-exit/one-second non-exit warning. The normal full run still
+> emits React `act(...)` warnings in existing UI timer/query/state-update paths,
+> the NetInfo dynamic-import fallback warning, and dependency warning `DEP0040`.
+> TypeScript and diff hygiene pass. No production source, migration SQL,
+> external service, database/Storage, deployment, stage, commit, push, or merge
+> changed in this follow-up. Phase 9 remains at
+> `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING`.
+
 > **2026-09-13 representative-cover rollout closeout:** Exact-project preflight
 > reconfirmed `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` healthy, then the
 > hash-verified M61 artifact was applied once as remote version
@@ -18,9 +36,12 @@
 > values remain strict, allowing Owner Edge to deploy before M62 without a
 > contract outage. Fresh TypeScript and worker build pass; affected Jest is
 > 8 suites/310 tests, structural metadata 14/14, M55 control 7/7, and full
-> M52–M62 representative-cover integration 2/2. No `act(...)`, open-handle, or
-> force-exit warning reproduced; only the known Expo/Node `DEP0040` warning did.
-> Metadata-worker/client rollout and the connected no-cover scan/Add remain unrun.
+> M52–M62 representative-cover integration 2/2. The focused runs did not emit
+> `act(...)`, open-handle, or force-exit warnings; the later full-run closeout
+> recorded existing React `act(...)`, NetInfo dynamic-import, and Expo/Node
+> `DEP0040` warnings, while the independent handle run exited normally.
+> Metadata-worker/client rollout and the connected no-cover scan/Add remain
+> unrun.
 > Post-apply readback confirms the private helper ACL and zero sidecar/inventory
 > representative-cover rows. No Git publication occurred.
 > [Evidence](./implementation/phase-9-image-inventory/supporting/unit6h-representative-cover-correction.md).
@@ -1393,10 +1414,10 @@ If implementation changes product or architecture behavior, update the relevant 
 |---|---|
 | Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6H duplicate confirmation and the representative-cover correction are locally verified; M60, M61, and M62 are live once, while matching runtime deployment and connected no-cover proof are pending** |
 | Overall status | `unit6h_representative_cover_m62_applied_runtime_rollout_pending` |
-| Last updated | 2026-09-13 |
-| Latest handoff | Baseline `8340647` matches the requested remote and branch; the current local HEAD is `80e7db965e4d6c74799be53036ab128bbd3b9fba` with the reviewed working tree preserved. F-01 is retracted; F-02/F-03 are corrected. M60 is live once as `20260912072815`; M61 is live once as `20260913111342`; M62 is live once as `20260913162154`. Post-apply readback passed; no connected no-cover proof has run. |
-| Current risk level | No local implementation blocker remains. The disposable proof used PostgreSQL 18.4 while the connected project reports PostgreSQL 17.6, so target-version behavior is not fully reproduced locally. Matching metadata-worker/client deployment and connected Edge/Storage no-cover verification remain unproven. |
-| Next recommended task | With explicit rollout authorization, deploy the matching tolerant Owner Edge, metadata-worker, and client code, then run the connected no-cover review/Add/public-projection proof. Do not merge to `main`; do not mutate existing development data. |
+| Last updated | 2026-09-14 |
+| Latest handoff | Baseline `8340647` matches the requested remote and branch; the current local HEAD is `30c965869b4ca16739a15b358a0e839662cc3d1b` with the reviewed working tree preserved and the local correction set uncommitted/unstaged. F-01 is retracted; F-02/F-03 are corrected. M60 is live once as `20260912072815`; M61 is live once as `20260913111342`; M62 is live once as `20260913162154`. Post-apply readback passed; no connected no-cover proof has run. |
+| Current risk level | No local product-implementation blocker was identified for the corrected feature. React `act(...)`, NetInfo dynamic-import, and Node `DEP0040` warnings remain unresolved test/tooling hygiene evidence even though full Jest exits normally and the independent handle run finds no persistent handle. The disposable proof used PostgreSQL 18.4 while the connected project reports PostgreSQL 17.6, so target-version behavior is not fully reproduced locally. Matching metadata-worker/client deployment and connected Edge/Storage no-cover verification remain unproven. |
+| Next recommended task | Using the previously granted development rollout/Git authority, commit and push the verified local correction on `codex/phase9-duplicate-confirmation`, deploy the matching tolerant Owner Edge, metadata-worker, and client code, then run the connected no-cover review/Add/public-projection proof. Do not merge to `main`; do not mutate existing development data. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 
