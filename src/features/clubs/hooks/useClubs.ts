@@ -759,23 +759,6 @@ export function useUnarchiveClub() {
     });
 }
 
-export function useTransferClubAdmin() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: ({ clubId, newAdminUserId }: { clubId: string; newAdminUserId: string }) =>
-            clubsService.transferClubAdmin(clubId, newAdminUserId),
-        onSuccess: async (result) => {
-            await Promise.all([
-                queryClient.invalidateQueries({ queryKey: clubKeys.manageDetail(result.id), refetchType: 'all' }),
-                queryClient.invalidateQueries({ queryKey: clubKeys.publicDetail(result.id), refetchType: 'all' }),
-                queryClient.invalidateQueries({ queryKey: clubKeys.members(result.id), refetchType: 'all' }),
-                queryClient.invalidateQueries({ queryKey: clubKeys.browseRoot, refetchType: 'all' }),
-            ]);
-        },
-    });
-}
-
 export function useRequestClubAdminTransfer() {
     const queryClient = useQueryClient();
 

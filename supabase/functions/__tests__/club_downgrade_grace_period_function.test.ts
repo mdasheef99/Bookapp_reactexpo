@@ -117,6 +117,62 @@ describe('handle-club-downgrade-grace-period Edge Function (real handler)', () =
     expect(rpcCalls()).toHaveLength(0);
   });
 
+  describe('fail-closed when CLUB_DOWNGRADE_CRON_SECRET is missing or blank (R1)', () => {
+    it('returns 500 naming the missing cron secret without creating a client or calling RPC', async () => {
+      const response = await invokeEdge('POST', { body: {} });
+
+      expect(response.status).toBe(500);
+      const body = await response.json();
+      expect(body.error).toContain('Missing required env vars');
+      expect(body.error).toContain('CLUB_DOWNGRADE_CRON_SECRET');
+      expect(createClientCalls()).toHaveLength(0);
+      expect(rpcCalls()).toHaveLength(0);
+    });
+
+    it('still fails closed when a cron header is supplied but no secret is configured', async () => {
+      const response = await invokeEdge('POST', {
+        headers: { 'x-cron-secret': 'any-client-supplied-value' },
+        body: {},
+      });
+
+      expect(response.status).toBe(500);
+      const body = await response.json();
+      expect(body.error).toContain('CLUB_DOWNGRADE_CRON_SECRET');
+      expect(createClientCalls()).toHaveLength(0);
+      expect(rpcCalls()).toHaveLength(0);
+    });
+
+    it('fails closed when the configured secret is blank', async () => {
+      __setEdgeEnv({ ...baseEnv(), CLUB_DOWNGRADE_CRON_SECRET: '' });
+
+      const response = await invokeEdge('POST', {
+        headers: { 'x-cron-secret': '' },
+        body: {},
+      });
+
+      expect(response.status).toBe(500);
+      const body = await response.json();
+      expect(body.error).toContain('CLUB_DOWNGRADE_CRON_SECRET');
+      expect(createClientCalls()).toHaveLength(0);
+      expect(rpcCalls()).toHaveLength(0);
+    });
+
+    it('fails closed when the configured secret is whitespace-only', async () => {
+      __setEdgeEnv({ ...baseEnv(), CLUB_DOWNGRADE_CRON_SECRET: '   ' });
+
+      const response = await invokeEdge('POST', {
+        headers: { 'x-cron-secret': '   ' },
+        body: {},
+      });
+
+      expect(response.status).toBe(500);
+      const body = await response.json();
+      expect(body.error).toContain('CLUB_DOWNGRADE_CRON_SECRET');
+      expect(createClientCalls()).toHaveLength(0);
+      expect(rpcCalls()).toHaveLength(0);
+    });
+  });
+
   describe('with CLUB_DOWNGRADE_CRON_SECRET configured (P0 gate)', () => {
     beforeEach(() => {
       __setEdgeEnv(envWithSecret());
@@ -159,9 +215,17 @@ describe('handle-club-downgrade-grace-period Edge Function (real handler)', () =
     });
   });
 
-  describe('default RPC semantics (secret unset as fixture setup; DEF-1 optional-secret policy review remains deferred)', () => {
+  describe('RPC/default argument behavior after successful authentication (R1 fail-closed)', () => {
+    beforeEach(() => {
+      __setEdgeEnv(envWithSecret());
+    });
+
+    function invokeAuthed(init?: { body?: unknown; rawBody?: string }): Promise<Response> {
+      return invokeEdge('POST', { headers: { 'x-cron-secret': CRON_SECRET }, ...init });
+    }
+
     it('invokes the exact RPC with default null/14/false arguments for an empty body', async () => {
-      const response = await invokeEdge('POST', { body: {} });
+      const response = await invokeAuthed({ body: {} });
 
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({ processed: 0, results: [] });
@@ -178,7 +242,7 @@ describe('handle-club-downgrade-grace-period Edge Function (real handler)', () =
     });
 
     it('forwards an explicit user_id unchanged without normalization', async () => {
-      const response = await invokeEdge('POST', { body: { user_id: USER_A } });
+      const response = await invokeAuthed({ body: { user_id: USER_A } });
 
       expect(response.status).toBe(200);
       const calls = rpcCalls();
@@ -194,7 +258,7 @@ describe('handle-club-downgrade-grace-period Edge Function (real handler)', () =
       ['abc', 14],
       ['14', 14],
     ])('parses grace_days %p to p_grace_days %p', async (input, expected) => {
-      await invokeEdge('POST', { body: { grace_days: input } });
+      await invokeAuthed({ body: { grace_days: input } });
 
       const calls = rpcCalls();
       expect(calls).toHaveLength(1);
@@ -212,7 +276,7 @@ describe('handle-club-downgrade-grace-period Edge Function (real handler)', () =
       const body: Record<string, unknown> = {};
       if (input !== undefined) body.dry_run = input;
 
-      await invokeEdge('POST', { body });
+      await invokeAuthed({ body });
 
       const calls = rpcCalls();
       expect(calls).toHaveLength(1);
@@ -226,7 +290,7 @@ describe('handle-club-downgrade-grace-period Edge Function (real handler)', () =
       ];
       __scriptEdgeResults({ rpc: { data: rows, error: null } });
 
-      const response = await invokeEdge('POST', { body: {} });
+      const response = await invokeAuthed({ body: {} });
 
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({ processed: 2, results: rows });
@@ -235,7 +299,7 @@ describe('handle-club-downgrade-grace-period Edge Function (real handler)', () =
     it('maps an empty RPC data array to processed 0 with empty results', async () => {
       __scriptEdgeResults({ rpc: { data: [], error: null } });
 
-      const response = await invokeEdge('POST', { body: {} });
+      const response = await invokeAuthed({ body: {} });
 
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({ processed: 0, results: [] });
@@ -244,7 +308,7 @@ describe('handle-club-downgrade-grace-period Edge Function (real handler)', () =
     it('maps an RPC error to a 400 error body and never a 200 success', async () => {
       __scriptEdgeResults({ rpc: { error: { message: 'synthetic rpc failure' } } });
 
-      const response = await invokeEdge('POST', { body: {} });
+      const response = await invokeAuthed({ body: {} });
 
       expect(response.status).toBe(400);
       const body = await response.json();
@@ -256,14 +320,14 @@ describe('handle-club-downgrade-grace-period Edge Function (real handler)', () =
     it('maps an unexpected RPC rejection to 500 with the generic internal error', async () => {
       __scriptEdgeResults({ rpc: { reject: new Error('synthetic unexpected failure') } });
 
-      const response = await invokeEdge('POST', { body: {} });
+      const response = await invokeAuthed({ body: {} });
 
       expect(response.status).toBe(500);
       await expect(response.json()).resolves.toEqual({ error: 'Internal server error' });
     });
 
     it('falls back to default RPC arguments for a malformed JSON body', async () => {
-      const response = await invokeEdge('POST', { rawBody: '{not-json' });
+      const response = await invokeAuthed({ rawBody: '{not-json' });
 
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({ processed: 0, results: [] });

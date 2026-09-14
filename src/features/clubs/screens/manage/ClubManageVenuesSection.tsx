@@ -9,7 +9,6 @@ export function ClubManageVenuesSection({
     colors,
     onAddVenue,
     onRemoveVenue,
-    onSetPrimaryVenue,
 }: {
     venues: ClubVenueLink[];
     isLoading: boolean;
@@ -17,7 +16,6 @@ export function ClubManageVenuesSection({
     colors: ThemeColors;
     onAddVenue: () => void;
     onRemoveVenue: (venueId: string) => void;
-    onSetPrimaryVenue: (venueId: string) => void;
 }) {
     return (
         <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
@@ -30,6 +28,12 @@ export function ClubManageVenuesSection({
                     <Text style={[styles.addButtonText, { color: colors.accent }]}>Add</Text>
                 </TouchableOpacity>
             </View>
+            {/*
+                R1 mitigation: primary-venue selection is hidden until the
+                backend capability is available. Venue linking/unlinking and
+                existing primary labels are preserved.
+            */}
+            <Text style={[styles.noticeText, { color: colors.textSecondary }]}>Primary venue selection is temporarily unavailable.</Text>
             {isLoading ? <ActivityIndicator color={colors.accent} /> : null}
             {!isLoading && venues.length === 0 ? (
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No venues are linked yet. Events can still use manual meetup locations.</Text>
@@ -45,11 +49,6 @@ export function ClubManageVenuesSection({
                             <Text style={[styles.venueMeta, { color: colors.textSecondary }]}>{[venue.address_line1, venue.city].filter(Boolean).join(', ')}</Text>
                             {venueLink.is_primary ? <Text style={[styles.primaryText, { color: colors.accent }]}>Primary</Text> : null}
                         </View>
-                        {!venueLink.is_primary ? (
-                            <TouchableOpacity disabled={isSaving} onPress={() => onSetPrimaryVenue(venueId)} style={styles.textButton}>
-                                <Text style={[styles.textButtonLabel, { color: colors.accent }]}>Primary</Text>
-                            </TouchableOpacity>
-                        ) : null}
                         <TouchableOpacity disabled={isSaving} onPress={() => onRemoveVenue(venueId)} style={styles.textButton}>
                             <Text style={[styles.textButtonLabel, { color: colors.error }]}>Remove</Text>
                         </TouchableOpacity>
@@ -69,6 +68,7 @@ const styles = StyleSheet.create({
     addButton: { borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 9 },
     addButtonText: { fontSize: 13, fontWeight: '800' },
     emptyText: { fontSize: 14, lineHeight: 20 },
+    noticeText: { fontSize: 13, lineHeight: 18, marginBottom: 4 },
     venueRow: { borderTopWidth: 1, paddingTop: 12, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 },
     venueBody: { flex: 1 },
     venueName: { fontSize: 15, fontWeight: '800', marginBottom: 3 },
