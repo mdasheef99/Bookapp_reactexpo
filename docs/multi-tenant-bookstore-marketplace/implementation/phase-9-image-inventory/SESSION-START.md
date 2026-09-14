@@ -7,6 +7,10 @@
 > suite/four tests skipped (304 suites, 2,483 tests total) and exits normally.
 > A separate `--detectOpenHandles --silent` run has the same pass/skip totals
 > and no persistent open-handle, forced-exit, or one-second non-exit warning.
+> One prior exact full handle run had one non-reproducible failure in the owner
+> inventory retry assertion; the isolated suite rerun and a second exact full
+> handle run both passed. This is recorded as verification history, not as an
+> active product failure.
 > TypeScript and diff hygiene pass. The normal full run still emits React
 > `act(...)` warnings in existing VirtualizedList/timer, CandidateReview state,
 > search/query, and subscription-query paths, plus the NetInfo dynamic-import
@@ -26,7 +30,7 @@
 > zero new-data effects. Owner Edge v12 is ACTIVE, JWT verification enabled,
 > hash `ad75a08f3624f543f904cf2bf6833bcca132dfc1727e5868d52022365aacea14`,
 > with its M61 contract file matching local source. On
-> `codex/phase9-duplicate-confirmation` at HEAD `4ab3e5c`, the local follow-up now
+> `codex/phase9-duplicate-confirmation` at HEAD `bb91428048ca9028c5592cbbc52c982bd6843946` with the code correction committed, the documentation-only handoff synchronization now
 > decodes Google Books volume evidence, suppresses fallback where unresolved
 > series evidence could select a different series, and adds forward-only M62 for
 > standalone Owner detail/review-save provenance. M62 was applied once as remote
@@ -110,7 +114,7 @@ This is the deterministic resume procedure for Phase 9. A new session should rec
 
 ## Current Unit 6H overlay
 
-The bounded Unit 6H duplicate-confirmation correction and its development proof are complete on `codex/phase9-duplicate-confirmation` at `C:\Users\user\Desktop\Bookconnect`, at HEAD `4ab3e5c` from baseline `8340647`. The current uncommitted correction set is limited to M61 sidecar-persistence failure observability, its regression assertion, and stale handoff documentation. M60, M61, and M62 are live once; Owner Edge v12 is active. M62 closes representative-cover standalone detail/save projection without changing duplicate behavior, selected metadata, or public cover projection. Matching worker/client runtime deployment and connected proof remain pending. Do not redeploy or mutate development database/Storage without separate authorization.
+The bounded Unit 6H duplicate-confirmation correction and its development proof are complete on `codex/phase9-duplicate-confirmation` at `C:\Users\user\Desktop\Bookconnect`, at HEAD `bb91428048ca9028c5592cbbc52c982bd6843946` from baseline `8340647`; the M61 sidecar-persistence observability correction is committed and this handoff synchronization changes documentation only. M60, M61, and M62 are live once; Owner Edge v12 is active. M62 closes representative-cover standalone detail/save projection without changing duplicate behavior, selected metadata, or public cover projection. Matching worker/client runtime deployment and connected proof remain pending. Do not redeploy or mutate development database/Storage without separate authorization.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 

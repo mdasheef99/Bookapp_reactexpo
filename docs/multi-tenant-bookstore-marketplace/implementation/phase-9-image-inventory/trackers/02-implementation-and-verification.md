@@ -1,11 +1,16 @@
 # Phase 9 Implementation and Verification Tracker
 
-> **2026-09-14 M61 warning-privacy correction:** The representative-cover
+> **2026-09-14 final read-only review:** HEAD is
+> `bb91428048ca9028c5592cbbc52c982bd6843946` on
+> `codex/phase9-duplicate-confirmation`; the code correction is committed and
+> this handoff synchronization changes documentation only. The representative-cover
 > persistence warning now emits only `lookupId`, `attemptId`, and the fixed
 > `P9_REPRESENTATIVE_COVER_PERSISTENCE_FAILED` code; raw exception text is not
 > logged. The focused composition regression passes 1 suite/29 tests. The exact
-> full `--runInBand --detectOpenHandles --silent` run passes 303 suites with
-> one skipped and 2,479 tests with four skipped, exits normally, and TypeScript
+> full `--runInBand --detectOpenHandles --silent` run initially had one
+> non-reproducible owner-query retry assertion; the isolated suite rerun and the
+> second exact full run pass 303 suites with one skipped and 2,479 tests with
+> four skipped, exit normally, and TypeScript
 > plus continuity validation pass. No production workflow, migration SQL,
 > external state, deployment, or Git publication changed.
 
@@ -3428,7 +3433,38 @@ dependency noise. Passing assertions do not claim those warnings resolved.
 Tracker/source-doc updates: ACTIVE, DOC-13, SESSION-START, Phase 9 TRACKER, the
 Unit 6H work unit, and the Unit 6H representative-cover correction evidence
 were updated with this closeout.
-Next authorized action and gate: Keep
-`M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING`; using the previously granted
-development rollout/Git authority, commit and push the verified local correction,
-deploy the matching runtime, and run the connected representative-cover proof.
+Next authorized action and gate (superseded by the final read-only review below):
+Keep `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING`; the prior instruction to
+commit and push the verified local correction is no longer applicable because
+that correction is already committed.
+
+## 2026-09-14 - Final read-only PR review and handoff synchronization
+
+Date/session: 2026-09-14 Phase 9 final read-only PR review.
+Authorized scope: Correct stale Unit 6H/M61/M62 handoff status only; preserve the
+no-runtime, no-remote-service, no-migration-application, and no-Git-publication
+boundaries.
+Completed: Updated the current handoff records from stale HEAD `4ab3e5c` and
+uncommitted-correction wording to committed code correction HEAD
+`bb91428048ca9028c5592cbbc52c982bd6843946`. Recorded that the first exact full
+handle run had one non-reproducible owner-query retry assertion, while its
+isolated rerun and second exact full run passed 303 suites/2,479 tests with the
+documented skips.
+Verification actually run: focused privacy Jest 29/29; focused Unit 6H group
+12 suites/269 tests; second exact full Jest 303 suites/2,479 tests with four
+skipped; TypeScript PASS; Phase 9 continuity validator PASS; diff check PASS;
+PGlite 7/7; independent PostgreSQL concurrency/U8B markers PASS; `.pyc` count
+0.
+Supabase/external mutations: None. No migration, database, Storage, provider,
+dispatch, deployment, staging, commit, push, merge, or reset occurred. The
+current uncommitted worktree changes are documentation-only handoff updates.
+Decisions/deviations/risks: F-01 remains retracted; F-02/F-03 remain corrected.
+Optional sidecar persistence remains best-effort without durable retry/outbox or
+backfill; matching worker/client rollout and connected no-cover proof remain
+pending.
+Tracker/source-doc updates: ACTIVE, DOC-13, SESSION-START, Phase 9 TRACKER,
+README, this implementation tracker, and the Unit 6H supporting correction were
+updated.
+Next authorized action and gate: With separate explicit rollout authorization,
+deploy the matching tolerant Owner Edge, metadata-worker, and client runtime,
+then run the connected no-cover review/Add/public-projection proof.

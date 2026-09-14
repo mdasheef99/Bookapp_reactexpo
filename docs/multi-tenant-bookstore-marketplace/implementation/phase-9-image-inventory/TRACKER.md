@@ -1,14 +1,17 @@
 # Phase 9 Master Tracker
 
-> **2026-09-14 bounded review correction:** HEAD is `4ab3e5c` with an
-> uncommitted, narrowly scoped M61 observability assertion for representative-cover
-> sidecar persistence failures plus stale-handoff documentation fixes. The
+> **2026-09-14 final read-only review:** HEAD is
+> `bb91428048ca9028c5592cbbc52c982bd6843946`; the narrowly scoped M61 observability
+> assertion for representative-cover sidecar persistence failures is committed,
+> and this handoff synchronization changes documentation only. The
 > production path still accepts metadata when optional owner-private presentation
 > persistence fails; it now emits a stable warning with lookup/attempt identity,
 > a fixed error code, and no raw exception detail.
-> The focused composition regression passes 29/29; the exact full
-> `--runInBand --detectOpenHandles --silent` run passes 303 suites with one
-> skipped and 2,479 tests with four skipped and exits normally. TypeScript and
+> The focused composition regression passes 29/29. One prior exact full
+> `--runInBand --detectOpenHandles --silent` run had one non-reproducible
+> owner-query retry assertion; its isolated rerun and the second exact full run
+> passed 303 suites with one skipped and 2,479 tests with four skipped and exited
+> normally. TypeScript and
 > continuity validation pass. No migration SQL, M60
 > duplicate behavior, public projection, database, Storage, deployment, or Git
 > history changed. Matching worker/client rollout and connected proof remain

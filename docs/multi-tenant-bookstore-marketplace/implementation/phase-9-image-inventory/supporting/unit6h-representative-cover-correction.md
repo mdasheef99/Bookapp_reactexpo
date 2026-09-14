@@ -1,8 +1,8 @@
 # Unit 6H Follow-up — Representative-Edition Cover Correction
 
 **Date:** 2026-09-14
-**Branch / HEAD reviewed:** `codex/phase9-duplicate-confirmation` / `4ab3e5c`
-**Status:** M61/M62 and Owner Edge v12 remain documented as live-verified at the database/function layer; the bounded local M61 failure-observability correction now emits only a fixed error code plus lookup/attempt IDs, is verified but uncommitted; matching worker/client rollout and connected proof pending authorization
+**Branch / HEAD reviewed:** `codex/phase9-duplicate-confirmation` / `bb91428048ca9028c5592cbbc52c982bd6843946`
+**Status:** M61/M62 and Owner Edge v12 remain documented as live-verified at the database/function layer; the bounded local M61 failure-observability correction now emits only a fixed error code plus lookup/attempt IDs, is committed and verified; this handoff synchronization changes documentation only. Matching worker/client rollout and connected proof pending explicit authorization
 **Scope:** cover presentation only; duplicate confirmation, selected-edition identity, inventory duplicate handling, and public discovery remain unchanged
 
 ## Decision and boundary
@@ -224,14 +224,13 @@ remote-artifact checksum claim. The unrelated existing
 `marketplace_sec.phase9_worker_wake_dispatches` RLS hardening note is also left
 out of this bounded correction.
 
-The exact next action, using the previously granted development rollout/Git
-authority, is to commit and push the verified local test/config/documentation
-correction on `codex/phase9-duplicate-confirmation`, deploy the tolerant Owner
-Edge contract and matching metadata worker/client, then run one connected
+The exact next action, requiring separate explicit rollout authorization, is to
+deploy the tolerant Owner Edge contract and matching metadata worker/client,
+then run one connected
 no-cover scan through standalone detail, review-save, explicit Add, and
 public-projection readback. The Render worker is Git-backed at commit
-`573182267ddd79e08b0abfb348b5afd9fb0dc571`; the matching runtime remains
-uncommitted on the current branch.
+`573182267ddd79e08b0abfb348b5afd9fb0dc571`; no matching runtime deployment
+occurred in this review.
 
 Historical external mutations were limited to the already-recorded M61 schema
 application and Owner Edge v12 deployment. In the representative-cover rollout,
@@ -239,6 +238,7 @@ M62 was the sole new remote migration mutation: it changed only the recorded
 PostgreSQL function definitions/ACLs. In this 2026-09-14 verification and
 documentation follow-up there was no Supabase data/Storage/provider/dispatch or
 application-data mutation or deletion, and no Render deployment. The feature
-baseline `8340647` is the merge base for the current branch; HEAD is `4ab3e5c`.
-The current M61 observability and handoff-documentation correction remains
-uncommitted and unstaged.
+baseline `8340647` is the merge base for the current branch; HEAD is
+`bb91428048ca9028c5592cbbc52c982bd6843946`. The M61 observability correction is
+committed; this review's only pending local changes are documentation updates.
+No commit, push, merge, or deployment occurred in this review.

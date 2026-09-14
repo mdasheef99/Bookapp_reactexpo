@@ -1,8 +1,9 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
 > **Current 2026-09-14 handoff:** M61 and M62 are live once in the verified
-> development project and Owner Edge v12 is active. The bounded follow-up on
-> `codex/phase9-duplicate-confirmation` at HEAD `4ab3e5c` decodes Google Books volume
+> development project and Owner Edge v12 is active. The committed bounded
+> follow-up on `codex/phase9-duplicate-confirmation` at HEAD
+> `bb91428048ca9028c5592cbbc52c982bd6843946` decodes Google Books volume
 > evidence, suppresses representative fallback for unresolved series evidence,
 > and adds M62 so standalone detail/save carry the same private provenance as
 > batch review. M62 was applied once as remote version `20260913162154`; its
@@ -30,10 +31,12 @@
 **Last updated:** 2026-09-14
 **Current handoff:** Unit 6H duplicate confirmation is locally implemented and
 corrected on `codex/phase9-duplicate-confirmation`; the current local follow-up
-is at HEAD `4ab3e5c` from merge base `8340647`.
+is at HEAD `bb91428048ca9028c5592cbbc52c982bd6843946` from merge base
+`8340647`. The code correction is committed; this handoff synchronization
+changes documentation only.
 F-01 is retracted after verification of M58's nested conflict handling; F-02 and
-F-03 are corrected locally and their focused checks pass. The current uncommitted
-bounded correction adds only sanitized M61 sidecar-persistence failure
+F-03 are corrected locally and their focused checks pass. The committed bounded
+correction adds only sanitized M61 sidecar-persistence failure
 observability with a fixed error code and no raw exception detail, and
 its regression assertion; no product workflow or migration SQL changes. The disposable local
 PostgreSQL 18.4 run applied M01–M60 and passed the independent-connection Unit 6H
