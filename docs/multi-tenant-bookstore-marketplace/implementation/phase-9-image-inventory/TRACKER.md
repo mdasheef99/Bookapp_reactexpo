@@ -1,6 +1,21 @@
 # Phase 9 Master Tracker
 
-> **2026-09-14 authorized runtime rollout / connected proof checkpoint:**
+> **2026-09-14 connected-proof continuation:** The Owner removed all 15 active
+> candidates from the prior `LIVE-TEST-20260912-REPRO` session through the UI,
+> then closed it from Session summary. The authoritative summary readback was
+> 15 detected, 15 removed from scan, and 0 committed inventory items. The
+> processed image itself remained because the input-removal guard uses accepted
+> candidate lineage. A new session `93567d47-3874-4576-b3b4-1adb044b552b` was
+> started with `Phase9 proof shelf`; a gallery image registered and uploaded,
+> but the current connected readback remains 1 image processing, 0 processed,
+> 0 detected, and 0 candidates. One private scan-image object was uploaded by
+> the normal Owner flow; no Storage deletion occurred. No migration, inventory
+> mutation, or manual dispatch change was made. Next authorized action: resume/refresh this active
+> session after the media/vision worker completes, or separately authorize
+> worker/dispatcher remediation if it remains nonterminal. Traceability:
+> Phase 9 Master SDD §6 and Extraction/Enrichment SDD §10.
+
+> **Historical pre-session-cleanup runtime rollout checkpoint:**
 > Owner Edge v14 is active in verified development project
 > `ahntbtktjjmvfosgkmgn` with JWT verification preserved. The matching
 > metadata worker is live on Render deployment `dep-dak2nmjl550s73bqb7jg` at

@@ -1,6 +1,20 @@
 # Active Marketplace Phase Router
 
-> **2026-09-14 authorized runtime rollout / connected-proof checkpoint:** The
+> **2026-09-14 connected-proof continuation:** The previously active
+> `LIVE-TEST-20260912-REPRO` session was cleaned up through the Owner UI: all 15
+> active candidates were removed, the summary confirmed 15 removed and 0
+> committed, and the session was closed. The processed image remained because
+> accepted candidate lineage still blocks input removal. A fresh session
+> `93567d47-3874-4576-b3b4-1adb044b552b` was started with
+> `Phase9 proof shelf`; its selected gallery image registered successfully, but
+> remains at 1 submitted/0 processed/0 detected/1 processing. One private
+> scan-image object was uploaded by the normal Owner flow; no Storage deletion
+> occurred. No migration, inventory, or manual dispatch mutation was made. Next: resume the active
+> session after worker completion or separately authorize worker/dispatcher
+> remediation. Traceability: Phase 9 Master SDD §6; Extraction/Enrichment SDD
+> §10.
+
+> **Historical pre-session-cleanup runtime rollout / connected-proof checkpoint:** The
 > verified development project `Bookconnect_reactexpo`
 > (`ahntbtktjjmvfosgkmgn`) now has the checked-in `phase9-owner-ingestion`
 > bundle active as Edge v14; JWT verification was preserved. The matching

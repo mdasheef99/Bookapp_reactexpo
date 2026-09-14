@@ -1,6 +1,20 @@
 # DOC-13: Implementation Tracker
 
-> **2026-09-14 authorized runtime rollout / proof blocker:** The verified
+> **2026-09-14 connected-proof continuation:** The prior active Owner session
+> `LIVE-TEST-20260912-REPRO` was cleaned up through the authenticated UI: all 15
+> active candidates were removed from review and the session was closed. Its
+> summary recorded 15 detected, 15 removed from scan, and 0 committed
+> inventory items. The processed input image remained because accepted candidate
+> lineage still blocks input removal. A new session
+> `93567d47-3874-4576-b3b4-1adb044b552b` was created with the gallery image
+> registered successfully; the latest summary shows 1 image submitted, 0
+> processed, 0 detected, and 1 processing. One private scan-image object was
+> uploaded by the normal Owner flow; no Storage deletion occurred. No inventory,
+> migration, or manual dispatch mutation occurred. Connected duplicate/metadata proof is pending
+> worker completion. This records evidence against Phase 9 Master SDD §6 and
+> Extraction/Enrichment SDD §10.
+
+> **Historical pre-session-cleanup runtime rollout / proof blocker:** The verified
 > development project `ahntbtktjjmvfosgkmgn` has `phase9-owner-ingestion` v14
 > active with JWT verification preserved. Render metadata-worker deployment
 > `dep-dak2nmjl550s73bqb7jg` is live on reviewed commit

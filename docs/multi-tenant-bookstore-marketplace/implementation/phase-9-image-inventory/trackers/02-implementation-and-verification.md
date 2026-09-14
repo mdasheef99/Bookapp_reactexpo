@@ -1,6 +1,21 @@
 # Phase 9 Implementation and Verification Tracker
 
-> **2026-09-14 authorized runtime rollout / connected proof checkpoint:**
+> **2026-09-14 connected-proof continuation:** The Owner removed all 15 active
+> candidates from `LIVE-TEST-20260912-REPRO` in the authenticated UI, verified
+> the Session summary at 15 removed/0 committed, and closed that session. The
+> processed image remained because accepted candidate lineage blocks input
+> removal. A new session `93567d47-3874-4576-b3b4-1adb044b552b` was created
+> with `Phase9 proof shelf`; its selected gallery image completed registration
+> and upload, but the latest connected summary remains 1 submitted/0 processed,
+> 0 detected, and 1 processing. No migration, inventory commit, or manual
+> dispatch change occurred. Duplicate Proceed/Cancel and Add verification are
+> pending worker completion. One private scan-image object was uploaded by the
+> normal Owner flow; no Storage deletion occurred. Next authorized action: refresh/resume this active
+> session after worker completion, or separately authorize worker/dispatcher
+> remediation if the input remains nonterminal. Traceability: Phase 9 Master
+> SDD §6; Extraction/Enrichment SDD §10.
+
+> **Historical pre-session-cleanup runtime rollout / connected proof checkpoint:**
 > `phase9-owner-ingestion` v14 is active in verified development project
 > `ahntbtktjjmvfosgkmgn` with JWT verification preserved. Render metadata-worker
 > deployment `dep-dak2nmjl550s73bqb7jg` is live at reviewed commit

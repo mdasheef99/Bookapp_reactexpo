@@ -1,6 +1,22 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-> **Current 2026-09-14 runtime rollout checkpoint:** The verified development
+> **2026-09-14 connected-proof continuation:** At the Owner's direction, the
+> existing `LIVE-TEST-20260912-REPRO` session was cleaned up through the UI:
+> all 15 active candidates were removed from review, the session summary
+> recorded 15 removed and 0 committed, and the session was closed. The original
+> processed image remained because input removal is guarded by its accepted
+> candidate lineage; no inventory was added or deleted. A new session
+> `93567d47-3874-4576-b3b4-1adb044b552b` was then started with shelf
+> `Phase9 proof shelf`. A gallery image was uploaded successfully and the
+> connected readback currently shows 1 submitted/0 processed image, 0 detected
+> books, and 1 processing job. Duplicate Proceed/Cancel and Add proof remain
+> pending worker completion. One private scan-image object was uploaded by the
+> normal Owner flow; no Storage deletion occurred. This evidence follows the
+> Phase 9 Master SDD §6 session/input state model and Extraction/Enrichment SDD
+> §10 queue recovery boundary. No migration, inventory commit, or manual
+> dispatch change was made.
+
+> **Historical pre-session-cleanup checkpoint (superseded):** The verified development
 > project has Owner Edge v14 active with JWT verification, and the matching
 > metadata worker is live on Render deployment
 > `dep-dak2nmjl550s73bqb7jg` at reviewed commit
@@ -40,7 +56,7 @@
 > historical. M60 was subsequently applied during the authorized development
 > rollout; the current bounded M61 representative-cover follow-up is local-only.
 
-**Status:** `unit6h_runtime_rollout_complete_connected_proof_blocked_by_existing_active_scan`
+**Status:** `unit6h_connected_input_registered_worker_processing_pending`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
 **Last updated:** 2026-09-14
 **Current handoff:** Unit 6H duplicate confirmation is locally implemented and
