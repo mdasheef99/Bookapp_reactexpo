@@ -9,7 +9,6 @@ const mockUseClubReadingSchedule = jest.fn();
 const mockUseUpsertClubReadingSchedule = jest.fn();
 const mockUseArchiveClub = jest.fn();
 const mockUseUnarchiveClub = jest.fn();
-const mockUseTransferClubAdmin = jest.fn();
 const mockUseClubAdminTransferRequests = jest.fn();
 const mockUseRequestClubAdminTransfer = jest.fn();
 const mockUseClubMemberActions = jest.fn();
@@ -35,7 +34,6 @@ const mockUseClubEvents = jest.fn();
 const mockUseClubEventVenues = jest.fn();
 const mockUseAddClubVenueLink = jest.fn();
 const mockUseRemoveClubVenueLink = jest.fn();
-const mockUseSetPrimaryClubVenue = jest.fn();
 const mockUseCancelClubEvent = jest.fn();
 const mockUseDeleteClubEvent = jest.fn();
 const mockUseUpdateClubMemberStatus = jest.fn();
@@ -112,7 +110,6 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useClubEventVenues: (...args: unknown[]) => mockUseClubEventVenues(...args),
     useAddClubVenueLink: (...args: unknown[]) => mockUseAddClubVenueLink(...args),
     useRemoveClubVenueLink: (...args: unknown[]) => mockUseRemoveClubVenueLink(...args),
-    useSetPrimaryClubVenue: (...args: unknown[]) => mockUseSetPrimaryClubVenue(...args),
     useCancelClubEvent: (...args: unknown[]) => mockUseCancelClubEvent(...args),
     useDeleteClubEvent: (...args: unknown[]) => mockUseDeleteClubEvent(...args),
     useUpdateClubMemberStatus: (...args: unknown[]) => mockUseUpdateClubMemberStatus(...args),
@@ -125,7 +122,6 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useResolveClubComplaint: (...args: unknown[]) => mockUseResolveClubComplaint(...args),
     useArchiveClub: (...args: unknown[]) => mockUseArchiveClub(...args),
     useUnarchiveClub: (...args: unknown[]) => mockUseUnarchiveClub(...args),
-    useTransferClubAdmin: (...args: unknown[]) => mockUseTransferClubAdmin(...args),
     useClubAdminTransferRequests: (...args: unknown[]) => mockUseClubAdminTransferRequests(...args),
     useRequestClubAdminTransfer: (...args: unknown[]) => mockUseRequestClubAdminTransfer(...args),
 }));
@@ -178,7 +174,6 @@ beforeEach(() => {
     mockUseUpsertClubReadingSchedule.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseArchiveClub.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
     mockUseUnarchiveClub.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
-    mockUseTransferClubAdmin.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-1' }), isPending: false });
     mockUseClubAdminTransferRequests.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
     mockUseRequestClubAdminTransfer.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'request-1' }), isPending: false });
     mockUseClubMemberActions.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
@@ -206,7 +201,6 @@ beforeEach(() => {
     mockUseClubEventVenues.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
     mockUseAddClubVenueLink.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseRemoveClubVenueLink.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
-    mockUseSetPrimaryClubVenue.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseCancelClubEvent.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseDeleteClubEvent.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseUpdateClubMemberStatus.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'member-1' }), isPending: false });
@@ -251,6 +245,34 @@ describe('ClubManageScreen', () => {
         fireEvent.press(getByTestId('manage-venues-add'));
 
         expect(mockRouterPush).toHaveBeenCalledWith('/clubs/club-1/venues?returnTo=manage-venues');
+    });
+
+    it('R1 mitigation: non-primary venues offer no set-primary action but keep add/remove reachable', async () => {
+        const removeMutateAsync = jest.fn().mockResolvedValue(undefined);
+        mockUseRemoveClubVenueLink.mockReturnValue({ mutateAsync: removeMutateAsync, isPending: false });
+        mockUseClubEventVenues.mockReturnValue({
+            data: [{ club_id: 'club-1', venue_id: 'venue-2', is_primary: false, venue: { id: 'venue-2', name: 'Riverside Hall', address_line1: '8 River Rd', city: 'Bengaluru', verification_status: 'approved' } }],
+            isLoading: false,
+            refetch: jest.fn(),
+        });
+
+        const { getByText, getByTestId, queryByText } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Venues'));
+
+        await waitFor(() => expect(getByText('Riverside Hall')).toBeOnTheScreen());
+        // Temporary unavailability notice is shown instead of a working-looking control.
+        expect(getByText('Primary venue selection is temporarily unavailable.')).toBeOnTheScreen();
+        // No set-primary control exists, so the missing RPC cannot be dispatched from this UI.
+        expect(queryByText('Primary')).not.toBeOnTheScreen();
+        // Action-oriented guard: catches "Set Primary" / "Set as primary" / "Make Primary"
+        // relabels without rejecting the legitimate "Primary" status label or the notice above.
+        expect(queryByText(/(set|make).*primary/i)).not.toBeOnTheScreen();
+
+        // Other venue operations remain reachable.
+        expect(getByTestId('manage-venues-add')).toBeOnTheScreen();
+        fireEvent.press(getByText('Remove'));
+        await waitFor(() => expect(removeMutateAsync).toHaveBeenCalledWith({ clubId: 'club-1', venueId: 'venue-2' }));
     });
 
     it('shows platform complaints in Reports and resolves them', async () => {
