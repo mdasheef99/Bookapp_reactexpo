@@ -26,7 +26,7 @@
 > zero new-data effects. Owner Edge v12 is ACTIVE, JWT verification enabled,
 > hash `ad75a08f3624f543f904cf2bf6833bcca132dfc1727e5868d52022365aacea14`,
 > with its M61 contract file matching local source. On
-> `codex/phase9-duplicate-confirmation` at `30c9658`, the local follow-up now
+> `codex/phase9-duplicate-confirmation` at HEAD `4ab3e5c`, the local follow-up now
 > decodes Google Books volume evidence, suppresses fallback where unresolved
 > series evidence could select a different series, and adds forward-only M62 for
 > standalone Owner detail/review-save provenance. M62 was applied once as remote
@@ -34,10 +34,14 @@
 > `E8CAAC179363D1E709F071BBF81436B7ED4B24968E0979ADA7A402C8C435066F`.
 > Post-apply readback confirms the postgres-owned helper, authenticated-only
 > Owner entrypoints, and zero sidecar/inventory representative-cover rows.
-> Fresh TypeScript, worker build, focused affected Jest 310/310, structural
+> Earlier rollout verification passed TypeScript, worker build, focused affected
+> Jest 310/310, structural
 > 14/14, M55 7/7, M52–M62 integration 2/2, migration contract 4/4,
-> deployment-runtime validation, and continuity validation pass. Those focused
-> runs did not emit `act(...)`, open-handle, or force-exit warnings; the later
+> deployment-runtime validation, and continuity validation pass. The current
+> bounded local follow-up also passes the focused composition regression 29/29
+> and adds only sanitized M61 sidecar-persistence failure logging with a fixed
+> error code plus lookup/attempt IDs; raw exception detail is not logged. Its focused
+> run reproduced the existing VirtualizedList `act(...)` warning; the later
 > full-run closeout above did emit the existing React `act(...)`, NetInfo, and
 > `DEP0040` warnings, while the independent handle run exited normally. No
 > worker/client deployment or Git publication occurred in this step.
@@ -106,7 +110,7 @@ This is the deterministic resume procedure for Phase 9. A new session should rec
 
 ## Current Unit 6H overlay
 
-The bounded Unit 6H duplicate-confirmation correction and its development proof are complete on `codex/phase9-duplicate-confirmation` at `C:\Users\user\Desktop\Bookconnect`, currently at `30c9658` with the local correction set uncommitted. M60, M61, and M62 are live once; Owner Edge v12 is active. M62 closes representative-cover standalone detail/save projection without changing duplicate behavior, selected metadata, or public cover projection. Matching worker/client runtime deployment and connected proof remain pending. Do not redeploy or mutate development database/Storage without separate authorization.
+The bounded Unit 6H duplicate-confirmation correction and its development proof are complete on `codex/phase9-duplicate-confirmation` at `C:\Users\user\Desktop\Bookconnect`, at HEAD `4ab3e5c` from baseline `8340647`. The current uncommitted correction set is limited to M61 sidecar-persistence failure observability, its regression assertion, and stale handoff documentation. M60, M61, and M62 are live once; Owner Edge v12 is active. M62 closes representative-cover standalone detail/save projection without changing duplicate behavior, selected metadata, or public cover projection. Matching worker/client runtime deployment and connected proof remain pending. Do not redeploy or mutate development database/Storage without separate authorization.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 

@@ -1,5 +1,15 @@
 # DOC-13: Implementation Tracker
 
+> **2026-09-14 M61 warning-privacy correction:** The bounded representative-cover
+> persistence warning now logs only `lookupId`, `attemptId`, and the fixed
+> `P9_REPRESENTATIVE_COVER_PERSISTENCE_FAILED` code; raw exception text is not
+> emitted. The exact focused composition regression passes 1 suite/29 tests,
+> and the complete `--runInBand --detectOpenHandles --silent` run passes 303
+> suites with one skipped and 2,479 tests with four skipped, exiting normally.
+> TypeScript and the Phase 9 continuity validator pass. No metadata
+> terminalization, selection, retry, public projection, duplicate behavior,
+> migration SQL, external state, deployment, or Git publication changed.
+
 > **2026-09-14 Phase 9 full-Jest correction:** The reported 12 failed suites and
 > 17 failed tests are corrected locally without changing production behavior or
 > migration SQL. Seven helper/fixture modules are no longer collected as tests;
@@ -1415,7 +1425,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6H duplicate confirmation and the representative-cover correction are locally verified; M60, M61, and M62 are live once, while matching runtime deployment and connected no-cover proof are pending** |
 | Overall status | `unit6h_representative_cover_m62_applied_runtime_rollout_pending` |
 | Last updated | 2026-09-14 |
-| Latest handoff | Baseline `8340647` matches the requested remote and branch; the current local HEAD is `30c965869b4ca16739a15b358a0e839662cc3d1b` with the reviewed working tree preserved and the local correction set uncommitted/unstaged. F-01 is retracted; F-02/F-03 are corrected. M60 is live once as `20260912072815`; M61 is live once as `20260913111342`; M62 is live once as `20260913162154`. Post-apply readback passed; no connected no-cover proof has run. |
+| Latest handoff | `8340647` is the merge base; current local HEAD is `4ab3e5cbba4315ad6b46bd23c421e97c949d3504` on `codex/phase9-duplicate-confirmation`. The worktree contains an uncommitted bounded M61 sidecar-persistence failure-observability/test correction plus stale-handoff documentation fixes. F-01 is retracted; F-02/F-03 are corrected. M60 is live once as `20260912072815`; M61 is live once as `20260913111342`; M62 is live once as `20260913162154`. Post-apply readback remains prior documented evidence; no connected no-cover proof has run in this review. |
 | Current risk level | No local product-implementation blocker was identified for the corrected feature. React `act(...)`, NetInfo dynamic-import, and Node `DEP0040` warnings remain unresolved test/tooling hygiene evidence even though full Jest exits normally and the independent handle run finds no persistent handle. The disposable proof used PostgreSQL 18.4 while the connected project reports PostgreSQL 17.6, so target-version behavior is not fully reproduced locally. Matching metadata-worker/client deployment and connected Edge/Storage no-cover verification remain unproven. |
 | Next recommended task | Using the previously granted development rollout/Git authority, commit and push the verified local correction on `codex/phase9-duplicate-confirmation`, deploy the matching tolerant Owner Edge, metadata-worker, and client code, then run the connected no-cover review/Add/public-projection proof. Do not merge to `main`; do not mutate existing development data. |
 

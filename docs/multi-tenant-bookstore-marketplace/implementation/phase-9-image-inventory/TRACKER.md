@@ -1,5 +1,19 @@
 # Phase 9 Master Tracker
 
+> **2026-09-14 bounded review correction:** HEAD is `4ab3e5c` with an
+> uncommitted, narrowly scoped M61 observability assertion for representative-cover
+> sidecar persistence failures plus stale-handoff documentation fixes. The
+> production path still accepts metadata when optional owner-private presentation
+> persistence fails; it now emits a stable warning with lookup/attempt identity,
+> a fixed error code, and no raw exception detail.
+> The focused composition regression passes 29/29; the exact full
+> `--runInBand --detectOpenHandles --silent` run passes 303 suites with one
+> skipped and 2,479 tests with four skipped and exits normally. TypeScript and
+> continuity validation pass. No migration SQL, M60
+> duplicate behavior, public projection, database, Storage, deployment, or Git
+> history changed. Matching worker/client rollout and connected proof remain
+> pending explicit authorization.
+
 > **2026-09-14 full-Jest correction closeout:** The Phase 9 rollout branch's
 > reported 12-suite/17-test failure set is corrected locally. Jest now discovers
 > only conventional `*.test.*`/`*.spec.*` files, excluding seven helper/fixture

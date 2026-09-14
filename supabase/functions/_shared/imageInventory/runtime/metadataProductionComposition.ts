@@ -5,6 +5,10 @@ import {
   MetadataProviderValidationContext,
 } from '../metadata/providerAdapter';
 import type { MetadataRepresentativeCover } from '../metadata/representativeCover';
+import {
+  persistCacheAfterTerminal,
+  persistRepresentativeCoverAfterTerminal,
+} from './metadataTerminalPersistence';
 
 export type MetadataProviderPolicy = Readonly<{
   enabled: boolean;
@@ -147,26 +151,6 @@ const isPositiveOutcome = (outcome: string) =>
 const isCacheableOutcome = (outcome: string) => [
   'coherent_match', 'no_acceptable_match', 'ambiguous_match', 'material_conflict',
 ].includes(outcome);
-
-async function persistCacheAfterTerminal(
-  gateway: MetadataProductionGateway,
-  input: Parameters<MetadataProductionGateway['persistCache']>[0],
-): Promise<void> {
-  try {
-    await gateway.persistCache(input);
-  } catch {
-    // Cache is derived reuse state and cannot reverse durable terminalization.
-  }
-}
-
-async function persistRepresentativeCoverAfterTerminal(
-  gateway: MetadataProductionGateway,
-  input: Parameters<MetadataProductionGateway['persistRepresentativeCover']>[0],
-): Promise<void> {
-  try { await gateway.persistRepresentativeCover(input); } catch {
-    // Optional owner-private presentation data cannot reverse accepted metadata.
-  }
-}
 
 export function decideMetadataProductionPolicy(
   policy: MetadataProviderPolicy,

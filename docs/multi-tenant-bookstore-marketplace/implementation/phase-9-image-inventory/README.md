@@ -1,17 +1,21 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
-> **Current 2026-09-13 handoff:** M61 and M62 are live once in the verified
+> **Current 2026-09-14 handoff:** M61 and M62 are live once in the verified
 > development project and Owner Edge v12 is active. The bounded follow-up on
-> `codex/phase9-duplicate-confirmation` at `80e7db9` decodes Google Books volume
+> `codex/phase9-duplicate-confirmation` at HEAD `4ab3e5c` decodes Google Books volume
 > evidence, suppresses representative fallback for unresolved series evidence,
 > and adds M62 so standalone detail/save carry the same private provenance as
 > batch review. M62 was applied once as remote version `20260913162154`; its
 > private helper/ACL and zero-row readback passed. M52–M61 are unchanged.
-> Fresh TypeScript/build, affected Jest 310/310, structural 14/14, M55 7/7,
+> Earlier rollout verification passed TypeScript/build, affected Jest 310/310,
+> structural 14/14, M55 7/7,
 > and M52–M62 integration 2/2 pass. No worker/client deployment or Git
 > publication occurred in this step; connected no-cover verification remains
 > unrun. [Evidence](./supporting/unit6h-representative-cover-correction.md).
-> Next action: separately authorize matching Owner Edge/metadata-worker/client
+> The current bounded follow-up also adds only sanitized M61 sidecar-persistence
+> failure observability with a fixed error code and no raw exception detail; the
+> focused composition regression passes 29/29. Next action:
+> separately authorize matching Owner Edge/metadata-worker/client
 > deployment, then run connected no-cover review/Add verification.
 
 > **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
@@ -23,12 +27,15 @@
 
 **Status:** `unit6h_representative_cover_m62_applied_runtime_rollout_pending`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
-**Last updated:** 2026-09-13
+**Last updated:** 2026-09-14
 **Current handoff:** Unit 6H duplicate confirmation is locally implemented and
 corrected on `codex/phase9-duplicate-confirmation`; the current local follow-up
-is at `80e7db9`.
+is at HEAD `4ab3e5c` from merge base `8340647`.
 F-01 is retracted after verification of M58's nested conflict handling; F-02 and
-F-03 are corrected locally and their focused checks pass. The disposable local
+F-03 are corrected locally and their focused checks pass. The current uncommitted
+bounded correction adds only sanitized M61 sidecar-persistence failure
+observability with a fixed error code and no raw exception detail, and
+its regression assertion; no product workflow or migration SQL changes. The disposable local
 PostgreSQL 18.4 run applied M01–M60 and passed the independent-connection Unit 6H
 concurrency and existing U8B regression markers, then fully tore down. M60 is
 already applied to development under prior authorization; M61 and M62 are live

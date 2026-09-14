@@ -1,8 +1,8 @@
 # Unit 6H Follow-up — Representative-Edition Cover Correction
 
-**Date:** 2026-09-13
-**Branch / HEAD reviewed:** `codex/phase9-duplicate-confirmation` / `30c9658`
-**Status:** M61/M62 and Owner Edge v12 live-verified at the database/function layer; local test/config/documentation correction is verified but uncommitted; matching worker/client rollout and connected proof pending authorization
+**Date:** 2026-09-14
+**Branch / HEAD reviewed:** `codex/phase9-duplicate-confirmation` / `4ab3e5c`
+**Status:** M61/M62 and Owner Edge v12 remain documented as live-verified at the database/function layer; the bounded local M61 failure-observability correction now emits only a fixed error code plus lookup/attempt IDs, is verified but uncommitted; matching worker/client rollout and connected proof pending authorization
 **Scope:** cover presentation only; duplicate confirmation, selected-edition identity, inventory duplicate handling, and public discovery remain unchanged
 
 ## Decision and boundary
@@ -40,6 +40,10 @@ representative image as an exact-edition cover.
   fallback rather than being guessed.
 - The metadata worker persists accepted fallback provenance through a new
   service-role-only public delegate to a private immutable sidecar.
+- If that optional sidecar write fails after metadata terminalization, the worker
+  keeps the accepted metadata result and emits only the fixed
+  `P9_REPRESENTATIVE_COVER_PERSISTENCE_FAILED` code plus lookup/attempt IDs;
+  raw exception detail is not logged.
 - Owner batch contracts expose the labelled fallback only when the exact selected
   cover is null. Forward-only M62 aligns standalone detail, fresh review-save,
   completed replay, and read-only replay with that projection. The new response
@@ -101,6 +105,16 @@ connected proof remain separately gated.
   hygiene warnings. No production source, migration SQL, external state,
   deployment, or Git publication changed; the rollout/connected-proof gate is
   unchanged.
+- 2026-09-14 M61 warning-privacy correction: the optional sidecar failure warning
+  now carries only `lookupId`, `attemptId`, and fixed
+  `P9_REPRESENTATIVE_COVER_PERSISTENCE_FAILED`; a URL/token-shaped exception was
+  used in the regression and its raw text was absent from the warning payload.
+  The focused composition regression passes 1 suite/29 tests; the exact full
+  `--runInBand --detectOpenHandles --silent` run passes 303 suites with one
+  skipped and 2,479 tests with four skipped and exits normally. Fresh TypeScript
+  and continuity validation pass. The run emitted only the existing Node
+  `DEP0040` startup warning in this command; no production workflow, migration,
+  external state, deployment, or Git publication changed.
 - Initial red run failed because the helper, contract fields, UI rendering, and
   M61 did not yet exist.
 - Fresh `npx.cmd tsc --noEmit`: PASS.
@@ -143,8 +157,10 @@ connected proof remain separately gated.
   migration contract Jest 4/4 PASS. Connected no-cover review/Add proof was not
   run because the matching runtime has not been deployed.
 
-The focused affected Jest runs emitted no React `act(...)`, open-handle, or
-force-exit warning. The later normal full run did emit React `act(...)`
+The earlier eight-suite affected Jest run emitted no React `act(...)`, open-handle,
+or force-exit warning. The current 18-suite focused review run reproduced the
+existing VirtualizedList `act(...)` warning, with no open-handle or force-exit
+warning. The later normal full run also emitted React `act(...)`
 warnings from existing VirtualizedList/timer, CandidateReview state-update,
 search/query, and subscription-query paths. It also emitted the NetInfo warning
 that its dynamic-import callback was unavailable under this Jest invocation and
@@ -223,5 +239,6 @@ M62 was the sole new remote migration mutation: it changed only the recorded
 PostgreSQL function definitions/ACLs. In this 2026-09-14 verification and
 documentation follow-up there was no Supabase data/Storage/provider/dispatch or
 application-data mutation or deletion, and no Render deployment. The feature
-baseline `30c9658` is already present on the remote branch; the current
-test/config/documentation correction remains uncommitted and unstaged.
+baseline `8340647` is the merge base for the current branch; HEAD is `4ab3e5c`.
+The current M61 observability and handoff-documentation correction remains
+uncommitted and unstaged.

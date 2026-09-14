@@ -17,11 +17,17 @@
 > as remote version `20260913162154`. Readback confirms the postgres-owned
 > private helper, authenticated-only detail/save entrypoints, M62 delegation,
 > and zero sidecar/inventory representative rows. The new response member is
-> rollout-tolerant while present values remain strict. Fresh verification passes
-> TypeScript, worker build, focused affected Jest 310/310, structural 14/14,
+> rollout-tolerant while present values remain strict. Earlier rollout
+> verification passed TypeScript, worker build, focused affected Jest 310/310,
+> structural 14/14,
 > M55 7/7, M52–M62 integration 2/2, migration contract 4/4,
-> deployment-runtime validation, and the continuity validator. Those focused
-> runs did not emit `act(...)`, open-handle, or force-exit warnings; the later
+> deployment-runtime validation, and the continuity validator. The current
+> bounded local follow-up also passes its focused composition regression (29/29)
+> and adds only sanitized M61 sidecar-persistence failure logging with a fixed
+> error code plus lookup/attempt IDs; raw exception detail is not logged. It does not
+> alter terminalization, selection, retry, public projection, or duplicate
+> behavior. The current focused run reproduced the existing VirtualizedList
+> `act(...)` warning; the later
 > full-run closeout recorded existing React `act(...)`, NetInfo dynamic-import,
 > and `DEP0040` warnings, while the independent handle run exited normally. No
 > worker/client deployment, connected no-cover proof, dispatch change, or Git
@@ -81,7 +87,7 @@ This file answers only “where does a new development session start?” DOC-13 
 
 ## Active route
 
-- **Unit 6H development overlay:** Unit 6H duplicate confirmation has completed its bounded correction and disposable independent-connection PostgreSQL verification on `codex/phase9-duplicate-confirmation`, currently at `30c9658` with the local correction set uncommitted, from baseline `8340647`. F-01 was retracted; F-02 and F-03 are corrected. M60 is live once as `20260912072815`; M61 is live once as `20260913111342`; M62 is live once as `20260913162154`. Owner Edge v12 is active with JWT verification; the remaining gate is matching metadata-worker/client deployment and connected no-cover proof. [Unit 6H authority and deployment procedure](./phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md).
+- **Unit 6H development overlay:** Unit 6H duplicate confirmation has completed its bounded correction and disposable independent-connection PostgreSQL verification on `codex/phase9-duplicate-confirmation`, at HEAD `4ab3e5c` from baseline `8340647`. The current uncommitted correction set is limited to M61 sidecar-persistence failure observability, its regression assertion, and stale handoff documentation. F-01 was retracted; F-02 and F-03 are corrected. M60 is live once as `20260912072815`; M61 is live once as `20260913111342`; M62 is live once as `20260913162154`. Owner Edge v12 is active with JWT verification; the remaining gate is matching metadata-worker/client deployment and connected no-cover proof. [Unit 6H authority and deployment procedure](./phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md).
 
 ## 2026-09-12 Unit 6H review closeout
 

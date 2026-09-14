@@ -272,17 +272,30 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
       })),
       persistRepresentativeCover: jest.fn(async () => {
         fixture.calls.push('representative-cover');
-        throw new Error('optional representative-cover storage unavailable');
+        throw new Error('https://token:secret@example.invalid/private-cover?signature=redact-me');
       }),
     });
-    await expect(runMetadataProductionComposition(request, fixture.value))
-      .resolves.toEqual({ outcome: 'accepted_metadata_match' });
-    expect(fixture.value.persistRepresentativeCover).toHaveBeenCalledWith({
-      lookupId: 'lookup-1', attemptId: 'attempt-1', representativeCover,
-    });
-    expect(fixture.value.persistSelection).toHaveBeenCalledTimes(1);
-    expect(fixture.calls.indexOf('representative-cover'))
-      .toBeLessThan(fixture.calls.indexOf('selection'));
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      await expect(runMetadataProductionComposition(request, fixture.value))
+        .resolves.toEqual({ outcome: 'accepted_metadata_match' });
+      expect(fixture.value.persistRepresentativeCover).toHaveBeenCalledWith({
+        lookupId: 'lookup-1', attemptId: 'attempt-1', representativeCover,
+      });
+      expect(fixture.value.persistSelection).toHaveBeenCalledTimes(1);
+      expect(fixture.calls.indexOf('representative-cover'))
+        .toBeLessThan(fixture.calls.indexOf('selection'));
+      expect(warning).toHaveBeenCalledWith(
+        '[phase9] representative-cover persistence failed',
+        {
+          lookupId: 'lookup-1', attemptId: 'attempt-1',
+          errorCode: 'P9_REPRESENTATIVE_COVER_PERSISTENCE_FAILED',
+        },
+      );
+      expect(JSON.stringify(warning.mock.calls[0])).not.toContain('redact-me');
+    } finally {
+      warning.mockRestore();
+    }
   });
 
   it('resumes a durably finalized logical attempt without another physical call', async () => {

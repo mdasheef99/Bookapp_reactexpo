@@ -1,5 +1,14 @@
 # Phase 9 Implementation and Verification Tracker
 
+> **2026-09-14 M61 warning-privacy correction:** The representative-cover
+> persistence warning now emits only `lookupId`, `attemptId`, and the fixed
+> `P9_REPRESENTATIVE_COVER_PERSISTENCE_FAILED` code; raw exception text is not
+> logged. The focused composition regression passes 1 suite/29 tests. The exact
+> full `--runInBand --detectOpenHandles --silent` run passes 303 suites with
+> one skipped and 2,479 tests with four skipped, exits normally, and TypeScript
+> plus continuity validation pass. No production workflow, migration SQL,
+> external state, deployment, or Git publication changed.
+
 > **2026-09-13 M61 partial rollout evidence:** Exact-project readback verified
 > `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` healthy and M60 present;
 > hash-verified M61 was applied once as remote version `20260913111342`.
