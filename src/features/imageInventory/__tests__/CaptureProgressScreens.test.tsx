@@ -1,10 +1,11 @@
-import { act, fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { AppState } from 'react-native';
 import { InventorySessionProgressScreen } from '../screens/CaptureProgressScreens';
 
 const mockRouter = { push: jest.fn(), replace: jest.fn() };
 const mockRefetch = jest.fn(() => Promise.resolve({ isError: false, error: null }));
 const mockRemoveMutate = jest.fn();
+const mockResolveDuplicateMutate = jest.fn();
 const mockCandidateRemoveMutate = jest.fn();
 const mockClaimSlot = jest.fn<string | null, [string, string]>(() => 'slot-token');
 const mockReleaseSlot = jest.fn();
@@ -141,6 +142,11 @@ jest.mock('../queries/ownerUxInputQueries', () => ({
         isPending: false,
         error: null,
     }),
+    useResolveDuplicateOwnerInventoryInput: () => ({
+        mutate: mockResolveDuplicateMutate,
+        isPending: false,
+        error: null,
+    }),
 }));
 jest.mock('../commit/useInventoryCommitCoordinator', () => ({
     useInventoryCommitCoordinator: () => ({
@@ -163,6 +169,12 @@ jest.mock('../capture/captureIds', () => ({
 
 describe('Phase 9 Unit 6C server progress and handoff', () => {
     const registeredInput = mockInputs.data.items[0];
+    afterEach(async () => {
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 60));
+        });
+    });
+
     beforeEach(() => {
         jest.clearAllMocks();
         mockFocused = true;
@@ -181,14 +193,58 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
         expect(screen.queryByText('Choose replacement image')).toBeNull();
     });
 
-    it('explains duplicate rejection without offering automatic retry or old-input reuse', () => {
-        mockInputs.data.items[0].safeCode = 'P9_MEDIA_DUPLICATE_INPUT';
+    it('shows a dismissible duplicate warning that can be reopened and explicitly proceeded', async () => {
+        mockInputs.data.items[0] = {
+            ...mockInputs.data.items[0],
+            inputState: 'awaiting_duplicate_confirmation',
+            presentationState: 'duplicate_confirmation_required',
+            retryState: 'none', terminal: false, polling: false,
+            safeCode: 'P9_MEDIA_DUPLICATE_INPUT',
+            duplicateConfirmationVersion: 1,
+            duplicateConfirmationExpiresAt: '2026-08-30T00:00:00.000Z',
+        } as any;
         const screen = render(
             <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
         );
-        expect(screen.getByText('This image was already submitted. Remove it and choose a different image.')).toBeTruthy();
+        await waitFor(() => expect(screen.getByText('Duplicate image')).toBeTruthy());
+        fireEvent.press(screen.getByText('Not now'));
+        expect(screen.queryByText('Continue with this upload?')).toBeNull();
+        fireEvent.press(screen.getByText('Review duplicate'));
+        fireEvent.press(screen.getByText('Proceed'));
+        expect(mockResolveDuplicateMutate).toHaveBeenCalledWith(expect.objectContaining({
+            decision: 'proceed', expectedConfirmationVersion: 1,
+        }), expect.any(Object));
         expect(screen.queryByText('Trying again')).toBeNull();
-        expect(screen.getByText('Remove image')).toBeTruthy();
+    });
+
+    it('does not reuse a duplicate command after the confirmation version changes', async () => {
+        mockInputs.data.items[0] = {
+            ...mockInputs.data.items[0],
+            inputState: 'awaiting_duplicate_confirmation',
+            presentationState: 'duplicate_confirmation_required',
+            retryState: 'none', terminal: false, polling: false,
+            safeCode: 'P9_MEDIA_DUPLICATE_INPUT',
+            inputVersion: 3,
+            duplicateConfirmationVersion: 1,
+            duplicateConfirmationExpiresAt: '2026-08-30T00:00:00.000Z',
+        } as any;
+        const screen = render(
+            <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+        await waitFor(() => expect(screen.getByText('Duplicate image')).toBeTruthy());
+        fireEvent.press(screen.getByText('Proceed'));
+        const first = mockResolveDuplicateMutate.mock.calls[0][0];
+        mockInputs.data.items[0] = {
+            ...mockInputs.data.items[0], inputVersion: 4, duplicateConfirmationVersion: 2,
+        } as any;
+        screen.rerender(
+            <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+        );
+        await waitFor(() => expect(screen.getByText('Duplicate image')).toBeTruthy());
+        fireEvent.press(screen.getByText('Proceed'));
+        const second = mockResolveDuplicateMutate.mock.calls[1][0];
+        expect(first).toEqual(expect.objectContaining({ expectedInputVersion: 3, expectedConfirmationVersion: 1 }));
+        expect(second).toEqual(expect.objectContaining({ expectedInputVersion: 4, expectedConfirmationVersion: 2 }));
     });
 
     it('labels image attention separately from per-book review counts', () => {

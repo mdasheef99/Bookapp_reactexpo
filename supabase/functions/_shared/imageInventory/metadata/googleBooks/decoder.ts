@@ -94,6 +94,36 @@ function cover(value: unknown): string | null {
   return null;
 }
 
+function seriesVolume(value: unknown): string | null {
+  const seriesInfo = record(value);
+  const display = text(seriesInfo?.bookDisplayNumber, 64);
+  if (display) return display;
+  if (!Array.isArray(seriesInfo?.volumeSeries) || seriesInfo.volumeSeries.length !== 1) {
+    return null;
+  }
+  const order = record(seriesInfo.volumeSeries[0])?.orderNumber;
+  return Number.isSafeInteger(order) && Number(order) >= 0 ? String(order) : null;
+}
+
+export function googleBooksSeriesRecordIds(value: unknown): ReadonlySet<string> {
+  const response = record(value);
+  if (!Array.isArray(response?.items)) return new Set<string>();
+  const ids = new Set<string>();
+  for (const entry of response.items) {
+    const item = record(entry);
+    const id = text(item?.id, 256);
+    const seriesInfo = record(record(item?.volumeInfo)?.seriesInfo);
+    if (!id || !seriesInfo) continue;
+    const volumeSeries = Array.isArray(seriesInfo.volumeSeries) ? seriesInfo.volumeSeries : [];
+    if (text(seriesInfo.bookDisplayNumber, 64)
+      || volumeSeries.some((series) => {
+        const row = record(series);
+        return text(row?.seriesId, 256) !== null || Number.isSafeInteger(row?.orderNumber);
+      })) ids.add(id);
+  }
+  return ids;
+}
+
 function decodeItem(value: unknown, context: Context): MetadataEdition | null {
   const item = record(value);
   const info = record(item?.volumeInfo);
@@ -126,7 +156,7 @@ function decodeItem(value: unknown, context: Context): MetadataEdition | null {
       script: null,
       edition_statement: null,
       series: null,
-      volume: null,
+      volume: seriesVolume(info?.seriesInfo),
       format: text(info?.printType, 128)?.toLowerCase() ?? null,
       page_count: Number.isSafeInteger(info?.pageCount) ? info?.pageCount : null,
       categories: strings(info?.categories, MAX_CATEGORIES, 128),

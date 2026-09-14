@@ -52,6 +52,7 @@ describe('Unit 7C WU3 Store View management query layer', () => {
             commandId: '00000000-0000-4000-8000-000000000002',
         });
         hook.unmount();
+        client.getMutationCache().getAll().forEach((mutation) => mutation.destroy());
         client.clear();
     });
 
@@ -67,6 +68,7 @@ describe('Unit 7C WU3 Store View management query layer', () => {
         await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: storeViewKeys.all }));
         expect(invalidate).toHaveBeenCalledWith({ queryKey: ownerInventoryReadKeys.all });
         hook.unmount();
+        client.getMutationCache().getAll().forEach((mutation) => mutation.destroy());
         client.clear();
     });
 });

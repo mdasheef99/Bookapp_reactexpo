@@ -9,6 +9,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { BatchReviewCard } from '../components/BatchReviewCard';
 import { BatchInventoryCommitControls } from '../components/BatchInventoryCommitControls';
 import { PostScanSessionHeader } from '../components/post-scan-session-header';
+import { DuplicateInputConfirmationDialog } from '../components/DuplicateInputConfirmationDialog';
 import { candidateCanStartBulkCommit } from '../commit/inventoryCommitCoordinator';
 import { useInventoryCommitCoordinator } from '../commit/useInventoryCommitCoordinator';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
@@ -29,9 +30,8 @@ import { InventoryAccessBoundary } from './InventoryAccessBoundary';
 import { coalesceOwnerUxRefresh } from '../offline/ownerUxOfflineGate';
 import { createCaptureUuid, createSemanticKey } from '../capture/captureIds';
 import { useCompletedScanAutoClose } from '../close/useCompletedScanAutoClose';
-import { useRemoveOwnerInventoryInput } from '../queries/ownerUxInputQueries';
-import type { RemoveScanInputRequest } from '../api/ownerUxService';
-
+import { useDuplicateInputConfirmation } from '../capture/useDuplicateInputConfirmation';
+import { useInputRemoval } from '../capture/useInputRemoval';
 function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIdentity; sessionId: string }) {
     const router = useRouter();
     const isFocused = useIsFocused();
@@ -45,11 +45,8 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const inventoryCommit = useInventoryCommitCoordinator(identity, sessionId);
     const { isOffline } = useNetworkStatus();
     const { colors } = useTheme();
-    const removeMutation = useRemoveOwnerInventoryInput(identity, sessionId);
-    const [removeTarget, setRemoveTarget] = useState<{
-        inputId: string; ordinal: number; inputVersion: number;
-    } | null>(null);
-    const [removeMessage, setRemoveMessage] = useState<string | null>(null);
+    const removal = useInputRemoval({ identity, sessionId,
+        sessionActive: session.data?.status === 'active', isOffline });
     const [candidateMessage, setCandidateMessage] = useState<string | null>(null);
     const [candidateDrafts, setCandidateDrafts] = useState<Map<string, CompactReviewEdits>>(
         new Map(),
@@ -57,7 +54,6 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const [authorityChangedCandidates, setAuthorityChangedCandidates] = useState<Set<string>>(
         new Set(),
     );
-    const pendingRemoval = useRef<RemoveScanInputRequest | null>(null);
     const unavailable = session.data?.status === 'expired' || [session.error, inputs.error].some(
         (error) => error && 'code' in error
             && ['P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND'].includes(String(error.code)),
@@ -90,6 +86,11 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     //   re-evaluates each render: with no live explanation left and
     //   detected still >= 16, the count is unsupportable and fails closed.
     const currentInputs = inputs.data?.items;
+    const duplicateConfirmation = useDuplicateInputConfirmation({
+        identity, sessionId, inputs: currentInputs,
+        sessionActive: session.data?.status === 'active', isOffline,
+        onMessage: removal.setMessage,
+    });
     const currentOverLimitFailure = currentInputs?.length === 1
         && currentInputs[0].terminal
         && currentInputs[0].retryState === 'new_upload_required'
@@ -131,36 +132,6 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const inputAnnouncement = inputs.data?.items.length
         ? `Image processing: ${inputs.data.items.filter((item) => item.presentationState === 'ready').length} ready, ${inputs.data.items.filter((item) => item.presentationState === 'needs_attention').length} need attention, ${inputs.data.items.filter((item) => ['checking_image', 'finding_books'].includes(item.presentationState)).length} processing.`
         : null;
-    const beginRemove = (target: { inputId: string; ordinal: number; inputVersion: number }) => {
-        if (removeMutation.isPending) return;
-        if (pendingRemoval.current?.inputId !== target.inputId
-            || pendingRemoval.current.expectedInputVersion !== target.inputVersion) {
-            pendingRemoval.current = null;
-        }
-        setRemoveMessage(null);
-        setRemoveTarget(target);
-    };
-    const confirmRemove = () => {
-        if (!removeTarget || isOffline || session.data?.status !== 'active' || removeMutation.isPending) return;
-        const request = pendingRemoval.current ?? {
-            sessionId,
-            inputId: removeTarget.inputId,
-            expectedInputVersion: removeTarget.inputVersion,
-            idempotencyKey: createSemanticKey('remove-input'),
-            commandId: createCaptureUuid(),
-        };
-        pendingRemoval.current = request;
-        removeMutation.mutate(request, {
-            onSuccess: () => {
-                pendingRemoval.current = null;
-                setRemoveTarget(null);
-                setRemoveMessage(`Image ${removeTarget.ordinal} removed.`);
-            },
-            onError: () => {
-                setRemoveMessage('The image could not be removed. Refresh and try again.');
-            },
-        });
-    };
     const handleCandidateRemove = (
         candidateId: string,
         expectedCandidateVersion: number,
@@ -225,7 +196,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
             inventoryCommit.outcomes,
         )) || inventoryCommit.bulkResult !== null);
     const commandsIdle = inventoryCommit.inFlight.size === 0 && !inventoryCommit.bulkPending
-        && !removeCandidate.isPending && !removeMutation.isPending;
+        && !removeCandidate.isPending && !removal.isPending && !duplicateConfirmation.isPending;
     const autoClose = useCompletedScanAutoClose({
         identity,
         sessionId,
@@ -235,7 +206,6 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
         isOffline,
         isFocused,
     });
-
     return (
         <ScreenBackground>
             <View style={{ flex: 1 }}>
@@ -296,20 +266,21 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         inputItems={inputs.data?.items ?? []}
                         firstCandidateId={cards[0]?.candidateId ?? null}
                         inputAnnouncement={inputAnnouncement}
-                        removeMessage={removeMessage}
+                        removeMessage={removal.message}
                         candidateMessage={[candidateMessage, autoClose.message]
                             .filter(Boolean).join(' ') || null}
-                        removeTarget={removeTarget}
-                        removePending={removeMutation.isPending}
+                        removeTarget={removal.target}
+                        removePending={removal.isPending}
                         onReturnToInventory={() => router.replace(inventoryRoutes.root())}
                         onRetryLifecycle={() => { void refreshAll(); }}
                         onRetryReview={() => { void batchReview.refetch(); }}
                         onOpenFirstCandidate={() => {
                             if (cards[0]) router.push(inventoryRoutes.candidate(sessionId, cards[0].candidateId));
                         }}
-                        onBeginRemove={beginRemove}
-                        onConfirmRemove={confirmRemove}
-                        onCancelRemove={() => setRemoveTarget(null)}
+                        onBeginRemove={removal.begin}
+                        onConfirmRemove={removal.confirm}
+                        onCancelRemove={removal.cancel}
+                        onReviewDuplicate={duplicateConfirmation.review}
                     />
                 )}
                 ListFooterComponent={!loading && !unavailable && !retryableError ? (
@@ -360,11 +331,17 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                     ) : null}
                 </View>
             ) : null}
+            <DuplicateInputConfirmationDialog
+                visible={duplicateConfirmation.visible}
+                pending={duplicateConfirmation.isPending}
+                onDismiss={duplicateConfirmation.dismiss}
+                onCancelUpload={duplicateConfirmation.cancel}
+                onProceed={duplicateConfirmation.proceed}
+            />
             </View>
         </ScreenBackground>
     );
 }
-
 export function InventorySessionProgressScreen({ sessionId }: { sessionId: string }) {
     return <InventoryAccessBoundary>{(identity) => <SessionProgress identity={identity} sessionId={sessionId} />}</InventoryAccessBoundary>;
 }

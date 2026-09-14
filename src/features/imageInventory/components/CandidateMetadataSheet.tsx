@@ -56,6 +56,10 @@ export function CandidateMetadataSheet({
     );
     const detail = query.data;
     const snapshot = detail?.metadata.snapshot ?? null;
+    const representativeCover = snapshot?.coverReference
+        ? null
+        : detail?.metadata.representativeCover ?? card.metadataSummary?.representativeCover ?? null;
+    const coverReference = snapshot?.coverReference ?? representativeCover?.coverReference ?? null;
     return (
         <Modal
             visible={visible}
@@ -88,15 +92,18 @@ export function CandidateMetadataSheet({
                             <>
                                 {snapshot ? (
                                     <View style={{ gap: 4 }} testID="selected-metadata-details">
-                                        {snapshot.coverReference ? (
+                                        {coverReference ? (
                                             <Image
-                                                source={{ uri: snapshot.coverReference }}
+                                                source={{ uri: coverReference }}
                                                 contentFit="contain"
                                                 accessible
                                                 accessibilityRole="image"
                                                 accessibilityLabel={`Cover for ${snapshot.title}`}
                                                 style={{ width: 120, height: 180, alignSelf: 'center', borderRadius: 8 }}
                                             />
+                                        ) : null}
+                                        {representativeCover ? (
+                                            <MetadataValue label="Cover source" value="Representative edition" />
                                         ) : null}
                                         <MetadataValue label="Title" value={snapshot.title} />
                                         <MetadataValue label="Subtitle" value={snapshot.subtitle} />

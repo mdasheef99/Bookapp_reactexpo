@@ -77,6 +77,17 @@ const requestSchemas = {
         idempotencyKey: z.string().min(16).max(128).regex(/^[A-Za-z0-9._:-]+$/u),
         commandId: uuidSchema,
     }).strict(),
+    resolve_duplicate_scan_input: z.object({
+        action: z.literal('resolve_duplicate_scan_input'),
+        contractVersion,
+        sessionId: uuidSchema,
+        inputId: uuidSchema,
+        decision: z.enum(['cancel', 'proceed']),
+        expectedInputVersion: z.number().int().positive().safe(),
+        expectedConfirmationVersion: z.number().int().positive().safe(),
+        idempotencyKey: z.string().min(16).max(128).regex(/^[A-Za-z0-9._:-]+$/u),
+        commandId: uuidSchema,
+    }).strict(),
     add_candidate_to_inventory: z.object({
         action: z.literal('add_candidate_to_inventory'),
         contractVersion,

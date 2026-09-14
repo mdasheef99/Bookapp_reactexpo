@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { PropsWithChildren } from 'react';
 import SessionRoute from '../../../../app/(store-owner)/inventory/scan/[sessionId]/index';
 
@@ -62,6 +62,8 @@ function inputFixture(overrides: Partial<Record<string, unknown>> = {}) {
         polling: true,
         detectedCandidateCount: null,
         acceptedCandidateCount: 0,
+        duplicateConfirmationVersion: null,
+        duplicateConfirmationExpiresAt: null,
         createdAt: '2026-08-24T00:00:00.000Z',
         updatedAt: '2026-08-24T00:00:00.000Z',
         ...overrides,
@@ -234,7 +236,11 @@ describe('Phase 9 NEW 6G-C genuine mounted production-route composition', () => 
         ));
     });
 
-    afterEach(() => { client.clear(); });
+    afterEach(async () => {
+        cleanup();
+        await client.cancelQueries();
+        client.clear();
+    });
 
     async function renderSessionRoute() {
         const screen = render(<SessionRoute />, { wrapper });

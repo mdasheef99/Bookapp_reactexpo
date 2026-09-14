@@ -62,10 +62,15 @@ function compactLanguage(value: unknown, field: string): string {
   }
 }
 
-function compactIsbnClue(value: unknown): unknown {
-  if (typeof value !== 'string') return value;
-  const withoutLabel = value.trim().replace(/^ISBN(?:-1[03])?\s*:?\s*/iu, '');
-  return /^(?=.*\d)[\dXx\s-]+$/u.test(withoutLabel) ? withoutLabel : value;
+function compactIsbnClue(value: unknown): string | null {
+  // ISBN is optional provider evidence. A malformed optional clue must not
+  // discard otherwise usable title/author extraction; the metadata normalizer
+  // remains responsible for checksum validation later in the pipeline.
+  if (typeof value !== 'string') return null;
+  const withoutLabel = value.trim().replace(/^ISBN(?:-1[03])?\s*:?\s*/iu, '').trim();
+  if (withoutLabel.length > PHASE9_LIMITS.isbnClueChars
+    || !/^(?=.*\d)[\dXx\s-]+$/u.test(withoutLabel)) return null;
+  return withoutLabel;
 }
 
 function compactVision(value: unknown): Readonly<{

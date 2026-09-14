@@ -3,6 +3,7 @@ import { type QueryClient, useMutation, useQueryClient } from '@tanstack/react-q
 import {
     ownerUxService,
     type RemoveScanInputRequest,
+    type ResolveDuplicateScanInputRequest,
 } from '../api/ownerUxService';
 import type { OwnerRemoveInputResult } from '../contracts/ownerUxContracts';
 import { captureOwnerRequest } from '../identity/ownerRequestFence';
@@ -56,6 +57,59 @@ export function useRemoveOwnerInventoryInput(
         onSuccess: (canonical) => synchronizeRemoveInputSuccess(
             client, identity, sessionId, canonical,
         ),
+    });
+}
+
+export function useResolveDuplicateOwnerInventoryInput(
+    identity: ImageInventoryIdentity,
+    sessionId: string,
+) {
+    const client = useQueryClient();
+    const scope = `${identity.userId}:${identity.storeId}:${sessionId}`;
+    const activeScope = useRef(scope);
+    const controllers = useRef(new Set<AbortController>());
+    useEffect(() => {
+        activeScope.current = scope;
+        return () => {
+            activeScope.current = '';
+            for (const controller of controllers.current) controller.abort();
+            controllers.current.clear();
+        };
+    }, [scope]);
+    return useMutation({
+        mutationFn: async (request: ResolveDuplicateScanInputRequest) => {
+            if (activeScope.current !== scope || request.sessionId !== sessionId) {
+                throw new Error('OWNER_INPUT_AUTHORITY_CHANGED');
+            }
+            const lifecycle = new AbortController();
+            const fence = captureOwnerRequest(identity, lifecycle.signal);
+            controllers.current.add(lifecycle);
+            try {
+                fence.assertCurrent();
+                const canonical = await ownerUxService.resolveDuplicateInput(request, fence.signal);
+                fence.assertCurrent();
+                if (activeScope.current !== scope || canonical.sessionId !== sessionId) {
+                    throw new Error('OWNER_INPUT_AUTHORITY_CHANGED');
+                }
+                return canonical;
+            } finally {
+                fence.release();
+                controllers.current.delete(lifecycle);
+            }
+        },
+        networkMode: 'always',
+        retry: false,
+        onSuccess: async (canonical) => {
+            if (activeScope.current !== scope || canonical.sessionId !== sessionId
+                || !sameIdentity(getResolvedImageInventoryIdentity(), identity)) return;
+            await Promise.all([
+                client.invalidateQueries({ queryKey: imageInventoryKeys.discovery(identity) }),
+                client.invalidateQueries({ queryKey: imageInventoryKeys.session(identity, sessionId) }),
+                client.invalidateQueries({ queryKey: imageInventoryKeys.inputs(identity, sessionId) }),
+                client.invalidateQueries({ queryKey: imageInventoryKeys.readiness(identity, sessionId) }),
+                client.invalidateQueries({ queryKey: [...imageInventoryKeys.identity(identity), 'candidates'] }),
+            ]);
+        },
     });
 }
 

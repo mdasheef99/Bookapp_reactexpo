@@ -32,6 +32,7 @@ export function PostScanSessionHeader({
     onBeginRemove,
     onConfirmRemove,
     onCancelRemove,
+    onReviewDuplicate,
 }: {
     loading: boolean;
     unavailable: boolean;
@@ -55,6 +56,7 @@ export function PostScanSessionHeader({
     onBeginRemove: (target: RemoveTarget) => void;
     onConfirmRemove: () => void;
     onCancelRemove: () => void;
+    onReviewDuplicate: (item: OwnerInputProgress) => void;
 }) {
     const { colors } = useTheme();
     const title = (
@@ -152,6 +154,7 @@ export function PostScanSessionHeader({
                             onBeginRemove={onBeginRemove}
                             onConfirmRemove={onConfirmRemove}
                             onCancelRemove={onCancelRemove}
+                            onReviewDuplicate={onReviewDuplicate}
                         />
                     </View>
                 </View>

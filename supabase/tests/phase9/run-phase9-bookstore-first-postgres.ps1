@@ -3,11 +3,13 @@ param(
   [string]$DataDir = '',
   [switch]$IncludeU8C,
   [switch]$IncludeUnit6gBaseline,
-  [switch]$IncludeMediaCorrection
+  [switch]$IncludeMediaCorrection,
+  [switch]$IncludeDuplicateConfirmation
 )
 
 $ErrorActionPreference = 'Stop'
 if ($IncludeMediaCorrection) { $IncludeUnit6gBaseline = $true }
+if ($IncludeDuplicateConfirmation) { $IncludeMediaCorrection = $true; $IncludeUnit6gBaseline = $true }
 $env:PGCLIENTENCODING = 'UTF8'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
 $dbName = "bookconnect_u8b_$PID"
@@ -93,6 +95,9 @@ if ($IncludeMediaCorrection) {
     '20260906000058_marketplace_phase9_media_completion_receipts.sql',
     '20260906000059_marketplace_phase9_media_output_cleanup.sql'
   )
+}
+if ($IncludeDuplicateConfirmation) {
+  $migrations += '20260911000060_marketplace_phase9_duplicate_confirmation.sql'
 }
 
 function Invoke-PsqlFile([string]$database, [string]$file) {
@@ -195,7 +200,10 @@ try {
     Write-Output 'U8B migration chain through M49 applied in the disposable database'
   }
 
-  if ($IncludeMediaCorrection) {
+  if ($IncludeDuplicateConfirmation) {
+    & node (Join-Path $PSScriptRoot 'phase9DuplicateConfirmationConcurrency.postgres.mjs') $Port $dbName $psql
+    if ($LASTEXITCODE -ne 0) { throw 'Unit 6H duplicate confirmation PostgreSQL acceptance failed' }
+  } elseif ($IncludeMediaCorrection) {
     & node (Join-Path $PSScriptRoot 'phase9MediaConcurrency.postgres.mjs') $Port $dbName $psql
     if ($LASTEXITCODE -ne 0) { throw 'Unit 6G media correction PostgreSQL acceptance failed' }
   }

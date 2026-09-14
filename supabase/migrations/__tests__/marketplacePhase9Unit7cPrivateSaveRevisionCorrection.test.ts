@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const file = path.join(process.cwd(), 'supabase', 'migrations',
   '20260816000046_marketplace_phase9_unit7c_private_save_revision_correction.sql');
-const sql = fs.readFileSync(file, 'utf8');
+const sql = fs.readFileSync(file, 'utf8').replace(/\r\n/gu, '\n');
 
 describe('Phase 9 Unit 7C M46 private-save revision correction', () => {
   it('is one forward-only replacement of the existing Save function', () => {

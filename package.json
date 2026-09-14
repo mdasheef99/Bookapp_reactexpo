@@ -114,6 +114,9 @@
       "<rootDir>/.wt",
       "[\\\\/]e2e[\\\\/]"
     ],
+    "testMatch": [
+      "**/?(*.)+(spec|test).[jt]s?(x)"
+    ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1",
       "^https://deno\\.land/std@0\\.168\\.0/http/server\\.ts$": "<rootDir>/supabase/functions/__tests__/support/edgeFunctionHttpStubs.ts",

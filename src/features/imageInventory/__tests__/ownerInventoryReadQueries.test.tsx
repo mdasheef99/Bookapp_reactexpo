@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from 'react';
+import type { Query } from '@tanstack/query-core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, cleanup, renderHook, waitFor } from '@testing-library/react-native';
+import { act, cleanupAsync, renderHook, waitFor } from '@testing-library/react-native';
 import {
     OwnerInventoryReadError,
     ownerInventoryReadService,
@@ -70,10 +71,16 @@ describe('useOwnerInventoryRead', () => {
     let client: QueryClient;
     let wrapper: ({ children }: PropsWithChildren) => React.JSX.Element;
     let listPage: jest.SpyInstance;
+    let queries: Set<Query>;
+    let unsubscribe: () => void;
 
     beforeEach(() => {
+        queries = new Set();
         client = new QueryClient({
             defaultOptions: { queries: { gcTime: Infinity } },
+        });
+        unsubscribe = client.getQueryCache().subscribe((event) => {
+            queries.add(event.query);
         });
         wrapper = ({ children }) => (
             <QueryClientProvider client={client}>{children}</QueryClientProvider>
@@ -82,10 +89,12 @@ describe('useOwnerInventoryRead', () => {
         resetImageInventoryIdentityForTests(identity);
     });
 
-    afterEach(() => {
-        cleanup();
+    afterEach(async () => {
+        await cleanupAsync();
         listPage.mockRestore();
+        unsubscribe();
         client.clear();
+        queries.forEach((query) => query.destroy());
         resetImageInventoryIdentityForTests();
     });
 

@@ -4,6 +4,11 @@ import {
   failClosedMetadataProviderOutcome, MetadataNormalizedOutcome, MetadataProviderOutcome,
   MetadataProviderValidationContext,
 } from '../metadata/providerAdapter';
+import type { MetadataRepresentativeCover } from '../metadata/representativeCover';
+import {
+  persistCacheAfterTerminal,
+  persistRepresentativeCoverAfterTerminal,
+} from './metadataTerminalPersistence';
 
 export type MetadataProviderPolicy = Readonly<{
   enabled: boolean;
@@ -121,6 +126,11 @@ export type MetadataProductionGateway = Readonly<{
     selected: MetadataEdition;
     evidence: readonly string[];
   }>): Promise<void>;
+  persistRepresentativeCover(input: Readonly<{
+    lookupId: string;
+    attemptId: string;
+    representativeCover: MetadataRepresentativeCover;
+  }>): Promise<void>;
   completeManual(input: Readonly<{
     lookupId?: string;
     attemptId?: string;
@@ -141,17 +151,6 @@ const isPositiveOutcome = (outcome: string) =>
 const isCacheableOutcome = (outcome: string) => [
   'coherent_match', 'no_acceptable_match', 'ambiguous_match', 'material_conflict',
 ].includes(outcome);
-
-async function persistCacheAfterTerminal(
-  gateway: MetadataProductionGateway,
-  input: Parameters<MetadataProductionGateway['persistCache']>[0],
-): Promise<void> {
-  try {
-    await gateway.persistCache(input);
-  } catch {
-    // Cache is derived reuse state and cannot reverse durable terminalization.
-  }
-}
 
 export function decideMetadataProductionPolicy(
   policy: MetadataProviderPolicy,
@@ -318,6 +317,11 @@ export async function runMetadataProductionComposition(
         retryable: false,
       });
       return resultForManualCompletion(completion);
+    }
+    if (provider.representativeCover !== null) {
+      await persistRepresentativeCoverAfterTerminal(gateway, {
+        lookupId, attemptId, representativeCover: provider.representativeCover,
+      });
     }
     await gateway.persistSelection({
       lookupId,

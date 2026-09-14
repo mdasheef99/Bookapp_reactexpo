@@ -23,6 +23,7 @@ import {
   metadataLookupParameters,
 } from './metadataGatewayContext';
 import { completeMetadataJobManually } from './metadataCompletionGateway';
+import { persistMetadataRepresentativeCover } from './metadataRepresentativeCoverGateway';
 export { decodeMetadataJobContext, loadMetadataJobContext } from './metadataJobContext';
 export type { MetadataJobContext, MetadataRpcClient } from './metadataJobContext';
 export { requestFromMetadataContext } from './metadataGatewayContext';
@@ -322,6 +323,10 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
       p_source_fetched_at: new Date().toISOString(),
       p_expires_at: new Date(Date.now()+this.configuration.revalidationSeconds*1000).toISOString(),
     });
+  }
+  async persistRepresentativeCover(input: Readonly<{ lookupId: string; attemptId: string;
+    representativeCover: import('../metadata/representativeCover').MetadataRepresentativeCover }>) {
+    await persistMetadataRepresentativeCover(this.client, this.configuration, input);
   }
   async persistSelection(input: Readonly<{ lookupId: string; attemptId: string;
     selected: unknown; evidence: readonly string[] }>) {

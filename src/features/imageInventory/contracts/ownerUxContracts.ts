@@ -75,20 +75,34 @@ const inputProgressSchema = z.object({
     inputId: uuidSchema,
     ordinal: z.number().int().min(1).safe(),
     sourceKind: z.enum(['camera', 'gallery']),
-    inputState: z.enum(['uploaded', 'validating', 'queued', 'processing', 'ready', 'failed', 'skipped']),
+    inputState: z.enum(['uploaded', 'validating', 'awaiting_duplicate_confirmation', 'queued', 'processing', 'ready', 'failed', 'skipped']),
     inputVersion: versionSchema,
-    presentationState: z.enum(['checking_image', 'finding_books', 'ready', 'needs_attention']),
+    presentationState: z.enum(['checking_image', 'duplicate_confirmation_required', 'finding_books', 'ready', 'needs_attention']),
     safeCode: z.string().regex(/^P9_[A-Z0-9_]+$/u).nullable(),
     retryState: z.enum(['none', 'server_retrying', 'new_upload_required']),
     terminal: z.boolean(),
     polling: z.boolean(),
     detectedCandidateCount: z.number().int().min(0).max(15).safe().nullable(),
     acceptedCandidateCount: z.number().int().min(0).max(15).safe().nullable(),
+    duplicateConfirmationVersion: versionSchema.nullable(),
+    duplicateConfirmationExpiresAt: timestampSchema.nullable(),
     createdAt: timestampSchema,
     updatedAt: timestampSchema,
 }).strict().superRefine((value, context) => {
-    if (value.terminal === value.polling) {
+    const awaitingDuplicate = value.inputState === 'awaiting_duplicate_confirmation';
+    if (!awaitingDuplicate && value.terminal === value.polling) {
         context.addIssue({ code: 'custom', message: 'input terminal and polling flags conflict' });
+    }
+    if (awaitingDuplicate && (value.terminal || value.polling
+        || value.presentationState !== 'duplicate_confirmation_required'
+        || value.safeCode !== 'P9_MEDIA_DUPLICATE_INPUT'
+        || value.duplicateConfirmationVersion === null
+        || value.duplicateConfirmationExpiresAt === null)) {
+        context.addIssue({ code: 'custom', message: 'duplicate confirmation state is inconsistent' });
+    }
+    if (!awaitingDuplicate && (value.duplicateConfirmationVersion !== null
+        || value.duplicateConfirmationExpiresAt !== null)) {
+        context.addIssue({ code: 'custom', message: 'unexpected duplicate confirmation authority' });
     }
     if (value.inputState === 'ready' && value.presentationState !== 'ready') {
         context.addIssue({ code: 'custom', message: 'ready input requires ready presentation' });
@@ -128,6 +142,16 @@ const responseSchemas = {
         sessionVersion: versionSchema,
         presentationRevision: versionSchema,
     }).strict(),
+    resolve_duplicate_scan_input: z.object({
+        sessionId: uuidSchema,
+        inputId: uuidSchema,
+        decision: z.enum(['cancel', 'proceed']),
+        outcome: z.enum(['cancelled', 'processing_started']),
+        inputState: z.enum(['skipped', 'queued']),
+        inputVersion: versionSchema,
+        sessionVersion: versionSchema,
+        presentationRevision: versionSchema,
+    }).strict(),
     list_scan_candidates: z.object({
         items: z.array(candidateSummarySchema),
         pageInfo: pageInfoSchema,
@@ -150,12 +174,13 @@ const responseSchemas = {
 
 export type OwnerUxAction = keyof typeof responseSchemas;
 export type OwnerUxQueryAction = Exclude<OwnerUxAction,
-    'remove_scan_input' | 'update_candidate_review' | 'add_candidate_to_inventory' | 'close_scan_session'>;
+    'remove_scan_input' | 'resolve_duplicate_scan_input' | 'update_candidate_review' | 'add_candidate_to_inventory' | 'close_scan_session'>;
 export type OwnerDiscovery = z.infer<typeof responseSchemas.discover_scan_session>;
 export type OwnerSessionSummary = z.infer<typeof responseSchemas.read_scan_session>;
 export type OwnerInputProgress = z.infer<typeof inputProgressSchema>;
 export type OwnerInputPage = z.infer<typeof responseSchemas.list_scan_inputs>;
 export type OwnerRemoveInputResult = z.infer<typeof responseSchemas.remove_scan_input>;
+export type OwnerDuplicateInputResult = z.infer<typeof responseSchemas.resolve_duplicate_scan_input>;
 export type OwnerCandidatePage = z.infer<typeof responseSchemas.list_scan_candidates>;
 export type OwnerCandidateDetail = z.infer<typeof responseSchemas.read_scan_candidate>;
 export type OwnerCandidateCommitResult = z.infer<typeof responseSchemas.add_candidate_to_inventory>;

@@ -1,5 +1,13 @@
 # DOC-4: Image-to-LLM Inventory Workflow
 
+> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+
+
+> **Status correction (2026-09-13):** The preceding 2026-09-12 paragraph is
+> historical. M60 was subsequently applied during the authorized development
+> rollout; M61 and M62 were later applied once, and matching runtime/connected
+> detail-projection proof remains pending.
+
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
 **Version:** 0.3
@@ -9,6 +17,16 @@
 **Owns:** Image capture, model extraction, metadata enrichment, owner review, create-only scanned-candidate inventory commit, quota/cost, recovery, and scan retention.
 
 ---
+
+> **Historical Unit 6H correction checkpoint — 2026-09-12:** The local duplicate-confirmation
+> implementation had completed its bounded correction pass at that checkpoint. Normal
+> uploads retain the prior pipeline; duplicates pause for local Owner
+> confirmation; Proceed uses the new upload's private media/provenance and
+> returns to normal review/Add; Cancel schedules no analysis. M60 was created
+> locally and not remotely applied at that checkpoint, then applied during the
+> authorized development rollout; M61 is local-only. F-01 is retracted and F-02/F-03 are corrected.
+> Disposable independent-connection PostgreSQL evidence passes; connected
+> Edge/Storage evidence remains pending.
 
 ## 1. Purpose
 
@@ -162,6 +180,15 @@ Model/provider/prompt/schema versions, latency, error class, fallback, and cost 
 ## 8. Metadata enrichment
 
 Metadata routing is deterministic and provider-neutral. Local canonical/cache resolution runs first. Exactly one primary and zero or one secondary metadata adapter are configuration-driven; one logical lookup permits at most one external attempt in each role, sequentially. A coherent acceptable primary result prevents secondary invocation. Secondary eligibility is based on a closed normalized outcome allowlist, not provider prose. No provider is canonical authority and fields from different provider editions are never stitched.
+
+Under P9-D86, a missing exact-edition cover may receive one Owner-private,
+explicitly labelled representative-edition cover selected from the already
+returned candidates of that same provider lookup. This is presentation/media
+provenance only: the selected metadata remains one coherent edition, no second
+provider request is made, and the representative image is not promoted to the
+canonical or public cover field. Decoded volume/order evidence must not conflict;
+opaque or otherwise unresolved series membership causes fail-closed rejection
+of the fallback instead of being relabelled as human-readable series metadata.
 
 Each attempt preserves provider-independent query identity, role, sequence, adapter/capability/schema/normalizer versions, routing-policy version, normalized outcome, cache status, latency, cost-reservation lineage, and accepted/rejected disposition. Provider/version cache namespaces prevent results from silently crossing adapter or normalization changes. Equivalent non-sensitive bibliographic lookups may be coalesced only when privacy, licensing, adapter/version, and policy scope match.
 

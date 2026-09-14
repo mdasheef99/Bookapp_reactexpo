@@ -2,6 +2,7 @@ import { failClosedMetadataProviderOutcome } from '../_shared/imageInventory/met
 import {
   decodeGoogleBooksResponse,
   rankGoogleBooksEditions,
+  selectRepresentativeEditionCover,
 } from '../_shared/imageInventory/metadata/googleBooks';
 import { buildMetadataQueryIdentity } from '../_shared/imageInventory/metadata';
 import { googleBooksMultipleVolumes } from './fixtures/phase9/googleBooksResponses';
@@ -53,6 +54,7 @@ const coherent = (selected = edition(), overrides: Record<string, unknown> = {})
   retryable: false,
   secondaryEligible: false,
   providerRequestId: 'request-1',
+  representativeCover: null,
   ...overrides,
 });
 
@@ -64,6 +66,7 @@ const invalidOutcome = {
   retryable: false,
   secondaryEligible: true,
   providerRequestId: null,
+  representativeCover: null,
 };
 
 describe('Phase 9 provider-neutral metadata outcome validation', () => {
@@ -135,5 +138,59 @@ describe('Phase 9 provider-neutral metadata outcome validation', () => {
     expect(result.outcome).toBe('coherent_match');
     expect(result.selected?.providerRecordId).toBe('volume-exact-isbn');
     expect(result.selected?.coverReference).toContain('https://books.google.com/');
+  });
+
+  it('selects one labelled representative-edition cover without stitching metadata', () => {
+    const selected = edition({
+      providerRecordId: 'selected-without-cover', coverReference: null,
+    });
+    const coverSource = edition({
+      providerRecordId: 'alternate-with-cover', isbn10: null, isbn13: null,
+      coverReference: 'https://books.google.com/books/content?id=alternate',
+    });
+    const representativeCover = selectRepresentativeEditionCover(
+      selected, [selected, coverSource],
+    );
+    expect(representativeCover).toEqual({
+      coverReference: coverSource.coverReference,
+      sourceRelation: 'representative_edition',
+      sourceProviderRecordId: 'alternate-with-cover',
+      selectionPolicyVersion: 'p9-representative-cover-v1',
+      matchEvidence: ['exact_title', 'exact_author_set', 'language_compatible'],
+    });
+    expect(selected.coverReference).toBeNull();
+
+    const result = failClosedMetadataProviderOutcome(coherent(selected, {
+      candidates: [selected, coverSource], representativeCover,
+    }), { ...expected, hostPolicy: {
+      adapterKey: 'recorded_metadata', policyVersion: 'recorded-hosts-v1',
+      approvedCoverHosts: ['books.google.com'],
+    } });
+    expect(result.representativeCover).toEqual(representativeCover);
+    expect(result.selected).toEqual(selected);
+  });
+
+  it('rejects an alternate cover when title, full author set, language, or edition clues conflict', () => {
+    const selected = edition({ providerRecordId: 'selected', coverReference: null });
+    const cover = 'https://books.google.com/books/content?id=unsafe-alternate';
+    const conflicts = [
+      edition({ providerRecordId: 'title', title: 'Another Book', coverReference: cover }),
+      edition({ providerRecordId: 'authors', authors: ['Another Author'], coverReference: cover }),
+      edition({ providerRecordId: 'language', language: 'fr', coverReference: cover }),
+    ];
+    expect(selectRepresentativeEditionCover(selected, [selected, ...conflicts])).toBeNull();
+    const selectedSubtitle = edition({
+      providerRecordId: 'selected-subtitle', coverReference: null, subtitle: 'Original subtitle',
+    });
+    expect(selectRepresentativeEditionCover(selectedSubtitle, [selectedSubtitle,
+      edition({ providerRecordId: 'subtitle', subtitle: 'Conflicting subtitle', coverReference: cover }),
+    ])).toBeNull();
+    const selectedSeries = edition({
+      providerRecordId: 'selected-series', coverReference: null, series: 'Series A', volume: '1',
+    });
+    expect(selectRepresentativeEditionCover(selectedSeries, [selectedSeries,
+      edition({ providerRecordId: 'series', series: 'Series B', volume: '1', coverReference: cover }),
+      edition({ providerRecordId: 'volume', series: 'Series A', volume: '2', coverReference: cover }),
+    ])).toBeNull();
   });
 });

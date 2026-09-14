@@ -20,6 +20,12 @@ const removeInput = z.object({
   sessionId: uuid, inputId: uuid, expectedInputVersion: version,
   idempotencyKey, commandId: uuid,
 }).strict();
+const resolveDuplicateInput = z.object({
+  action: z.literal('resolve_duplicate_scan_input'), contractVersion,
+  sessionId: uuid, inputId: uuid, decision: z.enum(['cancel', 'proceed']),
+  expectedInputVersion: version, expectedConfirmationVersion: version,
+  idempotencyKey, commandId: uuid,
+}).strict();
 const listCandidates = z.object({
   action: z.literal('list_scan_candidates'), contractVersion,
   scope: z.enum(['session', 'needs_review']),
@@ -62,6 +68,7 @@ const requestSchemas = {
   read_scan_session: readSession,
   list_scan_inputs: listInputs,
   remove_scan_input: removeInput,
+  resolve_duplicate_scan_input: resolveDuplicateInput,
   list_scan_candidates: listCandidates,
   read_scan_candidate: z.object({
     action: z.literal('read_scan_candidate'), contractVersion,
@@ -77,7 +84,7 @@ const requestSchemas = {
 
 const ownerUxRequest = z.discriminatedUnion('action', [
   requestSchemas.discover_scan_session, readSession, listInputs,
-  removeInput, listCandidates as any, requestSchemas.read_scan_candidate, updateReview,
+  removeInput, resolveDuplicateInput, listCandidates as any, requestSchemas.read_scan_candidate, updateReview,
   addCandidateToInventory, requestSchemas.read_scan_readiness, closeSession,
 ]);
 

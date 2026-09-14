@@ -62,6 +62,9 @@ const wrappers = {
 } as const;
 
 type WrapperName = keyof typeof wrappers;
+const supersededRuntimeWrappers = new Set<WrapperName>([
+  'phase9_media_validation_context',
+]);
 
 const compact = (value: string) => value.replace(/\s+/gu, '').replace(/;/gu, '').toLowerCase();
 const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
@@ -105,10 +108,13 @@ describe('Phase 9 M13 service-only PostgREST RPC wrappers', () => {
     expect(names.some((name) => /^20260722000009_/u.test(name))).toBe(false);
   });
 
-  it('wraps exactly the private RPCs used by Owner, media, vision, and the operator path', () => {
+  it('preserves every M13 wrapper while current runtime omits only superseded wrappers', () => {
     const sql = fs.readFileSync(migrationPath, 'utf8');
     const expected = Object.keys(wrappers).sort();
-    expect(runtimeRpcNames()).toEqual(expected);
+    const expectedRuntime = (Object.keys(wrappers) as WrapperName[])
+      .filter((name) => !supersededRuntimeWrappers.has(name))
+      .sort();
+    expect(runtimeRpcNames()).toEqual(expectedRuntime);
     const created = [...sql.matchAll(/CREATE FUNCTION public\.([a-z0-9_]+)\(/giu)]
       .map((match) => match[1])
       .sort();

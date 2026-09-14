@@ -25,11 +25,12 @@ import {
   STORE_VIEW_HISTORY_CONTRACT_VERSION,
   StoreViewHistoryRequest,
 } from '../contracts/storeViewHistory.ts';
-import { sha256Hex, StoredImageObject, storedImageEnvelope } from '../media/sourceIdentity.ts';
+import { sha256Hex, splitStoredObjectPath, StoredImageObject, storedImageEnvelope } from '../media/sourceIdentity.ts';
 import { executeStoreViewManagement } from './storeViewManagement.ts';
 import { executeStoreViewMedia } from './storeViewMedia.ts';
 import { executeStoreViewHistory } from './storeViewHistory.ts';
 import { executeOwnerBatchReview } from './ownerBatchReviewIngestion.ts';
+import { executeDuplicateInputResolution } from './ownerDuplicateResolution.ts';
 
 type RpcResult = { data: any; error: { message?: string } | null };
 type Client = {
@@ -103,12 +104,6 @@ const ownerUxRpc = {
     p_idempotency_key: request.idempotencyKey, p_command_id: request.commandId,
   })],
 } as const;
-
-function splitPath(path: string): { prefix: string; name: string } {
-  const index = path.lastIndexOf('/');
-  if (index < 1 || index === path.length - 1) throw new Error('P9_MEDIA_NOT_APPROVED');
-  return { prefix: path.slice(0, index), name: path.slice(index + 1) };
-}
 
 async function exactStoredObject(
   bucket: ReturnType<Client['storage']['from']>,
@@ -225,7 +220,7 @@ export async function executeOwnerIngestion(
       const context = unwrap(await serviceClient.rpc('phase9_public_copy_upload_context_v1', {
         p_actor: actorId, p_capability_id: publication.capabilityId,
       }));
-      const { prefix, name } = splitPath(context.object_path);
+      const { prefix, name } = splitStoredObjectPath(context.object_path);
       const bucket = serviceClient.storage.from(context.bucket_id);
       const observed = await storedImageEnvelope(await exactStoredObject(bucket, prefix, name));
       if (observed.size !== context.declared_bytes || observed.mime !== context.declared_mime) {
@@ -263,6 +258,9 @@ export async function executeOwnerIngestion(
 
   if (request.contractVersion === OWNER_UX_CONTRACT_VERSION) {
     const action = request.action as OwnerUxAction;
+    if (action === 'resolve_duplicate_scan_input') {
+      return executeDuplicateInputResolution(request as any, actorId, serviceClient);
+    }
     const route = ownerUxRpc[action];
     const data = unwrap(await userClient.rpc(route[0], route[1](request)));
     return parseOwnerUxResponse(action, {
@@ -313,7 +311,7 @@ export async function executeOwnerIngestion(
     p_actor: actorId,
     p_capability_id: request.capabilityId,
   }));
-  const { prefix, name } = splitPath(context.object_path);
+  const { prefix, name } = splitStoredObjectPath(context.object_path);
   const bucket = serviceClient.storage.from(context.bucket_id);
   const observed = await storedImageEnvelope(await exactStoredObject(bucket, prefix, name));
   if (observed.size !== context.declared_bytes || observed.mime !== context.declared_mime) {

@@ -51,6 +51,15 @@ const coverReferenceSchema = z.string().min(1).max(512).superRefine((value, cont
     }
 });
 
+const representativeCoverSchema = z.object({
+    coverReference: coverReferenceSchema,
+    sourceRelation: z.literal('representative_edition'),
+    sourceAdapter: z.string().regex(/^[a-z][a-z0-9_-]{1,63}$/u),
+    sourceAdapterVersion: z.string().min(1).max(64),
+    sourceRecordId: z.string().min(1).max(256),
+    selectionPolicyVersion: z.literal('p9-representative-cover-v1'),
+}).strict();
+
 const metadataSnapshotSchema = z.object({
     title: safeTextSchema(1, 512),
     authors: z.array(safeTextSchema(1, 256)).min(1).max(20),
@@ -78,6 +87,7 @@ const metadataSchema = z.object({
     selectionId: uuidSchema.nullable(),
     canonicalEditionId: uuidSchema.nullable(),
     snapshot: metadataSnapshotSchema.nullable(),
+    representativeCover: representativeCoverSchema.nullable().optional(),
 }).strict().superRefine((value, context) => {
     const selected = value.state === 'selected';
     const selectionComplete = value.selectionVersion !== null
@@ -89,6 +99,12 @@ const metadataSchema = z.object({
         && value.snapshot === null;
     if ((selected && !selectionComplete) || (!selected && !selectionEmpty)) {
         context.addIssue({ code: 'custom', message: 'metadata selection is inconsistent' });
+    }
+    if (value.representativeCover && (!value.snapshot || value.snapshot.coverReference)) {
+        context.addIssue({
+            code: 'custom',
+            message: 'representative cover requires a selected edition without an exact cover',
+        });
     }
 });
 

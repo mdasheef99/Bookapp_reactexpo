@@ -10,7 +10,7 @@ const migrationPath = path.join(
 describe('Phase 9 legacy Marketplace RPC security remediation', () => {
   it('exists as a revoke-only forward migration for the obsolete RPCs', () => {
     expect(fs.existsSync(migrationPath)).toBe(true);
-    const sql = fs.readFileSync(migrationPath, 'utf8');
+    const sql = fs.readFileSync(migrationPath, 'utf8').replace(/\r\n/gu, '\n');
     expect(sql).toContain(
       'REVOKE ALL ON FUNCTION\n'
         + '  public.phase9_storefront_catalogue(uuid,integer,jsonb),\n'
@@ -24,7 +24,7 @@ describe('Phase 9 legacy Marketplace RPC security remediation', () => {
   });
 
   it('does not mutate business data or Storage policy', () => {
-    const sql = fs.readFileSync(migrationPath, 'utf8');
+    const sql = fs.readFileSync(migrationPath, 'utf8').replace(/\r\n/gu, '\n');
     expect(sql).not.toMatch(/INSERT\s+INTO|UPDATE\s+|DELETE\s+FROM|TRUNCATE/i);
     expect(sql).not.toMatch(/CREATE\s+(TABLE|INDEX)|ALTER\s+(TABLE|VIEW)|DROP\s+(TABLE|VIEW)/i);
     expect(sql).not.toMatch(/storage\.|storage\/|bucket/i);

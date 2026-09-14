@@ -1,6 +1,40 @@
 # Phase 9 Requirements Traceability
 
-**Last updated:** 2026-09-08
+> **2026-09-13 representative-cover follow-up:** M61 and M62 are live once;
+> bounded verification is complete and post-apply helper/ACL readback passed.
+> The exact selected edition, public cover projection, duplicate behavior, and
+> M52–M61 remain unchanged. Matching runtime deployment and connected no-cover
+> proof remain pending. [Evidence](./unit6h-representative-cover-correction.md).
+
+> The following 2026-09-12 PostgreSQL paragraph is historical; M60 was later
+> applied during the authorized development rollout. M61 was also later applied;
+> M62 was subsequently applied once and is recorded in the current follow-up.
+
+> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+
+
+**Last updated:** 2026-09-13
+
+## Unit 6H representative-edition cover correction — live, runtime rollout gated
+
+| Requirement | Owning source and local evidence | Status and remaining gate |
+| --- | --- | --- |
+| Preserve one coherent selected edition; use at most one compatible alternate cover only when exact cover is absent; never stitch metadata or make a second provider request | DOC-3 §5; DOC-4 §8; SDD 01 §4; local representative-cover selector/provider tests | Local selector and fail-closed provider validation pass, including decoded Google volume and unresolved series evidence; connected Google Books/no-cover cohort remains unrun. |
+| Keep fallback provenance separate and Owner-private; exact selected `cover_url` remains authoritative | SDD 01/04; M61 sidecar, M62 standalone projection, strict-if-present Owner contracts; M52–M62 PGlite 2/2 | M61/M62 are live/read back. M62 grants, direct detail, fresh save, replay-compatible projection, and no-public-effect checks pass; matching runtime and connected proof remain pending. |
+| Copy representative cover only through explicit Add, into a separate private inventory field; do not alter canonical/public listing cover or existing duplicate handling | DOC-3; DOC-8; SDD 03/05; M61 trigger and Unit 7A integration cases | Local explicit-Add/no-public-listing/immutability checks pass; connected Add and public-projection readback remain pending. |
+| Preserve normal metadata/review/Add behavior when no fallback is available and keep M52–M61 unchanged | Phase 9 master SDD; Unit 6H authority; Google/metadata/worker/UI regressions | Fresh affected Jest 310/310, TypeScript/build, structural 14/14, and M55 7/7 pass. The four structural test debts are corrected test-only. |
+| Rollout boundary | M61/M62 live ledger plus current-vs-target audit | M62 is applied once. Exact next action is separately authorized matching Owner Edge/metadata-worker/client deployment, followed by connected no-cover review/Add and public-projection readback. |
+
+## Unit 6H duplicate confirmation — bounded correction verified, rollout gated
+
+| Requirement | Owning source and local evidence | Status and remaining gate |
+| --- | --- | --- |
+| Normal uploads retain the existing validation → vision → Owner review → explicit Add pipeline; a duplicate pauses for a warning | Unit 6H work unit §§Settled flows/Database and concurrency design; M60; owner ingestion/runtime contracts; focused Jest, PGlite, and PostgreSQL proof | Local contract/fixture evidence and existing PostgreSQL regression acceptance pass. Connected Edge/worker behavior remains unverified. |
+| Proceed analyzes the new upload with its own media/provenance and one idempotent vision job; Cancel skips analysis and makes the new output cleanup-eligible | Unit 6H work unit; `ownerDuplicateResolution.ts`; M60 resolver/cleanup definitions; duplicate-confirmation fixture | Local static/fixture checks pass. F-01 is retracted after verifying M58's nested conflict handling; F-02 is corrected with service-role-only public delegates. Connected proof remains pending. |
+| Dismissal is local-only, reopening remains visible, expiry follows session expiry, and Close cannot bypass pending confirmation | Unit 6H work unit; `DuplicateInputConfirmationDialog.tsx`; readiness/close compatibility review; dialog, screen, and lifecycle tests | Local UI/contract evidence passes. F-03 lifecycle coverage now passes for session change, unmount, and response mismatch. The earlier screen suite retains a historical `VirtualizedList` `act(...)` warning. |
+| Authenticated Owner access cannot bypass Storage verification; service-only RPCs, exact private-object proof, replay-before-Storage, and concurrent/repeated Proceed idempotency hold | Unit 6H work unit; M60; Edge/runtime contracts; security diff scan; independent-connection PostgreSQL proof | Static/fixture checks, authenticated delegate-denial proof, and independent-connection concurrency pass. Connected Edge/Storage remains required for rollout sign-off. |
+| Pending duplicate conflicts do not enter unrelated five-attempt retry/dead-letter handling; cleanup claim/finish/dispatch health agree on pending/expired state | M60; M58 completion handling; media worker/error handling; cleanup and dispatch review; fixture and PostgreSQL tests | PGlite proves attempt-1 resolution and exact completion replay. Real PostgreSQL proves canonical-winner/duplicate-loser serialization plus Proceed/cleanup/replay fencing. Connected scheduler/worker proof remains outstanding. |
+| Rollout boundary | Unit 6H work unit and implementation tracker | M60 is live once in the verified development project. M62 is also live once, while matching runtime deployment and connected Edge/Storage verification remain pending. No new business-row/Storage mutation or development-data deletion occurred in this follow-up. |
 
 ## Unit 6G media-completion correction — M57–M59 live
 

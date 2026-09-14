@@ -101,6 +101,7 @@ export function metadataGateway(
     })),
     finalizeAttempt: jest.fn(async () => { calls.push('finalize'); }),
     persistCache: jest.fn(async () => { calls.push('persist-cache'); }),
+    persistRepresentativeCover: jest.fn(async () => { calls.push('representative-cover'); }),
     persistSelection: jest.fn(async () => { calls.push('selection'); }),
     completeManual: jest.fn(async () => {
       calls.push('manual');

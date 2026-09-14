@@ -1,7 +1,7 @@
 # Phase 9 Planning and Decision Tracker
 
-**Status:** `unit6g_group1_contract_persistence_locally_complete`
-**Last updated:** 2026-08-21
+**Status:** `unit6h_representative_cover_locally_verified_rollout_pending`
+**Last updated:** 2026-09-13
 **Purpose:** retain detailed product decisions, audit evidence, reconciliations, and deferred choices without inflating the master tracker
 
 ## Decision register
@@ -93,6 +93,7 @@
 | P9-D83 | Per-card Add and top-level Add all ready books are the only submit actions. Each explicitly confirms displayed values, performs strict canonical Save, and then invokes the existing independent M39 commit. Bulk work is bounded client orchestration with partial success, never an automatic or atomic batch database commit. | Owner-approved target; Group 1 preserves M39 seam; orchestration remains pending |
 | P9-D84 | General Remove from this scan requires a new persisted `owner_removed_from_scan` candidate disposition, distinct from false detection, input removal, inventory deletion, and stock removal. It has no cascade and no Unit 6G Undo/Restore. | Owner-approved; Group 1 persistence/RPC fence locally verified in un-applied M52 |
 | P9-D85 | Unit 6G preserves M39's one-private-row `q/q/0/0/0` contract and Unit 7C as the sole post-commit management surface. Publication intent does not auto-publish, batch label does not enter inventory, and successful commits must invalidate Store View list caches. | Owner-approved target; Group 1 confirms M39/Unit 7C unchanged; cache invalidation remains pending |
+| P9-D86 | When a selected coherent provider edition has no exact cover, Owner-private review may show one separately labelled `representative_edition` cover from a compatible alternate edition already in the same provider response. Exact selected metadata and canonical/public `cover_url` remain authoritative; no second request, metadata stitching, backfill, automatic inventory/publication effect, or duplicate-policy change is allowed. Google volume evidence is decoded; unresolved series evidence fails closed rather than treating an opaque provider series ID as a human series name. | user-approved bounded correction 2026-09-13; M61/M62 live, selector/contracts/full-path tests verified; matching runtime and connected proof pending |
 
 ## Source reconciliation
 

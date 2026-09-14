@@ -8,6 +8,7 @@ import {
 } from '../_shared/imageInventory/contracts/ownerUx';
 import { executeOwnerIngestion } from '../_shared/imageInventory/runtime/ownerIngestion';
 import { ownerUxFailureResponse } from '../_shared/imageInventory/contracts/ownerUxHttp';
+import { OwnerBatchReviewContractError } from '../_shared/imageInventory/contracts/ownerBatchReview';
 
 const uuid = (n: number) => `92000000-0000-4000-8000-${n.toString().padStart(12, '0')}`;
 const contractVersion = 'phase9-owner-ux-v1';
@@ -67,6 +68,12 @@ describe('Phase 9 Unit 6A Owner UX request contracts', () => {
       action: 'close_scan_session', contractVersion, sessionId: uuid(1),
       expectedSessionVersion: 1, idempotencyKey: 'close-request-00001',
       commandId: uuid(4),
+    },
+    {
+      action: 'resolve_duplicate_scan_input', contractVersion,
+      sessionId: uuid(1), inputId: uuid(2), decision: 'proceed',
+      expectedInputVersion: 2, expectedConfirmationVersion: 1,
+      idempotencyKey: 'duplicate-proceed-0001', commandId: uuid(6),
     },
   ])('accepts the exact $action request', (request) => {
     expect(parseOwnerUxRequest(request)).toEqual(request);
@@ -366,6 +373,7 @@ describe('Phase 9 Unit 6A Owner UX response contracts', () => {
     metadata: {
       state: 'manual', revision: 1, selectionVersion: null,
       selectionId: null, canonicalEditionId: null, snapshot: null,
+      representativeCover: null,
     },
     review: { value: null, reviewVersion: null },
     duplicateAdvice: {
@@ -404,6 +412,7 @@ describe('Phase 9 Unit 6A Owner UX response contracts', () => {
     presentationState: 'finding_books', safeCode: null,
     retryState: 'server_retrying', terminal: false, polling: true,
     detectedCandidateCount: null, acceptedCandidateCount: 0,
+    duplicateConfirmationVersion: null, duplicateConfirmationExpiresAt: null,
     createdAt: '2026-07-30T00:00:00.000Z',
     updatedAt: '2026-07-30T00:00:00.000Z',
   };
@@ -555,6 +564,41 @@ describe('Phase 9 Unit 6A Owner UX response contracts', () => {
   it('keeps the owner UX version distinct from the ingestion transport version', () => {
     expect(OWNER_UX_CONTRACT_VERSION).toBe(contractVersion);
   });
+
+  it('accepts labelled representative-cover provenance only without an exact cover', () => {
+    const representativeCover = {
+      coverReference: 'https://books.google.com/books/content?id=alternate',
+      sourceRelation: 'representative_edition', sourceAdapter: 'google_books',
+      sourceAdapterVersion: '1.0.0', sourceRecordId: 'alternate-volume',
+      selectionPolicyVersion: 'p9-representative-cover-v1',
+    };
+    const selected = {
+      ...candidateDetail,
+      metadata: {
+        ...candidateDetail.metadata, state: 'selected', selectionVersion: 1,
+        selectionId: uuid(4), representativeCover,
+        snapshot: {
+          title: 'The Book', authors: ['One Author'], language: 'en', subtitle: null,
+          description: null, isbn10: null, isbn13: null, publisher: null,
+          publishedDate: null, script: null, editionStatement: null, series: null,
+          volume: null, format: null, pageCount: null, categories: [], coverReference: null,
+        },
+      },
+    };
+    expect(parseOwnerUxResponse('read_scan_candidate', {
+      contractVersion, data: selected,
+    }).data).toEqual(selected);
+    expect(() => parseOwnerUxResponse('read_scan_candidate', {
+      contractVersion,
+      data: {
+        ...selected,
+        metadata: {
+          ...selected.metadata,
+          snapshot: { ...selected.metadata.snapshot, coverReference: representativeCover.coverReference },
+        },
+      },
+    })).toThrow(/invalid/i);
+  });
 });
 
 describe('Phase 9 Unit 6A Edge RPC adapter', () => {
@@ -562,6 +606,50 @@ describe('Phase 9 Unit 6A Edge RPC adapter', () => {
   const client: any = { rpc, storage: { from: jest.fn() } };
 
   beforeEach(() => jest.resetAllMocks());
+
+  it('returns a completed duplicate replay before touching private storage', async () => {
+    const storage = { from: jest.fn() };
+    const response = { sessionId: uuid(1), inputId: uuid(2), decision: 'proceed',
+      outcome: 'processing_started', inputState: 'queued', inputVersion: 3,
+      sessionVersion: 4, presentationRevision: 5 };
+    rpc.mockResolvedValueOnce({ data: { replay: true, response }, error: null });
+    await expect(executeOwnerIngestion({
+      action: 'resolve_duplicate_scan_input', contractVersion,
+      sessionId: uuid(1), inputId: uuid(2), decision: 'proceed',
+      expectedInputVersion: 2, expectedConfirmationVersion: 1,
+      idempotencyKey: 'duplicate-proceed-0001', commandId: uuid(6),
+    } as any, uuid(9), client, { rpc, storage } as any)).resolves.toEqual({ contractVersion, data: response });
+    expect(storage.from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it('verifies the exact sanitized object before service-only Proceed resolution', async () => {
+    const bytes = new TextEncoder().encode('sanitized-new-upload');
+    const hash = await crypto.subtle.digest('SHA-256', bytes);
+    const sha256 = Array.from(new Uint8Array(hash), (x) => x.toString(16).padStart(2, '0')).join('');
+    const stored = { name: 'attempt-1.webp', id: uuid(8), updated_at: '2026-09-11T00:00:00Z',
+      metadata: { size: bytes.length, mimetype: 'image/webp', eTag: 'etag-1' } };
+    const bucket = { list: jest.fn().mockResolvedValue({ data: [stored], error: null }),
+      download: jest.fn().mockResolvedValue({ data: new Blob([bytes]), error: null }) };
+    const storage = { from: jest.fn(() => bucket) };
+    const response = { sessionId: uuid(1), inputId: uuid(2), decision: 'proceed',
+      outcome: 'processing_started', inputState: 'queued', inputVersion: 3,
+      sessionVersion: 4, presentationRevision: 5 };
+    rpc.mockResolvedValueOnce({ data: { replay: false, bucket_id: 'image-extraction-inputs',
+      object_path: `${uuid(7)}/scan_input/${uuid(1)}/${uuid(2)}/attempt-1.webp`,
+      sha256, bytes: bytes.length, mime: 'image/webp' }, error: null })
+      .mockResolvedValueOnce({ data: response, error: null });
+    await executeOwnerIngestion({
+      action: 'resolve_duplicate_scan_input', contractVersion,
+      sessionId: uuid(1), inputId: uuid(2), decision: 'proceed',
+      expectedInputVersion: 2, expectedConfirmationVersion: 1,
+      idempotencyKey: 'duplicate-proceed-0001', commandId: uuid(6),
+    } as any, uuid(9), client, { rpc, storage } as any);
+    expect(bucket.list).toHaveBeenCalledTimes(2);
+    expect(bucket.download).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenLastCalledWith('phase9_resolve_duplicate_scan_input',
+      expect.objectContaining({ p_observed_sha256: sha256, p_observed_bytes: bytes.length }));
+  });
 
   it.each(['P9_INPUT_HAS_CANDIDATES', 'P9_SINGLE_IMAGE_LIMIT'])(
     'preserves the registered M35 domain error %s through the Edge RPC adapter',
@@ -710,6 +798,11 @@ describe('Phase 9 Unit 6A safe errors', () => {
       failure = error;
     }
     expect(ownerUxErrorFromException(failure))
+      .toEqual(ownerUxErrorEnvelope('P9_INTERNAL_ERROR'));
+  });
+
+  it('maps malformed batch-review RPC responses to a safe internal error', () => {
+    expect(ownerUxErrorFromException(new OwnerBatchReviewContractError()))
       .toEqual(ownerUxErrorEnvelope('P9_INTERNAL_ERROR'));
   });
 

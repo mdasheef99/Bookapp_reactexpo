@@ -35,19 +35,24 @@ const nextIdentity = { userId: 'owner-b', storeId: 'store-a' };
 
 describe('Phase 9 NEW 6G-C read-query request fencing', () => {
     let client: QueryClient;
+    let clients: QueryClient[];
     let wrapper: ({ children }: PropsWithChildren) => React.JSX.Element;
     const sessionId = testUuid(10);
 
     beforeEach(() => {
         jest.clearAllMocks();
+        clients = [];
         client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        clients.push(client);
         wrapper = ({ children }) => (
             <QueryClientProvider client={client}>{children}</QueryClientProvider>
         );
         resetImageInventoryIdentityForTests(identity);
     });
 
-    afterEach(() => { client.clear(); });
+    afterEach(() => {
+        clients.forEach((queryClient) => queryClient.clear());
+    });
 
     it('passes an abort signal to session reads and aborts the transport on unmount', async () => {
         readSessionV3.mockImplementation(
@@ -75,6 +80,10 @@ describe('Phase 9 NEW 6G-C read-query request fencing', () => {
         await waitFor(() => expect(readBatchReview).toHaveBeenCalledTimes(1));
         const signal = readBatchReview.mock.calls[0][1] as AbortSignal | undefined;
         expect(signal).toBeInstanceOf(AbortSignal);
+        const staleQuery = client.getQueryCache().find({
+            queryKey: ownerBatchReviewKeys.batchReview(identity, sessionId),
+            exact: true,
+        });
 
         await act(async () => {
             await coordinateImageInventoryIdentity(nextIdentity, client);
@@ -93,6 +102,7 @@ describe('Phase 9 NEW 6G-C read-query request fencing', () => {
         // Once the route lifecycle tears down, the prior-identity root is
         // fully removed from the cache.
         hook.unmount();
+        staleQuery?.destroy();
         await clearImageInventoryPrivateQueries(client);
         expect(client.getQueryCache().findAll({
             queryKey: imageInventoryKeys.identity(identity),
@@ -107,6 +117,7 @@ describe('Phase 9 NEW 6G-C read-query request fencing', () => {
         first.unmount();
         // A fresh route lifecycle with a fresh cache re-fences from scratch.
         client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        clients.push(client);
         wrapper = ({ children }) => (
             <QueryClientProvider client={client}>{children}</QueryClientProvider>
         );

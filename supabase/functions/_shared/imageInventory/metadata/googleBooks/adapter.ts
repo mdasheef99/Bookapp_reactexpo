@@ -5,8 +5,13 @@ import {
   MetadataProviderOutcome,
 } from '../providerAdapter';
 import { buildGoogleBooksRequest } from './request';
-import { decodeGoogleBooksResponse, GOOGLE_BOOKS_EDITION_HOST_POLICY } from './decoder';
+import {
+  decodeGoogleBooksResponse,
+  googleBooksSeriesRecordIds,
+  GOOGLE_BOOKS_EDITION_HOST_POLICY,
+} from './decoder';
 import { rankGoogleBooksEditions } from './ranking';
+import { selectRepresentativeEditionCover } from '../representativeCover';
 
 type Fetcher = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 type Configuration = Readonly<{
@@ -42,6 +47,7 @@ const outcome = (
   retryable,
   secondaryEligible: secondaryEligible.has(value),
   providerRequestId: null,
+  representativeCover: null,
 });
 
 export class GoogleBooksAdapter implements MetadataProviderAdapter {
@@ -101,9 +107,16 @@ export class GoogleBooksAdapter implements MetadataProviderAdapter {
         return outcome('malformed_response');
       }
       const ranking = rankGoogleBooksEditions(input.query, candidates);
+      const seriesRecordIds = googleBooksSeriesRecordIds(decoded);
+      const representativeCover = ranking.selected === null ? null
+        : selectRepresentativeEditionCover(ranking.selected, candidates);
       return {
         ...ranking,
         candidates,
+        representativeCover: representativeCover !== null
+          && !seriesRecordIds.has(ranking.selected?.providerRecordId ?? '')
+          && !seriesRecordIds.has(representativeCover.sourceProviderRecordId)
+          ? representativeCover : null,
         retryable: false,
         secondaryEligible: secondaryEligible.has(ranking.outcome),
         providerRequestId: requestId,

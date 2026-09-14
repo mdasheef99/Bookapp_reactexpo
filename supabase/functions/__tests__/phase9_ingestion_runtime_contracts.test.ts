@@ -49,6 +49,23 @@ describe('Phase 9 ingestion-runtime transport contracts', () => {
       .toThrow(/unknown keys/i);
   });
 
+  it('accepts the bounded duplicate-resolution Owner command', () => {
+    const request = {
+      action: 'resolve_duplicate_scan_input',
+      contractVersion: 'phase9-owner-ux-v1',
+      sessionId: '92000000-0000-4000-8000-000000000001',
+      inputId: '92000000-0000-4000-8000-000000000002',
+      decision: 'proceed',
+      expectedInputVersion: 2,
+      expectedConfirmationVersion: 1,
+      idempotencyKey: 'duplicate-proceed-command-0001',
+      commandId: '92000000-0000-4000-8000-000000000003',
+    } as const;
+    expect(parseOwnerIngestionRequest(request)).toEqual(request);
+    expect(() => parseOwnerIngestionRequest({ ...request, objectPath: 'forged/path.webp' }))
+      .toThrow(/unknown keys/i);
+  });
+
   it('requires a bounded service worker request and rejects user authority injection', () => {
     expect(parseWorkerIngestionRequest({
       contractVersion: 'phase9-v1',

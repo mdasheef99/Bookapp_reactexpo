@@ -1,3 +1,6 @@
+import { OwnerBatchReviewContractError } from './ownerBatchReviewResponses.ts';
+import { OwnerUxResponseContractError } from './ownerUxResponses.ts';
+
 export type OwnerUxErrorCode =
   | 'P9_AUTH_REQUIRED' | 'P9_OWNER_NOT_AUTHORIZED' | 'P9_REQUEST_INVALID'
   | 'P9_CURSOR_INVALID' | 'P9_NOT_FOUND' | 'P9_STATE_CONFLICT'
@@ -50,10 +53,10 @@ export function ownerUxErrorFromException(
     : error instanceof Response && error.status === 403
       ? 'P9_OWNER_NOT_AUTHORIZED'
       : error instanceof OwnerUxResponseContractError
+          || error instanceof OwnerBatchReviewContractError
         ? 'P9_INTERNAL_ERROR'
       : error instanceof Error && /^(P9_[A-Z_]+)/u.test(error.message)
         ? error.message.match(/^(P9_[A-Z_]+)/u)?.[1] ?? 'P9_REQUEST_INVALID'
         : 'P9_REQUEST_INVALID';
   return ownerUxErrorEnvelope(code as OwnerUxErrorCode);
 }
-import { OwnerUxResponseContractError } from './ownerUxResponses.ts';

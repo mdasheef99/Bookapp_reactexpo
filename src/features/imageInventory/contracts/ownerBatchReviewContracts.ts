@@ -51,7 +51,7 @@ const blocker = z.object({
 }).strict().refine((value) => (value.candidateId === null) !== (value.inputId === null),
     'exactly one blocker entity is required');
 const sources = z.object({
-    cover: z.enum(['detected', 'matched', 'missing']),
+    cover: z.enum(['detected', 'matched', 'representative', 'missing']),
     title: z.enum(['detected', 'matched', 'custom', 'missing']),
     authors: z.enum(['detected', 'matched', 'custom', 'missing']),
     language: z.enum(['detected', 'matched', 'default', 'custom', 'missing']),
@@ -71,6 +71,14 @@ const cover = z.string().min(1).max(512).superRefine((value, context) => {
         context.addIssue({ code: 'custom', message: 'cover host is not approved' });
     }
 });
+const representativeCover = z.object({
+    coverReference: cover,
+    sourceRelation: z.literal('representative_edition'),
+    sourceAdapter: z.string().regex(/^[a-z][a-z0-9_-]{1,63}$/u),
+    sourceAdapterVersion: z.string().min(1).max(64),
+    sourceRecordId: z.string().min(1).max(256),
+    selectionPolicyVersion: z.literal('p9-representative-cover-v1'),
+}).strict();
 const observed = z.object({
     title: safeTextSchema(1, 512),
     authors: unique(safeTextSchema(1, 256), 20),
@@ -83,7 +91,12 @@ const metadataSummary = z.object({
         .refine((items) => items.length > 0).nullable(),
     language: languageSchema.nullable(), coverReference: cover.nullable(),
     selectionId: uuidSchema.nullable().optional(),
-}).strict();
+    representativeCover: representativeCover.nullable().optional(),
+}).strict().superRefine((value, context) => {
+    if (value.coverReference && value.representativeCover) context.addIssue({
+        code: 'custom', message: 'exact and representative covers cannot coexist',
+    });
+});
 const card = z.object({
     sessionId: uuidSchema, candidateId: uuidSchema, inputId: uuidSchema.nullable(),
     ordinal: z.number().int().min(1).max(15).safe(), candidateState: candidateStateSchema,
@@ -165,9 +178,13 @@ function validateFieldAuthority(
                 : language === 'default' ? Boolean(rootDefaults.languageHint
                     && (!review || review.originalLanguage === rootDefaults.languageHint))
                     : false);
+    const representative = selected?.representativeCover ?? null;
     issue('cover', value.fieldSources.cover === 'matched'
-        ? Boolean(selected?.coverReference)
-        : value.fieldSources.cover === 'missing' ? !selected?.coverReference : false);
+        ? Boolean(selected?.coverReference && !representative)
+        : value.fieldSources.cover === 'representative'
+            ? Boolean(!selected?.coverReference && representative)
+            : value.fieldSources.cover === 'missing'
+                ? !selected?.coverReference && !representative : false);
     issue('condition', value.fieldSources.condition === 'custom'
         ? Boolean(review && review.baseCondition !== rootDefaults.condition)
         : value.fieldSources.condition === 'default'

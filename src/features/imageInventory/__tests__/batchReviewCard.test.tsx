@@ -497,6 +497,24 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         expect(withoutCover.getByText('No cover')).toBeTruthy();
     });
 
+    it('renders and labels a representative-edition cover when the selected edition has no cover', () => {
+        const screen = renderCard({
+            metadataSummary: {
+                ...card().metadataSummary!, coverReference: null,
+                representativeCover: {
+                    coverReference: 'https://books.google.com/books/content?id=alternate',
+                    sourceRelation: 'representative_edition',
+                    sourceAdapter: 'google_books', sourceAdapterVersion: '1.0.0',
+                    sourceRecordId: 'alternate-volume',
+                    selectionPolicyVersion: 'p9-representative-cover-v1',
+                },
+            },
+            fieldSources: { ...card().fieldSources, cover: 'representative' },
+        });
+        expect(screen.getByText('Book 1 representative edition cover')).toBeTruthy();
+        expect(screen.getByText('Representative edition cover')).toBeTruthy();
+    });
+
     it('exposes a useful metadata status for every retained metadata state', () => {
         expect(renderCard({ metadataState: 'selected' }).getAllByText('Provider matched').length).toBeGreaterThan(0);
         expect(renderCard({ metadataState: 'manual' }).getByText('Manual details')).toBeTruthy();

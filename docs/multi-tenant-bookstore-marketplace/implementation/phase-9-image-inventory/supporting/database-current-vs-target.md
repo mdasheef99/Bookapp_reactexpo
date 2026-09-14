@@ -1,7 +1,29 @@
 # Phase 9 Database and Storage: Current vs Target
 
-**Audit date:** 2026-09-08 Unit 6G media-completion correction integration
-**Audit mode:** exact-project M57–M59 application and post-apply schema/function/grant/RLS/trigger/dispatcher readback; no business-data, Storage, job, or deployment mutation
+> **2026-09-13 M61 live schema checkpoint:** After exact-project and hash
+> preflight, M61 was applied once to development project
+> `ahntbtktjjmvfosgkmgn` as remote version `20260913111342`. Readback confirms
+> the private immutable sidecar, service-only write delegate, checked private
+> inventory field, RLS, and both triggers. `anon` and `authenticated` cannot
+> execute the write delegate; `service_role` can. Sidecar and representative-
+> cover inventory counts are both zero. Canonical/public `cover_url` remains
+> unchanged. M62 was subsequently applied once as remote version
+> `20260913162154`; its postgres-owned helper and authenticated Owner entrypoints
+> read back correctly, with zero sidecar/inventory representative-cover rows.
+> Owner Edge v12 is active; metadata-worker/client rollout and the connected
+> no-cover proof remain pending.
+> [Evidence](./unit6h-representative-cover-correction.md).
+
+> The following 2026-09-12 PostgreSQL paragraph is historical; M60 was later
+> applied during the authorized development rollout. M61 was also later applied;
+> M62 application and readback are recorded in the current 2026-09-13 checkpoint
+> above.
+
+> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+
+
+**Audit date:** 2026-09-13 M61/M62 exact-project readback plus local contract verification
+**Audit mode:** read-only M61/M62 live evidence and local contract verification; no business-data, Storage, job, or provider mutation
 **Verified project:** `ahntbtktjjmvfosgkmgn` (`Bookconnect_reactexpo`)
 **2026-08-21 connected result:** the live project has one publicly eligible
 inventory-media link, with zero eligible NULL, out-of-range, duplicate, or
@@ -22,6 +44,38 @@ Read-only exact-project history confirms M52–M56 are live once on
 `origin/main` baseline at `573182267ddd79e08b0abfb348b5afd9fb0dc571` tracks
 the matching M52–M56 source files. No migration file was restored or copied
 from the stale correction worktree.
+
+## Unit 6H current-vs-target checkpoint — 2026-09-13
+
+M60 remains live as remote version `20260912072815`. M61
+`20260913000061_marketplace_phase9_representative_edition_cover.sql` was applied
+once as remote version `20260913111342` after the local SHA-256 matched the
+recorded artifact. Exact readback verified its table/column, RLS, public
+service-only delegate, and immutable/copy triggers. `anon` and `authenticated`
+have no execute authority; `service_role` does. Both new-data counts were zero.
+
+Local static, fixture, and disposable PostgreSQL evidence covers M60's
+canonical-only partial uniqueness, same-store/hash/version trigger
+relationships, pending-confirmation protection, service-only resolution,
+cleanup/dispatch eligibility, and Proceed/Cancel contracts. M61 local and live
+evidence covers sidecar service-only grants/RLS, labelled Owner projection,
+explicit Add copy, no public listing, and immutable inventory provenance.
+Owner Edge v12 is live and source-verified. The metadata worker/client and
+connected Edge/Storage proof remain pending; no application row or Storage
+object was changed by the schema rollout.
+
+M62 `20260913000062_marketplace_phase9_representative_cover_detail_projection.sql`
+is the applied forward-only correction with SHA-256
+`E8CAAC179363D1E709F071BBF81436B7ED4B24968E0979ADA7A402C8C435066F`. It adds
+one private, revoked projection helper and replaces only the authenticated Owner
+detail/review-save functions so fresh and replay responses expose nullable
+representative-cover provenance. It creates no table, column, index, trigger,
+row, public listing, or Storage effect. Full local M52–M62 integration passes
+2/2, including grants and save/detail equivalence. Post-apply readback passed for
+the helper/entrypoint ACLs and zero sidecar/inventory representative-cover rows.
+Matching runtime deployment and connected proof remain pending.
+
+## Historical M57–M59 live readback continuation — 2026-09-08
 
 After the passing preflight, M57–M59 were applied separately and in order as
 M57 `20260908073203 marketplace_phase9_media_output_intents`, M58
