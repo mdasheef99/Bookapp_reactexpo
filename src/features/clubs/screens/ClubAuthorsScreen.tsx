@@ -56,7 +56,7 @@ export function ClubAuthorsScreen() {
                         ) : null}
                     </View>
                 )}
-                renderItem={({ item }) => <ClubCard club={item} colors={colors} onPress={handleClubPress} />}
+                renderItem={({ item }) => <ClubCard club={item} onPress={handleClubPress} />}
                 ListEmptyComponent={isError ? null : (
                     <View style={[styles.feedbackCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                         <Text style={[styles.feedbackTitle, { color: colors.textPrimary }]}>No author clubs yet</Text>

@@ -10,6 +10,7 @@ const mockUseBrowseClubs = jest.fn();
 const mockUseMyBrowseClubs = jest.fn();
 const mockUseMyArchivedManagedClubs = jest.fn();
 const mockUseMyClubInvitationInbox = jest.fn();
+const mockUseViewerMembershipTier = jest.fn();
 const mockRouterPush = jest.fn();
 
 jest.mock('@/hooks/useTheme', () => ({
@@ -29,6 +30,9 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useMyArchivedManagedClubs: (...args: unknown[]) => mockUseMyArchivedManagedClubs(...args),
     useMyClubInvitationInbox: (...args: unknown[]) => mockUseMyClubInvitationInbox(...args),
 }));
+jest.mock('@/features/clubs/hooks/useViewerMembershipTier', () => ({
+    useViewerMembershipTier: (...args: unknown[]) => mockUseViewerMembershipTier(...args),
+}));
 jest.mock('@/features/clubs/components/ClubCard', () => ({
     ClubCard: ({ club, onPress }: { club: { id: string; name: string }; onPress: (club: { id: string; name: string }) => void }) => {
         const React = require('react');
@@ -44,16 +48,23 @@ beforeEach(() => {
     mockUseMyBrowseClubs.mockReturnValue({ data: [{ id: 'club-2', name: 'Quiet Members' }], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
     mockUseMyArchivedManagedClubs.mockReturnValue({ data: [{ id: 'club-3', name: 'Archived Circle' }], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
     mockUseMyClubInvitationInbox.mockReturnValue({ data: [], isLoading: false });
+    mockUseViewerMembershipTier.mockReturnValue({ tier: 'free', isLoading: false });
 });
 
 describe('ClubsBrowseScreen', () => {
-    it('defaults to all clubs and shows the current audited browse copy', () => {
-        const { getByText, queryByText } = render(<ClubsBrowseScreen />);
+    it('defaults to Discover scope with the reader-first hierarchy and no admin banner', () => {
+        const { getByText, getByTestId, queryByText } = render(<ClubsBrowseScreen />);
 
-        expect(getByText('Book clubs')).toBeOnTheScreen();
-        expect(getByText('Discover public club details, browse current reads, and find your next reading community.')).toBeOnTheScreen();
+        expect(getByText('BookConnect')).toBeOnTheScreen();
+        expect(getByText('Clubs')).toBeOnTheScreen();
+        expect(getByText('Discover')).toBeOnTheScreen();
+        expect(getByText('Your Clubs • 1')).toBeOnTheScreen();
+        expect(getByTestId('clubs-search-input')).toBeOnTheScreen();
+        expect(getByTestId('clubs-filters-open')).toBeOnTheScreen();
+        expect(getByText('Clubs to explore')).toBeOnTheScreen();
         expect(getByText('Open Readers')).toBeOnTheScreen();
-        expect(getByText(/invite acceptance, invitation revocation, read-state support, and archived-club recovery are live/i)).toBeOnTheScreen();
+        expect(getByTestId('clubs-archived-link')).toBeOnTheScreen();
+        expect(queryByText(/invite acceptance, invitation revocation, read-state support, and archived-club recovery are live/i)).toBeNull();
         expect(queryByText(/still pending backend support/i)).toBeNull();
     });
 
@@ -107,28 +118,51 @@ describe('ClubsBrowseScreen', () => {
         expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/venues');
     });
 
-    it('switches to my clubs and shows the membership-scoped empty state or results', () => {
+    it('maps Your Clubs to the mine scope with membership copy and results', () => {
         const { getByText, getByTestId } = render(<ClubsBrowseScreen />);
 
         fireEvent.press(getByTestId('clubs-filter-scope-mine'));
 
         expect(mockUseMyBrowseClubs).toHaveBeenLastCalledWith('reader-1', expect.any(Object), true);
-        expect(getByText('See the clubs where you already have an active reader seat.')).toBeOnTheScreen();
+        expect(getByText('Your clubs')).toBeOnTheScreen();
         expect(getByText('Quiet Members')).toBeOnTheScreen();
     });
 
-    it('switches to archived clubs and routes archived cards to lifecycle management', () => {
+    it('returns to Discover from Your Clubs', () => {
         const { getByText, getByTestId } = render(<ClubsBrowseScreen />);
 
-        fireEvent.press(getByTestId('clubs-filter-scope-archived'));
+        fireEvent.press(getByTestId('clubs-filter-scope-mine'));
+        expect(getByText('Quiet Members')).toBeOnTheScreen();
+
+        fireEvent.press(getByTestId('clubs-filter-scope-all'));
+
+        expect(getByText('Clubs to explore')).toBeOnTheScreen();
+        expect(getByText('Open Readers')).toBeOnTheScreen();
+    });
+
+    it('keeps archived clubs reachable as a secondary action and routes archived cards to lifecycle management', () => {
+        const { getByText, getByTestId } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-archived-link'));
 
         expect(mockUseMyArchivedManagedClubs).toHaveBeenLastCalledWith('reader-1', expect.any(Object), true);
-        expect(getByText('Restore clubs you administer after they have been archived.')).toBeOnTheScreen();
+        expect(getByText('Archived clubs')).toBeOnTheScreen();
         expect(getByText('Archived Circle')).toBeOnTheScreen();
 
         fireEvent.press(getByTestId('club-card-Archived Circle'));
 
         expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-3/manage?tab=lifecycle');
+    });
+
+    it('returns to Discover from the archived scope', () => {
+        const { getByText, getByTestId } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-archived-link'));
+        expect(getByText('Archived clubs')).toBeOnTheScreen();
+
+        fireEvent.press(getByTestId('clubs-archived-back'));
+
+        expect(getByText('Clubs to explore')).toBeOnTheScreen();
     });
 
     it('shows scope-aware retry copy without the empty state when my clubs fails to load', () => {
@@ -145,5 +179,58 @@ describe('ClubsBrowseScreen', () => {
         expect(getByText('Couldn’t load clubs')).toBeOnTheScreen();
         expect(getByText('Try refreshing to fetch your latest membership-linked club list from Supabase.')).toBeOnTheScreen();
         expect(queryByText('You have not joined any clubs yet')).toBeNull();
+    });
+
+    it('exposes every existing filter option through the compact Filters control', () => {
+        const { getByTestId, getByText } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-filters-open'));
+
+        for (const label of ['All', 'Public', 'Approval', 'Invite only', 'Author clubs', 'Any', 'Online', 'Venue', 'Hybrid', 'All access', 'All members', 'Pro', 'Pro+']) {
+            expect(getByText(label)).toBeOnTheScreen();
+        }
+    });
+
+    it('applies a club-type filter from the sheet without dropping the other dimensions', () => {
+        const { getByTestId } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-filters-open'));
+        fireEvent.press(getByTestId('clubs-filter-type-author_club'));
+
+        const lastFilters = mockUseBrowseClubs.mock.calls[mockUseBrowseClubs.mock.calls.length - 1][0] as Record<string, unknown>;
+        expect(lastFilters).toMatchObject({ clubType: 'author_club', limit: 20, offset: 0 });
+        expect(getByTestId('clubs-filters-active-count')).toBeOnTheScreen();
+    });
+
+    it('resets all filter dimensions from the sheet', () => {
+        const { getByTestId, queryByTestId } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-filters-open'));
+        fireEvent.press(getByTestId('clubs-filter-type-public'));
+        expect(getByTestId('clubs-filters-active-count')).toBeOnTheScreen();
+
+        fireEvent.press(getByTestId('clubs-filters-reset'));
+
+        const lastFilters = mockUseBrowseClubs.mock.calls[mockUseBrowseClubs.mock.calls.length - 1][0] as Record<string, unknown>;
+        expect(lastFilters).toMatchObject({ clubType: undefined, meetingType: undefined, accessLevel: undefined });
+        expect(queryByTestId('clubs-filters-active-count')).toBeNull();
+    });
+
+    it('shows Create Club only for eligible Pro members and routes to creation', () => {
+        mockUseViewerMembershipTier.mockReturnValue({ tier: 'pro', isLoading: false });
+
+        const { getByTestId } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-create-club'));
+
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/create');
+    });
+
+    it('taps a discovery row through to club detail', () => {
+        const { getByTestId } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('club-card-Open Readers'));
+
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-1');
     });
 });

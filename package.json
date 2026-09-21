@@ -42,6 +42,8 @@
     "test:clubs:l4:rls": "node supabase/tests/clubs/clubsL4Runner.mjs rls"
   },
   "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/newsreader": "^0.4.1",
     "@expo/metro-runtime": "~6.1.2",
     "@expo/vector-icons": "~15.0.3",
     "@google/genai": "2.13.0",

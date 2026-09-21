@@ -1,31 +1,34 @@
 import { Stack } from 'expo-router';
+import { ClubsFontProvider } from '@/features/clubs/theme/Fonts';
 
 export default function ClubsLayout() {
     return (
-        <Stack
-            screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: 'transparent' },
-                animation: 'slide_from_right',
-            }}
-        >
-            <Stack.Screen name="index" />
-            <Stack.Screen name="authors" />
-            <Stack.Screen name="create" />
-            <Stack.Screen name="invitations" />
-            <Stack.Screen name="venues" />
-            <Stack.Screen name="venues/[venueId]" />
-            <Stack.Screen name="[clubId]/index" />
-            <Stack.Screen name="[clubId]/applications" />
-            <Stack.Screen name="[clubId]/discussion" />
-            <Stack.Screen name="[clubId]/events" />
-            <Stack.Screen name="[clubId]/events/create" />
-            <Stack.Screen name="[clubId]/events/[eventId]/edit" />
-            <Stack.Screen name="[clubId]/invite" />
-            <Stack.Screen name="[clubId]/manage" />
-            <Stack.Screen name="[clubId]/nominate" />
-            <Stack.Screen name="[clubId]/reading" />
-            <Stack.Screen name="[clubId]/venues" />
-        </Stack>
+        <ClubsFontProvider>
+            <Stack
+                screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: 'transparent' },
+                    animation: 'slide_from_right',
+                }}
+            >
+                <Stack.Screen name="index" />
+                <Stack.Screen name="authors" />
+                <Stack.Screen name="create" />
+                <Stack.Screen name="invitations" />
+                <Stack.Screen name="venues" />
+                <Stack.Screen name="venues/[venueId]" />
+                <Stack.Screen name="[clubId]/index" />
+                <Stack.Screen name="[clubId]/applications" />
+                <Stack.Screen name="[clubId]/discussion" />
+                <Stack.Screen name="[clubId]/events" />
+                <Stack.Screen name="[clubId]/events/create" />
+                <Stack.Screen name="[clubId]/events/[eventId]/edit" />
+                <Stack.Screen name="[clubId]/invite" />
+                <Stack.Screen name="[clubId]/manage" />
+                <Stack.Screen name="[clubId]/nominate" />
+                <Stack.Screen name="[clubId]/reading" />
+                <Stack.Screen name="[clubId]/venues" />
+            </Stack>
+        </ClubsFontProvider>
     );
 }

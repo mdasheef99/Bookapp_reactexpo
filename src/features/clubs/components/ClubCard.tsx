@@ -1,19 +1,19 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { type ThemeColors } from '@/hooks/useTheme';
+import { bookCovers, colors, radii, typography } from '../theme';
 import { type AccessLevel, type ClubPublicDetails, type ClubType, type MeetingType } from '../services/clubsService';
 
 const CLUB_TYPE_LABELS: Record<ClubType, string> = {
-    public: 'Public',
-    approval: 'Approval',
-    invite_only: 'Invite Only',
-    author_club: 'Author Club',
+    public: 'Public club',
+    approval: 'Approval club',
+    invite_only: 'Invite-only club',
+    author_club: 'Author club',
 };
 
 const MEETING_TYPE_LABELS: Record<MeetingType, string> = {
     online_only: 'Online',
-    venue_based: 'Venue',
+    venue_based: 'In person',
     hybrid: 'Hybrid',
 };
 
@@ -25,161 +25,151 @@ const ACCESS_LEVEL_LABELS: Record<AccessLevel, string> = {
 
 interface ClubCardProps {
     club: ClubPublicDetails;
-    colors: ThemeColors;
     onPress: (club: ClubPublicDetails) => void;
 }
 
-export function ClubCard({ club, colors, onPress }: ClubCardProps) {
-    const coverUrl = club.cover_url || club.current_book_cover_url || 'https://via.placeholder.com/100x140?text=Club';
-    const curatorName = club.author_display_name || club.admin_display_name || 'BookTalks Reader';
+export function ClubCard({ club, onPress }: ClubCardProps) {
+    const coverUrl = club.cover_url || club.current_book_cover_url || null;
+    const hostName = club.author_display_name || club.admin_display_name || 'BookTalks Reader';
+    const isAuthorClub = club.club_type === 'author_club';
+    const memberCount = club.member_count ?? 0;
+    const city = club.admin_city || club.author_city || null;
+
+    const metaParts = [
+        `${memberCount} ${memberCount === 1 ? 'reader' : 'readers'}`,
+        club.meeting_type ? MEETING_TYPE_LABELS[club.meeting_type] : 'Flexible',
+        ACCESS_LEVEL_LABELS[club.access_level ?? 'all'],
+    ];
+    if (city) metaParts.push(city);
 
     return (
         <TouchableOpacity
-            activeOpacity={0.88}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={club.name}
             onPress={() => onPress(club)}
-            style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
+            style={styles.row}
             testID={`club-card-${club.id}`}
         >
-            <Image source={{ uri: coverUrl }} style={styles.cover} contentFit="cover" transition={200} />
+            {coverUrl ? (
+                <Image source={{ uri: coverUrl }} style={styles.cover} contentFit="cover" transition={200} />
+            ) : (
+                <View style={styles.coverFallback}>
+                    <Ionicons name="book-outline" size={24} color={colors.textMuted} />
+                </View>
+            )}
 
             <View style={styles.content}>
-                <View style={styles.headerRow}>
-                    <View style={[styles.typeChip, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
-                        <Text style={[styles.typeChipText, { color: colors.accent }]}>{CLUB_TYPE_LABELS[club.club_type]}</Text>
-                    </View>
-                    {club.club_type === 'author_club' && club.author_display_name ? (
-                        <View style={[styles.authorChip, { borderColor: colors.accent }]}>
-                            <Ionicons name="checkmark-circle-outline" size={12} color={colors.accent} />
-                            <Text style={[styles.authorChipText, { color: colors.accent }]}>Verified author</Text>
-                        </View>
-                    ) : null}
-                    <View style={styles.metaRow}>
-                        <Ionicons name="people-outline" size={13} color={colors.textTertiary} />
-                        <Text style={[styles.metaText, { color: colors.textTertiary }]}>{club.member_count ?? 0}</Text>
-                    </View>
-                </View>
-
-                <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={2}>{club.name}</Text>
-
-                <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
-                    {club.description || 'A reader space for shared discussion, events, and book discoveries.'}
+                <Text style={styles.kicker} numberOfLines={1}>
+                    {CLUB_TYPE_LABELS[club.club_type]}
+                    {isAuthorClub && club.author_display_name ? ' · Verified author' : ''}
                 </Text>
 
-                <Text style={[styles.bookTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {club.current_book_title || 'No current book set yet'}
-                </Text>
+                <Text style={typography.bookTitle} numberOfLines={2}>{club.name}</Text>
 
-                <Text style={[styles.bookSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {club.club_type === 'author_club' && club.author_display_name ? `Hosted by verified author ${club.author_display_name}` : club.current_book_authors?.join(', ') || `Hosted by ${curatorName}`}
-                </Text>
+                {club.description ? (
+                    <Text style={styles.description} numberOfLines={2}>{club.description}</Text>
+                ) : null}
 
-                <View style={styles.footerRow}>
-                    <View style={styles.metaRow}>
-                        <Ionicons name="calendar-outline" size={13} color={colors.textTertiary} />
-                        <Text style={[styles.metaText, { color: colors.textTertiary }]}>
-                            {club.meeting_type ? MEETING_TYPE_LABELS[club.meeting_type] : 'Flexible'}
+                {club.current_book_title ? (
+                    <View style={styles.currentRead}>
+                        <Text style={styles.currentReadLabel}>Currently reading</Text>
+                        <Text style={styles.currentReadTitle} numberOfLines={1}>{club.current_book_title}</Text>
+                        <Text style={styles.currentReadMeta} numberOfLines={1}>
+                            {club.current_book_authors?.join(', ') || `Hosted by ${hostName}`}
                         </Text>
                     </View>
+                ) : (
+                    <Text style={styles.noCurrentBook}>No current book set</Text>
+                )}
 
-                    <View style={styles.metaRow}>
-                        <Ionicons name="sparkles-outline" size={13} color={colors.textTertiary} />
-                        <Text style={[styles.metaText, { color: colors.textTertiary }]}>{ACCESS_LEVEL_LABELS[club.access_level ?? 'all']}</Text>
-                    </View>
-                </View>
+                {isAuthorClub && club.author_display_name && !club.current_book_title ? (
+                    <Text style={styles.currentReadMeta} numberOfLines={1}>
+                        {`Hosted by verified author ${club.author_display_name}`}
+                    </Text>
+                ) : null}
+
+                <Text style={styles.meta} numberOfLines={1}>{metaParts.join(' · ')}</Text>
             </View>
         </TouchableOpacity>
     );
 }
 
 const styles = StyleSheet.create({
-    card: {
+    row: {
         flexDirection: 'row',
-        gap: 14,
-        padding: 14,
-        borderRadius: 18,
-        borderWidth: 1,
-        marginHorizontal: 4,
-        marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 10,
-        elevation: 3,
+        gap: 16,
+        paddingVertical: 18,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.divider,
     },
     cover: {
-        width: 88,
-        height: 132,
-        borderRadius: 12,
-        backgroundColor: '#E2E8F0',
+        width: bookCovers.medium.w,
+        height: bookCovers.medium.h,
+        borderRadius: radii.medium,
+        backgroundColor: colors.surfaceSubtle,
+    },
+    coverFallback: {
+        width: bookCovers.medium.w,
+        height: bookCovers.medium.h,
+        borderRadius: radii.medium,
+        backgroundColor: colors.surfaceSubtle,
+        borderWidth: 1,
+        borderColor: colors.border,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     content: {
         flex: 1,
         justifyContent: 'center',
-    },
-    headerRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: 6,
-        marginBottom: 8,
-    },
-    typeChip: {
-        borderWidth: 1,
-        borderRadius: 999,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-    },
-    typeChipText: {
-        fontSize: 11,
-        fontWeight: '700',
-        textTransform: 'uppercase',
-    },
-    authorChip: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 3,
-        borderWidth: 1,
-        borderRadius: 999,
-        paddingHorizontal: 7,
-        paddingVertical: 3,
-    },
-    authorChipText: {
-        fontSize: 10,
-        fontWeight: '800',
-    },
-    title: {
-        fontSize: 17,
-        fontWeight: '700',
-        marginBottom: 6,
-    },
-    description: {
-        fontSize: 13,
-        lineHeight: 18,
-        marginBottom: 8,
-    },
-    bookTitle: {
-        fontSize: 14,
-        fontWeight: '600',
-        marginBottom: 3,
-    },
-    bookSubtitle: {
-        fontSize: 12,
-        marginBottom: 10,
-    },
-    footerRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        gap: 12,
-    },
-    metaRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
         gap: 4,
     },
-    metaText: {
-        fontSize: 12,
-        fontWeight: '500',
-        textTransform: 'capitalize',
+    kicker: {
+        fontFamily: 'Inter_600SemiBold',
+        fontSize: 11,
+        lineHeight: 14,
+        letterSpacing: 0.8,
+        textTransform: 'uppercase',
+        color: colors.accent,
+    },    description: {
+        fontFamily: 'Inter_400Regular',
+        fontSize: 14,
+        lineHeight: 20,
+        color: colors.textSecondary,
+    },
+    currentRead: {
+        gap: 1,
+    },
+    currentReadLabel: {
+        fontFamily: 'Inter_600SemiBold',
+        fontSize: 11,
+        lineHeight: 14,
+        letterSpacing: 0.8,
+        textTransform: 'uppercase',
+        color: colors.textMuted,
+    },
+    currentReadTitle: {
+        fontFamily: 'Inter_600SemiBold',
+        fontSize: 15,
+        lineHeight: 21,
+        color: colors.textPrimary,
+    },    currentReadMeta: {
+        fontFamily: 'Inter_400Regular',
+        fontSize: 13,
+        lineHeight: 18,
+        color: colors.textMuted,
+    },
+    noCurrentBook: {
+        fontFamily: 'Inter_400Regular',
+        fontSize: 14,
+        lineHeight: 20,
+        color: colors.textMuted,
+    },
+    meta: {
+        fontFamily: 'Inter_400Regular',
+        fontSize: 13,
+        lineHeight: 18,
+        color: colors.textMuted,
+        marginTop: 2,
     },
 });
