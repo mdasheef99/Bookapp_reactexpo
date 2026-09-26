@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ClubCard } from '@/features/clubs/components/ClubCard';
+import { YourClubsCard } from '@/features/clubs/components/YourClubsCard';
 import { ClubFiltersSheet } from '@/features/clubs/components/ClubFiltersSheet';
 import { useBrowseClubs, useMyArchivedManagedClubs, useMyBrowseClubs, useMyClubInvitationInbox } from '@/features/clubs/hooks/useClubs';
 import { useViewerMembershipTier } from '@/features/clubs/hooks/useViewerMembershipTier';
@@ -52,8 +53,11 @@ export default function ClubsBrowseScreen() {
     const authorClubCount = clubs.filter((club) => club.club_type === 'author_club').length;
     const showAuthorSpotlight = browseScope === 'all' && !selectedClubType && authorClubCount > 0;
     const canCreateClub = !!userId && (viewerTier === 'pro' || viewerTier === 'pro_plus');
-    const mineCount = myBrowseQuery.data?.length ?? 0;
-    const showMineCount = !!userId && !myBrowseQuery.isLoading && !myBrowseQuery.isError && mineCount > 0;
+    const isMineScope = browseScope === 'mine';
+    const hasActiveSearchOrFilters = search.trim().length > 0
+        || selectedClubType !== undefined
+        || selectedMeetingType !== undefined
+        || selectedAccessLevel !== undefined;
     const activeFilterCount = [selectedClubType, selectedMeetingType, selectedAccessLevel]
         .filter((value) => value !== undefined).length;
 
@@ -67,13 +71,26 @@ export default function ClubsBrowseScreen() {
         setSelectedAccessLevel(undefined);
     };
 
-    const sectionTitle = browseScope === 'archived' ? 'Archived clubs' : browseScope === 'mine' ? 'Your clubs' : 'Clubs to explore';
+    const handleClearMineSearchAndFilters = () => {
+        setSearch('');
+        handleResetFilters();
+    };
 
-    const emptyStateTitle = browseScope === 'archived' ? 'No archived clubs' : browseScope === 'mine' ? 'You have not joined any clubs yet' : 'No clubs matched this search';
+    const sectionTitle = browseScope === 'archived' ? 'Archived clubs' : isMineScope ? 'Your reading circles' : 'Clubs to explore';
+
+    const emptyStateTitle = browseScope === 'archived'
+        ? 'No archived clubs'
+        : isMineScope
+        ? (hasActiveSearchOrFilters
+            ? (search.trim().length > 0 ? 'No clubs matched your search' : 'No clubs match these filters')
+            : 'You have not joined any clubs yet')
+        : 'No clubs matched this search';
     const emptyStateBody = browseScope === 'archived'
         ? 'Archived clubs you administer will appear here for restoration.'
-        : browseScope === 'mine'
-        ? 'Join a public club, apply to an approval club, or accept an invite-only club invitation to build your personal club shelf here.'
+        : isMineScope
+        ? (hasActiveSearchOrFilters
+            ? 'Try a different search term or adjust your filters to find more of your clubs.'
+            : 'Join a public club, apply to an approval club, or accept an invite-only club invitation to build your personal club shelf here.')
         : 'Try a different club type, meeting format, access tier, or search term to discover more communities.';
     const errorBody = browseScope === 'archived'
         ? 'Try refreshing to fetch archived clubs you administer from Supabase.'
@@ -160,7 +177,7 @@ export default function ClubsBrowseScreen() {
                                 accessibilityState={{ selected: browseScope === 'mine' }}
                             >
                                 <Text style={[styles.tabText, browseScope === 'mine' && styles.tabTextActive]}>
-                                    {showMineCount ? `Your Clubs • ${mineCount}` : 'Your Clubs'}
+                                    Your Clubs
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -228,6 +245,7 @@ export default function ClubsBrowseScreen() {
                             </View>
                         ) : null}
 
+                        {!isMineScope ? (
                         <TouchableOpacity
                             activeOpacity={0.85}
                             onPress={() => router.push('/(tabs)/clubs/venues')}
@@ -245,6 +263,7 @@ export default function ClubsBrowseScreen() {
                             </View>
                             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                         </TouchableOpacity>
+                        ) : null}
 
                         <View style={styles.sectionHeader}>
                             <Text style={typography.sectionHeading}>{sectionTitle}</Text>
@@ -271,32 +290,78 @@ export default function ClubsBrowseScreen() {
                         ) : null}
                     </View>
                 }
-                renderItem={({ item }) => <ClubCard club={item} onPress={handleClubPress} />}
+                renderItem={({ item }) => isMineScope
+                    ? <YourClubsCard club={item} onPress={handleClubPress} />
+                    : <ClubCard club={item} onPress={handleClubPress} />}
                 ListEmptyComponent={
-                    isError ? null : (
+                    isError
+                        ? null
+                        : (isMineScope || browseScope === 'archived') && !userId
+                        ? null
+                        : (
                         <View style={styles.feedbackCard}>
                             <Text style={styles.feedbackTitle}>{emptyStateTitle}</Text>
                             <Text style={typography.bodyCompact}>{emptyStateBody}</Text>
+                            {isMineScope && !hasActiveSearchOrFilters ? (
+                                <TouchableOpacity
+                                    activeOpacity={0.85}
+                                    onPress={() => setBrowseScope('all')}
+                                    style={styles.emptyActionOutline}
+                                    testID="clubs-mine-discover-link"
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Discover clubs"
+                                >
+                                    <Text style={styles.emptyActionOutlineText}>Discover clubs</Text>
+                                </TouchableOpacity>
+                            ) : null}
+                            {isMineScope && hasActiveSearchOrFilters ? (
+                                <TouchableOpacity
+                                    activeOpacity={0.85}
+                                    onPress={handleClearMineSearchAndFilters}
+                                    style={styles.emptyAction}
+                                    testID="clubs-mine-clear-filters"
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Clear search and filters"
+                                >
+                                    <Text style={styles.emptyActionText}>Clear filters</Text>
+                                </TouchableOpacity>
+                            ) : null}
                         </View>
-                    )
+                        )
                 }
                 ListFooterComponent={
                     browseScope === 'archived' ? null : (
-                        <TouchableOpacity
-                            activeOpacity={0.85}
-                            onPress={() => setBrowseScope('archived')}
-                            style={styles.archivedRow}
-                            testID="clubs-archived-link"
-                            accessibilityRole="button"
-                            accessibilityLabel="Archived clubs"
-                        >
-                            <Ionicons name="archive-outline" size={18} color={colors.textMuted} />
-                            <View style={styles.archivedBody}>
-                                <Text style={styles.archivedTitle}>Archived clubs</Text>
-                                <Text style={typography.metadata}>Restore clubs you administer.</Text>
-                            </View>
-                            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                        </TouchableOpacity>
+                        <View>
+                            <TouchableOpacity
+                                activeOpacity={0.85}
+                                onPress={() => setBrowseScope('archived')}
+                                style={styles.archivedRow}
+                                testID="clubs-archived-link"
+                                accessibilityRole="button"
+                                accessibilityLabel="Archived clubs"
+                            >
+                                <Ionicons name="archive-outline" size={18} color={colors.textMuted} />
+                                <View style={styles.archivedBody}>
+                                    <Text style={styles.archivedTitle}>Archived clubs</Text>
+                                    <Text style={typography.metadata}>Restore clubs you administer.</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                            </TouchableOpacity>
+                            {isMineScope ? (
+                                <TouchableOpacity
+                                    activeOpacity={0.85}
+                                    onPress={() => router.push('/(tabs)/clubs/venues')}
+                                    style={styles.secondaryRow}
+                                    testID="clubs-venues-secondary-link"
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Find club venues"
+                                >
+                                    <Ionicons name="location-outline" size={18} color={colors.textMuted} />
+                                    <Text style={styles.secondaryRowText}>Find club venues</Text>
+                                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                                </TouchableOpacity>
+                            ) : null}
+                        </View>
                     )
                 }
             />
@@ -468,6 +533,36 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
     },
     retryButtonText: { color: '#FFFFFF', fontFamily: 'Inter_600SemiBold' },
+    emptyAction: {
+        alignSelf: 'flex-start',
+        marginTop: 8,
+        minHeight: touchTarget,
+        justifyContent: 'center',
+        borderRadius: radii.medium,
+        backgroundColor: colors.accent,
+        paddingHorizontal: 16,
+    },
+    emptyActionText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontFamily: 'Inter_600SemiBold',
+    },
+    emptyActionOutline: {
+        alignSelf: 'flex-start',
+        marginTop: 8,
+        minHeight: touchTarget,
+        justifyContent: 'center',
+        borderRadius: radii.medium,
+        borderWidth: 1,
+        borderColor: colors.accent,
+        backgroundColor: colors.surface,
+        paddingHorizontal: 16,
+    },
+    emptyActionOutlineText: {
+        color: colors.accent,
+        fontSize: 14,
+        fontFamily: 'Inter_600SemiBold',
+    },
     spotlight: {
         flexDirection: 'row',
         gap: 12,
@@ -556,6 +651,21 @@ const styles = StyleSheet.create({
     },
     archivedBody: { flex: 1, gap: 2 },
     archivedTitle: {
+        fontSize: 14,
+        fontFamily: 'Inter_600SemiBold',
+        color: colors.textSecondary,
+    },
+    secondaryRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        minHeight: touchTarget,
+        paddingVertical: 12,
+        borderTopWidth: 1,
+        borderTopColor: colors.divider,
+    },
+    secondaryRowText: {
+        flex: 1,
         fontSize: 14,
         fontFamily: 'Inter_600SemiBold',
         color: colors.textSecondary,

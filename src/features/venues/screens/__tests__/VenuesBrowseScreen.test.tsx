@@ -1,12 +1,16 @@
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-router', () => ({
-    router: { push: (...args: unknown[]) => mockRouterPush(...args) },
+    router: {
+        push: (...args: unknown[]) => mockRouterPush(...args),
+        replace: (...args: unknown[]) => mockRouterReplace(...args),
+    },
 }));
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import VenuesBrowseScreen from '../VenuesBrowseScreen';
 
 const mockRouterPush = jest.fn();
+const mockRouterReplace = jest.fn();
 const mockUseApprovedVenues = jest.fn();
 
 jest.mock('@/hooks/useTheme', () => ({
@@ -78,5 +82,13 @@ describe('VenuesBrowseScreen', () => {
 
         expect(getByText('No venues matched this search')).toBeOnTheScreen();
         expect(getByText('Try another venue type, city, or search term.')).toBeOnTheScreen();
+    });
+
+    it('returns to Clubs when the back button is pressed', () => {
+        const { getByTestId } = render(<VenuesBrowseScreen />);
+
+        fireEvent.press(getByTestId('back-button'));
+
+        expect(mockRouterReplace).toHaveBeenCalledWith('/(tabs)/clubs');
     });
 });

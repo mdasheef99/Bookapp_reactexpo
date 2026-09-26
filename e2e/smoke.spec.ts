@@ -246,13 +246,16 @@ test.describe('BookTalks web smoke flows', () => {
   test('renders clubs browse filters after login', async ({ page }) => {
     await loginThroughOtp(page);
     await page.goto('/clubs');
-    await expect(page.getByText('Book clubs')).toBeVisible();
+    await expect(page.getByText('Clubs', { exact: true }).first()).toBeVisible();
     await expect(page.getByTestId('clubs-search-input')).toBeVisible();
+    await page.getByTestId('clubs-filters-open').click();
     await page.getByTestId('clubs-filter-type-author_club').click();
+    await page.getByTestId('clubs-filters-apply').click();
     await expect(page.getByTestId('club-card-dev-author-club')).toBeVisible();
-    await expect(page.getByText('Verified author', { exact: true })).toBeVisible();
+    await expect(page.getByText(/Verified author/)).toBeVisible();
     await page.getByTestId('clubs-filter-scope-mine').click();
-    await expect(page.getByText(/You have not joined any clubs yet/i)).toBeVisible();
+    await expect(page.getByText(/No clubs match these filters/i)).toBeVisible();
+    await page.getByTestId('clubs-filters-open').click();
     await page.getByTestId('clubs-filter-type-public').click();
     await page.getByTestId('clubs-filter-access-pro').click();
   });

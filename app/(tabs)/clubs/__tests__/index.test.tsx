@@ -12,6 +12,7 @@ const mockUseMyArchivedManagedClubs = jest.fn();
 const mockUseMyClubInvitationInbox = jest.fn();
 const mockUseViewerMembershipTier = jest.fn();
 const mockRouterPush = jest.fn();
+let mockAuthUser: { id: string } | null = { id: 'reader-1' };
 
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
@@ -22,7 +23,7 @@ jest.mock('@/hooks/useTheme', () => ({
     }),
 }));
 jest.mock('@/features/auth/hooks/useAuth', () => ({
-    useAuth: () => ({ user: { id: 'reader-1' } }),
+    useAuth: () => ({ user: mockAuthUser }),
 }));
 jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useBrowseClubs: (...args: unknown[]) => mockUseBrowseClubs(...args),
@@ -40,10 +41,18 @@ jest.mock('@/features/clubs/components/ClubCard', () => ({
         return React.createElement(TouchableOpacity, { onPress: () => onPress(club), testID: `club-card-${club.name}` }, React.createElement(Text, null, club.name));
     },
 }));
+jest.mock('@/features/clubs/components/YourClubsCard', () => ({
+    YourClubsCard: ({ club, onPress }: { club: { id: string; name: string }; onPress: (club: { id: string; name: string }) => void }) => {
+        const React = require('react');
+        const { TouchableOpacity, Text } = require('react-native');
+        return React.createElement(TouchableOpacity, { onPress: () => onPress(club), testID: `your-club-card-${club.id}` }, React.createElement(Text, null, club.name));
+    },
+}));
 
 beforeEach(() => {
     jest.clearAllMocks();
     mockRouterPush.mockReset();
+    mockAuthUser = { id: 'reader-1' };
     mockUseBrowseClubs.mockReturnValue({ data: [{ id: 'club-1', name: 'Open Readers' }], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
     mockUseMyBrowseClubs.mockReturnValue({ data: [{ id: 'club-2', name: 'Quiet Members' }], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
     mockUseMyArchivedManagedClubs.mockReturnValue({ data: [{ id: 'club-3', name: 'Archived Circle' }], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
@@ -58,7 +67,8 @@ describe('ClubsBrowseScreen', () => {
         expect(getByText('BookConnect')).toBeOnTheScreen();
         expect(getByText('Clubs')).toBeOnTheScreen();
         expect(getByText('Discover')).toBeOnTheScreen();
-        expect(getByText('Your Clubs • 1')).toBeOnTheScreen();
+        expect(getByText('Your Clubs')).toBeOnTheScreen();
+        expect(queryByText(/Your Clubs •/)).toBeNull();
         expect(getByTestId('clubs-search-input')).toBeOnTheScreen();
         expect(getByTestId('clubs-filters-open')).toBeOnTheScreen();
         expect(getByText('Clubs to explore')).toBeOnTheScreen();
@@ -118,21 +128,143 @@ describe('ClubsBrowseScreen', () => {
         expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/venues');
     });
 
-    it('maps Your Clubs to the mine scope with membership copy and results', () => {
-        const { getByText, getByTestId } = render(<ClubsBrowseScreen />);
+    it('maps Your Clubs to the mine scope with membership copy and shelf results', () => {
+        const { getByText, getByTestId, queryByTestId } = render(<ClubsBrowseScreen />);
 
         fireEvent.press(getByTestId('clubs-filter-scope-mine'));
 
         expect(mockUseMyBrowseClubs).toHaveBeenLastCalledWith('reader-1', expect.any(Object), true);
-        expect(getByText('Your clubs')).toBeOnTheScreen();
+        expect(getByText('Your reading circles')).toBeOnTheScreen();
+        expect(getByTestId('your-club-card-club-2')).toBeOnTheScreen();
         expect(getByText('Quiet Members')).toBeOnTheScreen();
+        expect(queryByTestId('clubs-venues-discovery-link')).toBeNull();
+    });
+
+    it('never shows a membership count beside Your Clubs', () => {
+        const { getByTestId, queryByText } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-filter-scope-mine'));
+
+        expect(queryByText(/Your Clubs •/)).toBeNull();
+    });
+
+    it('taps a Your Clubs shelf card through to club detail', () => {
+        const { getByTestId } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-filter-scope-mine'));
+        fireEvent.press(getByTestId('your-club-card-club-2'));
+
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-2');
+    });
+
+    it('keeps search and filters available in Your Clubs', () => {
+        const { getByTestId } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-filter-scope-mine'));
+
+        expect(getByTestId('clubs-search-input')).toBeOnTheScreen();
+        expect(getByTestId('clubs-filters-open')).toBeOnTheScreen();
+    });
+
+    it('shows true-empty Your Clubs copy with a Discover path when unconstrained', () => {
+        mockUseMyBrowseClubs.mockReturnValue({ data: [], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
+
+        const { getByTestId, getByText, queryByText } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-filter-scope-mine'));
+
+        expect(getByText('You have not joined any clubs yet')).toBeOnTheScreen();
+
+        fireEvent.press(getByTestId('clubs-mine-discover-link'));
+
+        expect(getByText('Clubs to explore')).toBeOnTheScreen();
+        expect(queryByText('You have not joined any clubs yet')).toBeNull();
+    });
+
+    it('shows scoped search-empty copy with Clear filters when search constrains mine', () => {
+        mockUseMyBrowseClubs.mockReturnValue({ data: [], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
+
+        const { getByTestId, getByText, queryByText } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-filter-scope-mine'));
+        fireEvent.changeText(getByTestId('clubs-search-input'), 'mystery');
+
+        expect(getByText('No clubs matched your search')).toBeOnTheScreen();
+        expect(queryByText('You have not joined any clubs yet')).toBeNull();
+
+        fireEvent.press(getByTestId('clubs-mine-clear-filters'));
+
+        const lastFilters = mockUseMyBrowseClubs.mock.calls[mockUseMyBrowseClubs.mock.calls.length - 1][1] as Record<string, unknown>;
+        expect(lastFilters).toMatchObject({ search: undefined, clubType: undefined, meetingType: undefined, accessLevel: undefined });
+    });
+
+    it('shows scoped filter-empty copy when filters constrain mine', () => {
+        mockUseMyBrowseClubs.mockReturnValue({ data: [], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
+
+        const { getByTestId, getByText, queryByText } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-filter-scope-mine'));
+        fireEvent.press(getByTestId('clubs-filters-open'));
+        fireEvent.press(getByTestId('clubs-filter-type-public'));
+
+        expect(getByText('No clubs match these filters')).toBeOnTheScreen();
+        expect(queryByText('You have not joined any clubs yet')).toBeNull();
+    });
+
+    it('does not stack a no-membership empty state under the signed-out notice', () => {
+        mockAuthUser = null;
+        mockUseMyBrowseClubs.mockReturnValue({ data: [], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
+
+        const { getByTestId, getByText, queryByText } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-filter-scope-mine'));
+
+        expect(getByText('Sign in to view your clubs')).toBeOnTheScreen();
+        expect(queryByText('You have not joined any clubs yet')).toBeNull();
+        expect(queryByText('No clubs matched your search')).toBeNull();
+        expect(queryByText('No clubs match these filters')).toBeNull();
+    });
+
+    it('does not show the author spotlight in Your Clubs', () => {
+        mockUseMyBrowseClubs.mockReturnValue({
+            data: [
+                { id: 'club-2', name: 'Quiet Members', club_type: 'public' },
+                { id: 'club-author-9', name: 'Author Salon', club_type: 'author_club', author_display_name: 'Asha Dev' },
+            ],
+            isLoading: false,
+            isError: false,
+            refetch: jest.fn(),
+            isRefetching: false,
+        });
+
+        const { getByTestId, queryByTestId } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-filter-scope-mine'));
+
+        expect(queryByTestId('clubs-author-spotlight')).toBeNull();
+    });
+
+    it('keeps archived and venue destinations reachable from Your Clubs without per-row actions', () => {
+        const { getByTestId, getByText, queryByText } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-filter-scope-mine'));
+
+        fireEvent.press(getByTestId('clubs-venues-secondary-link'));
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/venues');
+
+        fireEvent.press(getByTestId('clubs-archived-link'));
+        expect(getByText('Archived clubs')).toBeOnTheScreen();
+
+        expect(queryByText('Leave')).toBeNull();
+        expect(queryByText('Manage')).toBeNull();
+        expect(queryByText('Invite')).toBeNull();
     });
 
     it('returns to Discover from Your Clubs', () => {
         const { getByText, getByTestId } = render(<ClubsBrowseScreen />);
 
         fireEvent.press(getByTestId('clubs-filter-scope-mine'));
-        expect(getByText('Quiet Members')).toBeOnTheScreen();
+        expect(getByTestId('your-club-card-club-2')).toBeOnTheScreen();
 
         fireEvent.press(getByTestId('clubs-filter-scope-all'));
 

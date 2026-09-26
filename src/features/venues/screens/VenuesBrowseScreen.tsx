@@ -3,6 +3,7 @@ import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, Te
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { navigateBackOrFallback } from '@/lib/navigation';
 import { useApprovedVenues } from '../hooks/useVenues';
 import { VenueCard } from '../components/VenueCard';
 
@@ -59,7 +60,12 @@ export default function VenuesBrowseScreen() {
                 refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.accent} />}
                 ListHeaderComponent={
                     <View style={styles.header}>
-                        <Text style={[styles.title, { color: colors.textPrimary }]}>Club venues</Text>
+                        <View style={styles.headerRow}>
+                            <TouchableOpacity onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="back-button">
+                                <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+                            </TouchableOpacity>
+                            <Text style={[styles.title, { color: colors.textPrimary }]}>Club venues</Text>
+                        </View>
                         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Find libraries, bookstores, cafes, and community spaces where book clubs can gather.</Text>
                         <View style={[styles.searchShell, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                             <Ionicons name="search-outline" size={18} color={colors.textTertiary} />
@@ -109,7 +115,9 @@ const styles = StyleSheet.create({
     loadingText: { fontSize: 14, fontWeight: '500' },
     content: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 120 },
     header: { marginBottom: 12 },
-    title: { fontSize: 30, fontWeight: '800', marginBottom: 8 },
+    headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
+    iconButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+    title: { flex: 1, fontSize: 30, fontWeight: '800' },
     subtitle: { fontSize: 15, lineHeight: 22, marginBottom: 16 },
     searchShell: {
         flexDirection: 'row',

@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { navigateBackOrFallback } from '@/lib/navigation';
 import { ClubCard } from '@/features/clubs/components/ClubCard';
 import { useBrowseClubs } from '@/features/clubs/hooks/useClubs';
 import type { ClubPublicDetails } from '@/features/clubs/services/clubsService';
@@ -40,6 +41,9 @@ export function ClubAuthorsScreen() {
                 ListHeaderComponent={(
                     <View style={styles.headerSection}>
                         <View style={styles.titleRow}>
+                            <TouchableOpacity onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="back-button">
+                                <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+                            </TouchableOpacity>
                             <View style={[styles.iconShell, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                                 <Ionicons name="mic-outline" size={20} color={colors.accent} />
                             </View>
@@ -75,6 +79,7 @@ const styles = StyleSheet.create({
     contentContainer: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 120 },
     headerSection: { marginBottom: 14 },
     titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+    iconButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
     iconShell: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
     titleTextBlock: { flex: 1 },
     title: { fontSize: 28, fontWeight: '800', marginBottom: 4 },
