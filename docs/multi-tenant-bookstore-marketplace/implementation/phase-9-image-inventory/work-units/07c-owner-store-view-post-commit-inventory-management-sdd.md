@@ -195,6 +195,12 @@ worker retry -> existing token-fenced worker path
 Unit 7C introduces no lifecycle command. Make Private may retract the projection;
 a later republish may receive a different `listingId` without changing `inventoryId`.
 
+The Store View client requires an explicit confirmation before dispatching the
+initial `Private -> Publish` command. Cancel closes the confirmation with zero
+command or publication effect; confirm dispatches the exact existing Unit 7B
+Publish command once. Pause, Republish, Make Private, Retry, server eligibility,
+idempotency, and lifecycle state semantics remain unchanged.
+
 ## 10. Metadata authority
 
 Owner metadata edits are only `title`, `authors`, `language`, and
@@ -274,7 +280,7 @@ persistent drafts, preview, or undo.
 | C. Save Changes | Private and live-public success; live private-only edit; stale rejection; invalid live edit fully rolls back; exact replay +0; changed replay rejected; same inventory identity and in-place live listing identity. |
 | D. Stock | Live `1 -> 0` commits/out-of-stock; `0 -> 1` restores; bucket violations and active-hold conflicts reject; audit/revision classification is exact. |
 | E. Media | Old approved media remains while processing; failure changes nothing; approved swap is atomic; damage evidence stays safe; replay adds no effect. |
-| F. Lifecycle | Existing Publish/Pause/Private/Retry semantics pass unchanged and no duplicate lifecycle path exists. |
+| F. Lifecycle | Initial Publish requires an explicit client confirmation whose Cancel path dispatches nothing and whose confirm path invokes the existing command once; Publish/Pause/Private/Retry server semantics pass unchanged and no duplicate lifecycle path exists. |
 | G. History | Initial Revision 1; live public edit +1; private-only edit, replay, and failed/rolled-back command +0; snapshot contains only allowlisted public data. |
 | H. Real PostgreSQL seams | Before broad adversarial tests, prove trigger/default/generated listing ownership, price projection, stock `1 -> 0`, condition/damage eligibility, revision append, and media replacement without manual repair between steps. |
 

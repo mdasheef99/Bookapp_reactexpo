@@ -181,14 +181,24 @@ describe('Unit 7C WU3 Store View management UI', () => {
         expect(screen.getByText('Live')).toBeTruthy();
     });
 
-    it('reuses Unit 7B commands and shows lifecycle actions only from capabilities', async () => {
+    it('confirms initial Publish before reusing the Unit 7B command', async () => {
         setDetail(detail({ capabilities: ['publish', 'retry_publication'] }));
         const screen = render(<StoreViewDetailContent identity={identity} inventoryId={inventoryId} />);
         expect(screen.getByTestId('store-view-publish')).toBeTruthy();
         expect(screen.getByTestId('store-view-retry-publication')).toBeTruthy();
         expect(screen.queryByTestId('store-view-pause')).toBeNull();
         expect(screen.queryByTestId('store-view-make-private')).toBeNull();
+
         fireEvent.press(screen.getByTestId('store-view-publish'));
+        expect(screen.getByText('Publish this book?')).toBeTruthy();
+        expect(publicationMutate).not.toHaveBeenCalled();
+
+        fireEvent.press(screen.getByText('Cancel'));
+        expect(screen.queryByText('Publish this book?')).toBeNull();
+        expect(publicationMutate).not.toHaveBeenCalled();
+
+        fireEvent.press(screen.getByTestId('store-view-publish'));
+        fireEvent.press(screen.getByText('Publish book'));
         await waitFor(() => expect(publicationMutate).toHaveBeenCalledWith({
             inventoryId, inventoryVersion: 3, publicationIntentVersion: 2, intent: 'publish',
         }));
