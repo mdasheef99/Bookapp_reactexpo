@@ -125,7 +125,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         });
     });
 
-    it('distinguishes provider-matched fields from vision-detected fields', () => {
+    it('uses DOC-8 source wording for detected, default, custom, and missing fields', () => {
         const screen = renderCard({
             fieldSources: {
                 cover: 'matched', title: 'detected', authors: 'missing',
@@ -134,11 +134,10 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
                 damage: 'default',
             },
         });
-        const badges = screen.getAllByText(/^(Provider matched|Vision detected|Batch default|Custom|Missing)$/u)
+        const badges = screen.getAllByText(/^(Detected|Default|Custom|Missing)$/u)
             .map((node) => node.props.children);
-        expect(badges).toContain('Provider matched');
-        expect(badges).toContain('Vision detected');
-        expect(badges).toContain('Batch default');
+        expect(badges).toContain('Detected');
+        expect(badges).toContain('Default');
         expect(badges).toContain('Custom');
         expect(badges).toContain('Missing');
     });
@@ -152,16 +151,17 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
                 damage: 'default',
             },
         });
+        expect(screen.queryByTestId('card-location-sources')).toBeNull();
+        fireEvent.press(screen.getByTestId('card-additional-details-toggle'));
         const locationRow = screen.getByTestId('card-location-sources');
-        expect(within(locationRow).queryByText('Vision detected')).toBeNull();
-        expect(within(locationRow).queryByText('Provider matched')).toBeNull();
-        expect(within(locationRow).getAllByText('Batch default').length).toBeGreaterThan(0);
+        expect(within(locationRow).getByText('Location: Front shelf')).toBeTruthy();
+        expect(within(screen.getByTestId('card-location-field')).queryByText('Detected')).toBeNull();
+        expect(within(locationRow).getAllByText('Default')).toHaveLength(3);
     });
 
     it('keeps compact edits local until Add and round-trips hidden notes through that strict Save', async () => {
         const screen = renderCard();
-        fireEvent.press(screen.getByText('Edit book details'));
-        fireEvent.press(screen.getByTestId('card-condition-open'));
+        fireEvent.press(screen.getByTestId('card-condition-field'));
         fireEvent.press(screen.getByText('Acceptable'));
         expect(screen.queryByText('Save changes')).toBeNull();
         expect(onSaveEdits).not.toHaveBeenCalled();
@@ -185,8 +185,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
 
     it('replaces the persisted badge with a presentation-only local Custom marker for an unsaved edit', () => {
         const screen = renderCard({ fieldSources: card().fieldSources });
-        fireEvent.press(screen.getByText('Edit book details'));
-        fireEvent.press(screen.getByTestId('card-condition-open'));
+        fireEvent.press(screen.getByTestId('card-condition-field'));
         fireEvent.press(screen.getByText('Very Good'));
         expect(screen.getByTestId('card-condition-overlay').props.children).toBe('Custom');
         // The overlay alone cannot manufacture commit/readiness authority.
@@ -212,9 +211,8 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
 
     it('surfaces per-card Add only from server Save/Add authority and passes the exact mounted draft', async () => {
         const saveOnly = renderCard({ allowedActions: ['save_review'] });
-        expect(saveOnly.queryByText('Add to inventory')).toBeNull();
-        fireEvent.press(saveOnly.getByText('Edit book details'));
-        fireEvent.press(saveOnly.getByTestId('card-condition-open'));
+        expect(saveOnly.getByText('Add to inventory')).toBeTruthy();
+        fireEvent.press(saveOnly.getByTestId('card-condition-field'));
         fireEvent.press(saveOnly.getByText('Acceptable'));
         expect(saveOnly.getByText('Add to inventory')).toBeTruthy();
 
@@ -222,13 +220,12 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
             allowedActions: ['add_to_inventory'],
             reviewReady: false,
         });
-        expect(staleReadiness.queryByText('Add to inventory')).toBeNull();
+        expect(staleReadiness.getByText('Add to inventory')).toBeTruthy();
 
         const allowed = renderCard({
             allowedActions: ['save_review', 'add_to_inventory'],
         });
-        fireEvent.press(allowed.getByText('Edit book details'));
-        fireEvent.press(allowed.getByTestId('card-condition-open'));
+        fireEvent.press(allowed.getByTestId('card-condition-field'));
         fireEvent.press(allowed.getByText('Acceptable'));
         await act(async () => {
             fireEvent.press(allowed.getByText('Add to inventory'));
@@ -259,12 +256,11 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
                     field: 'priceMinor', safeMessage: 'Price is required.' },
             ],
         });
-        fireEvent.press(screen.getByText('Edit book details'));
-        expect(screen.getByTestId('card-condition-open')).toBeTruthy();
-        fireEvent.press(screen.getByTestId('card-condition-open'));
+        expect(screen.getByTestId('card-condition-field')).toBeTruthy();
+        fireEvent.press(screen.getByTestId('card-condition-field'));
         expect(screen.getByText('Good')).toBeTruthy();
-        fireEvent.press(screen.getByText('Edit price'));
-        expect(screen.getByTestId('compact-price-picker')).toBeTruthy();
+        fireEvent.press(screen.getByTestId('card-price-field'));
+        expect(screen.getByTestId('card-price-picker')).toBeTruthy();
     });
 
     it('lets review:null metadata Edit manually open identity editing', () => {
@@ -277,7 +273,8 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         });
         fireEvent.press(screen.getByText('View metadata'));
         fireEvent.press(screen.getByText('Edit manually'));
-        expect(screen.getByTestId('compact-identity-editor')).toBeTruthy();
+        expect(screen.getByText(/Add title/u)).toBeTruthy();
+        expect(screen.getByText(/Add authors/u)).toBeTruthy();
         expect(onDraftChange).toHaveBeenLastCalledWith(card().candidateId, {
             metadataChoice: { mode: 'manual', selectionId: null },
         });
@@ -298,8 +295,9 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
                     language: 'detected',
                 },
             });
-            expect(screen.getAllByText(/Live observed title/u).length).toBeGreaterThan(0);
-            expect(screen.getAllByText(/Live observed author/u).length).toBeGreaterThan(0);
+            expect(screen.getByText(/Live observed title/u)).toBeTruthy();
+            expect(screen.getByText(/Live observed author/u)).toBeTruthy();
+            fireEvent.press(screen.getByTestId('card-additional-details-toggle'));
             expect(screen.getByText('Language: fr')).toBeTruthy();
         },
     );
@@ -313,8 +311,8 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
                 title: 'matched', authors: 'matched', language: 'matched',
             },
         });
-        expect(screen.getAllByText(/Matched Metadata Title/u).length).toBeGreaterThan(0);
-        expect(screen.getAllByText(/Author A/u).length).toBeGreaterThan(0);
+        expect(screen.getByText(/Matched Metadata Title/u)).toBeTruthy();
+        expect(screen.getByText(/Author A/u)).toBeTruthy();
     });
 
     it('builds a valid local review:null draft without autosave and keeps Add Save-gated', async () => {
@@ -330,17 +328,17 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
                 condition: 'missing', price: 'missing',
             },
         });
-        expect(screen.queryByText('Add to inventory')).toBeNull();
+        expect(screen.getByText('Add to inventory')).toBeDisabled();
         fireEvent.press(screen.getByText('View metadata'));
         fireEvent.press(screen.getByText('Use detected details'));
-        fireEvent.press(screen.getByText('Edit book details'));
-        fireEvent.press(screen.getByTestId('card-condition-open'));
+        fireEvent.press(screen.getByTestId('card-condition-field'));
         fireEvent.press(screen.getByText('Good'));
-        fireEvent.press(screen.getByText('Edit price'));
+        fireEvent.press(screen.getByTestId('card-price-field'));
         fireEvent.press(screen.getByText('₹25'));
         expect(screen.queryByText('Save changes')).toBeNull();
         expect(onAdd).not.toHaveBeenCalled();
         expect(screen.getByText('Add to inventory')).toBeTruthy();
+        expect(screen.getByText('Add to inventory')).not.toBeDisabled();
         await act(async () => {
             fireEvent.press(screen.getByText('Add to inventory'));
             await Promise.resolve();
@@ -376,10 +374,9 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         ['125', 12_500],
     ])('treats custom whole-rupee input %p as %p minor units', (raw, expected) => {
         const screen = renderCard();
-        fireEvent.press(screen.getByText('Edit book details'));
-        fireEvent.press(screen.getByText('Edit price'));
-        fireEvent.changeText(screen.getByTestId('compact-custom-rupees'), raw);
-        fireEvent.press(screen.getByText('Use custom price'));
+        fireEvent.press(screen.getByTestId('card-price-field'));
+        fireEvent.changeText(screen.getByTestId('card-custom-rupees'), raw);
+        fireEvent.press(screen.getByLabelText('Use custom price'));
         expect(onDraftChange).toHaveBeenLastCalledWith(card().candidateId, {
             priceMinor: expected,
         });
@@ -389,18 +386,16 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         'rejects invalid custom whole-rupee input %p without changing the draft',
         (raw) => {
             const screen = renderCard();
-            fireEvent.press(screen.getByText('Edit book details'));
-            fireEvent.press(screen.getByText('Edit price'));
-            fireEvent.changeText(screen.getByTestId('compact-custom-rupees'), raw);
-            fireEvent.press(screen.getByText('Use custom price'));
+            fireEvent.press(screen.getByTestId('card-price-field'));
+            fireEvent.changeText(screen.getByTestId('card-custom-rupees'), raw);
+            fireEvent.press(screen.getByLabelText('Use custom price'));
             expect(onDraftChange).not.toHaveBeenCalled();
         },
     );
 
     it('serializes the explicit Not set price choice as null', () => {
         const screen = renderCard();
-        fireEvent.press(screen.getByText('Edit book details'));
-        fireEvent.press(screen.getByText('Edit price'));
+        fireEvent.press(screen.getByTestId('card-price-field'));
         fireEvent.press(screen.getByText('Not set'));
         expect(onDraftChange).toHaveBeenLastCalledWith(card().candidateId, {
             priceMinor: null,
@@ -423,9 +418,8 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
                 damage: 'default',
             },
         });
-        expect(screen.getAllByText(/Selected Metadata Title/u).length).toBeGreaterThan(0);
-        expect(screen.queryByText('Raw Scan Title')).toBeNull();
-        expect(screen.getAllByText(/Selected Author/u).length).toBeGreaterThan(0);
+        expect(screen.getByText(/Selected Metadata Title/u)).toBeTruthy();
+        expect(screen.getByText(/Selected Author/u)).toBeTruthy();
     });
 
     it('shows the saved custom identity when the server source is custom', () => {
@@ -443,28 +437,30 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
                 damage: 'default',
             },
         });
-        expect(screen.getAllByText(/Owner Corrected Title/u).length).toBeGreaterThan(0);
-        expect(screen.queryByText(/Selected Metadata Title/u)).toBeNull();
-        expect(screen.getAllByText(/Corrected Author/u).length).toBeGreaterThan(0);
+        expect(screen.getByText(/Owner Corrected Title/u)).toBeTruthy();
+        expect(screen.getByText(/Corrected Author/u)).toBeTruthy();
     });
 
     it('keeps the dense editor set behind one clear card action', () => {
         const screen = renderCard();
-        expect(screen.getByText('Edit book details')).toBeTruthy();
-        [
-            'Edit title and authors', 'Edit language', 'Edit condition',
-            'Edit price', 'Edit quantity', 'Edit location',
-            'Edit publication', 'Edit damage',
-        ].forEach((label) => expect(screen.queryByText(label)).toBeNull());
+        expect(screen.getByText(/Matched Metadata Title/u)).toBeTruthy();
+        expect(screen.getByText(/Author A/u)).toBeTruthy();
 
-        fireEvent.press(screen.getByText('Edit book details'));
-        [
-            'Edit title and authors', 'Edit language', 'Edit condition',
-            'Edit price', 'Edit quantity', 'Edit location',
-            'Edit publication', 'Edit damage',
-        ].forEach((label) => expect(screen.getByText(label)).toBeTruthy());
+        expect(screen.getByTestId('card-price-field')).toBeTruthy();
+        expect(screen.getByLabelText('Quantity: 1')).toBeTruthy();
+        expect(screen.getByTestId('card-quantity-decrease')).toBeTruthy();
+        expect(screen.getByTestId('card-quantity-increase')).toBeTruthy();
+        expect(screen.getByTestId('card-condition-field')).toBeTruthy();
+        expect(screen.queryByTestId('card-location-sources')).toBeNull();
+        fireEvent.press(screen.getByTestId('card-additional-details-toggle'));
+        expect(screen.getByTestId('card-location-sources')).toBeTruthy();
+        const details = screen.getByTestId('card-location-sources');
+        expect(within(details).getByText('Location: Front shelf')).toBeTruthy();
+        expect(within(details).getByText('Publication: Private')).toBeTruthy();
+        expect(within(details).getByText('Language: en')).toBeTruthy();
+        expect(within(details).getByText('Damage: No damage')).toBeTruthy();
 
-        fireEvent.press(screen.getByText('Edit condition'));
+        fireEvent.press(screen.getByTestId('card-condition-field'));
         fireEvent.press(screen.getByText('Acceptable'));
         expect(screen.queryByText('Save changes')).toBeNull();
         expect(screen.getByText('Add to inventory')).toBeTruthy();
@@ -477,6 +473,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
             review: { ...(card().review as Record<string, unknown>), originalLanguage: 'hi' },
             fieldSources: { ...card().fieldSources, language: 'custom' },
         });
+        fireEvent.press(screen.getByTestId('card-additional-details-toggle'));
         expect(screen.getByText('Language: hi')).toBeTruthy();
         expect(screen.queryByText('Language: fr')).toBeNull();
     });
@@ -527,6 +524,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
 
     it('shows the saved damage answer with its canonical source badge', () => {
         const noDamage = renderCard();
+        fireEvent.press(noDamage.getByTestId('card-additional-details-toggle'));
         expect(noDamage.getByText('Damage: No damage')).toBeTruthy();
         const damaged = renderCard({
             review: {
@@ -541,6 +539,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
                 damage: 'custom',
             },
         });
+        fireEvent.press(damaged.getByTestId('card-additional-details-toggle'));
         expect(damaged.getByText('Damage: Has damage')).toBeTruthy();
     });
 
@@ -551,18 +550,13 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
                 publicationIntent: 'publish',
             },
         });
+        fireEvent.press(screen.getByTestId('card-additional-details-toggle'));
         expect(screen.getByText('Publication: Prepare to publish')).toBeTruthy();
 
-        fireEvent.press(screen.getByText('Edit book details'));
-        fireEvent.press(screen.getByText('Edit damage'));
-        fireEvent.press(screen.getByText('Has damage'));
-        fireEvent.press(screen.getByText('Cover'));
-        fireEvent.changeText(screen.getByTestId('compact-damage-note'), 'Bent corner');
-        fireEvent.press(screen.getByText('Sellable copy'));
-
-        expect(screen.getByText('Publication: Private')).toBeTruthy();
-        expect(screen.queryByText('Publication: Prepare to publish')).toBeNull();
-        expect(screen.getByTestId('card-publication-overlay').props.children).toBe('Custom');
+        const details = screen.getByTestId('card-location-sources');
+        expect(within(details).getByText('Damage: No damage')).toBeTruthy();
+        expect(within(details).getByText('Publication: Prepare to publish')).toBeTruthy();
+        expect(within(details).queryByTestId('card-publication-overlay')).toBeNull();
 
         await act(async () => {
             fireEvent.press(screen.getByText('Add to inventory'));
@@ -570,12 +564,10 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         });
         expect(onAdd).toHaveBeenCalledWith(
             expect.objectContaining({ candidateId: card().candidateId }),
+            {},
             expect.objectContaining({
-                damageDisclosure: expect.objectContaining({ isSellable: false }),
-            }),
-            expect.objectContaining({
-                publicationIntent: 'private',
-                damageDisclosure: expect.objectContaining({ isSellable: false }),
+                publicationIntent: 'publish',
+                damageDisclosure: expect.objectContaining({ isSellable: true }),
             }),
         );
     });
@@ -609,7 +601,8 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         const manual = renderCard({ allowedActions: ['view_metadata'] });
         fireEvent.press(manual.getByText('View metadata'));
         fireEvent.press(manual.getByText('Edit manually'));
-        expect(manual.getByTestId('compact-identity-editor')).toBeTruthy();
+        expect(manual.getByText(/Matched Metadata Title/u)).toBeTruthy();
+        expect(manual.getByText(/Author A/u)).toBeTruthy();
         expect(onDraftChange).toHaveBeenLastCalledWith(card().candidateId, {
             metadataChoice: { mode: 'manual', selectionId: null },
         });
@@ -659,8 +652,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
                 onAuthorityStateChange={onAuthorityStateChange}
             />,
         );
-        fireEvent.press(screen.getByText('Edit book details'));
-        fireEvent.press(screen.getByTestId('card-condition-open'));
+        fireEvent.press(screen.getByTestId('card-condition-field'));
         fireEvent.press(screen.getByText('Acceptable'));
         screen.rerender(
             <BatchReviewCard
@@ -678,7 +670,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         fireEvent.press(screen.getByText('Reapply compact edits'));
         expect(onAuthorityStateChange).toHaveBeenLastCalledWith(initial.candidateId, false);
         expect(screen.getByText('Add to inventory')).not.toBeDisabled();
-        expect(screen.getByText('Condition: Acceptable')).toBeTruthy();
+        expect(screen.getByText('Acceptable')).toBeTruthy();
     });
 
     it('does not display Ready after an add outcome makes the card ineligible', () => {

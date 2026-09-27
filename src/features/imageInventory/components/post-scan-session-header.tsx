@@ -19,7 +19,6 @@ export function PostScanSessionHeader({
     sessionActive,
     batch,
     inputItems,
-    firstCandidateId,
     inputAnnouncement,
     removeMessage,
     candidateMessage,
@@ -28,7 +27,6 @@ export function PostScanSessionHeader({
     onReturnToInventory,
     onRetryLifecycle,
     onRetryReview,
-    onOpenFirstCandidate,
     onBeginRemove,
     onConfirmRemove,
     onCancelRemove,
@@ -43,7 +41,6 @@ export function PostScanSessionHeader({
     sessionActive: boolean;
     batch: OwnerBatchReview | undefined;
     inputItems: OwnerInputProgress[];
-    firstCandidateId: string | null;
     inputAnnouncement: string | null;
     removeMessage: string | null;
     candidateMessage: string | null;
@@ -52,7 +49,6 @@ export function PostScanSessionHeader({
     onReturnToInventory: () => void;
     onRetryLifecycle: () => void;
     onRetryReview: () => void;
-    onOpenFirstCandidate: () => void;
     onBeginRemove: (target: RemoveTarget) => void;
     onConfirmRemove: () => void;
     onCancelRemove: () => void;
@@ -132,8 +128,6 @@ export function PostScanSessionHeader({
                             <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>
                                 Preparing the saved book review…
                             </Text>
-                        ) : firstCandidateId ? (
-                            <Button title="Open first book in full review" variant="secondary" onPress={onOpenFirstCandidate} />
                         ) : null}
                         {inputAnnouncement ? (
                             <>

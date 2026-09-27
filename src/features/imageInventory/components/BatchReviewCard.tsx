@@ -1,119 +1,38 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useTheme } from '@/hooks/useTheme';
 import type { CandidateCommitOutcome } from '../commit/inventoryCommitCoordinator';
+import { candidateCanStartCommit } from '../commit/inventoryCommitCoordinator';
+import { candidateCommitAuthorityKey } from '../commit/inventoryCommitPolicy';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
 import type { ImageInventoryIdentity } from '../queries/ownerUxQueries';
 import {
     buildCompactReview, compactReviewDisplay, publicationHasEffectiveOverride,
+    validateCompactReview,
     type CompactReviewEdits,
 } from '../review/compactReviewDraft';
 import {
-    CONDITION_CHOICES,
-    formatInrFromMinor,
     type ScanSetupFormState,
 } from '../scanSetup/scanSetupForm';
 import { AddCandidateToInventoryAction } from './AddCandidateToInventoryAction';
 import { BookCoverThumbnail } from './BookCoverThumbnail';
+import { FieldSummary } from './BatchReviewFieldSummary';
 import { CandidateMetadataSheet } from './CandidateMetadataSheet';
-import { CompactReviewEditors } from './CompactReviewEditors';
+import { InlineBatchReviewAdditionalFields } from './InlineBatchReviewAdditionalFields';
+import { InlineReviewIdentity, InlineReviewValueFields } from './InlineBatchReviewFields';
 import { OwnerConfirmationDialog } from './OwnerConfirmationDialog';
+import { draftResolvableBlockerCodes, metadataStatusLabel, reviewStatusLabel } from './batchReviewStatus';
 
 export { applyCompactEdits, type CompactReviewEdits } from '../review/compactReviewDraft';
-
-export function sourceBadgeLabel(code: string): string {
-    if (code === 'matched') return 'Provider matched';
-    if (code === 'representative') return 'Representative edition';
-    if (code === 'detected') return 'Vision detected';
-    if (code === 'default') return 'Batch default';
-    if (code === 'custom') return 'Custom';
-    return 'Missing';
-}
-
-export function metadataStatusLabel(state: OwnerBatchReviewCard['metadataState']): string {
-    if (state === 'selected') return 'Provider matched';
-    if (state === 'manual') return 'Manual details';
-    if (state === 'no_match') return 'No provider match';
-    if (state === 'pending') return 'Finding metadata';
-    if (state === 'ambiguous') return 'Metadata needs review';
-    if (state === 'temporarily_unavailable') return 'Metadata unavailable';
-    return 'Metadata failed';
-}
-
-function reviewStatusLabel(
-    card: OwnerBatchReviewCard,
-    addOutcome?: CandidateCommitOutcome,
-): string {
-    if (addOutcome?.status === 'succeeded') return 'Added';
-    if (addOutcome && addOutcome.status !== 'busy') return 'Needs attention';
-    if (card.candidateState === 'committed') return 'Added';
-    if (card.candidateState === 'commit_in_progress') return 'Adding';
-    if (card.candidateState === 'processing') return 'Processing';
-    if (card.candidateState === 'failed') return 'Failed';
-    if (card.blockers.length > 0 || card.candidateState === 'needs_review'
-        || card.candidateState === 'possible_duplicate') return 'Needs attention';
-    if (card.reviewReady) return 'Ready';
-    return 'Review book';
-}
-
-function SourceBadge({ code, local = false, testID }: {
-    code: string;
-    local?: boolean;
-    testID?: string;
-}) {
-    const { colors } = useTheme();
-    const label = local ? 'Custom' : sourceBadgeLabel(code);
-    return (
-        <Text selectable testID={testID} accessibilityLabel={`Source ${label}`} style={{
-            color: local ? colors.accent : colors.textSecondary,
-            fontSize: 11,
-            fontWeight: '700',
-            borderWidth: 1,
-            borderColor: local ? colors.accent : colors.border,
-            borderRadius: 999,
-            paddingHorizontal: 7,
-            paddingVertical: 2,
-            overflow: 'hidden',
-        }}>
-            {label}
-        </Text>
-    );
-}
-
-function FieldSummary({ label, value, sourceCode, local, testSuffix, compact = false }: {
-    label: string;
-    value: string;
-    sourceCode: string | null;
-    local?: boolean;
-    testSuffix: string;
-    compact?: boolean;
-}) {
-    const { colors } = useTheme();
-    return (
-        <View style={{
-            flexGrow: compact ? 1 : 0,
-            flexBasis: compact ? 104 : 'auto',
-            gap: 5,
-            paddingVertical: compact ? 10 : 7,
-        }}>
-            <Text selectable style={{ color: colors.textPrimary, fontWeight: compact ? '700' : '600' }}>
-                {label}: {value}
-            </Text>
-            {local ? (
-                <View style={{ alignSelf: 'flex-start' }}>
-                    <SourceBadge code="custom" local testID={`card-${testSuffix}-overlay`} />
-                </View>
-            ) : sourceCode ? <View style={{ alignSelf: 'flex-start' }}><SourceBadge code={sourceCode} /></View> : null}
-        </View>
-    );
-}
+export { sourceBadgeLabel } from './BatchReviewFieldSummary';
+export { metadataStatusLabel } from './batchReviewStatus';
 
 export function BatchReviewCard({
     identity, card, defaults, isOffline, canMutate, removePending, addPending,
     addOutcome, onOpenFullCorrection, onRemove, onAdd, onDraftChange,
-    onAuthorityStateChange,
+    onAuthorityStateChange, onPendingIdentityChange,
 }: {
     identity: ImageInventoryIdentity;
     card: OwnerBatchReviewCard;
@@ -129,39 +48,58 @@ export function BatchReviewCard({
         review: NonNullable<ReturnType<typeof buildCompactReview>>) => Promise<unknown>;
     onDraftChange: (candidateId: string, edits: CompactReviewEdits) => void;
     onAuthorityStateChange?: (candidateId: string, changed: boolean) => void;
+    onPendingIdentityChange?: (candidateId: string, active: boolean,
+        acceptedAuthorityKey: string) => void;
 }) {
     const { colors } = useTheme();
     const [mountedEdits, setMountedEdits] = useState<CompactReviewEdits>({});
     const [metadataOpen, setMetadataOpen] = useState(false);
-    const [editingOpen, setEditingOpen] = useState(false);
-    const [identityRequested, setIdentityRequested] = useState(false);
+    const [detailsExpanded, setDetailsExpanded] = useState(false);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [authorityChanged, setAuthorityChanged] = useState(false);
-    const authorityKey = `${card.candidateVersion}:${card.metadataRevision}:${card.reviewVersion}`;
+    const [identityResetKey, setIdentityResetKey] = useState(0);
+    const [bufferedIdentity, setBufferedIdentity] = useState<{
+        titleActive: boolean;
+        authorsActive: boolean;
+        originalTitle?: string;
+        authors?: string[];
+    }>({ titleActive: false, authorsActive: false });
+    const bufferedIdentityRef = useRef(bufferedIdentity);
+    const authorityKey = candidateCommitAuthorityKey(card);
     const acceptedAuthority = useRef(authorityKey);
     const hasEdits = Object.keys(mountedEdits).length > 0;
     const editable = (card.review !== null && card.reviewVersion !== null)
         || card.allowedActions.includes('save_review');
-    const disabled = !canMutate || isOffline || authorityChanged;
+    const authorityMismatch = acceptedAuthority.current !== authorityKey;
+    const hasBufferedIdentity = bufferedIdentity.titleActive || bufferedIdentity.authorsActive;
+    const disabled = !canMutate || isOffline || authorityChanged || authorityMismatch || !editable;
     const display = compactReviewDisplay(card, defaults, mountedEdits);
     const publicationOverride = publicationHasEffectiveOverride(card, defaults, mountedEdits);
-    const review = buildCompactReview(card, defaults, mountedEdits);
-    const title = display.title;
-    const authors = display.authors.join(', ') || 'Author unknown';
-    const price = formatInrFromMinor(display.priceMinor);
-    const condition = CONDITION_CHOICES.find((choice) => choice.value === display.condition)?.label
-        ?? 'Not set';
+    const validation = validateCompactReview(card, defaults, mountedEdits);
+    const review = validation.review;
+    const canStartCommit = candidateCanStartCommit({ card, edits: mountedEdits,
+        acceptedAuthorityKey: acceptedAuthority.current,
+        ...(review ? { review } : {}) });
 
     useEffect(() => {
         if (acceptedAuthority.current === authorityKey) return;
-        if (hasEdits) {
+        if (hasEdits || bufferedIdentity.titleActive || bufferedIdentity.authorsActive) {
             if (!authorityChanged) {
                 setAuthorityChanged(true);
                 onAuthorityStateChange?.(card.candidateId, true);
             }
         }
-        else acceptedAuthority.current = authorityKey;
-    }, [authorityChanged, authorityKey, card.candidateId, hasEdits, onAuthorityStateChange]);
+        else {
+            acceptedAuthority.current = authorityKey;
+            setIdentityResetKey((current) => current + 1);
+        }
+    }, [authorityChanged, authorityKey, card.candidateId, hasEdits,
+        bufferedIdentity.titleActive, bufferedIdentity.authorsActive, onAuthorityStateChange]);
+
+    useEffect(() => () => {
+        if (bufferedIdentityRef.current.titleActive || bufferedIdentityRef.current.authorsActive)
+            onPendingIdentityChange?.(card.candidateId, false, acceptedAuthority.current);
+    }, [card.candidateId, onPendingIdentityChange]);
 
     const replaceEdits = (next: CompactReviewEdits) => {
         setMountedEdits(next);
@@ -169,20 +107,66 @@ export function BatchReviewCard({
     };
     const updateEdits = (patch: CompactReviewEdits) => replaceEdits({ ...mountedEdits, ...patch });
     const clearEdits = () => replaceEdits({});
+    const updateBufferedIdentity = (
+        field: 'originalTitle' | 'authors', value: string | string[] | undefined, active: boolean,
+    ) => {
+        const next = {
+            ...bufferedIdentityRef.current,
+            [field]: value,
+            [field === 'originalTitle' ? 'titleActive' : 'authorsActive']: active,
+        };
+        bufferedIdentityRef.current = next;
+        setBufferedIdentity(next);
+        onPendingIdentityChange?.(card.candidateId,
+            next.titleActive || next.authorsActive, acceptedAuthority.current);
+    };
     const resolveAuthorityChange = (keepEdits: boolean) => {
-        if (!keepEdits) clearEdits();
         acceptedAuthority.current = authorityKey;
+        if (!keepEdits) clearEdits();
+        else if (bufferedIdentity.originalTitle !== undefined
+            || bufferedIdentity.authors !== undefined) {
+            replaceEdits({
+                ...mountedEdits,
+                ...(bufferedIdentity.originalTitle !== undefined
+                    ? { originalTitle: bufferedIdentity.originalTitle } : {}),
+                ...(bufferedIdentity.authors !== undefined
+                    ? { authors: bufferedIdentity.authors } : {}),
+            });
+        }
         setAuthorityChanged(false);
+        bufferedIdentityRef.current = { titleActive: false, authorsActive: false };
+        setBufferedIdentity(bufferedIdentityRef.current);
+        onPendingIdentityChange?.(card.candidateId, false, authorityKey);
+        setIdentityResetKey((current) => current + 1);
         onAuthorityStateChange?.(card.candidateId, false);
     };
-    const attention = useMemo(() => card.blockers.length === 0 ? null
-        : `${card.blockers.length} item${card.blockers.length === 1 ? '' : 's'} need attention`,
-    [card.blockers.length]);
-    const status = reviewStatusLabel(card, addOutcome);
+    const attentionItems = useMemo(() => {
+        if (!hasEdits) {
+            return card.blockers.length > 0
+                ? card.blockers.map((blocker) => ({
+                    field: blocker.field ?? 'review', safeMessage: blocker.safeMessage,
+                }))
+                : [...validation.issues];
+        }
+        const retainedServerItems = card.blockers
+            .filter((blocker) => !draftResolvableBlockerCodes.has(blocker.code))
+            .map((blocker) => ({
+                field: blocker.field ?? 'review', safeMessage: blocker.safeMessage,
+            }));
+        return [...validation.issues, ...retainedServerItems].filter((item, index, values) => (
+            values.findIndex((candidate) => candidate.field === item.field
+                && candidate.safeMessage === item.safeMessage) === index
+        ));
+    }, [card.blockers, hasEdits, validation.issues]);
+    const errorFields = useMemo(() => new Set(attentionItems.map((item) => item.field)),
+        [attentionItems]);
+    const status = reviewStatusLabel(
+        card, review !== null, attentionItems.length, editable, hasEdits, addOutcome,
+    );
     const needsAttention = status === 'Needs attention' || status === 'Failed';
 
     return (
-        <GlassCard padding={0} borderRadius={16} style={needsAttention ? { borderLeftWidth: 4, borderLeftColor: colors.error } : undefined}>
+        <GlassCard padding={0} borderRadius={20} style={needsAttention ? { borderLeftWidth: 4, borderLeftColor: colors.error } : undefined}>
             <View testID={`card-${card.candidateId}`} style={{ gap: 14, padding: 16 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
                     <BookCoverThumbnail ordinal={card.ordinal} metadataSummary={card.metadataSummary} />
@@ -193,9 +177,10 @@ export function BatchReviewCard({
                             </Text>
                             <View testID="card-review-status" style={{
                                 borderRadius: 999,
-                                borderWidth: 1,
-                                borderColor: needsAttention ? colors.error : colors.accent,
-                                paddingHorizontal: 8,
+                                 borderWidth: 1,
+                                 borderColor: needsAttention ? colors.error : colors.accent,
+                                 backgroundColor: colors.bgSecondary,
+                                 paddingHorizontal: 8,
                                 paddingVertical: 3,
                             }}>
                                 <Text selectable style={{
@@ -207,63 +192,108 @@ export function BatchReviewCard({
                                 </Text>
                             </View>
                         </View>
-                        <Text selectable accessibilityRole="header"
-                            accessibilityLabel={`Book ${card.ordinal}. ${title}`}
-                            style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '800', lineHeight: 23 }}>
-                            {title}
-                        </Text>
-                        <Text selectable style={{ color: colors.textSecondary, lineHeight: 20 }}>{authors}</Text>
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                            <SourceBadge code={card.fieldSources.title} local={mountedEdits.originalTitle !== undefined} />
-                            <SourceBadge code={card.fieldSources.authors} local={mountedEdits.authors !== undefined} />
-                        </View>
-                        <Text selectable style={{ color: colors.accent, fontSize: 12, fontWeight: '800' }}>
+                        <InlineReviewIdentity ordinal={card.ordinal} title={display.title} authors={display.authors}
+                            titleSourceCode={card.fieldSources.title} authorsSourceCode={card.fieldSources.authors}
+                            titleLocal={mountedEdits.originalTitle !== undefined}
+                            authorsLocal={mountedEdits.authors !== undefined}
+                            errorFields={errorFields}
+                            disabled={disabled} holdBuffered={authorityChanged || authorityMismatch}
+                            resetKey={identityResetKey} onBufferedChange={updateBufferedIdentity}
+                            onChange={updateEdits} />
+                        <Text selectable accessibilityLabel={`Metadata status: ${metadataStatusLabel(card.metadataState)}`}
+                            style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
                             {metadataStatusLabel(card.metadataState)}
                         </Text>
-                        {hasEdits ? <Text selectable style={{ color: colors.error, fontSize: 12, fontWeight: '700' }}>Unsaved changes</Text> : null}
+                        {hasEdits ? (
+                            <Text selectable accessibilityLiveRegion="polite"
+                                style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>
+                                Edited · saved when added
+                            </Text>
+                        ) : null}
                     </View>
                 </View>
+
+                <InlineReviewValueFields display={display}
+                    priceSourceCode={card.fieldSources.price} quantitySourceCode={card.fieldSources.quantity}
+                    conditionSourceCode={card.fieldSources.condition}
+                    priceLocal={mountedEdits.priceMinor !== undefined}
+                    quantityLocal={mountedEdits.quantity !== undefined}
+                    conditionLocal={mountedEdits.baseCondition !== undefined}
+                    errorFields={errorFields} disabled={disabled} onChange={updateEdits} />
 
                 <View style={{
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                    gap: 8,
-                    paddingHorizontal: 12,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    borderRadius: 12,
-                    backgroundColor: colors.bgSecondary,
-                }}>
-                    <FieldSummary label="Price" value={price} sourceCode={card.fieldSources.price}
-                        local={mountedEdits.priceMinor !== undefined} testSuffix="price" compact />
-                    <FieldSummary label="Quantity" value={String(display.quantity)} sourceCode={card.fieldSources.quantity}
-                        local={mountedEdits.quantity !== undefined} testSuffix="quantity" compact />
-                    <FieldSummary label="Condition" value={condition} sourceCode={card.fieldSources.condition}
-                        local={mountedEdits.baseCondition !== undefined} testSuffix="condition" compact />
-                </View>
-
-                <View style={{ borderTopWidth: 1, borderTopColor: colors.border, gap: 1 }}>
-                    <View testID="card-location-sources">
-                        <FieldSummary label="Location" value={display.location || 'Not set'} sourceCode={card.fieldSources.location}
-                            local={mountedEdits.shelfLocation !== undefined} testSuffix="location" />
-                        <FieldSummary label="Publication" value={display.publication === 'publish' ? 'Prepare to publish' : 'Private'}
-                            sourceCode={card.fieldSources.publication}
-                            local={mountedEdits.publicationIntent !== undefined || publicationOverride}
-                            testSuffix="publication" />
-                    </View>
-                    <FieldSummary label="Language" value={display.language} sourceCode={card.fieldSources.language}
-                        local={mountedEdits.originalLanguage !== undefined} testSuffix="language" />
-                    <FieldSummary label="Damage" value={display.damage.hasDamage ? 'Has damage' : 'No damage'}
-                        sourceCode={card.fieldSources.damage}
-                        local={mountedEdits.damageDisclosure !== undefined} testSuffix="damage" />
-                </View>
-
-                {attention ? (
-                    <View style={{ borderRadius: 12, backgroundColor: colors.bgSecondary, padding: 12, gap: 4 }}>
-                        <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error, fontWeight: '800' }}>
-                            Needs attention · {attention}
+                    borderWidth: 1, borderColor: colors.border, borderRadius: 12,
+                    backgroundColor: colors.bgSecondary, gap: 1, paddingHorizontal: 12,
+                }} testID="card-additional-details">
+                    <Pressable
+                        testID="card-additional-details-toggle"
+                        accessibilityRole="button"
+                        accessibilityLabel={detailsExpanded
+                            ? 'Hide location, publication, language, and damage details'
+                            : 'Show location, publication, language, and damage details'}
+                        onPress={() => setDetailsExpanded((current) => !current)}
+                        style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8 }}
+                    >
+                        <Text selectable style={{ flex: 1, color: colors.textSecondary, fontSize: 14 }}>
+                            Location · Publication · Language · Damage
                         </Text>
-                        {card.blockers[0] ? <Text selectable style={{ color: colors.textSecondary }}>{card.blockers[0].safeMessage}</Text> : null}
+                        <Text selectable style={{ color: colors.textSecondary, fontSize: 12 }}>
+                            {detailsExpanded ? '▲' : '▼'}
+                        </Text>
+                    </Pressable>
+                    {detailsExpanded ? (
+                        <InlineBatchReviewAdditionalFields
+                            display={display}
+                            defaults={defaults}
+                            sourceCodes={{
+                                language: card.fieldSources.language,
+                                location: card.fieldSources.location,
+                                publication: card.fieldSources.publication,
+                                damage: card.fieldSources.damage,
+                            }}
+                            localFields={{
+                                language: mountedEdits.originalLanguage !== undefined,
+                                location: mountedEdits.shelfLocation !== undefined,
+                                publication: mountedEdits.publicationIntent !== undefined || publicationOverride,
+                                damage: mountedEdits.damageDisclosure !== undefined,
+                            }}
+                            errorFields={errorFields}
+                            disabled={disabled}
+                            onChange={updateEdits}
+                        />
+                    ) : (
+                        <View testID="card-additional-details-summary" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingBottom: 8 }}>
+                            <FieldSummary label="Location" value={display.location || 'No location'}
+                                sourceCode={card.fieldSources.location}
+                                local={mountedEdits.shelfLocation !== undefined}
+                                testSuffix="collapsed-location" compact />
+                            <FieldSummary label="Publication" value={display.publication === 'publish' ? 'Publish' : 'Private'}
+                                sourceCode={card.fieldSources.publication}
+                                local={mountedEdits.publicationIntent !== undefined || publicationOverride}
+                                testSuffix="collapsed-publication" compact />
+                            <FieldSummary label="Language" value={display.language || 'No language'}
+                                sourceCode={card.fieldSources.language}
+                                local={mountedEdits.originalLanguage !== undefined}
+                                testSuffix="collapsed-language" compact />
+                            <FieldSummary label="Damage" value={display.damage.hasDamage ? 'Has damage' : 'No damage'}
+                                sourceCode={card.fieldSources.damage}
+                                local={mountedEdits.damageDisclosure !== undefined}
+                                testSuffix="collapsed-damage" compact />
+                        </View>
+                    )}
+                </View>
+
+                {attentionItems.length > 0 ? (
+                    <View testID={!review ? 'card-add-validation' : undefined}
+                        style={{ borderRadius: 12, backgroundColor: colors.bgSecondary, padding: 12, gap: 6, borderWidth: 1, borderColor: colors.error }}>
+                        <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error, fontWeight: '800' }}>
+                            Complete these details
+                        </Text>
+                        {attentionItems.map((item, index) => (
+                            <Text key={index} selectable style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18 }}>
+                                • {item.safeMessage}
+                            </Text>
+                        ))}
                     </View>
                 ) : null}
 
@@ -283,41 +313,36 @@ export function BatchReviewCard({
                     Open full correction to prepare this book before it can be finalized.
                 </Text> : null}
 
-                {editable ? (
-                    <Button
-                        title={editingOpen ? 'Done editing' : 'Edit book details'}
-                        variant="secondary"
-                        onPress={() => setEditingOpen((current) => !current)}
-                        disabled={disabled}
-                        accessibilityHint="Shows compact editing controls for this book"
-                    />
-                ) : null}
-                {editable && editingOpen ? (
-                    <CompactReviewEditors values={display} defaults={defaults} disabled={disabled}
-                        forceIdentityOpen={identityRequested} onIdentityOpened={() => setIdentityRequested(false)}
-                        onChange={updateEdits} />
-                ) : null}
-
                 <View style={{ gap: 8 }}>
-                    <AddCandidateToInventoryAction card={card} hasUnsavedReview={hasEdits}
-                        draftReady={review !== null} disabled={!canMutate || authorityChanged}
+                    <AddCandidateToInventoryAction card={card}
+                        disabled={!canMutate || authorityChanged || authorityMismatch
+                            || hasBufferedIdentity || !review || !canStartCommit}
                         isOffline={isOffline} pending={addPending} outcome={addOutcome}
                         onAdd={async () => {
-                            if (!review) return undefined;
+                            if (!review || authorityChanged || acceptedAuthority.current !== authorityKey
+                                || hasBufferedIdentity || bufferedIdentityRef.current.titleActive
+                                || bufferedIdentityRef.current.authorsActive)
+                                return undefined;
                             const result = await onAdd(card, mountedEdits, review);
                             if (result && typeof result === 'object' && 'status' in result
                                 && result.status === 'succeeded') clearEdits();
                             return result;
                         }} />
-                    {card.allowedActions.includes('view_metadata') ? (
-                        <Button title="View metadata" variant="secondary" onPress={() => setMetadataOpen(true)}
-                            accessibilityHint="Opens bounded metadata details for this book" />
-                    ) : null}
-                    <Button title="Open full correction" variant="secondary" onPress={onOpenFullCorrection}
-                        accessibilityHint="Opens the existing full review for deep corrections" />
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                        {card.allowedActions.includes('view_metadata') ? (
+                            <Button title="View metadata" variant="secondary" size="sm"
+                                style={{ flexGrow: 1, flexBasis: 150, width: 'auto' }}
+                                onPress={() => setMetadataOpen(true)}
+                                accessibilityHint="Opens bounded metadata details for this book" />
+                        ) : null}
+                        <Button title="Open full correction" variant="secondary" size="sm"
+                            style={{ flexGrow: 1, flexBasis: 150, width: 'auto' }}
+                            onPress={onOpenFullCorrection}
+                            accessibilityHint="Opens the existing full review for deep corrections" />
+                    </View>
                     {card.allowedActions.includes('remove_from_scan') ? (
                         <>
-                            <Button title="Remove from this scan" variant="ghost" onPress={() => setConfirmOpen(true)}
+                            <Button title="Remove from this scan" variant="ghost" size="sm" onPress={() => setConfirmOpen(true)}
                                 disabled={!canMutate || isOffline || removePending}
                                 accessibilityHint="Removes this detected book from this scan after confirmation. This is not a false detection." />
                             <OwnerConfirmationDialog visible={confirmOpen} title="Remove this book from the scan?"
@@ -335,7 +360,7 @@ export function BatchReviewCard({
                 disabled={disabled} onClose={() => setMetadataOpen(false)}
                 onUseDetected={(edits) => { updateEdits(edits); setMetadataOpen(false); }}
                 onEditManually={(edits) => {
-                    updateEdits(edits); setMetadataOpen(false); setEditingOpen(true); setIdentityRequested(true);
+                    updateEdits(edits); setMetadataOpen(false);
                 }} /> : null}
         </GlassCard>
     );

@@ -14,6 +14,7 @@ export type CandidateCommitDraft = Readonly<{
     card: OwnerBatchReviewCard;
     edits: CompactReviewEdits;
     review?: OwnerCandidateReview;
+    acceptedAuthorityKey: string;
 }>;
 
 export type CandidateCommitOutcome = Readonly<{
@@ -32,6 +33,7 @@ export type FrozenCandidateCommand = Readonly<{
     needsSave: boolean;
     candidateVersion: number;
     metadataRevision: number;
+    reviewVersion: number | null;
     saveIdempotencyKey: string;
     saveCommandId: string;
     commitIdempotencyKey: string;

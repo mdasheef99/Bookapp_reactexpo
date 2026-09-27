@@ -9,6 +9,16 @@ export type CompactReviewEdits = Omit<Partial<OwnerCandidateReview>, 'priceMinor
     priceMinor?: number | null;
 };
 
+export type CompactReviewValidationIssue = Readonly<{
+    field: keyof OwnerCandidateReview | 'review';
+    safeMessage: string;
+}>;
+
+export type CompactReviewValidation = Readonly<{
+    review: OwnerCandidateReview | null;
+    issues: readonly CompactReviewValidationIssue[];
+}>;
+
 export type CompactReviewDisplay = Readonly<{
     title: string;
     authors: string[];
@@ -106,11 +116,43 @@ export function publicationHasEffectiveOverride(
     return (!damage.isSellable || !damage.completeReadableSafe) && requested !== 'private';
 }
 
-export function buildCompactReview(
+function issueField(path: readonly PropertyKey[], message: string): CompactReviewValidationIssue['field'] {
+    const first = String(path[0] ?? '');
+    if (first === 'originalTitle' || message.includes('title must')) return 'originalTitle';
+    if (first === 'authors' || message.includes('authors must')) return 'authors';
+    if (first === 'originalLanguage' || first === 'script'
+        || message.includes('language, script')) return 'originalLanguage';
+    if (first === 'metadataChoice' || message.includes('metadata selection')) return 'metadataChoice';
+    if (first === 'quantity') return 'quantity';
+    if (first === 'priceMinor' || message.includes('positive price')) return 'priceMinor';
+    if (first === 'baseCondition') return 'baseCondition';
+    if (first === 'damageDisclosure' || message.includes('damage')
+        || message.includes('sellable') || message.includes('unsafe')
+        || message.includes('mould')) return 'damageDisclosure';
+    if (first === 'shelfLocation') return 'shelfLocation';
+    if (first === 'publicationIntent') return 'publicationIntent';
+    return 'review';
+}
+
+function issueMessage(field: CompactReviewValidationIssue['field']): string {
+    if (field === 'originalTitle') return 'Add a title.';
+    if (field === 'authors') return 'Check the author names.';
+    if (field === 'originalLanguage') return 'Choose a valid language.';
+    if (field === 'metadataChoice') return 'Confirm the detected details or edit them manually.';
+    if (field === 'quantity') return 'Set a quantity from 1 to 10,000.';
+    if (field === 'priceMinor') return 'Set a whole-rupee selling price.';
+    if (field === 'baseCondition') return 'Choose a condition.';
+    if (field === 'damageDisclosure') return 'Complete the damage details.';
+    if (field === 'shelfLocation') return 'Add a shelf location.';
+    if (field === 'publicationIntent') return 'Choose Private or Prepare to publish.';
+    return 'Check the highlighted review details.';
+}
+
+export function validateCompactReview(
     card: OwnerBatchReviewCard,
     defaults: ScanSetupFormState,
     edits: CompactReviewEdits,
-): OwnerCandidateReview | null {
+): CompactReviewValidation {
     const display = compactReviewDisplay(card, defaults, edits);
     const selectedMetadataChoice = card.metadataState === 'selected'
         && card.metadataSummary?.selectionId
@@ -141,7 +183,23 @@ export function buildCompactReview(
         candidateDisposition: 'reviewed',
     };
     const parsed = ownerCandidateReviewSchema.safeParse(candidate);
-    return parsed.success ? parsed.data : null;
+    if (parsed.success) return { review: parsed.data, issues: [] };
+    const fields = new Set<CompactReviewValidationIssue['field']>();
+    const issues = parsed.error.issues.flatMap((issue) => {
+        const field = issueField(issue.path, issue.message);
+        if (fields.has(field)) return [];
+        fields.add(field);
+        return [{ field, safeMessage: issueMessage(field) }];
+    });
+    return { review: null, issues };
+}
+
+export function buildCompactReview(
+    card: OwnerBatchReviewCard,
+    defaults: ScanSetupFormState,
+    edits: CompactReviewEdits,
+): OwnerCandidateReview | null {
+    return validateCompactReview(card, defaults, edits).review;
 }
 
 export function detectedIdentityEdits(card: OwnerBatchReviewCard): CompactReviewEdits {

@@ -5,9 +5,12 @@ import type { OwnerCandidateReview } from '../contracts/ownerUxReviewSchema';
 import {
     CandidateCommandRegistry,
     InventoryCommitCoordinator,
+    candidateCanStartBulkCommit,
+    candidateCanStartCommit,
     type CandidateCommitDraft,
     type InventoryCommitCoordinatorDependencies,
 } from '../commit/inventoryCommitCoordinator';
+import { candidateCommitAuthorityKey } from '../commit/inventoryCommitPolicy';
 import { candidateDetailFixture, testUuid } from '../testing/ownerUxTestFixtures';
 
 const sessionId = testUuid(1);
@@ -28,24 +31,22 @@ const review: OwnerCandidateReview = {
 
 function draft(index: number, overrides: Partial<OwnerBatchReviewCard> = {}): CandidateCommitDraft {
     const candidateId = testUuid(index + 10);
-    return {
-        card: {
-            sessionId, candidateId, inputId: testUuid(2), ordinal: index,
-            candidateState: 'ready', candidateVersion: 4, metadataState: 'manual',
-            metadataRevision: 7, reviewVersion: 2, reviewDisposition: 'reviewed',
-            observed: { title: `Book ${index}`, authors: ['Author'], language: 'en', script: 'Latn' },
-            metadataSummary: null, review, fieldSources: {
-                cover: 'missing', title: 'custom', authors: 'custom', language: 'custom',
-                condition: 'custom', price: 'custom', quantity: 'default', location: 'custom',
-                publication: 'default', damage: 'default',
-            },
-            attentionCodes: [], blockers: [], reviewReady: true,
-            allowedActions: ['save_review', 'add_to_inventory'],
-            updatedAt: '2026-08-25T00:00:00.000Z',
-            ...overrides,
+    const card: OwnerBatchReviewCard = {
+        sessionId, candidateId, inputId: testUuid(2), ordinal: index,
+        candidateState: 'ready', candidateVersion: 4, metadataState: 'manual',
+        metadataRevision: 7, reviewVersion: 2, reviewDisposition: 'reviewed',
+        observed: { title: `Book ${index}`, authors: ['Author'], language: 'en', script: 'Latn' },
+        metadataSummary: null, review, fieldSources: {
+            cover: 'missing', title: 'custom', authors: 'custom', language: 'custom',
+            condition: 'custom', price: 'custom', quantity: 'default', location: 'custom',
+            publication: 'default', damage: 'default',
         },
-        edits: {},
+        attentionCodes: [], blockers: [], reviewReady: true,
+        allowedActions: ['save_review', 'add_to_inventory'],
+        updatedAt: '2026-08-25T00:00:00.000Z',
+        ...overrides,
     };
+    return { card, edits: {}, acceptedAuthorityKey: candidateCommitAuthorityKey(card) };
 }
 
 function readyDetail(candidateId: string, overrides: Partial<OwnerCandidateDetail> = {}) {
@@ -111,6 +112,71 @@ function harness(custom: Partial<InventoryCommitCoordinatorDependencies> = {}) {
 }
 
 describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
+    it('uses the same Save versus direct-Add eligibility for card, bulk, and frozen commands', async () => {
+        const unsaved = {
+            ...draft(1, { review: null, reviewVersion: null, reviewReady: false,
+                allowedActions: ['save_review'] }),
+            review,
+        };
+        const savedNoop = {
+            ...draft(2, { allowedActions: ['save_review'] }),
+            edits: { baseCondition: 'good' as const },
+        };
+        const savedDirect = draft(3, { allowedActions: ['add_to_inventory'] });
+        const changedWithoutSave = {
+            ...draft(4, { allowedActions: ['add_to_inventory'] }),
+            edits: { baseCondition: 'acceptable' as const },
+        };
+
+        expect(candidateCanStartCommit(unsaved)).toBe(true);
+        expect(candidateCanStartBulkCommit(unsaved)).toBe(true);
+        expect(candidateCanStartCommit(savedNoop)).toBe(false);
+        expect(candidateCanStartBulkCommit(savedNoop)).toBe(false);
+        expect(candidateCanStartCommit(savedDirect)).toBe(true);
+        expect(candidateCanStartCommit(changedWithoutSave)).toBe(false);
+
+        const test = harness();
+        const command = test.coordinator.freezeAddAll([
+            unsaved, savedNoop, savedDirect, changedWithoutSave,
+        ]);
+        expect(command.candidateIds).toEqual([
+            unsaved.card.candidateId, savedDirect.card.candidateId,
+        ]);
+        const direct = harness();
+        await expect(direct.coordinator.addCandidate(unsaved)).resolves.toMatchObject({ status: 'succeeded' });
+        expect(direct.saveReview).toHaveBeenCalledTimes(1);
+        await expect(direct.coordinator.addCandidate(savedNoop)).resolves.toMatchObject({
+            status: 'no_longer_eligible', stage: 'claim',
+        });
+    });
+    it('rejects a draft whose accepted authority is older than its current card', async () => {
+        const current = draft(1, { candidateVersion: 5 });
+        const stale = { ...current, edits: { baseCondition: 'acceptable' as const },
+            acceptedAuthorityKey: '4:7:2' };
+        expect(candidateCanStartCommit(stale)).toBe(false);
+        const single = harness();
+        await expect(single.coordinator.addCandidate(stale)).resolves.toMatchObject({
+            status: 'no_longer_eligible', stage: 'claim',
+        });
+        expect(single.saveReview).not.toHaveBeenCalled();
+        expect(single.commitCandidate).not.toHaveBeenCalled();
+        const bulk = harness();
+        expect(bulk.coordinator.freezeAddAll([stale]).candidateIds).toEqual([]);
+    });
+    it('does not replay a failed frozen command after review authority changes', async () => {
+        const saveReview = jest.fn().mockRejectedValueOnce(new Error('retry later'))
+            .mockImplementation(async (request) => readyDetail(request.candidateId));
+        const test = harness({ saveReview });
+        const item = { ...draft(1), edits: { baseCondition: 'acceptable' as const } };
+        await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({
+            status: 'failed_retryable', stage: 'save',
+        });
+        const changed = { ...item, card: { ...item.card, reviewVersion: 3 } };
+        await expect(test.coordinator.retryCandidate(item.card.candidateId, changed))
+            .resolves.toMatchObject({ status: 'no_longer_eligible', stage: 'claim' });
+        expect(saveReview).toHaveBeenCalledTimes(1);
+        expect(test.commitCandidate).not.toHaveBeenCalled();
+    });
     it('waits for canonical Save success before Add and blocks Add when Save fails', async () => {
         const save = deferred<OwnerCandidateDetail>();
         const first = harness({ saveReview: jest.fn(() => save.promise) });
@@ -372,6 +438,7 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
         const refreshed = {
             ...item,
             card: { ...item.card, ...cardPatch },
+            acceptedAuthorityKey: candidateCommitAuthorityKey({ ...item.card, ...cardPatch }),
         };
         await test.coordinator.retryCandidate(item.card.candidateId, refreshed);
         const [firstSave, retrySave] = saveReview.mock.calls.map(([request]) => request);

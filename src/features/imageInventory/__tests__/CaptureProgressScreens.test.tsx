@@ -9,6 +9,7 @@ const mockResolveDuplicateMutate = jest.fn();
 const mockCandidateRemoveMutate = jest.fn();
 const mockClaimSlot = jest.fn<string | null, [string, string]>(() => 'slot-token');
 const mockReleaseSlot = jest.fn();
+let mockBulkResult: any = null;
 let mockFocused = true;
 // NEW 6G-C composition: session authority is read through v3 and the compact
 // review aggregate is supplemental candidate authority alongside Unit 6 input
@@ -155,7 +156,7 @@ jest.mock('../commit/useInventoryCommitCoordinator', () => ({
         retryAddAll: jest.fn(),
         inFlight: new Set(),
         outcomes: new Map(),
-        bulkResult: null,
+        bulkResult: mockBulkResult,
         bulkPending: false,
         claimSlot: mockClaimSlot,
         releaseSlot: mockReleaseSlot,
@@ -177,6 +178,7 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        mockBulkResult = null;
         mockFocused = true;
         registeredInput.safeCode = 'P9_VISION_OVER_LIMIT';
         registeredInput.acceptedCandidateCount = 0;
@@ -301,12 +303,13 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
         input.acceptedCandidateCount = originalCount;
     });
 
-    it('renders terminal over-limit guidance and hands off only to the review shell', () => {
+    it('renders terminal over-limit guidance and keeps full correction on the candidate card', () => {
         const screen = render(
             <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
         );
         expect(screen.getByText(/More than 15 books/u)).toBeTruthy();
-        fireEvent.press(screen.getByText('Open first book in full review'));
+        expect(screen.queryByText('Open first book in full review')).toBeNull();
+        fireEvent.press(screen.getByText('Open full correction'));
         expect(mockRouter.push).toHaveBeenCalledWith(
             '/(store-owner)/inventory/scan/00000000-0000-4000-8000-000000000010/candidate/00000000-0000-4000-8000-000000000002',
         );
@@ -388,6 +391,68 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
         expect(screen.queryByText(/Books found: 1/u)).toBeNull();
         expect(screen.getByText('Saved on server. Processing continues if you leave.')).toBeTruthy();
         (mockBatchReview.data as Record<string, any>).counts = originalCounts;
+    });
+
+    it('counts every active review state once in the remaining-review summary', () => {
+        const aggregate = mockBatchReview.data as Record<string, any>;
+        const originalCounts = aggregate.counts;
+        const originalItems = aggregate.items;
+        const seed = originalItems[0];
+        aggregate.items = [seed,
+            { ...seed, candidateId: '00000000-0000-4000-8000-000000000003', ordinal: 2,
+                candidateState: 'processing' },
+            { ...seed, candidateId: '00000000-0000-4000-8000-000000000004', ordinal: 3,
+                candidateState: 'ready' },
+        ];
+        aggregate.counts = { ...originalCounts, detected: 3, processing: 1,
+            needsAttention: 1, reviewReadySaved: 1 };
+        mockBulkResult = { exactN: 1, candidateIds: [], outcomes: [], succeeded: 0,
+            failedRetryable: 0, noLongerEligible: 0, needsAttention: 0,
+            stillPending: 0, busy: 0 };
+        try {
+            const screen = render(
+                <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+            );
+            expect(screen.getByTestId('remaining-review-count').props.children)
+                .toBe('3 books remain in review.');
+        } finally {
+            aggregate.counts = originalCounts;
+            aggregate.items = originalItems;
+        }
+    });
+
+    it('counts confirmed successes still present in a stale review aggregate only once', () => {
+        const aggregate = mockBatchReview.data as Record<string, any>;
+        const originalCounts = aggregate.counts;
+        const originalItems = aggregate.items;
+        const seed = originalItems[0];
+        const second = { ...seed, candidateId: '00000000-0000-4000-8000-000000000003', ordinal: 2 };
+        const third = { ...seed, candidateId: '00000000-0000-4000-8000-000000000004', ordinal: 3 };
+        aggregate.items = [seed, second, third];
+        aggregate.counts = { ...originalCounts, detected: 3, processing: 0,
+            needsAttention: 3, reviewReadySaved: 0 };
+        mockBulkResult = { exactN: 1, candidateIds: [seed.candidateId],
+            outcomes: [{ candidateId: seed.candidateId, status: 'succeeded', stage: 'complete' }],
+            succeeded: 1, failedRetryable: 0, noLongerEligible: 0,
+            needsAttention: 0, stillPending: 0, busy: 0 };
+        try {
+            const screen = render(
+                <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+            );
+            expect(screen.getByTestId('remaining-review-count').props.children)
+                .toBe('2 books remain in review.');
+            aggregate.items = [second, third];
+            aggregate.counts = { ...aggregate.counts, needsAttention: 2, committed: 1 };
+            screen.rerender(
+                <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
+            );
+            expect(screen.getByTestId('remaining-review-count').props.children)
+                .toBe('2 books remain in review.');
+        } finally {
+            aggregate.counts = originalCounts;
+            aggregate.items = originalItems;
+            mockBulkResult = null;
+        }
     });
 
     it('requires confirmation and sends the exact registered input version for removal', () => {

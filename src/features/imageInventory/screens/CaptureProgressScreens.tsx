@@ -11,6 +11,7 @@ import { BatchInventoryCommitControls } from '../components/BatchInventoryCommit
 import { PostScanSessionHeader } from '../components/post-scan-session-header';
 import { DuplicateInputConfirmationDialog } from '../components/DuplicateInputConfirmationDialog';
 import { candidateCanStartBulkCommit } from '../commit/inventoryCommitCoordinator';
+import { candidateCommitAuthorityKey } from '../commit/inventoryCommitPolicy';
 import { useInventoryCommitCoordinator } from '../commit/useInventoryCommitCoordinator';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 import {
@@ -48,7 +49,12 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const removal = useInputRemoval({ identity, sessionId,
         sessionActive: session.data?.status === 'active', isOffline });
     const [candidateMessage, setCandidateMessage] = useState<string | null>(null);
-    const [candidateDrafts, setCandidateDrafts] = useState<Map<string, CompactReviewEdits>>(
+    const [candidateDrafts, setCandidateDrafts] = useState<Map<string, {
+        edits: CompactReviewEdits; acceptedAuthorityKey: string;
+    }>>(
+        new Map(),
+    );
+    const [pendingIdentityAuthorities, setPendingIdentityAuthorities] = useState<Map<string, string>>(
         new Map(),
     );
     const [authorityChangedCandidates, setAuthorityChangedCandidates] = useState<Set<string>>(
@@ -128,6 +134,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     }, [inputs.data?.presentationRevision, isFocused, refreshAll]);
     useEffect(() => {
         setAuthorityChangedCandidates(new Set());
+        setPendingIdentityAuthorities(new Map());
     }, [identity.storeId, identity.userId, sessionId]);
     const inputAnnouncement = inputs.data?.items.length
         ? `Image processing: ${inputs.data.items.filter((item) => item.presentationState === 'ready').length} ready, ${inputs.data.items.filter((item) => item.presentationState === 'needs_attention').length} need attention, ${inputs.data.items.filter((item) => ['checking_image', 'finding_books'].includes(item.presentationState)).length} processing.`
@@ -174,10 +181,22 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
         batchLabel: batchReview.data?.batchLabel ?? '',
     };
     const commitDrafts = cards.map((card) => {
-        const edits = candidateDrafts.get(card.candidateId) ?? {};
+        const savedDraft = candidateDrafts.get(card.candidateId);
+        const edits = savedDraft?.edits ?? {};
         const review = buildCompactReview(card, setupDefaults, edits);
-        return { card, edits, ...(review ? { review } : {}) };
+        return { card, edits, ...(review ? { review } : {}),
+            acceptedAuthorityKey: pendingIdentityAuthorities.get(card.candidateId)
+                ?? savedDraft?.acceptedAuthorityKey ?? candidateCommitAuthorityKey(card) };
     });
+    const blockedCandidateIds = new Set([
+        ...authorityChangedCandidates, ...pendingIdentityAuthorities.keys(),
+    ]);
+    const succeededCandidateIds = new Set(inventoryCommit.bulkResult?.outcomes
+        .filter((outcome) => outcome.status === 'succeeded')
+        .map((outcome) => outcome.candidateId) ?? []);
+    const successesStillInReview = cards.filter((card) => succeededCandidateIds.has(card.candidateId)
+        && card.candidateState !== 'committed').length;
+    const remainingReviewCount = Math.max(0, activeReviewCandidates - successesStillInReview);
     const handleAuthorityStateChange = useCallback((candidateId: string, changed: boolean) => {
         setAuthorityChangedCandidates((current) => {
             if (current.has(candidateId) === changed) return current;
@@ -187,11 +206,20 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
             return next;
         });
     }, []);
+    const handlePendingIdentityChange = useCallback((candidateId: string, active: boolean,
+        acceptedAuthorityKey: string) => {
+        setPendingIdentityAuthorities((current) => {
+            const next = new Map(current);
+            if (active) next.set(candidateId, acceptedAuthorityKey);
+            else next.delete(candidateId);
+            return next;
+        });
+    }, []);
     const showBulkControls = !loading && !unavailable && !retryableError
         && !aggregateFailed && !unsupportedLegacyOverflow
         && (commitDrafts.some((candidate) => candidateCanStartBulkCommit(
             candidate,
-            authorityChangedCandidates,
+            blockedCandidateIds,
             inventoryCommit.inFlight,
             inventoryCommit.outcomes,
         )) || inventoryCommit.bulkResult !== null);
@@ -212,7 +240,13 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
             <FlatList
                 style={{ flex: 1 }}
                 contentInsetAdjustmentBehavior="automatic"
-                contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 16, flexGrow: 1 }}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={{
+                    padding: 16,
+                    paddingBottom: showBulkControls ? 36 : 24,
+                    gap: 16,
+                    flexGrow: 1,
+                }}
                 data={!loading && !unavailable && !retryableError && !aggregateFailed
                     && !unsupportedLegacyOverflow ? cards : []}
                 initialNumToRender={6}
@@ -233,6 +267,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         addPending={inventoryCommit.inFlight.has(item.candidateId)}
                         addOutcome={inventoryCommit.outcomes.get(item.candidateId)}
                         onAuthorityStateChange={handleAuthorityStateChange}
+                        onPendingIdentityChange={handlePendingIdentityChange}
                         onOpenFullCorrection={() => router.push(inventoryRoutes.candidate(
                             sessionId,
                             item.candidateId,
@@ -242,12 +277,15 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         )}
                         onAdd={(card, edits, review) => inventoryCommit.addCandidate({
                             card, edits, review,
+                            acceptedAuthorityKey: candidateCommitAuthorityKey(card),
                         })}
                         onDraftChange={(candidateId, edits) => {
                             setCandidateDrafts((current) => {
                                 const next = new Map(current);
                                 if (Object.keys(edits).length === 0) next.delete(candidateId);
-                                else next.set(candidateId, edits);
+                                else next.set(candidateId, {
+                                    edits, acceptedAuthorityKey: candidateCommitAuthorityKey(item),
+                                });
                                 return next;
                             });
                         }}
@@ -264,7 +302,6 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         sessionActive={session.data?.status === 'active'}
                         batch={batchReview.data}
                         inputItems={inputs.data?.items ?? []}
-                        firstCandidateId={cards[0]?.candidateId ?? null}
                         inputAnnouncement={inputAnnouncement}
                         removeMessage={removal.message}
                         candidateMessage={[candidateMessage, autoClose.message]
@@ -274,9 +311,6 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         onReturnToInventory={() => router.replace(inventoryRoutes.root())}
                         onRetryLifecycle={() => { void refreshAll(); }}
                         onRetryReview={() => { void batchReview.refetch(); }}
-                        onOpenFirstCandidate={() => {
-                            if (cards[0]) router.push(inventoryRoutes.candidate(sessionId, cards[0].candidateId));
-                        }}
                         onBeginRemove={removal.begin}
                         onConfirmRemove={removal.confirm}
                         onCancelRemove={removal.cancel}
@@ -305,10 +339,9 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
             />
             {showBulkControls ? (
                 <View testID="post-scan-bulk-action" style={{
-                    gap: 8,
-                    paddingHorizontal: 16,
-                    paddingTop: 12,
-                    paddingBottom: 16,
+                    paddingHorizontal: 12,
+                    paddingTop: 8,
+                    paddingBottom: 10,
                     borderTopWidth: 1,
                     borderTopColor: colors.border,
                     backgroundColor: colors.bgPrimary,
@@ -318,17 +351,13 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         disabled={isOffline || session.data?.status !== 'active'}
                         pending={inventoryCommit.bulkPending}
                         result={inventoryCommit.bulkResult}
-                        blockedCandidateIds={authorityChangedCandidates}
+                        remainingReviewCount={remainingReviewCount}
+                        blockedCandidateIds={blockedCandidateIds}
                         inFlightCandidateIds={inventoryCommit.inFlight}
                         outcomes={inventoryCommit.outcomes}
                         onAddAll={inventoryCommit.addAll}
                         onRetry={inventoryCommit.retryAddAll}
                     />
-                    {batchReview.data && batchReview.data.counts.needsAttention > 0 ? (
-                        <Text selectable style={{ color: colors.textSecondary, textAlign: 'center', fontSize: 12 }}>
-                            {batchReview.data.counts.needsAttention} book{batchReview.data.counts.needsAttention === 1 ? '' : 's'} will remain in review.
-                        </Text>
-                    ) : null}
                 </View>
             ) : null}
             <DuplicateInputConfirmationDialog

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { BatchInventoryCommitControls } from '../components/BatchInventoryCommitControls';
 import type {
     CandidateCommitDraft,
@@ -46,10 +47,47 @@ function candidate(index: number): CandidateCommitDraft {
             updatedAt: '2026-08-25T00:00:00.000Z',
         },
         edits: {},
+        acceptedAuthorityKey: '4:7:2',
     };
 }
 
 describe('Phase 9 NEW 6G-D Add-all controls', () => {
+    it('describes the current review count before any bulk result exists', () => {
+        const screen = render(
+            <BatchInventoryCommitControls candidates={[candidate(1)]} disabled={false}
+                pending={false} remainingReviewCount={3} result={null}
+                onAddAll={jest.fn()} onRetry={jest.fn()} />,
+        );
+        expect(screen.getByTestId('remaining-review-count').props.children)
+            .toBe('3 books currently in review.');
+    });
+
+    it('does not offer Add all for an unaccepted candidate revision', () => {
+        const current = candidate(1);
+        const stale = { ...current, card: { ...current.card, candidateVersion: 5 } };
+        const screen = render(
+            <BatchInventoryCommitControls candidates={[stale]} disabled={false}
+                pending={false} result={null} onAddAll={jest.fn()} onRetry={jest.fn()} />,
+        );
+        expect(screen.queryByText('Add all ready books (1)')).toBeNull();
+    });
+
+    it('stays in normal layout flow so the review list and footer remain unobscured', () => {
+        const screen = render(
+            <BatchInventoryCommitControls
+                candidates={[candidate(1)]}
+                disabled={false}
+                pending={false}
+                result={null}
+                onAddAll={jest.fn()}
+                onRetry={jest.fn()}
+            />,
+        );
+
+        const style = StyleSheet.flatten(screen.getByTestId('add-all-controls').props.style);
+        expect(style.position).not.toBe('absolute');
+    });
+
     it('confirms and submits the exact three-candidate set even if a fourth later arrives', async () => {
         const initial = [candidate(1), candidate(2), candidate(3)];
         const onAddAll = jest.fn(async (values: readonly CandidateCommitDraft[]) => ({
@@ -89,6 +127,7 @@ describe('Phase 9 NEW 6G-D Add-all controls', () => {
                 candidates={[]}
                 disabled={false}
                 pending={false}
+                remainingReviewCount={3}
                 result={{
                     exactN: 3, candidateIds: [testUuid(11), testUuid(12), testUuid(13)],
                     outcomes: [], succeeded: 1, failedRetryable: 1,
@@ -98,9 +137,16 @@ describe('Phase 9 NEW 6G-D Add-all controls', () => {
                 onRetry={jest.fn()}
             />,
         );
-        expect(screen.getByTestId('add-all-result').props.children).toBe(
-            'Added 1 · Retryable 1 · No longer eligible 1 · Needs attention 0 · Still pending 0 · Busy 0',
+        expect(screen.getByText('1 book added')).toBeTruthy();
+        expect(screen.getByTestId('add-all-result').props.accessibilityLabel).toBe(
+            'Bulk add result. 1 book added. Retryable 1. No longer eligible 1. Needs attention 0. Still pending 0. Busy 0. 3 books remain in review.',
         );
+        expect(screen.getByTestId('remaining-review-count').props.children)
+            .toBe('3 books remain in review.');
+        expect(StyleSheet.flatten(screen.getByTestId('add-all-result-counts').props.style).flexWrap)
+            .toBe('wrap');
+        expect(StyleSheet.flatten(screen.getByTestId('add-all-controls').props.style).padding)
+            .toBeLessThanOrEqual(12);
         expect(screen.queryByText(/published successfully/iu)).toBeNull();
     });
 
@@ -120,7 +166,8 @@ describe('Phase 9 NEW 6G-D Add-all controls', () => {
                 onRetry={onRetry}
             />,
         );
-        expect(screen.getByTestId('add-all-result').props.children).toContain('Needs attention 1');
+        expect(screen.getByTestId('add-all-result').props.accessibilityLabel)
+            .toContain('Needs attention 1');
         // A local validation issue remains correctable and does not render the
         // false server-authority statement used for canonical ineligibility.
         expect(screen.queryByText(/This book is no longer eligible/iu)).toBeNull();

@@ -378,8 +378,11 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
         screen.rerender(
             <InventorySessionFoundationScreen sessionId="00000000-0000-4000-8000-000000000010" />,
         );
-        expect(screen.getAllByText(/Detected Book One/u).length).toBeGreaterThan(0);
-        expect(screen.getAllByText(/Detected Book Two/u).length).toBeGreaterThan(0);
+        // Title is now an inline TextInput, check value instead of text
+        const titleTexts = screen.getAllByText(/Detected Book One/u);
+        expect(titleTexts.length).toBeGreaterThan(0);
+        const titleTexts2 = screen.getAllByText(/Detected Book Two/u);
+        expect(titleTexts2.length).toBeGreaterThan(0);
 
         // Full correction remains reachable through client navigation delegation.
         fireEvent.press(screen.getAllByText('Open full correction')[0]);
@@ -527,20 +530,21 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
             <InventorySessionFoundationScreen sessionId="00000000-0000-4000-8000-000000000010" />,
         );
 
-        expect(screen.getByText('Edit book details')).toBeTruthy();
+        // Title/authors are now inline TextInputs, no edit button
+        expect(screen.getByText(/Detected Book One/u)).toBeTruthy();
+        expect(screen.queryByText('Edit book details')).toBeNull();
         expect(screen.queryByText('Edit title and authors')).toBeNull();
         expect(screen.queryByText('Save changes')).toBeNull();
         expect(screen.queryByText('Add to inventory')).toBeNull();
 
-        fireEvent.press(screen.getByText('Edit book details'));
-        expect(screen.getByText('Edit title and authors')).toBeTruthy();
-        expect(screen.getByText('Edit language')).toBeTruthy();
-        expect(screen.getByText('Edit price')).toBeTruthy();
-        expect(screen.getByText('Edit quantity')).toBeTruthy();
-        expect(screen.getByText('Edit location')).toBeTruthy();
-        expect(screen.getByText('Edit publication')).toBeTruthy();
-        expect(screen.getByText('Edit damage')).toBeTruthy();
-        fireEvent.press(screen.getByTestId('card-condition-open'));
+        // Title/authors use bounded inline controls. Secondary fields stay
+        // collapsed until their compact details disclosure is opened.
+        fireEvent.press(screen.getByText(/Location · Publication · Language · Damage/u));
+        expect(screen.getByText(/Location:/u)).toBeTruthy();
+        expect(screen.getByText(/Publication:/u)).toBeTruthy();
+        expect(screen.getByText(/Language:/u)).toBeTruthy();
+        expect(screen.getByText(/Damage:/u)).toBeTruthy();
+        fireEvent.press(screen.getByTestId('card-condition-field'));
         fireEvent.press(screen.getByText('Acceptable'));
         fireEvent.press(screen.getByText('View metadata'));
         expect(screen.getByText('Book metadata')).toBeTruthy();
@@ -560,7 +564,7 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
             <InventorySessionFoundationScreen sessionId="00000000-0000-4000-8000-000000000010" />,
         );
         fireEvent.press(screen.getByText('Use latest saved review'));
-        expect(screen.getByText('Quantity: 2')).toBeTruthy();
+        expect(screen.getByLabelText('Quantity: 2')).toBeTruthy();
         await act(async () => {
             fireEvent.press(screen.getByText('Add to inventory'));
             await Promise.resolve();
@@ -778,7 +782,9 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
         const screen = render(
             <InventorySessionFoundationScreen sessionId="00000000-0000-4000-8000-000000000010" />,
         );
-        expect(screen.queryByText('Add to inventory')).toBeNull();
+        // Card 2 has save_review → Add visible (new behavior: always show Add)
+        expect(screen.getByText('Add to inventory')).toBeTruthy();
+        // But card 2 does NOT have add_to_inventory, so not eligible for bulk
         expect(screen.queryByText(/Add all ready books/iu)).toBeNull();
         expect(mockRemoveCandidateMutate).not.toHaveBeenCalled();
     });

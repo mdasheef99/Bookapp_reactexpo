@@ -23,6 +23,10 @@ describe('Phase 9 NEW 6G-C scan setup defaults', () => {
         expect(initialScanSetupForm.priceMinor).toBeNull();
     });
 
+    it('defaults initial publication intent to private', () => {
+        expect(initialScanSetupForm.publication).toBe('private');
+    });
+
     it('offers exactly the nullable condition vocabulary led by Not set', () => {
         expect(CONDITION_CHOICES.map((choice) => choice.value)).toEqual([
             null, 'new', 'like_new', 'very_good', 'good', 'acceptable',
