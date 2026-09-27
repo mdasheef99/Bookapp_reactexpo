@@ -1,7 +1,7 @@
 # Phase 9 Planning and Decision Tracker
 
 **Status:** `unit6h_representative_cover_locally_verified_rollout_pending`
-**Last updated:** 2026-09-13
+**Last updated:** 2026-09-23
 **Purpose:** retain detailed product decisions, audit evidence, reconciliations, and deferred choices without inflating the master tracker
 
 ## Decision register
@@ -88,12 +88,14 @@
 | P9-D78 | M47/M48 customer denial on the unsafe legacy projection-row RPCs is a satisfied prerequisite. The known local/live migration-history mismatch is parked but must be reconciled before any future Unit 8 migration application. The freeze grants no implementation or migration authority. | owner-frozen 2026-08-20; Unit 8 SDD §§1/18/22 |
 | P9-D79 | The explicitly authorized smallest U8B correction is repository-only: provenance-qualified cover fallback, effective relevant policy cursor binding, bounded malformed-cursor handling, and disposable acceptance tests. M49 remains unapplied; migration-history reconciliation, Vault provisioning, live Supabase verification, and U8C are separately gated. | user-authorized 2026-08-20; Unit 8 SDD §§8–12/15/18–22 |
 | P9-D80 | Every publicly eligible inventory-media link has a unique non-null `public_order` in `1..3`. Both link changes and later asset-lifecycle transitions fail closed; pending/rejected links and private/staging assets may remain unordered. Q10/client expose at most three. `canonical_edition_exact` is reserved/unreachable in text-query v1. | user-authorized 2026-08-21; Unit 7B §6; Unit 8 §§7/15/20 |
-| P9-D81 | Unit 6G pre-scan setup requires location, initially selects English as a non-authoritative language hint, permits nullable condition and selling-price defaults, fixes quantity at 1 and currency to INR/whole-rupee UI, retains private/publish-later intent, and adds an optional durable session-only batch label. Remember-last-used settings and named presets remain deferred. | Owner-approved Group 1 target; contract/persistence locally verified 2026-08-21; UI remains pending |
+| P9-D81 | Unit 6G pre-scan setup requires location, initially selects English as a non-authoritative language hint, permits nullable condition and selling-price defaults (price required before Add), fixes quantity at 1 and currency to INR/whole-rupee UI, defaults publication intent to private under DOC-4 §5 and Phase 9 Master SDD §5, and adds an optional durable session-only batch label. Remember-last-used settings and named presets remain deferred. | Owner-approved Group 1 target; publication wording reconciled to higher-ranked source documents 2026-09-27; contract/persistence locally verified 2026-08-21; UI status recorded separately |
 | P9-D82 | Unit 6G uses one bounded session page with at most 15 compact cards. Every card shows all final review values, source indicators, a bounded metadata sheet, Remove, and Add; inherited values are subdued and exceptions are emphasized. Notes and Choose another match are absent from this UI. | Owner-approved target; Group 1 contracts only locally implemented; UI/card projection remains pending |
 | P9-D83 | Per-card Add and top-level Add all ready books are the only submit actions. Each explicitly confirms displayed values, performs strict canonical Save, and then invokes the existing independent M39 commit. Bulk work is bounded client orchestration with partial success, never an automatic or atomic batch database commit. | Owner-approved target; Group 1 preserves M39 seam; orchestration remains pending |
 | P9-D84 | General Remove from this scan requires a new persisted `owner_removed_from_scan` candidate disposition, distinct from false detection, input removal, inventory deletion, and stock removal. It has no cascade and no Unit 6G Undo/Restore. | Owner-approved; Group 1 persistence/RPC fence locally verified in un-applied M52 |
 | P9-D85 | Unit 6G preserves M39's one-private-row `q/q/0/0/0` contract and Unit 7C as the sole post-commit management surface. Publication intent does not auto-publish, batch label does not enter inventory, and successful commits must invalidate Store View list caches. | Owner-approved target; Group 1 confirms M39/Unit 7C unchanged; cache invalidation remains pending |
 | P9-D86 | When a selected coherent provider edition has no exact cover, Owner-private review may show one separately labelled `representative_edition` cover from a compatible alternate edition already in the same provider response. Exact selected metadata and canonical/public `cover_url` remain authoritative; no second request, metadata stitching, backfill, automatic inventory/publication effect, or duplicate-policy change is allowed. Google volume evidence is decoded; unresolved series evidence fails closed rather than treating an opaque provider series ID as a human series name. | user-approved bounded correction 2026-09-13; M61/M62 live, selector/contracts/full-path tests verified; matching runtime and connected proof pending |
+| P9-D87 | Post-scan title/author editors treat an unchanged normalized close as a no-op; compact bulk results use a wrapping whole-count hierarchy and an in-flow footer; and Store View requires explicit confirmation before the initial Publish command. This is client-only presentation/safety behavior: Save/M39 membership and Unit 7B lifecycle semantics remain unchanged. Cover projection, edition selection, font timeout, and transient read diagnosis are excluded. | user-authorized bounded correction 2026-09-22; local implementation and read-only browser proof complete |
+| P9-D88 | Full correction is opened from the relevant candidate card; remove the redundant session-header action that always opens the first candidate. | user-authorized bounded UI correction 2026-09-23; local implementation and read-only browser check complete |
 
 ## Source reconciliation
 
@@ -154,6 +156,19 @@ Audit performed read-only on 2026-07-19 after `get_project` verification.
 - [ ] Live migration application authorization and exact-project re-verification.
 
 ## Append-only planning log
+
+### 2026-09-22 — Post-scan and initial-Publish bounded correction
+
+- The Owner authorized only the confirmed no-op identity-editor defect, compact
+  bulk-result/footer density, and initial Store View Publish confirmation.
+- The correction does not change candidate readiness, Save/M39 orchestration,
+  Unit 7B lifecycle commands, cover projection, metadata requests, edition
+  selection, or the separately unproven transient-read/font issues.
+- Local red-first tests and read-only Codex-browser verification are complete.
+  No Publish confirmation was accepted, no Add was submitted, and no database,
+  Storage, migration, deployment, staging, commit, push, merge, or PR occurred.
+- Next action: Owner review of the local diff and open post-scan browser state;
+  Git publication or deployment requires separate authorization.
 
 ### 2026-08-21 — Unit 6G Group 1 approval and local implementation
 

@@ -1,12 +1,13 @@
 # DOC-8: Store Owner Console
 
-> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+> **Historical local PostgreSQL verification checkpoint (2026-09-12):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. At that checkpoint, M52–M59 were unchanged and M60 had not yet been applied remotely. No remote database/Storage or application data was touched in that run; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification was unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. This is historical test evidence, not a statement about current connected state.
 
 
-> **Status correction (2026-09-13):** The preceding 2026-09-12 paragraph is
-> historical. M60 was subsequently applied during the authorized development
-> rollout; M61 and M62 were later applied once, and matching runtime/connected
-> detail-projection proof remains pending.
+> **Historical rollout record (2026-09-13):** Subsequent authorized rollout
+> records list M60, M61, and M62 as applied once. This records migration/runtime
+> history only; it is not a fresh connected-state readback. See the Phase 9
+> implementation log for the later recorded session readback and current
+> verification boundary.
 
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
@@ -161,6 +162,8 @@ MVP features:
 - session defaults for condition, shelf/location, quantity, and private/publish
   preference; language is an optional target-design hint
 - numbered spine review, add-missed/remove-false, attention-only field highlighting, and marketplace preview
+- full correction is opened from its candidate card; there is no duplicate
+  session-header shortcut that always opens the first candidate
 - explicit Add to Inventory creates one new private inventory row per reviewed
   candidate; reviewed quantity initializes that row and never increments an
   existing row
@@ -175,12 +178,21 @@ The proposed Unit 6G refinement keeps this Inventory ownership while simplifying
 the active scan: required batch location; English-default optional language
 hint; optional condition/selling-price defaults; fixed quantity 1 and INR;
 optional session-only batch label; and one scrollable page of compact cards.
-Cards show every final value with Default/Detected/Custom/Missing cues; the
-internal `matched` source code is displayed as Detected rather than a separate
-Matched source badge,
-use a bounded metadata sheet, and provide Remove plus one Add action. A top Add
+Cards show every final value with Default/Detected/Custom/Missing cues; source
+cues for secondary values remain visible in both the collapsed summary and
+expanded details. The internal `matched` and `detected` source codes both use
+the concise visible label `Detected`; their distinct provenance remains in the
+underlying source code rather than separate visible “Matched” and “Vision”
+badges. Cards use a bounded metadata sheet and provide Remove plus one Add action. A top Add
 all ready books action runs independent save-then-commit commands with partial
 success. Store View remains the only rich post-commit management surface.
+
+Closing a compact title/author editor without a normalized value change creates
+no Custom draft marker. The compact bulk footer keeps expanded card controls
+reachable and presents whole, wrapping result counts rather than a dense status
+sentence. In Store View, the initial transition from Private to Publish requires
+an explicit Owner confirmation before the unchanged Unit 7B lifecycle command
+is dispatched; Cancel has no command or publication effect.
 
 Required filters:
 

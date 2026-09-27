@@ -60,6 +60,8 @@ versions. Groups 2–4 remain governed by their recorded authority. See [tracker
 | --- | --- |
 | Required location, English initial hint, optional condition/price, fixed quantity 1 and INR whole-rupee UI, optional session-only batch label | P9-D81; DOC-4 §§5/9; DOC-8 §5; Unit 6G §§5–7; U6G-AC01–AC04; IMG-20 |
 | One bounded session page, at most 15 compact cards, all final values, on-demand metadata, no notes/Choose another match, and one source mapping (`matched|detected`→Detected, `default`→Default, `custom`→Custom, `missing`→Missing) | P9-D82; DOC-4 §9; DOC-8 §5/CON-17; Unit 6G §§7–10; U6G-AC05–AC09; IMG-21 |
+| Closing title/author editing without a normalized value change creates no false Custom override; compact bulk results use exact whole plural labels, grouped wrapping counts, one live-region announcement, and an in-flow footer that preserves expanded-control reachability | P9-D87; DOC-4 §9; DOC-8 §5; Unit 6G §§9/13/21; U6G-AC23/U6G-AC32; focused post-scan and bulk-control regressions plus read-only Codex-browser proof |
+| Full-correction navigation is available from each candidate card without a duplicate header shortcut that unconditionally opens the first candidate | P9-D88; DOC-4 §9; DOC-8 §5; Unit 6G §§7/9/U6G-AC29; CaptureProgressScreens regression and read-only Codex-browser check |
 | Selected metadata sheet displays allowlisted cover, subtitle, bounded plain-text description, categories/genre, and explicit provider/processing/ambiguity/failure wording; it adds no cover toggle or scan-image fallback | Owner decision 2026-08-30; Unit 6G §§10/20; U6G-AC08; focused `batchReviewCard` metadata-sheet test |
 | `Use detected details` reuses existing `metadataChoice.mode="manual"` with null selection, copies only usable observed identity, commits no selected canonical/provider/cover fields through M39, and requires Edit manually when incomplete | Unit 6 strict review schema; Unit 7A §§5/7/11; Unit 6G §§10/18; matrix §§3.2/4.4; U6G-AC08 |
 | Per-card Add and Add all are explicit review actions; strict Save/current versions/server readiness precede each independent M39 commit; one candidate has one command slot and Add all skips/reports Busy rather than queueing locked cards | P9-D83; MAS-05/06; REV-01/04/05; DOC-3 §9; DOC-4 §§9–11; Unit 7A §§2–9; Unit 6G §§11–14; U6G-AC10–AC14; IMG-22; INV-19 |
@@ -266,7 +268,7 @@ tables as recorded in tracker 10.
 | Advisory duplicates; no image comparison; repeated spines retained | 01 Data; 03 Review | DAT-16–DAT-20; REV-07 |
 | Customer-request photos excluded from inventory duplicate identity | 01 Data; 06 Photo request | DAT-16–DAT-20; PHO-14 |
 | Quantity/price/location/condition before commit | 03 Review | REV-02–REV-05 |
-| Zero-price private inventory; positive-price publication | 03 Review | REV-02; REV-05 |
+| Price must be set before Add; explicit zero is valid for private inventory; positive minor-unit price is required only for publication | 03 Review; DOC-4 §9; Unit 7A §13; Unit 7B §2 | REV-02; REV-05 |
 | Preselected defaults | 03 Review; 02 Extraction | REV-06; EXT-06 |
 | Five conditions with explanations | 01 Data; 03 Review | DAT-21; REV-08 |
 | Damage separate; discount by price; photos 1–3 | 01 Data; 04 Media | DAT-22–DAT-25; MED-11 |
@@ -351,7 +353,7 @@ navigation cutover remain without implementation evidence and are not inferred.
 | Ordinary Save is exact-versioned, idempotent, synchronous, transactional, and rollback-safe | P9-D74; Unit 7C §§2/6; U7C-C |
 | Stock is separate and preserves buckets/holds; live zero stock projects unavailable without failing lifecycle | P9-D74; DOC-3 §§6.2/7–8; Unit 7C §7; U7C-D/H |
 | Media replacement retains approved public media until an atomic safe swap | P9-D74; Unit 7B §6; Unit 7C §8; U7C-E/H |
-| Unit 7B lifecycle commands and intent fencing are reused without a second path | Unit 7B §§3–5/8–15; Unit 7C §9; U7C-F |
+| Unit 7B lifecycle commands and intent fencing are reused without a second path; initial Store View Publish is client-confirmed, Cancel dispatches nothing, and confirm calls the unchanged Publish command once | P9-D87; Unit 7B §§3–5/8–15; Unit 7C §9; U7C-F; Store View management regression and read-only Codex-browser confirmation/cancel proof |
 | Attention, effective state, and capabilities are server-derived; Out of Stock is operational | P9-D73/74; Unit 7C §§2/4–5; U7C-B |
 | Store View filters use the authoritative UI bucket before stable keyset pagination (`needs_attention` = `attentionState/action_required`; other named states = `effectiveState`) and bind cursor context to actor, store, and filter | Unit 7C §§5/13–15; M44; U7C-B/H; WU2A integration and real PostgreSQL filter proof |
 | Owner-approved committed metadata cannot be silently overwritten or mutate canonical/provider truth | DOC-3 §5.3; DOC-4 §11; Unit 7C §§2/10; U7C-C |

@@ -119,13 +119,13 @@ the route remains mounted as Unit 6 processing completes.
 
 | Field | Display | Editor | Draft source precedence | Required before Add | Source badge |
 | --- | --- | --- | --- | --- | --- |
-| Cover | 56–72 px bounded thumbnail/placeholder | None | selected metadata/observed allowlisted reference → missing | No | Provider matched, Vision detected, or Missing; never scan image |
-| Title | Full screen-reader value; visually bounded lines | Plain text inline/manual | saved custom → selected metadata/observed → missing | Yes | Custom, Provider matched, Vision detected, or Missing |
-| Authors | Ordered accessible list; “Author unknown” allowed | Simple ordered fields/add/remove | saved custom → selected metadata/observed → missing | Decision required; empty confirmed array permitted | Custom, Provider matched, Vision detected, or Missing |
+| Cover | 56–72 px bounded thumbnail/placeholder | None | selected metadata/observed allowlisted reference → missing | No | Detected for internal `matched` or `detected`, or Missing; never scan image |
+| Title | Full screen-reader value; visually bounded lines | Plain text inline/manual | saved custom → selected metadata/observed → missing | Yes | Custom, Detected for internal `matched` or `detected`, or Missing |
+| Authors | Ordered accessible list; “Author unknown” allowed | Simple ordered fields/add/remove | saved custom → selected metadata/observed → missing | Decision required; empty confirmed array permitted | Custom, Detected for internal `matched` or `detected`, or Missing |
 | Metadata status | Provider metadata selected / Manual metadata / No provider match / Metadata processing / Multiple possible matches / Metadata temporarily unavailable / Metadata failed | Metadata sheet | current metadata state/revision | Terminal selected/manual path | State label only; not a field-source badge |
-| Language | Canonical language label/code | Searchable dropdown | saved custom → selected metadata/observed → session hint → missing | Yes | Custom/Provider matched/Vision detected/Default/Missing |
+| Language | Canonical language label/code | Searchable dropdown | saved custom → selected metadata/observed → session hint → missing | Yes | Custom/Detected/Default/Missing |
 | Condition | Label plus help marker | Five-value dropdown | saved review → session default | Yes | Custom/Default/Missing |
-| Selling price | Locale-aware `₹` whole amount | Preset/custom picker | saved review → session default | Yes; 0 only private | Custom/Default/Missing |
+| Selling price | Locale-aware `₹` whole amount | Preset/custom picker | saved review → session default | Yes; explicit ₹0 is valid for private Add; publication requires positive minor-unit price | Custom/Default/Missing |
 | Quantity | Integer | Stepper with accessible +/- and direct bounded entry fallback | saved custom → server-fixed 1 | Yes, 1..10,000 | Custom/Default |
 | Location | Batch/custom summary | `Use batch location` / `Custom` text | saved custom → batch location → missing | Yes | Custom/Default/Missing |
 | Publication intent | Private/Prepare to publish | Segmented selector | saved custom → session intent → missing | Yes | Custom/Default/Missing |
@@ -484,12 +484,14 @@ allowed actions, or commit eligibility.
 
 | Internal source | Visible badge | Canonical meaning |
 | --- | --- | --- |
-| `matched` | Provider matched | Current selected metadata/identity match contains a usable value for this field; it remains distinct from vision output |
-| `detected` | Vision detected | Current bounded observed identity |
+| `matched` | Detected | Current selected metadata/identity match contains a usable value for this field |
+| `detected` | Detected | Current bounded observed identity |
 | `default` | Default | Persisted session default |
 | `custom` | Custom | Saved/mounted per-card override |
 | `missing` | Missing | Final value absent/unusable |
 
+The internal `matched` and `detected` provenance codes remain distinct even
+though both use the single visible `Detected` badge, as required by DOC-8.
 Every field follows saved custom → selected/observed → applicable session
 default → missing. Metadata status `Matched` is a state label, not a source
 badge. The server is authoritative for persisted source codes; the client may

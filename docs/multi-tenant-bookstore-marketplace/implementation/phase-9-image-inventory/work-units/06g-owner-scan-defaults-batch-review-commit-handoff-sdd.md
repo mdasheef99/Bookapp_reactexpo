@@ -259,9 +259,9 @@ The setup screen owns the following exact effective values:
 | Location | Required select-or-enter field | No hidden fallback; Start is disabled until non-empty | Durable session default; copied to `shelfLocation` unless a card overrides it |
 | Language | Optional-feeling searchable dropdown | English (`en`) is preselected, so Owner interaction may be unnecessary; `StartScanSessionV2Request.languageHint` is nevertheless a required non-null request field and remains a hint/fallback, never forced candidate identity | Durable session hint; valid detected candidate language wins and is labelled Detected |
 | Condition | Optional five-value dropdown | `Not set`, New, Like New, Very Good, Good, Acceptable | Nullable durable session default; `Not set` makes each card require a condition |
-| Selling price | Optional whole-rupee picker | `Not set` initially unless the Owner chooses a value | Nullable durable `default_price_minor`; inherited by cards and still revalidated on Save |
+| Selling price | Optional whole-rupee picker | `Not set` initially unless the Owner chooses a value | Nullable durable `default_price_minor`; inherited by cards and still revalidated on Save. If set pre-scan, displayed as default post-scan. If not set pre-scan, Owner must set before Add (required for inventory display). |
 | Quantity | No pre-scan editor | Fixed at `1` | Existing durable session default remains `1`; each card has a post-scan stepper |
-| Publication intent | Two-state segmented control | Save private initially; Owner may choose Prepare to publish later | Durable `private|publish` intent only; Unit 7A still creates private inventory |
+| Publication intent | Two-state segmented control | Save private initially; Owner may choose Prepare to publish | Durable `private|publish` intent only; Unit 7A creates inventory ready for display |
 | Batch label | Optional text | Empty | Durable session-only Owner label; not copied to inventory and never affects readiness |
 | Currency | No selector | Fixed INR, displayed as `₹` | No currency column is added; canonical money remains integer minor units |
 | Script | No control | Server-owned, derived, and nullable from detected/reviewed language and text when available; it is never an Owner-entered setup value | Existing nullable session/candidate/review lineage is preserved |
@@ -302,9 +302,12 @@ The picker uses INR and whole rupees:
 
 The UI multiplies the rupee value by 100 exactly and submits an integer
 `priceMinor`. It never uses floating-point currency arithmetic and never asks
-the Owner for paise. `Not set` is null and differs from an explicit ₹0. The
-existing rule remains: ₹0 may be saved only for private intent and cannot
-publish; positive price is required before later publication.
+the Owner for paise. `Not set` is null and differs from an explicit ₹0. A
+selling price must be set before Add, but an explicit ₹0 is valid for private
+inventory. Only publication requires a positive price in minor units (Unit 7B
+§2); Unit 7A Add creates private inventory only (Unit 7A §13). If the Owner
+sets a price pre-scan, it is inherited by all cards as the default. If not set
+pre-scan, the Owner must set a price on each card before Add.
 
 ## 7. Default inheritance and field-source rules
 
@@ -324,8 +327,8 @@ displayed business field. The internal code-to-badge mapping is normative:
 
 | Internal source code | Visible badge | Meaning |
 | --- | --- | --- |
-| `matched` | `Provider matched` | The current selected metadata/identity match contains a usable value for this field; the provider match is explicitly distinguished from vision output. |
-| `detected` | `Vision detected` | The current bounded observed identity is the source. |
+| `matched` | `Detected` | The current selected metadata/identity match contains a usable value for this field. |
+| `detected` | `Detected` | The current bounded observed identity is the source. |
 | `default` | `Default` | The value is inherited from the persisted session default. |
 | `custom` | `Custom` | The Owner's saved per-card value overrides the observed/selected/default value. |
 | `missing` | `Missing` | The final value is absent or cannot yet be used. |
@@ -416,6 +419,8 @@ linguistic variants, proposal/source changed-authority comparison and explicit
 Reapply, and any edit that compact controls cannot safely represent. The
 existing missed-book route remains reachable from the combined session. This
 does not restore `Choose another match`; metadata rematching remains excluded.
+Full correction opens from the relevant candidate card; the session header does
+not duplicate that action by opening the first candidate.
 
 Successful commits leave the active card list after authoritative success.
 They remain represented by the Added count and server close summary. Failed or
@@ -463,17 +468,17 @@ default.
 
 | Card element | Display/edit behavior |
 | --- | --- |
-| Cover | Allowlisted metadata cover thumbnail with the `Provider matched` or `Vision detected` source badge when its internal source is `matched` or `detected`, or a `Missing` placeholder; never scan media |
-| Title and authors | Full accessible value, visually bounded summary; tap opens simple inline/manual edit |
+| Cover | Allowlisted metadata cover thumbnail with the `Detected` source badge when its internal source is `matched` or `detected`, or a `Missing` placeholder; never scan media |
+| Title and authors | Full accessible value, visually bounded summary; tap opens simple inline/manual edit; closing an unchanged normalized value is a no-op and must not create a Custom override |
 | Metadata status | Provider metadata selected, Manual metadata, No provider match, Metadata processing, Multiple possible matches, Metadata temporarily unavailable, or Metadata failed; opens metadata sheet |
-| Language | Searchable dropdown; source chip shows Provider matched, Vision detected, Default, or Custom |
+| Language | Searchable dropdown; source chip shows Detected, Default, or Custom |
 | Condition | Exact five-value dropdown with accessible explanations |
 | Selling price | Whole-rupee preset/custom picker from §6 |
 | Quantity | Stepper, initial default 1, existing server bound enforced |
 | Location | `Use batch location` or `Custom`; custom uses bounded text input |
 | Publication intent | `Private` or `Prepare to publish`; explanatory text says commit remains private |
 | Damage | No damage / Has damage segmented control; Yes expands exact existing type/note/sellability/complete-readable-safe fields |
-| Source markers | Default, Provider matched, Vision detected, Custom, or Missing per §7; provider and vision sources remain distinct |
+| Source markers | Default, Detected, Custom, or Missing per §7; internal `matched` and `detected` provenance codes remain distinct |
 | Metadata action | `View metadata` |
 | Full correction action | `Open full correction`; routes to the existing Unit 6 candidate-detail controller for false detection, variants, stale compare/Reapply, and edits unsafe for compact controls |
 | Removal action | `Remove from this scan`, visually secondary/destructive and confirmation-gated |
@@ -689,6 +694,13 @@ Failed/retryable, and Still processing counts. The button may run again only
 for the newly computed ready set; already committed candidates cannot be
 repeated. A server-side race that wins after local slot claim is reported as a
 stale/state result and cannot create a duplicate inventory row.
+
+The mounted result presents its added-book heading, outcome counts, and complete
+remaining-review sentence as grouped wrapping elements with one exact live-region
+announcement. The footer remains compact and in normal layout flow so expanded
+price, condition, and other card controls remain reachable above it. These are
+presentation/accessibility requirements only; they do not change membership,
+concurrency, retry, Save, or M39 commit behavior.
 
 This is a narrow prospective specialization of Unit 7A's “no batch action”
 wording. If this SDD is approved, the prohibited behavior remains automatic or
@@ -991,7 +1003,8 @@ counters are presentation only.
 - All values remain available to screen readers even when visually truncated.
 - Edit controls have visible labels, 44×44 targets, logical focus order, exact
   selected/disabled/busy state, and non-color source/attention indicators.
-- The top action announces the exact ready count and running/result counts.
+- The top action announces the exact ready count and running/result counts; the
+  visual result uses whole pluralized labels and wraps without splitting words.
 - Removal confirmation receives focus and explains that no photo or existing
   inventory is deleted.
 - Large text reflows cards vertically; no required field/action depends on a
@@ -1053,16 +1066,16 @@ business-outcome authority.
 | U6G-AC20 | Cross-store, same-store-noninitiator, random-ID, stale-version, changed-replay, forbidden-field, closed/closing/expired-status, and active-with-past-expiry mutation tests fail closed without effects. This lifecycle fence covers final Save/Add/Remove plus manual-candidate, skip/false-detection, and variant decision/replacement RPCs; non-mutable session reads advertise only read-only actions. |
 | U6G-AC21 | Scan/private/provider/job/attempt/cost data cannot leak through cards, metadata, logs, telemetry, or public media. |
 | U6G-AC22 | The supported 15-card maximum remains responsive with virtualized compact rendering, on-demand metadata, bounded polling, and bounded commits. |
-| U6G-AC23 | Screen reader, focus, 44×44 target, large-text, non-color status, busy/result announcement, and removal-dialog gates pass. |
+| U6G-AC23 | Screen reader, focus, 44×44 target, large-text, non-color status, exact whole-count busy/result announcement, wrapping result hierarchy, compact in-flow footer reachability, and removal-dialog gates pass. |
 | U6G-AC24 | Unit 7C remains the sole post-commit editor; Unit 6G adds no Store View table/lifecycle/media/stock command. |
 | U6G-AC25 | Unit 6 remains mounted or explicitly delegated intact as lifecycle controller; a candidate-only aggregate never becomes the sole session controller, and primary-screen changes require lifecycle-equivalence proof. |
 | U6G-AC26 | The combined route presents exactly ONE current image/input and uses Unit 6 session/input authority for upload, registration, sanitation, vision, pre-candidate failure/recovery/replacement; zero candidates never implies lifecycle completion or a dead end, and no append-image or multi-image session flow exists. |
 | U6G-AC27 | One logical Start v2 attempt keeps one semantic identity across lost/ambiguous response and explicit replay; async picker/camera/network completions are generation/identity fenced, and only a reconciled deliberate new Start obtains a new identity. |
 | U6G-AC28 | An active zero-input session resumes to camera/gallery selection and can continue; it never lands on an unrecoverable zero-card candidate page. |
-| U6G-AC29 | Compact review is primary but existing full correction remains reachable for false detection, variants, changed-authority compare/Reapply, missed books, and unsafe-to-compact edits; general Remove remains distinct and `Choose another match` is not invented. |
+| U6G-AC29 | Compact review is primary but existing full correction remains reachable from each relevant candidate card for false detection, variants, changed-authority compare/Reapply, missed books, and unsafe-to-compact edits; the session header does not duplicate navigation to the first candidate; general Remove remains distinct and `Choose another match` is not invented. |
 | U6G-AC30 | Unit 6G uses `read_scan_session_v3` and `close_scan_session_v3` consistently for session/readiness/Close surfaces; nullable-v2 fencing is compatibility only, `languageHint` is required/non-null, and script is server-derived/nullable rather than setup input. |
 | U6G-AC31 | Every new private Unit 6G query root joins Unit 6 identity/store/logout cancellation, removal, request fencing, and stale-result rejection in NEW 6G-C, not a later work unit. |
-| U6G-AC32 | An unsaved mounted field override displays a local Custom marker instead of a stale persisted source badge, but the marker cannot manufacture server readiness or commit authority; location source remains exactly default/custom/missing. |
+| U6G-AC32 | An unsaved mounted field override displays a local Custom marker instead of a stale persisted source badge, but closing title/author editing without a normalized value change creates no override or false edit marker; the marker cannot manufacture server readiness or commit authority, and location source remains exactly default/custom/missing. |
 | U6G-AC33 | The currently mounted production route proves two executable branches: (A) Start through candidate arrival/enrichment, recovery refreshes, compact/full review, per-book Add with returned `inventoryId` and canonical inventory readback, partial-failure retry, strict all-committed automatic v3 Close, and manual partial Close; and (B) a separate pre-lineage terminal input failure through deliberate replacement and resumed processing. The over-limit case proves one image with >15 detected books returns `P9_VISION_OVER_LIMIT`, creates zero candidates, shows bounded failure guidance, and preserves Unit 6 replacement/recovery so a replacement image with <=15 books can continue normally. |
 | U6G-AC34 | No live client verification is PASS until the exact reviewed Owner Edge bundle is deployed and read back with all five Unit 6G actions; local source, M52 application, or a client build is not deployment evidence. |
 
@@ -1198,8 +1211,9 @@ synchronization have one explicit owner each.
 The SDD fixes the formerly ambiguous points as follows:
 
 - condition is optional pre-scan and required before a card can be submitted;
-- price is optional pre-scan, means selling price, and is whole-rupee INR UI
-  over minor-unit storage;
+- price is optional pre-scan but must be set before Add; explicit ₹0 is valid
+  for private inventory, while publication requires positive minor-unit price
+  under Unit 7B §2; the picker is whole-rupee INR over minor-unit storage;
 - quantity is fixed at 1 pre-scan and editable post-scan;
 - Add/Add all are explicit review actions and always Save before commit;
 - Ready in the UI does not bypass server `reviewReady`;
@@ -1207,14 +1221,22 @@ The SDD fixes the formerly ambiguous points as follows:
 - `Use detected details` means existing `manual` metadata choice with a null
   selection, so canonical/selected cover and provider provenance are not
   committed; unusable observed identity stays manual-required;
-- `matched` and `detected` are distinct source codes whose visible badges are
-  `Provider matched` and `Vision detected` respectively;
+- `matched` and `detected` remain distinct internal source codes, both shown
+  with the concise `Detected` badge under DOC-8; `default`, `custom`, and
+  `missing` remain `Default`, `Custom`, and `Missing`;
 - one candidate has one active command slot; Add all skips and reports busy
   cards, and server disposition/version fences prevent removal/commit races;
 - v3 Close returns the safe-integer owner-removed lifetime count while v2 Close stays
   unchanged; and
 - general removal is a new durable disposition, not false detection; and
 - batch label is session-only.
+
+**2026-09-28 local implementation deviation:** The current mobile/Edge review
+schemas and existing SQL still reject explicit ₹0 when the retained intent is
+`publish`, even though Unit 7A Add creates private inventory. The compact cover
+thumbnail also does not render the `Detected` badge specified in §9. The Owner
+authorized Git publication with these gaps recorded, without changing these
+requirements or authorizing migration, deployment, or connected proof.
 
 The supported product boundary is one current image. For 1..15 detected books,
 Unit 6 processing proceeds normally and the compact review set remains bounded

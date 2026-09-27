@@ -1,12 +1,13 @@
 # DOC-4: Image-to-LLM Inventory Workflow
 
-> **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
+> **Historical local PostgreSQL verification checkpoint (2026-09-12):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. At that checkpoint, M52–M59 were unchanged and M60 had not yet been applied remotely. No remote database/Storage or application data was touched in that run; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification was unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. This is historical test evidence, not a statement about current connected state. No product behavior or inventory duplicate policy changed.
 
 
-> **Status correction (2026-09-13):** The preceding 2026-09-12 paragraph is
-> historical. M60 was subsequently applied during the authorized development
-> rollout; M61 and M62 were later applied once, and matching runtime/connected
-> detail-projection proof remains pending.
+> **Historical rollout record (2026-09-13):** Subsequent authorized rollout
+> records list M60, M61, and M62 as applied once. This records migration/runtime
+> history only; it is not a fresh connected-state readback. See the Phase 9
+> implementation log for the later recorded session readback and current
+> verification boundary.
 
 **Product:** BookConnect
 **Spec Suite:** Multi-Tenant Bookstore Marketplace
@@ -240,7 +241,16 @@ Mandatory minimal fields:
 - damage yes/no;
 - private/publish action.
 
+Selling price must be set before Add. An explicit ₹0 is valid for private
+inventory; publication requires a positive selling price in minor units. Add
+creates private inventory only and does not publish it. First-publication
+intent defaults to Private for a first session, as described in §5; Unit 7B
+owns the separate publication action and its positive-price gate.
+
 Extended bibliographic/acquisition fields are collapsed. Owner may add a missed candidate, remove a false candidate, correct metadata/aliases, and preview the future marketplace card.
+
+Full correction is opened from the relevant candidate card. The session header
+does not provide a duplicate shortcut that always opens the first candidate.
 
 The proposed Unit 6G review surface is one bounded session page with at most 15
 compact cards. Every card shows the final review values, source/default markers,
@@ -249,6 +259,12 @@ match are absent from this UI. Per-card Add and Add all ready books explicitly
 confirm the displayed values, perform strict canonical Save, and only then call
 the existing independent Unit 7A commit. Bulk partial success is expected; no
 automatic or session-atomic commit is introduced.
+
+Opening and closing an inline title or author editor without changing the
+normalized value is a no-op: it must not create a local Custom override or claim
+that an edit will be saved. Bulk outcomes keep every count intact in a grouped,
+wrapping result region and announce one complete result sentence; this is a
+presentation/accessibility rule and does not alter independent commit semantics.
 
 Conditions are New, Like New, Very Good, Good, and Acceptable, with an accessible explanation for all except New. Damage is separate. A sellable damaged copy requires a public note, damage types, and 1-3 approved actual-copy photos; an unsafe/incomplete/unreadable copy remains private.
 

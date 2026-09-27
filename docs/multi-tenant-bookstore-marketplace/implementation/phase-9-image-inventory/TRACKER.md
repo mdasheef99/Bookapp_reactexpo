@@ -1,20 +1,65 @@
 # Phase 9 Master Tracker
 
-> **2026-09-15 connected-proof continuation:** The Owner removed all 15 active
+> **2026-09-28 Unit 6G Git-publication handoff:** The Owner authorized commit
+> and direct push of the local post-scan and separate Store View changes, with
+> the price-intent and cover-source deviations explicitly deferred. Current
+> local verification passed 10 affected Jest suites/158 tests, TypeScript,
+> Phase 9 continuity, and `git diff --check`. No connected-state readback,
+> database/Storage mutation, or deployment occurred. The latest recorded
+> connected readback is still 2026-09-22. Next action after Git publication:
+> Owner decision on the two deviations before deployment or connected proof.
+
+> **2026-09-27 Unit 6G local correction and documentation handoff:** The
+> bounded post-scan corrections A–C and final buffered-edit Add guard are
+> implemented. Prior local reports record 6 suites/116 tests for A–C and 3
+> targeted suites/77 tests for the final Add guard; these scopes overlap and
+> are not additive. TypeScript passed in the prior implementation report.
+> This handoff reconciles price/source labels and status snapshots; the
+> continuity validator and `git diff --check` passed here. Jest and TypeScript
+> were not rerun.
+> Latest recorded connected readback remains 2026-09-22 (two private commits,
+> three candidates in review); no connected state was checked in this local
+> work. Next exact action: Owner review of the combined local diff. No database,
+> Storage, deployment, staging, commit, or push occurred in this handoff.
+
+> **2026-09-23 local bounded review-navigation correction:** P9-D88 removes
+> the redundant session-header shortcut to the first candidate; each card keeps
+> its own full-correction route. The focused screen regression passes 15/15,
+> TypeScript passes, and the mounted Codex browser confirms the header action is
+> absent while per-card correction remains visible. No server contract,
+> database, inventory, deployment, or Git publication changed. Next local action:
+> Owner review of the diff and open browser; publication remains separately
+> authorized.
+
+> **2026-09-22 local bounded UI correction:** P9-D87 is implemented locally
+> without changing server contracts: unchanged title/author editor exits are
+> no-ops, bulk-result counts wrap in a compact in-flow footer, and initial Store
+> View Publish is confirmation-gated before the existing Unit 7B command. The
+> affected Jest run passes **7 suites / 93 tests**; TypeScript, Phase 9
+> continuity validation, and `git diff --check` pass.
+> Read-only Codex-browser proof confirmed Publish-dialog Cancel leaves the item
+> Private, unchanged identity exits show zero edit markers, and price/condition/
+> quantity controls remain reachable. No Add/Publish confirmation, external
+> mutation, migration, deployment, or Git publication occurred. The Phase 9
+> representative-cover connected-proof gate is unchanged; next for this local
+> work is Owner diff/browser review, then separately authorized Git publication
+> or deployment.
+
+> **Historical connected-proof snapshot (2026-09-15; superseded by the 2026-09-22 connected record in implementation log):** The Owner removed all 15 active
 > candidates from the prior `LIVE-TEST-20260912-REPRO` session through the UI,
 > then closed it from Session summary. The authoritative summary readback was
 > 15 detected, 15 removed from scan, and 0 committed inventory items. The
 > processed image itself remained because the input-removal guard uses accepted
 > candidate lineage. A new session `93567d47-3874-4576-b3b4-1adb044b552b` was
 > started with `Phase9 proof shelf`; its gallery image registered, uploaded,
-> processed, and produced 5 candidates. The connected review readback is
+> processed, and produced 5 candidates. The connected review readback at that checkpoint was
 > 5 detected, 1 ready after one saved review of `The Birth of Tragedy` with
 > test values ₹0/Good, 4 needing review, and 0 added. One private scan-image
 > object was uploaded by the normal Owner flow; no Storage deletion or manual
 > dispatch change was made. Next authorized action: Owner review/correction of
 > the remaining four candidates, followed by separately authorized Add actions
 > if desired. Traceability: Phase 9 Master SDD §6 and Extraction/Enrichment SDD
-> §10.
+> §10. This is historical evidence, not a current connected-session assertion.
 
 > **Historical pre-session-cleanup runtime rollout checkpoint:**
 > Owner Edge v14 is active in verified development project
@@ -143,23 +188,24 @@
 > **Historical local PostgreSQL verification checkpoint (superseded by the connected closeout above) (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
 
 
-**Planning status:** `unit6h_representative_cover_correction_approved`
-**Implementation status:** `unit6h_runtime_rollout_complete_connected_proof_blocked_by_existing_active_scan`
+**Planning status:** `unit6h_representative_cover_correction_approved` (historical Unit 6H planning decision)
+**Implementation status:** `unit6g_post_scan_local_corrections_complete_pending_owner_review`
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS
-**Last updated:** 2026-09-14
-**Current milestone:** Unit 6H duplicate confirmation remains live through its recorded development proof. M60, M61, and M62 are live once, Owner Edge v14 and the matching metadata worker are active, and the local client reached the existing `LIVE-TEST-20260912-REPRO` scan. Connected representative-cover proof remains blocked because the existing scan already contains one processed image and 15 candidates, so a new upload requires a clean Owner session/store or explicit authorization to remove that image.
-**Active work unit:** `unit6h_representative_cover_m62_rollout_follow_up`
+**Last updated:** 2026-09-28
+**Current milestone:** Unit 6G post-scan local corrections and Store View Publish confirmation are Owner-authorized for Git publication with two known deviations deferred. A–C and the final buffered-edit Add guard are locally implemented; current local verification passed 10 affected Jest suites/158 tests, TypeScript, continuity, and diff hygiene. The latest recorded connected session readback remains 2026-09-22 (two private commits, three candidates in review). No current connected state is asserted.
+**Active work unit:** `Unit 6G — Git-publication handoff with recorded price-intent and cover-source deviations`
 **Prior local-only overlay:** Unit 6H changes future duplicate inputs from terminal rejection to an Owner-confirmed warning. Local branch `codex/phase9-duplicate-confirmation` added forward M60, direct Edge/client contract changes, cleanup/dispatch protection, and tests. M60 was subsequently applied before this diagnostic under prior authorization; no migration action was taken in this diagnostic. See [Unit 6H](./work-units/06h-duplicate-input-confirmation.md).
-**Environment:** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact Supabase project is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
+**Environment (last recorded verification, 2026-09-14; reverify before operational use):** Development application with a shared remote Supabase development project; this is not a production deployment and has no external production app consumers. The exact project recorded then is **`Bookconnect_reactexpo`** (project ref **`ahntbtktjjmvfosgkmgn`**, `ACTIVE_HEALTHY`, PostgreSQL `17.6.1.063`, `ap-southeast-2`). No current project health was checked in this handoff. In this tracker, “live” means readback against that development project. “Legacy consumer” means a stale repository-internal screen/service path, not a deployed customer application that must remain backward-compatible.
 **Auth prerequisite status:** `auth_hardening_core_wu1_wu2_locally_complete`
-**Last completed:** The full-Jest correction passes the reporter's exact 5-suite/48-test reproduction, image-inventory 61 suites/494 tests with one suite/four tests skipped, and the complete 304-suite/2,483-test run with only the same skips; Jest exits normally. A separate `--detectOpenHandles --silent` run has the same totals with no persistent handle/force-exit/one-second non-exit warning. TypeScript and diff hygiene pass. The bounded M62/runtime correction evidence remains unchanged: affected Jest 310/310, worker build, structural metadata 14/14, M55 7/7, and full M52–M62 PGlite 2/2. The normal full run still emits existing React `act(...)` and NetInfo warnings plus Node `DEP0040`; these remain unresolved test/tooling hygiene warnings, not product-test failures.
-**Next authorized action:** Obtain a clean Owner session/store or explicit authorization to remove the existing `LIVE-TEST-20260912-REPRO` image; then run one connected selected-edition-without-cover detail/save/review plus explicit Add/public-projection readback.
+**Migration-status qualification:** Migration versions and “live once” wording below are historical rollout/readback records. No database or migration state was queried in this handoff; reverify before operational use.
+**Prior implementation verification summary (historical test evidence):** The full-Jest correction passes the reporter's exact 5-suite/48-test reproduction, image-inventory 61 suites/494 tests with one suite/four tests skipped, and the complete 304-suite/2,483-test run with only the same skips; Jest exits normally. A separate `--detectOpenHandles --silent` run has the same totals with no persistent handle/force-exit/one-second non-exit warning. TypeScript and diff hygiene passed in that implementation work. The bounded M62/runtime correction evidence remains unchanged: affected Jest 310/310, worker build, structural metadata 14/14, M55 7/7, and full M52–M62 PGlite 2/2. The normal full run still emits existing React `act(...)` and NetInfo warnings plus Node `DEP0040`; these remain unresolved test/tooling hygiene warnings, not product-test failures.
+**Next authorized action:** After the Owner-authorized Git publication, obtain an Owner decision on the recorded price-intent and cover-source deviations before deployment or connected proof. Any connected proof requires fresh read-only session-state verification and separate authorization; database, Storage, and deployment mutations remain unauthorized.
 **Migration note:** M29 is live once as `20260730162700 marketplace_phase9_owner_safe_contracts`; M30 is live exactly once as `20260801093048 marketplace_phase9_unit6e_review_corrections`; M31-M51 remain live at their recorded versions; **M52 remains live exactly once as `20260822025712 marketplace_phase9_unit6g_contract_persistence_foundation` and byte-immutable**. M53 is live exactly once as `20260828081324 marketplace_phase9_unit6g_field_authority_correction`; M54 as `20260829142337 marketplace_phase9_unit6g_session_lifecycle_fence`; M55 as `20260830084323 marketplace_phase9_unit6g_metadata_add_authority_correction`; M56 as `20260830175651 marketplace_phase9_metadata_throughput`; M57 as `20260908073203 marketplace_phase9_media_output_intents`; M58 as `20260908073308 marketplace_phase9_media_completion_receipts`; M59 as `20260908073425 marketplace_phase9_media_output_cleanup`; M60 as `20260912072815 marketplace_phase9_duplicate_confirmation`; M61 as `20260913111342 marketplace_phase9_representative_edition_cover`; and M62 as `20260913162154 marketplace_phase9_representative_cover_detail_projection`.
 **Scope boundary:** Unit 6H review covers the duplicate warning, new-upload Proceed/Cancel semantics, exact private-object verification, completion replay, cleanup/dispatch fencing, UI confirmation lifecycle, and disposable independent-connection PostgreSQL behavior. M52–M59 behavior remains unchanged; connected rollout and live Edge/Storage proof are not established. Unit 8 remains complete.
 **Implementation authority:** Unit 6H local implementation, bounded correction, disposable PostgreSQL verification, exact Edge reconciliation, and duplicate-Proceed review handoff are complete for this checkpoint. F-01 is retracted; F-02 and F-03 are corrected. The Unit 6H work unit is the detailed authority; M52–M59 remain immutable live evidence. Further data/Storage, dispatch, or job mutation requires connected-test authorization. Native Unit 6F validation remains deferred and unrelated.
-**Migration creation/application authority:** M61 and M62 application are complete and verified. M52–M62 application history remains immutable live evidence; no historical migration was edited or replayed. Further schema, data, Storage, dispatch, or job mutation requires separate authorization.
+**Migration creation/application authority:** Prior records document M61 and M62 application and verification; M52–M62 migration history was not re-read in this handoff. No historical migration was edited or replayed. Further schema, data, Storage, dispatch, or job mutation requires separate authorization.
 **Migration-history prerequisite:** the canonical mapping and independent divergence review remain preserved as evidence in [migration-canonical-reconciliation-2026-08-21.md](./supporting/migration-canonical-reconciliation-2026-08-21.md); no ledger repair was required.
-**Current gate:** `M62_CONNECTED_PROOF_BLOCKED_BY_EXISTING_ACTIVE_SCAN`; M60–M62, Owner Edge v14, and the matching metadata worker are live, while the local client proof cannot register a new input until the existing active scan is cleared through an approved path.
+**Current gate:** Git publication is authorized for the local changes with two recorded deviations. The latest recorded connected session readback is 2026-09-22; current session, migration, Edge, and worker state were not checked. Any new connected proof starts with a fresh read-only state check; mutations require separate authorization.
 
 ## 2026-09-12 — Unit 6H bounded correction and documentation closeout
 
@@ -2611,3 +2657,111 @@ provider fallback, or create global alias authority.
 - Next exact authorized action: obtain separate authorization for integrated
   Unit 7C review and connected Edge→DB verification. Deployment, push, and
   business-row mutation remain separately gated.
+
+## 2026-09-16 — Unit 6G bounded post-scan UI correction (local)
+
+- Confirmed and corrected only the post-scan issues within the Unit 6G compact
+  card contract: bulk-action overlap, blank title editing, missing accessible
+  author controls, read-only secondary fields, incomplete damage detail
+  editing, and enabled Add on invalid drafts.
+- Verification: focused Jest 7 suites/81 tests PASS; TypeScript PASS; diff
+  check PASS; local mobile/desktop browser verification PASS. Existing
+  VirtualizedList `act(...)` and Node `DEP0040` warnings remain tooling
+  warnings.
+- Boundary: no Supabase/Storage/database/provider/migration/deployment or live
+  scan mutation; nothing staged, committed, pushed, merged, or opened as a PR.
+  The global Phase 9/Unit 6H status and connected-proof gate are unchanged.
+- Next exact authorized action: independent owner review of this local diff;
+  obtain separate authorization before staging/committing, deploying, or
+  running connected proof.
+
+## 2026-09-21 — Unit 6G post-scan UI polish and draft feedback (local)
+
+- Scope remained limited to the approved compact post-scan card contract in
+  Unit 6G SDD §§8–9.1, §12, and §21. The correction adds field-level draft
+  validation, status/attention feedback from the current mounted draft,
+  clearer inline title/author editing cues, calmer secondary action hierarchy,
+  and precise invalid custom-price guidance. Cover fallback, edition
+  selection, backend, migration, deployment, and connected-data behavior were
+  not changed.
+- Verification: focused Image Inventory Jest **7 suites / 96 tests PASS**;
+  TypeScript `npx.cmd tsc --noEmit --allowImportingTsExtensions` PASS;
+  `git diff --check` PASS; full Jest **304 suites PASS / 1 skipped,
+  2,485 passed / 4 skipped tests (2,489 total)**. The attempted live browser
+  opening was interrupted before visual acceptance; no browser-pass claim is
+  made for this polish.
+- Boundary: no Supabase/Storage/database/provider/migration/deployment or
+  live scan mutation; the local Expo server was stopped; nothing was staged,
+  committed, pushed, merged, or opened as a PR. Existing dirty worktree
+  changes were preserved.
+- Next exact authorized action: independent owner review of the local diff;
+  obtain separate authorization before staging/committing, deploying, or
+  running connected proof.
+
+
+## 2026-09-21 — Price, condition, and quantity control refinement
+
+- User-authorized scope: Unit 6G SDD §§8–9.1, §12, §21 compact-card controls.
+  Extracted InlineReviewValueFields into a cohesive component. Price/condition
+  use labeled 48px fields and one mutually exclusive full-width editor with
+  wrapping selected-state options. Quantity uses one bounded minus/value/plus
+  group; source markers and strict price serialization are preserved.
+- Custom amount has a persistent bordered input, currency prefix, Apply action,
+  and validation. The list preserves handled keyboard taps. Editors remain in
+  normal scroll flow; the bulk footer is a sibling of the list, not an overlay.
+- Verification: affected card/screen Jest 3 suites/58 tests PASS; TypeScript
+  PASS; diff hygiene PASS. Additional editor-state regression recorded in the
+  test suite. Browser reconnect timed out twice; current mobile/desktop visual
+  acceptance remains unverified. No database/storage mutations or deployment.
+- Existing user changes preserved; nothing staged, committed, or pushed.
+  Next action: visual acceptance of the local controls when browser access
+  resumes. Cover/metadata and edition-selection work remain deferred.
+## 2026-09-22 — Compact identity editor refinement
+
+Owner-authorized visual refinement under Unit 6G SDD §§9–9.1 and §21:
+restored pencil icons beside title/author values, replaced stacked author
+removal buttons with accessible 44px inline icon controls, and grouped Add
+author/Done in one compact footer. Existing ordered-author limits and local
+draft semantics remain unchanged. Implementation:
+`InlineBatchReviewFields.tsx`; interaction coverage:
+`postScanUiCorrections.test.tsx`.
+
+Verification: focused card/correction Jest 2 suites, 44 tests PASS; TypeScript
+PASS; Phase 9 continuity validator PASS (existing document-size advisories).
+No database, Storage, inventory submission, migration, deployment, staging,
+commit, or push. Existing unrelated edits preserved. Next action: owner
+review of the revised card; native-device acceptance remains unverified.
+
+## 2026-09-22 - Connected post-scan cycle and bulk-commit audit
+
+- Under explicit Owner authority to add multiple development books, the
+  mounted post-scan flow displayed the exact-two confirmation and committed
+  both eligible candidates independently. The result was `Added 2`, with zero
+  retryable, no-longer-eligible, needs-attention, pending, or busy outcomes.
+- Verified readback for session
+  `93567d47-3874-4576-b3b4-1adb044b552b` is two committed candidates and three
+  candidates still in review. The created private inventory rows are
+  `413563b1-a869-4182-8aef-4e62ce4cfebf` (`The Birth of Tragedy`, test price
+  INR 0, Good, quantity 1) and `46156eae-58a7-4db7-ad5b-a4cb1eb0b98f`
+  (`Thinking, Fast and Slow`, test price INR 250, Good, quantity 1).
+- Final publication state is safe: both rows are draft/private and the public
+  listing count for the tested item is zero. During Store View control testing,
+  `Publish` executed immediately with no confirmation. The same item was
+  restored immediately through `Make Private`; the immutable publish/private
+  audit entries and one public revision remain as required history.
+- Confirmed defects/risks: title/author `Done` can create a false Custom edit
+  without a value change; private Store View ignores the valid persisted
+  inventory `cover_url` because cards read only `publicState.coverUrl`; the web
+  `6000ms timeout exceeded` toast originates in Expo Font/fontfaceobserver; and
+  Session Summary plus Full Review each had one transient first-read failure
+  that recovered through their visible Retry actions.
+- No candidate or inventory row was deleted; the session remains active. No
+  Storage object, provider call, migration, deployment, staging, commit, push,
+  merge, or PR changed in this audit.
+- Session-close verification: Phase 9 continuity validator PASS and repository
+  `git diff --check` PASS; existing document-size and LF/CRLF advisories remain.
+
+Next exact authorized action: Owner disposition of a bounded correction set
+for Publish confirmation and no-op title/author edit guards. The private Store
+View cover projection remains a separate, deferrable DTO/RPC decision; the
+transient first-read failures and font-loading toast require separate diagnosis.

@@ -1,6 +1,77 @@
 # DOC-13: Implementation Tracker
 
-> **2026-09-15 connected-proof continuation:** The prior active Owner session
+> **2026-09-28 Phase 9 Git-publication handoff:** The Owner authorized commit
+> and direct push of the reviewed local post-scan and Store View work, while
+> deferring the two recorded review gaps. Current local verification passed
+> 10 affected Jest suites / 158 tests, TypeScript, Phase 9 continuity, and
+> `git diff --check`. The price contract still rejects ₹0 with `publish` intent
+> before private Add in mobile, Edge, and SQL; the cover thumbnail still lacks
+> the SDD's Detected source badge. These are known implementation deviations,
+> not completed corrections. No connected-state readback, database/Storage
+> mutation, or deployment was performed. The 2026-09-22 connected readback
+> remains the latest recorded evidence, not a current-state claim. Next exact
+> action after Git publication: Owner decision on these two deviations before
+> any deployment or connected proof.
+
+> **2026-09-27 Phase 9 / Unit 6G handoff:** Bounded post-scan corrections A–C
+> and the buffered-edit Add guard are locally implemented. Prior local
+> implementation reports record 6 suites/116 tests for A–C, then 3 targeted
+> suites/77 tests for the final Add guard; those scopes overlap and are not
+> additive. TypeScript passed in the prior implementation report. This
+> documentation pass reconciles the price contract, source labels, and status
+> snapshots; the continuity validator and `git diff --check` passed here, while
+> Jest and TypeScript were not rerun. The latest *recorded* connected session
+> readback is 2026-09-22
+> (two private commits and three candidates in review), not a current-state
+> assertion. No connected service was queried or mutated in this local work.
+> Next: Owner review of the combined local diff; database, Storage, deployment,
+> and Git publication remain separately authorized.
+
+> **2026-09-23 bounded post-scan navigation correction:** The Owner-authorized
+> client-only removal of the redundant “Open first book in full review” header
+> shortcut is implemented locally. Full correction remains available from each
+> candidate card. The red-first focused regression passes **15/15**, TypeScript
+> passes, and the open Codex browser confirms the new layout. No database,
+> inventory, deployment, staging, commit, push, merge, or PR action occurred.
+> Next: Owner review of the local diff and browser; Git publication requires
+> separate authorization.
+
+> **2026-09-22 bounded post-scan and initial-Publish correction:** The Owner-
+> authorized client-only correction is locally complete. Unchanged normalized
+> title/author closes no longer create false Custom state; bulk results now use
+> a compact wrapping count hierarchy with whole plural labels; and initial Store
+> View Publish now opens an explicit confirmation before the unchanged Unit 7B
+> command. The red-first focused run reproduced all three defects; the final
+> affected run passes **7 suites / 93 tests**, TypeScript passes, and the Phase
+> 9 continuity validator plus `git diff --check` pass with only existing
+> size/line-ending advisories. Read-only
+> Codex-browser verification confirmed confirmation + Cancel with the item still
+> Private, zero false edit markers after unchanged title/author exits, and fully
+> reachable compact price/condition/quantity controls. No Add or Publish confirm
+> was submitted; no database, Storage, provider, migration, deployment, stage,
+> commit, push, merge, or PR occurred. Private-cover projection, edition
+> selection, font timeout, and transient Summary/Full Review diagnosis remain
+> deferred. Exact next action: Owner review of the local diff and open browser;
+> Git publication/deployment requires separate authorization.
+
+> **2026-09-22 connected post-scan bulk-commit audit:** Under explicit Owner
+> authority, the development session
+> `93567d47-3874-4576-b3b4-1adb044b552b` completed its exact-two bulk Add:
+> two candidates are `committed_private`, two private inventory rows exist, and
+> three candidates remain in active review. Store View readback preserved the
+> entered values. During control testing, `Publish` executed immediately with
+> no confirmation; the same tested row was immediately returned to private.
+> Final public-listing count is zero, while the immutable public revision and
+> publish/private audit history remain. Additional confirmed risks are false
+> Custom state after unchanged title/author `Done`, a private Store View cover
+> projection gap despite a valid persisted `cover_url`, Expo Font's 6000 ms web
+> timeout toast, and transient Summary/Full Review first reads that recovered
+> through Retry. No deletion, Storage/provider/migration/deployment, stage,
+> commit, push, merge, or PR occurred. Exact next action: Owner disposition of
+> bounded Publish-confirmation and no-op-edit corrections; private-cover
+> projection and transient-read/font diagnostics remain separately scoped.
+
+> **Historical 2026-09-15 connected-proof snapshot (superseded by the 2026-09-22 connected audit above):** The prior active Owner session
 > `LIVE-TEST-20260912-REPRO` was cleaned up through the authenticated UI: all 15
 > active candidates were removed from review and the session was closed. Its
 > summary recorded 15 detected, 15 removed from scan, and 0 committed
@@ -8,14 +79,15 @@
 > lineage still blocks input removal. A new session
 > `93567d47-3874-4576-b3b4-1adb044b552b` was created, its gallery image was
 > registered/uploaded and processed, and 5 candidates were produced. The
-> connected review readback shows 5 detected, 1 ready after one saved review of
+> connected review readback at that checkpoint showed 5 detected, 1 ready after one saved review of
 > `The Birth of Tragedy` using test values ₹0/Good, 4 still needing review, and
 > 0 added to inventory. One private scan-image object was uploaded by the normal
 > Owner flow; no Storage deletion occurred. No migration or manual dispatch
-> mutation occurred. The exact next action is Owner review/correction of the
-> remaining four candidates, followed by separately authorized Add actions if
-> desired. This records evidence against Phase 9 Master SDD §6 and
+> mutation occurred. At that checkpoint, the next action was Owner
+> review/correction of the remaining four candidates, followed by separately
+> authorized Add actions if desired. This records evidence against Phase 9 Master SDD §6 and
 > Extraction/Enrichment SDD §10.
+> It is a historical snapshot and does not assert current connected-session state.
 
 > **Historical pre-session-cleanup runtime rollout / proof blocker:** The verified
 > development project `ahntbtktjjmvfosgkmgn` has `phase9-owner-ingestion` v14
@@ -683,7 +755,17 @@ If implementation changes product or architecture behavior, update the relevant 
 ---
 ## 2. Current Status
 
-> **2026-08-16 Unit 7C WU5 commit and M43–M45 application checkpoint:**
+> **Current 2026-09-28 Phase 9 / Unit 6G handoff:** The Owner authorized Git
+> publication of the locally verified post-scan and Store View changes with
+> the price-intent and cover-source deviations recorded above. This does not
+> establish a new connected runtime or database result. Latest recorded
+> connected session readback: 2026-09-22, two candidates privately committed
+> and three still in review. Migration history for M60–M62 is recorded as
+> applied once in prior rollout records; this session performed no fresh
+> database readback. Next exact action after Git publication is an Owner
+> decision on the two deviations before deployment or connected proof.
+
+> **Historical 2026-08-16 Unit 7C WU5 commit and M43–M45 application checkpoint:**
 > The proven WU5 Owner Store View cutover is committed locally as `380f2b3` on
 > `codex/unit7c-wu5-store-view-cutover`. The exact development project
 > `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` remained `ACTIVE_HEALTHY`;
@@ -1452,12 +1534,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6H duplicate confirmation and the representative-cover correction are locally verified; M60, M61, and M62 are live once, Owner Edge v14 and the matching metadata worker are live, while connected no-cover proof is blocked by the existing active scan** |
-| Overall status | `unit6h_runtime_rollout_complete_connected_proof_blocked_by_existing_active_scan` |
-| Last updated | 2026-09-14 |
-| Latest handoff | `8340647` is the merge base; current local HEAD is `bb91428048ca9028c5592cbbc52c982bd6843946` on `codex/phase9-duplicate-confirmation`; the bounded M61 sidecar-persistence failure-observability/test correction is committed and this handoff synchronization changes documentation only. F-01 is retracted; F-02/F-03 are corrected. M60 is live once as `20260912072815`; M61 is live once as `20260913111342`; M62 is live once as `20260913162154`. The first exact full handle run had one non-reproducible owner-query retry assertion; its isolated rerun and the second exact full run passed. Post-apply readback remains prior documented evidence; no connected no-cover proof has run in this review. |
-| Current risk level | No local product-implementation blocker was identified for the corrected feature. React `act(...)`, NetInfo dynamic-import, and Node `DEP0040` warnings remain unresolved test/tooling hygiene evidence even though full Jest exits normally and the independent handle run finds no persistent handle. The disposable proof used PostgreSQL 18.4 while the connected project reports PostgreSQL 17.6, so target-version behavior is not fully reproduced locally. Matching metadata-worker/client deployment and connected Edge/Storage no-cover verification remain unproven. |
-| Next recommended task | With separate explicit rollout authorization, deploy the matching tolerant Owner Edge, metadata-worker, and client code, then run the connected no-cover review/Add/public-projection proof. Do not merge to `main`; do not mutate existing development data. |
+| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6G post-scan corrections and Store View confirmation are authorized for Git publication with two known deviations; no current connected state is asserted** |
+| Overall status | `unit6g_post_scan_git_publication_authorized_with_deviations` |
+| Last updated | 2026-09-28 |
+| Latest handoff | On `codex/phase9-duplicate-confirmation`, local post-scan corrections A–C, the buffered-edit Add guard, and Store View Publish confirmation are implemented. Current affected Jest passed 10 suites/158 tests; TypeScript, continuity, and diff hygiene passed. No current live app, database, Storage, Edge, or worker state was checked. The latest recorded connected-session readback remains 2026-09-22: two private commits and three candidates in review. |
+| Current risk level | ₹0 with `publish` intent remains rejected before private Add in mobile, Edge, and SQL; the cover lacks the Detected source badge promised by Unit 6G. The Owner elected Git publication with these deviations unresolved. Local tests do not establish deployment or connected behavior. |
+| Next recommended task | After Git publication, obtain an Owner decision on the price-intent and cover-source deviations before deployment or connected proof. Connected proof, migration work, database/Storage mutation, and deployment require separate authorization. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 
@@ -1621,7 +1703,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6H review](./implementation/phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | Unit 6H is locally implemented and corrected on baseline `8340647`; disposable PostgreSQL concurrency and existing regression acceptance pass. M60 remains unapplied remotely; connected Edge/Storage verification remains gated. M52–M59 remain live and unchanged. |
+| Phase 9: Image-to-LLM Inventory | `unit6g_post_scan_local_corrections_complete_pending_owner_review` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6G SDD](./implementation/phase-9-image-inventory/work-units/06g-owner-scan-defaults-batch-review-commit-handoff-sdd.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | Unit 6G post-scan corrections and documentation reconciliation are locally ready for Owner review. Prior rollout records list M60–M62 applied once; no current connected readback was made in this handoff. The latest recorded session readback is 2026-09-22; database/Storage/runtime verification remains a separately authorized action. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |
