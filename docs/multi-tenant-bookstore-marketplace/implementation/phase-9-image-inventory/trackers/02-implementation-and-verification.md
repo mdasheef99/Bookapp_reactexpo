@@ -3845,3 +3845,21 @@ Commit selection excludes unrelated package files, `.hermes/briefs`, and the
 line-ending-only mounted-route integration test. Git publication is the next
 authorized action; afterward, the Owner must decide how to resolve the two
 deviations before any deployment or connected proof.
+
+## 2026-09-28 — Git-publication closeout
+
+The Owner-authorized local work was committed as `101e4b6` (Unit 6G code and
+regressions), `ce2d0c5` (Store View Publish confirmation and Unit 7C SDD),
+and `9ad1d6e` (Phase 9 source specifications and handoff). The branch was
+pushed to `origin/codex/phase9-duplicate-confirmation`; `git ls-remote` read
+back `9ad1d6e481247b4edb8691262cf45500212f59b7` at that branch. The
+remote advanced from `bb91428`, so the push also included four earlier local
+documentation commits already on this branch. This closeout records the
+completed push; its own documentation commit follows it.
+
+The pre-commit local verification above is the current code evidence. No
+post-push app, browser, database, Storage, Edge, worker, or deployment check
+was run. Package files, `.hermes/briefs`, and the line-ending-only integration
+test remain uncommitted. The two documented deviations remain unresolved.
+Next exact action: Owner decision on those deviations before any deployment
+or connected proof.

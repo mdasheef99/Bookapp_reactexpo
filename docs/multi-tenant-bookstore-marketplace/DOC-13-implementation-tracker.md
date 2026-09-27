@@ -1,5 +1,15 @@
 # DOC-13: Implementation Tracker
 
+> **2026-09-28 Git-publication closeout:** The Owner-authorized local work was
+> committed as `101e4b6` (Unit 6G code/tests), `ce2d0c5` (Store View
+> confirmation), and `9ad1d6e` (Phase 9 specifications/handoff). All three
+> were pushed to `origin/codex/phase9-duplicate-confirmation`; read-only remote
+> verification returned `9ad1d6e481247b4edb8691262cf45500212f59b7`.
+> The push also carried four earlier local documentation commits already on
+> this branch. Package files, `.hermes/briefs`, and the line-ending-only test
+> remained uncommitted. The two implementation deviations below remain open;
+> no deployment or database/Storage mutation occurred.
+
 > **2026-09-28 Phase 9 Git-publication handoff:** The Owner authorized commit
 > and direct push of the reviewed local post-scan and Store View work, while
 > deferring the two recorded review gaps. Current local verification passed
@@ -1534,12 +1544,12 @@ If implementation changes product or architecture behavior, update the relevant 
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6G post-scan corrections and Store View confirmation are authorized for Git publication with two known deviations; no current connected state is asserted** |
-| Overall status | `unit6g_post_scan_git_publication_authorized_with_deviations` |
+| Current phase | Phase 9: Image-to-LLM Inventory — **Unit 6G post-scan corrections and Store View confirmation were pushed with two known deviations; no current connected state is asserted** |
+| Overall status | `unit6g_post_scan_git_published_with_deviations` |
 | Last updated | 2026-09-28 |
 | Latest handoff | On `codex/phase9-duplicate-confirmation`, local post-scan corrections A–C, the buffered-edit Add guard, and Store View Publish confirmation are implemented. Current affected Jest passed 10 suites/158 tests; TypeScript, continuity, and diff hygiene passed. No current live app, database, Storage, Edge, or worker state was checked. The latest recorded connected-session readback remains 2026-09-22: two private commits and three candidates in review. |
 | Current risk level | ₹0 with `publish` intent remains rejected before private Add in mobile, Edge, and SQL; the cover lacks the Detected source badge promised by Unit 6G. The Owner elected Git publication with these deviations unresolved. Local tests do not establish deployment or connected behavior. |
-| Next recommended task | After Git publication, obtain an Owner decision on the price-intent and cover-source deviations before deployment or connected proof. Connected proof, migration work, database/Storage mutation, and deployment require separate authorization. |
+| Next recommended task | Obtain an Owner decision on the price-intent and cover-source deviations before deployment or connected proof. Connected proof, migration work, database/Storage mutation, and deployment require separate authorization. |
 
 ### 2026-08-16 Unit 7C resumed connected canary PASS
 

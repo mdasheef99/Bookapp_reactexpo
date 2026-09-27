@@ -1,5 +1,13 @@
 # Active Marketplace Phase Router
 
+> **2026-09-28 Git-publication closeout:** Unit 6G code/tests `101e4b6`,
+> Store View confirmation `ce2d0c5`, and Phase 9 documentation `9ad1d6e`
+> were pushed to `origin/codex/phase9-duplicate-confirmation` and remote HEAD
+> was read back as `9ad1d6e481247b4edb8691262cf45500212f59b7`.
+> Package files, `.hermes/briefs`, and the line-ending-only test remain local.
+> The next action is an Owner decision on the two recorded deviations before
+> any deployment or connected proof; no database/Storage authority was added.
+
 > **2026-09-28 Phase 9 / Unit 6G publication handoff:** The Owner authorized
 > commit and direct push of the local post-scan and separate Store View work.
 > Affected local Jest passed 10 suites/158 tests; TypeScript, Phase 9

@@ -127,6 +127,13 @@ This is the deterministic resume procedure for Phase 9. A new session should rec
 
 ## Current 2026-09-28 Git-publication handoff
 
+The Owner-authorized Unit 6G, Store View, and Phase 9 documentation commits
+`101e4b6`, `ce2d0c5`, and `9ad1d6e` were pushed to
+`origin/codex/phase9-duplicate-confirmation`; read-only remote verification
+returned `9ad1d6e481247b4edb8691262cf45500212f59b7`. Four earlier local
+documentation commits on this branch were also included in that push. The
+package files, `.hermes/briefs`, and line-ending-only test remain uncommitted.
+
 The Owner authorized commit and direct push of the local Unit 6G post-scan
 corrections and separate Store View Publish confirmation, accepting two known
 gaps for Git publication only: ₹0 with `publish` intent is rejected before
