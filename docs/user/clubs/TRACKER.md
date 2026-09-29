@@ -1,5 +1,11 @@
 # Clubs UI Overhaul Tracker
 
+## Clubs V2 follow-up (2026-09-29)
+- User-approved Club Home treatment: Discuss is a blush destination button below the current-book card; Readers remains a disclosure row; Events is a quieter matching button below Readers.
+- Existing Discuss and Events routes are preserved. No backend, API, database, or schema behavior changed in this UI follow-up.
+- Verification on `feat/clubs-v2`: full Jest passed (312 suites, 1 skipped; 2,700 tests, 4 skipped); `ClubDetailScreen.test.tsx` passed 44/44; `tsc --noEmit` passed; web export succeeded with one worker; Club Home was visually inspected in the browser at a mobile viewport.
+- This is a scoped V2 UI follow-up and does not advance or replace the older overhaul phases recorded below.
+
 **Branch:** `feat/clubs-ui-overhaul` from `origin/main` `c5e9714`
 **Environment:** two-worktree split — this desk `C:\Users\LEGION\Desktop\Bookconnect4_expo` (clubs), sibling `C:\Users\LEGION\Desktop\Bookconnect4_library` @ `feat/library-shelf-motion` (library, live session). `stash@{0}` holds the library tracked-edit backup — leave it alone, do not pop or drop.
 **SOT:** `ahntbtktjjmvfosgkmgn` `Bookconnect_reactexpo`

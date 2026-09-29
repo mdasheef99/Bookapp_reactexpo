@@ -5,6 +5,7 @@ import {
     Text,
     FlatList,
     TextInput,
+    ScrollView,
     TouchableOpacity,
     RefreshControl,
     ActivityIndicator,
@@ -21,6 +22,47 @@ import { colors, radii, touchTarget, typography } from '@/features/clubs/theme';
 import { type AccessLevel, type ClubType, type ClubFilters, type ClubPublicDetails, type MeetingType } from '@/features/clubs/services/clubsService';
 
 type BrowseScope = 'all' | 'mine' | 'archived';
+
+const QUICK_MEETING_FORMATS: Array<{ label: string; value: MeetingType | undefined }> = [
+    { label: 'Any', value: undefined },
+    { label: 'Online', value: 'online_only' },
+    { label: 'Venue', value: 'venue_based' },
+    { label: 'Hybrid', value: 'hybrid' },
+];
+
+const QUICK_ACCESS_FILTERS: Array<{ label: string; clubType?: ClubType; opensTierFilters?: boolean }> = [
+    { label: 'Public', clubType: 'public' },
+    { label: 'Approval', clubType: 'approval' },
+    { label: 'Invite only', clubType: 'invite_only' },
+    { label: 'Pro & Pro+', opensTierFilters: true },
+];
+
+interface QuickFilterChipProps {
+    label: string;
+    selected: boolean;
+    onPress: () => void;
+    testID: string;
+    accessibilityLabel?: string;
+    accessibilityHint?: string;
+}
+
+function QuickFilterChip({ label, selected, onPress, testID, accessibilityLabel, accessibilityHint }: QuickFilterChipProps) {
+    return (
+        <TouchableOpacity
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={accessibilityLabel ?? label}
+            accessibilityHint={accessibilityHint}
+            accessibilityState={{ selected }}
+            onPress={onPress}
+            hitSlop={4}
+            style={[styles.quickFilterChip, selected && styles.quickFilterChipActive]}
+            testID={testID}
+        >
+            <Text style={[styles.quickFilterChipText, selected && styles.quickFilterChipTextActive]}>{label}</Text>
+        </TouchableOpacity>
+    );
+}
 
 export default function ClubsBrowseScreen() {
     const { user } = useAuth();
@@ -76,7 +118,10 @@ export default function ClubsBrowseScreen() {
         handleResetFilters();
     };
 
-    const sectionTitle = browseScope === 'archived' ? 'Archived clubs' : isMineScope ? 'Your reading circles' : 'Clubs to explore';
+    const sectionTitle = browseScope === 'archived' ? 'Archived clubs' : isMineScope ? 'Your reading circles' : null;
+    const activeCommunityCountLabel = clubs.length === 20
+        ? 'Showing 20+ active communities'
+        : `Showing ${clubs.length} active ${clubs.length === 1 ? 'community' : 'communities'}`;
 
     const emptyStateTitle = browseScope === 'archived'
         ? 'No archived clubs'
@@ -120,8 +165,8 @@ export default function ClubsBrowseScreen() {
                     <View style={styles.headerSection}>
                         <View style={styles.header}>
                             <View style={styles.titleBlock}>
-                                <Text style={typography.kicker}>BookConnect</Text>
-                                <Text style={styles.pageTitle}>Clubs</Text>
+                                <Text style={typography.kicker}>COMMUNITY HUB</Text>
+                                <Text style={styles.pageTitle}>Book Clubs</Text>
                             </View>
                             <View style={styles.headerActions}>
                                 {canCreateClub ? (
@@ -134,7 +179,6 @@ export default function ClubsBrowseScreen() {
                                         accessibilityLabel="Create club"
                                     >
                                         <Ionicons name="add" size={18} color={colors.accent} />
-                                        <Text style={styles.createButtonText}>Create Club</Text>
                                     </TouchableOpacity>
                                 ) : null}
                                 {userId ? (
@@ -148,38 +192,13 @@ export default function ClubsBrowseScreen() {
                                     >
                                         <Ionicons name="mail-outline" size={20} color={colors.textPrimary} />
                                         {unreadInvitationCount > 0 ? (
-                                            <View style={styles.unreadBadge}>
+                                            <View style={styles.unreadBadge} testID="clubs-invitations-unread-count">
                                                 <Text style={styles.unreadBadgeText}>{unreadInvitationCount > 99 ? '99+' : unreadInvitationCount}</Text>
                                             </View>
                                         ) : null}
                                     </TouchableOpacity>
                                 ) : null}
                             </View>
-                        </View>
-
-                        <View style={styles.tabs}>
-                            <TouchableOpacity
-                                activeOpacity={0.85}
-                                onPress={() => setBrowseScope('all')}
-                                style={[styles.tab, browseScope === 'all' && styles.tabActive]}
-                                testID="clubs-filter-scope-all"
-                                accessibilityRole="tab"
-                                accessibilityState={{ selected: browseScope === 'all' }}
-                            >
-                                <Text style={[styles.tabText, browseScope === 'all' && styles.tabTextActive]}>Discover</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                activeOpacity={0.85}
-                                onPress={() => setBrowseScope('mine')}
-                                style={[styles.tab, browseScope === 'mine' && styles.tabActive]}
-                                testID="clubs-filter-scope-mine"
-                                accessibilityRole="tab"
-                                accessibilityState={{ selected: browseScope === 'mine' }}
-                            >
-                                <Text style={[styles.tabText, browseScope === 'mine' && styles.tabTextActive]}>
-                                    Your Clubs
-                                </Text>
-                            </TouchableOpacity>
                         </View>
 
                         <View style={styles.searchRow}>
@@ -213,38 +232,6 @@ export default function ClubsBrowseScreen() {
                             </TouchableOpacity>
                         </View>
 
-                        {(browseScope === 'mine' || browseScope === 'archived') && !userId ? (
-                            <View style={styles.feedbackCard}>
-                                <Text style={styles.feedbackTitle}>Sign in to view your clubs</Text>
-                                <Text style={typography.bodyCompact}>This view is tied to your current club membership and admin state, so it only appears for the signed-in reader account.</Text>
-                            </View>
-                        ) : null}
-
-                        {showAuthorSpotlight ? (
-                            <View style={styles.spotlight} testID="clubs-author-spotlight">
-                                <View style={styles.spotlightIcon}>
-                                    <Ionicons name="mic-outline" size={18} color={colors.accent} />
-                                </View>
-                                <View style={styles.spotlightBody}>
-                                    <Text style={styles.spotlightTitle}>Author clubs spotlight</Text>
-                                    <Text style={typography.metadata}>AMA-style discussions, signed-edition reads, and verified author communities.</Text>
-                                    <Text style={styles.spotlightCount}>
-                                        {authorClubCount === 1 ? '1 verified author club' : `${authorClubCount} verified author clubs`}
-                                    </Text>
-                                    <TouchableOpacity
-                                        activeOpacity={0.85}
-                                        onPress={() => router.push('/(tabs)/clubs/authors')}
-                                        style={styles.spotlightLink}
-                                        testID="author-clubs-landing-link"
-                                        accessibilityRole="button"
-                                        accessibilityLabel="View author clubs"
-                                    >
-                                        <Text style={styles.spotlightLinkText}>View author clubs</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        ) : null}
-
                         {!isMineScope ? (
                         <TouchableOpacity
                             activeOpacity={0.85}
@@ -258,15 +245,117 @@ export default function ClubsBrowseScreen() {
                                 <Ionicons name="location-outline" size={18} color={colors.accent} />
                             </View>
                             <View style={styles.venueBody}>
+                                <Text style={styles.venueKicker}>GATHERING SPOTS</Text>
                                 <Text style={styles.venueTitle}>Find club venues</Text>
-                                <Text style={typography.metadata}>Explore libraries, bookstores, cafes, and community spaces where clubs can meet.</Text>
+                                <Text style={typography.metadata}>Libraries, independent bookstores &amp; quiet cafes open for readers.</Text>
                             </View>
                             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                         </TouchableOpacity>
                         ) : null}
 
+                        <View style={styles.tabs}>
+                            <TouchableOpacity
+                                activeOpacity={0.85}
+                                onPress={() => setBrowseScope('all')}
+                                style={[styles.tab, browseScope === 'all' && styles.tabActive]}
+                                testID="clubs-filter-scope-all"
+                                accessibilityRole="tab"
+                                accessibilityState={{ selected: browseScope === 'all' }}
+                            >
+                                <Text style={[styles.tabText, browseScope === 'all' && styles.tabTextActive]}>All clubs</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                activeOpacity={0.85}
+                                onPress={() => setBrowseScope('mine')}
+                                style={[styles.tab, browseScope === 'mine' && styles.tabActive]}
+                                testID="clubs-filter-scope-mine"
+                                accessibilityRole="tab"
+                                accessibilityState={{ selected: browseScope === 'mine' }}
+                            >
+                                <View style={styles.tabLabelRow}>
+                                    <Text style={[styles.tabText, browseScope === 'mine' && styles.tabTextActive]}>My clubs</Text>
+                                    {myBrowseQuery.data ? (
+                                        <View style={styles.tabCount} testID="clubs-mine-count">
+                                            <Text style={styles.tabCountText}>{myBrowseQuery.data.length === 20 ? '20+' : myBrowseQuery.data.length}</Text>
+                                        </View>
+                                    ) : null}
+                                </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                activeOpacity={0.85}
+                                onPress={() => setBrowseScope('archived')}
+                                style={[styles.tab, browseScope === 'archived' && styles.tabActive]}
+                                testID="clubs-filter-scope-archived"
+                                accessibilityRole="tab"
+                                accessibilityState={{ selected: browseScope === 'archived' }}
+                            >
+                                <Text style={[styles.tabText, browseScope === 'archived' && styles.tabTextActive]}>Archived</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {(browseScope === 'mine' || browseScope === 'archived') && !userId ? (
+                            <View style={styles.feedbackCard}>
+                                <Text style={styles.feedbackTitle}>Sign in to view your clubs</Text>
+                                <Text style={typography.bodyCompact}>This view is tied to your current club membership and admin state, so it only appears for the signed-in reader account.</Text>
+                            </View>
+                        ) : null}
+
+                        {!filtersVisible ? (
+                            <View style={styles.quickFilterStack}>
+                                <View style={styles.quickFilterGroup}>
+                                    <Text style={styles.quickFilterLabel}>FORMAT</Text>
+                                    <ScrollView
+                                        horizontal
+                                        showsHorizontalScrollIndicator={false}
+                                        contentContainerStyle={styles.quickFilterOptions}
+                                    >
+                                        {QUICK_MEETING_FORMATS.map((option) => (
+                                            <QuickFilterChip
+                                                key={option.label}
+                                                label={option.label === 'Any' ? 'Any format' : option.label}
+                                                selected={selectedMeetingType === option.value}
+                                                onPress={() => setSelectedMeetingType(option.value)}
+                                                testID={'clubs-quick-meeting-' + (option.value ?? 'all')}
+                                            />
+                                        ))}
+                                    </ScrollView>
+                                </View>
+                                <View style={styles.quickFilterGroup}>
+                                    <Text style={styles.quickFilterLabel}>ACCESS</Text>
+                                    <ScrollView
+                                        horizontal
+                                        showsHorizontalScrollIndicator={false}
+                                        contentContainerStyle={styles.quickFilterOptions}
+                                    >
+                                        {QUICK_ACCESS_FILTERS.map((option) => (
+                                            <QuickFilterChip
+                                                key={option.clubType ?? 'tiers'}
+                                                label={option.label}
+                                                selected={option.opensTierFilters
+                                                    ? selectedAccessLevel !== undefined
+                                                    : selectedClubType === option.clubType}
+                                                onPress={() => option.opensTierFilters
+                                                    ? setFiltersVisible(true)
+                                                    : setSelectedClubType(selectedClubType === option.clubType ? undefined : option.clubType)}
+                                                testID={'clubs-quick-access-' + (option.clubType ?? 'tiers')}
+                                                accessibilityLabel={option.opensTierFilters ? 'Filter by Pro or Pro+ access' : option.label}
+                                                accessibilityHint={option.opensTierFilters ? 'Opens the access filter options' : undefined}
+                                            />
+                                        ))}
+                                    </ScrollView>
+                                </View>
+                            </View>
+                        ) : null}
+
                         <View style={styles.sectionHeader}>
-                            <Text style={typography.sectionHeading}>{sectionTitle}</Text>
+                            {browseScope === 'all' && clubs.length > 0 && !isError ? (
+                                <>
+                                    <Text style={styles.directoryCount}>{activeCommunityCountLabel}</Text>
+                                    <Text style={styles.sortSummary}>Newest first</Text>
+                                </>
+                            ) : sectionTitle ? (
+                                <Text style={typography.sectionHeading}>{sectionTitle}</Text>
+                            ) : null}
                             {browseScope === 'archived' ? (
                                 <TouchableOpacity
                                     activeOpacity={0.7}
@@ -274,7 +363,7 @@ export default function ClubsBrowseScreen() {
                                     hitSlop={12}
                                     testID="clubs-archived-back"
                                 >
-                                    <Text style={styles.backLink}>‹ Discover</Text>
+                                    <Text style={styles.backLink}>‹ All clubs</Text>
                                 </TouchableOpacity>
                             ) : null}
                         </View>
@@ -332,6 +421,30 @@ export default function ClubsBrowseScreen() {
                 ListFooterComponent={
                     browseScope === 'archived' ? null : (
                         <View>
+                            {showAuthorSpotlight ? (
+                                <View style={styles.spotlight} testID="clubs-author-spotlight">
+                                    <View style={styles.spotlightIcon}>
+                                        <Ionicons name="mic-outline" size={18} color={colors.accent} />
+                                    </View>
+                                    <View style={styles.spotlightBody}>
+                                        <Text style={styles.spotlightTitle}>Author clubs spotlight</Text>
+                                        <Text style={typography.metadata}>AMA-style discussions, signed-edition reads, and verified author communities.</Text>
+                                        <Text style={styles.spotlightCount}>
+                                            {authorClubCount === 1 ? '1 verified author club' : `${authorClubCount} verified author clubs`}
+                                        </Text>
+                                        <TouchableOpacity
+                                            activeOpacity={0.85}
+                                            onPress={() => router.push('/(tabs)/clubs/authors')}
+                                            style={styles.spotlightLink}
+                                            testID="author-clubs-landing-link"
+                                            accessibilityRole="button"
+                                            accessibilityLabel="View author clubs"
+                                        >
+                                            <Text style={styles.spotlightLinkText}>View author clubs</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            ) : null}
                             <TouchableOpacity
                                 activeOpacity={0.85}
                                 onPress={() => setBrowseScope('archived')}
@@ -384,32 +497,26 @@ export default function ClubsBrowseScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     loadingContainer: { flex: 1, backgroundColor: colors.bg, justifyContent: 'center', alignItems: 'center', gap: 12 },
-    contentContainer: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 120 },
+    contentContainer: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 120 },
     headerSection: { marginBottom: 4 },
-    header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 22 },
-    titleBlock: { flex: 1, gap: 6 },
+    header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 12 },
+    titleBlock: { flex: 1, gap: 4 },
     pageTitle: {
         fontFamily: 'Newsreader_700Bold',
-        fontSize: 36,
-        lineHeight: 42,
+        fontSize: 32,
+        lineHeight: 38,
         color: colors.textPrimary,
     },
     headerActions: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 4 },
     createButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        minHeight: touchTarget,
-        paddingHorizontal: 12,
+        width: touchTarget,
+        height: touchTarget,
         borderWidth: 1,
         borderColor: colors.accent,
         borderRadius: radii.large,
         backgroundColor: colors.surface,
-    },
-    createButtonText: {
-        color: colors.accent,
-        fontSize: 13,
-        fontFamily: 'Inter_600SemiBold',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     inboxButton: {
         width: touchTarget,
@@ -436,33 +543,55 @@ const styles = StyleSheet.create({
     unreadBadgeText: { color: '#FFFFFF', fontSize: 11, fontFamily: 'Inter_700Bold' },
     tabs: {
         flexDirection: 'row',
-        gap: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.divider,
-        marginBottom: 16,
+        gap: 4,
+        padding: 4,
+        borderRadius: 16,
+        backgroundColor: colors.surfaceSubtle,
+        marginBottom: 10,
     },
     tab: {
+        flex: 1,
         minHeight: touchTarget,
+        alignItems: 'center',
         justifyContent: 'center',
-        borderBottomWidth: 2,
-        borderBottomColor: 'transparent',
-        marginBottom: -1,
-        paddingHorizontal: 2,
+        borderRadius: 12,
+        paddingHorizontal: 3,
     },
-    tabActive: { borderBottomColor: colors.accent },
+    tabActive: {
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
     tabText: {
-        fontSize: 15,
+        fontSize: 13,
         fontFamily: 'Inter_600SemiBold',
         color: colors.textMuted,
+        textAlign: 'center',
     },
     tabTextActive: { color: colors.textPrimary },
-    searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+    tabLabelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+    tabCount: {
+        minWidth: 20,
+        height: 20,
+        borderRadius: 10,
+        paddingHorizontal: 5,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.surfaceSubtle,
+    },
+    tabCountText: {
+        color: colors.textSecondary,
+        fontSize: 11,
+        lineHeight: 15,
+        fontFamily: 'Inter_600SemiBold',
+    },
+    searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
     searchShell: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        minHeight: 48,
+        minHeight: 44,
         borderWidth: 1,
         borderColor: colors.border,
         borderRadius: radii.large,
@@ -474,7 +603,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        minHeight: 48,
+        minHeight: 44,
         paddingHorizontal: 14,
         borderWidth: 1,
         borderColor: colors.accent,
@@ -502,6 +631,49 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontFamily: 'Inter_700Bold',
     },
+    quickFilterStack: {
+        gap: 4,
+        marginBottom: 10,
+    },
+    quickFilterGroup: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    quickFilterLabel: {
+        width: 48,
+        fontFamily: 'Inter_600SemiBold',
+        fontSize: 10,
+        lineHeight: 14,
+        letterSpacing: 0.7,
+        color: colors.textMuted,
+    },
+    quickFilterOptions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        paddingRight: 2,
+    },
+    quickFilterChip: {
+        minHeight: 36,
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 999,
+        backgroundColor: colors.surface,
+        paddingHorizontal: 7,
+    },
+    quickFilterChipActive: {
+        borderColor: colors.accent,
+        backgroundColor: colors.accent,
+    },
+    quickFilterChipText: {
+        fontFamily: 'Inter_600SemiBold',
+        fontSize: 11,
+        lineHeight: 15,
+        color: colors.textSecondary,
+    },
+    quickFilterChipTextActive: { color: '#FFFFFF' },
     feedbackCard: {
         borderWidth: 1,
         borderColor: colors.border,
@@ -606,23 +778,30 @@ const styles = StyleSheet.create({
     venueRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: 10,
         borderWidth: 1,
         borderColor: colors.border,
-        borderRadius: radii.large,
-        backgroundColor: colors.surface,
-        padding: 14,
-        marginBottom: 20,
+        borderRadius: 16,
+        backgroundColor: colors.surfaceSubtle,
+        padding: 11,
+        marginBottom: 12,
     },
     venueIcon: {
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: colors.accentSubtle,
+        backgroundColor: colors.surface,
         alignItems: 'center',
         justifyContent: 'center',
     },
     venueBody: { flex: 1, gap: 2 },
+    venueKicker: {
+        fontFamily: 'Inter_600SemiBold',
+        fontSize: 10,
+        lineHeight: 14,
+        letterSpacing: 0.8,
+        color: colors.accent,
+    },
     venueTitle: {
         fontSize: 15,
         fontFamily: 'Inter_600SemiBold',
@@ -634,6 +813,19 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginTop: 4,
         marginBottom: 10,
+    },
+    directoryCount: {
+        flex: 1,
+        fontFamily: 'Inter_600SemiBold',
+        fontSize: 13,
+        lineHeight: 18,
+        color: colors.textSecondary,
+    },
+    sortSummary: {
+        fontFamily: 'Inter_500Medium',
+        fontSize: 12,
+        lineHeight: 16,
+        color: colors.textMuted,
     },
     backLink: {
         fontSize: 14,

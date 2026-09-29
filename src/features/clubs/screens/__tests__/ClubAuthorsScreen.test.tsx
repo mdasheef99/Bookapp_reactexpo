@@ -62,7 +62,8 @@ describe('ClubAuthorsScreen', () => {
 
         await waitFor(() => expect(getByText('Author clubs')).toBeOnTheScreen());
         expect(getByText('Author Salon')).toBeOnTheScreen();
-        expect(getByText('Author club · Verified author')).toBeOnTheScreen();
+        expect(getByText('Author-led club')).toBeOnTheScreen();
+        expect(getByText('Verified author community.')).toBeOnTheScreen();
     });
 
     it('returns to Clubs when the back button is pressed', async () => {

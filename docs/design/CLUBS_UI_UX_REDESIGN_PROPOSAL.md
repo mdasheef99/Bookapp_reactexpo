@@ -1,5 +1,51 @@
 # BookTalks Clubs — UI/UX Redesign Proposal
 
+## Current approved directory direction — 2026-09-28
+
+The selected Clubs V2 directory is the **Literary Card Study** artboard in the
+Stitch project. Its mobile hierarchy is Community Hub / Book Clubs, search and
+filters, a compact venue-discovery card, All clubs / My clubs / Archived,
+compact format and access filters, a result count and newest-first summary,
+then the first literary club card. The first card remains visible above the
+fixed bottom navigation at 390 × 844.
+
+The directory card presents club type, meeting format, member count, title,
+description, host, current-book state, access level, and city when available.
+Pressing it continues to the existing club detail route. Invite-only clubs
+continue to use the existing invitation-required state; this UI does not add an
+invite-request action or change membership behavior. This selected directory
+and card direction supersedes the earlier browse/card explorations in §2.1 and
+their browse-specific acceptance criteria. Other sections remain proposals,
+not approval to redesign their flows.
+
+Implementation and verification on `feat/clubs-v2`:
+
+- The directory and card UI use the existing hooks, filter sheet, services,
+  and routes. No service/API, database, migration, or membership action was
+  changed for this implementation.
+- Focused Clubs suites passed: 4 suites / 74 tests. `npx tsc --noEmit` and the
+  offline Expo web export passed. The in-app browser was checked at 390 × 844;
+  search, format/access filtering, scope tabs, venues, invitations, Create
+  Club navigation, and the first club's detail route were inspected without
+  submitting forms or changing membership data.
+- No database/storage mutation, deployment, staging, commit, or push occurred.
+  This describes the 2026-09-28 checkpoint; a later Club Home follow-up is
+  recorded below.
+
+## Club Home follow-up — Discuss and Events — 2026-09-29
+
+The approved detail-page hierarchy keeps the current-book card as the focal
+point, followed by a dedicated Discuss destination button, the Readers
+disclosure, and a quieter matching Events button. Discuss and Events retain
+their existing routes and actions; Readers remains expandable. This is a
+presentation-only change and does not modify services, APIs, membership
+actions, database behavior, or schema.
+
+The Club Home implementation was reviewed in the browser at a mobile viewport.
+The full Jest suite passed (312 suites, 1 skipped; 2,700 tests, 4 skipped),
+`npx tsc --noEmit` passed, and the offline Expo web export succeeded. The
+user approved a local commit on 2026-09-29; the branch was not pushed.
+
 **Date:** 2026-04-24  
 **Target:** NativeWind v4 / Tailwind CSS v3 + React Native 0.81 + Expo SDK 54  
 **Dependencies assumed available:** `expo-linear-gradient`, `expo-image`, `expo-haptics`, `react-native-reanimated`, `@expo/vector-icons`

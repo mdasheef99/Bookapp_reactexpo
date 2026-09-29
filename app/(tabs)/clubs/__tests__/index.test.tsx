@@ -61,21 +61,67 @@ beforeEach(() => {
 });
 
 describe('ClubsBrowseScreen', () => {
-    it('defaults to Discover scope with the reader-first hierarchy and no admin banner', () => {
+    it('uses the approved directory labels and count while keeping venue discovery reachable', () => {
         const { getByText, getByTestId, queryByText } = render(<ClubsBrowseScreen />);
 
-        expect(getByText('BookConnect')).toBeOnTheScreen();
-        expect(getByText('Clubs')).toBeOnTheScreen();
-        expect(getByText('Discover')).toBeOnTheScreen();
-        expect(getByText('Your Clubs')).toBeOnTheScreen();
+        expect(getByText('COMMUNITY HUB')).toBeOnTheScreen();
+        expect(getByText('Book Clubs')).toBeOnTheScreen();
+        expect(getByText('All clubs')).toBeOnTheScreen();
+        expect(getByText('My clubs')).toBeOnTheScreen();
+        expect(getByTestId('clubs-mine-count')).toHaveTextContent('1');
+        expect(getByText('Archived')).toBeOnTheScreen();
         expect(queryByText(/Your Clubs •/)).toBeNull();
         expect(getByTestId('clubs-search-input')).toBeOnTheScreen();
         expect(getByTestId('clubs-filters-open')).toBeOnTheScreen();
-        expect(getByText('Clubs to explore')).toBeOnTheScreen();
+        expect(getByText('Find club venues')).toBeOnTheScreen();
+        expect(getByText('Showing 1 active community')).toBeOnTheScreen();
         expect(getByText('Open Readers')).toBeOnTheScreen();
         expect(getByTestId('clubs-archived-link')).toBeOnTheScreen();
         expect(queryByText(/invite acceptance, invitation revocation, read-state support, and archived-club recovery are live/i)).toBeNull();
         expect(queryByText(/still pending backend support/i)).toBeNull();
+    });
+
+    it('keeps quick club-type filters aligned with the existing filters', () => {
+        const { getByTestId } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-quick-access-public'));
+
+        let lastFilters = mockUseBrowseClubs.mock.calls[mockUseBrowseClubs.mock.calls.length - 1][0] as Record<string, unknown>;
+        expect(lastFilters).toMatchObject({ clubType: 'public', accessLevel: undefined });
+
+        fireEvent.press(getByTestId('clubs-quick-access-approval'));
+
+        lastFilters = mockUseBrowseClubs.mock.calls[mockUseBrowseClubs.mock.calls.length - 1][0] as Record<string, unknown>;
+        expect(lastFilters).toMatchObject({ clubType: 'approval', accessLevel: undefined });
+    });
+
+    it('opens the existing tier options from the compact Pro & Pro+ access shortcut', () => {
+        const { getByTestId, getByText } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-quick-access-tiers'));
+
+        expect(getByText('Pro')).toBeOnTheScreen();
+        expect(getByText('Pro+')).toBeOnTheScreen();
+
+        fireEvent.press(getByTestId('clubs-filter-access-pro_plus'));
+
+        const lastFilters = mockUseBrowseClubs.mock.calls[mockUseBrowseClubs.mock.calls.length - 1][0] as Record<string, unknown>;
+        expect(lastFilters.accessLevel).toBe('pro_plus');
+    });
+
+    it('uses Any format as the clear state for meeting-format quick filters', () => {
+        const { getByTestId, getByText } = render(<ClubsBrowseScreen />);
+
+        expect(getByText('Any format')).toBeOnTheScreen();
+        fireEvent.press(getByTestId('clubs-quick-meeting-venue_based'));
+
+        let lastFilters = mockUseBrowseClubs.mock.calls[mockUseBrowseClubs.mock.calls.length - 1][0] as Record<string, unknown>;
+        expect(lastFilters.meetingType).toBe('venue_based');
+
+        fireEvent.press(getByTestId('clubs-quick-meeting-all'));
+
+        lastFilters = mockUseBrowseClubs.mock.calls[mockUseBrowseClubs.mock.calls.length - 1][0] as Record<string, unknown>;
+        expect(lastFilters.meetingType).toBeUndefined();
     });
 
     it('shows an unread invitations badge and opens the invitation inbox', () => {
@@ -87,9 +133,9 @@ describe('ClubsBrowseScreen', () => {
             isLoading: false,
         });
 
-        const { getByText, getByTestId } = render(<ClubsBrowseScreen />);
+        const { getByTestId } = render(<ClubsBrowseScreen />);
 
-        expect(getByText('1')).toBeOnTheScreen();
+        expect(getByTestId('clubs-invitations-unread-count')).toHaveTextContent('1');
 
         fireEvent.press(getByTestId('clubs-invitations-inbox'));
 
@@ -128,7 +174,7 @@ describe('ClubsBrowseScreen', () => {
         expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/venues');
     });
 
-    it('maps Your Clubs to the mine scope with membership copy and shelf results', () => {
+    it('maps My clubs to the mine scope with membership copy and shelf results', () => {
         const { getByText, getByTestId, queryByTestId } = render(<ClubsBrowseScreen />);
 
         fireEvent.press(getByTestId('clubs-filter-scope-mine'));
@@ -140,12 +186,12 @@ describe('ClubsBrowseScreen', () => {
         expect(queryByTestId('clubs-venues-discovery-link')).toBeNull();
     });
 
-    it('never shows a membership count beside Your Clubs', () => {
-        const { getByTestId, queryByText } = render(<ClubsBrowseScreen />);
+    it('updates the My clubs count when its scope is active', () => {
+        const { getByTestId } = render(<ClubsBrowseScreen />);
 
         fireEvent.press(getByTestId('clubs-filter-scope-mine'));
 
-        expect(queryByText(/Your Clubs •/)).toBeNull();
+        expect(getByTestId('clubs-mine-count')).toHaveTextContent('1');
     });
 
     it('taps a Your Clubs shelf card through to club detail', () => {
@@ -177,7 +223,7 @@ describe('ClubsBrowseScreen', () => {
 
         fireEvent.press(getByTestId('clubs-mine-discover-link'));
 
-        expect(getByText('Clubs to explore')).toBeOnTheScreen();
+        expect(getByText('Showing 1 active community')).toBeOnTheScreen();
         expect(queryByText('You have not joined any clubs yet')).toBeNull();
     });
 
@@ -260,7 +306,7 @@ describe('ClubsBrowseScreen', () => {
         expect(queryByText('Invite')).toBeNull();
     });
 
-    it('returns to Discover from Your Clubs', () => {
+    it('returns to All clubs from My clubs', () => {
         const { getByText, getByTestId } = render(<ClubsBrowseScreen />);
 
         fireEvent.press(getByTestId('clubs-filter-scope-mine'));
@@ -268,7 +314,7 @@ describe('ClubsBrowseScreen', () => {
 
         fireEvent.press(getByTestId('clubs-filter-scope-all'));
 
-        expect(getByText('Clubs to explore')).toBeOnTheScreen();
+        expect(getByText('Showing 1 active community')).toBeOnTheScreen();
         expect(getByText('Open Readers')).toBeOnTheScreen();
     });
 
@@ -286,7 +332,7 @@ describe('ClubsBrowseScreen', () => {
         expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-3/manage?tab=lifecycle');
     });
 
-    it('returns to Discover from the archived scope', () => {
+    it('returns to All clubs from the archived scope', () => {
         const { getByText, getByTestId } = render(<ClubsBrowseScreen />);
 
         fireEvent.press(getByTestId('clubs-archived-link'));
@@ -294,7 +340,7 @@ describe('ClubsBrowseScreen', () => {
 
         fireEvent.press(getByTestId('clubs-archived-back'));
 
-        expect(getByText('Clubs to explore')).toBeOnTheScreen();
+        expect(getByText('Showing 1 active community')).toBeOnTheScreen();
     });
 
     it('shows scope-aware retry copy without the empty state when my clubs fails to load', () => {
