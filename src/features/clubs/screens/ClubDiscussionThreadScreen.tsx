@@ -1,6 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
+    BackHandler,
+    Image,
+    Keyboard,
     KeyboardAvoidingView,
     Modal,
     Platform,
@@ -10,10 +13,12 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { navigateBackOrFallback } from '@/lib/navigation';
 import {
@@ -37,11 +42,29 @@ import {
     type ClubDiscussionVoteType,
 } from '@/features/clubs/services/clubsService';
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
-import { useTheme } from '@/hooks/useTheme';
+import { DiscussionReplyComposer } from '@/features/clubs/components/DiscussionReplyComposer';
+
+const discussionColors = {
+    bgPrimary: '#FAF6EE',
+    bgCard: '#FFFEFC',
+    bgSecondary: '#F8EBE7',
+    border: '#E7DCD1',
+    accent: '#8B322C',
+    textPrimary: '#1A1412',
+    textSecondary: '#6E645F',
+    textTertiary: '#8E8178',
+    feedbackSuccess: '#EDF5EC',
+    feedbackSuccessBorder: '#CADCC8',
+    feedbackSuccessText: '#38533A',
+} as const;
 
 // TYPE-03: mirrors the DB CHECK club_discussion_reactions_emoji_canonical (11 values)
 const REACTION_OPTIONS: ClubDiscussionReactionEmoji[] = ['👍', '👎', '❤️', '🔥', '👏', '😂', '😍', '😮', '😢', '🤔', '📚'];
 const MAX_VISIBLE_REPLY_DEPTH = 2;
+
+// Keep interaction glyphs close to the comment text scale. Compact surfaces
+// sit inside 44px targets so visual refinement does not reduce touch access.
+const threadType = { body: 14, bodyLine: 21, action: 12, actionLine: 18, icon: 16 } as const;
 
 type ReplyTreeNode = ClubDiscussionReplyWithDetails & {
     children: ReplyTreeNode[];
@@ -55,6 +78,7 @@ type ReplyComposerState = {
 type ReactionPickerState = {
     replyId: string | null;
     itemId: string;
+    anchor: { x: number; y: number; width: number; height: number };
 };
 
 type ReactionDetailState = {
@@ -70,7 +94,25 @@ function formatTimestamp(value: string | null) {
     if (!value) return 'Just now';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return 'Just now';
-    return date.toLocaleString();
+    return formatDistanceToNow(date, { addSuffix: true });
+}
+
+function getInitials(name: string) {
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    if (words.length > 1) return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
+    return (words[0] ?? 'BC').slice(0, 2).toUpperCase();
+}
+
+function AuthorAvatar({ avatarUrl, name, size = 36 }: { avatarUrl?: string | null; name: string; size?: number }) {
+    return (
+        <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
+            {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={{ width: size, height: size, borderRadius: size / 2 }} accessibilityLabel={`${name} profile photo`} />
+            ) : (
+                <Text style={styles.avatarInitials}>{getInitials(name)}</Text>
+            )}
+        </View>
+    );
 }
 
 function getTopicBody(topic: ClubDiscussionTopicWithDetails) {
@@ -84,7 +126,7 @@ function getReplyBody(reply: ClubDiscussionReplyWithDetails) {
 }
 
 function getReplyIndent(depth: number) {
-    return Math.min(depth, MAX_VISIBLE_REPLY_DEPTH) * 18;
+    return Math.min(depth, MAX_VISIBLE_REPLY_DEPTH) * 14;
 }
 
 function buildReplyTree(replies: ClubDiscussionReplyWithDetails[]): ReplyTreeNode[] {
@@ -115,9 +157,15 @@ function getReactionUsers(summary: ClubDiscussionReactionSummary) {
     return summary.users ?? [];
 }
 
+// Preserve the conversation order while applying indentation only once per row.
+function flattenReplyTree(root: ReplyTreeNode): ReplyTreeNode[] {
+    return [root, ...root.children.flatMap(flattenReplyTree)];
+}
+
 export default function ClubDiscussionThreadScreen() {
+    const viewport = useWindowDimensions();
     const { clubId, topicId } = useLocalSearchParams<{ clubId: string; topicId: string }>();
-    const { colors } = useTheme();
+    const colors = discussionColors;
     const { user } = useAuth();
     const userId = user?.id ?? null;
     const { data: club, isLoading: isClubLoading } = useClubPublicDetail(clubId ?? null);
@@ -134,7 +182,64 @@ export default function ClubDiscussionThreadScreen() {
 
     const [replyDraft, setReplyDraft] = useState('');
     const [replyComposerState, setReplyComposerState] = useState<ReplyComposerState | null>(null);
+    const [replyError, setReplyError] = useState<string | null>(null);
+    const [replyPosting, setReplyPosting] = useState(false);
+    const replyPostingRef = useRef(false);
+    const scrollRef = useRef<ScrollView>(null);
+    const composerRef = useRef<View>(null);
+    const replyInputRef = useRef<TextInput>(null);
+    const composerScrolledRef = useRef(false);
+    const mountedRef = useRef(true);
+    const votePostingRef = useRef(false);
+    const composerScope = `${clubId}:${topicId}:${userId}`;
+    const scopeRef = useRef({ key: composerScope });
+    const previousScopeRef = useRef(composerScope);
+    if (scopeRef.current.key !== composerScope) scopeRef.current = { key: composerScope };
     const [reactionPickerState, setReactionPickerState] = useState<ReactionPickerState | null>(null);
+    const reactionButtonRefs = useRef(new Map<string, { measureInWindow: (callback: (x: number, y: number, width: number, height: number) => void) => void; focus?: () => void }>());
+    const reactionPickerRequest = useRef(0);
+    const firstReactionRef = useRef<{ focus?: () => void } | null>(null);
+    const closeReactionPicker = () => {
+        reactionPickerRequest.current += 1;
+        const button = reactionPickerState ? reactionButtonRefs.current.get(reactionPickerState.itemId) : null;
+        setReactionPickerState(null);
+        button?.focus?.();
+    };
+    const openReactionPicker = (replyId: string | null, itemId: string) => {
+        Keyboard.dismiss();
+        const request = ++reactionPickerRequest.current;
+        const scope = scopeRef.current;
+        reactionButtonRefs.current.get(itemId)?.measureInWindow((x, y, width, height) => {
+            if (!mountedRef.current || request !== reactionPickerRequest.current || scope !== scopeRef.current) return;
+            setReactionPickerState({ replyId, itemId, anchor: { x, y, width, height } });
+        });
+    };
+    const pickerWidth = Math.min(272, Math.max(44, viewport.width - 24));
+    const pickerColumns = Math.max(1, Math.floor((pickerWidth - 26 + 4) / 48));
+    const pickerRows = Math.ceil(REACTION_OPTIONS.length / pickerColumns);
+    const pickerHeight = Math.min(52 + pickerRows * 44 + (pickerRows - 1) * 4, Math.max(44, viewport.height - 24));
+    const pickerAnchor = reactionPickerState?.anchor;
+    const pickerLeft = Math.max(12, Math.min(viewport.width - pickerWidth - 12, (pickerAnchor?.x ?? 12) + (pickerAnchor?.width ?? 0) / 2 - pickerWidth / 2));
+    const pickerBelow = (pickerAnchor?.y ?? 12) + (pickerAnchor?.height ?? 0) + 8;
+    const pickerTop = Math.max(12, Math.min(viewport.height - pickerHeight - 12,
+        pickerBelow + pickerHeight <= viewport.height - 12 ? pickerBelow : (pickerAnchor?.y ?? 12) - pickerHeight - 8));
+
+    useEffect(() => {
+        reactionPickerRequest.current += 1;
+        setReactionPickerState(null);
+    }, [viewport.width, viewport.height, composerScope]);
+
+    useEffect(() => {
+        if (!reactionPickerState || Platform.OS !== 'web') return;
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeReactionPicker();
+            }
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, [reactionPickerState]);
     const [reactionDetailState, setReactionDetailState] = useState<ReactionDetailState | null>(null);
     // SDD decision PRODUCT-10: overflow (⋯) menu is the report entry point.
     const [reportMenuState, setReportMenuState] = useState<{ replyId: string | null; itemId: string } | null>(null);
@@ -172,26 +277,126 @@ export default function ClubDiscussionThreadScreen() {
         [replyComposerState, topic],
     );
 
+    const isPostingReply = replyPosting || createReplyMutation.isPending;
+    const targetUnavailable = !!replyComposerState && (!canParticipate || !!topic?.is_deleted || (!!replyComposerState.replyId && (!activeReplyTarget || !!activeReplyTarget.is_deleted)));
+    const targetError = targetUnavailable
+        ? !canParticipate ? 'Only active club members can reply in club discussion.'
+            : topic?.is_deleted ? 'This topic is no longer available for replies.'
+                : 'This reply is no longer available. Your draft is still here.'
+        : null;
+
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => { mountedRef.current = false; };
+    }, []);
+
+    useEffect(() => {
+        if (previousScopeRef.current === composerScope) return;
+        previousScopeRef.current = composerScope;
+        setReplyDraft('');
+        setReplyComposerState(null);
+        setReplyError(null);
+        setReplyPosting(false);
+        replyPostingRef.current = false;
+    }, [composerScope]);
+
+    const openReplyComposer = (replyId: string | null) => {
+        if (replyPostingRef.current || createReplyMutation.isPending) return;
+        composerScrolledRef.current = false;
+        setReplyError(null);
+        setReplyComposerState({ replyId });
+    };
+
+    const closeReplyComposer = () => {
+        if (replyPostingRef.current || createReplyMutation.isPending) return;
+        Keyboard.dismiss();
+        setReplyComposerState(null);
+    };
+
+    useEffect(() => {
+        if (!replyComposerState || reactionPickerState || reactionDetailState || reportMenuState) return;
+        if (Platform.OS === 'web') {
+            const handleEscape = (event: KeyboardEvent) => {
+                if (event.key !== 'Escape' || replyPostingRef.current || createReplyMutation.isPending) return;
+                event.preventDefault();
+                Keyboard.dismiss();
+                setReplyComposerState(null);
+            };
+            document.addEventListener('keydown', handleEscape);
+            return () => document.removeEventListener('keydown', handleEscape);
+        }
+        const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+            if (!replyPostingRef.current && !createReplyMutation.isPending) {
+                Keyboard.dismiss();
+                setReplyComposerState(null);
+            }
+            return true;
+        });
+        return () => subscription.remove();
+    }, [replyComposerState, reactionPickerState, reactionDetailState, reportMenuState, createReplyMutation.isPending]);
+
+    const revealReplyComposer = () => {
+        if (composerScrolledRef.current || targetUnavailable) return;
+        composerScrolledRef.current = true;
+        requestAnimationFrame(() => {
+            if (!mountedRef.current || !composerRef.current) return;
+            replyInputRef.current?.focus();
+            const scrollContent = scrollRef.current?.getInnerViewNode();
+            if (scrollContent) composerRef.current.measureLayout(scrollContent, (_x, y) => scrollRef.current?.scrollTo({ y: Math.max(0, y - 24), animated: true }), () => {});
+        });
+    };
+
     const handleCreateReply = async () => {
+        if (replyPostingRef.current || createReplyMutation.isPending || !replyComposerState) return;
         const body = replyDraft.trim();
         if (!clubId || !topicId || !canParticipate) {
-            setFeedback({ type: 'error', message: 'Only active club members can reply in club discussion.' });
+            setReplyError('Only active club members can reply in club discussion.');
             return;
         }
+        if (targetUnavailable) { setReplyError(targetError); return; }
         if (!body) {
-            setFeedback({ type: 'error', message: 'Write a reply before posting.' });
+            setReplyError('Write a reply before posting.');
             return;
         }
-
+        const requestScope = scopeRef.current;
+        const parentReplyId = replyComposerState.replyId;
+        replyPostingRef.current = true;
+        setReplyPosting(true);
         try {
             setFeedback(null);
-            await createReplyMutation.mutateAsync({ clubId, input: { topicId, parentReplyId: replyComposerState?.replyId ?? null, body }, userId });
+            setReplyError(null);
+            await createReplyMutation.mutateAsync({ clubId, input: { topicId, parentReplyId, body }, userId });
+            if (!mountedRef.current || scopeRef.current !== requestScope) return;
+            Keyboard.dismiss();
             setReplyDraft('');
             setReplyComposerState(null);
             setFeedback({ type: 'success', message: 'Reply posted.' });
         } catch (error) {
-            setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to post this reply right now.') });
+            if (mountedRef.current && scopeRef.current === requestScope) setReplyError(getClubsEntitlementErrorMessage(error, 'Unable to post this reply right now.'));
+        } finally {
+            if (mountedRef.current && scopeRef.current === requestScope) {
+                replyPostingRef.current = false;
+                setReplyPosting(false);
+            }
         }
+    };
+
+    const renderReplyComposer = () => {
+        if (!replyComposerState || !topic) return null;
+        const preview = replyComposerState.replyId ? activeReplyTarget ? getReplyBody(activeReplyTarget) : 'The original reply is no longer available.' : getTopicBody(topic);
+        return <DiscussionReplyComposer
+            topicId={topic.id} targetId={replyComposerState.replyId}
+            targetLabel={replyComposerState.replyId ? activeReplyTarget ? `Replying to ${getAuthorLabel(activeReplyTarget.authorProfile)}` : 'Reply unavailable' : 'Replying to the topic'}
+            preview={preview} value={replyDraft} posting={isPostingReply} unavailable={targetUnavailable}
+            error={targetError ?? replyError} colors={colors} containerRef={composerRef} inputRef={replyInputRef}
+            onLayout={revealReplyComposer} onChange={setReplyDraft} onCancel={closeReplyComposer}
+            onSwitchToTopic={() => openReplyComposer(null)} onSubmit={handleCreateReply}
+            onQuote={() => {
+                if (replyPostingRef.current || targetUnavailable) return;
+                setReplyDraft((draft) => `${draft ? `${draft}\n\n` : ''}“${preview}”\n\n`);
+                replyInputRef.current?.focus();
+            }}
+        />;
     };
 
     const handleVote = async ({ replyId, voteType }: { replyId?: string; voteType: ClubDiscussionVoteType }) => {
@@ -214,6 +419,9 @@ export default function ClubDiscussionThreadScreen() {
             setFeedback({ type: 'error', message: 'Only active club members can vote in discussion.' });
             return;
         }
+        if (votePostingRef.current) return;
+        votePostingRef.current = true;
+        try {
         if (viewerVote === voteType) {
             try {
                 setFeedback(null);
@@ -224,6 +432,9 @@ export default function ClubDiscussionThreadScreen() {
             return;
         }
         await handleVote({ replyId, voteType });
+        } finally {
+            votePostingRef.current = false;
+        }
     };
 
     const handleReaction = async (emoji: ClubDiscussionReactionEmoji) => {
@@ -242,7 +453,7 @@ export default function ClubDiscussionThreadScreen() {
                 emoji,
                 userId,
             });
-            setReactionPickerState(null);
+            closeReactionPicker();
         } catch (error) {
             setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to save this reaction right now.') });
         }
@@ -288,17 +499,21 @@ export default function ClubDiscussionThreadScreen() {
                     <TouchableOpacity
                         key={`${itemId}-${summary.emoji}`}
                         onPress={() => handleReactionToggle(summary, replyId)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${summary.emoji}, ${summary.count} reactions. ${summary.viewerReacted && canParticipate ? 'Remove your reaction' : 'See who reacted'}`}
+                        accessibilityState={{ selected: summary.viewerReacted }}
                         style={[
                             styles.reactionSummaryChip,
                             {
-                                backgroundColor: summary.viewerReacted ? colors.bgSecondary : colors.bgPrimary,
-                                borderColor: summary.viewerReacted ? colors.accent : colors.border,
+                                backgroundColor: 'transparent',
                             },
                         ]}
                         testID={`discussion-reaction-summary-${itemId}-${summary.emoji}`}
                     >
-                        <Text style={styles.reactionSummaryEmoji}>{summary.emoji}</Text>
-                        <Text style={[styles.reactionSummaryCount, { color: summary.viewerReacted ? colors.accent : colors.textSecondary }]}>{summary.count}</Text>
+                        <View style={[styles.reactionSummarySurface, { backgroundColor: summary.viewerReacted ? colors.bgSecondary : colors.bgPrimary, borderColor: summary.viewerReacted ? colors.accent : colors.border }]}>
+                            <Text style={styles.reactionSummaryEmoji}>{summary.emoji}</Text>
+                            <Text style={[styles.reactionSummaryCount, { color: summary.viewerReacted ? colors.accent : colors.textSecondary }]}>{summary.count}</Text>
+                        </View>
                     </TouchableOpacity>
                 ))}
             </View>
@@ -310,46 +525,58 @@ export default function ClubDiscussionThreadScreen() {
         replyId,
         upvoteCount,
         downvoteCount,
+        score,
         viewerVote,
         onReply,
         disabled,
+        reactions,
     }: {
         itemId: string;
         replyId: string | null;
         upvoteCount: number;
         downvoteCount: number;
+        score?: number;
         viewerVote: ClubDiscussionVoteType | null;
         onReply: () => void;
         disabled: boolean;
+        reactions?: ClubDiscussionReactionSummary[];
     }) => (
         <View style={styles.actionStrip}>
-            <TouchableOpacity onPress={onReply} disabled={disabled} style={[styles.actionChip, { borderColor: colors.border }]} testID={replyId ? `discussion-reply-target-${itemId}` : `discussion-topic-reply-${topicId}`}>
-                <Ionicons name="chatbubble-outline" size={15} color={colors.textSecondary} />
-                <Text style={[styles.actionChipLabel, { color: colors.textSecondary }]}>Reply</Text>
+            <TouchableOpacity onPress={onReply} disabled={disabled} style={[styles.actionChip, replyId ? styles.replyActionQuiet : styles.replyActionPrimary, { backgroundColor: replyId ? colors.bgCard : colors.accent, borderColor: replyId ? colors.border : colors.accent }]} testID={replyId ? `discussion-reply-target-${itemId}` : `discussion-topic-reply-${topicId}`} accessibilityRole="button">
+                <Ionicons name="chatbubble-outline" size={threadType.icon} color={replyId ? colors.textSecondary : '#FFFFFF'} />
+                <Text style={[styles.actionChipLabel, { color: replyId ? colors.textSecondary : '#FFFFFF' }]}>Reply</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleVoteToggle({ replyId: replyId ?? undefined, voteType: 'upvote', viewerVote })} disabled={disabled} style={[styles.iconActionChip, { borderColor: viewerVote === 'upvote' ? colors.accent : colors.border, backgroundColor: viewerVote === 'upvote' ? colors.bgSecondary : colors.bgCard }]} testID={replyId ? `discussion-reply-upvote-${itemId}` : `discussion-topic-upvote-${topicId}`}>
-                <Ionicons name="thumbs-up-outline" size={16} color={viewerVote === 'upvote' ? colors.accent : colors.textSecondary} />
-                <Text style={[styles.iconActionCount, { color: viewerVote === 'upvote' ? colors.accent : colors.textSecondary }]}>{upvoteCount}</Text>
+            <View style={styles.voteGroup}>
+                <TouchableOpacity onPress={() => handleVoteToggle({ replyId: replyId ?? undefined, voteType: 'upvote', viewerVote })} disabled={disabled} style={styles.voteButton} testID={replyId ? `discussion-reply-upvote-${itemId}` : `discussion-topic-upvote-${topicId}`} accessibilityRole="button" accessibilityLabel={`Upvote ${replyId ? 'reply' : 'topic'}, ${upvoteCount} upvotes`} accessibilityState={{ selected: viewerVote === 'upvote', disabled }}>
+                    <View style={[styles.voteSurface, { backgroundColor: viewerVote === 'upvote' ? colors.bgSecondary : 'transparent' }]}>
+                        <Ionicons name="arrow-up" size={threadType.icon} color={viewerVote === 'upvote' ? colors.accent : colors.textSecondary} />
+                        {score === undefined ? <Text style={[styles.iconActionCount, { color: viewerVote === 'upvote' ? colors.accent : colors.textSecondary }]}>{upvoteCount}</Text> : null}
+                    </View>
+                </TouchableOpacity>
+                {score !== undefined ? <Text style={[styles.topicScore, { color: colors.textPrimary }]} accessibilityLabel={`${score} votes`}>{score}</Text> : null}
+                <TouchableOpacity onPress={() => handleVoteToggle({ replyId: replyId ?? undefined, voteType: 'downvote', viewerVote })} disabled={disabled} style={styles.voteButton} testID={replyId ? `discussion-reply-downvote-${itemId}` : `discussion-topic-downvote-${topicId}`} accessibilityRole="button" accessibilityLabel={`Downvote ${replyId ? 'reply' : 'topic'}, ${downvoteCount} downvotes`} accessibilityState={{ selected: viewerVote === 'downvote', disabled }}>
+                    <View style={[styles.voteSurface, { backgroundColor: viewerVote === 'downvote' ? colors.bgSecondary : 'transparent' }]}>
+                        <Ionicons name="arrow-down" size={threadType.icon} color={viewerVote === 'downvote' ? colors.accent : colors.textSecondary} />
+                        {score === undefined ? <Text style={[styles.iconActionCount, { color: viewerVote === 'downvote' ? colors.accent : colors.textSecondary }]}>{downvoteCount}</Text> : null}
+                    </View>
+                </TouchableOpacity>
+            </View>
+            <TouchableOpacity ref={button => { if (button) reactionButtonRefs.current.set(itemId, button); else reactionButtonRefs.current.delete(itemId); }} onPress={() => openReactionPicker(replyId, itemId)} disabled={disabled} style={[styles.iconActionChip, { borderColor: colors.border }]} testID={`discussion-reaction-picker-open-${itemId}`} accessibilityRole="button" accessibilityLabel="Add reaction" accessibilityState={{ expanded: reactionPickerState?.itemId === itemId, disabled }}>
+                <Ionicons name="happy-outline" size={threadType.icon} color={colors.textSecondary} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleVoteToggle({ replyId: replyId ?? undefined, voteType: 'downvote', viewerVote })} disabled={disabled} style={[styles.iconActionChip, { borderColor: viewerVote === 'downvote' ? colors.accent : colors.border, backgroundColor: viewerVote === 'downvote' ? colors.bgSecondary : colors.bgCard }]} testID={replyId ? `discussion-reply-downvote-${itemId}` : `discussion-topic-downvote-${topicId}`}>
-                <Ionicons name="thumbs-down-outline" size={16} color={viewerVote === 'downvote' ? colors.accent : colors.textSecondary} />
-                <Text style={[styles.iconActionCount, { color: viewerVote === 'downvote' ? colors.accent : colors.textSecondary }]}>{downvoteCount}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setReactionPickerState({ replyId, itemId })} disabled={disabled} style={[styles.iconActionChip, { borderColor: colors.border }]} testID={`discussion-reaction-picker-open-${itemId}`}>
-                <Ionicons name="happy-outline" size={17} color={colors.textSecondary} />
-            </TouchableOpacity>
-            {canViewDiscussion ? (
-                <TouchableOpacity onPress={() => setReportMenuState({ replyId, itemId })} disabled={disabled} style={[styles.iconActionChip, { borderColor: colors.border }]} testID={replyId ? `discussion-reply-report-open-${itemId}` : `discussion-topic-report-open-${topicId}`} accessibilityLabel="Report this content">
-                    <Ionicons name="ellipsis-horizontal" size={16} color={colors.textSecondary} />
+            {canViewDiscussion && replyId ? (
+                <TouchableOpacity onPress={() => setReportMenuState({ replyId, itemId })} disabled={disabled} style={[styles.iconActionChip, { borderColor: colors.border }]} testID={replyId ? `discussion-reply-report-open-${itemId}` : `discussion-topic-report-open-${topicId}`} accessibilityRole="button" accessibilityLabel="Report this content">
+                    <Ionicons name="ellipsis-horizontal" size={threadType.icon} color={colors.textSecondary} />
                 </TouchableOpacity>
             ) : null}
+            {reactions ? renderReactionSummaryRow(reactions, itemId, replyId) : null}
         </View>
     );
 
     const renderReplyNode = (node: ReplyTreeNode, activeReplyTargetId: string | null) => {
         const isReplyTarget = activeReplyTargetId === node.id;
         const showBranchLine = Math.min(node.depth, MAX_VISIBLE_REPLY_DEPTH) > 0;
-        const interactionDisabled = reactionMutation.isPending || voteMutation.isPending || createReplyMutation.isPending;
+        const interactionDisabled = reactionMutation.isPending || voteMutation.isPending || removeVoteMutation.isPending || isPostingReply;
 
         return (
             <View
@@ -363,25 +590,32 @@ export default function ClubDiscussionThreadScreen() {
             >
                 <View style={styles.replyBranchRow}>
                     {showBranchLine ? <View style={[styles.replyBranchMarker, { backgroundColor: colors.border }]} /> : null}
-                    <View style={[styles.replyCard, { borderColor: isReplyTarget ? colors.accent : colors.border, backgroundColor: colors.bgCard }]}>
-                        <Text style={[styles.replyMeta, { color: colors.textSecondary }]}>{`${getAuthorLabel(node.authorProfile)} · ${formatTimestamp(node.created_at)}`}</Text>
-                        {node.parent ? <Text style={[styles.replyContext, { color: colors.textSecondary }]}>{`Replying to ${getAuthorLabel(node.parent.authorProfile)}`}</Text> : null}
-                        <View style={[styles.bodyShell, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
-                            <Text style={[styles.replyBody, { color: colors.textPrimary }]}>{getReplyBody(node)}</Text>
+                    <View style={[styles.replyCard, isReplyTarget ? { borderLeftColor: colors.accent, borderLeftWidth: 2, paddingLeft: 10 } : null]}>
+                        <View style={styles.replyIdentity}>
+                            <AuthorAvatar avatarUrl={node.authorProfile?.avatar_url} name={getAuthorLabel(node.authorProfile)} size={30} />
+                            <View style={styles.replyIdentityBody}>
+                                <Text style={[styles.replyMeta, { color: colors.textPrimary }]}>
+                                    <Text style={styles.replyAuthor}>{getAuthorLabel(node.authorProfile)}</Text>
+                                    <Text style={{ color: colors.textTertiary }}>{` · ${formatTimestamp(node.created_at)}`}</Text>
+                                </Text>
+                                {node.parent ? <Text style={[styles.replyContext, { color: colors.textSecondary }]}>{`Replying to ${getAuthorLabel(node.parent.authorProfile)}`}</Text> : null}
+                            </View>
                         </View>
+                        <Text style={[styles.replyBody, { color: colors.textPrimary }]}>{getReplyBody(node)}</Text>
                         {canParticipate && !topic?.is_deleted && !node.is_deleted ? renderActionRow({
                             itemId: node.id,
                             replyId: node.id,
                             upvoteCount: node.upvoteCount,
                             downvoteCount: node.downvoteCount,
                             viewerVote: node.viewerVote,
-                            onReply: () => setReplyComposerState({ replyId: node.id }),
+                            onReply: () => openReplyComposer(node.id),
                             disabled: interactionDisabled,
+                            reactions: node.reactions,
                         }) : null}
-                        {!node.is_deleted ? renderReactionSummaryRow(node.reactions, node.id, node.id) : null}
+                        {!node.is_deleted && !(canParticipate && !topic?.is_deleted) ? renderReactionSummaryRow(node.reactions, node.id, node.id) : null}
+                        {isReplyTarget ? renderReplyComposer() : null}
                     </View>
                 </View>
-                {node.children.length > 0 ? <View style={styles.replyChildren}>{node.children.map((child) => renderReplyNode(child, activeReplyTarget?.id ?? null))}</View> : null}
             </View>
         );
     };
@@ -401,92 +635,85 @@ export default function ClubDiscussionThreadScreen() {
     }
 
     const replyTree = buildReplyTree(topic.replies);
-    const interactionDisabled = reactionMutation.isPending || voteMutation.isPending || createReplyMutation.isPending;
+    const interactionDisabled = reactionMutation.isPending || voteMutation.isPending || removeVoteMutation.isPending || isPostingReply;
 
     return (
         <>
-            <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.contentContainer}>
+            <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.contentContainer}>
                 <View style={styles.headerRow}>
-                    <TouchableOpacity onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}?tab=discussion`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                    <TouchableOpacity onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}/discussion`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} accessibilityRole="button" accessibilityLabel="Back to discussion">
                         <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
                     </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Discussion thread</Text>
-                    <View style={styles.headerSpacer} />
+                    <Text style={[styles.clubContext, { color: colors.textSecondary }]} numberOfLines={1} testID="discussion-club-context">{(club?.name || 'Club discussion').toUpperCase()}</Text>
                 </View>
 
                 <View style={[styles.topicCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID={`discussion-topic-${topic.id}`}>
-                    <View style={styles.topicHeader}>
-                        <View style={styles.topicHeaderBody}>
-                            <Text style={[styles.topicTitle, { color: colors.textPrimary }]}>{topic.title}</Text>
-                            <Text style={[styles.topicMeta, { color: colors.textSecondary }]}>{`${getAuthorLabel(topic.authorProfile)} · ${formatTimestamp(topic.created_at)}`}</Text>
-                            {club?.name ? <Text style={[styles.topicMeta, { color: colors.textSecondary }]}>{club.name}</Text> : null}
-                        </View>
-                        {topic.hasUnread ? <View style={[styles.unreadBadge, { backgroundColor: colors.bgSecondary, borderColor: colors.accent }]}><Text style={[styles.unreadBadgeText, { color: colors.accent }]}>{`${topic.unreadReplyCount} unread`}</Text></View> : null}
+                    <View style={styles.topicTitleRow}>
+                        <Text style={[styles.topicTitle, { color: colors.textPrimary }]}>{topic.title}</Text>
+                        {canViewDiscussion ? (
+                            <TouchableOpacity onPress={() => setReportMenuState({ replyId: null, itemId: topic.id })} style={[styles.topicOverflowButton, { borderColor: colors.border }]} accessibilityRole="button" accessibilityLabel="Thread options" testID={`discussion-topic-report-open-${topic.id}`}>
+                                <Ionicons name="ellipsis-horizontal" size={threadType.icon} color={colors.textSecondary} />
+                            </TouchableOpacity>
+                        ) : null}
                     </View>
-                    {feedback ? <View style={[styles.feedbackBanner, { backgroundColor: feedback.type === 'success' ? '#DCFCE7' : '#FEE2E2', borderColor: feedback.type === 'success' ? '#22C55E' : '#EF4444' }]}><Text style={[styles.feedbackText, { color: feedback.type === 'success' ? '#166534' : '#991B1B' }]}>{feedback.message}</Text></View> : null}
-                    <View style={[styles.bodyShell, styles.topicBodyShell, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
-                        <Text style={[styles.topicBody, { color: colors.textPrimary }]}>{getTopicBody(topic)}</Text>
+                    <View style={styles.topicAuthorRow}>
+                        <AuthorAvatar avatarUrl={topic.authorProfile?.avatar_url} name={getAuthorLabel(topic.authorProfile)} size={30} />
+                        <Text style={[styles.topicMeta, { color: colors.textSecondary }]}>
+                            <Text style={styles.topicAuthor}>{getAuthorLabel(topic.authorProfile)}</Text>
+                            <Text style={{ color: colors.textTertiary }}>{` · ${formatTimestamp(topic.created_at)}`}</Text>
+                        </Text>
                     </View>
-                    <View style={styles.topicStatsRow}>
-                        <Text style={[styles.topicMeta, { color: colors.textSecondary }]}>{`${topic.replyCount} replies`}</Text>
-                        <Text style={[styles.topicMeta, { color: colors.textSecondary }]}>{`${topic.voteCount} score`}</Text>
-                    </View>
+                    <Text style={[styles.topicBody, { color: colors.textPrimary }]}>{getTopicBody(topic)}</Text>
+                    {!topic.is_deleted && !canParticipate ? renderReactionSummaryRow(topic.reactions, topic.id) : null}
                     {canParticipate && !topic.is_deleted ? renderActionRow({
                         itemId: topic.id,
                         replyId: null,
                         upvoteCount: topic.upvoteCount,
                         downvoteCount: topic.downvoteCount,
+                        score: topic.voteCount,
                         viewerVote: topic.viewerVote,
-                        onReply: () => setReplyComposerState({ replyId: null }),
+                        onReply: () => openReplyComposer(null),
                         disabled: interactionDisabled,
+                        reactions: topic.reactions,
                     }) : null}
-                    {!topic.is_deleted ? renderReactionSummaryRow(topic.reactions, topic.id) : null}
-                    {topic.hasUnread ? <TouchableOpacity onPress={handleMarkRead} disabled={markReadMutation.isPending} style={[styles.markReadButton, { borderColor: colors.accent, opacity: markReadMutation.isPending ? 0.65 : 1 }]} testID={`discussion-topic-mark-read-${topic.id}`}><Text style={[styles.markReadText, { color: colors.accent }]}>Mark topic as read</Text></TouchableOpacity> : null}
+                    {feedback ? <View style={[styles.feedbackBanner, { backgroundColor: feedback.type === 'success' ? colors.feedbackSuccess : colors.bgSecondary, borderColor: feedback.type === 'success' ? colors.feedbackSuccessBorder : colors.border }]}><Text style={[styles.feedbackText, { color: feedback.type === 'success' ? colors.feedbackSuccessText : colors.accent }]}>{feedback.message}</Text></View> : null}
+                    {replyComposerState && (!replyComposerState.replyId || !activeReplyTarget) ? renderReplyComposer() : null}
                 </View>
 
-                <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Replies</Text>
-                    {replyTree.length === 0 ? <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>No replies yet. Open the reply sheet to start the conversation.</Text> : <View style={styles.replyList}>{replyTree.map((node) => renderReplyNode(node, activeReplyTarget?.id ?? null))}</View>}
+                <View style={styles.repliesSection}>
+                    <View style={styles.repliesHeadingRow} testID="discussion-replies-header">
+                        <View style={styles.repliesTitleGroup}>
+                            <Text style={[styles.repliesTitle, { color: colors.textPrimary }]}>Replies</Text>
+                            <Text style={[styles.repliesCount, { color: colors.textTertiary }]} testID="discussion-replies-count">{topic.replyCount}</Text>
+                        </View>
+                        <View style={styles.repliesHeadingActions}>
+                            {topic.hasUnread ? <View style={[styles.unreadBadge, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.unreadBadgeText, { color: colors.accent }]}>{`${topic.unreadReplyCount} unread`}</Text></View> : null}
+                            {topic.hasUnread ? <TouchableOpacity onPress={handleMarkRead} disabled={markReadMutation.isPending} style={[styles.markReadButton, { opacity: markReadMutation.isPending ? 0.65 : 1 }]} testID={`discussion-topic-mark-read-${topic.id}`} accessibilityRole="button"><Text style={[styles.markReadText, { color: colors.accent }]}>{markReadMutation.isPending ? 'Marking…' : 'Mark topic as read'}</Text></TouchableOpacity> : null}
+                        </View>
+                    </View>
+                    {replyTree.length === 0 ? <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>No replies yet. Start the conversation with a reply.</Text> : <View style={styles.replyList}>{replyTree.map((node) => (
+                        <View key={node.id} style={[styles.conversationBranch, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                            {flattenReplyTree(node).map((reply) => renderReplyNode(reply, replyComposerState?.replyId ?? null))}
+                        </View>
+                    ))}</View>}
                 </View>
             </ScrollView>
+            </KeyboardAvoidingView>
 
-            <Modal visible={!!replyComposerState} transparent animationType="slide" onRequestClose={() => setReplyComposerState(null)}>
-                <Pressable style={styles.sheetOverlay} onPress={() => setReplyComposerState(null)} testID="discussion-reply-sheet-overlay">
-                    <Pressable onPress={(event) => event.stopPropagation()} style={styles.sheetPressable}>
-                        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-                            <View style={[styles.sheet, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="discussion-reply-sheet">
-                                <View style={styles.sheetHandleWrap}><View style={[styles.sheetHandle, { backgroundColor: colors.border }]} /></View>
-                                <View style={styles.sheetHeader}>
-                                    <View style={styles.sheetHeaderBody}>
-                                        <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>{activeReplyTarget ? `Replying to ${getAuthorLabel(activeReplyTarget.authorProfile)}` : 'Reply to topic'}</Text>
-                                        <Text style={[styles.sheetSubtitle, { color: colors.textSecondary }]}>{topic.title}</Text>
-                                    </View>
-                                    <TouchableOpacity onPress={() => setReplyComposerState(null)} testID="discussion-reply-sheet-close"><Text style={[styles.sheetCancel, { color: colors.accent }]}>Cancel</Text></TouchableOpacity>
-                                </View>
-                                {activeReplyTarget ? <View style={[styles.sheetPreview, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]} testID={`discussion-reply-preview-${activeReplyTarget.id}`}><Text style={[styles.sheetPreviewAuthor, { color: colors.textPrimary }]}>{getAuthorLabel(activeReplyTarget.authorProfile)}</Text><Text style={[styles.sheetPreviewBody, { color: colors.textSecondary }]} numberOfLines={3}>{getReplyBody(activeReplyTarget)}</Text></View> : null}
-                                <TextInput value={replyDraft} onChangeText={setReplyDraft} placeholder={activeReplyTarget ? `Reply to ${getAuthorLabel(activeReplyTarget.authorProfile)}` : 'Share your reply'} placeholderTextColor={colors.textTertiary} multiline autoFocus style={[styles.textArea, styles.sheetInput, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgPrimary }]} testID={`discussion-reply-body-${topic.id}`} />
-                                {activeReplyTarget ? <TouchableOpacity onPress={() => setReplyComposerState({ replyId: null })} testID={`discussion-reply-cancel-${activeReplyTarget.id}`}><Text style={[styles.sheetSwitchText, { color: colors.textSecondary }]}>Reply to the topic instead</Text></TouchableOpacity> : null}
-                                <TouchableOpacity onPress={handleCreateReply} disabled={createReplyMutation.isPending} style={[styles.primaryActionButton, styles.sheetSubmit, { backgroundColor: colors.accent, opacity: createReplyMutation.isPending ? 0.65 : 1 }]} testID={`discussion-reply-submit-${topic.id}`}><Text style={styles.primaryActionText}>{createReplyMutation.isPending ? 'Posting...' : activeReplyTarget ? 'Reply to thread' : 'Reply to topic'}</Text></TouchableOpacity>
-                            </View>
-                        </KeyboardAvoidingView>
-                    </Pressable>
-                </Pressable>
-            </Modal>
-
-            <Modal visible={!!reactionPickerState} transparent animationType="fade" onRequestClose={() => setReactionPickerState(null)}>
-                <Pressable style={styles.sheetOverlay} onPress={() => setReactionPickerState(null)} testID="discussion-reaction-picker-overlay">
-                    <Pressable onPress={(event) => event.stopPropagation()} style={styles.sheetPressable}>
-                        <View style={[styles.sheet, styles.reactionPickerSheet, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="discussion-reaction-picker">
-                            <View style={styles.sheetHandleWrap}><View style={[styles.sheetHandle, { backgroundColor: colors.border }]} /></View>
-                            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>React to this comment</Text>
+            <Modal visible={!!reactionPickerState} transparent animationType="fade" onShow={() => firstReactionRef.current?.focus?.()} onRequestClose={closeReactionPicker}>
+                <Pressable style={styles.reactionPopoverOverlay} onPress={closeReactionPicker} testID="discussion-reaction-picker-overlay">
+                    <Pressable onPress={(event) => event.stopPropagation()} style={[styles.reactionPopover, { width: pickerWidth, maxHeight: pickerHeight, left: pickerLeft, top: pickerTop, backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="discussion-reaction-picker" accessibilityViewIsModal>
+                        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.reactionPopoverContent}>
+                            <Text style={[styles.reactionPopoverTitle, { color: colors.textSecondary }]}>{reactionPickerState?.replyId ? 'React to this reply' : 'React to this topic'}</Text>
                             <View style={styles.reactionPickerGrid}>
-                                {REACTION_OPTIONS.map((emoji) => (
-                                    <TouchableOpacity key={emoji} onPress={() => handleReaction(emoji)} style={[styles.reactionPickerOption, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]} testID={`discussion-reaction-option-${reactionPickerState?.itemId ?? 'none'}-${emoji}`}>
+                                {REACTION_OPTIONS.map((emoji, index) => (
+                                    <TouchableOpacity ref={index === 0 ? button => { firstReactionRef.current = button; } : undefined} key={emoji} onPress={() => handleReaction(emoji)} disabled={reactionMutation.isPending} accessibilityRole="button" accessibilityLabel={`React with ${emoji}`} accessibilityState={{ disabled: reactionMutation.isPending }} style={[styles.reactionPickerOption, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]} testID={`discussion-reaction-option-${reactionPickerState?.itemId ?? 'none'}-${emoji}`}>
                                         <Text style={styles.reactionPickerEmoji}>{emoji}</Text>
                                     </TouchableOpacity>
                                 ))}
                             </View>
-                        </View>
+                        </ScrollView>
                     </Pressable>
                 </Pressable>
             </Modal>
@@ -540,81 +767,87 @@ export default function ClubDiscussionThreadScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    contentContainer: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 48 },
+    contentContainer: { width: '100%', maxWidth: 680, alignSelf: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 120 },
     loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     errorContainer: { padding: 24, justifyContent: 'center' },
-    headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-    iconButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
-    headerTitle: { flex: 1, marginHorizontal: 12, fontSize: 18, fontWeight: '700' },
-    headerSpacer: { width: 40 },
-    sectionCard: { borderWidth: 1, borderRadius: 18, padding: 16, marginBottom: 14 },
-    sectionTitle: { fontSize: 15, fontWeight: '700', marginBottom: 8 },
-    sectionBody: { fontSize: 14, lineHeight: 20 },
-    topicCard: { borderWidth: 1, borderRadius: 18, padding: 14, marginBottom: 14, gap: 10 },
-    topicHeader: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
-    topicHeaderBody: { flex: 1, gap: 4 },
-    topicTitle: { fontSize: 16, fontWeight: '700' },
-    topicMeta: { fontSize: 12, lineHeight: 17 },
-    topicBodyShell: { marginTop: 2 },
-    topicBody: { fontSize: 14, lineHeight: 21, fontWeight: '500' },
-    topicStatsRow: { flexDirection: 'row', gap: 12 },
-    unreadBadge: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-    unreadBadgeText: { fontSize: 12, fontWeight: '700' },
-    feedbackBanner: { marginTop: 4, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
-    feedbackText: { fontSize: 13, fontWeight: '600', lineHeight: 18 },
-    replyList: { gap: 10 },
-    replyTreeNode: { gap: 8 },
-    replyTreeNodeNested: { borderLeftWidth: 2, paddingLeft: 10 },
-    replyBranchRow: { flexDirection: 'row', alignItems: 'stretch', gap: 8 },
-    replyBranchMarker: { width: 16, height: 2, marginTop: 18, borderRadius: 999 },
-    replyChildren: { gap: 8 },
-    replyCard: { flex: 1, borderWidth: 1, borderRadius: 16, padding: 12, gap: 8 },
-    replyMeta: { fontSize: 12, lineHeight: 16 },
-    replyContext: { fontSize: 12, lineHeight: 16, fontWeight: '600' },
-    replyBody: { fontSize: 14, lineHeight: 20, fontWeight: '500' },
-    bodyShell: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 },
-    actionStrip: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-    actionChip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 },
-    actionChipLabel: { fontSize: 12, fontWeight: '700' },
-    iconActionChip: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 },
-    iconActionCount: { fontSize: 11, fontWeight: '700' },
-    reactionSummaryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    reactionSummaryChip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-    reactionSummaryEmoji: { fontSize: 14 },
-    reactionSummaryCount: { fontSize: 11, fontWeight: '700' },
-    markReadButton: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
-    markReadText: { fontSize: 12, fontWeight: '700' },
-    reportReasonOption: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginTop: 8 },
-    reportReasonLabel: { fontSize: 14, fontWeight: '600' },
-    input: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, marginTop: 10 },
-    textArea: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, minHeight: 120, textAlignVertical: 'top', marginTop: 10 },
-    primaryActionButton: { marginTop: 16, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
-    primaryActionText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
-    secondaryActionButton: { marginTop: 12, borderWidth: 1, borderRadius: 14, paddingVertical: 12, alignItems: 'center', paddingHorizontal: 12 },
-    secondaryActionText: { fontSize: 15, fontWeight: '800' },
-    sheetOverlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.35)', justifyContent: 'flex-end' },
+    headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
+    iconButton: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+    clubContext: { flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 11, lineHeight: 16, letterSpacing: 0.8 },
+    sectionTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 16, lineHeight: 22 },
+    sectionBody: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21 },
+    topicCard: { borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 8, gap: 4 },
+    topicTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    topicOverflowButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22 },
+    topicAuthorRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+    avatar: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backgroundColor: '#F8EBE7' },
+    avatarInitials: { color: '#8B322C', fontFamily: 'Inter_600SemiBold', fontSize: 11, lineHeight: 15 },
+    topicMeta: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 19 },
+    topicAuthor: { fontFamily: 'Inter_600SemiBold', color: '#1A1412' },
+    topicTitle: { flex: 1, fontFamily: 'Newsreader_600SemiBold', fontSize: 24, lineHeight: 30, letterSpacing: -0.25 },
+    topicBody: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21 },
+    unreadBadge: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5 },
+    unreadBadgeText: { fontFamily: 'Inter_600SemiBold', fontSize: 11, lineHeight: 15 },
+    feedbackBanner: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
+    feedbackText: { fontFamily: 'Inter_500Medium', fontSize: 13, lineHeight: 19 },
+    repliesSection: { paddingBottom: 8 },
+    repliesHeadingRow: { minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingBottom: 6, flexWrap: 'wrap' },
+    repliesTitleGroup: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    repliesTitle: { fontFamily: 'Newsreader_600SemiBold', fontSize: 22, lineHeight: 28 },
+    repliesCount: { fontFamily: 'Inter_500Medium', fontSize: 13, lineHeight: 18 },
+    repliesHeadingActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6, flexWrap: 'wrap' },
+    markReadButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 6 },
+    markReadText: { fontFamily: 'Inter_600SemiBold', fontSize: 11, lineHeight: 16 },
+    replyList: { gap: 8 },
+    conversationBranch: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12 },
+    replyTreeNode: { gap: 0 },
+    replyTreeNodeNested: { borderLeftWidth: 1, paddingLeft: 6 },
+    replyBranchRow: { flexDirection: 'row', alignItems: 'stretch', gap: 4 },
+    replyBranchMarker: { width: 8, height: 1, marginTop: 20, borderRadius: 999 },
+    replyCard: { flex: 1, minWidth: 0, paddingVertical: 8, gap: 4 },
+    replyIdentity: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+    replyIdentityBody: { flex: 1, gap: 2 },
+    replyMeta: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 19 },
+    replyAuthor: { fontFamily: 'Inter_600SemiBold', color: '#1A1412' },
+    replyContext: { fontFamily: 'Inter_500Medium', fontSize: 12, lineHeight: 18 },
+    replyBody: { fontFamily: 'Inter_400Regular', fontSize: threadType.body, lineHeight: threadType.bodyLine },
+    actionStrip: { flexDirection: 'row', alignItems: 'center', gap: 2, flexWrap: 'wrap', marginTop: 0 },
+    actionChip: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 999, paddingHorizontal: 12 },
+    replyActionPrimary: { minWidth: 88 },
+    replyActionQuiet: { minWidth: 64, borderWidth: 0, paddingHorizontal: 4 },
+    actionChipLabel: { fontFamily: 'Inter_500Medium', fontSize: threadType.action, lineHeight: threadType.actionLine },
+    voteGroup: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 0, paddingHorizontal: 0 },
+    voteButton: { minWidth: 44, height: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: 999, paddingHorizontal: 5 },
+    voteSurface: { minWidth: 30, minHeight: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: 999, paddingHorizontal: 5, paddingVertical: 4 },
+    topicScore: { minWidth: 18, textAlign: 'center', fontFamily: 'Inter_600SemiBold', fontSize: threadType.action, lineHeight: threadType.actionLine },
+    iconActionChip: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderWidth: 0, borderRadius: 999, paddingHorizontal: 9 },
+    iconActionCount: { fontFamily: 'Inter_500Medium', fontSize: threadType.action, lineHeight: threadType.actionLine },
+    reactionSummaryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+    reactionSummaryChip: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+    reactionSummarySurface: { minHeight: 28, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+    reactionSummaryEmoji: { fontSize: 12, lineHeight: 16 },
+    reactionSummaryCount: { fontFamily: 'Inter_500Medium', fontSize: threadType.action, lineHeight: threadType.actionLine },
+    reportReasonOption: { minHeight: 44, justifyContent: 'center', borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginTop: 8 },
+    reportReasonLabel: { fontFamily: 'Inter_500Medium', fontSize: 14, lineHeight: 20 },
+    secondaryActionButton: { minHeight: 44, marginTop: 12, borderWidth: 1, borderRadius: 14, paddingVertical: 12, alignItems: 'center', paddingHorizontal: 12 },
+    secondaryActionText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
+    sheetOverlay: { flex: 1, backgroundColor: 'rgba(26, 20, 18, 0.38)', justifyContent: 'flex-end' },
     sheetPressable: { justifyContent: 'flex-end' },
-    sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, borderBottomWidth: 0, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 24, gap: 12 },
+    sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, borderBottomWidth: 0, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 28, gap: 12 },
     sheetHandleWrap: { alignItems: 'center', paddingBottom: 4 },
     sheetHandle: { width: 48, height: 5, borderRadius: 999 },
-    sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' },
-    sheetHeaderBody: { flex: 1, gap: 4 },
-    sheetTitle: { fontSize: 16, fontWeight: '700' },
-    sheetSubtitle: { fontSize: 13, lineHeight: 18 },
-    sheetCancel: { fontSize: 13, fontWeight: '700' },
-    sheetPreview: { borderWidth: 1, borderRadius: 14, padding: 12, gap: 6 },
-    sheetPreviewAuthor: { fontSize: 13, fontWeight: '700' },
-    sheetPreviewBody: { fontSize: 13, lineHeight: 18 },
-    sheetInput: { minHeight: 112, marginTop: 0 },
-    sheetSwitchText: { fontSize: 13, fontWeight: '600' },
-    sheetSubmit: { marginTop: 0 },
+    sheetTitle: { fontFamily: 'Newsreader_600SemiBold', fontSize: 21, lineHeight: 27 },
+    sheetCancel: { fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 20 },
     reactionPickerSheet: { paddingBottom: 20 },
-    reactionPickerGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-    reactionPickerOption: { width: 54, height: 54, borderWidth: 1, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-    reactionPickerEmoji: { fontSize: 24 },
+    reactionPopoverOverlay: { flex: 1, backgroundColor: 'rgba(26, 20, 18, 0.08)' },
+    reactionPopover: { position: 'absolute', borderWidth: 1, borderRadius: 14, overflow: 'hidden' },
+    reactionPopoverContent: { padding: 12, gap: 8 },
+    reactionPopoverTitle: { fontFamily: 'Inter_500Medium', fontSize: 12, lineHeight: 18 },
+    reactionPickerGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+    reactionPickerOption: { width: 44, height: 44, borderWidth: 1, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+    reactionPickerEmoji: { fontSize: 18, lineHeight: 24 },
     reactionUsersSheet: { maxHeight: '60%' },
     reactionUsersList: { gap: 8 },
     reactionUserRow: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 },
-    reactionUserName: { fontSize: 14, fontWeight: '700' },
-    reactionUserHandle: { fontSize: 12, marginTop: 2 },
+    reactionUserName: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
+    reactionUserHandle: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, marginTop: 2 },
 });
