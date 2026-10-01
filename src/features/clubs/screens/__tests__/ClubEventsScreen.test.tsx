@@ -94,4 +94,51 @@ describe('ClubEventsScreen', () => {
 
         expect(mockRouterPush).toHaveBeenCalledWith('/clubs/club-1/events/create');
     });
+
+    it('preserves cancelled-event management without exposing RSVP or cancel', () => {
+        mockUseClubMembership.mockReturnValue({ data: { role: 'admin', status: 'active' }, isLoading: false });
+        const result = mockUseClubEvents();
+        mockUseClubEvents.mockReturnValue({ ...result, data: [{ ...result.data[0], status: 'cancelled', currentUserRsvp: { status: 'maybe' } }] });
+        const { getByText, getByTestId, queryByTestId } = render(<ClubEventsScreen />);
+        expect(getByText('Cancelled')).toBeOnTheScreen();
+        expect(getByText('You marked maybe.')).toBeOnTheScreen();
+        expect(getByTestId('club-event-delete-event-1')).toBeOnTheScreen();
+        expect(queryByTestId('club-event-cancel-event-1')).toBeNull();
+        expect(queryByTestId('club-event-rsvp-going-event-1')).toBeNull();
+        fireEvent.press(getByTestId('club-event-edit-event-1'));
+        expect(mockRouterPush).toHaveBeenCalledWith('/clubs/club-1/events/event-1/edit');
+    });
+
+    it('announces the saved RSVP selection and preserves the not-going payload', async () => {
+        const result = mockUseClubEvents();
+        mockUseClubEvents.mockReturnValue({ ...result, data: [{ ...result.data[0], currentUserRsvp: { status: 'not_going' } }] });
+        const mutateAsync = jest.fn().mockResolvedValue({ status: 'not_going' });
+        mockUseUpsertClubEventRsvp.mockReturnValue({ mutateAsync, isPending: false });
+        const { getByTestId } = render(<ClubEventsScreen />);
+        expect(getByTestId('club-event-rsvp-not-going-event-1')).toHaveProp('accessibilityState', { selected: true, disabled: false });
+        fireEvent.press(getByTestId('club-event-rsvp-not-going-event-1'));
+        await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ eventId: 'event-1', clubId: 'club-1', userId: 'reader-1', status: 'not_going' }));
+    });
+
+    it('keeps retry available and hides stale event actions when loading fails', () => {
+        const result = mockUseClubEvents();
+        const refetch = jest.fn();
+        mockUseClubEvents.mockReturnValue({ ...result, isError: true, error: new Error('Offline'), refetch });
+        const { getByTestId, getByText, queryByTestId } = render(<ClubEventsScreen />);
+        expect(getByText('Unable to load events')).toBeOnTheScreen();
+        expect(queryByTestId('club-event-event-1')).toBeNull();
+        fireEvent.press(getByTestId('club-events-retry'));
+        expect(refetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('preserves loading and empty schedule feedback', () => {
+        const result = mockUseClubEvents();
+        mockUseClubEvents.mockReturnValue({ ...result, isLoading: true });
+        const { getByText, queryByTestId, rerender } = render(<ClubEventsScreen />);
+        expect(getByText('Loading club events…')).toBeOnTheScreen();
+        expect(queryByTestId('club-event-event-1')).toBeNull();
+        mockUseClubEvents.mockReturnValue({ ...result, data: [] });
+        rerender(<ClubEventsScreen />);
+        expect(getByText('No events yet')).toBeOnTheScreen();
+    });
 });
