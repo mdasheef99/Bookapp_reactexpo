@@ -8,9 +8,14 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useViewerMembershipTier } from '@/features/clubs/hooks/useViewerMembershipTier';
 import { useClubEvent, useClubEventVenues, useClubMembership, useClubPublicDetail, useCreateClubEvent, useUpdateClubEvent } from '@/features/clubs/hooks/useClubs';
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
-import { type ClubEventFormat, type MembershipTier } from '@/features/clubs/services/clubsService';
-import { useTheme } from '@/hooks/useTheme';
+import { type ClubEventFormat } from '@/features/clubs/services/clubsService';
 import { canCreateClubEvents, canManageClubEvent, combineDateAndTime, toDateInputValue, toTimeInputValue } from './clubEvents.shared';
+
+const colors = {
+    bgPrimary: '#FAF6EE', bgCard: '#FFFEFC', bgSecondary: '#F8EBE7',
+    border: '#E7DCD1', accent: '#8B322C', textPrimary: '#1A1412',
+    textSecondary: '#6E645F', textTertiary: '#81756E',
+} as const;
 
 type LocationMode = 'linked_venue' | 'manual_location';
 type PickerTarget = 'start-date' | 'start-time' | 'end-date' | 'end-time';
@@ -102,7 +107,9 @@ function WebPickerField({
         width: '100%',
         minHeight: 46,
         border: 'none',
-        outline: 'none',
+        outlineColor: '#8B322C',
+        outlineOffset: -2,
+        fontFamily: 'Inter_400Regular, sans-serif',
         backgroundColor: 'transparent',
         color: colors.textPrimary,
         fontSize: 14,
@@ -142,7 +149,6 @@ export default function ClubEventEditorScreen() {
         draft?: string;
     }>();
     const isEditing = !!eventId;
-    const { colors } = useTheme();
     const { user } = useAuth();
     const userId = user?.id ?? null;
     const { data: club, isLoading: isClubLoading } = useClubPublicDetail(clubId ?? null);
@@ -393,14 +399,13 @@ export default function ClubEventEditorScreen() {
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.contentContainer}>
             <View style={styles.headerRow}>
-                <TouchableOpacity onPress={handleBackPress} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>{isEditing ? 'Edit club event' : 'Create club event'}</Text>
-                <View style={styles.headerSpacer} />
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={returnTo === 'manage' ? 'Back to club management' : 'Back to events'} onPress={handleBackPress} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity>
+                <Text style={styles.clubContext}>{club?.name || 'Book club'}</Text>
             </View>
 
-            <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Simple event setup</Text>
-                <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>Create one club event at a time. Choose the format first, then only the fields that format needs.</Text>
+            <View style={styles.pageIntro}>
+                <Text accessibilityRole="header" style={[styles.headerTitle, { color: colors.textPrimary }]}>{isEditing ? 'Edit club event' : 'Create club event'}</Text>
+                <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>{isEditing ? 'Update the details for your club’s gathering.' : 'Bring your club together for a conversation or meetup.'}</Text>
                 {!userId ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Sign in required</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>You must be signed in before you can manage club events.</Text></View> : null}
                 {userId && !canSubmit ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Manager access required</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Only the club admin or an eligible moderator can create events. Eligible moderators can edit or cancel only the events they created.</Text></View> : null}
                 {feedback ? <View style={[styles.feedbackBanner, { backgroundColor: feedback.type === 'success' ? '#DCFCE7' : '#FEE2E2', borderColor: feedback.type === 'success' ? '#22C55E' : '#EF4444' }]}><Text style={[styles.feedbackText, { color: feedback.type === 'success' ? '#166534' : '#991B1B' }]}>{feedback.message}</Text></View> : null}
@@ -415,10 +420,10 @@ export default function ClubEventEditorScreen() {
                     {IS_NATIVE_PICKER_PLATFORM ? (
                         <>
                             <TouchableOpacity onPress={() => setActivePicker(activePicker === 'start-date' ? null : 'start-date')} style={[styles.input, styles.rowInput, styles.pickerFieldButton, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]} testID="club-event-start-date">
-                                <Text style={{ color: startDate ? colors.textPrimary : colors.textTertiary }}>{formatEditorDateLabel(startDate)}</Text>
+                                <Text style={[styles.pickerText, { color: startDate ? colors.textPrimary : colors.textTertiary }]}>{formatEditorDateLabel(startDate)}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => setActivePicker(activePicker === 'start-time' ? null : 'start-time')} style={[styles.input, styles.rowInput, styles.pickerFieldButton, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]} testID="club-event-start-time">
-                                <Text style={{ color: startTime ? colors.textPrimary : colors.textTertiary }}>{formatEditorTimeLabel(startTime)}</Text>
+                                <Text style={[styles.pickerText, { color: startTime ? colors.textPrimary : colors.textTertiary }]}>{formatEditorTimeLabel(startTime)}</Text>
                             </TouchableOpacity>
                         </>
                     ) : (
@@ -434,7 +439,7 @@ export default function ClubEventEditorScreen() {
                 <View style={styles.labelRow}>
                     <Text style={[styles.label, { color: colors.textPrimary }]}>End date & time (optional)</Text>
                     {(endDate || endTime) ? (
-                        <TouchableOpacity onPress={() => { setEndDate(''); setEndTime(''); setActivePicker(null); }} testID="club-event-clear-end">
+                        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Clear optional end date and time" style={styles.clearButton} onPress={() => { setEndDate(''); setEndTime(''); setActivePicker(null); }} testID="club-event-clear-end">
                             <Text style={[styles.clearText, { color: colors.accent }]}>Clear</Text>
                         </TouchableOpacity>
                     ) : null}
@@ -443,10 +448,10 @@ export default function ClubEventEditorScreen() {
                     {IS_NATIVE_PICKER_PLATFORM ? (
                         <>
                             <TouchableOpacity onPress={() => setActivePicker(activePicker === 'end-date' ? null : 'end-date')} style={[styles.input, styles.rowInput, styles.pickerFieldButton, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]} testID="club-event-end-date">
-                                <Text style={{ color: endDate ? colors.textPrimary : colors.textTertiary }}>{formatEditorDateLabel(endDate)}</Text>
+                                <Text style={[styles.pickerText, { color: endDate ? colors.textPrimary : colors.textTertiary }]}>{formatEditorDateLabel(endDate)}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => setActivePicker(activePicker === 'end-time' ? null : 'end-time')} style={[styles.input, styles.rowInput, styles.pickerFieldButton, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]} testID="club-event-end-time">
-                                <Text style={{ color: endTime ? colors.textPrimary : colors.textTertiary }}>{formatEditorTimeLabel(endTime)}</Text>
+                                <Text style={[styles.pickerText, { color: endTime ? colors.textPrimary : colors.textTertiary }]}>{formatEditorTimeLabel(endTime)}</Text>
                             </TouchableOpacity>
                         </>
                     ) : (
@@ -460,18 +465,18 @@ export default function ClubEventEditorScreen() {
                 {renderNativePicker('end-time')}
 
                 <Text style={[styles.label, { color: colors.textPrimary }]}>Format</Text>
-                <View style={styles.row}>{(['virtual', 'in_person', 'hybrid'] as const).map((option) => <TouchableOpacity key={option} onPress={() => setEventType(option)} style={[styles.choiceButton, { backgroundColor: eventType === option ? colors.accent : colors.bgPrimary, borderColor: eventType === option ? colors.accent : colors.border }]} testID={`club-event-type-${option}`}><Text style={[styles.choiceText, { color: eventType === option ? '#FFFFFF' : colors.textPrimary }]}>{option === 'in_person' ? 'In person' : option === 'hybrid' ? 'Hybrid' : 'Virtual'}</Text></TouchableOpacity>)}</View>
+                <View style={styles.row}>{(['virtual', 'in_person', 'hybrid'] as const).map((option) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: eventType === option }} key={option} onPress={() => setEventType(option)} style={[styles.choiceButton, { backgroundColor: eventType === option ? colors.accent : colors.bgPrimary, borderColor: eventType === option ? colors.accent : colors.border }]} testID={`club-event-type-${option}`}>{eventType === option ? <Ionicons name="checkmark" size={12} color="#FFFFFF" /> : null}<Text style={[styles.choiceText, { color: eventType === option ? '#FFFFFF' : colors.textPrimary }]}>{option === 'in_person' ? 'In person' : option === 'hybrid' ? 'Hybrid' : 'Virtual'}</Text></TouchableOpacity>)}</View>
 
                 {requiresPhysicalLocation ? <>
                     <Text style={[styles.label, { color: colors.textPrimary }]}>Physical location</Text>
-                    {hasLinkedVenues ? <View style={styles.row}><TouchableOpacity onPress={() => setLocationMode('linked_venue')} style={[styles.choiceButton, { backgroundColor: locationMode === 'linked_venue' ? colors.accent : colors.bgPrimary, borderColor: locationMode === 'linked_venue' ? colors.accent : colors.border }]} testID="club-event-location-linked"><Text style={[styles.choiceText, { color: locationMode === 'linked_venue' ? '#FFFFFF' : colors.textPrimary }]}>Use linked venue</Text></TouchableOpacity><TouchableOpacity onPress={() => setLocationMode('manual_location')} style={[styles.choiceButton, { backgroundColor: locationMode === 'manual_location' ? colors.accent : colors.bgPrimary, borderColor: locationMode === 'manual_location' ? colors.accent : colors.border }]} testID="club-event-location-manual"><Text style={[styles.choiceText, { color: locationMode === 'manual_location' ? '#FFFFFF' : colors.textPrimary }]}>Enter meetup place</Text></TouchableOpacity></View> : <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>This club does not have a linked venue yet, so this event will use a meetup-place field.</Text>}
+                    {hasLinkedVenues ? <View style={styles.row}><TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: locationMode === 'linked_venue' }} onPress={() => setLocationMode('linked_venue')} style={[styles.choiceButton, { backgroundColor: locationMode === 'linked_venue' ? colors.accent : colors.bgPrimary, borderColor: locationMode === 'linked_venue' ? colors.accent : colors.border }]} testID="club-event-location-linked"><Text style={[styles.choiceText, { color: locationMode === 'linked_venue' ? '#FFFFFF' : colors.textPrimary }]}>Use linked venue</Text></TouchableOpacity><TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: locationMode === 'manual_location' }} onPress={() => setLocationMode('manual_location')} style={[styles.choiceButton, { backgroundColor: locationMode === 'manual_location' ? colors.accent : colors.bgPrimary, borderColor: locationMode === 'manual_location' ? colors.accent : colors.border }]} testID="club-event-location-manual"><Text style={[styles.choiceText, { color: locationMode === 'manual_location' ? '#FFFFFF' : colors.textPrimary }]}>Enter meetup place</Text></TouchableOpacity></View> : <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>This club does not have a linked venue yet, so this event will use a meetup-place field.</Text>}
                     {locationMode === 'linked_venue' && hasLinkedVenues ? <>
                         <TouchableOpacity
                             onPress={() => router.push(`/clubs/${clubId}/venues?${venuePickerReturnQuery}`)}
                             style={[styles.secondaryActionButton, { borderColor: colors.accent, marginBottom: 12 }]}
                             testID="event-browse-venues"
                         >
-                            <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 14 }}>Browse all venues</Text>
+                            <Text style={[styles.choiceText, { color: colors.accent }]}>Browse all venues</Text>
                         </TouchableOpacity>
                         {linkedVenues.map((venueLink) => <TouchableOpacity key={venueLink.venue_id ?? venueLink.venue?.id ?? venueLink.venue?.name} onPress={() => setSelectedVenueId(venueLink.venue_id ?? null)} style={[styles.venueCard, { backgroundColor: colors.bgPrimary, borderColor: selectedVenueId === venueLink.venue_id ? colors.accent : colors.border }]} testID={`club-event-venue-${venueLink.venue_id}`}><Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{venueLink.venue?.name || 'Unnamed venue'}</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>{[venueLink.venue?.address_line1, venueLink.venue?.city].filter(Boolean).join(', ') || 'Venue details will be shown to members.'}</Text></TouchableOpacity>)}
                     </> : <TextInput value={manualLocation} onChangeText={setManualLocation} placeholder="Library reading room, café upstairs, bookstore front hall…" placeholderTextColor={colors.textTertiary} multiline style={[styles.input, styles.multilineInput, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgPrimary }]} testID="club-event-manual-location" />}
@@ -482,17 +487,45 @@ export default function ClubEventEditorScreen() {
                 <Text style={[styles.label, { color: colors.textPrimary }]}>Description (optional)</Text>
                 <TextInput value={description} onChangeText={setDescription} placeholder="What should members expect at this event?" placeholderTextColor={colors.textTertiary} multiline style={[styles.input, styles.multilineInput, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgPrimary }]} testID="club-event-description" />
 
-                <TouchableOpacity onPress={handleSubmit} disabled={createEventMutation.isPending || updateEventMutation.isPending} style={[styles.primaryActionButton, { backgroundColor: colors.accent, opacity: createEventMutation.isPending || updateEventMutation.isPending ? 0.65 : 1 }]} testID="club-event-submit"><Text style={styles.primaryActionText}>{createEventMutation.isPending || updateEventMutation.isPending ? 'Saving…' : isEditing ? 'Save event' : 'Create event'}</Text></TouchableOpacity>
+                <TouchableOpacity accessibilityRole="button" onPress={handleSubmit} disabled={createEventMutation.isPending || updateEventMutation.isPending} style={[styles.primaryActionButton, { backgroundColor: colors.accent, opacity: createEventMutation.isPending || updateEventMutation.isPending ? 0.65 : 1 }]} testID="club-event-submit"><Text style={styles.primaryActionText}>{createEventMutation.isPending || updateEventMutation.isPending ? 'Saving…' : isEditing ? 'Save event' : 'Create event'}</Text></TouchableOpacity>
             </View> : null}
         </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 }, contentContainer: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 48 }, loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 }, iconButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' }, headerTitle: { flex: 1, marginHorizontal: 12, fontSize: 18, fontWeight: '700' }, headerSpacer: { width: 40 },
-    sectionCard: { borderWidth: 1, borderRadius: 18, padding: 16, marginBottom: 14 }, sectionTitle: { fontSize: 15, fontWeight: '700', marginBottom: 8 }, sectionBody: { fontSize: 14, lineHeight: 20 }, noticeCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12 }, noticeTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6 }, noticeBody: { fontSize: 14, lineHeight: 20 },
-    label: { fontSize: 14, fontWeight: '700', marginTop: 14, marginBottom: 8 }, labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, clearText: { fontSize: 13, fontWeight: '700' }, input: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, fontSize: 14 }, multilineInput: { minHeight: 96, textAlignVertical: 'top' }, row: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' }, rowInput: { flex: 1, minWidth: 120 }, pickerFieldButton: { justifyContent: 'center' }, webPickerField: { paddingHorizontal: 0, paddingVertical: 0, overflow: 'hidden' }, pickerCard: { borderWidth: 1, borderRadius: 14, marginTop: 10, overflow: 'hidden' }, choiceButton: { flex: 1, minWidth: 120, borderWidth: 1, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 12, alignItems: 'center' }, choiceText: { fontSize: 14, fontWeight: '700' }, venueCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 10 },
-    primaryActionButton: { marginTop: 18, borderRadius: 14, paddingVertical: 14, alignItems: 'center' }, primaryActionText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' }, feedbackBanner: { marginTop: 14, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }, feedbackText: { fontSize: 13, fontWeight: '600', lineHeight: 18 },
-    secondaryActionButton: { borderWidth: 1.5, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
+    container: { flex: 1 },
+    contentContainer: { width: '100%', maxWidth: 760, alignSelf: 'center', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 48 },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    headerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 18 },
+    iconButton: { width: 44, height: 44, borderRadius: 8, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+    clubContext: { flex: 1, color: colors.textSecondary, fontFamily: 'Inter_600SemiBold', fontSize: 11, lineHeight: 16, letterSpacing: 0.8, textTransform: 'uppercase' },
+    headerTitle: { fontFamily: 'Newsreader_600SemiBold', fontSize: 30, lineHeight: 36, marginBottom: 6 },
+    pageIntro: { marginBottom: 20 },
+    sectionCard: { borderWidth: 1, borderRadius: 12, padding: 16, marginBottom: 14 },
+    sectionTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 21, marginBottom: 4 },
+    sectionBody: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21 },
+    noticeCard: { borderWidth: 1, borderRadius: 10, padding: 14, marginTop: 12 },
+    noticeTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 21, marginBottom: 6 },
+    noticeBody: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21 },
+    label: { fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 19, marginTop: 14, marginBottom: 8 },
+    labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    clearButton: { minHeight: 44, minWidth: 44, justifyContent: 'center', alignItems: 'center', marginTop: 6 },
+    clearText: { fontFamily: 'Inter_600SemiBold', fontSize: 12, lineHeight: 18 },
+    input: { minHeight: 46, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 12, fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21 },
+    multilineInput: { minHeight: 96, textAlignVertical: 'top' },
+    row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+    rowInput: { flex: 1, minWidth: 120 },
+    pickerFieldButton: { justifyContent: 'center' },
+    pickerText: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21 },
+    webPickerField: { paddingHorizontal: 0, paddingVertical: 0, overflow: 'hidden' },
+    pickerCard: { borderWidth: 1, borderRadius: 8, marginTop: 10, overflow: 'hidden' },
+    choiceButton: { flex: 1, flexDirection: 'row', gap: 4, minWidth: 80, minHeight: 44, borderWidth: 1, borderRadius: 8, paddingVertical: 11, paddingHorizontal: 8, justifyContent: 'center', alignItems: 'center' },
+    choiceText: { fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 19, textAlign: 'center' },
+    venueCard: { borderWidth: 1, borderRadius: 8, padding: 12, marginTop: 10 },
+    primaryActionButton: { marginTop: 22, borderRadius: 8, minHeight: 44, paddingVertical: 12, alignItems: 'center' },
+    primaryActionText: { color: '#FFFFFF', fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
+    feedbackBanner: { marginTop: 14, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10 },
+    feedbackText: { fontFamily: 'Inter_500Medium', fontSize: 13, lineHeight: 19 },
+    secondaryActionButton: { borderWidth: 1, borderRadius: 8, minHeight: 44, paddingVertical: 12, alignItems: 'center', marginTop: 10 },
 });
