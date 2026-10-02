@@ -1,6 +1,29 @@
 # Clubs local pre-PR review
 
-## Create Club publication preflight (2026-10-03; current)
+## Create Club main publication (2026-10-03; current)
+
+- The reviewed four-file scope was committed as
+  `bfb2b86ab165aa3ef2343f71441551a710a10f2f`
+  (`feat(clubs): redesign create club form`). Independent review cleared source
+  and tests; two minor handoff-wording findings were corrected and approved.
+- Full local pre-publication Jest passed 315 suites / 2,752 tests, with the
+  existing 1 suite / 4 test skips, normal exit 0. Final source TypeScript/export,
+  focused mocked checks, desktop/mobile interaction and continuity validation
+  passed as detailed below. No new connected/native proof is claimed.
+- Final fetch verified `fd30911` was still remote main and an ancestor of the
+  candidate. The normal dry run passed; the normal push advanced main to
+  `bfb2b86`. Exact `ls-remote` readback matches; 0 behind / 0 ahead. Local main
+  and the unrelated Home screenshot were preserved. No force push, protection
+  bypass, PR, runtime deployment, migration or database/Storage mutation.
+- [Source CI run 37054264088](https://github.com/mdasheef99/Bookapp_reactexpo/actions/runs/37054264088)
+  completed successfully for that exact SHA: clean Ubuntu/Node 22 locked
+  install, full Jest, TypeScript, production web export and cleanup all pass.
+  Evidence is the run conclusion and individual job-step results; the full
+  downloadable log was not read. This subsequent two-document closeout requires
+  independent review and normal commit/publication; verify its own remote
+  SHA/CI before returning page selection.
+
+## Create Club publication preflight (2026-10-03)
 
 The user explicitly authorized a normal direct push of the reviewed Create Club
 changes to remote main. This scope is the screen, its regression tests and the
