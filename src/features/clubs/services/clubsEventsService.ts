@@ -96,7 +96,7 @@ function validateClubEventInput(input: ClubEventInput) {
     }
 }
 
-function buildClubEventPayload(input: ClubEventInput) {
+function buildClubEventPayload(input: ClubEventInput, isUpdate = false) {
     validateClubEventInput(input);
 
     return {
@@ -108,7 +108,7 @@ function buildClubEventPayload(input: ClubEventInput) {
         venue_id: input.venueId ?? null,
         manual_location: normalizeOptionalText(input.manualLocation),
         meeting_link: normalizeOptionalText(input.meetingLink),
-        max_attendees: input.maxAttendees ?? null,
+        ...(!isUpdate || input.maxAttendees !== undefined ? { max_attendees: input.maxAttendees ?? null } : {}),
     };
 }
 
@@ -215,7 +215,7 @@ export async function createClubEvent(input: CreateClubEventInput): Promise<Club
 export async function updateClubEvent(eventId: string, input: UpdateClubEventInput): Promise<ClubEvent> {
     const { data, error } = await supabase
         .from('club_events')
-        .update(buildClubEventPayload(input))
+        .update(buildClubEventPayload(input, true))
         .eq('id', eventId)
         .select(CLUB_EVENT_MUTATION_SELECT)
         .single();

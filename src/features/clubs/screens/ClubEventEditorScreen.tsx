@@ -10,11 +10,12 @@ import { useClubEvent, useClubEventVenues, useClubMembership, useClubPublicDetai
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
 import { type ClubEventFormat } from '@/features/clubs/services/clubsService';
 import { canCreateClubEvents, canManageClubEvent, combineDateAndTime, toDateInputValue, toTimeInputValue } from './clubEvents.shared';
+import { showWebEventPicker } from './webEventPicker';
 
 const colors = {
     bgPrimary: '#FAF6EE', bgCard: '#FFFEFC', bgSecondary: '#F8EBE7',
     border: '#E7DCD1', accent: '#8B322C', textPrimary: '#1A1412',
-    textSecondary: '#6E645F', textTertiary: '#81756E',
+    textSecondary: '#6E645F', textTertiary: '#746860',
 } as const;
 
 type LocationMode = 'linked_venue' | 'manual_location';
@@ -130,8 +131,7 @@ function WebPickerField({
                 value={value}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.currentTarget.value)}
                 onFocus={(event: ChangeEvent<HTMLInputElement>) => {
-                    const input = event.currentTarget as HTMLInputElement & { showPicker?: () => void };
-                    input.showPicker?.();
+                    showWebEventPicker(event.currentTarget);
                 }}
                 style={webInputStyle}
             />

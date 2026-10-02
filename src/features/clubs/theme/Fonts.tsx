@@ -1,5 +1,7 @@
 import React from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { useFonts } from 'expo-font';
+import { colors } from './tokens';
 import {
     Inter_400Regular,
     Inter_500Medium,
@@ -19,7 +21,7 @@ interface ClubsFontProviderProps {
 }
 
 export function ClubsFontProvider({ children }: ClubsFontProviderProps) {
-    const [loaded] = useFonts({
+    const [loaded, error] = useFonts({
         Inter_400Regular,
         Inter_500Medium,
         Inter_600SemiBold,
@@ -31,6 +33,12 @@ export function ClubsFontProvider({ children }: ClubsFontProviderProps) {
         Newsreader_700Bold,
     });
 
-    if (!loaded) return null;
+    if (!loaded && !error) {
+        return (
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
+                <ActivityIndicator accessibilityLabel="Loading Clubs" color={colors.accent} />
+            </View>
+        );
+    }
     return <>{children}</>;
 }

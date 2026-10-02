@@ -61,7 +61,7 @@ export default function VenuesBrowseScreen() {
                 ListHeaderComponent={
                     <View style={styles.header}>
                         <View style={styles.headerRow}>
-                            <TouchableOpacity onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="back-button">
+                            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to Clubs" onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="back-button">
                                 <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
                             </TouchableOpacity>
                             <Text style={[styles.title, { color: colors.textPrimary }]}>Club venues</Text>
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     content: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 120 },
     header: { marginBottom: 12 },
     headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
-    iconButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+    iconButton: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
     title: { flex: 1, fontSize: 30, fontWeight: '800' },
     subtitle: { fontSize: 15, lineHeight: 22, marginBottom: 16 },
     searchShell: {

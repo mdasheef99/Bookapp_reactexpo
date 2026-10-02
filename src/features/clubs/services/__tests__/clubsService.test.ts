@@ -217,8 +217,30 @@ describe('clubsService', () => {
             manual_location: 'Café upstairs',
             venue_id: null,
             event_type: 'hybrid',
+            max_attendees: null,
         }));
         expect(result.manual_location).toBe('Café upstairs');
+    });
+
+    it.each([{}, { maxAttendees: undefined }])('preserves an existing attendee limit when an edit omits capacity (%j)', async (capacity) => {
+        const updateBuilder = mockQuery({ data: { id: 'event-1', max_attendees: 12 }, error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(updateBuilder);
+        await clubsService.updateClubEvent('event-1', {
+            title: 'New title', eventType: 'virtual', startTime: '2026-10-10T13:00:00.000Z',
+            meetingLink: 'https://meet.example.com/club-room', ...capacity,
+        });
+        expect(updateBuilder.update.mock.calls[0][0]).not.toHaveProperty('max_attendees');
+        expect(updateBuilder.eq).toHaveBeenCalledWith('id', 'event-1');
+    });
+
+    it.each([null, 12])('writes an explicit attendee limit of %s when provided', async (maxAttendees) => {
+        const updateBuilder = mockQuery({ data: { id: 'event-1', max_attendees: maxAttendees }, error: null });
+        (supabase.from as jest.Mock).mockReturnValueOnce(updateBuilder);
+        await clubsService.updateClubEvent('event-1', {
+            title: 'New title', eventType: 'virtual', startTime: '2026-10-10T13:00:00.000Z',
+            meetingLink: 'https://meet.example.com/club-room', maxAttendees,
+        });
+        expect(updateBuilder.update.mock.calls[0][0]).toHaveProperty('max_attendees', maxAttendees);
     });
 
     it('reads my clubs browse results from membership plus club_public_details', async () => {

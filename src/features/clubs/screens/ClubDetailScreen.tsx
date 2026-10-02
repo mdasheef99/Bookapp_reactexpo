@@ -385,11 +385,6 @@ export default function ClubDetailScreen() {
                         <Text style={styles.primaryButtonText}>{joinMutation.isPending ? 'Working…' : canJoinDirectly ? 'Join this club' : 'Apply to join'}</Text>
                     </TouchableOpacity>
                 ) : null}
-                {actionFeedback ? (
-                    <View style={[styles.feedbackBanner, actionFeedback.type === 'success' ? styles.feedbackSuccess : styles.feedbackError]}>
-                        <Text style={[styles.feedbackText, actionFeedback.type === 'success' ? styles.feedbackSuccessText : styles.feedbackErrorText]}>{actionFeedback.message}</Text>
-                    </View>
-                ) : null}
             </View>
         );
     };
@@ -793,6 +788,12 @@ export default function ClubDetailScreen() {
             </View>
 
             {!isMember ? renderMembershipSection() : null}
+
+            {actionFeedback ? (
+                <View accessibilityRole="alert" style={[styles.feedbackBanner, actionFeedback.type === 'success' ? styles.feedbackSuccess : styles.feedbackError]}>
+                    <Text style={[styles.feedbackText, actionFeedback.type === 'success' ? styles.feedbackSuccessText : styles.feedbackErrorText]}>{actionFeedback.message}</Text>
+                </View>
+            ) : null}
 
             {activeTop === 'home' ? (
                 <>

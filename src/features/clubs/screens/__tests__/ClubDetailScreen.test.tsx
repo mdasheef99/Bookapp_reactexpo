@@ -435,6 +435,7 @@ describe('ClubDetailScreen', () => {
     });
 
     it('lets a proposed successor accept a pending admin transfer from club detail', async () => {
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
         const mutateAsync = jest.fn().mockResolvedValue({ id: 'club-1' });
         const refetchTransfers = jest.fn().mockResolvedValue({ data: [] });
         const refetchClub = jest.fn().mockResolvedValue({ data: baseClub });
@@ -463,6 +464,20 @@ describe('ClubDetailScreen', () => {
         expect(refetchClub).toHaveBeenCalled();
         expect(refetchTransfers).toHaveBeenCalled();
         expect(getByText('You are now the club admin.')).toBeOnTheScreen();
+    });
+
+    it('shows transfer failure feedback to an active member', async () => {
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
+        mockUseClubAdminTransferRequests.mockReturnValue({
+            data: [{ id: 'transfer-1', club_id: 'club-1', proposed_admin_user_id: 'reader-1', status: 'pending' }],
+            isLoading: false, refetch: jest.fn(),
+        });
+        mockUseAcceptClubAdminTransferRequest.mockReturnValue({
+            mutateAsync: jest.fn().mockRejectedValue(new Error('Transfer expired.')), isPending: false,
+        });
+        const { getByTestId, getByText } = render(<ClubDetailScreen />);
+        fireEvent.press(getByTestId('club-accept-admin-transfer'));
+        await waitFor(() => expect(getByText('Transfer expired.')).toBeOnTheScreen());
     });
 
     it('shows invite acceptance UI when the signed-in user has a pending invite-only invitation', async () => {
@@ -878,6 +893,19 @@ describe('ClubDetailScreen', () => {
             expect(mutateAsync).toHaveBeenCalledWith({ clubId: 'club-1', userId: 'reader-1' });
         });
         expect(mockRouterPush).toHaveBeenCalledWith('/clubs');
+    });
+
+    it.each(['active', 'muted'])('shows leave failure feedback to a %s member without navigating away', async (status) => {
+        const mutateAsync = jest.fn().mockRejectedValue(new Error('Unable to leave this club right now.'));
+        mockUseClubMembership.mockReturnValue({ data: { role: 'member', status }, isLoading: false });
+        mockUseLeaveClub.mockReturnValue({ mutateAsync, isPending: false });
+        const { getByTestId, getByText, queryByTestId } = render(<ClubDetailScreen />);
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+        fireEvent.press(getByTestId('club-leave'));
+        fireEvent.press(getByTestId('leave-confirm-leave'));
+        await waitFor(() => expect(getByText('Unable to leave this club right now.')).toBeOnTheScreen());
+        expect(queryByTestId('leave-confirm-modal')).toBeNull();
+        expect(mockRouterPush).not.toHaveBeenCalled();
     });
 
     it('shows the nomination entry point in Books compat for active members', async () => {

@@ -41,7 +41,7 @@ export function ClubAuthorsScreen() {
                 ListHeaderComponent={(
                     <View style={styles.headerSection}>
                         <View style={styles.titleRow}>
-                            <TouchableOpacity onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="back-button">
+                            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to Clubs" onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="back-button">
                                 <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
                             </TouchableOpacity>
                             <View style={[styles.iconShell, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     contentContainer: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 120 },
     headerSection: { marginBottom: 14 },
     titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-    iconButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+    iconButton: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
     iconShell: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
     titleTextBlock: { flex: 1 },
     title: { fontSize: 28, fontWeight: '800', marginBottom: 4 },

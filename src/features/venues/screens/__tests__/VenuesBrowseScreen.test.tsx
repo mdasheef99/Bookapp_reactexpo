@@ -85,9 +85,9 @@ describe('VenuesBrowseScreen', () => {
     });
 
     it('returns to Clubs when the back button is pressed', () => {
-        const { getByTestId } = render(<VenuesBrowseScreen />);
+        const { getByRole } = render(<VenuesBrowseScreen />);
 
-        fireEvent.press(getByTestId('back-button'));
+        fireEvent.press(getByRole('button', { name: 'Back to Clubs' }));
 
         expect(mockRouterReplace).toHaveBeenCalledWith('/(tabs)/clubs');
     });

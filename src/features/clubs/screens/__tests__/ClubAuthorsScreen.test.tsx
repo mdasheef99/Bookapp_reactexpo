@@ -67,11 +67,11 @@ describe('ClubAuthorsScreen', () => {
     });
 
     it('returns to Clubs when the back button is pressed', async () => {
-        const { getByTestId, getByText } = render(<ClubAuthorsScreen />);
+        const { getByRole, getByText } = render(<ClubAuthorsScreen />);
 
         await waitFor(() => expect(getByText('Author clubs')).toBeOnTheScreen());
 
-        fireEvent.press(getByTestId('back-button'));
+        fireEvent.press(getByRole('button', { name: 'Back to Clubs' }));
 
         expect(mockRouterReplace).toHaveBeenCalledWith('/(tabs)/clubs');
     });

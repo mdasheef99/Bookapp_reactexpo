@@ -52,7 +52,7 @@ const discussionColors = {
     accent: '#8B322C',
     textPrimary: '#1A1412',
     textSecondary: '#6E645F',
-    textTertiary: '#8E8178',
+    textTertiary: '#6E645F',
     feedbackSuccess: '#EDF5EC',
     feedbackSuccessBorder: '#CADCC8',
     feedbackSuccessText: '#38533A',
