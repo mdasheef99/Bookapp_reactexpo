@@ -1,6 +1,49 @@
 # Clubs local pre-PR review
 
-## Direct main publication and CI (2026-10-02; current)
+## Create Club publication preflight (2026-10-03; current)
+
+The user explicitly authorized a normal direct push of the reviewed Create Club
+changes to remote main. This scope is the screen, its regression tests and the
+two Clubs handoff documents. Preserve the unrelated Home screenshot and local
+main; no force push, protection bypass, deployment or database/Storage mutation.
+
+- Refreshed `origin/main` is `fd30911`, equal to the feature branch's committed
+  HEAD (0 behind / 0 ahead). No integration or conflict resolution is required
+  at this checkpoint. Refresh again immediately before publication.
+- Independent subagent `review_create_club` found no actionable issue in the
+  screen/test/tracker diff. The form state, profile/author gate, validation and
+  submission/error block is text-identical to HEAD. Hooks, services, routes and
+  permissions are unchanged. Reviewer inspected saved desktop/mobile captures;
+  it did not rerun live interaction or production export.
+- Independent fresh checks passed: screen/general mutation suites 41/41,
+  targeted transactional creation/Edge membership-limit service cases 2/2
+  (49 service cases intentionally filtered), TypeScript and diff hygiene.
+  The 26 general mutation cases do not directly exercise `useCreateClub`.
+- Executing-agent checks passed: final production export, desktop/default and
+  390x844 interaction/navigation/validation/keyboard/preview checks, no observed
+  horizontal overflow or browser errors, and Phase 9 continuity validation.
+  Drafts were discarded and the viewport reset. Exact evidence is recorded in
+  [TRACKER.md](./TRACKER.md#independent-create-club-review-2026-10-03).
+- User's banner question was checked against HEAD: Create Club already accepted
+  only an optional cover URL. Its PRODUCT-14 rule prohibits pre-creation file
+  upload; Manage Club Settings owns upload after the club exists. This redesign
+  preserves that behavior. No live upload is claimed in this check.
+- Connected creation/live server denial, verified-author browser behavior,
+  native keyboard/enlarged text and screen readers remain unverified. Creation
+  success/errors and service checks are mocked. Astra's critique hit its usage
+  limit before a verdict; the user subsequently authorized implementation.
+- Full repository pre-publication Jest passed against the proposed source tree:
+  315 suites / 2,752 tests passed, with the existing 1 suite / 4 test skips
+  (316 suites / 2,756 tests total), normal exit 0 in 374.371 seconds. The local
+  run used the workflow dummy/offline configuration and installed Windows
+  dependencies; clean Linux CI remains pending publication. Log:
+  `bookconnect-create-club-prepublish-jest.log` in the local temporary directory.
+  Existing React/NetInfo/dependency warnings remain. The two minor handoff
+  wording findings were corrected and independently approved on follow-up.
+  Exact next action: inspect/stage the four reviewed paths, commit, refresh main,
+  normally push and verify CI. Marketplace Phase 9/rollout gates are unchanged.
+
+## Direct main publication and CI (2026-10-02)
 
 The user explicitly authorized adding the missing automated checks and directly
 pushing the reviewed Clubs history to remote `main`. This supersedes the earlier
