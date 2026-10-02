@@ -1,0 +1,50 @@
+name: Clubs and shared app validation
+
+on:
+  push:
+    branches:
+      - main
+      - feat/clubs-v2
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clubs-app-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      EXPO_OFFLINE: '1'
+      EXPO_NO_DOTENV: '1'
+      EXPO_PUBLIC_SUPABASE_URL: https://test.supabase.co
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
+      EXPO_PUBLIC_DEV_SKIP_AUTH: 'false'
+      EXPO_PUBLIC_APP_ENV: test
+      SENTRY_DISABLE_AUTO_UPLOAD: 'true'
+    steps:
+      - name: Check out candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run repository tests
+        run: npm test -- --runInBand
+      - name: Check TypeScript
+        run: npx tsc --noEmit --incremental false
+      - name: Export production web bundle
+        run: npx expo export --platform web --max-workers 1

@@ -1,5 +1,48 @@
 # Clubs local pre-PR review
 
+## Direct main publication and CI (2026-10-02; current)
+
+The user explicitly authorized adding the missing automated checks and directly
+pushing the reviewed Clubs history to remote `main`. This supersedes the earlier
+PR-only sequencing and the historical no-push authorization wording below.
+Normal fast-forward publication is authorized; force push, protection bypass,
+database/Storage mutations, migrations and service deployment are not.
+
+- Refreshed remote main is `7cab645667bd5cdf4756f42cab0248cf8c139ad5`, an ancestor
+  of `6fa062f`, with 0 remote-only and 9 local-only commits before this CI change.
+  The GitHub API confirms push permission and an unprotected main branch. A normal
+  push dry run passed without updating the remote. Stale local `main` and the
+  unrelated untracked Home screenshot remain preserved.
+- Added `.github/workflows/clubs-app-validation.yml`: main/feature pushes,
+  pull requests targeting main, and manual runs. No path filters omit shared
+  consumers. Ubuntu 24.04 with Node 22 installs the lockfile using `npm ci`, runs
+  the full repository Jest suite, TypeScript and production Expo web export.
+  Official checkout/setup-node v7 actions are pinned to exact verified tag SHAs;
+  checkout does not persist credentials. Token permissions are read-only.
+- The workflow uses dummy public Supabase configuration, disables auth bypass,
+  local dotenv loading and Sentry upload, and uses offline Expo CLI mode.
+  It contains no live database test, migration, provider call or deployment step.
+  A successful main push starts validation afterward; the workflow does not
+  establish a branch-protection requirement or block a direct main push.
+- Independent subagent `review_clubs_ci` found no actionable blocker in the
+  workflow or handoff. Linux dependency-test discovery was checked against Jest's
+  HasteMap source; dependencies are excluded independently of the existing
+  Windows-specific test-path ignore pattern. Review was read-only; the executing
+  agent performed verification.
+- Fresh local checks with the workflow environment: full Jest 315 suites /
+  2,740 tests pass, with 1 suite / 4 tests skipped (316 / 2,744 total), normal
+  exit 0 in 324.813 seconds; TypeScript and production web export pass, exit 0.
+  Workflow YAML and trigger/permission/revision/command assertions, Phase 9
+  continuity validator and whitespace checks pass. Existing warning/advisory
+  output remains. Logs: `bookconnect-clubs-ci-local-{jest,tsc,export}.log` in
+  the local temporary directory. These checks use installed Windows dependencies;
+  clean Linux installation and remote CI remain pending until GitHub runs them.
+- Active work unit: CI addition reviewed and locally verified; publication
+  pending. Exact next authorized action: commit only the workflow and Clubs
+  handoff files, refresh remote main, normally push to main, and inspect CI for
+  the exact pushed SHA.
+  Existing native, accessibility and connected-role evidence gaps below remain.
+
 ## Required process for every subsequent commit
 
 The user does not review PRs. The following local gate applies to each individual
@@ -23,7 +66,7 @@ and database mutation authorities remain separate.
 6. Check whitespace and the exact staged paths/diff. Update the Clubs tracker and
    this review record, then commit only authorized scope. Preserve the history;
    subsequent fixes may be separate reviewed commits.
-7. Before opening a PR, fetch current `origin/main`, integrate any new main-side
+7. Before publication, fetch current `origin/main`, integrate any new main-side
    changes locally, resolve conflicts, and review the combined diff for changes
    to shared navigation, marketplace, library, services, or permissions. Repeat
    affected tests and browser checks after integration. Run the full repository
@@ -31,9 +74,9 @@ and database mutation authorities remain separate.
 8. Audit residual risks and unverified acceptance criteria. Include device,
    screen-reader/enlarged-text, role/entitlement, connected failure/rollback,
    and non-Clubs smoke coverage when affected. Do not promise universal behavior
-   from a desktop browser or mocked tests. Check CI after a user-authorized PR;
+   from a desktop browser or mocked tests. Check CI after authorized publication;
    do not treat local validation as evidence of a remote CI result.
-9. Refresh `origin/main` once more immediately before an authorized PR/merge if
+9. Refresh `origin/main` once more immediately before an authorized push/PR/merge if
    the baseline changed or the review became stale. Keep deployment/rollout and
    rollback gates explicit. Never assume that a successful commit deploys code.
 
