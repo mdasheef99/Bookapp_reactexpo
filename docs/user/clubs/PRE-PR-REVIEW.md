@@ -8,8 +8,9 @@ PR-only sequencing and the historical no-push authorization wording below.
 Normal fast-forward publication is authorized; force push, protection bypass,
 database/Storage mutations, migrations and service deployment are not.
 
-- Refreshed remote main is `7cab645667bd5cdf4756f42cab0248cf8c139ad5`, an ancestor
-  of `6fa062f`, with 0 remote-only and 9 local-only commits before this CI change.
+- The pre-publication remote main baseline was
+  `7cab645667bd5cdf4756f42cab0248cf8c139ad5`, an ancestor of `6fa062f`, with
+  0 remote-only and 9 local-only commits before this CI change.
   The GitHub API confirms push permission and an unprotected main branch. A normal
   push dry run passed without updating the remote. Stale local `main` and the
   unrelated untracked Home screenshot remain preserved.
@@ -35,13 +36,28 @@ database/Storage mutations, migrations and service deployment are not.
   Workflow YAML and trigger/permission/revision/command assertions, Phase 9
   continuity validator and whitespace checks pass. Existing warning/advisory
   output remains. Logs: `bookconnect-clubs-ci-local-{jest,tsc,export}.log` in
-  the local temporary directory. These checks use installed Windows dependencies;
-  clean Linux installation and remote CI remain pending until GitHub runs them.
-- Active work unit: CI addition reviewed and locally verified; publication
-  pending. Exact next authorized action: commit only the workflow and Clubs
-  handoff files, refresh remote main, normally push to main, and inspect CI for
-  the exact pushed SHA.
-  Existing native, accessibility and connected-role evidence gaps below remain.
+  the local temporary directory. These local checks use installed Windows
+  dependencies; the distinct clean Linux result is recorded below.
+- Normal push advanced remote main from `7cab645` to
+  `a70dd7c8f21ee405111ae2ca5f5a100a73aa92f4`, publishing all 10 reviewed commits
+  without rewriting their history. GitHub's branch API and local remote ref
+  matched that exact SHA, with 0 behind / 0 ahead. CI commit `a70dd7c` contains
+  only the new workflow and the two Clubs handoff files. No PR, force push,
+  protection bypass, database/Storage operation, migration or manual service
+  deployment was performed; local main and the screenshot remain preserved.
+- [GitHub Actions run 37022023576](https://github.com/mdasheef99/Bookapp_reactexpo/actions/runs/37022023576)
+  completed successfully for that exact main SHA. Clean Ubuntu 24.04 / Node
+  22.23.3 `npm ci`, full Jest, TypeScript, web export and cleanup steps all pass.
+  Downloaded job log confirms 315 suites / 2,740 tests pass, 1 suite / 4 tests
+  skipped (316 / 2,744 total), 86.304 seconds, and `Exported: dist`.
+  Local log: `bookconnect-clubs-ci-37022023576.log` in the temporary directory.
+  This verifies the automated clean install and build; it does not close the
+  native, accessibility or connected-role gaps below.
+- Active work unit: reviewed Clubs source history published and CI verified.
+  This subsequent closeout changes only these two Clubs documentation files.
+  Exact next authorized action: independently review, commit and normally
+  publish the documentation closeout, verify its remote SHA/CI, then return
+  page selection to the user. Refresh remote main before further implementation.
 
 ## Required process for every subsequent commit
 
