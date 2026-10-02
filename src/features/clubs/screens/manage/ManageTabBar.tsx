@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 
 export interface ManageTab {
     key: string;
@@ -13,7 +13,6 @@ interface ManageTabBarProps {
 }
 
 export function ManageTabBar({ tabs, activeTab, onTabChange }: ManageTabBarProps) {
-    const { colors } = useTheme();
 
     return (
         <View style={[styles.container, { borderBottomColor: colors.border }]}>

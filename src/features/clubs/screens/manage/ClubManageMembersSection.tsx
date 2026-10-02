@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Alert, ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 import { type ClubMemberAction, type ClubMemberActionType, type ClubMemberWithProfile, type ClubPublicDetails } from '@/features/clubs/services/clubsService';
 import {
     canHoldPrivilegedClubRole,
@@ -24,7 +24,6 @@ interface Props {
 }
 
 export function ClubManageMembersSection({ club, members, actions, isLoading, isActionsLoading, onToggleRole, onToggleMute, onCreateAction, onRemove, onFeedback }: Props) {
-    const { colors } = useTheme();
     const [activeUserId, setActiveUserId] = useState<string | null>(null);
     const [actionDraft, setActionDraft] = useState<{ userId: string; actionType: ClubMemberActionType; reason: string; durationHours: string } | null>(null);
     const manageableMembers = useMemo(

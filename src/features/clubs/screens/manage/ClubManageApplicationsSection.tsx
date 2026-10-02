@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 import type { ClubJoinApplicationWithProfile } from '@/features/clubs/services/clubsService';
 import type { FeedbackState } from './manageUtils';
 
@@ -41,7 +41,6 @@ function normalizeApplicationAnswers(answers: unknown) {
 }
 
 export function ClubManageApplicationsSection({ applications, isLoading, onReview, onFeedback }: Props) {
-    const { colors } = useTheme();
     const [activeId, setActiveId] = useState<string | null>(null);
 
     const handleReview = async (application: ClubJoinApplicationWithProfile, action: 'approve' | 'decline') => {

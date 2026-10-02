@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 import type { ClubAdminTransferRequest, ClubManageDetails, ClubMemberWithProfile } from '@/features/clubs/services/clubsService';
 import { canHoldPrivilegedClubRole, getModeratorEligibilityMessage, membershipTierSatisfiesAccessLevel } from '@/features/clubs/services/clubsEntitlement';
 import type { FeedbackState } from './manageUtils';
@@ -34,7 +34,6 @@ export function ClubManageLifecycleSection({
     onTransferAdmin,
     onFeedback,
 }: Props) {
-    const { colors } = useTheme();
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const isArchived = club.is_archived === true;
     const isBusy = isArchiving || isUnarchiving || isTransferring;
@@ -145,7 +144,7 @@ export function ClubManageLifecycleSection({
                         <Text style={[styles.guidanceBody, { color: colors.textSecondary }]}>{archiveRetentionStateMessage}</Text>
                     </View>
                 </View>
-                <View style={[styles.warningBox, { borderColor: colors.error, backgroundColor: colors.bgSecondary }]}>
+                <View style={[styles.warningBox, { borderColor: colors.error, backgroundColor: colors.errorLight }]}>
                     <Text style={[styles.guidanceTitle, { color: colors.textPrimary }]}>Admin warning</Text>
                     <Text style={[styles.guidanceBody, { color: colors.textSecondary }]}>This screen does not automatically demote admins, transfer ownership, archive excess clubs, or delete archived clubs. Use explicit requests until product policy confirms automation.</Text>
                 </View>
@@ -230,7 +229,7 @@ const styles = StyleSheet.create({
     guidanceTitle: { fontSize: 14, fontWeight: '800', marginBottom: 4 },
     guidanceBody: { fontSize: 13, lineHeight: 18 },
     policyGrid: { borderWidth: 1, borderRadius: 10, overflow: 'hidden', marginTop: 4 },
-    policyItem: { padding: 12, borderBottomWidth: StyleSheet.hairlineWidth },
+    policyItem: { padding: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
     warningBox: { borderWidth: 1, borderRadius: 10, padding: 12, marginTop: 12 },
     memberRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, paddingVertical: 10, gap: 10 },
     memberInfo: { flex: 1 },

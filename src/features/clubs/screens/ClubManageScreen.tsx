@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './manage/managePalette';
 import { navigateBackOrFallback } from '@/lib/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { type GoogleBook } from '@/features/books/services/booksService';
@@ -102,7 +102,6 @@ export default function ClubManageScreen() {
         : typeof window !== 'undefined' && window.location
         ? new URLSearchParams(window.location.search).get('tab')
         : null;
-    const { colors } = useTheme();
     const { user } = useAuth();
     const userId = user?.id ?? null;
 

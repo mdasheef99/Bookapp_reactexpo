@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 import { useDebounce } from '@/hooks/useDebounce';
 import * as Haptics from 'expo-haptics';
 import { searchGoogleBooksCached, type GoogleBook } from '@/features/books/services/booksService';
@@ -15,7 +15,6 @@ interface Props {
 }
 
 export function ClubManageBookOverrideSection({ clubId, onOverride, onClose, onFeedback }: Props) {
-    const { colors } = useTheme();
     const [query, setQuery] = useState('');
     const debouncedQuery = useDebounce(query, 400);
     const [results, setResults] = useState<GoogleBook[]>([]);

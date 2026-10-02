@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, StyleSheet, Switch, Text, TextInput, Touchabl
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import type { MediaType } from 'expo-image-picker';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 import { supabase } from '@/lib/supabase';
 import { type ClubPublicDetails, type AccessLevel, type ClubType, type MeetingType } from '@/features/clubs/services/clubsService';
 import type { FeedbackState, SettingsDraft } from './manageUtils';
@@ -26,7 +26,6 @@ interface Props {
 }
 
 export function ClubManageSettingsSection({ club, settings, setSettings, isSaving, onSave, onReset }: Props) {
-    const { colors } = useTheme();
     const [localSettings, setLocalSettings] = useState<SettingsDraft>(settings);
     const [hasTouched, setHasTouched] = useState(false);
 
