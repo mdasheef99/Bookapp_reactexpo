@@ -9,6 +9,7 @@ export type LibraryBookEntry = {
         title: string;
         authors?: string[] | null;
         cover_url?: string | null;
+        page_count?: number | null;
     };
 };
 
@@ -20,10 +21,10 @@ export type LibraryFilterChip = {
 
 export function getLibraryFilterChips(entries: LibraryBookEntry[]): LibraryFilterChip[] {
     return [
-        { key: 'all', label: 'All', count: entries.length },
-        { key: 'reading', label: 'Reading', count: entries.filter((item) => item.reading_status === 'reading').length },
-        { key: 'completed', label: 'Completed', count: entries.filter((item) => item.reading_status === 'completed').length },
-        { key: 'wishlist', label: 'Wishlist', count: entries.filter((item) => item.ownership === 'wishlist').length },
+        { key: 'all', label: 'All', count: filterLibraryBooks(entries, 'all').length },
+        { key: 'reading', label: 'Reading', count: filterLibraryBooks(entries, 'reading').length },
+        { key: 'completed', label: 'Completed', count: filterLibraryBooks(entries, 'completed').length },
+        { key: 'wishlist', label: 'Wishlist', count: filterLibraryBooks(entries, 'wishlist').length },
     ];
 }
 

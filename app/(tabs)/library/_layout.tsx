@@ -11,7 +11,7 @@ export default function LibraryLayout() {
         >
             <Stack.Screen name="index" />
             <Stack.Screen name="search" />
-            <Stack.Screen name="[bookId]" />
+            <Stack.Screen name="[bookId]" options={{ animation: 'fade' }} />
             <Stack.Screen name="notes" />
         </Stack>
     );

@@ -1,6 +1,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { FlatList, ScrollView, StyleSheet } from 'react-native';
 import LibraryScreen from '../index';
 import { booksService } from '@/features/books/services/booksService';
 
@@ -192,5 +193,37 @@ describe('LibraryScreen', () => {
         unmount();
         queryClient.clear();
         jest.useRealTimers();
+    });
+
+    it('uses the bounded FlatList as the sole vertical scroll owner, including the collection controls', async () => {
+        (booksService.getUserLibrary as jest.Mock).mockResolvedValueOnce([
+            { id: 'one', reading_status: 'reading', ownership: 'owned', book: { title: 'Single scroll owner' } },
+        ]);
+        const { getByText, UNSAFE_getByType, queryClient, unmount } = renderScreen();
+        await waitFor(() => expect(getByText('Single scroll owner')).toBeTruthy());
+        const list = UNSAFE_getByType(FlatList);
+        expect(list.props.ListHeaderComponent).toBeTruthy();
+        expect(StyleSheet.flatten(list.props.style).flex).toBe(1);
+        let ancestor = list.parent;
+        while (ancestor) {
+            expect(ancestor.type).not.toBe(ScrollView);
+            ancestor = ancestor.parent;
+        }
+        expect(list.props.refreshControl.props.onRefresh).toEqual(expect.any(Function));
+        unmount();
+        queryClient.clear();
+    });
+
+    it('refreshes the same query through the List scroll owner and updates its header counts', async () => {
+        const entry = { id: 'refresh-one', reading_status: 'reading', ownership: 'owned', book: { title: 'Refresh book' } };
+        (booksService.getUserLibrary as jest.Mock).mockResolvedValueOnce([entry]).mockResolvedValueOnce([]);
+        const { getByText, UNSAFE_getByType, queryClient, unmount } = renderScreen();
+        await waitFor(() => expect(getByText('Refresh book')).toBeTruthy());
+        await act(async () => { await UNSAFE_getByType(FlatList).props.refreshControl.props.onRefresh(); });
+        await waitFor(() => expect(getByText('0 books')).toBeTruthy());
+        expect(getByText('Your library is empty')).toBeTruthy();
+        expect(booksService.getUserLibrary).toHaveBeenCalledTimes(2);
+        unmount();
+        queryClient.clear();
     });
 });
