@@ -231,14 +231,22 @@ describe('LibraryShelf single shelf SDD-04', () => {
         queryClient.clear();
     });
 
-    it('adds local decorative wood grain while retaining the 440px frame and 12px ledge', () => {
+    it('retains the 440px cabinet with a slimmer middle board and both book rows grounded on their boards', () => {
         const { getByTestId } = render(<LibraryShelf books={[]} onBookPress={jest.fn()} />);
         const grain = getByTestId('library-shelf-wood-grain', { includeHiddenElements: true });
         expect(grain.props.source.uri).toMatch(/^data:image\/svg\+xml/);
         expect(grain.props.accessible).toBe(false);
         expect(grain.props.pointerEvents).toBe('none');
         expect(StyleSheet.flatten(getByTestId('library-shelf-frame').props.style).height).toBe(440);
-        expect(StyleSheet.flatten(getByTestId('library-shelf-inner-ledge').props.style).height).toBe(12);
+        const innerBoard = StyleSheet.flatten(getByTestId('library-shelf-inner-ledge').props.style);
+        const bottomBoard = StyleSheet.flatten(getByTestId('library-shelf-bottom-ledge').props.style);
+        const topRow = StyleSheet.flatten(getByTestId('library-shelf-row-top').props.style);
+        const bottomRow = StyleSheet.flatten(getByTestId('library-shelf-row-bottom').props.style);
+        expect(innerBoard.height).toBe(18);
+        expect(topRow.top + topRow.height).toBe(innerBoard.top);
+        expect(bottomRow.top + bottomRow.height).toBe(bottomBoard.top);
+        expect(innerBoard.top + innerBoard.height).toBe(bottomRow.top);
+        expect(bottomBoard.top + bottomBoard.height).toBe(440);
     });
 
     it('renders every spine during the shelf entrance', async () => {

@@ -98,7 +98,10 @@ export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractio
                 style={[styles.spine, { backgroundColor, width, height }]}
             >
                 <Image source={{ uri: BOOK_CLOTH_TEXTURE_URI }} style={StyleSheet.absoluteFill} contentFit="fill" pointerEvents="none" accessible={false} />
-                <LinearGradient colors={['rgba(255,255,255,0.20)', 'rgba(255,255,255,0.04)', 'transparent', 'rgba(0,0,0,0.32)']} locations={[0, 0.15, 0.8, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+                <LinearGradient colors={['rgba(0,0,0,0.28)', 'rgba(255,255,255,0.25)', 'rgba(255,255,255,0.07)', 'transparent', 'rgba(0,0,0,0.38)']}
+                    locations={[0, 0.16, 0.38, 0.68, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+                <View style={styles.bindingCrease} pointerEvents="none" />
+                <LinearGradient colors={['transparent', 'rgba(16,10,6,0.46)']} style={styles.footShade} pointerEvents="none" />
                 <View style={styles.bindingTop} pointerEvents="none" />
                 {divider ? <View pointerEvents="none" style={[styles.bindingBand, { height: divider.height, width: divider.width as `${number}%`, backgroundColor: divider.color }]} /> : null}
                 {/* Keep texture/edge lighting behind an opaque label region for measured title contrast. */}
@@ -114,15 +117,17 @@ export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractio
 }
 
 const styles = StyleSheet.create({
-    animatedWrap: { transformOrigin: '50% 100%', shadowColor: '#000', shadowOffset: { width: 2, height: 0 }, shadowRadius: 3, elevation: 4 },
+    animatedWrap: { transformOrigin: '50% 100%', shadowColor: '#160e08', shadowOffset: { width: 2, height: 1 }, shadowRadius: 1.5, elevation: 4 },
     spine: {
-        borderTopLeftRadius: 3, borderTopRightRadius: 3,
+        borderTopLeftRadius: 5, borderTopRightRadius: 4,
         borderLeftWidth: 1, borderLeftColor: 'rgba(255,255,255,0.18)',
         borderRightWidth: 1, borderRightColor: 'rgba(0,0,0,0.22)',
         borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.24)',
         overflow: 'hidden', flexShrink: 0,
     },
     bindingTop: { position: 'absolute', left: 0, right: 0, top: 4, height: 1, backgroundColor: 'rgba(255,255,255,0.12)' },
+    bindingCrease: { position: 'absolute', left: 2, top: 5, bottom: 3, width: 1, backgroundColor: 'rgba(0,0,0,0.23)' },
+    footShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 4 },
     bindingBand: { position: 'absolute', top: 16, alignSelf: 'center', opacity: 0.8 },
     // Rotate the sized frame, so Text's web max-width is the label length, not the narrow spine.
     labelFrame: { position: 'absolute', transform: [{ rotate: '-90deg' }] },

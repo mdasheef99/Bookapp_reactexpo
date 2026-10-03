@@ -18,10 +18,11 @@ type LibraryShelfProps = {
     onBookPress: (item: LibraryBookEntry) => void;
 };
 
-const TOP_Y = 32;
-const ROW_H = 160;
-const LEDGE_H = 12;
-const BOTTOM_Y = TOP_Y + ROW_H + LEDGE_H + 64;
+const TOP_Y = 28;
+const ROW_H = 192;
+const LEDGE_H = 10;
+const TIER_GAP = 8;
+const BOTTOM_Y = TOP_Y + ROW_H + LEDGE_H + TIER_GAP;
 const SHELF_H = BOTTOM_Y + ROW_H + LEDGE_H;
 const ROW_GEOMETRY = {
     top: { y: TOP_Y, height: ROW_H },
@@ -139,7 +140,7 @@ export function LibraryShelf({ books, onBookPress }: LibraryShelfProps) {
     }, [bookLayouts, isReduceMotion, sweptId]);
 
     const renderRow = (entries: LibraryBookEntry[], indexOffset: number, y: number, row: 'top' | 'bottom') => (
-        <View style={[styles.bookRow, { top: y }]}>
+        <View testID={`library-shelf-row-${row}`} style={[styles.bookRow, { top: y }]}>
             {entries.map((item, index) => (
                 <BookSpine key={item.id} item={item} index={indexOffset + index}
                     onPress={() => onBookPress(item)} isReduceMotion={isReduceMotion}
@@ -157,11 +158,15 @@ export function LibraryShelf({ books, onBookPress }: LibraryShelfProps) {
             ) : null}
         </View>
     );
-    const renderFace = (y: number, testID?: string) => (
-        <View testID={testID} style={[styles.shelfFace, { top: y }]} pointerEvents="none">
-            <LinearGradient colors={['#b18b60', '#8e6641', '#654329', '#382719']} locations={[0, 0.2, 0.8, 1]}
+    const renderFace = (y: number, testID?: string, faceHeight = LEDGE_H) => (
+        <View testID={testID} style={[styles.shelfFace, { top: y, height: faceHeight }]} pointerEvents="none">
+            <LinearGradient colors={['#ad8559', '#8b623c', '#614025']} locations={[0, 0.4, 1]}
                 style={StyleSheet.absoluteFill} />
-            <Image source={{ uri: CABINET_WOOD_TEXTURE_URI }} style={StyleSheet.absoluteFill} contentFit="fill" accessible={false} />
+            <Image source={{ uri: CABINET_WOOD_TEXTURE_URI }} style={[StyleSheet.absoluteFill, styles.faceGrain]} contentFit="fill" accessible={false} />
+            <LinearGradient colors={['#d2b187', '#b18a5d', '#805a37']} locations={[0, 0.45, 1]}
+                style={styles.boardTop} />
+            <View style={styles.boardFrontHighlight} />
+            <LinearGradient colors={['transparent', 'rgba(24,14,7,0.55)']} style={styles.boardUnderside} />
         </View>
     );
     const renderWall = (y: number) => (
@@ -188,14 +193,14 @@ export function LibraryShelf({ books, onBookPress }: LibraryShelfProps) {
                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
                 {renderWall(TOP_Y)}
                 {renderWall(BOTTOM_Y)}
-                <Image source={{ uri: CABINET_WOOD_TEXTURE_URI }} style={StyleSheet.absoluteFill} contentFit="fill"
+                <Image source={{ uri: CABINET_WOOD_TEXTURE_URI }} style={[StyleSheet.absoluteFill, styles.wallGrain]} contentFit="fill"
                     testID="library-shelf-wood-grain" pointerEvents="none" accessible={false}
                     accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
                 <LinearGradient colors={['rgba(0,0,0,0.28)', 'transparent', 'transparent', 'rgba(0,0,0,0.24)']}
                     locations={[0, 0.06, 0.94, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                     style={StyleSheet.absoluteFill} pointerEvents="none" />
-                {renderFace(TOP_Y + ROW_H, 'library-shelf-inner-ledge')}
-                {renderFace(BOTTOM_Y + ROW_H)}
+                {renderFace(TOP_Y + ROW_H, 'library-shelf-inner-ledge', LEDGE_H + TIER_GAP)}
+                {renderFace(BOTTOM_Y + ROW_H, 'library-shelf-bottom-ledge')}
                 <ScrollView ref={scrollRef} horizontal showsHorizontalScrollIndicator={contentWidth > viewportWidth}
                     style={styles.scrollViewport} contentContainerStyle={{ width: contentWidth, height: SHELF_H }}
                     testID="library-shelf-scroll" scrollEventThrottle={16} directionalLockEnabled
@@ -238,9 +243,13 @@ const styles = StyleSheet.create({
     },
     shelfFace: {
         position: 'absolute', left: 0, right: 0, height: LEDGE_H,
-        borderTopWidth: 1, borderTopColor: 'rgba(255,227,180,0.35)',
-        shadowColor: '#160e08', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 4,
+        shadowColor: '#160e08', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 2,
     },
+    wallGrain: { opacity: 0.65 },
+    faceGrain: { opacity: 0.45 },
+    boardTop: { position: 'absolute', left: 0, right: 0, top: 0, height: 3 },
+    boardFrontHighlight: { position: 'absolute', left: 0, right: 0, top: 3, height: 1, backgroundColor: 'rgba(243,213,167,0.36)' },
+    boardUnderside: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 3 },
     scrollViewport: { ...StyleSheet.absoluteFillObject },
     bookRow: {
         position: 'absolute', left: SHELF_SIDE_WIDTH, right: 0, height: ROW_H, flexDirection: 'row',
@@ -250,11 +259,11 @@ const styles = StyleSheet.create({
     sideGrain: { position: 'absolute', width: SHELF_H, height: SHELF_SIDE_WIDTH,
         left: (SHELF_SIDE_WIDTH - SHELF_H) / 2, top: (SHELF_H - SHELF_SIDE_WIDTH) / 2, transform: [{ rotate: '90deg' }] },
     ceilingShadow: { position: 'absolute', top: 0, left: 0, right: 0, height: 16 },
-    contactShadow: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 8 },
+    contactShadow: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 4 },
     topBevel: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, backgroundColor: 'rgba(255,226,176,0.32)', zIndex: 2 },
     bookend: {
         width: SHELF_BOOKEND_WIDTH, height: 76, flexShrink: 0,
-        shadowColor: '#000', shadowOffset: { width: 2, height: 1 }, shadowOpacity: 0.3, shadowRadius: 2,
+        shadowColor: '#170e07', shadowOffset: { width: 2, height: 1 }, shadowOpacity: 0.4, shadowRadius: 1.5,
     },
     bookendUpright: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 5, borderTopLeftRadius: 2, borderTopRightRadius: 2 },
     bookendFoot: { position: 'absolute', left: 0, right: 1, bottom: 0, height: 4, backgroundColor: '#a4864f', borderRadius: 1,
