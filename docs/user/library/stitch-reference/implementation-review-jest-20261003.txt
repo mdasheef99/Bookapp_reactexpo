@@ -1,0 +1,42 @@
+(node:16752) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/components/library/__tests__/LibraryShelf.test.tsx (21.755 s)
+PASS app/(tabs)/library/__tests__/index.test.tsx
+PASS app/(tabs)/library/__tests__/[bookId].test.tsx
+PASS app/(tabs)/library/__tests__/search.test.tsx
+  ● Console
+
+    console.error
+      An update to SearchBooksScreen inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      at node_modules/react-test-renderer/cjs/react-test-renderer.development.js:11801:19
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:1574:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:11800:9)
+      at scheduleUpdateOnFiber (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10326:9)
+      at forceStoreRerender (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3430:24)
+      at node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3415:41
+      at node_modules/@tanstack/query-core/src/notifyManager.ts:73:11
+      at notifyFn (node_modules/@tanstack/query-core/src/notifyManager.ts:21:5)
+      at node_modules/@tanstack/query-core/src/notifyManager.ts:44:13
+          at Array.forEach (<anonymous>)
+      at node_modules/@tanstack/query-core/src/notifyManager.ts:43:25
+      at batchNotifyFn (node_modules/@tanstack/query-core/src/notifyManager.ts:24:5)
+      at Timeout._onTimeout (node_modules/@tanstack/query-core/src/notifyManager.ts:42:9)
+
+PASS src/features/books/utils/__tests__/shelfLayout.test.ts
+PASS src/components/library/__tests__/LibraryAppearance.test.ts
+
+Test Suites: 6 passed, 6 total
+Tests:       47 passed, 47 total
+Snapshots:   0 total
+Time:        40.673 s
+Ran all test suites within paths "src/features/books/utils/__tests__/shelfLayout.test.ts", "src/components/library/__tests__/LibraryShelf.test.tsx", "src/components/library/__tests__/LibraryAppearance.test.ts", "app/(tabs)/library/__tests__/index.test.tsx", "app/(tabs)/library/__tests__/search.test.tsx", "app/(tabs)/library/__tests__/[bookId].test.tsx".

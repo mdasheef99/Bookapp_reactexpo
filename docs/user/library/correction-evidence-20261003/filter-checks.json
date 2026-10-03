@@ -1,0 +1,58 @@
+[
+  {
+    "chooserAvailable": false,
+    "expected": 0,
+    "filter": "Reading",
+    "mode": "list",
+    "rendered": 0
+  },
+  {
+    "chooserAvailable": false,
+    "expected": 1,
+    "filter": "Completed",
+    "mode": "list",
+    "rendered": 1
+  },
+  {
+    "chooserAvailable": false,
+    "expected": 1,
+    "filter": "Wishlist",
+    "mode": "list",
+    "rendered": 1
+  },
+  {
+    "chooserAvailable": false,
+    "expected": 7,
+    "filter": "All",
+    "mode": "list",
+    "rendered": 7
+  },
+  {
+    "chooserAvailable": false,
+    "expected": 0,
+    "filter": "Reading",
+    "mode": "shelf",
+    "rendered": 0
+  },
+  {
+    "chooserAvailable": true,
+    "expected": 1,
+    "filter": "Completed",
+    "mode": "shelf",
+    "rendered": 1
+  },
+  {
+    "chooserAvailable": true,
+    "expected": 1,
+    "filter": "Wishlist",
+    "mode": "shelf",
+    "rendered": 1
+  },
+  {
+    "chooserAvailable": true,
+    "expected": 7,
+    "filter": "All",
+    "mode": "shelf",
+    "rendered": 7
+  }
+]

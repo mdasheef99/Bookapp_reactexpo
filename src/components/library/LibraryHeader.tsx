@@ -11,9 +11,10 @@ type LibraryHeaderProps = {
     viewMode?: 'shelf' | 'list';
     onViewModeChange?: (mode: 'shelf' | 'list') => void;
     focusSelectedView?: boolean;
+    disabled?: boolean;
 };
 
-export function LibraryHeader({ showAddButton = true, onSearch, onAdd = onSearch, viewMode = 'list', onViewModeChange, focusSelectedView = false }: LibraryHeaderProps) {
+export function LibraryHeader({ showAddButton = true, onSearch, onAdd = onSearch, viewMode = 'list', onViewModeChange, focusSelectedView = false, disabled = false }: LibraryHeaderProps) {
     const colors = useLibraryAppearance();
     const fonts = useLibraryTypography();
     const selectedViewRef = React.useRef<React.ElementRef<typeof TouchableOpacity>>(null);
@@ -30,6 +31,7 @@ export function LibraryHeader({ showAddButton = true, onSearch, onAdd = onSearch
                     <Text style={[styles.title, { fontFamily: fonts.heading, color: colors.textPrimary }]}>CM's Book Shelf</Text>
                 </View>
                 <TouchableOpacity
+                    disabled={disabled} accessibilityState={{ disabled }}
                     onPress={onSearch}
                     style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
                     accessibilityRole="button"
@@ -46,8 +48,9 @@ export function LibraryHeader({ showAddButton = true, onSearch, onAdd = onSearch
                             const selected = viewMode === mode;
                             return (
                                 <TouchableOpacity key={mode} ref={selected ? selectedViewRef : undefined} onPress={() => onViewModeChange(mode)} activeOpacity={0.8}
+                                    disabled={disabled}
                                     accessibilityRole="button" accessibilityLabel={`${mode === 'shelf' ? 'Shelf' : 'List'} view`}
-                                    accessibilityState={{ selected }}
+                                    accessibilityState={{ selected, disabled }}
                                     {...(Platform.OS === 'web' ? { 'aria-pressed': selected } : {})}
                                     testID={`library-view-${mode}`}
                                     style={[styles.viewChoice, selected && { backgroundColor: colors.bgCard }]}>
@@ -63,6 +66,7 @@ export function LibraryHeader({ showAddButton = true, onSearch, onAdd = onSearch
                 ) : null}
                 {showAddButton ? (
                     <TouchableOpacity onPress={onAdd} activeOpacity={0.85}
+                        disabled={disabled} accessibilityState={{ disabled }}
                         style={[styles.addButton, { backgroundColor: colors.accent }]}
                         accessibilityRole="button" accessibilityLabel="Add a new book to your library"
                         accessibilityHint="Open the catalogue to find a book or add one manually">

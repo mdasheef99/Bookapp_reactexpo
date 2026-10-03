@@ -1,0 +1,558 @@
+[
+  {
+    "width": 390,
+    "list": {
+      "choices": [],
+      "dialog": null,
+      "focus": "library-view-list",
+      "labels": [],
+      "list": {
+        "clientHeight": 795,
+        "headerInside": true,
+        "height": 795,
+        "outerListScrollers": [],
+        "overflowY": "auto",
+        "scrollHeight": 1630,
+        "width": 342.3999938964844
+      },
+      "page": {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      "shelf": null,
+      "spines": [],
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    },
+    "shelf": {
+      "choices": [],
+      "dialog": null,
+      "focus": "library-view-shelf",
+      "labels": [
+        {
+          "background": "rgb(133, 57, 57)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "The Bed of Procrustes"
+        },
+        {
+          "background": "rgb(46, 52, 56)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "ZZ_TEST Playwright Nomination Book"
+        },
+        {
+          "background": "rgb(35, 53, 74)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "Dune"
+        },
+        {
+          "background": "rgb(133, 57, 57)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "Sand Dune Stabilization, Shelterbelts and Afforestation in Dry Zones"
+        },
+        {
+          "background": "rgb(189, 122, 66)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(8, 6, 4)",
+          "text": "The Science of Dune"
+        },
+        {
+          "background": "rgb(214, 208, 196)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(8, 6, 4)",
+          "text": "Fooled by Randomness"
+        },
+        {
+          "background": "rgb(214, 208, 196)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(8, 6, 4)",
+          "text": "Oil, electricity and Taleb’s ‚Black Swan‘"
+        },
+        {
+          "background": "rgb(54, 58, 64)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "The Black Swan"
+        }
+      ],
+      "list": null,
+      "page": {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      "shelf": {
+        "effectiveOpacity": 1,
+        "height": 441.6000061035156,
+        "width": 342.3999938964844
+      },
+      "spines": [
+        {
+          "height": "150px",
+          "id": "library-shelf-spine-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+          "width": "32px"
+        },
+        {
+          "height": "144px",
+          "id": "library-shelf-spine-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+          "width": "32px"
+        },
+        {
+          "height": "148px",
+          "id": "library-shelf-spine-ae665879-eda1-40f1-a775-7d698a861b27",
+          "width": "32px"
+        },
+        {
+          "height": "154px",
+          "id": "library-shelf-spine-e063191d-6a0b-4222-91c9-0a98937ee80b",
+          "width": "30px"
+        },
+        {
+          "height": "154px",
+          "id": "library-shelf-spine-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+          "width": "30px"
+        },
+        {
+          "height": "152px",
+          "id": "library-shelf-spine-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+          "width": "33px"
+        },
+        {
+          "height": "150px",
+          "id": "library-shelf-spine-f498f920-386c-484b-8533-18f9c44579f8",
+          "width": "24px"
+        },
+        {
+          "height": "144px",
+          "id": "library-shelf-spine-eebf0401-d243-423b-83e4-41aa5d287d70",
+          "width": "37px"
+        }
+      ],
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "width": 320,
+    "list": {
+      "choices": [],
+      "dialog": null,
+      "focus": "library-view-list",
+      "labels": [],
+      "list": {
+        "clientHeight": 795,
+        "headerInside": true,
+        "height": 795,
+        "outerListScrollers": [],
+        "overflowY": "auto",
+        "scrollHeight": 1871,
+        "width": 272
+      },
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "shelf": null,
+      "spines": [],
+      "viewport": {
+        "height": 844,
+        "width": 320
+      }
+    },
+    "shelf": {
+      "choices": [],
+      "dialog": null,
+      "focus": "library-view-shelf",
+      "labels": [
+        {
+          "background": "rgb(133, 57, 57)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "The Bed of Procrustes"
+        },
+        {
+          "background": "rgb(46, 52, 56)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "ZZ_TEST Playwright Nomination Book"
+        },
+        {
+          "background": "rgb(35, 53, 74)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "Dune"
+        },
+        {
+          "background": "rgb(133, 57, 57)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "Sand Dune Stabilization, Shelterbelts and Afforestation in Dry Zones"
+        },
+        {
+          "background": "rgb(189, 122, 66)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(8, 6, 4)",
+          "text": "The Science of Dune"
+        },
+        {
+          "background": "rgb(214, 208, 196)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(8, 6, 4)",
+          "text": "Fooled by Randomness"
+        },
+        {
+          "background": "rgb(214, 208, 196)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(8, 6, 4)",
+          "text": "Oil, electricity and Taleb’s ‚Black Swan‘"
+        },
+        {
+          "background": "rgb(54, 58, 64)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "The Black Swan"
+        }
+      ],
+      "list": null,
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "shelf": {
+        "effectiveOpacity": 1,
+        "height": 441.6000061035156,
+        "width": 272
+      },
+      "spines": [
+        {
+          "height": "150px",
+          "id": "library-shelf-spine-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+          "width": "32px"
+        },
+        {
+          "height": "144px",
+          "id": "library-shelf-spine-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+          "width": "32px"
+        },
+        {
+          "height": "148px",
+          "id": "library-shelf-spine-ae665879-eda1-40f1-a775-7d698a861b27",
+          "width": "32px"
+        },
+        {
+          "height": "154px",
+          "id": "library-shelf-spine-e063191d-6a0b-4222-91c9-0a98937ee80b",
+          "width": "30px"
+        },
+        {
+          "height": "154px",
+          "id": "library-shelf-spine-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+          "width": "30px"
+        },
+        {
+          "height": "152px",
+          "id": "library-shelf-spine-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+          "width": "33px"
+        },
+        {
+          "height": "150px",
+          "id": "library-shelf-spine-f498f920-386c-484b-8533-18f9c44579f8",
+          "width": "24px"
+        },
+        {
+          "height": "144px",
+          "id": "library-shelf-spine-eebf0401-d243-423b-83e4-41aa5d287d70",
+          "width": "37px"
+        }
+      ],
+      "viewport": {
+        "height": 844,
+        "width": 320
+      }
+    }
+  },
+  {
+    "width": 430,
+    "list": {
+      "choices": [],
+      "dialog": null,
+      "focus": "library-view-list",
+      "labels": [],
+      "list": {
+        "clientHeight": 795,
+        "headerInside": true,
+        "height": 795,
+        "outerListScrollers": [],
+        "overflowY": "auto",
+        "scrollHeight": 1630,
+        "width": 382.3999938964844
+      },
+      "page": {
+        "clientWidth": 430,
+        "scrollWidth": 430
+      },
+      "shelf": null,
+      "spines": [],
+      "viewport": {
+        "height": 844,
+        "width": 430
+      }
+    },
+    "shelf": {
+      "choices": [],
+      "dialog": null,
+      "focus": "library-view-shelf",
+      "labels": [
+        {
+          "background": "rgb(133, 57, 57)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "The Bed of Procrustes"
+        },
+        {
+          "background": "rgb(46, 52, 56)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "ZZ_TEST Playwright Nomination Book"
+        },
+        {
+          "background": "rgb(35, 53, 74)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "Dune"
+        },
+        {
+          "background": "rgb(133, 57, 57)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "Sand Dune Stabilization, Shelterbelts and Afforestation in Dry Zones"
+        },
+        {
+          "background": "rgb(189, 122, 66)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(8, 6, 4)",
+          "text": "The Science of Dune"
+        },
+        {
+          "background": "rgb(214, 208, 196)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(8, 6, 4)",
+          "text": "Fooled by Randomness"
+        },
+        {
+          "background": "rgb(214, 208, 196)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(8, 6, 4)",
+          "text": "Oil, electricity and Taleb’s ‚Black Swan‘"
+        },
+        {
+          "background": "rgb(54, 58, 64)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "The Black Swan"
+        }
+      ],
+      "list": null,
+      "page": {
+        "clientWidth": 430,
+        "scrollWidth": 430
+      },
+      "shelf": {
+        "effectiveOpacity": 1,
+        "height": 441.6000061035156,
+        "width": 382.3999938964844
+      },
+      "spines": [
+        {
+          "height": "150px",
+          "id": "library-shelf-spine-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+          "width": "32px"
+        },
+        {
+          "height": "144px",
+          "id": "library-shelf-spine-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+          "width": "32px"
+        },
+        {
+          "height": "148px",
+          "id": "library-shelf-spine-ae665879-eda1-40f1-a775-7d698a861b27",
+          "width": "32px"
+        },
+        {
+          "height": "154px",
+          "id": "library-shelf-spine-e063191d-6a0b-4222-91c9-0a98937ee80b",
+          "width": "30px"
+        },
+        {
+          "height": "154px",
+          "id": "library-shelf-spine-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+          "width": "30px"
+        },
+        {
+          "height": "152px",
+          "id": "library-shelf-spine-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+          "width": "33px"
+        },
+        {
+          "height": "150px",
+          "id": "library-shelf-spine-f498f920-386c-484b-8533-18f9c44579f8",
+          "width": "24px"
+        },
+        {
+          "height": "144px",
+          "id": "library-shelf-spine-eebf0401-d243-423b-83e4-41aa5d287d70",
+          "width": "37px"
+        }
+      ],
+      "viewport": {
+        "height": 844,
+        "width": 430
+      }
+    }
+  },
+  {
+    "width": 1280,
+    "list": {
+      "choices": [],
+      "dialog": null,
+      "focus": "library-view-list",
+      "labels": [],
+      "list": {
+        "clientHeight": 671,
+        "headerInside": true,
+        "height": 671,
+        "outerListScrollers": [],
+        "overflowY": "auto",
+        "scrollHeight": 1630,
+        "width": 552
+      },
+      "page": {
+        "clientWidth": 1280,
+        "scrollWidth": 1280
+      },
+      "shelf": null,
+      "spines": [],
+      "viewport": {
+        "height": 720,
+        "width": 1280
+      }
+    },
+    "shelf": {
+      "choices": [],
+      "dialog": null,
+      "focus": "library-view-shelf",
+      "labels": [
+        {
+          "background": "rgb(133, 57, 57)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "The Bed of Procrustes"
+        },
+        {
+          "background": "rgb(46, 52, 56)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "ZZ_TEST Playwright Nomination Book"
+        },
+        {
+          "background": "rgb(35, 53, 74)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "Dune"
+        },
+        {
+          "background": "rgb(133, 57, 57)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "Sand Dune Stabilization, Shelterbelts and Afforestation in Dry Zones"
+        },
+        {
+          "background": "rgb(189, 122, 66)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(8, 6, 4)",
+          "text": "The Science of Dune"
+        },
+        {
+          "background": "rgb(214, 208, 196)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(8, 6, 4)",
+          "text": "Fooled by Randomness"
+        },
+        {
+          "background": "rgb(214, 208, 196)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(8, 6, 4)",
+          "text": "Oil, electricity and Taleb’s ‚Black Swan‘"
+        },
+        {
+          "background": "rgb(54, 58, 64)",
+          "effectiveOpacity": 1,
+          "foreground": "rgb(255, 253, 248)",
+          "text": "The Black Swan"
+        }
+      ],
+      "list": null,
+      "page": {
+        "clientWidth": 1280,
+        "scrollWidth": 1280
+      },
+      "shelf": {
+        "effectiveOpacity": 1,
+        "height": 441.6000061035156,
+        "width": 552
+      },
+      "spines": [
+        {
+          "height": "150px",
+          "id": "library-shelf-spine-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+          "width": "32px"
+        },
+        {
+          "height": "144px",
+          "id": "library-shelf-spine-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+          "width": "32px"
+        },
+        {
+          "height": "148px",
+          "id": "library-shelf-spine-ae665879-eda1-40f1-a775-7d698a861b27",
+          "width": "32px"
+        },
+        {
+          "height": "154px",
+          "id": "library-shelf-spine-e063191d-6a0b-4222-91c9-0a98937ee80b",
+          "width": "30px"
+        },
+        {
+          "height": "154px",
+          "id": "library-shelf-spine-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+          "width": "30px"
+        },
+        {
+          "height": "152px",
+          "id": "library-shelf-spine-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+          "width": "33px"
+        },
+        {
+          "height": "150px",
+          "id": "library-shelf-spine-f498f920-386c-484b-8533-18f9c44579f8",
+          "width": "24px"
+        },
+        {
+          "height": "144px",
+          "id": "library-shelf-spine-eebf0401-d243-423b-83e4-41aa5d287d70",
+          "width": "37px"
+        }
+      ],
+      "viewport": {
+        "height": 720,
+        "width": 1280
+      }
+    }
+  }
+]

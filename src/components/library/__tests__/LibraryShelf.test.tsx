@@ -8,6 +8,16 @@ import { booksService } from '@/features/books/services/booksService';
 import { LibraryShelf } from '../LibraryShelf';
 
 jest.mock('expo-image', () => ({ Image: 'Image' }));
+jest.mock('react-native-gesture-handler', () => ({
+    GestureDetector: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Gesture: { Pan: () => {
+        const gesture: Record<string, jest.Mock> = {};
+        for (const name of ['enabled', 'minDistance', 'maxPointers', 'runOnJS', 'onStart', 'onUpdate', 'onEnd', 'onFinalize']) {
+            gesture[name] = jest.fn(() => gesture);
+        }
+        return gesture;
+    } },
+}));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-haptics', () => ({ impactAsync: jest.fn(() => Promise.resolve()), ImpactFeedbackStyle: { Light: 'Light' } }));
@@ -78,7 +88,7 @@ jest.mock('expo-router', () => {
         mockCapturedScreens.push(props);
         return null;
     };
-    return { router: { push: jest.fn() }, Stack, __mockCapturedScreens: mockCapturedScreens };
+    return { router: { push: jest.fn() }, useFocusEffect: jest.fn(), Stack, __mockCapturedScreens: mockCapturedScreens };
 });
 
 const renderLibraryScreen = () => {
@@ -183,11 +193,11 @@ describe('LibraryShelf single shelf SDD-04', () => {
         // Explicit labeled choices keep the current presentation visible.
         const shelfChoice = getByTestId('library-view-shelf');
         const listChoice = getByTestId('library-view-list');
-        expect(listChoice).toHaveProp('accessibilityState', { selected: true });
+        expect(listChoice.props.accessibilityState).toEqual(expect.objectContaining({ selected: true, disabled: false }));
         fireEvent.press(shelfChoice);
         await waitFor(() => expect(getByTestId('library-shelf')).toBeTruthy());
         expect(AsyncStorage.setItem).toHaveBeenCalledWith('library_viewMode', 'shelf');
-        expect(getByTestId('library-view-shelf')).toHaveProp('accessibilityState', { selected: true });
+        expect(getByTestId('library-view-shelf').props.accessibilityState).toEqual(expect.objectContaining({ selected: true, disabled: false }));
         const savedCalls = (AsyncStorage.setItem as jest.Mock).mock.calls.length;
         fireEvent.press(getByTestId('library-view-shelf'));
         expect(AsyncStorage.setItem).toHaveBeenCalledTimes(savedCalls);
@@ -201,6 +211,51 @@ describe('LibraryShelf single shelf SDD-04', () => {
 
         unmount();
         queryClient.clear();
+    });
+
+    it('arranges the whole collection by entry ID, with one-step Undo, Cancel and explicit Save', async () => {
+        const entries = ['a', 'b', 'c'].map((id) => ({
+            id, ownership: id === 'c' ? 'wishlist' : 'owned', reading_status: 'to_read',
+            book: { title: 'Same title', authors: ['An Author'] },
+        }));
+        (booksService.getUserLibrary as jest.Mock).mockResolvedValueOnce(entries);
+        (AsyncStorage.getItem as jest.Mock).mockImplementation((key: string) => Promise.resolve(key === 'library_viewMode' ? 'shelf' : null));
+        const { getByTestId, getByLabelText, getAllByTestId, queryClient, unmount } = renderLibraryScreen();
+        const order = () => getAllByTestId(/^library-shelf-spine-/).map((spine) => spine.props.testID.replace('library-shelf-spine-', ''));
+        await waitFor(() => expect(getByTestId('library-arrange-arrange-shelf')).toBeEnabled());
+        fireEvent.press(getByLabelText('Wishlist, 1 books'));
+        expect(order()).toEqual(['c']);
+        fireEvent.press(getByTestId('library-arrange-arrange-shelf'));
+        expect(order()).toEqual(['a', 'b', 'c']);
+        expect(getByTestId('library-view-list')).toBeDisabled();
+        expect(getByLabelText('Wishlist, 1 books')).toBeDisabled();
+        expect(getByLabelText('Add a new book to your library')).toBeDisabled();
+        expect(getByTestId('library-arrange-undo')).toBeDisabled();
+        fireEvent.press(getByTestId('library-book-picker-open'));
+        expect(getByTestId('library-book-picker-entry-c').props.accessibilityLabel).toBe('Select Same title by An Author');
+        fireEvent.press(getByTestId('library-book-picker-entry-c'));
+        expect(require('expo-router').router.push).not.toHaveBeenCalled();
+        fireEvent.press(getByTestId('library-arrange-earlier'));
+        expect(order()).toEqual(['a', 'c', 'b']);
+        fireEvent.press(getByTestId('library-arrange-undo'));
+        expect(order()).toEqual(['a', 'b', 'c']);
+        expect(getByTestId('library-arrange-undo')).toBeDisabled();
+        fireEvent.press(getByTestId('library-arrange-earlier'));
+        fireEvent.press(getByTestId('library-arrange-cancel'));
+        expect(order()).toEqual(['a', 'b', 'c']);
+        expect(AsyncStorage.setItem).not.toHaveBeenCalled();
+        fireEvent.press(getByTestId('library-arrange-arrange-shelf'));
+        fireEvent.press(getByTestId('library-shelf-spine-c'));
+        fireEvent.press(getByTestId('library-arrange-earlier'));
+        fireEvent.press(getByTestId('library-arrange-save'));
+        await waitFor(() => expect(getByTestId('library-arrange-arrange-shelf')).toBeTruthy());
+        expect(order()).toEqual(['a', 'c', 'b']);
+        expect(AsyncStorage.setItem).toHaveBeenCalledTimes(1);
+        expect(AsyncStorage.setItem).toHaveBeenCalledWith('library_shelfOrder:v1:reader-1', JSON.stringify({ version: 1, ids: ['a', 'c', 'b'] }));
+        expect(getByTestId('library-view-list')).toBeEnabled();
+        unmount();
+        queryClient.clear();
+        (AsyncStorage.getItem as jest.Mock).mockImplementation(() => Promise.resolve(null));
     });
 
     it('keeps filters and the actual filtered count before the collection in both modes', async () => {

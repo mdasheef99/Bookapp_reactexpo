@@ -8,9 +8,10 @@ type LibraryFilterBarProps = {
     chips: LibraryFilterChip[];
     activeFilter: LibraryFilter;
     onChange: (filter: LibraryFilter) => void;
+    disabled?: boolean;
 };
 
-export function LibraryFilterBar({ chips, activeFilter, onChange }: LibraryFilterBarProps) {
+export function LibraryFilterBar({ chips, activeFilter, onChange, disabled = false }: LibraryFilterBarProps) {
     const colors = useLibraryAppearance();
     const fonts = useLibraryTypography();
 
@@ -24,8 +25,9 @@ export function LibraryFilterBar({ chips, activeFilter, onChange }: LibraryFilte
                     <TouchableOpacity
                         key={chip.key}
                         onPress={() => onChange(chip.key)}
+                        disabled={disabled}
                         accessibilityRole="button"
-                        accessibilityState={{ selected: isActive }}
+                        accessibilityState={{ selected: isActive, disabled }}
                         {...(Platform.OS === 'web' ? { 'aria-pressed': isActive } : {})}
                         accessibilityLabel={`${chip.label}, ${chip.count} books`}
                         style={[
@@ -33,6 +35,7 @@ export function LibraryFilterBar({ chips, activeFilter, onChange }: LibraryFilte
                             {
                                 backgroundColor: isActive ? colors.accent : colors.bgCard,
                                 borderColor: isActive ? colors.accent : colors.border,
+                                opacity: disabled && !isActive ? 0.5 : 1,
                             },
                         ]}
                     >

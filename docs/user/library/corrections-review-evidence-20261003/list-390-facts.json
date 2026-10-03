@@ -1,0 +1,25 @@
+{
+  "focus": "library-view-list",
+  "list": {
+    "bottom": 795,
+    "height": 795,
+    "left": 24,
+    "right": 366.3999938964844,
+    "top": 0,
+    "width": 342.3999938964844,
+    "x": 24,
+    "y": 0
+  },
+  "scrollers": [
+    {
+      "height": 795,
+      "id": null,
+      "scrollHeight": 795
+    },
+    {
+      "height": 795,
+      "id": "library-book-list",
+      "scrollHeight": 1630
+    }
+  ]
+}

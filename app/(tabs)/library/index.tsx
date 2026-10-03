@@ -1,9 +1,11 @@
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { router } from 'expo-router';
-import { useEffect, useMemo, useState, ReactNode } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useLibraryBooks } from '@/features/books/hooks/useLibraryBooks';
+import { useShelfArrangement } from '@/features/books/hooks/useShelfArrangement';
+import { LibraryArrangeControls } from '@/components/library/LibraryArrangeControls';
 import {
     filterLibraryBooks,
     getLibraryFilterChips,
@@ -43,6 +45,7 @@ function LibraryHome() {
     const [focusSelectedView, setFocusSelectedView] = useState(false);
     const isShelf = viewMode === 'shelf';
     const { data: books = [], error, isError, isLoading, isRefetching, refetch } = useLibraryBooks(session?.user?.id);
+    const [shelfDragging, setShelfDragging] = useState(false);
 
     useEffect(() => {
         let mounted = true;
@@ -52,6 +55,12 @@ function LibraryHome() {
         return () => { mounted = false; };
     }, []);
 
+    const arrangement = useShelfArrangement(session?.user?.id, books);
+    useFocusEffect(useCallback(() => () => {
+        arrangement.cancel();
+        setShelfDragging(false);
+    }, [arrangement.cancel]));
+
     const handleViewModeChange = (next: LibraryViewMode) => {
         if (viewMode === next) return;
         setFocusSelectedView(true);
@@ -59,7 +68,8 @@ function LibraryHome() {
         void AsyncStorage.setItem(LIBRARY_VIEW_MODE_KEY, next).catch(() => {});
     };
     const filterChips = useMemo(() => getLibraryFilterChips(books), [books]);
-    const filteredBooks = useMemo(() => filterLibraryBooks(books, activeFilter), [activeFilter, books]);
+    const collection = isShelf ? arrangement.orderedBooks : books;
+    const filteredBooks = useMemo(() => filterLibraryBooks(collection, activeFilter), [activeFilter, collection]);
     const activeFilterLabel = getLibraryFilterLabel(filterChips, activeFilter);
     const currentBook = books.find((book) => book.reading_status === 'reading' && book.ownership !== 'wishlist');
     const wishlistCount = filterChips.find((chip) => chip.key === 'wishlist')?.count ?? 0;
@@ -81,9 +91,9 @@ function LibraryHome() {
 
     const collectionHeader = (
         <View>
-            <LibraryHeader onSearch={openSearch} viewMode={viewMode} onViewModeChange={handleViewModeChange} focusSelectedView={focusSelectedView} />
+            <LibraryHeader onSearch={openSearch} viewMode={viewMode} onViewModeChange={handleViewModeChange} focusSelectedView={focusSelectedView} disabled={arrangement.active} />
             <View testID="library-collection-controls">
-                <LibraryFilterBar chips={filterChips} activeFilter={activeFilter} onChange={setActiveFilter} />
+                <LibraryFilterBar chips={filterChips} activeFilter={activeFilter} onChange={setActiveFilter} disabled={arrangement.active} />
                 <LibrarySummary count={filteredBooks.length} activeFilterLabel={activeFilterLabel} />
             </View>
         </View>
@@ -92,15 +102,17 @@ function LibraryHome() {
     return (
         <LibraryPageBackground>
             {isShelf ? (
-                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} style={styles.scrollView}>
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} style={styles.scrollView} scrollEnabled={!shelfDragging}>
                     <View style={styles.content}>
                         {collectionHeader}
-                        <LibraryShelf books={filteredBooks} onBookPress={openBook} />
+                        <LibraryArrangeControls arrangement={arrangement} bookCount={books.length} dragging={shelfDragging}
+                            onEnter={() => { setActiveFilter('all'); arrangement.enter(); }} />
+                        <LibraryShelf books={filteredBooks} onBookPress={openBook} arrangement={arrangement} onDraggingChange={setShelfDragging} />
                         <LibraryBentoGrid
                             currentBook={currentBook ? { title: currentBook.book.title, author: currentBook.book.authors?.[0] ?? '' } : null}
                             booksCount={books.length} wishlistCount={wishlistCount}
-                            onCurrentBookPress={currentBook ? () => openBook(currentBook) : undefined}
-                            onWishlistPress={() => setActiveFilter('wishlist')}
+                            onCurrentBookPress={currentBook && !arrangement.active ? () => openBook(currentBook) : undefined}
+                            onWishlistPress={arrangement.active ? undefined : () => setActiveFilter('wishlist')}
                         />
                     </View>
                 </ScrollView>

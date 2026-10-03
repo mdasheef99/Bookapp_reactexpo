@@ -1,0 +1,16 @@
+{
+  "Entry": "/_expo/static/js/web/entry-bf18b5746c9237d3c4d481aaab3656f4.js",
+  "HtmlMatches": true,
+  "BundleMatches": true,
+  "SHA256": "C80A3333219FE642157F608497E2315B1F9D63CC094448DDF723A66591BCAF1A",
+  "Packages": [
+    {
+      "Path": "package.json",
+      "Unchanged": true
+    },
+    {
+      "Path": "package-lock.json",
+      "Unchanged": true
+    }
+  ]
+}

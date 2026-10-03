@@ -1,0 +1,98 @@
+[
+  {
+    "chooser": 0,
+    "rows": 8,
+    "selected": [
+      "List view",
+      "All, 8 books"
+    ],
+    "viewport": [
+      1280,
+      720
+    ]
+  },
+  {
+    "chooser": 0,
+    "rows": 0,
+    "selected": [
+      "List view",
+      "Reading, 0 books"
+    ],
+    "viewport": [
+      1280,
+      720
+    ]
+  },
+  {
+    "chooser": 0,
+    "rows": 1,
+    "selected": [
+      "List view",
+      "Completed, 1 books"
+    ],
+    "viewport": [
+      1280,
+      720
+    ]
+  },
+  {
+    "chooser": 0,
+    "rows": 1,
+    "selected": [
+      "List view",
+      "Wishlist, 1 books"
+    ],
+    "viewport": [
+      1280,
+      720
+    ]
+  },
+  {
+    "chooser": 1,
+    "rows": 8,
+    "selected": [
+      "Shelf view",
+      "All, 8 books"
+    ],
+    "viewport": [
+      1280,
+      720
+    ]
+  },
+  {
+    "chooser": 0,
+    "rows": 0,
+    "selected": [
+      "Shelf view",
+      "Reading, 0 books"
+    ],
+    "viewport": [
+      1280,
+      720
+    ]
+  },
+  {
+    "chooser": 1,
+    "rows": 1,
+    "selected": [
+      "Shelf view",
+      "Completed, 1 books"
+    ],
+    "viewport": [
+      1280,
+      720
+    ]
+  },
+  {
+    "chooser": 1,
+    "rows": 1,
+    "selected": [
+      "Shelf view",
+      "Wishlist, 1 books"
+    ],
+    "viewport": [
+      1280,
+      720
+    ]
+  }
+]

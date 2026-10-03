@@ -9,7 +9,7 @@ import { stableSeed, spineMetrics, spineColorFromTitle, spineTextColor, spineDiv
 import { useLibraryTypography } from './LibraryTypography';
 import { BOOK_CLOTH_TEXTURE_URI } from './bookClothTexture';
 
-export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractionChange, tiltDeg = 0, swept = false, gapAfter = 0 }: {
+export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractionChange, tiltDeg = 0, swept = false, gapAfter = 0, arranging = false, selected = false, testID }: {
     item: LibraryBookEntry;
     index: number;
     onPress: () => void;
@@ -19,6 +19,9 @@ export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractio
     tiltDeg?: number;
     swept?: boolean;
     gapAfter?: number;
+    arranging?: boolean;
+    selected?: boolean;
+    testID?: string;
 }) {
     const fonts = useLibraryTypography();
     const [hovered, setHovered] = React.useState(false);
@@ -32,8 +35,8 @@ export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractio
     const pullShadowDelta = useSharedValue(0);
     const sweepLift = useSharedValue(0);
     React.useEffect(() => {
-        sweepLift.value = isReduceMotion ? 0 : withTiming(swept || hovered || focused ? 1 : 0, { duration: 120 });
-    }, [swept, hovered, focused, isReduceMotion]);
+        sweepLift.value = isReduceMotion || arranging ? 0 : withTiming(swept || hovered || focused ? 1 : 0, { duration: 120 });
+    }, [swept, hovered, focused, isReduceMotion, arranging]);
 
     const updateInteractionState = React.useCallback((key: keyof typeof interactionState.current, value: boolean) => {
         const next = { ...interactionState.current, [key]: value };
@@ -47,7 +50,7 @@ export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractio
     const handleBlur = () => { setFocused(false); updateInteractionState('focused', false); };
 
     const animatedStyle = useAnimatedStyle(() => ({
-        transform: [
+        transform: arranging ? [] : [
             { perspective: 600 }, { rotate: `${tiltDeg}deg` }, { rotateY: `${pullRotateY.value}deg` },
             { translateY: pullTranslateY.value - sweepLift.value * 6 },
             { scale: pullScale.value * (1 + sweepLift.value * 0.06) },
@@ -59,7 +62,7 @@ export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractio
     const handlePressIn = () => {
         setPressed(true);
         updateInteractionState('pressed', true);
-        if (isReduceMotion) return;
+        if (isReduceMotion || arranging) return;
         const easing = Easing.bezier(0.34, 1.56, 0.64, 1);
         pullScale.value = withTiming(1.15, { duration: 220, easing });
         pullTranslateY.value = withTiming(-18, { duration: 220, easing });
@@ -93,8 +96,10 @@ export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractio
                 onHoverIn={handleHoverIn} onHoverOut={handleHoverOut}
                 onFocus={handleFocus} onBlur={handleBlur}
                 accessibilityRole="button"
-                accessibilityLabel={`Open ${item.book.title}${item.book.authors?.[0] ? ` by ${item.book.authors[0]}` : ''}`}
-                testID={`library-shelf-spine-${item.id}`}
+                accessibilityLabel={`${arranging ? 'Select' : 'Open'} ${item.book.title}${item.book.authors?.[0] ? ` by ${item.book.authors[0]}` : ''}`}
+                accessibilityState={arranging ? { selected } : undefined}
+                accessibilityHint={arranging ? 'Select, then drag this book or use the Earlier and Later controls below the shelf' : undefined}
+                testID={testID ?? `library-shelf-spine-${item.id}`}
                 style={[styles.spine, { backgroundColor, width, height }]}
             >
                 <Image source={{ uri: BOOK_CLOTH_TEXTURE_URI }} style={StyleSheet.absoluteFill} contentFit="fill" pointerEvents="none" accessible={false} />

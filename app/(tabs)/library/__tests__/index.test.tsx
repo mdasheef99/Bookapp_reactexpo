@@ -9,7 +9,17 @@ const mockRouterPush = jest.fn();
 
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
-jest.mock('expo-router', () => ({ router: { push: (...args: unknown[]) => mockRouterPush(...args) } }));
+jest.mock('expo-router', () => ({ router: { push: (...args: unknown[]) => mockRouterPush(...args) }, useFocusEffect: jest.fn() }));
+jest.mock('react-native-gesture-handler', () => ({
+    GestureDetector: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Gesture: { Pan: () => {
+        const gesture: Record<string, jest.Mock> = {};
+        for (const name of ['enabled', 'minDistance', 'maxPointers', 'runOnJS', 'onStart', 'onUpdate', 'onEnd', 'onFinalize']) {
+            gesture[name] = jest.fn(() => gesture);
+        }
+        return gesture;
+    } },
+}));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
         colors: {

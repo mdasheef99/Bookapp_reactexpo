@@ -6,10 +6,11 @@ import { LIBRARY_RADIUS, LIBRARY_SPACING, useLibraryAppearance } from './Library
 import { useLibraryTypography } from './LibraryTypography';
 
 // A separate, non-overlapping activation path preserves the narrow physical spines.
-export function LibraryBookPicker({ books, onBookPress, activeBook = null }: {
+export function LibraryBookPicker({ books, onBookPress, activeBook = null, selecting = false }: {
     books: LibraryBookEntry[];
     onBookPress: (book: LibraryBookEntry) => void;
     activeBook?: LibraryBookEntry | null;
+    selecting?: boolean;
 }) {
     const [open, setOpen] = React.useState(false);
     const colors = useLibraryAppearance();
@@ -69,7 +70,7 @@ export function LibraryBookPicker({ books, onBookPress, activeBook = null }: {
                             <FlatList testID="library-book-picker-list" style={styles.list} data={books} keyExtractor={(book) => book.id}
                                 renderItem={({ item }) => (
                                     <Pressable testID={`library-book-picker-entry-${item.id}`} accessibilityRole="button"
-                                        accessibilityLabel={`Open ${item.book.title}${item.book.authors?.[0] ? ` by ${item.book.authors[0]}` : ''}`}
+                                        accessibilityLabel={`${selecting ? 'Select' : 'Open'} ${item.book.title}${item.book.authors?.[0] ? ` by ${item.book.authors[0]}` : ''}`}
                                         onPress={() => { setOpen(false); onBookPress(item); }}
                                         style={[styles.entry, { borderBottomColor: colors.border }]}>
                                         <Text style={[styles.title, { color: colors.textPrimary, fontFamily: fonts.heading }]}>{item.book.title}</Text>

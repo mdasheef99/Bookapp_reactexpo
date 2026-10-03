@@ -1,0 +1,132 @@
+{
+  "initial": {
+    "clientWidth": 550,
+    "order": "arrange-1,arrange-2,arrange-3,arrange-4,arrange-5,arrange-6,arrange-7,arrange-8,arrange-9,arrange-10,arrange-11,arrange-12,arrange-13,arrange-14,arrange-15,arrange-16,arrange-17,arrange-18,arrange-19,arrange-20,arrange-21,arrange-22,arrange-23,arrange-24,arrange-25,arrange-26,arrange-27,arrange-28,arrange-29,arrange-30,arrange-31,arrange-32,arrange-33,arrange-34,arrange-35,arrange-36,arrange-37,arrange-38,arrange-39,arrange-40,arrange-41,arrange-42,arrange-43,arrange-44,arrange-45,arrange-46,arrange-47,arrange-48,arrange-49,arrange-50,arrange-51,arrange-52,arrange-53,arrange-54,arrange-55,arrange-56,arrange-57,arrange-58,arrange-59,arrange-60,arrange-61,arrange-62,arrange-63,arrange-64,arrange-65,arrange-66,arrange-67,arrange-68,arrange-69,arrange-70,arrange-71,arrange-72,arrange-73,arrange-74,arrange-75,arrange-76,arrange-77,arrange-78,arrange-79,arrange-80",
+    "scrollLeft": 0,
+    "scrollWidth": 1486,
+    "spines": [
+      {
+        "id": "library-shelf-spine-arrange-1",
+        "x": 369.2000122070313
+      },
+      {
+        "id": "library-shelf-spine-arrange-2",
+        "x": 394.2000122070313
+      },
+      {
+        "id": "library-shelf-spine-arrange-3",
+        "x": 425.2000122070313
+      },
+      {
+        "id": "library-shelf-spine-arrange-4",
+        "x": 459.2000122070313
+      },
+      {
+        "id": "library-shelf-spine-arrange-5",
+        "x": 496.2000122070313
+      },
+      {
+        "id": "library-shelf-spine-arrange-6",
+        "x": 539.2000122070312
+      },
+      {
+        "id": "library-shelf-spine-arrange-7",
+        "x": 585.2000122070312
+      },
+      {
+        "id": "library-shelf-spine-arrange-8",
+        "x": 610.2000122070312
+      },
+      {
+        "id": "library-shelf-spine-arrange-9",
+        "x": 641.2000122070312
+      },
+      {
+        "id": "library-shelf-spine-arrange-10",
+        "x": 675.2000122070312
+      },
+      {
+        "id": "library-shelf-spine-arrange-11",
+        "x": 712.2000122070312
+      },
+      {
+        "id": "library-shelf-spine-arrange-12",
+        "x": 755.2000122070312
+      },
+      {
+        "id": "library-shelf-spine-arrange-13",
+        "x": 801.2000122070312
+      },
+      {
+        "id": "library-shelf-spine-arrange-14",
+        "x": 826.2000122070312
+      },
+      {
+        "id": "library-shelf-spine-arrange-15",
+        "x": 857.2000122070312
+      },
+      {
+        "id": "library-shelf-spine-arrange-16",
+        "x": 891.2000122070312
+      },
+      {
+        "id": "library-shelf-spine-arrange-17",
+        "x": 928.2000122070312
+      },
+      {
+        "id": "library-shelf-spine-arrange-18",
+        "x": 971.2000122070312
+      },
+      {
+        "id": "library-shelf-spine-arrange-19",
+        "x": 1017.2000122070312
+      },
+      {
+        "id": "library-shelf-spine-arrange-20",
+        "x": 1042.2000732421875
+      },
+      {
+        "id": "library-shelf-spine-arrange-21",
+        "x": 1073.2000732421875
+      },
+      {
+        "id": "library-shelf-spine-arrange-22",
+        "x": 1107.2000732421875
+      }
+    ],
+    "viewportLeft": 357.20001220703125,
+    "viewportRight": 907.6000366210938,
+    "width": 1280
+  },
+  "afterEdgeDrag": {
+    "order": "arrange-2,arrange-3,arrange-4,arrange-5,arrange-6,arrange-7,arrange-8,arrange-9,arrange-10,arrange-11,arrange-12,arrange-13,arrange-14,arrange-15,arrange-16,arrange-17,arrange-18,arrange-1,arrange-19,arrange-20,arrange-21,arrange-22,arrange-23,arrange-24,arrange-25,arrange-26,arrange-27,arrange-28,arrange-29,arrange-30,arrange-31,arrange-32,arrange-33,arrange-34,arrange-35,arrange-36,arrange-37,arrange-38,arrange-39,arrange-40,arrange-41,arrange-42,arrange-43,arrange-44,arrange-45,arrange-46,arrange-47,arrange-48,arrange-49,arrange-50,arrange-51,arrange-52,arrange-53,arrange-54,arrange-55,arrange-56,arrange-57,arrange-58,arrange-59,arrange-60,arrange-61,arrange-62,arrange-63,arrange-64,arrange-65,arrange-66,arrange-67,arrange-68,arrange-69,arrange-70,arrange-71,arrange-72,arrange-73,arrange-74,arrange-75,arrange-76,arrange-77,arrange-78,arrange-79,arrange-80",
+    "scrollLeft": 110.4000015258789
+  },
+  "offscreenDestinationReached": {
+    "beforeId": "arrange-19",
+    "initialDestinationX": 1017.2000122070312,
+    "initialViewportRight": 907.6000366210938
+  },
+  "outsideDropPreserved": true,
+  "undoRestored": true,
+  "manualScrollBefore": {
+    "lowerX": -175,
+    "scrollLeft": 587.2000122070312,
+    "upperX": -193
+  },
+  "manualScrollAfter": {
+    "lowerX": -523,
+    "scrollLeft": 935.2000122070312,
+    "upperX": -541
+  },
+  "finalValidEdge": {
+    "order": "arrange-2,arrange-3,arrange-4,arrange-5,arrange-6,arrange-7,arrange-8,arrange-9,arrange-10,arrange-11,arrange-12,arrange-13,arrange-14,arrange-15,arrange-16,arrange-17,arrange-18,arrange-1,arrange-19,arrange-20,arrange-21,arrange-22,arrange-23,arrange-24,arrange-25,arrange-26,arrange-27,arrange-28,arrange-29,arrange-30,arrange-31,arrange-32,arrange-33,arrange-34,arrange-35,arrange-36,arrange-37,arrange-38,arrange-39,arrange-40,arrange-41,arrange-42,arrange-43,arrange-44,arrange-45,arrange-46,arrange-47,arrange-48,arrange-49,arrange-50,arrange-51,arrange-52,arrange-53,arrange-54,arrange-55,arrange-56,arrange-57,arrange-58,arrange-59,arrange-60,arrange-61,arrange-62,arrange-63,arrange-64,arrange-65,arrange-66,arrange-67,arrange-68,arrange-69,arrange-70,arrange-71,arrange-72,arrange-73,arrange-74,arrange-75,arrange-76,arrange-77,arrange-78,arrange-79,arrange-80",
+    "scrollLeft": 115.1999969482422
+  },
+  "finalOutside": {
+    "order": "arrange-2,arrange-3,arrange-4,arrange-5,arrange-6,arrange-7,arrange-8,arrange-9,arrange-10,arrange-11,arrange-12,arrange-13,arrange-14,arrange-15,arrange-16,arrange-17,arrange-18,arrange-1,arrange-19,arrange-20,arrange-21,arrange-22,arrange-23,arrange-24,arrange-25,arrange-26,arrange-27,arrange-28,arrange-29,arrange-30,arrange-31,arrange-32,arrange-33,arrange-34,arrange-35,arrange-36,arrange-37,arrange-38,arrange-39,arrange-40,arrange-41,arrange-42,arrange-43,arrange-44,arrange-45,arrange-46,arrange-47,arrange-48,arrange-49,arrange-50,arrange-51,arrange-52,arrange-53,arrange-54,arrange-55,arrange-56,arrange-57,arrange-58,arrange-59,arrange-60,arrange-61,arrange-62,arrange-63,arrange-64,arrange-65,arrange-66,arrange-67,arrange-68,arrange-69,arrange-70,arrange-71,arrange-72,arrange-73,arrange-74,arrange-75,arrange-76,arrange-77,arrange-78,arrange-79,arrange-80",
+    "overlayGone": true,
+    "scrollLeft": 587.2000122070312
+  },
+  "finalUndoRestored": true
+}

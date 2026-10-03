@@ -1,0 +1,61 @@
+UnableToResolveError: Unable to resolve module @/features/books/utils/shelfLayout from C:\Users\LEGION\Desktop\Bookconnect4_library\src\components\library\LibraryShelf.tsx: @/features/books/utils/shelfLayout could not be found within the project or in these directories:
+  node_modules
+   9 | import { ShelfArrangement } from '@/features/books/hooks/useShelfArrangement';
+  10 | import { LibraryBookEntry } from '@/features/books/utils/libraryShelf';
+> 11 | import { getShelfTrackLayout, splitShelfRows, resolveSweptSpine, SHELF_SIDE_WIDTH, SHELF_BOOKEND_WIDTH } from '@/features/books/utils/shelfLayout';
+     |                                                                                                                ^
+  12 | import { BookSpine } from './BookSpine';
+  13 | import { LibraryBookPicker } from './LibraryBookPicker';
+  14 | import { useLibraryTypography } from './LibraryTypography';
+    at ModuleResolver.resolveDependency (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\node-haste\DependencyGraph\ModuleResolution.js:172:15)
+    at DependencyGraph.resolveDependency (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\node-haste\DependencyGraph.js:252:43)
+    ... 16 lines matching cause stack trace ...
+    at async C:\Users\LEGION\Desktop\Bookconnect4_library\docs\user\library\arrange-evidence-20261003\build-fixture.cjs:22:5 {
+  type: 'UnableToResolveError',
+  originModulePath: 'C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\components\\library\\LibraryShelf.tsx',
+  targetModuleName: '@/features/books/utils/shelfLayout',
+  cause: FailedToResolveNameError: Module does not exist in the Haste module map or in these directories:
+    C:\Users\LEGION\Desktop\Bookconnect4_library\src\components\library\node_modules
+    C:\Users\LEGION\Desktop\Bookconnect4_library\src\components\node_modules
+    C:\Users\LEGION\Desktop\Bookconnect4_library\src\node_modules
+    C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules
+    C:\Users\LEGION\Desktop\node_modules
+    C:\Users\LEGION\node_modules
+    C:\Users\node_modules
+    C:\node_modules
+  
+      at Object.resolve [as resolveRequest] (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro-resolver\src\resolve.js:197:9)
+      at config.resolver.resolveRequest (C:\Users\LEGION\Desktop\Bookconnect4_library\docs\user\library\arrange-evidence-20261003\build-fixture.cjs:19:89)
+      at Object.resolve (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro-resolver\src\resolve.js:40:12)
+      at ModuleResolver.resolveDependency (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\node-haste\DependencyGraph\ModuleResolution.js:96:31)
+      at DependencyGraph.resolveDependency (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\node-haste\DependencyGraph.js:252:43)
+      at C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\lib\transformHelpers.js:163:21
+      at resolveDependencies (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\DeltaBundler\buildSubgraph.js:43:25)
+      at visit (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\DeltaBundler\buildSubgraph.js:81:30)
+      at async Promise.all (index 6)
+      at async visit (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\DeltaBundler\buildSubgraph.js:90:5)
+      at async Promise.all (index 0)
+      at async buildSubgraph (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\DeltaBundler\buildSubgraph.js:105:3)
+      at async Graph._buildDelta (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\DeltaBundler\Graph.js:163:22)
+      at async Graph.initialTraverseDependencies (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\DeltaBundler\Graph.js:146:19)
+      at async DeltaCalculator._getChangedDependencies (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\DeltaBundler\DeltaCalculator.js:155:25)
+      at async DeltaCalculator.getDelta (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\DeltaBundler\DeltaCalculator.js:72:16)
+      at async DeltaBundler.buildGraph (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\DeltaBundler.js:42:5)
+      at async IncrementalBundler.buildGraphForEntries (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\IncrementalBundler.js:90:19)
+      at async IncrementalBundler.buildGraph (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\IncrementalBundler.js:170:19)
+      at async Server.build (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\Server.js:235:32)
+      at async Object.runBuild (C:\Users\LEGION\Desktop\Bookconnect4_library\node_modules\metro\src\index.flow.js:337:25)
+      at async C:\Users\LEGION\Desktop\Bookconnect4_library\docs\user\library\arrange-evidence-20261003\build-fixture.cjs:22:5 {
+    dirPaths: [
+      'C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\components\\library\\node_modules',
+      'C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\components\\node_modules',
+      'C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\node_modules',
+      'C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules',
+      'C:\\Users\\LEGION\\Desktop\\node_modules',
+      'C:\\Users\\LEGION\\node_modules',
+      'C:\\Users\\node_modules',
+      'C:\\node_modules'
+    ],
+    extraPaths: []
+  }
+}

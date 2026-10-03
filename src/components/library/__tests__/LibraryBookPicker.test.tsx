@@ -10,6 +10,15 @@ const books = [{ id: 'first', ownership: 'owned', reading_status: 'reading', boo
     { id: 'second', ownership: 'wishlist', reading_status: 'completed', book: { title: 'Duplicate title', authors: null } }];
 
 describe('review R5 accessible book chooser', () => {
+    it('announces selection instead of opening a book while arranging', () => {
+        const onSelect = jest.fn();
+        const { getByTestId, getByLabelText, queryByTestId } = render(<LibraryBookPicker books={books} onBookPress={onSelect} selecting />);
+        fireEvent.press(getByTestId('library-book-picker-open'));
+        fireEvent.press(getByLabelText('Select Duplicate title by First Author'));
+        expect(onSelect).toHaveBeenCalledWith(books[0]);
+        expect(queryByTestId('library-book-picker-panel')).toBeNull();
+    });
+
     it('uses separate 44px controls and full-width book rows for both pointer and keyboard activation', () => {
         const onPress = jest.fn();
         const { getByTestId, getByLabelText, queryByTestId, UNSAFE_getByType } = render(<LibraryBookPicker books={books} onBookPress={onPress} />);

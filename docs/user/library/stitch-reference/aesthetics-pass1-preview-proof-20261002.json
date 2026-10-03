@@ -1,0 +1,16 @@
+{
+  "Entry": "entry-f576fb2498810ca45bbe5541399c1df9.js",
+  "SHA256": "D43E182114936D7582D530ECC29180F67B0E66645139D3A0D5A5F8058D7D4435",
+  "ServedEntryMatches": true,
+  "PackageChecks": [
+    {
+      "File": "package.json",
+      "Unchanged": true
+    },
+    {
+      "File": "package-lock.json",
+      "Unchanged": true
+    }
+  ],
+  "Baseline": "BookConnect-library-aesthetics-pass1-20261002-214957"
+}
