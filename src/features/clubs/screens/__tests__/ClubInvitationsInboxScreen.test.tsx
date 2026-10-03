@@ -14,6 +14,7 @@ const mockUseMarkInvitationRead = jest.fn();
 const mockUseAcceptClubInvitation = jest.fn();
 const mockRouterBack = jest.fn();
 const mockRouterPush = jest.fn();
+const mockUseAuth = jest.fn();
 
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
@@ -25,7 +26,7 @@ jest.mock('@/hooks/useTheme', () => ({
     }),
 }));
 jest.mock('@/features/auth/hooks/useAuth', () => ({
-    useAuth: () => ({ user: { id: 'reader-1' } }),
+    useAuth: () => mockUseAuth(),
 }));
 jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useMyClubInvitationInbox: (...args: unknown[]) => mockUseMyClubInvitationInbox(...args),
@@ -72,6 +73,7 @@ const acceptedInvite = {
 
 beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({ user: { id: 'reader-1' } });
     mockUseMyClubInvitationInbox.mockReturnValue({ data: [baseInvite], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
     mockUseMarkInvitationRead.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseAcceptClubInvitation.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
@@ -104,7 +106,7 @@ describe('ClubInvitationsInboxScreen', () => {
         const { getByTestId, getByText } = render(<ClubInvitationsInboxScreen />);
 
         expect(getByText('Invitation reminders')).toBeOnTheScreen();
-        expect(getByText('Manage notification preferences for new invite-only club invitations.')).toBeOnTheScreen();
+        expect(getByText('Choose how you hear about new club invitations.')).toBeOnTheScreen();
 
         fireEvent.press(getByTestId('club-invitations-notification-settings'));
 
@@ -135,5 +137,92 @@ describe('ClubInvitationsInboxScreen', () => {
             expect(acceptInvite).toHaveBeenCalledWith({ invitationId: 'invite-1', clubId: 'club-1', userId: 'reader-1' });
         });
         expect(getByText('Invitation accepted. You are now an active member of Quiet Sci-Fi Circle.')).toBeOnTheScreen();
+    });
+
+    it('opens an already read invitation without marking it read again', async () => {
+        const markRead = jest.fn();
+        mockUseMarkInvitationRead.mockReturnValue({ mutateAsync: markRead, isPending: false });
+        mockUseMyClubInvitationInbox.mockReturnValue({ data: [{ ...baseInvite, read_at: '2026-05-23T01:00:00Z' }], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
+        const { getByTestId } = render(<ClubInvitationsInboxScreen />);
+
+        fireEvent.press(getByTestId('club-invitation-open-invite-1'));
+
+        await waitFor(() => expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-1'));
+        expect(markRead).not.toHaveBeenCalled();
+    });
+
+    it('keeps the inbox open and displays an error when marking read fails', async () => {
+        mockUseMarkInvitationRead.mockReturnValue({ mutateAsync: jest.fn().mockRejectedValue(new Error('Read update failed.')), isPending: false });
+        const { getByTestId, getByText } = render(<ClubInvitationsInboxScreen />);
+
+        fireEvent.press(getByTestId('club-invitation-open-invite-1'));
+
+        await waitFor(() => expect(getByText('Read update failed.')).toBeOnTheScreen());
+        expect(mockRouterPush).not.toHaveBeenCalled();
+    });
+
+    it('displays acceptance errors without reporting success', async () => {
+        mockUseAcceptClubInvitation.mockReturnValue({ mutateAsync: jest.fn().mockRejectedValue(new Error('Invitation expired.')), isPending: false });
+        const { getByTestId, getByText, queryByText } = render(<ClubInvitationsInboxScreen />);
+
+        fireEvent.press(getByTestId('club-invitation-accept-invite-1'));
+
+        await waitFor(() => expect(getByText('Invitation expired.')).toBeOnTheScreen());
+        expect(queryByText(/You are now an active member/)).toBeNull();
+    });
+
+    it('preserves disabled action states while invitation mutations are pending', () => {
+        mockUseMarkInvitationRead.mockReturnValue({ mutateAsync: jest.fn(), isPending: true });
+        mockUseAcceptClubInvitation.mockReturnValue({ mutateAsync: jest.fn(), isPending: true });
+        const { getByTestId } = render(<ClubInvitationsInboxScreen />);
+
+        expect(getByTestId('club-invitation-open-invite-1')).toBeDisabled();
+        expect(getByTestId('club-invitation-accept-invite-1')).toBeDisabled();
+    });
+
+    it('requests the next twenty invitations when load more is pressed', () => {
+        const invitations = Array.from({ length: 20 }, (_, index) => ({ ...baseInvite, id: 'invite-' + index }));
+        mockUseMyClubInvitationInbox.mockReturnValue({ data: invitations, isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
+        const { getByTestId } = render(<ClubInvitationsInboxScreen />);
+
+        fireEvent.press(getByTestId('club-invitations-load-more'));
+
+        expect(mockUseMyClubInvitationInbox).toHaveBeenLastCalledWith('reader-1', { limit: 40 });
+    });
+
+    it('refreshes through the visible web control and disables it during refetch', () => {
+        const refetch = jest.fn();
+        mockUseMyClubInvitationInbox.mockReturnValue({ data: [baseInvite], isLoading: false, isError: false, refetch, isRefetching: false });
+        const { getByTestId, rerender } = render(<ClubInvitationsInboxScreen />);
+        fireEvent.press(getByTestId('club-invitations-refresh'));
+        expect(refetch).toHaveBeenCalledTimes(1);
+
+        mockUseMyClubInvitationInbox.mockReturnValue({ data: [baseInvite], isLoading: false, isError: false, refetch, isRefetching: true });
+        rerender(<ClubInvitationsInboxScreen />);
+        expect(getByTestId('club-invitations-refresh')).toBeDisabled();
+    });
+
+    it('shows sign-in guidance and omits notification settings when signed out', () => {
+        mockUseAuth.mockReturnValue({ user: null });
+        mockUseMyClubInvitationInbox.mockReturnValue({ data: [], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
+        const { getByText, getByTestId, queryByTestId } = render(<ClubInvitationsInboxScreen />);
+
+        expect(getByText('Sign in to view invitations')).toBeOnTheScreen();
+        expect(getByTestId('club-invitations-refresh')).toBeDisabled();
+        expect(queryByTestId('club-invitations-notification-settings')).toBeNull();
+        expect(mockUseMyClubInvitationInbox).toHaveBeenCalledWith(null, { limit: 20 });
+    });
+
+    it('retains history metadata and limits all past statuses to View club', () => {
+        const history = ['accepted', 'expired', 'revoked'].map((status) => ({ ...acceptedInvite, id: status, status }));
+        mockUseMyClubInvitationInbox.mockReturnValue({ data: history, isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
+        const { getByTestId, queryByTestId, getAllByText } = render(<ClubInvitationsInboxScreen />);
+
+        for (const invitation of history) {
+            expect(getByTestId('club-invitation-open-' + invitation.id)).toBeOnTheScreen();
+            expect(queryByTestId('club-invitation-accept-' + invitation.id)).toBeNull();
+        }
+        expect(getAllByText('Current read: Beloved')).toHaveLength(3);
+        expect(getAllByText('Updated ' + new Date(acceptedInvite.responded_at).toLocaleString())).toHaveLength(3);
     });
 });

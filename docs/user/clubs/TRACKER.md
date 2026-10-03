@@ -1,5 +1,56 @@
 # Clubs UI Overhaul Tracker
 
+## Invitation inbox and Invite Readers implementation (2026-10-03; complete locally, uncommitted)
+- The user authorized reapplying the Invitations Inbox and Invite Readers refresh after confirming their undo was complete. Before editing, Git was inspected and existing dirty work was preserved. A source comparison against HEAD confirmed both screens' auth, query, state, and mutation-handler blocks were unchanged by this implementation.
+- Restyled only the Inbox and Invite Readers screen presentation and their screen tests. Both use the Clubs ivory/burgundy/white palette, Newsreader headings, Inter body/control type, compact spacing, clear hierarchy, and accessible action sizing. The Inbox retains its existing pull-to-refresh and adds a visible refresh control wired to the same refetch; pending count, card actions, invitation history/status, inviter/book/context, and fixed tabs remain represented. Invite Readers retains the existing manager gate, username plus optional note submission, feedback, draft-clearing-on-success, refetch, and invitation history. No revoke, read, accept, or send behavior was added or changed.
+- Backend and behavior boundary: no hook, service, route, RPC, schema, RLS/permission, migration, or dependency changes. No database/Storage writes or external mutations occurred. No invitation was sent, accepted, revoked, or marked read.
+- Verification after final screen changes: focused screen/hook/service regression run passed 5 suites / 114 tests; TypeScript --noEmit --incremental false passed sequentially after web export; Expo web export passed; git diff --check passed. The existing Node DEP0040 punycode deprecation warning appeared during tests.
+- Browser checks covered the Inbox at desktop and 390×844, visible and keyboard-operated refresh, settings/back navigation, the public-club invite guard, and the invite-only manager-access guard. The tested account has access only to a public club; the user confirmed no eligible manager test login or club is available. Therefore the Invite Readers form and live send flow could not be checked in an authenticated browser session; mocked screen/service tests cover the form and mutation states. No successful live invite or backend write is claimed. Checked viewports showed no horizontal overflow and visible controls met 44 px minimum sizing.
+- Screenshots: C:/Users/LEGION/.codex/visualizations/2026/09/30/01a0f41a-79cd-73b0-a323-1079b03f96ad/invitations-inbox-desktop.jpg, invitations-inbox-mobile.jpg, invite-readers-public-guard-mobile.jpg, invite-readers-access-guard-mobile.jpg, and invite-readers-access-guard-desktop.jpg.
+- Marketplace Phase 9 status remains unchanged at M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING; this Clubs-only change makes no claim about its deployment or connected proof.
+- Files changed for this task: the two screen files, their two screen test files, and this tracker. The pre-existing untracked clubs-home-390x844-authenticated-dedup.png and prior tracker edits were preserved. Nothing was staged, committed, pushed, or deployed.
+- Exact next action: user review of the uncommitted Inbox and Invite Readers refresh. A live form/send-flow browser check remains contingent on an eligible manager test session; no such session is currently available.
+
+## Invitation inbox and Invite Readers design checkpoint (2026-10-03; historical)
+- Mapped the existing `/clubs/invitations` and `/clubs/[clubId]/invite` screens,
+  routes, UI state, mutation hooks/services, manage-page revoke overlap, and
+  invitation RPC/RLS boundaries before design. Existing actions, ordering,
+  history statuses, fields, and manager boundary are the design contract.
+- Added two invitation visual-refresh concepts in the existing Stitch project.
+  After source checks, the inbox’s premature “Invitation accepted” toast and
+  unsupported pending-card category labels were removed; pending actions are
+  labeled View club and Accept. Invite Readers now uses single-line Username
+  and optional Note fields and shows reader identity plus current status. No
+  revoke action, invented note limit, delivery promise, or extra history date
+  is proposed. The screens remain proposals, not app implementation.
+- Verified Stitch’s accessible screen trees after correction. The selected
+  inbox frame reports 390 × 884 px and Invite Readers reports 390 × 774 px;
+  Stitch’s generated summary claimed 390 × 844 px for both, which is not
+  supported by the measured canvas sizes. Keep this mismatch explicit in
+  review. The concept uses the requested ivory/burgundy/white palette and
+  Newsreader/Inter direction. Do not treat generator summaries as pixel proof.
+- Astra: the invitation critique and initial screenshot were sent in the
+  specified conversation after confirming GPT-6 Astra with Light effort. Astra
+  returned NEEDS REFINEMENT twice: consolidate the pending count, use the
+  intended 390 × 844 inbox frame, and inspect lower-scroll actions/history;
+  it confirmed the optional book and note are supported after source
+  clarification, and found no material Invite Readers blocker. Stitch was
+  refined to one pending count, a compact reminder notice, and a lower Inbox
+  view using the exact second-invitation and history records. The latest canvas
+  visibly shows all three history rows and View club actions above the fixed
+  tabs, but the selected lower frame still measures 390 × 884; Stitch's summary
+  claiming 390 × 844 is not measurement evidence. No final Astra critique of
+  the latest canvas has been sent. At this design checkpoint, the next step was
+  to resolve or explicitly accept the frame-size discrepancy and request final
+  Astra review before app approval; the user later explicitly authorized
+  implementation. No final Astra critique of the implementation is claimed.
+- Scope/effects: the Stitch project now contains the two visual concepts and
+  corrections described above. No application source or tests changed; no
+  invitation was sent, accepted, or revoked; no database rows, migrations,
+  permissions, or services changed. Supabase review remained read-only.
+  Nothing was staged, committed, pushed, or deployed. The existing untracked
+  `clubs-home-390x844-authenticated-dedup.png` remains untouched.
+
 ## Create Club main publication (2026-10-03; current)
 - User explicitly requested direct main publication after independent review. The original Create Club banner behavior was checked again: it accepts an optional cover URL; PRODUCT-14 prohibits file upload until the club exists, and Manage Club Settings retains upload. No upload option was removed by this redesign.
 - Full local pre-publication Jest passed 315 suites / 2,752 tests, with the existing 1 suite / 4 test skips (316 / 2,756 total), normal exit 0 in 374.371 seconds. Final source TypeScript, web export, focused screen/general mutation 41/41, targeted creation/limit service 2/2 and desktop/mobile browser checks were completed before publication. Exact coverage limits remain below; no live club was created and no native/screen-reader proof is claimed.
