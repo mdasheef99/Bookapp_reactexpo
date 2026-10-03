@@ -61,10 +61,15 @@ const styles = StyleSheet.create({
     tabButton: {
         paddingHorizontal: 14,
         paddingVertical: 10,
-        borderRadius: 999,
+        borderRadius: 6,
+        minHeight: 44,
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: colors.border,
     },
     tabText: {
         fontSize: 13,
-        fontWeight: '700',
+        fontFamily: 'Inter_600SemiBold',
+        lineHeight: 20,
     },
 });

@@ -24,6 +24,7 @@ interface Props {
 }
 
 export function ClubManageMembersSection({ club, members, actions, isLoading, isActionsLoading, onToggleRole, onToggleMute, onCreateAction, onRemove, onFeedback }: Props) {
+    const [expandedUserId, setExpandedUserId] = useState<string | null | undefined>(undefined);
     const [activeUserId, setActiveUserId] = useState<string | null>(null);
     const [actionDraft, setActionDraft] = useState<{ userId: string; actionType: ClubMemberActionType; reason: string; durationHours: string } | null>(null);
     const manageableMembers = useMemo(
@@ -113,7 +114,7 @@ export function ClubManageMembersSection({ club, members, actions, isLoading, is
     };
 
     const handleSubmitAction = async (member: ClubMemberWithProfile) => {
-        if (!actionDraft || !member.user_id) return;
+        if (!actionDraft || !member.user_id || member.role === 'admin') return;
         const reason = actionDraft.reason.trim();
         if (!reason) {
             onFeedback({ type: 'error', message: 'Add a reason before applying a moderation action.' });
@@ -148,7 +149,7 @@ export function ClubManageMembersSection({ club, members, actions, isLoading, is
 
     return (
         <View>
-            <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            <View style={styles.card}>
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Members &amp; roles</Text>
                 {manageableMembers.length === 0 ? (
                     <Text style={[styles.placeholder, { color: colors.textSecondary }]}>No eligible members to manage.</Text>
@@ -157,6 +158,8 @@ export function ClubManageMembersSection({ club, members, actions, isLoading, is
                         const canAssignModerator = member.status === 'active' || member.status === 'muted';
                         const memberActionDraft = actionDraft?.userId === member.user_id ? actionDraft : null;
                         const recentActions = actions.filter((action) => action.user_id === member.user_id).slice(0, 3);
+                        const expanded = (expandedUserId === undefined ? manageableMembers[0]?.user_id : expandedUserId) === member.user_id;
+                        const isAdminMember = member.role === 'admin';
                         return (
                             <View key={member.user_id} style={[styles.memberRow, { borderBottomColor: colors.border }]}>
                                 <View style={styles.memberInfo}>
@@ -164,65 +167,71 @@ export function ClubManageMembersSection({ club, members, actions, isLoading, is
                                         {member.profile?.display_name || 'Unknown'}
                                     </Text>
                                     <Text style={[styles.memberRole, { color: colors.textSecondary }]}>
-                                        {formatStatus(member.status)}
+                                        {member.role === 'moderator' ? 'Moderator' : member.role === 'admin' ? 'Admin' : 'Member'} · {formatStatus(member.status)}
                                     </Text>
                                 </View>
+                                <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Manage ${member.profile?.display_name || 'Unknown'}`} accessibilityState={{ expanded }} testID={`manage-member-${member.user_id}`} style={styles.manageButton} onPress={() => setExpandedUserId(expanded ? null : member.user_id)}>
+                                    <Text style={styles.manageText}>Manage {expanded ? '−' : '+'}</Text>
+                                </TouchableOpacity>
+                                {expanded ? <View style={styles.memberDetails}>
+                                <Text style={styles.groupLabel}>Role &amp; status</Text>
                                 <View style={styles.memberActions}>
                                     <TouchableOpacity
+                                        accessibilityRole="button"
                                         testID={`toggle-moderator-${member.user_id}`}
                                         onPress={() => handleToggle(member)}
-                                        disabled={activeUserId === member.user_id || !canAssignModerator}
+                                        disabled={activeUserId === member.user_id || !canAssignModerator || isAdminMember}
                                         style={[
                                             styles.roleBadge,
-                                            { backgroundColor: member.role === 'moderator' ? colors.accent : colors.bgCard, opacity: activeUserId === member.user_id || !canAssignModerator ? 0.5 : 1 },
+                                            { backgroundColor: member.role === 'moderator' ? colors.accent : colors.bgCard, opacity: activeUserId === member.user_id || !canAssignModerator || isAdminMember ? 0.5 : 1 },
                                         ]}
                                     >
-                                        <Text style={{ color: member.role === 'moderator' ? '#FFFFFF' : colors.textPrimary, fontSize: 13, fontWeight: '700' }}>
-                                            {member.role === 'moderator' ? 'Moderator' : 'Member'}
+                                        <Text style={[styles.actionText, { color: member.role === 'moderator' ? '#FFFFFF' : colors.textPrimary }]}>
+                                            Change role to {member.role === 'moderator' ? 'Member' : 'Moderator'}
                                         </Text>
                                     </TouchableOpacity>
-                                    {!canAssignModerator && (
+                                    {isAdminMember ? (
+                                        <Text style={[styles.roleNote, { color: colors.textTertiary }]}>Club admins cannot be managed here.</Text>
+                                    ) : !canAssignModerator && (
                                         <Text style={[styles.roleNote, { color: colors.textTertiary }]} testID={`moderator-restriction-${member.user_id}`}>
                                             Only active or muted members can be assigned as moderators.
                                         </Text>
                                     )}
-                                    <TouchableOpacity
+                                    {member.status === 'muted' || memberActionDraft?.actionType !== 'muted' ? <TouchableOpacity
+                                        accessibilityRole="button"
                                         testID={`mute-member-${member.user_id}`}
                                         onPress={() => handleMuteToggle(member)}
-                                        disabled={activeUserId === member.user_id}
-                                        style={{ opacity: activeUserId === member.user_id ? 0.5 : 1 }}
+                                        disabled={activeUserId === member.user_id || isAdminMember}
+                                        style={[styles.roleBadge, { opacity: activeUserId === member.user_id || isAdminMember ? 0.5 : 1 }]}
                                     >
-                                        <Text style={{ color: member.status === 'muted' ? colors.accent : colors.textSecondary, fontSize: 13, fontWeight: '600' }}>
+                                        <Text style={[styles.actionText, { color: member.status === 'muted' ? colors.accent : colors.textSecondary }]}>
                                             {member.status === 'muted' ? 'Unmute' : 'Mute'}
                                         </Text>
-                                    </TouchableOpacity>
+                                    </TouchableOpacity> : null}
+                                    </View>
+                                    <Text style={styles.groupLabel}>Moderation</Text>
                                     <View style={styles.moderationRow}>
                                         {(['warned', 'muted', 'banned'] as ClubMemberActionType[]).map((actionType) => (
                                             <TouchableOpacity
+                                        accessibilityRole="button"
                                                 key={actionType}
                                                 testID={`member-action-${actionType}-${member.user_id}`}
                                                 onPress={() => openActionDraft(member, actionType)}
-                                                disabled={activeUserId === member.user_id}
-                                                style={{ opacity: activeUserId === member.user_id ? 0.5 : 1 }}
+                                                disabled={activeUserId === member.user_id || isAdminMember}
+                                                style={[styles.roleBadge, { opacity: activeUserId === member.user_id || isAdminMember ? 0.5 : 1 }, memberActionDraft?.actionType === actionType && styles.selectedAction]}
                                             >
-                                                <Text style={{ color: actionType === 'banned' ? colors.error : colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
+                                                <Text style={[styles.actionText, { color: actionType === 'banned' ? colors.error : colors.textSecondary }]}>
                                                     {actionType === 'warned' ? 'Warn' : actionType === 'muted' ? 'Timed mute' : 'Ban'}
                                                 </Text>
                                             </TouchableOpacity>
                                         ))}
                                     </View>
-                                    <TouchableOpacity
-                                        testID={`remove-member-${member.user_id}`}
-                                        onPress={() => confirmRemove(member)}
-                                        disabled={activeUserId === member.user_id}
-                                        style={{ opacity: activeUserId === member.user_id ? 0.5 : 1 }}
-                                    >
-                                        <Text style={{ color: colors.error, fontSize: 13 }}>Remove</Text>
-                                    </TouchableOpacity>
-                                </View>
-                                {memberActionDraft ? (
+                                {memberActionDraft && !isAdminMember ? (
                                     <View style={styles.actionDraft}>
+                                        <Text style={styles.draftTitle}>{memberActionDraft.actionType === 'muted' ? 'Timed mute' : memberActionDraft.actionType === 'warned' ? 'Warn member' : 'Ban member'}</Text>
+                                        <Text style={styles.fieldLabel}>Reason</Text>
                                         <TextInput
+                                            accessibilityLabel="Reason"
                                             value={memberActionDraft.reason}
                                             onChangeText={(reason) => setActionDraft({ ...memberActionDraft, reason })}
                                             placeholder="Reason"
@@ -231,7 +240,10 @@ export function ClubManageMembersSection({ club, members, actions, isLoading, is
                                             testID={`member-action-reason-${member.user_id}`}
                                         />
                                         {memberActionDraft.actionType === 'muted' ? (
+                                            <>
+                                            <Text style={styles.fieldLabel}>Duration (hours)</Text>
                                             <TextInput
+                                                accessibilityLabel="Duration in hours"
                                                 value={memberActionDraft.durationHours}
                                                 onChangeText={(durationHours) => setActionDraft({ ...memberActionDraft, durationHours })}
                                                 placeholder="Hours"
@@ -240,22 +252,36 @@ export function ClubManageMembersSection({ club, members, actions, isLoading, is
                                                 style={[styles.actionInput, { borderColor: colors.border, color: colors.textPrimary }]}
                                                 testID={`member-action-duration-${member.user_id}`}
                                             />
+                                            <Text style={styles.helper}>Whole hours, minimum 1</Text>
+                                            </>
                                         ) : null}
                                         <View style={styles.draftButtons}>
-                                            <TouchableOpacity onPress={() => setActionDraft(null)} testID={`member-action-cancel-${member.user_id}`}>
-                                                <Text style={{ color: colors.textSecondary, fontWeight: '700' }}>Cancel</Text>
+                                            <TouchableOpacity accessibilityRole="button" style={styles.roleBadge} onPress={() => setActionDraft(null)} testID={`member-action-cancel-${member.user_id}`}>
+                                                <Text style={styles.actionText}>Cancel</Text>
                                             </TouchableOpacity>
-                                            <TouchableOpacity onPress={() => handleSubmitAction(member)} testID={`member-action-submit-${member.user_id}`}>
-                                                <Text style={{ color: colors.accent, fontWeight: '800' }}>Apply</Text>
+                                            <TouchableOpacity accessibilityRole="button" style={[styles.roleBadge, { backgroundColor: colors.accent }]} onPress={() => handleSubmitAction(member)} testID={`member-action-submit-${member.user_id}`}>
+                                                <Text style={[styles.actionText, { color: '#FFFFFF' }]}>{memberActionDraft.actionType === 'muted' ? 'Apply timed mute' : 'Apply'}</Text>
                                             </TouchableOpacity>
                                         </View>
                                     </View>
                                 ) : null}
+                                    <Text style={styles.groupLabel}>Remove member</Text>
+                                    <TouchableOpacity
+                                        accessibilityRole="button"
+                                        testID={`remove-member-${member.user_id}`}
+                                        onPress={() => confirmRemove(member)}
+                                        disabled={activeUserId === member.user_id || isAdminMember}
+                                        style={[styles.removeButton, { opacity: activeUserId === member.user_id || isAdminMember ? 0.5 : 1 }]}
+                                    >
+                                        <Text style={[styles.actionText, { color: colors.error }]}>Remove from club…</Text>
+                                    </TouchableOpacity>
+                                {!isActionsLoading && recentActions.length > 0 ? <Text style={styles.groupLabel}>Recent moderation</Text> : null}
                                 {isActionsLoading ? null : recentActions.map((action) => (
                                     <Text key={action.id} style={[styles.actionHistory, { color: colors.textTertiary }]}>
                                         {action.action_type} · {action.reason}{action.expires_at ? ` · until ${new Date(action.expires_at).toLocaleString()}` : ''}
                                     </Text>
                                 ))}
+                                </View> : null}
                             </View>
                         );
                     })
@@ -267,83 +293,29 @@ export function ClubManageMembersSection({ club, members, actions, isLoading, is
 
 const styles = StyleSheet.create({
     loadingContainer: { paddingVertical: 20, alignItems: 'center' },
-    card: {
-        padding: 14,
-        borderRadius: 12,
-        borderWidth: 1,
-        marginBottom: 14,
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        marginBottom: 8,
-    },
-    placeholder: {
-        fontSize: 14,
-        fontStyle: 'italic',
-        paddingVertical: 6,
-    },
-    memberRow: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 10,
-        borderBottomWidth: 1,
-    },
-    memberInfo: {
-        flex: 1,
-        paddingRight: 10,
-    },
-    memberName: {
-        fontSize: 15,
-        fontWeight: '600',
-    },
-    memberRole: {
-        fontSize: 12,
-        marginTop: 2,
-    },
-    memberActions: {
-        alignItems: 'flex-end',
-        gap: 6,
-    },
-    moderationRow: {
-        flexDirection: 'row',
-        gap: 8,
-        flexWrap: 'wrap',
-        justifyContent: 'flex-end',
-    },
-    actionDraft: {
-        width: '100%',
-        gap: 8,
-        marginTop: 10,
-    },
-    actionInput: {
-        borderWidth: 1,
-        borderRadius: 10,
-        paddingHorizontal: 10,
-        paddingVertical: 9,
-        fontSize: 13,
-    },
-    draftButtons: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        gap: 16,
-    },
-    actionHistory: {
-        width: '100%',
-        fontSize: 11,
-        lineHeight: 16,
-        marginTop: 4,
-    },
-    roleBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 999,
-    },
-    roleNote: {
-        fontSize: 11,
-        textAlign: 'right',
-        maxWidth: 200,
-    },
+    card: { width: '100%', maxWidth: 760, alignSelf: 'center', marginBottom: 14 },
+    sectionTitle: { fontFamily: 'Newsreader_600SemiBold', fontSize: 23, lineHeight: 29, marginBottom: 12 },
+    placeholder: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21, padding: 14 },
+    memberRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: colors.bgCard, gap: 8 },
+    memberInfo: { flex: 1, minWidth: 0 },
+    memberName: { fontFamily: 'Newsreader_600SemiBold', fontSize: 20, lineHeight: 26 },
+    memberRole: { fontFamily: 'Inter_500Medium', fontSize: 12, lineHeight: 18, marginTop: 4 },
+    manageButton: { minHeight: 44, paddingHorizontal: 12, justifyContent: 'center', borderRadius: 6, backgroundColor: colors.accentLight },
+    manageText: { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: colors.accent },
+    memberDetails: { width: '100%', borderTopWidth: 1, borderTopColor: colors.border, marginTop: 4 },
+    groupLabel: { fontFamily: 'Inter_500Medium', fontSize: 10, lineHeight: 16, letterSpacing: 0.8, textTransform: 'uppercase', color: colors.textSecondary, marginTop: 12, marginBottom: 6 },
+    memberActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    moderationRow: { flexDirection: 'row', gap: 8 },
+    roleBadge: { flex: 1, minWidth: 64, minHeight: 44, paddingHorizontal: 8, paddingVertical: 8, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.bgPrimary, borderRadius: 6, justifyContent: 'center', alignItems: 'center' },
+    actionText: { fontFamily: 'Inter_600SemiBold', fontSize: 12, lineHeight: 18, textAlign: 'center', color: colors.textPrimary },
+    selectedAction: { backgroundColor: colors.accentLight, borderColor: colors.accent },
+    removeButton: { minHeight: 44, borderWidth: 1, borderColor: colors.error, borderRadius: 6, justifyContent: 'center', alignItems: 'center', padding: 8 },
+    actionDraft: { gap: 8, marginTop: 12, padding: 12, backgroundColor: colors.bgPrimary, borderWidth: 1, borderColor: colors.border, borderRadius: 8 },
+    draftTitle: { fontFamily: 'Newsreader_600SemiBold', fontSize: 20, color: colors.textPrimary },
+    fieldLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: colors.textPrimary },
+    helper: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, color: colors.textSecondary },
+    actionInput: { minHeight: 44, borderWidth: 1, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 10, fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21, backgroundColor: colors.bgCard },
+    draftButtons: { flexDirection: 'row', gap: 8 },
+    actionHistory: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, marginTop: 4, padding: 8, backgroundColor: colors.bgPrimary, borderRadius: 4 },
+    roleNote: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, width: '100%' },
 });
