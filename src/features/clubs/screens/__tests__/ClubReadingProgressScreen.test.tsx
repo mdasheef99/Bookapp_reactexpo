@@ -1,5 +1,21 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import ClubReadingProgressScreen from '../ClubReadingProgressScreen';
+
+const mockUseWindowDimensions = jest.fn();
+
+jest.mock('react-native', () => {
+    const ReactNative = jest.requireActual('react-native');
+    return Object.defineProperties({}, {
+        ...Object.getOwnPropertyDescriptors(ReactNative),
+        useWindowDimensions: {
+            configurable: true,
+            enumerable: true,
+            writable: true,
+            value: (...args: unknown[]) => mockUseWindowDimensions(...args),
+        },
+    });
+});
 
 const mockUseAuth = jest.fn();
 const mockUseTheme = jest.fn();
@@ -47,6 +63,7 @@ const colors = {
 describe('ClubReadingProgressScreen', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockUseWindowDimensions.mockReturnValue({ width: 390, height: 844, scale: 1, fontScale: 1 });
         mockUseAuth.mockReturnValue({ user: { id: 'reader-1' } });
         mockUseTheme.mockReturnValue({ colors });
         mockUseLocalSearchParams.mockReturnValue({ clubId: 'club-1' });
@@ -93,6 +110,45 @@ describe('ClubReadingProgressScreen', () => {
         expect(getByText('No reading schedule has been set for this book yet.')).toBeOnTheScreen();
     });
 
+    it('keeps the full status label in an accessible target', async () => {
+        const { getByTestId, getByText } = render(<ClubReadingProgressScreen />);
+
+        await waitFor(() => expect(getByText('Want to Read')).toBeOnTheScreen());
+
+        expect(StyleSheet.flatten(getByTestId('reading-status-want_to_read').props.style)).toEqual(
+            expect.objectContaining({ minHeight: 44 }),
+        );
+        expect(getByTestId('reading-status-want_to_read').props.accessibilityState).toEqual(
+            expect.objectContaining({ selected: true }),
+        );
+    });
+
+    it('switches between a two-column mobile stats grid and four desktop columns', async () => {
+        const { getByTestId, getByText, rerender } = render(<ClubReadingProgressScreen />);
+        const statIds = [
+            'reading-stat-active-members',
+            'reading-stat-to-start',
+            'reading-stat-reading',
+            'reading-stat-completed',
+        ];
+
+        await waitFor(() => expect(getByText('Active members')).toBeOnTheScreen());
+        for (const testId of statIds) {
+            expect(StyleSheet.flatten(getByTestId(testId).props.style)).toEqual(
+                expect.objectContaining({ flexBasis: '48%', minWidth: '46%' }),
+            );
+        }
+
+        mockUseWindowDimensions.mockReturnValue({ width: 1280, height: 900, scale: 1, fontScale: 1 });
+        rerender(<ClubReadingProgressScreen />);
+
+        for (const testId of statIds) {
+            expect(StyleSheet.flatten(getByTestId(testId).props.style)).toEqual(
+                expect.objectContaining({ flexBasis: '23%', minWidth: '22%' }),
+            );
+        }
+    });
+
     it('renders reading schedule milestones and updates milestone progress', async () => {
         const mutateAsync = jest.fn().mockResolvedValue(undefined);
         mockUseClubReadingSchedule.mockReturnValue({
@@ -119,6 +175,9 @@ describe('ClubReadingProgressScreen', () => {
         await waitFor(() => expect(getByText('Week 1')).toBeOnTheScreen());
         expect(getByText('Chapters 1-5')).toBeOnTheScreen();
         expect(getByText('Due 2026-06-15')).toBeOnTheScreen();
+        expect(StyleSheet.flatten(getByTestId('reading-schedule-toggle-0').props.style)).toEqual(
+            expect.objectContaining({ minHeight: 44 }),
+        );
 
         fireEvent.press(getByTestId('reading-schedule-toggle-1'));
 

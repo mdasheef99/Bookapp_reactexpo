@@ -1,5 +1,31 @@
 # Clubs local pre-PR review
 
+## Reading Progress local commit (2026-10-04)
+
+- Local commit scope: `src/features/clubs/screens/ClubReadingProgressScreen.tsx`,
+  its focused regression test, this review record, and only the new Reading
+  Progress implementation entry in `docs/user/clubs/TRACKER.md`. Other existing
+  tracker edits and `clubs-home-390x844-authenticated-dedup.png` are preserved
+  outside the commit.
+- Independent subagent review found no behavior regression and identified a P3
+  test-coverage gap for the 600 px responsive breakpoint. The test now asserts
+  the two-column mobile and four-column desktop metric styles at 390 px and
+  1280 px. The reviewer reran the focused suite (7/7 passed) and confirmed the
+  finding closed with no remaining finding.
+- The change is presentation-only: existing route, queries, authorization,
+  status and milestone handlers, mutation hooks, and payloads are unchanged.
+  No database or Storage write, migration, dependency change, or deployment.
+- Verification: focused Reading Progress suite 7/7; TypeScript
+  `--noEmit --incremental false`; Expo web export; `git diff --check`; and the
+  Phase 9 continuity validator all pass. The authenticated running page was
+  checked at 390×844 and 1280×900: no horizontal overflow, all four metrics
+  visible in the expected 2×2/4-across layouts, 44 px status/milestone targets,
+  and no observed browser-console errors. No live status or milestone mutation
+  was submitted. Native-device, screen-reader, enlarged-text, and connected
+  mutation checks were not performed.
+- Commit is local only. No push, PR, or deployment is included in this action.
+  Marketplace Phase 9 runtime rollout/connected proof remains pending.
+
 ## Create Club main publication (2026-10-03; current)
 
 - The reviewed four-file scope was committed as
