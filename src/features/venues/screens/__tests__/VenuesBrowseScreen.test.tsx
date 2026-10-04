@@ -7,28 +7,12 @@ jest.mock('expo-router', () => ({
 }));
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { RefreshControl } from 'react-native';
 import VenuesBrowseScreen from '../VenuesBrowseScreen';
 
 const mockRouterPush = jest.fn();
 const mockRouterReplace = jest.fn();
 const mockUseApprovedVenues = jest.fn();
-
-jest.mock('@/hooks/useTheme', () => ({
-    useTheme: () => ({
-        colors: {
-            bgPrimary: '#FFFFFF',
-            bgCard: '#F8FAFC',
-            bgSecondary: '#EEF2FF',
-            border: '#CBD5E1',
-            accent: '#4F46E5',
-            accentLight: '#EEF2FF',
-            textPrimary: '#0F172A',
-            textSecondary: '#475569',
-            textTertiary: '#94A3B8',
-            error: '#EF4444',
-        },
-    }),
-}));
 
 jest.mock('@/features/venues/hooks/useVenues', () => ({
     useApprovedVenues: (...args: unknown[]) => mockUseApprovedVenues(...args),
@@ -64,6 +48,7 @@ describe('VenuesBrowseScreen', () => {
     it('passes search and venue type filters to the venue hook', async () => {
         const { getByTestId } = render(<VenuesBrowseScreen />);
 
+        expect(getByTestId('venues-filter-type-all').props.accessibilityState).toEqual({ selected: true });
         fireEvent.changeText(getByTestId('venues-search-input'), 'library');
         fireEvent.press(getByTestId('venues-filter-type-library'));
 
@@ -73,6 +58,22 @@ describe('VenuesBrowseScreen', () => {
             limit: 20,
             offset: 0,
         })));
+        expect(getByTestId('venues-filter-type-library').props.accessibilityState).toEqual({ selected: true });
+    });
+
+    it('shows the existing loading and error feedback states', () => {
+        mockUseApprovedVenues.mockReturnValue({ data: [], isLoading: true, isError: false, refetch: jest.fn(), isRefetching: false });
+        const loading = render(<VenuesBrowseScreen />);
+
+        expect(loading.getByText('Finding club venues...')).toBeOnTheScreen();
+
+        loading.unmount();
+        mockUseApprovedVenues.mockReturnValue({ data: [], isLoading: false, isError: true, refetch: jest.fn(), isRefetching: false });
+        const error = render(<VenuesBrowseScreen />);
+
+        expect(error.getByText('Could not load venues')).toBeOnTheScreen();
+        expect(error.getByText('Try refreshing to fetch approved club venues again.')).toBeOnTheScreen();
+        expect(error.queryByText('No venues matched this search')).toBeNull();
     });
 
     it('shows an empty state when no venues match', () => {
@@ -82,6 +83,18 @@ describe('VenuesBrowseScreen', () => {
 
         expect(getByText('No venues matched this search')).toBeOnTheScreen();
         expect(getByText('Try another venue type, city, or search term.')).toBeOnTheScreen();
+    });
+
+    it('retains the pull-to-refresh handler and refreshing state', () => {
+        const refetch = jest.fn();
+        mockUseApprovedVenues.mockReturnValue({ data: [], isLoading: false, isError: false, refetch, isRefetching: true });
+        const { UNSAFE_getByType } = render(<VenuesBrowseScreen />);
+        const refreshControl = UNSAFE_getByType(RefreshControl);
+
+        expect(refreshControl.props.refreshing).toBe(true);
+        fireEvent(refreshControl, 'refresh');
+
+        expect(refetch).toHaveBeenCalledTimes(1);
     });
 
     it('returns to Clubs when the back button is pressed', () => {
