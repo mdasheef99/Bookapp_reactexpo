@@ -4,6 +4,7 @@ jest.mock('expo-router', () => ({
 }));
 
 import { fireEvent, render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import ClubsBrowseScreen from '../index';
 
 const mockUseBrowseClubs = jest.fn();
@@ -74,6 +75,7 @@ describe('ClubsBrowseScreen', () => {
         expect(getByTestId('clubs-search-input')).toBeOnTheScreen();
         expect(getByTestId('clubs-filters-open')).toBeOnTheScreen();
         expect(getByText('Find club venues')).toBeOnTheScreen();
+        expect(getByTestId('clubs-author-browse-link')).toBeOnTheScreen();
         expect(getByText('Showing 1 active community')).toBeOnTheScreen();
         expect(getByText('Open Readers')).toBeOnTheScreen();
         expect(getByTestId('clubs-archived-link')).toBeOnTheScreen();
@@ -142,26 +144,17 @@ describe('ClubsBrowseScreen', () => {
         expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/invitations');
     });
 
-    it('shows a dedicated author clubs discovery section when author clubs are present', () => {
-        mockUseBrowseClubs.mockReturnValue({
-            data: [
-                { id: 'club-1', name: 'Open Readers', club_type: 'public' },
-                { id: 'club-author-1', name: 'Author Salon', club_type: 'author_club', author_display_name: 'Asha Dev' },
-            ],
-            isLoading: false,
-            isError: false,
-            refetch: jest.fn(),
-            isRefetching: false,
-        });
+    it('keeps a prominent author-club destination visible when current results contain no author clubs', () => {
+        const { getByTestId, getByText } = render(<ClubsBrowseScreen />);
+        const authorBrowseButton = getByTestId('clubs-author-browse-link');
 
-        const { getByText, getByTestId, queryByText } = render(<ClubsBrowseScreen />);
-
-        expect(getByText('Author clubs spotlight')).toBeOnTheScreen();
-        expect(getByText('AMA-style discussions, signed-edition reads, and verified author communities.')).toBeOnTheScreen();
-        expect(getByText('1 verified author club')).toBeOnTheScreen();
-        expect(queryByText('Create Club')).toBeNull();
-
-        fireEvent.press(getByTestId('author-clubs-landing-link'));
+        expect(getByText('Explore author clubs')).toBeOnTheScreen();
+        expect(authorBrowseButton.props.accessibilityRole).toBe('button');
+        expect(authorBrowseButton.props.accessibilityLabel).toBe('Explore author clubs');
+        expect(StyleSheet.flatten(authorBrowseButton.props.style)).toEqual(
+            expect.objectContaining({ minHeight: 48 }),
+        );
+        fireEvent.press(authorBrowseButton);
 
         expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/authors');
     });
@@ -271,7 +264,7 @@ describe('ClubsBrowseScreen', () => {
         expect(queryByText('No clubs match these filters')).toBeNull();
     });
 
-    it('does not show the author spotlight in Your Clubs', () => {
+    it('keeps author discovery available in My clubs and hides it in Archived', () => {
         mockUseMyBrowseClubs.mockReturnValue({
             data: [
                 { id: 'club-2', name: 'Quiet Members', club_type: 'public' },
@@ -287,7 +280,11 @@ describe('ClubsBrowseScreen', () => {
 
         fireEvent.press(getByTestId('clubs-filter-scope-mine'));
 
-        expect(queryByTestId('clubs-author-spotlight')).toBeNull();
+        fireEvent.press(getByTestId('clubs-author-browse-link'));
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/authors');
+
+        fireEvent.press(getByTestId('clubs-archived-link'));
+        expect(queryByTestId('clubs-author-browse-link')).toBeNull();
     });
 
     it('keeps archived and venue destinations reachable from Your Clubs without per-row actions', () => {

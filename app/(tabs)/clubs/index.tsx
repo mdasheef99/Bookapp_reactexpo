@@ -92,8 +92,6 @@ export default function ClubsBrowseScreen() {
     const clubs = activeBrowseQuery.data ?? [];
     const { isLoading, isError, refetch, isRefetching } = activeBrowseQuery;
     const unreadInvitationCount = (invitationInboxQuery.data ?? []).filter((invitation) => !invitation.read_at).length;
-    const authorClubCount = clubs.filter((club) => club.club_type === 'author_club').length;
-    const showAuthorSpotlight = browseScope === 'all' && !selectedClubType && authorClubCount > 0;
     const canCreateClub = !!userId && (viewerTier === 'pro' || viewerTier === 'pro_plus');
     const isMineScope = browseScope === 'mine';
     const hasActiveSearchOrFilters = search.trim().length > 0
@@ -251,6 +249,22 @@ export default function ClubsBrowseScreen() {
                             </View>
                             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                         </TouchableOpacity>
+                        ) : null}
+
+                        {browseScope !== 'archived' ? (
+                            <TouchableOpacity
+                                activeOpacity={0.85}
+                                onPress={() => router.push('/(tabs)/clubs/authors')}
+                                style={styles.authorBrowseButton}
+                                testID="clubs-author-browse-link"
+                                accessibilityRole="button"
+                                accessibilityLabel="Explore author clubs"
+                                accessibilityHint="Opens the author clubs directory"
+                            >
+                                <Ionicons name="people-outline" size={19} color="#FFFFFF" />
+                                <Text style={styles.authorBrowseButtonText}>Explore author clubs</Text>
+                                <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
+                            </TouchableOpacity>
                         ) : null}
 
                         <View style={styles.tabs}>
@@ -421,30 +435,6 @@ export default function ClubsBrowseScreen() {
                 ListFooterComponent={
                     browseScope === 'archived' ? null : (
                         <View>
-                            {showAuthorSpotlight ? (
-                                <View style={styles.spotlight} testID="clubs-author-spotlight">
-                                    <View style={styles.spotlightIcon}>
-                                        <Ionicons name="mic-outline" size={18} color={colors.accent} />
-                                    </View>
-                                    <View style={styles.spotlightBody}>
-                                        <Text style={styles.spotlightTitle}>Author clubs spotlight</Text>
-                                        <Text style={typography.metadata}>AMA-style discussions, signed-edition reads, and verified author communities.</Text>
-                                        <Text style={styles.spotlightCount}>
-                                            {authorClubCount === 1 ? '1 verified author club' : `${authorClubCount} verified author clubs`}
-                                        </Text>
-                                        <TouchableOpacity
-                                            activeOpacity={0.85}
-                                            onPress={() => router.push('/(tabs)/clubs/authors')}
-                                            style={styles.spotlightLink}
-                                            testID="author-clubs-landing-link"
-                                            accessibilityRole="button"
-                                            accessibilityLabel="View author clubs"
-                                        >
-                                            <Text style={styles.spotlightLinkText}>View author clubs</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                            ) : null}
                             <TouchableOpacity
                                 activeOpacity={0.85}
                                 onPress={() => setBrowseScope('archived')}
@@ -689,11 +679,22 @@ const styles = StyleSheet.create({
         lineHeight: 23,
         color: colors.textPrimary,
     },
-    spotlightTitle: {
+    authorBrowseButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        minHeight: 48,
+        paddingHorizontal: 16,
+        marginBottom: 12,
+        borderRadius: radii.large,
+        backgroundColor: colors.accent,
+    },
+    authorBrowseButtonText: {
+        flex: 1,
         fontFamily: 'Inter_600SemiBold',
-        fontSize: 16,
-        lineHeight: 22,
-        color: colors.textPrimary,
+        fontSize: 15,
+        lineHeight: 20,
+        color: '#FFFFFF',
     },
     retryButton: {
         alignSelf: 'flex-start',
@@ -734,46 +735,6 @@ const styles = StyleSheet.create({
         color: colors.accent,
         fontSize: 14,
         fontFamily: 'Inter_600SemiBold',
-    },
-    spotlight: {
-        flexDirection: 'row',
-        gap: 12,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radii.large,
-        backgroundColor: colors.surface,
-        padding: 16,
-        marginBottom: 12,
-    },
-    spotlightIcon: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: colors.accentSubtle,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    spotlightBody: { flex: 1, gap: 3 },
-    spotlightCount: {
-        fontSize: 13,
-        fontFamily: 'Inter_600SemiBold',
-        color: colors.accent,
-        marginTop: 2,
-    },
-    spotlightLink: {
-        alignSelf: 'flex-start',
-        marginTop: 8,
-        minHeight: touchTarget,
-        justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: colors.accent,
-        borderRadius: 999,
-        paddingHorizontal: 14,
-    },
-    spotlightLinkText: {
-        fontSize: 13,
-        fontFamily: 'Inter_600SemiBold',
-        color: colors.accent,
     },
     venueRow: {
         flexDirection: 'row',

@@ -1,5 +1,36 @@
 # Clubs local pre-PR review
 
+## Author Clubs directory and destination local commit (2026-10-04)
+
+- Local commit scope: the Clubs directory entry button and focused regression
+  assertions, the Authors page visual refresh, this review record, and only the
+  Authors/directory entries in `docs/user/clubs/TRACKER.md`. Preserve the
+  unrelated tracker edits and `clubs-home-390x844-authenticated-dedup.png`.
+- Independent subagent review found no blocking issues. It confirmed the
+  button remains visible in All and My scopes, is hidden in Archived, and opens
+  the existing Authors route. The screen retains author-only query filters,
+  loading/error/empty copy, refresh, fallback back navigation, and ClubCard
+  navigation. Review was read-only; the reviewer did not run tests.
+- Presentation and discoverability only. Services, query payloads, routes,
+  permissions, backend, schema, and business behavior are preserved. No
+  database/Storage write, migration, dependency change, or deployment.
+- Verification: focused directory/Authors route/Authors screen Jest passed
+  3 suites / 30 tests. TypeScript `npx.cmd tsc --noEmit --incremental false`
+  and `npm.cmd run export:web -- --max-workers 1` passed. The first TypeScript
+  attempt raced the export while it replaced `dist`; the rerun after export
+  passed. `git diff --check` and the Phase 9 continuity validator passed
+  (86 Markdown files / 62 required files; existing document-size advisories).
+  Directory and Authors live navigation was checked at 1280×720 in the
+  running app. The account has no author-club records, so populated cards were
+  mock-verified. Narrow-width Authors, screen-reader/native checks, and a fresh
+  browser-console inspection were not performed. Jest printed non-fatal
+  VirtualizedList `act(...)` warnings from the directory screen test.
+- Local commit only; no push, PR, or deployment. The separate untracked Home
+  screenshot and unrelated tracker edits remain outside this scope.
+- The next page mapping is the public venue discovery route `/clubs/venues` and
+  its venue-detail destination. Design review must precede app implementation.
+  Marketplace Phase 9 runtime rollout/connected proof remains pending.
+
 ## Reading Progress local commit (2026-10-04)
 
 - Local commit scope: `src/features/clubs/screens/ClubReadingProgressScreen.tsx`,

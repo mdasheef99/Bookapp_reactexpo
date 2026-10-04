@@ -1,11 +1,20 @@
 import { router } from 'expo-router';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
 import { navigateBackOrFallback } from '@/lib/navigation';
 import { ClubCard } from '@/features/clubs/components/ClubCard';
 import { useBrowseClubs } from '@/features/clubs/hooks/useClubs';
 import type { ClubPublicDetails } from '@/features/clubs/services/clubsService';
+
+const colors = {
+    bgPrimary: '#FAF6EE',
+    bgCard: '#FFFEFC',
+    bgSecondary: '#F8EBE7',
+    border: '#E7DCD1',
+    accent: '#8B322C',
+    textPrimary: '#1A1412',
+    textSecondary: '#6E645F',
+} as const;
 
 const AUTHOR_CLUB_FILTERS = {
     clubType: 'author_club' as const,
@@ -14,7 +23,6 @@ const AUTHOR_CLUB_FILTERS = {
 };
 
 export function ClubAuthorsScreen() {
-    const { colors } = useTheme();
     const { data, isLoading, isError, refetch, isRefetching } = useBrowseClubs(AUTHOR_CLUB_FILTERS);
     const clubs = data ?? [];
 
@@ -62,9 +70,12 @@ export function ClubAuthorsScreen() {
                 )}
                 renderItem={({ item }) => <ClubCard club={item} onPress={handleClubPress} />}
                 ListEmptyComponent={isError ? null : (
-                    <View style={[styles.feedbackCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                    <View style={[styles.emptyState, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                        <View style={[styles.emptyIcon, { backgroundColor: colors.bgSecondary }]}>
+                            <Ionicons name="book-outline" size={24} color={colors.accent} />
+                        </View>
                         <Text style={[styles.feedbackTitle, { color: colors.textPrimary }]}>No author clubs yet</Text>
-                        <Text style={[styles.feedbackBody, { color: colors.textSecondary }]}>Verified author communities will appear here when they are available.</Text>
+                        <Text style={[styles.feedbackBody, { color: colors.textSecondary, textAlign: 'center' }]}>Verified author communities will appear here when they are available.</Text>
                     </View>
                 )}
             />
@@ -74,17 +85,19 @@ export function ClubAuthorsScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-    loadingText: { fontSize: 14, fontWeight: '500' },
-    contentContainer: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 120 },
-    headerSection: { marginBottom: 14 },
-    titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-    iconButton: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-    iconShell: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 10, backgroundColor: colors.bgPrimary },
+    loadingText: { color: colors.textSecondary, fontFamily: 'Inter_500Medium', fontSize: 14, lineHeight: 21 },
+    contentContainer: { width: '100%', maxWidth: 760, alignSelf: 'center', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 112 },
+    headerSection: { marginBottom: 12 },
+    titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
+    iconButton: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+    iconShell: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
     titleTextBlock: { flex: 1 },
-    title: { fontSize: 28, fontWeight: '800', marginBottom: 4 },
-    subtitle: { fontSize: 15, lineHeight: 21 },
-    feedbackCard: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 6, marginBottom: 12 },
-    feedbackTitle: { fontSize: 15, fontWeight: '800', marginBottom: 4 },
-    feedbackBody: { fontSize: 13, lineHeight: 19 },
+    title: { fontFamily: 'Newsreader_600SemiBold', fontSize: 30, lineHeight: 36, marginBottom: 3, color: colors.textPrimary },
+    subtitle: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21, color: colors.textSecondary },
+    feedbackCard: { borderWidth: 1, borderRadius: 16, padding: 16, marginTop: 4, marginBottom: 14 },
+    feedbackTitle: { fontFamily: 'Newsreader_600SemiBold', fontSize: 20, lineHeight: 26, marginBottom: 6 },
+    feedbackBody: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21 },
+    emptyState: { alignItems: 'center', borderWidth: 1, borderRadius: 16, padding: 20, marginTop: 4, marginBottom: 14 },
+    emptyIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
 });
