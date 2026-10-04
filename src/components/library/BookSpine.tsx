@@ -85,6 +85,10 @@ export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractio
     const backgroundColor = spineColorFromTitle(item.book.title);
     const color = spineTextColor(backgroundColor);
     const divider = spineDividerVariant(seed);
+    const showSpineRibs = Math.abs(seed) % 3 !== 0;
+    const showPageEdge = Math.abs(seed) % 4 === 0;
+    const upperRibTop = Math.round(height * 0.15);
+    const lowerRibTop = Math.round(height * 0.84);
     const fontSize = width >= 40 ? 17 : width >= 36 ? 16 : 15;
     const lineHeight = fontSize * 1.1;
     const textWidth = height - 24;
@@ -103,9 +107,29 @@ export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractio
                 style={[styles.spine, { backgroundColor, width, height }]}
             >
                 <Image source={{ uri: BOOK_CLOTH_TEXTURE_URI }} style={StyleSheet.absoluteFill} contentFit="fill" pointerEvents="none" accessible={false} />
-                <LinearGradient colors={['rgba(0,0,0,0.28)', 'rgba(255,255,255,0.25)', 'rgba(255,255,255,0.07)', 'transparent', 'rgba(0,0,0,0.38)']}
-                    locations={[0, 0.16, 0.38, 0.68, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+                <LinearGradient colors={['rgba(0,0,0,0.36)', 'rgba(255,255,255,0.23)', 'rgba(255,255,255,0.08)', 'rgba(0,0,0,0.05)', 'rgba(0,0,0,0.32)']}
+                    locations={[0, 0.12, 0.34, 0.72, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+                {showPageEdge ? <View testID={`library-shelf-page-edge-${item.id}`} style={styles.pageEdge}
+                    pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                    <LinearGradient colors={['rgba(249,239,216,0.84)', 'rgba(184,156,116,0.72)']}
+                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+                    <View style={[styles.pageRule, { top: '23%' }]} />
+                    <View style={[styles.pageRule, { top: '51%' }]} />
+                    <View style={[styles.pageRule, { top: '78%' }]} />
+                </View> : null}
                 <View style={styles.bindingCrease} pointerEvents="none" />
+                {showSpineRibs ? <>
+                    <View testID={`library-shelf-spine-ridge-upper-${item.id}`} style={[styles.spineRidge, { top: upperRibTop }]}
+                        pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                        <LinearGradient colors={['rgba(255,245,220,0.24)', 'rgba(17,11,7,0.20)', 'rgba(255,255,255,0.10)']}
+                            locations={[0, 0.52, 1]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
+                    </View>
+                    <View testID={`library-shelf-spine-ridge-lower-${item.id}`} style={[styles.spineRidge, { top: lowerRibTop }]}
+                        pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                        <LinearGradient colors={['rgba(255,245,220,0.20)', 'rgba(17,11,7,0.18)', 'rgba(255,255,255,0.08)']}
+                            locations={[0, 0.52, 1]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
+                    </View>
+                </> : null}
                 <LinearGradient colors={['transparent', 'rgba(16,10,6,0.46)']} style={styles.footShade} pointerEvents="none" />
                 <View style={styles.bindingTop} pointerEvents="none" />
                 {divider ? <View pointerEvents="none" style={[styles.bindingBand, { height: divider.height, width: divider.width as `${number}%`, backgroundColor: divider.color }]} /> : null}
@@ -130,8 +154,11 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.24)',
         overflow: 'hidden', flexShrink: 0,
     },
+    pageEdge: { position: 'absolute', top: 2, bottom: 2, right: 1, width: 2 },
+    pageRule: { position: 'absolute', left: 0, right: 0, height: 0.5, backgroundColor: 'rgba(79,53,31,0.28)' },
     bindingTop: { position: 'absolute', left: 0, right: 0, top: 4, height: 1, backgroundColor: 'rgba(255,255,255,0.12)' },
     bindingCrease: { position: 'absolute', left: 2, top: 5, bottom: 3, width: 1, backgroundColor: 'rgba(0,0,0,0.23)' },
+    spineRidge: { position: 'absolute', left: 1, right: 1, height: 3, opacity: 0.72 },
     footShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 4 },
     bindingBand: { position: 'absolute', top: 16, alignSelf: 'center', opacity: 0.8 },
     // Rotate the sized frame, so Text's web max-width is the label length, not the narrow spine.

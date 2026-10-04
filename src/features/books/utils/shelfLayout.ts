@@ -19,11 +19,12 @@ export function seededJitter(seed: number): number {
     return 2 + (Math.abs(seed) % 7);
 }
 
-// SDD-05 §12: visual thickness from saved pages; height stays independent and readable.
+// SDD-05 §12: page count estimates thickness; seeded height adds a natural size mix without
+// claiming physical dimensions the catalogue does not provide.
 export function spineMetrics(seed: number, pageCount?: number | null): { width: number; height: number } {
     const width = typeof pageCount === 'number' && Number.isFinite(pageCount) && pageCount > 0
         ? Math.round(Math.min(44, Math.max(24, 20 + 0.04 * pageCount))) : 32;
-    return { width, height: 144 + (Math.abs(seed) % 7) * 2 };
+    return { width, height: 144 + (Math.abs(seed) % 13) * 2 };
 }
 
 // SDD-05 §3: title hash only — no index term (stable across filter/reorder)
@@ -50,25 +51,29 @@ export function spineTextColor(background: string): string {
 
 export type ShelfPosture = { tiltDeg: number; isBookend: boolean };
 
-// Leaning pairs: upper bound ≤2 per dozen books, deterministic adjacency walk; tilt −4…−6°
-// Posture is positional by nature (adjacency), exempted from per-id order-stability.
+// A small number of adjacent volumes lean together. Posture is positional by nature
+// (adjacency), so it changes with shelf order; individual colors and dimensions do not.
 export function computeShelfPosture(entries: LibraryBookEntry[]): Record<string, ShelfPosture> {
     const count = entries.length;
     const posture: Record<string, ShelfPosture> = {};
     entries.forEach((e) => { posture[e.id] = { tiltDeg: 0, isBookend: false }; });
     if (count === 0) return posture;
 
-    const maxPairs = count >= 24 ? 4 : count >= 12 ? 2 : count >= 6 ? 1 : 0;
+    const maxPairs = count >= 24 ? 4 : count >= 12 ? 2 : count >= 4 ? 1 : 0;
+    const occupied = new Set<number>();
+    const firstSeed = stableSeed(entries[0].id, entries[0].book.title);
+    const firstStart = Math.abs(firstSeed) % (count - 1);
     let pairs = 0;
-    for (let i = 0; i < count - 1 && pairs < maxPairs; i++) {
-        const seed = stableSeed(entries[i].id, entries[i].book.title);
-        if (Math.abs(seed) % 3 === 0) {
-            const tiltDeg = -(4 + (Math.abs(seed) % 3));
-            posture[entries[i].id].tiltDeg = tiltDeg;
-            i += 1;
-            if (i < count) posture[entries[i].id].tiltDeg = tiltDeg;
-            pairs += 1;
-        }
+    for (let offset = 0; offset < count - 1 && pairs < maxPairs; offset++) {
+        const index = (firstStart + offset) % (count - 1);
+        if (occupied.has(index) || occupied.has(index + 1)) continue;
+        const seed = stableSeed(entries[index].id, entries[index].book.title);
+        const tiltDeg = -(2 + (Math.abs(seed) % 2));
+        posture[entries[index].id].tiltDeg = tiltDeg;
+        posture[entries[index + 1].id].tiltDeg = tiltDeg;
+        occupied.add(index);
+        occupied.add(index + 1);
+        pairs += 1;
     }
 
     if (count >= 10) {

@@ -8,11 +8,11 @@ import * as Haptics from 'expo-haptics';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { ShelfArrangement } from '@/features/books/hooks/useShelfArrangement';
 import { LibraryBookEntry } from '@/features/books/utils/libraryShelf';
-import { getShelfTrackLayout, splitShelfRows, resolveSweptSpine, SHELF_SIDE_WIDTH, SHELF_BOOKEND_WIDTH } from '@/features/books/utils/shelfLayout';
+import { getShelfTrackLayout, splitShelfRows, resolveSweptSpine, computeShelfPosture, SHELF_SIDE_WIDTH, SHELF_BOOKEND_WIDTH } from '@/features/books/utils/shelfLayout';
 import { BookSpine } from './BookSpine';
 import { LibraryBookPicker } from './LibraryBookPicker';
 import { useLibraryTypography } from './LibraryTypography';
-import { LIBRARY_RADIUS, LIBRARY_SPACING } from './LibraryAppearance';
+import { LIBRARY_SPACING } from './LibraryAppearance';
 import { CABINET_WOOD_TEXTURE_URI } from './cabinetWoodTexture';
 import { useVerticalShelfDrag } from './useVerticalShelfDrag';
 import { LibraryArrangeSelection } from './LibraryArrangeControls';
@@ -174,36 +174,39 @@ export function LibraryShelf({ books, onBookPress, arrangement, onDraggingChange
         setSweptId(id);
     }, [bookLayouts, isReduceMotion, sweptId, arranging]);
 
-    const renderRow = (entries: LibraryBookEntry[], indexOffset: number, y: number, row: 'top' | 'bottom') => (
-        <View testID={`library-shelf-row-${row}`} style={[styles.bookRow, { top: y }]}>
-            {entries.map((item, index) => {
-                const selected = arranging && selectedId === item.id;
-                const spine = <View key={item.id} collapsable={false} style={{ flexShrink: 0, opacity: drag?.id === item.id ? 0 : 1 }}>
-                    <LinearGradient colors={['rgba(17,10,5,0.52)', 'rgba(17,10,5,0.28)', 'transparent']}
-                        locations={[0, 0.3, 1]} pointerEvents="none" accessible={false}
-                        accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
-                        style={[styles.bookContactShadow, { width: layoutByBookId.get(item.id)?.width,
-                            opacity: !arranging && (activeSpineIds.includes(item.id) || sweptId === item.id) ? 0.25 : 0.85 }]} />
-                <BookSpine item={item} index={indexOffset + index}
-                    onPress={() => arranging ? selectBook(item) : onBookPress(item)} isReduceMotion={isReduceMotion}
-                    onInteractionChange={handleSpineInteraction}
-                    arranging={arranging} selected={selected}
-                    playTak={playTak} swept={sweptId === item.id}
-                    gapAfter={layoutByBookId.get(item.id)?.gapAfter ?? 0} />
-                    {selected ? <View pointerEvents="none" style={styles.selectedOutline} /> : null}
-                </View>;
-                return selected ? <GestureDetector key={item.id} gesture={gesture} touchAction="none">{spine}</GestureDetector> : spine;
-            })}
-            {entries.length > 0 ? (
-                <View style={styles.bookend} testID={`library-shelf-bookend-${row}`} pointerEvents="none"
-                    accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                    <LinearGradient colors={['#ddc28d', '#a4864f', '#66512e']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                        style={styles.bookendUpright} />
-                    <View style={styles.bookendFoot} />
-                </View>
-            ) : null}
-        </View>
-    );
+    const renderRow = (entries: LibraryBookEntry[], indexOffset: number, y: number, row: 'top' | 'bottom') => {
+        const postureById = computeShelfPosture(entries);
+        return (
+            <View testID={`library-shelf-row-${row}`} style={[styles.bookRow, { top: y }]}>
+                {entries.map((item, index) => {
+                    const selected = arranging && selectedId === item.id;
+                    const spine = <View key={item.id} collapsable={false} style={{ flexShrink: 0, opacity: drag?.id === item.id ? 0 : 1 }}>
+                        <LinearGradient colors={['rgba(17,10,5,0.52)', 'rgba(17,10,5,0.28)', 'transparent']}
+                            locations={[0, 0.3, 1]} pointerEvents="none" accessible={false}
+                            accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+                            style={[styles.bookContactShadow, { width: layoutByBookId.get(item.id)?.width,
+                                opacity: !arranging && (activeSpineIds.includes(item.id) || sweptId === item.id) ? 0.25 : 0.85 }]} />
+                        <BookSpine item={item} index={indexOffset + index}
+                            onPress={() => arranging ? selectBook(item) : onBookPress(item)} isReduceMotion={isReduceMotion}
+                            onInteractionChange={handleSpineInteraction}
+                            arranging={arranging} selected={selected} tiltDeg={postureById[item.id]?.tiltDeg ?? 0}
+                            playTak={playTak} swept={sweptId === item.id}
+                            gapAfter={layoutByBookId.get(item.id)?.gapAfter ?? 0} />
+                        {selected ? <View pointerEvents="none" style={styles.selectedOutline} /> : null}
+                    </View>;
+                    return selected ? <GestureDetector key={item.id} gesture={gesture} touchAction="none">{spine}</GestureDetector> : spine;
+                })}
+                {entries.length > 0 ? (
+                    <View style={styles.bookend} testID={`library-shelf-bookend-${row}`} pointerEvents="none"
+                        accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                        <LinearGradient colors={['#ddc28d', '#a4864f', '#66512e']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                            style={styles.bookendUpright} />
+                        <View style={styles.bookendFoot} />
+                    </View>
+                ) : null}
+            </View>
+        );
+    };
     const renderFace = (y: number, testID?: string, faceHeight = LEDGE_H) => (
         <View testID={testID} style={[styles.shelfFace, { top: y, height: faceHeight }]} pointerEvents="none">
             <LinearGradient colors={['#ad8559', '#8b623c', '#614025']} locations={[0, 0.4, 1]}
@@ -212,15 +215,17 @@ export function LibraryShelf({ books, onBookPress, arrangement, onDraggingChange
             <LinearGradient colors={['#d8bb92', '#b58e63', '#8b623e']} locations={[0, 0.4, 1]}
                 style={styles.boardTop} />
             <View style={styles.boardFrontHighlight} />
+            <View style={[styles.boardJoint, styles.boardJointLeft]} />
+            <View style={[styles.boardJoint, styles.boardJointRight]} />
             <LinearGradient colors={['transparent', 'rgba(24,14,7,0.64)']} style={styles.boardUnderside} />
         </View>
     );
     const renderWall = (y: number) => (
         <View style={[styles.shelfWall, { top: y }]} pointerEvents="none">
-            <LinearGradient colors={['#342419', '#62452f', '#503622']} locations={[0, 0.4, 1]} style={StyleSheet.absoluteFill} />
-            <LinearGradient colors={['rgba(15,9,5,0.48)', 'rgba(15,9,5,0.16)', 'transparent']}
+            <LinearGradient colors={['#483222', '#6c4b32', '#493323']} locations={[0, 0.4, 1]} style={StyleSheet.absoluteFill} />
+            <LinearGradient colors={['rgba(15,9,5,0.38)', 'rgba(15,9,5,0.12)', 'transparent']}
                 locations={[0, 0.4, 1]} style={styles.ceilingShadow} />
-            <LinearGradient colors={['transparent', 'rgba(0,0,0,0.32)']} style={styles.contactShadow} />
+            <LinearGradient colors={['transparent', 'rgba(0,0,0,0.24)']} style={styles.contactShadow} />
         </View>
     );
     const renderSide = (side: 'left' | 'right') => (
@@ -229,6 +234,7 @@ export function LibraryShelf({ books, onBookPress, arrangement, onDraggingChange
             <LinearGradient colors={side === 'left' ? ['#b29067', '#886241', '#48301f'] : ['#48301f', '#886241', '#a3815b']}
                 locations={[0, 0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
             <Image source={{ uri: CABINET_WOOD_TEXTURE_URI }} contentFit="fill" style={styles.sideGrain} accessible={false} />
+            <View style={[styles.sideInsideEdge, side === 'left' ? { right: 0 } : { left: 0 }]} />
         </View>
     );
 
@@ -240,10 +246,11 @@ export function LibraryShelf({ books, onBookPress, arrangement, onDraggingChange
                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
                 {renderWall(TOP_Y)}
                 {renderWall(BOTTOM_Y)}
+                {renderFace(0, 'library-shelf-top-cap', TOP_Y)}
                 <Image source={{ uri: CABINET_WOOD_TEXTURE_URI }} style={[StyleSheet.absoluteFill, styles.wallGrain]} contentFit="fill"
                     testID="library-shelf-wood-grain" pointerEvents="none" accessible={false}
                     accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
-                <LinearGradient colors={['rgba(0,0,0,0.28)', 'transparent', 'transparent', 'rgba(0,0,0,0.24)']}
+                <LinearGradient colors={['rgba(0,0,0,0.18)', 'transparent', 'transparent', 'rgba(0,0,0,0.16)']}
                     locations={[0, 0.06, 0.94, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                     style={StyleSheet.absoluteFill} pointerEvents="none" />
                 {renderFace(TOP_Y + ROW_H, 'library-shelf-inner-ledge', LEDGE_H + TIER_GAP)}
@@ -298,11 +305,11 @@ const styles = StyleSheet.create({
     dropMarker: { position: 'absolute', height: ROW_H - 24, width: 3, backgroundColor: '#fff1bd', borderWidth: 0.5, borderColor: '#654329', zIndex: 20 },
     dragOverlay: { position: 'absolute', zIndex: 30, elevation: 12 },
     shelfContainer: {
-        marginBottom: LIBRARY_SPACING.large, borderRadius: LIBRARY_RADIUS.cabinet, borderWidth: 1, borderColor: 'rgba(176,143,99,0.42)',
+        marginBottom: LIBRARY_SPACING.large, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(176,143,99,0.52)',
         shadowColor: '#20160e', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.14,
         shadowRadius: 14, elevation: 5, backgroundColor: '#896341',
     },
-    shelfFrame: { height: SHELF_H, borderRadius: 15, overflow: 'hidden', backgroundColor: '#896341' },
+    shelfFrame: { height: SHELF_H, borderRadius: 9, overflow: 'hidden', backgroundColor: '#896341' },
     shelfWall: {
         position: 'absolute', left: 0, right: 0, height: ROW_H,
     },
@@ -310,10 +317,13 @@ const styles = StyleSheet.create({
         position: 'absolute', left: 0, right: 0, height: LEDGE_H,
         shadowColor: '#160e08', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 2,
     },
-    wallGrain: { opacity: 0.65 },
-    faceGrain: { opacity: 0.45 },
+    wallGrain: { opacity: 0.68 },
+    faceGrain: { opacity: 0.5 },
     boardTop: { position: 'absolute', left: 0, right: 0, top: 0, height: 4 },
     boardFrontHighlight: { position: 'absolute', left: 0, right: 0, top: 4, height: 1, backgroundColor: 'rgba(243,213,167,0.42)' },
+    boardJoint: { position: 'absolute', top: 1, bottom: 1, width: 2, backgroundColor: 'rgba(35,22,12,0.28)', borderLeftWidth: 1, borderLeftColor: 'rgba(249,219,178,0.24)' },
+    boardJointLeft: { left: SHELF_SIDE_WIDTH + 1 },
+    boardJointRight: { right: SHELF_SIDE_WIDTH + 1 },
     boardUnderside: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 4 },
     // Static footprint: book transforms lift above this shadow; it never enters the drag overlay.
     bookContactShadow: { position: 'absolute', left: 0, bottom: -3, height: 3, borderRadius: 2 },
@@ -323,6 +333,7 @@ const styles = StyleSheet.create({
         alignItems: 'flex-end', justifyContent: 'flex-start',
     },
     cabinetSide: { position: 'absolute', top: 0, bottom: 0, width: SHELF_SIDE_WIDTH, zIndex: 2 },
+    sideInsideEdge: { position: 'absolute', top: 0, bottom: 0, width: 2, backgroundColor: 'rgba(25,15,9,0.30)' },
     sideGrain: { position: 'absolute', width: SHELF_H, height: SHELF_SIDE_WIDTH,
         left: (SHELF_SIDE_WIDTH - SHELF_H) / 2, top: (SHELF_H - SHELF_SIDE_WIDTH) / 2, transform: [{ rotate: '90deg' }] },
     ceilingShadow: { position: 'absolute', top: 0, left: 0, right: 0, height: 18 },
