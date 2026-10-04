@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Venue } from '../services/venuesService.types';
@@ -5,6 +6,7 @@ import { formatVenueType, VenueTypeBadge } from './VenueTypeBadge';
 
 type VenueCardColors = {
     bgCard: string;
+    bgSecondary?: string;
     border: string;
     textPrimary: string;
     textSecondary: string;
@@ -20,24 +22,44 @@ export function VenueCard({
     colors,
     onPress,
     rightLabel,
+    rightLabelAdornment,
+    accessibilityHint,
+    subdued = false,
+    busy = false,
     variant = 'default',
 }: {
     venue: Partial<Venue> & { id: string; name: string };
     colors: VenueCardColors;
     onPress?: (venue: Partial<Venue> & { id: string; name: string }) => void;
     rightLabel?: string;
+    rightLabelAdornment?: ReactNode;
+    accessibilityHint?: string;
+    subdued?: boolean;
+    busy?: boolean;
     variant?: VenueCardVariant;
 }) {
     const address = [venue.address_line1, venue.address_line2, venue.city].filter(Boolean).join(', ');
+    const subduedBackgroundColor = colors.bgSecondary ?? colors.bgCard;
+    const accessibilityLabel = variant === 'editorial'
+        ? [venue.name, address, formatVenueType(venue.venue_type), venue.booking_required ? 'Booking required' : null, rightLabel]
+            .filter(Boolean)
+            .join(', ')
+        : undefined;
     return (
         <TouchableOpacity
             activeOpacity={0.85}
             onPress={() => onPress?.(venue)}
             disabled={!onPress}
             accessibilityRole="button"
-            accessibilityLabel={variant === 'editorial' ? [venue.name, address, formatVenueType(venue.venue_type), venue.booking_required ? 'Booking required' : null].filter(Boolean).join(', ') : undefined}
-            accessibilityHint={onPress && variant === 'editorial' ? 'Opens venue details' : undefined}
-            style={[styles.card, variant === 'editorial' && styles.editorialCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
+            accessibilityLabel={accessibilityLabel}
+            accessibilityHint={onPress && variant === 'editorial' ? accessibilityHint ?? 'Opens venue details' : undefined}
+            accessibilityState={{ disabled: !onPress, ...(busy ? { busy: true } : {}) }}
+            style={[
+                styles.card,
+                variant === 'editorial' && styles.editorialCard,
+                subdued && { shadowOpacity: 0, elevation: 0 },
+                { backgroundColor: subdued ? subduedBackgroundColor : colors.bgCard, borderColor: colors.border },
+            ]}
             testID={`venue-card-${venue.id}`}
         >
             <View style={styles.headerRow}>
@@ -45,7 +67,12 @@ export function VenueCard({
                     <Text style={[styles.name, variant === 'editorial' && styles.editorialName, { color: colors.textPrimary }]}>{venue.name}</Text>
                     {address ? <Text style={[styles.address, variant === 'editorial' && styles.editorialAddress, { color: colors.textSecondary }]}>{address}</Text> : null}
                 </View>
-                {rightLabel ? <Text style={[styles.rightLabel, { color: colors.accent }]}>{rightLabel}</Text> : null}
+                {rightLabel || rightLabelAdornment ? (
+                    <View style={styles.rightLabelGroup}>
+                        {rightLabelAdornment}
+                        {rightLabel ? <Text style={[styles.rightLabel, { color: colors.accent }]}>{rightLabel}</Text> : null}
+                    </View>
+                ) : null}
             </View>
             <View style={[styles.footerRow, variant === 'editorial' && styles.editorialFooterRow]}>
                 <VenueTypeBadge type={venue.venue_type} colors={colors} variant={variant} />
@@ -65,6 +92,7 @@ const styles = StyleSheet.create({
     editorialCard: { padding: 12, paddingTop: 13, marginBottom: 9, shadowColor: '#402B25', shadowOpacity: 0.025, shadowRadius: 12, shadowOffset: { width: 0, height: 3 }, elevation: 1 },
     headerRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
     titleBlock: { flex: 1 },
+    rightLabelGroup: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 },
     name: { fontSize: 16, fontWeight: '800', marginBottom: 5 },
     editorialName: { fontFamily: 'Newsreader_500Medium', fontSize: 19, lineHeight: 23, fontWeight: '500', letterSpacing: -0.2, marginBottom: 0 },
     address: { fontSize: 13, lineHeight: 18 },
