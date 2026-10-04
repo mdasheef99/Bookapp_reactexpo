@@ -1,5 +1,13 @@
 # Phase 9 Master Tracker
 
+> **2026-10-01 local Unit 6G card feedback correction:** compact review cards
+> now name locally explainable missing/invalid fields when a fresh candidate
+> has only the generic `review_missing` blocker. The UI summary does not change
+> server readiness or Add eligibility. Focused Jest passed 2 suites/61 tests;
+> TypeScript passed. No connected runtime, database/Storage, migration, or
+> deployment was accessed. Existing publication/source deviations and their
+> operational gates remain unchanged; Owner review of the local diff is next.
+
 > **2026-09-28 Git-publication closeout:** Unit 6G `101e4b6`, Store View
 > `ce2d0c5`, and Phase 9 documentation `9ad1d6e` were pushed to
 > `origin/codex/phase9-duplicate-confirmation`; remote readback matched

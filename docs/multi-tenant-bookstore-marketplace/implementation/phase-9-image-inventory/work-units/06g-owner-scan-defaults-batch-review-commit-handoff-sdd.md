@@ -466,6 +466,12 @@ are visually subdued; missing, invalid, stale, or custom values receive the
 attention treatment. Values are never hidden merely because they match a
 default.
 
+When no saved review exists and the server supplies only the generic
+`review_missing` blocker, the card uses local strict-review validation to name
+the currently missing or invalid fields when it can explain that blocker.
+This attention summary is presentation-only: it does not create a saved review,
+change server readiness, or enable Add.
+
 | Card element | Display/edit behavior |
 | --- | --- |
 | Cover | Allowlisted metadata cover thumbnail with the `Detected` source badge when its internal source is `matched` or `detected`, or a `Missing` placeholder; never scan media |

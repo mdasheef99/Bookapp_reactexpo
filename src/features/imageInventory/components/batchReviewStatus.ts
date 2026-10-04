@@ -1,5 +1,6 @@
 import type { CandidateCommitOutcome } from '../commit/inventoryCommitCoordinator';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
+import type { CompactReviewValidationIssue } from '../review/compactReviewDraft';
 
 export function metadataStatusLabel(state: OwnerBatchReviewCard['metadataState']): string {
     if (state === 'selected') return 'Provider matched';
@@ -38,3 +39,31 @@ export const draftResolvableBlockerCodes = new Set([
     'price_invalid', 'condition_missing', 'damage_answer_missing',
     'damage_details_missing', 'location_missing', 'publication_intent_missing',
 ]);
+
+export function cardAttentionItems({
+    card,
+    hasEdits,
+    validationIssues,
+}: {
+    card: OwnerBatchReviewCard;
+    hasEdits: boolean;
+    validationIssues: readonly CompactReviewValidationIssue[];
+}) {
+    const canExplainMissingReview = !hasEdits
+        && card.candidateState === 'needs_review'
+        && card.review === null
+        && validationIssues.length > 0
+        && card.blockers.some((blocker) => blocker.code === 'review_missing');
+    const serverItems = card.blockers
+        .filter((blocker) => hasEdits
+            ? !draftResolvableBlockerCodes.has(blocker.code)
+            : !canExplainMissingReview || blocker.code !== 'review_missing')
+        .map((blocker) => ({ field: blocker.field ?? 'review', safeMessage: blocker.safeMessage }));
+    const localItems = hasEdits || canExplainMissingReview || card.blockers.length === 0
+        ? validationIssues
+        : [];
+    return [...localItems, ...serverItems].filter((item, index, items) => (
+        items.findIndex((candidate) => candidate.field === item.field
+            && candidate.safeMessage === item.safeMessage) === index
+    ));
+}

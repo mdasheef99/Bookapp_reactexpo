@@ -263,6 +263,33 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         expect(screen.getByTestId('card-price-picker')).toBeTruthy();
     });
 
+    it('shows specific local missing fields instead of only the generic missing-review blocker', () => {
+        const screen = renderCard({
+            candidateState: 'needs_review', reviewVersion: null, review: null,
+            reviewDisposition: null, reviewReady: false,
+            blockers: [{
+                code: 'review_missing', candidateId: card().candidateId, inputId: null,
+                field: null, safeMessage: 'Review this book.',
+            }],
+            fieldSources: {
+                ...card().fieldSources, condition: 'missing', price: 'missing',
+            },
+            allowedActions: ['save_review'],
+        });
+
+        const validationSummary = within(screen.getByTestId('card-add-validation'));
+        expect(validationSummary.getByText(/Set a whole-rupee selling price\./)).toBeTruthy();
+        expect(validationSummary.getByText(/Choose a condition\./)).toBeTruthy();
+        expect(validationSummary.queryByText(/Review this book\./)).toBeNull();
+        expect(screen.getByText('Add to inventory')).toBeDisabled();
+
+        fireEvent.press(screen.getByTestId('card-condition-field'));
+        fireEvent.press(screen.getByText('Good'));
+        const editedSummary = within(screen.getByTestId('card-add-validation'));
+        expect(editedSummary.getByText(/Set a whole-rupee selling price\./)).toBeTruthy();
+        expect(editedSummary.queryByText(/Review this book\./)).toBeNull();
+    });
+
     it('lets review:null metadata Edit manually open identity editing', () => {
         const screen = renderCard({
             reviewVersion: null,

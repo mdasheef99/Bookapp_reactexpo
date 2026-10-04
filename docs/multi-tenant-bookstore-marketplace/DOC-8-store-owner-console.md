@@ -161,7 +161,9 @@ MVP features:
 - initiating-Owner resume/mutation during the Owner-only pilot, with separately authorized/audited support intervention
 - session defaults for condition, shelf/location, quantity, and private/publish
   preference; language is an optional target-design hint
-- numbered spine review, add-missed/remove-false, attention-only field highlighting, and marketplace preview
+- numbered spine review, add-missed/remove-false, attention-only field
+  highlighting with specific missing-field guidance when known, and marketplace
+  preview
 - full correction is opened from its candidate card; there is no duplicate
   session-header shortcut that always opens the first candidate
 - explicit Add to Inventory creates one new private inventory row per reviewed

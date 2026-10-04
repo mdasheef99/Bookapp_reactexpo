@@ -3863,3 +3863,30 @@ was run. Package files, `.hermes/briefs`, and the line-ending-only integration
 test remain uncommitted. The two documented deviations remain unresolved.
 Next exact action: Owner decision on those deviations before any deployment
 or connected proof.
+
+## 2026-10-01 — Unit 6G specific missing-field feedback (local)
+
+Authorized scope: compact review cards identify missing or invalid details when
+a fresh candidate has no saved review and the server blocker is only the
+generic `review_missing` state. The card now shows locally derived strict
+review messages in place of that generic message when possible. Server
+blockers remain visible, and the presentation does not change server readiness
+or Add eligibility.
+
+Documentation aligned: DOC-4 §9, DOC-8 §5, Unit 6G SDD §9, and the requirements
+traceability row record this clarification of the existing missing-field
+attention contract.
+
+Verification actually run: red-first focused case reproduced the generic-only
+message. Final `batchReviewCard.test.tsx` and
+`postScanUiCorrections.test.tsx` passed **2 suites / 61 tests**. TypeScript
+`--noEmit --allowImportingTsExtensions` exited 0. No connected browser
+acceptance is claimed.
+
+External state: no database, Storage, migration, inventory, deployment, or
+connected runtime was accessed or mutated. Nothing was staged, committed, or
+pushed; existing unrelated working-tree changes were preserved.
+
+Next exact action: Owner review of this local diff. Existing price-intent and
+cover-source deviations remain separate gates before deployment or connected
+proof.

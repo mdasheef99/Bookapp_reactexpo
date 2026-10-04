@@ -247,6 +247,11 @@ creates private inventory only and does not publish it. First-publication
 intent defaults to Private for a first session, as described in §5; Unit 7B
 owns the separate publication action and its positive-price gate.
 
+When a new candidate has no saved review yet, its compact card should name the
+missing or invalid review fields when local validation can explain the generic
+missing-review state. This guidance does not change server-owned readiness or
+Add eligibility.
+
 Extended bibliographic/acquisition fields are collapsed. Owner may add a missed candidate, remove a false candidate, correct metadata/aliases, and preview the future marketplace card.
 
 Full correction is opened from the relevant candidate card. The session header

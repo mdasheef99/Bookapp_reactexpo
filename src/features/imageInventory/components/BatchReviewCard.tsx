@@ -23,7 +23,7 @@ import { CandidateMetadataSheet } from './CandidateMetadataSheet';
 import { InlineBatchReviewAdditionalFields } from './InlineBatchReviewAdditionalFields';
 import { InlineReviewIdentity, InlineReviewValueFields } from './InlineBatchReviewFields';
 import { OwnerConfirmationDialog } from './OwnerConfirmationDialog';
-import { draftResolvableBlockerCodes, metadataStatusLabel, reviewStatusLabel } from './batchReviewStatus';
+import { cardAttentionItems, metadataStatusLabel, reviewStatusLabel } from './batchReviewStatus';
 
 export { applyCompactEdits, type CompactReviewEdits } from '../review/compactReviewDraft';
 export { sourceBadgeLabel } from './BatchReviewFieldSummary';
@@ -140,24 +140,9 @@ export function BatchReviewCard({
         setIdentityResetKey((current) => current + 1);
         onAuthorityStateChange?.(card.candidateId, false);
     };
-    const attentionItems = useMemo(() => {
-        if (!hasEdits) {
-            return card.blockers.length > 0
-                ? card.blockers.map((blocker) => ({
-                    field: blocker.field ?? 'review', safeMessage: blocker.safeMessage,
-                }))
-                : [...validation.issues];
-        }
-        const retainedServerItems = card.blockers
-            .filter((blocker) => !draftResolvableBlockerCodes.has(blocker.code))
-            .map((blocker) => ({
-                field: blocker.field ?? 'review', safeMessage: blocker.safeMessage,
-            }));
-        return [...validation.issues, ...retainedServerItems].filter((item, index, values) => (
-            values.findIndex((candidate) => candidate.field === item.field
-                && candidate.safeMessage === item.safeMessage) === index
-        ));
-    }, [card.blockers, hasEdits, validation.issues]);
+    const attentionItems = useMemo(() => cardAttentionItems({
+        card, hasEdits, validationIssues: validation.issues,
+    }), [card, hasEdits, validation.issues]);
     const errorFields = useMemo(() => new Set(attentionItems.map((item) => item.field)),
         [attentionItems]);
     const status = reviewStatusLabel(
