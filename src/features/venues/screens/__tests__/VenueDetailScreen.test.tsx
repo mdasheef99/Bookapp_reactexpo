@@ -1,6 +1,7 @@
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
+import { router } from 'expo-router';
 import VenueDetailScreen from '../VenueDetailScreen';
 
 const mockUseLocalSearchParams = jest.fn();
@@ -73,9 +74,20 @@ describe('VenueDetailScreen', () => {
     it('shows an error state when venue detail fails', () => {
         mockUseVenueDetail.mockReturnValue({ data: null, isLoading: false, isError: true, error: new Error('nope') });
 
-        const { getByText } = render(<VenueDetailScreen />);
+        const { getByText, getByTestId } = render(<VenueDetailScreen />);
 
         expect(getByText('Unable to load venue')).toBeOnTheScreen();
         expect(getByText('Try returning to club venues and opening this place again.')).toBeOnTheScreen();
+        fireEvent.press(getByTestId('venue-error-back-button'));
+        expect(router.replace).toHaveBeenCalledWith('/(tabs)/clubs/venues');
+    });
+
+    it('keeps the initial loading state limited to its spinner', () => {
+        mockUseVenueDetail.mockReturnValue({ data: null, isLoading: true, isError: false, error: null });
+
+        const { queryByText } = render(<VenueDetailScreen />);
+
+        expect(queryByText('Venue')).toBeNull();
+        expect(queryByText('Unable to load venue')).toBeNull();
     });
 });
