@@ -1,11 +1,12 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LibraryScreen from '../../../../app/(tabs)/library/index';
 import { booksService } from '@/features/books/services/booksService';
 import { LibraryShelf } from '../LibraryShelf';
+import { LibraryHorizontalShelf } from '../LibraryHorizontalShelf';
 
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('react-native-gesture-handler', () => ({
@@ -96,6 +97,172 @@ const renderLibraryScreen = () => {
     return { queryClient, ...render(<QueryClientProvider client={queryClient}><LibraryScreen /></QueryClientProvider>) };
 };
 
+describe('horizontal browsing and quick look', () => {
+    const book = { id: 'quick-1', ownership: 'owned', reading_status: 'reading', rating: 4, review: 'A personal review', condition: 'good', available_for_lending: false,
+        book: { title: 'True facts', authors: ['A. Reader'], page_count: 320 } };
+    it('waits the full 450ms through the press responder before opening quick look', () => {
+        jest.useFakeTimers();
+        try {
+            const navigate = jest.fn(), screen = render(<LibraryHorizontalShelf books={[book]} onBookPress={navigate} />);
+            const volume = screen.getByTestId('library-horizontal-book-quick-1');
+            const event = { currentTarget: 1, target: 1, persist: () => {}, nativeEvent: { pageX: 40, pageY: 100, locationX: 10, locationY: 20, touches: [{ pageX: 40, pageY: 100 }] } };
+            fireEvent(volume, 'responderGrant', event);
+            act(() => jest.advanceTimersByTime(449));
+            expect(screen.queryByTestId('library-book-quick-look')).toBeNull();
+            act(() => jest.advanceTimersByTime(1));
+            expect(screen.getByTestId('library-book-quick-look')).toBeTruthy();
+            fireEvent(volume, 'responderRelease', event);
+            expect(navigate).not.toHaveBeenCalled();
+            screen.unmount();
+        } finally { jest.useRealTimers(); }
+    });
+    it('opens loaded facts after a hold, suppresses release navigation and routes the details action', () => {
+        const navigate = jest.fn(), screen = render(<LibraryHorizontalShelf books={[book]} onBookPress={navigate} />);
+        const volume = screen.getByTestId('library-horizontal-book-quick-1');
+        fireEvent(volume, 'pressIn', { nativeEvent: { pageX: 40, pageY: 100 } });
+        fireEvent(volume, 'longPress'); fireEvent.press(volume);
+        expect(navigate).not.toHaveBeenCalled();
+        expect(screen.getByTestId('library-book-quick-look')).toBeTruthy();
+        for (const value of ['Reading', 'Owned', '320', 'Good', '4 / 5', 'A personal review', 'Not available to lend']) expect(screen.getByText(value)).toBeTruthy();
+        expect(screen.queryByText(/progress|minutes|streak/i)).toBeNull();
+        fireEvent.press(screen.getByTestId('library-quick-look-details'));
+        expect(navigate).toHaveBeenCalledWith(book); expect(screen.queryByTestId('library-book-quick-look')).toBeNull();
+    });
+    it('cancels hold and tap after pointer movement and track scrolling', () => {
+        const navigate = jest.fn(), screen = render(<LibraryHorizontalShelf books={[book]} onBookPress={navigate} />);
+        let volume = screen.getByTestId('library-horizontal-book-quick-1');
+        fireEvent(volume, 'pressIn', { nativeEvent: { pageX: 40, pageY: 100 } });
+        fireEvent(volume, 'touchMove', { nativeEvent: { touches: [{ pageX: 65, pageY: 100 }] } });
+        fireEvent(volume, 'longPress'); fireEvent.press(volume);
+        expect(navigate).not.toHaveBeenCalled(); expect(screen.queryByTestId('library-book-quick-look')).toBeNull();
+        fireEvent(volume, 'pressIn', { nativeEvent: { pageX: 40, pageY: 100 } });
+        fireEvent.scroll(screen.getByTestId('library-horizontal-scroll-top'), { nativeEvent: { contentOffset: { x: 20 } } });
+        volume = screen.getByTestId('library-horizontal-book-quick-1');
+        fireEvent(volume, 'longPress'); fireEvent.press(volume);
+        expect(navigate).not.toHaveBeenCalled(); expect(screen.queryByTestId('library-book-quick-look')).toBeNull();
+    });
+    it('retains quick look with reduced motion and applies no transform animation', () => {
+        const motion = require('react-native-reanimated');
+        motion.useReducedMotion.mockReturnValue(true); motion.withTiming.mockClear();
+        try {
+            const screen = render(<LibraryHorizontalShelf books={[book]} onBookPress={jest.fn()} />);
+            const volume = screen.getByTestId('library-horizontal-book-quick-1');
+            fireEvent(volume, 'hoverIn'); fireEvent(volume, 'longPress');
+            expect(screen.getByTestId('library-book-quick-look')).toBeTruthy();
+            expect(motion.withTiming).not.toHaveBeenCalled();
+            screen.unmount();
+        } finally { motion.useReducedMotion.mockReturnValue(false); }
+    });
+    it('provides a visible chooser alternative, omits missing facts and dismisses with back', () => {
+        const unknown = { id: 'unknown', reading_status: null, ownership: null, book: { title: 'Unknown' } };
+        const screen = render(<LibraryHorizontalShelf books={[unknown]} onBookPress={jest.fn()} />);
+        fireEvent.press(screen.getByTestId('library-book-picker-open'));
+        fireEvent.press(screen.getByTestId('library-book-picker-quick-unknown'));
+        expect(screen.getByTestId('library-book-quick-look')).toBeTruthy();
+        expect(screen.getAllByText('Not recorded')).toHaveLength(2);
+        for (const value of ['Pages', 'Lending', 'Your rating', 'Your review', 'Condition']) expect(screen.queryByText(value)).toBeNull();
+        fireEvent(screen.UNSAFE_getByType(require('react-native').Modal), 'requestClose');
+        expect(screen.queryByTestId('library-book-quick-look')).toBeNull();
+    });
+    it('exposes independent overflow controls and updates their boundaries', () => {
+        const books = Array.from({ length: 17 }, (_, i) => ({ ...book, id: `overflow-${i}` }));
+        const screen = render(<LibraryHorizontalShelf books={books} onBookPress={jest.fn()} />);
+        fireEvent(screen.getByTestId('library-horizontal-shelf'), 'layout', { nativeEvent: { layout: { width: 300 } } });
+        expect(screen.getByTestId('library-horizontal-top-previous').props.accessibilityState.disabled).toBe(true);
+        expect(screen.getByTestId('library-horizontal-top-next').props.accessibilityState.disabled).toBe(false);
+        fireEvent.scroll(screen.getByTestId('library-horizontal-scroll-top'), { nativeEvent: { contentOffset: { x: 548 } } });
+        expect(screen.getByTestId('library-horizontal-top-next').props.accessibilityState.disabled).toBe(true);
+        expect(screen.getByTestId('library-horizontal-bottom-previous').props.accessibilityState.disabled).toBe(true);
+    });
+});
+
+describe('horizontal Shelf layout checkpoint', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        (AsyncStorage.getItem as jest.Mock).mockImplementation((key: string) => Promise.resolve(key === 'library_viewMode' ? 'shelf' : null));
+    });
+    it('switches only Shelf style, retains the shared draft, and cancels moves in either style', async () => {
+        const books = ['One', 'Two', 'Three'].map((title, index) => ({ id: `style-${index}`, ownership: 'owned', reading_status: 'want_to_read', book: { title } }));
+        (booksService.getUserLibrary as jest.Mock).mockResolvedValue(books);
+        const screen = renderLibraryScreen();
+        await waitFor(() => expect(screen.getByTestId('library-shelf')).toBeTruthy());
+        fireEvent.press(screen.getByTestId('library-arrange-arrange-shelf'));
+        fireEvent.press(screen.getByTestId('library-shelf-style-horizontal'));
+        expect(screen.getByTestId('library-horizontal-shelf')).toBeTruthy();
+        expect(screen.getByTestId('library-arrange-save')).toBeTruthy();
+        fireEvent.press(screen.getByTestId('library-horizontal-book-style-0'));
+        fireEvent.press(screen.getByTestId('library-arrange-later'));
+        expect(screen.getAllByTestId(/^library-horizontal-book-/).map((node) => node.props.testID))
+            .toEqual(['library-horizontal-book-style-1', 'library-horizontal-book-style-0', 'library-horizontal-book-style-2']);
+        fireEvent.press(screen.getByTestId('library-shelf-style-vertical'));
+        expect(screen.getByTestId('library-arrange-save')).toBeTruthy();
+        fireEvent.press(screen.getByTestId('library-arrange-cancel'));
+        fireEvent.press(screen.getByTestId('library-shelf-style-horizontal'));
+        expect(screen.getAllByTestId(/^library-horizontal-book-/).map((node) => node.props.testID))
+            .toEqual(books.map((book) => `library-horizontal-book-${book.id}`));
+        expect(AsyncStorage.setItem).toHaveBeenCalledWith('library_shelfStyle:v1', 'horizontal');
+        expect(AsyncStorage.setItem).not.toHaveBeenCalledWith('library_shelfOrder:v1:reader-1', expect.anything());
+        screen.unmount(); screen.queryClient.clear();
+    });
+    it('restores Horizontal preference, routes real IDs, filters the same data, and keeps the selector out of List', async () => {
+        (AsyncStorage.getItem as jest.Mock).mockImplementation((key: string) => Promise.resolve(key === 'library_viewMode' ? 'shelf' : key === 'library_shelfStyle:v1' ? 'horizontal' : null));
+        (booksService.getUserLibrary as jest.Mock).mockResolvedValue([
+            { id: 'actual-id', ownership: 'owned', reading_status: 'reading', book: { title: 'Equal title' } },
+            { id: 'wanted-id', ownership: 'wishlist', reading_status: 'want_to_read', book: { title: 'Equal title' } },
+        ]);
+        const screen = renderLibraryScreen();
+        await waitFor(() => expect(screen.getByTestId('library-horizontal-shelf')).toBeTruthy());
+        fireEvent.press(screen.getByTestId('library-horizontal-book-actual-id'));
+        expect(require('expo-router').router.push).toHaveBeenCalledWith('/(tabs)/library/actual-id');
+        fireEvent.press(screen.getByLabelText('Wishlist, 1 books'));
+        expect(screen.queryByTestId('library-horizontal-book-actual-id')).toBeNull();
+        expect(screen.getByTestId('library-horizontal-book-wanted-id')).toBeTruthy();
+        fireEvent.press(screen.getByTestId('library-view-list'));
+        expect(screen.queryByTestId('library-shelf-style-control')).toBeNull();
+        expect(AsyncStorage.setItem).toHaveBeenCalledWith('library_viewMode', 'list');
+        screen.unmount(); screen.queryClient.clear();
+    });
+    it.each(['unknown', 'read-error'])('falls back to Vertical for %s style preference', async (value) => {
+        (AsyncStorage.getItem as jest.Mock).mockImplementation((key: string) => key === 'library_shelfStyle:v1' && value === 'read-error'
+            ? Promise.reject(new Error('storage unavailable')) : Promise.resolve(key === 'library_viewMode' ? 'shelf' : value));
+        (booksService.getUserLibrary as jest.Mock).mockResolvedValue([]);
+        const screen = renderLibraryScreen();
+        await waitFor(() => expect(screen.getByTestId('library-shelf')).toBeTruthy());
+        expect(screen.queryByTestId('library-horizontal-shelf')).toBeNull();
+        screen.unmount(); screen.queryClient.clear();
+    });
+    it('does not let a late saved style overwrite an explicit selection', async () => {
+        let finishRead!: (value: string) => void;
+        (AsyncStorage.getItem as jest.Mock).mockImplementation((key: string) => key === 'library_shelfStyle:v1'
+            ? new Promise<string>((resolve) => { finishRead = resolve; }) : Promise.resolve(key === 'library_viewMode' ? 'shelf' : null));
+        (booksService.getUserLibrary as jest.Mock).mockResolvedValue([]);
+        const screen = renderLibraryScreen();
+        await waitFor(() => expect(screen.getByTestId('library-shelf')).toBeTruthy());
+        fireEvent.press(screen.getByTestId('library-shelf-style-horizontal'));
+        await act(async () => { finishRead('vertical'); });
+        expect(screen.getByTestId('library-horizontal-shelf')).toBeTruthy();
+        screen.unmount(); screen.queryClient.clear();
+    });
+    it('renders separate overflow tracks with fixed planks outside them and no duplicate IDs', () => {
+        const books = Array.from({ length: 17 }, (_, index) => ({ id: `pile-${index}`, ownership: 'owned', reading_status: 'want_to_read', book: { title: 'Pile book' } }));
+        const screen = render(<LibraryHorizontalShelf books={books} onBookPress={jest.fn()} />);
+        fireEvent(screen.getByTestId('library-horizontal-shelf'), 'layout', { nativeEvent: { layout: { width: 342 } } });
+        const upper = screen.getByTestId('library-horizontal-scroll-top');
+        const lower = screen.getByTestId('library-horizontal-scroll-bottom');
+        expect(upper.props.showsHorizontalScrollIndicator).toBe(false);
+        expect(lower.props.showsHorizontalScrollIndicator).toBe(false);
+        expect(upper.props.contentContainerStyle.width).toBeGreaterThan(lower.props.contentContainerStyle.width);
+        expect(screen.getAllByTestId(/^library-horizontal-book-/)).toHaveLength(17);
+        for (const row of ['top', 'bottom']) {
+            let node = screen.getByTestId(`library-horizontal-plank-${row}`).parent;
+            while (node) {
+                expect(node.props.testID).not.toBe(`library-horizontal-scroll-${row}`);
+                node = node.parent;
+            }
+        }
+    });
+});
+
 describe('LibraryShelf single shelf SDD-04', () => {
     beforeEach(() => jest.clearAllMocks());
 
@@ -149,12 +316,13 @@ describe('LibraryShelf single shelf SDD-04', () => {
     });
 
     it('keeps the label region opaque and removes competing expanded spine hit regions', () => {
-        const book = { id: 'contrast', reading_status: 'reading', ownership: 'owned', book: { title: 'Ikigai', page_count: 63 } };
+        const book = { id: 'contrast1', reading_status: 'reading', ownership: 'owned', book: { title: 'Ikigai', page_count: 63 } };
         const { getByTestId, getByText } = render(<LibraryShelf books={[book]} onBookPress={jest.fn()} />);
-        expect(getByTestId('library-shelf-spine-contrast').props.hitSlop).toBeUndefined();
+        expect(getByTestId('library-shelf-spine-contrast1').props.hitSlop).toBeUndefined();
         const label = getByText('Ikigai');
         expect(StyleSheet.flatten(label.props.style).opacity ?? 1).toBe(1);
-        expect(StyleSheet.flatten(getByTestId('library-shelf-label-contrast').props.style).backgroundColor).toBe('#bd7a42');
+        expect(StyleSheet.flatten(getByTestId('library-shelf-label-contrast1').props.style).backgroundColor).toBe('#bd7a42');
+        expect(getByTestId('library-shelf-spine-ridge-upper-contrast1', { includeHiddenElements: true })).toBeTruthy();
     });
 
     it('offers non-overlapping title buttons for the same filtered books without changing presentation', async () => {
@@ -251,7 +419,8 @@ describe('LibraryShelf single shelf SDD-04', () => {
         await waitFor(() => expect(getByTestId('library-arrange-arrange-shelf')).toBeTruthy());
         expect(order()).toEqual(['a', 'c', 'b']);
         expect(AsyncStorage.setItem).toHaveBeenCalledTimes(1);
-        expect(AsyncStorage.setItem).toHaveBeenCalledWith('library_shelfOrder:v1:reader-1', JSON.stringify({ version: 1, ids: ['a', 'c', 'b'] }));
+        expect(AsyncStorage.setItem).toHaveBeenCalledWith('library_shelfOrder:v2:reader-1',
+            JSON.stringify({ version: 2, ids: ['a', 'c', 'b'], tiers: { top: ['a', 'b'], bottom: ['c'] } }));
         expect(getByTestId('library-view-list')).toBeEnabled();
         unmount();
         queryClient.clear();
@@ -293,6 +462,7 @@ describe('LibraryShelf single shelf SDD-04', () => {
         expect(grain.props.accessible).toBe(false);
         expect(grain.props.pointerEvents).toBe('none');
         expect(StyleSheet.flatten(getByTestId('library-shelf-frame').props.style).height).toBe(440);
+        expect(getByTestId('library-shelf-top-cap')).toBeTruthy();
         const innerBoard = StyleSheet.flatten(getByTestId('library-shelf-inner-ledge').props.style);
         const bottomBoard = StyleSheet.flatten(getByTestId('library-shelf-bottom-ledge').props.style);
         const topRow = StyleSheet.flatten(getByTestId('library-shelf-row-top').props.style);

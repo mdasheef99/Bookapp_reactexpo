@@ -1,0 +1,19 @@
+(node:18616) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/components/library/__tests__/LibraryShelf.test.tsx (28.371 s)
+PASS src/components/library/__tests__/horizontalWebPress.test.ts
+PASS src/components/library/__tests__/LibraryBookPicker.test.tsx
+PASS src/features/books/hooks/__tests__/useShelfArrangement.test.ts
+PASS src/components/library/__tests__/useVerticalShelfDrag.test.ts
+PASS src/features/books/utils/__tests__/horizontalShelfArrange.test.ts
+PASS src/components/library/__tests__/useHorizontalShelfDrag.test.ts
+PASS src/features/books/utils/__tests__/shelfOrder.test.ts
+PASS src/features/books/utils/__tests__/horizontalShelfLayout.test.ts
+PASS src/features/books/utils/__tests__/shelfLayout.test.ts
+PASS src/features/books/utils/__tests__/libraryShelf.test.ts
+
+Test Suites: 11 passed, 11 total
+Tests:       134 passed, 134 total
+Snapshots:   0 total
+Time:        49.408 s, estimated 52 s
+Ran all test suites within paths "src/features/books/utils/__tests__/horizontalShelfArrange.test.ts", "src/components/library/__tests__/useHorizontalShelfDrag.test.ts", "src/components/library/__tests__/LibraryShelf.test.tsx", "src/features/books/utils/__tests__/horizontalShelfLayout.test.ts", "src/features/books/utils/__tests__/shelfOrder.test.ts", "src/features/books/hooks/__tests__/useShelfArrangement.test.ts", "src/components/library/__tests__/useVerticalShelfDrag.test.ts", "src/components/library/__tests__/LibraryBookPicker.test.tsx", "src/features/books/utils/__tests__/shelfLayout.test.ts", "src/features/books/utils/__tests__/libraryShelf.test.ts", "src/components/library/__tests__/horizontalWebPress.test.ts".

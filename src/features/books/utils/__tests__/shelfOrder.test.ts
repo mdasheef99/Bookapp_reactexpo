@@ -1,4 +1,4 @@
-import { createShelfDraft, moveShelfBook, moveShelfDraft, parseShelfOrder, reconcileShelfOrder, undoShelfDraft } from '../shelfOrder';
+import { createShelfDraft, initialShelfTierIds, moveHorizontalShelfDraft, moveShelfBook, moveShelfDraft, parseShelfOrder, reconcileShelfArrangement, reconcileShelfOrder, undoShelfDraft } from '../shelfOrder';
 import { resolveVerticalShelfDrop, shelfEdgeScrollStep } from '../verticalShelfArrange';
 import { splitShelfRows, SweptSpineBookLayout } from '../shelfLayout';
 
@@ -19,8 +19,36 @@ describe('shared Shelf arrangement identity and draft', () => {
             expect(moveShelfBook(order, id, before)).toBe(order);
         }
     });
-    it('undoes exactly one completed move and ignores no-op drops', () => {
-        const first = moveShelfDraft(createShelfDraft(['a', 'b', 'c']), 'c', 'a');
+    it('migrates legacy order to balanced tier membership and assigns additions to the shorter tier', () => {
+        const migrated = reconcileShelfArrangement({ order: ['a', 'b', 'c', 'd'], tierIds: null }, ['a', 'b', 'c', 'd']);
+        expect(migrated.tierIds).toEqual({ top: ['a', 'b'], bottom: ['c', 'd'] });
+        const extended = reconcileShelfArrangement({ order: migrated.order, tierIds: migrated.tierIds }, ['a', 'b', 'c', 'd', 'new']);
+        expect(extended.tierIds).toEqual({ top: ['a', 'b', 'new'], bottom: ['c', 'd'] });
+    });
+    it('moves one book between Horizontal tiers without changing neighboring membership', () => {
+        const start = { order: ['a', 'b', 'c', 'd', 'e', 'f'], tierIds: initialShelfTierIds(['a', 'b', 'c', 'd', 'e', 'f']) };
+        const draft = createShelfDraft(start);
+        const moved = moveHorizontalShelfDraft(draft, 'b', 'bottom', 'e');
+        expect(moved.order).toEqual(['a', 'c', 'd', 'b', 'e', 'f']);
+        expect(moved.tierIds).toEqual({ top: ['a', 'c'], bottom: ['d', 'b', 'e', 'f'] });
+        expect(moved.previous).toEqual(start);
+        expect(moved.tierIds.top).toContain('c');
+        expect(moved.tierIds.bottom).toContain('d');
+    });
+    it('Undo restores both order and tier membership, while Vertical moves preserve membership', () => {
+        const start = { order: ['a', 'b', 'c', 'd', 'e', 'f'], tierIds: initialShelfTierIds(['a', 'b', 'c', 'd', 'e', 'f']) };
+        const first = moveHorizontalShelfDraft(createShelfDraft(start), 'b', 'bottom', 'e');
+        const undone = undoShelfDraft(first);
+        expect(undone.order).toEqual(start.order);
+        expect(undone.tierIds).toEqual(start.tierIds);
+        expect(undone.previous).toBeNull();
+        const vertical = moveShelfDraft(createShelfDraft(start), 'd', 'a');
+        expect(vertical.order).toEqual(['d', 'a', 'b', 'c', 'e', 'f']);
+        expect(vertical.tierIds).toEqual(start.tierIds);
+    });
+    it('undoes exactly one completed shared move and ignores no-op drops', () => {
+        const start = { order: ['a', 'b', 'c'], tierIds: initialShelfTierIds(['a', 'b', 'c']) };
+        const first = moveShelfDraft(createShelfDraft(start), 'c', 'a');
         const second = moveShelfDraft(first, 'a', null);
         const noop = moveShelfDraft(second, 'c', 'b');
         expect(noop).toBe(second);
@@ -29,10 +57,14 @@ describe('shared Shelf arrangement identity and draft', () => {
         expect(undone.previous).toBeNull();
         expect(undoShelfDraft(undone)).toBe(undone);
     });
-    it('accepts versioned local order and refuses corrupt/unsupported preferences', () => {
+    it('reads the v1 order and validates v2 tier membership', () => {
         expect(parseShelfOrder(null)).toBeNull();
-        expect(parseShelfOrder('{"version":1,"ids":["a","b"]}')).toEqual(['a', 'b']);
-        for (const raw of ['bad json', '{"version":2,"ids":[]}', '{"version":1,"ids":["a","a"]}', '{"version":1,"ids":[4]}']) {
+        expect(parseShelfOrder('{"version":1,"ids":["a","b"]}')).toEqual({ order: ['a', 'b'], tierIds: null });
+        expect(parseShelfOrder('{"version":2,"ids":["a","b"],"tiers":{"top":["a"],"bottom":["b"]}}'))
+            .toEqual({ order: ['a', 'b'], tierIds: { top: ['a'], bottom: ['b'] } });
+        for (const raw of ['bad json', '{"version":3,"ids":[]}', '{"version":1,"ids":["a","a"]}',
+            '{"version":1,"ids":[4]}', '{"version":2,"ids":["a","b"],"tiers":{"top":["a"],"bottom":[]}}',
+            '{"version":2,"ids":["a","b"],"tiers":{"top":["a","b"],"bottom":["b"]}}']) {
             expect(() => parseShelfOrder(raw)).toThrow();
         }
     });

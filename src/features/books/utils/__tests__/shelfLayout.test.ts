@@ -68,7 +68,7 @@ describe('shelfLayout F1 seeded stability (SDD-05 §3)', () => {
         const m = spineMetrics(s);
         expect(m.width).toBe(32);
         expect(m.height).toBeGreaterThanOrEqual(144);
-        expect(m.height).toBeLessThanOrEqual(156);
+        expect(m.height).toBeLessThanOrEqual(168);
     });
 
     it('uses saved pages for bounded thickness without changing height', () => {
@@ -82,14 +82,22 @@ describe('shelfLayout F1 seeded stability (SDD-05 §3)', () => {
         }
     });
 
-    it('posture: ≤2 leaning pairs per dozen, tilts in −4…−6°, pairs adjacent', () => {
+    it('posture: gentle −2…−3° leaning pairs stay adjacent and scale with shelf size', () => {
         const many = Array.from({ length: 13 }, (_, i) => mkEntry(`m${i}`, `Title ${i}`));
         const posture = computeShelfPosture(many);
         const tilted = many.filter((e) => posture[e.id].tiltDeg !== 0);
         expect(tilted.length).toBeLessThanOrEqual(4); // ≤2 pairs × 2 books
+        expect(tilted.length).toBeGreaterThan(0);
         for (const e of tilted) {
-            expect([-4, -5, -6]).toContain(posture[e.id].tiltDeg);
+            expect([-2, -3]).toContain(posture[e.id].tiltDeg);
         }
+        const tiltedIndexes = tilted.map((entry) => many.findIndex((candidate) => candidate.id === entry.id)).sort((a, b) => a - b);
+        for (let pair = 0; pair < tiltedIndexes.length; pair += 2) {
+            expect(tiltedIndexes[pair + 1]).toBe(tiltedIndexes[pair] + 1);
+        }
+        const smallShelf = Array.from({ length: 4 }, (_, i) => mkEntry(`small-${i}`, `Small ${i}`));
+        const smallPosture = computeShelfPosture(smallShelf);
+        expect(smallShelf.filter((entry) => smallPosture[entry.id].tiltDeg !== 0)).toHaveLength(2);
         // determinism
         expect(computeShelfPosture(many)).toEqual(posture);
     });
@@ -266,6 +274,7 @@ describe('review R2 spine label contrast', () => {
 describe('review R4 per-book brush bounds', () => {
     const rowGeometry = { top: { y: 32, height: 160 }, bottom: { y: 268, height: 160 } };
     it('matches rendered metric height and rejects backing above each bottom-aligned spine', () => {
+        const shelfRowGeometry = { top: { y: 32, height: 192 }, bottom: { y: 268, height: 192 } };
         const entries = Array.from({ length: 14 }, (_, i) => mkEntry(`height-${i}`, `Book ${i}`));
         const { top, bottom } = splitShelfRows(entries);
         const { bookLayouts } = getShelfTrackLayout(top, bottom, 200);
@@ -273,9 +282,9 @@ describe('review R4 per-book brush bounds', () => {
             const item = entries.find((entry) => entry.id === book.id)!;
             const expectedHeight = spineMetrics(stableSeed(item.id, item.book.title), item.book.page_count).height;
             expect(book).toEqual(expect.objectContaining({ height: expectedHeight }));
-            const band = rowGeometry[book.row];
+            const band = shelfRowGeometry[book.row];
             const visibleTop = band.y + band.height - expectedHeight;
-            const point = { scrollX: 40, touchX: book.offsetLeft + book.width / 2 - 40, rowGeometry, bookLayouts };
+            const point = { scrollX: 40, touchX: book.offsetLeft + book.width / 2 - 40, rowGeometry: shelfRowGeometry, bookLayouts };
             expect(resolveSweptSpine({ ...point, touchY: visibleTop - 0.01 })).toBeNull();
             expect(resolveSweptSpine({ ...point, touchY: visibleTop })).toBe(book.id);
             expect(resolveSweptSpine({ ...point, touchY: band.y + band.height - 0.01 })).toBe(book.id);

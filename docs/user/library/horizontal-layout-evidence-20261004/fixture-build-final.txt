@@ -1,0 +1,1 @@
+Fixture built. Actual horizontal layout/component; mocked theme/fonts/images/icons. No account/storage/network or native performance certification.

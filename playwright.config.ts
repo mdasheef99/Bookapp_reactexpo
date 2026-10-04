@@ -14,14 +14,14 @@ export default defineConfig({
   workers: 1,
   reporter: [['list']],
   use: {
-    baseURL: 'http://127.0.0.1:8081',
+    baseURL: 'http://127.0.0.1:8084',
     trace: 'on-first-retry',
     viewport: { width: 1440, height: 960 },
   },
   webServer: {
     command: 'node _serve.js',
-    url: 'http://127.0.0.1:8081',
-    reuseExistingServer: true,
+    url: 'http://127.0.0.1:8084',
+    reuseExistingServer: false,
     timeout: 30_000,
   },
   projects: [

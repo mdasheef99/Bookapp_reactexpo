@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { shelfOrderStorageKey, useShelfArrangement } from '../useShelfArrangement';
+import { legacyShelfOrderStorageKey, shelfOrderStorageKey, useShelfArrangement } from '../useShelfArrangement';
 import { LibraryBookEntry } from '../../utils/libraryShelf';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({ getItem: jest.fn(), setItem: jest.fn() }));
@@ -28,17 +28,38 @@ it('keeps moves/Undo/Cancel local to a draft and writes only on Save', async () 
     act(() => result.current.enter());
     act(() => result.current.move('c', 'a'));
     await act(() => result.current.save());
-    expect(setItem).toHaveBeenCalledWith(shelfOrderStorageKey('reader'), '{"version":1,"ids":["c","a","b"]}');
+    expect(setItem).toHaveBeenCalledWith(shelfOrderStorageKey('reader'),
+        '{"version":2,"ids":["c","a","b"],"tiers":{"top":["a","b"],"bottom":["c"]}}');
     expect(result.current.active).toBe(false);
     expect(result.current.order).toEqual(['c', 'a', 'b']);
 });
 
-it('loads a saved arrangement and keeps new entries after its surviving IDs', async () => {
-    getItem.mockResolvedValue('{"version":1,"ids":["b","removed","a"]}');
+it('loads and upgrades a legacy v1 order while keeping new entries after surviving IDs', async () => {
+    getItem.mockImplementation((key: string) => Promise.resolve(key === legacyShelfOrderStorageKey('reader')
+        ? '{"version":1,"ids":["b","removed","a"]}' : null));
     const { result } = renderHook(() => useShelfArrangement('reader', source));
     await waitFor(() => expect(result.current.ready).toBe(true));
     expect(result.current.order).toEqual(['b', 'a', 'c']);
     expect(setItem).not.toHaveBeenCalled();
+});
+
+it('keeps a horizontal transfer in the draft and saves its independent tier membership', async () => {
+    const { result } = renderHook(() => useShelfArrangement('reader', source));
+    await waitFor(() => expect(result.current.ready).toBe(true));
+    act(() => result.current.enter());
+    act(() => result.current.moveHorizontal('c', 'top', 'a'));
+    expect(result.current.order).toEqual(['c', 'a', 'b']);
+    expect(result.current.tierIds).toEqual({ top: ['c', 'a', 'b'], bottom: [] });
+    expect(result.current.canUndo).toBe(true);
+    expect(setItem).not.toHaveBeenCalled();
+    act(() => result.current.undo());
+    expect(result.current.order).toEqual(['a', 'b', 'c']);
+    expect(result.current.tierIds).toEqual({ top: ['a', 'b'], bottom: ['c'] });
+    expect(result.current.canUndo).toBe(false);
+    act(() => result.current.moveHorizontal('c', 'top', 'a'));
+    await act(() => result.current.save());
+    expect(setItem).toHaveBeenCalledWith(shelfOrderStorageKey('reader'),
+        '{"version":2,"ids":["c","a","b"],"tiers":{"top":["c","a","b"],"bottom":[]}}');
 });
 
 it('retains the draft and its undo snapshot when saving fails, then permits retry', async () => {
@@ -94,7 +115,8 @@ it('reports membership cancellation truthfully when an in-flight save fails and 
     await act(() => result.current.save());
     expect(result.current.order).toEqual(['c', 'new', 'a']);
     expect(result.current.active).toBe(false);
-    expect(setItem).toHaveBeenLastCalledWith(shelfOrderStorageKey('reader'), '{"version":1,"ids":["c","new","a"]}');
+    expect(setItem).toHaveBeenLastCalledWith(shelfOrderStorageKey('reader'),
+        '{"version":2,"ids":["c","new","a"],"tiers":{"top":["new","a"],"bottom":["c"]}}');
 });
 
 it('isolates users even when a previous account read finishes late', async () => {

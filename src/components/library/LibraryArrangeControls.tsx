@@ -4,8 +4,8 @@ import { ShelfArrangement } from '@/features/books/hooks/useShelfArrangement';
 import { LIBRARY_RADIUS, useLibraryAppearance } from './LibraryAppearance';
 import { useLibraryTypography } from './LibraryTypography';
 
-export function LibraryArrangeControls({ arrangement, onEnter, bookCount, dragging }: {
-    arrangement: ShelfArrangement; onEnter: () => void; bookCount: number; dragging: boolean;
+export function LibraryArrangeControls({ arrangement, onEnter, bookCount, dragging, interactionHint = 'Tap a book, then drag it. Hold it near an edge to scroll.' }: {
+    arrangement: ShelfArrangement; onEnter: () => void; bookCount: number; dragging: boolean; interactionHint?: string;
 }) {
     const colors = useLibraryAppearance();
     const fonts = useLibraryTypography();
@@ -26,7 +26,7 @@ export function LibraryArrangeControls({ arrangement, onEnter, bookCount, draggi
                 </> : bookCount > 1 ? button('Arrange shelf', onEnter, !arrangement.ready || arrangement.saving) : null}
             </View>
             {arrangement.active ? <Text style={[styles.hint, { color: colors.textSecondary, fontFamily: fonts.body }]}>
-                Tap a book, then drag it. Hold it near an edge to scroll.
+                {interactionHint}
             </Text> : null}
             {arrangement.message ? <Text accessibilityLiveRegion="polite" testID="library-arrange-message"
                 style={[styles.hint, { color: colors.textSecondary, fontFamily: fonts.body }]}>{arrangement.message}</Text> : null}

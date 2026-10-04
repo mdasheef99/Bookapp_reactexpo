@@ -1,0 +1,70 @@
+[
+  {
+    "contacts": [
+      {
+        "gap": -0.0000152587890625,
+        "pile": "library-horizontal-pile-top-0"
+      },
+      {
+        "gap": -0.0000152587890625,
+        "pile": "library-horizontal-pile-top-1"
+      },
+      {
+        "gap": -0.0000152587890625,
+        "pile": "library-horizontal-pile-top-2"
+      },
+      {
+        "gap": 0,
+        "pile": "library-horizontal-pile-bottom-0"
+      },
+      {
+        "gap": 0,
+        "pile": "library-horizontal-pile-bottom-1"
+      }
+    ],
+    "stage": "initial",
+    "tracks": [
+      {
+        "client": 342,
+        "content": 848,
+        "height": 244,
+        "id": "library-horizontal-scroll-top",
+        "left": 0
+      },
+      {
+        "client": 342,
+        "content": 568,
+        "height": 244,
+        "id": "library-horizontal-scroll-bottom",
+        "left": 0
+      }
+    ],
+    "width": 390
+  },
+  {
+    "stage": "upper-scroll",
+    "tracks": [
+      {
+        "id": "library-horizontal-scroll-top",
+        "left": 342.3999938964844
+      },
+      {
+        "id": "library-horizontal-scroll-bottom",
+        "left": 0
+      }
+    ]
+  },
+  {
+    "stage": "lower-scroll",
+    "tracks": [
+      {
+        "id": "library-horizontal-scroll-top",
+        "left": 342.3999938964844
+      },
+      {
+        "id": "library-horizontal-scroll-bottom",
+        "left": 225.6000061035156
+      }
+    ]
+  }
+]

@@ -6,11 +6,12 @@ import { LIBRARY_RADIUS, LIBRARY_SPACING, useLibraryAppearance } from './Library
 import { useLibraryTypography } from './LibraryTypography';
 
 // A separate, non-overlapping activation path preserves the narrow physical spines.
-export function LibraryBookPicker({ books, onBookPress, activeBook = null, selecting = false }: {
+export function LibraryBookPicker({ books, onBookPress, activeBook = null, selecting = false, onQuickLook }: {
     books: LibraryBookEntry[];
     onBookPress: (book: LibraryBookEntry) => void;
     activeBook?: LibraryBookEntry | null;
     selecting?: boolean;
+    onQuickLook?: (book: LibraryBookEntry) => void;
 }) {
     const [open, setOpen] = React.useState(false);
     const colors = useLibraryAppearance();
@@ -69,15 +70,23 @@ export function LibraryBookPicker({ books, onBookPress, activeBook = null, selec
                             </View>
                             <FlatList testID="library-book-picker-list" style={styles.list} data={books} keyExtractor={(book) => book.id}
                                 renderItem={({ item }) => (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                     <Pressable testID={`library-book-picker-entry-${item.id}`} accessibilityRole="button"
                                         accessibilityLabel={`${selecting ? 'Select' : 'Open'} ${item.book.title}${item.book.authors?.[0] ? ` by ${item.book.authors[0]}` : ''}`}
                                         onPress={() => { setOpen(false); onBookPress(item); }}
-                                        style={[styles.entry, { borderBottomColor: colors.border }]}>
+                                        style={[styles.entry, { flex: 1, borderBottomColor: colors.border }]}>
                                         <Text style={[styles.title, { color: colors.textPrimary, fontFamily: fonts.heading }]}>{item.book.title}</Text>
                                         {item.book.authors?.length ? (
                                             <Text style={[styles.author, { color: colors.textSecondary, fontFamily: fonts.body }]}>{item.book.authors.join(', ')}</Text>
                                         ) : null}
                                     </Pressable>
+                                    {onQuickLook && !selecting ? <Pressable testID={`library-book-picker-quick-${item.id}`}
+                                        accessibilityRole="button" accessibilityLabel={`Quick look at ${item.book.title}`}
+                                        onPress={() => { setOpen(false); onQuickLook(item); }}
+                                        style={{ minHeight: 44, minWidth: 44, paddingHorizontal: 12, justifyContent: 'center' }}>
+                                        <Text style={{ fontFamily: fonts.label, color: colors.textPrimary }}>Quick look</Text>
+                                    </Pressable> : null}
+                                    </View>
                                 )} />
                         </View>
                     </View>

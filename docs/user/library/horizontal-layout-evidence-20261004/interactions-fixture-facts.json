@@ -1,0 +1,448 @@
+[
+  {
+    "step": "initial",
+    "opened": "",
+    "order": [
+      "library-horizontal-book-fixture-1",
+      "library-horizontal-book-fixture-2",
+      "library-horizontal-book-fixture-3",
+      "library-horizontal-book-fixture-4",
+      "library-horizontal-book-fixture-5",
+      "library-horizontal-book-fixture-6",
+      "library-horizontal-book-fixture-7",
+      "library-horizontal-book-fixture-8",
+      "library-horizontal-book-fixture-9",
+      "library-horizontal-book-fixture-10",
+      "library-horizontal-book-fixture-11",
+      "library-horizontal-book-fixture-12",
+      "library-horizontal-book-fixture-13",
+      "library-horizontal-book-fixture-14",
+      "library-horizontal-book-fixture-15",
+      "library-horizontal-book-fixture-16",
+      "library-horizontal-book-fixture-17"
+    ],
+    "tracks": [
+      {
+        "client": 552,
+        "content": 848,
+        "id": "library-horizontal-scroll-top",
+        "x": 0
+      },
+      {
+        "client": 552,
+        "content": 568,
+        "id": "library-horizontal-scroll-bottom",
+        "x": 0
+      }
+    ]
+  },
+  {
+    "step": "upper-next",
+    "opened": "",
+    "order": [
+      "library-horizontal-book-fixture-1",
+      "library-horizontal-book-fixture-2",
+      "library-horizontal-book-fixture-3",
+      "library-horizontal-book-fixture-4",
+      "library-horizontal-book-fixture-5",
+      "library-horizontal-book-fixture-6",
+      "library-horizontal-book-fixture-7",
+      "library-horizontal-book-fixture-8",
+      "library-horizontal-book-fixture-9",
+      "library-horizontal-book-fixture-10",
+      "library-horizontal-book-fixture-11",
+      "library-horizontal-book-fixture-12",
+      "library-horizontal-book-fixture-13",
+      "library-horizontal-book-fixture-14",
+      "library-horizontal-book-fixture-15",
+      "library-horizontal-book-fixture-16",
+      "library-horizontal-book-fixture-17"
+    ],
+    "tracks": [
+      {
+        "client": 552,
+        "content": 848,
+        "id": "library-horizontal-scroll-top",
+        "x": 280
+      },
+      {
+        "client": 552,
+        "content": 568,
+        "id": "library-horizontal-scroll-bottom",
+        "x": 0
+      }
+    ]
+  },
+  {
+    "step": "lower-next-phone",
+    "opened": "",
+    "order": [
+      "library-horizontal-book-fixture-1",
+      "library-horizontal-book-fixture-2",
+      "library-horizontal-book-fixture-3",
+      "library-horizontal-book-fixture-4",
+      "library-horizontal-book-fixture-5",
+      "library-horizontal-book-fixture-6",
+      "library-horizontal-book-fixture-7",
+      "library-horizontal-book-fixture-8",
+      "library-horizontal-book-fixture-9",
+      "library-horizontal-book-fixture-10",
+      "library-horizontal-book-fixture-11",
+      "library-horizontal-book-fixture-12",
+      "library-horizontal-book-fixture-13",
+      "library-horizontal-book-fixture-14",
+      "library-horizontal-book-fixture-15",
+      "library-horizontal-book-fixture-16",
+      "library-horizontal-book-fixture-17"
+    ],
+    "tracks": [
+      {
+        "client": 342,
+        "content": 848,
+        "id": "library-horizontal-scroll-top",
+        "x": 280
+      },
+      {
+        "client": 342,
+        "content": 568,
+        "id": "library-horizontal-scroll-bottom",
+        "x": 225.6000061035156
+      }
+    ]
+  },
+  {
+    "step": "before-edge-drag",
+    "opened": "",
+    "order": [
+      "library-horizontal-book-fixture-1",
+      "library-horizontal-book-fixture-2",
+      "library-horizontal-book-fixture-3",
+      "library-horizontal-book-fixture-4",
+      "library-horizontal-book-fixture-5",
+      "library-horizontal-book-fixture-6",
+      "library-horizontal-book-fixture-7",
+      "library-horizontal-book-fixture-8",
+      "library-horizontal-book-fixture-9",
+      "library-horizontal-book-fixture-10",
+      "library-horizontal-book-fixture-11",
+      "library-horizontal-book-fixture-12",
+      "library-horizontal-book-fixture-13",
+      "library-horizontal-book-fixture-14",
+      "library-horizontal-book-fixture-15",
+      "library-horizontal-book-fixture-16",
+      "library-horizontal-book-fixture-17"
+    ],
+    "tracks": [
+      {
+        "client": 327,
+        "content": 848,
+        "id": "library-horizontal-scroll-top",
+        "x": 0
+      },
+      {
+        "client": 327,
+        "content": 568,
+        "id": "library-horizontal-scroll-bottom",
+        "x": 225.6000061035156
+      }
+    ]
+  },
+  {
+    "step": "after-edge-drag",
+    "opened": "",
+    "order": [
+      "library-horizontal-book-fixture-1",
+      "library-horizontal-book-fixture-2",
+      "library-horizontal-book-fixture-3",
+      "library-horizontal-book-fixture-4",
+      "library-horizontal-book-fixture-5",
+      "library-horizontal-book-fixture-6",
+      "library-horizontal-book-fixture-7",
+      "library-horizontal-book-fixture-8",
+      "library-horizontal-book-fixture-9",
+      "library-horizontal-book-fixture-10",
+      "library-horizontal-book-fixture-11",
+      "library-horizontal-book-fixture-12",
+      "library-horizontal-book-fixture-13",
+      "library-horizontal-book-fixture-14",
+      "library-horizontal-book-fixture-15",
+      "library-horizontal-book-fixture-16",
+      "library-horizontal-book-fixture-17"
+    ],
+    "tracks": [
+      {
+        "client": 327,
+        "content": 848,
+        "id": "library-horizontal-scroll-top",
+        "x": 0
+      },
+      {
+        "client": 327,
+        "content": 568,
+        "id": "library-horizontal-scroll-bottom",
+        "x": 225.6000061035156
+      }
+    ]
+  },
+  {
+    "step": "corrected-before-edge-drag",
+    "opened": "",
+    "order": [
+      "library-horizontal-book-fixture-1",
+      "library-horizontal-book-fixture-2",
+      "library-horizontal-book-fixture-3",
+      "library-horizontal-book-fixture-4",
+      "library-horizontal-book-fixture-5",
+      "library-horizontal-book-fixture-6",
+      "library-horizontal-book-fixture-7",
+      "library-horizontal-book-fixture-8",
+      "library-horizontal-book-fixture-9",
+      "library-horizontal-book-fixture-10",
+      "library-horizontal-book-fixture-11",
+      "library-horizontal-book-fixture-12",
+      "library-horizontal-book-fixture-13",
+      "library-horizontal-book-fixture-14",
+      "library-horizontal-book-fixture-15",
+      "library-horizontal-book-fixture-16",
+      "library-horizontal-book-fixture-17"
+    ],
+    "tracks": [
+      {
+        "client": 342,
+        "content": 848,
+        "id": "library-horizontal-scroll-top",
+        "x": 0
+      },
+      {
+        "client": 342,
+        "content": 568,
+        "id": "library-horizontal-scroll-bottom",
+        "x": 0
+      }
+    ]
+  },
+  {
+    "step": "corrected-after-edge-drag",
+    "opened": "",
+    "order": [
+      "library-horizontal-book-fixture-2",
+      "library-horizontal-book-fixture-3",
+      "library-horizontal-book-fixture-4",
+      "library-horizontal-book-fixture-5",
+      "library-horizontal-book-fixture-1",
+      "library-horizontal-book-fixture-6",
+      "library-horizontal-book-fixture-7",
+      "library-horizontal-book-fixture-8",
+      "library-horizontal-book-fixture-9",
+      "library-horizontal-book-fixture-10",
+      "library-horizontal-book-fixture-11",
+      "library-horizontal-book-fixture-12",
+      "library-horizontal-book-fixture-13",
+      "library-horizontal-book-fixture-14",
+      "library-horizontal-book-fixture-15",
+      "library-horizontal-book-fixture-16",
+      "library-horizontal-book-fixture-17"
+    ],
+    "tracks": [
+      {
+        "client": 342,
+        "content": 848,
+        "id": "library-horizontal-scroll-top",
+        "x": 111.1999969482422
+      },
+      {
+        "client": 342,
+        "content": 568,
+        "id": "library-horizontal-scroll-bottom",
+        "x": 0
+      }
+    ]
+  },
+  {
+    "step": "fixture-save",
+    "opened": "",
+    "order": [
+      "library-horizontal-book-fixture-2",
+      "library-horizontal-book-fixture-3",
+      "library-horizontal-book-fixture-4",
+      "library-horizontal-book-fixture-5",
+      "library-horizontal-book-fixture-1",
+      "library-horizontal-book-fixture-6",
+      "library-horizontal-book-fixture-7",
+      "library-horizontal-book-fixture-8",
+      "library-horizontal-book-fixture-9",
+      "library-horizontal-book-fixture-10",
+      "library-horizontal-book-fixture-11",
+      "library-horizontal-book-fixture-12",
+      "library-horizontal-book-fixture-13",
+      "library-horizontal-book-fixture-14",
+      "library-horizontal-book-fixture-15",
+      "library-horizontal-book-fixture-16",
+      "library-horizontal-book-fixture-17"
+    ],
+    "tracks": [
+      {
+        "client": 342,
+        "content": 848,
+        "id": "library-horizontal-scroll-top",
+        "x": 111.1999969482422
+      },
+      {
+        "client": 342,
+        "content": 568,
+        "id": "library-horizontal-scroll-bottom",
+        "x": 0
+      }
+    ]
+  },
+  {
+    "step": "fixture-reload",
+    "opened": "",
+    "order": [
+      "library-horizontal-book-fixture-2",
+      "library-horizontal-book-fixture-3",
+      "library-horizontal-book-fixture-4",
+      "library-horizontal-book-fixture-5",
+      "library-horizontal-book-fixture-1",
+      "library-horizontal-book-fixture-6",
+      "library-horizontal-book-fixture-7",
+      "library-horizontal-book-fixture-8",
+      "library-horizontal-book-fixture-9",
+      "library-horizontal-book-fixture-10",
+      "library-horizontal-book-fixture-11",
+      "library-horizontal-book-fixture-12",
+      "library-horizontal-book-fixture-13",
+      "library-horizontal-book-fixture-14",
+      "library-horizontal-book-fixture-15",
+      "library-horizontal-book-fixture-16",
+      "library-horizontal-book-fixture-17"
+    ],
+    "tracks": [
+      {
+        "client": 342,
+        "content": 848,
+        "id": "library-horizontal-scroll-top",
+        "x": 0
+      },
+      {
+        "client": 342,
+        "content": 568,
+        "id": "library-horizontal-scroll-bottom",
+        "x": 0
+      }
+    ]
+  },
+  {
+    "step": "upper-keyboard-end",
+    "opened": "",
+    "order": [
+      "library-horizontal-book-fixture-2",
+      "library-horizontal-book-fixture-3",
+      "library-horizontal-book-fixture-4",
+      "library-horizontal-book-fixture-5",
+      "library-horizontal-book-fixture-1",
+      "library-horizontal-book-fixture-6",
+      "library-horizontal-book-fixture-7",
+      "library-horizontal-book-fixture-8",
+      "library-horizontal-book-fixture-9",
+      "library-horizontal-book-fixture-10",
+      "library-horizontal-book-fixture-11",
+      "library-horizontal-book-fixture-12",
+      "library-horizontal-book-fixture-13",
+      "library-horizontal-book-fixture-14",
+      "library-horizontal-book-fixture-15",
+      "library-horizontal-book-fixture-16",
+      "library-horizontal-book-fixture-17"
+    ],
+    "tracks": [
+      {
+        "client": 342,
+        "content": 848,
+        "id": "library-horizontal-scroll-top",
+        "x": 505.6000061035156
+      },
+      {
+        "client": 342,
+        "content": 568,
+        "id": "library-horizontal-scroll-bottom",
+        "x": 0
+      }
+    ],
+    "nextDisabled": true
+  },
+  {
+    "step": "lower-end",
+    "opened": "",
+    "order": [
+      "library-horizontal-book-fixture-2",
+      "library-horizontal-book-fixture-3",
+      "library-horizontal-book-fixture-4",
+      "library-horizontal-book-fixture-5",
+      "library-horizontal-book-fixture-1",
+      "library-horizontal-book-fixture-6",
+      "library-horizontal-book-fixture-7",
+      "library-horizontal-book-fixture-8",
+      "library-horizontal-book-fixture-9",
+      "library-horizontal-book-fixture-10",
+      "library-horizontal-book-fixture-11",
+      "library-horizontal-book-fixture-12",
+      "library-horizontal-book-fixture-13",
+      "library-horizontal-book-fixture-14",
+      "library-horizontal-book-fixture-15",
+      "library-horizontal-book-fixture-16",
+      "library-horizontal-book-fixture-17"
+    ],
+    "tracks": [
+      {
+        "client": 342,
+        "content": 848,
+        "id": "library-horizontal-scroll-top",
+        "x": 505.6000061035156
+      },
+      {
+        "client": 342,
+        "content": 568,
+        "id": "library-horizontal-scroll-bottom",
+        "x": 225.6000061035156
+      }
+    ],
+    "nextDisabled": true
+  },
+  {
+    "step": "fixture-key-reset",
+    "opened": "",
+    "order": [
+      "library-horizontal-book-fixture-1",
+      "library-horizontal-book-fixture-2",
+      "library-horizontal-book-fixture-3",
+      "library-horizontal-book-fixture-4",
+      "library-horizontal-book-fixture-5",
+      "library-horizontal-book-fixture-6",
+      "library-horizontal-book-fixture-7",
+      "library-horizontal-book-fixture-8",
+      "library-horizontal-book-fixture-9",
+      "library-horizontal-book-fixture-10",
+      "library-horizontal-book-fixture-11",
+      "library-horizontal-book-fixture-12",
+      "library-horizontal-book-fixture-13",
+      "library-horizontal-book-fixture-14",
+      "library-horizontal-book-fixture-15",
+      "library-horizontal-book-fixture-16",
+      "library-horizontal-book-fixture-17"
+    ],
+    "tracks": [
+      {
+        "client": 342,
+        "content": 848,
+        "id": "library-horizontal-scroll-top",
+        "x": 505.6000061035156
+      },
+      {
+        "client": 342,
+        "content": 568,
+        "id": "library-horizontal-scroll-bottom",
+        "x": 225.6000061035156
+      }
+    ]
+  }
+]

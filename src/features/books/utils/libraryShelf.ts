@@ -5,6 +5,9 @@ export type LibraryBookEntry = {
     reading_status: string | null;
     ownership: string | null;
     available_for_lending?: boolean | null;
+    condition?: string | null;
+    rating?: number | null;
+    review?: string | null;
     book: {
         title: string;
         authors?: string[] | null;

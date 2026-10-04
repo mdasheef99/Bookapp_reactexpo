@@ -1,0 +1,9 @@
+{
+  "entryFile": "entry-3009c7c404666084dfc21441b1a44acf.js",
+  "localSha256": "02321BE0A73522DCD1B32860F9BCFD370EE58B97B26F9FBD47F1E23C816C8464",
+  "freshExportPassed": true,
+  "servedHtmlSha256": null,
+  "servedEntrySha256": null,
+  "servedIdentityVerified": false,
+  "reason": "After the final web press-delay correction, localhost:19006 refused connections and the browser session became unavailable; the prior entry was verified in the authenticated app."
+}
