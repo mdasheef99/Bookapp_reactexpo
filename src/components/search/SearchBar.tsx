@@ -1,7 +1,8 @@
 import { View, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { useLibraryTypography } from '@/components/library/LibraryTypography';
 
 interface SearchBarProps {
     query: string;
@@ -22,11 +23,12 @@ export const SearchBar = ({
     onClear,
     loading,
     autoFocus = true,
-    placeholder = "Search books, authors...",
+    placeholder = 'Title, author, or ISBN',
     onFocus,
     onBlur,
 }: SearchBarProps) => {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
+    const fonts = useLibraryTypography();
     const handleClear = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onClear();
@@ -40,24 +42,24 @@ export const SearchBar = ({
                 backgroundColor: colors.bgCard,
                 borderWidth: 1,
                 borderColor: colors.border,
-                borderRadius: 20,
-                height: 60,
-                paddingHorizontal: 20,
-                marginBottom: 16,
+                borderRadius: 14,
+                minHeight: 56,
+                paddingHorizontal: 12,
+                marginBottom: 12,
                 shadowColor: colors.shadow,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.15,
-                shadowRadius: 12,
-                elevation: 5,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 6,
+                elevation: 2,
             }}
         >
-            <Ionicons name="search" size={24} color={colors.textSecondary} />
+            <Ionicons name="search-outline" size={20} color={colors.textSecondary} />
             <TextInput
                 style={{
                     flex: 1,
-                    marginLeft: 12,
-                    fontSize: 17,
-                    fontWeight: '500',
+                    marginLeft: 10,
+                    fontSize: 16,
+                    fontFamily: fonts.body,
                     color: colors.textPrimary,
                 }}
                 placeholder={placeholder}
@@ -77,13 +79,17 @@ export const SearchBar = ({
                     onPress={handleClear}
                     style={{
                         backgroundColor: colors.bgSecondary,
-                        borderRadius: 12,
-                        padding: 6,
+                        borderRadius: 22,
+                        width: 44,
+                        height: 44,
+                        alignItems: 'center',
+                        justifyContent: 'center',
                     }}
+                    accessibilityRole="button"
                     accessibilityLabel="Clear search"
                     accessibilityHint="Clears the search input"
                 >
-                    <Ionicons name="close" size={16} color={colors.textSecondary} />
+                    <Ionicons name="close" size={18} color={colors.textSecondary} />
                 </TouchableOpacity>
             )}
             {loading && (

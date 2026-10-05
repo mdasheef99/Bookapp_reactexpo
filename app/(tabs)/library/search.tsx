@@ -9,13 +9,12 @@ import {
     RefreshControl,
     StyleSheet,
 } from 'react-native';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { booksService, GoogleBook, SearchFilters, PaginatedResult } from '@/features/books/services/booksService';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useRecentSearches } from '@/hooks/useRecentSearches';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -23,7 +22,9 @@ import { useWishlist } from '@/hooks/useWishlist';
 import * as Haptics from 'expo-haptics';
 import { SortOption } from '@/lib/constants';
 import { navigateBackOrFallback } from '@/lib/navigation';
-import { ScreenBackground } from '@/components/ui/ScreenBackground';
+import { LibraryTypographyProvider, useLibraryTypography } from '@/components/library/LibraryTypography';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { sortSearchResults } from '@/features/books/utils/searchResults';
 
 // Import components
 import {
@@ -41,19 +42,28 @@ import { OfflineBanner } from '@/components/ui/OfflineBanner';
 
 // Loading footer for pagination
 const LoadingFooter = ({ loading }: { loading: boolean }) => {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
+    const fonts = useLibraryTypography();
     if (!loading) return null;
     return (
         <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-            <Text style={{ color: colors.textTertiary, fontSize: 12 }}>Loading more...</Text>
+            <Text style={{ color: colors.textTertiary, fontSize: 12, fontFamily: fonts.body }}>Loading more...</Text>
         </View>
     );
 };
 
+const getSearchSignature = (searchQuery: string, filters: SearchFilters) =>
+    JSON.stringify([searchQuery.trim(), filters]);
+
 export default function SearchBooksScreen() {
+    return <LibraryTypographyProvider><SearchBooksScreenContent /></LibraryTypographyProvider>;
+}
+
+function SearchBooksScreenContent() {
     const router = useRouter();
     const { session } = useAuth();
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
+    const fonts = useLibraryTypography();
     const queryClient = useQueryClient();
     const { isOffline } = useNetworkStatus();
     const browserLocation = typeof window !== 'undefined'
@@ -80,6 +90,13 @@ export default function SearchBooksScreen() {
     const [hasMore, setHasMore] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [totalItems, setTotalItems] = useState(0);
+    const [totalItemsExact, setTotalItemsExact] = useState(true);
+    const [providerUnsupportedFilters, setProviderUnsupportedFilters] = useState<Array<keyof SearchFilters>>([]);
+    const searchRequestId = useRef(0);
+    const lastSearchSignature = useRef<string | null>(null);
+    const pendingRecentSearchSignature = useRef<string | null>(null);
+    const selectedProvider = useRef<'google' | 'openLibrary' | undefined>(undefined);
+    const submittedQuery = useRef<string | null>(null);
 
     // Sort & Filter
     const [sortBy, setSortBy] = useState<SortOption>('relevance');
@@ -116,7 +133,10 @@ export default function SearchBooksScreen() {
 
     // Auto-search when debounced query changes
     useEffect(() => {
-        if (debouncedQuery.trim().length >= 3 && !searchIsOffline) {
+        if ((debouncedQuery.trim().length >= 3 || (debouncedQuery.trim() && submittedQuery.current === debouncedQuery.trim())) && !searchIsOffline) {
+            const signature = getSearchSignature(debouncedQuery, filters);
+            if (lastSearchSignature.current === signature) return;
+            lastSearchSignature.current = signature;
             performSearch(debouncedQuery, 0, false);
         }
     }, [debouncedQuery, filters, searchIsOffline]);
@@ -138,8 +158,10 @@ export default function SearchBooksScreen() {
     // Search function
     const performSearch = useCallback(async (searchQuery: string, index: number = 0, saveToRecent: boolean = true) => {
         if (!searchQuery.trim() || searchIsOffline) return;
+        const requestId = ++searchRequestId.current;
 
         if (index === 0) {
+            selectedProvider.current = undefined;
             setLoading(true);
             setResults([]);
         } else {
@@ -149,9 +171,14 @@ export default function SearchBooksScreen() {
         setShowSuggestions(false);
         setShowCachedResultsNotice(false);
         setShowOpenLibraryFallbackNotice(false);
+        setProviderUnsupportedFilters([]);
 
         try {
-            const result = await booksService.searchGoogleBooksCached(searchQuery, index, 20, filters);
+            const result = index === 0
+                ? await booksService.searchGoogleBooksCached(searchQuery, index, 20, filters)
+                : await booksService.searchGoogleBooksCached(searchQuery, index, 20, filters, selectedProvider.current);
+            if (requestId !== searchRequestId.current) return;
+            selectedProvider.current = result.providerUsed ?? 'google';
 
             if (index === 0) {
                 setResults(result.items);
@@ -161,29 +188,48 @@ export default function SearchBooksScreen() {
 
             setHasMore(result.hasMore);
             setTotalItems(result.totalItems);
-            setStartIndex(index + result.items.length);
+            setTotalItemsExact(result.totalItemsExact ?? true);
+            setProviderUnsupportedFilters(result.unsupportedFilters ?? []);
+            setStartIndex(result.nextStartIndex ?? index + result.items.length);
             setShowCachedResultsNotice(result.fromCache && index === 0);
             setShowOpenLibraryFallbackNotice(
-                result.fallbackUsed === true && result.providerUsed === 'openLibrary' && index === 0
+                result.fallbackUsed === true && result.providerUsed === 'openLibrary'
             );
 
-            if (saveToRecent && result.items.length > 0 && index === 0) {
+            const searchSignature = getSearchSignature(searchQuery, filters);
+            const explicitSubmitWasPending = pendingRecentSearchSignature.current === searchSignature;
+            if ((saveToRecent || explicitSubmitWasPending) && result.items.length > 0 && index === 0) {
                 saveRecentSearch(searchQuery);
+                if (explicitSubmitWasPending) pendingRecentSearchSignature.current = null;
             }
         } catch (err) {
+            if (requestId !== searchRequestId.current) return;
             const message = err instanceof Error ? err.message : 'Failed to search. Please try again.';
             setError(message);
         } finally {
-            setLoading(false);
-            setLoadingMore(false);
+            if (requestId === searchRequestId.current) {
+                setLoading(false);
+                setLoadingMore(false);
+            }
         }
     }, [searchIsOffline, filters, saveRecentSearch]);
 
     const handleSearch = useCallback(() => {
         if (!searchIsOffline) {
+            submittedQuery.current = query.trim();
+            const signature = getSearchSignature(query, filters);
+            if (lastSearchSignature.current === signature && !error) {
+                if (results.length > 0) {
+                    saveRecentSearch(query);
+                } else if (loading) {
+                    pendingRecentSearchSignature.current = signature;
+                }
+                return;
+            }
+            lastSearchSignature.current = signature;
             performSearch(query, 0, true);
         }
-    }, [searchIsOffline, query, performSearch]);
+    }, [searchIsOffline, query, filters, error, results.length, loading, saveRecentSearch, performSearch]);
 
     const handleLoadMore = useCallback(() => {
         if (!loadingMore && hasMore && !searchIsOffline) {
@@ -199,14 +245,48 @@ export default function SearchBooksScreen() {
     }, [query, searchIsOffline, performSearch]);
 
     const handleClear = useCallback(() => {
+        submittedQuery.current = null;
+        selectedProvider.current = undefined;
+        searchRequestId.current += 1;
+        lastSearchSignature.current = null;
+        pendingRecentSearchSignature.current = null;
         setQuery('');
         setResults([]);
+        setLoading(false);
+        setLoadingMore(false);
+        setError(null);
         setStartIndex(0);
         setHasMore(false);
         setSuggestions([]);
         setShowCachedResultsNotice(false);
         setShowOpenLibraryFallbackNotice(false);
+        setTotalItems(0);
+        setTotalItemsExact(true);
+        setProviderUnsupportedFilters([]);
     }, []);
+
+    const handleQueryChange = useCallback((text: string) => {
+        if (text !== query) {
+            submittedQuery.current = null;
+            selectedProvider.current = undefined;
+            searchRequestId.current += 1;
+            lastSearchSignature.current = null;
+            pendingRecentSearchSignature.current = null;
+            setResults([]);
+            setLoading(false);
+            setLoadingMore(false);
+            setStartIndex(0);
+            setHasMore(false);
+            setTotalItems(0);
+            setTotalItemsExact(true);
+            setProviderUnsupportedFilters([]);
+            setShowCachedResultsNotice(false);
+            setShowOpenLibraryFallbackNotice(false);
+            setError(null);
+        }
+        setQuery(text);
+        setShowSuggestions(text.length >= 2);
+    }, [query]);
 
     const closeManualEntryModal = useCallback(() => {
         setShowManualEntryModal(false);
@@ -221,43 +301,30 @@ export default function SearchBooksScreen() {
     }, [query]);
 
     const handleSuggestionSelect = useCallback((suggestion: string) => {
+        submittedQuery.current = suggestion.trim();
         setQuery(suggestion);
         setShowSuggestions(false);
-        performSearch(suggestion, 0, true);
-    }, [performSearch]);
+        const signature = getSearchSignature(suggestion, filters);
+        if (lastSearchSignature.current !== signature) {
+            lastSearchSignature.current = signature;
+            performSearch(suggestion, 0, true);
+        }
+    }, [filters, performSearch]);
 
     const handleFilterApply = useCallback((newFilters: SearchFilters) => {
+        pendingRecentSearchSignature.current = null;
         setFilters(newFilters);
-        if (query.trim()) {
-            performSearch(query, 0, false);
-        }
-    }, [query, performSearch]);
+    }, []);
 
     const handleFilterRemove = useCallback((key: keyof SearchFilters) => {
         const newFilters = { ...filters };
         delete newFilters[key];
+        pendingRecentSearchSignature.current = null;
         setFilters(newFilters);
-        if (query.trim()) {
-            performSearch(query, 0, false);
-        }
-    }, [filters, query, performSearch]);
+    }, [filters]);
 
     // Sort results
-    const sortedResults = useMemo(() => {
-        if (sortBy === 'relevance') return results;
-        return [...results].sort((a, b) => {
-            switch (sortBy) {
-                case 'rating':
-                    return (b.volumeInfo.averageRating || 0) - (a.volumeInfo.averageRating || 0);
-                case 'newest':
-                    return (b.volumeInfo.publishedDate || '0000').localeCompare(a.volumeInfo.publishedDate || '0000');
-                case 'title':
-                    return a.volumeInfo.title.localeCompare(b.volumeInfo.title);
-                default:
-                    return 0;
-            }
-        });
-    }, [results, sortBy]);
+    const sortedResults = useMemo(() => sortSearchResults(results, sortBy), [results, sortBy]);
 
     // Book actions
     const handleAddBook = useCallback(async (book: GoogleBook) => {
@@ -398,32 +465,32 @@ export default function SearchBooksScreen() {
     );
 
     const renderError = () => (
-        <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 80, paddingHorizontal: 32 }}>
-            <View style={{ width: 80, height: 80, backgroundColor: '#FEE2E2', borderRadius: 40, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <Ionicons name="alert-circle-outline" size={40} color="#EF4444" />
+        <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 64, paddingHorizontal: 32 }}>
+            <View style={{ width: 68, height: 68, backgroundColor: colors.bgSecondary, borderRadius: 34, alignItems: 'center', justifyContent: 'center', marginBottom: 16, borderWidth: 1, borderColor: colors.border }}>
+                <Ionicons name="alert-circle-outline" size={34} color={colors.error} />
             </View>
-            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '600', textAlign: 'center' }}>Something went wrong</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 8 }}>{error}</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 22, fontFamily: fonts.heading, textAlign: 'center' }}>Search couldn’t finish</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: fonts.body, textAlign: 'center', marginTop: 8 }}>{error}</Text>
             <TouchableOpacity
                 onPress={handleSearch}
-                style={{ backgroundColor: colors.accent, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14, marginTop: 20, flexDirection: 'row', alignItems: 'center' }}
+                style={{ backgroundColor: colors.accent, paddingHorizontal: 18, minHeight: 44, borderRadius: 12, marginTop: 20, flexDirection: 'row', alignItems: 'center' }}
                 accessibilityLabel="Try Again"
                 accessibilityHint="Retry the failed search"
             >
-                <Ionicons name="refresh" size={18} color="#fff" />
-                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', marginLeft: 8 }}>Try Again</Text>
+                <Ionicons name="refresh" size={18} color={colors.onAccent} />
+                <Text style={{ color: colors.onAccent, fontSize: 14, fontFamily: fonts.label, marginLeft: 8 }}>Try Again</Text>
             </TouchableOpacity>
         </View>
     );
 
     const renderEmptyState = () => (
-        <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 60, paddingHorizontal: 40, opacity: 0.8 }}>
-            <View style={{ width: 100, height: 100, backgroundColor: colors.bgCard, borderRadius: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 1, borderColor: colors.border }}>
-                <Ionicons name="library-outline" size={48} color={colors.accent} />
+        <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 54, paddingHorizontal: 32 }}>
+            <View style={{ width: 82, height: 82, backgroundColor: colors.bgCard, borderRadius: 41, alignItems: 'center', justifyContent: 'center', marginBottom: 16, borderWidth: 1, borderColor: colors.border }}>
+                <Ionicons name="book-outline" size={38} color={colors.accent} />
             </View>
-            <Text style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 8 }}>Discover Books</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 15, textAlign: 'center', lineHeight: 22 }}>
-                Search for your favorite titles, authors, or genres
+            <Text style={{ color: colors.textPrimary, fontSize: 26, fontFamily: fonts.heading, textAlign: 'center', marginBottom: 6 }}>Find your next read</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: fonts.body, textAlign: 'center', lineHeight: 21 }}>
+                Search books, authors, or ISBNs. Add a title to your shelf or wishlist.
             </Text>
         </View>
     );
@@ -433,24 +500,45 @@ export default function SearchBooksScreen() {
             <View style={[styles.noResultsIconCircle, { backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border }]}>
                 <Ionicons name="search-outline" size={36} color={colors.textTertiary} />
             </View>
-            <Text style={{ color: colors.textSecondary, fontSize: 18, fontWeight: '600', textAlign: 'center' }}>No books found</Text>
-            <Text style={{ color: colors.textTertiary, fontSize: 15, textAlign: 'center', marginTop: 8 }}>
-                Try a different search term or adjust filters
+            <Text style={{ color: colors.textPrimary, fontSize: 22, fontFamily: fonts.heading, textAlign: 'center' }}>
+                {searchIsOffline ? 'Search unavailable offline' : 'No books found'}
             </Text>
-            <TouchableOpacity
+            <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: fonts.body, textAlign: 'center', marginTop: 8, lineHeight: 21 }}>
+                {searchIsOffline
+                    ? 'Reconnect to the internet to search book catalogues.'
+                    : 'Try a different search term or adjust filters'}
+            </Text>
+            {!searchIsOffline && showOpenLibraryFallbackNotice && (
+                <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body, textAlign: 'center', marginTop: 12, lineHeight: 18 }}>
+                    {providerNotice}
+                </Text>
+            )}
+            {!searchIsOffline && <TouchableOpacity
                 testID="library-manual-entry-open"
                 onPress={openManualEntryModal}
                 style={[styles.manualEntryButton, { backgroundColor: colors.accent }]}
+                accessibilityRole="button"
                 accessibilityLabel="Add book manually"
                 accessibilityHint="Opens a form to add a book without Google Books results"
             >
-                <Ionicons name="create-outline" size={18} color="#fff" />
-                <Text style={[styles.manualEntryButtonText, { color: '#fff' }]}>
+                <Ionicons name="create-outline" size={18} color={colors.onAccent} />
+                <Text style={[styles.manualEntryButtonText, { color: colors.onAccent, fontFamily: fonts.label }]}>
                     Add it manually
                 </Text>
-            </TouchableOpacity>
-            <Text style={{ color: colors.textTertiary, fontSize: 13, textAlign: 'center', marginTop: 10 }}>
+            </TouchableOpacity>}
+            {!searchIsOffline && <Text style={{ color: colors.textTertiary, fontSize: 12, fontFamily: fonts.body, textAlign: 'center', marginTop: 10 }}>
                 Can’t find the book? Save a basic title and optional author to your library.
+            </Text>}
+        </View>
+    );
+
+    const renderShortQuery = () => (
+        <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 60, paddingHorizontal: 40 }}>
+            <Text style={{ color: colors.textPrimary, fontSize: 21, fontFamily: fonts.heading, textAlign: 'center' }}>
+                Keep typing to search
+            </Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: fonts.body, textAlign: 'center', marginTop: 8 }}>
+                Enter at least 3 characters to search the catalogues.
             </Text>
         </View>
     );
@@ -460,46 +548,57 @@ export default function SearchBooksScreen() {
         filters.language && filters.language !== 'all',
         filters.priceType && filters.priceType !== 'all',
     ].filter(Boolean).length;
+    const displayedResultCount = totalItems > 0 ? totalItems : results.length;
+    const fallbackFiltersNotApplied = showOpenLibraryFallbackNotice && providerUnsupportedFilters.length > 0;
+    const resultsCountLabel = fallbackFiltersNotApplied
+        ? `${results.length} shown`
+        : `${totalItemsExact ? '' : 'About '}${displayedResultCount.toLocaleString()} ${displayedResultCount === 1 ? 'result' : 'results'}`;
+    const providerNotice = providerUnsupportedFilters.includes('priceType')
+        ? 'Showing results from Open Library. It does not provide book pricing, so the Free/Paid filter was not applied.'
+        : providerUnsupportedFilters.length > 0
+            ? `Showing Open Library results. It cannot apply the ${providerUnsupportedFilters.join(' and ')} filter${providerUnsupportedFilters.length === 1 ? '' : 's'}.`
+        : 'Showing results from Open Library while Google Books is unavailable.';
 
     return (
-        <ScreenBackground>
+        <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
             {/* Offline Banner */}
-            <OfflineBanner visible={searchIsOffline} />
+            <OfflineBanner visible={searchIsOffline} variant="library" />
 
-            <View style={{ flex: 1, paddingTop: isOffline ? 60 : 60, paddingHorizontal: 16 }}>
+            <View style={{ flex: 1, paddingTop: 56, paddingHorizontal: 18, width: '100%', maxWidth: 1000, alignSelf: 'center' }}>
                 {/* Header with Back Button */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
                     <TouchableOpacity
                         onPress={() => navigateBackOrFallback(router, '/(tabs)/library')}
                         style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 20,
-                            backgroundColor: 'rgba(255,255,255,0.9)',
+                            width: 44,
+                            height: 44,
+                            borderRadius: 12,
+                            backgroundColor: colors.bgCard,
+                            borderWidth: 1,
+                            borderColor: colors.border,
                             justifyContent: 'center',
                             alignItems: 'center',
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowOpacity: 0.1,
-                            shadowRadius: 4,
-                            elevation: 3,
                         }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Back to Library"
                     >
-                        <Ionicons name="arrow-back" size={22} color="#1A1A1A" />
+                        <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
                     </TouchableOpacity>
-                    <Text style={{ fontSize: 24, fontWeight: '700', color: '#1A1A1A', marginLeft: 12 }}>
-                        Search Books
-                    </Text>
+                    <View style={{ marginLeft: 12, flex: 1, minWidth: 0 }}>
+                        <Text accessibilityRole="header" style={{ fontSize: 27, lineHeight: 31, fontFamily: fonts.heading, color: colors.textPrimary }}>
+                            Find books
+                        </Text>
+                        <Text style={{ fontSize: 12, fontFamily: fonts.body, color: colors.textSecondary, marginTop: 1 }}>
+                            Search the catalogue by title, author, or ISBN
+                        </Text>
+                    </View>
                 </View>
 
                 {/* Search Bar */}
                 <View style={{ position: 'relative', zIndex: 100 }}>
                     <SearchBar
                         query={query}
-                        onQueryChange={(text) => {
-                            setQuery(text);
-                            if (text.length >= 2) setShowSuggestions(true);
-                        }}
+                        onQueryChange={handleQueryChange}
                         onSubmit={handleSearch}
                         onClear={handleClear}
                         loading={loading}
@@ -524,6 +623,7 @@ export default function SearchBooksScreen() {
                     <RecentSearches
                         searches={recentSearches}
                         onSearch={(q) => {
+                            submittedQuery.current = q.trim();
                             setQuery(q);
                             performSearch(q, 0, true);
                         }}
@@ -549,7 +649,7 @@ export default function SearchBooksScreen() {
                                 }}
                             >
                                 <Ionicons name="cloud-offline-outline" size={16} color={colors.textSecondary} />
-                                <Text style={{ color: colors.textSecondary, fontSize: 13, marginLeft: 8, flex: 1 }}>
+                                <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body, marginLeft: 8, flex: 1 }}>
                                     Showing recent cached Google Books results.
                                 </Text>
                             </View>
@@ -569,15 +669,15 @@ export default function SearchBooksScreen() {
                                 }}
                             >
                                 <Ionicons name="library-outline" size={16} color={colors.textSecondary} />
-                                <Text style={{ color: colors.textSecondary, fontSize: 13, marginLeft: 8, flex: 1 }}>
-                                    Showing results from Open Library while Google Books is unavailable.
+                                <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body, marginLeft: 8, flex: 1 }}>
+                                    {providerNotice}
                                 </Text>
                             </View>
                         )}
 
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                            <Text style={{ fontSize: 14, color: colors.textSecondary, fontWeight: '500' }}>
-                                {totalItems > 0 ? `${totalItems.toLocaleString()} results` : `${results.length} results`}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                            <Text accessibilityLiveRegion="polite" style={{ fontSize: 13, color: colors.textSecondary, fontFamily: fonts.body }}>
+                                {resultsCountLabel}
                             </Text>
                             <View style={{ flexDirection: 'row', gap: 8 }}>
                                 {/* Filter Button */}
@@ -589,19 +689,24 @@ export default function SearchBooksScreen() {
                                     style={{
                                         flexDirection: 'row',
                                         alignItems: 'center',
+                                        justifyContent: 'center',
+                                        minHeight: 44,
+                                        minWidth: 88,
                                         backgroundColor: activeFiltersCount > 0 ? colors.accent : colors.bgCard,
                                         paddingHorizontal: 12,
-                                        paddingVertical: 8,
                                         borderRadius: 12,
                                         borderWidth: 1,
                                         borderColor: activeFiltersCount > 0 ? colors.accent : colors.border,
                                     }}
                                     accessibilityLabel="Filter results"
                                     accessibilityHint="Opens filter options"
+                                    accessibilityRole="button"
+                                    accessibilityState={{ selected: activeFiltersCount > 0, expanded: showFilterModal }}
                                 >
-                                    <Ionicons name="filter" size={16} color={activeFiltersCount > 0 ? '#fff' : colors.textSecondary} />
+                                    <Ionicons name="filter-outline" size={16} color={activeFiltersCount > 0 ? colors.onAccent : colors.textSecondary} />
+                                    <Text style={{ color: activeFiltersCount > 0 ? colors.onAccent : colors.textPrimary, fontSize: 12, fontFamily: fonts.label, marginLeft: 5 }}>Filter</Text>
                                     {activeFiltersCount > 0 && (
-                                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>
+                                        <Text style={{ color: colors.onAccent, fontSize: 11, fontFamily: fonts.label, marginLeft: 4 }}>
                                             {activeFiltersCount}
                                         </Text>
                                     )}
@@ -616,17 +721,22 @@ export default function SearchBooksScreen() {
                                     style={{
                                         flexDirection: 'row',
                                         alignItems: 'center',
+                                        justifyContent: 'center',
+                                        minHeight: 44,
+                                        minWidth: 78,
                                         backgroundColor: colors.bgCard,
                                         paddingHorizontal: 12,
-                                        paddingVertical: 8,
                                         borderRadius: 12,
                                         borderWidth: 1,
                                         borderColor: colors.border,
                                     }}
                                     accessibilityLabel="Sort results"
                                     accessibilityHint="Opens sort options"
+                                    accessibilityRole="button"
+                                    accessibilityState={{ expanded: showSortModal }}
                                 >
                                     <Ionicons name="swap-vertical" size={16} color={colors.textSecondary} />
+                                    <Text style={{ color: colors.textPrimary, fontSize: 12, fontFamily: fonts.label, marginLeft: 5 }}>Sort</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -656,7 +766,13 @@ export default function SearchBooksScreen() {
                                 colors={[colors.accent]}
                             />
                         }
-                        ListEmptyComponent={query ? renderNoResults() : renderEmptyState()}
+                        ListEmptyComponent={searchIsOffline && query
+                            ? renderNoResults()
+                            : query.trim().length > 0 && query.trim().length < 3 && submittedQuery.current !== query.trim()
+                                ? renderShortQuery()
+                                : query
+                                    ? renderNoResults()
+                                    : renderEmptyState()}
                     />
                 )}
             </View>
@@ -686,7 +802,7 @@ export default function SearchBooksScreen() {
                 onCancel={closeManualEntryModal}
                 onSave={handleManualAddBook}
             />
-        </ScreenBackground>
+        </View>
     );
 }
 
@@ -708,14 +824,13 @@ const styles = StyleSheet.create({
     manualEntryButton: {
         marginTop: 20,
         paddingHorizontal: 18,
-        paddingVertical: 12,
+        minHeight: 44,
         borderRadius: 14,
         flexDirection: 'row',
         alignItems: 'center',
     },
     manualEntryButtonText: {
         fontSize: 14,
-        fontWeight: '600',
         marginLeft: 8,
     },
 });

@@ -2,13 +2,20 @@ import { View, Text, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
 import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { useLibraryTypography } from '@/components/library/LibraryTypography';
 
 interface OfflineBannerProps {
     visible: boolean;
+    variant?: 'default' | 'library';
 }
 
-export const OfflineBanner = ({ visible }: OfflineBannerProps) => {
-    const { colors } = useTheme();
+export const OfflineBanner = ({ visible, variant = 'default' }: OfflineBannerProps) => {
+    const appTheme = useTheme();
+    const libraryColors = useLibraryAppearance();
+    const libraryFonts = useLibraryTypography();
+    const colors = variant === 'library' ? libraryColors : appTheme.colors;
+    const foreground = variant === 'library' ? libraryColors.onAccent : '#fff';
     const translateY = useRef(new Animated.Value(-60)).current;
 
     useEffect(() => {
@@ -22,6 +29,13 @@ export const OfflineBanner = ({ visible }: OfflineBannerProps) => {
 
     return (
         <Animated.View
+            accessible={visible}
+            accessibilityRole={visible ? 'alert' : undefined}
+            accessibilityLabel={visible ? "You're offline. New catalogue searches need an internet connection." : undefined}
+            accessibilityElementsHidden={!visible}
+            importantForAccessibility={visible ? 'yes' : 'no-hide-descendants'}
+            aria-hidden={!visible}
+            pointerEvents={visible ? 'auto' : 'none'}
             style={[
                 styles.container,
                 { transform: [{ translateY }] },
@@ -33,9 +47,9 @@ export const OfflineBanner = ({ visible }: OfflineBannerProps) => {
                     { backgroundColor: colors.accent },
                 ]}
             >
-                <Ionicons name="cloud-offline" size={18} color="#fff" />
-                <Text style={[styles.text, { color: '#fff' }]}>
-                    You're offline. Search requires internet.
+                <Ionicons name="cloud-offline" size={18} color={foreground} />
+                <Text style={[styles.text, { color: foreground, fontFamily: variant === 'library' ? libraryFonts.body : undefined }]}>
+                    You're offline. New catalogue searches need an internet connection.
                 </Text>
             </View>
         </Animated.View>

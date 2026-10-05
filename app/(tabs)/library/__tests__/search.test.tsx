@@ -1,12 +1,13 @@
 import React from 'react';
-import { Alert } from 'react-native';
+import { Alert, FlatList } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import SearchBooksScreen from '../search';
 import { booksService } from '@/features/books/services/booksService';
 
 const mockRouterBack = jest.fn();
 const mockRefreshWishlist = jest.fn().mockResolvedValue(undefined);
+const mockSaveRecentSearch = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-linear-gradient', () => {
@@ -42,7 +43,7 @@ jest.mock('@/hooks/useDebounce', () => ({
 jest.mock('@/hooks/useRecentSearches', () => ({
     useRecentSearches: () => ({
         recentSearches: [],
-        saveRecentSearch: jest.fn(),
+        saveRecentSearch: mockSaveRecentSearch,
         removeRecentSearch: jest.fn(),
     }),
 }));
@@ -82,8 +83,21 @@ jest.mock('@/components/search', () => {
             )
         ),
         SearchSuggestions: () => null,
-        FilterModal: () => null,
-        FilterChips: () => null,
+        FilterModal: ({ visible, onApply, onClose }: any) => visible ? React.createElement(
+            React.Fragment,
+            null,
+            React.createElement(TouchableOpacity, {
+                testID: 'test-apply-fiction',
+                onPress: () => { onApply({ genre: 'fiction' }); onClose(); },
+            }, React.createElement(Text, null, 'Apply Fiction')),
+            React.createElement(TouchableOpacity, {
+                testID: 'test-apply-free',
+                onPress: () => { onApply({ priceType: 'free' }); onClose(); },
+            }, React.createElement(Text, null, 'Apply Free')),
+        ) : null,
+        FilterChips: ({ filters, onRemove }: any) => filters.genre ? React.createElement(TouchableOpacity, {
+            testID: 'test-remove-genre', onPress: () => onRemove('genre'),
+        }, React.createElement(Text, null, 'Remove genre')) : null,
         SwipeableBookCard: () => null,
         ManualEntryModal: ({ visible, title, author, onTitleChange, onAuthorChange, onCancel, onSave }: any) => (
             visible ? React.createElement(
@@ -153,6 +167,47 @@ describe('SearchBooksScreen manual entry', () => {
         jest.restoreAllMocks();
     });
 
+    it('refreshes a submitted short query when filters change', async () => {
+        (booksService.searchGoogleBooksCached as jest.Mock).mockResolvedValue({
+            items: [{ id: 'it', volumeInfo: { title: 'It' } }], totalItems: 1, hasMore: false,
+        });
+        const screen = renderScreen();
+        fireEvent.changeText(screen.getByTestId('library-search-input'), 'It');
+        fireEvent.press(screen.getByTestId('library-search-submit'));
+        await waitFor(() => expect(screen.getByLabelText('Filter results')).toBeOnTheScreen());
+        fireEvent.press(screen.getByLabelText('Filter results'));
+        fireEvent.press(screen.getByTestId('test-apply-fiction'));
+        await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalledWith('It', 0, 20, { genre: 'fiction' }));
+        fireEvent.press(screen.getByTestId('test-remove-genre'));
+        await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalledTimes(3));
+        expect(booksService.searchGoogleBooksCached).toHaveBeenLastCalledWith('It', 0, 20, {});
+    });
+
+    it('passes the first page provider and cursor to subsequent pages', async () => {
+        (booksService.searchGoogleBooksCached as jest.Mock).mockResolvedValue({
+            items: [{ id: 'ol', volumeInfo: { title: 'Dune' } }], totalItems: 40, hasMore: true,
+            nextStartIndex: 20, providerUsed: 'openLibrary', fallbackUsed: true,
+        });
+        const screen = renderScreen();
+        fireEvent.changeText(screen.getByTestId('library-search-input'), 'Dune');
+        await waitFor(() => expect(screen.getByText('40 results')).toBeOnTheScreen());
+        fireEvent(screen.UNSAFE_getByType(FlatList), 'onEndReached');
+        await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalledWith('Dune', 20, 20, {}, 'openLibrary'));
+    });
+
+    it('explains unsupported fallback filters even when no books are returned', async () => {
+        (booksService.searchGoogleBooksCached as jest.Mock)
+            .mockResolvedValueOnce({ items: [{ id: 'b', volumeInfo: { title: 'Dune' } }], totalItems: 1, hasMore: false })
+            .mockResolvedValueOnce({ items: [], totalItems: 0, hasMore: false, providerUsed: 'openLibrary', fallbackUsed: true, unsupportedFilters: ['priceType'] });
+        const screen = renderScreen();
+        fireEvent.changeText(screen.getByTestId('library-search-input'), 'Dune');
+        await waitFor(() => expect(screen.getByLabelText('Filter results')).toBeOnTheScreen());
+        fireEvent.press(screen.getByLabelText('Filter results'));
+        fireEvent.press(screen.getByTestId('test-apply-free'));
+        await waitFor(() => expect(screen.getByText('No books found')).toBeOnTheScreen());
+        expect(screen.getByText(/Free\/Paid filter was not applied/)).toBeOnTheScreen();
+    });
+
     it('opens the manual-entry modal from no-results and saves a manual book to the library', async () => {
         const { getByTestId, queryByTestId } = renderScreen();
 
@@ -200,5 +255,73 @@ describe('SearchBooksScreen manual entry', () => {
 
         await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalled());
         expect(getByText('Showing results from Open Library while Google Books is unavailable.')).toBeOnTheScreen();
+    });
+
+    it('requeries once with the applied filters and explains pricing unavailable in Open Library', async () => {
+        const book = { id: 'fallback-filtered', volumeInfo: { title: 'Filtered Dune', authors: ['A. Reader'] } };
+        (booksService.searchGoogleBooksCached as jest.Mock)
+            .mockResolvedValueOnce({ items: [book], totalItems: 48254, hasMore: true, fromCache: false })
+            .mockResolvedValueOnce({
+                items: [book], totalItems: 48254, totalItemsExact: true, hasMore: true, fromCache: false,
+                providerUsed: 'openLibrary', fallbackUsed: true, unsupportedFilters: ['priceType'],
+            });
+        const screen = renderScreen();
+
+        fireEvent.changeText(screen.getByTestId('library-search-input'), 'Dune');
+        await waitFor(() => expect(screen.getByText('48,254 results')).toBeOnTheScreen());
+        (booksService.searchGoogleBooksCached as jest.Mock).mockClear();
+        fireEvent.press(screen.getByLabelText('Filter results'));
+        fireEvent.press(screen.getByTestId('test-apply-free'));
+
+        await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalledTimes(1));
+        expect(booksService.searchGoogleBooksCached).toHaveBeenCalledWith('Dune', 0, 20, { priceType: 'free' });
+        expect(screen.getByText('1 shown')).toBeOnTheScreen();
+        expect(screen.getByText(/does not provide book pricing.*Free\/Paid filter was not applied/i)).toBeOnTheScreen();
+    });
+
+    it('does not repeat the same auto-search when the reader submits the query', async () => {
+        (booksService.searchGoogleBooksCached as jest.Mock).mockResolvedValue({
+            items: [{ id: 'submitted-once', volumeInfo: { title: 'Dune' } }], totalItems: 1, hasMore: false,
+        });
+        const screen = renderScreen();
+
+        fireEvent.changeText(screen.getByTestId('library-search-input'), 'Dune');
+        await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalledTimes(1));
+        fireEvent.press(screen.getByTestId('library-search-submit'));
+        expect(booksService.searchGoogleBooksCached).toHaveBeenCalledTimes(1);
+        await waitFor(() => expect(mockSaveRecentSearch).toHaveBeenCalledWith('Dune'));
+    });
+
+    it('ignores an older search response after a newer query completes', async () => {
+        const pending: Array<(value: any) => void> = [];
+        (booksService.searchGoogleBooksCached as jest.Mock).mockImplementation(() => new Promise((resolve) => pending.push(resolve)));
+        const screen = renderScreen();
+
+        fireEvent.changeText(screen.getByTestId('library-search-input'), 'Dune');
+        await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalledTimes(1));
+        fireEvent.changeText(screen.getByTestId('library-search-input'), 'Dune update');
+        await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalledTimes(2));
+
+        await act(async () => pending[1]({ items: [{ id: 'new', volumeInfo: { title: 'Newest' } }], totalItems: 7, hasMore: false }));
+        await waitFor(() => expect(screen.getByText('7 results')).toBeOnTheScreen());
+        await act(async () => pending[0]({ items: [{ id: 'old', volumeInfo: { title: 'Older' } }], totalItems: 3, hasMore: false }));
+
+        expect(screen.getByText('7 results')).toBeOnTheScreen();
+        expect(screen.queryByText('3 results')).toBeNull();
+    });
+
+    it('does not show old results or a false no-results state while the query is too short', async () => {
+        let finishSearch!: (value: any) => void;
+        (booksService.searchGoogleBooksCached as jest.Mock).mockImplementation(() => new Promise((resolve) => { finishSearch = resolve; }));
+        const screen = renderScreen();
+
+        fireEvent.changeText(screen.getByTestId('library-search-input'), 'Dune');
+        await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalledTimes(1));
+        fireEvent.changeText(screen.getByTestId('library-search-input'), 'Du');
+        expect(screen.getByText('Keep typing to search')).toBeOnTheScreen();
+        expect(screen.queryByText('No books found')).toBeNull();
+        await act(async () => finishSearch({ items: [{ id: 'late', volumeInfo: { title: 'Late result' } }], totalItems: 1, hasMore: false }));
+        expect(screen.getByText('Keep typing to search')).toBeOnTheScreen();
+        expect(screen.queryByText('1 result')).toBeNull();
     });
 });

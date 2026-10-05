@@ -1,17 +1,25 @@
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { useLibraryTypography } from '@/components/library/LibraryTypography';
 
-export const InLibraryBadge = () => (
-    <View style={{
-        backgroundColor: '#6366F1',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-        alignSelf: 'flex-start',
-    }}>
-        <Ionicons name="checkmark-circle" size={14} color="#fff" />
-        <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600', marginLeft: 4 }}>In Library</Text>
-    </View>
-);
+export const InLibraryBadge = () => {
+    const colors = useLibraryAppearance();
+    const fonts = useLibraryTypography();
+    return (
+        <View style={{
+            backgroundColor: colors.tagBackground,
+            paddingHorizontal: 9,
+            minHeight: 24,
+            borderRadius: 9,
+            flexDirection: 'row',
+            alignItems: 'center',
+            alignSelf: 'flex-start',
+            borderWidth: 1,
+            borderColor: colors.border,
+        }}>
+            <Ionicons name="checkmark-circle" size={14} color={colors.tagText} />
+            <Text style={{ color: colors.tagText, fontSize: 11, fontFamily: fonts.label, marginLeft: 4 }}>In Library</Text>
+        </View>
+    );
+};
