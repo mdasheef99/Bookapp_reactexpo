@@ -446,7 +446,7 @@ export default function ClubManageScreen() {
             <View style={[styles.headerCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{club.name}</Text>
                 <Text style={[styles.headerMeta, { color: colors.textSecondary }]}>
-                    {formatAccessLevel(club.access_level ?? 'all')} � {formatMeetingType(club.meeting_type ?? null)}
+                    {formatAccessLevel(club.access_level ?? 'all')} · {formatMeetingType(club.meeting_type ?? null)}
                 </Text>
             </View>
 

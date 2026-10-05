@@ -215,6 +215,7 @@ describe('ClubManageScreen', () => {
         const { getByText } = render(<ClubManageScreen />);
 
         expect(getByText('Founders Circle')).toBeOnTheScreen();
+        expect(getByText('All members · Online only')).toBeOnTheScreen();
         expect(getByText('Current Book')).toBeOnTheScreen();
         expect(getByText('Schedule')).toBeOnTheScreen();
         expect(getByText('Analytics')).toBeOnTheScreen();

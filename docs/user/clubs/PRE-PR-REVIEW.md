@@ -1,5 +1,11 @@
 # Clubs local pre-PR review
 
+## Manage header separator local commit (2026-10-05)
+
+- Scope: one malformed character replaced with a middle dot in Manage header, one assertion in the existing Manage screen suite, this record and only the new tracker entry. Independent review approved with no actionable finding and confirmed no handlers/queries/permissions/navigation changed.
+- Fresh verification: Manage Jest 42/42 PASS (existing DEP0040 warning), TypeScript PASS, one-worker web export PASS, diff hygiene and continuity validator PASS. Browser header checked at 1280×720/390×844; no mobile overflow and viewport restored. No additional business-data mutation, Storage write, migration, deployment or push.
+- Older mixed tracker edits, AGENTS.md, PAGE-REFINEMENT-PROCESS.md and Home screenshot remain outside the local commit. Next: user selects remaining verification scope; no additional redesign or venue/authorization behavior change is approved.
+
 ## Nominate a Book final review and authorized local commit (2026-10-05)
 
 - Final independent reviewer `nomination_final_review` found and then closed a P2 result-recovery regression. Search results now hide only for short-query validation, so manual-title errors and failed submissions allow selecting another result. Two new tests cover recovery; final independent and primary focused runs pass 10/10. No remaining actionable source finding was reported.
