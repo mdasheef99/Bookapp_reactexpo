@@ -1,5 +1,58 @@
 # Clubs local pre-PR review
 
+## Nominate a Book final review and authorized local commit (2026-10-05)
+
+- Final independent reviewer `nomination_final_review` found and then closed a P2 result-recovery regression. Search results now hide only for short-query validation, so manual-title errors and failed submissions allow selecting another result. Two new tests cover recovery; final independent and primary focused runs pass 10/10. No remaining actionable source finding was reported.
+- Fresh TypeScript, one-worker web export, diff hygiene and Phase 9 continuity validation pass. The preceding desktop/mobile layout checks are historical evidence, not newly rerun after this small recovery correction. No native or actual assistive-technology check is claimed.
+- Authorized connected proof created one `Parable of the Sower` / `Octavia E. Butler` nomination through the existing running-app mutation in the seeded public test club, default seven days. Pending controls, automatic nominations redirect and persistence after reload were observed; displayed deadline is 12 October 2026, votes zero, current read unchanged. The transient success banner was not captured. Successful manual submission remains unverified; blank-title validation is covered by mocks and browser checks. Supabase MCP reverified the exact healthy project before this check; no direct SQL write or cleanup was used. The new nomination remains in test data.
+- This scoped local commit includes only nomination UI/SearchBar/test and nomination documentation. It excludes existing AGENTS.md, PAGE-REFINEMENT-PROCESS.md, older mixed tracker edits and the Home screenshot. No push, deployment, migration, Storage write or permission change. Existing authorization concerns remain a separate unverified scope. Next: separate presentation-only Manage separator correction, review and browser verification.
+
+## Nominate a Book local pre-PR review (2026-10-05; historical before final review)
+
+- Scope: `ClubNominateBookScreen.tsx`, its focused regression suite, additive
+  shared `SearchBar` palette/compact and clear-button accessibility props, and
+  only this nomination record in `TRACKER.md`. Preserve the older unrelated
+  tracker edits and `clubs-home-390x844-authenticated-dedup.png`.
+- The independent read-only reviewer found a P3 selected-card border override:
+  the neutral card border style masked the intended burgundy accent. Removed
+  that override and added a focused style assertion. It also identified the
+  stale next-action line in the tracker; the line has been replaced with this
+  unit's exact next action. Final reviewer follow-up confirmed the border fix
+  and found no remaining route/query/mutation/membership/backend regression.
+  The reviewer confirmed both non-Clubs production callers (Marketplace and
+  Library) leave the new optional props unset, preserving their theme, size,
+  spacing, typography, and icon defaults. The added clear-button role changes
+  semantics only. No remaining actionable issue was found.
+- The correction is presentation/accessibility only. Existing route, hooks,
+  Google Books request behavior, membership gate, nomination mutation calls,
+  deadline calculation, haptics, success/error handling, and redirects remain
+  unchanged. Other `SearchBar` callers keep their default appearance; its new
+  palette/compact options are supplied only by this screen.
+- Focused screen Jest: **8/8 PASS**. `npx.cmd tsc --noEmit --incremental
+  false` PASS. `npx.cmd expo export --platform web --max-workers 1` PASS.
+  `git diff --check` PASS. The Phase 9 continuity validator PASS: 86 Markdown
+  files / 62 required phase files, 195 requirement definitions, 0 duplicate
+  definitions, 0 missing traceability rows, and repository/WU1/WU2 diff checks
+  PASS. It emitted the existing document-size advisories; no continuity gap.
+- Connected web review at 1280×720 and 390×844 used the seeded active-member
+  club. Ten results loaded for `Parable of the Sower`; selection, 3/7/14-day
+  checked state, clear/reset with 14-day retention, short-query validation,
+  blank manual-title validation, back navigation and return to the nomination
+  route were observed. At mobile size the 390 px viewport had no horizontal
+  overflow; the fixed tabs began at y=795.8. After scrolling, the 48 px
+  selected-book and manual nomination controls ended at y=388.8 and y=730.2,
+  both above the tab bar. At 1280×720 the fixed tabs began at y=671.8; after
+  scrolling to the end, the selected-book control occupied y=235.2–283.2 and
+  the manual control y=558.6–606.6. No browser console errors were observed.
+- No live nomination was submitted, so successful server mutation remains
+  unverified. No database/Storage mutation, permission change, migration, or
+  deployment occurred. Native-device and assistive-technology checks remain
+  open. Nothing is staged, committed, pushed, or deployed.
+- Exact next authorized action: the user reviews this local diff and explicitly
+  requests a local commit if accepted. Any later commit must isolate the
+  nomination UI, shared SearchBar, focused test, and only this current tracker
+  entry; prior tracker edits remain outside scope.
+
 ## Author Clubs directory and destination local commit (2026-10-04)
 
 - Local commit scope: the Clubs directory entry button and focused regression
