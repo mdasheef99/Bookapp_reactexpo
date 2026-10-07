@@ -1,5 +1,237 @@
 # Clubs UI Overhaul Tracker
 
+## Manage Venues completion (2026-10-08)
+
+- Added the approved primary-venue controls and recovery states, while keeping
+  the existing admin gate, service/RPC, Add/Remove mutations, and event data
+  behavior. Venue removal now asks for confirmation; Cancel submits nothing,
+  and removing the primary explains that another primary must be selected.
+- Dialog and primary-selection state are isolated across club/account changes.
+  Focus moves to the named Manage region on identity change and to Add after a
+  confirmed or externally observed venue disappearance, unless the user has
+  moved focus to another surviving control. No initial focus jump or extra Tab
+  stop is added. Spoken screen-reader testing was excluded by the user.
+- The final independent Luna max review found no blocker. It identified and
+  prompted fixes for focus loss after club/account changes and confirmed venue
+  removal. Its slow-refresh focus-steal observation was also addressed.
+- Verification on final code: Manage 75/75 and four focused suites 148/148;
+  TypeScript, web export, continuity validator, and diff checks passed. One
+  combined run timed out a single test while TypeScript ran concurrently; the
+  isolated Manage and four-suite reruns passed. Node DEP0040 and existing
+  document-size/line-ending advisories remain.
+- Browser checks: desktop 1280×720 and mobile 390×844; modal name and modal
+  state, Cancel focus, keyboard containment, Escape restoration, 44 px dialog
+  actions, and no mobile horizontal overflow. No confirm submission or primary
+  selection changed connected data. Rare identity/disappearance focus paths are
+  covered by automated tests.
+- No schema, permissions, service contract, or migration changed in this UI
+  work. No new database/storage write or deployment occurred. Local commit
+  created; no push. Unrelated working-tree changes remain uncommitted.
+- Exact next action: user chooses the next Clubs task.
+
+## Manage Venues bounded correction (2026-10-07)
+- The user authorized correcting three subsequent review findings locally:
+  Saving hidden by an early primary-badge update, operation feedback lost when
+  the target row disappears, and old responses/state leaking across club or
+  account changes. Seven reproductions failed before the production correction.
+- Pending feedback now survives primary cache updates. Missing/unreadable
+  target rows retain section-level status and reselection/Add guidance. The
+  page remounts by club/account and fences old continuations; confirmation
+  checks club, venue ID, primary flag, and renderable venue details.
+- Existing RPC/hooks/services and Add/Remove paths are preserved. A submitted
+  RPC can still finish after navigation; the correction fences UI continuations
+  rather than cancelling or reversing server effects.
+- Independent read-only correction review found no blocker; it did not run
+  tests or browser checks. Final verification evidence is owned by
+  [the app correction record](./PRIMARY-VENUE-APP-REVIEW.md#bounded-ui-correction-2026-10-07).
+- Verification: Manage 58/58; four focused suites 131/131; final web export,
+  subsequent TypeScript, continuity validator, and diff hygiene PASS. The Node
+  DEP0040 warning, document-size advisories, and existing line-ending notice
+  remain. All changes remain uncommitted and unstaged at HEAD `382e50e`.
+- Active work unit: bounded local Manage Venues correction, complete. The
+  2026-10-08 runtime follow-up below supersedes the earlier pending browser
+  review; detached-event editor recovery remains separate. Code and tests from
+  the implementation remain uncommitted and unstaged. Phase 9/M62 is unchanged.
+
+### Runtime follow-up (2026-10-08)
+- The local Manage > Venues page rendered at 1280×720 with the linked-venue
+  guidance and controls visible; no desktop overlap was observed. Add opened the
+  venue-linking page and browser Back returned to Manage without submitting an
+  Add. The initial page showed the Cafe as primary and Central Reading Library
+  as the alternative.
+- During this browser check, Remove was clicked unintentionally on
+  `ZZ_TEST Chapter House Cafe`. The UI immediately ran its existing unlink flow
+  (no confirmation) and displayed “Venue unlinked.” The user confirmed this
+  was a test club and accepted leaving it unlinked; it was not restored. A fresh
+  read-only query against verified Supabase project `Bookconnect_reactexpo`
+  confirmed that `ZZ_TEST Manage Basics Club` now has only
+  `ZZ_TEST Central Reading Library`, with `is_primary = false`. No direct SQL
+  write was issued. No Add, Set as primary, event, permission, or migration
+  operation was submitted.
+- Observation: the existing Remove control is immediate and has no confirmation.
+  This is recorded for product review; no UI behavior was changed. Desktop at
+  1280×720 and mobile at 390×844 were checked. At 390×844 the management tabs
+  wrap to three rows, the venue name wraps, actions remain visible, and measured
+  document/body widths stay at 390 px. No overlap or horizontal overflow was
+  observed. Screen-reader behavior, primary-selection success/failure,
+  account/club switching, and concurrent cache-update paths remain unverified
+  in the running app. The independent review’s reported automated results were
+  not rerun during this browser check.
+- Exact next action: close the reviewer-listed real-QueryClient race-coverage
+  gaps (club/account switching across delayed success/failure/confirmation,
+  Remove invalidation during confirmation, and failed refresh after unmount).
+  Keep connected writes out of that test-only step; any further live mutation
+  needs explicit scoped test-data authorization. Whether Remove should ask for
+  confirmation is a separate product decision. No commit, push, deployment, or
+  migration occurred.
+
+## Manage Club > Venues design review and local follow-through (2026-10-07)
+- The user authorized an independent review of the three existing Stitch states
+  and local implementation if the review found no blocking design issue. The
+  Normal, Saving, and Error artboards were inspected in the existing canvas;
+  no visual blocker was found. No artboards were edited or replaced.
+- Source mapping confirmed the existing admin-only Venues tab, the linked-venue
+  query and primary-first event ordering, the existing `set_primary_club_venue`
+  service/RPC call, and event-editor preservation of an existing saved venue ID.
+  The UI now invokes the RPC for selection and waits for a fresh linked-venue
+  read to confirm the selected venue before clearing its pending state. Failure
+  retains the previous state with retry; a successful RPC whose list cannot
+  confirm the result also keeps an explicit retry state.
+- The independent read-only review caught the success/refetch timing gap and
+  its initially incomplete regression. Both were corrected. The focused
+  `ClubManageScreen.test.tsx` suite passes 46/46, including deferred confirmation,
+  RPC failure/retry, unconfirmed data, and refetch failure. TypeScript, web
+  export, docs validation and final independent review are recorded in
+  [the app review](./PRIMARY-VENUE-APP-REVIEW.md).
+- Browser visual check reached only the seeded `ZZ_TEST Manage Basics Club`,
+  where this session is a member; the admin Manage screen could not be opened
+  without changing access or using another authorized test identity. The three
+  artboards remain open in Stitch. Actual desktop and 390×844 app verification
+  remains pending. No event IDs, RPC/backend behavior, schema, direct table
+  permissions, Storage or business data changed during this UI work.
+- No database mutation, stage, commit, push, deploy, or migration action was
+  taken in this work unit. Existing user changes are preserved. Exact next
+  action: user visual review of the local Manage Venues implementation; further
+  work, Git publication, or live changes require their own request. Phase 9
+  Unit 6H/M62 remains unchanged.
+
+## Primary venue migration application (2026-10-07)
+- The user authorized applying the corrected Clubs-only primary-venue migration
+  to Bookconnect_reactexpo (`ahntbtktjjmvfosgkmgn`). Supabase MCP applied it as
+  `20261007144356 clubs_admin_primary_venue`; the local migration filename now
+  matches that recorded version.
+- Post-apply readback: the partial unique index and authenticated-only invoker
+  RPC are present; RPC has an empty search path; zero duplicate-primary clubs;
+  live link policies retain their pre-apply predicates. The July migration is
+  still absent, and both Exchange `city_key` columns remain absent.
+- No event venue IDs, business rows, Exchange schema, direct table grants,
+  storage, app code, or UI changed. The shared historical-ledger reconciliation
+  remains open; no broad `db push`, repair set, commit, or push was run.
+- Exact next action: review the live migration record and decide the separate
+  Manage Club app/design follow-up. Phase 9 M62 remains unchanged.
+
+## Primary venue bounded correction (2026-10-07; pre-application local closeout)
+- User-authorized scope: correct the four independent-review findings in the
+  existing local migration, fixture, and documentation. No app or design edits.
+- Exact PostgreSQL catalog comparisons preserve literal case and whitespace;
+  regressions reject both `LEAD` and `l ead` historical-policy changes.
+- Final authorization follows potentially blocking flag writes. Under READ
+  COMMITTED, downgrade/archive committed during target or previous-primary waits
+  rejects with rollback; all four independent-connection cases pass. Changes
+  after that checkpoint and stronger-isolation snapshots are not fenced.
+  Direct permissions and nonparticipating writer/deadlock boundaries are unchanged.
+- Cleanup bounds checked shutdown of the owned process and requires process exit
+  plus a closed port before removal. Injected rejected, pending, and unconfirmed
+  stop outcomes preserve data; unsafe targets and removal ordering are tested.
+- Unlink verification removes the event's actual primary venue link and checks
+  unchanged event identity/location plus the surviving venue record.
+- Verification: PostgreSQL 17.6 fixture 49/49 PASS, real teardown PASS; Node syntax,
+  trailing whitespace, diff hygiene and Phase 9 continuity PASS. An intermediate
+  run rejected CRLF expectations; explicit SQL newline escapes fixed that before
+  the complete passing run. No app tests, TypeScript, or web export ran.
+- No live database/Storage mutation, application, grant change, shared-ledger
+  remediation, staging, commit, push, or deployment. Existing unrelated changes
+  remain preserved. Concurrency limits and details are in
+  [the migration review record](./PRIMARY-VENUE-MIGRATION-REVIEW.md).
+- Active work unit: local primary-venue correction complete. Exact next authorized
+  action: user review of the corrected local artifact and concurrency guarantee.
+  Design/app work and live rollout retain their separate gates. Marketplace Phase
+  9 remains M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING.
+
+## Primary venue selection preparation (2026-10-07)
+- The user approved preparing a local Clubs-only database artifact and a Stitch
+  design proposal. This is not permission to apply the migration or implement app
+  code. The public venue associations and unrelated grant cleanup remain out of
+  scope.
+- Created the local migration, subsequently applied as
+  `supabase/migrations/20261007144356_clubs_admin_primary_venue.sql`.
+  It adds per-club at-most-one-primary enforcement and an authenticated,
+  eligible-admin invoker RPC; it keeps current live link-policy predicates and
+  fails closed on duplicate data, missing/duplicate/mixed policy families,
+  unknown policies, and catalog-shape or predicate drift in both the current
+  live names and exact historical 008 replay names. It does not mutate event
+  venue IDs or touch the July file's Exchange changes. See
+  [migration review record](./PRIMARY-VENUE-MIGRATION-REVIEW.md).
+- Independent read-only reviews caught a NULL-catalog-expression gap, missing
+  definition checks for historical policy names, and the possibility of mixing
+  one historical and one current policy. All are fixed and have regression
+  coverage. The earlier disposable PostgreSQL 17.6 fixture passed 38/38, including
+  missing/mixed family rejection and eight historical-policy drift cases. It did
+  not inject a failed stop; that earlier coverage claim is corrected above. GPT-6 Luna max
+  reasoning's final review found no remaining blocker; its review was read-only
+  and did not rerun tests.
+- Reverified live project `ahntbtktjjmvfosgkmgn` and read the exact two
+  `club_venues` policies before application. At that baseline the live ledger
+  had 167 entries, latest `20260913162154`; the production migration-history hold
+  remained in force. Direct writes still
+  have the existing broader owner/admin-id authorization; this RPC does not
+  remedy that separate policy boundary.
+- Created and refined three Stitch artboards for Manage Club > Venues: normal,
+  saving and error states, using the current source screenshot attached to the
+  design request. The screen tree confirms the normal state has Add, both Remove
+  actions, one Primary badge and Set as primary; the saving state retains both
+  Remove actions and changes only the target primary action to disabled Saving;
+  the error state retains both Remove actions, the old Primary badge, retry
+  action and restrained inline error. Normal and saving boards were visually
+  inspected at their 390×844 frame; error content was checked in the screen tree.
+  No app code was implemented.
+- Astra critique was not sent because the named conversation contains a
+  different unsent prompt; that user draft is being preserved.
+- Verification: isolated local PostgreSQL 17.6 fixture 38/38 PASS; no app
+  source/app tests, TypeScript, web export, app browser interaction, live write,
+  migration application, or ledger mutation. `git diff --check`, untracked-file
+  trailing-whitespace scan, and the active Phase 9 continuity validator PASS.
+- Exact active work unit: primary venue local database artifact and Manage
+  Venues design proposal. Next action: have the user review the three Stitch
+  states and decide how to obtain an Astra critique without overwriting the
+  existing unsent prompt. App
+  implementation still requires the critique and design approval; live
+  application has separate reconciliation and authorization gates. Marketplace
+  Phase 9 Unit 6H/M62 remains unchanged.
+
+## Live venue database versus local SQL (2026-10-07; read-only audit complete)
+- Documentation verification: Phase 9 continuity validator PASS (86 Markdown files / 62 required; existing size advisories), git diff --check PASS. No code/test source changed, so no application tests were rerun.
+- User authorized the live-source-of-truth comparison. [Venue database audit](./VENUE-DATABASE-AUDIT.md) records fresh exact-project/catalog/167-row-ledger evidence, relevant local SQL and app mappings. Primary RPC is genuinely absent live but present in the bundled July file; single-primary enforcement is absent in both. Zero current multiple-primary clubs/null flags. The local RPC permits eligible moderators whereas venue UI/spec is admin-only; live link policy uses admin_id without eligibility, and old local lead-policy SQL does not reproduce the live link write policy.
+- Public club identity already exists for all non-archived club types through security-invoker club_public_details; club-venue associations remain member-scoped and event reads require active/muted membership. No dedicated venue relationship function/view/materialized view found live or locally. Member-authorized venue-filtered events need app queries, not a new public-visibility migration. The earlier public-only association proposal remains a product proposal, not a statement that other club identities are hidden.
+- Effective TRUNCATE privileges are confirmed via has_table_privilege for anon/authenticated on venues/club_venues/club_events; no destructive/API-exploitability test attempted. Existing reconciliation authority deliberately defers shared ledger repair/freezes normal production DB deployment and classifies the July file as genuinely unapplied. This audit does not lift that hold or authorize the combined Exchange changes.
+- Exact active work unit: completed bounded venue database comparison. Exact next action: user reviews the admin-only primary-selection/migration-history scope before any migration-file creation; public association visibility needs a separate explicit behavior decision. Only audit/proposal/tracker docs changed. No app/browser tests, SQL writes, data/Storage/permission changes, migration file, ledger repair, external design submission, stage/commit/push/deployment occurred. Marketplace Phase 9 Unit 6H/M62 state and unrelated working-tree changes are preserved.
+
+## Venue completion plan (2026-10-07; proposal only)
+- User requested a concrete plan following the read-only venue audit. [Venue completion proposal](./VENUE-COMPLETION-PLAN.md) records proposed admin-only primary selection, at-most-one optional primary, new-event defaults, preserved saved/draft locations, detached-event venue handling, safe public-club summaries and member-authorized event lists. These remain proposed behavior, not approved product decisions.
+- Re-read current Manage/Venue Detail/event-editor code, venue specification and local combined migration; read Clubs and sibling Library trackers. Supabase MCP reverified healthy Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn. Fresh read-only count audit found zero clubs with multiple primary venues and zero null primary flags. Earlier same-session schema/ledger checks found no primary RPC/unique-primary constraint and confirmed member read boundaries and the grant-review concern. No database/Storage writes or migration application occurred.
+- Plan orders authorization/migration-replay review, a separately authorized Clubs migration artifact with disposable PostgreSQL security/concurrency checks, Stitch/confirmed Astra design approval, separately authorized live application/readback, implementation, browser/focused regression checks and independent review. The existing combined Clubs/Exchange migration must not be applied wholesale for this scope.
+- Verification: Phase 9 continuity validator PASS (86 Markdown files / 62 required, existing document-size advisories); git diff --check PASS. No code/browser tests were run for this documentation-only proposal. Exact active work unit: venue behavior and database-update proposal. Exact next action: user reviews the proposed behavior before implementation/migration-file creation; live application remains a separate AGENTS.md gate. Marketplace Phase 9 Unit 6H/M62 rollout status is unchanged. This turn changes proposal/tracker documentation only; no code, external design submission, migration, commit or push. Existing unrelated working-tree changes remain preserved.
+
+## Venue relationships and primary selection audit (2026-10-06; read-only proposal)
+- The user selected the deferred venue relationships/primary-selection work for source mapping before any redesign or implementation. Current Clubs work unit: decide the safe relationship visibility contract and prepare the UI design only after that contract is clear. This entry supersedes the publication-closeout next-action line below; it does not authorize implementation, permission changes, migration creation/application, or live writes.
+- Source mapping: public `VenueDetailScreen` currently renders venue identity/details and a “Clubs and events” placeholder; it has no relationship query. Manage Club > Venues lists existing club links, marks the current primary, retains Add/Remove, and says primary selection is unavailable. `clubsEventsService` already exposes `setPrimaryClubVenue` through an RPC call. The event editor loads linked venues primary-first; after the user chooses linked-venue mode, the first (primary-first) link can be preselected. `club_events.venue_id` references `venues`, independently of the `club_venues` link, so removing a link must not rewrite an existing event's location; editor presentation of a previously linked venue still needs explicit handling.
+- Read-only Supabase MCP verification reconfirmed healthy `Bookconnect_reactexpo` / project `ahntbtktjjmvfosgkmgn`. Live `club_venues` SELECT is member-scoped and its ALL write policy checks `book_clubs.admin_id = auth.uid()`; `club_events` SELECT is member-scoped. Live `set_primary_club_venue` is absent, and the remote migration ledger does not contain local migration `20260714000001_harden_club_primary_and_exchange_city.sql`. Thus the hidden primary control is not safely restored by exposing a button alone, and a real linked-venue write remains blocked by the local/live authorization mismatch.
+- Additional live catalog concern for a separate scoped security audit: `information_schema.role_table_grants` reports `TRUNCATE` grants to `anon` and `authenticated` for `venues`, `club_venues`, and `club_events`. RLS does not filter `TRUNCATE`. No API exploitability test was attempted, and no policy/grant changes or database writes were made.
+- Behavior proposal, not a product decision: exactly one optional primary venue; it is only a default when creating a new event and choosing a linked physical venue, and never changes an existing event. Unlink removes the venue from future choices while leaving existing `club_events.venue_id` values intact; the edit form should continue to show the stored venue if it is no longer linked. For the public venue page, never expose approval/invite-only club associations or member-only event data to nonmembers. Public club association listing requires a least-privilege public projection; event rows remain member-visible unless an explicit public-event visibility contract is approved. The current schema has no such event-visibility field.
+- Running-browser check used the already-loaded authenticated client session to inspect Manage Club > Venues and the public venue-detail page at the available 583×720 viewport. Observed UI matched the source: two linked venues with one Primary, and the venue-detail placeholder. No controls that write data were activated. A fresh tab could not complete its first bundle after a worker-spawn restriction; no 390×844 check is claimed. No tests were run.
+- Astra model in the named critique conversation was visually confirmed as GPT-6 Astra / Light, but no critique was sent: its composer already contained an unrelated unsent Venue Picker request, which was preserved. The Stitch brief paste timed out before the composer could be checked; no Send action was issued, so any unsent draft presence is unverified. Further CUA state checks also timed out; browser automation is blocked pending tool recovery. Expo web was started offline on port 8081 with one worker and remains running. No code, migrations, database/Storage data, permissions, commits, or remote state changed; the existing uncommitted AGENTS/tracker edits and untracked Home screenshot remain.
+- Exact next action: after CUA recovers, inspect the Stitch composer before typing or sending anything. Continue the design proposal only after confirming its state and preserving the existing Astra Venue Picker draft; then send current screenshots/context to the confirmed Astra model and obtain user design approval before implementation. Before live primary/link mutations, resolve the missing RPC, role-policy mismatch, and TRUNCATE grants through the authorization process. Marketplace Phase 9 remains `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING` (Unit 6H); no global phase handoff changed.
+
 ## Manual nomination and aggregate publication review (2026-10-05; published)
 - The user authorized successful manual nomination verification and a combined review of all unpublished Clubs commits against main, resolving introduced findings before publication. Immediately before push, the fresh fetch showed `origin/main` at `d1d5386e365d1f5851e582049badcdfc85c772aa` and the reviewed implementation branch `feat/clubs-v2` at `26eea88d8e1fdefccb68b3672c12763acfcdeddb`: zero behind / nine ahead, with main an ancestor. No merge/rebase was needed.
 - Supabase MCP reconfirmed healthy `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`. Submitted `ZZ_TEST Manual Nomination Verification 2026-10-05`, author `BookConnect Test Author`, once through the running app's manual form with its default seven-day duration. Pending control, automatic nominations redirect, exact title/author and zero votes were observed; reload confirmed persistence and displayed closing date 12 October 2026. Current read remained Critique of Pure Reason. Error-log query returned none. Success banner was not captured. One additional test nomination and any book record created/reused by the existing service are retained; no direct SQL write, deletion, vote, permission, Storage, migration or deployment action was performed. Evidence: `C:/Users/LEGION/.codex/visualizations/2026/09/30/01a0f41a-79cd-73b0-a323-1079b03f96ad/manual-nomination-persisted-2026-10-05.jpg`.
@@ -107,6 +339,16 @@
 - No database/Storage mutation, migration, or deployment. This screen, its regression test and the scoped documentation are being committed locally; no push is part of this action. Pre-existing tracker edits and the untracked `clubs-home-390x844-authenticated-dedup.png` are preserved outside the commit. Marketplace remains at Phase 9 M62 runtime rollout/connected proof pending; no global phase handoff changed.
 - Exact next authorized action: wait for the user to select the next Clubs page or request additional Reading Progress changes; no further page implementation is authorized by this task.
 
+## Reading Progress design proposal checkpoint (2026-10-03; historical, superseded by implementation above)
+- Mapped the existing `/clubs/[clubId]/reading` route, `ClubReadingProgressScreen`, its hooks, service calls, mutation invalidations, current-book/empty-book/empty-schedule/loading/error states, and existing status/milestone actions. Current contract remains: aggregate active/to-start/reading/completed counts; the member's Want to Read/Reading/Completed status; and numbered schedule milestones with Mark complete/Mark incomplete. No route, API, permission, service, schema, or business behavior change is proposed.
+- The initial read-only Supabase inspection confirmed the configured `Bookconnect_reactexpo` project (`ahntbtktjjmvfosgkmgn`, ACTIVE_HEALTHY) and existing reading-schedule/progress policies; no data write or migration had occurred at that earlier checkpoint. Source/live policy asymmetry remains for later consideration: muted members may see status controls while the status RPC accepts only active members. The existing milestone count model also means marking an earlier milestone incomplete clears later progress; neither behavior was changed. Current project re-verification and the limited live test-data writes are recorded below.
+- Live interaction verification: re-verified Supabase project `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as `ACTIVE_HEALTHY`. On the authenticated test club, exercised Want to Read and Reading, then restored Completed; the aggregate counts returned to 3 active / 1 to start / 0 reading / 2 completed. Exercised Mark incomplete and Mark complete; the single milestone returned to complete. The header back control returned to the club page. No invite, membership, or other club action was taken.
+- Test-data side effects: the status RPC sets `user_books.completed_at = now()` when Completed is selected, so restoring the visible status refreshed that timestamp. The milestone upsert refreshed `member_reading_progress.last_updated` when restoring the original count. The visible status/count/milestone values are restored; those timestamps are not. No direct SQL write was used to force old timestamps back.
+- Created four new Stitch concepts in the existing project: populated Reading Progress, No current book, No schedule, and Desktop. Existing project artboards were not edited. The desktop outer frame is 1280×900. Stitch did not honor the requested 390×844 outer sizes for the three mobile concepts: the selected populated artboard reports 1280×844; its separate responsive preview preset reports 390×884. Do not describe the 390×884 preview as a 390×844 artboard or claim exact mobile-frame verification. The other mobile artboards should be checked before design approval.
+- Astra's model selector was visually confirmed as GPT-6 Astra / Light, but its ChatGPT usage banner shows the quota is exhausted. No critique prompt was sent because the current screenshots could not be attached through this browser control surface. A rich-image paste attempt became an unsent `Pasted text.txt` attachment and was removed. No message or screenshot was sent to Astra. Do not treat the earlier Astra reviews in this conversation as reviews of these Reading Progress concepts.
+- No application source or tests were changed or run. No schema, permission, migration, deployment, stage, commit, or push change occurred. Existing uncommitted user changes and `clubs-home-390x844-authenticated-dedup.png` remain preserved.
+- At this checkpoint the exact next authorized action was to obtain current screenshots for Astra review and resolve the mobile frame discrepancy. That proposal checkpoint is superseded by the user's subsequent approval and the implementation recorded above.
+
 ## Members and applications implementation (2026-10-03; complete locally)
 - Final design review: GPT-6 Astra / Light was visibly selected. Four current screenshots (Members, Timed Mute, corrected Applications list, standalone Application Review) were attached after the earlier link-only review. Astra returned APPROVE. The Applications editor screenshot supports composition review only; its small text was not individually verified by Astra. References: Krug's Don't Make Me Think and WCAG 2.2 Target Size (Enhanced). The user subsequently explicitly authorized implementation here after the read-only OpenCode assessment; OpenCode was not used to implement.
 - Implemented the approved layout in ClubManageMembersSection, ClubManageApplicationsSection and ClubApplicationsScreen, plus the shared ManageTabBar styling. Warm ivory/white/burgundy, Newsreader headings, Inter text, bounded desktop content, compact cards, 44 px controls and matching rectangular management tabs. Members uses one Manage disclosure at a time (first reader initially open), separates role/status, moderation, removal and recent history, preserves drafts across disclosure changes, and hides immediate Mute while a timed-mute draft is open. Unmute remains available for an already-muted reader. The review route separates applicant identity, answers and optional decline reason/actions.
@@ -117,7 +359,16 @@
 - Verification: final focused Jest 4 suites/61 tests PASS; Final TypeScript --noEmit --incremental false, Expo web export with one worker, git diff --check and Phase 9 continuity validator PASS (86 Markdown files/62 required files; existing document-size advisories). An initial new confirmation test emitted act warnings; it was corrected with async act and the final run emitted only the existing Node DEP0040 warning. An initial TypeScript run found an optional profile spread in the new fixture; the fixture was corrected before the final check.
 - Screenshots in C:/Users/LEGION/.codex/visualizations/2026/09/30/01a0f41a-79cd-73b0-a323-1079b03f96ad/: members-mobile.jpg, members-timed-mute-mobile.jpg, members-desktop.jpg, applications-public-guard-mobile.jpg and applications-manager-guard-mobile.jpg. Temporary viewport override restored; temporary design inspection tab closed. Temporary web export output removed after verification.
 - No database/Storage/business-data mutations, migration, deployment or push. The reviewed screen/test changes and this implementation record are authorized for a local commit. Earlier tracker additions and the untracked clubs-home-390x844-authenticated-dedup.png are preserved outside that commit. Marketplace Phase 9 remains M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING; no global handoff changed.
-- Active work unit: Members and applications presentation refresh implemented with the verification limits above. Exact next authorized action after local commit: map the existing Club Reading Progress page and its behavior before proposing its redesign; an eligible approval-club manager session is still needed for the deferred live application-form/action checks.
+- Active work unit at this checkpoint (2026-10-03): Reading Progress proposal. It is superseded by the 2026-10-04 implementation recorded above. Eligible approval-club manager access remains a separate blocker for the deferred application-form/action checks.
+
+## Manage Members and application-review design checkpoint (2026-10-03; historical, superseded above)
+- Mapped the existing manager-only Members and approval-application surfaces before design. The source contract remains: Member/Moderator role changes; immediate Mute/Unmute; reason-required Warn, Timed mute and Ban, plus confirmed Remove; integer timed mute of at least one hour with a 24-hour default; exact existing Remove confirmation; latest three moderation records; oldest-first pending applications with answer fallback and existing Approve/Decline confirmations; and a separate review route with location fallback, optional decline reason, and direct review actions. No code, route, service, permission, schema, or business behavior changed.
+- Updated Stitch concepts: Members `fec75e32a438415cb0d7ce6f9f7d9cbb`; Timed Mute `c7776a61d04a44828190f59ff9c50f3d`; separate Application Review `0b28123fcce542448d5c5d90cba55715`. The older Applications node `8869eb8b38e84172824d0c68a3bcfa7a` opens an inaccurate stale snapshot, so a new source-mapped Applications-list artboard was created at `c5fbdf4c878140a2bc0798e4925e1fc4` without editing other project artboards.
+- Applied the two requested Astra refinements: remove immediate Mute from the Timed Mute draft, use “Apply timed mute” and the verified “Whole hours, minimum 1” helper; align management-tab shape, typography, spacing, and selected treatment across Members and Applications. The new Applications concept uses exact conditional-club tab labels/order, neutral dynamic-field placeholders, the exact no-answer fallback, and only the existing two card actions.
+- Measured the new Applications artboard at 390×844. Its list container is internally scrollable; after scrolling, both second-card actions are 44 px high and fully above the fixed bottom navigation. Members is also a 390×844 screen with 44 px management tabs, three moderation-history rows in the scroll container, and exact source-defined tab names. The manager screens could not be exercised under the available public-club test account; source mapping is not live authorization/action proof.
+- Astra’s final request was made with GPT-6 Astra / Light visibly selected. The updated previews were linked, but Astra’s cloud browser requested permission to access and interact with `stitch.withgoogle.com`. That permission was denied because the user had not authorized this separate cloud-browser access. Astra could not inspect any of the four current previews and returned **NEEDS REFINEMENT solely for incomplete visual verification**; it reported no additional design defect from the supplied facts and confirmed the two requested corrections are reported as resolved. Its remaining request is current exported screenshots of all four concepts. Earlier attachments in the Astra conversation show prior drafts, not this final state. Reference from Astra: [WCAG 2.2 Target Size (Enhanced)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced); the 44×44 criterion is Level AAA and has exceptions, not a blanket AA failure.
+- No current preview image was attached to the Astra follow-up; only the current Stitch preview links and source/measurement context were sent. No app source, tests, local screenshot files, backend records, database/storage state, permissions, migrations, or external service data were changed. No invitation/application/member action was submitted. Git remains on `feat/clubs-v2`, one commit ahead of `origin/main`, with the pre-existing untracked `clubs-home-390x844-authenticated-dedup.png` preserved; nothing was staged, committed, pushed, or deployed.
+- Exact next action: obtain current visual evidence for the four artboards through either (a) user-authorized current screenshots attached to the Astra conversation or (b) the user explicitly allowing ChatGPT cloud-browser access to `stitch.withgoogle.com` for this chat; then request Astra’s final visual verdict. Do not implement until that review is complete and the user approves implementation.
 
 ## Invitation inbox and Invite Readers implementation (2026-10-03; complete locally, uncommitted)
 - The user authorized reapplying the Invitations Inbox and Invite Readers refresh after confirming their undo was complete. Before editing, Git was inspected and existing dirty work was preserved. A source comparison against HEAD confirmed both screens' auth, query, state, and mutation-handler blocks were unchanged by this implementation.

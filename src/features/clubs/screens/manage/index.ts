@@ -9,6 +9,7 @@ export { ClubManageInvitationsSection } from './ClubManageInvitationsSection';
 export { ClubManageAnalyticsSection } from './ClubManageAnalyticsSection';
 export { ClubManageEventsSection } from './ClubManageEventsSection';
 export { ClubManageVenuesSection } from './ClubManageVenuesSection';
+export type { PrimaryVenueAction } from './ClubManageVenuesSection';
 export { ClubManageLifecycleSection } from './ClubManageLifecycleSection';
 export { ClubManageReadingScheduleSection } from './ClubManageReadingScheduleSection';
 export { ClubManageDiscussionReportsSection } from './ClubManageDiscussionReportsSection';

@@ -1,5 +1,7 @@
-import { Alert } from 'react-native';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { Alert, Platform, View } from 'react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { clubsService } from '@/features/clubs/services/clubsService';
 import ClubManageScreen from '../ClubManageScreen';
 
 let mockUserId = 'admin-1';
@@ -34,6 +36,7 @@ const mockUseClubEvents = jest.fn();
 const mockUseClubEventVenues = jest.fn();
 const mockUseAddClubVenueLink = jest.fn();
 const mockUseRemoveClubVenueLink = jest.fn();
+const mockUseSetPrimaryClubVenue = jest.fn();
 const mockUseCancelClubEvent = jest.fn();
 const mockUseDeleteClubEvent = jest.fn();
 const mockUseUpdateClubMemberStatus = jest.fn();
@@ -110,6 +113,7 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useClubEventVenues: (...args: unknown[]) => mockUseClubEventVenues(...args),
     useAddClubVenueLink: (...args: unknown[]) => mockUseAddClubVenueLink(...args),
     useRemoveClubVenueLink: (...args: unknown[]) => mockUseRemoveClubVenueLink(...args),
+    useSetPrimaryClubVenue: (...args: unknown[]) => mockUseSetPrimaryClubVenue(...args),
     useCancelClubEvent: (...args: unknown[]) => mockUseCancelClubEvent(...args),
     useDeleteClubEvent: (...args: unknown[]) => mockUseDeleteClubEvent(...args),
     useUpdateClubMemberStatus: (...args: unknown[]) => mockUseUpdateClubMemberStatus(...args),
@@ -164,6 +168,20 @@ const baseClub = {
     archived_at: null,
 };
 
+const testVenueDetails = { venue_type: null, city: null, address_line1: null, address_line2: null, verification_status: 'approved' };
+const primaryVenueLinks = [
+    { club_id: 'club-1', venue_id: 'venue-1', is_primary: true, venue: { ...testVenueDetails, id: 'venue-1', name: 'Central Library' } },
+    { club_id: 'club-1', venue_id: 'venue-2', is_primary: false, venue: { ...testVenueDetails, id: 'venue-2', name: 'Riverside Hall' } },
+    { club_id: 'club-1', venue_id: 'venue-3', is_primary: false, venue: { ...testVenueDetails, id: 'venue-3', name: 'Garden Room' } },
+];
+
+function deferred<T>() {
+    let resolve!: (value: T) => void;
+    let reject!: (error: Error) => void;
+    const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; });
+    return { promise, resolve, reject };
+}
+
 beforeEach(() => {
     jest.clearAllMocks();
     mockUserId = 'admin-1';
@@ -201,6 +219,7 @@ beforeEach(() => {
     mockUseClubEventVenues.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn() });
     mockUseAddClubVenueLink.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseRemoveClubVenueLink.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
+    mockUseSetPrimaryClubVenue.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({}), isPending: false });
     mockUseCancelClubEvent.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseDeleteClubEvent.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
     mockUseUpdateClubMemberStatus.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'member-1' }), isPending: false });
@@ -211,6 +230,395 @@ beforeEach(() => {
 });
 
 describe('ClubManageScreen', () => {
+    it('keeps Saving visible when a cache update moves the badge before confirmation finishes', async () => {
+        const confirmation = deferred<{ data: typeof primaryVenueLinks; isError: boolean }>();
+        const refetch = jest.fn(() => confirmation.promise);
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks, isLoading: false, refetch });
+        const screen = render(<ClubManageScreen />);
+        fireEvent.press(screen.getByText('Venues'));
+        fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+        await waitFor(() => expect(refetch).toHaveBeenCalledTimes(1));
+        const updated = primaryVenueLinks.map(link => ({ ...link, is_primary: link.venue_id === 'venue-2' }));
+        mockUseClubEventVenues.mockReturnValue({ data: updated, isLoading: false, refetch });
+        screen.rerender(<ClubManageScreen />);
+        expect(screen.getByTestId('manage-venue-primary-badge-venue-2')).toBeOnTheScreen();
+        expect(screen.getByText('Saving…')).toBeOnTheScreen();
+        expect(screen.getByTestId('manage-venue-set-primary-venue-1')).toBeDisabled();
+        await act(async () => confirmation.resolve({ data: updated, isError: false }));
+        expect(screen.queryByText('Saving…')).toBeNull();
+        expect(screen.getByTestId('manage-venue-set-primary-venue-1')).toBeEnabled();
+    });
+
+    it.each(['success', 'failure'] as const)('retains feedback when Remove unlinks a pending target before RPC %s', async outcome => {
+        const mutation = deferred<void>();
+        const remaining = primaryVenueLinks.filter(link => link.venue_id !== 'venue-2');
+        const refetch = jest.fn().mockResolvedValue({ data: remaining, isError: false });
+        mockUseSetPrimaryClubVenue.mockReturnValue({ mutateAsync: jest.fn(() => mutation.promise), isPending: false });
+        mockUseRemoveClubVenueLink.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue(undefined), isPending: false });
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks, isLoading: false, refetch });
+        const screen = render(<ClubManageScreen />);
+        fireEvent.press(screen.getByText('Venues'));
+        fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+        fireEvent.press(screen.getByTestId('manage-venue-remove-venue-2'));
+        fireEvent.press(screen.getByTestId('manage-venue-confirm-remove'));
+        await waitFor(() => expect(refetch).toHaveBeenCalledTimes(1));
+        mockUseClubEventVenues.mockReturnValue({ data: remaining, isLoading: false, refetch });
+        screen.rerender(<ClubManageScreen />);
+        expect(screen.getByText('Saving…')).toBeOnTheScreen();
+        await act(async () => {
+            if (outcome === 'success') mutation.resolve();
+            else mutation.reject(new Error('No longer linked'));
+        });
+        expect(screen.getByText(/The selected venue is no longer shown/)).toBeOnTheScreen();
+        expect(screen.queryByTestId('manage-venue-retry-venue-2')).toBeNull();
+        expect(screen.getByTestId('manage-venue-set-primary-venue-3')).toBeEnabled();
+        expect(screen.getByTestId('manage-venues-add')).toBeOnTheScreen();
+    });
+
+    it.each(['success', 'failure'] as const)('ignores delayed RPC %s after changing clubs and allows a new selection', async outcome => {
+        const oldMutation = deferred<void>();
+        const newMutation = deferred<void>();
+        const mutateAsync = jest.fn().mockReturnValueOnce(oldMutation.promise).mockReturnValueOnce(newMutation.promise);
+        const refetch = jest.fn().mockResolvedValue({ data: primaryVenueLinks, isError: false });
+        mockUseSetPrimaryClubVenue.mockReturnValue({ mutateAsync, isPending: false });
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks, isLoading: false, refetch });
+        const screen = render(<ClubManageScreen />);
+        fireEvent.press(screen.getByText('Venues'));
+        fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+        mockUseLocalSearchParams.mockReturnValue({ clubId: 'club-2', tab: 'venues' });
+        mockUseClubPublicDetail.mockReturnValue({ data: { ...baseClub, id: 'club-2' }, isLoading: false, refetch: jest.fn() });
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks.map(link => ({ ...link, club_id: 'club-2' })), isLoading: false, refetch });
+        screen.rerender(<ClubManageScreen />);
+        expect(screen.queryByText('Saving…')).toBeNull();
+        fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+        expect(mutateAsync).toHaveBeenLastCalledWith({ clubId: 'club-2', venueId: 'venue-2' });
+        await act(async () => {
+            if (outcome === 'success') oldMutation.resolve();
+            else oldMutation.reject(new Error('Old club failure'));
+        });
+        expect(refetch).not.toHaveBeenCalled();
+        expect(screen.getByText('Saving…')).toBeOnTheScreen();
+        screen.unmount();
+        await act(async () => newMutation.resolve());
+        expect(refetch).not.toHaveBeenCalled();
+    });
+
+    it.each(['empty', 'unreadable'] as const)('retains section recovery when the refreshed target is %s', async kind => {
+        const mutation = deferred<void>();
+        const missingTarget = kind === 'empty' ? [] : [{ ...primaryVenueLinks[1], is_primary: true, venue: null }];
+        const refetch = jest.fn().mockResolvedValue({ data: missingTarget, isError: false });
+        mockUseSetPrimaryClubVenue.mockReturnValue({ mutateAsync: jest.fn(() => mutation.promise), isPending: false });
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks, isLoading: false, refetch });
+        const screen = render(<ClubManageScreen />);
+        fireEvent.press(screen.getByText('Venues'));
+        fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+        mockUseClubEventVenues.mockReturnValue({ data: missingTarget, isLoading: false, refetch });
+        screen.rerender(<ClubManageScreen />);
+        expect(screen.getByText('Saving…')).toBeOnTheScreen();
+        await act(async () => mutation.resolve());
+        expect(screen.getByText(/The selected venue is no longer shown/)).toBeOnTheScreen();
+        expect(screen.queryByTestId('manage-venue-retry-venue-2')).toBeNull();
+        expect(screen.getByTestId('manage-venues-add')).toBeOnTheScreen();
+    });
+
+    it('ignores old confirmation data after a club switch even when clubs share a venue', async () => {
+        const oldConfirmation = deferred<{ data: typeof primaryVenueLinks; isError: boolean }>();
+        const newMutation = deferred<void>();
+        const mutateAsync = jest.fn().mockResolvedValueOnce({}).mockReturnValueOnce(newMutation.promise);
+        const refetch = jest.fn(() => oldConfirmation.promise);
+        mockUseSetPrimaryClubVenue.mockReturnValue({ mutateAsync, isPending: false });
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks, isLoading: false, refetch });
+        const screen = render(<ClubManageScreen />);
+        fireEvent.press(screen.getByText('Venues'));
+        fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+        await waitFor(() => expect(refetch).toHaveBeenCalledTimes(1));
+        mockUseLocalSearchParams.mockReturnValue({ clubId: 'club-2', tab: 'venues' });
+        mockUseClubPublicDetail.mockReturnValue({ data: { ...baseClub, id: 'club-2' }, isLoading: false, refetch: jest.fn() });
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks.map(link => ({ ...link, club_id: 'club-2' })), isLoading: false, refetch });
+        screen.rerender(<ClubManageScreen />);
+        fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+        await act(async () => oldConfirmation.resolve({
+            data: primaryVenueLinks.map(link => ({ ...link, club_id: 'club-2', is_primary: link.venue_id === 'venue-2' })), isError: false,
+        }));
+        expect(screen.getByText('Saving…')).toBeOnTheScreen();
+        expect(screen.queryByText(/could not confirm/)).toBeNull();
+        screen.unmount();
+        await act(async () => newMutation.resolve());
+    });
+
+    it('clears pending selection on account change and fences the old RPC response', async () => {
+        const mutation = deferred<void>();
+        const refetch = jest.fn();
+        mockUseSetPrimaryClubVenue.mockReturnValue({ mutateAsync: jest.fn(() => mutation.promise), isPending: false });
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks, isLoading: false, refetch });
+        const screen = render(<ClubManageScreen />);
+        fireEvent.press(screen.getByText('Venues'));
+        fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+        mockUserId = 'admin-2';
+        mockUseLocalSearchParams.mockReturnValue({ clubId: 'club-1', tab: 'venues' });
+        mockUseClubPublicDetail.mockReturnValue({ data: { ...baseClub, admin_id: 'admin-2' }, isLoading: false, refetch: jest.fn() });
+        screen.rerender(<ClubManageScreen />);
+        expect(screen.queryByText('Saving…')).toBeNull();
+        await act(async () => mutation.resolve());
+        expect(refetch).not.toHaveBeenCalled();
+    });
+
+    it('does not confirm matching venue data from another club', async () => {
+        const wrongClubLinks = primaryVenueLinks.map(link => ({ ...link, club_id: 'club-2', is_primary: link.venue_id === 'venue-2' }));
+        mockUseClubEventVenues.mockReturnValue({
+            data: primaryVenueLinks, isLoading: false,
+            refetch: jest.fn().mockResolvedValue({ data: wrongClubLinks, isError: false }),
+        });
+        const screen = render(<ClubManageScreen />);
+        fireEvent.press(screen.getByText('Venues'));
+        fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+        expect(await screen.findByText(/could not confirm this venue/)).toBeOnTheScreen();
+        expect(screen.getByTestId('manage-venue-retry-venue-2')).toBeOnTheScreen();
+    });
+
+    it('keeps recovery when refetch resolves isError with cached primary data', async () => {
+        const updated = primaryVenueLinks.map(link => ({ ...link, is_primary: link.venue_id === 'venue-2' }));
+        mockUseClubEventVenues.mockReturnValue({
+            data: primaryVenueLinks, isLoading: false,
+            refetch: jest.fn().mockResolvedValue({ data: updated, isError: true }),
+        });
+        const screen = render(<ClubManageScreen />);
+        fireEvent.press(screen.getByText('Venues'));
+        fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+        expect(await screen.findByText(/could not confirm this venue/)).toBeOnTheScreen();
+    });
+
+    it('does not unlink until confirmed and Cancel leaves the link intact', async () => {
+        const remove = jest.fn().mockResolvedValue(undefined);
+        mockUseRemoveClubVenueLink.mockReturnValue({ mutateAsync: remove, isPending: false });
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks, isLoading: false, refetch: jest.fn() });
+        const screen = render(<ClubManageScreen />);
+        fireEvent.press(screen.getByText('Venues'));
+        fireEvent.press(screen.getByTestId('manage-venue-remove-venue-1'));
+        expect(screen.getByText('Remove venue?')).toBeOnTheScreen();
+        expect(screen.getByText('The club will have no primary venue until you select another.')).toBeOnTheScreen();
+        expect(remove).not.toHaveBeenCalled();
+        fireEvent.press(screen.getByTestId('manage-venue-cancel-remove'));
+        expect(screen.queryByText('Remove venue?')).toBeNull();
+        expect(remove).not.toHaveBeenCalled();
+        fireEvent.press(screen.getByTestId('manage-venue-remove-venue-2'));
+        fireEvent.press(screen.getByTestId('manage-venue-confirm-remove'));
+        await waitFor(() => expect(remove).toHaveBeenCalledTimes(1));
+        expect(remove).toHaveBeenCalledWith({ clubId: 'club-1', venueId: 'venue-2' });
+    });
+
+    it.each(['club', 'account'] as const)('hands web focus to the management surface on a %s change', kind => {
+        const os = Platform.OS;
+        Object.defineProperty(Platform, 'OS', { configurable: true, value: 'web' });
+        const focus = jest.spyOn(View.prototype, 'focus');
+        const screen = render(<ClubManageScreen />);
+        try {
+            expect(focus).not.toHaveBeenCalled();
+            if (kind === 'club') mockUseLocalSearchParams.mockReturnValue({ clubId: 'club-2', tab: 'venues' });
+            else mockUserId = 'admin-2';
+            screen.rerender(<ClubManageScreen />);
+            expect(focus).toHaveBeenCalledTimes(1);
+            expect(screen.getByTestId('club-management-surface').props.accessibilityLabel).toBe('Club management');
+        } finally {
+            screen.unmount();
+            focus.mockRestore();
+            Object.defineProperty(Platform, 'OS', { configurable: true, value: os });
+        }
+    });
+
+    it.each([false, true])('hands web focus to Add when the removal target disappears (confirmed=%s)', async confirmed => {
+        const os = Platform.OS;
+        Object.defineProperty(Platform, 'OS', { configurable: true, value: 'web' });
+        const focus = jest.spyOn(View.prototype, 'focus');
+        mockUseRemoveClubVenueLink.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue(undefined), isPending: false });
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks, isLoading: false, refetch: jest.fn() });
+        const screen = render(<ClubManageScreen />);
+        try {
+            fireEvent.press(screen.getByText('Venues'));
+            fireEvent.press(screen.getByTestId('manage-venue-remove-venue-2'));
+            if (confirmed) await act(async () => fireEvent.press(screen.getByTestId('manage-venue-confirm-remove')));
+            mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks.filter(link => link.venue_id !== 'venue-2'), isLoading: false, refetch: jest.fn() });
+            screen.rerender(<ClubManageScreen />);
+            expect(focus).toHaveBeenCalledTimes(1);
+            expect(screen.queryByTestId('manage-venue-confirm-remove')).toBeNull();
+        } finally {
+            screen.unmount();
+            focus.mockRestore();
+            Object.defineProperty(Platform, 'OS', { configurable: true, value: os });
+        }
+    });
+
+    it('dismisses confirmation if its target disappears without unlinking again', () => {
+        const remove = jest.fn();
+        mockUseRemoveClubVenueLink.mockReturnValue({ mutateAsync: remove, isPending: false });
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks, isLoading: false, refetch: jest.fn() });
+        const screen = render(<ClubManageScreen />);
+        fireEvent.press(screen.getByText('Venues'));
+        fireEvent.press(screen.getByTestId('manage-venue-remove-venue-2'));
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks.filter(link => link.venue_id !== 'venue-2'), isLoading: false, refetch: jest.fn() });
+        screen.rerender(<ClubManageScreen />);
+        expect(screen.queryByTestId('manage-venue-confirm-remove')).toBeNull();
+        expect(remove).not.toHaveBeenCalled();
+        expect(screen.getByTestId('manage-venues-add')).toBeEnabled();
+    });
+
+    it.each(['club', 'account'] as const)('dismisses removal confirmation after a %s change', kind => {
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks, isLoading: false, refetch: jest.fn() });
+        const screen = render(<ClubManageScreen />);
+        fireEvent.press(screen.getByText('Venues'));
+        fireEvent.press(screen.getByTestId('manage-venue-remove-venue-2'));
+        if (kind === 'club') mockUseLocalSearchParams.mockReturnValue({ clubId: 'club-2', tab: 'venues' });
+        else mockUserId = 'admin-2';
+        screen.rerender(<ClubManageScreen />);
+        expect(screen.queryByTestId('manage-venue-confirm-remove')).toBeNull();
+    });
+
+    it.each([
+        ['club', 'success'], ['club', 'failure'], ['club', 'confirmation'],
+        ['account', 'success'], ['account', 'failure'], ['account', 'confirmation'],
+    ] as const)('fences real-query %s changes during delayed %s', async (identity, outcome) => {
+        const realHooks = jest.requireActual<typeof import('@/features/clubs/hooks/useClubs')>('@/features/clubs/hooks/useClubs');
+        const rpc = deferred<Awaited<ReturnType<typeof clubsService.setPrimaryClubVenue>>>();
+        const confirmation = deferred<typeof primaryVenueLinks>();
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false, gcTime: 0 } } });
+        const oldKey = realHooks.clubKeys.eventVenues('club-1');
+        client.setQueryData(oldKey, primaryVenueLinks);
+        const readSpy = jest.spyOn(clubsService, 'getClubEventVenues').mockResolvedValue(primaryVenueLinks);
+        if (outcome === 'confirmation') readSpy.mockImplementation(() => confirmation.promise);
+        const writeSpy = jest.spyOn(clubsService, 'setPrimaryClubVenue').mockImplementation(() => rpc.promise);
+        mockUseClubEventVenues.mockImplementation(realHooks.useClubEventVenues);
+        mockUseSetPrimaryClubVenue.mockImplementation(realHooks.useSetPrimaryClubVenue);
+        const screen = render(<QueryClientProvider client={client}><ClubManageScreen /></QueryClientProvider>);
+        try {
+            fireEvent.press(screen.getByText('Venues'));
+            fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+            if (outcome === 'confirmation') {
+                await act(async () => rpc.resolve({ ...primaryVenueLinks[1], is_primary: true }));
+                await waitFor(() => expect(readSpy).toHaveBeenCalledTimes(2));
+            }
+            const clubId = identity === 'club' ? 'club-2' : 'club-1';
+            const newLinks = primaryVenueLinks.map(link => ({ ...link, club_id: clubId }));
+            // Auth changes clear account-owned caches in the app; model that boundary here.
+            if (identity === 'account') { client.clear(); mockUserId = 'admin-2'; }
+            client.setQueryData(realHooks.clubKeys.eventVenues(clubId), newLinks);
+            readSpy.mockResolvedValue(newLinks);
+            mockUseLocalSearchParams.mockReturnValue({ clubId, tab: 'venues' });
+            mockUseClubPublicDetail.mockReturnValue({ data: { ...baseClub, id: clubId, admin_id: mockUserId }, isLoading: false, refetch: jest.fn() });
+            screen.rerender(<QueryClientProvider client={client}><ClubManageScreen /></QueryClientProvider>);
+            expect(screen.queryByText('Saving…')).toBeNull();
+            await act(async () => {
+                if (outcome === 'failure') rpc.reject(new Error('Old identity failure'));
+                else if (outcome === 'confirmation') confirmation.resolve(primaryVenueLinks.map(link => ({ ...link, is_primary: link.venue_id === 'venue-2' })));
+                else rpc.resolve({ ...primaryVenueLinks[1], is_primary: true });
+            });
+            await waitFor(() => expect(screen.getByTestId('manage-venue-set-primary-venue-2')).toBeEnabled());
+            expect(screen.queryByText(/could not confirm/)).toBeNull();
+            expect(screen.queryByText(/Old identity failure/)).toBeNull();
+            expect(screen.queryByText('Saving…')).toBeNull();
+            expect(writeSpy).toHaveBeenCalledTimes(1);
+        } finally {
+            screen.unmount();
+            rpc.resolve({ ...primaryVenueLinks[1], is_primary: true });
+            confirmation.resolve(primaryVenueLinks);
+            client.clear(); readSpy.mockRestore(); writeSpy.mockRestore();
+        }
+    });
+
+    it('retains recovery through real Remove invalidation during primary confirmation', async () => {
+        const realHooks = jest.requireActual<typeof import('@/features/clubs/hooks/useClubs')>('@/features/clubs/hooks/useClubs');
+        const confirmation = deferred<typeof primaryVenueLinks>();
+        const remaining = primaryVenueLinks.filter(link => link.venue_id !== 'venue-2');
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false, gcTime: 0 } } });
+        client.setQueryData(realHooks.clubKeys.eventVenues('club-1'), primaryVenueLinks);
+        const readSpy = jest.spyOn(clubsService, 'getClubEventVenues').mockResolvedValue(remaining)
+            .mockImplementationOnce(() => confirmation.promise).mockImplementationOnce(() => confirmation.promise);
+        const writeSpy = jest.spyOn(clubsService, 'setPrimaryClubVenue').mockResolvedValue({ ...primaryVenueLinks[1], is_primary: true });
+        const removeSpy = jest.spyOn(clubsService, 'removeClubVenueLink').mockResolvedValue(undefined);
+        mockUseClubEventVenues.mockImplementation(realHooks.useClubEventVenues);
+        mockUseSetPrimaryClubVenue.mockImplementation(realHooks.useSetPrimaryClubVenue);
+        mockUseRemoveClubVenueLink.mockImplementation(realHooks.useRemoveClubVenueLink);
+        const screen = render(<QueryClientProvider client={client}><ClubManageScreen /></QueryClientProvider>);
+        try {
+            fireEvent.press(screen.getByText('Venues'));
+            fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+            await waitFor(() => expect(readSpy).toHaveBeenCalledTimes(2));
+            fireEvent.press(screen.getByTestId('manage-venue-remove-venue-2'));
+            fireEvent.press(screen.getByTestId('manage-venue-confirm-remove'));
+            await waitFor(() => expect(removeSpy).toHaveBeenCalledTimes(1));
+            await act(async () => confirmation.resolve(remaining));
+            await waitFor(() => expect(screen.getByText(/The selected venue is no longer shown/)).toBeOnTheScreen());
+            expect(screen.queryByTestId('manage-venue-retry-venue-2')).toBeNull();
+            expect(screen.getByTestId('manage-venues-add')).toBeEnabled();
+            expect(removeSpy).toHaveBeenCalledTimes(1);
+        } finally {
+            screen.unmount(); confirmation.resolve(remaining); client.clear();
+            readSpy.mockRestore(); writeSpy.mockRestore(); removeSpy.mockRestore();
+        }
+    });
+
+    it.each(['success', 'failure'] as const)('fences real-query failure refresh %s after unmount', async outcome => {
+        const realHooks = jest.requireActual<typeof import('@/features/clubs/hooks/useClubs')>('@/features/clubs/hooks/useClubs');
+        const refresh = deferred<typeof primaryVenueLinks>();
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false, gcTime: 0 } } });
+        client.setQueryData(realHooks.clubKeys.eventVenues('club-1'), primaryVenueLinks);
+        const readSpy = jest.spyOn(clubsService, 'getClubEventVenues').mockImplementation(() => refresh.promise);
+        const writeSpy = jest.spyOn(clubsService, 'setPrimaryClubVenue').mockRejectedValue(new Error('Primary rejected'));
+        mockUseClubEventVenues.mockImplementation(realHooks.useClubEventVenues);
+        mockUseSetPrimaryClubVenue.mockImplementation(realHooks.useSetPrimaryClubVenue);
+        const screen = render(<QueryClientProvider client={client}><ClubManageScreen /></QueryClientProvider>);
+        try {
+            fireEvent.press(screen.getByText('Venues'));
+            fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+            await waitFor(() => expect(readSpy).toHaveBeenCalledTimes(1));
+            screen.unmount();
+            await act(async () => {
+                if (outcome === 'success') refresh.resolve(primaryVenueLinks);
+                else refresh.reject(new Error('Refresh rejected'));
+            });
+            expect(readSpy).toHaveBeenCalledTimes(1);
+            expect(client.getQueryCache().find({ queryKey: realHooks.clubKeys.eventVenues('club-1') })?.getObserversCount() ?? 0).toBe(0);
+        } finally {
+            screen.unmount(); refresh.resolve(primaryVenueLinks); client.clear();
+            readSpy.mockRestore(); writeSpy.mockRestore();
+        }
+    });
+
+    it('keeps Saving through real venue-query invalidation and confirmation', async () => {
+        const realHooks = jest.requireActual<typeof import('@/features/clubs/hooks/useClubs')>('@/features/clubs/hooks/useClubs');
+        const confirmation = deferred<typeof primaryVenueLinks>();
+        const invalidatedRead = deferred<typeof primaryVenueLinks>();
+        const updated = primaryVenueLinks.map(link => ({ ...link, is_primary: link.venue_id === 'venue-2' }));
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false, gcTime: 0 } } });
+        client.setQueryData(realHooks.clubKeys.eventVenues('club-1'), primaryVenueLinks);
+        const readSpy = jest.spyOn(clubsService, 'getClubEventVenues')
+            .mockImplementationOnce(() => invalidatedRead.promise)
+            .mockImplementationOnce(() => confirmation.promise);
+        const writeSpy = jest.spyOn(clubsService, 'setPrimaryClubVenue').mockResolvedValue({ club_id: 'club-1', venue_id: 'venue-2', is_primary: true, venue: null });
+        mockUseClubEventVenues.mockImplementation(realHooks.useClubEventVenues);
+        mockUseSetPrimaryClubVenue.mockImplementation(realHooks.useSetPrimaryClubVenue);
+        const screen = render(<QueryClientProvider client={client}><ClubManageScreen /></QueryClientProvider>);
+        try {
+            fireEvent.press(screen.getByText('Venues'));
+            fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+            fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+            await waitFor(() => expect(readSpy).toHaveBeenCalledTimes(2));
+            expect(writeSpy).toHaveBeenCalledTimes(1);
+            await act(async () => client.setQueryData(realHooks.clubKeys.eventVenues('club-1'), updated));
+            await waitFor(() => expect(screen.getByTestId('manage-venue-primary-badge-venue-2')).toBeOnTheScreen());
+            expect(screen.getByText('Saving…')).toBeOnTheScreen();
+            await act(async () => confirmation.resolve(updated));
+            await waitFor(() => expect(screen.queryByText('Saving…')).toBeNull());
+            expect(screen.getByTestId('manage-venue-set-primary-venue-1')).toBeEnabled();
+        } finally {
+            screen.unmount();
+            invalidatedRead.resolve(updated);
+            confirmation.resolve(updated);
+            client.clear();
+            readSpy.mockRestore();
+            writeSpy.mockRestore();
+        }
+    });
+
     it('shows club header and tab bar for admins with all tabs', () => {
         const { getByText } = render(<ClubManageScreen />);
 
@@ -241,14 +649,137 @@ describe('ClubManageScreen', () => {
         fireEvent.press(getByText('Venues'));
 
         await waitFor(() => expect(getByText('Central Library')).toBeOnTheScreen());
-        expect(getByText('Primary')).toBeOnTheScreen();
+        expect(getByText('Primary venue')).toBeOnTheScreen();
 
         fireEvent.press(getByTestId('manage-venues-add'));
 
         expect(mockRouterPush).toHaveBeenCalledWith('/clubs/club-1/venues?returnTo=manage-venues');
     });
 
-    it('R1 mitigation: non-primary venues offer no set-primary action but keep add/remove reachable', async () => {
+    it('sets a linked venue as primary and exposes a pending action without hiding remove controls', async () => {
+        let finishMutation!: () => void;
+        let finishRefetch!: () => void;
+        const setPrimary = jest.fn(() => new Promise<void>((resolve) => {
+            finishMutation = resolve;
+        }));
+        mockUseSetPrimaryClubVenue.mockReturnValue({ mutateAsync: setPrimary, isPending: false });
+        const initialVenueLinks = [
+            { club_id: 'club-1', venue_id: 'venue-1', is_primary: true, venue: { id: 'venue-1', name: 'Central Library', address_line1: '12 Main St', city: 'Bengaluru', verification_status: 'approved' } },
+            { club_id: 'club-1', venue_id: 'venue-2', is_primary: false, venue: { id: 'venue-2', name: 'Riverside Hall', address_line1: '8 River Rd', city: 'Bengaluru', verification_status: 'approved' } },
+        ];
+        const updatedVenueLinks = [
+            { ...initialVenueLinks[0], is_primary: false },
+            { ...initialVenueLinks[1], is_primary: true },
+        ];
+        let currentVenueLinks = initialVenueLinks;
+        const refetchVenues = jest.fn(() => new Promise((resolve) => {
+            finishRefetch = () => {
+                currentVenueLinks = updatedVenueLinks;
+                resolve({ data: updatedVenueLinks, isError: false });
+            };
+        }));
+        mockUseClubEventVenues.mockImplementation(() => ({
+            data: currentVenueLinks,
+            isLoading: false,
+            refetch: refetchVenues,
+        }));
+
+        const { getByText, getByTestId, queryByTestId } = render(<ClubManageScreen />);
+
+        fireEvent.press(getByText('Venues'));
+
+        expect(await getByText('Primary venue is suggested for new in-person or hybrid events; existing events keep their saved venue.')).toBeOnTheScreen();
+        expect(getByText('Primary venue')).toBeOnTheScreen();
+        expect(getByTestId('manage-venue-remove-venue-1')).toBeOnTheScreen();
+        expect(getByTestId('manage-venue-remove-venue-2')).toBeOnTheScreen();
+        expect(getByTestId('manage-venues-add')).toBeOnTheScreen();
+        fireEvent.press(getByTestId('manage-venue-set-primary-venue-2'));
+        await waitFor(() => expect(setPrimary).toHaveBeenCalledWith({ clubId: 'club-1', venueId: 'venue-2' }));
+        expect(getByText('Saving…')).toBeOnTheScreen();
+        expect(getByTestId('manage-venue-remove-venue-1')).toBeOnTheScreen();
+        expect(getByTestId('manage-venue-remove-venue-2')).toBeOnTheScreen();
+        expect(getByTestId('manage-venue-set-primary-venue-2').props.accessibilityState).toEqual({ disabled: true, busy: true });
+        finishMutation();
+        await waitFor(() => expect(refetchVenues).toHaveBeenCalledTimes(1));
+        expect(getByText('Saving…')).toBeOnTheScreen();
+        expect(getByTestId('manage-venue-primary-badge-venue-1')).toBeOnTheScreen();
+        finishRefetch();
+        await waitFor(() => {
+            expect(getByTestId('manage-venue-primary-badge-venue-2')).toBeOnTheScreen();
+            expect(queryByTestId('manage-venue-primary-badge-venue-1')).toBeNull();
+            expect(getByTestId('manage-venue-set-primary-venue-1')).toBeOnTheScreen();
+        });
+    });
+
+    it('keeps the previous primary visible after a failed selection and offers retry', async () => {
+        const setPrimary = jest.fn().mockRejectedValue(new Error('The venue update was rejected.'));
+        const venueLinks = [
+            { club_id: 'club-1', venue_id: 'venue-1', is_primary: true, venue: { id: 'venue-1', name: 'Central Library', address_line1: '12 Main St', city: 'Bengaluru', verification_status: 'approved' } },
+            { club_id: 'club-1', venue_id: 'venue-2', is_primary: false, venue: { id: 'venue-2', name: 'Riverside Hall', address_line1: '8 River Rd', city: 'Bengaluru', verification_status: 'approved' } },
+        ];
+        const refetchVenues = jest.fn().mockResolvedValue({ data: venueLinks, isError: false });
+        mockUseSetPrimaryClubVenue.mockReturnValue({ mutateAsync: setPrimary, isPending: false });
+        mockUseClubEventVenues.mockReturnValue({ data: venueLinks, isLoading: false, refetch: refetchVenues });
+
+        const { getByText, getByTestId, findByText } = render(<ClubManageScreen />);
+        fireEvent.press(getByText('Venues'));
+        fireEvent.press(getByTestId('manage-venue-set-primary-venue-2'));
+
+        expect(await findByText('Couldn’t update primary venue. Central Library remains primary.')).toBeOnTheScreen();
+        expect(getByText('Primary venue')).toBeOnTheScreen();
+        expect(getByTestId('manage-venue-remove-venue-1')).toBeOnTheScreen();
+        expect(getByTestId('manage-venue-remove-venue-2')).toBeOnTheScreen();
+        fireEvent.press(getByTestId('manage-venue-retry-venue-2'));
+        await waitFor(() => expect(setPrimary).toHaveBeenCalledTimes(2));
+    });
+
+    it('keeps a recovery action when the RPC succeeds but the refreshed list cannot confirm the target', async () => {
+        const venueLinks = [
+            { club_id: 'club-1', venue_id: 'venue-1', is_primary: true, venue: { id: 'venue-1', name: 'Central Library', address_line1: '12 Main St', city: 'Bengaluru', verification_status: 'approved' } },
+            { club_id: 'club-1', venue_id: 'venue-2', is_primary: false, venue: { id: 'venue-2', name: 'Riverside Hall', address_line1: '8 River Rd', city: 'Bengaluru', verification_status: 'approved' } },
+        ];
+        const setPrimary = jest.fn().mockResolvedValue({});
+        mockUseSetPrimaryClubVenue.mockReturnValue({ mutateAsync: setPrimary, isPending: false });
+        mockUseClubEventVenues.mockReturnValue({
+            data: venueLinks,
+            isLoading: false,
+            refetch: jest.fn().mockResolvedValue({ data: venueLinks, isError: false }),
+        });
+
+        const { getByText, getByTestId, findByText } = render(<ClubManageScreen />);
+        fireEvent.press(getByText('Venues'));
+        fireEvent.press(getByTestId('manage-venue-set-primary-venue-2'));
+
+        expect(await findByText('Primary venue update succeeded, but the latest venue list could not confirm this venue as primary. Try again to set it as primary.')).toBeOnTheScreen();
+        expect(getByTestId('manage-venue-primary-badge-venue-1')).toBeOnTheScreen();
+        expect(getByTestId('manage-venue-retry-venue-2')).toBeOnTheScreen();
+        expect(setPrimary).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps a recovery action when the refreshed venue-list request fails after RPC success', async () => {
+        const venueLinks = [
+            { club_id: 'club-1', venue_id: 'venue-1', is_primary: true, venue: { id: 'venue-1', name: 'Central Library', address_line1: '12 Main St', city: 'Bengaluru', verification_status: 'approved' } },
+            { club_id: 'club-1', venue_id: 'venue-2', is_primary: false, venue: { id: 'venue-2', name: 'Riverside Hall', address_line1: '8 River Rd', city: 'Bengaluru', verification_status: 'approved' } },
+        ];
+        const setPrimary = jest.fn().mockResolvedValue({});
+        mockUseSetPrimaryClubVenue.mockReturnValue({ mutateAsync: setPrimary, isPending: false });
+        mockUseClubEventVenues.mockReturnValue({
+            data: venueLinks,
+            isLoading: false,
+            refetch: jest.fn().mockRejectedValue(new Error('refresh failed')),
+        });
+
+        const { getByText, getByTestId, findByText } = render(<ClubManageScreen />);
+        fireEvent.press(getByText('Venues'));
+        fireEvent.press(getByTestId('manage-venue-set-primary-venue-2'));
+
+        expect(await findByText('Primary venue update succeeded, but the latest venue list could not confirm this venue as primary. Try again to set it as primary.')).toBeOnTheScreen();
+        expect(getByTestId('manage-venue-primary-badge-venue-1')).toBeOnTheScreen();
+        expect(getByTestId('manage-venue-retry-venue-2')).toBeOnTheScreen();
+        expect(setPrimary).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps add and remove venue actions available when primary selection is absent', async () => {
         const removeMutateAsync = jest.fn().mockResolvedValue(undefined);
         mockUseRemoveClubVenueLink.mockReturnValue({ mutateAsync: removeMutateAsync, isPending: false });
         mockUseClubEventVenues.mockReturnValue({
@@ -257,22 +788,14 @@ describe('ClubManageScreen', () => {
             refetch: jest.fn(),
         });
 
-        const { getByText, getByTestId, queryByText } = render(<ClubManageScreen />);
-
+        const { getByText, getByTestId } = render(<ClubManageScreen />);
         fireEvent.press(getByText('Venues'));
 
         await waitFor(() => expect(getByText('Riverside Hall')).toBeOnTheScreen());
-        // Temporary unavailability notice is shown instead of a working-looking control.
-        expect(getByText('Primary venue selection is temporarily unavailable.')).toBeOnTheScreen();
-        // No set-primary control exists, so the missing RPC cannot be dispatched from this UI.
-        expect(queryByText('Primary')).not.toBeOnTheScreen();
-        // Action-oriented guard: catches "Set Primary" / "Set as primary" / "Make Primary"
-        // relabels without rejecting the legitimate "Primary" status label or the notice above.
-        expect(queryByText(/(set|make).*primary/i)).not.toBeOnTheScreen();
-
-        // Other venue operations remain reachable.
         expect(getByTestId('manage-venues-add')).toBeOnTheScreen();
-        fireEvent.press(getByText('Remove'));
+        expect(getByTestId('manage-venue-set-primary-venue-2')).toBeOnTheScreen();
+        fireEvent.press(getByTestId('manage-venue-remove-venue-2'));
+        fireEvent.press(getByTestId('manage-venue-confirm-remove'));
         await waitFor(() => expect(removeMutateAsync).toHaveBeenCalledWith({ clubId: 'club-1', venueId: 'venue-2' }));
     });
 
