@@ -733,6 +733,115 @@ describe('ClubManageScreen', () => {
         await waitFor(() => expect(setPrimary).toHaveBeenCalledTimes(2));
     });
 
+    it.each(['non-owner admin', 'archived owner'])('hides primary selection for a %s without removing existing link actions', kind => {
+        mockUseClubPublicDetail.mockReturnValue({
+            data: { ...baseClub, ...(kind === 'non-owner admin' ? { admin_id: 'another-owner' } : { is_archived: true }) },
+            isLoading: false, isError: false, refetch: jest.fn(),
+        });
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks, isLoading: false, refetch: jest.fn() });
+        const screen = render(<ClubManageScreen />);
+        fireEvent.press(screen.getByText('Venues'));
+        expect(screen.queryByTestId('manage-venue-set-primary-venue-2')).toBeNull();
+        expect(screen.getByTestId('manage-venue-primary-badge-venue-1')).toBeOnTheScreen();
+        expect(screen.getByTestId('manage-venues-add')).toBeOnTheScreen();
+        expect(screen.getByTestId('manage-venue-remove-venue-2')).toBeOnTheScreen();
+    });
+
+    it.each(['confirmed', 'wrong club', 'unreadable', 'failed refresh'])('reconciles a lost RPC response using %s readback', async kind => {
+        const updated = primaryVenueLinks.map(link => ({ ...link, is_primary: link.venue_id === 'venue-2' }));
+        const readback = kind === 'wrong club' ? updated.map(link => ({ ...link, club_id: 'another-club' }))
+            : kind === 'unreadable' ? updated.map(link => ({ ...link, venue: null })) : updated;
+        mockUseSetPrimaryClubVenue.mockReturnValue({ mutateAsync: jest.fn().mockRejectedValue(new Error('Response lost')), isPending: false });
+        let current = primaryVenueLinks;
+        const refetch = jest.fn(async () => {
+            current = updated;
+            return { data: readback, isError: kind === 'failed refresh' };
+        });
+        mockUseClubEventVenues.mockImplementation(() => ({ data: current, isLoading: false, refetch }));
+        const screen = render(<ClubManageScreen />);
+        fireEvent.press(screen.getByText('Venues'));
+        fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+        await waitFor(() => expect(refetch).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(screen.queryByText('Saving…')).toBeNull());
+        if (kind === 'confirmed') {
+            expect(screen.queryByTestId('manage-venue-retry-venue-2')).toBeNull();
+            expect(screen.getByTestId('manage-venue-primary-badge-venue-2')).toBeOnTheScreen();
+        }
+        else {
+            expect(screen.getByTestId('manage-venue-retry-venue-2')).toBeOnTheScreen();
+            expect(screen.getByText('Couldn’t update primary venue. Refresh and try again.')).toBeOnTheScreen();
+            expect(screen.queryByText('Couldn’t update primary venue. No primary venue is set.')).toBeNull();
+        }
+    });
+
+    it.each(['wrong club', 'unreadable'])('retains recovery when the displayed query adopts %s readback after response loss', async kind => {
+        const updated = primaryVenueLinks.map(link => ({ ...link, is_primary: link.venue_id === 'venue-2' }));
+        const readback = kind === 'wrong club' ? updated.map(link => ({ ...link, club_id: 'another-club' }))
+            : updated.map(link => ({ ...link, venue: null }));
+        mockUseSetPrimaryClubVenue.mockReturnValue({ mutateAsync: jest.fn().mockRejectedValue(new Error('Response lost')), isPending: false });
+        let current: typeof readback | typeof primaryVenueLinks = primaryVenueLinks;
+        const refetch = jest.fn(async () => {
+            current = readback;
+            return { data: readback, isError: false };
+        });
+        mockUseClubEventVenues.mockImplementation(() => ({ data: current, isLoading: false, refetch }));
+        const screen = render(<ClubManageScreen />);
+        fireEvent.press(screen.getByText('Venues'));
+        fireEvent.press(screen.getByTestId('manage-venue-set-primary-venue-2'));
+        await waitFor(() => expect(refetch).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(screen.queryByText('Saving…')).toBeNull());
+        expect(screen.queryByText('Couldn’t update primary venue. No primary venue is set.')).toBeNull();
+        expect(screen.getByTestId('manage-venues-add')).toBeOnTheScreen();
+        if (kind === 'unreadable') {
+            expect(screen.getByTestId('manage-venues-selection-status')).toBeOnTheScreen();
+            expect(screen.queryByTestId('manage-venue-retry-venue-2')).toBeNull();
+            expect(screen.queryByTestId('manage-venue-primary-badge-venue-2')).toBeNull();
+        } else {
+            expect(screen.getByText('Couldn’t update primary venue. Refresh and try again.')).toBeOnTheScreen();
+            expect(screen.getByTestId('manage-venue-retry-venue-2')).toBeOnTheScreen();
+        }
+    });
+
+    it.each(['lost focus', 'moved focus', 'background click'])('handles an externally removed focused venue with %s', kind => {
+        const os = Platform.OS;
+        const previousDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+        const body = {};
+        const otherControl = {};
+        const control = { contains: (target: unknown) => target === control };
+        const listeners = new Map<string, (event: { target: unknown }) => void>();
+        const documentMock = { body, documentElement: {}, activeElement: control as unknown,
+            addEventListener: (type: string, listener: (event: { target: unknown }) => void) => listeners.set(type, listener),
+            removeEventListener: (type: string) => listeners.delete(type),
+        };
+        Object.defineProperty(globalThis, 'document', { configurable: true, value: documentMock });
+        Object.defineProperty(Platform, 'OS', { configurable: true, value: 'web' });
+        const focus = jest.spyOn(View.prototype, 'focus');
+        mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks, isLoading: false, refetch: jest.fn() });
+        const screen = render(<ClubManageScreen />);
+        try {
+            fireEvent.press(screen.getByText('Venues'));
+            fireEvent(screen.getByTestId('manage-venue-remove-venue-2'), 'focus', { currentTarget: control });
+            if (kind === 'moved focus') {
+                documentMock.activeElement = otherControl;
+                listeners.get('focusin')?.({ target: otherControl });
+            } else {
+                if (kind === 'background click') listeners.get('pointerdown')?.({ target: body });
+                documentMock.activeElement = body;
+            }
+            mockUseClubEventVenues.mockReturnValue({ data: primaryVenueLinks.filter(link => link.venue_id !== 'venue-2'), isLoading: false, refetch: jest.fn() });
+            screen.rerender(<ClubManageScreen />);
+            expect(focus).toHaveBeenCalledTimes(kind === 'lost focus' ? 1 : 0);
+            expect(screen.queryByTestId('manage-venue-confirm-remove')).toBeNull();
+        } finally {
+            screen.unmount();
+            expect(listeners.size).toBe(0);
+            focus.mockRestore();
+            Object.defineProperty(Platform, 'OS', { configurable: true, value: os });
+            if (previousDocument) Object.defineProperty(globalThis, 'document', previousDocument);
+            else Reflect.deleteProperty(globalThis, 'document');
+        }
+    });
+
     it('keeps a recovery action when the RPC succeeds but the refreshed list cannot confirm the target', async () => {
         const venueLinks = [
             { club_id: 'club-1', venue_id: 'venue-1', is_primary: true, venue: { id: 'venue-1', name: 'Central Library', address_line1: '12 Main St', city: 'Bengaluru', verification_status: 'approved' } },

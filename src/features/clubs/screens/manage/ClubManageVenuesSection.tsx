@@ -15,6 +15,7 @@ export function ClubManageVenuesSection({
     isLoading,
     isSavingLinks,
     primaryAction,
+    canSelectPrimary,
     colors,
     onAddVenue,
     onRemoveVenue,
@@ -25,6 +26,7 @@ export function ClubManageVenuesSection({
     isLoading: boolean;
     isSavingLinks: boolean;
     primaryAction: PrimaryVenueAction | null;
+    canSelectPrimary: boolean;
     colors: ThemeColors;
     onAddVenue: () => void;
     onRemoveVenue: (venueId: string) => void;
@@ -35,6 +37,29 @@ export function ClubManageVenuesSection({
     const removalSubmitted = useRef(false);
     const submittedRemovalId = useRef<string | null>(null);
     const addButtonRef = useRef<React.ElementRef<typeof TouchableOpacity>>(null);
+    const focusedVenueControl = useRef<{ venueId: string; node: HTMLElement } | null>(null);
+    const trackVenueFocus = (venueId: string, node: unknown) => {
+        if (Platform.OS === 'web' && node && typeof (node as HTMLElement).contains === 'function') {
+            focusedVenueControl.current = { venueId, node: node as HTMLElement };
+        }
+    };
+    useEffect(() => {
+        if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+        const clearMovedFocus = (event: Event) => {
+            if (focusedVenueControl.current && !focusedVenueControl.current.node.contains(event.target as Node)) {
+                focusedVenueControl.current = null;
+            }
+        };
+        // Row deletion can send focus to body without a focusin event. Remember
+        // the control, but discard it when the user focuses/clicks elsewhere.
+        document.addEventListener('focusin', clearMovedFocus);
+        document.addEventListener('pointerdown', clearMovedFocus);
+        return () => {
+            document.removeEventListener('focusin', clearMovedFocus);
+            document.removeEventListener('pointerdown', clearMovedFocus);
+            focusedVenueControl.current = null;
+        };
+    }, []);
     const removalTarget = venues.find(link => (link.venue_id ?? link.venue?.id) === removalId && link.venue);
     useEffect(() => {
         if (removalId && (!removalTarget || isSavingLinks)) {
@@ -44,6 +69,13 @@ export function ClubManageVenuesSection({
         }
     }, [removalId, removalTarget, isSavingLinks]);
     useEffect(() => {
+        const focused = focusedVenueControl.current;
+        if (focused && !venues.some(link => (link.venue_id ?? link.venue?.id) === focused.venueId && link.venue)) {
+            focusedVenueControl.current = null;
+            if (Platform.OS === 'web' && typeof document !== 'undefined' && (!document.activeElement || document.activeElement === document.body || document.activeElement === document.documentElement)) {
+                addButtonRef.current?.focus();
+            }
+        }
         if (submittedRemovalId.current && !venues.some(link => (link.venue_id ?? link.venue?.id) === submittedRemovalId.current && link.venue)) {
             submittedRemovalId.current = null;
             // A slow refresh must not steal focus from another surviving control.
@@ -121,27 +153,29 @@ export function ClubManageVenuesSection({
                                     <Text accessibilityRole="alert" style={[styles.errorText, { color: colors.error }]}>
                                         {primaryAction.errorMessage}
                                     </Text>
-                                    <TouchableOpacity
+                                    {canSelectPrimary ? <TouchableOpacity
                                         accessibilityRole="button"
                                         accessibilityLabel={'Try again to set ' + venue.name + ' as primary'}
                                         onPress={() => onRetryPrimary(venueId)}
+                                        onFocus={event => trackVenueFocus(venueId, event.currentTarget)}
                                         style={[styles.retryButton, { borderColor: colors.error }]}
                                         testID={'manage-venue-retry-' + venueId}
                                     >
                                         <Ionicons name="refresh-outline" size={15} color={colors.error} />
                                         <Text style={[styles.retryText, { color: colors.error }]}>Try again</Text>
-                                    </TouchableOpacity>
+                                    </TouchableOpacity> : null}
                                 </View>
                             ) : null}
                         </View>
                         <View style={styles.venueActions}>
-                            {(!venueLink.is_primary || isSavingThisVenue) && !hasPrimaryError ? (
+                            {canSelectPrimary && (!venueLink.is_primary || isSavingThisVenue) && !hasPrimaryError ? (
                                 <TouchableOpacity
                                     accessibilityRole="button"
                                     accessibilityLabel={'Set ' + venue.name + ' as primary'}
                                     accessibilityState={{ disabled: isPrimarySelectionPending, ...(isSavingThisVenue ? { busy: true } : {}) }}
                                     disabled={isPrimarySelectionPending}
                                     onPress={() => onSetPrimary(venueId)}
+                                    onFocus={event => trackVenueFocus(venueId, event.currentTarget)}
                                     style={[
                                         styles.primaryActionButton,
                                         {
@@ -162,6 +196,7 @@ export function ClubManageVenuesSection({
                                 accessibilityLabel={'Remove ' + venue.name}
                                 accessibilityState={{ disabled: isSavingLinks }}
                                 disabled={isSavingLinks}
+                                onFocus={event => trackVenueFocus(venueId, event.currentTarget)}
                                 onPress={() => {
                                     removalSubmitted.current = false;
                                     submittedRemovalId.current = null;

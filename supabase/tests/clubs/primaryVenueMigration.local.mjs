@@ -1,7 +1,7 @@
 // Disposable PostgreSQL only. No DATABASE_URL, Supabase or existing database is used.
 // node .../primaryVenueMigration.local.mjs <absolute embedded-postgres package directory>
 import assert from 'node:assert/strict';
-import { readFile, mkdtemp, rm, access } from 'node:fs/promises';
+import { readFile, readdir, mkdtemp, rm, access } from 'node:fs/promises';
 import { tmpdir, platform } from 'node:os';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -306,6 +306,86 @@ try {
     assert.deepEqual(policyRows,['Admins can manage club venues','Members can view club venues']);
     const r=(await owner.query("SELECT prosecdef,has_function_privilege('service_role',oid,'EXECUTE') service FROM pg_proc WHERE oid='public.set_primary_club_venue(uuid,uuid)'::regprocedure")).rows[0];assert.equal(r.prosecdef,false);assert.equal(r.service,false);
   });
+  if (process.argv.includes('--verify-authorization-proposal') || process.argv.includes('--verify-authorization-migration')) {
+    const document = await readFile(join(root, 'docs/user/clubs/PRIMARY-VENUE-AUTHORIZATION-PROPOSAL.md'), 'utf8');
+    let proposal = document.match(/```sql\r?\n([\s\S]*?)```/)?.[1];
+    assert.ok(proposal, 'Expected reviewable SQL proposal');
+    if (process.argv.includes('--verify-authorization-migration')) {
+      const migrationDir = join(root, 'supabase/migrations');
+      const files = (await readdir(migrationDir)).filter(file => /^\d{14}_clubs_primary_venue_write_authorization\.sql$/.test(file));
+      assert.equal(files.length, 1, 'Expected exactly one authorization correction migration');
+      const artifact = await readFile(join(migrationDir, files[0]), 'utf8');
+      assert.equal(artifact.replace(/^(?:--[^\n]*\n)+/, '').trim(), proposal.trim(), 'Migration must match reviewed proposal SQL');
+      proposal = artifact;
+    }
+    await asActor(actor, admin);
+    await check('reproduce current direct UPDATE entitlement bypass locally', async () => {
+      await owner.query("UPDATE user_profiles SET membership_tier='free' WHERE user_id=$1", [admin]);
+      assert.equal((await actor.query('UPDATE club_venues SET is_primary=false WHERE club_id=$1 AND venue_id=$2', [club, v1])).rowCount, 1);
+      await owner.query("UPDATE user_profiles SET membership_tier='pro' WHERE user_id=$1", [admin]);
+      await call(actor, v1);
+    });
+    await check('proposal refuses additional permissive policy before changing authorization', async () => {
+      await owner.query('CREATE POLICY unreviewed_write ON club_venues FOR UPDATE USING(true)');
+      await rejects(owner.query(proposal), '55000');
+      await owner.query('ROLLBACK; DROP POLICY unreviewed_write ON club_venues');
+    });
+    await check('proposal refuses disabled row security without replacing policies', async () => {
+      await owner.query('ALTER TABLE club_venues DISABLE ROW LEVEL SECURITY');
+      await rejects(owner.query(proposal), '55000');
+      await owner.query('ROLLBACK');
+      assert.equal((await owner.query("SELECT relrowsecurity FROM pg_class WHERE oid='public.club_venues'::regclass")).rows[0].relrowsecurity, false);
+      assert.deepEqual((await owner.query("SELECT polname FROM pg_policy WHERE polrelid='public.club_venues'::regclass ORDER BY polname")).rows.map(r => r.polname), ['Admins can manage club venues', 'Members can view club venues']);
+      await owner.query('ALTER TABLE club_venues ENABLE ROW LEVEL SECURITY');
+    });
+    await owner.query(proposal);
+    for (const condition of ['downgraded', 'access mismatch', 'archived']) {
+      await check(`proposal denies ${condition} direct UPDATE and primary INSERT but preserves ordinary Add/Remove`, async () => {
+        if (condition === 'downgraded') await owner.query("UPDATE user_profiles SET membership_tier='free' WHERE user_id=$1", [admin]);
+        if (condition === 'access mismatch') await owner.query("UPDATE book_clubs SET access_level='pro_plus' WHERE id=$1", [club]);
+        if (condition === 'archived') await owner.query('UPDATE book_clubs SET is_archived=true WHERE id=$1', [club]);
+        try {
+          assert.equal((await actor.query('UPDATE club_venues SET is_primary=false WHERE club_id=$1 AND venue_id=$2', [club, v1])).rowCount, 0);
+          await rejects(actor.query('INSERT INTO club_venues VALUES($1,$2,true)', [club, missing]), '42501');
+          assert.equal((await actor.query('INSERT INTO club_venues VALUES($1,$2,false) RETURNING *', [club, missing])).rowCount, 1);
+          assert.equal((await actor.query('DELETE FROM club_venues WHERE club_id=$1 AND venue_id=$2', [club, missing])).rowCount, 1);
+          assert.equal((await owner.query('SELECT is_primary FROM club_venues WHERE club_id=$1 AND venue_id=$2', [club, v1])).rows[0].is_primary, true);
+        } finally {
+          await owner.query("UPDATE user_profiles SET membership_tier='pro' WHERE user_id=$1", [admin]);
+          await owner.query("UPDATE book_clubs SET access_level='all',is_archived=false WHERE id=$1", [club]);
+        }
+      });
+    }
+    await check('proposal preserves owner reads and RPC without a membership row', async () => {
+      await owner.query('DELETE FROM club_members WHERE club_id=$1 AND user_id=$2', [club, admin]);
+      try {
+        assert.equal((await actor.query('SELECT * FROM club_venues WHERE club_id=$1', [club])).rowCount, 1);
+        await call(actor, v1);
+      } finally { await owner.query("INSERT INTO club_members VALUES($1,$2,'admin','active')", [club, admin]); }
+    });
+    await check('proposal preserves eligible direct updates and RPC switching with unique enforcement', async () => {
+      await actor.query('UPDATE club_venues SET is_primary=false WHERE club_id=$1', [club]);
+      await actor.query('INSERT INTO club_venues VALUES($1,$2,true)', [club, missing]);
+      await call(actor, v1);
+      await rejects(actor.query('UPDATE club_venues SET is_primary=true WHERE club_id=$1 AND venue_id=$2', [club, missing]), '23505');
+      await actor.query('DELETE FROM club_venues WHERE club_id=$1 AND venue_id=$2', [club, missing]);
+    });
+    await check('proposal WITH CHECK prevents reassigning a link to another owner', async () => {
+      await rejects(actor.query('UPDATE club_venues SET club_id=$1 WHERE club_id=$2 AND venue_id=$3', [other, club, v1]), '42501');
+    });
+    for (const identity of [member, moderator]) {
+      await check(`proposal denies non-owner ${identity===member?'member':'moderator'} writes`, async () => {
+        await asActor(actor, identity);
+        assert.equal((await actor.query('UPDATE club_venues SET is_primary=false WHERE club_id=$1', [club])).rowCount, 0);
+        await rejects(actor.query('INSERT INTO club_venues VALUES($1,$2,true)', [club, missing]), '42501');
+      });
+    }
+    await asActor(actor, admin);
+    await check('proposal preserves existing event venue after primary-link removal', async () => {
+      await actor.query('DELETE FROM club_venues WHERE club_id=$1 AND venue_id=$2', [club, v1]);
+      assert.deepEqual((await owner.query('SELECT id,venue_id FROM club_events')).rows, [{id:id(30),venue_id:v2}]);
+    });
+  }
   for (const [name, stop, verifyStopped] of [
     ['rejected stop',async()=>{throw new Error('injected stop failure');},async()=>true],
     ['pending stop',()=>new Promise(()=>{}),async()=>true],

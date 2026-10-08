@@ -1,5 +1,51 @@
 # Venue database comparison
 
+## 2026-10-08 primary-venue authorization migration applied
+
+The user explicitly approved creation and Supabase MCP application, then renewed
+approval after the first MCP call was cancelled. Readback after that cancellation
+showed no correction ledger row and the original two policies; no retry was made
+until renewed approval. Supabase MCP reverified ACTIVE_HEALTHY
+Bookconnect_reactexpo, ahntbtktjjmvfosgkmgn (PostgreSQL 17.6.1.063), before applying.
+Both Clubs and sibling Library trackers were checked; no active Library DDL was
+recorded. Exact policy/RLS read-only preflight passed and name collision was zero.
+
+Applied once through MCP as `20261008091939 clubs_primary_venue_write_authorization`.
+Local file: `supabase/migrations/20261008091939_clubs_primary_venue_write_authorization.sql`.
+CLI 2.116.0 generated initial local version 20261008090403; only the filename was
+aligned to the returned live version. SHA-256 remains
+`73FC0C028256B30710E6A11CD1E5E25376C975C0D4408C4DE1C10B964A3A47BD`.
+The earlier applied 20261007144356 migration remains byte-for-byte unchanged
+(SHA-256 CEB05DD30F00699933A6BC0BA55F729C529B830C9A675BE4F128186AC859B74C).
+Exact artifact fixture: 61/61 PASS on disposable PostgreSQL 17.6; owned process,
+port and temp-directory teardown verified. Independent GPT-6 Luna max artifact
+review found no actionable issue; it was static and did not rerun the fixture.
+
+Post-apply catalog readback confirms RLS enabled, five expected policies, old
+owner ALL policy absent, eligibility/archive checks on primary INSERT and both
+UPDATE predicates, owner SELECT/ordinary Add/Remove and member SELECT retained.
+RPC/helper definitions and ACLs, table grants, unique indexes and zero noninternal
+triggers are unchanged. No duplicate-primary club exists. Before/after link data
+count/digest match (1 / 09cafd2e2ad21b6cfd6032490294d615); event ID/location
+count/digest match (4 / 510a4c68c9088e55c07aea9bba54d3f4). Ledger is now 169 rows.
+No business-data DML, Storage mutation, runtime deployment or Git publication.
+
+Security advisors were run: existing project-wide notices remain; no club_venues
+or primary-RPC notice was returned. The existing eligibility helper has the
+SECURITY DEFINER execute advisory; its definition/ACL are unchanged and not
+remediated here. Advisor output is not a clean whole-project security verdict.
+Eligible direct writes remain allowed without RPC advisory-lock coordination;
+existing TRUNCATE grants remain a separate audit. Connected primary-selection
+submission after this migration is not claimed. Phase 9 Unit 6H/M62 runtime
+rollout and connected proof pending state is unchanged; normal db push/history
+repair remains frozen.
+
+Active work unit: Clubs aggregate-review closeout/handoff. Exact next action:
+review the exact combined local diff and select scoped commit contents before
+any user-authorized commit; preserve mixed tracker edits and unrelated screenshot.
+Do not reapply this migration. No staging, commit or push occurred.
+
+
 Date: 2026-10-07. Scope: user-authorized read-only comparison. Live database
 state is authoritative for what exists. Proposed changes are not approvals.
 
@@ -94,3 +140,18 @@ The July migration remains unapplied and both Exchange `city_key` columns remain
 absent. No event venue IDs, business rows, direct table permissions, or Storage
 objects were changed. The shared history-reconciliation hold still blocks normal
 production `db push` and historical replay; no repair entries were changed.
+
+## 2026-10-08 read-only authorization recheck
+
+Supabase MCP reverified ACTIVE_HEALTHY Bookconnect_reactexpo,
+ahntbtktjjmvfosgkmgn (PostgreSQL 17.6.1.063). Full policy, RPC/helper and grant
+readback confirmed exactly the owner ALL policy and member SELECT policy, no
+noninternal club_venues trigger, and authenticated/anon table UPDATE privileges.
+The owner ALL policy has no explicit WITH CHECK and permits direct primary writes
+without the RPC's tier/access/archive checks. The helper requires owner identity,
+Pro/Pro+ and club access compatibility; active membership is not a prerequisite.
+The local forward-policy proposal also addresses primary INSERT bypasses while
+preserving ordinary Add/Remove and owner SELECT without a membership row. Its
+60/60 disposable PostgreSQL checks are local evidence, not a live application.
+See PRIMARY-VENUE-AUTHORIZATION-PROPOSAL.md. No live writes were attempted;
+migration creation/application approval remains pending.

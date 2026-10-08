@@ -131,6 +131,9 @@ function ClubManageScreenContent() {
     const { data: club, isLoading, isError, refetch: refetchClub } = useClubManageDetail(clubId ?? null);
     const { data: membership, isLoading: isMembershipLoading } = useClubMembership(clubId ?? null, userId);
     const isAdmin = !!userId && !!club && (club.admin_id === userId || membership?.role === 'admin');
+    // The primary RPC authorizes the recorded owner, not any membership admin.
+    // It remains authoritative for current tier/access eligibility.
+    const canSelectPrimaryVenue = !!userId && club?.admin_id === userId && !club.is_archived;
     const isActiveModerator = membership?.role === 'moderator' && membership?.status === 'active';
     const canManageCurrentBook = !!userId && !!club && (isAdmin || isActiveModerator);
 
@@ -464,7 +467,7 @@ function ClubManageScreenContent() {
     };
 
     const handleSetPrimaryVenue = async (venueId: string) => {
-        if (!clubId || !isAdmin || primaryVenueBusyRef.current) return;
+        if (!clubId || !canSelectPrimaryVenue || primaryVenueBusyRef.current) return;
         primaryVenueBusyRef.current = true;
         setPrimaryVenueAction({ venueId, state: 'saving' });
         try {
@@ -475,11 +478,21 @@ function ClubManageScreenContent() {
                 let errorMessage = 'Couldn’t update primary venue. Refresh and try again.';
                 try {
                     const result = await refetchLinkedVenues();
+                    if (!mountedRef.current) return;
                     if (!result.isError && Array.isArray(result.data)) {
+                        // A transport failure can occur after the server commits.
+                        // Confirm the same target with the same guards as success.
+                        if (result.data.some((venueLink) => venueLink.club_id === clubId && venueLink.venue_id === venueId && venueLink.is_primary === true && venueLink.venue != null)) {
+                            setPrimaryVenueAction(null);
+                            return;
+                        }
+                        const belongsToClub = result.data.every((venueLink) => venueLink.club_id === clubId);
                         const currentPrimary = result.data.find((venueLink) => venueLink.is_primary === true);
-                        errorMessage = currentPrimary
-                            ? 'Couldn’t update primary venue. ' + (currentPrimary.venue?.name ?? 'The previous venue') + ' remains primary.'
-                            : 'Couldn’t update primary venue. No primary venue is set.';
+                        if (belongsToClub && (!currentPrimary || currentPrimary.venue != null)) {
+                            errorMessage = currentPrimary
+                                ? 'Couldn’t update primary venue. ' + (currentPrimary.venue?.name ?? 'The previous venue') + ' remains primary.'
+                                : 'Couldn’t update primary venue. No primary venue is set.';
+                        }
                     }
                 } catch {
                     // Keep the generic recovery message when the current state cannot be confirmed.
@@ -646,6 +659,7 @@ function ClubManageScreenContent() {
                     isLoading={isLinkedVenuesLoading}
                     isSavingLinks={addClubVenueLink.isPending || removeClubVenueLink.isPending}
                     primaryAction={primaryVenueAction}
+                    canSelectPrimary={canSelectPrimaryVenue}
                     colors={colors}
                     onAddVenue={handleAddVenue}
                     onRemoveVenue={handleRemoveVenue}
