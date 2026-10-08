@@ -1,11 +1,282 @@
 # Clubs UI Overhaul Tracker
 
+## 2026-10-08 user-authorized local checkpoint commits
+
+Navigation checkpoint `4e1aa35` and primary corrections/applied-migration evidence
+`542b90f` are committed. Remaining review/process/continuity documents are
+checkpointed separately. The two P2 navigation findings remain open.
+Next authorized action: correct Home-child and Settings-child return-context
+propagation, add chain regressions, browser-check and independently rereview
+before publication. No push, deployment or database mutation in this commit step.
+Earlier tests were not rerun; staged diff hygiene and documentation validation
+are run for this checkpoint. Preserve the untracked Home screenshot.
+
+## 2026-10-08 whole unpublished-set review — publication blocked
+
+GPT-6 Luna max independently reviewed both unpublished commits plus all relevant
+working-tree/new files against freshly fetched origin/main 2f2f383 (ancestor,
+zero behind/two ahead). Two P2 integration gaps remain: Club Home children lose
+the originating directory context, and Settings notification children lose the
+Invitations origin. No introduced migration/RPC blocker found by static review.
+Fresh regression/build/local PostgreSQL checks pass but do not cover those missing
+chains. Exact scope, evidence and limits:
+[aggregate review](./AGGREGATE-PUBLICATION-REVIEW-20261008.md).
+Active work unit: aggregate navigation-context corrections. Next: resolve both
+P2 paths, check downstream routes and browser/test regressions, then independently
+rereview before any commit/publication. No source changes, business mutations,
+staging, commit, push or deployment in this review.
+
+
+## 2026-10-08 primary-venue authorization migration applied
+
+The user explicitly approved creation and Supabase MCP application, then renewed
+approval after the first MCP call was cancelled. Readback after that cancellation
+showed no correction ledger row and the original two policies; no retry was made
+until renewed approval. Supabase MCP reverified ACTIVE_HEALTHY
+Bookconnect_reactexpo, ahntbtktjjmvfosgkmgn (PostgreSQL 17.6.1.063), before applying.
+Both Clubs and sibling Library trackers were checked; no active Library DDL was
+recorded. Exact policy/RLS read-only preflight passed and name collision was zero.
+
+Applied once through MCP as `20261008091939 clubs_primary_venue_write_authorization`.
+Local file: `supabase/migrations/20261008091939_clubs_primary_venue_write_authorization.sql`.
+CLI 2.116.0 generated initial local version 20261008090403; only the filename was
+aligned to the returned live version. SHA-256 remains
+`73FC0C028256B30710E6A11CD1E5E25376C975C0D4408C4DE1C10B964A3A47BD`.
+The earlier applied 20261007144356 migration remains byte-for-byte unchanged
+(SHA-256 CEB05DD30F00699933A6BC0BA55F729C529B830C9A675BE4F128186AC859B74C).
+Exact artifact fixture: 61/61 PASS on disposable PostgreSQL 17.6; owned process,
+port and temp-directory teardown verified. Independent GPT-6 Luna max artifact
+review found no actionable issue; it was static and did not rerun the fixture.
+
+Post-apply catalog readback confirms RLS enabled, five expected policies, old
+owner ALL policy absent, eligibility/archive checks on primary INSERT and both
+UPDATE predicates, owner SELECT/ordinary Add/Remove and member SELECT retained.
+RPC/helper definitions and ACLs, table grants, unique indexes and zero noninternal
+triggers are unchanged. No duplicate-primary club exists. Before/after link data
+count/digest match (1 / 09cafd2e2ad21b6cfd6032490294d615); event ID/location
+count/digest match (4 / 510a4c68c9088e55c07aea9bba54d3f4). Ledger is now 169 rows.
+No business-data DML, Storage mutation, runtime deployment or Git publication.
+
+Security advisors were run: existing project-wide notices remain; no club_venues
+or primary-RPC notice was returned. The existing eligibility helper has the
+SECURITY DEFINER execute advisory; its definition/ACL are unchanged and not
+remediated here. Advisor output is not a clean whole-project security verdict.
+Eligible direct writes remain allowed without RPC advisory-lock coordination;
+existing TRUNCATE grants remain a separate audit. Connected primary-selection
+submission after this migration is not claimed. Phase 9 Unit 6H/M62 runtime
+rollout and connected proof pending state is unchanged; normal db push/history
+repair remains frozen.
+
+Active work unit: Clubs aggregate-review closeout/handoff. Exact next action:
+review the exact combined local diff and select scoped commit contents before
+any user-authorized commit; preserve mixed tracker edits and unrelated screenshot.
+Do not reapply this migration. No staging, commit or push occurred.
+
+
+## 2026-10-08 second independent Luna max review
+
+A fresh GPT-6 Luna max read-only review independently reconfirmed the exact live
+project and owner-policy direct-write gap. It identified two bounded corrections:
+the proposed SQL preflight must reject disabled row security, and lost-response
+readback must not claim no primary exists when the primary is unreadable or the
+rows belong to another club. Both are corrected locally with regression coverage.
+Fresh Manage/service tests pass 137/137; affected navigation suites pass 107/107;
+local PostgreSQL proposal fixture passes 61/61 with verified teardown. Final
+independent rereview confirms both fixes and the new exact-query-readback tests by inspection. TypeScript and export pass; the export preceded the final test-only edit. No browser recheck of the recovery message was run.
+
+The proposal enforces eligibility on primary INSERT and UPDATE; it intentionally
+still allows eligible direct writes and does not force the RPC/advisory-lock path.
+Existing anon/authenticated TRUNCATE grants are a separate grant-audit concern;
+no exposed client path was verified, and this proposal does not remediate them.
+The stale DOC-13 Phase 9 table row was reconciled to the recorded latest router /
+session-start closeout (M60-M62 applied; M62 runtime rollout/proof pending), not a
+fresh live M60-M62 re-verification. No migration file, live write, staging,
+commit, push or deployment occurred in this follow-up.
+
+## 2026-10-08 confirmed aggregate-review corrections
+
+The follow-up confirmed and corrected three local defects: primary selection now
+requires the club owner and a nonarchived club; a lost RPC response is reconciled
+only by an error-free refresh showing the same club/venue primary with readable
+venue details; externally removed focused venue controls recover focus to Add
+only if the user has not moved focus or clicked elsewhere. Add/Remove remain on
+their existing permission and mutation paths. Primary selection remains optional.
+
+Fresh verification: Manage/service Jest 135/135 PASS; TypeScript and one-worker web export PASS; disposable
+PostgreSQL 17.6 proposal fixture 60/60 PASS with teardown verified. The targeted
+pre-fix regressions reproduced four failures. Continuity validation and diff hygiene PASS (existing dependency/document-size/line-ending advisories). Independent gpt-6-luna at max
+reasoning found no actionable residual defect in these scoped corrections or the
+policy proposal; its review was static and did not rerun tests or touch live data.
+Desktop and 390x844 browser checks confirmed the removal dialog, Cancel/Escape
+focus return, Add/back navigation and no mobile horizontal overflow. No primary
+selection or removal confirmation was submitted. Connected identity-switch,
+response-loss and external-removal behavior remain unverified in the browser.
+
+Read-only Supabase MCP confirmed a separate live permission gap: the owner ALL
+policy permits direct primary UPDATE/INSERT beyond the RPC entitlement/archive
+checks. The RPC helper checks ownership, tier and access level, not active
+membership. The proposed forward policy correction and exact evidence are in
+[PRIMARY-VENUE-AUTHORIZATION-PROPOSAL.md](./PRIMARY-VENUE-AUTHORIZATION-PROPOSAL.md).
+No migration file was created or applied; owner approval is pending. Preserve the
+already-applied migration byte-for-byte. Existing dirty work is preserved; no
+staging, commit, push, deployment, database or Storage mutation occurred.
+
+Active work unit: aggregate-review corrections and authorization handoff. Exact
+next action: obtain the owner's decision on the reviewed forward migration;
+reverify the exact live project/policies before any separately approved apply.
+Phase 9 remains Unit 6H, M62 runtime rollout and connected proof pending.
+
+
+## Join, application, and invitation flow map (2026-10-08)
+
+- Read-only behavior map of Club Home membership states, the application-review
+  and invite-manager routes, and the invitation inbox. No UI, route, service,
+  permission, schema, or database behavior was changed.
+- Public clubs expose **Join this club** to signed-in nonmembers, subject to the
+  club's membership-tier requirement; the existing service inserts an active
+  member. Approval and author clubs expose configured join questions and
+  **Apply to join** when there is no prior application. Required answers are
+  validated; with no questions, an application may be sent immediately.
+  Successful application submission becomes pending moderator review. Pending
+  applications cannot be resubmitted; declined applications show their reason
+  or the current no-reapply message, and the form stays hidden. The service
+  reports an already-approved state rather than creating another application.
+- Invite-only clubs show **Invite required** without a pending invite. With a
+  pending invite, Club Home offers **Accept invitation**, subject to the access
+  tier. The inbox groups pending invites as unread/read and presents **View
+  club** and **Accept**; opening an unread invite marks it read. Accepted,
+  expired, and revoked invitations appear in history, where **View club** is
+  available. There is no decline control in the current inbox.
+- The manager application route is limited in the UI to approval/author clubs
+  and users recognized as a club admin or moderator. It shows pending applicant
+  answers, an optional decline reason, and **Decline**/**Approve** actions; the
+  existing review RPC performs the decision. The invite-manager route is
+  limited to invite-only clubs and recognized managers; it accepts a required
+  username and optional note, then shows invitation history. Its helper directs
+  managers to Manage Club to revoke pending invitations. These UI gates were
+  inspected in source; this map is not a fresh audit of live database policies.
+- Read-only browser observations with the signed-in test account: the seeded
+  approval club currently shows **Application declined** and no reapply form;
+  its Applications route shows **Moderator access required**. The seeded
+  invite-only club currently shows **Invite required**; its Invite route also
+  shows **Moderator access required**. The invitation inbox contains a past
+  **Accepted** invitation for that club (updated 2026-03-11) and no pending
+  invitation. This seeded account's current test data provides no first-time
+  application or pending-invitation acceptance state. The public club in the
+  directory is already joined, so its join control was not live-exercised. The
+  previously documented read-only live database check found no current
+  membership row for the accepted invitation; why it is absent remains unknown.
+  No invite was opened from the inbox, so its read state was not changed.
+- No application, invitation, membership, permission, or other business data
+  was submitted or changed. No tests were run because this was source mapping
+  plus read-only browser inspection. Existing working-tree changes are preserved;
+  nothing was staged, committed, pushed, or deployed. Exact next action: owner
+  reviews this map and decides whether to begin a separate join/application UI
+  design proposal; no implementation is authorized by this mapping.
+
+## Clubs return-context corrections (2026-10-08)
+
+- Fixed four observed return flows with allowlisted route context: Club Home
+  restores My Clubs scope; an invitation's View club returns to Invitations;
+  Settings opened from Invitations returns to that inbox; Reading Progress
+  returns to the Books view and preserves its originating directory context.
+  Authors club links now carry an Authors return target as well.
+- Directory return parameters resynchronize the scope if the directory remains
+  mounted while Club Home is open. Default All clubs and Archived destinations
+  remain unchanged. No navigation helper, route permission, service, schema,
+  or backend behavior changed.
+- Regression verification: six focused suites, 104/104 tests PASS. The directory
+  suite emitted React Native VirtualizedList `act(...)` warnings; they did not
+  fail tests. `npx tsc --noEmit --incremental false` and `git diff --check` PASS.
+- Browser verification in a temporary local tab: My Clubs → Club Home → Back
+  returned to `/clubs?scope=mine` and rendered “Your reading circles”; the
+  accepted test invitation → Club Home → Back returned to Invitations; inbox →
+  Settings → Go back returned to `/clubs/invitations`; Books → Reading Progress
+  → Back returned to the Books content with `tab=nominations` and preserved
+  `returnTo=my-clubs`. No invitation acceptance or other content change was
+  submitted. The Authors directory had no live club card, so only its focused
+  test covers the card-to-detail return target.
+- Read-only investigation of the invitation/Club Home discrepancy: live
+  Supabase project `Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) shows the
+  inbox invitation as `accepted` (responded 2026-03-11), but no current
+  `club_members` row and no pending invitation for that same user and club.
+  The club is still invite-only and not archived. Historical live-contract
+  notes from 2026-03-11 record that the test user was an active member after
+  acceptance.
+- The current UI logic explains the display: Club Home treats active/muted
+  membership as membership and otherwise shows “Invite required” when there
+  is no pending invitation. The acceptance RPC creates membership and marks
+  the invitation accepted in one transaction, so the observed state is not
+  explained by that screen logic or by an acceptance that only partially
+  completed. Leave/remove use direct membership-row deletes; the live member
+  action history is empty and no delete-audit trigger was found. It is
+  therefore plausible the test membership was later removed, but current
+  evidence cannot distinguish a later leave/removal from manual test-data
+  editing or identify who/when. No RLS change or other authorization defect
+  is indicated by this observation.
+- Investigation was read-only: no invitation, membership, or permission was
+  changed. Do not re-invite or otherwise repair the test record without a
+  separately authorized test-data action.
+- No database, migration, service, or Storage change; no commit, push, or deploy.
+  Existing unrelated user changes remain preserved. The requested full Clubs
+  Back-button audit is recorded in the closeout section below.
+
+## Clubs back-navigation audit closeout (2026-10-08)
+
+- Completed a route inventory and browser audit of the Clubs directory, create
+  club, invitations and invitation settings, author clubs, venue directory and
+  venue detail, Club Home, Manage Club and its ten sections, invite/application
+  gates, events list/create/edit, event and management venue pickers, reading
+  progress, book nomination, discussion list, and discussion thread.
+- Browser return checks passed for Directory → Create Club → Directory;
+  Invitations → Settings → Invitations; invitation View club → Invitations;
+  venue directory → detail → directory; Authors → Directory; All Clubs and My
+  Clubs → Club Home → the same directory scope; Archive view → All Clubs;
+  Club Home → Books/Nominations → Reading Progress → the same Books/Nominations
+  view; Nominate a Book → Books/Nominations; Club Home → Discussion → Thread →
+  Discussion → Club Home; and Club Home → Events → Create/Edit → Events → Club
+  Home. Inline Readers disclosure and the Books view's Back to Home control
+  remained within Club Home as expected.
+- The Manage header Back button was individually exercised from all ten tabs:
+  Current Book, Schedule, Analytics, Events, Venues, Reports, Members,
+  Settings, Join Questions, and Lifecycle. Each returned to Club Home.
+  Events → Create/Edit returned to `/manage?tab=events`; Manage Venues → Add →
+  Back returned to `/manage?tab=venues`; the event editor's Browse all venues
+  picker returned to the editor with the local draft and selected linked-venue
+  context restored. No incorrect return destination was observed among the
+  routes exercised.
+- The available account is not a moderator/admin for the seeded Invite Only or
+  Approval clubs. From each corresponding Club Home, the protected Invite or
+  Applications route showed “Moderator access required”; its Go back control
+  returned to that club. These checks validate the denial fallback only; the
+  privileged invite and application-review workflows remain unverified. The
+  Authors list had no live author-club card to open, so its card return route is
+  covered by regression tests rather than a live card.
+- Data-changing controls were intentionally not submitted: event creation or
+  cancellation, RSVP, nomination/vote, discussion post/reaction/report, venue
+  link/removal/primary selection, membership/moderation, settings, archive, and
+  succession actions. These were outside the back-navigation check and could
+  mutate shared test data.
+- The first focused run found one stale Authors-screen assertion that expected
+  the old route without `returnTo=authors`. Updated that assertion to match the
+  existing return-context behavior; no app screen or service code changed in
+  this audit. Final focused run: 16 Clubs page suites, 275/275 tests passed.
+  The directory suite still emits React Native VirtualizedList `act(...)`
+  warnings; Jest also emits the existing Node `punycode` deprecation warning.
+  TypeScript, `git diff --check`, and the Phase 9 continuity validator passed.
+- Browser testing used the running local app at 1280×720. No connected business
+  data, database, migration, service, permission, or Storage state was changed.
+  No stage, commit, push, or deployment occurred. Existing unrelated worktree
+  changes remain preserved. Exact next action: user chooses the next Clubs work
+  unit; this navigation audit is complete, subject to the protected-workflow
+  and empty-author-list limits above.
+
 ## Manage Venues completion (2026-10-08)
 
 - Added the approved primary-venue controls and recovery states, while keeping
   the existing admin gate, service/RPC, Add/Remove mutations, and event data
   behavior. Venue removal now asks for confirmation; Cancel submits nothing,
-  and removing the primary explains that another primary must be selected.
+  and removing the primary explains that the club will have no primary until another is selected.
 - Dialog and primary-selection state are isolated across club/account changes.
   Focus moves to the named Manage region on identity change and to Add after a
   confirmed or externally observed venue disappearance, unless the user has

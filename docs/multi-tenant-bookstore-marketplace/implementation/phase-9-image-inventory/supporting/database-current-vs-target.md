@@ -1,5 +1,29 @@
 # Phase 9 Database and Storage: Current vs Target
 
+> **2026-10-08 Clubs migration closeout:** User-authorized forward migration
+> `20261008091939 clubs_primary_venue_write_authorization` is applied once through
+> Supabase MCP to verified Bookconnect_reactexpo (ahntbtktjjmvfosgkmgn). Exact
+> policy/RLS/name preflight and 61/61 local artifact checks passed. Live readback
+> confirms five intended policies, unchanged functions/grants/indexes and unchanged
+> venue-link/event-location data. Local filename matches live version and content
+> hash is unchanged. Ledger now 169 entries; historical repair/db push freeze and
+> Phase 9 Unit 6H/M62 rollout pending status are unchanged. No business DML,
+> Storage write, runtime deployment, staging, commit or push. Current evidence:
+> [Clubs migration closeout](../../../../user/clubs/VENUE-DATABASE-AUDIT.md). Next: exact local-diff review for a
+> separately authorized scoped commit; do not reapply the migration.
+
+
+> **2026-10-08 aggregate-review correction:** Clubs owner/archive selection gating,
+> lost-response reconciliation and external-removal focus recovery are corrected
+> locally. Fresh Manage/service tests 135/135, TypeScript, web export and local
+> PostgreSQL policy-proposal checks 61/61 pass. Luna max scoped rereview found no
+> actionable residual defect. Read-only live catalog inspection confirmed direct
+> primary-write policy bypasses; forward-migration creation/application approval
+> is pending. No live writes or Git publication occurred. See the
+> [Clubs correction record](../../../../user/clubs/VENUE-DATABASE-AUDIT.md). Phase 9 Unit 6H and M62 runtime rollout /
+> connected proof pending status remain unchanged.
+
+
 > **2026-09-13 M61 live schema checkpoint:** After exact-project and hash
 > preflight, M61 was applied once to development project
 > `ahntbtktjjmvfosgkmgn` as remote version `20260913111342`. Readback confirms
@@ -965,3 +989,16 @@ application logs; pg_net's private request queue transiently carries the
 Authorization header as required for delivery. Local tests cover all claimability states
 and all three due-stage dispatch paths. No database, Vault, Cron, Render,
 Storage, worker, provider, inventory, listing, or publication mutation occurred.
+
+### 2026-10-08 targeted RLS/grant confirmation
+
+On the verified `Bookconnect_reactexpo` project, a read-only catalog query
+confirmed `public.spatial_ref_sys` still has RLS disabled and effective
+SELECT/INSERT/UPDATE/DELETE privileges for both `anon` and `authenticated`.
+`public.marketplace_event_schema_registry` and
+`public.marketplace_notification_type_registry` also have RLS disabled, but
+the same roles have no effective SELECT/INSERT/UPDATE/DELETE table privileges
+on those two tables. This confirms the previously recorded `spatial_ref_sys`
+advisor finding and clarifies that the two registry tables are not exposed to
+those roles by table ACLs. No grants, policies, schema, or data were changed;
+remediation remains a separate security decision.

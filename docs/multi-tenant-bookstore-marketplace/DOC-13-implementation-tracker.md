@@ -1,5 +1,62 @@
 # DOC-13: Implementation Tracker
 
+> **2026-10-08 local commit checkpoint:** User-authorized navigation checkpoint 4e1aa35 and primary corrections/applied-migration evidence 542b90f are committed. Remaining review documentation is checkpointed separately. Two P2 navigation findings still block publication; next action is correction, regression/browser verification and independent rereview. No push, deployment or database mutation in this commit step. Earlier test evidence was not rerun.
+
+> **2026-10-08 aggregate Clubs review:** Full unpublished-set GPT-6 Luna max review
+> found two return-context integration defects; Clubs publication is blocked until
+> corrected and independently rereviewed. See [review](../user/clubs/AGGREGATE-PUBLICATION-REVIEW-20261008.md).
+> Phase 9 Unit 6H/M62 rollout status unchanged. No commit/push/deployment/live write.
+
+
+> **2026-10-08 Clubs migration closeout:** User-authorized forward migration
+> `20261008091939 clubs_primary_venue_write_authorization` is applied once through
+> Supabase MCP to verified Bookconnect_reactexpo (ahntbtktjjmvfosgkmgn). Exact
+> policy/RLS/name preflight and 61/61 local artifact checks passed. Live readback
+> confirms five intended policies, unchanged functions/grants/indexes and unchanged
+> venue-link/event-location data. Local filename matches live version and content
+> hash is unchanged. Ledger now 169 entries; historical repair/db push freeze and
+> Phase 9 Unit 6H/M62 rollout pending status are unchanged. No business DML,
+> Storage write, runtime deployment, staging, commit or push. Current evidence:
+> [Clubs migration closeout](../user/clubs/PRIMARY-VENUE-MIGRATION-REVIEW.md). Next: exact local-diff review for a
+> separately authorized scoped commit; do not reapply the migration.
+
+
+> **2026-10-08 aggregate-review correction:** Clubs owner/archive selection gating,
+> lost-response reconciliation and external-removal focus recovery are corrected
+> locally. Fresh Manage/service tests 135/135, TypeScript, web export and local
+> PostgreSQL policy-proposal checks 61/61 pass. Luna max scoped rereview found no
+> actionable residual defect. Read-only live catalog inspection confirmed direct
+> primary-write policy bypasses; forward-migration creation/application approval
+> is pending. No live writes or Git publication occurred. See the
+> [Clubs correction record](../user/clubs/TRACKER.md). Phase 9 Unit 6H and M62 runtime rollout /
+> connected proof pending status remain unchanged.
+
+
+> **2026-10-08 Clubs follow-up:** User-approved venue Remove confirmation and
+> real QueryClient race coverage are implemented locally. Desktop/mobile keyboard
+> checks passed. Club/account web focus handoff is now corrected locally;
+> spoken screen-reader checks are excluded by the user. Connected primary-selection
+> proof remains unverified. See [Clubs tracker](../user/clubs/TRACKER.md). Phase 9 M62 rollout status is unchanged.
+> No new database mutation, migration, Git publication, or deployment occurred.
+
+
+> **2026-10-07 bounded cross-feature Clubs UI correction:** The user authorized
+> local corrections to Manage Venues pending/recovery feedback and club/account
+> response isolation. Scope and verification are owned by
+> [the Clubs app review](../user/clubs/PRIMARY-VENUE-APP-REVIEW.md#bounded-ui-correction-2026-10-07).
+> No Phase 9 runtime, schema, live data, migration, deployment, or M62 gate
+> changed. Desktop/390×844 admin-page visual review and connected selection
+> proof remain unrun; shared history and direct-permission boundaries remain.
+
+> **2026-10-07 cross-feature Clubs migration:** Under explicit user
+> authorization, the Clubs-only primary-venue migration was applied to
+> `ahntbtktjjmvfosgkmgn` as `20261007144356 clubs_admin_primary_venue`; the local
+> source filename matches the live version. M62 remains at `20260913162154` and
+> Phase 9's `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING` gate is unchanged.
+> The shared historical repair set and the pending July Clubs/Exchange migration
+> remain untouched; normal production `db push` remains frozen. No Phase 9
+> runtime or business rows changed.
+
 > **2026-09-14 M61 warning-privacy correction:** The bounded representative-cover
 > persistence warning now logs only `lookupId`, `attemptId`, and the fixed
 > `P9_REPRESENTATIVE_COVER_PERSISTENCE_FAILED` code; raw exception text is not
@@ -1591,7 +1648,7 @@ If implementation changes product or architecture behavior, update the relevant 
 | Phase 6: Order Request and Confirmation | `complete_e2e_deferred` | [PHASE-6 tracker](./implementation/PHASE-6-order-request-confirmation.md) · [verification/traceability](./implementation/PHASE-6-verification-and-traceability.md) · [corrected monolithic SDD](./implementation/PHASE-6-order-request-confirmation-SDD.md) · [immutable v0.1 archive](./implementation/archive/PHASE-6-order-request-confirmation-SDD-v0.1-original-monolith.md) | M01-M39 and persisted behavior through `payment_ready` are verified in development. Scheduler v5/worker v3 and cron job 5 are active. Comprehensive browser E2E and real timed commerce-command E2E are explicitly deferred, not silently passed. |
 | Phase 7: Payment, Ledger, and Settlement | `deferred` | [PHASE-7](./implementation/PHASE-7-payment-ledger-settlement.md) | Deferred 2026-07-18; resume only through separate authorization and DOC-15/payment/legal/accounting gates. |
 | Phase 8: Pickup Fulfillment | `deferred` | [PHASE-8](./implementation/PHASE-8-pickup-fulfillment.md) | Deferred with Phase 7 because it requires verified paid-order creation. |
-| Phase 9: Image-to-LLM Inventory | `unit6h_duplicate_confirmation_local_postgres_verified_connected_rollout_gated` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6H review](./implementation/phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | Unit 6H is locally implemented and corrected on baseline `8340647`; disposable PostgreSQL concurrency and existing regression acceptance pass. M60 remains unapplied remotely; connected Edge/Storage verification remains gated. M52–M59 remain live and unchanged. |
+| Phase 9: Image-to-LLM Inventory | `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING` | [master tracker](./implementation/phase-9-image-inventory/TRACKER.md) · [Unit 6H review](./implementation/phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md) · [implementation tracker](./implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) | Unit 6H corrections and the recorded development proof are complete. The 2026-09-13 closeout records M60–M62 applied and Owner Edge v12 active; matching runtime rollout and connected representative-cover proof remain pending explicit authorization. This row is reconciled to the existing router/session-start/tracker evidence, not a fresh live readback. |
 | Phase 10: Third-Party Delivery | `not_started` | [PHASE-10](./implementation/PHASE-10-third-party-delivery.md) | Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators. |
 | Phase 11: Notifications and Realtime | `not_started` | [PHASE-11](./implementation/PHASE-11-notifications-realtime.md) | Events, push/in-app, selected realtime. |
 | Phase 12: Demand, Bookclubs, and Places | `not_started` | [PHASE-12](./implementation/PHASE-12-demand-bookclubs-places.md) | Growth layer after commerce loop. |

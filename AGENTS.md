@@ -9,6 +9,10 @@ check both trackers before any migration.
 
 This file is the repository entrypoint for every new AI development or review session. Chat history and compacted conversation summaries are helpful context, but they are never the project source of truth.
 
+## Clubs UI/UX page work
+
+For page-by-page Clubs visual refinement, follow the [Clubs Page-by-Page UI/UX Refinement Process](./docs/user/clubs/PAGE-REFINEMENT-PROCESS.md). It supplements this repository continuity contract and does not grant database, permission, migration, deployment, commit, or push authority.
+
 ## Mandatory session start
 
 Before proposing, editing, migrating, or implementing:
