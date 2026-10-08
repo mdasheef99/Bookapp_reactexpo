@@ -83,6 +83,6 @@ describe('ClubAuthorsScreen', () => {
 
         fireEvent.press(getByTestId('club-card-club-author-1'));
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-author-1');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-author-1?returnTo=authors');
     });
 });

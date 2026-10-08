@@ -55,6 +55,6 @@ describe('ClubAuthorsRoute', () => {
 
         fireEvent.press(getByTestId('author-club-author-club-1'));
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/author-club-1');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/author-club-1?returnTo=authors');
     });
 });

@@ -1,6 +1,7 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import ClubReadingProgressScreen from '../ClubReadingProgressScreen';
+import { navigateBackOrFallback } from '@/lib/navigation';
 
 const mockUseWindowDimensions = jest.fn();
 
@@ -108,6 +109,16 @@ describe('ClubReadingProgressScreen', () => {
         expect(getByText('2')).toBeOnTheScreen();
         expect(getByText('1')).toBeOnTheScreen();
         expect(getByText('No reading schedule has been set for this book yet.')).toBeOnTheScreen();
+    });
+
+    it('returns from Reading Progress to the Books view and preserves the originating directory', () => {
+        mockUseLocalSearchParams.mockReturnValue({ clubId: 'club-1', returnView: 'books', returnTo: 'my-clubs' });
+
+        const { getByLabelText } = render(<ClubReadingProgressScreen />);
+
+        fireEvent.press(getByLabelText('Back to club'));
+
+        expect(navigateBackOrFallback).toHaveBeenCalledWith(expect.any(Object), '/clubs/club-1?tab=nominations&returnTo=my-clubs');
     });
 
     it('keeps the full status label in an accessible target', async () => {

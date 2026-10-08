@@ -8,6 +8,7 @@ const mockCanGoBack = jest.fn();
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
 const mockSignOut = jest.fn();
+let mockSearchParams: { returnTo?: string } = {};
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
@@ -18,6 +19,7 @@ jest.mock('expo-router', () => ({
         push: (...args: unknown[]) => mockPush(...args),
         replace: (...args: unknown[]) => mockReplace(...args),
     },
+    useLocalSearchParams: () => mockSearchParams,
 }));
 jest.mock('@/features/auth/hooks/useAuth', () => ({
     useAuth: () => ({
@@ -50,6 +52,7 @@ describe('SettingsScreen', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mockCanGoBack.mockReturnValue(false);
+        mockSearchParams = {};
     });
 
     afterEach(() => {
@@ -76,6 +79,16 @@ describe('SettingsScreen', () => {
         fireEvent.press(getByLabelText('Go back'));
 
         expect(mockReplace).toHaveBeenCalledWith('/(tabs)/profile');
+        expect(mockBack).not.toHaveBeenCalled();
+    });
+
+    it('returns to Club invitations when Settings was opened from the invitation inbox', () => {
+        mockSearchParams = { returnTo: 'club-invitations' };
+        const { getByLabelText } = render(<SettingsScreen />);
+
+        fireEvent.press(getByLabelText('Go back'));
+
+        expect(mockReplace).toHaveBeenCalledWith('/(tabs)/clubs/invitations');
         expect(mockBack).not.toHaveBeenCalled();
     });
 

@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { router } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
     View,
     Text,
@@ -65,14 +65,20 @@ function QuickFilterChip({ label, selected, onPress, testID, accessibilityLabel,
 }
 
 export default function ClubsBrowseScreen() {
+    const { scope: scopeParam } = useLocalSearchParams<{ scope?: string }>();
+    const routeScope: BrowseScope = scopeParam === 'mine' || scopeParam === 'archived' ? scopeParam : 'all';
     const { user } = useAuth();
     const userId = user?.id ?? null;
     const [search, setSearch] = useState('');
-    const [browseScope, setBrowseScope] = useState<BrowseScope>('all');
+    const [browseScope, setBrowseScope] = useState<BrowseScope>(routeScope);
     const [selectedClubType, setSelectedClubType] = useState<ClubType | undefined>(undefined);
     const [selectedMeetingType, setSelectedMeetingType] = useState<MeetingType | undefined>(undefined);
     const [selectedAccessLevel, setSelectedAccessLevel] = useState<AccessLevel | undefined>(undefined);
     const [filtersVisible, setFiltersVisible] = useState(false);
+
+    useEffect(() => {
+        setBrowseScope(routeScope);
+    }, [routeScope]);
 
     const filters = useMemo<ClubFilters>(() => ({
         clubType: selectedClubType,
@@ -102,7 +108,11 @@ export default function ClubsBrowseScreen() {
         .filter((value) => value !== undefined).length;
 
     const handleClubPress = (club: ClubPublicDetails) => {
-        router.push(browseScope === 'archived' ? `/(tabs)/clubs/${club.id}/manage?tab=lifecycle` : `/(tabs)/clubs/${club.id}`);
+        router.push(browseScope === 'archived'
+            ? `/(tabs)/clubs/${club.id}/manage?tab=lifecycle`
+            : browseScope === 'mine'
+                ? `/(tabs)/clubs/${club.id}?returnTo=my-clubs`
+                : `/(tabs)/clubs/${club.id}`);
     };
 
     const handleResetFilters = () => {

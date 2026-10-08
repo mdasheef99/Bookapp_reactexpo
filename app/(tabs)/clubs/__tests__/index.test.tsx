@@ -1,9 +1,10 @@
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-router', () => ({
     router: { push: (...args: unknown[]) => mockRouterPush(...args) },
+    useLocalSearchParams: () => mockSearchParams,
 }));
 
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import ClubsBrowseScreen from '../index';
 
@@ -14,6 +15,7 @@ const mockUseMyClubInvitationInbox = jest.fn();
 const mockUseViewerMembershipTier = jest.fn();
 const mockRouterPush = jest.fn();
 let mockAuthUser: { id: string } | null = { id: 'reader-1' };
+let mockSearchParams: { scope?: string } = {};
 
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
@@ -54,6 +56,7 @@ beforeEach(() => {
     jest.clearAllMocks();
     mockRouterPush.mockReset();
     mockAuthUser = { id: 'reader-1' };
+    mockSearchParams = {};
     mockUseBrowseClubs.mockReturnValue({ data: [{ id: 'club-1', name: 'Open Readers' }], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
     mockUseMyBrowseClubs.mockReturnValue({ data: [{ id: 'club-2', name: 'Quiet Members' }], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
     mockUseMyArchivedManagedClubs.mockReturnValue({ data: [{ id: 'club-3', name: 'Archived Circle' }], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
@@ -193,7 +196,19 @@ describe('ClubsBrowseScreen', () => {
         fireEvent.press(getByTestId('clubs-filter-scope-mine'));
         fireEvent.press(getByTestId('your-club-card-club-2'));
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-2');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-2?returnTo=my-clubs');
+    });
+
+    it('restores My clubs when its return route is applied to an already mounted directory', async () => {
+        const { getByTestId, getByText, rerender } = render(<ClubsBrowseScreen />);
+        fireEvent.press(getByTestId('clubs-filter-scope-mine'));
+        fireEvent.press(getByTestId('clubs-filter-scope-all'));
+
+        mockSearchParams = { scope: 'mine' };
+        rerender(<ClubsBrowseScreen />);
+
+        await waitFor(() => expect(getByText('Your reading circles')).toBeOnTheScreen());
+        expect(getByTestId('clubs-filter-scope-mine').props.accessibilityState).toEqual(expect.objectContaining({ selected: true }));
     });
 
     it('keeps search and filters available in Your Clubs', () => {

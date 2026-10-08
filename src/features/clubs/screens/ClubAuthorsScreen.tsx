@@ -27,7 +27,7 @@ export function ClubAuthorsScreen() {
     const clubs = data ?? [];
 
     const handleClubPress = (club: ClubPublicDetails) => {
-        router.push(`/(tabs)/clubs/${club.id}`);
+        router.push(`/(tabs)/clubs/${club.id}?returnTo=authors`);
     };
 
     if (isLoading && clubs.length === 0) {

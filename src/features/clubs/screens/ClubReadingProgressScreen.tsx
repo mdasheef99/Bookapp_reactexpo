@@ -33,7 +33,7 @@ const CURRENT_BOOK_STATUS_LABELS: Record<ClubCurrentBookReadingStatus, string> =
 };
 
 export default function ClubReadingProgressScreen() {
-    const { clubId } = useLocalSearchParams<{ clubId: string }>();
+    const { clubId, returnView, returnTo } = useLocalSearchParams<{ clubId: string; returnView?: string; returnTo?: string }>();
     const { width: viewportWidth } = useWindowDimensions();
     const isCompactLayout = viewportWidth < 600;
     const { user } = useAuth();
@@ -55,6 +55,12 @@ export default function ClubReadingProgressScreen() {
 
     const setStatusMutation = useSetClubCurrentBookReadingStatus();
     const updateProgressMutation = useUpdateClubReadingProgress();
+    const backParams = [
+        returnView === 'books' ? 'tab=nominations' : null,
+        ['clubs', 'my-clubs', 'invitations', 'authors'].includes(returnTo ?? '') ? `returnTo=${returnTo}` : null,
+    ].filter((param): param is string => param !== null);
+    const backQuery = backParams.join('&');
+    const backHref = `/clubs/${clubId}${backQuery ? `?${backQuery}` : ''}`;
 
     const handleStatusChange = async (status: ClubCurrentBookReadingStatus) => {
         if (!clubId) return;
@@ -113,7 +119,7 @@ export default function ClubReadingProgressScreen() {
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.content}>
             <View style={styles.headerRow}>
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to club" onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to club" onPress={() => navigateBackOrFallback(router, backHref)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                     <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Reading Progress</Text>

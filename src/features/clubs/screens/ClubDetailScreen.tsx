@@ -61,7 +61,17 @@ function getCurrentBookCoverUrl(coverUrl: string | null | undefined): string | n
 }
 
 export default function ClubDetailScreen() {
-    const { clubId, tab } = useLocalSearchParams<{ clubId: string; tab?: string }>();
+    const { clubId, tab, returnTo } = useLocalSearchParams<{ clubId: string; tab?: string; returnTo?: string }>();
+    const backHref = returnTo === 'my-clubs'
+        ? '/(tabs)/clubs?scope=mine'
+        : returnTo === 'invitations'
+            ? '/(tabs)/clubs/invitations'
+            : returnTo === 'authors'
+                ? '/(tabs)/clubs/authors'
+                : '/(tabs)/clubs';
+    const preservedReturnContext = ['clubs', 'my-clubs', 'invitations', 'authors'].includes(returnTo ?? '')
+        ? `&returnTo=${returnTo}`
+        : '';
     const { user } = useAuth();
     const userId = user?.id ?? null;
     const { data: club, isLoading, isError, refetch } = useClubPublicDetail(clubId ?? null);
@@ -149,7 +159,7 @@ export default function ClubDetailScreen() {
             <View style={[styles.loadingContainer, { paddingHorizontal: 24 }]}>
                 <Text style={styles.errorTitle}>Unable to load this club</Text>
                 <TouchableOpacity style={styles.retryButton} onPress={() => refetch()} accessibilityRole="button" accessibilityLabel="Retry loading club"><Text style={styles.retryButtonText}>Retry</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.goBackButton} onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')} accessibilityRole="button" accessibilityLabel="Go back to Clubs"><Text style={styles.goBackButtonText}>Go back</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.goBackButton} onPress={() => navigateBackOrFallback(router, backHref)} accessibilityRole="button" accessibilityLabel="Go back to Clubs"><Text style={styles.goBackButtonText}>Go back</Text></TouchableOpacity>
             </View>
         );
     }
@@ -647,7 +657,7 @@ export default function ClubDetailScreen() {
                             </View>
                             {currentBookFeedback ? <View style={[styles.feedbackBanner, currentBookFeedback.type === 'success' ? styles.feedbackSuccess : styles.feedbackError]}><Text style={[styles.feedbackText, currentBookFeedback.type === 'success' ? styles.feedbackSuccessText : styles.feedbackErrorText]}>{currentBookFeedback.message}</Text></View> : null}
                             <TouchableOpacity
-                                onPress={() => router.push(`/clubs/${club.id}/reading`)}
+                                onPress={() => router.push(`/clubs/${club.id}/reading?returnView=${activeTop}${preservedReturnContext}`)}
                                 style={[styles.toolButton, { alignSelf: 'flex-start', marginTop: 12 }]}
                                 testID="club-view-reading-progress"
                             >
@@ -761,7 +771,7 @@ export default function ClubDetailScreen() {
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
             <View style={styles.topBar}>
                 <TouchableOpacity
-                    onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')}
+                    onPress={() => navigateBackOrFallback(router, backHref)}
                     style={styles.backButton}
                     testID="club-home-back"
                     accessibilityRole="button"

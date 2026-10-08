@@ -1,7 +1,7 @@
 import React from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
@@ -9,6 +9,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 
 export default function SettingsScreen() {
+    const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
     const { signOut, session } = useAuth();
     const { colors } = useTheme();
     const userPhone = session?.user?.phone ?? 'Not available';
@@ -31,7 +32,7 @@ export default function SettingsScreen() {
             <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.header}>
                     <TouchableOpacity
-                        onPress={() => router.replace('/(tabs)/profile')}
+                        onPress={() => router.replace(returnTo === 'club-invitations' ? '/(tabs)/clubs/invitations' : '/(tabs)/profile')}
                         style={styles.backButton}
                         accessibilityRole="button"
                         accessibilityLabel="Go back"

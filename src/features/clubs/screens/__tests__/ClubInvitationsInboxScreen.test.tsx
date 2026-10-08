@@ -110,7 +110,7 @@ describe('ClubInvitationsInboxScreen', () => {
 
         fireEvent.press(getByTestId('club-invitations-notification-settings'));
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/profile/settings');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/profile/settings?returnTo=club-invitations');
     });
 
     it('marks unread invitations read before opening club detail', async () => {
@@ -123,7 +123,7 @@ describe('ClubInvitationsInboxScreen', () => {
         await waitFor(() => {
             expect(markRead).toHaveBeenCalledWith({ invitationId: 'invite-1', clubId: 'club-1', userId: 'reader-1' });
         });
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-1');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-1?returnTo=invitations');
     });
 
     it('accepts an invitation from the inbox', async () => {
@@ -147,7 +147,7 @@ describe('ClubInvitationsInboxScreen', () => {
 
         fireEvent.press(getByTestId('club-invitation-open-invite-1'));
 
-        await waitFor(() => expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-1'));
+        await waitFor(() => expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-1?returnTo=invitations'));
         expect(markRead).not.toHaveBeenCalled();
     });
 

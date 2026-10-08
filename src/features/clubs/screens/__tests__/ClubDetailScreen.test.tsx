@@ -23,7 +23,7 @@ const mockUseLeaveClub = jest.fn();
 const mockUseClubAdminTransferRequests = jest.fn();
 const mockUseAcceptClubAdminTransferRequest = jest.fn();
 
-let mockSearchParams: { clubId: string; tab?: string } = { clubId: 'club-1' };
+let mockSearchParams: { clubId: string; tab?: string; returnTo?: string } = { clubId: 'club-1' };
 let mockAuthUser: { id: string } | null = { id: 'reader-1' };
 
 jest.mock('expo-image', () => ({ Image: 'Image' }));
@@ -131,6 +131,21 @@ describe('ClubDetailScreen', () => {
 
         fireEvent.press(getByTestId('club-home-back'));
         expect(mockRouterReplace).toHaveBeenCalledWith('/(tabs)/clubs');
+    });
+
+    it.each([
+        ['my-clubs', '/(tabs)/clubs?scope=mine'],
+        ['invitations', '/(tabs)/clubs/invitations'],
+        ['authors', '/(tabs)/clubs/authors'],
+    ])('returns to the originating %s page from Club Home', async (returnTo, expectedHref) => {
+        mockSearchParams = { clubId: 'club-1', returnTo };
+        const { getByTestId } = render(<ClubDetailScreen />);
+
+        await waitFor(() => expect(profileService.getProfileSummary).toHaveBeenCalledWith('reader-1'));
+
+        fireEvent.press(getByTestId('club-home-back'));
+
+        expect(mockRouterReplace).toHaveBeenCalledWith(expectedHref);
     });
 
     it('keeps Home free of a redundant local tab row and exposes contextual Books, Discuss, and Events actions', async () => {
@@ -837,7 +852,7 @@ describe('ClubDetailScreen', () => {
         fireEvent.press(getByTestId('club-open-books'));
         fireEvent.press(getByTestId('club-view-reading-progress'));
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/clubs/club-1/reading');
+        expect(mockRouterPush).toHaveBeenCalledWith('/clubs/club-1/reading?returnView=books');
     });
 
     it('shows a custom leave confirmation modal when Leave club is tapped', async () => {

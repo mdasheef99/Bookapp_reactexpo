@@ -54,7 +54,7 @@ export default function ClubInvitationsInboxScreen() {
             if (!invitation.read_at) {
                 await markReadMutation.mutateAsync({ invitationId: invitation.id, clubId: invitation.club_id, userId });
             }
-            router.push(`/(tabs)/clubs/${invitation.club_id}`);
+            router.push(`/(tabs)/clubs/${invitation.club_id}?returnTo=invitations`);
         } catch (error) {
             setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to open this invitation right now.') });
         }
@@ -146,7 +146,7 @@ export default function ClubInvitationsInboxScreen() {
                     </View>
                     <TouchableOpacity
                         accessibilityRole="button"
-                        onPress={() => router.push('/(tabs)/profile/settings')}
+                        onPress={() => router.push('/(tabs)/profile/settings?returnTo=club-invitations')}
                         style={[styles.handoffButton, { borderColor: colors.accent }]}
                         testID="club-invitations-notification-settings"
                     >
