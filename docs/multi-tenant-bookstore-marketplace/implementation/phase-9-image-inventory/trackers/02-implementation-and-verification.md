@@ -5746,3 +5746,11 @@ proof and the price-intent / cover-source deviations remain as recorded;
 no new runtime acceptance is claimed. The separate edition-picker and Unit 6I
 worktrees retain their uncommitted changes. Next exact action: Owner decision
 on committing/publishing the separate edition-picker implementation.
+
+## 2026-10-10 - Bounded handoff correction approval and stop
+
+GPT-6 Luna/max read-only correction review APPROVED the seven-document correction at 169d142dbe680524b3c72b0d6e365516a2e1fbc7. It inspected exact paths/diff/status and passed git diff --check; no tests or external actions were run by that bounded reviewer. The three test-only integration corrections at 4b34714a0f09b220f9409980c9cbbfb90438db89 are also approved. Aggregate feature verdict remains CHANGES_REQUIRED for the superseded-job terminal gap.
+
+Current Git scope: feature and current-main integration plus approved test/doc corrections are local commits; no feature push. The only implementation file outside commits is the 125-line disposable RED regression, with four expected failures and one preserved boundary pass. M72 remains absent pending the local-file approval request. M65–M71 hashes match, and all 229 separate Desktop snapshot hashes match. No shared database, Storage, provider, configuration/plan or deployment change occurred.
+
+Exact next authorized action: wait for the requested local M72-file decision, then implement/prove only the bounded queue correction and obtain GPT-6 Luna/max correction review before any feature push. Shared application stays separately gated; Render deployment remains held for the Owner.
