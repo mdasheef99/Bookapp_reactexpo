@@ -60,6 +60,22 @@ function completionResult(value: unknown): MetadataWorkerResult {
     ? 'retry_scheduled' : 'manual_metadata_required' };
 }
 
+async function resolveSupersededEditionJob(
+  claim: MetadataClaim,
+  dependencies: MetadataWorkerDependencies,
+): Promise<boolean> {
+  try {
+    const superseded = await dependencies.serviceClient.rpc('phase9_resolve_superseded_edition_job_v1', {
+      p_job_id: claim.id,p_worker: dependencies.workerId,
+      p_lease_token: claim.lease_token,p_attempt_count: claim.attempt_count,
+    });
+    return !superseded.error && superseded.data?.status === 'resolved_noop';
+  } catch {
+    // Keep the stale outcome when claim-fenced cleanup cannot be confirmed.
+    return false;
+  }
+}
+
 async function processMetadataClaim(
   claim: MetadataClaim,
   dependencies: MetadataWorkerDependencies,
@@ -121,20 +137,16 @@ async function processMetadataClaim(
         ? { request, boundary: dependencies.editionOptionsBoundary } : undefined,
     });
     if (context.purpose === 'edition_options') {
-      return await executeEditionOptionsLookup(context, gateway, dependencies.primary as GoogleBooksAdapter, new AbortController().signal);
+      const result = await executeEditionOptionsLookup(
+        context, gateway, dependencies.primary as GoogleBooksAdapter, new AbortController().signal,
+      );
+      if (result.outcome === 'stale_claim') await resolveSupersededEditionJob(claim, dependencies);
+      return result;
     }
     return await runMetadataProductionComposition(request, gateway);
   } catch (error) {
     if (context?.purpose === 'edition_options' || context === null) {
-      try {
-        const superseded = await dependencies.serviceClient.rpc('phase9_resolve_superseded_edition_job_v1', {
-          p_job_id: claim.id,p_worker: dependencies.workerId,
-          p_lease_token: claim.lease_token,p_attempt_count: claim.attempt_count,
-        });
-        if (!superseded.error && superseded.data?.status === 'resolved_noop') return { outcome: 'stale_claim' };
-      } catch {
-        // Preserve the existing stale/failure handling when the cleanup receipt is unavailable.
-      }
+      if (await resolveSupersededEditionJob(claim, dependencies)) return { outcome: 'stale_claim' };
       if (context?.purpose === 'edition_options'
         || (error instanceof Error && error.message === 'P9_EDITION_CONTEXT_INVALID')) return { outcome: 'stale_claim' };
     }

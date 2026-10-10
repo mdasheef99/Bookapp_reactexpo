@@ -1,10 +1,36 @@
 # Owner edition-picker publication and development backend rollout
 
-## Current checkpoint, 2026-10-10
+## Current checkpoint, 2026-10-11
 
-Phase 9 / Unit 6G: the independently confirmed P2 superseded-job terminal gap is corrected locally. GPT-6 Luna/max correction review is pending; aggregate publication approval is not claimed. Base HEAD for this correction is 8012f01616384b428f9fffed1e4e378eee8de2ce. M65–M71 are applied and byte-preserved; M72 is CREATED_LOCAL / NOT_APPLIED.
+Phase 9 / Unit 6G: GPT-6 Luna/max correction review of 905b1f9818ab0f5a4c5798f11158b509a268ae99 returned CHANGES_REQUIRED for normally returned stale results bypassing catch-only cleanup. The author confirmed the finding and corrected that return path locally. The follow-up base is 905b1f9; aggregate publication approval awaits its read-only correction review. M65–M71 are applied and byte-preserved; M72 is byte-preserved CREATED_LOCAL / NOT_APPLIED.
 
 Exact next authorized action: have the requested GPT-6 Luna/max reviewer inspect this bounded correction; confirm/fix any finding and rereview it before publishing the approved feature/main. The Owner explicitly authorized local M72 creation, regressions and correction review. Shared application remains separate, Render deployment is held, and provider-result retention remains disabled. The read-only Supabase warning audit changed no functions, schedules, database data, configuration or billing. Earlier entries below preserve historical authorization and review provenance.
+
+## 2026-10-11 - Returned-stale worker correction and fresh evidence
+
+The 905b1f9 reviewer independently found that executeEditionOptionsLookup can return stale_claim without throwing. Its caller returned immediately, so M72 cleanup ran only for exceptions. A controlled identity replacement during the recorded provider response on attempt five rejected stale options but left the job in_progress with no completed_at. The author reproduced the actual compiled-worker outcome against the disposable M65–M72 stack: one provider request, zero cleanup calls, attempt_count 5 and completed_at null. This is a durable job-outcome defect within picker §§4.3/5/9, EP-AC09/20, Master §8/MAS-17 and Pipeline §10; no new behavior is originated.
+
+Semantic RED before the follow-up production edit: runnable-worker Jest had 10 pass / one expected failure (missing cleanup RPC), normal exit 1; the M72 SQL suite had seven pass / one expected failure (actual job in_progress rather than resolved_noop), normal exit 1. Both failures exercised existing code and real command boundaries, not missing imports or startup failures.
+
+Bounded source correction: workers/phase9-metadata-worker/index.ts extracts the existing cleanup RPC into one helper and invokes it for normally returned explicit-edition stale results as well as the existing exception path. It preserves exact job/worker/token/attempt evidence, retains stale outcomes if cleanup is unavailable or declined, and leaves the automatic path intact. M72 SQL/hash and M65–M71 remain unchanged. Tests change only phase9_metadata_worker.test.ts and phase9EditionOptionsSuperseded.integration.test.mjs. Twelve documentation paths reconcile the handoff/evidence. No UI, ranking, cover, provider-retention, canonical, selling, package/dependency or shared-state change is included.
+
+| Fresh follow-up command | Observed result / scope |
+| --- | --- |
+| `npm.cmd run test:phase9:structural-metadata` | Worker build then 14/14 structural tests, exit 0; fresh build precedes compiled-worker SQL |
+| `node node_modules/jest/bin/jest.js --runInBand --runTestsByPath supabase/functions/__tests__/phase9_metadata_worker.test.ts` | 11/11, exit 0 |
+| `node node_modules/jest/bin/jest.js --runInBand --runTestsByPath supabase/functions/__tests__/phase9_metadata_worker.test.ts supabase/functions/__tests__/phase9_metadata_edition_options_worker.test.ts supabase/functions/__tests__/phase9_metadata_edition_options_recovery.test.ts supabase/functions/__tests__/phase9_metadata_edition_options_rpc.test.ts supabase/functions/__tests__/phase9_metadata_production_gateway.test.ts supabase/functions/__tests__/phase9_metadata_production_composition.test.ts` | Six suites / 124 tests, exit 0; preserves automatic composition and explicit recovery boundaries |
+| `node --experimental-vm-modules --test --test-reporter=spec --test-concurrency=2 supabase/tests/phase9/phase9EditionOptionsSuperseded.integration.test.mjs supabase/tests/phase9/phase9EditionOptionsCompletion.integration.test.mjs supabase/tests/phase9/phase9EditionOptionsWorkerSql.integration.test.mjs supabase/tests/phase9/phase9EditionOptionsCorrections.integration.test.mjs` | 104/104, exit 0; eight superseded cases install M72, neighboring suites retain their disclosed historical stacks |
+| `node node_modules/typescript/bin/tsc --noEmit --allowImportingTsExtensions` | Exit 0; strict worker compilation also passed in the build |
+
+Fresh node syntax, git diff --check and M65–M72 hash checks passed. Phase 9 continuity/migration-set validation passed: 195 definitions, zero duplicate/missing traces, 94 Markdown files and 62 required phase files. Existing document-size, line-ending and Node deprecation advisories remain nonblocking. The follow-up diff has exactly 15 paths: one worker, two test files and twelve documents; no migration or validator byte changed.
+
+The new SQL case routes the actual compiled worker through real claim, physical-accounting, identity-edit, completion and M72 RPC boundaries. Its injected HTTP response is a local recorded fixture with synthetic retention evidence; no live permission or provider call is claimed. Attempt five ends resolved_noop with completed_at and a cleared lease deadline, exactly one cleanup call and one recorded provider request, idle card lookup state and no returned/saved stale choices. Existing current/selling-only, newer-request, wrong/reclaimed-token, ACL and replay protections pass. These sequential PGlite cases do not prove new independent-connection race or operational acceptance for M72. The earlier full merged 337-suite / 3,293-test result predates M72 and was not rerun.
+
+Read-only publication safety checks: origin/main remains 6e8848e82b47538f67962f0e34238d0017707711 and is an ancestor of this work. Render workspace MD ASHEEF's workspace / tea-d9j67irtqb8s739ritc0 has four existing free web services, all autoDeploy off, one instance; metadata target is srv-d9sqfdvqj5pc73dc66fg on main. Supabase project dashboard reports no connected GitHub repository and no development branch. The two repository workflows run validation only and contain no service-deployment step. Git publication therefore does not apply M72 or trigger the held Render deployment through these inspected mechanisms. No service configuration was changed.
+
+Desktop exclusion audit: branch/HEAD still match the original snapshot and no snapshotted product-code hash changed. Twenty-one separately held documentation files and three expanded status entries differ from the earlier 229-file snapshot; attribution was not established. Those changes are left untouched and excluded from this feature publication. The earlier all-229-match audit remains historical and is not repeated as a current blanket preservation claim.
+
+Correction review remains pending. No feature push, Render/Supabase deployment, shared migration application, business-data/Storage/provider operation, schedule deletion, plan or secret change occurred during this follow-up. Exact next action is the requested same-model read-only correction review before authorized Git publication; live M72 application and Render rollout remain separate gates.
 
 
 ## 2026-10-10 - Authorized M72 local correction and verification

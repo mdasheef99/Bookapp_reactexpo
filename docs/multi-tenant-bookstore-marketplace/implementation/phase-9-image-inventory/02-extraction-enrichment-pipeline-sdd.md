@@ -1,10 +1,10 @@
 # SDD 02: Extraction and Metadata Enrichment Pipeline
 
-## 2026-10-10 - Bounded superseded explicit-job terminal correction
+## 2026-10-11 - Bounded superseded explicit-job terminal correction
 
-Pipeline §10, picker §§4.3/5/9 and MAS-17 require the old request to end durably without publishing stale results. Worker catch handling now asks a claim-fenced service-only terminalizer to close only demonstrably superseded explicit edition work. A current request or unavailable cleanup keeps prior stale/failure handling; unrelated automatic jobs retain the generic failure path. No provider call, automatic ranking/cache or physical accounting change is introduced.
+Pipeline §10, picker §§4.3/5/9 and MAS-17 require the old request to end durably without publishing stale results. Review of 905b1f9 found that catch-only cleanup missed normally returned stale results. The corrected worker now uses the same claim-fenced service-only terminalizer on both paths. A current request or unavailable cleanup keeps prior stale/failure handling; unrelated automatic jobs retain the generic failure path. No provider call, automatic ranking/cache or physical accounting change is introduced.
 
-M72 is Owner-authorized CREATED_LOCAL / NOT_APPLIED; M65–M71 are immutable/applied. Ten worker Jest tests and seven M72 disposable SQL cases pass, with the 103-case neighboring gate and build/14 structural checks disclosed in [tracker 36](trackers/36-owner-edition-picker-publication-deployment.md). Correction review precedes authorized publication. Deploy this worker correction only after M72 live application/readback and compatible-runtime preflight; Render rollout is on the Owner's hold.
+M72 is Owner-authorized CREATED_LOCAL / NOT_APPLIED with its original hash; M65–M71 are immutable/applied. Eleven runnable-worker cases pass within six suites / 124 tests; eight M72 disposable cases pass within the 104-case neighboring SQL gate. Whole TypeScript and build/14 structural checks pass. The new real-worker regression proves fifth-attempt returned-stale cleanup with one recorded provider request and no saved stale options. [Tracker 36](trackers/36-owner-edition-picker-publication-deployment.md) records RED/GREEN and review provenance. Correction review precedes authorized publication. Deploy this worker correction only after M72 live application/readback and compatible-runtime preflight; Render rollout is on the Owner's hold.
 
 ## 2026-10-09 - Task 8 independent approval and M65-M70 applied
 

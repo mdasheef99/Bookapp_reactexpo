@@ -5,8 +5,12 @@ import fs from 'node:fs';
 import { after, before, test } from 'node:test';
 import { migrationPath } from './databaseHarness.mjs';
 import { createCommitDatabase, reviewValue, saveReview } from './editionPickerCommitFixture.mjs';
-import { lookupSql, readSql, resetActor, scalar, seedCard, setActor } from './editionPickerFixture.mjs';
-import { prepareCall, rpc, seedOperation, worker, token, finalize, complete } from './editionOptionsCompletionFixture.mjs';
+import { lookupSql, readSql, resetActor, scalar, seedCard, seedAutomaticLineage, setActor } from './editionPickerFixture.mjs';
+import { prepareCall, rpc, seedOperation, worker, token, finalize, complete, asService, completionServiceClient } from './editionOptionsCompletionFixture.mjs';
+import { GoogleBooksAdapter } from '../../../.phase9-dist/supabase/functions/_shared/imageInventory/metadata/googleBooks/adapter.js';
+import { GOOGLE_BOOKS_CAPABILITY } from '../../../.phase9-dist/supabase/functions/_shared/imageInventory/metadata/googleBooks/index.js';
+import { createMetadataEditionOptionsBoundary } from '../../../.phase9-dist/supabase/functions/_shared/imageInventory/runtime/metadataEditionOptionsRpc.js';
+import { runMetadataWorkerBatch } from '../../../.phase9-dist/workers/phase9-metadata-worker/index.js';
 
 const forward='20261010000072_marketplace_phase9_edition_picker_superseded_jobs.sql';
 let db;
@@ -146,6 +150,43 @@ test('a reclaimed claim rejects the previous token before terminalizing the supe
   assert.equal((await rpc(db,'phase9_resolve_superseded_edition_job_v1',[f.jobId,current.worker,current.token,current.attempt])).status,'resolved_noop');
   assert.equal((await job(f)).attempt_count,current.attempt);
 }));
+
+test('actual worker closes an in-flight fifth claim superseded during its recorded response',async()=>withRequest(async f=>{
+  const lineage=await seedAutomaticLineage(db,f);
+  await resetActor(db);
+  await db.query("UPDATE public.image_extraction_candidates SET state='ready' WHERE id=$1",[f.candidateId]);
+  await db.query("UPDATE public.image_extraction_jobs SET status='resolved' WHERE id=$1",[lineage.jobId]);
+  await db.query("UPDATE public.image_extraction_jobs SET status='open',attempt_count=4,lease_owner=NULL,lease_token_hash=NULL,lease_expires_at=NULL,next_attempt_at=transaction_timestamp() WHERE id=$1",[f.jobId]);
+  await asService(db,f);
+  const base=completionServiceClient(db);let requests=0,cleanups=0;
+  const client={rpc:async(name,p)=>{
+    if(name==='phase9_resolve_superseded_edition_job_v1') {
+      cleanups++;
+      try {return {data:await rpc(db,name,[p.p_job_id,p.p_worker,p.p_lease_token,p.p_attempt_count]),error:null};}
+      catch(error) {return {data:null,error};}
+    }
+    return base.rpc(name,p);
+  }};
+  const adapter=new GoogleBooksAdapter({mode:'real',apiKey:'fixture-only',timeoutMs:10000,maxResponseBytes:100000,
+    verifyOptionsRetention:({fetchedAt})=>({storagePermissionVerified:true,
+      permittedDeadlineAt:new Date(Date.parse(fetchedAt)+3600000).toISOString()}),
+    fetcher:async()=>{
+      requests++;await edit(f);await asService(db,f);
+      return new Response(JSON.stringify({kind:'books#volumes',totalItems:0,items:[]}),
+        {status:200,headers:{'content-type':'application/json'}});
+    }});
+  const result=await runMetadataWorkerBatch(1,{workerId:worker,workerAuthToken:'fixture-only',
+    serviceClient:client,primary:adapter,primaryCapability:GOOGLE_BOOKS_CAPABILITY,
+    editionOptionsBoundary:createMetadataEditionOptionsBoundary(client)});
+  assert.deepEqual(result,{claimed:1,results:[{outcome:'stale_claim'}]});
+  const terminal=await job(f);
+  assert.equal(terminal.status,'resolved_noop');assert.equal(terminal.attempt_count,5);
+  assert.ok(terminal.completed_at);assert.equal(terminal.lease_expires_at,null);
+  assert.equal(cleanups,1);assert.equal(requests,1);
+  await setActor(db,f.ownerId);
+  const choices=await scalar(db,readSql(f));
+  assert.equal(choices.lookupStatus,'idle');assert.deepEqual(choices.rows,[]);
+},true));
 
 test('a current request cannot be retired and a selling edit does not detach it',async()=>withRequest(async f=>{
   await setActor(db,f.ownerId);

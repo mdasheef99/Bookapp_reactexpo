@@ -2,6 +2,7 @@ import { handlePhase9MetadataWorker, runMetadataWorkerBatch }
   from '../../../workers/phase9-metadata-worker';
 import { buildMetadataQueryIdentity }
   from '../_shared/imageInventory/metadata';
+import { editionWorkerFixture } from './fixtures/phase9/editionOptionsWorker';
 
 const workerId = 'metadata-worker-000001';
 const workerAuthToken = 'metadata-worker-ingress-A7z.49_xYp-001';
@@ -116,6 +117,24 @@ describe('Phase 9 runnable metadata worker', () => {
       p_job_id: 'job-1',p_worker: workerId,p_lease_token: 'c'.repeat(64),p_attempt_count: 2,
     });
     expect(rpc).not.toHaveBeenCalledWith('phase9_fail_metadata_job', expect.anything());
+  });
+
+  it('requests claim-fenced cleanup when the fifth edition claim returns stale without throwing', async () => {
+    const fixture = editionWorkerFixture();
+    Object.assign(fixture.current(), { attempt: 5 });
+    fixture.controls.beforeComplete = async () => {
+      fixture.current().requestGeneration = 1;
+    };
+    await expect(fixture.run()).resolves.toEqual({ claimed: 1, results: [{ outcome: 'stale_claim' }] });
+    expect(fixture.calls).toContainEqual({
+      name: 'phase9_resolve_superseded_edition_job_v1',
+      parameters: {
+        p_job_id: 'job-1',p_worker: fixture.dependencies.workerId,
+        p_lease_token: fixture.current().claimToken,p_attempt_count: 5,
+      },
+    });
+    expect(fixture.saved.size).toBe(0);
+    expect(fixture.stats().providerRequests).toBe(1);
   });
 
   it('leaves a current edition request open when superseded cleanup declines it', async () => {

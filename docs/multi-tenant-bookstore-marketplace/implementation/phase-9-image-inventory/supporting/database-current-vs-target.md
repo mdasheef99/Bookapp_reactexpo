@@ -1,8 +1,8 @@
-## 2026-10-10 - M72 authorized locally; shared schema unchanged
+## 2026-10-11 - M72 authorized locally; shared schema unchanged
 
 Owner authorized local M72 creation for the superseded explicit-job terminal correction. Filename 20261010000072_marketplace_phase9_edition_picker_superseded_jobs.sql is CREATED_LOCAL / NOT_APPLIED; live history still ends at M71 / 20261010110835 on the freshly verified Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn project. M65–M71 bytes remain preserved. The target adds service-role-only private/public terminalizer functions; current deployed schema does not contain M72. No new table/column, RLS, trigger or business-data mutation.
 
-The disposable full-through-M72 suite passes seven cases; the combined neighboring SQL gate passes 103/103 with historical stacks disclosed. [Migration ledger, security and read-only I/O audit](../trackers/36-owner-edition-picker-publication-deployment.md) records exact hashes, commands, scopes, project identity and warning evidence. Disk I/O budget depletion was observed; database size 258 MB and large pg_net/cron histories do not justify deleting Edge Functions. Application remains separate; Render is held.
+The disposable full-through-M72 suite passes eight cases, including the actual fifth-claim worker after identity replacement during its recorded response; the combined neighboring SQL gate passes 104/104 with historical stacks disclosed. M72 retains SHA-256 49C946287085A6C4208FBC1348904DE8FB8A8EA2DBD79AD814186D0C723B39D7. [Migration ledger, security and read-only I/O audit](../trackers/36-owner-edition-picker-publication-deployment.md) records exact commands, scopes, project identity and warning evidence. Disk I/O budget depletion was observed; database size 258 MB and large pg_net/cron histories do not justify deleting Edge Functions. Application remains separate; Render is held.
 
 ## 2026-10-10 - M71 applied and catalog verified
 

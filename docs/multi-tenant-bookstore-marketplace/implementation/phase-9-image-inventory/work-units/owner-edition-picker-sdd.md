@@ -2,7 +2,7 @@
 
 Existing §§4.3/5/9, EP-AC09/20 and Master MAS-17 own this bounded lifecycle correction. Owner authorized local M72 creation; M72 is CREATED_LOCAL / NOT_APPLIED, while M65–M71 are applied/byte-preserved. A valid worker claim receives a terminal no-op when its per-card request is demonstrably superseded; missing/current state is not cancellation authority. Same-claim replay is stable and reclaimed claim evidence rejects. Selection/selling/provider/cover behavior stays unchanged.
 
-[Exact local proof and migration ledger](../trackers/36-owner-edition-picker-publication-deployment.md): seven through-M72 cases plus historical neighbors total 103 SQL checks, 10 worker tests, TypeScript and build/14 structural checks passed. GPT-6 Luna/max correction review is next before authorized publication. Shared application, compatible runtime, provider permission and operational evidence remain gated; Render deployment is explicitly held.
+[Exact local proof and migration ledger](../trackers/36-owner-edition-picker-publication-deployment.md), updated 2026-10-11: eight through-M72 cases plus historical neighbors total 104 SQL checks; six worker/recovery/production suites / 124 tests, whole TypeScript and build/14 structural checks passed. The confirmed 905b1f9 review finding is corrected: normally returned stale results now request the same claim-fenced cleanup as exceptions. Fifth-claim actual-worker proof preserves rejection, one physical request and no stale choices. M72 SQL/hash is unchanged. GPT-6 Luna/max follow-up correction review is next before authorized publication. Shared application, compatible runtime, provider permission and operational evidence remain gated; Render deployment is explicitly held.
 
 ## 2026-10-10 - Selection correction applied
 
