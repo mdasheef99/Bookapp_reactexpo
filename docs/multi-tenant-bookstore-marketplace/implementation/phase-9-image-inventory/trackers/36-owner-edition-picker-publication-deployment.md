@@ -1,5 +1,12 @@
 # Owner edition-picker publication and development backend rollout
 
+## Current checkpoint, 2026-10-10
+
+Phase 9 / Unit 6G: aggregate GPT-6 Luna/max pre-push review is CHANGES_REQUIRED for one independently reproduced P2 superseded-job terminal gap. The three test-only integration corrections are approved and committed at 4b34714a0f09b220f9409980c9cbbfb90438db89; final merged Jest passes 337 suites / 3,293 tests, four existing pending, zero failures. M65–M71 are unchanged and applied. M72 is PROPOSED / NOT_CREATED / NOT_APPLIED. The untracked disposable regression has four expected RED failures and one existing safe-boundary PASS.
+
+Exact next authorized action: obtain the separate local M72-file authorization, implement/prove only the bounded correction, and request GPT-6 Luna/max correction review before any feature push. No feature push or deployment has occurred; Render is explicitly held. Provider-result retention remains disabled. The P3 review finding about the first six handoff sentences is confirmed and corrected to this same next action; documentation-correction review remains pending. Earlier workflow sections below preserve historical authorization and chronology, not the current next action.
+
+
 ## 2026-10-10 - Owner-authorized feature publication and development backend rollout
 
 Phase 9 / Unit 6G remains active; Tasks 1-8 retain their recorded local approval and verification boundaries. The Owner explicitly authorized committing this edition-picker work, a GPT-6 Luna review at max before pushing, bounded corrections of confirmed findings followed by correction review, publication to GitHub main after approval, and compatible development backend rollout.
