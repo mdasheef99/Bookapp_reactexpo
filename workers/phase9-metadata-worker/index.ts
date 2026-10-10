@@ -125,8 +125,19 @@ async function processMetadataClaim(
     }
     return await runMetadataProductionComposition(request, gateway);
   } catch (error) {
-    if (context?.purpose === 'edition_options'
-      || (error instanceof Error && error.message === 'P9_EDITION_CONTEXT_INVALID')) return { outcome: 'stale_claim' };
+    if (context?.purpose === 'edition_options' || context === null) {
+      try {
+        const superseded = await dependencies.serviceClient.rpc('phase9_resolve_superseded_edition_job_v1', {
+          p_job_id: claim.id,p_worker: dependencies.workerId,
+          p_lease_token: claim.lease_token,p_attempt_count: claim.attempt_count,
+        });
+        if (!superseded.error && superseded.data?.status === 'resolved_noop') return { outcome: 'stale_claim' };
+      } catch {
+        // Preserve the existing stale/failure handling when the cleanup receipt is unavailable.
+      }
+      if (context?.purpose === 'edition_options'
+        || (error instanceof Error && error.message === 'P9_EDITION_CONTEXT_INVALID')) return { outcome: 'stale_claim' };
+    }
     try {
       const failed = await dependencies.serviceClient.rpc('phase9_fail_metadata_job', {
         p_job_id: context?.jobId ?? claim.id,p_worker: dependencies.workerId,

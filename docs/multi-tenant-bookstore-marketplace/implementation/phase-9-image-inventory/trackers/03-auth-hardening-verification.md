@@ -1,5 +1,17 @@
 # Auth Hardening Verification
 
+## 2026-10-10 - M72 bounded local superseded-job security matrix
+
+| Boundary (picker §§4.3/5/9; MAS-17) | Fresh local evidence |
+| --- | --- |
+| Service-only terminalizer/wrapper | pg_proc privilege checks: service_role allowed; anon/authenticated denied |
+| Reclaimed/wrong claim evidence | Old token, worker and attempt reject; only current claim terminalizes |
+| Stable response-loss replay | Identical claim returns same terminal outcome without another effect |
+| Current/missing request protection | Current and selling-only requests remain in progress; no unproved cancellation |
+| Newer request/late response | New request stays pending; late finalized/completion results remain fenced |
+
+Seven disposable M72 cases pass; 103 total SQL checks include disclosed historical stacks. No live/native race proof is claimed for M72. M65–M71 hashes are unchanged and applied; M72 is CREATED_LOCAL / NOT_APPLIED. [Migration/worker evidence](36-owner-edition-picker-publication-deployment.md). GPT-6 Luna/max correction review is pending; Render remains held. No shared grants, Auth, Storage, data or provider mutations.
+
 ## 2026-10-08 - Task 6 M70 bounded local confirmation verification
 
 Scope: picker §§6-7/9, MAS-02/03/15/17 and EP-AC11/19 only. The M70 disposable

@@ -100,6 +100,39 @@ describe('Phase 9 runnable metadata worker', () => {
       ]));
   });
 
+  it('terminalizes an explicitly superseded job when its context has gone stale', async () => {
+    const rpc = jest.fn()
+      .mockResolvedValueOnce({ data: [{ id: 'job-1', attempt_count: 2, lease_token: 'c'.repeat(64) }], error: null })
+      .mockResolvedValueOnce({ data: null, error: { message: 'P9_STATE_CONFLICT' } })
+      .mockResolvedValueOnce({ data: { status: 'resolved_noop', outcome: 'request_superseded' }, error: null });
+    const response = await handlePhase9MetadataWorker(
+      request(`Bearer ${workerAuthToken}`),
+      { workerId,workerAuthToken,serviceClient: { rpc },primary: null,primaryCapability: null },
+    );
+    await expect(response.json()).resolves.toEqual({
+      claimed: 1,results: [{ outcome: 'stale_claim' }],
+    });
+    expect(rpc).toHaveBeenNthCalledWith(3,'phase9_resolve_superseded_edition_job_v1',{
+      p_job_id: 'job-1',p_worker: workerId,p_lease_token: 'c'.repeat(64),p_attempt_count: 2,
+    });
+    expect(rpc).not.toHaveBeenCalledWith('phase9_fail_metadata_job', expect.anything());
+  });
+
+  it('leaves a current edition request open when superseded cleanup declines it', async () => {
+    const explicit = { ...context,contractVersion: 'p9-metadata-job-context-v2',purpose: 'edition_options' };
+    const rpc = jest.fn()
+      .mockResolvedValueOnce({ data: [{ id: 'job-1', attempt_count: 1, lease_token: 'a'.repeat(64) }], error: null })
+      .mockResolvedValueOnce({ data: explicit, error: null })
+      .mockResolvedValueOnce({ data: { status: 'not_superseded' }, error: null });
+    const response = await handlePhase9MetadataWorker(request(`Bearer ${workerAuthToken}`), {
+      workerId,workerAuthToken,serviceClient: { rpc },primary: null,primaryCapability: null,
+    });
+    await expect(response.json()).resolves.toEqual({ claimed: 1,results: [{ outcome: 'stale_claim' }] });
+    expect(rpc).toHaveBeenLastCalledWith('phase9_resolve_superseded_edition_job_v1', expect.objectContaining({
+      p_job_id: 'job-1',p_attempt_count: 1,
+    }));
+  });
+
   it('continues to a sibling when the first failure RPC rejects', async () => {
     const second = { ...context,jobId: 'job-2',candidateId: 'candidate-2',claimToken: 'b'.repeat(64) };
     const rpc = jest.fn(async (name: string, parameters: any) => {
@@ -109,6 +142,7 @@ describe('Phase 9 runnable metadata worker', () => {
       ], error: null };
       if (name === 'phase9_metadata_job_context') return parameters.p_job_id === 'job-1'
         ? { data: {}, error: null } : { data: second, error: null };
+      if (name === 'phase9_resolve_superseded_edition_job_v1') return { data: { status: 'not_applicable' },error: null };
       if (name === 'phase9_fail_metadata_job' && parameters.p_job_id === 'job-1') {
         throw new Error('completion transport rejected');
       }
