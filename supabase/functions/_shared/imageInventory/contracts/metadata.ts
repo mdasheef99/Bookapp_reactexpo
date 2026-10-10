@@ -9,11 +9,11 @@ import {
   requiredIsoTimestamp,
   requiredString,
   utf8ByteLength,
-} from '../domain/validation';
-import { validateIsbnPair } from '../domain/isbn';
-import { PHASE9_CONTRACT_VERSION, PHASE9_METADATA_SCHEMA_VERSION } from './versions';
-import { assertApprovedProviderHttpsUrl, ProviderHostPolicy } from './providerReuse';
-import { PHASE9_LIMITS } from './registers';
+} from '../domain/validation.ts';
+import { validateIsbnPair } from '../domain/isbn.ts';
+import { PHASE9_CONTRACT_VERSION, PHASE9_METADATA_SCHEMA_VERSION } from './versions.ts';
+import { assertApprovedProviderHttpsUrl, ProviderHostPolicy } from './providerReuse.ts';
+import { PHASE9_LIMITS } from './registers.ts';
 
 const METADATA_KEYS = [
   'contract_version', 'schema_version', 'adapter_key', 'adapter_version', 'normalizer_version', 'correlation_id', 'attempt_id', 'provider_record_id',

@@ -1,3 +1,17 @@
+## 2026-10-11 - M72 applied; backend activation preflight
+
+Phase 9 / Unit 6G remains feature_published_runtime_pending. Under the Owner's current step-by-step backend authorization, M72 is APPLIED_VERIFIED on Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn as live version 20261010200655. Its archived SQL equals the reviewed file and its original SHA-256 is preserved. M65-M71 source bytes and existing Phase 9 function definitions/ACLs are unchanged.
+
+Rollout order is M72, compatible Render metadata worker, then the Owner Edge API. The old worker's claim RPC has no edition-operation filter and its decoder cannot handle edition_options contexts, so the new API must not enqueue those jobs until the new worker is healthy. No edition jobs exist at this checkpoint. Owner API remains ACTIVE v14; metadata runtime remains bb91428048ca9028c5592cbbc52c982bd6843946. The Owner's explicit stop before Render deployment remains in force.
+
+A fresh ordinary Deno check exposed extensionless imports newly reached by the API. The bounded local correction adds seven .ts suffixes in contracts/metadata.ts and contracts/providerReuse.ts, naming the same existing targets without changing metadata, ranking, cover, authorization or retention behavior. Fresh verification passed Deno check --no-lock, two existing Jest suites / 49 tests, worker build plus 14 structural tests, and whole TypeScript. Correction review/publication is pending; earlier feature approval and successful CI remain separate evidence.
+
+Exact next action: complete the requested read-only GPT-6 Luna/max correction review and publish only if approved, then report the prepared deployment checkpoint for the Owner's Render decision. Provider-result retention remains disabled without verified permission; registry flags and cache headers are not authorization. No Edge or Render runtime deployment, provider request, inventory/Auth/Storage/configuration/billing change occurred. [Exact application, rollout, artifacts and verification evidence](../trackers/36-owner-edition-picker-publication-deployment.md). Earlier dated records below are historical.
+
+| Local migration | Live version / target | Effect and readback |
+| --- | --- | --- |
+| 20261010000072_marketplace_phase9_edition_picker_superseded_jobs.sql | APPLIED_VERIFIED / 20261010200655; Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn | Two new superseded-job terminalizer functions only. Full archived SQL equals the reviewed local file; SHA-256 49C946287085A6C4208FBC1348904DE8FB8A8EA2DBD79AD814186D0C723B39D7. Private definer/public invoker, postgres owner, empty search_path, service_role-only execution. Existing Phase 9 definitions/ACL fingerprint preserved; no backfill or business-row write. |
+
 ## 2026-10-11 - M72 authorized locally; shared schema unchanged
 
 Owner authorized local M72 creation for the superseded explicit-job terminal correction. Filename 20261010000072_marketplace_phase9_edition_picker_superseded_jobs.sql is CREATED_LOCAL / NOT_APPLIED; live history still ends at M71 / 20261010110835 on the freshly verified Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn project. M65–M71 bytes remain preserved. The target adds service-role-only private/public terminalizer functions; current deployed schema does not contain M72. No new table/column, RLS, trigger or business-data mutation.

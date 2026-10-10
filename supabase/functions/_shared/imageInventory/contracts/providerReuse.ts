@@ -1,5 +1,5 @@
-import { Phase9ContractError } from '../domain/validation';
-import { PHASE9_PROVIDER_REUSE_FIELDS, ProviderFieldReuse } from './registers';
+import { Phase9ContractError } from '../domain/validation.ts';
+import { PHASE9_PROVIDER_REUSE_FIELDS, ProviderFieldReuse } from './registers.ts';
 
 export type ProviderReusePolicy = Readonly<{
   adapterKey: string;
