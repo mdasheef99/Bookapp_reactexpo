@@ -5680,3 +5680,61 @@ The separate Desktop Unit 6I checkout remains outside this publication. All nine
 Current work unit: local publication preflight and pre-push review. Exact next action: commit the feature snapshot, integrate current main, then perform the requested read-only subagent review and verification before publication. Runtime rollout follows approval/publication; new provider-result retention remains disabled until independently verified permission is available. No feature publication, deployment, or new shared database mutation is claimed at this checkpoint.
 
 See the [publication and deployment record](36-owner-edition-picker-publication-deployment.md) for fresh checks, review findings, corrections, exact commits and service readback. Earlier dated handoffs retain historical provenance.
+## 2026-10-10 - Existing inventory baseline main publication
+
+Authority and scope: the Owner requested push of the nine existing inventory
+commits to GitHub main. The integrated commits are `c897585`, `0eca214`,
+`48480cd`, `dc97ba9`, `101e4b6`, `ce2d0c5`, `9ad1d6e`, `a03b8af`, and `ee3a8c7`.
+No edition-picker or Unit 6I uncommitted changes were included.
+
+The fresh main tip was `2f2f383b14b5818b62682ae5bdd7fa295550ba5b`; common ancestor
+with the baseline was `bb91428048ca9028c5592cbbc52c982bd6843946`. The histories
+were 45 main-only / nine baseline-only commits. Their changed paths were
+disjoint: 139 newer-main files and 40 baseline files. Git combined them without
+conflicts; index comparisons preserved all 179 input file contents exactly.
+
+The full source-baseline Jest command initially returned 303 passing suites,
+one failed architecture suite, and one skipped suite (2510 passing tests,
+one failure, four skipped). Its name-based boundary missed the already
+authorized `components/batchReviewStatus.ts`, `queries/ownerInventoryCommitQueries.ts`,
+and `queries/ownerUxReviewQueries.ts` surfaces. The status module has a type-only
+commit outcome import; the query modules perform the controlled Owner Add/cache
+flow authorized by Unit 6G SDD sections 8/12/14. Only the test allowlist changed:
+three exact paths and one source-trace comment. Direct table, forbidden Unit 7
+adapter, local persistence, scan-media and logging guards remain global.
+Focused RED/GREEN correction verification: architecture/cache/review-query
+Jest gate passed three suites / 17 tests. No production fix was needed.
+
+Final merge verification, in the clean temporary managed checkout:
+
+- `node node_modules/jest/bin/jest.js --runInBand --json --outputFile=<temporary report>`:
+  exit 0; 318 passed suites / 2829 passed tests; one existing skipped suite /
+  four skipped tests. This is the full merged repository suite, not the
+  uncommitted edition-picker test checkpoint.
+- `node node_modules/typescript/bin/tsc --noEmit --allowImportingTsExtensions`:
+  exit 0.
+- Phase 9 `validate-phase9-continuity.ps1`: exit 0; 195 definitions, zero
+  duplicate definitions, zero missing traceability; 86 Markdown files / 62
+  required phase files. Existing size advisories were nonblocking.
+- `git diff --check` and `git diff --cached --check`: exit 0.
+- Locked dependency setup: `npm ci --ignore-scripts --no-audit --no-fund`, exit 0;
+  dependencies installed only in the temporary checkout. The original dependency
+  junction was unlinked after verifying its exact target; Desktop dependencies
+  were preserved.
+- Before publication, all 162 dirty edition-picker files and all 229 dirty
+  Desktop files had identical SHA-256 hashes and identical expanded status
+  lists compared with this task's starting snapshots.
+
+Merge `618433fc948e5d86d72d3b49d21079bd536f2d77` has first parent
+`2f2f383b14b5818b62682ae5bdd7fa295550ba5b` and second parent
+`ee3a8c79429ca401d468861f2861721082ba955e`. Ancestry checks passed for both inputs.
+Normal `git push origin HEAD:refs/heads/main` advanced main from `2f2f383`
+to `618433f`; fresh `git ls-remote --heads origin main` matched the full merge
+SHA. The publication record itself follows in a documentation-only commit.
+
+External effects: GitHub publication only; no Supabase/database/Storage/provider
+request, migration application, or manual deployment. Earlier operational
+proof and the price-intent / cover-source deviations remain as recorded;
+no new runtime acceptance is claimed. The separate edition-picker and Unit 6I
+worktrees retain their uncommitted changes. Next exact action: Owner decision
+on committing/publishing the separate edition-picker implementation.

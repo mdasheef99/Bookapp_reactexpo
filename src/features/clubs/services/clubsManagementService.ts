@@ -64,15 +64,6 @@ export async function unarchiveClub(clubId: string): Promise<Club> {
     return updateClub(clubId, { is_archived: false, archived_at: null });
 }
 
-export async function transferClubAdmin(clubId: string, newAdminUserId: string): Promise<Club> {
-    const { data, error } = await supabase.rpc('transfer_club_admin', {
-        p_club_id: clubId,
-        p_new_admin_user_id: newAdminUserId,
-    });
-    if (error) throw new Error(getClubsEntitlementErrorMessage(error, 'Unable to transfer club admin right now.'));
-    return data as Club;
-}
-
 export async function getClubAdminTransferRequests(clubId: string): Promise<ClubAdminTransferRequest[]> {
     const { data, error } = await supabase
         .from('club_admin_transfer_requests')

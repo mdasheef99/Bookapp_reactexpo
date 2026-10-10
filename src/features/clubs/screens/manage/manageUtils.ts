@@ -1,5 +1,4 @@
 import type { AccessLevel, ClubPublicDetails, ClubType, MeetingType } from '@/features/clubs/services/clubsService';
-import type { GoogleBook } from '@/features/books/services/booksService';
 
 export type FeedbackState = { type: 'success' | 'error'; message: string } | null;
 
@@ -106,8 +105,11 @@ export function hasNominationVotingClosed(votingEndsAt: string | null) {
     return votingEndTime <= Date.now();
 }
 
-export function getBookCoverUrl(book: GoogleBook | null): string {
-    const imageUrl = book?.volumeInfo.imageLinks?.thumbnail ?? book?.volumeInfo.imageLinks?.smallThumbnail;
+// Cover URL resolver — accepts a minimal shape (just imageLinks) so callers
+// holding only a thumbnail don't need a full GoogleBook payload.
+export function getBookCoverUrl(book: { volumeInfo?: { imageLinks?: { thumbnail?: string; smallThumbnail?: string } } } | null): string {
+    const imageLinks = book?.volumeInfo?.imageLinks;
+    const imageUrl = imageLinks?.thumbnail ?? imageLinks?.smallThumbnail;
     if (!imageUrl) return 'https://via.placeholder.com/120x180?text=No+Cover';
     return imageUrl.replace(/^http:\/\//i, 'https://').replace('zoom=1', 'zoom=0');
 }

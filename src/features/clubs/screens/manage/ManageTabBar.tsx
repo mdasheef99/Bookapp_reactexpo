@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 
 export interface ManageTab {
     key: string;
@@ -13,7 +13,6 @@ interface ManageTabBarProps {
 }
 
 export function ManageTabBar({ tabs, activeTab, onTabChange }: ManageTabBarProps) {
-    const { colors } = useTheme();
 
     return (
         <View style={[styles.container, { borderBottomColor: colors.border }]}>
@@ -62,10 +61,15 @@ const styles = StyleSheet.create({
     tabButton: {
         paddingHorizontal: 14,
         paddingVertical: 10,
-        borderRadius: 999,
+        borderRadius: 6,
+        minHeight: 44,
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: colors.border,
     },
     tabText: {
         fontSize: 13,
-        fontWeight: '700',
+        fontFamily: 'Inter_600SemiBold',
+        lineHeight: 20,
     },
 });

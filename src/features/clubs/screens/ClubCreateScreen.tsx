@@ -3,15 +3,19 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOp
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
 import { navigateBackOrFallback } from '@/lib/navigation';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { profileService, type UserProfile } from '@/features/auth/services/profileService';
 import { useCreateClub } from '@/features/clubs/hooks/useClubs';
 import { type AccessLevel, type ClubType, type MeetingType } from '@/features/clubs/services/clubsService';
-import { useTheme } from '@/hooks/useTheme';
 import { formatAccessLevel, formatClubType, formatMeetingType } from './manage';
+
+const colors = {
+    bgPrimary: '#FAF6EE', bgCard: '#FFFEFC', bgSecondary: '#F8EBE7',
+    border: '#E7DCD1', accent: '#8B322C', textPrimary: '#1A1412',
+    textSecondary: '#6E645F', textTertiary: '#746860',
+    error: '#A12D28', errorLight: '#FCEDEA',
+} as const;
 
 type CreateClubType = ClubType;
 
@@ -29,7 +33,6 @@ function getErrorMessage(error: unknown, fallback: string) {
 }
 
 export default function ClubCreateScreen() {
-    const { colors } = useTheme();
     const { user } = useAuth();
     const createClub = useCreateClub();
     const [name, setName] = useState('');
@@ -40,7 +43,6 @@ export default function ClubCreateScreen() {
     const [accessLevel, setAccessLevel] = useState<AccessLevel>('all');
     const [meetingType, setMeetingType] = useState<MeetingType | null>(null);
     const [maxMembers, setMaxMembers] = useState('');
-    const [isUploadingCover, setIsUploadingCover] = useState(false);
     const [feedback, setFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
     const clubTypeOptions = useMemo(() => profile?.is_verified_author ? [...BASE_CLUB_TYPE_OPTIONS, 'author_club' as const] : BASE_CLUB_TYPE_OPTIONS, [profile?.is_verified_author]);
 
@@ -98,50 +100,10 @@ export default function ClubCreateScreen() {
         }
     };
 
-    const pickCoverImage = async () => {
-        if (!user?.id) {
-            setFeedback({ type: 'error', message: 'Sign in before selecting a cover image.' });
-            return;
-        }
-
-        try {
-            setFeedback(null);
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') {
-                setFeedback({ type: 'error', message: 'Permission denied. Please allow photo access to select a cover image, or enter a URL.' });
-                return;
-            }
-
-            const result = await ImagePicker.launchImageLibraryAsync({
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                mediaTypes: (ImagePicker as any).MediaType?.Images ?? ImagePicker.MediaTypeOptions.Images,
-                quality: 0.85,
-                allowsEditing: true,
-                aspect: [3, 4],
-            });
-
-            if (result.canceled || !result.assets?.length) return;
-
-            setIsUploadingCover(true);
-            const asset = result.assets[0];
-            const response = await fetch(asset.uri);
-            if (!response.ok) throw new Error(`Fetch failed: ${response.status} ${response.statusText}`);
-
-            const blob = await response.blob();
-            const contentType = asset.mimeType || blob.type || 'image/jpeg';
-            const ext = contentType === 'image/png' ? 'png' : contentType === 'image/webp' ? 'webp' : 'jpg';
-            const path = `drafts/${user.id}-${Date.now()}.${ext}`;
-            const { error: uploadError } = await supabase.storage.from('club-banners').upload(path, blob, { contentType, upsert: true });
-            if (uploadError) throw uploadError;
-
-            const { data } = supabase.storage.from('club-banners').getPublicUrl(path);
-            setCoverUrl(data.publicUrl);
-        } catch (error) {
-            setFeedback({ type: 'error', message: getErrorMessage(error, 'Unable to upload this cover image. You can still enter an image URL.') });
-        } finally {
-            setIsUploadingCover(false);
-        }
-    };
+    // PRODUCT-14: no pre-creation banner upload. Banners are club-owned and
+    // uploaded from manage settings after the club exists; here only a URL
+    // may be pasted. The old drafts/{uid}-{ts} upload path was removed with
+    // the club-banners Storage lockdown (CLUB-BACKEND-01).
 
     const renderOption = <T extends string | null>({
         value,
@@ -149,33 +111,40 @@ export default function ClubCreateScreen() {
         label,
         testID,
         onPress,
+        layout,
     }: {
         value: T;
         selected: boolean;
         label: string;
         testID: string;
         onPress: (value: T) => void;
+        layout: 'full' | 'third' | 'half';
     }) => (
         <TouchableOpacity
             key={value ?? 'none'}
             testID={testID}
+            accessibilityRole="button"
+            accessibilityLabel={selected ? `${label}, selected` : label}
+            accessibilityState={{ selected }}
             onPress={() => onPress(value)}
             style={[
                 styles.option,
+                layout === 'full' ? styles.fullOption : layout === 'third' ? styles.thirdOption : styles.halfOption,
                 {
-                    backgroundColor: selected ? colors.accent : colors.bgSecondary,
+                    backgroundColor: selected ? colors.accent : colors.bgCard,
                     borderColor: selected ? colors.accent : colors.border,
                 },
             ]}
         >
             <Text style={[styles.optionText, { color: selected ? '#FFFFFF' : colors.textPrimary }]}>{label}</Text>
+            {selected ? <Ionicons name="checkmark" size={16} color="#FFFFFF" /> : null}
         </TouchableOpacity>
     );
 
     return (
         <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
             <View style={[styles.header, { borderBottomColor: colors.border }]}>
-                <TouchableOpacity onPress={() => navigateBackOrFallback(router, '/clubs')} style={styles.iconButton} testID="create-club-back">
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to clubs" onPress={() => navigateBackOrFallback(router, '/clubs')} style={styles.iconButton} testID="create-club-back">
                     <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Create club</Text>
@@ -183,6 +152,10 @@ export default function ClubCreateScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+                <View style={styles.introduction}>
+                    <Text accessibilityRole="header" style={styles.pageTitle}>Create club</Text>
+                    <Text style={styles.introText}>Start a book club for readers to gather, discuss, and read together.</Text>
+                </View>
                 {!user?.id ? (
                     <View style={[styles.noticeCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                         <Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Sign in required</Text>
@@ -193,8 +166,9 @@ export default function ClubCreateScreen() {
                 <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                     <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Club basics</Text>
 
-                    <Text style={[styles.label, { color: colors.textSecondary }]}>Name</Text>
+                    <Text style={[styles.label, { color: colors.textPrimary }]}>Name <Text style={styles.fieldHint}>· Required</Text></Text>
                     <TextInput
+                        accessibilityLabel="Club name, required"
                         value={name}
                         onChangeText={setName}
                         placeholder="Weekend literary circle"
@@ -202,9 +176,11 @@ export default function ClubCreateScreen() {
                         style={[styles.input, { borderColor: colors.border, color: colors.textPrimary }]}
                         testID="create-club-name"
                     />
+                    <Text style={styles.helperText}>At least 3 characters.</Text>
 
-                    <Text style={[styles.label, { color: colors.textSecondary }]}>Description</Text>
+                    <Text style={[styles.label, { color: colors.textPrimary }]}>Description <Text style={styles.fieldHint}>· Optional</Text></Text>
                     <TextInput
+                        accessibilityLabel="Description, optional"
                         value={description}
                         onChangeText={setDescription}
                         placeholder="What kind of readers should join?"
@@ -215,19 +191,13 @@ export default function ClubCreateScreen() {
                         testID="create-club-description"
                     />
 
-                    <Text style={[styles.label, { color: colors.textSecondary }]}>Cover image URL</Text>
+                    <Text style={[styles.label, { color: colors.textPrimary }]}>Cover image URL <Text style={styles.fieldHint}>· Optional</Text></Text>
                     {coverUrl.trim() ? (
                         <Image source={{ uri: coverUrl.trim() }} style={[styles.coverPreview, { borderColor: colors.border }]} contentFit="cover" testID="create-club-cover-preview" />
                     ) : null}
-                    <TouchableOpacity
-                        onPress={pickCoverImage}
-                        disabled={isUploadingCover}
-                        style={[styles.coverButton, { borderColor: colors.accent, opacity: isUploadingCover ? 0.65 : 1 }]}
-                        testID="create-club-pick-cover"
-                    >
-                        {isUploadingCover ? <ActivityIndicator size="small" color={colors.accent} /> : <Text style={[styles.coverButtonText, { color: colors.accent }]}>{coverUrl.trim() ? 'Change cover image' : 'Select cover image'}</Text>}
-                    </TouchableOpacity>
+                    <Text style={[styles.coverHint, { color: colors.textTertiary }]}>Banners are uploaded from club settings after the club is created. Paste an image URL here or add the banner later.</Text>
                     <TextInput
+                        accessibilityLabel="Cover image URL, optional"
                         value={coverUrl}
                         onChangeText={setCoverUrl}
                         placeholder="https://..."
@@ -238,8 +208,9 @@ export default function ClubCreateScreen() {
                         testID="create-club-cover-url"
                     />
 
-                    <Text style={[styles.label, { color: colors.textSecondary }]}>Member cap</Text>
+                    <Text style={[styles.label, { color: colors.textPrimary }]}>Member cap <Text style={styles.fieldHint}>· Optional</Text></Text>
                     <TextInput
+                        accessibilityLabel="Member cap, optional"
                         value={maxMembers}
                         onChangeText={setMaxMembers}
                         placeholder="Leave blank for unlimited"
@@ -248,19 +219,21 @@ export default function ClubCreateScreen() {
                         keyboardType="number-pad"
                         testID="create-club-max-members"
                     />
+                    <Text style={styles.helperText}>If set, enter a whole number of at least 2.</Text>
                 </View>
 
                 <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Access</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Access & format</Text>
 
                     <Text style={[styles.label, { color: colors.textSecondary }]}>Club type</Text>
-                    <View style={styles.optionGroup}>
+                    <View style={styles.optionColumn}>
                         {clubTypeOptions.map((option) => renderOption({
                             value: option,
                             selected: clubType === option,
                             label: formatClubType(option),
                             testID: `create-club-type-${option}`,
                             onPress: setClubType,
+                            layout: 'full',
                         }))}
                     </View>
                     {profile?.is_verified_author ? (
@@ -275,6 +248,7 @@ export default function ClubCreateScreen() {
                             label: formatAccessLevel(option),
                             testID: `create-club-access-${option}`,
                             onPress: setAccessLevel,
+                            layout: 'third',
                         }))}
                     </View>
 
@@ -286,12 +260,14 @@ export default function ClubCreateScreen() {
                             label: formatMeetingType(option),
                             testID: `create-club-meeting-${option ?? 'none'}`,
                             onPress: setMeetingType,
+                            layout: 'half',
                         }))}
                     </View>
                 </View>
 
                 {feedback ? (
                     <View
+                        accessibilityLiveRegion="polite"
                         style={[
                             styles.feedback,
                             {
@@ -307,6 +283,10 @@ export default function ClubCreateScreen() {
                 <TouchableOpacity
                     onPress={handleSubmit}
                     disabled={!user?.id || createClub.isPending}
+                    accessibilityRole="button"
+                    accessibilityLabel={createClub.isPending ? 'Creating club' : 'Create club'}
+                    accessibilityState={{ disabled: !user?.id || createClub.isPending, busy: createClub.isPending }}
+                    aria-busy={createClub.isPending}
                     style={[styles.submitButton, { backgroundColor: colors.accent, opacity: !user?.id || createClub.isPending ? 0.55 : 1 }]}
                     testID="create-club-submit"
                 >
@@ -319,27 +299,34 @@ export default function ClubCreateScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    header: { minHeight: 58, borderBottomWidth: 1, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    iconButton: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
-    headerTitle: { fontSize: 18, fontWeight: '800' },
-    content: { padding: 16, paddingBottom: 120, gap: 14 },
-    card: { borderWidth: 1, borderRadius: 16, padding: 16 },
-    sectionTitle: { fontSize: 18, fontWeight: '800', marginBottom: 14 },
-    label: { fontSize: 13, fontWeight: '700', marginBottom: 8, marginTop: 12 },
-    input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11, fontSize: 15 },
+    header: { minHeight: 56, borderBottomWidth: 1, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    iconButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    headerTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 15, lineHeight: 21 },
+    content: { width: '100%', maxWidth: 760, alignSelf: 'center', padding: 16, paddingBottom: 120, gap: 16 },
+    introduction: { gap: 6, paddingVertical: 4 },
+    pageTitle: { color: colors.textPrimary, fontFamily: 'Newsreader_600SemiBold', fontSize: 30, lineHeight: 36 },
+    introText: { color: colors.textSecondary, fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21 },
+    card: { borderWidth: 1, borderRadius: 12, padding: 16 },
+    sectionTitle: { fontFamily: 'Newsreader_600SemiBold', fontSize: 22, lineHeight: 28, marginBottom: 4 },
+    label: { fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 19, marginBottom: 8, marginTop: 16 },
+    fieldHint: { color: colors.textSecondary, fontFamily: 'Inter_400Regular', fontSize: 12 },
+    input: { backgroundColor: colors.bgCard, minHeight: 46, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 11, fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21 },
     textArea: { minHeight: 96, textAlignVertical: 'top' },
     coverPreview: { alignSelf: 'center', width: 120, height: 160, borderRadius: 10, borderWidth: 1, marginBottom: 10 },
-    coverButton: { borderWidth: 1.5, borderRadius: 12, paddingVertical: 12, alignItems: 'center', marginBottom: 10 },
-    coverButtonText: { fontSize: 14, fontWeight: '800' },
-    optionGroup: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-    option: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 9 },
-    optionText: { fontSize: 13, fontWeight: '800' },
-    helperText: { fontSize: 12, lineHeight: 18, marginTop: 8 },
-    noticeCard: { borderWidth: 1, borderRadius: 14, padding: 14 },
-    noticeTitle: { fontSize: 16, fontWeight: '800', marginBottom: 6 },
-    noticeBody: { fontSize: 14, lineHeight: 20 },
-    feedback: { borderWidth: 1, borderRadius: 12, padding: 12 },
-    feedbackText: { fontSize: 14, lineHeight: 20, fontWeight: '700' },
-    submitButton: { borderRadius: 14, minHeight: 50, alignItems: 'center', justifyContent: 'center' },
-    submitText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900' },
+    coverHint: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, marginBottom: 10 },
+    optionColumn: { gap: 8 },
+    optionGroup: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    option: { minHeight: 44, borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+    fullOption: { width: '100%', justifyContent: 'space-between' },
+    thirdOption: { flex: 1 },
+    halfOption: { flexBasis: '47%', flexGrow: 1 },
+    optionText: { fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 19, flexShrink: 1 },
+    helperText: { color: colors.textSecondary, fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, marginTop: 6 },
+    noticeCard: { borderWidth: 1, borderRadius: 10, padding: 14 },
+    noticeTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 15, lineHeight: 21, marginBottom: 6 },
+    noticeBody: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21 },
+    feedback: { borderWidth: 1, borderRadius: 8, padding: 12 },
+    feedbackText: { fontFamily: 'Inter_500Medium', fontSize: 14, lineHeight: 21 },
+    submitButton: { borderRadius: 8, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
+    submitText: { color: '#FFFFFF', fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
 });

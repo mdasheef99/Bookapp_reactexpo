@@ -2,9 +2,19 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { navigateBackOrFallback } from '@/lib/navigation';
-import { useTheme } from '@/hooks/useTheme';
 import { useVenueDetail } from '../hooks/useVenues';
 import { VenueTypeBadge } from '../components/VenueTypeBadge';
+
+const colors = {
+    bgPrimary: '#FAF6EE',
+    bgCard: '#FFFEFC',
+    bgSecondary: '#F4EEE6',
+    textPrimary: '#1A1412',
+    textSecondary: '#6E645F',
+    accent: '#8B322C',
+    accentLight: '#F3E7E7',
+    border: '#E7DCD1',
+} as const;
 
 function formatAddress(venue: {
     address_line1?: string | null;
@@ -23,7 +33,6 @@ function formatAddress(venue: {
 
 export default function VenueDetailScreen() {
     const { venueId } = useLocalSearchParams<{ venueId: string }>();
-    const { colors } = useTheme();
     const { data: venue, isLoading, isError } = useVenueDetail(venueId ?? null);
 
     if (isLoading) {
@@ -36,35 +45,50 @@ export default function VenueDetailScreen() {
 
     if (isError || !venue) {
         return (
-            <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}>
-                <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>Unable to load venue</Text>
+            <View style={[styles.stateContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}>
+                <Text accessibilityRole="header" style={[styles.errorTitle, { color: colors.textPrimary }]}>Unable to load venue</Text>
                 <Text style={[styles.errorBody, { color: colors.textSecondary }]}>Try returning to club venues and opening this place again.</Text>
+                <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel="Back to venues"
+                    onPress={() => router.replace('/(tabs)/clubs/venues')}
+                    style={[styles.errorButton, { backgroundColor: colors.accent }]}
+                    testID="venue-error-back-button"
+                >
+                    <Text style={styles.errorButtonText}>Back to venues</Text>
+                </TouchableOpacity>
             </View>
         );
     }
 
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.content}>
-            <View style={styles.headerRow}>
-                <TouchableOpacity onPress={() => navigateBackOrFallback(router, '/clubs/venues')} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                    <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+            <View style={styles.header}>
+                <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel="Back to venues"
+                    onPress={() => navigateBackOrFallback(router, '/clubs/venues')}
+                    style={styles.backButton}
+                    testID="venue-back-button"
+                >
+                    <Ionicons name="chevron-back" size={19} color={colors.textSecondary} />
+                    <Text style={[styles.backLabel, { color: colors.textSecondary }]}>Club venues</Text>
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Venue</Text>
-                <View style={styles.headerSpacer} />
+                <Text accessibilityRole="header" style={[styles.headerTitle, { color: colors.textPrimary }]}>Venue</Text>
             </View>
 
             <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                <VenueTypeBadge type={venue.venue_type} colors={colors} />
+                <VenueTypeBadge type={venue.venue_type} colors={colors} variant="editorial" />
                 <Text style={[styles.title, { color: colors.textPrimary }]}>{venue.name}</Text>
                 {venue.description ? <Text style={[styles.description, { color: colors.textSecondary }]}>{venue.description}</Text> : null}
                 <View style={styles.infoRow}>
-                    <Ionicons name="location-outline" size={16} color={colors.textTertiary} />
+                    <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
                     <Text style={[styles.infoText, { color: colors.textSecondary }]}>{formatAddress(venue)}</Text>
                 </View>
             </View>
 
             <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Venue details</Text>
+                <Text accessibilityRole="header" style={[styles.sectionTitle, { color: colors.textPrimary }]}>Venue details</Text>
                 {venue.max_capacity ? <Text style={[styles.detailLine, { color: colors.textSecondary }]}>Up to {venue.max_capacity} people</Text> : null}
                 <Text style={[styles.detailLine, { color: colors.textSecondary }]}>{venue.booking_required ? 'Booking required' : 'Drop-in friendly'}</Text>
                 {venue.amenities?.length ? (
@@ -79,7 +103,7 @@ export default function VenueDetailScreen() {
             </View>
 
             <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Clubs and events</Text>
+                <Text accessibilityRole="header" style={[styles.sectionTitle, { color: colors.textPrimary }]}>Clubs and events</Text>
                 <Text style={[styles.description, { color: colors.textSecondary }]}>Club and event relationships will appear here after public venue relationship queries are verified.</Text>
             </View>
         </ScrollView>
@@ -88,22 +112,35 @@ export default function VenueDetailScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    content: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 48 },
-    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-    iconButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
-    headerTitle: { flex: 1, marginHorizontal: 12, fontSize: 18, fontWeight: '800', textAlign: 'center' },
-    headerSpacer: { width: 40 },
-    card: { borderWidth: 1, borderRadius: 16, padding: 16, marginBottom: 14 },
-    title: { fontSize: 28, fontWeight: '800', marginTop: 14, marginBottom: 8 },
-    description: { fontSize: 14, lineHeight: 21 },
-    infoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 14 },
-    infoText: { flex: 1, fontSize: 14, lineHeight: 20 },
-    sectionTitle: { fontSize: 16, fontWeight: '800', marginBottom: 10 },
-    detailLine: { fontSize: 14, lineHeight: 20, marginBottom: 6 },
-    amenityRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-    amenityPill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-    amenityText: { fontSize: 12, fontWeight: '700' },
-    errorTitle: { fontSize: 18, fontWeight: '800', marginBottom: 8, textAlign: 'center' },
-    errorBody: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
+    content: { width: '100%', maxWidth: 760, alignSelf: 'center', paddingHorizontal: 18, paddingTop: 12, paddingBottom: 112 },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
+    stateContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    header: { marginBottom: 14 },
+    backButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, paddingRight: 12 },
+    backLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 19 },
+    headerTitle: { fontFamily: 'Newsreader_500Medium', fontSize: 32, lineHeight: 36, letterSpacing: -0.5, marginTop: 2 },
+    card: {
+        borderWidth: 1,
+        borderRadius: 17,
+        padding: 16,
+        marginBottom: 12,
+        shadowColor: '#402B25',
+        shadowOpacity: 0.025,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 1,
+    },
+    title: { fontFamily: 'Newsreader_600SemiBold', fontSize: 25, lineHeight: 31, marginTop: 11, marginBottom: 6 },
+    description: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21 },
+    infoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 12 },
+    infoText: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 19 },
+    sectionTitle: { fontFamily: 'Newsreader_600SemiBold', fontSize: 21, lineHeight: 27, marginBottom: 9 },
+    detailLine: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21, marginBottom: 5 },
+    amenityRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 7 },
+    amenityPill: { borderRadius: 999, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 10, paddingVertical: 6 },
+    amenityText: { fontFamily: 'Inter_500Medium', fontSize: 12, lineHeight: 17, color: colors.textPrimary },
+    errorTitle: { fontFamily: 'Newsreader_600SemiBold', fontSize: 25, lineHeight: 31, marginBottom: 8, textAlign: 'center' },
+    errorBody: { fontFamily: 'Inter_400Regular', fontSize: 14, textAlign: 'center', lineHeight: 21, maxWidth: 320 },
+    errorButton: { minHeight: 48, minWidth: 164, borderRadius: 15, justifyContent: 'center', alignItems: 'center', marginTop: 20, paddingHorizontal: 18 },
+    errorButtonText: { color: '#FFFEFC', fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
 });

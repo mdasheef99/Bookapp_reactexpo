@@ -1,5 +1,5 @@
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 import type { ClubComplaintResolutionAction, ClubComplaintWithProfiles } from '@/features/clubs/services/clubsService';
 import type { FeedbackState } from './manageUtils';
 
@@ -20,7 +20,6 @@ function getResolutionFeedback(resolutionAction: ClubComplaintResolutionAction) 
 }
 
 export function ClubManagePlatformComplaintsSection({ complaints, isLoading, isResolving, onResolve, onFeedback }: Props) {
-    const { colors } = useTheme();
 
     const handleResolve = async (complaintId: string, resolutionAction: ClubComplaintResolutionAction) => {
         try {

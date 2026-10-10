@@ -1,4 +1,5 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import ClubDiscussionScreen from '../ClubDiscussionScreen';
 
 const mockRouterBack = jest.fn();
@@ -8,6 +9,7 @@ const mockUseClubPublicDetail = jest.fn();
 const mockUseClubMembership = jest.fn();
 const mockUseClubDiscussionTopics = jest.fn();
 const mockUseCreateClubDiscussionTopic = jest.fn();
+const mockNavigateBackOrFallback = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-router', () => ({
@@ -39,7 +41,7 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
     useCreateClubDiscussionTopic: (...args: unknown[]) => mockUseCreateClubDiscussionTopic(...args),
 }));
 jest.mock('@/lib/navigation', () => ({
-    navigateBackOrFallback: jest.fn(),
+    navigateBackOrFallback: (...args: unknown[]) => mockNavigateBackOrFallback(...args),
 }));
 
 const baseTopic = {
@@ -93,24 +95,67 @@ beforeEach(() => {
 });
 
 describe('ClubDiscussionScreen', () => {
-    it('creates topics and opens a thread from the lighter topic list', async () => {
+    it('uses the existing club-home fallback when Back is pressed', () => {
+        const { getByTestId } = render(<ClubDiscussionScreen />);
+
+        fireEvent.press(getByTestId('discussion-back'));
+
+        expect(mockNavigateBackOrFallback).toHaveBeenCalledTimes(1);
+        expect(mockNavigateBackOrFallback.mock.calls[0][1]).toBe('/clubs/club-1');
+    });
+
+    it('starts with the conversation list and preserves a draft when the composer is collapsed', () => {
+        const { getByTestId, getByText, queryByTestId, queryByText } = render(<ClubDiscussionScreen />);
+
+        const sectionHeading = getByText('Recent discussion');
+        const sectionHeadingStyle = StyleSheet.flatten(sectionHeading.props.style);
+        expect(sectionHeading).toBeOnTheScreen();
+        expect(sectionHeadingStyle).toEqual(expect.objectContaining({ fontFamily: 'Inter_500Medium', fontSize: 16 }));
+        expect(queryByText('Topic list')).toBeNull();
+        expect(queryByTestId('discussion-topic-title')).toBeNull();
+
+        fireEvent.press(getByTestId('discussion-start-topic'));
+        fireEvent.changeText(getByTestId('discussion-topic-title'), 'A thought about chapter four');
+        fireEvent.changeText(getByTestId('discussion-topic-body'), 'The ending changed how I read the opening.');
+        fireEvent.press(getByTestId('discussion-hide-composer'));
+
+        expect(queryByTestId('discussion-topic-title')).toBeNull();
+        fireEvent.press(getByTestId('discussion-start-topic'));
+        expect(getByTestId('discussion-topic-title').props.value).toBe('A thought about chapter four');
+        expect(getByTestId('discussion-topic-body').props.value).toBe('The ending changed how I read the opening.');
+    });
+
+    it('creates topics and opens a thread from a topic row', async () => {
         const createTopic = jest.fn().mockResolvedValue({ club_id: 'club-1' });
         mockUseCreateClubDiscussionTopic.mockReturnValue({ mutateAsync: createTopic, isPending: false });
 
         const { getByTestId, getByText, queryByTestId } = render(<ClubDiscussionScreen />);
 
-        expect(getByText('Topic list')).toBeOnTheScreen();
-        expect(getByText('First reply')).toBeOnTheScreen();
+        expect(getByText(/First reply · Reader Two/)).toBeOnTheScreen();
+        expect(getByText(/Reader One ·/).props.children).not.toMatch(/\d{1,2}:\d{2}:\d{2}/);
         expect(queryByTestId('discussion-reply-node-reply-1')).toBeNull();
 
+        fireEvent.press(getByTestId('discussion-start-topic'));
         fireEvent.changeText(getByTestId('discussion-topic-title'), 'Theme check-in');
         fireEvent.changeText(getByTestId('discussion-topic-body'), 'What themes stood out the most this week?');
         fireEvent.press(getByTestId('discussion-create-topic'));
 
         await waitFor(() => expect(createTopic).toHaveBeenCalledWith({ clubId: 'club-1', title: 'Theme check-in', body: 'What themes stood out the most this week?' }));
+        expect(getByText('Discussion topic posted.')).toBeOnTheScreen();
 
         fireEvent.press(getByTestId('discussion-topic-topic-1'));
         expect(mockRouterPush).toHaveBeenCalledWith('/clubs/club-1/discussion/topic-1');
+    });
+
+    it('retries a failed topic-list request when Retry is pressed', () => {
+        const refetch = jest.fn();
+        mockUseClubDiscussionTopics.mockReturnValue({ data: [], isLoading: false, isError: true, error: new Error('Temporary failure'), refetch });
+
+        const { getByTestId, getByText } = render(<ClubDiscussionScreen />);
+
+        expect(getByText('Unable to load discussion')).toBeOnTheScreen();
+        fireEvent.press(getByTestId('discussion-retry'));
+        expect(refetch).toHaveBeenCalledTimes(1);
     });
 
     it('shows read-only discussion access for muted members', () => {
@@ -119,7 +164,7 @@ describe('ClubDiscussionScreen', () => {
         const { getByText, queryByTestId } = render(<ClubDiscussionScreen />);
 
         expect(getByText('Read-only discussion access')).toBeOnTheScreen();
-        expect(queryByTestId('discussion-create-topic')).toBeNull();
+        expect(queryByTestId('discussion-start-topic')).toBeNull();
     });
 
     it('shows a members-only gate when the signed-in user is not a club member', () => {

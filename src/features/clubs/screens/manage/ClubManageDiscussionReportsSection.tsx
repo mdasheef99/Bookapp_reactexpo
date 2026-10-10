@@ -1,5 +1,5 @@
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 import type { ClubDiscussionReportWithTarget } from '@/features/clubs/services/clubsService';
 import type { FeedbackState } from './manageUtils';
 
@@ -26,7 +26,6 @@ function getReporterName(report: ClubDiscussionReportWithTarget) {
 }
 
 export function ClubManageDiscussionReportsSection({ reports, isLoading, isResolving, onResolve, onFeedback }: Props) {
-    const { colors } = useTheme();
 
     const handleResolve = async (reportId: string) => {
         try {

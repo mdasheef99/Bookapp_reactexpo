@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 import type { ClubPublicDetails, ClubBookNominationWithDetails } from '@/features/clubs/services/clubsService';
 import { formatNominationStatus, getBookCoverUrl, hasNominationVotingClosed } from './manageUtils';
 
@@ -17,7 +17,6 @@ interface Props {
 }
 
 export function ClubManageCurrentBookSection({ club, nominations, isLoading, isError, error, isAdmin, onFinalize, onSetCurrentBook, onShowOverride }: Props) {
-    const { colors } = useTheme();
     const [activeNominationId, setActiveNominationId] = useState<string | null>(null);
 
     if (isLoading) {
@@ -72,7 +71,7 @@ export function ClubManageCurrentBookSection({ club, nominations, isLoading, isE
                         const canSetCurrent = isAdmin && nom.status === 'active' && !isVotingClosed;
                         const isCurrentBook = !!club.current_book_id && club.current_book_id === nom.book_id;
                         const coverUrl = nom.book?.cover_url
-                            ? getBookCoverUrl({ volumeInfo: { imageLinks: { thumbnail: nom.book.cover_url } } } as any)
+                            ? getBookCoverUrl({ volumeInfo: { imageLinks: { thumbnail: nom.book.cover_url } } })
                             : null;
 
                         return (

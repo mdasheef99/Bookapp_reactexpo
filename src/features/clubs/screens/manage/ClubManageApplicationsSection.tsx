@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 import type { ClubJoinApplicationWithProfile } from '@/features/clubs/services/clubsService';
 import type { FeedbackState } from './manageUtils';
 
@@ -41,7 +41,6 @@ function normalizeApplicationAnswers(answers: unknown) {
 }
 
 export function ClubManageApplicationsSection({ applications, isLoading, onReview, onFeedback }: Props) {
-    const { colors } = useTheme();
     const [activeId, setActiveId] = useState<string | null>(null);
 
     const handleReview = async (application: ClubJoinApplicationWithProfile, action: 'approve' | 'decline') => {
@@ -115,12 +114,14 @@ export function ClubManageApplicationsSection({ applications, isLoading, onRevie
                     </View>
                     <View style={styles.appActions}>
                         <TouchableOpacity
+                            accessibilityRole="button"
                             onPress={() => handleReview(app, 'approve')}
                             disabled={activeId === app.id}
                             style={[styles.actionButton, { backgroundColor: colors.accent, opacity: activeId === app.id ? 0.5 : 1 }]}>
                             <Text style={styles.actionButtonText}>Approve</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
+                            accessibilityRole="button"
                             onPress={() => handleReview(app, 'decline')}
                             disabled={activeId === app.id}
                             style={[styles.actionButton, { backgroundColor: colors.errorLight, opacity: activeId === app.id ? 0.5 : 1 }]}>
@@ -136,61 +137,76 @@ export function ClubManageApplicationsSection({ applications, isLoading, onRevie
 const styles = StyleSheet.create({
     loadingContainer: { paddingVertical: 20, alignItems: 'center' },
     card: {
-        padding: 14,
-        borderRadius: 12,
-        borderWidth: 1,
+        width: '100%',
+        maxWidth: 760,
+        alignSelf: 'center',
         marginBottom: 14,
     },
     sectionTitle: {
-        fontSize: 16,
-        fontWeight: '700',
+        fontSize: 23,
+        lineHeight: 29,
+        fontFamily: 'Newsreader_600SemiBold',
         marginBottom: 8,
     },
     placeholder: {
         fontSize: 14,
-        fontStyle: 'italic',
-        paddingVertical: 6,
+        fontFamily: 'Inter_400Regular',
+        lineHeight: 21,
+        paddingVertical: 10,
     },
     appRow: {
-        paddingVertical: 12,
-        borderBottomWidth: 1,
+        padding: 14,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 10,
+        backgroundColor: colors.bgCard,
     },
     appInfo: {
         marginBottom: 8,
     },
     appName: {
-        fontSize: 15,
-        fontWeight: '600',
+        fontSize: 20,
+        lineHeight: 26,
+        fontFamily: 'Newsreader_600SemiBold',
     },
     appMeta: {
         fontSize: 12,
-        marginTop: 2,
+        lineHeight: 18,
+        fontFamily: 'Inter_400Regular',
+        marginTop: 4,
     },
     answersBlock: {
         marginTop: 8,
         gap: 8,
     },
-    answerItem: {},
+    answerItem: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 10 },
     answerQuestion: {
         fontSize: 12,
-        fontWeight: '600',
+        fontFamily: 'Inter_600SemiBold',
     },
     answerText: {
-        fontSize: 13,
-        marginTop: 2,
+        fontSize: 14,
+        lineHeight: 21,
+        fontFamily: 'Inter_400Regular',
+        marginTop: 4,
     },
     appActions: {
         flexDirection: 'row',
         gap: 8,
     },
     actionButton: {
-        paddingVertical: 6,
+        flex: 1,
+        minHeight: 44,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
         paddingHorizontal: 12,
         borderRadius: 8,
     },
     actionButtonText: {
         color: '#FFFFFF',
-        fontWeight: '700',
+        fontFamily: 'Inter_600SemiBold',
         fontSize: 13,
     },
 });

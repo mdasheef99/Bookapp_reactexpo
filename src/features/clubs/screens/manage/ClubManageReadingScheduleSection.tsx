@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 import type { ClubReadingSchedule, ClubReadingScheduleMilestone } from '@/features/clubs/services/clubsService';
 import type { FeedbackState } from './manageUtils';
 
@@ -76,7 +76,6 @@ function hasChronologicalChapterTargets(milestones: ClubReadingScheduleMilestone
 }
 
 export function ClubManageReadingScheduleSection({ bookId, schedule, isLoading, isSaving, onSave, onFeedback }: Props) {
-    const { colors } = useTheme();
     const [draftMilestones, setDraftMilestones] = useState<ClubReadingScheduleMilestone[]>([createEmptyMilestone(1)]);
 
     useEffect(() => {

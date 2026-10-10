@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 import type { ClubInvitationWithProfiles } from '@/features/clubs/services/clubsService';
 import type { FeedbackState } from './manageUtils';
 
@@ -15,7 +15,6 @@ interface Props {
 }
 
 export function ClubManageInvitationsSection({ invitations, isLoading, isCreating, isRevoking, onCreate, onRevoke, onFeedback }: Props) {
-    const { colors } = useTheme();
     const [username, setUsername] = useState('');
 
     const handleCreate = async () => {

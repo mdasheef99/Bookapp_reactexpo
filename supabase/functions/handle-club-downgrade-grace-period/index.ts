@@ -23,13 +23,19 @@ serve(async (req) => {
   if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: jsonHeaders })
 
   try {
-    const missingEnv = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'].filter((key) => !Deno.env.get(key))
+    // R1: CLUB_DOWNGRADE_CRON_SECRET is REQUIRED configuration. A missing or
+    // blank secret must fail closed here — before any service-role client is
+    // created — instead of silently disabling authorization.
+    const missingEnv = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'CLUB_DOWNGRADE_CRON_SECRET'].filter((key) => {
+      const value = Deno.env.get(key)
+      return !value || value.trim().length === 0
+    })
     if (missingEnv.length > 0) {
       return new Response(JSON.stringify({ error: `Missing required env vars: ${missingEnv.join(', ')}` }), { status: 500, headers: jsonHeaders })
     }
 
-    const cronSecret = Deno.env.get('CLUB_DOWNGRADE_CRON_SECRET')
-    if (cronSecret && req.headers.get('x-cron-secret') !== cronSecret) {
+    const cronSecret = Deno.env.get('CLUB_DOWNGRADE_CRON_SECRET') ?? ''
+    if (req.headers.get('x-cron-secret') !== cronSecret) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: jsonHeaders })
     }
 

@@ -1,5 +1,12 @@
 # BookConnect Agent Continuity Contract
 
+## Workspace split (2026-08-22)
+Two git worktrees share this repo. Bookconnect4_expo @ feat/clubs-ui-overhaul = clubs
+feature only. Bookconnect4_library @ feat/library-shelf-motion = library feature only.
+Each session edits only its own tree; never stage or commit sibling-feature paths.
+Ports: clubs 8081, library 8083+. Shared Supabase project ahntbtktjjmvfosgkmgn —
+check both trackers before any migration.
+
 This file is the repository entrypoint for every new AI development or review session. Chat history and compacted conversation summaries are helpful context, but they are never the project source of truth.
 
 ## Mandatory session start

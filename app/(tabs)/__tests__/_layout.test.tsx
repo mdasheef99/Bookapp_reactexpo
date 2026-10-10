@@ -19,19 +19,18 @@ describe('TabsLayout', () => {
         tabScreens.length = 0;
     });
 
-    it('registers primary tabs, omits legacy shims, and hides detail routes', () => {
+    it('registers exactly the five primary tabs and leaks no nested routes', () => {
         render(<TabsLayout />);
 
         expect(tabScreens.map(screen => screen.name)).toEqual([
             'library',
             'exchange',
-            'marketplace/index',
+            'marketplace',
             'clubs',
             'profile',
-            'marketplace/store/[storeId]',
         ]);
         expect(tabScreens.find(screen => screen.name === 'credit-history')).toBeUndefined();
         expect(tabScreens.find(screen => screen.name === 'addresses')).toBeUndefined();
-        expect(tabScreens.find(screen => screen.name === 'marketplace/store/[storeId]')?.options?.href).toBeNull();
+        expect(tabScreens.some(screen => screen.name.startsWith('marketplace/'))).toBe(false);
     });
 });

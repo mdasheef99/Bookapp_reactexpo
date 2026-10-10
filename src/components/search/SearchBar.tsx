@@ -1,7 +1,7 @@
 import { View, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme, type ThemeColors } from '@/hooks/useTheme';
 
 interface SearchBarProps {
     query: string;
@@ -14,6 +14,8 @@ interface SearchBarProps {
     onFocus?: () => void;
     onBlur?: () => void;
     maxLength?: number;
+    paletteOverride?: ThemeColors;
+    compact?: boolean;
 }
 
 export const SearchBar = ({
@@ -27,8 +29,11 @@ export const SearchBar = ({
     onFocus,
     onBlur,
     maxLength,
+    paletteOverride,
+    compact = false,
 }: SearchBarProps) => {
-    const { colors } = useTheme();
+    const { colors: themeColors } = useTheme();
+    const colors = paletteOverride ?? themeColors;
     const handleClear = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onClear();
@@ -42,10 +47,10 @@ export const SearchBar = ({
                 backgroundColor: colors.bgCard,
                 borderWidth: 1,
                 borderColor: colors.border,
-                borderRadius: 20,
-                height: 60,
-                paddingHorizontal: 20,
-                marginBottom: 16,
+                borderRadius: compact ? 14 : 20,
+                height: compact ? 54 : 60,
+                paddingHorizontal: compact ? 14 : 20,
+                marginBottom: compact ? 0 : 16,
                 shadowColor: colors.shadow,
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.15,
@@ -53,13 +58,14 @@ export const SearchBar = ({
                 elevation: 5,
             }}
         >
-            <Ionicons name="search" size={24} color={colors.textSecondary} />
+            <Ionicons name="search" size={compact ? 20 : 24} color={colors.textSecondary} />
             <TextInput
                 style={{
                     flex: 1,
-                    marginLeft: 12,
-                    fontSize: 17,
+                    marginLeft: compact ? 8 : 12,
+                    fontSize: compact ? 14 : 17,
                     fontWeight: '500',
+                    fontFamily: compact ? 'Inter_400Regular' : undefined,
                     color: colors.textPrimary,
                 }}
                 placeholder={placeholder}
@@ -87,6 +93,7 @@ export const SearchBar = ({
                         alignItems: 'center',
                         justifyContent: 'center',
                     }}
+                    accessibilityRole="button"
                     accessibilityLabel="Clear search"
                     accessibilityHint="Clears the search input"
                 >

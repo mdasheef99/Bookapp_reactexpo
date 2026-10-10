@@ -152,7 +152,7 @@ describe('useClubs cache invalidation', () => {
         expectInvalidatedWithRefetchAll(invalidateQueries, clubKeys.myInvitation('club-4', 'user-4'));
     });
 
-    it('invalidates public detail and browse queries after updating club settings', async () => {
+    it('invalidates public detail, manage detail, and browse queries after updating club settings', async () => {
         const queryClient = createQueryClient();
         const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
         (clubsService.updateClub as jest.Mock).mockResolvedValue({
@@ -172,6 +172,7 @@ describe('useClubs cache invalidation', () => {
         await waitFor(() => {
             expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.publicDetail('club-4') });
         });
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.manageDetail('club-4'), refetchType: 'all' });
         expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: clubKeys.browseRoot });
     });
 

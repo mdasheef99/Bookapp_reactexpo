@@ -46,6 +46,28 @@ beforeEach(() => {
 });
 
 describe('ClubApplicationsScreen', () => {
+    it('declines directly with the optional reason and retains location and answer fallbacks', async () => {
+        const mutateAsync = jest.fn().mockResolvedValue(undefined);
+        const refetch = jest.fn().mockResolvedValue(undefined);
+        mockUseClubApplications.mockReturnValue({ data: [{ id: 'application-1', answers: [{ question: 'Why join?', answer: null }], applicantProfile: { display_name: 'Reader One', city: null } }], isLoading: false, refetch });
+        mockUseReviewClubApplication.mockReturnValue({ mutateAsync, isPending: false });
+        const view = render(<ClubApplicationsScreen />);
+        expect(view.getByText('Location unavailable • Pending review')).toBeOnTheScreen();
+        expect(view.getByText('No answer submitted.')).toBeOnTheScreen();
+        fireEvent.changeText(view.getByTestId('decline-reason-application-1'), 'Not a match');
+        fireEvent.press(view.getByTestId('decline-application-application-1'));
+        await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ applicationId: 'application-1', decision: 'declined', declineReason: 'Not a match' }));
+        expect(refetch).toHaveBeenCalled();
+    });
+
+    it('disables both review actions while a review is pending', () => {
+        mockUseClubApplications.mockReturnValue({ data: [{ id: 'application-1', answers: null }], isLoading: false, refetch: jest.fn() });
+        mockUseReviewClubApplication.mockReturnValue({ mutateAsync: jest.fn(), isPending: true });
+        const view = render(<ClubApplicationsScreen />);
+        expect(view.getByTestId('approve-application-application-1')).toBeDisabled();
+        expect(view.getByTestId('decline-application-application-1')).toBeDisabled();
+    });
+
     it('renders live array-shaped answer payloads without crashing', () => {
         mockUseClubApplications.mockReturnValue({
             data: [{

@@ -1,5 +1,5 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 import type { ClubPublicDetails, ClubBookNominationWithDetails } from '@/features/clubs/services/clubsService';
 import type { ClubCurrentBookStatusOverview, ClubEventWithDetails } from '@/features/clubs/services/clubsService.types';
 
@@ -26,7 +26,6 @@ export function ClubManageAnalyticsSection({
     currentBookStatusError,
     isLoading,
 }: Props) {
-    const { colors } = useTheme();
 
     if (isLoading) {
         return (

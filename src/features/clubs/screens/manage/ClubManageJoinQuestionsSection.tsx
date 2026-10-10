@@ -1,8 +1,16 @@
 import { useState, useMemo } from 'react';
-import { ActivityIndicator, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { ActivityIndicator, Platform, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { clubManageColors as colors } from './managePalette';
 import type { ClubJoinQuestion } from '@/features/clubs/services/clubsService';
 import type { FeedbackState } from './manageUtils';
+
+const switchColors = {
+    trackColor: { false: colors.textTertiary, true: colors.accent },
+    thumbColor: colors.bgCard,
+    ios_backgroundColor: colors.textTertiary,
+    // React Native Web has a separate color for the active thumb.
+    ...(Platform.OS === 'web' ? { activeThumbColor: colors.bgCard } : {}),
+};
 
 interface Props {
     clubId: string;
@@ -15,7 +23,6 @@ interface Props {
 }
 
 export function ClubManageJoinQuestionsSection({ clubId, questions, isLoading, onCreate, onUpdate, onDelete, onFeedback }: Props) {
-    const { colors } = useTheme();
     const [draftQuestion, setDraftQuestion] = useState('');
     const [draftRequired, setDraftRequired] = useState(true);
     const [edits, setEdits] = useState<Record<string, { question: string; isRequired: boolean }>>({});
@@ -97,7 +104,7 @@ export function ClubManageJoinQuestionsSection({ clubId, questions, isLoading, o
                 </TouchableOpacity>
             </View>
             <View style={styles.toggleRow}>
-                <Switch testID="toggle-new-required" value={draftRequired} onValueChange={setDraftRequired} />
+                <Switch testID="toggle-new-required" value={draftRequired} onValueChange={setDraftRequired} {...switchColors} />
                 <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>{draftRequired ? 'Required' : 'Optional'}</Text>
             </View>
 
@@ -114,7 +121,7 @@ export function ClubManageJoinQuestionsSection({ clubId, questions, isLoading, o
                             style={[styles.textInput, { borderColor: colors.border, color: colors.textPrimary }]}
                         />
                         <View style={styles.actionRow}>
-                            <Switch testID={`toggle-required-${question.id}`} value={edit.isRequired} onValueChange={(val) => setEdits((prev) => ({ ...prev, [question.id]: { ...prev[question.id], isRequired: val } }))} />
+                            <Switch testID={`toggle-required-${question.id}`} value={edit.isRequired} onValueChange={(val) => setEdits((prev) => ({ ...prev, [question.id]: { ...prev[question.id], isRequired: val } }))} {...switchColors} />
                             <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>{edit.isRequired ? 'Required' : 'Optional'}</Text>
                             <TouchableOpacity testID={`delete-question-${question.id}`} onPress={() => handleDelete(question.id)} disabled={activeId === question.id}>
                                 <Text style={{ color: colors.error, fontWeight: '700' }}>Delete</Text>

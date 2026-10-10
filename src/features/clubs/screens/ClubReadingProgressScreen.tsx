@@ -1,8 +1,7 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
 import { navigateBackOrFallback } from '@/lib/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
@@ -15,6 +14,18 @@ import {
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
 import type { ClubCurrentBookReadingStatus } from '@/features/clubs/services/clubsService';
 
+const colors = {
+    bgPrimary: '#FAF6EE',
+    bgCard: '#FFFEFC',
+    bgSecondary: '#F8EBE7',
+    border: '#E7DCD1',
+    accent: '#8B322C',
+    textPrimary: '#1A1412',
+    textSecondary: '#6E645F',
+    textTertiary: '#746860',
+    error: '#A12D28',
+} as const;
+
 const CURRENT_BOOK_STATUS_LABELS: Record<ClubCurrentBookReadingStatus, string> = {
     want_to_read: 'Want to Read',
     reading: 'Reading',
@@ -23,7 +34,8 @@ const CURRENT_BOOK_STATUS_LABELS: Record<ClubCurrentBookReadingStatus, string> =
 
 export default function ClubReadingProgressScreen() {
     const { clubId } = useLocalSearchParams<{ clubId: string }>();
-    const { colors } = useTheme();
+    const { width: viewportWidth } = useWindowDimensions();
+    const isCompactLayout = viewportWidth < 600;
     const { user } = useAuth();
     const userId = user?.id ?? null;
 
@@ -101,7 +113,7 @@ export default function ClubReadingProgressScreen() {
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.content}>
             <View style={styles.headerRow}>
-                <TouchableOpacity onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to club" onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                     <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Reading Progress</Text>
@@ -131,19 +143,19 @@ export default function ClubReadingProgressScreen() {
                     </View>
 
                     <View style={styles.statsGrid}>
-                        <View style={[styles.statCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+                        <View testID="reading-stat-active-members" style={[styles.statCard, isCompactLayout && styles.statCardCompact, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{statusOverview?.active_member_count ?? 0}</Text>
                             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Active members</Text>
                         </View>
-                        <View style={[styles.statCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+                        <View testID="reading-stat-to-start" style={[styles.statCard, isCompactLayout && styles.statCardCompact, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{statusOverview?.to_start_count ?? 0}</Text>
                             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>To start</Text>
                         </View>
-                        <View style={[styles.statCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+                        <View testID="reading-stat-reading" style={[styles.statCard, isCompactLayout && styles.statCardCompact, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{statusOverview?.reading_count ?? 0}</Text>
                             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Reading</Text>
                         </View>
-                        <View style={[styles.statCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+                        <View testID="reading-stat-completed" style={[styles.statCard, isCompactLayout && styles.statCardCompact, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{statusOverview?.completed_count ?? 0}</Text>
                             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Completed</Text>
                         </View>
@@ -162,6 +174,8 @@ export default function ClubReadingProgressScreen() {
                                         key={status}
                                         onPress={() => handleStatusChange(status)}
                                         disabled={setStatusMutation.isPending}
+                                        accessibilityRole="button"
+                                        accessibilityState={{ selected: isSelected, disabled: setStatusMutation.isPending }}
                                         style={[
                                             styles.statusButton,
                                             {
@@ -214,6 +228,8 @@ export default function ClubReadingProgressScreen() {
                                                 <TouchableOpacity
                                                     onPress={() => handleMilestoneProgress(isComplete ? milestoneNumber - 1 : milestoneNumber)}
                                                     disabled={updateProgressMutation.isPending || !userId}
+                                                    accessibilityRole="button"
+                                                    accessibilityState={{ disabled: updateProgressMutation.isPending || !userId }}
                                                     style={[styles.timelineButton, { borderColor: colors.accent, opacity: updateProgressMutation.isPending || !userId ? 0.6 : 1 }]}
                                                     testID={`reading-schedule-toggle-${index}`}
                                                 >
@@ -241,38 +257,38 @@ export default function ClubReadingProgressScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    content: { padding: 24, paddingBottom: 48 },
+    content: { padding: 24, paddingBottom: 96 },
     loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-    iconButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
-    headerTitle: { flex: 1, marginHorizontal: 12, fontSize: 18, fontWeight: '700' },
-    headerSpacer: { width: 40 },
-    title: { fontSize: 22, fontWeight: '800', marginBottom: 16 },
-    errorTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
-    errorBody: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
-    card: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16 },
-    cardTitle: { fontSize: 16, fontWeight: '700', marginBottom: 6 },
-    cardBody: { fontSize: 14, lineHeight: 20, marginBottom: 12 },
-    bookCard: { flexDirection: 'row', borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16, gap: 14 },
-    bookCover: { width: 80, height: 120, borderRadius: 8 },
+    headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+    iconButton: { width: 44, height: 44, borderRadius: 10, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+    headerTitle: { flex: 1, marginHorizontal: 12, fontFamily: 'Newsreader_600SemiBold', fontSize: 25, lineHeight: 31 },
+    headerSpacer: { width: 44 },
+    errorTitle: { fontFamily: 'Newsreader_600SemiBold', fontSize: 22, lineHeight: 28, marginBottom: 8, textAlign: 'center' },
+    errorBody: { fontFamily: 'Inter_400Regular', fontSize: 14, textAlign: 'center', lineHeight: 21 },
+    card: { borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 12 },
+    cardTitle: { fontFamily: 'Newsreader_600SemiBold', fontSize: 18, lineHeight: 24, marginBottom: 6 },
+    cardBody: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21, marginBottom: 12 },
+    bookCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 12, gap: 12 },
+    bookCover: { width: 64, height: 88, borderRadius: 6 },
     bookInfo: { flex: 1, justifyContent: 'center' },
-    bookTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
-    bookAuthors: { fontSize: 14, lineHeight: 20 },
-    statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
-    statCard: { flex: 1, minWidth: '22%', borderRadius: 12, borderWidth: 1, padding: 12, alignItems: 'center' },
-    statValue: { fontSize: 20, fontWeight: '800', marginBottom: 2 },
-    statLabel: { fontSize: 12, textAlign: 'center' },
-    statusRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
-    statusButton: { flex: 1, borderRadius: 12, borderWidth: 1.5, paddingVertical: 10, alignItems: 'center' },
-    statusButtonText: { fontSize: 13, fontWeight: '700' },
-    feedbackText: { fontSize: 13, marginTop: 10, textAlign: 'center' },
-    timelineRow: { borderLeftWidth: 2, marginLeft: 10, paddingLeft: 18, paddingBottom: 16, position: 'relative' },
+    bookTitle: { fontFamily: 'Newsreader_600SemiBold', fontSize: 18, lineHeight: 23, marginBottom: 3 },
+    bookAuthors: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 19 },
+    statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+    statCard: { flexGrow: 1, flexBasis: '23%', minWidth: '22%', borderRadius: 8, borderWidth: 1, padding: 10, alignItems: 'flex-start' },
+    statCardCompact: { flexBasis: '48%', minWidth: '46%' },
+    statValue: { fontFamily: 'Inter_700Bold', fontSize: 20, lineHeight: 25, marginBottom: 1 },
+    statLabel: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17 },
+    statusRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
+    statusButton: { flex: 1, minHeight: 44, borderRadius: 7, borderWidth: 1, paddingHorizontal: 4, paddingVertical: 8, alignItems: 'center', justifyContent: 'center' },
+    statusButtonText: { fontFamily: 'Inter_600SemiBold', fontSize: 12, lineHeight: 17, textAlign: 'center' },
+    feedbackText: { fontFamily: 'Inter_500Medium', fontSize: 13, lineHeight: 19, marginTop: 10, textAlign: 'center' },
+    timelineRow: { borderLeftWidth: 2, marginLeft: 10, paddingLeft: 18, paddingBottom: 12, position: 'relative' },
     timelineDot: { position: 'absolute', left: -12, top: 0, width: 24, height: 24, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-    timelineDotText: { fontSize: 12, fontWeight: '800' },
-    timelineContent: { gap: 4 },
-    timelineTitle: { fontSize: 15, fontWeight: '700' },
-    timelineBody: { fontSize: 14, lineHeight: 20 },
-    timelineDate: { fontSize: 12 },
-    timelineButton: { alignSelf: 'flex-start', marginTop: 8, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
-    timelineButtonText: { fontSize: 13, fontWeight: '800' },
+    timelineDotText: { fontFamily: 'Inter_700Bold', fontSize: 12, lineHeight: 16 },
+    timelineContent: { gap: 3 },
+    timelineTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
+    timelineBody: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 19 },
+    timelineDate: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17 },
+    timelineButton: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', marginTop: 5, borderWidth: 1, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 8 },
+    timelineButtonText: { fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 19 },
 });

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './managePalette';
 import type { ClubEventWithDetails } from '@/features/clubs/services/clubsService.types';
 import { formatClubEventStatus, formatClubEventTiming, formatClubEventType, getClubEventLocationLabel } from '../clubEvents.shared';
 import type { FeedbackState } from './manageUtils';
@@ -18,7 +18,6 @@ interface Props {
 }
 
 export function ClubManageEventsSection({ events, isLoading, canCreate, canManageEvent, onCreate, onEdit, onCancel, onDelete, onFeedback }: Props) {
-    const { colors } = useTheme();
     const [activeEventId, setActiveEventId] = useState<string | null>(null);
 
     const upcoming = events.filter((e) => e.status === 'scheduled' && new Date(e.start_time) > new Date());

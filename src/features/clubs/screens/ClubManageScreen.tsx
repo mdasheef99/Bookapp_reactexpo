@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
+import { clubManageColors as colors } from './manage/managePalette';
 import { navigateBackOrFallback } from '@/lib/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { type GoogleBook } from '@/features/books/services/booksService';
@@ -34,12 +34,10 @@ import {
     useClubEventVenues,
     useAddClubVenueLink,
     useRemoveClubVenueLink,
-    useSetPrimaryClubVenue,
     useCancelClubEvent,
     useDeleteClubEvent,
     useArchiveClub,
     useUnarchiveClub,
-    useTransferClubAdmin,
     useClubAdminTransferRequests,
     useRequestClubAdminTransfer,
     useClubReadingSchedule,
@@ -104,7 +102,6 @@ export default function ClubManageScreen() {
         : typeof window !== 'undefined' && window.location
         ? new URLSearchParams(window.location.search).get('tab')
         : null;
-    const { colors } = useTheme();
     const { user } = useAuth();
     const userId = user?.id ?? null;
 
@@ -160,12 +157,10 @@ export default function ClubManageScreen() {
     const revokeInvitation = useRevokeClubInvitation();
     const addClubVenueLink = useAddClubVenueLink();
     const removeClubVenueLink = useRemoveClubVenueLink();
-    const setPrimaryClubVenue = useSetPrimaryClubVenue();
     const cancelEvent = useCancelClubEvent();
     const deleteEvent = useDeleteClubEvent();
     const archiveClub = useArchiveClub();
     const unarchiveClub = useUnarchiveClub();
-    const transferClubAdmin = useTransferClubAdmin();
     const requestClubAdminTransfer = useRequestClubAdminTransfer();
     const upsertReadingSchedule = useUpsertClubReadingSchedule();
     const resolveDiscussionReport = useResolveClubDiscussionReport();
@@ -436,18 +431,6 @@ export default function ClubManageScreen() {
         }
     };
 
-    const handleSetPrimaryVenue = async (venueId: string) => {
-        if (!clubId) throw new Error('Missing clubId');
-        try {
-            onFeedback(null);
-            await setPrimaryClubVenue.mutateAsync({ clubId, venueId });
-            await refetchLinkedVenues();
-            onFeedback({ type: 'success', message: 'Primary venue updated.' });
-        } catch (error) {
-            onFeedback({ type: 'error', message: error instanceof Error ? error.message : 'Unable to update the primary venue right now.' });
-        }
-    };
-
     const moderatorsCount = members.filter((m) => m.role === 'moderator').length;
 
     return (
@@ -463,7 +446,7 @@ export default function ClubManageScreen() {
             <View style={[styles.headerCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{club.name}</Text>
                 <Text style={[styles.headerMeta, { color: colors.textSecondary }]}>
-                    {formatAccessLevel(club.access_level ?? 'all')} � {formatMeetingType(club.meeting_type ?? null)}
+                    {formatAccessLevel(club.access_level ?? 'all')} · {formatMeetingType(club.meeting_type ?? null)}
                 </Text>
             </View>
 
@@ -579,11 +562,10 @@ export default function ClubManageScreen() {
                 <ClubManageVenuesSection
                     venues={linkedVenues}
                     isLoading={isLinkedVenuesLoading}
-                    isSaving={addClubVenueLink.isPending || removeClubVenueLink.isPending || setPrimaryClubVenue.isPending}
+                    isSaving={addClubVenueLink.isPending || removeClubVenueLink.isPending}
                     colors={colors}
                     onAddVenue={handleAddVenue}
                     onRemoveVenue={handleRemoveVenue}
-                    onSetPrimaryVenue={handleSetPrimaryVenue}
                 />
             )}
 
@@ -638,7 +620,7 @@ export default function ClubManageScreen() {
                     isRequestsLoading={isAdminTransferRequestsLoading}
                     isArchiving={archiveClub.isPending}
                     isUnarchiving={unarchiveClub.isPending}
-                    isTransferring={requestClubAdminTransfer.isPending || transferClubAdmin.isPending}
+                    isTransferring={requestClubAdminTransfer.isPending}
                     onArchive={handleArchiveClub}
                     onUnarchive={handleUnarchiveClub}
                     onTransferAdmin={handleRequestTransferAdmin}
