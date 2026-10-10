@@ -1,3 +1,11 @@
+## 2026-10-10 - Merged verification and Owner deployment hold
+
+Phase 9 / Unit 6G remains active. The edition-picker feature and current-main integration are committed locally at 4fdcaf8b2642a1a6311c3713e332277bd5257d96; no feature push or deployment is claimed. The Owner explicitly requests a stop before Render deployment and a free-plan/verification report.
+
+Exact next authorized action: complete the GPT-6 Luna/max pre-push review and full merged verification; confirm and narrowly correct findings, obtain correction review, then publish only an approved checkpoint. Three bounded test-harness corrections pass 97/97 with unchanged product/migration bytes; whole TypeScript and worker build/14 structural checks pass. Final full Jest passes 337 suites / 3,293 tests (four existing pending). GPT-6 Luna/max approves the test-only corrections but returns CHANGES_REQUIRED for the independently reproduced superseded-job terminal gap. Proposed M72 local creation awaits separate authorization; no feature push or deployment occurs before correction review.
+
+M65–M71 remain applied/byte-preserved, provider-result retention remains disabled, and the separate Desktop source audit is unchanged. Render rollout is held; no shared database/Storage/provider/plan/deployment mutation occurred. [Exact evidence and free-plan constraints](phase-9-image-inventory/trackers/36-owner-edition-picker-publication-deployment.md). Earlier dated records preserve historical scope.
+
 ## 2026-10-10 - Owner-authorized feature publication and development backend rollout
 
 Phase 9 / Unit 6G remains active; Tasks 1-8 retain their recorded local approval and verification boundaries. The Owner explicitly authorized committing this edition-picker work, a GPT-6 Luna review at max before pushing, bounded corrections of confirmed findings followed by correction review, publication to GitHub main after approval, and compatible development backend rollout.

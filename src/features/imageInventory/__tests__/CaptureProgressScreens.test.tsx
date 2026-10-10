@@ -137,6 +137,11 @@ jest.mock('../queries/ownerBatchReviewQueries', () => ({
     useSaveOwnerCandidateReview: () => ({ mutate: jest.fn(), isPending: false }),
     useCloseOwnerInventorySessionV3: () => ({ mutate: jest.fn(), isPending: false }),
 }));
+// Picker SDD §§6–7: edition reads are covered by mounted picker suites; this
+// legacy progress suite supplies the same query seam as its other hook mocks.
+jest.mock('../queries/ownerEditionPickerQueries', () => ({
+    useOwnerEditionChoices: () => ({ data: undefined, isLoading: false, error: null }),
+}));
 jest.mock('../queries/ownerUxInputQueries', () => ({
     useRemoveOwnerInventoryInput: () => ({
         mutate: mockRemoveMutate,

@@ -678,3 +678,9 @@ identity/known-language conflicts still reject. Automatic/current/local strict
 matching and M70 confirmation/replay remain unchanged. No requirement or
 acceptance criterion changes. [Local evidence and ledger](../trackers/02-implementation-and-verification.md)
 record M71 CREATED_LOCAL / NOT_APPLIED and preserved APPLIED M65-M70.
+
+### 2026-10-10 - Pre-push superseded-job correction proposal
+
+Existing §§4.3/5/9, Master §8/MAS-17 and Pipeline §10 govern superseded durable request outcomes. GPT-6 Luna/max pre-push review and an independent disposable reproduction found that an identity edit makes an old explicit request unusable but leaves its job nonterminal after up to five stale claims. Data safety and the new request remain protected. This is an implementation gap within existing fencing/reliability requirements; no additional edition UI/provider/canonical behavior is approved.
+
+[Tracker 36](../trackers/36-owner-edition-picker-publication-deployment.md) owns exact proof and the proposed bounded forward M72/service failure-boundary correction. Local migration creation awaits explicit authorization; M65–M71 remain applied and byte-preserved. Publication remains gated on correction and independent review, and Render deployment is held at the Owner's request.

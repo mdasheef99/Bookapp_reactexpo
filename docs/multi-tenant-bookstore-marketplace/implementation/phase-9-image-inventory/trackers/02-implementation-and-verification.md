@@ -1,3 +1,11 @@
+## 2026-10-10 - Merged verification and Owner deployment hold
+
+Phase 9 / Unit 6G remains active. The edition-picker feature and current-main integration are committed locally at 4fdcaf8b2642a1a6311c3713e332277bd5257d96; no feature push or deployment is claimed. The Owner explicitly requests a stop before Render deployment and a free-plan/verification report.
+
+Exact next authorized action: complete the GPT-6 Luna/max pre-push review and full merged verification; confirm and narrowly correct findings, obtain correction review, then publish only an approved checkpoint. Three bounded test-harness corrections pass 97/97 with unchanged product/migration bytes; whole TypeScript and worker build/14 structural checks pass. Final full Jest passes 337 suites / 3,293 tests (four existing pending). GPT-6 Luna/max approves the test-only corrections but returns CHANGES_REQUIRED for the independently reproduced superseded-job terminal gap. Proposed M72 local creation awaits separate authorization; no feature push or deployment occurs before correction review.
+
+M65–M71 remain applied/byte-preserved, provider-result retention remains disabled, and the separate Desktop source audit is unchanged. Render rollout is held; no shared database/Storage/provider/plan/deployment mutation occurred. [Exact evidence and free-plan constraints](36-owner-edition-picker-publication-deployment.md). Earlier dated records preserve historical scope.
+
 ## 2026-10-10 - Local scan UI inspection before Git publication
 
 User-requested browser inspection ran from C:/Users/user/.codex/worktrees/edition-picker-research/Bookconnect on codex/edition-picker at ee3a8c79429ca401d468861f2861721082ba955e. The Expo web preview served on localhost:8083. The HTML and JavaScript bundle returned HTTP 200; the bundle was 15,031,973 characters, included CandidateEditionPicker, EditionOptionList, Search Books, and the verified ahntbtktjjmvfosgkmgn project origin, contained 290 edition-picker-research references, and contained zero Desktop Bookconnect/src references.

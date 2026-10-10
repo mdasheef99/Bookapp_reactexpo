@@ -187,7 +187,12 @@ describe('Phase 9 WU1 owner-inventory read boundary', () => {
   });
 
   it('makes WU1 artifacts and boundary invariants continuity-gated', () => {
-    const validator = read(validatorPath);
+    const entrypoint = read(validatorPath);
+    // SESSION-START §8: WU1 migration checks remain reached through this helper.
+    expect(entrypoint).toContain("scripts/validate-phase9-migration-set.ps1");
+    const validator = [entrypoint, read(path.join(
+      path.dirname(validatorPath), 'validate-phase9-migration-set.ps1',
+    ))].join('\n');
     const evidence = read(evidencePath);
     expect(validator).toContain('work-units/owner-inventory-read-boundary-wu1-sdd.md');
     expect(validator).toContain('trackers/25-owner-inventory-read-boundary-wu1-evidence.md');

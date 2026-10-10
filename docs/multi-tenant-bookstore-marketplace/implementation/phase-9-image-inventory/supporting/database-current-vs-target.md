@@ -1318,3 +1318,11 @@ application logs; pg_net's private request queue transiently carries the
 Authorization header as required for delivery. Local tests cover all claimability states
 and all three due-stage dispatch paths. No database, Vault, Cron, Render,
 Storage, worker, provider, inventory, listing, or publication mutation occurred.
+
+## 2026-10-10 - Read-only superseded-job preflight and proposal
+
+Fresh Supabase MCP verified Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn / ACTIVE_HEALTHY / organization xxbqwluvomrrxeohydis. The shared metadata queue contains 165 resolved and two dead-letter automatic jobs, and no explicit edition request. No live defect occurrence is claimed. image_extraction_jobs already permits resolved_noop/cancelled; claims are bounded to five. The edition-state relation has no existing user-defined trigger. Private identity/clear/worker/failure definitions were read back; no SQL write occurred.
+
+Current local M65–M71 reproduction: identity invalidation detaches request_id; five real claims fail both context and failure transition with P9_STATE_CONFLICT, leaving in_progress with null terminal evidence. Proposed target uses the existing service-only failure RPC plus exact live claim and superseded per-card request evidence to terminalize only that old job. Current requests, other cards/stores, existing billing/physical-call evidence and Owner choices/selling details remain outside the correction. No new table, public catalogue authority, broad authenticated grant, or Owner trigger/job lock path is proposed.
+
+M72 filename proposed: 20261010000072_marketplace_phase9_edition_picker_superseded_jobs.sql. State: PROPOSED / NOT_CREATED / NOT_APPLIED. Local-file authorization, semantic GREEN and GPT-6 Luna/max correction review precede publication; shared application remains a separate gate. [Exact review, red proof and handoff](../trackers/36-owner-edition-picker-publication-deployment.md). M65–M71 retain their recorded applied versions/hashes. No database, Storage, provider, deployment, billing or plan mutation occurred.

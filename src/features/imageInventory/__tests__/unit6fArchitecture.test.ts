@@ -21,6 +21,9 @@ describe('Phase 9 Unit 6F privacy, media-purpose, and Unit 7 boundary', () => {
         'components/BatchReviewCard.tsx',
         // Unit 6G SDD sections 8/12/14: status and controlled Add/cache surfaces.
         'components/batchReviewStatus.ts',
+        // Unit 6G §§8/11–14: extracted Add composition and the shared Remove slot.
+        'components/PostScanInventoryActions.tsx',
+        'review/scanCandidateRemoval.ts',
         'queries/ownerInventoryCommitQueries.ts',
         'queries/ownerUxReviewQueries.ts',
         'screens/CaptureProgressScreens.tsx',
