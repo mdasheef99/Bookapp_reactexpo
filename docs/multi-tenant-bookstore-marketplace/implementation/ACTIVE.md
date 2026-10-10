@@ -1,5 +1,30 @@
 # Active Marketplace Phase Router
 
+## 2026-10-10 - Existing inventory baseline published to GitHub main
+
+The Owner authorized integration of the nine existing commits through `ee3a8c7`
+into GitHub `main`. The verified merge `618433fc948e5d86d72d3b49d21079bd536f2d77`
+was pushed normally and read back at `refs/heads/main`; its first parent is
+`2f2f383b14b5818b62682ae5bdd7fa295550ba5b` and second parent is
+`ee3a8c79429ca401d468861f2861721082ba955e`. All nine commit identities and the
+newer main history are preserved. This publishes the earlier Unit 6G / Store
+View baseline; the edition-picker implementation remains separate and uncommitted.
+The Desktop Unit 6I work remains excluded and unchanged.
+
+Merged verification passed 318 Jest suites / 2829 tests, with the existing
+one skipped suite / four skipped tests, full no-emit TypeScript, Phase 9
+continuity (195 definitions; zero duplicate or missing traces), and whitespace
+checks. One stale architecture allowlist was corrected under Unit 6G SDD
+sections 8/12/14; no additional production behavior was introduced.
+[Exact scope and verification](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-10---existing-inventory-baseline-main-publication).
+
+Phase 9 / Unit 6G remains the active phase/baseline. Existing operational gates
+and recorded price-intent / cover-source deviations are retained; this Git
+publication is not deployment or live acceptance. No database, Storage,
+provider, migration, or manual deployment action occurred. Next action: Owner
+decision on committing/publishing the separate edition-picker work.
+
+
 > **2026-09-28 Git-publication closeout:** Unit 6G code/tests `101e4b6`,
 > Store View confirmation `ce2d0c5`, and Phase 9 documentation `9ad1d6e`
 > were pushed to `origin/codex/phase9-duplicate-confirmation` and remote HEAD
