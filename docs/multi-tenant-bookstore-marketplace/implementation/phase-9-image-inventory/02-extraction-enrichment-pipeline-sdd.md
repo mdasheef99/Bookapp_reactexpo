@@ -1,5 +1,117 @@
 # SDD 02: Extraction and Metadata Enrichment Pipeline
 
+## 2026-10-09 - Task 8 independent approval and M65-M70 applied
+
+Phase 9 / completed Unit 6G baseline. Task 8's bounded LOCAL checkpoint is
+independently APPROVED; all eight tasks have local implementation/verification
+evidence. [Review provenance](trackers/33-owner-edition-picker-task8-local-verification.md)
+preserves earlier approval provenance and the unavailable historical 152-path
+audit baseline.
+
+**Status:** `task8_independently_approved_m65_m70_applied_runtime_pending`.
+The Owner authorized steps 1-3: approval documentation, live preflight and the
+six unchanged migrations. All M65-M70 are now APPLIED / catalog-verified on
+Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn. [Application ledger](trackers/34-owner-edition-picker-m65-m70-application.md)
+records six live versions, exact source/archive hashes, function/ACL/RLS/index/
+trigger readback, unchanged business counts, recovery and advisor deltas.
+
+No Edge/worker/client deployment, registry/configuration change, provider call,
+browser test, data deletion, staging, commit or push occurred. New alternatives
+retention remains disabled/unverified; existing automatic provider flags remain
+unchanged. Runtime/provider/browser/operational rollout gates stay pending.
+
+Exact next action: Owner review/authorization for compatible development
+Edge/worker/client rollout and provider-gated browser verification (step 4).
+Earlier dated entries below retain their historical NOT_APPLIED status and
+review provenance; this latest entry owns current application status.
+
+## 2026-10-08 - Edition-picker Task 5 local completion
+
+Picker §§7-8 reuses marketplace_sec.dispatch_phase9_worker_wakes and its existing active minute cron command. M69 delegates ordinary worker dispatch to the unchanged prior function and first clears at most 50 due card sets (private testable limit 1..100), with candidate locks and SKIP LOCKED. A single private due predicate covers option/candidate/session expiry, removal/false-detection, commit, query invalidation and provider eligibility loss. Cleared/remaining/failed report the actual due backlog. A failed batch rolls back in a subtransaction, retains payloads, reports failure and is retried on the next ordinary tick.
+
+No new service/job kind/cron installation or provider call is added. Successful Add clears its own alternatives in the inventory transaction and fences later completion via existing candidate/request authority. Original fetch/provider deadlines, chosen snapshots and selling fields are retained independently; old receipts expose no alternatives. [Task 5 evidence](trackers/02-implementation-and-verification.md#2026-10-08---edition-picker-task-5-local-completion) records scheduler injection/retry and existing completion/worker regressions. Only local M69 is created; M65-M68 bytes are unchanged and M65-M69 are NOT_APPLIED. Real concurrent connections and live scheduling/enablement remain later gates.
+
+## 2026-10-08 - Task 4 completion contract and replay corrections
+
+Picker §§4.1-4.3/5/9 and Master MAS-02/17 govern the three reproduced Task 4 review defects. SQL now accepts the same compatible exact-ISBN/und case as the shared adapter and independently validates every non-null normalized option. The concrete completion RPC forwards only P9_EDITION_ROWS_INVALID as a safe deterministic rejection. After trying committed-receipt recovery, the worker treats it as nonretryable schema_invalid; unknown transport/persistence failures retain existing retry behavior. One physical response remains one accounted request.
+
+Failure transitions now atomically persist a bounded private claim receipt; identical retries after response loss return the existing result without new backoff, timestamps, provider calls or candidate changes. Current request/generation/query, Owner/session/card and worker/hashed-token/attempt remain mandatory; reclaimed claims and different failure arguments reject. Failure receipts cannot authorize successful options completion. Scheduling remains fifteen jobs/three active/immediate refill; automatic winner/cache behavior is preserved. Fresh 264 Jest, 77 completion/worker SQL, 14 structural and 48 existing picker cases plus strict types/build pass. [Detailed proof](trackers/02-implementation-and-verification.md#2026-10-08---edition-picker-task-4-review-corrections). M65-M68 remain NOT_APPLIED, production retention remains disabled, correction review is pending and Tasks 5-8 remain unstarted. Earlier checkpoints are historical.
+## 2026-10-07 - Edition-picker Task 4 local completion
+
+Under picker §§4.1-4.3/5/8-9 and Master MAS-02/03/12/17, the explicitly requested edition_options worker now completes through local M68 and its typed service RPC port. The fifteen-job/three-active pool and automatic winner/cache behavior remain intact. Bounded private own-card results are atomically persisted before readiness; slim replay/recovery avoids another provider request after committed response loss. Selection, selling details and existing authority versions are preserved. Production installs no retention verifier.
+
+Task 4 is task4_locally_verified_pending_review; Tasks 5-8 remain unstarted. Fresh proof: 259 Jest tests, strict graph/bootstrap types, required build/14 structural DB cases and 40 completion/worker DB cases PASS. M65-M67 hashes are unchanged; M65-M68 remain NOT_APPLIED. Independent review returned no verdict at the usage limit. Next action is Task 4 review; no live mutation or Git publication occurred. Earlier checkpoints are historical.
+
+[Detailed Task 4 evidence](trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-4-local-completion) records scope, commands and limits.
+
+## 2026-10-07 - Edition-picker Task 4 runtime checkpoint
+
+Local runtime/test scope is implemented; durable Task 4 completion remains incomplete pending separately authorized forward SQL. The worker now decodes the existing v2 automatic/edition_options context, routes explicit Google options jobs around local/cache/coalesced winner-only shortcuts, validates the bounded Task 3 response, preserves physical-call accounting, and reports available only after the typed controlled completion port confirms it. Production installs neither that port nor a retention verifier; explicit requests are not enabled.
+
+Fresh evidence: Task 4 worker/recovery plus affected worker/gateway/composition and provider/automatic regressions pass 9 suites / 237 tests; strict types pass; the required structural metadata worker build and 14 disposable database cases pass. Tests use recorded responses and an in-memory port model; these results do not establish durable SQL, grants/RLS, real races or live permission.
+
+Read [Task 4 implementation evidence](./trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-4-runtime-checkpoint) and the [reviewable SQL proposal](./work-units/owner-edition-picker-task4-sql-proposal.md). The fresh read-only Supabase check verifies live M62, with no controlled options completion/failure operations. M65-M67 remain local and NOT_APPLIED. Next action is separate Owner authorization of one forward local migration and disposable SQL tests. Tasks 5-8 remain unstarted; no migration file was created/edited/applied and no live/external mutation or Git publication occurred.
+
+
+## 2026-10-07 - Edition-picker Task 3 review corrections
+
+This correction restores picker §4.1 / DOC-3 §5.1 and this SDD §§8–9/13–14. Count every safely decoded row with the observed ISBN before eligibility filtering. Strong ISBN certainty requires one material identity and eligibility of all such rows. A disabled conflicting title/author/language sibling downgrades the compatible row to confirmation-required evidence and the adapter to ambiguous_match. Identical duplicate records remain separate options and can retain strong evidence; unrelated ISBNs do not weaken it. Structured-volume authority continues to derive only from strong evidence. No adapter, automatic winner/cache, worker or persistence behavior is added.
+
+Retention restores picker §8 / Security §8: Date/Age are validated when either max-age or Expires supplies a lifetime. Without max-age, Expires-minus-Date is reduced by observed age; missing Date uses receipt time conservatively, and invalid/exhausted evidence denies retention. With max-age present, its age-adjusted lifetime remains authoritative and Expires keeps its absolute ceiling. All deadlines remain bounded by independently verified permission and original fetch + 24 hours. Headers never grant rights; production installs no verifier.
+
+The supplied Task 3 review remains CHANGES_REQUIRED pending independent correction review. New regressions first produced 9 failures / 6 passing controls; the final four-suite command passed 136/136, with strict types and worker build PASS. M65–M67 remain unchanged/NOT_APPLIED; Task 4 remains pending separate Owner authorization. [Correction evidence](trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-3-review-corrections) supersedes the earlier unqualified lifetime summary; earlier checkpoints remain historical.
+
+## 2026-10-07 - Edition-picker Task 3 provider contract
+
+Picker §§3/4.1/5/13.2 now has a local explicit-operation adapter result using the existing StoredEditionRow and OptionsRetentionEvidence. A shared request path preserves Google configuration, credentials, relevance parameters, response bounds, timeout/cancellation and normalized failures. The explicit decoder receives original items before automatic filtering and preserves duplicate IDs/ordinals, unavailable positions and safe-but-ineligible records. It uses the existing per-item decoder with the shared twenty-author schema bound; the automatic default and winner/ranker/cache remain unchanged. BOOK printType supplies no binding/edition number, and each row owns its own safe metadata/cover/link.
+
+Eligibility uses the existing normalized ISBN/title/all-supplied-authors/primary-language rules. Internal ISBN contradiction becomes unavailable; conflicting text/identity remains disabled; different valid ISBNs may be alternatives. A coherent exact-ISBN record can supply structured-volume conflict evidence. Query publisher/year/free-text clues never manufacture volume authority. Text-only and conflicting same-ISBN records require confirmation; response order/date cannot promote their certainty. This result never selects or persists an Owner choice.
+
+The server verifier sees only fetchedAt and allowlisted Cache-Control/Expires/Date/Age evidence. Without independently verified provider permission/deadline, retention is denied. Actual headers can only shorten that deadline, bounded by original server UTC fetch + 24 hours; cache prohibitions and malformed/stale lifetimes deny storage. No verifier is installed in production. [Actual proof](trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-3-local-completion): 98 required Jest cases, 23 provider-contract cases, strict types/build PASS. Task 4 completion/persistence/accounting remains unimplemented and separately authorized. No migration or provider call occurred; earlier checkpoints are historical.
+
+## 2026-10-07 - Edition-picker Task 2 review corrections
+
+The Owner-authorized corrections restore picker §4.1 / DOC-3 §5.1 / DOC-4 §8: local reuse validates the complete Owner-safe metadata, a unique coherent exact text match remains a medium suggestion requiring confirmation, and ambiguous matches remain unresolved. M65/M67 are revised locally only; M65–M67 are NOT_APPLIED. The existing gateway, jobs, private-state permissions, selling fields and Add fence remain in force. No product scope or new migration was added.
+
+Current authority, corrected handoff and verification are recorded in [the implementation evidence](trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-2-review-corrections) and DOC-13/TRACKER. Earlier checkpoints are historical.
+
+## 2026-10-07 - Edition-picker Task 2 local completion
+
+Task 2 is locally complete: private per-card state, controlled read/search/select, version/expiry/ownership guards, coherent local ISBN resolution, lookup-scoped attempt history, and explicit-operation admission. Task 1 remains complete. The Owner's “ok proceed” authorized local M65–M67 creation and disposable tests; these files exist locally and are NOT_APPLIED. No live database/Storage write, deployment, staging, commit, or push occurred.
+
+Fresh proof: 34 disposable-database tests PASS; 4 affected Owner Jest suites / 303 tests PASS; strict Owner ingestion graph type check PASS. Real independent-connection races, provider-retention permission, worker execution/completion, Add/cleanup integration, client/UI/browser and rollout proof remain Tasks 3–8. No full-feature acceptance is claimed.
+
+Current work unit: Task 2 checkpoint review. Exact next authorized action: review the Task 2 diff/evidence; the next implementation slice is Task 3 Google result envelope after Owner authorization. Sources: picker SDD §§4.3/5–6/8–9/11; Master MAS-02/03/07/12/17. Earlier dated checkpoints below are historical.
+
+Task 2 fixed p9-owner-edition-options-v1 job purpose admits eligible unfinished cards through existing service claims without resetting them to processing. It excludes explicit lookup rows from automatic review-revision invalidation and uses lookup-scoped logical attempt uniqueness while preserving provider identity/role and legacy history. Automatic winner-only cache/snapshot payloads and invocation budget fifteen/three active stay unchanged. Google decoding, egress/accounting and fenced bounded completion remain Tasks 3/4; this checkpoint adds no automatic alternatives or worker execution path.
+
+
+## 2026-10-07 - Edition-picker Task 2 gateway/preflight checkpoint
+
+Task 1 remains locally complete. Task 2 code/read-only preflight is now authorized: the strict authenticated Owner gateway and HTTP routing pass 303 affected Jest tests and a strict server type check. Database storage/commands are not implemented; local M65–M67 migration-file creation is awaiting the separate Owner approval required by AGENTS. No SQL/database/Storage/deployment/Git publication occurred. Tasks 3–8 remain pending. Current authority/status comes from DOC-13 and TRACKER; earlier checkpoints below are historical.
+
+## 2026-10-07 - Edition-picker Task 1 contract checkpoint
+
+The Owner authorized Task 1 on 2026-10-07. Contracts/fixtures and narrow compatibility are locally complete; Tasks 2–8 and database changes remain unstarted/unapproved. Source behavior remains picker SDD §§5–7/9/13.2. Current next action is Task 1 diff review; [implementation evidence](trackers/02-implementation-and-verification.md) supersedes earlier planning-only status below.
+
+
+## 2026-10-06 - Owner edition picker draft extension
+
+Latest Owner display clarification EP-D14: each edition option in the metadata sheet shows its own cover image from its safe URL, title, all authors, and publication date; publisher, ISBN, and language are secondary details. Selection saves the coherent chosen metadata independently and follows the usual inventory Add flow, leaving one chosen cover on the scan card. This supersedes earlier text-only option rows. Owner chose relevance order with returned order preserved and Google attribution/book links. Picker §13.2 now defines Search Books wording and bounded unavailable/ineligible rows; EP-D11/13 scope cuts remain in force.
+
+Latest Owner scope: alternatives are obtained and saved only after an explicit Owner lookup (EP-D13); automatic scan/cache/coalesced paths keep winner/outcome-only persistence and never copy alternatives. New manual edition-number editing before and after Add, numeric overrides, and Store View edition-edit extensions are deferred (EP-D11).
+
+The [edition-picker SDD](./work-units/owner-edition-picker-sdd.md) consolidates EP-D01..EP-D14 and extends this domain's §§8-13; retain three active jobs and a fifteen-job invocation budget.
+
+Keep one card and one chosen cover, five initial rows/Show all up to ten, an explicit lookup for local/cache/older unfinished cards, independent per-card storage, a 24-hour product retention maximum from source fetch, and cleanup after confirmed Add. Preserve chosen metadata and selling details. Provider edition statements remain coherent source metadata; no new manual number field is introduced.
+
+Only explicit edition_options completion saves bounded alternatives. Reuse operation-aware context, lookup-scoped attempts, leases, physical-call retry/billing fencing, and per-card request deduplication. Automatic local/cache/coalesced winner-only paths never propagate alternatives.
+
+Status: design_ready_pending_owner_approval. The relevance-order decision resolves provider display §13.2; written-SDD and execution-plan approval still precede implementation. Historical implemented behavior below remains baseline evidence; no runtime or migration implementation is added.
+
+
+Readiness clarification (picker §§4.3/5/13.2): preserve provider-attempt identity uniqueness alongside lookup-role uniqueness. Explicit results need original ordinal, safe Google Books links, separate eligibility, and allowlisted cache/deadline evidence; the automatic filtered/winner-only decoder is unchanged.
+
 **Status:** `approved_baseline`
 **Version:** 1.0
 **Date:** 2026-07-19

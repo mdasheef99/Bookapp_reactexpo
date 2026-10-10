@@ -488,7 +488,7 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
         expect(test.commitCandidate).toHaveBeenCalledTimes(1);
     });
 
-    it('F01-B: an ambiguous M39 attempt is not resent once the draft changed; a fresh pipeline runs instead', async () => {
+    it('F01-B: an ambiguous M39 attempt reconciles its original identity before a changed draft can start', async () => {
         const commitCandidate = jest.fn()
             .mockRejectedValueOnce(new OwnerUxClientError('P9_INTERNAL_ERROR', true, 'unclear'))
             .mockImplementation(async (request) => ({
@@ -505,14 +505,10 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
         await expect(test.coordinator.retryCandidate(
             itemB.card.candidateId, itemB,
         )).resolves.toMatchObject({ status: 'succeeded' });
-        // The stale frozen commit identity was NOT silently replayed.
+        // Picker §7 / Unit 6G §12: transport loss does not prove no inventory effect.
         const [firstRequest, secondRequest] = commitCandidate.mock.calls.map(([r]) => r);
-        expect(secondRequest.idempotencyKey).not.toBe(firstRequest.idempotencyKey);
-        expect(secondRequest.commandId).not.toBe(firstRequest.commandId);
-        // The current draft was saved fresh before the new commit. (The first
-        // attempt needed no Save because its draft had no mounted edits.)
-        expect(test.saveReview).toHaveBeenCalledTimes(1);
-        expect(test.saveReview.mock.calls[0][0].review.quantity).toBe(5);
+        expect(secondRequest).toEqual(firstRequest);
+        expect(test.saveReview).not.toHaveBeenCalled();
     });
 
     it('F01-C: retry without a draft argument keeps idempotent replay of the frozen command', async () => {

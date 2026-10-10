@@ -1,3 +1,4 @@
+jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
 import { QueryClient } from '@tanstack/react-query';
 import { storeViewKeys } from '@/features/storeView/queries/storeViewQueries';
 import { ownerBatchReviewKeys } from '../queries/ownerBatchReviewQueries';
@@ -10,8 +11,15 @@ import { synchronizeInventoryCommitSuccess, synchronizeInventoryCommitIneligibil
 import { testUuid } from '../testing/ownerUxTestFixtures';
 
 describe('Phase 9 NEW 6G-D commit cache synchronization', () => {
-    it('invalidates only approved inventory/Store View and candidate/session roots after success', async () => {
+    const clients: QueryClient[] = [];
+    const createClient = () => {
         const client = new QueryClient();
+        clients.push(client);
+        return client;
+    };
+    afterEach(() => { clients.splice(0).forEach(client => client.clear()); });
+    it('invalidates only approved inventory/Store View and candidate/session roots after success', async () => {
+        const client = createClient();
         const identity = { userId: testUuid(1), storeId: testUuid(2) };
         const sessionId = testUuid(3);
         const candidateId = testUuid(4);
@@ -43,7 +51,7 @@ describe('Phase 9 NEW 6G-D commit cache synchronization', () => {
     });
 
     it('invalidates exactly the targeted candidate/review/readiness roots for no_longer_eligible outcomes', async () => {
-        const client = new QueryClient();
+        const client = createClient();
         const identity = { userId: testUuid(1), storeId: testUuid(2) };
         const sessionId = testUuid(3);
         const candidateId = testUuid(4);
@@ -73,7 +81,7 @@ describe('Phase 9 NEW 6G-D commit cache synchronization', () => {
     });
 
     it('keeps per-candidate roots exact and shared session roots single-shot for multiple ineligible candidates', async () => {
-        const client = new QueryClient();
+        const client = createClient();
         const identity = { userId: testUuid(1), storeId: testUuid(2) };
         const sessionId = testUuid(3);
         const firstCandidate = testUuid(4);

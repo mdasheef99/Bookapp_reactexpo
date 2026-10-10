@@ -172,9 +172,9 @@ export function ReviewFormFields({
                     <View style={{ gap: 8 }}>
                         <ReviewToggle
                             label="Use matched details"
-                            selected={draft.metadataMode === 'selected'}
+                            selected={draft.metadataMode === 'selected' || draft.metadataMode === 'edition_option'}
                             onPress={() => update({
-                                metadataMode: 'selected',
+                                metadataMode: draft.metadataMode === 'edition_option' ? 'edition_option' : 'selected',
                                 selectionId: detail.metadata.selectionId,
                             })}
                             disabled={disabled}

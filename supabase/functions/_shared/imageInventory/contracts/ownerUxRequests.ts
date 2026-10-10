@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ownerUxReviewSchema as review } from './ownerUxReview.ts';
-import { OWNER_UX_CONTRACT_VERSION } from './ownerUxResponses.ts';
+import { OWNER_UX_CONTRACT_VERSION } from './versions.ts';
+import { editionRequestSchemas } from './ownerEditionPicker.ts';
 
 const uuid = z.string().uuid();
 const version = z.number().int().positive().safe();
@@ -62,6 +63,7 @@ const closeSession = z.object({
 }).strict();
 
 const requestSchemas = {
+  ...editionRequestSchemas,
   discover_scan_session: z.object({
     action: z.literal('discover_scan_session'), contractVersion,
   }).strict(),
@@ -82,13 +84,9 @@ const requestSchemas = {
   close_scan_session: closeSession,
 } as const;
 
-const ownerUxRequest = z.discriminatedUnion('action', [
-  requestSchemas.discover_scan_session, readSession, listInputs,
-  removeInput, resolveDuplicateInput, listCandidates as any, requestSchemas.read_scan_candidate, updateReview,
-  addCandidateToInventory, requestSchemas.read_scan_readiness, closeSession,
-]);
-
-export type OwnerUxRequest = z.infer<typeof ownerUxRequest>;
+export type OwnerUxRequest = {
+  [Action in keyof typeof requestSchemas]: z.infer<(typeof requestSchemas)[Action]>;
+}[keyof typeof requestSchemas];
 export type OwnerUxAction = keyof typeof requestSchemas;
 
 export function parseOwnerUxRequest(value: unknown): OwnerUxRequest {

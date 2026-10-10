@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import {
-  canonicalizeMetadataOutcome,
   MetadataNormalizedOutcome,
   MetadataProviderAdapter,
 } from '../metadata/providerAdapter';
@@ -16,7 +15,6 @@ import {
   MetadataRpcClient,
 } from './metadataJobContext';
 import {
-  canonicalMetadataJson,
   metadataClaimParameters,
   MetadataGatewayConfiguration,
   metadataGatewayRpc,
@@ -29,7 +27,24 @@ export type { MetadataJobContext, MetadataRpcClient } from './metadataJobContext
 export { requestFromMetadataContext } from './metadataGatewayContext';
 export type { MetadataGatewayConfiguration } from './metadataGatewayContext';
 
+import { finalizeMetadataProductionAttempt } from './metadataAttemptFinalization';
+import type { MetadataAttemptFinalization } from './metadataAttemptFinalization';
+
+// Picker §§4.3/9: selling/version changes do not invalidate this identity/request fence.
+function sameEditionRequest(
+  configuration: MetadataGatewayConfiguration, request: MetadataProductionRequest,
+  fresh: import('./metadataJobContext').MetadataJobContext,
+): boolean {
+  const original = configuration.context;
+  return fresh.purpose === original.purpose && fresh.jobId === request.jobId
+    && fresh.claimToken === request.claimLeaseToken && fresh.attempt === request.claimAttempt
+    && fresh.candidateId === request.candidateId && fresh.storeId === request.storeId
+    && fresh.sessionId === original.sessionId && fresh.queryIdentity === request.query.key
+    && fresh.requestGeneration === original.requestGeneration;
+}
+
 export class SupabaseMetadataProductionGateway implements MetadataProductionGateway {
+  readonly editionOptions;
   readonly providerValidation;
   private readonly providerCalls = new Map<string, string>();
   private reusableLookup: string | null = null;
@@ -38,6 +53,7 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
     private readonly client: MetadataRpcClient,
     private readonly configuration: MetadataGatewayConfiguration,
   ) {
+    this.editionOptions = configuration.editionOptions;
     this.providerValidation = Object.freeze({
       adapterKey: configuration.adapterKey,
       adapterVersion: configuration.adapterVersion,
@@ -222,7 +238,9 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
       jobId: input.jobId,worker: input.claimWorker,
       leaseToken: input.claimLeaseToken,attempt: input.claimAttempt,
     });
-    if (context.candidateId !== input.candidateId) return false;
+    if (this.configuration.context.purpose === 'edition_options'
+      ? !sameEditionRequest(this.configuration, input, context)
+      : context.candidateId !== input.candidateId) return false;
     const physicalIdentity = randomUUID();
     const registered = object(await metadataGatewayRpc(this.client, 'phase9_register_metadata_provider_call', {
       p_attempt_id: input.attemptId,p_job_id: input.jobId,p_worker: input.claimWorker,
@@ -234,81 +252,17 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
       jobId: input.jobId,worker: input.claimWorker,
       leaseToken: input.claimLeaseToken,attempt: input.claimAttempt,
     });
-    return revalidated.candidateId === input.candidateId;
+    return this.configuration.context.purpose === 'edition_options'
+      ? sameEditionRequest(this.configuration, input, revalidated)
+      : revalidated.candidateId === input.candidateId;
   }
   invokePrimary(input: Parameters<MetadataProviderAdapter['lookup']>[0]) {
     return this.configuration.primary.lookup(input);
   }
-  async finalizeAttempt(input: Readonly<{ lookupId: string; attemptId: string;
-    normalizedOutcome: MetadataNormalizedOutcome;
-    logicalOutcome?: MetadataNormalizedOutcome;
-    disposition: 'accepted' | 'rejected' | 'stale_rejected';
-    providerRequestId: string | null; normalizedCandidate: unknown | null;
-    retryable: boolean; evidence?: readonly string[];
-    physicalStatus?: 'finalized' | 'outcome_unknown' }>) {
-    const providerCallId = this.providerCalls.get(input.attemptId);
-    if (providerCallId !== undefined) {
-      const physicalStatus = input.disposition === 'stale_rejected' ? 'stale_rejected'
-        : input.physicalStatus ?? 'finalized';
-      const physicalFinalization = {
-        p_provider_call_id: providerCallId,p_job_id: this.configuration.context.jobId,
-        p_worker: this.configuration.worker,p_lease_token: this.configuration.context.claimToken,
-        p_attempt_count: this.configuration.context.attempt,
-        p_status: physicalStatus,
-        p_normalized_outcome: input.normalizedOutcome,
-        p_logical_outcome: input.logicalOutcome ?? input.normalizedOutcome,
-        p_provider_request_id: input.providerRequestId,
-        p_retryable: input.retryable,p_normalized_candidate: input.normalizedCandidate,
-        p_match_evidence: input.evidence ?? [],
-      };
-      try {
-        await metadataGatewayRpc(this.client, 'phase9_finalize_metadata_provider_call', physicalFinalization);
-      } catch (error) {
-        if (physicalStatus === 'stale_rejected') throw error;
-        const durable = object(await metadataGatewayRpc(
-          this.client,
-          'phase9_reconcile_metadata_provider_call',
-          {
-            p_provider_call_id: providerCallId,
-            p_job_id: this.configuration.context.jobId,
-            p_worker: this.configuration.worker,
-            p_lease_token: this.configuration.context.claimToken,
-            p_attempt_count: this.configuration.context.attempt,
-          },
-        ));
-        const durableMatches = durable.status === physicalStatus
-          && durable.normalized_outcome === input.normalizedOutcome
-          && durable.logical_outcome === (input.logicalOutcome ?? input.normalizedOutcome)
-          && durable.provider_request_id === input.providerRequestId
-          && durable.retryable === input.retryable
-          && canonicalMetadataJson(durable.normalized_candidate)
-            === canonicalMetadataJson(input.normalizedCandidate)
-          && canonicalMetadataJson(durable.match_evidence)
-            === canonicalMetadataJson(input.evidence ?? []);
-        if (!durableMatches) {
-          throw new Error(durable.status === 'outcome_unknown'
-            ? 'P9_METADATA_PHYSICAL_OUTCOME_UNKNOWN'
-            : 'P9_METADATA_PHYSICAL_RECONCILIATION_CONFLICT');
-        }
-      }
-    }
-    if (input.retryable) return;
-    await metadataGatewayRpc(this.client, 'phase9_finalize_structural_metadata_attempt', {
-      p_attempt_id: input.attemptId,...metadataClaimParameters({
-        jobId: this.configuration.context.jobId,claimWorker: this.configuration.worker,
-        claimLeaseToken: this.configuration.context.claimToken,
-        claimAttempt: this.configuration.context.attempt,
-      } as MetadataProductionRequest),p_disposition: input.disposition === 'stale_rejected' ? 'stale' : input.disposition,
-      p_candidate_id: this.configuration.context.candidateId,
-      p_candidate_version: this.configuration.context.candidateVersion,
-      p_normalized_outcome: canonicalizeMetadataOutcome(
-        input.logicalOutcome ?? input.normalizedOutcome,
-      ),
-      p_provider_request_id: input.providerRequestId,
-      p_cache_status: 'miss',p_latency_ms: 0,p_pricing_policy_version: this.configuration.pricingPolicyVersion,
-      p_pricing_evidence: { currency: 'USD', input_basis: 'request', pricing_source_version: this.configuration.pricingPolicyVersion },
-      p_calculated_cost_units: 0,p_normalized_candidate: input.normalizedCandidate,
-    });
+  async finalizeAttempt(input: MetadataAttemptFinalization) {
+    await finalizeMetadataProductionAttempt(
+      this.client, this.configuration, this.providerCalls.get(input.attemptId), input,
+    );
   }
   async persistCache(input: Readonly<{ lookupId: string; attemptId: string;
     normalizedOutcome: string; selected: unknown | null }>) {

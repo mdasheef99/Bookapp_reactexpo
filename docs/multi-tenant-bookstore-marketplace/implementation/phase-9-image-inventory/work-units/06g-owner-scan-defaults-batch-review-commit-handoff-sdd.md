@@ -1,5 +1,49 @@
 # Phase 9 Unit 6G SDD: Owner Scan Defaults, Batch Review, and Commit Handoff
 
+## 2026-10-08 - Task 6 client review checkpoint and confirmation gap
+
+Existing root DOC-3 §§5.2/6, DOC-4 §§9-11 and DOC-8 §5 govern picker
+§§3/6-7 and Unit 6G §§11-14. No product decision or acceptance ID is added.
+The Task 6 client uses the authenticated Owner Edge and strict Task 1 DTOs,
+keeps corresponding counters within identity/session/card scope, preserves
+unsaved full/compact selling fields, and shares the existing Save/Add slot.
+Single/Add all reconcile uncertain Add using the original command before a new
+draft can supersede it. Generic/conflict reads do not adopt another edition.
+Lookup and read/mount/expiry are separate actions; only explicit lookup writes
+request alternatives.
+
+The no-review current_suggestion resume case remains a required contract gap.
+No Owner confirmation is inferred from a selected state, opaque UUID, non-null
+selection, source tag or metadata similarity. Existing strong selected/manual
+behavior remains compatible. Task 6 is incomplete; Task 7 UI and Task 8
+browser/live/independent-connection proof are pending.
+
+[Local Task 6 evidence](../trackers/02-implementation-and-verification.md#2026-10-08---task-6-client-review-checkpoint-and-confirmation-gap); the narrow read-discriminant proposal is linked there. Task 5 correction APPROVED self-review is Owner-accepted, not independent approval. M65-M69 remain NOT_APPLIED and unchanged. Earlier entries are historical.
+
+
+## 2026-10-07 - Edition-picker Task 2 local completion
+
+Task 2 is locally complete: private per-card state, controlled read/search/select, version/expiry/ownership guards, coherent local ISBN resolution, lookup-scoped attempt history, and explicit-operation admission. Task 1 remains complete. The Owner's “ok proceed” authorized local M65–M67 creation and disposable tests; these files exist locally and are NOT_APPLIED. No live database/Storage write, deployment, staging, commit, or push occurred.
+
+Fresh proof: 34 disposable-database tests PASS; 4 affected Owner Jest suites / 303 tests PASS; strict Owner ingestion graph type check PASS. Real independent-connection races, provider-retention permission, worker execution/completion, Add/cleanup integration, client/UI/browser and rollout proof remain Tasks 3–8. No full-feature acceptance is claimed.
+
+Current work unit: Task 2 checkpoint review. Exact next authorized action: review the Task 2 diff/evidence; the next implementation slice is Task 3 Google result envelope after Owner authorization. Sources: picker SDD §§4.3/5–6/8–9/11; Master MAS-02/03/07/12/17. Earlier dated checkpoints below are historical.
+
+
+## 2026-10-07 - Edition-picker Task 1 contract checkpoint
+
+The Owner authorized Task 1 on 2026-10-07. Contracts/fixtures and narrow compatibility are locally complete; Tasks 2–8 and database changes remain unstarted/unapproved. Source behavior remains picker SDD §§5–7/9/13.2. Current next action is Task 1 diff review; [implementation evidence](../trackers/02-implementation-and-verification.md) supersedes earlier planning-only status below.
+
+
+## 2026-10-06 - Owner edition picker scope extension
+
+Latest Owner display clarification EP-D14: each edition option in the metadata sheet shows its own cover image from its safe URL, title, all authors, and publication date; publisher, ISBN, and language are secondary details. Selection saves the coherent chosen metadata independently and follows the usual inventory Add flow, leaving one chosen cover on the scan card. This supersedes earlier text-only option rows. Owner chose relevance order with returned order preserved and Google attribution/book links. Picker §13.2 now defines Search Books wording and bounded unavailable/ineligible rows; EP-D11/13 scope cuts remain in force.
+
+Latest Owner scope: alternatives are obtained and saved only after an explicit Owner lookup (EP-D13); automatic scan/cache/coalesced paths keep winner/outcome-only persistence and never copy alternatives. New manual edition-number editing before and after Add, numeric overrides, and Store View edition-edit extensions are deferred (EP-D11).
+
+**Draft scoped extension; not implemented.** The [edition-picker SDD](./owner-edition-picker-sdd.md) §2.1 extends this SDD's §§8/10, U6G-AC08, and the no-rematching clause of U6G-AC29 only for choosing an eligible edition of the same identified book on an unfinished card. An independent cover toggle, unrelated-book rematching, and post-commit rematching remain outside scope. Opening the sheet does not query the provider; eligible local/cache/older cards use an explicit Owner request. The closed Unit 6G implementation/history below is preserved. Provider display follows the resolved relevance-order contract in picker §13.2; no runtime or migration was changed.
+
+
 **Status:** `unit6g_metadata_quality_local_complete_pending_review`
 **Version/date:** 0.4 / 2026-08-30
 **Authority:** the Owner workflow decisions recorded in P9-D81 through P9-D85;

@@ -35,6 +35,7 @@ export function captureOwnerRequest(
     if (!expectedToken || activeToken !== expectedToken) throw new Error('OWNER_IDENTITY_CHANGED');
     const controller = new AbortController();
     const abort = () => controller.abort();
+    if (externalSignal?.aborted) controller.abort();
     externalSignal?.addEventListener('abort', abort, { once: true });
     activeControllers.add(controller);
     const assertCurrent = () => {

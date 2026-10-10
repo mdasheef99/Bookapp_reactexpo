@@ -1,4 +1,5 @@
-import { type QueryClient, useQuery } from '@tanstack/react-query';
+import { acceptCandidateRead, assertCandidatePageAuthority } from './ownerCandidateAuthority';
+import { type QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { appQueryClient } from '@/lib/queryClient';
 import {
     OwnerUxClientError,
@@ -8,6 +9,7 @@ import {
 import { OWNER_UX_CONTRACT_VERSION } from '../contracts/ownerUxContracts';
 import { cancelAllCaptureWork } from '../capture/captureCancellation';
 import {
+    captureOwnerRequest,
     beginOwnerIdentityTransition,
     completeOwnerIdentityTransition,
     resetOwnerRequestFence,
@@ -204,6 +206,7 @@ export function useOwnerInventoryCandidates(
     identity: ImageInventoryIdentity | null,
     request: CandidatePageRequest | null,
 ) {
+    const client = useQueryClient();
     const context = request
         ? { ...request, pageSize: request.pageSize ?? 20, cursor: request.cursor ?? null }
         : {
@@ -218,7 +221,14 @@ export function useOwnerInventoryCandidates(
             identity ?? { userId: 'unresolved', storeId: 'unresolved' },
             context,
         ),
-        queryFn: () => ownerUxService.listCandidates(request as CandidatePageRequest),
+        queryFn: async ({ signal }) => {
+            const fence = captureOwnerRequest(identity!, signal);
+            try {
+                const page = await ownerUxService.listCandidates(request as CandidatePageRequest);
+                fence.assertCurrent();
+                return assertCandidatePageAuthority(client, identity!, page);
+            } finally { fence.release(); }
+        },
         enabled: Boolean(identity && request),
     });
 }
@@ -229,6 +239,7 @@ export function useOwnerInventoryCandidate(
     candidateId: string | null,
     enabled = true,
 ) {
+    const client = useQueryClient();
     return useQuery({
         ...commonQueryOptions,
         queryKey: imageInventoryKeys.candidate(
@@ -236,7 +247,14 @@ export function useOwnerInventoryCandidate(
             sessionId ?? 'unresolved',
             candidateId ?? 'unresolved',
         ),
-        queryFn: () => ownerUxService.readCandidate(sessionId as string, candidateId as string),
+        queryFn: async ({ signal }) => {
+            const fence = captureOwnerRequest(identity!, signal);
+            try {
+                const canonical = await ownerUxService.readCandidate(sessionId!, candidateId!, fence.signal);
+                fence.assertCurrent();
+                return acceptCandidateRead(client, identity!, canonical);
+            } finally { fence.release(); }
+        },
         enabled: Boolean(enabled && identity && sessionId && candidateId),
     });
 }

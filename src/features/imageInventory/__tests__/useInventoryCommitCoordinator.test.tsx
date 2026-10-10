@@ -1,5 +1,6 @@
+jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { act, cleanupAsync, renderHook, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { OwnerUxClientError, ownerUxService } from '../api/ownerUxService';
 import {
@@ -98,7 +99,8 @@ describe('Phase 9 NEW 6G-D commit hook retry routing (F01)', () => {
             }));
     });
 
-    afterEach(() => {
+    afterEach(async () => {
+        await cleanupAsync();
         client.clear();
     });
 
@@ -137,7 +139,7 @@ describe('Phase 9 NEW 6G-D commit hook retry routing (F01)', () => {
         expect(addToInventory).toHaveBeenCalledTimes(1);
     });
 
-    it('never resends an ambiguous M39 request once the Owner changed the draft and cannot duplicate a landed commit', async () => {
+    it('reconciles an ambiguous M39 with the original command before applying a changed draft', async () => {
         addToInventory.mockRejectedValueOnce(
             new OwnerUxClientError('P9_INTERNAL_ERROR', true, 'unclear'),
         );
@@ -155,14 +157,16 @@ describe('Phase 9 NEW 6G-D commit hook retry routing (F01)', () => {
         // The prior ambiguous commit actually landed server-side; fresh
         // authority must prove it before anything else may run.
         readCandidateSpy.mockResolvedValue(committedDetail(testUuid(11)));
+        const savesBeforeRetry = updateReview.mock.calls.length;
         const draftB = draft({ quantity: 3 });
         let secondOutcome!: CandidateCommitOutcome;
         await act(async () => {
             secondOutcome = await result.current.addCandidate(draftB);
         });
-        expect(secondOutcome).toMatchObject({ status: 'no_longer_eligible' });
-        // M39 ran exactly once: the ambiguous attempt. Never duplicated.
-        expect(addToInventory).toHaveBeenCalledTimes(1);
+        expect(secondOutcome).toMatchObject({ status: 'succeeded' });
+        expect(updateReview).toHaveBeenCalledTimes(savesBeforeRetry);
+        expect(addToInventory).toHaveBeenCalledTimes(2);
+        expect(addToInventory.mock.calls[1][0]).toEqual(addToInventory.mock.calls[0][0]);
     });
 
     it('keeps idempotent identity when retrying an unchanged draft', async () => {

@@ -24,6 +24,8 @@ export type MetadataGatewayConfiguration = Readonly<{
   cacheNamespace: string;
   pricingPolicyVersion: string;
   revalidationSeconds: number;
+  editionOptions?: Readonly<{ request: MetadataProductionRequest;
+    boundary: import('./metadataEditionOptionsBoundary').MetadataEditionOptionsBoundary }>;
 }>;
 
 export async function metadataGatewayRpc(

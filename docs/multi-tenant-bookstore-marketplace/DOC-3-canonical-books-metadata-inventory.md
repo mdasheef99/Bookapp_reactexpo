@@ -1,5 +1,201 @@
 # DOC-3: Canonical Books, Metadata, and Inventory
 
+## 2026-10-09 - Task 8 independent approval and M65-M70 applied
+
+Phase 9 / completed Unit 6G baseline. Task 8's bounded LOCAL checkpoint is
+independently APPROVED; all eight tasks have local implementation/verification
+evidence. [Review provenance](implementation/phase-9-image-inventory/trackers/33-owner-edition-picker-task8-local-verification.md)
+preserves earlier approval provenance and the unavailable historical 152-path
+audit baseline.
+
+**Status:** `task8_independently_approved_m65_m70_applied_runtime_pending`.
+The Owner authorized steps 1-3: approval documentation, live preflight and the
+six unchanged migrations. All M65-M70 are now APPLIED / catalog-verified on
+Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn. [Application ledger](implementation/phase-9-image-inventory/trackers/34-owner-edition-picker-m65-m70-application.md)
+records six live versions, exact source/archive hashes, function/ACL/RLS/index/
+trigger readback, unchanged business counts, recovery and advisor deltas.
+
+No Edge/worker/client deployment, registry/configuration change, provider call,
+browser test, data deletion, staging, commit or push occurred. New alternatives
+retention remains disabled/unverified; existing automatic provider flags remain
+unchanged. Runtime/provider/browser/operational rollout gates stay pending.
+
+Exact next action: Owner review/authorization for compatible development
+Edge/worker/client rollout and provider-gated browser verification (step 4).
+Earlier dated entries below retain their historical NOT_APPLIED status and
+review provenance; this latest entry owns current application status.
+
+## 2026-10-09 - Task 8 local verification review checkpoint
+
+Phase 9 / completed Unit 6G baseline; Tasks 1-7 locally implemented.
+Task 6 and Task 7's bounded corrections retain independent APPROVED provenance.
+**Status:** `task8_locally_verified_pending_independent_review`.
+**Active work unit:** Task 8 LOCAL verification review checkpoint.
+The Owner supplied the previously pending local authorization.
+[Task 8 evidence](implementation/phase-9-image-inventory/trackers/33-owner-edition-picker-task8-local-verification.md) records 17 native PostgreSQL checks /
+11 lock overlaps, exact Task 7 23 suites / 349 tests, provider/worker/contract
+13 suites / 365 tests, 187 scoped SQL cases, build / 14 structural cases,
+strict types, teardown and the 19-ACTIVE-ID evidence matrix.
+Mocked UI requests, fixture SQL and real native locks are labelled separately.
+
+**Exact next authorized action:** independent read-only review of Task 8's
+local test, harness and verification-documentation diff. No Task 8 independent
+approval or full operational completion is claimed. Remaining browser/device,
+configured-provider permission, live migration/runtime, security/cleanup and
+lookup/UI disablement/rollback/rollout gates are separately authorized.
+M65-M70 remain unchanged / CREATED_LOCAL / NOT_APPLIED to the shared service;
+production retention stays disabled. Only disposable local database/cluster
+mutations occurred. No shared database/Storage/provider/deployed-worker mutation,
+staging, commit, push or deployment occurred. No product requirement changed.
+Earlier dated entries below retain their historical scope and review provenance.
+
+## 2026-10-09 - Task 7 correction review approved
+
+Phase 9 / completed Unit 6G baseline; Task 6 independently APPROVED.
+**Status:** task7_corrections_independently_approved_task8_authorization_pending.
+The Owner supplied an independent read-only APPROVED verdict for the bounded
+Task 7 corrections: matched-details preserves edition_option/selection reference;
+detected-details resets replacement identity confirmations while preserving
+selling values and ordinary metadata-only manual switching.
+
+[Independent correction-review evidence](implementation/phase-9-image-inventory/trackers/32-owner-edition-picker-task7-ui-evidence.md#2026-10-09---task-7-correction-review-approved) records the independently
+rerun 23 suites / 349 tests, strict TypeScript, continuity and diff checks.
+Save assertions capture outgoing mocked-service requests, not successful server
+persistence. Browser/device/provider and independent-connection PostgreSQL
+proof remain Task 8 gates.
+
+Exact next action: separate Owner authorization for Task 8 local integrated
+acceptance proof and independent-connection PostgreSQL checks. Task 8 is
+unstarted. Live migration/runtime/browser/provider enablement and Git
+publication remain separately authorized. M65-M70 remain byte-preserved /
+NOT_APPLIED; production retention is disabled. This session changes handoff
+documentation only; product tests are not rerun. No database/Storage/provider
+mutation, staging, commit, push, deployment or application occurred.
+Earlier dated entries below retain their historical scope and evidence.
+
+## 2026-10-09 - Task 7 bounded review corrections
+
+Phase 9 / completed Unit 6G baseline; Task 6 independently APPROVED.
+The independent Task 7 review returned CHANGES_REQUIRED (two P2 findings);
+the Owner explicitly authorized these bounded local corrections.
+**Status:** task7_corrections_locally_verified_pending_review.
+The full-review matched-details control preserves an existing edition_option
+choice; detected-details replacement resets title/author confirmations to the
+replacement identity, while metadata-only manual switching preserves them.
+Existing picker §§6-7 / EP-AC19, Review SDD §5 and Master MAS-18 own the fixes;
+no requirement, server authority, schema or acceptance criterion is added.
+Fresh recorded Task 7 Jest gate: 23 suites / 349 tests PASS, exit 0.
+Exact next authorized action: independent read-only review of the two bounded
+corrections and their regression evidence. Correction approval is not claimed.
+Task 8 remains unstarted. M65-M70 remain byte-preserved / NOT_APPLIED; production
+provider retention stays disabled. No database/Storage/provider mutation,
+staging, commit, push, deployment or migration application occurred.
+Earlier dated entries below retain their historical evidence.
+
+
+## 2026-10-09 - Task 7 mounted picker implementation evidence
+
+Existing DOC-3 §§5.2/6, DOC-4 §§9-11 and DOC-8 §5 → picker §§3/6-7/13.2,
+EP-D02/03/04/07/14, EP-AC03/06/08/10/11/13/15/19 and Unit 6G §§11-14 own this
+local UI slice. The current choice and its one cover remain above bounded
+original-position results; explicit Search Books alone requests alternatives.
+The real compact/full review callers use the existing server-confirmed selection,
+version/draft helpers and Save/Add slot, preserving selling edits and held-choice
+resume while keeping manual correction available. Selection/read create no
+selling review or server readiness. Representative provenance, strict normalized
+fields/URLs and existing legacy metadata-only behavior remain intact.
+
+[Task 7 evidence and exact scope](implementation/phase-9-image-inventory/trackers/32-owner-edition-picker-task7-ui-evidence.md) record 23 fresh Jest suites /
+345 tests and strict TypeScript PASS, plus local self-review corrections and
+closeout gates. Status: `task7_locally_implemented_verified_pending_independent_review`.
+No behavior requirement, acceptance ID, schema, server contract or provider policy
+changes. Independent review and browser/device/large-text/live/real-connection
+proof remain pending. Exact next action: independent read-only Task 7 review.
+No database/Storage/provider mutation, staging, commit, push, deployment or
+migration application occurred. Earlier dated entries below are historical.
+
+## 2026-10-08 - Independent Task 6 review and bounded corrections
+
+Phase 9 / completed Unit 6G baseline; status remains
+`task6_client_checkpoint_contract_gap`. Independent review confirmed and
+locally corrected two P2 client defects: coherent null/different-script resume
+and release of the uncertainty guard after authoritative single/bulk Add replay
+rejection. Existing DOC-3 §5.2, DOC-4 §11, DOC-8 §5, picker §§6-7 /
+EP-AC11/19 and Unit 6G §§11-14 own these corrections; no requirement is added.
+
+[Review and verification evidence](implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-08---independent-task-6-review-and-bounded-client-corrections)
+records RED/GREEN and final gate readback. The original checkpoint required
+changes; correction acceptance is local only. Overall Task 6 remains INCOMPLETE
+because current_suggestion/no-review fresh resume lacks a server confirmation
+discriminator. Exact next action: Owner review of the corrected checkpoint and
+separate authorization of the bounded server/strict-DTO correction. No migration
+creation/edit/application, external mutation, Task 7 UI, Task 8 live/race work
+or Git publication occurred. M65-M69 hashes match and remain NOT_APPLIED.
+Earlier entries below are historical.
+
+
+## 2026-10-08 - Task 6 client review checkpoint and confirmation gap
+
+Existing root DOC-3 §§5.2/6, DOC-4 §§9-11 and DOC-8 §5 govern picker
+§§3/6-7 and Unit 6G §§11-14. No product decision or acceptance ID is added.
+The Task 6 client uses the authenticated Owner Edge and strict Task 1 DTOs,
+keeps corresponding counters within identity/session/card scope, preserves
+unsaved full/compact selling fields, and shares the existing Save/Add slot.
+Single/Add all reconcile uncertain Add using the original command before a new
+draft can supersede it. Generic/conflict reads do not adopt another edition.
+Lookup and read/mount/expiry are separate actions; only explicit lookup writes
+request alternatives.
+
+The no-review current_suggestion resume case remains a required contract gap.
+No Owner confirmation is inferred from a selected state, opaque UUID, non-null
+selection, source tag or metadata similarity. Existing strong selected/manual
+behavior remains compatible. Task 6 is incomplete; Task 7 UI and Task 8
+browser/live/independent-connection proof are pending.
+
+[Local Task 6 evidence](implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-08---task-6-client-review-checkpoint-and-confirmation-gap); the narrow read-discriminant proposal is linked there. Task 5 correction APPROVED self-review is Owner-accepted, not independent approval. M65-M69 remain NOT_APPLIED and unchanged. Earlier entries are historical.
+
+
+## 2026-10-08 - Task 5 independent-review correction
+
+Existing §§5.2/6 and picker §§5-7 require the current coherent store choice to survive independently of a selling review. The bounded Task 5 correction projects that durable choice before the first review save, including its no-cover state; no canonical/inventory mutation occurs during selection/read.
+
+[Correction evidence](implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-08---task-5-independent-review-correction). Locally verified; independent correction review is pending. Tasks 6-8 remain unstarted and M65-M69 remain NOT_APPLIED. Earlier checkpoints are historical.
+
+## 2026-10-08 - Edition-picker Task 5 local completion
+
+Local implementation of §5.2/§6/§10 and picker §§5-8: the existing create-only Add now materializes the exact saved coherent edition choice, including nullable canonical references and source fields, while preserving selling facts and private publication rules. It creates one separate inventory identity for each candidate; no canonical mutation or inventory merge/increment occurs. The inventory BEFORE INSERT trigger gates representative-cover fallback by the effective original selected mode/ID, preventing an edition option (including a no-cover option) from inheriting an old automatic cover.
+
+[Task 5 local evidence](implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-08---edition-picker-task-5-local-completion) proves original canonical/manual compatibility, atomic own-card cleanup and response-loss replay. M69 is CREATED_LOCAL / NOT_APPLIED; M65-M68 are preserved / NOT_APPLIED. Backend Task 5 is at its local review checkpoint; client/UI/enablement remain later tasks. Earlier checkpoints are historical.
+
+## 2026-10-07 - Edition-picker Task 2 local completion
+
+Task 2 is locally complete: private per-card state, controlled read/search/select, version/expiry/ownership guards, coherent local ISBN resolution, lookup-scoped attempt history, and explicit-operation admission. Task 1 remains complete. The Owner's “ok proceed” authorized local M65–M67 creation and disposable tests; these files exist locally and are NOT_APPLIED. No live database/Storage write, deployment, staging, commit, or push occurred.
+
+Fresh proof: 34 disposable-database tests PASS; 4 affected Owner Jest suites / 303 tests PASS; strict Owner ingestion graph type check PASS. Real independent-connection races, provider-retention permission, worker execution/completion, Add/cleanup integration, client/UI/browser and rollout proof remain Tasks 3–8. No full-feature acceptance is claimed.
+
+Current work unit: Task 2 checkpoint review. Exact next authorized action: review the Task 2 diff/evidence; the next implementation slice is Task 3 Google result envelope after Owner authorization. Sources: picker SDD §§4.3/5–6/8–9/11; Master MAS-02/03/07/12/17. Earlier dated checkpoints below are historical.
+
+
+## 2026-10-07 - Edition-picker Task 1 contract checkpoint
+
+The Owner authorized Task 1 on 2026-10-07. Contracts/fixtures and narrow compatibility are locally complete; Tasks 2–8 and database changes remain unstarted/unapproved. Source behavior remains picker SDD §§5–7/9/13.2. Current next action is Task 1 diff review; [implementation evidence](implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md) supersedes earlier planning-only status below.
+
+
+## 2026-10-06 - Owner edition picker design extension
+
+Latest Owner display clarification EP-D14: each edition option in the metadata sheet shows its own cover image from its safe URL, title, all authors, and publication date; publisher, ISBN, and language are secondary details. Selection saves the coherent chosen metadata independently and follows the usual inventory Add flow, leaving one chosen cover on the scan card. This supersedes earlier text-only option rows. Owner chose relevance order with returned order preserved and Google attribution/book links. Picker §13.2 now defines Search Books wording and bounded unavailable/ineligible rows; EP-D11/13 scope cuts remain in force.
+
+Latest Owner scope: alternatives are obtained and saved only after an explicit Owner lookup (EP-D13); automatic scan/cache/coalesced paths keep winner/outcome-only persistence and never copy alternatives. New manual edition-number editing before and after Add, numeric overrides, and Store View edition-edit extensions are deferred (EP-D11).
+
+**Draft target; not implemented.** Owner decisions EP-D01..EP-D14 in the [edition-picker SDD](./implementation/phase-9-image-inventory/work-units/owner-edition-picker-sdd.md) extend §§4-6 and §9 for coherent edition identity, selected metadata, and create-only inventory.
+
+Keep one card and one chosen cover, five initial rows/Show all up to ten, an explicit lookup for local/cache/older unfinished cards, independent per-card storage, a 24-hour product retention maximum from source fetch, and cleanup after confirmed Add. Preserve chosen metadata and selling details. Provider edition statements remain coherent source metadata; no new manual number field is introduced.
+
+DOC-3 §5.1 → picker §4.1 retains strong validated-ISBN evidence versus text-only confirmation. Picker §§6/7 preserve coherent provider statements and effective-choice cover handling.
+
+Provider display in picker §13.2 is resolved as returned relevance order with attribution/book links and bounded unavailable/ineligible rows; earlier client sorting/filtering/deduplication is superseded. Automatic enrichment stays local-first. Current review, manual metadata entry, provider policy, create-only Add, and canonical/public governance remain authoritative. Review removal, Open Library, catalogue cleanup, and production reset are deferred. Status: design_ready_pending_owner_approval; no implementation or migration is authorized.
+
+
 > **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
 
 
@@ -161,6 +357,15 @@ Provider-supplied volume/order evidence participates in the conflict check.
 When a provider exposes only opaque series membership rather than a trustworthy
 human series name, BookConnect does not invent that name and suppresses the
 fallback for either series-bearing record.
+
+The planned Phase 9 edition picker distinguishes an automatic suggestion from
+a valid store/session/card-scoped Owner-confirmed choice on resume, including
+before the first selling review. Confirmation comes from server-held authority;
+IDs, selected state or metadata similarity do not prove it. A confirmed choice
+retains one coherent snapshot after alternatives expire. It does not promote
+canonical truth or bypass the required review/selling fields and controlled Add.
+[Picker §§6-7](implementation/phase-9-image-inventory/work-units/owner-edition-picker-sdd.md#6-owner-commands-and-reads)
+own the bounded confirmation read contract and compatibility fences.
 
 ### 5.3 Manual Correction
 

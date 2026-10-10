@@ -1,5 +1,100 @@
 # SDD 01: Data, Canonical Catalogue, Metadata, Aliases, and Duplicates
 
+## 2026-10-09 - Task 8 independent approval and M65-M70 applied
+
+Phase 9 / completed Unit 6G baseline. Task 8's bounded LOCAL checkpoint is
+independently APPROVED; all eight tasks have local implementation/verification
+evidence. [Review provenance](trackers/33-owner-edition-picker-task8-local-verification.md)
+preserves earlier approval provenance and the unavailable historical 152-path
+audit baseline.
+
+**Status:** `task8_independently_approved_m65_m70_applied_runtime_pending`.
+The Owner authorized steps 1-3: approval documentation, live preflight and the
+six unchanged migrations. All M65-M70 are now APPLIED / catalog-verified on
+Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn. [Application ledger](trackers/34-owner-edition-picker-m65-m70-application.md)
+records six live versions, exact source/archive hashes, function/ACL/RLS/index/
+trigger readback, unchanged business counts, recovery and advisor deltas.
+
+No Edge/worker/client deployment, registry/configuration change, provider call,
+browser test, data deletion, staging, commit or push occurred. New alternatives
+retention remains disabled/unverified; existing automatic provider flags remain
+unchanged. Runtime/provider/browser/operational rollout gates stay pending.
+
+Exact next action: Owner review/authorization for compatible development
+Edge/worker/client rollout and provider-gated browser verification (step 4).
+Earlier dated entries below retain their historical NOT_APPLIED status and
+review provenance; this latest entry owns current application status.
+
+## 2026-10-08 - Task 6 confirmation read projection
+
+Picker §§5-7 / EP-AC11/19 reuse existing private selection_id, selected_at and
+selected_by; there is no new persisted field. The Owner selection DTO now
+requires confirmedByOwner in both sources. M70 derives it through M69's valid
+store/session/card/query-current projection; an automatic suggestion is false.
+Strong legacy selected mode remains independent of Owner-confirmed status.
+
+Read projection and selection replay change no stored receipt, selected snapshot,
+review, inventory or version counter. [Dictionary](supporting/data-dictionary.md#2026-10-08---task-6-confirmation-read-contract)
+and [migration/compatibility ledger](supporting/database-current-vs-target.md#2026-10-08---task-6-m70-local-confirmation-correction)
+own exact fields, verified live absence, coordinated contracts and rollback
+boundaries. M65-M69 are unchanged; M65-M70 remain NOT_APPLIED.
+
+## 2026-10-08 - Edition-picker Task 5 local completion
+
+Picker §§5-8 and Unit 7A §§5-11 now resolve edition_option through the scoped private state selection_id at the existing metadata revision. The saved title/all authors/language/script must match the coherent snapshot; the public Save boundary admits no metadata blob. Provider ISBNs, publisher/date, description, cover, edition statement, volume and format materialize from that one selected snapshot. Controlled current-suggestion selection preserves eligible original canonical references; a provider option has nullable canonical references. Existing manual/original selected modes retain their contract, with text-only automatic/local suggestions requiring controlled confirmation or manual entry.
+
+M69 uses the existing table only: clearing resets options, source lookup/attempt/fetch/deadline and pending request identity, preserving selection_id/selected_option_snapshot/selected_source/selected_source_id/selected_at/selected_by. Inventory lineage and a version containing the saved selection ID/metadata revision remain durable. No table/column/index/RLS change, catalogue promotion, shared merge/increment or option history is added. [Task 5 evidence](trackers/02-implementation-and-verification.md#2026-10-08---edition-picker-task-5-local-completion) proves private row/selling-field fidelity, canonical compatibility and two same-book cards in one store/session. M65-M69 remain NOT_APPLIED; earlier checkpoints are historical.
+
+## 2026-10-08 - Task 4 normalized completion and failure replay corrections
+
+Under picker §§4.1-4.3/5/9 and Master MAS-02/17, M68 now validates the pinned normalized metadata contract on every non-null eligible/ineligible row before suitability. Bounds match TypeScript UTF-16 lengths; versions, timezone-bearing fetchedAt and checksummed/coherent ISBN10/13 fields are required. An exact validated ISBN may satisfy eligibility when the supplied query language is und, while contradictory supplied clues remain rejected.
+
+M68 adds one nullable private failure_receipt JSONB (object <=1024 bytes) to phase9_candidate_edition_state. It records only the latest failure's claim/request identity hashes and bounded arguments, enabling exact replay after lease release without a provider lookup. Existing job status is authoritative. Direct client access, selected metadata/selling authority and alternative storage policy are unchanged. This supersedes the earlier no-new-column description. M65-M67 are unchanged; M65-M68 are NOT_APPLIED. [Correction evidence](trackers/02-implementation-and-verification.md#2026-10-08---edition-picker-task-4-review-corrections) and [dictionary](supporting/data-dictionary.md#2026-10-08---task-4-private-failure-receipt) own exact fields/proof. Task 4 awaits correction review; Tasks 5-8 remain unstarted.
+## 2026-10-07 - Task 4 private result completion
+
+Picker §§4.3/5/8-9 is implemented locally by M68 using the existing M65 state, lookup/attempt/reservation/provider-call tables and job authority. Completion increments options_version once, stores bounded options and original source/deadline provenance, and atomically resolves the explicit operation. Recovery/failure return slim receipts. Selection, candidate metadata/review authority and selling fields remain preserved. No new table/column, canonical promotion, automatic options cache or cross-card copy is added.
+
+Fresh proof: 34 completion/security plus 6 worker-to-SQL and 14 automatic structural cases PASS. M65-M67 are unchanged; M65-M68 are NOT_APPLIED. [Migration ledger](supporting/database-current-vs-target.md#2026-10-07---task-4-m68-local-migration-readback) and [verification](trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-4-local-completion) distinguish disposable readback from live application. Task 4 is pending review; Tasks 5-8 remain unstarted. Earlier checkpoints are historical.
+
+## 2026-10-07 - Edition-picker Task 2 review corrections
+
+The Owner-authorized corrections restore picker §4.1 / DOC-3 §5.1 / DOC-4 §8: local reuse validates the complete Owner-safe metadata, a unique coherent exact text match remains a medium suggestion requiring confirmation, and ambiguous matches remain unresolved. M65/M67 are revised locally only; M65–M67 are NOT_APPLIED. The existing gateway, jobs, private-state permissions, selling fields and Add fence remain in force. No product scope or new migration was added.
+
+Current authority, corrected handoff and verification are recorded in [the implementation evidence](trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-2-review-corrections) and DOC-13/TRACKER. Earlier checkpoints are historical.
+
+## 2026-10-07 - Edition-picker Task 2 local completion
+
+Task 2 is locally complete: private per-card state, controlled read/search/select, version/expiry/ownership guards, coherent local ISBN resolution, lookup-scoped attempt history, and explicit-operation admission. Task 1 remains complete. The Owner's “ok proceed” authorized local M65–M67 creation and disposable tests; these files exist locally and are NOT_APPLIED. No live database/Storage write, deployment, staging, commit, or push occurred.
+
+Fresh proof: 34 disposable-database tests PASS; 4 affected Owner Jest suites / 303 tests PASS; strict Owner ingestion graph type check PASS. Real independent-connection races, provider-retention permission, worker execution/completion, Add/cleanup integration, client/UI/browser and rollout proof remain Tasks 3–8. No full-feature acceptance is claimed.
+
+Current work unit: Task 2 checkpoint review. Exact next authorized action: review the Task 2 diff/evidence; the next implementation slice is Task 3 Google result envelope after Owner authorization. Sources: picker SDD §§4.3/5–6/8–9/11; Master MAS-02/03/07/12/17. Earlier dated checkpoints below are historical.
+
+
+## 2026-10-07 - Edition-picker Task 2 gateway/preflight checkpoint
+
+Task 1 remains locally complete. Task 2 code/read-only preflight is now authorized: the strict authenticated Owner gateway and HTTP routing pass 303 affected Jest tests and a strict server type check. Database storage/commands are not implemented; local M65–M67 migration-file creation is awaiting the separate Owner approval required by AGENTS. No SQL/database/Storage/deployment/Git publication occurred. Tasks 3–8 remain pending. Current authority/status comes from DOC-13 and TRACKER; earlier checkpoints below are historical.
+
+## 2026-10-07 - Edition-picker Task 1 contract checkpoint
+
+The Owner authorized Task 1 on 2026-10-07. Contracts/fixtures and narrow compatibility are locally complete; Tasks 2–8 and database changes remain unstarted/unapproved. Source behavior remains picker SDD §§5–7/9/13.2. Current next action is Task 1 diff review; [implementation evidence](trackers/02-implementation-and-verification.md) supersedes earlier planning-only status below.
+
+
+## 2026-10-06 - Owner edition picker draft extension
+
+Latest Owner display clarification EP-D14: each edition option in the metadata sheet shows its own cover image from its safe URL, title, all authors, and publication date; publisher, ISBN, and language are secondary details. Selection saves the coherent chosen metadata independently and follows the usual inventory Add flow, leaving one chosen cover on the scan card. This supersedes earlier text-only option rows. Owner chose relevance order with returned order preserved and Google attribution/book links. Picker §13.2 now defines Search Books wording and bounded unavailable/ineligible rows; EP-D11/13 scope cuts remain in force.
+
+Latest Owner scope: alternatives are obtained and saved only after an explicit Owner lookup (EP-D13); automatic scan/cache/coalesced paths keep winner/outcome-only persistence and never copy alternatives. New manual edition-number editing before and after Add, numeric overrides, and Store View edition-edit extensions are deferred (EP-D11).
+
+The [edition-picker SDD](./work-units/owner-edition-picker-sdd.md) consolidates EP-D01..EP-D14 and extends this domain's §§2-5; existing automatic snapshots remain distinct from the current Owner choice.
+
+Keep one card and one chosen cover, five initial rows/Show all up to ten, an explicit lookup for local/cache/older unfinished cards, independent per-card storage, a 24-hour product retention maximum from source fetch, and cleanup after confirmed Add. Preserve chosen metadata and selling details. Provider edition statements remain coherent source metadata; no new manual number field is introduced.
+
+Per-record strong/medium identity rules remain under picker §4.1. Picker §§5/6 keeps expiring results separate from selected provenance, using existing metadata authority versions and coherent provider edition statements. No canonical overwrite or number-specific schema extension.
+
+Status: design_ready_pending_owner_approval. The relevance-order decision resolves provider display §13.2; written-SDD and execution-plan approval still precede implementation. Historical implemented behavior below remains baseline evidence; no runtime or migration implementation is added.
+
+
 **Status:** `approved_baseline`
 **Version:** 1.0
 **Date:** 2026-07-19

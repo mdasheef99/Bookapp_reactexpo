@@ -1,3 +1,5 @@
+import type { StoredEditionRow, OptionsRetentionEvidence } from '../contracts/ownerEditionPicker';
+import type { MetadataNormalizedOutcome } from './providerAdapter';
 import { MetadataEdition } from '../contracts/metadata';
 import { MetadataProviderRole, NormalizedProviderOutcome } from './routing';
 import { MetadataQueryIdentity, MetadataLookupStrategy } from './queryIdentity';
@@ -61,4 +63,14 @@ export type MetadataReuseLineage = Readonly<{
   leaderLookupId: string | null;
   sourceAttemptId: string | null;
   createsProviderCharge: boolean;
+}>;
+
+// Picker SDD §§4.1/5/8/13.2: private explicit-operation result, never a winner cache DTO.
+export type EditionOptionsProviderResult = Readonly<{
+  outcome: MetadataNormalizedOutcome;
+  rows: readonly StoredEditionRow[];
+  fetchedAt: string | null;
+  retentionEvidence: OptionsRetentionEvidence | null;
+  retryable: boolean;
+  providerRequestId: string | null;
 }>;

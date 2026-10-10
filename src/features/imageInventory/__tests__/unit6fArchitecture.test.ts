@@ -12,12 +12,14 @@ describe('Phase 9 Unit 6F privacy, media-purpose, and Unit 7 boundary', () => {
     const production = productionSources.map(({ source }) => source).join('\n');
     const authorizedUnit6gDCommitSurfaces = new Set([
         'commit/inventoryCommitCoordinator.ts',
+        'commit/inventoryCommitBatchExecution.ts',
         'commit/inventoryCommitPolicy.ts',
         'commit/inventoryCommitTypes.ts',
         'commit/useInventoryCommitCoordinator.ts',
         'components/AddCandidateToInventoryAction.tsx',
         'components/BatchInventoryCommitControls.tsx',
         'components/BatchReviewCard.tsx',
+        'components/batchReviewStatus.ts',
         'screens/CaptureProgressScreens.tsx',
     ]);
     const productionOutsideUnit6gDCommit = productionSources
@@ -42,6 +44,8 @@ describe('Phase 9 Unit 6F privacy, media-purpose, and Unit 7 boundary', () => {
     it('routes Close only through the existing Owner Edge action', () => {
         const service = fs.readFileSync(path.join(root, 'api/ownerUxService.ts'), 'utf8');
         expect(service).toContain("invoke('close_scan_session', request, signal)");
-        expect(service).toContain("supabase.functions.invoke('phase9-owner-ingestion'");
+        expect(service).toContain("from './ownerUxTransport'");
+        const transport = fs.readFileSync(path.join(root, 'api/ownerUxTransport.ts'), 'utf8');
+        expect(transport).toContain("supabase.functions.invoke('phase9-owner-ingestion'");
     });
 });

@@ -1,3 +1,4 @@
+jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
 import { QueryClient } from '@tanstack/react-query';
 import {
     clearImageInventoryPrivateQueries,
@@ -20,6 +21,13 @@ function seed(client: QueryClient, key: readonly unknown[], data: unknown) {
 }
 
 describe('Phase 9 NEW 6G-C private query roots join Unit 6 identity cleanup', () => {
+    const clients: QueryClient[] = [];
+    const createClient = () => {
+        const client = new QueryClient();
+        clients.push(client);
+        return client;
+    };
+    afterEach(() => { clients.splice(0).forEach(client => client.clear()); });
     beforeEach(() => {
         resetImageInventoryIdentityForTests(identity);
     });
@@ -34,7 +42,7 @@ describe('Phase 9 NEW 6G-C private query roots join Unit 6 identity cleanup', ()
     });
 
     it('removes new 6G roots during logout/account/store identity transitions', async () => {
-        const client = new QueryClient();
+        const client = createClient();
         const sessionKey = seed(
             client,
             ownerBatchReviewKeys.sessionV3(identity, sessionId),
@@ -51,7 +59,7 @@ describe('Phase 9 NEW 6G-C private query roots join Unit 6 identity cleanup', ()
     });
 
     it('clears prior-identity 6G state before the next owner/store can query', async () => {
-        const client = new QueryClient();
+        const client = createClient();
         const reviewKey = seed(
             client,
             ownerBatchReviewKeys.batchReview(identity, sessionId),
@@ -63,7 +71,7 @@ describe('Phase 9 NEW 6G-C private query roots join Unit 6 identity cleanup', ()
     });
 
     it('keeps no cross-session stale review leakage through the shared root', async () => {
-        const client = new QueryClient();
+        const client = createClient();
         seed(client, ownerBatchReviewKeys.batchReview(identity, sessionId), { stale: true });
         await coordinateImageInventoryIdentity({ userId: 'owner-1', storeId: 'store-2' }, client);
         expect(client.getQueryData(ownerBatchReviewKeys.batchReview(
@@ -74,7 +82,7 @@ describe('Phase 9 NEW 6G-C private query roots join Unit 6 identity cleanup', ()
     });
 
     it('synchronizes only an authoritative removal so removed candidates leave active review', async () => {
-        const client = new QueryClient();
+        const client = createClient();
         const invalidateSpy = jest.spyOn(client, 'invalidateQueries')
             .mockReturnValue(Promise.resolve() as never);
         await coordinateImageInventoryIdentity(identity, client);

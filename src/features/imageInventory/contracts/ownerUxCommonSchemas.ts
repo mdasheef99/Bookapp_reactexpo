@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { safeTextSchema } from './ownerUxValidation';
 
+export const OWNER_UX_CONTRACT_VERSION = 'phase9-owner-ux-v1' as const;
 export const uuidSchema = z.string().uuid();
 export const versionSchema = z.number().int().positive().safe();
 export const countSchema = z.number().int().nonnegative().safe();

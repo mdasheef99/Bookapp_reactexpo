@@ -1,3 +1,4 @@
+jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Alert, FlatList } from 'react-native';
 import { OwnerUxClientError } from '../api/ownerUxService';
@@ -112,6 +113,17 @@ jest.mock('../queries/ownerUxReviewQueries', () => ({
         isPending: false,
     }),
 }));
+jest.mock('../queries/ownerEditionPickerQueries', () => ({
+    useOwnerEditionChoices: () => ({ data: undefined, isLoading: false, error: null }),
+    useOwnerEditionPicker: () => ({
+        choices: { data: undefined, isLoading: false, error: null, refetch: jest.fn() },
+        selectEdition: {}, requestOptions: {}, selectionPending: false, lookupPending: false,
+        isCommandActive: () => false, retrySelection: jest.fn(), retryLookup: jest.fn(),
+    }),
+}));
+jest.mock('../commit/useInventoryCommitCoordinator', () => ({ useInventoryCommitCoordinator: () => ({
+  claimSlot: jest.fn(() => 'existing-slot'), releaseSlot: jest.fn(), isCommandActive: jest.fn(() => false),
+}) }));
 jest.mock('../queries/ownerCorrectionQueries', () => ({
     useCorrectionQueryClient: () => ({ invalidateQueries: jest.fn(), setQueryData: jest.fn() }),
     useMarkCandidateFalse: () => ({ mutateAsync: jest.fn(), isPending: false }),

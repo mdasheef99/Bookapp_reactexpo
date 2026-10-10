@@ -1,3 +1,4 @@
+import { recordConfirmedCandidateOutcome } from './ownerCandidateAuthority';
 import type { QueryClient } from '@tanstack/react-query';
 import { STORE_VIEW_CONTRACT_VERSION } from '@/features/storeView/contracts/storeViewContracts';
 import type { OwnerCandidateCommitResult } from '../contracts/ownerUxContracts';
@@ -28,6 +29,7 @@ export async function synchronizeInventoryCommitSuccess(
     // Exact candidate roots remain independent; shared session/inventory roots
     // are invalidated once per synchronization call (once for a bulk run).
     for (const result of accepted) {
+        await recordConfirmedCandidateOutcome(client, identity, result);
         await client.invalidateQueries({
             queryKey: imageInventoryKeys.candidate(
                 identity, sessionId, result.candidateId,

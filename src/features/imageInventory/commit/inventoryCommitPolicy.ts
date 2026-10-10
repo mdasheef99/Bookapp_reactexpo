@@ -100,7 +100,7 @@ export function classifyFailure(
     error: unknown,
 ) {
     const code = error instanceof OwnerUxClientError ? error.code : undefined;
-    if (stage === 'commit' && code === 'P9_INTERNAL_ERROR') {
+    if (stage === 'commit' && (!code || code === 'P9_INTERNAL_ERROR')) {
         return { candidateId, status: 'still_pending' as const, stage, code };
     }
     if (code && conflictCodes.has(code)) {
@@ -129,4 +129,19 @@ export function aggregate(command: FrozenAddAllCommand): AddAllResult {
         stillPending: count('still_pending'),
         busy: count('busy'),
     };
+}
+
+/** Picker §7 / Unit 6G §12: reread cannot substitute another server-held edition. */
+export function canonicalMatchesControlledChoice(
+    detail: OwnerCandidateDetail, draft: OwnerCandidateReview,
+): boolean {
+    if (draft.metadataChoice.mode !== 'edition_option') return true;
+    const saved = detail.review.value;
+    return saved?.metadataChoice.mode === 'edition_option'
+        && saved.metadataChoice.selectionId === draft.metadataChoice.selectionId
+        && detail.metadata.selectionId === draft.metadataChoice.selectionId
+        && saved.originalTitle === draft.originalTitle
+        && JSON.stringify(saved.authors) === JSON.stringify(draft.authors)
+        && saved.originalLanguage === draft.originalLanguage
+        && saved.script === draft.script;
 }

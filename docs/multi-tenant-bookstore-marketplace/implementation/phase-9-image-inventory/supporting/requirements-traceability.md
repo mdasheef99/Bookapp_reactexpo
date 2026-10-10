@@ -1,5 +1,303 @@
 # Phase 9 Requirements Traceability
 
+## 2026-10-09 - Task 8 independent approval and M65-M70 applied
+
+Phase 9 / completed Unit 6G baseline. Task 8's bounded LOCAL checkpoint is
+independently APPROVED; all eight tasks have local implementation/verification
+evidence. [Review provenance](../trackers/33-owner-edition-picker-task8-local-verification.md)
+preserves earlier approval provenance and the unavailable historical 152-path
+audit baseline.
+
+**Status:** `task8_independently_approved_m65_m70_applied_runtime_pending`.
+The Owner authorized steps 1-3: approval documentation, live preflight and the
+six unchanged migrations. All M65-M70 are now APPLIED / catalog-verified on
+Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn. [Application ledger](../trackers/34-owner-edition-picker-m65-m70-application.md)
+records six live versions, exact source/archive hashes, function/ACL/RLS/index/
+trigger readback, unchanged business counts, recovery and advisor deltas.
+
+No Edge/worker/client deployment, registry/configuration change, provider call,
+browser test, data deletion, staging, commit or push occurred. New alternatives
+retention remains disabled/unverified; existing automatic provider flags remain
+unchanged. Runtime/provider/browser/operational rollout gates stay pending.
+
+Exact next action: Owner review/authorization for compatible development
+Edge/worker/client rollout and provider-gated browser verification (step 4).
+Earlier dated entries below retain their historical NOT_APPLIED status and
+review provenance; this latest entry owns current application status.
+
+## 2026-10-09 - Task 8 local verification review checkpoint
+
+Phase 9 / completed Unit 6G baseline; Tasks 1-7 locally implemented.
+Task 6 and Task 7's bounded corrections retain independent APPROVED provenance.
+**Status:** `task8_locally_verified_pending_independent_review`.
+**Active work unit:** Task 8 LOCAL verification review checkpoint.
+The Owner supplied the previously pending local authorization.
+[Task 8 evidence](../trackers/33-owner-edition-picker-task8-local-verification.md) records 17 native PostgreSQL checks /
+11 lock overlaps, exact Task 7 23 suites / 349 tests, provider/worker/contract
+13 suites / 365 tests, 187 scoped SQL cases, build / 14 structural cases,
+strict types, teardown and the 19-ACTIVE-ID evidence matrix.
+Mocked UI requests, fixture SQL and real native locks are labelled separately.
+
+**Exact next authorized action:** independent read-only review of Task 8's
+local test, harness and verification-documentation diff. No Task 8 independent
+approval or full operational completion is claimed. Remaining browser/device,
+configured-provider permission, live migration/runtime, security/cleanup and
+lookup/UI disablement/rollback/rollout gates are separately authorized.
+M65-M70 remain unchanged / CREATED_LOCAL / NOT_APPLIED to the shared service;
+production retention stays disabled. Only disposable local database/cluster
+mutations occurred. No shared database/Storage/provider/deployed-worker mutation,
+staging, commit, push or deployment occurred. No product requirement changed.
+Earlier dated entries below retain their historical scope and review provenance.
+
+The [19-row acceptance matrix](../trackers/33-owner-edition-picker-task8-local-verification.md#fresh-local-acceptance-matrix)
+maps every ACTIVE EP-AC to its owning picker section, concrete suite, actual
+boundary/migration stack, fresh local result and residual operational portion.
+EP-AC17 remains deferred. No new behavior, source requirement or acceptance ID.
+
+## 2026-10-09 - Task 7 correction review approved
+
+Phase 9 / completed Unit 6G baseline; Task 6 independently APPROVED.
+**Status:** task7_corrections_independently_approved_task8_authorization_pending.
+The Owner supplied an independent read-only APPROVED verdict for the bounded
+Task 7 corrections: matched-details preserves edition_option/selection reference;
+detected-details resets replacement identity confirmations while preserving
+selling values and ordinary metadata-only manual switching.
+
+[Independent correction-review evidence](../trackers/32-owner-edition-picker-task7-ui-evidence.md#2026-10-09---task-7-correction-review-approved) records the independently
+rerun 23 suites / 349 tests, strict TypeScript, continuity and diff checks.
+Save assertions capture outgoing mocked-service requests, not successful server
+persistence. Browser/device/provider and independent-connection PostgreSQL
+proof remain Task 8 gates.
+
+Exact next action: separate Owner authorization for Task 8 local integrated
+acceptance proof and independent-connection PostgreSQL checks. Task 8 is
+unstarted. Live migration/runtime/browser/provider enablement and Git
+publication remain separately authorized. M65-M70 remain byte-preserved /
+NOT_APPLIED; production retention is disabled. This session changes handoff
+documentation only; product tests are not rerun. No database/Storage/provider
+mutation, staging, commit, push, deployment or application occurred.
+Earlier dated entries below retain their historical scope and evidence.
+
+## 2026-10-09 - Task 7 bounded review corrections
+
+Phase 9 / completed Unit 6G baseline; Task 6 independently APPROVED.
+The independent Task 7 review returned CHANGES_REQUIRED (two P2 findings);
+the Owner explicitly authorized these bounded local corrections.
+**Status:** task7_corrections_locally_verified_pending_review.
+The full-review matched-details control preserves an existing edition_option
+choice; detected-details replacement resets title/author confirmations to the
+replacement identity, while metadata-only manual switching preserves them.
+Existing picker §§6-7 / EP-AC19, Review SDD §5 and Master MAS-18 own the fixes;
+no requirement, server authority, schema or acceptance criterion is added.
+Fresh recorded Task 7 Jest gate: 23 suites / 349 tests PASS, exit 0.
+Exact next authorized action: independent read-only review of the two bounded
+corrections and their regression evidence. Correction approval is not claimed.
+Task 8 remains unstarted. M65-M70 remain byte-preserved / NOT_APPLIED; production
+provider retention stays disabled. No database/Storage/provider mutation,
+staging, commit, push, deployment or migration application occurred.
+Earlier dated entries below retain their historical evidence.
+
+
+## 2026-10-09 - Task 7 local UI traceability
+
+**Status:** `task7_locally_implemented_verified_pending_independent_review`.
+
+No requirement or acceptance ID is added. DOC-3 §§5.2/6, DOC-4 §§9-11 and DOC-8
+§5 → picker §§3/6-7/13.2 and Unit 6G §§11-14 own the existing display/selection
+behavior. Local Task 7 proof is recorded in the [review evidence](../trackers/32-owner-edition-picker-task7-ui-evidence.md).
+
+| Existing acceptance | Fresh local Task 7 proof and limit |
+| --- | --- |
+| EP-AC02/03/04 | First five/Show all up to ten preserve original positions/order/duplicates; own cover/failed placeholder, all authors/partial date/secondary fields, attribution/validated link, disabled and unavailable rows. No fabricated fields. Mocked host focus/activation and accessibility states; browser/device/large-text remains Task 8. |
+| EP-AC06/07/08/15 | Explicit Search Books, fresh-empty reuse, no lookup on mount/open/reopen/expiry/Show all, pending internal polling, failure/read retry, expiry preserves held choice and manual fallback. |
+| EP-AC09/10/11/13/18/19 | Real compact/full callers use Task 6 hooks and existing slot; server acceptance precedes draft adoption; price/quantity/shelf and held-choice resume survive. Post-scan Add all carries scoped confirmation; stale cached rows cannot replace current metadata. Existing query/contracts/commit/coordinator gates rerun. Real independent-connection races are unrun. |
+
+23 Jest suites / 345 tests and strict TypeScript PASS, exit 0. Task 7 is locally
+implemented/verified pending independent read-only review; this is self-verification,
+not full operational acceptance. M65-M70 are unchanged and NOT_APPLIED. No backend,
+worker, SQL, schema or provider-policy change; Task 8 is unstarted. Earlier entries
+are historical.
+
+## 2026-10-08 - Task 6 confirmation correction local completion
+
+No requirement/acceptance IDs are added. Root DOC-3 §§5.2/6, DOC-4 §§9-11 and
+DOC-8 §5 → picker §§6-7/9, EP-AC11/19, MAS-02/03/05/15/17 and Unit 6G §§11-14
+own the required current-suggestion/no-review resume correction.
+
+| Existing acceptance | Local correction proof |
+| --- | --- |
+| EP-AC11/19 | Strict server confirmation; full/compact fresh resume before review and after expiry; coherent script and title/author confirmations; actual Save/Add preserves edition and selling fields. |
+| EP-AC09/10/18 | Required strict boolean, forged request rejection, scope/version fences, obsolete receipt rejection even without reread, nullable review version, no public owner IDs. |
+| EP-AC05/13/15/16 | Strong selected/manual compatibility, no manufactured readiness, selected snapshot survives expiry/cleanup, per-card isolation and true pre-M70 receipt preservation. |
+
+[Exact gates and scope](../trackers/02-implementation-and-verification.md#2026-10-08---task-6-confirmation-correction-local-completion)
+record Task 6 locally complete pending review. EP-AC12 real connection races,
+Task 7 display and Task 8 browser/provider/rollout remain pending. M65-M70 are
+NOT_APPLIED; earlier checkpoints remain historical.
+
+## 2026-10-08 - Independent Task 6 review and bounded corrections
+
+Phase 9 / completed Unit 6G baseline; status remains
+`task6_client_checkpoint_contract_gap`. Independent review confirmed and
+locally corrected two P2 client defects: coherent null/different-script resume
+and release of the uncertainty guard after authoritative single/bulk Add replay
+rejection. Existing DOC-3 §5.2, DOC-4 §11, DOC-8 §5, picker §§6-7 /
+EP-AC11/19 and Unit 6G §§11-14 own these corrections; no requirement is added.
+
+[Review and verification evidence](../trackers/02-implementation-and-verification.md#2026-10-08---independent-task-6-review-and-bounded-client-corrections)
+records RED/GREEN and final gate readback. The original checkpoint required
+changes; correction acceptance is local only. Overall Task 6 remains INCOMPLETE
+because current_suggestion/no-review fresh resume lacks a server confirmation
+discriminator. Exact next action: Owner review of the corrected checkpoint and
+separate authorization of the bounded server/strict-DTO correction. No migration
+creation/edit/application, external mutation, Task 7 UI, Task 8 live/race work
+or Git publication occurred. M65-M69 hashes match and remain NOT_APPLIED.
+Earlier entries below are historical.
+
+
+## 2026-10-08 - Task 6 client review checkpoint and confirmation gap
+
+Existing root DOC-3 §§5.2/6, DOC-4 §§9-11 and DOC-8 §5 govern picker
+§§3/6-7 and Unit 6G §§11-14. No product decision or acceptance ID is added.
+The Task 6 client uses the authenticated Owner Edge and strict Task 1 DTOs,
+keeps corresponding counters within identity/session/card scope, preserves
+unsaved full/compact selling fields, and shares the existing Save/Add slot.
+Single/Add all reconcile uncertain Add using the original command before a new
+draft can supersede it. Generic/conflict reads do not adopt another edition.
+Lookup and read/mount/expiry are separate actions; only explicit lookup writes
+request alternatives.
+
+The no-review current_suggestion resume case remains a required contract gap.
+No Owner confirmation is inferred from a selected state, opaque UUID, non-null
+selection, source tag or metadata similarity. Existing strong selected/manual
+behavior remains compatible. Task 6 is incomplete; Task 7 UI and Task 8
+browser/live/independent-connection proof are pending.
+
+| Existing acceptance / source | Task 6 local client proof |
+| --- | --- |
+| Picker §§3/6-7; EP-AC09/10/11/18 | Strict authenticated service; independent candidate/metadata/review and generation/options fences; slim replay; latest-draft coherent adoption; private scoped keys and lifecycle cleanup. |
+| Unit 6G §§11-14; EP-AC13/14/20 | Shared selection/Save/Add slot; single/Add all exact saved choice; original-command reconciliation after uncertain Add; old Save/read/replay protection including detail, batch and candidate pages. |
+| EP-AC05/19 | Explicit current-suggestion command serializes edition_option, legacy strong selected/manual compatible; option and matching saved-review resumes pass. Required current-suggestion/no-review resume remains GAP. |
+| EP-AC07/15/16 | Repeated pending lookup shares identity; empty/expired mount never enqueues lookup; expiry and confirmed commit/removal reject late alternatives only for the affected card. |
+
+Fixture proof does not establish Task 7 display, EP-AC12 real connection races or live acceptance. [Exact results and gap proposal](../trackers/02-implementation-and-verification.md#2026-10-08---task-6-client-review-checkpoint-and-confirmation-gap). No new IDs or migration/schema authority. Earlier evidence is historical.
+
+
+## 2026-10-08 - Task 5 independent-review correction
+
+Existing DOC-3 §§5.2/6, DOC-4 §§9-11, DOC-8 §5 → picker §§5-7/9 and EP-AC10/11/13 → corrected M69 and two added no-review SQL cases. Projection shows the chosen snapshot/no-cover state after alternatives expire; required review still blocks Add until first coherent Save. No new requirement IDs; 32 focused/54 nearest SQL cases pass.
+
+[Correction evidence](../trackers/02-implementation-and-verification.md#2026-10-08---task-5-independent-review-correction). Locally verified; independent correction review is pending. Tasks 6-8 remain unstarted and M65-M69 remain NOT_APPLIED. Earlier checkpoints are historical.
+
+## 2026-10-08 - Edition-picker Task 5 local completion
+
+No requirement ID or product acceptance is added. Root DOC-3 §§5.2/6/10, DOC-4 §§8-11/13 and DOC-8 §5 → picker §§5-9 → Unit 7A §§5-11 → local M69/HTTP boundary and the legitimate phase9EditionPickerCommit.integration.test.mjs suite.
+
+| Existing acceptance | Backend proof at Task 5 checkpoint |
+| --- | --- |
+| EP-AC05/19 | Text-only legacy Save cannot manufacture confirmation; controlled current-suggestion/manual paths and unchanged strong provider/local-canonical selected modes remain valid. |
+| EP-AC10/11/18 | Saved selection ID/current metadata revision and coherent title/authors/language/script are checked; selling fields remain unchanged; detail/compact attention/readiness use the chosen edition; private grants remain denied. |
+| EP-AC13/14/20 | Existing single/Add all per-card Add materializes exact source fields into one private row; pre-insert no-old-cover fallback, atomic rollback and one-insert lost-response replay. |
+| EP-AC15 | Immediate read/select deadline; selected/selling persistence; candidate/session expiry and bounded scheduled physical clearing; failure/retry; accurate due backlog; slim receipts after expiry/Add. |
+| EP-AC16 | Two explicitly requested same-book cards in one store/session own separate snapshots/results; adding the first preserves the second; both yield separate private inventory identities. |
+
+Full Task 5 SQL is 30/30; the final combined existing/new SQL gate is 194/194; affected Jest is 406/406; strict graph types/build and 14 structural cases pass. [Exact evidence/limits](../trackers/02-implementation-and-verification.md#2026-10-08---edition-picker-task-5-local-completion). Real simultaneous selections/selection-versus-Add (EP-AC12) stay Task 8; client unsaved-draft/UI portions remain Tasks 6-7. EP-AC17 remains deferred; no full-feature or live claim. M65-M69 are NOT_APPLIED; earlier checkpoints are historical.
+
+## 2026-10-08 - Timestamp boundary regression evidence
+
+No requirement or product scope is added. Existing MAS-02, picker §§5/9 and SQL proposal §3.6 require normalized validation for every persisted non-null option. The existing correction suite now proves six era/ordinal/leap-second denials and four valid ISO UTC/offset controls across eligible/ineligible rows. Full completion/worker SQL is 87/87, with 264 Jest, 14 structural, strict graph/bootstrap types and worker build PASS.
+
+[Exact evidence](../trackers/02-implementation-and-verification.md#2026-10-08---task-4-timestamp-self-review-correction) records RED/GREEN, limitations and preserved migration authority. Owner-requested self-review is complete; no independent correction approval is claimed. Tasks 5-8 remain unstarted; M65-M68 remain NOT_APPLIED. Earlier checkpoints are historical.
+
+
+## 2026-10-08 - Task 4 review-correction trace
+
+No requirement IDs or product acceptance criteria are added. Picker §§4.1-4.3/5/9, SQL proposal §§3.6/4 and Master MAS-02/03/12/17 govern these corrections: EP-AC02/05 eligibility and normalized ISBN evidence; EP-AC07 replay and separately billed retries; EP-AC09 stale authority; EP-AC18 private authority and EP-AC20 crash/replay recovery. Completion now admits compatible exact ISBN with und and validates all non-null rows before suitability. Deterministic contract rejection is nonretryable after committed recovery. Bounded private failure evidence permits exact replay after lease release without copying metadata or introducing a status mirror.
+
+Fresh proof: 264/264 Jest, 77/77 completion/worker SQL, 14/14 structural and 48/48 existing picker SQL; strict graph/bootstrap types and worker build PASS. [Exact scope/security/RED-GREEN evidence](../trackers/02-implementation-and-verification.md#2026-10-08---edition-picker-task-4-review-corrections). This establishes corrected local Task 4 only; it does not close cross-layer client/UI/Add/retention/real-race acceptance. Correction review remains pending, Tasks 5-8 remain unstarted and M65-M68 remain NOT_APPLIED. Earlier checkpoints are historical.
+## 2026-10-07 - Task 4 local worker and SQL proof
+
+Existing picker §§4.1-4.3/5/8-9 and Master MAS-02/03/12/17 remain the source; no requirement IDs/acceptance criteria are added. Task 4 proves worker/storage portions of EP-AC08 (automatic separation), EP-AC16 (independent explicit cards) and EP-AC18 (permitted retention), plus §9 completion/retry/replay/fencing. Fifteen-job/three-active/immediate-refill cases remain covered.
+
+Fresh proof: 11 scoped Jest suites / 259 tests, strict graph/bootstrap types, required build/14 automatic structural DB cases and 34 completion/security + 6 worker-to-SQL DB cases PASS. RPC tests validate slim receipts; real SQL tests prove atomic persistence, empty reuse, expiry/refresh, lost committed response recovery, 429/failed-persistence separately billed retries, disabled provider, stale authority, selection/selling preservation and permission denial. M65-M67 hashes are unchanged; M68 is CREATED_LOCAL / NOT_APPLIED.
+
+[Exact verification/security mapping](../trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-4-local-completion) records limits. Task 4 is locally verified pending review; the requested reviewer returned no verdict at the usage limit. Add/cleanup, client/UI, real races/live permission/rollout remain Tasks 5-8; EP-AC17 is deferred. Production has no verifier; no live mutation/provider/deployment/Git publication occurred. Earlier entries are historical.
+
+## 2026-10-07 - Task 4 partial runtime trace
+
+Sources: picker §§4.1-4.3/5/8-9; DOC-4 §§8/12-13; Master MAS-02/03/12/17. The new worker/recovery fixture cases map the local runtime portions of EP-AC01/06/07/08/09/15/18/20: bounded 15-job/3-active refill, explicit local/cache bypass, no automatic option capture, separate calls/replay, stale-fence denial, empty result reuse, private completion port and expiry/permission validation.
+
+Evidence is fixture-only for the new SQL port. It does not complete or fully accept any cross-layer EP-AC: actual durable SQL transaction/grants/RLS, query/generation replay against PostgreSQL, real independent connections, provider rights, client/UI, Add/cleanup and operational rollout remain gated. Fresh local proof: 9 affected Jest suites / 237 tests; strict Task 4 types; structural worker build + 14/14 disposable database cases PASS. M65-M67 remain NOT_APPLIED. No requirement IDs were introduced. See [Task 4 implementation evidence](../trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-4-runtime-checkpoint) and the [SQL proposal](../work-units/owner-edition-picker-task4-sql-proposal.md).
+
+## 2026-10-07 - Edition-picker Task 3 review corrections
+
+Existing provider requirements only: picker §§4.1/8/13.2, DOC-3 §5.1, Security §8 and Master MAS-02/15. The new phase9_google_books_edition_options_review.test.ts supplies 15 additional regressions/controls for the provider portions of EP-AC05/18: safely decoded same-ISBN title/author/language conflicts downgrade certainty before eligibility filtering; identical duplicates and unrelated ISBNs preserve valid strong evidence; Expires-only Date/Age bounds retention, rejects malformed/exhausted evidence, preserves unaged and earlier independent deadlines, and denies fresh headers without verified permission.
+
+The new suite first reproduced 9 failures / 6 passing controls. Final proof: four suites / 136 tests PASS, strict types and worker build PASS. The original Task 3 CHANGES_REQUIRED verdict is not promoted to approval; independent correction-only review is the next action. [Detailed evidence](../trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-3-review-corrections).
+
+No new requirement IDs, full acceptance, worker persistence/accounting, Add/cleanup, UI or operational proof are claimed. EP-AC17 remains deferred. Tasks 4–8 remain pending; Task 4 requires separate Owner authorization. M65–M67 remain unchanged/NOT_APPLIED. Earlier checkpoints are historical.
+
+## 2026-10-07 - Edition-picker Task 3 local provider proof
+
+Sources: picker §§3/4.1/5/8/13.2, DOC-3 §5.1, Data §§3–5, Master MAS-02/15 and Security §8. phase9_google_books_edition_options.test.ts maps the provider portions of EP-AC02/04/05/18: one ten-result relevance request, original positions/duplicate IDs/null rows, coherent own metadata/URLs, missing fields, disabled identity/language/volume conflicts, checksum conflicts, strong versus confirmation-required evidence, bounded errors and fail-closed retention. phase9_google_books_adapter.test.ts preserves automatic behavior; phase9_metadata_provider_adapter.test.ts preserves normalized provider contracts. Actual fresh results: 98/98 required cases and 23/23 provider cases; strict graph types/build PASS.
+
+No new requirement IDs or product behavior are introduced. This proof does not complete worker persistence/billing (Task 4), Add/cleanup (Task 5), client/UI (Tasks 6–7), real races/live retention/browser/rollout (Task 8), or the full cross-layer acceptances. EP-AC17 remains deferred. Tasks 1–3 are locally complete; review Task 3 next, and separately authorize Task 4. M65–M67 remain unchanged and NOT_APPLIED. [Detailed evidence](../trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-3-local-completion); earlier checkpoints are historical.
+
+## 2026-10-07 - Edition-picker Task 2 review corrections
+
+The Owner-authorized corrections restore picker §4.1 / DOC-3 §5.1 / DOC-4 §8: local reuse validates the complete Owner-safe metadata, a unique coherent exact text match remains a medium suggestion requiring confirmation, and ambiguous matches remain unresolved. M65/M67 are revised locally only; M65–M67 are NOT_APPLIED. The existing gateway, jobs, private-state permissions, selling fields and Add fence remain in force. No product scope or new migration was added.
+
+Current authority, corrected handoff and verification are recorded in [the implementation evidence](../trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-2-review-corrections) and DOC-13/TRACKER. Earlier checkpoints are historical.
+
+Additional Task 2 proof: EP-AC05/06/18 map to phase9EditionPickerLocalMatch.integration.test.mjs (14 cases): malformed-author/bounds/cover rejection through context and real local completion, coherent ISBN preservation, unique text suggestion with text-only evidence, explicit authenticated confirmation and selling preservation, and ambiguous/incomplete clues. Existing state/fence suites remain required. This is local database evidence, not full acceptance or live concurrency/provider/UI proof. No requirement IDs are added.
+
+## 2026-10-07 - Edition-picker Task 2 local completion
+
+Task 2 is locally complete: private per-card state, controlled read/search/select, version/expiry/ownership guards, coherent local ISBN resolution, lookup-scoped attempt history, and explicit-operation admission. Task 1 remains complete. The Owner's “ok proceed” authorized local M65–M67 creation and disposable tests; these files exist locally and are NOT_APPLIED. No live database/Storage write, deployment, staging, commit, or push occurred.
+
+Fresh proof: 34 disposable-database tests PASS; 4 affected Owner Jest suites / 303 tests PASS; strict Owner ingestion graph type check PASS. Real independent-connection races, provider-retention permission, worker execution/completion, Add/cleanup integration, client/UI/browser and rollout proof remain Tasks 3–8. No full-feature acceptance is claimed.
+
+Current work unit: Task 2 checkpoint review. Exact next authorized action: review the Task 2 diff/evidence; the next implementation slice is Task 3 Google result envelope after Owner authorization. Sources: picker SDD §§4.3/5–6/8–9/11; Master MAS-02/03/07/12/17. Earlier dated checkpoints below are historical.
+
+Task 2 evidence maps to picker §§4.3/5–6/8–9/11 and Master MAS-02/03/07/12/17; Data §§3/5 and Security MED-23/25/28 remain controlling boundaries. EP-AC05: coherent unique ISBN and no arbitrary text winner; EP-AC06/07: old/current cards and repeated/independent logical history; EP-AC09/10/11: lease/query/selection versions, safe command validation and selling preservation; EP-AC15/16: expiry/read/replay and independent choices; EP-AC18: ownership/RLS/ACL/provider-policy/claim denials. These are local database portions only. EP-AC12 real races, EP-AC13/14 Add/cleanup, EP-AC20 crash completion, UI/client unsaved drafts, full Google eligibility and provider-rights proof remain later tasks. No EP-AC is marked fully accepted from this checkpoint.
+
+
+## 2026-10-07 - Edition-picker Task 2 gateway/preflight checkpoint
+
+Task 1 remains locally complete. Task 2 code/read-only preflight is now authorized: the strict authenticated Owner gateway and HTTP routing pass 303 affected Jest tests and a strict server type check. Database storage/commands are not implemented; local M65–M67 migration-file creation is awaiting the separate Owner approval required by AGENTS. No SQL/database/Storage/deployment/Git publication occurred. Tasks 3–8 remain pending. Current authority/status comes from DOC-13 and TRACKER; earlier checkpoints below are historical.
+
+EP-AC10/18 have additional gateway-layer proof: strict authenticated routing, forged request rejection, safe errors, candidate/session/source/option response checks and private-field rejection. Database tenant/session/state/version/expiry checks remain unproved until Task 2 SQL/tests. EP-AC05/06/07/09/11/12/15 and other database/worker/Add/client/UI coverage remains assigned to the eight-task plan. No active acceptance is marked fully satisfied by gateway mocks.
+
+## 2026-10-07 - Edition-picker Task 1 contract checkpoint
+
+The Owner authorized Task 1 on 2026-10-07. Contracts/fixtures and narrow compatibility are locally complete; Tasks 2–8 and database changes remain unstarted/unapproved. Source behavior remains picker SDD §§5–7/9/13.2. Current next action is Task 1 diff review; [implementation evidence](../trackers/02-implementation-and-verification.md) supersedes earlier planning-only status below.
+
+Task 1 proof: strict source/version/ID shapes (EP-AC10); safe public-field/URL rejection and HTTP admission (contract portion of EP-AC18); manual/selected/new-source draft compatibility (contract portion of EP-AC19). No RLS, worker, concurrency, Add, lifecycle or UI acceptance is marked complete.
+
+
+## 2026-10-06 - Owner edition picker traceability
+
+Latest Owner display clarification EP-D14: each edition option in the metadata sheet shows its own cover image from its safe URL, title, all authors, and publication date; publisher, ISBN, and language are secondary details. Selection saves the coherent chosen metadata independently and follows the usual inventory Add flow, leaving one chosen cover on the scan card. This supersedes earlier text-only option rows. Owner chose relevance order with returned order preserved and Google attribution/book links. Picker §13.2 now defines Search Books wording and bounded unavailable/ineligible rows; EP-D11/13 scope cuts remain in force.
+
+Latest Owner scope: alternatives are obtained and saved only after an explicit Owner lookup (EP-D13); automatic scan/cache/coalesced paths keep winner/outcome-only persistence and never copy alternatives. New manual edition-number editing before and after Add, numeric overrides, and Store View edition-edit extensions are deferred (EP-D11).
+
+All references point to the [draft SDD](../work-units/owner-edition-picker-sdd.md). Nineteen acceptance checks remain active planned proof; EP-AC17 is a deferred reservation, not a release gate. No product check is claimed implemented or tested. EP-D03/04/07 and EP-AC03 follow the resolved relevance-order contract in §13.2.
+
+| Decisions / source | Design owner | Acceptance |
+| --- | --- | --- |
+| EP-D02..05,14; DOC-8 §5; DOC-3 §5.1 | SDD §§3-4 and §§5-7 for selected storage/Add | EP-AC02..05,11,13,19 |
+| EP-D06..07,13; DOC-4 §§8,12 | SDD §§4,6 | EP-AC01,06..09 |
+| EP-D08..09; DOC-4 §13 | SDD §§5,8 | EP-AC14..16,20 |
+| EP-D10; DOC-4 §§9,11; Unit 7A §§5,8,9 | SDD §§6-7 | EP-AC10..14,19 |
+| EP-D11: Owner deferral | SDD §§1,6-7,11 | EP-AC17 reserved/deferred; EP-AC19 guards scoped compatibility |
+| Master MAS-02/03/07/12/17; Security §§8-10 | SDD §9 | EP-AC18 |
+| EP-D01,12 | SDD §§1,11-12 | Branch/scope and documentation review |
+
+Operation-scoped attempts, slim replay receipts, coherent selected metadata and effective-choice cover provenance remain traceable through DOC-4 §§8/9/11-13 and Unit 7A. New numeric precedence and automatic-source copying are superseded draft design, not active acceptance.
+
+
+Eight-task execution coverage: AC01→4; AC02→3; AC03→7; AC04→3/7; AC05→3/5; AC06→2/4/7; AC07→2/4/6; AC08→1/4/7; AC09→2/4/6; AC10→2/6; AC11→2/5/6; AC12→2/5/8; AC13→5/6; AC14→5; AC15→2/4/5; AC16→5; AC18→1/2/3/5/8; AC19→1/5/6; AC20→4/5/8. Task 8 integrates proof across all active checks. EP-AC17 stays deferred; no implementation/test completion is claimed.
+
 > **2026-09-13 representative-cover follow-up:** M61 and M62 are live once;
 > bounded verification is complete and post-apply helper/ACL readback passed.
 > The exact selected edition, public cover projection, duplicate behavior, and

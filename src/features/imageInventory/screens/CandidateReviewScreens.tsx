@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
-import { useNavigation } from 'expo-router';
+import { ScrollView, Text, View } from 'react-native';
+import { useInventoryCommitCoordinator } from '../commit/useInventoryCommitCoordinator';
+import { CandidateReviewEditionSheet } from '../components/CandidateReviewEditionSheet';
+import { applyEditionSelection } from '../review/editionSelectionDraft';
+import { useCandidateLeaveGuard } from '../review/useCandidateLeaveGuard';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
@@ -31,6 +34,7 @@ import {
     useOwnerInventoryCandidate,
 } from '../queries/ownerUxQueries';
 import { useOwnerSessionV3 } from '../queries/ownerBatchReviewQueries';
+import { useOwnerEditionChoices } from '../queries/ownerEditionPickerQueries';
 import { useUpdateOwnerCandidateReview } from '../queries/ownerUxReviewQueries';
 import { useOwnerUxOfflineGate } from '../offline/ownerUxOfflineGate';
 
@@ -48,13 +52,17 @@ export function CandidateReview({
     candidateId: string;
 }) {
     const { colors } = useTheme();
-    const navigation = useNavigation();
+    const commandSlot = useInventoryCommitCoordinator(identity, sessionId);
+    const [selectionPending, setSelectionPending] = useState(false);
+    const [addPending, setAddPending] = useState(false);
+    const [editionFence, setEditionFence] = useState(0);
     const { isOffline } = useNetworkStatus();
     const candidateQuery = useOwnerInventoryCandidate(identity, sessionId, candidateId);
+    const editionChoices = useOwnerEditionChoices(identity, sessionId, candidateId);
     // Retained candidate detail stays on its valid v2 contract, while every
     // current Unit 6G session/default dependency uses nullable-safe v3.
     const sessionQuery = useOwnerSessionV3(identity, sessionId);
-    const mutation = useUpdateOwnerCandidateReview(identity, sessionId, candidateId);
+    const mutation = useUpdateOwnerCandidateReview(identity, sessionId, candidateId, commandSlot);
     const [canonicalOverride, setCanonicalOverride] = useState<OwnerCandidateDetail | null>(null);
     const detail = canonicalOverride ?? candidateQuery.data ?? null;
     const [draft, setDraft] = useState<ReviewDraft | null>(null);
@@ -71,12 +79,12 @@ export function CandidateReview({
         return () => { activeScope.current = ''; };
     }, [scopeToken]);
     useEffect(() => {
-        if (!draft && detail && sessionQuery.data) {
-            const next = createReviewDraft(detail, sessionQuery.data.defaults);
+        if (!draft && detail && sessionQuery.data && !editionChoices.isLoading) {
+            const next = createReviewDraft(detail, sessionQuery.data.defaults, editionChoices.data);
             setDraft(next);
             setBaseFingerprint(reviewDraftFingerprint(next));
         }
-    }, [detail, draft, sessionQuery.data]);
+    }, [detail, draft, sessionQuery.data, editionChoices.data, editionChoices.isLoading]);
     const build = useMemo(() => draft ? buildReviewInput(draft) : null, [draft]);
     const dirty = Boolean(
         draft
@@ -109,7 +117,7 @@ export function CandidateReview({
                     changes: candidateConflictChanges(detail, candidateResult.data),
                 });
             } else {
-                const next = createReviewDraft(candidateResult.data, sessionResult.data.defaults);
+                const next = createReviewDraft(candidateResult.data, sessionResult.data.defaults, editionChoices.data);
                 setCanonicalOverride(candidateResult.data);
                 setDraft(next);
                 setBaseFingerprint(reviewDraftFingerprint(next));
@@ -125,6 +133,7 @@ export function CandidateReview({
     }, [
         candidateId,
         candidateQuery.refetch,
+        editionChoices.data,
         detail,
         dirty,
         sessionId,
@@ -137,34 +146,11 @@ export function CandidateReview({
         hasAuthoritativeData: Boolean(candidateQuery.data && sessionQuery.data && !candidateQuery.error && !sessionQuery.error),
         currentAuthorityVerified: candidateQuery.isFetchedAfterMount && sessionQuery.isFetchedAfterMount,
     });
-    useEffect(() => navigation.addListener('beforeRemove', (event: any) => {
-        if (!dirty) return;
-        event.preventDefault();
-        if (mutation.isPending) {
-            Alert.alert(
-                'Save in progress',
-                'Wait for the review save to finish before leaving.',
-                [{ text: 'Stay', style: 'cancel' }],
-            );
-            return;
-        }
-        Alert.alert(
-            'Leave without saving?',
-            'Your unsaved review edits exist only on this screen.',
-            [
-                { text: 'Stay', style: 'cancel' },
-                {
-                    text: 'Leave unsaved',
-                    style: 'destructive',
-                    onPress: () => navigation.dispatch?.(event.data.action),
-                },
-            ],
-        );
-    }), [dirty, mutation.isPending, navigation]);
+    useCandidateLeaveGuard(dirty, mutation.isPending || selectionPending);
 
     const applyCanonical = (canonical: OwnerCandidateDetail) => {
         if (!sessionQuery.data) return;
-        const next = createReviewDraft(canonical, sessionQuery.data.defaults);
+        const next = createReviewDraft(canonical, sessionQuery.data.defaults, editionChoices.data);
         setCanonicalOverride(canonical);
         setDraft(next);
         setBaseFingerprint(reviewDraftFingerprint(next));
@@ -258,7 +244,7 @@ export function CandidateReview({
     if (!draft || !sessionQuery.data || !build) return <CandidateReviewState title="Book review" body="Preparing the review form…" loading />;
     const reviewable = detail.allowedActions.includes('save_review')
         && ['ready', 'needs_review', 'possible_duplicate'].includes(detail.candidateState);
-    const disabled = mutation.isPending
+    const disabled = selectionPending || detail.metadata.revision < editionFence || mutation.isPending
         || Boolean(conflict)
         || Boolean(pendingCommand)
         || Boolean(staleRefreshBase)
@@ -271,7 +257,7 @@ export function CandidateReview({
         setPendingCommand(null);
         pendingCommandRef.current = null;
         setBaseFingerprint(reviewDraftFingerprint(
-            createReviewDraft(currentConflict.latest, sessionQuery.data.defaults),
+            createReviewDraft(currentConflict.latest, sessionQuery.data.defaults, editionChoices.data),
         ));
     };
     return (
@@ -294,7 +280,26 @@ export function CandidateReview({
                         </Text>
                     </GlassCard>
                 )}
-                <ReviewFormFields detail={detail} draft={draft} errors={build.errors} disabled={disabled || !reviewable || isOffline} onChange={(next) => { setDraft(next); setMessage(null); }} />
+                {reviewable ? <CandidateReviewEditionSheet identity={identity} detail={detail}
+                    disabled={disabled || addPending || isOffline} commandSlot={commandSlot}
+                    onPendingChange={setSelectionPending}
+                    onSelection={(canonical, previousRevision) => {
+                        setDraft(current => current ? applyEditionSelection(current, canonical, previousRevision) : current);
+                        setEditionFence(canonical.metadataRevision);
+                        setCanonicalOverride(null);
+                    }}
+                    onManual={(edits) => setDraft(current => current ? { ...current,
+                        metadataMode: 'manual', selectionId: null,
+                        originalFieldConfirmation: {
+                            title: edits.originalTitle !== undefined ? false : current.originalFieldConfirmation.title,
+                            authors: edits.authors !== undefined ? edits.authors.map(() => false) : current.originalFieldConfirmation.authors,
+                        },
+                        ...(edits.originalTitle !== undefined ? { originalTitle: edits.originalTitle } : {}),
+                        ...(edits.authors !== undefined ? { authors: edits.authors } : {}),
+                        ...(edits.originalLanguage !== undefined ? { originalLanguage: edits.originalLanguage } : {}),
+                        ...(edits.script !== undefined ? { script: edits.script ?? '' } : {}),
+                    } : current)} /> : null}
+                <ReviewFormFields detail={detail} draft={draft} errors={build.errors} disabled={disabled || addPending || !reviewable || isOffline} onChange={(next) => { setDraft(next); setMessage(null); }} />
                 <CandidateCorrectionActions
                     identity={identity}
                     detail={detail}
@@ -325,6 +330,7 @@ export function CandidateReview({
                     identity={identity}
                     detail={detail}
                     disabled={disabled}
+                    commandSlot={commandSlot} onPendingChange={setAddPending}
                     hasUnsavedReview={dirty}
                     isOffline={isOffline}
                     refetchCandidate={candidateQuery.refetch}
@@ -333,7 +339,7 @@ export function CandidateReview({
                     title="Save review"
                     loading={mutation.isPending}
                     onPress={save}
-                    disabled={!reviewable || isOffline || !build.success || disabled}
+                    disabled={addPending || !reviewable || isOffline || !build.success || disabled}
                     accessibilityHint="Saves this staged review only. It does not add inventory."
                 />
             </ScrollView>

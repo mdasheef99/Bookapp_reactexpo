@@ -11,6 +11,7 @@ import { createCaptureUuid, createSemanticKey } from '../capture/captureIds';
 import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
 import type { CandidateCommitOutcome } from '../commit/inventoryCommitCoordinator';
+import type { OwnerCandidateCommandSlot } from '../identity/useOwnerCardCommand';
 import type { ImageInventoryIdentity } from '../queries/ownerUxQueries';
 import { useAddOwnerCandidateToInventory } from '../queries/ownerUxReviewQueries';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
@@ -25,6 +26,8 @@ type LegacyAddProps = Readonly<{
     hasUnsavedReview: boolean;
     isOffline: boolean;
     refetchCandidate: () => Promise<unknown>;
+    commandSlot?: OwnerCandidateCommandSlot;
+    onPendingChange?: (pending: boolean) => void;
 }>;
 
 type CoordinatedAddProps = Readonly<{
@@ -95,12 +98,12 @@ function LegacyAddCandidateToInventoryAction({
     disabled,
     hasUnsavedReview,
     isOffline,
-    refetchCandidate,
+    refetchCandidate, commandSlot, onPendingChange,
 }: LegacyAddProps) {
     const { colors } = useTheme();
     const router = useRouter();
     const mutation = useAddOwnerCandidateToInventory(
-        identity, detail.sessionId, detail.candidateId,
+        identity, detail.sessionId, detail.candidateId, commandSlot,
     );
     const [pending, setPending] = useState<AddCandidateToInventoryRequest | null>(null);
     const pendingRef = useRef<AddCandidateToInventoryRequest | null>(null);
@@ -117,6 +120,9 @@ function LegacyAddCandidateToInventoryAction({
         return () => { activeScope.current = ''; };
     }, [scope]);
 
+    useEffect(() => { onPendingChange?.(mutation.isPending || Boolean(pending)); },
+        [mutation.isPending, pending, onPendingChange]);
+    useEffect(() => () => onPendingChange?.(false), [onPendingChange]);
     if (!detail.allowedActions.includes('add_to_inventory')) return null;
 
     const run = async (command: AddCandidateToInventoryRequest) => {

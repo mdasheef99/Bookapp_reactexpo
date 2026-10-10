@@ -60,7 +60,7 @@ const representativeCoverSchema = z.object({
     selectionPolicyVersion: z.literal('p9-representative-cover-v1'),
 }).strict();
 
-const metadataSnapshotSchema = z.object({
+export const metadataSnapshotSchema = z.object({
     title: safeTextSchema(1, 512),
     authors: z.array(safeTextSchema(1, 256)).min(1).max(20),
     language: languageSchema,

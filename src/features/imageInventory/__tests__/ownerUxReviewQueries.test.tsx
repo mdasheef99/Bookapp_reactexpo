@@ -1,3 +1,4 @@
+jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanupAsync, renderHook, waitFor } from '@testing-library/react-native';
 import type { PropsWithChildren } from 'react';

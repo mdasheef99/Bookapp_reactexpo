@@ -7,6 +7,8 @@ import { MetadataProviderAdapter } from '../../supabase/functions/_shared/imageI
 import { ProviderCapabilityDeclaration } from '../../supabase/functions/_shared/imageInventory/metadata/contracts';
 import { createClient } from '@supabase/supabase-js';
 import { handlePhase9MetadataWorker } from './index';
+import { createMetadataEditionOptionsBoundary }
+  from '../../supabase/functions/_shared/imageInventory/runtime/metadataEditionOptionsRpc';
 
 export type MetadataProductionDependencies = Readonly<{
   primary: MetadataProviderAdapter | null;
@@ -43,11 +45,18 @@ export function createPhase9MetadataService(environment: MetadataWorkerEnvironme
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
   const dependencies = createMetadataProductionDependencies(environment);
+  const editionOptionsBoundary = createMetadataEditionOptionsBoundary({
+    rpc: async (name, parameters) => {
+      const { data, error } = await serviceClient.rpc(name, parameters);
+      return { data, error };
+    },
+  });
   return (request: Request) => handlePhase9MetadataWorker(request, {
     workerId: environment.workerId,
     workerAuthToken: environment.workerAuthToken,
     serviceClient,
     primary: dependencies.primary,
     primaryCapability: dependencies.primaryCapability,
+    editionOptionsBoundary,
   });
 }

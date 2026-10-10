@@ -617,6 +617,10 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
     });
 
     it('keeps Use detected and Edit manually bounded to explicit manual/null identity edits', () => {
+        // This ordinary-action case requires detail authority at least as new as the card.
+        mockMetadataDetail = { ...mockMetadataDetail, candidateVersion: card().candidateVersion,
+            metadata: { ...mockMetadataDetail.metadata, revision: card().metadataRevision },
+            review: { ...mockMetadataDetail.review, reviewVersion: card().reviewVersion } };
         const detected = renderCard({ allowedActions: ['view_metadata'] });
         fireEvent.press(detected.getByText('View metadata'));
         fireEvent.press(detected.getByText('Use detected details'));

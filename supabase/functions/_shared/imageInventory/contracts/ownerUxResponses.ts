@@ -7,7 +7,10 @@ import {
   ownerUxSafeTextSchema as safeText,
 } from './ownerUxReview.ts';
 
-export const OWNER_UX_CONTRACT_VERSION = 'phase9-owner-ux-v1' as const;
+import { OWNER_UX_CONTRACT_VERSION } from './versions.ts';
+import { editionResponseSchemas } from './ownerEditionPicker.ts';
+import { ownerMetadataSnapshotSchema as metadataSnapshot, representativeCover } from './ownerMetadataSnapshot.ts';
+export { OWNER_UX_CONTRACT_VERSION } from './versions.ts';
 export const OWNER_UX_FORBIDDEN_RESPONSE_KEYS = Object.freeze([
   'raw_payload', 'provider_payload', 'confidence', 'geometry', 'scan_url',
   'signed_url', 'object_path', 'sha256', 'cost', 'attempt_count', 'lease_token',
@@ -106,39 +109,6 @@ const inputProgress = z.object({
     context.addIssue({ code: z.ZodIssueCode.custom, message: 'unexpected duplicate confirmation authority' });
   }
 });
-const coverReference = z.string().min(1).max(512).superRefine((value, context) => {
-  try {
-    const parsed = new URL(value);
-    if (parsed.protocol !== 'https:' || parsed.username || parsed.password ||
-        parsed.hostname.toLowerCase() !== 'books.google.com') throw new Error();
-  } catch {
-    context.addIssue({ code: z.ZodIssueCode.custom, message: 'cover host is not approved' });
-  }
-});
-const representativeCover = z.object({
-  coverReference,
-  sourceRelation: z.literal('representative_edition'),
-  sourceAdapter: z.string().regex(/^[a-z][a-z0-9_-]{1,63}$/u),
-  sourceAdapterVersion: z.string().min(1).max(64),
-  sourceRecordId: z.string().min(1).max(256),
-  selectionPolicyVersion: z.literal('p9-representative-cover-v1'),
-}).strict();
-const metadataSnapshot = z.object({
-  title: safeText(1, 512),
-  authors: z.array(safeText(1, 256)).min(1).max(20), language,
-  subtitle: nullableSafeText(512),
-  description: nullableSafeText(5000),
-  isbn10: z.string().min(10).max(32).nullable(), isbn13: z.string().min(10).max(32).nullable(),
-  publisher: nullableSafeText(256),
-  publishedDate: nullableSafeText(32),
-  script: nullableSafeText(16),
-  editionStatement: nullableSafeText(256),
-  series: nullableSafeText(256), volume: nullableSafeText(64),
-  format: nullableSafeText(128),
-  pageCount: z.number().int().min(1).max(100_000).nullable(),
-  categories: z.array(safeText(1, 128)).max(20),
-  coverReference: coverReference.nullable(),
-}).strict();
 const blocker = z.object({
   code: z.enum(blockerCodes), candidateId: uuid.nullable(), inputId: uuid.nullable(),
   field: z.string().nullable(), safeMessage: z.string().min(1).max(240),
@@ -217,6 +187,7 @@ const activeSession = z.object({
   inputCount: count, candidateCount: count, attentionCount: count,
 }).strict();
 const responseSchemas = {
+  ...editionResponseSchemas,
   discover_scan_session: z.object({
     activeSession: activeSession.nullable(), needsReviewCount: count, reviewScopeVersion: version,
   }).strict(),

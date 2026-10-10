@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+    OWNER_UX_CONTRACT_VERSION,
     blockerCountsSchema,
     closeSummarySchema,
     countSchema,
@@ -18,7 +19,8 @@ import {
     safeTextSchema,
 } from './ownerUxValidation';
 
-export const OWNER_UX_CONTRACT_VERSION = 'phase9-owner-ux-v1' as const;
+export { OWNER_UX_CONTRACT_VERSION } from './ownerUxCommonSchemas';
+import { editionResponseSchemas } from './ownerEditionPicker';
 
 const closeStateSchema = z.enum(['not_closeable', 'closeable', 'closed', 'expired']);
 
@@ -113,6 +115,7 @@ const inputProgressSchema = z.object({
 });
 
 const responseSchemas = {
+    ...editionResponseSchemas,
     discover_scan_session: z.object({
         activeSession: z.object({
             sessionId: uuidSchema,
@@ -174,7 +177,8 @@ const responseSchemas = {
 
 export type OwnerUxAction = keyof typeof responseSchemas;
 export type OwnerUxQueryAction = Exclude<OwnerUxAction,
-    'remove_scan_input' | 'resolve_duplicate_scan_input' | 'update_candidate_review' | 'add_candidate_to_inventory' | 'close_scan_session'>;
+    'remove_scan_input' | 'resolve_duplicate_scan_input' | 'update_candidate_review' | 'add_candidate_to_inventory' | 'close_scan_session'
+    | 'read_candidate_edition_choices' | 'request_candidate_edition_options' | 'select_candidate_edition'>;
 export type OwnerDiscovery = z.infer<typeof responseSchemas.discover_scan_session>;
 export type OwnerSessionSummary = z.infer<typeof responseSchemas.read_scan_session>;
 export type OwnerInputProgress = z.infer<typeof inputProgressSchema>;

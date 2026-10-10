@@ -37,7 +37,7 @@ export const ownerUxLanguageSchema = z.string().superRefine((value, context) => 
 }).transform((value) => canonicalBcp47(value));
 
 const metadataChoice = z.object({
-  mode: z.enum(['manual', 'selected']), selectionId: uuid.nullable(),
+  mode: z.enum(['manual', 'selected', 'edition_option']), selectionId: uuid.nullable(),
 }).strict();
 const damageDisclosure = z.object({
   hasDamage: z.boolean(),
@@ -86,7 +86,7 @@ export const ownerUxReviewSchema = z.object({
       value.originalFieldConfirmation.authors.some((confirmed) => !confirmed)) {
     issue('authors must be explicitly confirmed');
   }
-  if ((value.metadataChoice.mode === 'selected') !==
+  if ((value.metadataChoice.mode !== 'manual') !==
       (value.metadataChoice.selectionId !== null)) issue('metadata selection is inconsistent');
   if (new Set(value.damageDisclosure.damageTypes).size !==
       value.damageDisclosure.damageTypes.length) issue('damage types must be unique');

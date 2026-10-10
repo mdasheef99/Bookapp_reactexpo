@@ -136,6 +136,11 @@ before(async()=>{
     '20260911000060_marketplace_phase9_duplicate_confirmation.sql',
     '20260913000061_marketplace_phase9_representative_edition_cover.sql',
     '20260913000062_marketplace_phase9_representative_cover_detail_projection.sql',
+    // Task 4 automatic-regression proof runs with the entire forward picker migration chain.
+    '20261007000065_marketplace_phase9_edition_picker_state.sql',
+    '20261007000066_marketplace_phase9_edition_picker_commands.sql',
+    '20261007000067_marketplace_phase9_edition_picker_operation_fences.sql',
+    '20261007000068_marketplace_phase9_edition_picker_worker_completion.sql',
   ]) {
     await db.exec(fs.readFileSync(migrationPath(migration), 'utf8'));
   }
@@ -578,7 +583,7 @@ test('concurrent identical cache misses atomically reserve one in-flight leader'
       AND job_kind='metadata_enrich')`),0);
 });
 
-test('local resolution gives a validated ISBN match precedence over title equivalence',async()=>{
+test('local resolution rejects conflicting ISBN identity and gives a compatible ISBN match precedence',async()=>{
   const candidate='b7000000-0000-4000-8000-000000000001';
   const exactEdition='b7100000-0000-4000-8000-000000000001';
   const titleEdition='b7200000-0000-4000-8000-000000000001';
@@ -610,7 +615,15 @@ test('local resolution gives a validated ISBN match precedence over title equiva
     '${METADATA_WORKER}')`)).rows[0];
   const context=await scalar(db,`SELECT public.phase9_metadata_job_context('${claim.id}',
     '${METADATA_WORKER}','${claim.lease_token}',${claim.attempt_count})`);
-  assert.equal(context.localCanonicalEditionId,exactEdition);
+  // Picker SDD §4.1: ISBN precedence still requires compatible title/author identity (M67).
+  assert.equal(context.localCanonicalEditionId,null);
+  await resetActor(db);
+  await db.exec(`UPDATE public.canonical_editions SET title='Priority Book',
+    authors=ARRAY['Fixture Author'] WHERE id='${exactEdition}'`);
+  await setActor(db,OWNER,'service_role');
+  const compatible=await scalar(db,`SELECT public.phase9_metadata_job_context('${claim.id}',
+    '${METADATA_WORKER}','${claim.lease_token}',${claim.attempt_count})`);
+  assert.equal(compatible.localCanonicalEditionId,exactEdition);
 });
 
 test('physical-call finalization rejects a newly non-authoritative vision result without mutation',async()=>{

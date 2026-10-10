@@ -85,6 +85,10 @@ export class CandidateCommandRegistry {
         if (this.claims.get(candidateId) === token) this.claims.delete(candidateId);
     }
 
+    clear(): void {
+        this.claims.clear();
+    }
+
     isClaimed(candidateId: string): boolean {
         return this.claims.has(candidateId);
     }

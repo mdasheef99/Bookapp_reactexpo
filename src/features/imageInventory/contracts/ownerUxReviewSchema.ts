@@ -39,7 +39,7 @@ export const ownerCandidateReviewSchema = z.object({
     originalLanguage: languageSchema,
     script: z.string().regex(/^[A-Z][a-z]{3}$/u).nullable(),
     metadataChoice: z.object({
-        mode: z.enum(['selected', 'manual']),
+        mode: z.enum(['selected', 'manual', 'edition_option']),
         selectionId: uuid.nullable(),
     }).strict(),
     quantity: z.number().int().min(1).max(10_000).safe(),
@@ -68,7 +68,7 @@ export const ownerCandidateReviewSchema = z.object({
         || value.originalFieldConfirmation.authors.some((confirmed) => !confirmed)
     ) issue('authors must be explicitly confirmed');
     if (
-        (value.metadataChoice.mode === 'selected')
+        (value.metadataChoice.mode !== 'manual')
         !== (value.metadataChoice.selectionId !== null)
     ) issue('metadata selection is inconsistent');
     if (new Set(value.damageDisclosure.damageTypes).size

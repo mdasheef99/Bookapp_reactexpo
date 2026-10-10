@@ -4,6 +4,7 @@ import {
     type OwnerUxAction,
 } from './ownerUxContracts';
 import { uuidSchema } from './ownerUxCommonSchemas';
+import { editionRequestSchemas } from './ownerEditionPicker';
 import { ownerCandidateReviewSchema } from './ownerUxReviewSchema';
 
 const contractVersion = z.literal(OWNER_UX_CONTRACT_VERSION);
@@ -11,6 +12,7 @@ const pageSize = z.number().int().min(1).max(50).safe().optional();
 const cursor = z.string().min(1).max(4096).nullable().optional();
 
 const requestSchemas = {
+    ...editionRequestSchemas,
     discover_scan_session: z.object({
         action: z.literal('discover_scan_session'),
         contractVersion,

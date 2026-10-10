@@ -1,3 +1,7 @@
+import { GoogleBooksAdapter } from '../../supabase/functions/_shared/imageInventory/metadata/googleBooks/adapter';
+import { executeEditionOptionsLookup } from '../../supabase/functions/_shared/imageInventory/runtime/metadataEditionOptions';
+import type { MetadataEditionOptionsBoundary } from '../../supabase/functions/_shared/imageInventory/runtime/metadataEditionOptionsBoundary';
+import { editionOptionsFence } from '../../supabase/functions/_shared/imageInventory/runtime/metadataEditionOptionsBoundary';
 import { assertSafeIngestionResponse, parseDedicatedMetadataWorkerRequest }
   from '../../supabase/functions/_shared/imageInventory/contracts/ingestion';
 import { ProviderCapabilityDeclaration }
@@ -19,6 +23,8 @@ export type MetadataWorkerDependencies = Readonly<{
   serviceClient: any;
   primary: MetadataProviderAdapter | null;
   primaryCapability: ProviderCapabilityDeclaration | null;
+  // Trusted composition port; production bootstrap installs the M68 RPC implementation.
+  editionOptionsBoundary?: MetadataEditionOptionsBoundary;
 }>;
 
 const headers = { 'content-type': 'application/json', 'cache-control': 'no-store', pragma: 'no-cache' };
@@ -31,7 +37,7 @@ type MetadataClaim = Readonly<{
   lease_token: string;
 }>;
 type MetadataWorkerResult = Readonly<{
-  outcome: 'accepted_metadata_match' | 'coalesced_follower' | 'local_canonical_match'
+  outcome: 'edition_options_available' | 'accepted_metadata_match' | 'coalesced_follower' | 'local_canonical_match'
     | 'manual_metadata_required' | 'retry_scheduled' | 'stale_claim';
 }>;
 
@@ -64,6 +70,16 @@ async function processMetadataClaim(
       jobId: claim.id,worker: dependencies.workerId,
       leaseToken: claim.lease_token,attempt: claim.attempt_count,
     });
+    if (context.purpose === 'edition_options' && (!dependencies.editionOptionsBoundary
+      || !(dependencies.primary instanceof GoogleBooksAdapter)
+      || dependencies.primaryCapability?.adapterKey !== 'google_books')) {
+      if (dependencies.editionOptionsBoundary) {
+        return completionResult(await dependencies.editionOptionsBoundary.fail({
+          ...editionOptionsFence(context,dependencies.workerId),outcome:'provider_disabled',retryable:false,
+        }));
+      }
+      return { outcome: 'manual_metadata_required' };
+    }
     if (dependencies.primary === null || dependencies.primaryCapability === null) {
       const failed = await dependencies.serviceClient.rpc('phase9_fail_metadata_job', {
         p_job_id: context.jobId,p_worker: dependencies.workerId,
@@ -101,9 +117,16 @@ async function processMetadataClaim(
       snapshotVersion: 'p9-selected-metadata-v1',cachePolicyVersion: 'p9-metadata-cache-v1',
       cacheNamespace: 'metadata-v1',pricingPolicyVersion: 'metadata-zero-cost-v1',
       revalidationSeconds: 86400,
+      editionOptions: context.purpose === 'edition_options' && dependencies.editionOptionsBoundary
+        ? { request, boundary: dependencies.editionOptionsBoundary } : undefined,
     });
+    if (context.purpose === 'edition_options') {
+      return await executeEditionOptionsLookup(context, gateway, dependencies.primary as GoogleBooksAdapter, new AbortController().signal);
+    }
     return await runMetadataProductionComposition(request, gateway);
-  } catch {
+  } catch (error) {
+    if (context?.purpose === 'edition_options'
+      || (error instanceof Error && error.message === 'P9_EDITION_CONTEXT_INVALID')) return { outcome: 'stale_claim' };
     try {
       const failed = await dependencies.serviceClient.rpc('phase9_fail_metadata_job', {
         p_job_id: context?.jobId ?? claim.id,p_worker: dependencies.workerId,

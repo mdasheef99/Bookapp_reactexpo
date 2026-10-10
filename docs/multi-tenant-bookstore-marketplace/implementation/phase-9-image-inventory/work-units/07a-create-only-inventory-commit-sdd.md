@@ -1,5 +1,11 @@
 # Unit 7A SDD: Create-Only Scanned-Candidate Inventory Commit
 
+## 2026-10-08 - Edition-picker Task 5 local completion
+
+Existing §§5-11 are extended only by the already approved picker §§5-8. Local M69 preserves the Unit 7A Add signature, expected candidate/review/metadata versions, Owner/store/session authority, single-candidate private transaction, quantity conservation, provenance and idempotency protection. edition_option resolves its exact independent saved snapshot; original selected/manual modes remain compatible, while text-only suggestions require controlled confirmation/manual entry. No merge, canonical write or publication is added.
+
+The effective-choice BEFORE INSERT trigger prevents automatic representative-cover inheritance for a new edition option, including no-cover choices. Inventory creation and own-card alternative discard commit/rollback together; success replay returns the same inventory row. [Task 5 evidence](../trackers/02-implementation-and-verification.md#2026-10-08---edition-picker-task-5-local-completion) includes full-stack canonical/manual controls, selling-field fidelity, rollback/replay and two same-store/session cards. M69 is CREATED_LOCAL / NOT_APPLIED; M65-M68 are unchanged. Real concurrent connections and compatible client integration remain Tasks 8 and 6 respectively. Earlier checkpoint evidence remains historical.
+
 **Status:** normative design frozen 2026-08-12; implementation not started
 **Authority:** Owner decision 2026-08-12; DOC-3, DOC-4, DOC-8; Phase 9 master SDD; SDD 03
 **Implementation authority:** none; red-test specification is the next separately authorized step

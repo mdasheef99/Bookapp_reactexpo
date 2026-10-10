@@ -1,4 +1,167 @@
+## 2026-10-10 - M71 security readback
+
+Owner-authorized M71 applied as 20261010110835; no new table, policy, trigger, grant or data mutation.
+Private selection delegate remains postgres-owned SECURITY DEFINER with empty search_path; PUBLIC/anon/authenticated/service_role execution stays revoked.
+Public M70 selection remains authenticated-only. RLS/ACLs on candidate, edition-state and inventory relations are unchanged.
+Security advisors retain 251 findings across seven groups; normalized comparison excludes observation timestamps and reports no new finding.
+Existing findings are not a clean-security approval. New provider retention permission remains unverified/disabled.
+[Exact preflight and application evidence](trackers/02-implementation-and-verification.md); no runtime deployment or operational security acceptance claimed.
+
 # SDD 04: Media, Security, Privacy, Retention, and Recovery
+
+## 2026-10-09 - Task 8 independent approval and M65-M70 applied
+
+Phase 9 / completed Unit 6G baseline. Task 8's bounded LOCAL checkpoint is
+independently APPROVED; all eight tasks have local implementation/verification
+evidence. [Review provenance](trackers/33-owner-edition-picker-task8-local-verification.md)
+preserves earlier approval provenance and the unavailable historical 152-path
+audit baseline.
+
+**Status:** `task8_independently_approved_m65_m70_applied_runtime_pending`.
+The Owner authorized steps 1-3: approval documentation, live preflight and the
+six unchanged migrations. All M65-M70 are now APPLIED / catalog-verified on
+Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn. [Application ledger](trackers/34-owner-edition-picker-m65-m70-application.md)
+records six live versions, exact source/archive hashes, function/ACL/RLS/index/
+trigger readback, unchanged business counts, recovery and advisor deltas.
+
+No Edge/worker/client deployment, registry/configuration change, provider call,
+browser test, data deletion, staging, commit or push occurred. New alternatives
+retention remains disabled/unverified; existing automatic provider flags remain
+unchanged. Runtime/provider/browser/operational rollout gates stay pending.
+
+Exact next action: Owner review/authorization for compatible development
+Edge/worker/client rollout and provider-gated browser verification (step 4).
+Earlier dated entries below retain their historical NOT_APPLIED status and
+review provenance; this latest entry owns current application status.
+
+## 2026-10-08 - Task 6 confirmation security projection
+
+Picker §§6-7/9 and existing §9 require confirmation evidence from valid private
+store/session/card/query-current held choice only. M70 exposes a boolean without
+selected_by/selected_at, raw provider records or internal paths. Strict client
+and server request schemas reject client-authored confirmation; both response
+schemas require a boolean. No service-role or client table write authority grows.
+
+M70's reader/legacy delegates are postgres-owned SECURITY DEFINER functions with
+empty search_path and no PUBLIC/anon/authenticated/service_role execute grants.
+Public choices/select RPC signatures and authenticated-only grants are preserved.
+Selection replies, including legacy receipts, project current authority without
+rewriting stored audit JSON; a superseded/query-invalid receipt reports false.
+
+[Security and local gates](trackers/02-implementation-and-verification.md#2026-10-08---task-6-confirmation-correction-local-completion)
+include cross-store denial, private helper/public RPC ACLs and true pre-M70
+upgrade preservation. This is sequential PGlite, not independent-connection race
+proof. Retention permissions/configuration are unchanged and production retention
+remains disabled. M65-M69 are unchanged; M65-M70 are NOT_APPLIED.
+
+## 2026-10-08 - Task 5 independent-review correction
+
+Existing §9 and picker §9 govern the new private phase9_edition_projection_selection(candidate) helper: scoped candidate/store/session, current query identity and valid server-held metadata. It is postgres-owned with empty search_path and no PUBLIC/anon/authenticated/service_role execution grant. No public RPC, direct table access or Add gate widens; disposable catalog and grant checks pass.
+
+[Correction evidence](trackers/02-implementation-and-verification.md#2026-10-08---task-5-independent-review-correction). Locally verified; independent correction review is pending. Tasks 6-8 remain unstarted and M65-M69 remain NOT_APPLIED. Earlier checkpoints are historical.
+
+## 2026-10-08 - Edition-picker Task 5 local completion
+
+Picker §§5-9 and MAS-02/03/07/12/17 govern local M69. The public authenticated Add signature/ACL and server-resolved Owner/store/session/candidate checks remain unchanged. New resolvers, legacy delegates, saved-choice validators, metadata projections, due predicate, clearing and dispatcher functions are postgres-owned with empty search_path; PUBLIC/anon/authenticated/service_role cannot execute the private helpers. The existing trusted commit-eligibility service_role grant is restored. No new public RPC/table write grant, RLS change, bucket/media write or provider permission is introduced.
+
+| Security/retention boundary | Actual local proof |
+| --- | --- |
+| Exact server selection and legacy confirmation fence | Full M69 SQL rejects stale Add and mixed selected review fields; text-only legacy Save requires controlled confirmation/manual entry. |
+| Pre-insert cover authority | Own/no-cover option and manual choice cannot inherit the automatic representative cover; unchanged original selected mode retains fallback. |
+| Atomic discard and response-loss recovery | Injected clear failure rolls back insertion/candidate/receipt/options; success replay inserts once and retains only chosen provenance. |
+| Per-card ownership/retention | Two same-book cards share one store/session yet remain independent; immediate read/select expiry, candidate/session expiry, identity/removal clearing and slim replay are tested. |
+| Bounded cleanup/recovery | Existing dispatcher clears a limited batch, accurately reports all due reasons, rolls back failed cleanup and retries next tick. |
+| Private API/grants | New private helpers/dispatcher deny client-capable roles; Add keeps authenticated-only authority; existing state/completion security regressions pass. |
+
+[Task 5 evidence](trackers/02-implementation-and-verification.md#2026-10-08---edition-picker-task-5-local-completion) records the 194-case SQL and 406-test HTTP/client compatibility gates. No real connection-race or live provider/browser/deployed-worker proof is claimed. M65-M69 are NOT_APPLIED; production still installs no retention verifier. Earlier checkpoints are historical.
+
+## 2026-10-08 - Direct completion timestamp validation correction
+
+Picker §§5/9, SQL proposal §3.6 and MAS-02 apply to every non-null option, including ineligible rows. M68 now requires complete ISO calendar timestamp syntax and valid clock ranges before persistence. A timezone suffix plus PostgreSQL cast is insufficient: PostgreSQL era/ordinal dates and leap-second values fail the shared TypeScript contract. Six rejection regressions and four valid UTC/offset controls pass through the actual service completion boundary.
+
+The full 87-case completion/security/worker suite preserves existing service-only entrypoints, private-helper grants, row isolation, lease/request fences and failure replay. No grants/schema/retention permission changed. [RED/GREEN, security proof and hashes](trackers/02-implementation-and-verification.md#2026-10-08---task-4-timestamp-self-review-correction) record this Owner-authorized local correction. Self-review is complete; no independent correction approval or real multi-connection race proof is claimed. M65-M68 remain NOT_APPLIED; live enablement and Task 5 need separate authority. Earlier checkpoints are historical.
+
+
+## 2026-10-08 - Task 4 correction security boundary
+
+Picker §§4.1/5/8-9, SQL proposal §§3.6/4 and MAS-02/03/17 require normalized validation before any direct service completion stores options. New private M68 helpers enforce the pinned versions, all string/array UTF-16 bounds, timezone-bearing fetch time, valid ISBN field shapes/checksums and coherent identifier pairs on eligible and ineligible rows. Unknown query language is waived only for compatible exact ISBN evidence; supplied title/author/known-language denials remain. Helper ownership is postgres, search_path is empty and PUBLIC/anon/authenticated/service_role direct execution is revoked.
+
+The sole new private failure_receipt is bounded to an object of <=1024 bytes and generated only by controlled failure writes. It contains hashed query/token identity, current request/generation/attempt/worker and bounded failure arguments; no provider metadata, raw alternatives, plaintext lease token or mirrored status. Existing private-table permissions prevent client reads/writes. Replay cannot bypass current actor/store/session/card/query/claim checks or authorize completion; changed arguments and reclaimed claims reject. The RPC preserves only the exact safe P9_EDITION_ROWS_INVALID code, keeps other details opaque, and the worker tries committed recovery before nonretryable schema failure. Production still has no retention verifier, and M65-M68 remain NOT_APPLIED. [Fresh security matrix, tests and hashes](trackers/02-implementation-and-verification.md#2026-10-08---edition-picker-task-4-review-corrections) cover 77 completion/worker SQL cases and the related regressions. Real independent-connection races/live permission remain Task 8. Task 4 awaits correction review; no live mutation occurred. Earlier checkpoints are historical.
+## 2026-10-07 - Task 4 controlled completion security proof
+
+Picker §§5/8-9 and existing tenant/retention rules are enforced by local M68. Its three worker RPCs are service-only invokers over postgres-owned empty-search_path definers; clients and direct writes remain denied. The job/candidate/private-state lock order preserves initiating Owner capability, authoritative store/session membership, request/query/generation, mutable/uncommitted state and lease/physical-attempt fences. Automatic bypass helpers have no direct service grant. Explicit options cannot enter automatic snapshots/cache or normalized audit payloads.
+
+Fresh disposable cases prove grants/readback, forged identity/provenance and own-book/cover denial, selection/selling preservation, rollback/replay, cancellation/stale authority and physical retry billing. Verified retention and a future deadline capped by original fetch + 24 hours are mandatory. Local bootstrap installs the concrete port but no verifier; registry flags/headers do not grant permission. M65-M68 are NOT_APPLIED; no live mutation/provider/deployment occurred. [Security verification matrix](trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-4-local-completion) and [ledger](supporting/database-current-vs-target.md#2026-10-07---task-4-m68-local-migration-readback) own exact proof. Real races/live permission remain Task 8. Earlier checkpoints are historical.
+
+## 2026-10-07 - Edition-picker Task 4 runtime checkpoint
+
+Local runtime/test scope is implemented; durable Task 4 completion remains incomplete pending separately authorized forward SQL. The worker now decodes the existing v2 automatic/edition_options context, routes explicit Google options jobs around local/cache/coalesced winner-only shortcuts, validates the bounded Task 3 response, preserves physical-call accounting, and reports available only after the typed controlled completion port confirms it. Production installs neither that port nor a retention verifier; explicit requests are not enabled.
+
+Fresh evidence: Task 4 worker/recovery plus affected worker/gateway/composition and provider/automatic regressions pass 9 suites / 237 tests; strict types pass; the required structural metadata worker build and 14 disposable database cases pass. Tests use recorded responses and an in-memory port model; these results do not establish durable SQL, grants/RLS, real races or live permission.
+
+Read [Task 4 implementation evidence](./trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-4-runtime-checkpoint) and the [reviewable SQL proposal](./work-units/owner-edition-picker-task4-sql-proposal.md). The fresh read-only Supabase check verifies live M62, with no controlled options completion/failure operations. M65-M67 remain local and NOT_APPLIED. Next action is separate Owner authorization of one forward local migration and disposable SQL tests. Tasks 5-8 remain unstarted; no migration file was created/edited/applied and no live/external mutation or Git publication occurred.
+
+
+## 2026-10-07 - Edition-picker Task 3 review corrections
+
+The independent review confirmed a gap in the earlier Task 3 header-lifetime enforcement summary. Under this SDD §8 and picker §8, the local correction validates Date/Age for Expires-only responses and reduces the Date-relative lifetime by observed age. Date 00:00, Expires 01:00, Age 3500 and receipt 00:50 now permit at most 100 remaining seconds, ending at 00:51:40 UTC. Malformed or exhausted evidence denies retention; missing Date uses receipt time conservatively. max-age still applies its age-adjusted lifetime, with Expires as an absolute ceiling.
+
+These bounds only shorten an independently verified permission/deadline and the original-fetch 24-hour product cap. Production still installs no retention verifier; fresh headers, fixtures or client flags cannot grant permission. No live provider-rights, security, tenant or database proof is claimed.
+
+The supplied Task 3 verdict remains CHANGES_REQUIRED pending independent correction review. Fresh local proof: four Jest suites / 136 tests, strict TypeScript and worker build PASS. Both review findings were reproduced before production edits; [correction evidence](trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-3-review-corrections) records the scope and controls. Tasks 4–8 remain pending, M65–M67 unchanged/NOT_APPLIED, and no external mutation occurred. Earlier checkpoints are historical.
+
+## 2026-10-07 - Edition-picker Task 3 safety and retention proof
+
+Local Task 3 restores picker §§5/8/13.2 under this SDD §8: bounded provider IDs, schema-validated same-record metadata, approved own-result book/cover URLs, unavailable placeholders and disabled incompatible rows. Unsafe covers use a safe smaller image from the same result or a missing-cover placeholder; no other record supplies fields or a cover. Raw response/debug headers/credentials are excluded from the result. Existing private/public projection remains authoritative.
+
+Retention requires the existing OptionsRetentionEvidence from a server-only independently verified provider-rights callback. Production bootstrap has no callback, including when cache headers are positive. Client input, fixtures and registry flags never supply production permission. The adapter forwards only Cache-Control/Expires/Date/Age and the original UTC fetch time to the verifier, enforces actual provider denials/lifetimes, and caps any permitted deadline at original fetch + 24 hours. Null/unverified/expired evidence, verifier failure, cache prohibition or malformed lifetime denies storage. This is a verification seam, not proof of live provider rights or permission for durable chosen snapshots.
+
+[Task 3 proof](trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-3-local-completion) records 98/98 required Jest and 23/23 provider-contract cases plus strict types/build. No live security/tenant/database/browser/provider proof is claimed. M65–M67 remain unchanged/NOT_APPLIED; no migration, environment or external mutation occurred. Task 4 and later integration/enablement remain separately authorized. Earlier checkpoints are historical.
+
+## 2026-10-07 - Edition-picker Task 2 review corrections
+
+The Owner-authorized corrections restore picker §4.1 / DOC-3 §5.1 / DOC-4 §8: local reuse validates the complete Owner-safe metadata, a unique coherent exact text match remains a medium suggestion requiring confirmation, and ambiguous matches remain unresolved. M65/M67 are revised locally only; M65–M67 are NOT_APPLIED. The existing gateway, jobs, private-state permissions, selling fields and Add fence remain in force. No product scope or new migration was added.
+
+Current authority, corrected handoff and verification are recorded in [the implementation evidence](trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-2-review-corrections) and DOC-13/TRACKER. Earlier checkpoints are historical.
+
+## 2026-10-07 - Edition-picker Task 2 local completion
+
+Task 2 is locally complete: private per-card state, controlled read/search/select, version/expiry/ownership guards, coherent local ISBN resolution, lookup-scoped attempt history, and explicit-operation admission. Task 1 remains complete. The Owner's “ok proceed” authorized local M65–M67 creation and disposable tests; these files exist locally and are NOT_APPLIED. No live database/Storage write, deployment, staging, commit, or push occurred.
+
+Fresh proof: 34 disposable-database tests PASS; 4 affected Owner Jest suites / 303 tests PASS; strict Owner ingestion graph type check PASS. Real independent-connection races, provider-retention permission, worker execution/completion, Add/cleanup integration, client/UI/browser and rollout proof remain Tasks 3–8. No full-feature acceptance is claimed.
+
+Current work unit: Task 2 checkpoint review. Exact next authorized action: review the Task 2 diff/evidence; the next implementation slice is Task 3 Google result envelope after Owner authorization. Sources: picker SDD §§4.3/5–6/8–9/11; Master MAS-02/03/07/12/17. Earlier dated checkpoints below are historical.
+
+### Read-only security advisor baseline
+
+The exact-project security advisor read was captured before any live DDL (none was applied). Returned observations are existing baseline findings, some observed_at timestamps are 2026-10-06; they are not a post-migration security verdict. Counts/remediation: [rls_enabled_no_policy INFO 70](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy); [function_search_path_mutable WARN 8](https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable); [rls_disabled_in_public ERROR 1](https://supabase.com/docs/guides/database/database-linter?lint=0013_rls_disabled_in_public); [extension_in_public WARN 1](https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public); [anon_security_definer_function_executable WARN 15](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable); [authenticated_security_definer_function_executable WARN 151](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable); [auth_leaked_password_protection WARN 1](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+Local new-boundary proof: RLS enabled, no direct client/service table privileges or private-helper execution, only three authenticated controlled RPCs, fixed empty search_path and postgres ownership, server Owner/store/session checks, strict bounded payloads and composite membership, safe public projection, claim/token/lease and stale-query denial. No unrelated baseline remediation or clean live-security claim is implied.
+
+
+## 2026-10-07 - Edition-picker Task 2 gateway/preflight checkpoint
+
+Task 1 remains locally complete. Task 2 code/read-only preflight is now authorized: the strict authenticated Owner gateway and HTTP routing pass 303 affected Jest tests and a strict server type check. Database storage/commands are not implemented; local M65–M67 migration-file creation is awaiting the separate Owner approval required by AGENTS. No SQL/database/Storage/deployment/Git publication occurred. Tasks 3–8 remain pending. Current authority/status comes from DOC-13 and TRACKER; earlier checkpoints below are historical.
+
+## 2026-10-07 - Edition-picker Task 1 contract checkpoint
+
+The Owner authorized Task 1 on 2026-10-07. Contracts/fixtures and narrow compatibility are locally complete; Tasks 2–8 and database changes remain unstarted/unapproved. Source behavior remains picker SDD §§5–7/9/13.2. Current next action is Task 1 diff review; [implementation evidence](trackers/02-implementation-and-verification.md) supersedes earlier planning-only status below.
+
+
+## 2026-10-06 - Owner edition picker draft extension
+
+Latest Owner display clarification EP-D14: each edition option in the metadata sheet shows its own cover image from its safe URL, title, all authors, and publication date; publisher, ISBN, and language are secondary details. Selection saves the coherent chosen metadata independently and follows the usual inventory Add flow, leaving one chosen cover on the scan card. This supersedes earlier text-only option rows. Owner chose relevance order with returned order preserved and Google attribution/book links. Picker §13.2 now defines Search Books wording and bounded unavailable/ineligible rows; EP-D11/13 scope cuts remain in force.
+
+Latest Owner scope: alternatives are obtained and saved only after an explicit Owner lookup (EP-D13); automatic scan/cache/coalesced paths keep winner/outcome-only persistence and never copy alternatives. New manual edition-number editing before and after Add, numeric overrides, and Store View edition-edit extensions are deferred (EP-D11).
+
+The [edition-picker SDD](./work-units/owner-edition-picker-sdd.md) consolidates EP-D01..EP-D14 and extends this domain's §§8-10; enforce Owner/store boundaries, provider rights, and separate options/selection retention.
+
+Keep one card and one chosen cover, five initial rows/Show all up to ten, an explicit lookup for local/cache/older unfinished cards, independent per-card storage, a 24-hour product retention maximum from source fetch, and cleanup after confirmed Add. Preserve chosen metadata and selling details. Provider edition statements remain coherent source metadata; no new manual number field is introduced.
+
+Picker §§6/8 keeps alternatives out of 30-day receipts and historical option versions. Retain stale-response/worker fencing, forged and cross-store denial, effective-choice cover provenance, expiry/replay proof, and bounded cleanup. Provider permission can shorten the product retention cap.
+
+Status: design_ready_pending_owner_approval. The relevance-order decision resolves provider display §13.2; written-SDD and execution-plan approval still precede implementation. Historical implemented behavior below remains baseline evidence; no runtime or migration implementation is added.
+
 
 > **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
 

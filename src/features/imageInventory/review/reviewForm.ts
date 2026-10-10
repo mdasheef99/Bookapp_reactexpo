@@ -4,6 +4,10 @@ import {
     type OwnerCandidateReview,
 } from '../contracts/ownerUxReviewSchema';
 
+import type { EditionChoices } from '../contracts/ownerEditionPicker';
+import { editionSelectionAuthority } from './editionSelectionDraft';
+export { applyEditionSelection } from './editionSelectionDraft';
+
 type Condition = OwnerCandidateReview['baseCondition'];
 type PublicationIntent = OwnerCandidateReview['publicationIntent'];
 type DamageType = OwnerCandidateReview['damageDisclosure']['damageTypes'][number];
@@ -15,7 +19,7 @@ export type ReviewDraft = {
     authors: string[];
     originalLanguage: string;
     script: string;
-    metadataMode: 'selected' | 'manual';
+    metadataMode: OwnerCandidateReview['metadataChoice']['mode'];
     selectionId: string | null;
     currentMetadataSelectionId: string | null;
     quantity: string;
@@ -59,17 +63,26 @@ export function createReviewDraft(
         quantity: number;
         publication: PublicationIntent;
     }>,
+    choices?: EditionChoices,
 ): ReviewDraft {
     const saved = detail.review.value;
+    const resumed = choices && choices.sessionId === detail.sessionId
+        && choices.candidateId === detail.candidateId
+        && choices.metadataRevision === detail.metadata.revision
+        && choices.candidateVersion === detail.candidateVersion
+        && choices.selection?.selectionId === detail.metadata.selectionId
+        && editionSelectionAuthority(choices, saved) === 'controlled'
+        ? choices.selection : null;
     const selected = detail.metadata.state === 'selected'
         ? detail.metadata.selectionId
         : null;
     return {
-        originalTitle: saved?.originalTitle ?? detail.observed.title,
-        authors: [...(saved?.authors ?? detail.observed.authors)],
-        originalLanguage: saved?.originalLanguage ?? detail.observed.language,
-        script: saved?.script ?? detail.observed.script ?? '',
-        metadataMode: saved?.metadataChoice.mode ?? (selected ? 'selected' : 'manual'),
+        originalTitle: saved?.originalTitle ?? resumed?.snapshot.title ?? detail.observed.title,
+        authors: [...(saved?.authors ?? resumed?.snapshot.authors ?? detail.observed.authors)],
+        originalLanguage: saved?.originalLanguage ?? resumed?.snapshot.language ?? detail.observed.language,
+        script: saved ? saved.script ?? ''
+            : resumed ? resumed.snapshot.script ?? '' : detail.observed.script ?? '',
+        metadataMode: saved?.metadataChoice.mode ?? (resumed ? 'edition_option' : selected ? 'selected' : 'manual'),
         selectionId: saved?.metadataChoice.selectionId ?? selected,
         currentMetadataSelectionId: selected,
         quantity: String(saved?.quantity ?? defaults.quantity),
@@ -90,7 +103,10 @@ export function createReviewDraft(
                 title: saved.originalFieldConfirmation.title,
                 authors: [...saved.originalFieldConfirmation.authors],
             }
-            : {
+            : resumed ? {
+                title: true,
+                authors: resumed.snapshot.authors.map(() => true),
+            } : {
                 title: false,
                 authors: detail.observed.authors.map(() => false),
             },
@@ -105,7 +121,7 @@ function localErrors(draft: ReviewDraft): ReviewFieldErrors {
     if (!integerPattern.test(draft.quantity)) errors.quantity = 'Enter a whole quantity.';
     if (!integerPattern.test(draft.priceMinor)) errors.priceMinor = 'Enter a whole price in paise.';
     if (
-        draft.metadataMode === 'selected'
+        draft.metadataMode !== 'manual'
         && draft.selectionId !== draft.currentMetadataSelectionId
     ) errors.metadataChoice = 'The matched book details changed. Choose them again or use manual details.';
     return errors;
@@ -128,7 +144,7 @@ export function buildReviewInput(draft: ReviewDraft): ReviewBuildResult {
         script: draft.script.trim() || null,
         metadataChoice: {
             mode: draft.metadataMode,
-            selectionId: draft.metadataMode === 'selected' ? draft.selectionId : null,
+            selectionId: draft.metadataMode !== 'manual' ? draft.selectionId : null,
         },
         quantity,
         priceMinor,

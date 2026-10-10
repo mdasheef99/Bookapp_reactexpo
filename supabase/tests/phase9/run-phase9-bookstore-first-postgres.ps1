@@ -4,12 +4,14 @@ param(
   [switch]$IncludeU8C,
   [switch]$IncludeUnit6gBaseline,
   [switch]$IncludeMediaCorrection,
-  [switch]$IncludeDuplicateConfirmation
+  [switch]$IncludeDuplicateConfirmation,
+  [switch]$IncludeEditionPicker
 )
 
 $ErrorActionPreference = 'Stop'
 if ($IncludeMediaCorrection) { $IncludeUnit6gBaseline = $true }
 if ($IncludeDuplicateConfirmation) { $IncludeMediaCorrection = $true; $IncludeUnit6gBaseline = $true }
+if ($IncludeEditionPicker) { $IncludeUnit6gBaseline = $true }
 $env:PGCLIENTENCODING = 'UTF8'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
 $dbName = "bookconnect_u8b_$PID"
@@ -89,15 +91,29 @@ if ($IncludeUnit6gBaseline) {
     '20260830000056_marketplace_phase9_metadata_throughput.sql'
   )
 }
-if ($IncludeMediaCorrection) {
+if ($IncludeMediaCorrection -or $IncludeEditionPicker) {
   $migrations += @(
     '20260906000057_marketplace_phase9_media_output_intents.sql',
     '20260906000058_marketplace_phase9_media_completion_receipts.sql',
     '20260906000059_marketplace_phase9_media_output_cleanup.sql'
   )
 }
-if ($IncludeDuplicateConfirmation) {
+if ($IncludeDuplicateConfirmation -or $IncludeEditionPicker) {
   $migrations += '20260911000060_marketplace_phase9_duplicate_confirmation.sql'
+}
+
+# Picker SDD §§9-11: opt-in full prerequisites; M63/M64 belong to the separate Unit 6I checkout.
+if ($IncludeEditionPicker) {
+  $migrations += @(
+    '20260913000061_marketplace_phase9_representative_edition_cover.sql',
+    '20260913000062_marketplace_phase9_representative_cover_detail_projection.sql',
+    '20261007000065_marketplace_phase9_edition_picker_state.sql',
+    '20261007000066_marketplace_phase9_edition_picker_commands.sql',
+    '20261007000067_marketplace_phase9_edition_picker_operation_fences.sql',
+    '20261007000068_marketplace_phase9_edition_picker_worker_completion.sql',
+    '20261008000069_marketplace_phase9_edition_picker_commit_cleanup.sql',
+    '20261008000070_marketplace_phase9_edition_picker_confirmation.sql'
+  )
 }
 
 function Invoke-PsqlFile([string]$database, [string]$file) {
@@ -192,7 +208,9 @@ try {
   foreach ($migration in $migrations) {
     Invoke-PsqlFile $dbName (Join-Path $root "supabase\migrations\$migration") | Out-Null
   }
-  if ($IncludeUnit6gBaseline) {
+  if ($IncludeEditionPicker) {
+    Write-Output 'Edition picker unchanged prerequisite chain M01-M62 + M65-M70 applied; M63/M64 excluded'
+  } elseif ($IncludeUnit6gBaseline) {
     Write-Output 'Unit 6G migration chain through M56 applied in the disposable database'
   } elseif ($IncludeU8C) {
     Write-Output 'U8C migration chain through M51 applied in the disposable database'
@@ -208,6 +226,12 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Unit 6G media correction PostgreSQL acceptance failed' }
   }
 
+  if ($IncludeEditionPicker) {
+    & node (Join-Path $PSScriptRoot 'phase9EditionPickerConcurrency.postgres.mjs') $Port $dbName $psql
+    if ($LASTEXITCODE -ne 0) { throw 'Task 8 edition picker PostgreSQL acceptance failed' }
+    Write-Output 'EDITION_PICKER_REAL_POSTGRES_ACCEPTANCE_PASS'
+  }
+
   $acceptance = Invoke-PsqlFile $dbName (Join-Path $root 'supabase\tests\phase9\phase9_bookstore_first_postgres.sql')
   $acceptance | ForEach-Object { Write-Output $_ }
   Write-Output 'U8B_REAL_POSTGRES_ACCEPTANCE_PASS'
@@ -219,24 +243,59 @@ try {
   $exitCode = 0
 }
 catch {
-  Write-Error $_
+  Write-Error $_ -ErrorAction Continue
 }
 finally {
+  # Task 8 / EP-AC12: cleanup failures are failures, with evidence retained in command output.
+  $cleanupErrors = [Collections.Generic.List[string]]::new()
+  $stopVerified = -not $serverStarted
   if ($databaseCreated -and $serverStarted) {
-    try { Invoke-PsqlCommand 'postgres' "DROP DATABASE IF EXISTS $dbName" | Out-Null } catch { Write-Warning $_ }
+    try {
+      $sessions = Invoke-PsqlCommand 'postgres' "SELECT count(*) FROM pg_stat_activity WHERE datname='$dbName'"
+      $sessionCount = @($sessions | ForEach-Object { "$_".Trim() } | Where-Object { $_ -match '^\d+$' })[0]
+      Write-Output "POSTGRES_TEARDOWN_CONNECTIONS_BEFORE_DROP=$sessionCount"
+      Invoke-PsqlCommand 'postgres' "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$dbName'" | Out-Null
+      Invoke-PsqlCommand 'postgres' "DROP DATABASE IF EXISTS $dbName" | Out-Null
+      $exists = Invoke-PsqlCommand 'postgres' "SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname='$dbName')"
+      if (-not @($exists | ForEach-Object { "$_".Trim() }).Contains('f')) { throw 'database removal readback failed' }
+      Write-Output "POSTGRES_TEARDOWN_DATABASE_REMOVED=$dbName"
+    } catch { $cleanupErrors.Add("database cleanup: $_") }
   }
   if ($serverStarted) {
-    $stopProcess = Start-Process -FilePath $pgctl -ArgumentList @('-D',$DataDir,'-m','fast','stop') -WindowStyle Hidden -PassThru -Wait
-    if ($stopProcess.ExitCode -ne 0) {
-      Start-Process -FilePath $pgctl -ArgumentList @('-D',$DataDir,'-m','immediate','stop') -WindowStyle Hidden -PassThru -Wait | Out-Null
+    try {
+      $stopProcess = Start-Process -FilePath $pgctl -ArgumentList @('-D',$DataDir,'-m','fast','stop') -WindowStyle Hidden -PassThru -Wait
+      if ($stopProcess.ExitCode -ne 0) {
+        $stopProcess = Start-Process -FilePath $pgctl -ArgumentList @('-D',$DataDir,'-m','immediate','stop') -WindowStyle Hidden -PassThru -Wait
+        if ($stopProcess.ExitCode -ne 0) { throw "pg_ctl stop failed: $($stopProcess.ExitCode)" }
+      }
+      & $pgctl -D $DataDir status *> $null
+      if ($LASTEXITCODE -ne 3) { throw 'pg_ctl did not verify the created cluster stopped' }
+      $stopVerified = $true
+      Write-Output 'POSTGRES_TEARDOWN_CLUSTER_STOPPED'
+    } catch { $cleanupErrors.Add("cluster cleanup: $_") }
+  }
+  try {
+    $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
+    $resolvedDataDir = [IO.Path]::GetFullPath($DataDir).TrimEnd('\')
+    $safeDisposablePath = $resolvedDataDir.StartsWith("$tempRoot\bookconnect-u8b-pg-", [StringComparison]::OrdinalIgnoreCase)
+    if ($dataDirCreated -and $safeDisposablePath -and $stopVerified -and (Test-Path -LiteralPath $resolvedDataDir)) {
+      $actualPath = (Resolve-Path -LiteralPath $resolvedDataDir).Path.TrimEnd('\')
+      $item = Get-Item -LiteralPath $actualPath
+      if ($actualPath -ne $resolvedDataDir -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+        throw "unsafe recursive cleanup path: $actualPath"
+      }
+      Remove-Item -LiteralPath $actualPath -Recurse -Force
+      if (Test-Path -LiteralPath $actualPath) { throw 'created temporary directory remains' }
+      Write-Output "POSTGRES_TEARDOWN_TEMP_DIRECTORY_REMOVED=$actualPath"
+    } elseif ($dataDirCreated -and (Test-Path -LiteralPath $DataDir)) {
+      Write-Output "POSTGRES_TEARDOWN_DIRECTORY_RETAINED=$DataDir"
+      if (-not $stopVerified) { throw 'running cluster directory retained after stop failure' }
     }
-  }
-  $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
-  $resolvedDataDir = $DataDir.TrimEnd('\')
-  $safeDisposablePath = $resolvedDataDir.StartsWith("$tempRoot\bookconnect-u8b-pg-", [StringComparison]::OrdinalIgnoreCase)
-  if ($dataDirCreated -and $safeDisposablePath -and (Test-Path -LiteralPath $DataDir)) {
-    Remove-Item -LiteralPath $DataDir -Recurse -Force
-  }
+  } catch { $cleanupErrors.Add("directory cleanup: $_") }
+  if ($cleanupErrors.Count -gt 0) {
+    $exitCode = 1
+    $cleanupErrors | ForEach-Object { Write-Error "POSTGRES_TEARDOWN_FAILURE: $_" -ErrorAction Continue }
+  } else { Write-Output 'POSTGRES_TEARDOWN_PASS' }
 }
 
 exit $exitCode

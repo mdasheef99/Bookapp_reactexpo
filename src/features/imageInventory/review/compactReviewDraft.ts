@@ -1,3 +1,6 @@
+export { applyCompactEditionSelection } from './editionSelectionDraft';
+import type { EditionChoices } from '../contracts/ownerEditionPicker';
+import { editionSelectionAuthority } from './editionSelectionDraft';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
 import {
     ownerCandidateReviewSchema,
@@ -152,11 +155,16 @@ export function validateCompactReview(
     card: OwnerBatchReviewCard,
     defaults: ScanSetupFormState,
     edits: CompactReviewEdits,
+    choices?: EditionChoices,
 ): CompactReviewValidation {
     const display = compactReviewDisplay(card, defaults, edits);
+    const resumedChoice = choices?.sessionId === card.sessionId && choices.candidateId === card.candidateId
+        && choices.candidateVersion === card.candidateVersion && choices.metadataRevision === card.metadataRevision
+        && choices.selection?.selectionId === card.metadataSummary?.selectionId
+        && editionSelectionAuthority(choices, card.review) === 'controlled';
     const selectedMetadataChoice = card.metadataState === 'selected'
         && card.metadataSummary?.selectionId
-        ? { mode: 'selected' as const, selectionId: card.metadataSummary.selectionId }
+        ? { mode: resumedChoice ? 'edition_option' as const : 'selected' as const, selectionId: card.metadataSummary.selectionId }
         : undefined;
     const metadataChoice = edits.metadataChoice ?? card.review?.metadataChoice
         ?? selectedMetadataChoice;
@@ -164,14 +172,16 @@ export function validateCompactReview(
         originalTitle: display.title,
         authors: display.authors,
         originalLanguage: display.language,
-        script: edits.script ?? card.review?.script ?? card.observed.script,
+        script: edits.script !== undefined ? edits.script
+            : card.review ? card.review.script
+                : resumedChoice ? choices!.selection!.snapshot.script : card.observed.script,
         metadataChoice,
         quantity: display.quantity,
         priceMinor: display.priceMinor,
         baseCondition: display.condition,
         damageDisclosure: display.damage,
         shelfLocation: display.location,
-        notes: card.review?.notes ?? { publicNote: null, internalNote: null },
+        notes: edits.notes !== undefined ? edits.notes : card.review?.notes ?? { publicNote: null, internalNote: null },
         publicationIntent: display.publication,
         duplicateIntent: null,
         // Add/Add-all is the explicit confirmation boundary for every value
@@ -198,8 +208,9 @@ export function buildCompactReview(
     card: OwnerBatchReviewCard,
     defaults: ScanSetupFormState,
     edits: CompactReviewEdits,
+    choices?: EditionChoices,
 ): OwnerCandidateReview | null {
-    return validateCompactReview(card, defaults, edits).review;
+    return validateCompactReview(card, defaults, edits, choices).review;
 }
 
 export function detectedIdentityEdits(card: OwnerBatchReviewCard): CompactReviewEdits {

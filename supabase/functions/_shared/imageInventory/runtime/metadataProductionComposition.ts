@@ -1,3 +1,7 @@
+import {
+  isPositiveOutcome, isCacheableOutcome, decideMetadataProductionPolicy, resultForReuseCompletion, resultForManualCompletion,
+} from './metadataProductionPolicy';
+export { decideMetadataProductionPolicy, resultForManualCompletion } from './metadataProductionPolicy';
 import { MetadataEdition } from '../contracts/metadata';
 import { MetadataQueryIdentity } from '../metadata';
 import {
@@ -67,6 +71,10 @@ export type MetadataManualCompletion =
   }>;
 
 export type MetadataProductionGateway = Readonly<{
+  editionOptions?: Readonly<{
+    request: MetadataProductionRequest;
+    boundary: import('./metadataEditionOptionsBoundary').MetadataEditionOptionsBoundary;
+  }>;
   providerValidation?: Omit<MetadataProviderValidationContext, 'correlationId' | 'attemptId'>;
   resolveLocal(request: MetadataProductionRequest): Promise<
     | { outcome: 'matched'; canonicalEditionId: string }
@@ -144,60 +152,6 @@ export type MetadataCompositionResult = Readonly<{
     | 'coalesced_follower' | 'stale_claim' | 'accepted_metadata_match'
     | 'retry_scheduled';
 }>;
-
-const isPositiveOutcome = (outcome: string) =>
-  outcome === 'coherent_match' || outcome === 'accepted_metadata_match';
-
-const isCacheableOutcome = (outcome: string) => [
-  'coherent_match', 'no_acceptable_match', 'ambiguous_match', 'material_conflict',
-].includes(outcome);
-
-export function decideMetadataProductionPolicy(
-  policy: MetadataProviderPolicy,
-): MetadataPolicyDecision {
-  const compatible = policy.enabled
-    && policy.adapterVersionCompatible
-    && policy.capabilityVersionCompatible
-    && policy.pricingPolicyCompatible;
-  return {
-    allowCacheRead: compatible && policy.reuseAllowed,
-    allowFollowerReuse: compatible && policy.reuseAllowed,
-    allowFreshProviderCall: compatible && policy.matchingAllowed,
-    allowPositiveRetention: compatible && policy.storageAllowed,
-    allowCacheWrite: compatible && policy.reuseAllowed,
-    requiredDegradationOutcome: 'policy_denied',
-  };
-}
-
-function resultForReuseCompletion(
-  completion: MetadataReuseCompletion,
-  decision: MetadataPolicyDecision,
-): MetadataCompositionResult {
-  if (completion.status === 'stale_rejected') return { outcome: 'stale_claim' };
-  if (completion.status !== 'completed') {
-    return { outcome: 'manual_metadata_required' };
-  }
-  if (completion.normalizedOutcome === 'coalesced_follower') {
-    return { outcome: 'coalesced_follower' };
-  }
-  if (isPositiveOutcome(completion.normalizedOutcome)
-    && !decision.allowPositiveRetention) {
-    return { outcome: 'manual_metadata_required' };
-  }
-  return {
-    outcome: isPositiveOutcome(completion.normalizedOutcome)
-      ? 'accepted_metadata_match' : 'manual_metadata_required',
-  };
-}
-
-export function resultForManualCompletion(
-  completion: MetadataManualCompletion,
-): MetadataCompositionResult {
-  const persistedStatus = completion.status === 'replayed'
-    ? completion.jobStatus : completion.status;
-  return { outcome: persistedStatus === 'retry_scheduled'
-    ? 'retry_scheduled' : 'manual_metadata_required' };
-}
 
 export async function runMetadataProductionComposition(
   request: MetadataProductionRequest,

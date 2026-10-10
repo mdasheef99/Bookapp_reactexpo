@@ -124,12 +124,12 @@ export function googleBooksSeriesRecordIds(value: unknown): ReadonlySet<string> 
   return ids;
 }
 
-function decodeItem(value: unknown, context: Context): MetadataEdition | null {
+export function decodeGoogleBooksItem(value: unknown, context: Context, authorLimit = MAX_AUTHORS): MetadataEdition | null {
   const item = record(value);
   const info = record(item?.volumeInfo);
   const id = text(item?.id, 256);
   const title = text(info?.title, 512);
-  const authors = strings(info?.authors, MAX_AUTHORS, 256);
+  const authors = strings(info?.authors, authorLimit, 256);
   const language = text(info?.language, 35);
   if (!id || !title || authors.length === 0 || !language) return null;
   const pair = isbnPair(info?.industryIdentifiers);
@@ -176,6 +176,6 @@ export function decodeGoogleBooksResponse(value: unknown, context: Context): Met
   if (!Array.isArray(response.items) || response.items.length > MAX_ITEMS) {
     throw new Error('P9_METADATA_MALFORMED_RESPONSE');
   }
-  return response.items.map((item) => decodeItem(item, context))
+  return response.items.map((item) => decodeGoogleBooksItem(item, context))
     .filter((item): item is MetadataEdition => item !== null);
 }

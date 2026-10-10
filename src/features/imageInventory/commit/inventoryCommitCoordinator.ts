@@ -1,3 +1,4 @@
+import { runCandidateCommands } from './inventoryCommitBatchExecution';
 import type { AddCandidateToInventoryRequest } from '../api/ownerUxService';
 import type {
     OwnerCandidateCommitResult,
@@ -13,6 +14,7 @@ import {
 } from './inventoryCommitTypes';
 import {
     aggregate,
+    canonicalMatchesControlledChoice,
     candidateCanStartCommit,
     candidateCanStartBulkCommit,
     candidateCommitPreparation,
@@ -73,6 +75,7 @@ export class InventoryCommitCoordinator {
     async addCandidate(value: CandidateCommitDraft): Promise<CandidateCommitOutcome> {
         const prior = this.completed.get(value.card.candidateId);
         if (prior) return prior;
+        if (this.retries.has(value.card.candidateId)) return this.retryCandidate(value.card.candidateId, value);
         return this.beginFresh(value);
     }
 
@@ -91,6 +94,7 @@ export class InventoryCommitCoordinator {
     // Standalone screen commands (Save, Remove) participate in the same
     // per-candidate command slot as Add/Add-all. No second registry exists.
     tryClaim(candidateId: string, prefix: string): string | null {
+        if (this.retries.get(candidateId)?.ambiguousCommit) return null;
         const token = `${prefix}:${this.dependencies.createCommandId()}`;
         return this.registry.claim(candidateId, token) ? token : null;
     }
@@ -139,13 +143,9 @@ export class InventoryCommitCoordinator {
         if (prior) return prior;
         const retry = this.retries.get(candidateId);
         if (!retry) return { candidateId, status: 'no_longer_eligible', stage: 'claim' };
-        // Stale-draft fence: if the Owner changed the mounted review since the
-        // failed attempt, the frozen command is superseded. Discard it and run
-        // a fresh pipeline against the CURRENT draft. Idempotency safety for
-        // an ambiguous prior commit is preserved by fresh canonical
-        // revalidation: a landed commit makes the candidate ineligible, so M39
-        // can never run twice for one candidate.
-        if (refreshed && !draftMatchesCommand(refreshed, retry.command)) {
+        // A changed draft can supersede a failed Save. An uncertain Add must
+        // first replay its original command to reconcile server-held authority.
+        if (!retry.ambiguousCommit && refreshed && !draftMatchesCommand(refreshed, retry.command)) {
             this.retries.delete(candidateId);
             return this.beginFresh(refreshed);
         }
@@ -163,6 +163,7 @@ export class InventoryCommitCoordinator {
             } catch (error) {
                 const outcome = classifyFailure(candidateId, 'commit', error);
                 if (outcome.status === 'no_longer_eligible') {
+                    this.retries.delete(candidateId);
                     // Authoritative server conflict/non-retryable rejection:
                     // reconcile candidate/review/readiness authority immediately.
                     await this.dependencies.synchronizeIneligible([candidateId]);
@@ -190,7 +191,7 @@ export class InventoryCommitCoordinator {
             const token = `bulk-retry:${command.commandId}`;
             const retry = this.retries.get(item.candidateId);
             const current = refreshedById.get(item.candidateId);
-            if (retry && current && !draftMatchesCommand(current, retry.command)) {
+            if (retry && !retry.ambiguousCommit && current && !draftMatchesCommand(current, retry.command)) {
                 // Mirror per-card supersede semantics: changed Owner draft B
                 // receives a fresh Save/commit identity; frozen A is discarded.
                 if (!candidateCanStartCommit(current)) {
@@ -221,32 +222,19 @@ export class InventoryCommitCoordinator {
     }
 
     private async runBounded(
-        commands: readonly FrozenCandidateCommand[],
-        bulk: FrozenAddAllCommand,
-        retry: boolean,
+        commands: readonly FrozenCandidateCommand[], bulk: FrozenAddAllCommand, _retry: boolean,
     ): Promise<void> {
-        let next = 0;
-        const worker = async () => {
-            while (next < commands.length) {
-                const command = commands[next++];
-                if (!command.claimed) {
-                    bulk.outcomes.set(command.candidateId, {
-                        candidateId: command.candidateId, status: 'busy', stage: 'claim',
-                    });
-                    continue;
-                }
-                const retryState = this.retries.get(command.candidateId);
-                const outcome = retry && retryState?.ambiguousCommit
-                    ? await this.retryCandidateWithinClaim(command, retryState)
-                    : await this.executeClaimed(command, false);
-                bulk.outcomes.set(command.candidateId, outcome);
-            }
-        };
-        await Promise.all(Array.from(
-            { length: Math.min(3, commands.length) }, () => worker(),
-        ));
+        await runCandidateCommands(commands, bulk, async (command) => {
+            const retryState = this.retries.get(command.candidateId);
+            return retryState?.ambiguousCommit
+                ? this.retryCandidateWithinClaim(command, retryState)
+                : this.executeClaimed(command, false);
+        });
     }
 
+    dispose(): void {
+        this.registry.clear();
+    }
     private async retryCandidateWithinClaim(
         command: FrozenCandidateCommand,
         retry: RetryState,
@@ -257,6 +245,7 @@ export class InventoryCommitCoordinator {
         } catch (error) {
             const outcome = classifyFailure(command.candidateId, 'commit', error);
             if (outcome.status === 'no_longer_eligible') {
+                this.retries.delete(command.candidateId);
                 // Authoritative server conflict/non-retryable rejection:
                 // reconcile candidate/review/readiness authority immediately.
                 await this.dependencies.synchronizeIneligible([command.candidateId]);
@@ -297,7 +286,7 @@ export class InventoryCommitCoordinator {
             const authority = await this.dependencies.readCandidate(
                 command.sessionId, command.candidateId,
             );
-            if (!canonicalEligible(authority)) {
+            if (!canonicalEligible(authority) || !canonicalMatchesControlledChoice(authority, command.draft)) {
                 this.retries.delete(command.candidateId);
                 // Fresh authority rejected the candidate; synchronize the
                 // exact candidate/review/readiness roots so the UI can no

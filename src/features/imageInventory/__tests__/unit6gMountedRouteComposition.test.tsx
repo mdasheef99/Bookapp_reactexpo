@@ -8,6 +8,8 @@ import {
     InventorySummaryFoundationScreen,
 } from '../screens/InventoryFoundationScreens';
 import { captureService } from '../api/captureService';
+import { selectedChoices } from '../testing/editionPickerClientFixtures';
+import type { EditionChoices } from '../contracts/ownerEditionPicker';
 
 const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn() };
 const mockWorkflow = { selected: null as any, select: jest.fn(), clear: jest.fn() };
@@ -26,6 +28,8 @@ let mockSaveReviewMutate: jest.Mock;
 let mockRemoveInputMutate: jest.Mock;
 let mockResolveDuplicateMutate: jest.Mock;
 let mockAddCandidate: jest.Mock;
+let mockAddAll: jest.Mock;
+let mockEditionChoices: EditionChoices | undefined;
 let mockCandidateDetail: any;
 
 function processingCounts(overrides: Record<string, number> = {}) {
@@ -129,12 +133,15 @@ function resetMocks() {
     mockRemoveInputMutate = jest.fn();
     mockResolveDuplicateMutate = jest.fn();
     mockAddCandidate = jest.fn().mockResolvedValue({ status: 'succeeded' });
+    mockAddAll = jest.fn().mockResolvedValue({ command: {}, result: {} });
+    mockEditionChoices = undefined;
     mockCandidateDetail = {
+        candidateVersion: 2, review: { value: null, reviewVersion: null },
         observed: {
             title: 'Detected Book One', authors: ['Author One'],
             language: 'en', script: 'Latn',
         },
-        metadata: { snapshot: null },
+        metadata: { revision: 3, snapshot: null, representativeCover: null },
     };
     mockRouter.push.mockReset();
     mockRouter.replace.mockReset();
@@ -201,10 +208,18 @@ jest.mock('../queries/ownerUxQueries', () => ({
         refetch: jest.fn(),
     }),
 }));
+jest.mock('../queries/ownerEditionPickerQueries', () => ({
+    useOwnerEditionChoices: () => ({ data: mockEditionChoices, isLoading: false, error: null }),
+    useOwnerEditionPicker: () => ({
+        choices: { data: undefined, isLoading: false, error: null, refetch: jest.fn() },
+        selectEdition: {}, requestOptions: {}, selectionPending: false, lookupPending: false,
+        isCommandActive: () => false, retrySelection: jest.fn(), retryLookup: jest.fn(),
+    }),
+}));
 jest.mock('../commit/useInventoryCommitCoordinator', () => ({
     useInventoryCommitCoordinator: () => ({
         addCandidate: mockAddCandidate,
-        addAll: jest.fn(), retryAddAll: jest.fn(),
+        addAll: mockAddAll, retryAddAll: jest.fn(),
         claimSlot: jest.fn(() => 'slot'), releaseSlot: jest.fn(),
         isCommandActive: jest.fn(() => false),
         inFlight: new Set(), outcomes: new Map(),
@@ -764,6 +779,36 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
         expect(screen.queryByText('Mark false detection')).toBeNull();
     });
 
+    it('Task 7: the mounted post-scan Add all carries a confirmed held edition without creating a saved review', async () => {
+        const choices = selectedChoices({
+            sessionId: '00000000-0000-4000-8000-000000000010',
+            candidateId: '00000000-0000-4000-8000-000000000021',
+            reviewVersion: null, rows: [], optionsExpiresAt: null,
+            selection: { ...selectedChoices().selection!, source: 'current_suggestion', optionId: null },
+        });
+        mockEditionChoices = choices;
+        mockInputs.data.items = [{ inputId: '00000000-0000-4000-8000-000000000001',
+            ordinal: 1, inputVersion: 2, presentationState: 'ready', retryState: 'none',
+            safeCode: null, acceptedCandidateCount: 1 }];
+        const card = cardFixture({
+            candidateVersion: choices.candidateVersion, metadataRevision: choices.metadataRevision,
+            metadataSummary: { ...choices.selection!.snapshot, selectionId: choices.selection!.selectionId, representativeCover: null },
+            fieldSources: { ...cardFixture().fieldSources, title: 'matched', authors: 'matched', language: 'matched' },
+            allowedActions: ['save_review', 'view_metadata'],
+        });
+        mockBatchReview = batchReviewFixture([card], { detected: 1, processing: 0 });
+        mockBatchReview.data.defaults = { ...defaultsFixture(), condition: 'good', priceMinor: 0 };
+        const screen = render(<InventorySessionFoundationScreen sessionId={choices.sessionId} />);
+        await waitFor(() => expect(screen.queryByText('Add all ready books (1)')).toBeTruthy());
+        fireEvent.press(screen.getByText('Add all ready books (1)'));
+        fireEvent.press(screen.getByText('Add all 1'));
+        await waitFor(() => expect(mockAddAll).toHaveBeenCalledTimes(1));
+        expect(mockAddAll.mock.calls[0][0][0].review).toMatchObject({
+            metadataChoice: { mode: 'edition_option', selectionId: choices.selection!.selectionId },
+            priceMinor: 0, baseCondition: 'good', shelfLocation: 'Front shelf',
+        });
+        expect(card.review).toBeNull(); expect(card.reviewReady).toBe(false);
+    });
     it('renders no Add, Add-all, or commit controls anywhere on the composed surface', () => {
         mockInputs.data.items = [{
             inputId: '00000000-0000-4000-8000-000000000001',

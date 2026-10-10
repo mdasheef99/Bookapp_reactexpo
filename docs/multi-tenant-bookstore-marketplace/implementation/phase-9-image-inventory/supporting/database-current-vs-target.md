@@ -1,4 +1,357 @@
+## 2026-10-10 - M71 applied and catalog verified
+
+Fresh MCP exact-project verification: Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn, ACTIVE_HEALTHY, PostgreSQL 17.6.1.063, ap-southeast-2.
+M65-M70 history is unchanged; M71 is APPLIED_VERIFIED as 20261010110835 / marketplace_phase9_edition_picker_selection_eligibility.
+Preflight delegate source matched preserved M66. Postflight source SHA-256 equals the reviewed M71 body; its OID, owner, SECURITY DEFINER, empty search_path and ACL remain unchanged.
+M70 wrapper/confirmation reader, M68 eligibility, strict identity and the other 359 Phase 9 functions are unchanged.
+Observed counts remain 173 candidates / 21 inventory / zero edition-state rows; candidate/state/inventory RLS and ACLs are unchanged.
+Provider flags are unchanged and do not establish new alternatives-retention permission. No active claimed job was observed.
+[Migration ledger, source hashes, recovery and advisor comparison](../trackers/02-implementation-and-verification.md).
+Next: local feature browser inspection before publication; deployed Owner Edge remains ACTIVE v14 / verify_jwt=true and compatible runtime rollout is pending.
+
+## 2026-10-10 - Unknown-language selection correction checkpoint
+
+Read-only MCP preflight on 2026-10-10 verified Bookconnect_reactexpo /
+ahntbtktjjmvfosgkmgn, ACTIVE_HEALTHY, PostgreSQL 17.6.1.063. M65-M70 are APPLIED;
+public phase9_select_candidate_edition_v1 delegates through M70 to private
+phase9_edition_legacy_select_candidate, still using strict identity compatibility.
+M68 completion uses the ISBN-aware option helper. M69 held-choice Save/Add
+validation does not repeat the strict helper for edition_option. pg_proc ACLs
+show the delegate/private helpers postgres-only; public selection authenticated-only.
+No proposed M71 version/name exists in live history. Local forward M71 replaces
+only the delegate's edition_option eligibility branch; no live change applied.
+[Ledger/evidence](../trackers/02-implementation-and-verification.md).
+No table/column/RLS/trigger/Storage/data or other schema state changed.
+
 # Phase 9 Database and Storage: Current vs Target
+
+## 2026-10-09 - Local preview before Git publication
+
+**Status:** `local_web_bundle_verified_browser_runtime_blocked`.
+Phase 9 / Unit 6G baseline complete; Task 8 independently APPROVED locally.
+M65-M70 remain APPLIED / catalog-verified; no migration was reapplied.
+The Owner chose local UI inspection before committing, pushing or deploying.
+[Preview/runtime evidence](../trackers/35-owner-edition-picker-local-web-preview.md) records the corrected
+worktree-only application bundle (HTTP 200), successful test Auth checks,
+and the Codex browser startup failure. No browser interaction PASS is claimed.
+Compatible deployed Edge/worker code and provider retention permission remain
+pending. Only authorized Auth request/verification calls changed external state;
+no inventory, Storage, provider, deployment or Git-publication mutation occurred.
+
+Exact next authorized action: restore Codex browser control and inspect the
+local scan UI with the supplied test login before Git publication/deployment.
+Earlier dated entries preserve their historical scope and approval provenance.
+
+## 2026-10-09 - Task 8 independent approval and M65-M70 applied
+
+Phase 9 / completed Unit 6G baseline. Task 8's bounded LOCAL checkpoint is
+independently APPROVED; all eight tasks have local implementation/verification
+evidence. [Review provenance](../trackers/33-owner-edition-picker-task8-local-verification.md)
+preserves earlier approval provenance and the unavailable historical 152-path
+audit baseline.
+
+**Status:** `task8_independently_approved_m65_m70_applied_runtime_pending`.
+The Owner authorized steps 1-3: approval documentation, live preflight and the
+six unchanged migrations. All M65-M70 are now APPLIED / catalog-verified on
+Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn. [Application ledger](../trackers/34-owner-edition-picker-m65-m70-application.md)
+records six live versions, exact source/archive hashes, function/ACL/RLS/index/
+trigger readback, unchanged business counts, recovery and advisor deltas.
+
+No Edge/worker/client deployment, registry/configuration change, provider call,
+browser test, data deletion, staging, commit or push occurred. New alternatives
+retention remains disabled/unverified; existing automatic provider flags remain
+unchanged. Runtime/provider/browser/operational rollout gates stay pending.
+
+Exact next action: Owner review/authorization for compatible development
+Edge/worker/client rollout and provider-gated browser verification (step 4).
+Earlier dated entries below retain their historical NOT_APPLIED status and
+review provenance; this latest entry owns current application status.
+
+## 2026-10-09 - Task 8 local verification review checkpoint
+
+Phase 9 / completed Unit 6G baseline; Tasks 1-7 locally implemented.
+Task 6 and Task 7's bounded corrections retain independent APPROVED provenance.
+**Status:** `task8_locally_verified_pending_independent_review`.
+**Active work unit:** Task 8 LOCAL verification review checkpoint.
+The Owner supplied the previously pending local authorization.
+[Task 8 evidence](../trackers/33-owner-edition-picker-task8-local-verification.md) records 17 native PostgreSQL checks /
+11 lock overlaps, exact Task 7 23 suites / 349 tests, provider/worker/contract
+13 suites / 365 tests, 187 scoped SQL cases, build / 14 structural cases,
+strict types, teardown and the 19-ACTIVE-ID evidence matrix.
+Mocked UI requests, fixture SQL and real native locks are labelled separately.
+
+**Exact next authorized action:** independent read-only review of Task 8's
+local test, harness and verification-documentation diff. No Task 8 independent
+approval or full operational completion is claimed. Remaining browser/device,
+configured-provider permission, live migration/runtime, security/cleanup and
+lookup/UI disablement/rollback/rollout gates are separately authorized.
+M65-M70 remain unchanged / CREATED_LOCAL / NOT_APPLIED to the shared service;
+production retention stays disabled. Only disposable local database/cluster
+mutations occurred. No shared database/Storage/provider/deployed-worker mutation,
+staging, commit, push or deployment occurred. No product requirement changed.
+Earlier dated entries below retain their historical scope and review provenance.
+
+Disposable readback only: native role-bound SQL used unchanged baseline/prerequisites
+(M01-M62 excluding inherited M09, no M63/M64) plus M65-M70, including M61/M62.
+All 17 checks and teardown passed. This is not a fresh live schema/project audit.
+The [local ledger/hash evidence](../trackers/33-owner-edition-picker-task8-local-verification.md#migration-preservation-and-disposable-ledger)
+records before/after SHA-256 and unchanged shared NOT_APPLIED status.
+No shared migration version or Supabase application entry was created.
+
+## 2026-10-08 - Task 6 M70 local confirmation correction
+
+Owner authorized the bounded Task 6 backend/shared-DTO/client completion and
+separately answered Yes, create the local migration for exactly
+20261008000070_marketplace_phase9_edition_picker_confirmation.sql.
+Creation does not authorize live application. Filename/reservation checks found
+no M70 collision; M63/M64 in the other checkout remain outside this task.
+
+Fresh read-only MCP preflight (2026-10-08): Bookconnect_reactexpo /
+ahntbtktjjmvfosgkmgn, ACTIVE_HEALTHY, ap-southeast-2, PostgreSQL 17.6.1.063.
+Live phase9_candidate_edition_state and private phase9_edition_choices are absent.
+Latest live Phase 9 migration is M62 / 20260913162154. The unrelated overall
+live tail is clubs_primary_venue_write_authorization / 20261008091939,
+after clubs_admin_primary_venue / 20261007144356. This is schema/history evidence,
+not permission to retain new provider data or apply any migration.
+
+| Local filename | Live version/status | Effects and verification |
+| --- | --- | --- |
+| 20261008000070_marketplace_phase9_edition_picker_confirmation.sql | none; CREATED_LOCAL / NOT_APPLIED | Forward reader/selection-reply wrappers derive confirmedByOwner from existing valid private held authority. Public signatures/authenticated-only grants persist; private delegates deny all client/service roles. No table/column/RLS/counter/retention/inventory change. 20 full-stack M70 PGlite checks PASS, including real pre-M70 state/receipt/warmed-reader upgrade preservation and Save/Add after expiry. |
+
+M70 SHA-256: CBC63A03BF92A7609B4997B80C7CA3BB36C70D0568613D4D56CA76EDE230AF3C.
+All historical migration artifacts, including M65-M69, are byte-preserved.
+M65-M70 remain unapplied; no live database/Storage/provider write occurred.
+32 nearest M69 tests PASS in their historical M65-M69 harness; do not call all
+52 SQL cases M70-stack proof. PGlite is sequential, not independent-connection
+PostgreSQL race proof.
+
+Compatibility/deployment: both strict parsers require the flag on non-null
+selection. Deploy compatible SQL/Owner Edge/client together only under later
+explicit rollout authority; old responses missing the flag fail closed. M70
+projects existing legacy receipts at return time without changing stored audit
+JSON. New-format and old-format replays whose held choice is superseded or
+query-invalid return false while preserving original IDs/snapshots/versions.
+
+Rollback: preferred feature disablement retains compatible M70 readers/parsers,
+server-held choices and Add support as picker §12 requires; no data deletion or
+historical migration rewrite. Rolling back to pre-flag binaries additionally
+requires a coordinated response shim that removes the field from reads AND
+selection receipts, including new-format stored receipts. Simply restoring old
+function names is not a compatible binary rollback. That operational rollback
+and live mixed-version/race proof remain Task 8, NOT_RUN. No down migration or
+live rollback is created/executed in this local correction.
+
+[Exact authority, source trace and gates](../trackers/02-implementation-and-verification.md#2026-10-08---task-6-confirmation-correction-local-completion).
+Earlier audits/ledgers are historical.
+
+## 2026-10-08 - Task 6 client review checkpoint and confirmation gap
+
+This session performed local client implementation and local artifact/hash
+verification only. No new live project/schema verification, migration plan,
+migration-file creation/edit/application or database/Storage/provider action is
+claimed. M65-M69 remain byte-identical and NOT_APPLIED; M69 SHA256 is
+008F9EBB8CDF3288053B10FFCF2A50DB36D96807A0B42787D89339EAE79E0CDE.
+
+The [Task 6 resume-gap proposal](../work-units/owner-edition-picker-task6-confirmation-gap.md)
+concerns strict Owner read confirmation evidence derived from existing private
+state. It is proposed, not implemented or applied. Any future database/migration
+work must independently verify the exact Supabase project and obtain its own
+authority. [Client checkpoint evidence](../trackers/02-implementation-and-verification.md#2026-10-08---task-6-client-review-checkpoint-and-confirmation-gap). Task 6 is incomplete; earlier live evidence is historical.
+
+
+## 2026-10-08 - Task 5 independent-review correction
+
+Revised local M69 remains CREATED_LOCAL / NOT_APPLIED. SHA256: 008F9EBB8CDF3288053B10FFCF2A50DB36D96807A0B42787D89339EAE79E0CDE. Only its private metadata-state/detail resolver changes; public Add/Save signatures, trigger bindings, schema and RLS are unchanged. Existing exact-project preflight remains recorded evidence, not a fresh live read. Final local Task 5/commit/cover/lifecycle gate passes 54/54; M65-M68 and historical SQL bytes are preserved. No live database/Storage action.
+
+[Correction evidence](../trackers/02-implementation-and-verification.md#2026-10-08---task-5-independent-review-correction). Locally verified; independent correction review is pending. Tasks 6-8 remain unstarted and M65-M69 remain NOT_APPLIED. Earlier checkpoints are historical.
+
+## 2026-10-08 - Edition-picker Task 5 local completion
+
+Read-only preflight at 2026-10-07T20:39:16.964537+00:00 (2026-10-08 local date) freshly verified Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn / ACTIVE_HEALTHY / PostgreSQL 17.6.1.063 / ap-southeast-2. Live latest Phase 9 is M62 / 20260913162154 representative_cover_detail_projection; overall tail is unrelated clubs_admin_primary_venue / 20261007144356. Private picker state/completion remain absent live.
+
+Affected live candidate/inventory/snapshot/idempotency schema, constraints/policies, Add/review/cover definitions, triggers and grants were read. Existing Add/review signatures are authenticated-only; cover/dispatcher helpers are private, with trusted commit eligibility retaining service_role. Existing active cron phase9-worker-wake-dispatcher runs * * * * * and calls marketplace_sec.dispatch_phase9_worker_wakes(); the live dispatcher matches the M56 target. No new lifecycle service or remote write is needed for the local artifact.
+
+Filename preflight compared actual local migrations through M68 with documentation reservations (M63/M64 belong to separate work). No M69 collision/reservation existed. The Owner authorized exactly one necessary forward local artifact: 20261008000069_marketplace_phase9_edition_picker_commit_cleanup.sql. SHA256: 23CFDE75AFEBAEFDF03217B38A46AAB4CEBB255AD5127CEA4A219ADE1D2426CC.
+
+| Local artifact | Live version | Effects / verification |
+| --- | --- | --- |
+| M69 exact-selection Add/cleanup | CREATED_LOCAL / NOT_APPLIED | Forward replacements/private delegates for saved-choice validation, readiness/detail, existing Add, effective cover trigger, identity invalidation and bounded existing-dispatcher cleanup; no table/column/RLS/storage/public signature change. Full M69 30/30, final combined 194/194 SQL cases, 406 Jest, strict graph types and worker build + 14 structural cases PASS. |
+| M65-M68 | NOT_APPLIED | Bytes unchanged against captured starting hashes; historical applied SQL also preserved. |
+
+No application, deployment, database/Storage write or environment mutation occurred. Apply only after separate authorization and fresh exact-project/tail/drift readback. Production retains no independent retention verifier; independent-connection races/client/UI/live enablement remain later gates. [Ledger and exact commands](../trackers/02-implementation-and-verification.md#2026-10-08---edition-picker-task-5-local-completion). Earlier audits are historical.
+
+## 2026-10-08 - M68 timestamp correction ledger
+
+Fresh read-only Supabase MCP verifies Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn, ACTIVE_HEALTHY, PostgreSQL 17.6.1.063, ap-southeast-2. Latest Phase 9 remains M62 / 20260913162154; latest overall remains unrelated clubs_admin_primary_venue / 20261007144356. The private picker state and public completion RPC are absent live. No remote mutation occurred.
+
+| Local artifact | Live version | Project verification | Corrected effect / local proof |
+| --- | --- | --- | --- |
+| 20261007000068_marketplace_phase9_edition_picker_worker_completion.sql | NOT_APPLIED | Fresh read-only project, migration-tail and state/RPC catalog reads above | Full ISO calendar timestamp and valid clock-range checks replace suffix-only validation. Six direct completion rejection cases and four valid UTC/offset controls pass; full completion/security/worker SQL 87/87 and structural 14/14 PASS. No schema, grants or public signatures changed in this timestamp patch. |
+| M65-M67 | NOT_APPLIED | Same verified project/tail; no picker state live | Byte-preserved; hashes remain recorded in implementation evidence. |
+
+Current M68 SHA256: C591686FA414B76635C55EADA59DC2172B0F885362606654C5886C5B11A85C5A. Prior A57E5CC9C1E80DCEF9C2170579DEFBDE76A39531E1A4E788B28A08E5BB9B2DBE is the historical pre-timestamp-correction artifact. [Exact scoped tests and authority](../trackers/02-implementation-and-verification.md#2026-10-08---task-4-timestamp-self-review-correction) govern this Owner-authorized local edit. Owner-requested correction self-review is complete; independent correction approval is not claimed. Task 5 and migration application still require separate Owner authorization. Production retention remains disabled; no real multi-connection race proof is claimed. Earlier ledgers are historical.
+
+
+## 2026-10-08 - Task 4 correction readback and migration ledger
+
+Fresh read-only Supabase MCP verifies Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn / ACTIVE_HEALTHY / PostgreSQL 17.6.1.063 / ap-southeast-2. Latest Phase 9 remains M62 / 20260913162154. The overall migration tail now includes unrelated clubs_admin_primary_venue / 20261007144356; this distinction supersedes earlier current-tail wording. No edition-picker migrations, public.phase9_candidate_edition_state or completion RPC are live. No database/Storage mutation occurred.
+
+| Local artifact | Live version | Project verification | Corrected effects / actual proof |
+| --- | --- | --- | --- |
+| 20261007000068_marketplace_phase9_edition_picker_worker_completion.sql | NOT_APPLIED | Fresh read-only exact-project/catalog/history check above | Nullable bounded private failure_receipt; safe exact failure replay after lease release; compatible exact ISBN with unknown query language; normalized versions/bounds/timezone/checksums/pair validation on all non-null option rows. 77 completion/worker SQL + 14 structural cases PASS; private helper/table ACL, postgres ownership and empty search_path PASS. |
+| Existing M65-M67 | NOT_APPLIED | Same read-only check; no picker migrations/state live | Bytes/hashes unchanged; 48 existing picker SQL cases PASS. |
+
+M68 SHA256 is A57E5CC9C1E80DCEF9C2170579DEFBDE76A39531E1A4E788B28A08E5BB9B2DBE, replacing reviewed 995ACAC0A844326FCC898DA54F87932C80E7522F3A0286EECBBD466FA96F71D7. [All hashes and actual correction evidence](../trackers/02-implementation-and-verification.md#2026-10-08---edition-picker-task-4-review-corrections). M68 now adds one column to an existing private table; earlier no-new-column entries describe the pre-correction checkpoint. No new table, public signature, status mirror or generic version/counter is added. Original automatic dispatch/history and chosen metadata remain preserved.
+
+Current state is corrected local Task 4 pending independent correction review. Production retention remains disabled; no live application or independent-connection race claim is made. Task 5 requires separate Owner authorization; future application requires exact-project/tail/drift readback and separate authority. Main-checkout Unit 6I work is outside this correction scope. Earlier dated audits/ledgers are historical.
+## 2026-10-07 - Task 4 M68 local migration readback
+
+Owner "sure lease proceed" authorized one forward local Task 4 migration/disposable tests. Fresh pre-creation Supabase MCP verified Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn / ACTIVE_HEALTHY / PostgreSQL 17.6.1.063 / ap-southeast-2; live tail M62 / 20260913162154, preceded by M61 / 20260913111342. Function/signature/ACL inspection confirmed the automatic-only gap. This was read-only; no live DDL/grant/row/Storage mutation occurred. M68 was unused in this worktree before creation; main-checkout M63/M64 remain separate.
+
+| Local filename | Live version | Exact project verification | Effects | Verification/status |
+| --- | --- | --- | --- | --- |
+| 20261007000068_marketplace_phase9_edition_picker_worker_completion.sql | none / NOT_APPLIED | MCP ahntbtktjjmvfosgkmgn / Bookconnect_reactexpo / ACTIVE_HEALTHY, 2026-10-07; live M62 | Service-only completion/recovery/failure; explicit registration/egress/finalization/reconciliation dispatch; private atomic options/job completion; automatic payload guards and private bypass grants | CREATED_LOCAL / NOT_APPLIED; 34 completion/security + 6 worker-to-SQL + 14 automatic structural cases PASS; ownership/search_path/ACL readback PASS |
+
+M65-M67 SHA256 matches the pre-Task-4 checkpoint. M68 adds no table/column and preserves original automatic bodies behind purpose dispatch. Public wrappers are invokers; privileged helpers are postgres-owned with empty search_path and deny-by-default grants. Client/direct-write denial, request/query/generation/claim/Owner/store/session fences, own-record metadata/book/cover validation, rollback and slim audit/receipts pass locally. [Security matrix and hashes](../trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-4-local-completion) record exact proof.
+
+Production installs the typed local port but no retention verifier. No live application/permission claim is made. PGlite does not prove independent-connection races. Future application requires fresh exact-project/tail/reservation/drift readback and separate authority; Add/cleanup, client/UI and rollout remain pending. No destructive rollback is authorized: future disablement must preserve chosen provenance, inventory and automatic history (picker §§5-9/11). Earlier audit/ledger entries are historical.
+
+## 2026-10-07 - Task 4 read-only completion-boundary audit
+
+Fresh read-only Supabase MCP verification: Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn, ACTIVE_HEALTHY, PostgreSQL 17.6.1.063 in ap-southeast-2; live migration history ends at M62 / 20260913162154 (M61 / 20260913111342 precedes it). Read-only catalog inspection of job context, structural lookup/attempt registration, usage reservation, provider-call registration/finalization/reconciliation and job failure found no controlled edition-options completion/recovery/failure operations. Existing registration/failure branches contain automatic query/processing/snapshot assumptions. The public context wrapper correctly restores M38's v2 physical-claim field over M67's internal v1 return.
+
+No DDL, rows or grants changed. Existing M65-M67 remain local and NOT_APPLIED. Proposed Task 4 forward changes are documented for separate local-file authority in [the SQL proposal](../work-units/owner-edition-picker-task4-sql-proposal.md). No migration filename is allocated; current evidence and limitations are in [implementation verification](../trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-4-runtime-checkpoint).
+
+## 2026-10-07 - Edition-picker Task 2 review corrections
+
+The Owner-authorized corrections restore picker §4.1 / DOC-3 §5.1 / DOC-4 §8: local reuse validates the complete Owner-safe metadata, a unique coherent exact text match remains a medium suggestion requiring confirmation, and ambiguous matches remain unresolved. M65/M67 are revised locally only; M65–M67 are NOT_APPLIED. The existing gateway, jobs, private-state permissions, selling fields and Add fence remain in force. No product scope or new migration was added.
+
+Current authority, corrected handoff and verification are recorded in [the implementation evidence](../trackers/02-implementation-and-verification.md#2026-10-07---edition-picker-task-2-review-corrections) and DOC-13/TRACKER. Earlier checkpoints are historical.
+
+### Fresh read-only review preflight and local corrections
+
+On 2026-10-07, Supabase MCP reverified ahntbtktjjmvfosgkmgn / Bookconnect_reactexpo / ACTIVE_HEALTHY, PostgreSQL 17.6.1.063, ap-southeast-2. Fresh migration history still ends at M62 / 20260913162154. The edition-state relation is absent. Catalog inspection found no canonical_editions CHECK constraints and confirmed that the live structural local-completion wrapper delegates after claim/query checks; safe reusable metadata must therefore be checked at local resolution. Only catalog metadata was read.
+
+Local M65 now shares phase9_edition_canonical_snapshot between local resolution and current-suggestion projection; the existing Owner-safe field validator applies every author/category, bounds, language, ISBN coherence and cover policy. Its private ACL follows the existing phase9_edition_% revocation loop. Local M67 counts ISBN conflicts before safe filtering and exposes only a unique coherent text match when no validated observed ISBN exists; the unchanged gateway records exact_original_title_author_language evidence. Neither path creates alternatives. These files remain NOT_APPLIED and no live definition was changed.
+
+## 2026-10-07 - Edition-picker Task 2 local completion
+
+Task 2 is locally complete: private per-card state, controlled read/search/select, version/expiry/ownership guards, coherent local ISBN resolution, lookup-scoped attempt history, and explicit-operation admission. Task 1 remains complete. The Owner's “ok proceed” authorized local M65–M67 creation and disposable tests; these files exist locally and are NOT_APPLIED. No live database/Storage write, deployment, staging, commit, or push occurred.
+
+Fresh proof: 34 disposable-database tests PASS; 4 affected Owner Jest suites / 303 tests PASS; strict Owner ingestion graph type check PASS. Real independent-connection races, provider-retention permission, worker execution/completion, Add/cleanup integration, client/UI/browser and rollout proof remain Tasks 3–8. No full-feature acceptance is claimed.
+
+Current work unit: Task 2 checkpoint review. Exact next authorized action: review the Task 2 diff/evidence; the next implementation slice is Task 3 Google result envelope after Owner authorization. Sources: picker SDD §§4.3/5–6/8–9/11; Master MAS-02/03/07/12/17. Earlier dated checkpoints below are historical.
+
+### Fresh project readback and local-vs-live boundary
+
+Supabase MCP reverified Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn / ACTIVE_HEALTHY / ap-southeast-2 / PostgreSQL 17.6.1.063. Catalog reads reconfirmed M62 as the live migration tail, absent edition state, affected function/constraint/trigger/ACL/replay/cleanup definitions, and the main checkout's reserved M63/M64. No Owner data or secrets were read and no external state changed. M65–M67 were rechecked absent in both worktrees immediately before creation; they now exist only in codex/edition-picker.
+
+
+| Local filename | Live version | Exact project verification | Effects | Verification/status |
+| --- | --- | --- | --- | --- |
+| 20261007000065_marketplace_phase9_edition_picker_state.sql | none | MCP ahntbtktjjmvfosgkmgn / Bookconnect_reactexpo / ACTIVE_HEALTHY, 2026-10-07 | Private bounded state/projection/identity/Owner guards; composite membership; RLS and private ACLs. | CREATED_LOCAL / NOT_APPLIED; disposable proof PASS. |
+| 20261007000066_marketplace_phase9_edition_picker_commands.sql | none | same fresh exact-project preflight | Authenticated read/enqueue/select; candidate locks; replay fingerprints; slim receipts; coherent metadata/selling preservation. | CREATED_LOCAL / NOT_APPLIED; disposable proof PASS. |
+| 20261007000067_marketplace_phase9_edition_picker_operation_fences.sql | none | same; remote tail M62, main M63/M64 reservations rechecked and preserved | Lookup/legacy partial attempt uniqueness, coherent local ISBN, explicit ready-card claim context, automatic revision exclusion and identity invalidation. | CREATED_LOCAL / NOT_APPLIED; disposable proof PASS. |
+
+Application is blocked by authority and rollout sequencing, not by local test failure: no live application has been authorized, and compatible Google envelope, explicit worker, Add/cover/cleanup, client/UI and provider-permission gates remain later tasks. Before any future application, reverify exact project and migration reservations/drift again; do not import main M63/M64 automatically.
+
+Rollback remains forward-compatible: disable new lookup/UI exposure while preserving independent saved selections and existing inventory. Do not drop chosen state, automatic history or the new attempt indexes merely to hide the picker. No destructive rollback is authorized here. Source: picker §§5–9/11.
+
+### Read-only security advisor baseline
+
+The exact-project security advisor read was captured before any live DDL (none was applied). Returned observations are existing baseline findings, some observed_at timestamps are 2026-10-06; they are not a post-migration security verdict. Counts/remediation: [rls_enabled_no_policy INFO 70](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy); [function_search_path_mutable WARN 8](https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable); [rls_disabled_in_public ERROR 1](https://supabase.com/docs/guides/database/database-linter?lint=0013_rls_disabled_in_public); [extension_in_public WARN 1](https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public); [anon_security_definer_function_executable WARN 15](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable); [authenticated_security_definer_function_executable WARN 151](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable); [auth_leaked_password_protection WARN 1](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+Local new-boundary proof: RLS enabled, no direct client/service table privileges or private-helper execution, only three authenticated controlled RPCs, fixed empty search_path and postgres ownership, server Owner/store/session checks, strict bounded payloads and composite membership, safe public projection, claim/token/lease and stale-query denial. No unrelated baseline remediation or clean live-security claim is implied.
+
+Local forward tests: 34/34 PASS. Continuity's extracted migration-set check accepts only the recorded approved M65–M67 and rejects missing/unknown/duplicate/unapproved/other-branch files (one positive + five negative probes PASS). Real PostgreSQL races and live migration/grant/RLS readback remain NOT_RUN. New validator module is 180 lines; baseline phase-wide checks are preserved. Historical NOT_CREATED entries below record the pre-approval checkpoint, not current local state.
+
+
+## 2026-10-07 - Edition-picker Task 2 read-only migration preflight
+
+Task 2 code/tests and read-only preflight are authorized by the Owner's latest “Proceed with the next task.” Migration-file creation/application retain the separate AGENTS authorization boundary. No proposed SQL below has been created or applied.
+
+### Exact project and observed state
+
+Supabase MCP freshly verified Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn / ACTIVE_HEALTHY / ap-southeast-2 / PostgreSQL 17.6.1.063. Read catalog definitions only; no Owner records, credentials, provider payloads, database or Storage writes. Migration history still ends at remote 20260913162154, marketplace_phase9_representative_cover_detail_projection (local M62).
+
+Git has two worktrees, both based on ee3a8c79429ca401d468861f2861721082ba955e. Main codex/unit6i-owner-review-saved-books reserves uncommitted M63/M64 (20261005000063/64); they must not be imported, renamed, overwritten or reused. Edition-picker worktree has no newer SQL. Reserve the proposed M65–M67 names below in this branch's ledger; these are proposals, not applied or created migrations.
+
+| Catalog evidence | Consequence for picker SDD §§4.3/5–9 |
+| --- | --- |
+| phase9_candidate_edition_state absent | Expand with one independent bounded private row per candidate; preserve automatic snapshot table. |
+| Automatic snapshots UNIQUE(candidate_id), immutable trigger, local/external outcome constraints | Owner selection needs independent storage. Never replace/delete the automatic record. |
+| Attempts UNIQUE(candidate_id,adapter_key,attempt_sequence), sequence 1–10; registration actually uses primary=1/secondary=2 | Candidate-lifetime constraint blocks a later logical operation. Replace only that uniqueness for lookup-backed attempts; retain a partial legacy constraint for lookup_id IS NULL plus lookup/adapter/sequence uniqueness. Preserve provider_attempt_identity and lookup/provider_role constraints and history. |
+| Jobs dedupe_key UNIQUE; metadata_enrich claims use SKIP LOCKED, leases and attempts ≤5; claim batch limit 10 | Reuse metadata_enrich jobs, identify explicit purpose through a fixed operation_version. Worker invocation budget 15/three active stays a runtime rule; do not increase claim batch size. |
+| Claim asserts service role, worker/token/attempt/lease and candidate entity; job context currently requires processing + immutable vision lineage | Version only explicit-operation context/admission for unfinished ready/needs_review/possible_duplicate cards. Never reset an Owner card to processing to pass the old assertion. |
+| Local job context uses ORDER BY edition ID LIMIT 1 for ISBN and title matching | Resolve unique coherent checksum-valid ISBN only as strong; a unique text match remains a suggestion requiring confirmation; ambiguous/conflicting locals cannot win by ID. |
+| phase9_owner_ux_lookup_revision bumps metadata_revision and clears review_ready on every lookup insert/update/delete | Explicit options operations must be excluded from this automatic-result invalidation trigger. Searching alternatives must preserve current selection/review/selling fields. |
+| Initiating Owner/session helpers check auth.uid(), active owner capability and server store; active-session helper locks and rejects closed/expired sessions | Reuse on all three RPCs; cross-store/candidate/session, removed/expired/committed cards fail closed. Candidate/options locks and baseline versions fence selection. |
+| Private operational relations have RLS enabled and no client policies; service grants vary by existing relation | New state: RLS, no anon/authenticated/service direct table grants, postgres-owned private helpers; authenticated public controlled RPC only. Do not copy broad service DML ACLs. |
+| Replay helper keys actor/operation/idempotency and checks request fingerprint; receipts expire after 30 days | Use distinct command operation keys. Store slim lookup receipts and one chosen selection only; never option arrays in receipts. Replay reads current availability after expiry/commit. |
+| Metadata revision trigger watches automatic selection and duplicate advice | Owner selection explicitly increments existing metadata/review authority versions while preserving selling fields; no extra generic revision. |
+| Representative-cover inventory trigger reads original automatic snapshot | Task 5 must resolve effective choice before inventory insert, suppressing old cover fallback for edition_option. No Task 2 Add admission. |
+| Existing service cleanup claim invokes duplicate-expiry helper; cleanup jobs use fenced status/leases | Task 5 extends existing scheduled lifecycle, including immediate read/select deadline guards. No new cleanup service. |
+
+### Proposed forward files and effects
+
+| Proposed filename | Responsibility | Application/verification status |
+| --- | --- | --- |
+| 20261007000065_marketplace_phase9_edition_picker_state.sql | Private per-card relation, bounded normalized options and independent selection, composite candidate/session/store integrity, safe projection/expiry/authorization helpers. | NOT_CREATED / NOT_APPLIED; awaiting separate file-creation authority. |
+| 20261007000066_marketplace_phase9_edition_picker_commands.sql | Controlled read/search/select RPCs using existing session/replay/version helpers; one per-card operation, slim receipts, opaque IDs, current-suggestion confirmation and selling-field preservation. | NOT_CREATED / NOT_APPLIED; awaiting separate file-creation authority. |
+| 20261007000067_marketplace_phase9_edition_picker_operation_fences.sql | Lookup-scoped attempt uniqueness and explicit-purpose context/admission; unique coherent local matching and explicit-lookup metadata-revision guard. | NOT_CREATED / NOT_APPLIED; awaiting separate file-creation authority. |
+
+Source: [picker SDD](../work-units/owner-edition-picker-sdd.md) §§4.3/5–6/8–9/11; Master MAS-02/03/07/12/17; Data SDD §§3/5; Security MED-23/25/28. These files partition stable responsibilities, not equal line counts. Names must be rechecked for concurrent reservations immediately before authorized creation.
+
+Storage includes request ID/generation/query identity, option version/rows/source lookup/attempt/fetch/deadline, independent selection ID/source/originating option ID/snapshot/audit attribution, and timestamps. It does not store image bytes or selling fields. The originating option ID implements the existing Task 1 wire/resume contract. Deadline remains min(original fetch +24h, independently permitted provider deadline); unknown permission cannot enable storage.
+
+Search uses confirmed identity when available, otherwise observed clues, and never changes selection or saved selling fields. Generation fences bibliographic identity changes; expiry alone does not change identity. Each actual refresh gets a fresh operation/job/lookup ID, even for the same identity. Pending compatible taps reuse one operation, and fresh empty sets reuse their expiry window. Worker status remains authority; do not add another writable status machine.
+
+Selection copies only an eligible unexpired server option at exact optionsVersion, or validates current server-owned suggestion identity. Candidate/metadata/review versions are checked together. It updates coherent bibliographic review fields, preserves price/quantity/condition/location/damage/notes/publication intent, and saves selection independently from alternatives. Receipts exclude unchosen rows, and replay cannot regress a newer choice in the client.
+
+### Compatibility, proof and rollback
+
+- Run RED then GREEN PGlite tests against forward files for tenant/session/card denial, unique/coherent ISBN/text ambiguity, repeated logical lookups, expired/unavailable/forged selection, version conflict, confirmation and selling-field preservation. Gateway tests separately prove strict authenticated dispatch and bounded public responses.
+- Preserve baseline automatic snapshot/cache completion and original selected/manual contracts. Keep HTTP edition_option review admission fenced until Task 5 implements exact Add/cover behavior. Task 4 supplies explicit worker execution/completion; Task 8 provides real independent-connection races.
+- No migration application before compatible backend/worker/selection-aware commit/client and provider-rights gates are satisfied. Local fixture success is not live concurrency, provider permission or deployment proof.
+- Roll back exposure by disabling new lookup/UI entrypoints while retaining read/selection-aware Add support for existing saved choices. Preserve selected snapshots, inventory, historical attempts and receipts. No DROP, data deletion, reverse rewriting of applied migrations or return to candidate-lifetime uniqueness after multiple lookups.
+- No live migration, provider call, deployment, environment/package change or Git publication occurred during this preflight.
+
+## 2026-10-07 - Edition-picker Task 1 contract checkpoint
+
+The Owner authorized Task 1 on 2026-10-07. Contracts/fixtures and narrow compatibility are locally complete; Tasks 2–8 and database changes remain unstarted/unapproved. Source behavior remains picker SDD §§5–7/9/13.2. Current next action is Task 1 diff review; [implementation evidence](../trackers/02-implementation-and-verification.md) supersedes earlier planning-only status below.
+
+Task 1 performed no fresh database audit, migration preflight or mutation. HTTP admission is fail-closed independently of the installed SQL definitions; the earlier live evidence is historical.
+
+
+## 2026-10-06 - Owner edition picker read-only evidence
+
+Latest Owner display clarification EP-D14: each edition option in the metadata sheet shows its own cover image from its safe URL, title, all authors, and publication date; publisher, ISBN, and language are secondary details. Selection saves the coherent chosen metadata independently and follows the usual inventory Add flow, leaving one chosen cover on the scan card. This supersedes earlier text-only option rows. Owner chose relevance order with returned order preserved and Google attribution/book links. Picker §13.2 now defines Search Books wording and bounded unavailable/ineligible rows; EP-D11/13 scope cuts remain in force.
+
+Latest target scope (EP-D11/13, picker §§4-7/11): proposed per-card alternatives are written only by explicit edition_options completion; no automatic alternative capture/copy boundary, numeric override field/materialization, or post-add edition-number write extension is planned. Existing provider statement mapping remains. This scope update uses the recorded evidence below; it makes no new live-schema claim and performs no database audit or mutation.
+
+Review readback, 2026-10-06: the same project was freshly verified through Supabase MCP. Live metadata_enrichment_attempts has UNIQUE(candidate_id, adapter_key, attempt_sequence) and UNIQUE(lookup_id, provider_role); a new lookup needs scoped logical-attempt registration. Live marketplace_sec.phase9_set_inventory_representative_cover reads the original selected snapshot on INSERT and locks the sidecar on UPDATE without effective-choice gating. phase9_idempotency_keys has canonical_response JSONB and default 30-day expiry. store_inventory.edition_statement is text. These require the forward design in SDD §§4.3/6/7; they are not applied corrections or a complete DDL/RLS/ACL preflight. Official Google guidance was browsed for §13.2; no Books API search or response-header verification occurred. Migration ledger remains zero created/applied files and no database/Storage mutation.
+
+Supabase MCP get_project verified Bookconnect_reactexpo,
+ahntbtktjjmvfosgkmgn, ACTIVE_HEALTHY, PostgreSQL 17.6.1.063, ap-southeast-2.
+Column metadata was read for image_extraction_candidates,
+phase9_selected_metadata_snapshots, phase9_metadata_cache_entries,
+phase9_metadata_provider_calls, and store_inventory.
+Selected snapshots have UNIQUE(candidate_id) and outcome-specific constraints;
+store_inventory.edition_statement exists. Proposed
+phase9_candidate_edition_state does not exist.
+Google registry readback: storage_allowed=true, public_display_allowed=false,
+revalidation_seconds=86400. Registry configuration does not establish external
+provider rights or authorize public cover display.
+
+[SDD §§5-9,11](../work-units/owner-edition-picker-sdd.md) describes the proposed
+per-card relation and controlled boundaries. This evidence is not a complete
+migration preflight: inspect affected definitions, RLS/grants, triggers, queue/
+operation constraints, lifecycle wiring, and migration tail again before DDL.
+Migration ledger for this work unit: zero files created, zero applications,
+no live version allocated, no schema/data/Storage effects. Historical migrations
+remain unchanged. No provider call or deployment occurred.
+
+Readiness readback: Supabase MCP freshly verified ahntbtktjjmvfosgkmgn / Bookconnect_reactexpo / ACTIVE_HEALTHY. Proposed phase9_candidate_edition_state remains ABSENT. Live attempts have UNIQUE(candidate_id,adapter_key,attempt_sequence), UNIQUE(provider_attempt_identity), and UNIQUE(lookup_id,provider_role). Inventory has title, authors, published_date, cover_url, edition_statement, canonical_edition_id, and representative_cover. Latest returned migration tail is 20260913162154 (M62), not authority to allocate a future filename. This is bounded evidence, not complete function/RLS/grant/migration preflight. A public unauthenticated Books probe returned 429 without usable cache headers; configured-worker retention permission remains unverified. No database/Storage/schema/registry mutation or migration creation/application occurred. Earlier no-provider-query statements above belong to the preceding design sessions.
 
 > **2026-09-13 M61 live schema checkpoint:** After exact-project and hash
 > preflight, M61 was applied once to development project

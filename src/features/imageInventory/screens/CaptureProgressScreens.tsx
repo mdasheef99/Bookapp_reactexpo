@@ -2,12 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, FlatList, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
-import { Button } from '@/components/ui/Button';
+import { PostScanFooter, PostScanBulkAction } from '../components/PostScanInventoryActions';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useTheme } from '@/hooks/useTheme';
 import { BatchReviewCard } from '../components/BatchReviewCard';
-import { BatchInventoryCommitControls } from '../components/BatchInventoryCommitControls';
+import type { EditionChoices } from '../contracts/ownerEditionPicker';
 import { PostScanSessionHeader } from '../components/post-scan-session-header';
 import { DuplicateInputConfirmationDialog } from '../components/DuplicateInputConfirmationDialog';
 import { candidateCanStartBulkCommit } from '../commit/inventoryCommitCoordinator';
@@ -29,7 +29,7 @@ import {
 } from '../review/compactReviewDraft';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
 import { coalesceOwnerUxRefresh } from '../offline/ownerUxOfflineGate';
-import { createCaptureUuid, createSemanticKey } from '../capture/captureIds';
+import { createScanCandidateRemoval } from '../review/scanCandidateRemoval';
 import { useCompletedScanAutoClose } from '../close/useCompletedScanAutoClose';
 import { useDuplicateInputConfirmation } from '../capture/useDuplicateInputConfirmation';
 import { useInputRemoval } from '../capture/useInputRemoval';
@@ -49,6 +49,24 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const removal = useInputRemoval({ identity, sessionId,
         sessionActive: session.data?.status === 'active', isOffline });
     const [candidateMessage, setCandidateMessage] = useState<string | null>(null);
+    const [editionPending, setEditionPending] = useState<Set<string>>(new Set());
+    const editionScope = `${identity.userId}:${identity.storeId}:${sessionId}`;
+    const [editionChoices, setEditionChoices] = useState<{ scope: string; values: Map<string, EditionChoices> }>({
+        scope: editionScope, values: new Map(),
+    });
+    const handleEditionChoices = useCallback((choices: EditionChoices) => {
+        setEditionChoices(current => {
+            const values = current.scope === editionScope ? current.values : new Map<string, EditionChoices>();
+            if (values.get(choices.candidateId) === choices) return current;
+            const next = new Map(values); next.set(choices.candidateId, choices);
+            return { scope: editionScope, values: next };
+        });
+    }, [editionScope]);
+    const handleEditionPending = useCallback((id: string, pending: boolean) => {
+        setEditionPending(current => {
+            const next = new Set(current); if (pending) next.add(id); else next.delete(id); return next;
+        });
+    }, []);
     const [candidateDrafts, setCandidateDrafts] = useState<Map<string, {
         edits: CompactReviewEdits; acceptedAuthorityKey: string;
     }>>(
@@ -133,44 +151,15 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
         if (isFocused && inputs.data?.presentationRevision) void refreshAll();
     }, [inputs.data?.presentationRevision, isFocused, refreshAll]);
     useEffect(() => {
+        setEditionPending(new Set());
         setAuthorityChangedCandidates(new Set());
         setPendingIdentityAuthorities(new Map());
     }, [identity.storeId, identity.userId, sessionId]);
     const inputAnnouncement = inputs.data?.items.length
         ? `Image processing: ${inputs.data.items.filter((item) => item.presentationState === 'ready').length} ready, ${inputs.data.items.filter((item) => item.presentationState === 'needs_attention').length} need attention, ${inputs.data.items.filter((item) => ['checking_image', 'finding_books'].includes(item.presentationState)).length} processing.`
         : null;
-    const handleCandidateRemove = (
-        candidateId: string,
-        expectedCandidateVersion: number,
-    ) => {
-        if (isOffline || removeCandidate.isPending) return;
-        // SDD U6G-AC11: one candidate has one active command slot. Remove
-        // claims the same shared slot as Add/Add-all/Save or fails closed
-        // busy without sending a request.
-        const slotToken = inventoryCommit.claimSlot(candidateId, 'remove');
-        if (!slotToken) {
-            setCandidateMessage('That book is busy. Wait for its current action to finish.');
-            return;
-        }
-        removeCandidate.mutate({
-            sessionId,
-            candidateId,
-            expectedCandidateVersion,
-            idempotencyKey: createSemanticKey('remove-candidate'),
-            commandId: createCaptureUuid(),
-        }, {
-            onSuccess: () => {
-                inventoryCommit.releaseSlot(candidateId, slotToken);
-                setCandidateMessage('Book removed from this scan.');
-            },
-            onError: () => {
-                inventoryCommit.releaseSlot(candidateId, slotToken);
-                setCandidateMessage(
-                    'The book could not be removed. Refresh and try again.',
-                );
-            },
-        });
-    };
+    const handleCandidateRemove = createScanCandidateRemoval({ sessionId, isOffline,
+        removeCandidate, inventoryCommit, setCandidateMessage });
     const cards = batchReview.data?.items ?? [];
     const setupDefaults = {
         languageHint: batchReview.data?.defaults.languageHint ?? 'en',
@@ -183,13 +172,14 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const commitDrafts = cards.map((card) => {
         const savedDraft = candidateDrafts.get(card.candidateId);
         const edits = savedDraft?.edits ?? {};
-        const review = buildCompactReview(card, setupDefaults, edits);
+        const review = buildCompactReview(card, setupDefaults, edits,
+            editionChoices.scope === editionScope ? editionChoices.values.get(card.candidateId) : undefined);
         return { card, edits, ...(review ? { review } : {}),
             acceptedAuthorityKey: pendingIdentityAuthorities.get(card.candidateId)
                 ?? savedDraft?.acceptedAuthorityKey ?? candidateCommitAuthorityKey(card) };
     });
     const blockedCandidateIds = new Set([
-        ...authorityChangedCandidates, ...pendingIdentityAuthorities.keys(),
+        ...authorityChangedCandidates, ...pendingIdentityAuthorities.keys(), ...editionPending,
     ]);
     const succeededCandidateIds = new Set(inventoryCommit.bulkResult?.outcomes
         .filter((outcome) => outcome.status === 'succeeded')
@@ -223,7 +213,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
             inventoryCommit.inFlight,
             inventoryCommit.outcomes,
         )) || inventoryCommit.bulkResult !== null);
-    const commandsIdle = inventoryCommit.inFlight.size === 0 && !inventoryCommit.bulkPending
+    const commandsIdle = editionPending.size === 0 && inventoryCommit.inFlight.size === 0 && !inventoryCommit.bulkPending
         && !removeCandidate.isPending && !removal.isPending && !duplicateConfirmation.isPending;
     const autoClose = useCompletedScanAutoClose({
         identity,
@@ -266,6 +256,10 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         removePending={removeCandidate.isPending}
                         addPending={inventoryCommit.inFlight.has(item.candidateId)}
                         addOutcome={inventoryCommit.outcomes.get(item.candidateId)}
+                        commandSlot={inventoryCommit}
+                        onEditionPendingChange={handleEditionPending}
+                        onEditionChoices={handleEditionChoices}
+                        onEditionSelection={() => { void batchReview.refetch(); }}
                         onAuthorityStateChange={handleAuthorityStateChange}
                         onPendingIdentityChange={handlePendingIdentityChange}
                         onOpenFullCorrection={() => router.push(inventoryRoutes.candidate(
@@ -279,12 +273,12 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                             card, edits, review,
                             acceptedAuthorityKey: candidateCommitAuthorityKey(card),
                         })}
-                        onDraftChange={(candidateId, edits) => {
+                        onDraftChange={(candidateId, edits, acceptedAuthorityKey) => {
                             setCandidateDrafts((current) => {
                                 const next = new Map(current);
                                 if (Object.keys(edits).length === 0) next.delete(candidateId);
                                 else next.set(candidateId, {
-                                    edits, acceptedAuthorityKey: candidateCommitAuthorityKey(item),
+                                    edits, acceptedAuthorityKey: acceptedAuthorityKey ?? candidateCommitAuthorityKey(item),
                                 });
                                 return next;
                             });
@@ -318,47 +312,15 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                     />
                 )}
                 ListFooterComponent={!loading && !unavailable && !retryableError ? (
-                    <View style={{ gap: 12, paddingTop: 4 }}>
-                        {isOffline && (inputs.data?.items.length ?? 0) === 0 ? <Text selectable style={{ color: colors.textSecondary }}>Reconnect to choose a replacement image.</Text> : null}
-                        {(inputs.data?.items.length ?? 0) === 0 ? (
-                            <Button title="Choose replacement image" onPress={() => router.push(inventoryRoutes.scan())}
-                                disabled={isOffline || session.data?.status !== 'active'} />
-                        ) : null}
-                        <Button title="View session summary" variant="secondary" onPress={() => router.push(inventoryRoutes.summary(sessionId))} />
-                        {!unsupportedLegacyOverflow ? (
-                            <Button
-                                title="Add missed book"
-                                variant="secondary"
-                                onPress={() => router.push(inventoryRoutes.missed(sessionId))}
-                                disabled={isOffline || cards.length >= 15 || session.data?.status !== 'active'}
-                                accessibilityHint="Creates one staged manual candidate without running image analysis"
-                            />
-                        ) : null}
-                    </View>
+                    <PostScanFooter sessionId={sessionId} isOffline={isOffline}
+                        active={session.data?.status === 'active'} inputCount={inputs.data?.items.length ?? 0}
+                        cardCount={cards.length} overflow={unsupportedLegacyOverflow} />
                 ) : null}
             />
             {showBulkControls ? (
-                <View testID="post-scan-bulk-action" style={{
-                    paddingHorizontal: 12,
-                    paddingTop: 8,
-                    paddingBottom: 10,
-                    borderTopWidth: 1,
-                    borderTopColor: colors.border,
-                    backgroundColor: colors.bgPrimary,
-                }}>
-                    <BatchInventoryCommitControls
-                        candidates={commitDrafts}
-                        disabled={isOffline || session.data?.status !== 'active'}
-                        pending={inventoryCommit.bulkPending}
-                        result={inventoryCommit.bulkResult}
-                        remainingReviewCount={remainingReviewCount}
-                        blockedCandidateIds={blockedCandidateIds}
-                        inFlightCandidateIds={inventoryCommit.inFlight}
-                        outcomes={inventoryCommit.outcomes}
-                        onAddAll={inventoryCommit.addAll}
-                        onRetry={inventoryCommit.retryAddAll}
-                    />
-                </View>
+                <PostScanBulkAction candidates={commitDrafts} inventoryCommit={inventoryCommit}
+                    disabled={isOffline || session.data?.status !== 'active'}
+                    remainingReviewCount={remainingReviewCount} blockedCandidateIds={blockedCandidateIds} />
             ) : null}
             <DuplicateInputConfirmationDialog
                 visible={duplicateConfirmation.visible}

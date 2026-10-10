@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -9,7 +9,7 @@ import { candidateCommitAuthorityKey } from '../commit/inventoryCommitPolicy';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
 import type { ImageInventoryIdentity } from '../queries/ownerUxQueries';
 import {
-    buildCompactReview, compactReviewDisplay, publicationHasEffectiveOverride,
+    buildCompactReview, compactReviewDisplay,
     validateCompactReview,
     type CompactReviewEdits,
 } from '../review/compactReviewDraft';
@@ -18,9 +18,13 @@ import {
 } from '../scanSetup/scanSetupForm';
 import { AddCandidateToInventoryAction } from './AddCandidateToInventoryAction';
 import { BookCoverThumbnail } from './BookCoverThumbnail';
-import { FieldSummary } from './BatchReviewFieldSummary';
+import { BatchReviewDetails } from './BatchReviewDetails';
 import { CandidateMetadataSheet } from './CandidateMetadataSheet';
-import { InlineBatchReviewAdditionalFields } from './InlineBatchReviewAdditionalFields';
+import { EditionChoicesReader } from './EditionChoicesReader';
+import { MetadataSheetTrigger } from './MetadataSheetTrigger';
+import type { OwnerCandidateCommandSlot } from '../identity/useOwnerCardCommand';
+import type { EditionChoices } from '../contracts/ownerEditionPicker';
+import { applyCompactEditionSelection } from '../review/editionSelectionDraft';
 import { InlineReviewIdentity, InlineReviewValueFields } from './InlineBatchReviewFields';
 import { OwnerConfirmationDialog } from './OwnerConfirmationDialog';
 import { cardAttentionItems, metadataStatusLabel, reviewStatusLabel } from './batchReviewStatus';
@@ -32,7 +36,7 @@ export { metadataStatusLabel } from './batchReviewStatus';
 export function BatchReviewCard({
     identity, card, defaults, isOffline, canMutate, removePending, addPending,
     addOutcome, onOpenFullCorrection, onRemove, onAdd, onDraftChange,
-    onAuthorityStateChange, onPendingIdentityChange,
+    onAuthorityStateChange, onPendingIdentityChange, commandSlot, onEditionSelection, onEditionPendingChange, onEditionChoices,
 }: {
     identity: ImageInventoryIdentity;
     card: OwnerBatchReviewCard;
@@ -46,7 +50,11 @@ export function BatchReviewCard({
     onRemove: (candidateId: string) => void;
     onAdd: (card: OwnerBatchReviewCard, edits: CompactReviewEdits,
         review: NonNullable<ReturnType<typeof buildCompactReview>>) => Promise<unknown>;
-    onDraftChange: (candidateId: string, edits: CompactReviewEdits) => void;
+    onDraftChange: (candidateId: string, edits: CompactReviewEdits, acceptedAuthorityKey?: string) => void;
+    commandSlot?: OwnerCandidateCommandSlot;
+    onEditionSelection?: (choices: EditionChoices) => void;
+    onEditionChoices?: (choices: EditionChoices) => void;
+    onEditionPendingChange?: (candidateId: string, pending: boolean) => void;
     onAuthorityStateChange?: (candidateId: string, changed: boolean) => void;
     onPendingIdentityChange?: (candidateId: string, active: boolean,
         acceptedAuthorityKey: string) => void;
@@ -54,7 +62,22 @@ export function BatchReviewCard({
     const { colors } = useTheme();
     const [mountedEdits, setMountedEdits] = useState<CompactReviewEdits>({});
     const [metadataOpen, setMetadataOpen] = useState(false);
-    const [detailsExpanded, setDetailsExpanded] = useState(false);
+    const [selectionPending, setSelectionPending] = useState(false);
+    const [selectedEdition, setSelectedEdition] = useState<EditionChoices | null>(null);
+    const [editionChoices, setEditionChoices] = useState<EditionChoices>();
+    const acceptChoices = useCallback((choices: EditionChoices) => {
+        setEditionChoices(choices); onEditionChoices?.(choices);
+    }, [onEditionChoices]);
+    const latestEdits = useRef(mountedEdits);
+    const metadataTriggerRef = useRef<View>(null);
+    const editionTriggerRef = useRef<View>(null);
+    const viewMetadataTriggerRef = useRef<View>(null);
+    const openMetadata = (trigger: { current: View | null }) => {
+        metadataTriggerRef.current = trigger.current; setMetadataOpen(true);
+    };
+    const handleSelectionPending = useCallback((pending: boolean) => {
+        setSelectionPending(pending); onEditionPendingChange?.(card.candidateId, pending);
+    }, [card.candidateId, onEditionPendingChange]);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [authorityChanged, setAuthorityChanged] = useState(false);
     const [identityResetKey, setIdentityResetKey] = useState(0);
@@ -72,10 +95,9 @@ export function BatchReviewCard({
         || card.allowedActions.includes('save_review');
     const authorityMismatch = acceptedAuthority.current !== authorityKey;
     const hasBufferedIdentity = bufferedIdentity.titleActive || bufferedIdentity.authorsActive;
-    const disabled = !canMutate || isOffline || authorityChanged || authorityMismatch || !editable;
+    const disabled = !canMutate || isOffline || authorityChanged || authorityMismatch || selectionPending || !editable;
     const display = compactReviewDisplay(card, defaults, mountedEdits);
-    const publicationOverride = publicationHasEffectiveOverride(card, defaults, mountedEdits);
-    const validation = validateCompactReview(card, defaults, mountedEdits);
+    const validation = validateCompactReview(card, defaults, mountedEdits, editionChoices);
     const review = validation.review;
     const canStartCommit = candidateCanStartCommit({ card, edits: mountedEdits,
         acceptedAuthorityKey: acceptedAuthority.current,
@@ -83,6 +105,8 @@ export function BatchReviewCard({
 
     useEffect(() => {
         if (acceptedAuthority.current === authorityKey) return;
+        // Our accepted command is awaiting the parent read; keep the latest draft.
+        if (selectedEdition && card.metadataRevision < selectedEdition.metadataRevision) return;
         if (hasEdits || bufferedIdentity.titleActive || bufferedIdentity.authorsActive) {
             if (!authorityChanged) {
                 setAuthorityChanged(true);
@@ -94,7 +118,7 @@ export function BatchReviewCard({
             setIdentityResetKey((current) => current + 1);
         }
     }, [authorityChanged, authorityKey, card.candidateId, hasEdits,
-        bufferedIdentity.titleActive, bufferedIdentity.authorsActive, onAuthorityStateChange]);
+        bufferedIdentity.titleActive, bufferedIdentity.authorsActive, onAuthorityStateChange, selectedEdition]);
 
     useEffect(() => () => {
         if (bufferedIdentityRef.current.titleActive || bufferedIdentityRef.current.authorsActive)
@@ -102,11 +126,28 @@ export function BatchReviewCard({
     }, [card.candidateId, onPendingIdentityChange]);
 
     const replaceEdits = (next: CompactReviewEdits) => {
+        latestEdits.current = next;
         setMountedEdits(next);
         onDraftChange(card.candidateId, next);
     };
     const updateEdits = (patch: CompactReviewEdits) => replaceEdits({ ...mountedEdits, ...patch });
     const clearEdits = () => replaceEdits({});
+    const adoptEdition = (canonical: EditionChoices, previousRevision: number) => {
+        const next = applyCompactEditionSelection(latestEdits.current, canonical, previousRevision);
+        if (next === latestEdits.current) return;
+        acceptedAuthority.current = `${canonical.candidateVersion}:${canonical.metadataRevision}:${canonical.reviewVersion}`;
+        latestEdits.current = next;
+        setMountedEdits(next);
+        setSelectedEdition(canonical);
+        acceptChoices(canonical);
+        onDraftChange(card.candidateId, next, acceptedAuthority.current);
+        onEditionSelection?.(canonical);
+    };
+    const selectedSummary = selectedEdition?.selection && card.metadataRevision <= selectedEdition.metadataRevision
+        ? { ...selectedEdition.selection.snapshot, selectionId: selectedEdition.selection.selectionId,
+            representativeCover: selectedEdition.selection.source === 'edition_option'
+                ? null : card.metadataSummary?.representativeCover ?? null }
+        : card.metadataSummary;
     const updateBufferedIdentity = (
         field: 'originalTitle' | 'authors', value: string | string[] | undefined, active: boolean,
     ) => {
@@ -152,9 +193,11 @@ export function BatchReviewCard({
 
     return (
         <GlassCard padding={0} borderRadius={20} style={needsAttention ? { borderLeftWidth: 4, borderLeftColor: colors.error } : undefined}>
+            {commandSlot ? <EditionChoicesReader identity={identity} sessionId={card.sessionId}
+                candidateId={card.candidateId} onChoices={acceptChoices} /> : null}
             <View testID={`card-${card.candidateId}`} style={{ gap: 14, padding: 16 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
-                    <BookCoverThumbnail ordinal={card.ordinal} metadataSummary={card.metadataSummary} />
+                    <BookCoverThumbnail ordinal={card.ordinal} metadataSummary={selectedSummary} />
                     <View style={{ flex: 1, gap: 6 }}>
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 6 }}>
                             <Text selectable style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
@@ -206,68 +249,8 @@ export function BatchReviewCard({
                     conditionLocal={mountedEdits.baseCondition !== undefined}
                     errorFields={errorFields} disabled={disabled} onChange={updateEdits} />
 
-                <View style={{
-                    borderWidth: 1, borderColor: colors.border, borderRadius: 12,
-                    backgroundColor: colors.bgSecondary, gap: 1, paddingHorizontal: 12,
-                }} testID="card-additional-details">
-                    <Pressable
-                        testID="card-additional-details-toggle"
-                        accessibilityRole="button"
-                        accessibilityLabel={detailsExpanded
-                            ? 'Hide location, publication, language, and damage details'
-                            : 'Show location, publication, language, and damage details'}
-                        onPress={() => setDetailsExpanded((current) => !current)}
-                        style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8 }}
-                    >
-                        <Text selectable style={{ flex: 1, color: colors.textSecondary, fontSize: 14 }}>
-                            Location · Publication · Language · Damage
-                        </Text>
-                        <Text selectable style={{ color: colors.textSecondary, fontSize: 12 }}>
-                            {detailsExpanded ? '▲' : '▼'}
-                        </Text>
-                    </Pressable>
-                    {detailsExpanded ? (
-                        <InlineBatchReviewAdditionalFields
-                            display={display}
-                            defaults={defaults}
-                            sourceCodes={{
-                                language: card.fieldSources.language,
-                                location: card.fieldSources.location,
-                                publication: card.fieldSources.publication,
-                                damage: card.fieldSources.damage,
-                            }}
-                            localFields={{
-                                language: mountedEdits.originalLanguage !== undefined,
-                                location: mountedEdits.shelfLocation !== undefined,
-                                publication: mountedEdits.publicationIntent !== undefined || publicationOverride,
-                                damage: mountedEdits.damageDisclosure !== undefined,
-                            }}
-                            errorFields={errorFields}
-                            disabled={disabled}
-                            onChange={updateEdits}
-                        />
-                    ) : (
-                        <View testID="card-additional-details-summary" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingBottom: 8 }}>
-                            <FieldSummary label="Location" value={display.location || 'No location'}
-                                sourceCode={card.fieldSources.location}
-                                local={mountedEdits.shelfLocation !== undefined}
-                                testSuffix="collapsed-location" compact />
-                            <FieldSummary label="Publication" value={display.publication === 'publish' ? 'Publish' : 'Private'}
-                                sourceCode={card.fieldSources.publication}
-                                local={mountedEdits.publicationIntent !== undefined || publicationOverride}
-                                testSuffix="collapsed-publication" compact />
-                            <FieldSummary label="Language" value={display.language || 'No language'}
-                                sourceCode={card.fieldSources.language}
-                                local={mountedEdits.originalLanguage !== undefined}
-                                testSuffix="collapsed-language" compact />
-                            <FieldSummary label="Damage" value={display.damage.hasDamage ? 'Has damage' : 'No damage'}
-                                sourceCode={card.fieldSources.damage}
-                                local={mountedEdits.damageDisclosure !== undefined}
-                                testSuffix="collapsed-damage" compact />
-                        </View>
-                    )}
-                </View>
-
+                <BatchReviewDetails card={card} defaults={defaults} mountedEdits={mountedEdits}
+                    display={display} errorFields={errorFields} disabled={disabled} updateEdits={updateEdits} />
                 {attentionItems.length > 0 ? (
                     <View testID={!review ? 'card-add-validation' : undefined}
                         style={{ borderRadius: 12, backgroundColor: colors.bgSecondary, padding: 12, gap: 6, borderWidth: 1, borderColor: colors.error }}>
@@ -301,7 +284,7 @@ export function BatchReviewCard({
                 <View style={{ gap: 8 }}>
                     <AddCandidateToInventoryAction card={card}
                         disabled={!canMutate || authorityChanged || authorityMismatch
-                            || hasBufferedIdentity || !review || !canStartCommit}
+                            || selectionPending || hasBufferedIdentity || !review || !canStartCommit}
                         isOffline={isOffline} pending={addPending} outcome={addOutcome}
                         onAdd={async () => {
                             if (!review || authorityChanged || acceptedAuthority.current !== authorityKey
@@ -314,11 +297,11 @@ export function BatchReviewCard({
                             return result;
                         }} />
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                        {commandSlot && editable ? <MetadataSheetTrigger title="Change edition" focusRef={editionTriggerRef}
+                            onPress={() => openMetadata(editionTriggerRef)} /> : null}
                         {card.allowedActions.includes('view_metadata') ? (
-                            <Button title="View metadata" variant="secondary" size="sm"
-                                style={{ flexGrow: 1, flexBasis: 150, width: 'auto' }}
-                                onPress={() => setMetadataOpen(true)}
-                                accessibilityHint="Opens bounded metadata details for this book" />
+                            <MetadataSheetTrigger title="View metadata" focusRef={viewMetadataTriggerRef}
+                                onPress={() => openMetadata(viewMetadataTriggerRef)} />
                         ) : null}
                         <Button title="Open full correction" variant="secondary" size="sm"
                             style={{ flexGrow: 1, flexBasis: 150, width: 'auto' }}
@@ -342,7 +325,9 @@ export function BatchReviewCard({
             </View>
 
             {metadataOpen ? <CandidateMetadataSheet identity={identity} card={card} visible
-                disabled={disabled} onClose={() => setMetadataOpen(false)}
+                disabled={disabled || hasBufferedIdentity} onClose={() => setMetadataOpen(false)}
+                commandSlot={commandSlot} onSelection={adoptEdition} onPendingChange={handleSelectionPending}
+                restoreFocusRef={metadataTriggerRef}
                 onUseDetected={(edits) => { updateEdits(edits); setMetadataOpen(false); }}
                 onEditManually={(edits) => {
                     updateEdits(edits); setMetadataOpen(false);

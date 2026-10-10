@@ -98,7 +98,11 @@ export function parseOwnerIngestionRequest(value: unknown): OwnerIngestionReques
       'remove_scan_input', 'resolve_duplicate_scan_input',
       'list_scan_candidates', 'read_scan_candidate', 'update_candidate_review',
       'add_candidate_to_inventory', 'read_scan_readiness', 'close_scan_session',
-    ].includes(action)) return parseOwnerUxRequest(value);
+      'read_candidate_edition_choices', 'request_candidate_edition_options', 'select_candidate_edition',
+    ].includes(action)) {
+      const request = parseOwnerUxRequest(value);
+      return request;
+    }
     if (typeof action === 'string' && [
       'start_scan_session_v2', 'read_scan_session_v3', 'read_scan_batch_review',
       'remove_candidate_from_scan', 'close_scan_session_v3',

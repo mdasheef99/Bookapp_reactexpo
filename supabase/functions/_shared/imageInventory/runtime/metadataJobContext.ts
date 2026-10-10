@@ -19,7 +19,12 @@ export type MetadataJobContext = Readonly<{
   attempt: number;
   claimToken: string;
   candidateId: string;
-  candidateState: 'processing';
+  candidateState: 'processing' | 'ready' | 'needs_review' | 'possible_duplicate';
+  purpose: 'automatic' | 'edition_options';
+  requestGeneration: number | null;
+  optionsVersion: number | null;
+  optionsAvailable: boolean;
+  optionsExpiresAt: string | null;
   candidateVersion: number;
   storeId: string;
   sessionId: string;
@@ -65,6 +70,7 @@ const contextKeys = new Set([
   'currentPhysicalStatus','currentPhysicalClaimAttempt','currentPhysicalOutcome','currentPhysicalProviderRequestId',
   'currentPhysicalLogicalOutcome',
   'currentPhysicalRetryable','currentPhysicalCandidate','currentPhysicalEvidence',
+  'purpose','requestGeneration','optionsVersion','optionsAvailable','optionsExpiresAt',
 ]);
 const policyKeys = new Set([
   'adapterKey','adapterVersion','enabled','matchingAllowed','storageAllowed',
@@ -88,6 +94,15 @@ const hasOnly = (row: Record<string, unknown>, keys: ReadonlySet<string>) =>
 export function decodeMetadataJobContext(value: unknown): MetadataJobContext {
   const row = metadataObject(value);
   if (!hasOnly(row, contextKeys)) throw new Error('P9_METADATA_CONTEXT_INVALID');
+  const purpose = row.purpose ?? 'automatic';
+  if (!['automatic','edition_options'].includes(purpose as string)
+    || (purpose === 'automatic' && row.candidateState !== 'processing')
+    || (purpose === 'edition_options' && (!['ready','needs_review','possible_duplicate'].includes(row.candidateState as string)
+      || !Number.isSafeInteger(row.requestGeneration) || Number(row.requestGeneration) < 0
+      || !Number.isSafeInteger(row.optionsVersion) || Number(row.optionsVersion) < 0
+      || typeof row.optionsAvailable !== 'boolean'
+      || (row.optionsExpiresAt !== null && (typeof row.optionsExpiresAt !== 'string'
+        || !Number.isFinite(Date.parse(row.optionsExpiresAt))))))) throw new Error('P9_METADATA_CONTEXT_INVALID');
   const policies = Array.isArray(row.providerPolicies) ? row.providerPolicies.map((item) => {
     const policy = metadataObject(item);
     if (!hasOnly(policy, policyKeys) || typeof policy.enabled !== 'boolean'
@@ -103,7 +118,7 @@ export function decodeMetadataJobContext(value: unknown): MetadataJobContext {
     });
   }) : [];
   if (row.contractVersion !== 'p9-metadata-job-context-v2'
-    || row.candidateState !== 'processing' || !Number.isInteger(row.attempt)
+    || !Number.isInteger(row.attempt)
     || !Number.isInteger(row.candidateVersion) || !Array.isArray(row.authors)
     || row.authors.some((author) => typeof author !== 'string')
     || ![null, 'unresolved', 'accepted', 'rejected', 'stale', 'failed']
@@ -123,7 +138,12 @@ export function decodeMetadataJobContext(value: unknown): MetadataJobContext {
   return Object.freeze({
     contractVersion: row.contractVersion, jobId: metadataText(row.jobId),
     attempt: row.attempt as number, claimToken: metadataText(row.claimToken),
-    candidateId: metadataText(row.candidateId), candidateState: row.candidateState,
+    candidateId: metadataText(row.candidateId), candidateState: row.candidateState as MetadataJobContext['candidateState'],
+    purpose: purpose as MetadataJobContext['purpose'],
+    requestGeneration: purpose === 'edition_options' ? row.requestGeneration as number : null,
+    optionsVersion: purpose === 'edition_options' ? row.optionsVersion as number : null,
+    optionsAvailable: purpose === 'edition_options' && row.optionsAvailable === true,
+    optionsExpiresAt: purpose === 'edition_options' ? nullableText(row.optionsExpiresAt) : null,
     candidateVersion: row.candidateVersion as number, storeId: metadataText(row.storeId),
     sessionId: metadataText(row.sessionId), inputId: metadataText(row.inputId),
     observationId: metadataText(row.observationId), title: metadataText(row.title),
@@ -163,5 +183,17 @@ export async function loadMetadataJobContext(
     p_lease_token: claim.leaseToken, p_attempt_count: claim.attempt,
   });
   if (result.error !== null) throw new Error('P9_METADATA_RPC_FAILED:phase9_metadata_job_context');
-  return decodeMetadataJobContext(result.data);
+  try {
+    const context = decodeMetadataJobContext(result.data);
+    if (context.jobId !== claim.jobId || context.claimToken !== claim.leaseToken || context.attempt !== claim.attempt) {
+      throw new Error('P9_METADATA_CONTEXT_INVALID');
+    }
+    return context;
+  } catch (error) {
+    if (result.data !== null && typeof result.data === 'object'
+      && 'purpose' in result.data && result.data.purpose === 'edition_options') {
+      throw new Error('P9_EDITION_CONTEXT_INVALID');
+    }
+    throw error;
+  }
 }

@@ -1,3 +1,5 @@
+import { synchronizeCandidateReviewSuccess } from '../queries/ownerUxReviewQueries';
+import { acceptCandidateRead } from '../queries/ownerCandidateAuthority';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ownerUxService } from '../api/ownerUxService';
@@ -52,12 +54,23 @@ export function useInventoryCommitCoordinator(
     }, [ownerIdentity, scope]);
 
     const coordinator = useMemo(() => new InventoryCommitCoordinator({
-        saveReview: (request) => executeFenced(
-            (signal) => ownerUxService.updateCandidateReview(request, signal),
-        ),
-        readCandidate: (readSessionId, candidateId) => executeFenced(
-            (signal) => ownerUxService.readCandidate(readSessionId, candidateId, signal),
-        ),
+        saveReview: async (request) => {
+            const canonical = await executeFenced(
+                signal => ownerUxService.updateCandidateReview(request, signal),
+            );
+            if (activeScope.current !== scope) throw new Error('OWNER_COMMIT_AUTHORITY_CHANGED');
+            const current = acceptCandidateRead(client, ownerIdentity, canonical);
+            if (current !== canonical) throw new Error('OWNER_CANDIDATE_AUTHORITY_CHANGED');
+            await synchronizeCandidateReviewSuccess(client, ownerIdentity, request.sessionId, request.candidateId, canonical);
+            return canonical;
+        },
+        readCandidate: async (readSessionId, candidateId) => {
+            const canonical = await executeFenced(
+                signal => ownerUxService.readCandidate(readSessionId, candidateId, signal),
+            );
+            if (activeScope.current !== scope) throw new Error('OWNER_COMMIT_AUTHORITY_CHANGED');
+            return acceptCandidateRead(client, ownerIdentity, canonical);
+        },
         // Retained Unit 7A/M39 mobile client seam. This sends only IDs,
         // canonical versions, and idempotency identities.
         commitCandidate: (request) => executeFenced(
@@ -84,10 +97,11 @@ export function useInventoryCommitCoordinator(
         setBulkPending(false);
         return () => {
             activeScope.current = '';
+            coordinator.dispose();
             for (const controller of controllers.current) controller.abort();
             controllers.current.clear();
         };
-    }, [scope]);
+    }, [scope, coordinator]);
 
     const markInFlight = (candidateIds: readonly string[], pending: boolean) => {
         setInFlight((current) => {

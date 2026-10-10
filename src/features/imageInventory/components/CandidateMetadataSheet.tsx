@@ -1,162 +1,101 @@
-import { Modal, ScrollView, Text, View } from 'react-native';
-import { Image } from 'expo-image';
+import { useCallback, useRef, useState, type RefObject } from 'react';
+import { AccessibilityInfo, findNodeHandle, Modal, Platform, ScrollView, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useTheme } from '@/hooks/useTheme';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
+import type { EditionChoices } from '../contracts/ownerEditionPicker';
+import type { OwnerCandidateCommandSlot } from '../identity/useOwnerCardCommand';
 import type { CompactReviewEdits } from '../review/compactReviewDraft';
-import {
-    type ImageInventoryIdentity,
-    useOwnerInventoryCandidate,
-} from '../queries/ownerUxQueries';
+import { type ImageInventoryIdentity, useOwnerInventoryCandidate } from '../queries/ownerUxQueries';
+import { CandidateEditionPicker } from './CandidateEditionPicker';
+import { candidateVersions, versionsRegress } from '../queries/ownerCandidateAuthority';
+import { CurrentMetadataSummary, MetadataValue } from './CurrentMetadataSummary';
 
 const stateLabels = {
-    selected: 'Provider metadata selected',
-    manual: 'Manual metadata',
-    no_match: 'No provider match',
-    ambiguous: 'Multiple possible matches',
-    pending: 'Metadata processing',
-    temporarily_unavailable: 'Metadata temporarily unavailable',
-    failed: 'Metadata failed',
+  selected: 'Provider metadata selected', manual: 'Manual metadata', no_match: 'No provider match',
+  ambiguous: 'Multiple possible matches', pending: 'Metadata processing',
+  temporarily_unavailable: 'Metadata temporarily unavailable', failed: 'Metadata failed',
 } as const;
-
-function MetadataValue({ label, value }: { label: string; value: string | number | null }) {
-    const { colors } = useTheme();
-    if (value === null || value === '') return null;
-    return (
-        <Text selectable style={{ color: colors.textPrimary }}>
-            {label}: {String(value)}
-        </Text>
-    );
+function focus(target: View | null | undefined) {
+  if (!target) return;
+  if (Platform.OS === 'web') target.focus?.();
+  else { const handle = findNodeHandle(target); if (handle !== null) AccessibilityInfo.setAccessibilityFocus(handle); }
 }
-
-export function CandidateMetadataSheet({
-    identity,
-    card,
-    visible,
-    disabled,
-    onClose,
-    onUseDetected,
-    onEditManually,
-}: {
-    identity: ImageInventoryIdentity;
-    card: OwnerBatchReviewCard;
-    visible: boolean;
-    disabled: boolean;
-    onClose: () => void;
-    onUseDetected: (edits: CompactReviewEdits) => void;
-    onEditManually: (edits: CompactReviewEdits) => void;
+export function CandidateMetadataSheet({ identity, card, visible, disabled, onClose, onUseDetected,
+  onEditManually, commandSlot, onSelection, onPendingChange, restoreFocusRef }: {
+  identity: ImageInventoryIdentity; card: Pick<OwnerBatchReviewCard, 'sessionId' | 'candidateId' | 'metadataState' | 'metadataSummary' | 'candidateVersion' | 'metadataRevision' | 'reviewVersion'>; visible: boolean; disabled: boolean;
+  onClose: () => void; onUseDetected: (edits: CompactReviewEdits) => void;
+  onEditManually: (edits: CompactReviewEdits) => void;
+  commandSlot?: OwnerCandidateCommandSlot;
+  onSelection?: (choices: EditionChoices, previousRevision: number) => void;
+  onPendingChange?: (pending: boolean) => void;
+  restoreFocusRef?: RefObject<View | null>;
 }) {
-    const { colors } = useTheme();
-    const query = useOwnerInventoryCandidate(
-        identity,
-        card.sessionId,
-        card.candidateId,
-        visible,
-    );
-    const detail = query.data;
-    const snapshot = detail?.metadata.snapshot ?? null;
-    const representativeCover = snapshot?.coverReference
-        ? null
-        : detail?.metadata.representativeCover ?? card.metadataSummary?.representativeCover ?? null;
-    const coverReference = snapshot?.coverReference ?? representativeCover?.coverReference ?? null;
-    return (
-        <Modal
-            visible={visible}
-            transparent
-            animationType="slide"
-            onRequestClose={onClose}
-            accessibilityViewIsModal
-        >
-            <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#0008' }}>
-                <GlassCard padding={20} borderRadius={18}>
-                    <ScrollView contentContainerStyle={{ gap: 8 }}>
-                        <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '800' }}>
-                            Book metadata
-                        </Text>
-                        <Text selectable style={{ color: colors.textSecondary }}>
-                            Status: {stateLabels[card.metadataState]}
-                        </Text>
-                        {query.isLoading ? (
-                            <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>
-                                Loading metadata…
-                            </Text>
-                        ) : query.error || !detail ? (
-                            <>
-                                <Text selectable accessibilityLiveRegion="assertive" style={{ color: colors.error }}>
-                                    Metadata details are unavailable right now.
-                                </Text>
-                                <Button title="Retry metadata" variant="secondary" onPress={() => { void query.refetch(); }} />
-                            </>
-                        ) : (
-                            <>
-                                {snapshot ? (
-                                    <View style={{ gap: 4 }} testID="selected-metadata-details">
-                                        {coverReference ? (
-                                            <Image
-                                                source={{ uri: coverReference }}
-                                                contentFit="contain"
-                                                accessible
-                                                accessibilityRole="image"
-                                                accessibilityLabel={`Cover for ${snapshot.title}`}
-                                                style={{ width: 120, height: 180, alignSelf: 'center', borderRadius: 8 }}
-                                            />
-                                        ) : null}
-                                        {representativeCover ? (
-                                            <MetadataValue label="Cover source" value="Representative edition" />
-                                        ) : null}
-                                        <MetadataValue label="Title" value={snapshot.title} />
-                                        <MetadataValue label="Subtitle" value={snapshot.subtitle} />
-                                        <MetadataValue label="Authors" value={snapshot.authors.join(', ')} />
-                                        <MetadataValue label="Description" value={snapshot.description} />
-                                        <MetadataValue label="Language" value={snapshot.language} />
-                                        <MetadataValue label="ISBN-10" value={snapshot.isbn10} />
-                                        <MetadataValue label="ISBN-13" value={snapshot.isbn13} />
-                                        <MetadataValue label="Publisher" value={snapshot.publisher} />
-                                        <MetadataValue label="Published" value={snapshot.publishedDate} />
-                                        <MetadataValue label="Edition" value={snapshot.editionStatement} />
-                                        <MetadataValue label="Volume" value={snapshot.volume} />
-                                        <MetadataValue label="Format" value={snapshot.format} />
-                                        <MetadataValue label="Page count" value={snapshot.pageCount} />
-                                        <MetadataValue label="Categories / genre" value={snapshot.categories.join(', ')} />
-                                        <MetadataValue label="Source" value="Selected metadata" />
-                                    </View>
-                                ) : (
-                                    <Text selectable testID="metadata-no-selected-details" style={{ color: colors.textSecondary }}>
-                                        No selected metadata details are available. Detected identity remains available for manual review.
-                                    </Text>
-                                )}
-                                <View style={{ gap: 4 }}>
-                                    <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>Detected details</Text>
-                                    <MetadataValue label="Detected title" value={detail.observed.title} />
-                                    <MetadataValue label="Detected authors" value={detail.observed.authors.join(', ') || 'Author unknown'} />
-                                    <MetadataValue label="Detected language" value={detail.observed.language} />
-                                </View>
-                                <Button
-                                    title="Use detected details"
-                                    onPress={() => onUseDetected({
-                                        originalTitle: detail.observed.title,
-                                        authors: [...detail.observed.authors],
-                                        originalLanguage: detail.observed.language,
-                                        script: detail.observed.script,
-                                        metadataChoice: { mode: 'manual', selectionId: null },
-                                    })}
-                                    disabled={disabled}
-                                />
-                                <Button
-                                    title="Edit manually"
-                                    variant="secondary"
-                                    onPress={() => onEditManually({
-                                        metadataChoice: { mode: 'manual', selectionId: null },
-                                    })}
-                                    disabled={disabled}
-                                />
-                            </>
-                        )}
-                        <Button title="Close metadata" variant="secondary" onPress={onClose} />
-                    </ScrollView>
-                </GlassCard>
-            </View>
-        </Modal>
-    );
+  const { colors } = useTheme();
+  const headingRef = useRef<Text>(null);
+  const pendingRef = useRef(false);
+  const [selectionPending, setSelectionPending] = useState(false);
+  const handlePendingChange = useCallback((pending: boolean) => {
+    pendingRef.current = pending;
+    setSelectionPending(pending);
+    onPendingChange?.(pending);
+  }, [onPendingChange]);
+  const selectionLocked = () => pendingRef.current || !!commandSlot?.isCommandActive(card.candidateId);
+  const query = useOwnerInventoryCandidate(identity, card.sessionId, card.candidateId, visible);
+  const detail = query.data;
+  const detailVersions = detail ? candidateVersions(detail) : undefined;
+  const currentDetected = !!detailVersions && !versionsRegress(detailVersions, card);
+  const currentDetail = !commandSlot || currentDetected;
+  const minimumVersions = currentDetail ? detailVersions : card;
+  const summary = (choices?: EditionChoices) => {
+    const selected = choices?.selection;
+    return <CurrentMetadataSummary snapshot={selected?.snapshot
+      ?? (currentDetail ? detail?.metadata.snapshot : card.metadataSummary) ?? null}
+      representative={selected?.source === 'edition_option' ? null
+        : (currentDetail ? detail?.metadata.representativeCover : card.metadataSummary?.representativeCover) ?? null} />;
+  };
+  const close = () => {
+    if (selectionLocked()) return;
+    onClose(); queueMicrotask(() => focus(restoreFocusRef?.current));
+  };
+  const manual = (useDetected: boolean) => {
+    if (disabled || selectionLocked() || (useDetected && (!detail || !currentDetected))) return;
+    if (useDetected && detail) onUseDetected({ originalTitle: detail.observed.title,
+      authors: [...detail.observed.authors], originalLanguage: detail.observed.language,
+      script: detail.observed.script, metadataChoice: { mode: 'manual', selectionId: null } });
+    else onEditManually({ metadataChoice: { mode: 'manual', selectionId: null } });
+    queueMicrotask(() => focus(restoreFocusRef?.current));
+  };
+  return <Modal visible={visible} transparent animationType="slide" accessibilityViewIsModal
+    onRequestClose={close} onShow={() => focus(headingRef.current)}>
+    <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#0008' }}>
+      <GlassCard padding={20} borderRadius={18} style={{ maxHeight: '90%' }}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8 }}>
+          <Text ref={headingRef} selectable accessibilityRole="header"
+            style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '800' }}>Book metadata</Text>
+          <Text style={{ color: colors.textSecondary }}>Status: {stateLabels[card.metadataState]}</Text>
+          {query.isLoading ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Loading metadata…</Text> : null}
+          {query.error || !detail || !currentDetected ? <>
+            <Text accessibilityLiveRegion="assertive" style={{ color: colors.error }}>Metadata details are unavailable right now.</Text>
+            <Button title="Retry metadata" variant="secondary" onPress={() => { void query.refetch(); }} />
+          </> : null}
+          {commandSlot && onSelection ? <CandidateEditionPicker identity={identity} sessionId={card.sessionId}
+            candidateId={card.candidateId} commandSlot={commandSlot} disabled={disabled}
+            onSelection={onSelection} onPendingChange={handlePendingChange} minimumVersions={minimumVersions}>{summary}</CandidateEditionPicker> : summary()}
+          {detail ? <>
+            {currentDetected ? <View style={{ gap: 4 }}>
+              <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Detected details</Text>
+              <MetadataValue label="Detected title" value={detail.observed.title} />
+              <MetadataValue label="Detected authors" value={detail.observed.authors.join(', ') || 'Author unknown'} />
+              <MetadataValue label="Detected language" value={detail.observed.language} />
+            </View> : null}
+            <Button title="Use detected details" disabled={disabled || selectionPending || !currentDetected} onPress={() => manual(true)} />
+          </> : null}
+          <Button title="Edit manually" variant="secondary" disabled={disabled || selectionPending} onPress={() => manual(false)} />
+          <Button title="Close metadata" variant="secondary" disabled={selectionPending || selectionLocked()} onPress={close} />
+        </ScrollView>
+      </GlassCard>
+    </View>
+  </Modal>;
 }

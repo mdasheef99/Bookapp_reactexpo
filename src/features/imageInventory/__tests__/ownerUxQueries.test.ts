@@ -1,3 +1,4 @@
+jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
 import { QueryClient } from '@tanstack/react-query';
 import {
     clearImageInventoryPrivateQueries,

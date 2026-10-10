@@ -1,4 +1,4 @@
-import { Image } from 'expo-image';
+import { MetadataCover } from './MetadataCover';
 import { Text, View } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
@@ -12,9 +12,7 @@ export function BookCoverThumbnail({
     const reference = metadataSummary?.coverReference ?? representative?.coverReference ?? null;
     if (reference) return (
         <View style={{ gap: 4 }}>
-            <Image source={{ uri: reference }} contentFit="cover"
-                accessibilityLabel={representative
-                    ? `Book ${ordinal} representative edition cover` : `Book ${ordinal} cover`}
+            <MetadataCover reference={reference} label={representative ? `Book ${ordinal} representative edition cover` : `Book ${ordinal} cover`} placeholderLabel={`Book ${ordinal} cover placeholder`}
                 style={{ width: 72, height: 104, borderRadius: 9 }} />
             {representative ? (
                 <Text selectable style={{ color: colors.textSecondary, fontSize: 11, maxWidth: 90 }}>
