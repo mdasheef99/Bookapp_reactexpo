@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
+import { OwnerConfirmationDialog } from '@/features/imageInventory/components/OwnerConfirmationDialog';
 import { PublicationClientError } from '@/features/imageInventory/api/publicationService';
 import { usePublicationCommands } from '@/features/imageInventory/queries/publicationQueries';
 import type { ImageInventoryIdentity } from '@/features/imageInventory/queries/ownerUxQueries';
@@ -57,6 +58,7 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
     const [editOpen, setEditOpen] = useState(false);
     const [stockOpen, setStockOpen] = useState(false);
     const [photosOpen, setPhotosOpen] = useState(false);
+    const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
     const [actionBusy, setActionBusy] = useState(false);
     const [editError, setEditError] = useState<string | null>(null);
     const [stockError, setStockError] = useState<string | null>(null);
@@ -170,6 +172,15 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
             setFeedback(failure instanceof Error ? failure.message : 'Publication state was not changed.');
         }
     });
+    const requestPublication = (
+        action: 'publish' | 'pause' | 'republish' | 'make_private' | 'retry_publication',
+    ) => {
+        if (action === 'publish') {
+            setPublishConfirmOpen(true);
+            return;
+        }
+        runPublication(action);
+    };
     return (
         <ScreenBackground>
             <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 14 }}>
@@ -189,7 +200,7 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
                         disabled={busy}
                         onEdit={() => { setEditError(null); setEditOpen(true); }}
                         onStock={() => { setStockError(null); setStockOpen(true); }}
-                        onPublication={runPublication}
+                        onPublication={requestPublication}
                     />
                 </Section>
                 <Section title="Selling details">
@@ -243,6 +254,18 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
                 inventoryId={item.identity.inventoryId}
                 inventoryVersion={item.versions.inventoryVersion}
                 onDismiss={() => { if (!busy) setPhotosOpen(false); }}
+            />
+            <OwnerConfirmationDialog
+                visible={publishConfirmOpen}
+                title="Publish this book?"
+                description="The current customer-safe book details will become visible in the marketplace immediately if the item is still eligible."
+                confirmLabel="Publish book"
+                pending={busy}
+                onCancel={() => { if (!busy) setPublishConfirmOpen(false); }}
+                onConfirm={() => {
+                    setPublishConfirmOpen(false);
+                    runPublication('publish');
+                }}
             />
         </ScreenBackground>
     );

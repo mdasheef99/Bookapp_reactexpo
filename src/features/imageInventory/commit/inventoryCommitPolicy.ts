@@ -1,6 +1,7 @@
 import { OwnerUxClientError } from '../api/ownerUxService';
 import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
-import { ownerCandidateReviewSchema } from '../contracts/ownerUxReviewSchema';
+import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
+import { ownerCandidateReviewSchema, type OwnerCandidateReview } from '../contracts/ownerUxReviewSchema';
 import type {
     AddAllResult,
     CandidateCommitDraft,
@@ -17,14 +18,32 @@ const conflictCodes = new Set([
     'P9_OWNER_NOT_AUTHORIZED',
 ]);
 
-export function candidateCanStartCommit(value: CandidateCommitDraft): boolean {
+export function candidateCommitAuthorityKey(card: OwnerBatchReviewCard): string {
+    return `${card.candidateVersion}:${card.metadataRevision}:${card.reviewVersion}`;
+}
+
+export function candidateCommitPreparation(value: CandidateCommitDraft): {
+    draft: OwnerCandidateReview;
+    needsSave: boolean;
+} | null {
     const merged = value.review ?? (value.card.review
         ? { ...value.card.review, ...value.edits }
         : null);
-    if (!merged) return false;
-    if (!ownerCandidateReviewSchema.safeParse(merged).success) return false;
-    const hasEdits = Object.keys(value.edits).length > 0;
-    return hasEdits
+    if (!merged) return null;
+    const parsed = ownerCandidateReviewSchema.safeParse(merged);
+    if (!parsed.success) return null;
+    return {
+        draft: parsed.data,
+        needsSave: value.card.review === null
+            || JSON.stringify(parsed.data) !== JSON.stringify(value.card.review),
+    };
+}
+
+export function candidateCanStartCommit(value: CandidateCommitDraft): boolean {
+    if (value.acceptedAuthorityKey !== candidateCommitAuthorityKey(value.card)) return false;
+    const preparation = candidateCommitPreparation(value);
+    if (!preparation) return false;
+    return preparation.needsSave
         ? value.card.allowedActions.includes('save_review')
         : value.card.reviewReady
             && value.card.allowedActions.includes('add_to_inventory');
@@ -63,13 +82,16 @@ export function draftMatchesCommand(
     refreshed: CandidateCommitDraft,
     command: FrozenCandidateCommand,
 ): boolean {
+    if (refreshed.acceptedAuthorityKey !== candidateCommitAuthorityKey(refreshed.card))
+        return false;
     const merged = refreshed.review ?? (refreshed.card.review
         ? { ...refreshed.card.review, ...refreshed.edits }
         : null);
     if (!merged) return false;
     return JSON.stringify(merged) === JSON.stringify(command.draft)
         && refreshed.card.candidateVersion === command.candidateVersion
-        && refreshed.card.metadataRevision === command.metadataRevision;
+        && refreshed.card.metadataRevision === command.metadataRevision
+        && refreshed.card.reviewVersion === command.reviewVersion;
 }
 
 export function classifyFailure(

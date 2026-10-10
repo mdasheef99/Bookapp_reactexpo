@@ -1,12 +1,29 @@
 # Phase 9 Development-Session Start and Handoff Protocol
 
-> **Current 2026-09-14 local Jest closeout:** The rollout branch's reported
+> **Historical 2026-09-14 runtime rollout checkpoint:** The verified development
+> project has Owner Edge v14 active with JWT verification preserved. Render
+> metadata worker deployment `dep-dak2nmjl550s73bqb7jg` is live on reviewed
+> commit `bb91428048ca9028c5592cbbc52c982bd6843946`; `/health` and `/ready`
+> both returned 200. A local Expo client from that code reached the
+> authenticated Owner scan flow. The connected test then resolved the existing
+> `LIVE-TEST-20260912-REPRO` session, which already has one processed image and
+> 15 candidates; the selected gallery image was visible in preview but `Upload
+> image` was disabled. No new input registration, duplicate resolution, Add,
+> migration, Storage deletion, or dispatch change occurred. Next action is
+> blocked pending a clean Owner session/store or explicit authorization to
+> remove the existing image.
+
+> **Historical 2026-09-14 local Jest closeout:** The rollout branch's reported
 > 12 failed suites/17 failed tests and post-run non-exit warning are corrected
 > locally. The exact reproduction passes 5 suites/48 tests; the complete
 > `npm.cmd test -- --runInBand` run passes 303 suites/2,479 tests with one
 > suite/four tests skipped (304 suites, 2,483 tests total) and exits normally.
 > A separate `--detectOpenHandles --silent` run has the same pass/skip totals
 > and no persistent open-handle, forced-exit, or one-second non-exit warning.
+> One prior exact full handle run had one non-reproducible failure in the owner
+> inventory retry assertion; the isolated suite rerun and a second exact full
+> handle run both passed. This is recorded as verification history, not as an
+> active product failure.
 > TypeScript and diff hygiene pass. The normal full run still emits React
 > `act(...)` warnings in existing VirtualizedList/timer, CandidateReview state,
 > search/query, and subscription-query paths, plus the NetInfo dynamic-import
@@ -19,14 +36,14 @@
 > `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING`; matching runtime rollout
 > and connected proof still require explicit authorization.
 
-> **Current 2026-09-13 representative-cover rollout closeout:** M61 was applied once
+> **Historical 2026-09-13 representative-cover rollout closeout:** M61 was applied once
 > to verified development project `ahntbtktjjmvfosgkmgn` as remote version
 > `20260913111342` after exact-project and SHA-256 reverification. Readback
 > confirms the sidecar/table/column, RLS, service-only delegate, triggers, and
 > zero new-data effects. Owner Edge v12 is ACTIVE, JWT verification enabled,
 > hash `ad75a08f3624f543f904cf2bf6833bcca132dfc1727e5868d52022365aacea14`,
 > with its M61 contract file matching local source. On
-> `codex/phase9-duplicate-confirmation` at HEAD `4ab3e5c`, the local follow-up now
+> `codex/phase9-duplicate-confirmation` at HEAD `bb91428048ca9028c5592cbbc52c982bd6843946` with the code correction committed, the documentation-only handoff synchronization now
 > decodes Google Books volume evidence, suppresses fallback where unresolved
 > series evidence could select a different series, and adds forward-only M62 for
 > standalone Owner detail/review-save provenance. M62 was applied once as remote
@@ -103,14 +120,60 @@
 
 
 **Status:** active continuity protocol
-**Last updated:** 2026-09-14
+**Last updated:** 2026-09-28
 **Applies to:** AI/human development sessions, not bookstore inventory-capture sessions
 
 This is the deterministic resume procedure for Phase 9. A new session should recover the current state from files and verified systems, never from chat memory alone.
 
-## Current Unit 6H overlay
+## Current 2026-09-28 Git-publication handoff
 
-The bounded Unit 6H duplicate-confirmation correction and its development proof are complete on `codex/phase9-duplicate-confirmation` at `C:\Users\user\Desktop\Bookconnect`, at HEAD `4ab3e5c` from baseline `8340647`. The current uncommitted correction set is limited to M61 sidecar-persistence failure observability, its regression assertion, and stale handoff documentation. M60, M61, and M62 are live once; Owner Edge v12 is active. M62 closes representative-cover standalone detail/save projection without changing duplicate behavior, selected metadata, or public cover projection. Matching worker/client runtime deployment and connected proof remain pending. Do not redeploy or mutate development database/Storage without separate authorization.
+The Owner-authorized Unit 6G, Store View, and Phase 9 documentation commits
+`101e4b6`, `ce2d0c5`, and `9ad1d6e` were pushed to
+`origin/codex/phase9-duplicate-confirmation`; read-only remote verification
+returned `9ad1d6e481247b4edb8691262cf45500212f59b7`. Four earlier local
+documentation commits on this branch were also included in that push. The
+package files, `.hermes/briefs`, and line-ending-only test remain uncommitted.
+
+The Owner authorized commit and direct push of the local Unit 6G post-scan
+corrections and separate Store View Publish confirmation, accepting two known
+gaps for Git publication only: ₹0 with `publish` intent is rejected before
+private Add by mobile, Edge, and SQL validation, and the cover thumbnail lacks
+the Unit 6G SDD's Detected source badge. Local affected Jest passed 10 suites/
+158 tests; TypeScript, Phase 9 continuity, and `git diff --check` passed.
+The latest recorded connected readback remains 2026-09-22; no current service,
+database, or Storage state was checked or changed. After Git publication, the
+next exact action is an Owner decision on these deviations before deployment
+or connected proof. Git authorization does not authorize those external steps.
+
+## Current 2026-09-27 Unit 6G handoff
+
+Phase 9's current local focus is Owner review of the bounded post-scan
+corrections and this documentation reconciliation. The prior implementation
+reports record A–C in 6 suites/116 tests and the final buffered-edit Add guard
+in 3 targeted suites/77 tests; those scopes overlap and are not additive.
+Latest recorded connected-session readback: 2026-09-22, with two private
+commits and three candidates in review. This handoff did not query the current
+session, database, Storage, Edge, or worker state and does not claim the local
+application is currently connected or deployed. Exact next action: Owner
+review of the combined local code-and-documentation diff. Any database,
+Storage, migration, connected proof, deployment, or Git publication action
+requires separate authorization.
+
+## Historical Unit 6H rollout overlay (recorded 2026-09-14)
+
+As recorded on 2026-09-14, the bounded Unit 6H duplicate-confirmation
+correction and its development proof were complete on
+`codex/phase9-duplicate-confirmation` at
+`C:\Users\user\Desktop\Bookconnect`; the code correction was recorded as
+`bb91428048ca9028c5592cbbc52c982bd6843946` from baseline `8340647`, with
+documentation synchronized separately. M60, M61, and M62 were recorded as
+applied once; Owner Edge v14 and the matching metadata worker were recorded as
+active. M62 closes representative-cover standalone detail/save projection
+without changing duplicate behavior, selected metadata, or public cover
+projection. The local client reached an existing active scan and the
+connected no-cover proof was blocked at that checkpoint. These are historical
+records, not a current deployment/session readback. Do not delete or mutate
+development database/Storage data without separate explicit authorization.
 
 The one startup chain is repository `AGENTS.md` → `implementation/ACTIVE.md` → DOC-13 → this `SESSION-START.md` → Phase 9 `TRACKER.md`. `AGENTS.md` is always the first entrypoint; this file refines the Phase 9 portion of that repository-level sequence.
 
@@ -291,7 +354,7 @@ M52 application. Local branch commits: `20b5916` (Group 1 foundation),
 of 6G-C; Edge/mobile deployment of new client code requires separate
 authorization.
 
-## Current 2026-08-21 Unit 8 closure overlay
+## Historical 2026-08-21 Unit 8 closure overlay
 
 Unit 8 is live-verified on the development Supabase project. M49, M50, and M51
 are applied exactly once as live versions `20260821060156`, `20260821060742`,

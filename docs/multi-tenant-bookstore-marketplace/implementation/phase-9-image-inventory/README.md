@@ -1,8 +1,39 @@
 # Phase 9 Image-Assisted Inventory Planning Set
 
+> **2026-09-15 connected-proof continuation:** At the Owner's direction, the
+> existing `LIVE-TEST-20260912-REPRO` session was cleaned up through the UI:
+> all 15 active candidates were removed from review, the session summary
+> recorded 15 removed and 0 committed, and the session was closed. The original
+> processed image remained because input removal is guarded by its accepted
+> candidate lineage; no inventory was added or deleted. A new session
+> `93567d47-3874-4576-b3b4-1adb044b552b` was then started with shelf
+> `Phase9 proof shelf`. Its gallery image registered, uploaded, processed, and
+> produced 5 candidates. The connected review readback shows 1 ready after one
+> saved review of `The Birth of Tragedy` with test values ₹0/Good, 4 still
+> needing review, and 0 added to inventory. One private scan-image object was
+> uploaded by the normal Owner flow; no Storage deletion occurred. This evidence
+> follows the Phase 9 Master SDD §6 session/input state model and
+> Extraction/Enrichment SDD §10 queue/review boundary. No migration or manual
+> dispatch change was made.
+
+> **Historical pre-session-cleanup checkpoint (superseded):** The verified development
+> project has Owner Edge v14 active with JWT verification, and the matching
+> metadata worker is live on Render deployment
+> `dep-dak2nmjl550s73bqb7jg` at reviewed commit
+> `bb91428048ca9028c5592cbbc52c982bd6843946`; `/health` and `/ready` returned
+> 200. The client was run locally from the same reviewed code. The authenticated
+> Owner flow reached scan preview with a selected gallery image, but the session
+> was the existing `LIVE-TEST-20260912-REPRO` scan containing one processed image
+> and 15 candidates, so the app disabled `Upload image`. No new input or
+> duplicate Proceed/Cancel proof was created. Connected no-cover verification is
+> blocked pending a clean Owner session/store or explicit authorization to remove
+> the existing image; no migration, Storage deletion, inventory Add, or dispatch
+> change was made.
+
 > **Current 2026-09-14 handoff:** M61 and M62 are live once in the verified
-> development project and Owner Edge v12 is active. The bounded follow-up on
-> `codex/phase9-duplicate-confirmation` at HEAD `4ab3e5c` decodes Google Books volume
+> development project and Owner Edge v12 is active. The committed bounded
+> follow-up on `codex/phase9-duplicate-confirmation` at HEAD
+> `bb91428048ca9028c5592cbbc52c982bd6843946` decodes Google Books volume
 > evidence, suppresses representative fallback for unresolved series evidence,
 > and adds M62 so standalone detail/save carry the same private provenance as
 > batch review. M62 was applied once as remote version `20260913162154`; its
@@ -25,15 +56,17 @@
 > historical. M60 was subsequently applied during the authorized development
 > rollout; the current bounded M61 representative-cover follow-up is local-only.
 
-**Status:** `unit6h_representative_cover_m62_applied_runtime_rollout_pending`
+**Status:** `unit6h_connected_image_processed_review_save_verified_remaining_review_pending`
 **Historical Unit 7B status marker:** **Status:** `unit7b_main_integrated_next_scope_authorization`
-**Last updated:** 2026-09-14
+**Last updated:** 2026-09-15
 **Current handoff:** Unit 6H duplicate confirmation is locally implemented and
 corrected on `codex/phase9-duplicate-confirmation`; the current local follow-up
-is at HEAD `4ab3e5c` from merge base `8340647`.
+is at HEAD `bb91428048ca9028c5592cbbc52c982bd6843946` from merge base
+`8340647`. The code correction is committed; this handoff synchronization
+changes documentation only.
 F-01 is retracted after verification of M58's nested conflict handling; F-02 and
-F-03 are corrected locally and their focused checks pass. The current uncommitted
-bounded correction adds only sanitized M61 sidecar-persistence failure
+F-03 are corrected locally and their focused checks pass. The committed bounded
+correction adds only sanitized M61 sidecar-persistence failure
 observability with a fixed error code and no raw exception detail, and
 its regression assertion; no product workflow or migration SQL changes. The disposable local
 PostgreSQL 18.4 run applied M01–M60 and passed the independent-connection Unit 6H

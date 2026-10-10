@@ -3,9 +3,6 @@ import type {
     OwnerCandidateCommitResult,
 } from '../contracts/ownerUxContracts';
 import {
-    ownerCandidateReviewSchema,
-} from '../contracts/ownerUxReviewSchema';
-import {
     CandidateCommandRegistry,
     type AddAllResult,
     type CandidateCommitDraft,
@@ -18,6 +15,7 @@ import {
     aggregate,
     candidateCanStartCommit,
     candidateCanStartBulkCommit,
+    candidateCommitPreparation,
     canonicalEligible,
     classifyFailure,
     draftMatchesCommand,
@@ -53,18 +51,16 @@ export class InventoryCommitCoordinator {
     ) {}
 
     private freezeCandidate(value: CandidateCommitDraft, claimToken: string): FrozenCandidateCommand {
-        const draft = ownerCandidateReviewSchema.parse(
-            value.review ?? { ...value.card.review!, ...value.edits },
-        );
-        const hasEdits = value.card.review === null
-            || JSON.stringify(draft) !== JSON.stringify(value.card.review);
+        const preparation = candidateCommitPreparation(value);
+        if (!preparation) throw new Error('Cannot freeze an invalid compact review.');
         return {
             candidateId: value.card.candidateId,
             sessionId: value.card.sessionId,
-            draft,
-            needsSave: hasEdits,
+            draft: preparation.draft,
+            needsSave: preparation.needsSave,
             candidateVersion: value.card.candidateVersion,
             metadataRevision: value.card.metadataRevision,
+            reviewVersion: value.card.reviewVersion,
             saveIdempotencyKey: this.dependencies.createIdempotencyKey('save-review'),
             saveCommandId: this.dependencies.createCommandId(),
             commitIdempotencyKey: this.dependencies.createIdempotencyKey('commit'),

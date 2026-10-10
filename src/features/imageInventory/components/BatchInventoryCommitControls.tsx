@@ -16,6 +16,7 @@ export function BatchInventoryCommitControls({
     disabled,
     pending,
     result,
+    remainingReviewCount = 0,
     blockedCandidateIds,
     inFlightCandidateIds,
     outcomes,
@@ -26,6 +27,7 @@ export function BatchInventoryCommitControls({
     disabled: boolean;
     pending: boolean;
     result: AddAllResult | null;
+    remainingReviewCount?: number;
     blockedCandidateIds?: ReadonlySet<string>;
     inFlightCandidateIds?: ReadonlySet<string>;
     outcomes?: ReadonlyMap<string, CandidateCommitOutcome>;
@@ -50,18 +52,33 @@ export function BatchInventoryCommitControls({
     const retryable = Boolean(result && (
         result.failedRetryable > 0 || result.stillPending > 0 || result.needsAttention > 0
     ));
-    const summary = result ? [
-        `Added ${result.succeeded}`,
-        `Retryable ${result.failedRetryable}`,
-        `No longer eligible ${result.noLongerEligible}`,
-        `Needs attention ${result.needsAttention}`,
-        `Still pending ${result.stillPending}`,
-        `Busy ${result.busy}`,
-    ].join(' · ') : null;
+    const bookCount = (count: number) => `${count} ${count === 1 ? 'book' : 'books'}`;
+    const addedLabel = result ? `${bookCount(result.succeeded)} added` : null;
+    const remainingLabel = result
+        ? `${bookCount(remainingReviewCount)} remain in review.`
+        : remainingReviewCount > 0
+            ? `${bookCount(remainingReviewCount)} currently in review.`
+            : null;
+    const outcomeCounts = result ? [
+        ['Retryable', result.failedRetryable],
+        ['No longer eligible', result.noLongerEligible],
+        ['Needs attention', result.needsAttention],
+        ['Still pending', result.stillPending],
+        ['Busy', result.busy],
+    ] as const : [];
+    const resultAnnouncement = result && addedLabel ? [
+        'Bulk add result',
+        addedLabel,
+        ...outcomeCounts.map(([label, count]) => `${label} ${count}`),
+        `${bookCount(remainingReviewCount)} remain in review`,
+    ].join('. ') + '.' : null;
 
     if (eligible.length === 0 && !result) return null;
     return (
-        <View style={{ gap: 8 }} testID="add-all-controls">
+        <View testID="add-all-controls" style={{
+            gap: 10, padding: 12, borderTopWidth: 1, borderColor: colors.border,
+            borderRadius: 16, backgroundColor: colors.bgSecondary,
+        }}>
             {eligible.length > 0 ? (
                 <Button
                     title={`Add all ready books (${eligible.length})`}
@@ -85,14 +102,43 @@ export function BatchInventoryCommitControls({
                     void onAddAll(eligible).then(({ command }) => setLastCommand(command));
                 }}
             />
-            {summary ? (
-                <Text
-                    selectable
+            {result && addedLabel && resultAnnouncement ? (
+                <View
                     testID="add-all-result"
+                    accessible
+                    accessibilityLabel={resultAnnouncement}
                     accessibilityLiveRegion="polite"
-                    style={{ color: result?.succeeded ? colors.accent : colors.textSecondary }}
+                    style={{ gap: 8, paddingTop: 2 }}
                 >
-                    {summary}
+                    <Text selectable style={{
+                        color: result.succeeded ? colors.accent : colors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: '800',
+                    }}>
+                        {addedLabel}
+                    </Text>
+                    <View testID="add-all-result-counts" style={{
+                        flexDirection: 'row', flexWrap: 'wrap', gap: 6,
+                    }}>
+                        {outcomeCounts.map(([label, count]) => (
+                            <View key={label} style={{
+                                flexDirection: 'row', alignItems: 'center', gap: 4,
+                                minHeight: 30, paddingHorizontal: 9, borderRadius: 999,
+                                borderWidth: 1, borderColor: colors.border,
+                                backgroundColor: colors.bgPrimary,
+                            }}>
+                                <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{label}</Text>
+                                <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: '800' }}>{count}</Text>
+                            </View>
+                        ))}
+                    </View>
+                </View>
+            ) : null}
+            {remainingLabel ? (
+                <Text testID="remaining-review-count" selectable style={{
+                    color: colors.textSecondary, textAlign: 'center', fontSize: 12,
+                }}>
+                    {remainingLabel}
                 </Text>
             ) : null}
             {retryable && lastCommand ? (

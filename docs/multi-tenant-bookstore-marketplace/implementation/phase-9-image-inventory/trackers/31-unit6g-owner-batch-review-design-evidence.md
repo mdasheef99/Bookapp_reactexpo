@@ -732,3 +732,190 @@ Canary the request-pattern change and verify timeout ≤10 seconds, provider
 quota/rate limits, memory/database connections, retries/dead letters, and
 duplicate-call signals. M56 application requires a later, separate explicit
 authorization after that worker evidence.
+
+## 19. 2026-09-16 — bounded post-scan UI corrections
+
+This local correction was authorized after owner review of the Unit 6G
+post-scan composition. It is limited to the already-approved compact-card
+contract in the Unit 6G SDD §§8–9.1, §12, and §21, plus contract matrix
+§§3–3.2. It does not change backend contracts, migrations, deployment, or live
+scan data.
+
+- RED-first focused tests initially failed on the absolute bulk-action layout,
+  missing title control semantics, missing secondary editors, and Add being
+  enabled for an incomplete draft. The bounded correction then moved the bulk
+  action into normal layout flow; restored visible title editing; added bounded,
+  accessible ordered author add/remove controls; added language, location,
+  publication, and damage editors with the exact damage fields; and disabled
+  Add until the strict draft is valid and ready.
+- Verification actually run: focused Image Inventory Jest **7 suites / 81
+  tests PASS**; TypeScript `npx.cmd tsc --noEmit` PASS; `git diff --check`
+  PASS; local in-app browser verification at mobile 367×608 and desktop
+  1821×809 confirmed the bulk bar remains in flow, footer actions remain
+  reachable, the title remains visible while editing, and the expanded card
+  exposes the secondary editors. Existing VirtualizedList `act(...)` and
+  Node `DEP0040` warnings remain test/tooling hygiene warnings.
+- External state: no Supabase/Storage access, database or application-data
+  mutation, provider call, migration, deployment, staging, commit, push,
+  merge, or PR occurred. Existing unrelated/user changes were preserved.
+- Residual risk: connected client/native Unit 6G-E proof and the current global
+  Unit 6H connected proof remain gated; this local verification does not claim
+  physical-device acceptance.
+
+**Current next action:** independent owner review of this local diff; separate
+authorization is required for staging/commit, client deployment, or connected
+proof.
+
+## 2026-09-21 — Compact-card polish evidence
+
+This follow-up stays within the approved Unit 6G post-scan review surface. It
+does not add an edition picker, change cover fallback, or introduce a new
+metadata request path.
+
+- The card now reports the current mounted draft rather than only stale server
+  blockers. Safe field-level messages make missing title and invalid custom
+  price actionable, while retained non-draft-resolvable server blockers still
+  remain visible.
+- Inline title and author editing is visually discoverable, saved edits use a
+  calm `Edited · saved when added` status, and metadata/full correction remain
+  secondary escape routes. The stronger Add action remains disabled until the
+  strict compact draft validates.
+- RED-first evidence: the new bounded post-scan regression covers the current
+  draft status transition, Edit cues, missing-title message, and invalid-price
+  message. Focused Unit 6G coverage is 7 suites/96 tests PASS; TypeScript and
+  `git diff --check` PASS; the full repository run is 304 suites PASS with one
+  suite/four tests skipped and 2,485 passing tests.
+- The live browser-opening attempt was interrupted before visual inspection,
+  so no visual acceptance claim is made for this polish. No external service,
+  database, Storage, provider, migration, deployment, or inventory mutation
+  occurred.
+
+**Current next action:** owner review of the local diff, followed by separate
+authorization for any staging/commit, deployment, or connected proof.
+
+## 2026-09-22 — Price, condition, and quantity control refinement
+
+This bounded follow-up remains within the approved Unit 6G compact-card review
+surface. It does not add edition selection, change cover fallback, alter
+metadata requests, or mutate inventory data.
+
+- Price and condition now use compact labeled controls with clear selected
+  values, source badges, and one mutually exclusive expanded editor. The
+  expanded choices render below the complete value row so they are not trapped
+  inside a narrow field column.
+- Quantity is one grouped `− value +` control with bounded values and explicit
+  accessible labels. Custom price entry remains available with an inline
+  validation message and an Apply action. The list retains keyboard-safe tap
+  handling for the review surface.
+- Fresh verification: focused Jest coverage for the affected card, correction,
+  and capture screen suites is **3 suites / 59 tests PASS**; TypeScript
+  (`npx.cmd tsc --noEmit --allowImportingTsExtensions`) exits 0; and
+  `git diff --check` exits 0. The Codex in-app browser is open on the live
+  post-scan route with a review card, the compact value controls, and the
+  sticky bulk action visible. No inventory action was submitted.
+- External state: no Supabase/Storage access, database or application-data
+  mutation, provider call, migration, deployment, staging, commit, push,
+  merge, or PR occurred.
+
+**Current next action:** owner review of the open browser state and local diff;
+separate authorization is required for staging/commit, deployment, or
+connected proof.
+## 2026-09-22 — Compact identity editor refinement
+
+Owner-authorized visual refinement under Unit 6G SDD §§9–9.1 and §21:
+restored pencil icons beside title/author values, replaced stacked author
+removal buttons with accessible 44px inline icon controls, and grouped Add
+author/Done in one compact footer. Existing ordered-author limits and local
+draft semantics remain unchanged. Implementation:
+`InlineBatchReviewFields.tsx`; interaction coverage:
+`postScanUiCorrections.test.tsx`.
+
+Verification: focused card/correction Jest 2 suites, 44 tests PASS; TypeScript
+PASS; Phase 9 continuity validator PASS (existing document-size advisories).
+No database, Storage, inventory submission, migration, deployment, staging,
+commit, or push. Existing unrelated edits preserved. Next action: owner
+review of the revised card; native-device acceptance remains unverified.
+
+## 2026-09-22 - Connected end-to-end post-scan design audit
+
+The user-authorized development test completed the compact-review-to-Store-View
+cycle for exactly two books. Exact-count bulk confirmation, independent commit
+outcomes, private inventory creation, Store View list/detail routing, and final
+database readback all passed. Two candidates were committed and three remain in
+the active review session; no candidate, image, or inventory row was removed.
+
+Observed interaction and aesthetic evidence:
+
+- Restored title/author pencil affordances and the compact author editor are
+  materially clearer, but pressing `Done` without changing a value still marks
+  the field Custom and claims it was edited.
+- Price, condition, and grouped quantity controls work. Expanded choices and
+  Additional details remain vertically dense near the sticky bulk footer; the
+  least-visible condition choice can begin below the viewport.
+- Exact-two confirmation copy is clear and the bulk result is correct, but the
+  result line is cramped and currently renders awkward plural spacing such as
+  `3 book s`.
+- Session Summary and Full Review recovered after Retry, but their initial
+  generic failures and the full-correction schema-style error language reduce
+  owner confidence. Full correction also exposes raw paise instead of the
+  compact review's rupee-level presentation.
+- The metadata sheet and Store View Edit surface are functional but visually
+  dense. Store View `Publish` is an immediate state change with no confirmation;
+  the test item was immediately restored to private and final public-listing
+  count is zero.
+- Private Store View displays `No cover` even though the exact provider cover
+  URL is stored. The cover appeared while the row was public, proving the URL
+  works and isolating the issue to the private owner DTO/UI projection rather
+  than metadata acquisition.
+
+The web `6000ms timeout exceeded` message was traced to Expo Font's
+fontfaceobserver loader. It is not evidence that the bulk commit failed. The
+cause of the separate transient Summary/Full Review reads remains unproven.
+
+Session-close verification: Phase 9 continuity validator PASS and repository
+`git diff --check` PASS, with only the existing size and line-ending advisories.
+
+**Current next action:** prioritize a bounded safety correction for Publish
+confirmation and no-op identity edits before further visual polish. Keep the
+private Store View cover projection deferred unless the Owner separately
+authorizes its DTO/RPC contract change.
+
+## 2026-09-22 — Bounded no-op, bulk-result, and Publish-safety correction
+
+The Owner authorized the exact bounded follow-up identified by the connected
+audit. Scope was limited to unchanged title/author exit semantics, bulk-result
+hierarchy/footer density, and confirmation before the initial Store View
+Publish command. Save/M39 orchestration, Unit 7B server lifecycle semantics,
+cover projection, edition selection, font loading, and transient Summary/Full
+Review diagnosis were excluded.
+
+- RED-first focused coverage reproduced all three defects: unchanged identity
+  completion emitted an update, initial Publish dispatched without a dialog,
+  and the bulk result remained one dense status line.
+- Title and author completion now compares normalized mounted values and emits
+  no change for an unchanged exit. Real changes retain the existing local
+  Custom marker and save-on-Add behavior.
+- Initial `Private -> Publish` now opens `Publish this book?`; Cancel dispatches
+  nothing, while confirm reuses the exact existing command. Pause, Republish,
+  Make Private, and Retry are unchanged.
+- The bulk result now has an added-book heading, wrapping outcome pills, one
+  exact live-region announcement, and a whole remaining-review sentence. The
+  compact in-flow footer and list inset preserve expanded-control reachability.
+- Final automated evidence: affected Jest **7 suites / 93 tests PASS** and
+  TypeScript `npx.cmd tsc --noEmit --allowImportingTsExtensions` PASS. Existing
+  VirtualizedList `act(...)` and Node `DEP0040` warnings remain non-failing
+  test/tooling hygiene warnings. Phase 9 continuity validation and
+  `git diff --check` PASS with only existing document-size and line-ending
+  advisories.
+- Read-only visible Codex-browser proof: Publish displayed the confirmation;
+  Cancel returned to the still-Private item; unchanged author Done and title
+  Enter produced zero `Edited · saved when added` markers; compact price and
+  condition panels opened completely above the navigation/footer; quantity
+  remained one grouped `− 1 +` control. No selection, Add, or Publish confirm
+  was submitted.
+- External/Git state: no Supabase/database/Storage/provider call, business-data
+  mutation, migration, deployment, staging, commit, push, merge, or PR occurred.
+
+**Current next action:** Owner review of the local diff and delivered post-scan
+browser state. Staging/commit, client deployment, connected proof, or any of the
+explicitly deferred issues requires separate authorization.

@@ -1,8 +1,8 @@
 # Unit 6H Follow-up — Representative-Edition Cover Correction
 
 **Date:** 2026-09-14
-**Branch / HEAD reviewed:** `codex/phase9-duplicate-confirmation` / `4ab3e5c`
-**Status:** M61/M62 and Owner Edge v12 remain documented as live-verified at the database/function layer; the bounded local M61 failure-observability correction now emits only a fixed error code plus lookup/attempt IDs, is verified but uncommitted; matching worker/client rollout and connected proof pending authorization
+**Branch / HEAD reviewed:** `codex/phase9-duplicate-confirmation` / `bb91428048ca9028c5592cbbc52c982bd6843946`
+**Status:** M61/M62 and Owner Edge v14 are live-verified; the matching metadata worker is live on Render deployment `dep-dak2nmjl550s73bqb7jg` at reviewed commit `bb91428048ca9028c5592cbbc52c982bd6843946`, with `/health` and `/ready` returning 200. The local client reached an authenticated Owner scan preview, but the existing `LIVE-TEST-20260912-REPRO` session already contains one processed image and 15 candidates, so the selected gallery image could not be registered. Connected proof is blocked pending a clean Owner session/store or explicit authorization to remove that existing image.
 **Scope:** cover presentation only; duplicate confirmation, selected-edition identity, inventory duplicate handling, and public discovery remain unchanged
 
 ## Decision and boundary
@@ -59,11 +59,11 @@ representative image as an exact-edition cover.
 | Item | Local evidence | Remote state |
 | --- | --- | --- |
 | File | `20260913000061_marketplace_phase9_representative_edition_cover.sql` | applied once as `20260913111342 marketplace_phase9_representative_edition_cover` |
-| SHA-256 | `A2A8F9191E29C9813DEBC4E35EA8170F00538288079FFA2E7014621A4D90D463` | no remote readback |
+| SHA-256 | `A2A8F9191E29C9813DEBC4E35EA8170F00538288079FFA2E7014621A4D90D463` | artifact hash verified before application; post-apply readback passed |
 | Private persistence | immutable, RLS-enabled `marketplace_sec.phase9_metadata_representative_covers`; no direct API/service table grant | table/RLS/immutable trigger verified; zero rows |
 | Write boundary | postgres-owned private function plus public `SECURITY INVOKER` delegate; execute only for `service_role` | delegate verified; service execute true, anon/authenticated false |
 | Inventory | nullable checked `store_inventory.representative_cover`; database-owned insert copy and immutable thereafter | column/copy trigger verified; zero non-null rows |
-| Owner projection | representative cover and `fieldSources.cover=representative` only when exact selected cover is absent | Owner Edge v12 active; deployed contract matches local source |
+| Owner projection | representative cover and `fieldSources.cover=representative` only when exact selected cover is absent | Owner Edge v14 active; deployed contract matches local source |
 | Public projection | unchanged | unchanged; connected row proof pending |
 
 M52–M60 were not edited. M60 remains live as remote version `20260912072815`.
@@ -81,9 +81,27 @@ M61 was applied once to the verified development project as remote version
 | Data/schema effect | no table/column/index/trigger/data/backfill/public/Storage change | sidecar and representative-cover inventory counts remain zero |
 
 M52–M61 were not edited by M62. M62 was applied once after exact-project and
-artifact-hash preflight; no worker/client deployment, Storage/business-row
-mutation, or Git publication occurred. Matching runtime deployment and
-connected proof remain separately gated.
+artifact-hash preflight. The later authorized runtime rollout deployed Owner
+Edge v14 and the matching metadata worker; the client was run locally from the
+reviewed code. The connected proof reached an existing active scan and stopped
+before new input registration because one processed image and 15 candidates
+were already present. No Storage deletion, inventory Add, migration, or
+dispatch change occurred.
+
+## 2026-09-14 runtime rollout and connected-proof boundary
+
+The verified project `ahntbtktjjmvfosgkmgn` now serves Owner Edge v14 with JWT
+verification preserved. Render deployment `dep-dak2nmjl550s73bqb7jg` is live
+for the metadata worker at reviewed commit
+`bb91428048ca9028c5592cbbc52c982bd6843946`; `/health` and `/ready` returned
+200. A local Expo client from the same code reached the authenticated Owner
+scan flow and showed the selected gallery image in preview. The app resolved
+the existing `LIVE-TEST-20260912-REPRO` session, which already contained one
+processed image and 15 candidates, so `Upload image` was disabled. This proof
+did not reach duplicate Cancel/Proceed, review Add, or public-projection
+readback. Removing the existing image would be a destructive remote action and
+requires explicit authorization; a clean Owner session/store is the preferred
+next proof setup.
 
 ## Verification actually run
 
@@ -224,14 +242,13 @@ remote-artifact checksum claim. The unrelated existing
 `marketplace_sec.phase9_worker_wake_dispatches` RLS hardening note is also left
 out of this bounded correction.
 
-The exact next action, using the previously granted development rollout/Git
-authority, is to commit and push the verified local test/config/documentation
-correction on `codex/phase9-duplicate-confirmation`, deploy the tolerant Owner
-Edge contract and matching metadata worker/client, then run one connected
+The exact next action, requiring separate explicit rollout authorization, is to
+deploy the tolerant Owner Edge contract and matching metadata worker/client,
+then run one connected
 no-cover scan through standalone detail, review-save, explicit Add, and
 public-projection readback. The Render worker is Git-backed at commit
-`573182267ddd79e08b0abfb348b5afd9fb0dc571`; the matching runtime remains
-uncommitted on the current branch.
+`573182267ddd79e08b0abfb348b5afd9fb0dc571`; no matching runtime deployment
+occurred in this review.
 
 Historical external mutations were limited to the already-recorded M61 schema
 application and Owner Edge v12 deployment. In the representative-cover rollout,
@@ -239,6 +256,7 @@ M62 was the sole new remote migration mutation: it changed only the recorded
 PostgreSQL function definitions/ACLs. In this 2026-09-14 verification and
 documentation follow-up there was no Supabase data/Storage/provider/dispatch or
 application-data mutation or deletion, and no Render deployment. The feature
-baseline `8340647` is the merge base for the current branch; HEAD is `4ab3e5c`.
-The current M61 observability and handoff-documentation correction remains
-uncommitted and unstaged.
+baseline `8340647` is the merge base for the current branch; HEAD is
+`bb91428048ca9028c5592cbbc52c982bd6843946`. The M61 observability correction is
+committed; this review's only pending local changes are documentation updates.
+No commit, push, merge, or deployment occurred in this review.

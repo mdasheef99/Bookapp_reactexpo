@@ -18,6 +18,10 @@ describe('Phase 9 Unit 6F privacy, media-purpose, and Unit 7 boundary', () => {
         'components/AddCandidateToInventoryAction.tsx',
         'components/BatchInventoryCommitControls.tsx',
         'components/BatchReviewCard.tsx',
+        // Unit 6G SDD sections 8/12/14: status and controlled Add/cache surfaces.
+        'components/batchReviewStatus.ts',
+        'queries/ownerInventoryCommitQueries.ts',
+        'queries/ownerUxReviewQueries.ts',
         'screens/CaptureProgressScreens.tsx',
     ]);
     const productionOutsideUnit6gDCommit = productionSources

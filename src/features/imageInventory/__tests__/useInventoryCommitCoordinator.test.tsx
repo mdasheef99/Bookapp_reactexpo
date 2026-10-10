@@ -48,7 +48,7 @@ function draft(edits: Partial<OwnerCandidateReview>): CandidateCommitDraft {
         allowedActions: ['save_review', 'add_to_inventory'],
         updatedAt: '2026-08-25T00:00:00.000Z',
     };
-    return { card, edits };
+    return { card, edits, acceptedAuthorityKey: '4:7:2' };
 }
 
 function readyDetail(candidateId: string): OwnerCandidateDetail {

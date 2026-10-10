@@ -1,5 +1,73 @@
 # Active Marketplace Phase Router
 
+> **2026-09-28 Git-publication closeout:** Unit 6G code/tests `101e4b6`,
+> Store View confirmation `ce2d0c5`, and Phase 9 documentation `9ad1d6e`
+> were pushed to `origin/codex/phase9-duplicate-confirmation` and remote HEAD
+> was read back as `9ad1d6e481247b4edb8691262cf45500212f59b7`.
+> Package files, `.hermes/briefs`, and the line-ending-only test remain local.
+> The next action is an Owner decision on the two recorded deviations before
+> any deployment or connected proof; no database/Storage authority was added.
+
+> **2026-09-28 Phase 9 / Unit 6G publication handoff:** The Owner authorized
+> commit and direct push of the local post-scan and separate Store View work.
+> Affected local Jest passed 10 suites/158 tests; TypeScript, Phase 9
+> continuity, and `git diff --check` passed. The ₹0 plus `publish`-intent
+> validation and missing cover Detected badge remain documented deviations;
+> no correction or connected-state claim is implied. The latest recorded
+> connected readback is still 2026-09-22. Next action after Git publication:
+> Owner decision on those deviations before deployment or connected proof.
+> Database, Storage, and deployment mutation remain unauthorized.
+
+> **2026-09-27 Phase 9 / Unit 6G handoff:** The current local focus is owner
+> review of the bounded post-scan corrections and this documentation
+> reconciliation. Prior implementation reports record A–C in 6 suites/116
+> tests and the final buffered-Add guard in 3 targeted suites/77 tests; these
+> scopes overlap and are not additive. TypeScript and Phase 9 continuity
+> validation were reported passing. The latest recorded connected-session
+> readback remains the 2026-09-22 entry in DOC-13 (two private commits, three
+> candidates in review); this local work made no connected-state claim. Price
+> policy follows DOC-4 §9, Unit 7A §13, and Unit 7B §2; the source badge follows
+> DOC-8. The continuity validator and `git diff --check` passed during this
+> documentation handoff; TypeScript and Jest were not rerun. Exact next action:
+> Owner review of the combined local code/document diff. No database, Storage,
+> deployment, staging, commit, or push is authorized by this handoff.
+
+> **Historical connected-proof snapshot (2026-09-15; superseded by the later 2026-09-22 record):** The previously active
+> `LIVE-TEST-20260912-REPRO` session was cleaned up through the Owner UI: all 15
+> active candidates were removed, the summary confirmed 15 removed and 0
+> committed, and the session was closed. The processed image remained because
+> accepted candidate lineage still blocks input removal. A fresh session
+> `93567d47-3874-4576-b3b4-1adb044b552b` was started with
+> `Phase9 proof shelf`; its gallery image registered, uploaded, processed, and
+> produced 5 candidates. At that checkpoint the connected review readback showed 5 detected,
+> 1 ready after one saved review (`The Birth of Tragedy`, test values ₹0/Good),
+> 4 still needing review, and 0 added to inventory. One private scan-image
+> object was uploaded by the normal Owner flow; no Storage deletion occurred.
+> No migration or manual dispatch mutation was made. At that checkpoint the
+> session remained active; its next action was Owner review/correction of the
+> remaining four candidates, followed by separately authorized Add actions if
+> desired. The later 2026-09-22 record reported two private commits and three
+> candidates remaining. Neither snapshot asserts current live state.
+> Traceability: Phase 9 Master SDD §6; Extraction/Enrichment SDD §10.
+
+> **Historical pre-session-cleanup runtime rollout / connected-proof checkpoint:** The
+> verified development project `Bookconnect_reactexpo`
+> (`ahntbtktjjmvfosgkmgn`) had the checked-in `phase9-owner-ingestion`
+> bundle active as Edge v14; JWT verification was preserved. The matching
+> metadata worker is live on Render deployment `dep-dak2nmjl550s73bqb7jg` at
+> reviewed code commit `bb91428048ca9028c5592cbbc52c982bd6843946`, and its
+> `/health` and `/ready` endpoints returned 200. The client runtime was run
+> locally from the same reviewed code against the verified project. The
+> connected Owner UI reached scan preview, but at that checkpoint its active session was the
+> existing `LIVE-TEST-20260912-REPRO` session with one processed image and 15
+> candidates; the selected gallery image therefore showed `Upload image`
+> disabled. No new input registration, duplicate Proceed/Cancel, inventory
+> Add, migration, Storage deletion, or dispatch change occurred in this
+> attempt. Connected no-cover proof is blocked until an approved clean Owner
+> session/store is available or the existing image is explicitly authorized
+> for removal. [Render deployment API](https://api-docs.render.com/reference/create-deploy)
+> was used only to select the reviewed commit.
+
 > **2026-09-13 representative-cover rollout closeout:** After exact-project
 > reverification, M61 SHA-256
 > `A2A8F9191E29C9813DEBC4E35EA8170F00538288079FFA2E7014621A4D90D463`
@@ -80,14 +148,14 @@
 > **Historical local PostgreSQL verification checkpoint (superseded by the connected closeout above) (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
 
 
-**Last updated:** 2026-09-14
+**Last updated:** 2026-09-28
 **Routing status:** authoritative
 
 This file answers only “where does a new development session start?” DOC-13 owns global status; the active phase tracker owns the detailed current milestone and next authorized action.
 
 ## Active route
 
-- **Unit 6H development overlay:** Unit 6H duplicate confirmation has completed its bounded correction and disposable independent-connection PostgreSQL verification on `codex/phase9-duplicate-confirmation`, at HEAD `4ab3e5c` from baseline `8340647`. The current uncommitted correction set is limited to M61 sidecar-persistence failure observability, its regression assertion, and stale handoff documentation. F-01 was retracted; F-02 and F-03 are corrected. M60 is live once as `20260912072815`; M61 is live once as `20260913111342`; M62 is live once as `20260913162154`. Owner Edge v12 is active with JWT verification; the remaining gate is matching metadata-worker/client deployment and connected no-cover proof. [Unit 6H authority and deployment procedure](./phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md).
+- **Unit 6H development overlay:** Unit 6H duplicate confirmation has completed its bounded correction and disposable independent-connection PostgreSQL verification on `codex/phase9-duplicate-confirmation`; the code correction is `bb91428048ca9028c5592cbbc52c982bd6843946` from baseline `8340647`, with documentation synchronized in the follow-up commit. F-01 was retracted; F-02 and F-03 are corrected. M60 is live once as `20260912072815`; M61 is live once as `20260913111342`; M62 is live once as `20260913162154`. The matching Owner Edge v14 and metadata worker are live, while the local client reached the existing active `LIVE-TEST-20260912-REPRO` scan and could not register a new image because one processed image and 15 candidates already exist. The connected no-cover proof is therefore blocked by the required explicit authorization to remove that existing image or use a clean Owner session/store. [Unit 6H authority and deployment procedure](./phase-9-image-inventory/work-units/06h-duplicate-input-confirmation.md).
 
 ## 2026-09-12 Unit 6H review closeout
 

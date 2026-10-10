@@ -1,11 +1,100 @@
 # Phase 9 Implementation and Verification Tracker
 
-> **2026-09-14 M61 warning-privacy correction:** The representative-cover
+## 2026-09-23 — Redundant post-scan full-review shortcut removal
+
+Date/session: 2026-09-23.
+
+Authorized work unit and scope: Owner-approved bounded client change removing
+the session-header action that always opened the first candidate. Keep the
+candidate-card `Open full correction` route.
+
+Completed: removed the header action and its unused candidate/handler props;
+the screen regression now asserts that the header action is absent and that
+card-level full correction still navigates to the candidate route. The active
+Codex browser shows the header shortcut removed and per-card actions intact.
+
+Files/components/migrations: `post-scan-session-header.tsx`,
+`CaptureProgressScreens.tsx`, `CaptureProgressScreens.test.tsx`, DOC-4, DOC-8,
+Unit 6G SDD/U6G-AC29, P9-D88, requirements traceability, DOC-13, and Phase 9
+trackers. No migration or server contract changed.
+
+Verification actually run: regression test first failed at the assertion that
+the header shortcut was absent; after the implementation,
+`CaptureProgressScreens.test.tsx` passes **15/15**. `npx.cmd tsc --noEmit`
+exited 0. The Phase 9 continuity validator and final `git diff --check` pass;
+the validator reports only existing document-size advisories and Git reports
+existing LF/CRLF conversion warnings.
+
+Supabase/external mutations: None. No database/Storage, inventory, provider,
+migration, deployment, stage, commit, push, merge, or PR action occurred.
+
+Decisions/deviations/risks: P9-D88 records the user-approved removal; full
+correction remains reachable on every eligible card. Existing unrelated dirty
+worktree changes were preserved.
+
+Tracker/source-doc updates: DOC-4 §9, DOC-8 §5, Unit 6G U6G-AC29, P9-D88,
+requirements traceability, DOC-13, Phase 9 master tracker, and this log.
+
+Next authorized action and gate: Owner review of the local diff and open
+browser. Staging, commit, push, and deployment require separate authorization.
+
+> **2026-09-22 P9-D87 local verification:** Red-first focused coverage
+> reproduced the false no-op Custom state, missing initial-Publish confirmation,
+> and dense bulk-result presentation. The bounded implementation suppresses
+> unchanged normalized title/author updates, adds a client guard around only the
+> initial Publish command, and groups/wraps whole bulk counts in a compact
+> in-flow footer. Final affected Jest is **7 suites / 93 tests PASS**; TypeScript
+> is PASS; Phase 9 continuity validation and `git diff --check` are PASS with
+> only existing size/line-ending advisories. In the visible Codex browser,
+> Publish opened the confirmation and
+> Cancel left the item Private; unchanged author Done and title Enter produced
+> zero `Edited · saved when added` markers; and price/condition expansion plus
+> grouped quantity remained reachable. Existing VirtualizedList `act(...)` and
+> Node `DEP0040` warnings remain tooling/test-hygiene warnings. No Add or Publish
+> confirmation was submitted, and no Supabase/database/Storage/provider,
+> migration, deployment, staging, commit, push, merge, or PR action occurred.
+> Cover projection, edition selection, font timeout, and transient-read diagnosis
+> remain outside this correction.
+
+> **2026-09-15 connected-proof continuation:** The Owner removed all 15 active
+> candidates from `LIVE-TEST-20260912-REPRO` in the authenticated UI, verified
+> the Session summary at 15 removed/0 committed, and closed that session. The
+> processed image remained because accepted candidate lineage blocks input
+> removal. A new session `93567d47-3874-4576-b3b4-1adb044b552b` was created
+> with `Phase9 proof shelf`; its selected gallery image completed registration,
+> upload, processing, and candidate creation. The latest connected review
+> summary is 5 detected, 1 ready after one saved review of `The Birth of
+> Tragedy` with test values ₹0/Good, 4 needing review, and 0 added. No
+> migration, inventory Add, or manual dispatch change occurred. One private
+> scan-image object was uploaded by the normal Owner flow; no Storage deletion
+> occurred. Next authorized action: Owner review/correction of the remaining
+> four candidates, followed by separately authorized Add actions if desired.
+> Traceability: Phase 9 Master SDD §6; Extraction/Enrichment SDD §10.
+
+> **Historical pre-session-cleanup runtime rollout / connected proof checkpoint:**
+> `phase9-owner-ingestion` v14 is active in verified development project
+> `ahntbtktjjmvfosgkmgn` with JWT verification preserved. Render metadata-worker
+> deployment `dep-dak2nmjl550s73bqb7jg` is live at reviewed commit
+> `bb91428048ca9028c5592cbbc52c982bd6843946`; `/health` and `/ready` returned
+> 200. The local client reached the authenticated Owner scan preview, but the
+> active session was the existing `LIVE-TEST-20260912-REPRO` scan with one
+> processed image and 15 candidates, so `Upload image` was disabled for the
+> selected gallery image. No new input, duplicate Proceed/Cancel, Add,
+> migration, Storage deletion, or dispatch change occurred. Remaining proof
+> requires a clean Owner session/store or explicit authorization to remove the
+> existing image.
+
+> **2026-09-14 final read-only review:** HEAD is
+> `bb91428048ca9028c5592cbbc52c982bd6843946` on
+> `codex/phase9-duplicate-confirmation`; the code correction is committed and
+> this handoff synchronization changes documentation only. The representative-cover
 > persistence warning now emits only `lookupId`, `attemptId`, and the fixed
 > `P9_REPRESENTATIVE_COVER_PERSISTENCE_FAILED` code; raw exception text is not
 > logged. The focused composition regression passes 1 suite/29 tests. The exact
-> full `--runInBand --detectOpenHandles --silent` run passes 303 suites with
-> one skipped and 2,479 tests with four skipped, exits normally, and TypeScript
+> full `--runInBand --detectOpenHandles --silent` run initially had one
+> non-reproducible owner-query retry assertion; the isolated suite rerun and the
+> second exact full run pass 303 suites with one skipped and 2,479 tests with
+> four skipped, exit normally, and TypeScript
 > plus continuity validation pass. No production workflow, migration SQL,
 > external state, deployment, or Git publication changed.
 
@@ -127,9 +216,9 @@
 
 > **Current local PostgreSQL verification checkpoint (2026-09-12; supersedes the prior correction-only gate):** F-01 remains retracted; F-02 and F-03 remain corrected locally. Focused Jest passed 4 suites/181 tests, including the 3 lifecycle tests, and the in-memory PGlite fixture passed 5/5. The Owner-authorized disposable PostgreSQL 18.4 harness then ran at `127.0.0.1:55461` with data directory `C:\Users\user\AppData\Local\Temp\bookconnect-u8b-pg-unit6h-verify-20260912` and PID-scoped database `bookconnect_u8b_22652`. It applied the disposable baseline and M01–M60, passed `UNIT6H_DUPLICATE_CONFIRMATION_REAL_POSTGRES_CONCURRENCY_PASS` using independent connections, and passed the existing `U8B_REAL_POSTGRES_ACCEPTANCE_PASS` regression. Teardown was verified: the database/cluster directory is absent, the port has no listener, and no matching postgres process remains. M52–M59 are unchanged; M60 remains local and was not remotely applied. No remote database/Storage or application data was touched; no deployment, dispatch change, development-data deletion, staging, commit, or push occurred. Connected Edge/Storage verification remains unrun. Prior screen act/open-handle warnings remain historical unresolved evidence and did not affect these database checks. Next: review this local PostgreSQL proof and separately authorize connected Edge/Storage verification. No product behavior or inventory duplicate policy changed.
 
-**Status:** `unit6h_representative_cover_m62_applied_runtime_rollout_pending`; **last updated:** 2026-09-13
+**Status:** `unit6h_runtime_rollout_complete_connected_proof_blocked_by_existing_active_scan`; **last status checkpoint:** 2026-09-14 (the later 2026-09-22 connected readback is recorded below; current live state was not reverified in the 2026-09-27 local follow-up)
 **Unit 6 closure scope:** automatic/functional pipeline PASS; native Unit 6F validation debt deferred `NOT_RUN`/`UNRESOLVED`, not PASS.
-**Active work unit:** `unit6h_representative_cover_m62_rollout_follow_up`. Unit 6H duplicate confirmation retains its historical development proof. M61 and M62 are live once and Owner Edge v12 is active; matching metadata-worker/client deployment plus connected proof remain pending.
+**Active work unit at the 2026-09-14 checkpoint:** `unit6h_representative_cover_m62_rollout_follow_up`. Unit 6H duplicate confirmation retains its historical development proof. M61 and M62, Owner Edge v14, and the matching metadata worker were recorded live/active, and the local client reached `LIVE-TEST-20260912-REPRO`. The one-image/15-candidate blocker describes that earlier checkpoint; the later 2026-09-22 connected readback is in the dated entry below. No current connected state is asserted here.
 
 ### 2026-09-13 — Representative-edition cover correction
 
@@ -3428,7 +3517,376 @@ dependency noise. Passing assertions do not claim those warnings resolved.
 Tracker/source-doc updates: ACTIVE, DOC-13, SESSION-START, Phase 9 TRACKER, the
 Unit 6H work unit, and the Unit 6H representative-cover correction evidence
 were updated with this closeout.
-Next authorized action and gate: Keep
-`M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING`; using the previously granted
-development rollout/Git authority, commit and push the verified local correction,
-deploy the matching runtime, and run the connected representative-cover proof.
+Next authorized action and gate (superseded by the final read-only review below):
+Keep `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING`; the prior instruction to
+commit and push the verified local correction is no longer applicable because
+that correction is already committed.
+
+## 2026-09-14 - Authorized runtime rollout and connected-proof boundary
+
+Date/session: 2026-09-14 Phase 9 authorized runtime rollout.
+Authorized scope: Deploy the matching reviewed Owner Edge and metadata worker,
+run the client against the verified development project, and continue the
+connected no-cover proof without applying migrations or deleting existing data.
+Completed: `phase9-owner-ingestion` v14 is active with JWT verification
+preserved. Render deployment `dep-dak2nmjl550s73bqb7jg` is live at reviewed
+code commit `bb91428048ca9028c5592cbbc52c982bd6843946`; the local client
+reached authenticated Owner scan preview. The existing
+`LIVE-TEST-20260912-REPRO` session already contains one processed image and 15
+candidates, so the selected gallery image could not be registered and the
+duplicate proof stopped before Proceed/Cancel or Add.
+Verification actually run: focused privacy Jest 29/29; focused Unit 6H group
+12 suites/269 tests; second exact full Jest 303 suites/2,479 tests with four
+skipped; TypeScript PASS; Phase 9 continuity validator PASS; diff check PASS;
+PGlite 7/7; independent PostgreSQL concurrency/U8B markers PASS; `.pyc` count
+0; Render `/health` and `/ready` 200; Supabase function listing shows the
+active Owner Edge v14.
+Supabase/external mutations: Owner Edge deployment and Render worker deployment
+only. No migration application, database-row mutation, Storage deletion,
+provider dispatch, inventory Add, staging, push, merge, or reset occurred.
+Decisions/deviations/risks: F-01 remains retracted; F-02/F-03 remain corrected.
+Optional sidecar persistence remains best-effort without durable retry/outbox or
+backfill. The connected proof is blocked by the existing active scan; removing
+its image is a destructive remote action and has not been authorized.
+Tracker/source-doc updates: ACTIVE, DOC-13, SESSION-START, Phase 9 TRACKER,
+README, this implementation tracker, and the Unit 6H supporting correction were
+updated.
+Next authorized action and gate: Use a clean Owner session/store, or obtain
+explicit authorization to remove the existing image, then run the connected
+no-cover review/Add/public-projection proof.
+
+## 2026-09-16 - Bounded Unit 6G post-scan UI correction
+
+Date/session: 2026-09-16, Phase 9 Unit 6G local correction after issue
+confirmation.
+
+Authorized scope: correct only the confirmed post-scan UI layout and compact
+review-card issues covered by the Unit 6G SDD §§8–9.1, §12, and §21. No
+backend, migration, deployment, connected-data, or navigation-scope change was
+authorized.
+
+Completed: the bulk action now stays in normal layout flow; title editing is
+visible and semantically a button/textbox; authors use bounded ordered
+add/remove controls; secondary location, publication, language, and damage
+fields are editable and expose exact damage details; and incomplete drafts
+cannot present an enabled Add action.
+
+Verification actually run: focused Jest 7 suites/81 tests PASS; TypeScript
+`npx.cmd tsc --noEmit` PASS; `git diff --check` PASS; mobile and desktop local
+browser checks PASS. Existing VirtualizedList `act(...)` and Node `DEP0040`
+warnings remain unresolved test/tooling hygiene warnings.
+
+Supabase/external mutations: None. No database/Storage access, migration,
+provider call, deployment, staging, commit, push, merge, PR, or live scan
+mutation occurred. Existing dirty worktree changes were preserved.
+
+Decisions/deviations/risks: This is a bounded local UI correction and does not
+change the current Phase 9/Unit 6H global status. Connected/native acceptance
+and the existing connected-proof gate remain outstanding.
+
+Tracker/source-doc updates: this Unit 6G evidence tracker, the active Phase 9
+tracker, and this implementation-verification tracker were updated. ACTIVE,
+DOC-13, and the active SDD were not changed because no phase/status or product
+contract changed.
+
+Next authorized action and gate: independent owner review of the local diff;
+staging/commit, client deployment, and connected proof require separate
+authorization.
+
+## 2026-09-22 - Browser visual acceptance for value controls
+
+The local browser gate for the bounded price, condition, and quantity
+refinement was completed without submitting an inventory action. The Codex
+in-app browser was reopened on the mounted post-scan route after restarting
+the existing local Expo server and visibly confirmed the review card's compact
+Price/Condition fields, grouped Quantity control, secondary details row, Add
+action, and sticky bulk-action footer.
+
+Fresh verification actually run: the affected card/correction/capture Jest
+scope is **3 suites / 59 tests PASS**; TypeScript
+`npx.cmd tsc --noEmit --allowImportingTsExtensions` exits 0; and
+`git diff --check` exits 0. The browser tab was marked deliverable so the
+review surface remains open for owner inspection. No Supabase/Storage access,
+database or application-data mutation, provider call, migration, deployment,
+inventory Add/remove, staging, commit, push, merge, PR, or connected scan
+mutation occurred.
+
+Next authorized action and gate: independent owner review of the local diff
+and open browser state; staging/commit, client deployment, and connected proof
+require separate authorization.
+
+
+## 2026-09-21 — Price, condition, and quantity control refinement
+
+- User-authorized scope: Unit 6G SDD §§8–9.1, §12, §21 compact-card controls.
+  Extracted InlineReviewValueFields into a cohesive component. Price/condition
+  use labeled 48px fields and one mutually exclusive full-width editor with
+  wrapping selected-state options. Quantity uses one bounded minus/value/plus
+  group; source markers and strict price serialization are preserved.
+- Custom amount has a persistent bordered input, currency prefix, Apply action,
+  and validation. The list preserves handled keyboard taps. Editors remain in
+  normal scroll flow; the bulk footer is a sibling of the list, not an overlay.
+- Verification: affected card/screen Jest 3 suites/58 tests PASS; TypeScript
+  PASS; diff hygiene PASS. Additional editor-state regression recorded in the
+  test suite. Browser reconnect timed out twice; current mobile/desktop visual
+  acceptance remains unverified. No database/storage mutations or deployment.
+- Existing user changes preserved; nothing staged, committed, or pushed.
+  Next action: visual acceptance of the local controls when browser access
+  resumes. Cover/metadata and edition-selection work remain deferred.
+
+## 2026-09-21 - Bounded Unit 6G post-scan UI polish
+
+Date/session: 2026-09-21, continuation of the local Unit 6G post-scan review.
+
+Authorized scope: preserve the compact-card and batch-review contracts while
+making current-draft validity visible, inline editing discoverable, and
+secondary actions visually subordinate. Cover fallback, edition selection,
+backend, migration, deployment, connected-data, and live scan behavior stayed
+out of scope.
+
+Completed: `validateCompactReview` now retains safe field-level validation
+messages instead of discarding them with a null draft; the card recomputes
+status and attention items from the mounted draft; title/authors expose visible
+Edit cues; custom-price input reports a precise whole-rupee error; and the
+additional-details/secondary-action layout uses calmer grouped hierarchy.
+
+Verification actually run: focused Image Inventory Jest 7 suites/96 tests
+PASS; TypeScript `npx.cmd tsc --noEmit --allowImportingTsExtensions` PASS;
+`git diff --check` PASS; full Jest 304 suites passed with one suite/four tests
+skipped, 2,485 passing and 4 skipped tests out of 2,489. Existing React
+`act(...)`/VirtualizedList, NetInfo fallback, fixture error logging, and Node
+`DEP0040` warnings remain tooling/test-harness warnings. The attempted live
+browser opening was interrupted before a visual acceptance pass, so this entry
+does not claim browser verification for the new polish.
+
+Supabase/external mutations: None. No database/Storage access, migration,
+provider call, deployment, inventory Add/remove, staging, commit, push, merge,
+PR, or connected scan mutation occurred. The temporary local Expo server was
+stopped after the interrupted browser step. Existing dirty worktree changes
+were preserved.
+
+Decisions/deviations/risks: Product and backend contracts are unchanged; cover
+fallback and edition-picker work remain deferred. Automated coverage is green,
+but current live/native visual acceptance remains outstanding.
+
+Tracker/source-doc updates: this implementation-verification tracker and the
+active Phase 9 tracker were updated. ACTIVE, DOC-13, and the active SDD were
+not changed because no phase/status or product contract changed.
+
+Next authorized action and gate: independent owner review of the local diff;
+staging/commit, client deployment, and connected proof require separate
+authorization.
+## 2026-09-22 — Compact identity editor refinement
+
+Owner-authorized visual refinement under Unit 6G SDD §§9–9.1 and §21:
+restored pencil icons beside title/author values, replaced stacked author
+removal buttons with accessible 44px inline icon controls, and grouped Add
+author/Done in one compact footer. Existing ordered-author limits and local
+draft semantics remain unchanged. Implementation:
+`InlineBatchReviewFields.tsx`; interaction coverage:
+`postScanUiCorrections.test.tsx`.
+
+Verification: focused card/correction Jest 2 suites, 44 tests PASS; TypeScript
+PASS; Phase 9 continuity validator PASS (existing document-size advisories).
+No database, Storage, inventory submission, migration, deployment, staging,
+commit, or push. Existing unrelated edits preserved. Next action: owner
+review of the revised card; native-device acceptance remains unverified.
+
+## 2026-09-22 - Connected post-scan cycle and bulk-commit verification
+
+Authorization and target: the Owner explicitly authorized adding multiple
+books in the development environment. The verified project was
+`Bookconnect_reactexpo` (`ahntbtktjjmvfosgkmgn`) and the tested session was
+`93567d47-3874-4576-b3b4-1adb044b552b`.
+
+Connected result: the mounted route recalculated `Add all ready books` from one
+to two after the second valid compact draft, showed the exact-two confirmation,
+and returned `Added 2` with every non-success result count at zero. Readback
+proved both source candidates in `committed` / `committed_private`, session
+`committed_count=2`, and three remaining candidates. Inventory rows
+`413563b1-a869-4182-8aef-4e62ce4cfebf` and
+`46156eae-58a7-4db7-ad5b-a4cb1eb0b98f` preserve the entered price, condition,
+quantity, private intent, and canonical candidate lineage.
+
+Control coverage: compact title/author, price, condition, quantity, additional
+details, metadata sheet, Remove confirmation/Cancel, session summary, Add
+missed book, full correction, Store View list/detail, Edit, and Adjust Stock
+entry points were exercised. No Remove, Close session, edit-save, stock-save,
+or missed-book submission was performed. The bulk coordinator supplied the Add
+submission proof; a separate per-card Add was not duplicated.
+
+External-state deviation and restoration: while checking whether Store View
+`Publish` opened a confirmation, the button immediately published
+`46156eae-58a7-4db7-ad5b-a4cb1eb0b98f`. This exposed a consequential-action
+confirmation gap. The same row was immediately returned to private through
+`Make Private`. Final readback is `visibility_status=draft`,
+`publication_status=private`, `publication_intent_version=3`, version 1, and
+zero current public listings. One immutable public revision plus publish/private
+audit entries remain. No other item was published or changed.
+
+Diagnostic findings: the valid Google Books cover URL is persisted on the
+private inventory row, but `StoreViewCard` renders only
+`publicState.coverUrl`; publication made the cover visible and returning the
+item to private removed that projection. The browser timeout stack maps to
+Expo Font's fontfaceobserver 6000 ms loader, not Supabase or inventory commit.
+Session Summary and Full Review each recovered from a transient generic
+first-read failure after Retry; the current evidence does not establish the
+backend cause. `Done` on an unchanged author editor creates false Custom/edit
+feedback, with title using the same risky path.
+
+No Storage object, provider call, migration, deployment, staging, commit, push,
+merge, PR, candidate deletion, or inventory deletion occurred. The scan session
+remains active with three candidates still requiring review.
+
+Session-close verification: Phase 9 continuity validator PASS and repository
+`git diff --check` PASS. Existing document-size and LF/CRLF advisories remain;
+no new code test was required after this documentation-only closeout update.
+
+Next authorized action and gate: Owner decision on the bounded safety
+corrections (Publish confirmation and no-op identity-edit guards). Private
+cover projection and transient-read/font diagnostics remain separately scoped;
+no correction implementation, deployment, or Git publication is authorized by
+this audit.
+
+## 2026-09-27 — Unit 6G identity no-op and status reconciliation
+
+Authorized scope: bounded local title/author no-op correction, D81 publication-
+default documentation reconciliation, and connected-session history wording.
+No database, Storage, deployment, or external-service access was performed.
+
+Implementation: title comparison now follows `normalizeSafeText` (NFC, trim,
+and whitespace collapse). Author fields stay in component-local drafts while
+editing and are sent to the mounted review draft once on Done only when the
+canonical author list changed. The new regression tests prove unchanged,
+whitespace-equivalent, and NFC-equivalent title/author edits do not create a
+Custom draft; a real author edit is committed on Done. The setup-form test now
+asserts that initial publication intent is private.
+
+Documentation: Unit 6G's publication default now matches DOC-4 §5, Phase 9
+Master SDD §5, and the existing `initialScanSetupForm` default. The Sep 15
+connected session paragraph is labeled as a historical snapshot; the Sep 22
+record remains the latest recorded readback (two private commits and three
+candidates in review). Current connected state was not queried.
+
+Verification actually run: red-first post-scan run reproduced three failures
+in the new no-op/author-commit tests. The final focused command passed **3
+suites / 58 tests** (`batchReviewCard`, `postScanUiCorrections`, and
+`scanSetupForm`). `node_modules/.bin/tsc.cmd --noEmit
+--allowImportingTsExtensions` exited 0. Phase 9 continuity validation passed
+(document-size advisories only), and `git diff --check` passed; Git emitted
+existing LF-to-CRLF conversion warnings.
+
+Next exact authorized action: Owner review of the local correction diff.
+Staging/commit, deployment, and connected proof remain separately authorized.
+
+## 2026-09-27 — Unit 6G post-scan handoff and documentation reconciliation
+
+Authorized scope: Phase 9 documentation handoff only. No application code,
+tests, migration, database, Storage, deployment, or external-service state was
+changed or queried in this pass.
+
+Recorded implementation context: the preceding local correction reports cover
+post-scan findings A–C and the final individual-Add guard for buffered title or
+author text. The earlier report records 6 affected suites/116 tests for A–C;
+the subsequent focused report records 3 suites/77 tests for the final guard.
+These scopes overlap and must not be summed. TypeScript was reported passing
+with those implementation corrections. This documentation-only handoff did
+not rerun Jest or TypeScript.
+
+Documentation reconciled: DOC-4 §9 now makes the price gate explicit (price
+set before Add; ₹0 valid for private inventory; positive minor-unit amount
+required only for publication, per Unit 7B §2; Add remains private-only under
+Unit 7A §13). DOC-8, the Unit 6G SDD §§7/9/27, and its contract matrix now use
+`Detected` for both internal `matched` and `detected` source codes while
+preserving their distinct provenance. Unit 6G price language, the traceability
+row, and the exact status handoff were aligned. DOC-13, ACTIVE, the Phase 9
+tracker, and SESSION-START now distinguish the latest recorded 2026-09-22
+connected-session readback from unverified current live state; older rollout
+snapshots remain historical. Root behavior sources used: DOC-4 §§5/9, DOC-8,
+Phase 9 Master SDD §5, Unit 7A §13, Unit 7B §2, and Unit 6G SDD §§6–9/27.
+
+Verification actually run in this documentation pass: Phase 9 continuity
+validator passed (`REQUIREMENT_DEFINITIONS=195`, duplicates `0`, missing
+traceability `0`, regression probes PASS, `MARKDOWN_FILES_CHECKED=86`,
+`REQUIRED_PHASE_FILES=62`). `git diff --check` exited 0. Both emitted existing
+LF/CRLF conversion warnings; size/cohesion advisories were non-blocking. No
+Jest, TypeScript, app, browser, database, Storage, Edge, or worker check was
+run here.
+
+Next exact authorized action: Owner review of the combined local code-and-
+documentation diff. Nothing was staged, committed, pushed, deployed, or
+applied; unrelated dirty work remains preserved. Connected proof and any Git
+publication action require separate authorization.
+
+## 2026-09-28 — Owner-authorized Git publication preflight
+
+The Owner authorized commit and direct push of the local post-scan corrections
+and separate Store View Publish confirmation, explicitly deferring the two
+reported price-intent and cover-source review findings for Git publication.
+This authorization does not extend to migration, database, Storage, deployment,
+or connected runtime work.
+
+Current exact local verification: the ten affected Jest suites passed **158/158
+tests**; `node_modules/.bin/tsc.cmd --noEmit --allowImportingTsExtensions`
+exited 0; Phase 9 continuity passed with 195 requirements, zero duplicate or
+missing traceability, 86 Markdown files checked, and non-blocking document-size
+advisories; `git diff --check` exited 0 with line-ending conversion warnings.
+The first Jest/TypeScript attempts were blocked before execution by sandbox
+`EPERM` on `C:\Users\user`; the elevated retries produced the results above.
+
+Known deviations left unchanged: mobile, Edge, and existing SQL reject ₹0
+with retained `publish` intent before private Add; the compact cover thumbnail
+does not show the Unit 6G SDD's Detected source badge. Tests passing do not
+resolve either discrepancy. The latest connected readback remains the recorded
+2026-09-22 state, not current live proof. No app/browser, database, Storage,
+Edge, worker, or deployment was accessed or mutated in this preflight.
+
+Commit selection excludes unrelated package files, `.hermes/briefs`, and the
+line-ending-only mounted-route integration test. Git publication is the next
+authorized action; afterward, the Owner must decide how to resolve the two
+deviations before any deployment or connected proof.
+
+## 2026-09-28 — Git-publication closeout
+
+The Owner-authorized local work was committed as `101e4b6` (Unit 6G code and
+regressions), `ce2d0c5` (Store View Publish confirmation and Unit 7C SDD),
+and `9ad1d6e` (Phase 9 source specifications and handoff). The branch was
+pushed to `origin/codex/phase9-duplicate-confirmation`; `git ls-remote` read
+back `9ad1d6e481247b4edb8691262cf45500212f59b7` at that branch. The
+remote advanced from `bb91428`, so the push also included four earlier local
+documentation commits already on this branch. This closeout records the
+completed push; its own documentation commit follows it.
+
+The pre-commit local verification above is the current code evidence. No
+post-push app, browser, database, Storage, Edge, worker, or deployment check
+was run. Package files, `.hermes/briefs`, and the line-ending-only integration
+test remain uncommitted. The two documented deviations remain unresolved.
+Next exact action: Owner decision on those deviations before any deployment
+or connected proof.
+
+## 2026-10-01 — Unit 6G specific missing-field feedback (local)
+
+Authorized scope: compact review cards identify missing or invalid details when
+a fresh candidate has no saved review and the server blocker is only the
+generic `review_missing` state. The card now shows locally derived strict
+review messages in place of that generic message when possible. Server
+blockers remain visible, and the presentation does not change server readiness
+or Add eligibility.
+
+Documentation aligned: DOC-4 §9, DOC-8 §5, Unit 6G SDD §9, and the requirements
+traceability row record this clarification of the existing missing-field
+attention contract.
+
+Verification actually run: red-first focused case reproduced the generic-only
+message. Final `batchReviewCard.test.tsx` and
+`postScanUiCorrections.test.tsx` passed **2 suites / 61 tests**. TypeScript
+`--noEmit --allowImportingTsExtensions` exited 0. No connected browser
+acceptance is claimed.
+
+External state: no database, Storage, migration, inventory, deployment, or
+connected runtime was accessed or mutated. Nothing was staged, committed, or
+pushed; existing unrelated working-tree changes were preserved.
+
+Next exact action: Owner review of this local diff. Existing price-intent and
+cover-source deviations remain separate gates before deployment or connected
+proof.
