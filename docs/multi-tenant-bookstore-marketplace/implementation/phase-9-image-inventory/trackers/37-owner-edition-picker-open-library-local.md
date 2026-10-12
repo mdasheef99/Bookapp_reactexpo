@@ -1,12 +1,10 @@
-## 2026-10-13 - Configuration and live adapter checked; publication and CI pending
+## 2026-10-13 - Open Library published; CI passed; Render held
 
-Current status: open_library_committed_configuration_checked_publication_ci_pending. Phase9 / Unit6G remains active. Feature d04a333206efac257cd55b2bfd224d1cf57d236d and receipt02485f3 remain local; source is unchanged. The requested local checks/reviews are complete with their prior scope limits. This additional read-only predeployment check found no new code defect or required startup-setting change.
+Current status: open_library_published_ci_passed_render_held. Phase 9 / Unit 6G remains active. The Owner-authorized atomic, non-force push fast-forwarded both remote main and codex/edition-picker from d3bda38 to 96bcdde9abc39c15675c19fa763971ce208e9828; both refs matched on readback. Feature d04a333 and the two prior documentation receipts are published, with all earlier main history retained. GPT-6 Luna/max APPROVED the immutable committed snapshot; no unapproved product change was found.
 
-Fresh verification: correct ACTIVE_HEALTHY Supabase project; M73/M74 present; OL disabled/policy_version1; Owner Edge v15/JWT enabled, compatible local entrypoint passes Deno check exit0. Render target/main/Dockerfile/health path/one-instance topology verified, autoDeploy off; environment/Docker startup source unchanged from the live worker. Ready200 and health retry200 followed one initial30s health timeout. These process checks describe the old worker.
+[GitHub validation](https://github.com/mdasheef99/Bookapp_reactexpo/actions/runs/38295345765) completed successfully for this exact source SHA: repository tests, TypeScript and production web export all passed. No local product gate was repeated. This publication receipt changes documentation only; its source/test/dependency/migration tree remains identical to the validated commit.
 
-The compiled adapter also completed a real public-book OL lookup: sixHTTP200JSON requests, ten positions, two eligible choices, four ineligible and four unavailable; no shared writes/Google requests/raw-body/image retention. Owner selection remains required. This is provider-adapter evidence, not deployed Owner/API/persistence acceptance.
-
-The Owner skipped the Free-plan review; no quota/billing-plan inspection was performed. Exact next authorized action: publish the reviewed commit after reconciling current remote main, wait for existing source CI, then report a concrete manual rollout. Render deployment remains HELD; OL stays disabled until compatible worker/API/client and activation checks. [Fresh configuration/provider evidence and limits](37-owner-edition-picker-open-library-local.md) (tracker37 §20). Earlier dated checkpoints remain historical.
+Exact next authorized action: report the compatible metadata-worker, Owner Edge and client rollout for the Owner's deployment decision, then STOP before Render deployment. The verified autoDeploy setting is off; Open Library stays disabled. M65-M74 remain applied and byte-preserved. Controlled provider activation and the real Owner edition-search/selection/Add/cleanup workflow remain operational gates. The Free-plan review waiver remains in effect. [Publication, CI and scope limits](37-owner-edition-picker-open-library-local.md) (tracker 37 section 21); earlier dated entries are historical.
 
 ## 2026-10-12 - M74 applied and verified; Open Library disabled; Render held
 
@@ -957,3 +955,34 @@ No source/test/dependency/migration/env/configuration edit, privileged-key retri
 Exact next authorized action: reconcile/publish the reviewed commit under the existing Owner authorization, wait for GitHub source CI, then report the exact manual compatible worker/API rollout while keeping OL disabled. STOP before Render deployment. Publication/CI and the final one-card live Owner workflow after authorized activation remain gates; no guarantee of never needing a later deployment is made.
 
 Configuration closeout: continuity PASS/exit0,195definitions/0duplicates/0missing traces; exact17-document scope and feature-source preservation verified. The following Git receipt is documentation only; no publication, activation or deployment is included.
+
+## 21. Owner-authorized publication and successful CI, 2026-10-13
+
+### 21.1 Immutable review and publication receipt
+
+The Owner requested proceeding with reviewed commit publication. The parent retained the explicit instruction to STOP before Render deployment. GPT-6 Luna/max performed a bounded post-commit attestation at 96bcdde9abc39c15675c19fa763971ce208e9828 and returned APPROVED. Feature d04a333206efac257cd55b2bfd224d1cf57d236d contains the implementation and already approved corrections; 02485f3 and 96bcdde contain documentation only. The reviewer checked both saved snapshots, found only the five previously approved client source/test deltas, no missing snapshot paths, and no unapproved product changes. This attestation ran no tests/build/browser/provider/native or live-service checks.
+
+Fresh git status was clean; branch/HEAD matched. Both remote refs read d3bda38d179e0d7a8b3ed877df0a4bd5239a0a8e, an ancestor of the reviewed HEAD. The authorized git push --atomic origin HEAD:refs/heads/main HEAD:refs/heads/codex/edition-picker completed normally, with no force, merge, rebase, or Desktop checkout action. Both remote refs read back exactly 96bcdde9abc39c15675c19fa763971ce208e9828. All earlier main commits are retained by this fast-forward.
+
+### 21.2 Actual GitHub result
+
+[Clubs and shared app validation, run 38295345765](https://github.com/mdasheef99/Bookapp_reactexpo/actions/runs/38295345765) completed with conclusion success for head_sha 96bcdde9abc39c15675c19fa763971ce208e9828. Its job and every command passed: locked npm dependency installation, repository Jest tests, TypeScript and production Expo web export. The push-triggered run started at 2026-10-12T19:05:46Z and completed at 2026-10-12T19:08:59Z (13 October IST). GitHub CI is fresh verification; no corresponding broad local gate was repeated.
+
+Only the existing main-push app workflow was triggered. The separate worker-container workflow does not trigger on ordinary main pushes; its absence is not represented as a new container-smoke pass. Prior worker build, native race/accounting, compiled spacing, adapter, and fixture-browser evidence retain their recorded provenance. CI does not establish deployed Owner/API/provider behavior.
+
+Publication metadata, before-document hashes, exact sixteen-document manifest and CI receipt are saved in C:\Users\user\AppData\Local\Temp\bookconnect-ol-publication-1fb41e081adc4fd2bf458980c047759c. An initial documentation update stopped after one current-state header because another document had a different historical next heading; no product or Git state changed. The correction validates every current-state boundary before writing, then applies only the same sixteen planned documentation updates.
+
+### 21.3 Preserved rollout boundary and next action
+
+This step publishes Git refs and runs GitHub CI only. No source/test/dependency/migration/environment edit, shared database/Auth/inventory/Storage write, provider activation, Render/Supabase runtime deployment, service-setting/secret/billing change, or preview restart occurred. M65-M74 remain applied and byte-preserved; no migration was reapplied. Open Library stays disabled. Render autoDeploy was last verified off in section 20; no deployment API was called. The Free-plan review is explicitly waived.
+
+This follow-up publication receipt is documentation only. Before committing it, verify exact changed-path scope, identical source/test/dependency/migration tree, continuity and whitespace; record those actual results below. Publish this receipt through a non-force fast-forward, preserving the same reviewed and CI-validated product source.
+
+Exact next authorized action: report the rollout for the Owner's deployment decision and STOP before Render deployment. The concrete pending order is:
+1. Manually deploy the existing metadata worker from the validated source, then check readiness and worker/RPC compatibility with Open Library still disabled.
+2. Deploy the compatible phase9-owner-ingestion Edge and client, preserving the existing project, authentication and worker startup configuration.
+3. After explicit provider activation authority, enable the already permitted OL provider and verify one actual Owner search, selection and Add, with cleanup/recovery evidence.
+
+These steps remain pending. The existing explicit deployment hold has not been lifted. A successful live workflow is required before operational completion; no guarantee of never needing a later correction/deployment is made.
+
+Publication closeout: mandatory continuity PASS/exit0, 96 Markdown files/62 required; exact sixteen-document scope PASS, no unexpected untracked paths, product tree identical to GitHub-validated 96bcdde, all ten M65-M74 hashes identical to the original aggregate snapshot, and whitespace PASS. Only existing line-ending/document-size advisories were emitted. No local product gates were rerun; GitHub supplied the fresh repository test/type/export result. This documentation-only receipt is committed and then published through the same ordinary atomic fast-forward process; Git and remote readback provide its actual receipt. The source remains unchanged. Final rollout authority remains STOP before Render deployment.
