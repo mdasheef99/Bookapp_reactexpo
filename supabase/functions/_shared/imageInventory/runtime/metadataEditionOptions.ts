@@ -1,4 +1,11 @@
-import type { GoogleBooksAdapter } from '../metadata/googleBooks/adapter';
+import type { MetadataProviderAdapter } from '../metadata/providerAdapter';
+import { OpenLibraryEditionOptionsAdapter } from '../metadata/openLibrary';
+import type { EditionHttpHooks } from '../metadata/openLibrary/transport';
+export type EditionOptionsAdapter = MetadataProviderAdapter & {
+  lookupEditionOptions(input: Parameters<MetadataProviderAdapter['lookup']>[0] & {
+    httpHooks?: EditionHttpHooks;
+  }): Promise<EditionOptionsProviderResult>;
+};
 import { resolveOptionsDeadline } from '../metadata/googleBooks/editionOptions';
 import { parseNormalizedMetadataEdition } from '../contracts/metadata';
 import { projectStoredEditionRow } from '../contracts/ownerEditionPicker';
@@ -17,7 +24,7 @@ export type MetadataEditionOptionsJobResult = Readonly<{
 // Picker §§4.1-4.3/5/9: automatic winner reuse/selection are never called by this operation.
 export async function executeEditionOptionsLookup(
   context: MetadataJobContext, gateway: MetadataProductionGateway,
-  adapter: GoogleBooksAdapter, signal: AbortSignal,
+  adapter: EditionOptionsAdapter, signal: AbortSignal, fallback?: OpenLibraryEditionOptionsAdapter,
 ): Promise<MetadataEditionOptionsJobResult> {
   if (context.purpose !== 'edition_options' || context.requestGeneration === null) {
     throw new Error('P9_EDITION_CONTEXT_INVALID');
@@ -53,36 +60,58 @@ export async function executeEditionOptionsLookup(
     if (!policy.allowFreshProviderCall || !policy.allowPositiveRetention) return await fail('policy_denied', false);
     const recovered = completionResult(await boundary.recover(fence));
     if (recovered) return recovered;
-    if (context.currentPhysicalStatus === 'stale_rejected') return { outcome: 'stale_claim' };
+    if (context.currentPhysicalStatus === 'stale_rejected' && context.currentPhysicalClaimAttempt === context.attempt) return { outcome: 'stale_claim' };
     // Same-claim replay cannot authorize a duplicate physical call when its outcome is known.
     if (context.currentPhysicalStatus === 'finalized' && context.currentPhysicalClaimAttempt === context.attempt) {
       return await fail('provider_unavailable', true);
     }
     const { lookupId } = await gateway.registerLookup(request);
     const { reservationId } = await gateway.reserveUsage({ ...request, lookupId });
-    const { attemptId } = await gateway.registerAttempt({ ...request, lookupId, reservationId, providerRole: 'primary' });
+    let { attemptId } = await gateway.registerAttempt({ ...request, lookupId, reservationId, providerRole: 'primary' });
     if (signal.aborted) return await fail('cancelled', false);
-    if (!await gateway.validateEgress({ ...request, lookupId, attemptId })) return { outcome: 'stale_claim' };
+    let selectedAdapter = adapter;
+    if (!(selectedAdapter instanceof OpenLibraryEditionOptionsAdapter)
+      && !await gateway.validateEgress({ ...request, lookupId, attemptId })) return { outcome: 'stale_claim' };
+    const lookup = async () => selectedAdapter.lookupEditionOptions({
+      query: request.query, correlationId: lookupId, attemptId, signal,
+      httpHooks: selectedAdapter instanceof OpenLibraryEditionOptionsAdapter
+        ? gateway.editionProviderCalls?.createHooks(lookupId,attemptId) : undefined,
+    });
+    if (selectedAdapter instanceof OpenLibraryEditionOptionsAdapter && !gateway.editionProviderCalls) {
+      return await fail('provider_disabled',false);
+    }
     let provider: EditionOptionsProviderResult;
     try {
-      provider = await adapter.lookupEditionOptions({
-        query: request.query, correlationId: lookupId, attemptId, signal,
-      });
-    } catch {
-      await gateway.finalizeAttempt({
+      provider = await lookup();
+    } catch(error) {
+      if (error instanceof Error && ['P9_METADATA_STALE_PHYSICAL_CALL','P9_EDITION_CONTEXT_INVALID'].includes(error.message)) throw error;
+      if (!(selectedAdapter instanceof OpenLibraryEditionOptionsAdapter)) await gateway.finalizeAttempt({
         lookupId, attemptId, normalizedOutcome: 'provider_unavailable', disposition: 'rejected',
         providerRequestId: null, normalizedCandidate: null, retryable: true, physicalStatus: 'outcome_unknown',
       });
       return await fail('provider_unavailable', true);
     }
     // Physical spend is durable separately from options persistence; audits/cache retain no alternatives.
-    await gateway.finalizeAttempt({
+    if (!(selectedAdapter instanceof OpenLibraryEditionOptionsAdapter)) await gateway.finalizeAttempt({
       lookupId, attemptId, normalizedOutcome: provider.outcome, disposition: 'rejected',
       providerRequestId: provider.providerRequestId, normalizedCandidate: null,
       evidence: [], retryable: provider.retryable, physicalStatus: 'finalized',
     });
     if (signal.aborted) return await fail('cancelled', false);
+    // Google remains preferred when it has independent retention permission. Denial never invokes a secondary.
+    const allowedFallback = ['no_acceptable_match','ambiguous_match','material_conflict','schema_invalid',
+      'malformed_response','timeout','rate_limited','provider_unavailable','circuit_breaker_open','network_failure','response_too_large','unsupported_content_type'];
+    const googleRetention = provider.fetchedAt && provider.retentionEvidence
+      ? resolveOptionsDeadline(provider.fetchedAt,provider.retentionEvidence) : null;
+    if (!(selectedAdapter instanceof OpenLibraryEditionOptionsAdapter) && fallback && gateway.editionProviderCalls
+      && allowedFallback.includes(provider.outcome) && (provider.fetchedAt === null || googleRetention !== null)
+      && !provider.rows.some(row => row.eligibility === 'eligible')) {
+      ({ attemptId } = await gateway.editionProviderCalls.registerFallback(request,lookupId,reservationId,attemptId,provider.outcome));
+      selectedAdapter = fallback;
+      provider = await lookup();
+    }
     if (provider.retryable) return await fail(provider.outcome, true);
+    if (provider.fetchedAt === null && provider.rows.length === 0) return await fail(provider.outcome, false);
     const expiresAt = provider.fetchedAt && provider.retentionEvidence
       ? resolveOptionsDeadline(provider.fetchedAt, provider.retentionEvidence) : null;
     if (!expiresAt || Date.parse(expiresAt) <= Date.now()) return await fail('policy_denied', false);
@@ -97,8 +126,9 @@ export async function executeEditionOptionsLookup(
         }
         ids.add(row.optionId);
         if (row.metadata !== null) {
-          const metadata = parseNormalizedMetadataEdition(row.metadata, GOOGLE_BOOKS_EDITION_HOST_POLICY);
-          if (metadata.correlationId !== lookupId || metadata.attemptId !== attemptId
+          const metadata = parseNormalizedMetadataEdition(row.metadata, selectedAdapter.normalizedEditionHostPolicy);
+          if (metadata.adapterKey !== selectedAdapter.normalizedEditionHostPolicy?.adapterKey
+            || metadata.correlationId !== lookupId || metadata.attemptId !== attemptId
             || metadata.fetchedAt !== provider.fetchedAt) throw new Error('P9_EDITION_ROWS_INVALID');
         }
       }

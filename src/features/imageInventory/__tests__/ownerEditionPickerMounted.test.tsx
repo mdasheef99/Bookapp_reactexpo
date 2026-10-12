@@ -1,8 +1,9 @@
 jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Modal, Platform } from 'react-native';
+import { Modal, Platform, StyleSheet } from 'react-native';
 import { act, cleanupAsync, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { BatchReviewCard } from '../components/BatchReviewCard';
+import { CandidateReviewEditionSheet } from '../components/CandidateReviewEditionSheet';
 import { ownerUxService } from '../api/ownerUxService';
 import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
 import { CandidateCommandRegistry } from '../commit/inventoryCommitTypes';
@@ -64,7 +65,7 @@ it('opens/reopens without provider search, preserves current choice and explicit
 it('reuses fresh empty results with no lookup loop', async () => {
   read.mockResolvedValue({ ...initial, rows: [] });
   const view = mount(); fireEvent.press(view.getByText('Change edition'));
-  await waitFor(() => expect(view.getByText('No Google Books results were returned.')).toBeTruthy());
+  await waitFor(() => expect(view.getByText('No book results were returned.')).toBeTruthy());
   expect(view.queryByText('Search Books')).toBeNull();
   expect(lookup).not.toHaveBeenCalled();
 });
@@ -172,4 +173,24 @@ it('keeps Close and hardware back locked through selection reconciliation', asyn
   await waitFor(() => expect(view.getByText('Edition saved.')).toBeTruthy());
   fireEvent.press(view.getByText('Close metadata'));
   expect(view.queryByText('Close metadata')).toBeNull();
+});
+
+it('keeps the full-review edition trigger at its natural touch-target height and opens the picker', async () => {
+  const view = render(<QueryClientProvider client={client}><CandidateReviewEditionSheet
+    identity={pickerIdentity} detail={mockDetail} disabled={false} commandSlot={slots}
+    onSelection={refresh} onManual={jest.fn()} onPendingChange={jest.fn()} /></QueryClientProvider>);
+  const style = StyleSheet.flatten(view.getByRole('button', { name: 'Change edition' }).props.style);
+  expect(style.minHeight).toBeGreaterThanOrEqual(48);
+  expect(style.flexBasis).toBeUndefined();
+  expect(style.flexGrow).toBeUndefined();
+  fireEvent.press(view.getByRole('button', { name: 'Change edition' }));
+  await waitFor(() => expect(view.getByLabelText('Select result 1: Chosen edition')).toBeTruthy());
+});
+
+it('preserves the compact-row sizing and touch targets for both metadata triggers', () => {
+  const view = mount();
+  for (const name of ['Change edition', 'View metadata']) {
+    const style = StyleSheet.flatten(view.getByRole('button', { name }).props.style);
+    expect(style).toMatchObject({ minHeight: 48, flexGrow: 1, flexBasis: 150 });
+  }
 });

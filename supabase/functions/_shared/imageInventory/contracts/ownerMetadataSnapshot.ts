@@ -10,7 +10,7 @@ const coverReference = z.string().min(1).max(512).superRefine((value, context) =
   try {
     const parsed = new URL(value);
     if (parsed.protocol !== 'https:' || parsed.username || parsed.password ||
-        parsed.hostname.toLowerCase() !== 'books.google.com') throw new Error();
+        (parsed.hostname.toLowerCase() !== 'books.google.com' && !(parsed.hostname === 'covers.openlibrary.org' && /^\/b\/id\/[1-9][0-9]*-M\.jpg$/u.test(parsed.pathname) && !parsed.search && !parsed.hash && !parsed.port))) throw new Error();
   } catch {
     context.addIssue({ code: z.ZodIssueCode.custom, message: 'cover host is not approved' });
   }

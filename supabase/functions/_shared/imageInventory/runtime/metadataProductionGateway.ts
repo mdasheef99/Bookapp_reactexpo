@@ -1,3 +1,4 @@
+import { createEditionProviderCalls } from './metadataEditionProviderCalls';
 import { randomUUID } from 'node:crypto';
 import {
   MetadataNormalizedOutcome,
@@ -45,6 +46,7 @@ function sameEditionRequest(
 
 export class SupabaseMetadataProductionGateway implements MetadataProductionGateway {
   readonly editionOptions;
+  readonly editionProviderCalls;
   readonly providerValidation;
   private readonly providerCalls = new Map<string, string>();
   private reusableLookup: string | null = null;
@@ -54,6 +56,8 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
     private readonly configuration: MetadataGatewayConfiguration,
   ) {
     this.editionOptions = configuration.editionOptions;
+    this.editionProviderCalls = configuration.context.purpose === 'edition_options'
+      ? createEditionProviderCalls(client,configuration) : undefined;
     this.providerValidation = Object.freeze({
       adapterKey: configuration.adapterKey,
       adapterVersion: configuration.adapterVersion,
@@ -147,8 +151,8 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
   async reserveUsage(input: MetadataProductionRequest & { lookupId: string }) {
     const data = object(await metadataGatewayRpc(this.client, 'phase9_reserve_metadata_usage', {
       ...metadataClaimParameters(input), p_lookup_id: input.lookupId,
-      p_adapter_key: this.configuration.adapterKey,
-      p_adapter_version: this.configuration.adapterVersion,
+      p_adapter_key: this.configuration.context.currentLookupAdapterKey ?? this.configuration.adapterKey,
+      p_adapter_version: this.configuration.context.currentLookupAdapterVersion ?? this.configuration.adapterVersion,
       p_policy_version: Number(metadataLookupParameters(
         input, this.configuration, null,
       ).p_reuse_policy_version),

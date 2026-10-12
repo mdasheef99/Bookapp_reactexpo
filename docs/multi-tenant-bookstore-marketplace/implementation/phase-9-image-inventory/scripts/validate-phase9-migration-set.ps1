@@ -125,6 +125,19 @@ if ($tracker.Contains('Owner authorized local M72 creation') -and
     $draftMigrationNames += '20261010000072_marketplace_phase9_edition_picker_superseded_jobs.sql'
 }
 
+# Owner's explicit fallback approval permits local M73 only; application stays separate.
+if ($tracker.Contains('Owner authorized local M73 creation') -and
+    $tracker.Contains('20261011000073_marketplace_phase9_open_library_edition_options.sql') -and
+    $tracker.Contains('CREATED_LOCAL / NOT_APPLIED')) {
+    $draftMigrationNames += '20261011000073_marketplace_phase9_open_library_edition_options.sql'
+}
+
+# Owner's author-isolation approval permits exactly local M74; shared application stays separate.
+if ($tracker.Contains('Owner authorized local M74 creation') -and
+    $tracker.Contains('20261012000074_marketplace_phase9_open_library_author_isolation.sql') -and
+    $tracker.Contains('CREATED_LOCAL / NOT_APPLIED')) {
+    $draftMigrationNames += '20261012000074_marketplace_phase9_open_library_author_isolation.sql'
+}
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
     $tracker.Contains('**Implementation status:** `wu2_owner_inventory_client_locally_complete_runtime_deferred`') -or

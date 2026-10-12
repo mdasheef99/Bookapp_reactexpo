@@ -26,7 +26,7 @@ import {
 const cover = z.string().min(1).max(512).superRefine((value, context) => {
   try {
     const url = new URL(value);
-    if (url.protocol !== 'https:' || url.hostname.toLowerCase() !== 'books.google.com'
+    if (url.protocol !== 'https:' || (url.hostname.toLowerCase() !== 'books.google.com' && !(url.hostname === 'covers.openlibrary.org' && /^\/b\/id\/[1-9][0-9]*-M\.jpg$/u.test(url.pathname) && !url.search && !url.hash && !url.port))
       || url.username || url.password) throw new Error();
   } catch {
     context.addIssue({ code: z.ZodIssueCode.custom, message: 'cover host is not approved' });

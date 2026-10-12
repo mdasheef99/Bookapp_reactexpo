@@ -52,7 +52,7 @@ it.each(['idle', 'failed'] as const)('%s alternatives keep explicit search avail
 });
 it('pending choices poll internal reads without a provider command', async () => {
   read.mockResolvedValue(selectedChoices({ lookupStatus: 'pending', optionsExpiresAt: null, rows: [] }));
-  const view = mount(); await waitFor(() => expect(view.queryByText('Searching Google Books…')).toBeTruthy());
+  const view = mount(); await waitFor(() => expect(view.queryByText('Searching books…')).toBeTruthy());
   const before = read.mock.calls.length;
   await act(async () => { jest.advanceTimersByTime(3100); });
   expect(read.mock.calls.length).toBeGreaterThan(before); expect(lookup).not.toHaveBeenCalled();
@@ -111,8 +111,8 @@ it('a cached older set cannot replace the current saved metadata or expose stale
 it('announces fresh empty results politely', async () => {
   read.mockResolvedValue(selectedChoices({ rows: [] }));
   const view = mount();
-  await waitFor(() => expect(view.getByText('No Google Books results were returned.')).toBeTruthy());
-  expect(view.getByText('No Google Books results were returned.').props.accessibilityLiveRegion).toBe('polite');
+  await waitFor(() => expect(view.getByText('No book results were returned.')).toBeTruthy());
+  expect(view.getByText('No book results were returned.').props.accessibilityLiveRegion).toBe('polite');
 });
 it('hides stale detected identity and rejects its action even if invoked directly', async () => {
   const older = selectedChoices();

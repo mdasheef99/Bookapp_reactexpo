@@ -70,7 +70,7 @@ export function CandidateMetadataSheet({ identity, card, visible, disabled, onCl
   return <Modal visible={visible} transparent animationType="slide" accessibilityViewIsModal
     onRequestClose={close} onShow={() => focus(headingRef.current)}>
     <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#0008' }}>
-      <GlassCard padding={20} borderRadius={18} style={{ maxHeight: '90%' }}>
+      <GlassCard padding={20} borderRadius={18} style={{ maxHeight: '90%', backgroundColor: colors.bgPrimary }}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8 }}>
           <Text ref={headingRef} selectable accessibilityRole="header"
             style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '800' }}>Book metadata</Text>

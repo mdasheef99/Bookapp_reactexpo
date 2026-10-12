@@ -41,6 +41,9 @@ export type MetadataJobContext = Readonly<{
   reusableLookupId: string | null;
   reusableOutcome: string | null;
   currentLookupId: string | null;
+  currentLookupAdapterKey?: string | null;
+  currentLookupAdapterVersion?: string | null;
+  currentAttemptAdapterKey?: string | null;
   currentOutcome: string | null;
   currentAttemptId: string | null;
   currentAttemptOutcome: string | null;
@@ -66,6 +69,7 @@ const contextKeys = new Set([
   'routingPolicyVersion','selectionPolicyVersion','localCanonicalEditionId',
   'reusableLookupId','reusableOutcome','currentLookupId','currentOutcome',
   'currentAttemptId','currentAttemptOutcome','providerPolicies',
+  'currentLookupAdapterKey','currentLookupAdapterVersion','currentAttemptAdapterKey',
   'currentAttemptDisposition','currentAttemptCandidate','currentAttemptProviderRequestId',
   'currentPhysicalStatus','currentPhysicalClaimAttempt','currentPhysicalOutcome','currentPhysicalProviderRequestId',
   'currentPhysicalLogicalOutcome',
@@ -153,6 +157,9 @@ export function decodeMetadataJobContext(value: unknown): MetadataJobContext {
     localCanonicalEditionId: nullableText(row.localCanonicalEditionId),
     reusableLookupId: nullableText(row.reusableLookupId), reusableOutcome: nullableText(row.reusableOutcome),
     currentLookupId: nullableText(row.currentLookupId), currentOutcome: nullableText(row.currentOutcome),
+    currentLookupAdapterKey: nullableText(row.currentLookupAdapterKey ?? null),
+    currentLookupAdapterVersion: nullableText(row.currentLookupAdapterVersion ?? null),
+    currentAttemptAdapterKey: nullableText(row.currentAttemptAdapterKey ?? null),
     currentAttemptId: nullableText(row.currentAttemptId),
     currentAttemptOutcome: nullableText(row.currentAttemptOutcome),
     currentAttemptDisposition: row.currentAttemptDisposition === null ? null

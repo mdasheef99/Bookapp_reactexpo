@@ -1,3 +1,53 @@
+## 2026-10-12 - M74 applied and verified; Open Library disabled; Render held
+
+Current status: open_library_m74_applied_verified_render_held. Phase 9 / Unit 6G remains active. The Owner explicitly requested completion of M74 preflight/application after the approved bounded correction. That application authority supersedes the earlier local-only gate for M74; publication, provider activation and Render deployment remain held.
+
+Fresh preflight matched the reviewed file and both M73 function bodies/permissions on Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn; the focused full-M74 SQL/security suite passed 20/20. M74 is APPLIED_VERIFIED as live version 20261012140853. Archived SQL SHA-256 FE0B13B7D10DA09AFFF71E031E6330F8568C5D05638F079551A7652172EF2FF3 matches the unchanged local file; both installed function bodies match the reviewed definitions.
+
+Only the two private completion/registration functions changed. Their signatures/owners/ACLs/search paths and 17 other checked functions remain intact; provider-call columns/RLS/ACLs/policies, provider flags and observed business/job counts are unchanged. Open Library remains disabled with no unresolved OL attempt. One existing in_progress edition job has an expired lease; it was observed and preserved.
+
+Exact next authorized action: independent read-only GPT-6 Luna/max aggregate prepublication review of the final Open Library diff and evidence. Compatible client/worker/Owner API rollout, separately authorized provider activation and controlled shared operational acceptance remain pending. STOP before Render deployment. No commit, push, runtime deployment, provider request, Auth/inventory/Storage write or account/configuration change occurred. [Application ledger, exact readback and scope](../trackers/37-owner-edition-picker-open-library-local.md) (§15). Earlier dated checkpoints are historical.
+
+## 2026-10-12 - Author isolation corrected locally; M74 unapplied; Render held
+
+Current status: open_library_author_corrections_local_verified_m74_pending. Phase 9 / Unit 6G remains active. The Owner authorized "Yes, fix both and create local M74". Both aggregate P2 findings were reproduced, corrected and regression-tested; GPT-6 Luna/max approved the bounded correction. This does not replace the aggregate prepublication review.
+
+The adapter validates edition facts before allocating complete own-author sets within the four-author budget. Nonretryable author-content failures leave only dependent rows unavailable; local M74 permits truthful finalized receipts to continue and complete without weakening mandatory-stage, retryable, egress or authority guards. Google ranking/cover and Owner UI behavior are preserved.
+
+M65-M73 remain applied and byte-preserved. M73's archived live SQL matched its reviewed hash in this session's read-only exact-project check; OL remains disabled. M74 is CREATED_LOCAL / NOT_APPLIED. No shared mutation, provider request, browser action, staging, commit, push or deployment occurred in this correction.
+
+Correction-specific record: M74 schema delta: no relations, columns, constraints, indexes, storage objects or DTO fields. Only the two private completion/registration function bodies and their existing service-only ACLs are reaffirmed. Provider-call failure outcome/retryability/egress facts retain their original meaning; selected own facts and selling values are unchanged.
+
+Exact next authorized action: independent read-only GPT-6 Luna/max aggregate prepublication review of the final Open Library diff and evidence. M74 application needs a separate decision and fresh preflight; compatible client/worker/Owner API rollout, provider activation and authenticated operational acceptance remain gates. STOP before Render deployment. [Exact scope, commands, migration ledger and evidence](../trackers/37-owner-edition-picker-open-library-local.md) (§14). Earlier dated checkpoints are historical.
+
+## 2026-10-12 - Browser corrections verified; M73 applied; Render held
+
+Phase 9 / Unit 6G remains active. Status: `open_library_browser_corrected_m73_applied_render_held`. The Owner authorized the bounded corrections and migration application, with an explicit stop before Render deployment.
+
+The Response receiver, bulk-control lifetime and metadata-sheet opacity are corrected. Fresh gates: 25 client suites / 379 tests, eight actual-app browser fixture cases, 25 full-M73 SQL/worker cases, worker build / 14 structural checks and TypeScript PASS. Luna/max approved only the bounded source corrections; no independent test rerun or aggregate publication approval is claimed. No new Save step was introduced.
+
+M73 is APPLIED_VERIFIED on Bookconnect_reactexpo / ahntbtktjjmvfosgkmgn as version 20261011224457; archived SQL SHA-256 matches the unchanged reviewed file. Open Library is installed disabled. Existing books/candidates/inventory/provider-call data, provider-call RLS/grants and M65-M72 bytes are preserved. Seven read-only actual-adapter OL GETs returned 200 with minimum start spacing 1005.37 ms; raw bodies and returned metadata were discarded.
+
+Exact next authorized action: report this verified correction/application checkpoint and the remaining rollout prerequisites, then STOP before Render deployment. Compatible client/worker/Owner API publication and rollout, shared provider activation, authenticated shared workflow and operational acceptance remain pending. No Git publication, runtime deployment or provider activation occurred here. [Exact evidence, migration ledger and limits](../trackers/37-owner-edition-picker-open-library-local.md) (§11). Earlier dated checkpoints are historical.
+
+## 2026-10-11 - Native accounting and request spacing verified; browser handoff
+
+Current status: `open_library_native_spacing_locally_verified_browser_pending`. Phase 9 / Unit 6G remains active and Tasks 1-8 retain their earlier bounded approval provenance. M65-M72 remain applied/byte-preserved; M73 remains CREATED_LOCAL / NOT_APPLIED and shared OL activation remains pending.
+
+Native PostgreSQL through M73 passed 28 cases with 18 observed independent-connection lock overlaps and verified disposable teardown. The Owner-authorized scheduler correction holds the shared permit through fresh authority checks until HTTP dispatch; a compiled-factory fixture run spaced all 18 actual fetch invocations at least one second apart across three jobs. The 397-test backend gate passed. These local proofs do not establish deployed provider/browser behavior.
+
+Next authorized action: use the separate predeployment browser inspection prompt in another session, then return its report here for the final Free-plan/configuration preflight. Do not start browser testing in this preparation session. Deployment remains held at the Owner's request; M73 application, shared provider activation, compatible runtime/client rollout, shared security/cleanup/recovery/disablement and publication remain gates. Available-model local correction review does not replace the requested Luna prepublication review, which remains separately pending at its usage limit.
+
+[Detailed scope, evidence and pending gates](../trackers/37-owner-edition-picker-open-library-local.md). Earlier dated checkpoints below are historical.
+
+## 2026-10-11 - Local Open Library edition fallback; rollout gated
+
+Current status: `open_library_fallback_local_review_complete_rollout_pending`. Phase 9 / Unit 6G remains active; Tasks 1-8 keep their prior approvals. The Owner authorized explicit-search fallback implementation and "Yes, create local M73". M65-M72 remain applied/byte-preserved; M73 is CREATED_LOCAL / NOT_APPLIED. OL is absent from the shared metadata registry.
+
+Only explicit Owner lookup can use independently permitted Open Library factual editions; automatic Google winner/cache/ranking and representative-cover behavior remain unchanged. Local schema delta/service RPCs are recorded below; none exists live yet.
+
+Next authorized action: hand off the verified local correction and detailed independent browser prompt. GPT-6 Luna/max found no remaining bounded blocker and independently passed two focused full-M73 regressions; wider gates remain root evidence. Publication/application/activation/deployment and browser/device verification remain gated; the Owner asked for a separate browser prompt first. [Scope, migration ledger, evidence and gates](../trackers/37-owner-edition-picker-open-library-local.md). Earlier dated entries are historical.
+
 # Phase 9 Metadata and Inventory Data Dictionary
 
 ## 2026-10-09 - Task 8 independent approval and M65-M70 applied
@@ -745,3 +795,21 @@ mutate only the bounded correlation relation, reads only six fixed Vault names,
 and emits at most one authenticated `POST /run` per stage/tick through
 `pg_net`. Existing worker claim RPCs remain the sole mutation and fencing
 boundary for queued work.
+
+## Local M73 explicit Open Library receipt delta (NOT_APPLIED)
+
+Authority: DOC-3 §5.2.1 and picker §§5/9/13.14. Existing per-card alternatives and selected-snapshot schemas are reused; no shared bundle, raw provider store or inventory/canonical column is introduced.
+
+| Relation / field | Local contract |
+| --- | --- |
+| public.phase9_metadata_provider_calls.edition_call_sequence | Nullable smallint; explicit OL search=0, editions=1, authors=2..5. Null preserves legacy Google calls. |
+| public.phase9_metadata_provider_calls.edition_call_stage | Nullable text; bounded search, editions, or author:OL<positive-id>A; own validated fixed-host transport only. |
+| public.phase9_metadata_provider_calls.edition_egress_started | Nullable boolean; null means legacy/uncertain evidence, false is proved registration-only cancellation, true means HTTP was attempted. Immutable finalization replay checks it. |
+| Per-attempt/claim constraints | Bounded shape and unique sequence/stage; predecessors must be finalized with proved egress. Completion cannot use an unknown/known-unsent receipt. |
+| Existing provider registry | M73 inserts open_library metadata v1.0.0 disabled, policy1, factual matching/storage/display, raw retention0, image cachefalse, attributiontrue, revalidation86400s. Activation is separate. |
+
+Service-only RPCs: phase9_register_edition_options_provider_call_v1 (attempt/job/worker/lease/claim, UUID, sequence, stage); phase9_finalize_edition_options_provider_call_v1 (call/job/worker/lease/claim, status, outcome, retryable, egress); phase9_finish_edition_primary_for_fallback_v1 (attempt/job/worker/lease/claim/outcome). New private execution is revoked for public/anon/authenticated; existing Owner readers and controlled selection remain store/session/card/version bound.
+
+Worker context exposes optional current lookup adapter key/version and attempt adapter key through the existing M38 public v2 wrapper. The legacy googleBooksUrl wire key permits a validated actual-source book link; OL record identity is OL<id>M and own cover is HTTPS covers.openlibrary.org/b/id/<id>-M.jpg. Older Google-only clients require replacement before activation.
+
+Read-only shared audit: OL row/columns absent; M72 live version20261010200655, later unrelated library_manual_note_persistence20261010221843 preserved. M73 live version is absent. [Exact migration/hash/evidence](../trackers/37-owner-edition-picker-open-library-local.md).

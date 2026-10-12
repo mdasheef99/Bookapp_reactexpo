@@ -44,6 +44,7 @@ const safeRequestId = (value: string | null): string | null =>
 export class GoogleBooksAdapter implements MetadataProviderAdapter {
   readonly normalizedEditionHostPolicy = GOOGLE_BOOKS_EDITION_HOST_POLICY;
   constructor(private readonly configuration: Configuration) {}
+  get optionsRetentionConfigured(): boolean { return this.configuration.verifyOptionsRetention !== undefined; }
 
   async lookup(input: Lookup): Promise<GoogleBooksOutcome> {
     const response = await this.request(input);

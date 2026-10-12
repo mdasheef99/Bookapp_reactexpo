@@ -1,3 +1,5 @@
+import { OpenLibraryEditionOptionsAdapter } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary';
+import { createOpenLibraryRateLimiter } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary/transport';
 import {
   GoogleBooksAdapter,
   GOOGLE_BOOKS_CAPABILITY,
@@ -14,6 +16,7 @@ export type MetadataProductionDependencies = Readonly<{
   primary: MetadataProviderAdapter | null;
   primaryCapability: ProviderCapabilityDeclaration | null;
   secondary: null;
+  editionFallback?: OpenLibraryEditionOptionsAdapter;
 }>;
 
 export function createMetadataProductionDependencies(
@@ -36,6 +39,10 @@ export function createMetadataProductionDependencies(
       maxResponseBytes: environment.maxResponseBytes,
     }),
     primaryCapability: GOOGLE_BOOKS_CAPABILITY,
+    editionFallback: new OpenLibraryEditionOptionsAdapter({
+      fetcher, timeoutMs: environment.timeoutMs, maxResponseBytes: environment.maxResponseBytes,
+      retentionAllowed: true, waitForRequest: createOpenLibraryRateLimiter(),
+    }),
     secondary: null,
   });
 }
@@ -57,6 +64,7 @@ export function createPhase9MetadataService(environment: MetadataWorkerEnvironme
     serviceClient,
     primary: dependencies.primary,
     primaryCapability: dependencies.primaryCapability,
+    editionFallback: dependencies.editionFallback,
     editionOptionsBoundary,
   });
 }

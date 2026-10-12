@@ -1,6 +1,7 @@
 import { fireEvent, render, within } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 import { EditionOptionList } from '../components/EditionOptionList';
+import { MetadataCover } from '../components/MetadataCover';
 import type { EditionRow } from '../contracts/ownerEditionPicker';
 import { pickerSnapshot } from '../testing/editionPickerClientFixtures';
 import { testUuid } from '../testing/ownerUxTestFixtures';
@@ -33,6 +34,7 @@ it('displays own cover, all authors, supplied date precision, secondary details 
   const view = render(<EditionOptionList rows={rows.slice(0, 2)} selectedOptionId={null} disabled={false} onSelect={jest.fn()} />);
   const first = within(view.getByTestId(`edition-row-${rows[0].optionId}`));
   expect(first.getByLabelText('Cover for Duplicate title').props.source.uri).toBe(rows[0].metadata!.coverReference);
+  expect(first.getByLabelText('Cover for Duplicate title').props.cachePolicy).toBeUndefined();
   for (const text of ['First author, Second author', 'Published: 2002-03', 'Publisher: Publisher', 'ISBN: 9780140328721', 'Language: en', 'Google Books']) expect(first.getByText(text)).toBeTruthy();
   fireEvent.press(first.getByLabelText('View result 1 on Google Books'));
   expect(open).toHaveBeenCalledWith(rows[0].googleBooksUrl);
@@ -60,4 +62,54 @@ it('disables selection while shared commands are active and resets expansion for
   fireEvent.press(view.getByText('Show all'));
   view.rerender(<EditionOptionList rows={rows.map(row => ({ ...row, optionId: testUuid(40 + row.ordinal) }))} selectedOptionId={null} disabled={false} onSelect={jest.fn()} />);
   expect(view.getAllByTestId(/^edition-row-/)).toHaveLength(5);
+});
+it('attributes an Open Library option and opens its own edition URL and cover', () => {
+  const open=jest.spyOn(Linking,'openURL').mockResolvedValue(true);
+  const row:EditionRow={...rows[0],googleBooksUrl:'https://openlibrary.org/books/OL100M',
+    metadata:{...rows[0].metadata!,coverReference:'https://covers.openlibrary.org/b/id/123-M.jpg'}};
+  const view=render(<EditionOptionList rows={[row]} selectedOptionId={null} disabled={false} onSelect={jest.fn()} />);
+  expect(view.getByText('Open Library')).toBeTruthy();
+  expect(view.queryByText('Google Books')).toBeNull();
+  expect(view.getByLabelText('Cover for Duplicate title').props.source.uri).toBe(row.metadata!.coverReference);
+  expect(view.getByLabelText('Cover for Duplicate title').props.cachePolicy).toBe('none');
+  fireEvent.press(view.getByLabelText('View result 1 on Open Library'));
+  expect(open).toHaveBeenCalledWith(row.googleBooksUrl);
+  open.mockRestore();
+});
+
+it('reveals selectable Open Library editions after five unavailable positions and keeps their own cover placeholders',()=>{
+ const onSelect=jest.fn();
+ const values:EditionRow[]=rows.map((row,ordinal)=>{
+  const selectable=ordinal===7||ordinal===8;
+  return {...row,eligibility:selectable?'eligible':'unavailable',
+   googleBooksUrl:selectable?'https://openlibrary.org/books/OL'+(200+ordinal)+'M':null,
+   metadata:selectable?{...row.metadata!,title:'Oliver Twist',coverReference:null,
+    authors:ordinal===7?['George Cruikshank','Charles Dickens']:['Charles Dickens','George Cruikshank'],
+    publishedDate:ordinal===7?'2022':'2017'}:null};
+ });
+ const view=render(<EditionOptionList rows={values} selectedOptionId={null} disabled={false} onSelect={onSelect}/>);
+ expect(view.getAllByTestId(/^edition-row-/)).toHaveLength(5);
+ expect(view.queryByLabelText('Select result 8: Oliver Twist')).toBeNull();
+ fireEvent.press(view.getByText('Show all'));
+ expect(view.getAllByTestId(/^edition-row-/)).toHaveLength(10);
+ const option=within(view.getByTestId('edition-row-'+values[7].optionId));
+ expect(option.getByText('George Cruikshank, Charles Dickens')).toBeTruthy();
+ expect(option.getByText('Published: 2022')).toBeTruthy();
+ expect(option.getByLabelText('No cover available for Oliver Twist')).toBeTruthy();
+ expect(option.getByText('Open Library')).toBeTruthy();
+ fireEvent.press(option.getByLabelText('Select result 8: Oliver Twist'));
+ expect(onSelect).toHaveBeenCalledWith(values[7]);
+});
+
+it.each([
+  'https://covers.openlibrary.org/b/id/123-M.jpg',
+  'https://COVERS.OPENLIBRARY.ORG:443/b/id/123-M.jpg',
+])('denies native caching for an Open Library cover and restores the Google default on replacement: %s', reference => {
+  const props = { label: 'Current cover', placeholderLabel: 'No current cover', style: { width: 64, height: 96 } };
+  const view = render(<MetadataCover {...props} reference={reference} />);
+  expect(view.getByLabelText('Current cover').props.cachePolicy).toBe('none');
+  view.rerender(<MetadataCover {...props} reference="https://books.google.com/books/content?id=one&printsec=frontcover" />);
+  expect(view.getByLabelText('Current cover').props.cachePolicy).toBeUndefined();
+  fireEvent(view.getByLabelText('Current cover'), 'error');
+  expect(view.getByLabelText('No current cover')).toBeTruthy();
 });

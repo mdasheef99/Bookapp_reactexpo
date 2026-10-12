@@ -1,3 +1,5 @@
+import { editionProviderRoute } from './editionProviderRoute';
+import type { OpenLibraryEditionOptionsAdapter } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary';
 import { GoogleBooksAdapter } from '../../supabase/functions/_shared/imageInventory/metadata/googleBooks/adapter';
 import { executeEditionOptionsLookup } from '../../supabase/functions/_shared/imageInventory/runtime/metadataEditionOptions';
 import type { MetadataEditionOptionsBoundary } from '../../supabase/functions/_shared/imageInventory/runtime/metadataEditionOptionsBoundary';
@@ -23,6 +25,7 @@ export type MetadataWorkerDependencies = Readonly<{
   serviceClient: any;
   primary: MetadataProviderAdapter | null;
   primaryCapability: ProviderCapabilityDeclaration | null;
+  editionFallback?: OpenLibraryEditionOptionsAdapter;
   // Trusted composition port; production bootstrap installs the M68 RPC implementation.
   editionOptionsBoundary?: MetadataEditionOptionsBoundary;
 }>;
@@ -86,9 +89,8 @@ async function processMetadataClaim(
       jobId: claim.id,worker: dependencies.workerId,
       leaseToken: claim.lease_token,attempt: claim.attempt_count,
     });
-    if (context.purpose === 'edition_options' && (!dependencies.editionOptionsBoundary
-      || !(dependencies.primary instanceof GoogleBooksAdapter)
-      || dependencies.primaryCapability?.adapterKey !== 'google_books')) {
+    const route = context.purpose === 'edition_options' ? editionProviderRoute(context,dependencies) : null;
+    if (context.purpose === 'edition_options' && (!dependencies.editionOptionsBoundary || !route)) {
       if (dependencies.editionOptionsBoundary) {
         return completionResult(await dependencies.editionOptionsBoundary.fail({
           ...editionOptionsFence(context,dependencies.workerId),outcome:'provider_disabled',retryable:false,
@@ -96,7 +98,9 @@ async function processMetadataClaim(
       }
       return { outcome: 'manual_metadata_required' };
     }
-    if (dependencies.primary === null || dependencies.primaryCapability === null) {
+    const primary = route?.adapter ?? dependencies.primary;
+    const primaryCapability = route?.capability ?? dependencies.primaryCapability;
+    if (primary === null || primaryCapability === null) {
       const failed = await dependencies.serviceClient.rpc('phase9_fail_metadata_job', {
         p_job_id: context.jobId,p_worker: dependencies.workerId,
         p_lease_token: context.claimToken,p_attempt_count: context.attempt,
@@ -107,7 +111,7 @@ async function processMetadataClaim(
       if (failed.error) throw new Error('P9_METADATA_COMPLETION_FAILED');
       return completionResult(failed.data);
     }
-    const capability = dependencies.primaryCapability;
+    const capability = primaryCapability;
     const provider = context.providerPolicies.find((item) =>
       item.adapterKey === capability.adapterKey
       && item.adapterVersion === capability.adapterVersion);
@@ -122,7 +126,7 @@ async function processMetadataClaim(
       },
     };
     const gateway = new SupabaseMetadataProductionGateway(dependencies.serviceClient, {
-      worker: dependencies.workerId,context,primary: dependencies.primary,
+      worker: dependencies.workerId,context,primary,
       adapterKey: capability.adapterKey,adapterVersion: capability.adapterVersion,
       capabilityVersion: capability.capabilityVersion,
       schemaVersion: 'p9-metadata-foundation-v1',
@@ -138,7 +142,7 @@ async function processMetadataClaim(
     });
     if (context.purpose === 'edition_options') {
       const result = await executeEditionOptionsLookup(
-        context, gateway, dependencies.primary as GoogleBooksAdapter, new AbortController().signal,
+        context, gateway, route!.adapter, new AbortController().signal, route!.fallback ?? undefined,
       );
       if (result.outcome === 'stale_claim') await resolveSupersededEditionJob(claim, dependencies);
       return result;

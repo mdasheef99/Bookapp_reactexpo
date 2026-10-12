@@ -212,7 +212,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
             blockedCandidateIds,
             inventoryCommit.inFlight,
             inventoryCommit.outcomes,
-        )) || inventoryCommit.bulkResult !== null);
+        )) || inventoryCommit.bulkPending || inventoryCommit.bulkResult !== null);
     const commandsIdle = editionPending.size === 0 && inventoryCommit.inFlight.size === 0 && !inventoryCommit.bulkPending
         && !removeCandidate.isPending && !removal.isPending && !duplicateConfirmation.isPending;
     const autoClose = useCompletedScanAutoClose({

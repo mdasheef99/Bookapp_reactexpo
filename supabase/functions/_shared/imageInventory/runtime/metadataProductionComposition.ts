@@ -71,6 +71,7 @@ export type MetadataManualCompletion =
   }>;
 
 export type MetadataProductionGateway = Readonly<{
+  editionProviderCalls?: ReturnType<typeof import('./metadataEditionProviderCalls').createEditionProviderCalls>;
   editionOptions?: Readonly<{
     request: MetadataProductionRequest;
     boundary: import('./metadataEditionOptionsBoundary').MetadataEditionOptionsBoundary;

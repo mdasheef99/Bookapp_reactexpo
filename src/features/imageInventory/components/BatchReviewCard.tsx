@@ -297,10 +297,10 @@ export function BatchReviewCard({
                             return result;
                         }} />
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                        {commandSlot && editable ? <MetadataSheetTrigger title="Change edition" focusRef={editionTriggerRef}
+                        {commandSlot && editable ? <MetadataSheetTrigger title="Change edition" focusRef={editionTriggerRef} style={{ flexGrow: 1, flexBasis: 150 }}
                             onPress={() => openMetadata(editionTriggerRef)} /> : null}
                         {card.allowedActions.includes('view_metadata') ? (
-                            <MetadataSheetTrigger title="View metadata" focusRef={viewMetadataTriggerRef}
+                            <MetadataSheetTrigger title="View metadata" focusRef={viewMetadataTriggerRef} style={{ flexGrow: 1, flexBasis: 150 }}
                                 onPress={() => openMetadata(viewMetadataTriggerRef)} />
                         ) : null}
                         <Button title="Open full correction" variant="secondary" size="sm"

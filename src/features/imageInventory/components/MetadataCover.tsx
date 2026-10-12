@@ -9,7 +9,14 @@ export function MetadataCover({ reference, label, placeholderLabel, style }: {
 }) {
   const { colors } = useTheme();
   const [failedReference, setFailedReference] = useState<string | null>(null);
-  if (reference && reference !== failedReference) return <Image source={{ uri: reference }}
+  // Security §8 / picker §13.14: Open Library permits display, not native image caching.
+  let cachePolicy: 'none' | undefined;
+  if (reference) {
+    try {
+      if (new URL(reference).hostname.toLowerCase() === 'covers.openlibrary.org') cachePolicy = 'none';
+    } catch { /* Existing image-error fallback handles malformed legacy references. */ }
+  }
+  if (reference && reference !== failedReference) return <Image source={{ uri: reference }} cachePolicy={cachePolicy}
     contentFit="contain" accessible accessibilityRole="image" accessibilityLabel={label}
     style={style as import('react-native').ImageStyle} onError={() => setFailedReference(reference)} />;
   return <View accessible accessibilityRole="image" accessibilityLabel={placeholderLabel}

@@ -5,12 +5,14 @@ param(
   [switch]$IncludeUnit6gBaseline,
   [switch]$IncludeMediaCorrection,
   [switch]$IncludeDuplicateConfirmation,
-  [switch]$IncludeEditionPicker
+  [switch]$IncludeEditionPicker,
+  [switch]$IncludeOpenLibrary
 )
 
 $ErrorActionPreference = 'Stop'
 if ($IncludeMediaCorrection) { $IncludeUnit6gBaseline = $true }
 if ($IncludeDuplicateConfirmation) { $IncludeMediaCorrection = $true; $IncludeUnit6gBaseline = $true }
+if ($IncludeOpenLibrary) { $IncludeEditionPicker = $true }
 if ($IncludeEditionPicker) { $IncludeUnit6gBaseline = $true }
 $env:PGCLIENTENCODING = 'UTF8'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
@@ -116,6 +118,16 @@ if ($IncludeEditionPicker) {
   )
 }
 
+if ($IncludeOpenLibrary) {
+  # Owner-authorized native proof only; shared application and activation remain separate.
+  $migrations += @(
+    '20261010000071_marketplace_phase9_edition_picker_selection_eligibility.sql',
+    '20261010000072_marketplace_phase9_edition_picker_superseded_jobs.sql',
+    '20261011000073_marketplace_phase9_open_library_edition_options.sql',
+    '20261012000074_marketplace_phase9_open_library_author_isolation.sql'
+  )
+}
+
 function Invoke-PsqlFile([string]$database, [string]$file) {
   $argList = @('-h','127.0.0.1','-p',"$Port",'-U','postgres','-d',$database,
     '-X','-v','ON_ERROR_STOP=1','-f',$file)
@@ -208,7 +220,9 @@ try {
   foreach ($migration in $migrations) {
     Invoke-PsqlFile $dbName (Join-Path $root "supabase\migrations\$migration") | Out-Null
   }
-  if ($IncludeEditionPicker) {
+  if ($IncludeOpenLibrary) {
+    Write-Output 'Open Library native proof uses M01-M62 + M65-M74; M09 and M63/M64 excluded'
+  } elseif ($IncludeEditionPicker) {
     Write-Output 'Edition picker unchanged prerequisite chain M01-M62 + M65-M70 applied; M63/M64 excluded'
   } elseif ($IncludeUnit6gBaseline) {
     Write-Output 'Unit 6G migration chain through M56 applied in the disposable database'
@@ -230,6 +244,12 @@ try {
     & node (Join-Path $PSScriptRoot 'phase9EditionPickerConcurrency.postgres.mjs') $Port $dbName $psql
     if ($LASTEXITCODE -ne 0) { throw 'Task 8 edition picker PostgreSQL acceptance failed' }
     Write-Output 'EDITION_PICKER_REAL_POSTGRES_ACCEPTANCE_PASS'
+  }
+
+  if ($IncludeOpenLibrary) {
+    & node (Join-Path $PSScriptRoot 'phase9OpenLibraryConcurrency.postgres.mjs') $Port $dbName $psql
+    if ($LASTEXITCODE -ne 0) { throw 'Open Library native PostgreSQL acceptance failed' }
+    Write-Output 'OPEN_LIBRARY_REAL_POSTGRES_ACCEPTANCE_PASS'
   }
 
   $acceptance = Invoke-PsqlFile $dbName (Join-Path $root 'supabase\tests\phase9\phase9_bookstore_first_postgres.sql')

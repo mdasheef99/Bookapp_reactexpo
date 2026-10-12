@@ -1,3 +1,4 @@
+import type { ProviderHostPolicy } from '../../contracts/providerReuse';
 import type { MetadataEdition } from '../../contracts/metadata';
 import { parseNormalizedMetadataEdition } from '../../contracts/metadata';
 import { normalizeIsbnClue } from '../../domain/isbn';
@@ -81,9 +82,9 @@ function decodeOption(value: unknown, context: GoogleEditionOptionsContext): Met
 }
 
 export function evaluateEditionOption(
-  query: MetadataQueryIdentity, metadata: MetadataEdition,
+  query: MetadataQueryIdentity, metadata: MetadataEdition, hostPolicy: ProviderHostPolicy = GOOGLE_BOOKS_EDITION_HOST_POLICY,
 ): 'eligible' | 'ineligible' {
-  try { metadata = parseNormalizedMetadataEdition(metadata, GOOGLE_BOOKS_EDITION_HOST_POLICY); }
+  try { metadata = parseNormalizedMetadataEdition(metadata, hostPolicy); }
   catch { return 'ineligible'; }
   const exactIsbn = query.normalizedIsbn13 !== null && metadata.isbn13 === query.normalizedIsbn13;
   const titleMatches = !query.normalizedTitle || normalizeBibliographicText(metadata.title) === query.normalizedTitle;
@@ -121,6 +122,10 @@ export function normalizeGoogleEditionRows(
     try { projectStoredEditionRow(row); return row; }
     catch { return unavailable; }
   });
+  return annotateEditionRows(rows, query);
+}
+
+export function annotateEditionRows(rows: StoredEditionRow[], query: MetadataQueryIdentity): readonly StoredEditionRow[] {
   // Conflicting observed-ISBN evidence remains relevant even when selection is disabled (§4.1).
   const isbnRows = rows.filter(row => row.metadata !== null && query.normalizedIsbn13 !== null
     && row.metadata.isbn13 === query.normalizedIsbn13);

@@ -85,6 +85,27 @@ describe('Phase 9 Unit 6B Owner UX service', () => {
         expect(invoke).not.toHaveBeenCalled();
     });
 
+    it('decodes an HTTP error from a real Response without losing its receiver', async () => {
+        invoke.mockResolvedValueOnce({ data: null, error: { context: new Response(
+            JSON.stringify({ error: 'P9_OWNER_NOT_AUTHORIZED', retryable: true,
+                message: 'private SQL and account detail' }), { status: 403 },
+        ) } });
+        await expect(ownerUxService.discover()).rejects.toMatchObject({
+            code: 'P9_OWNER_NOT_AUTHORIZED', retryable: false,
+            message: 'Owner access is required.',
+        });
+    });
+
+    it('keeps the safe fallback when a real HTTP Response has invalid JSON', async () => {
+        invoke.mockResolvedValueOnce({ data: null,
+            error: { context: new Response('private malformed response', { status: 500 }) },
+        });
+        await expect(ownerUxService.discover()).rejects.toMatchObject({
+            code: 'P9_INTERNAL_ERROR', retryable: true,
+            message: 'The request could not be completed.',
+        });
+    });
+
     it('normalizes registered errors and hides malformed or raw failures', async () => {
         invoke.mockResolvedValueOnce({
             data: null,

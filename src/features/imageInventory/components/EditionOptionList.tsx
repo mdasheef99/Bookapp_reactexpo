@@ -18,6 +18,7 @@ export function EditionOptionList({ rows, selectedOptionId, disabled, onSelect }
   return <View style={{ gap: 12 }}>
     {rows.slice(0, expanded ? 10 : 5).map(row => {
       const metadata = row.metadata;
+      const provider = row.googleBooksUrl?.startsWith('https://openlibrary.org/books/') ? 'Open Library' : 'Google Books';
       const unavailable = row.eligibility === 'unavailable' || !metadata;
       const blocked = disabled || row.eligibility !== 'eligible' || !metadata;
       return <View key={row.optionId} testID={`edition-row-${row.optionId}`}
@@ -35,9 +36,9 @@ export function EditionOptionList({ rows, selectedOptionId, disabled, onSelect }
               {metadata.language ? <Text selectable style={{ color: colors.textSecondary }}>Language: {metadata.language}</Text> : null}
             </View>
           </View>
-          <Text style={{ color: colors.textSecondary }}>Google Books</Text>
-          {row.googleBooksUrl ? <Button title="View on Google Books" variant="secondary" size="sm"
-            accessibilityLabel={`View result ${row.ordinal + 1} on Google Books`}
+          <Text style={{ color: colors.textSecondary }}>{provider}</Text>
+          {row.googleBooksUrl ? <Button title={'View on '+provider} variant="secondary" size="sm"
+            accessibilityLabel={'View result ' + (row.ordinal+1) + ' on ' + provider}
             onPress={() => { void Linking.openURL(row.googleBooksUrl!).catch(() => setLinkError(true)); }} /> : null}
           {row.eligibility === 'ineligible' ? <Text style={{ color: colors.textSecondary }}>Not eligible for this book</Text> : null}
           <Pressable accessibilityRole="button" disabled={blocked}
@@ -52,7 +53,7 @@ export function EditionOptionList({ rows, selectedOptionId, disabled, onSelect }
         </>}
       </View>;
     })}
-    {linkError ? <Text accessibilityLiveRegion="polite" style={{ color: colors.error }}>Google Books could not be opened.</Text> : null}
+    {linkError ? <Text accessibilityLiveRegion="polite" style={{ color: colors.error }}>The book link could not be opened.</Text> : null}
     {!expanded && rows.length > 5 ? <Button title="Show all" variant="secondary"
       accessibilityHint="Shows up to ten original results from this response"
       onPress={() => setExpandedResponse(responseKey)} /> : null}

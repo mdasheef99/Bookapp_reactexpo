@@ -59,13 +59,13 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
         if (!blocked) void act(() => picker.selectEdition.mutateAsync(createEditionSelectionCommand(choices,
           { source: 'current_suggestion', selectionId: choices.selection!.selectionId })), 'Edition saved.');
       }} /> : null}
-    <Text accessibilityRole="header" style={{ color: colors.textPrimary, fontWeight: '800' }}>Google Books search results</Text>
+    <Text accessibilityRole="header" style={{ color: colors.textPrimary, fontWeight: '800' }}>Book search results</Text>
     {picker.choices.isLoading ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Loading edition choices…</Text> : null}
     {picker.choices.error || stale ? <>
       <Text accessibilityLiveRegion="assertive" style={{ color: colors.error }}>Edition choices are unavailable. Retry the saved choices read.</Text>
       <Button title="Retry choices" variant="secondary" onPress={() => { void picker.choices.refetch(); }} />
     </> : null}
-    {pending ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Searching Google Books…</Text> : null}
+    {pending ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Searching books…</Text> : null}
     {picker.selectionPending ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Saving edition…</Text> : null}
     {choices && !fresh && !pending ? <>
       <Text style={{ color: colors.textSecondary }}>{choices.lookupStatus === 'failed'
@@ -75,7 +75,7 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
       }} />
     </> : null}
     {fresh && choices?.lookupStatus === 'failed' ? <Text accessibilityLiveRegion="polite" style={{ color: colors.error }}>Edition search failed. Your current choice and any fresh results are kept.</Text> : null}
-    {fresh && choices?.rows.length === 0 ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No Google Books results were returned.</Text> : null}
+    {fresh && choices?.rows.length === 0 ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No book results were returned.</Text> : null}
     {choices && fresh ? <EditionOptionList rows={choices.rows} disabled={blocked}
       selectedOptionId={choices.selection?.optionId ?? null} onSelect={select} /> : null}
     {message ? <Text accessibilityLiveRegion="polite" style={{ color: message === 'Edition saved.' ? colors.accent : colors.textSecondary }}>{message}</Text> : null}

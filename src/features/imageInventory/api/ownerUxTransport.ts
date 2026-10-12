@@ -164,7 +164,7 @@ async function errorBody(error: unknown): Promise<unknown> {
     const json = (context as { json?: unknown }).json;
     if (typeof json !== 'function') return null;
     try {
-        return await (json as () => Promise<unknown>)();
+        return await (json as () => Promise<unknown>).call(context);
     } catch {
         return null;
     }

@@ -37,10 +37,11 @@ export const editionRequestSchemas = {
   ]),
 } as const;
 
+// Legacy wire key: approved book link; provider attribution comes from its validated host.
 const googleBooksUrl = z.string().min(1).max(2048).refine((value) => {
   try {
     const url = new URL(value);
-    return url.protocol === 'https:' && url.hostname.toLowerCase() === 'books.google.com'
+    return url.protocol === 'https:' && (url.hostname.toLowerCase() === 'books.google.com' || (url.hostname === 'openlibrary.org' && /^\/books\/OL[1-9][0-9]*M$/u.test(url.pathname) && !url.search && !url.hash))
       && !url.username && !url.password && !url.port
       && /^\/books(?:\/|$)/u.test(url.pathname);
   } catch { return false; }
