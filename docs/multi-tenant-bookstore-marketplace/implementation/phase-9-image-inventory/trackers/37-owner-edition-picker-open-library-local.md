@@ -1,12 +1,12 @@
-## 2026-10-12 - Reviewed Open Library feature committed locally; publication pending
+## 2026-10-13 - Configuration and live adapter checked; publication and CI pending
 
-Current status: open_library_committed_publication_configuration_pending. Phase9 / Unit6G remains active. Feature commit d04a333206efac257cd55b2bfd224d1cf57d236d on codex/edition-picker contains the exact65 reviewed paths, including applied M73/M74, bounded P2/P3 corrections and their evidence. Git readback verified the parent, exact path set and clean worktree after that feature commit. The subsequent receipt changes documentation only.
+Current status: open_library_committed_configuration_checked_publication_ci_pending. Phase9 / Unit6G remains active. Feature d04a333206efac257cd55b2bfd224d1cf57d236d and receipt02485f3 remain local; source is unchanged. The requested local checks/reviews are complete with their prior scope limits. This additional read-only predeployment check found no new code defect or required startup-setting change.
 
-The completed aggregate review and GPT-6 Luna/max bounded correction APPROVED remain in force. Recorded local proof: selected3suites/29tests, web export exit0, browser9/9 with simulated API/persistence, and earlier aggregate SQL/spacing/native gates. No product gate was repeated for this Git-only checkpoint; fresh continuity, integrity and staged-whitespace checks passed before commit. M65-M74 remain applied per the existing ledger and unchanged; no live read/write, provider activation or deployment occurred.
+Fresh verification: correct ACTIVE_HEALTHY Supabase project; M73/M74 present; OL disabled/policy_version1; Owner Edge v15/JWT enabled, compatible local entrypoint passes Deno check exit0. Render target/main/Dockerfile/health path/one-instance topology verified, autoDeploy off; environment/Docker startup source unchanged from the live worker. Ready200 and health retry200 followed one initial30s health timeout. These process checks describe the old worker.
 
-The Owner explicitly skipped the Free-plan review. Configuration verification remains exact-project/environment, compatible worker/API/client and activation-order checking; worker limits and provider permissions are unchanged. OL remains disabled per the prior verified ledger, and Render deployment remains held.
+The compiled adapter also completed a real public-book OL lookup: sixHTTP200JSON requests, ten positions, two eligible choices, four ineligible and four unavailable; no shared writes/Google requests/raw-body/image retention. Owner selection remains required. This is provider-adapter evidence, not deployed Owner/API/persistence acceptance.
 
-Exact next authorized action: reconcile the committed feature with current remote main and publish under the existing Owner authorization; retain configuration verification before runtime/provider activation. STOP before Render deployment. [Commit receipt, scope and waiver](37-owner-edition-picker-open-library-local.md) (tracker37 §19). Earlier dated checkpoints remain historical.
+The Owner skipped the Free-plan review; no quota/billing-plan inspection was performed. Exact next authorized action: publish the reviewed commit after reconciling current remote main, wait for existing source CI, then report a concrete manual rollout. Render deployment remains HELD; OL stays disabled until compatible worker/API/client and activation checks. [Fresh configuration/provider evidence and limits](37-owner-edition-picker-open-library-local.md) (tracker37 §20). Earlier dated checkpoints remain historical.
 
 ## 2026-10-12 - M74 applied and verified; Open Library disabled; Render held
 
@@ -911,3 +911,49 @@ Commit receipt: feature d04a333206efac257cd55b2bfd224d1cf57d236d was created suc
 This follow-up records the actual feature SHA and the Owner's Free-plan-review waiver in16 existing routing/owning/evidence documents. It introduces no source/test/dependency/migration change. Precommit continuity PASS,195definitions/0duplicate/0missing; exact scope and staged whitespace PASS. No product tests/builds/browser/provider/native gates were repeated. No remote fetch/push, merge, rollout, database/Auth/inventory/Storage/configuration/billing mutation occurred. Runtime deployment remains held; existing shared application/disabled-provider status is unchanged. Next: reconcile current remote main and publish the reviewed checkpoint under existing authorization; configuration compatibility remains required before activation, with Free-plan review skipped.
 
 Receipt closeout: continuity PASS, exit0; exact16-document scope verified. The following documentation-only commit preserves the entire feature source tree. Git log/status provide its final receipt. No product verification or external action followed.
+
+## 20. Read-only configuration and compiled live-provider proof, 2026-10-13
+
+The Owner asked whether the work can be pushed and later redeployed, and whether meaningful predeployment proof remains. The parent completed targeted configuration and live-adapter checks before publication. This follows the existing rollout and provider contract; no product decision/schema/permission is introduced. The explicit Render hold remains. Free-plan quota/billing review was skipped at the Owner's request; instance topology was inspected only because the shared per-process limiter depends on it.
+
+### 20.1 Fresh configuration readback
+
+- Supabase MCP get_project: Bookconnect_reactexpo/ahntbtktjjmvfosgkmgn, ACTIVE_HEALTHY. list_migrations confirms M73=20261011224457 and M74=20261012140853, alongside earlier picker migrations. No migration was applied/reapplied.
+- Bounded registry SELECT: Google and OL adapter1.0.0/policy_version1; OL enabled=false, matching/storage/public display allowed, image caching denied, attribution required, revalidation86400s, raw retention0. These unchanged values are fresh observations, not activation authority.
+- get_edge_function: phase9-owner-ingestion ACTIVE v15, verify_jwt=true,35 returned files; no returned source contains OL markers. Updated compatible source still needs deployment after worker readiness.
+- Render get_service/list_deploys: exact phase9-metadata-worker/srv-d9sqfdvqj5pc73dc66fg, workspace tea-d9j67irtqb8s739ritc0, branchmain, autoDeploy=no, Docker context., Dockerfile ./workers/phase9-metadata-worker/Dockerfile, default Docker CMD, /health, one instance. Current live commit f2d47cb1d015c8b93ded58baff35f125f99ad52c. No service/setting/secret was changed.
+- Local git diff confirms environment.ts and metadata Dockerfile unchanged between that live revision and the reviewed feature. No new required environment name is introduced; retain the existing google_books bootstrap mode. OL explicit-search routing uses the registry/adapter, not a new provider-mode environment value. Secret values were not retrieved or compared.
+- One initial /health GET timed out after30s. Subsequent /ready returned200/ready and one bounded /health retry returned200/alive. Cause of the initial timeout was not proved. These are old-process checks, not OL job/database or newly deployed readiness proof.
+- git ls-remote: main and codex/edition-picker still d3bda38d179e0d7a8b3ed877df0a4bd5239a0a8e. Local source commit d04a333 is its descendant; publication can fast-forward if those refs remain unchanged. No fetch/push/merge occurred.
+- Existing two repository workflows were inspected for deployment commands; publication triggers validation, not the held runtime deployment. CI after publication remains pending.
+
+### 20.2 Actual Edge graph compilation
+
+~~~powershell
+& 'C:\Users\user\scoop\apps\deno\current\deno.exe' check --no-lock --config supabase/functions/phase9-owner-ingestion/deno.json supabase/functions/phase9-owner-ingestion/index.ts
+~~~
+
+PASS, normal exit0, no diagnostics/source/lock change. This checks the actual deploy entrypoint's reachable graph and adds proof not supplied by the browser mocks. No worker/full-repository/Jest/SQL/browser gate was repeated.
+
+### 20.3 Compiled adapter against real Open Library
+
+One read-only lookup used the existing compiled OpenLibraryEditionOptionsAdapter and buildMetadataQueryIdentity, for the generic public title Oliver Twist/Charles Dickens/en with no ISBN clue. The production transport, normalizer, factual validation and shared1s limiter were used. HTTP hooks/DB persistence were absent in this standalone adapter probe; its count is not a production SQL usage-accounting receipt.
+
+Result: normal exit0; six requests (search, editions, four author records), allHTTP200/application-json. Ten original positions0-9;2eligible,4ineligible,4unavailable;6own metadata snapshots and2cover references. The adapter returned ambiguous_match/nonretryable because title-author alternatives require Owner choice, not an automatic ISBN selection. Existing factual retention policy yielded storagePermissionVerified=true and the24h permitted deadline. No new rights/permission grant is inferred from this check.
+
+fetchedAt=2026-10-12T18:32:10.380Z (00:02 IST on13October); permittedDeadlineAt=2026-10-13T18:32:10.380Z. No provider raw bodies, descriptions, actual image files, author names/edition payloads or private credentials were written to logs/docs. Only status/count/flag evidence was retained. Zero Google requests, zero shared writes; OL registry remains disabled.
+
+This proves a real response passes the compiled adapter for this sample. It does not prove every book returns10 selectable editions or the deployed Owner/API/worker persistence path. Prior native SQL/compiled worker/accounting/request-spacing and nine-browser fixtures retain their separate provenance. Actual Owner Search/select/Add and cleanup/recovery remain the post-activation check.
+
+Evidence:
+C:\Users\user\AppData\Local\Temp\bookconnect-config-check-2ed2a95c444a4b1ea2248b8fae83a1b4\owner-edge-deno-check.log
+C:\Users\user\AppData\Local\Temp\bookconnect-config-check-2ed2a95c444a4b1ea2248b8fae83a1b4\live-open-library-adapter.log
+C:\Users\user\AppData\Local\Temp\bookconnect-config-check-2ed2a95c444a4b1ea2248b8fae83a1b4\configuration-summary.txt
+
+### 20.4 Preservation and next gate
+
+No source/test/dependency/migration/env/configuration edit, privileged-key retrieval, provider activation, worker job invocation, Auth/inventory/Storage/billing or runtime deployment occurred. The source tree equals feature d04a333. Only seventeen existing owning/routing/audit/evidence documents record this checkpoint; its Git receipt will be documentation only. No Free-plan inspection or new service was performed.
+
+Exact next authorized action: reconcile/publish the reviewed commit under the existing Owner authorization, wait for GitHub source CI, then report the exact manual compatible worker/API rollout while keeping OL disabled. STOP before Render deployment. Publication/CI and the final one-card live Owner workflow after authorized activation remain gates; no guarantee of never needing a later deployment is made.
+
+Configuration closeout: continuity PASS/exit0,195definitions/0duplicates/0missing traces; exact17-document scope and feature-source preservation verified. The following Git receipt is documentation only; no publication, activation or deployment is included.
