@@ -55,7 +55,7 @@ export function EditionIdentityFix({ source, blocked, clearsEdition, onSubmit }:
     try {
       const result = await onSubmit(built);
       setOpen(false);
-      setMessage(result.searched ? 'Title and author saved. Searching books…'
+      setMessage(result.searched ? 'Title and author saved.'
         : 'Title and author saved. Use Search Books to search again.');
     } catch (error) { setMessage(identityFixErrorMessage(error)); }
   };

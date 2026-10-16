@@ -87,7 +87,7 @@ it('saves the corrected identity first, then searches with the saved identity', 
   const view = mount(source(), saved);
   await openAndCorrect(view);
   await act(async () => { fireEvent.press(view.getByText('Save and search again')); });
-  await waitFor(() => expect(view.getByText('Title and author saved. Searching books…')).toBeTruthy());
+  await waitFor(() => expect(view.getByText('Title and author saved.')).toBeTruthy());
   expect(save).toHaveBeenCalledTimes(1);
   expect(save.mock.calls[0][0]).toMatchObject({ sessionId: pickerChoices().sessionId, candidateId: pickerChoices().candidateId,
     expectedCandidateVersion: 5, expectedMetadataRevision: 8,
