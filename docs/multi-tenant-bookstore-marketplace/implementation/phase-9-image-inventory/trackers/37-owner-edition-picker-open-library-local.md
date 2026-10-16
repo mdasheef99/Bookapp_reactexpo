@@ -1554,3 +1554,25 @@ Proposed M77 (NOT_CREATED / NOT_APPLIED): narrow phase9_edition_title_key/author
 Verification actually run: matching, title-variant and all Open Library Jest suites 133/133 before the import tidy, explicit matching file 58/58 after it, with the budget test RED on the old ordering; sheet-state suite 28/28; full Jest, tsc, worker build, M76 SQL suite and the continuity validator are recorded in the closeout entry below. No database, Storage, provider, Render, Owner API or client deployment mutation.
 
 Closeout verification (2026-10-16): full Jest 343 suites, 3,500 passed, 0 failed, 4 pre-existing skips; tsc --noEmit and metadata-worker build exit 0; structural worker 14/14; M76 SQL 32/32 (SQL unchanged); Phase 9 continuity validator PASS; no literal combining characters in changed code. Nothing applied or deployed.
+
+## 60. Owner-requested self-review and live parity check, 2026-10-16
+
+Authority: after §59 the Owner asked for a direct review rather than reliance on the Haiku reports. Read-only throughout: no source, migration, data, provider, Render, Owner API or client change in the review itself. This entry is documentation only.
+
+Process note: M76 was applied (§58) before any independent review, and the original rule tests used only the author's own examples. The §59 edge cases (comma-form and joined-initial surnames, non-Latin marks, Open Library budget ordering) were therefore found after application. Future migrations in this work unit get an independent review before preflight/application.
+
+Query-side parity: requestFromMetadataContext rebuilds the query in TypeScript and throws P9_METADATA_QUERY_IDENTITY_MISMATCH unless its key equals the SQL query identity, so worker and SQL compare against byte-identical query text; they can only diverge on provider-text normalization.
+
+Live collation (read-only): datcollate/datctype en_US.UTF-8, provider ICU; lower('ΟΔΟΣ Ὅμηρος İSTANBUL ÉTÉ ЖУК') = 'οδος ὅμηρος i+U+0307 stanbul été жук', matching JavaScript toLocaleLowerCase. The §59 Greek final-sigma note applies only to the disposable PGlite harness (C-locale lower), not production.
+
+Live parity check (read-only, one SELECT against live M76 functions, no writes): 190 distinct generated cases (title variants: leading The, & / and, accents, case, spacing, Cyrillic/Greek; author variants: initials, comma form, surname-only, first-name-only, accents, case, typo; languages en, en-GB, fr, ru, el, und). Corrected worker (bbc93ea build) accepted 44, live SQL 33. Fifteen worker-yes/SQL-no cases all used provider titles with repeated internal spaces supplied raw; both real decoders (Google normalizeGoogleEditionRows and Open Library normalizeOpenLibraryRows) collapse spacing before storage (verified: "Les   Misérables" -> "Les Misérables", eligible), and live phase9_edition_valid_metadata rejects the uncollapsed form, so production never submits that shape. Four SQL-only cases are the documented superset edges (Greek tonos folding; "Hugo, Victor" surname). Result: no reachable case where a worker-eligible row is rejected by live M76.
+
+Disposable PGlite fuzz (2,619 query-consistent cases, 1,381 skipped where TS and C-locale SQL query normalization differ): 0 worker-yes/SQL-no.
+
+Review of final app and Open Library code: the Edit title/author prompt is limited to fresh sets with no eligible row, at least one genuinely ineligible row or no rows, and no Owner-confirmed choice; an unconfirmed automatic suggestion can still be replaced through the same manual path as the existing Edit manually button. Open Library ordering serves known-language identities before unknown-language ones, each in page order, then the remaining safe rows. Minor: an empty fresh set shows both "No book results were returned." and the no-match prompt.
+
+Haiku report disposition: confirmed real and fixed in §59 (comma/initials surname, non-Latin folding, Open Library ordering, prompt cases, SDD wording); not applicable in production (Greek final sigma under ICU); pre-existing and fail-closed (isbn10 strict-path acceptance, exception masking by design).
+
+Decision support: M77 is not required for safety; live M76 accepts every reachable worker-eligible row and selection still requires the worker's stored eligible flag. M77 stays PROPOSED / NOT_CREATED / NOT_APPLIED as an optional exact-parity cleanup. Remaining real risk is untested behaviour on real provider data until the worker is deployed and a controlled live Search Books check runs.
+
+Evidence files (scratch, not committed): parity-fuzz.mjs, live-gen.cjs, live-compact.cjs, live2.cases.json, live2.sql in this session's scratchpad. Next authorized action unchanged: Owner decision on the Render metadata-worker deployment; M77 creation separately.
