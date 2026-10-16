@@ -113,3 +113,45 @@ it.each([
   fireEvent(view.getByLabelText('Current cover'), 'error');
   expect(view.getByLabelText('No current cover')).toBeTruthy();
 });
+// Owner decision2026-10-13 / picker §3.1: discoverability, genuine fields and safe reasons.
+it('announces a later selectable edition without filtering the first five original positions', () => {
+  const values = rows.map((row, ordinal) => ({ ...row, eligibility: ordinal === 7 ? 'eligible' as const : 'ineligible' as const }));
+  const view = render(<EditionOptionList rows={values} selectedOptionId={null} disabled={false} onSelect={jest.fn()} />);
+  expect(view.getByText('1 selectable edition in 10 results.')).toBeTruthy();
+  expect(view.getByText('Selectable editions are in the remaining results. Show all to view them.')).toBeTruthy();
+  expect(view.getAllByTestId(/^edition-row-/).map(node => node.props.testID)).toEqual(values.slice(0, 5).map(row => 'edition-row-' + row.optionId));
+  fireEvent.press(view.getByText('Show all'));
+  expect(view.queryByText('Selectable editions are in the remaining results. Show all to view them.')).toBeNull();
+  expect(view.getAllByTestId(/^edition-row-/)).toHaveLength(10);
+});
+it('reports zero selectable records honestly and counts eligibility independently of a busy command', () => {
+  const view = render(<EditionOptionList rows={rows.map(row => ({ ...row, eligibility: 'ineligible' }))} selectedOptionId={null} disabled={false} onSelect={jest.fn()} />);
+  expect(view.getByText('0 selectable editions in 10 results.')).toBeTruthy();
+  expect(view.queryByText('Selectable editions are in the remaining results. Show all to view them.')).toBeNull();
+  view.rerender(<EditionOptionList rows={rows} selectedOptionId={null} disabled onSelect={jest.fn()} />);
+  expect(view.getByText('10 selectable editions in 10 results.')).toBeTruthy();
+  expect(view.getByLabelText('Select result 1: Duplicate title').props.accessibilityState.disabled).toBe(true);
+});
+it('displays supplied edition and format without inventing missing details or requiring a cover', () => {
+  const values = [{ ...rows[0], metadata: { ...rows[0].metadata!, editionStatement: 'Second edition', format: 'Paperback', coverReference: null } },
+    { ...rows[1], metadata: { ...rows[1].metadata!, editionStatement: null, format: null } }];
+  const selected = jest.fn();
+  const view = render(<EditionOptionList rows={values} selectedOptionId={null} disabled={false} onSelect={selected} />);
+  expect(view.getAllByText('Edition: Second edition')).toHaveLength(1);
+  expect(view.getAllByText('Format: Paperback')).toHaveLength(1);
+  expect(view.queryByText('Format: Books')).toBeNull();
+  fireEvent.press(view.getByLabelText('Select result 1: Duplicate title'));
+  expect(selected).toHaveBeenCalledWith(values[0]);
+});
+it.each([
+  ['title_differs', 'Title differs from this book.'], ['author_differs', 'Author differs from this book.'],
+  ['language_unknown', 'Language could not be verified.'], ['language_differs', 'Language differs from this book.'],
+  ['volume_differs', 'Volume differs from this book.'], ['identity_unverified', 'Other book identity checks could not be verified.'],
+])('explains authoritative %s without enabling the disabled row', (reason, message) => {
+  const selected = jest.fn();
+  const value = { ...rows[0], eligibility: 'ineligible' as const, rejectionReason: reason as never };
+  const view = render(<EditionOptionList rows={[value]} selectedOptionId={null} disabled={false} onSelect={selected} />);
+  expect(view.getByText(message)).toBeTruthy();
+  fireEvent.press(view.getByLabelText('Select result 1: Duplicate title'));
+  expect(selected).not.toHaveBeenCalled();
+});

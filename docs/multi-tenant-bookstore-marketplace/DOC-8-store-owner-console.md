@@ -725,3 +725,7 @@ Activity logs should be append-only from the client perspective.
 - [DOC-6: Cart, Order Request, and Payment](./DOC-6-cart-order-request-payment.md)
 - [DOC-7: Fulfillment and Delivery](./DOC-7-fulfillment-delivery.md)
 - [DOC-10: Notifications, Events, and Realtime](./DOC-10-notifications-events-realtime.md)
+
+## 2026-10-13 approved edition-picker feedback corrections
+
+The Owner approved all four bounded corrections. DOC-3 §5.2.1 and picker §3.1 own result discovery/counts, supplied edition/format display, error-specific recovery and authoritative enum-only disabled reasons. Keep order, accessible sheet patterns, manual path and selling fields. Implementation is local/red-first; SQL remains a proposal and publication is held.

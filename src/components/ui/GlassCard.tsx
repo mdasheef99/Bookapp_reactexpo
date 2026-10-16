@@ -30,6 +30,7 @@ const GLASS_COLORS: Record<
 interface GlassCardProps {
     children: React.ReactNode;
     style?: ViewStyle;
+    contentStyle?: ViewStyle;
     padding?: number;
     borderRadius?: number;
 }
@@ -37,6 +38,7 @@ interface GlassCardProps {
 export const GlassCard: React.FC<GlassCardProps> = ({
     children,
     style,
+    contentStyle,
     padding = 16,
     borderRadius = 20,
 }) => {
@@ -69,7 +71,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
                     },
                 ]}
             />
-            <View style={[styles.content, { padding, borderRadius }]}>
+            <View style={[styles.content, { padding, borderRadius }, contentStyle]}>
                 {children}
             </View>
         </View>

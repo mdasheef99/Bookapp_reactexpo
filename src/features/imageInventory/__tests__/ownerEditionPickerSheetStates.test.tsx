@@ -132,3 +132,107 @@ it('hides stale detected identity and rejects its action even if invoked directl
   act(() => action.props.onPress());
   expect(detected).not.toHaveBeenCalled(); expect(manual).not.toHaveBeenCalled();
 });
+
+// Picker §3.1/§7: known changed authority needs a new action, uncertain transport retains the command.
+describe('selection-error recovery', () => {
+  const select = ownerEditionPickerService.selectEdition as jest.Mock;
+  const registered = (code: import('../api/ownerUxTransport').OwnerUxErrorCode) => require('../api/ownerUxTransport').registeredOwnerUxError(code);
+  beforeEach(() => { select.mockReset(); read.mockResolvedValue(pickerChoices()); });
+  it.each(['P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT', 'P9_CANDIDATE_VERSION_CONFLICT'] as const)('%s offers a read refresh without blindly replaying a stale command', async code => {
+    select.mockRejectedValue(registered(code));
+    const view = mount();
+    await waitFor(() => expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeTruthy());
+    fireEvent.press(view.getByLabelText('Select result 1: Chosen edition'));
+    await waitFor(() => expect(view.queryByText('The book or its edition choices changed. Review the latest choices before selecting again.')).toBeTruthy());
+    expect(view.queryByText('Retry selection')).toBeNull();
+    expect(view.queryByText('Edition saved.')).toBeNull();
+    const before = read.mock.calls.length;
+    fireEvent.press(view.getByText('Refresh edition choices'));
+    await waitFor(() => expect(read.mock.calls.length).toBeGreaterThan(before));
+    expect(select).toHaveBeenCalledTimes(1); expect(lookup).not.toHaveBeenCalled();
+  });
+  it('recognizes superseded client authority as a refresh case', async () => {
+    select.mockRejectedValue(require('../queries/ownerCandidateAuthority').authorityChanged());
+    const view = mount();
+    await waitFor(() => expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeTruthy());
+    fireEvent.press(view.getByLabelText('Select result 1: Chosen edition'));
+    await waitFor(() => expect(view.queryByText('Refresh edition choices')).toBeTruthy());
+    expect(view.queryByText('Retry selection')).toBeNull(); expect(view.queryByText('Edition saved.')).toBeNull();
+  });
+  it.each(['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND', 'P9_IDEMPOTENCY_MISMATCH'] as const)('%s displays the registered message with no command retry', async code => {
+    const error = registered(code); select.mockRejectedValue(error);
+    const view = mount();
+    await waitFor(() => expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeTruthy());
+    fireEvent.press(view.getByLabelText('Select result 1: Chosen edition'));
+    await waitFor(() => expect(view.queryByText(error.message)).toBeTruthy());
+    expect(view.queryByText('Retry selection')).toBeNull(); expect(view.queryByText('Edition saved.')).toBeNull();
+  });
+  it('an uncertain network response retries the exact command and only then reports confirmed success', async () => {
+    select.mockRejectedValueOnce(new Error('lost response')).mockResolvedValueOnce(selectedChoices());
+    const view = mount();
+    await waitFor(() => expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeTruthy());
+    fireEvent.press(view.getByLabelText('Select result 1: Chosen edition'));
+    await waitFor(() => expect(view.queryByText('Retry selection')).toBeTruthy());
+    expect(view.queryByText('Edition saved.')).toBeNull();
+    read.mockResolvedValue(selectedChoices()); fireEvent.press(view.getByText('Retry selection'));
+    await waitFor(() => expect(view.queryByText('Edition saved.')).toBeTruthy());
+    expect(select.mock.calls[0][0]).toEqual(select.mock.calls[1][0]); expect(lookup).not.toHaveBeenCalled();
+  });
+});
+
+// Owner amendment 2026-10-16: offer the existing manual identity path when nothing is selectable.
+describe('no selectable edition', () => {
+  const blockedRow = { optionId: '00000000-0000-4000-8000-000000000041', ordinal: 0,
+    googleBooksUrl: 'https://books.google.com/books?id=blocked', eligibility: 'ineligible' as const,
+    metadata: { ...pickerChoices().rows[0].metadata!, title: 'Other book' } };
+  function mountWithEdit(onEditIdentity: jest.Mock, disabled = false) {
+    return render(<QueryClientProvider client={client}><CandidateEditionPicker identity={pickerIdentity}
+      sessionId={pickerChoices().sessionId} candidateId={pickerChoices().candidateId} commandSlot={slots}
+      disabled={disabled} onSelection={jest.fn()} onEditIdentity={onEditIdentity}>{() => null}</CandidateEditionPicker></QueryClientProvider>);
+  }
+  it('offers Edit title/author for a fresh set with no eligible row', async () => {
+    read.mockResolvedValue(pickerChoices({ rows: [blockedRow] }));
+    const edit = jest.fn(); const view = mountWithEdit(edit);
+    await waitFor(() => expect(view.queryByText('Edit title/author')).toBeTruthy());
+    fireEvent.press(view.getByText('Edit title/author'));
+    expect(edit).toHaveBeenCalledTimes(1); expect(lookup).not.toHaveBeenCalled();
+  });
+  it('offers it for a fresh empty result set too', async () => {
+    read.mockResolvedValue(pickerChoices({ rows: [] }));
+    const view = mountWithEdit(jest.fn());
+    await waitFor(() => expect(view.queryByText('No book results were returned.')).toBeTruthy());
+    expect(view.getByText('Edit title/author')).toBeTruthy();
+  });
+  it('does not offer it when an eligible row exists or results are not fresh', async () => {
+    read.mockResolvedValue(pickerChoices());
+    const view = mountWithEdit(jest.fn());
+    await waitFor(() => expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeTruthy());
+    expect(view.queryByText('Edit title/author')).toBeNull();
+    read.mockResolvedValue(pickerChoices({ rows: [], optionsExpiresAt: null, lookupStatus: 'idle' }));
+    const expired = mountWithEdit(jest.fn());
+    await waitFor(() => expect(expired.queryAllByText('Search Books').length).toBeGreaterThan(0));
+    expect(expired.queryByText('Edit title/author')).toBeNull();
+  });
+  it('a locked picker keeps the prompt but cannot invoke it', async () => {
+    read.mockResolvedValue(pickerChoices({ rows: [blockedRow] }));
+    const edit = jest.fn(); const view = mountWithEdit(edit, true);
+    await waitFor(() => expect(view.queryByText('Edit title/author')).toBeTruthy());
+    fireEvent.press(view.getByText('Edit title/author'));
+    expect(edit).not.toHaveBeenCalled();
+  });
+});
+
+describe('disabled sheet reason', () => {
+  const mountSheet = (disabled: boolean) => render(<QueryClientProvider client={client}><CandidateMetadataSheet
+    identity={pickerIdentity} card={pickerCard()} visible disabled={disabled} commandSlot={slots}
+    disabledReason="Finish editing the title or author on this card before choosing an edition."
+    onSelection={jest.fn()} onClose={jest.fn()} onUseDetected={jest.fn()} onEditManually={jest.fn()} /></QueryClientProvider>);
+  it('explains a caller-owned lock only while disabled', async () => {
+    jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(pickerDetail());
+    const locked = mountSheet(true);
+    expect(locked.getByText('Finish editing the title or author on this card before choosing an edition.')).toBeTruthy();
+    await waitFor(() => expect(read).toHaveBeenCalled());
+    const open = mountSheet(false);
+    expect(open.queryByText('Finish editing the title or author on this card before choosing an edition.')).toBeNull();
+  });
+});

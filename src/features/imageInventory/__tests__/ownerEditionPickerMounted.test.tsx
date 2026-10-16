@@ -52,11 +52,11 @@ it('opens/reopens without provider search, preserves current choice and explicit
   lookup.mockResolvedValue({ operationId: testUuid(50), status: 'pending', requestGeneration: 1, optionsVersion: 1, available: false });
   const view = mount();
   expect(lookup).not.toHaveBeenCalled();
-  fireEvent.press(view.getByText('Change edition'));
+  fireEvent.press(view.getByText('Find or change edition'));
   await waitFor(() => expect(view.getByText('Search Books')).toBeTruthy());
   expect(lookup).not.toHaveBeenCalled();
   fireEvent.press(view.getByText('Close metadata'));
-  fireEvent.press(view.getByText('Change edition'));
+  fireEvent.press(view.getByText('Find or change edition'));
   await waitFor(() => expect(view.getByText('Search Books')).toBeTruthy());
   expect(lookup).not.toHaveBeenCalled();
   fireEvent.press(view.getByText('Search Books'));
@@ -64,7 +64,7 @@ it('opens/reopens without provider search, preserves current choice and explicit
 });
 it('reuses fresh empty results with no lookup loop', async () => {
   read.mockResolvedValue({ ...initial, rows: [] });
-  const view = mount(); fireEvent.press(view.getByText('Change edition'));
+  const view = mount(); fireEvent.press(view.getByText('Find or change edition'));
   await waitFor(() => expect(view.getByText('No book results were returned.')).toBeTruthy());
   expect(view.queryByText('Search Books')).toBeNull();
   expect(lookup).not.toHaveBeenCalled();
@@ -75,7 +75,7 @@ it('only adopts accepted selection, retaining latest price/quantity/shelf edits 
   fireEvent.press(view.getByLabelText('Edit Price'));
   fireEvent.changeText(view.getByLabelText('Custom whole rupees'), '42');
   fireEvent.press(view.getByLabelText('Use custom price'));
-  fireEvent.press(view.getByText('Change edition'));
+  fireEvent.press(view.getByText('Find or change edition'));
   await waitFor(() => expect(view.getByLabelText('Select result 1: Chosen edition')).toBeTruthy());
   fireEvent.press(view.getByLabelText('Select result 1: Chosen edition'));
   await waitFor(() => expect(select).toHaveBeenCalledTimes(1));
@@ -89,7 +89,7 @@ it('only adopts accepted selection, retaining latest price/quantity/shelf edits 
 });
 it('failed selection retains the draft and has a same-command retry', async () => {
   select.mockRejectedValue(new Error('network'));
-  const view = mount(); fireEvent.press(view.getByText('Change edition'));
+  const view = mount(); fireEvent.press(view.getByText('Find or change edition'));
   await waitFor(() => expect(view.getByLabelText('Select result 1: Chosen edition')).toBeTruthy());
   fireEvent.press(view.getByLabelText('Select result 1: Chosen edition'));
   await waitFor(() => expect(view.getByText('Retry selection')).toBeTruthy());
@@ -100,7 +100,7 @@ it('failed selection retains the draft and has a same-command retry', async () =
 });
 it('late selection after account change does not adopt card metadata', async () => {
   const pending = deferred<ReturnType<typeof selectedChoices>>(); select.mockReturnValue(pending.promise);
-  const view = mount(); fireEvent.press(view.getByText('Change edition'));
+  const view = mount(); fireEvent.press(view.getByText('Find or change edition'));
   await waitFor(() => expect(view.getByLabelText('Select result 1: Chosen edition')).toBeTruthy());
   fireEvent.press(view.getByLabelText('Select result 1: Chosen edition'));
   await waitFor(() => expect(select).toHaveBeenCalledTimes(1));
@@ -129,14 +129,14 @@ it('closing the sheet returns focus to the actual compact-card trigger that open
     expect(node).not.toBeNull();
     return node!.instance as { focus: jest.Mock; props: { accessibilityLabel: string } };
   };
-  const changeTarget = focusOf('Change edition'); const metadataTarget = focusOf('View metadata');
-  expect(changeTarget.props.accessibilityLabel).toBe('Change edition');
+  const changeTarget = focusOf('Find or change edition'); const metadataTarget = focusOf('View metadata');
+  expect(changeTarget.props.accessibilityLabel).toBe('Find or change edition');
   expect(metadataTarget.props.accessibilityLabel).toBe('View metadata');
-  fireEvent.press(view.getByText('Change edition'));
+  fireEvent.press(view.getByText('Find or change edition'));
   await waitFor(() => expect(view.getByText('Close metadata')).toBeTruthy());
   fireEvent.press(view.getByText('Close metadata'));
   await act(async () => jest.runAllTicks());
-  expect(changeTarget.focus.mock.contexts.at(-1)?.props.accessibilityLabel).toBe('Change edition');
+  expect(changeTarget.focus.mock.contexts.at(-1)?.props.accessibilityLabel).toBe('Find or change edition');
   fireEvent.press(view.getByText('View metadata'));
   fireEvent.press(view.getByText('Close metadata'));
   await act(async () => jest.runAllTicks());
@@ -150,7 +150,7 @@ it('keeps Close and hardware back locked through selection reconciliation', asyn
   (ownerEditionPickerService.selectEdition as jest.Mock).mockReturnValue(pending.promise);
   const view = mount();
 
-  fireEvent.press(view.getByText('Change edition'));
+  fireEvent.press(view.getByText('Find or change edition'));
   await waitFor(() => expect(view.getByLabelText('Select result 1: Chosen edition')).toBeTruthy());
   fireEvent.press(view.getByLabelText('Select result 1: Chosen edition'));
   await waitFor(() => expect(ownerEditionPickerService.selectEdition).toHaveBeenCalledTimes(1));
@@ -179,17 +179,17 @@ it('keeps the full-review edition trigger at its natural touch-target height and
   const view = render(<QueryClientProvider client={client}><CandidateReviewEditionSheet
     identity={pickerIdentity} detail={mockDetail} disabled={false} commandSlot={slots}
     onSelection={refresh} onManual={jest.fn()} onPendingChange={jest.fn()} /></QueryClientProvider>);
-  const style = StyleSheet.flatten(view.getByRole('button', { name: 'Change edition' }).props.style);
+  const style = StyleSheet.flatten(view.getByRole('button', { name: 'Find or change edition' }).props.style);
   expect(style.minHeight).toBeGreaterThanOrEqual(48);
   expect(style.flexBasis).toBeUndefined();
   expect(style.flexGrow).toBeUndefined();
-  fireEvent.press(view.getByRole('button', { name: 'Change edition' }));
+  fireEvent.press(view.getByRole('button', { name: 'Find or change edition' }));
   await waitFor(() => expect(view.getByLabelText('Select result 1: Chosen edition')).toBeTruthy());
 });
 
 it('preserves the compact-row sizing and touch targets for both metadata triggers', () => {
   const view = mount();
-  for (const name of ['Change edition', 'View metadata']) {
+  for (const name of ['Find or change edition', 'View metadata']) {
     const style = StyleSheet.flatten(view.getByRole('button', { name }).props.style);
     expect(style).toMatchObject({ minHeight: 48, flexGrow: 1, flexBasis: 150 });
   }

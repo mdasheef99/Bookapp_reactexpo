@@ -21,7 +21,7 @@ it('reads strictly through the existing authenticated Owner Edge with abort', as
   invoke.mockResolvedValue(response(pickerChoices()));
   const signal = new AbortController().signal;
   await expect(ownerEditionPickerService.readEditionChoices(read, signal)).resolves.toEqual(pickerChoices());
-  expect(invoke).toHaveBeenCalledWith('phase9-owner-ingestion', { body: read, signal });
+  expect(invoke).toHaveBeenCalledWith('phase9-owner-ingestion', { body: read, signal, headers: { 'X-Client-Info': 'bookconnect/edition-reasons-v1' } });
 });
 it('retains identical logical command identity across lookup retries and parses a slim receipt', async () => {
   const receipt = { operationId: testUuid(40), status: 'pending', requestGeneration: 1, optionsVersion: 1, available: false };
@@ -87,4 +87,18 @@ it('a selection receipt cannot regress the requested review version, including n
   invoke.mockResolvedValue(response(selectedChoices({ reviewVersion: null })));
   await expect(ownerEditionPickerService.selectEdition({ ...select, expectedReviewVersion: 2 }, new AbortController().signal))
     .rejects.toMatchObject({ code: 'P9_INTERNAL_ERROR' });
+});
+
+it('passes authoritative reasons through the existing read while older responses remain compatible', async () => {
+  const value = pickerChoices();
+  const data = { ...value, rows: value.rows.map(row => ({ ...row, eligibility: 'ineligible', rejectionReason: 'author_differs' })) };
+  invoke.mockResolvedValue(response(data));
+  await expect(ownerEditionPickerService.readEditionChoices(read, new AbortController().signal)).resolves.toEqual(data);
+});
+it('does not add the read capability to a lookup command or its idempotency body', async () => {
+  const receipt = { operationId: testUuid(40), status: 'pending', requestGeneration: 1, optionsVersion: 1, available: false };
+  invoke.mockResolvedValue(response(receipt));
+  const signal = new AbortController().signal;
+  await ownerEditionPickerService.requestEditionOptions(lookup, signal);
+  expect(invoke).toHaveBeenCalledWith('phase9-owner-ingestion', { body: lookup, signal });
 });

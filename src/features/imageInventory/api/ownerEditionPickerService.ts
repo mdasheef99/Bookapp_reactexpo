@@ -1,5 +1,5 @@
 import { invokeOwnerUx, registeredOwnerUxError } from './ownerUxTransport';
-import { parseOwnerEditionPickerRequest, type ReadEditionChoicesRequest,
+import { EDITION_REASONS_CLIENT_INFO, parseOwnerEditionPickerRequest, type ReadEditionChoicesRequest,
   type RequestEditionOptionsRequest, type SelectEditionRequest, type OwnerEditionPickerAction,
   type OwnerEditionPickerRequest } from '../contracts/ownerEditionPicker';
 
@@ -13,7 +13,7 @@ function checked(action: OwnerEditionPickerAction, value: OwnerEditionPickerRequ
 export const ownerEditionPickerService = {
   async readEditionChoices(request: ReadEditionChoicesRequest, signal: AbortSignal) {
     return invokeOwnerUx('read_candidate_edition_choices',
-      checked('read_candidate_edition_choices', request), signal);
+      checked('read_candidate_edition_choices', request), signal, EDITION_REASONS_CLIENT_INFO);
   },
   async requestEditionOptions(request: RequestEditionOptionsRequest, signal: AbortSignal) {
     return invokeOwnerUx('request_candidate_edition_options',

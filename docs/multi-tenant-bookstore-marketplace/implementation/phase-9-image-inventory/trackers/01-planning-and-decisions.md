@@ -453,3 +453,57 @@ Audit performed read-only on 2026-07-19 after `get_project` verification.
 - Finalized `p9-vision-v2`, count/language/repeated-position decisions, exact token/attempt job transitions, one persistence/replay transaction, minimum forward M12, stable errors, privacy boundaries, and 31 red-first cases.
 - No production/test/migration file, provider call, Supabase/Storage mutation, deployment, stage, commit, or push occurred.
 - Exact next gate: separate authorization for red-first local Unit 4 implementation including forward M12 creation/testing, with live application and all external/provider effects still prohibited.
+
+## 2026-10-13 bounded explicit-title selection decision
+
+Owner amendment, 2026-10-13: explicit Owner edition options may treat one leading English The difference as compatible when the remaining normalized nonempty title is identical and both original query/result base languages are en. Retain exact supplied author membership, known-language checks, coherent identifiers, volume-conflict flags and explicit confirmation. Preserve original titles. Use the same comparison for safe Open Library own-author feasibility and final explicit eligibility; automatic winner/cache/ranking and current-suggestion identity stay exact. Defer new rejection-message contracts, cover fallbacks and OCR functionality. The proposed forward SQL predicate and current-scan temporary-list refresh remain separate creation/application/data-operation approvals.
+
+Authority: Owner approved the reduced proposal, then requested related analysis/local changes ahead of a combined release. This permits the local worker amendment and tests; AGENTS migration-creation/application and publication/deployment boundaries remain. No new phase, matching engine, dependency, alias dictionary, service or automatic-provider workflow is introduced.
+
+## 2026-10-13 SQL proposal retained by Owner decision
+
+The Owner chose "Keep the SQL as a proposal" when asked to authorize local forward-migration and repository SQL regression creation. Neither file is created. This does not revoke or extend the approved bounded worker behavior in DOC-3 §5.2.1 / picker §4.1; the worker/test/scroll changes stay local and unreleased. Application, temporary-list refresh, Git publication and deployment remain unauthorized. Exact next action: retain the proposal and local patch until a later explicit Owner direction. Tracker37 §31 owns this authority checkpoint.
+
+## 2026-10-13 four picker corrections approved for local implementation
+
+The Owner requested planning then implementation and answered the third-correction clarification with Both — four corrections in total. This explicitly authorizes the four UI/feedback corrections in DOC-3 §5.2.1 / picker §3.1, including local API/schema compatibility work and disposable tests. It does not change the earlier Keep the SQL as a proposal decision: formal migration/test-file creation, application, data refresh, Git publication and deployment remain held. Plan: work-units/owner-edition-picker-client-corrections-plan.md. Execute inline with red-first tests and one final independent review.
+
+## 2026-10-13 four-correction completion ruling
+
+All four approved local corrections are implemented, verified and independently APPROVED (tracker37 §34). Keep the prior SQL-as-proposal decision. Actual read-only browser presentation/scroll proof plus mounted/actual-HTTP/disposable-SQL failure/reason fixtures fulfill the bounded local plan without faking shared publication. No provider/live business operation was needed. API/SQL/client release, prior title worker rollout and scoped refresh remain separate authorization gates; M75 remains deferred. Next authorized action is Owner review of localhost:8083 and the retained proposals.
+
+## 2026-10-13 dump research recommendation, not an approved architecture change
+
+Owner authorized reading the full dump page and determining a best next step. Findings/recommendation are tracker37 §37 / external open-library-dumps-research-20261013 REPORT.md. Proposed direction is a bounded offline coverage/cost feasibility pass before a curated local catalogue and API fallback, traced to existing DOC-3 §§5.1/5.2 coherent canonical-first authority. No new source/retention/bulk import/provider policy/phase requirement was adopted. No download/import/hosting or price commitment made. Prior SQL-as-proposal and publication/refresh holds remain; current four corrections locally complete. Exact next action present this analysis, with a later concrete direction required to execute a pilot/implementation.
+
+## 2026-10-13 PostgreSQL dump-import reference follow-up, no adoption decision
+
+Owner requested assessment of LibrariesHacked/openlibrary-search. Tracker37 §38 / external REPORT.md record read-only exact-revision code evidence and recommendation. It can reduce offline pilot schema/import design work, but needs own-edition author integrity, tested import recovery, measured capacity and approved source/storage/integration scope. No third-party code adoption, new schema requirement, dataset/service/hosting authorization or publication decision. Existing work unit/holds unchanged.
+
+## 2026-10-13 archive-cover research, no recovery-policy decision
+
+Requested archive links are actual image ZIP/TARs; monthly cover metadata and a separate2011 mapping are distinct. Tracker37 §39 records manifest proofs, existing positive image example and no recovery claim for five current coverless editions. Potential targeted old-identifier feasibility check is a recommendation only, not approved image storage/URL-policy/provider behavior. Current source rules, local completion/proposals and rollout holds unchanged.
+
+## 2026-10-13 tools versus download transports clarified
+
+User asked to map page options. Tracker37 §40 distinguishes DuckDB offline analysis, PostgreSQL import, live GraphQL ID queries, source schemas, metadata torrent and separate image archives. Current exact torrent/files verified, no dataset or client started. Recommendation remains a bounded offline feasibility pass before architecture adoption; no scope/policy/retention/rate change or hosting authorization. Existing local completion/proposals/rollout holds unchanged.
+
+## 2026-10-13 unfinished download inspection and database advice
+
+Owner authorized inspecting Downloads and recommending treatment of text-format data, clarified torrent still downloading. Tracker37 §41 records actual filenames/zero prefixes and capacity limits; no readable record or completion claim. Recommend DuckDB bounded compressed inspection first; SQLite remains valid for local read-heavy indexed data, PostgreSQL a later hosted/concurrent-write search candidate. This is advice, not adoption/schema/import/installation or product integration approval. Exact next research action after Owner confirms completion is completed-core-file validation and bounded record inspection. Phase/status/source policies and earlier held SQL/refresh/publication/rollout decisions unchanged.
+
+## Supabase catalogue and second-hand coverage advice
+
+Owner clarified second-hand books of any age; no publication-year cutoff should be inferred. Research recommendation is keep Supabase, measure local bounded factual catalogue first, then choose separate reference tables for a small catalogue or paid isolated same-provider project for broad/full load. Current Free capacity cannot host the full source dump. Covers remain exact edition associations; actual-copy photos/condition use existing Owner flow. Historic2011 mapping test is optional unexecuted research, not approved cover recovery. No new product/source-policy/schema/hosting/import/billing decision adopted. Tracker37 §42 records exact read-only MCP/public evidence and unchanged prior holds.
+
+## 2026-10-14 catalogue size/free hosting/search advice, no adoption
+
+Requested recommendation distinguishes actual compressed source/duplicate torrent size from unknown imported/indexed size and existing app size. Recommend local factual/index measurement first and PostgreSQL native exact/full-text/trigram retrieval using the already installed pg_trgm capability. Supabase app retained; managed Free subsets vs Oracle self-hosted larger disk are options, not approved providers/schema/services. Second-hand means all publication years. Tracker37 §43 records verified prices/rules/limits; existing SQL/refresh/Git/rollout holds and local-complete status unchanged.
+
+## 2026-10-14 spine-photo research wording corrected and Pro options explained
+
+Owner clarified main catalogue input is OCR title+author from spine photos; ISBN only supplementary when visible. Prior research ISBN-first flow is superseded for this input; no matching-strength/runtime/retention amendment or new engine implementation. Published Pro disk/compute example budgets in tracker37 §44 are advice, not upgrade/project/billing authorization or measured import capacity. Existing rollout/SQL/migration/publication holds remain; next bounded title/own-author measurement after completion.
+
+## 2026-10-14 catalogue hosting/subset advice, no scope adoption
+
+User requested explanation of hosting a populated DB and using part of the dump. Tracker37 §45 records managed PostgreSQL,VPS/freeVM/local options and factual-field reduction plus possible later agreed row filtering. No language/genre/stock cutoff,age filter,cache retention,provider/schema/service/host direction adopted. OCR title+author primary,own-edition refs/missing facts preserved. Existing holds unchanged; next bounded measurement after completed downloads.

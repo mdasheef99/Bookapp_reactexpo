@@ -18,7 +18,7 @@ export function CandidateReviewEditionSheet({ identity, detail, disabled, comman
   const triggerRef = useRef<View>(null);
   const manual = (edits: CompactReviewEdits) => { onManual(edits); setOpen(false); };
   return <>
-    <MetadataSheetTrigger title="Change edition" focusRef={triggerRef} onPress={() => setOpen(true)} />
+    <MetadataSheetTrigger title="Find or change edition" focusRef={triggerRef} onPress={() => setOpen(true)} />
     {open ? <CandidateMetadataSheet identity={identity} visible disabled={disabled} commandSlot={commandSlot}
       card={{ sessionId: detail.sessionId, candidateId: detail.candidateId, metadataState: detail.metadata.state,
         candidateVersion: detail.candidateVersion, metadataRevision: detail.metadata.revision, reviewVersion: detail.review.reviewVersion,

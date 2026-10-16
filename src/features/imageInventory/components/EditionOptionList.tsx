@@ -2,8 +2,21 @@ import { useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { useTheme } from '@/hooks/useTheme';
-import type { EditionRow } from '../contracts/ownerEditionPicker';
+import type { EditionRow, EditionRejectionReason } from '../contracts/ownerEditionPicker';
 import { MetadataCover } from './MetadataCover';
+
+// Picker §3.1: copy only the authoritative safe enum; never classify in the client.
+const rejectionMessages: Record<EditionRejectionReason, string> = {
+  title_differs: 'Title differs from this book.',
+  author_differs: 'Author differs from this book.',
+  language_unknown: 'Language could not be verified.',
+  language_differs: 'Language differs from this book.',
+  volume_differs: 'Volume differs from this book.',
+  identity_unverified: 'Other book identity checks could not be verified.',
+  result_unavailable: 'Result metadata is unavailable.',
+};
+const selectable = (row: EditionRow) => row.eligibility === 'eligible' && row.metadata !== null;
+
 
 // Picker §§3/13.2 / EP-D03/04: slice original positions; never filter or reorder.
 export function EditionOptionList({ rows, selectedOptionId, disabled, onSelect }: {
@@ -15,7 +28,13 @@ export function EditionOptionList({ rows, selectedOptionId, disabled, onSelect }
   const [expandedResponse, setExpandedResponse] = useState<string | null>(null);
   const expanded = expandedResponse === responseKey;
   const [linkError, setLinkError] = useState(false);
+  const eligibleCount = rows.filter(selectable).length;
+  const hiddenSelectable = !expanded && rows.length > 5 && eligibleCount > 0 && !rows.slice(0, 5).some(selectable);
   return <View style={{ gap: 12 }}>
+    {rows.length > 0 ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>
+      {eligibleCount} selectable {eligibleCount === 1 ? 'edition' : 'editions'} in {rows.length} {rows.length === 1 ? 'result' : 'results'}.
+    </Text> : null}
+    {hiddenSelectable ? <Text style={{ color: colors.textSecondary }}>Selectable editions are in the remaining results. Show all to view them.</Text> : null}
     {rows.slice(0, expanded ? 10 : 5).map(row => {
       const metadata = row.metadata;
       const provider = row.googleBooksUrl?.startsWith('https://openlibrary.org/books/') ? 'Open Library' : 'Google Books';
@@ -31,6 +50,8 @@ export function EditionOptionList({ rows, selectedOptionId, disabled, onSelect }
               <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>{metadata.title}</Text>
               <Text selectable style={{ color: colors.textPrimary }}>{metadata.authors.join(', ')}</Text>
               {metadata.publishedDate ? <Text selectable style={{ color: colors.textSecondary }}>Published: {metadata.publishedDate}</Text> : null}
+              {metadata.editionStatement ? <Text selectable style={{ color: colors.textSecondary }}>Edition: {metadata.editionStatement}</Text> : null}
+              {metadata.format ? <Text selectable style={{ color: colors.textSecondary }}>Format: {metadata.format}</Text> : null}
               {metadata.publisher ? <Text selectable style={{ color: colors.textSecondary }}>Publisher: {metadata.publisher}</Text> : null}
               {metadata.isbn13 || metadata.isbn10 ? <Text selectable style={{ color: colors.textSecondary }}>ISBN: {metadata.isbn13 ?? metadata.isbn10}</Text> : null}
               {metadata.language ? <Text selectable style={{ color: colors.textSecondary }}>Language: {metadata.language}</Text> : null}
@@ -40,7 +61,7 @@ export function EditionOptionList({ rows, selectedOptionId, disabled, onSelect }
           {row.googleBooksUrl ? <Button title={'View on '+provider} variant="secondary" size="sm"
             accessibilityLabel={'View result ' + (row.ordinal+1) + ' on ' + provider}
             onPress={() => { void Linking.openURL(row.googleBooksUrl!).catch(() => setLinkError(true)); }} /> : null}
-          {row.eligibility === 'ineligible' ? <Text style={{ color: colors.textSecondary }}>Not eligible for this book</Text> : null}
+          {row.eligibility === 'ineligible' ? <Text style={{ color: colors.textSecondary }}>{row.rejectionReason ? rejectionMessages[row.rejectionReason] : 'Not eligible for this book'}</Text> : null}
           <Pressable accessibilityRole="button" disabled={blocked}
             accessibilityLabel={`Select result ${row.ordinal + 1}: ${metadata.title}`}
             accessibilityState={{ disabled: blocked, selected: selectedOptionId === row.optionId }}

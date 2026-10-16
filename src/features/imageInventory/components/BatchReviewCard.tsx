@@ -297,7 +297,7 @@ export function BatchReviewCard({
                             return result;
                         }} />
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                        {commandSlot && editable ? <MetadataSheetTrigger title="Change edition" focusRef={editionTriggerRef} style={{ flexGrow: 1, flexBasis: 150 }}
+                        {commandSlot && editable ? <MetadataSheetTrigger title="Find or change edition" focusRef={editionTriggerRef} style={{ flexGrow: 1, flexBasis: 150 }}
                             onPress={() => openMetadata(editionTriggerRef)} /> : null}
                         {card.allowedActions.includes('view_metadata') ? (
                             <MetadataSheetTrigger title="View metadata" focusRef={viewMetadataTriggerRef} style={{ flexGrow: 1, flexBasis: 150 }}
@@ -326,6 +326,7 @@ export function BatchReviewCard({
 
             {metadataOpen ? <CandidateMetadataSheet identity={identity} card={card} visible
                 disabled={disabled || hasBufferedIdentity} onClose={() => setMetadataOpen(false)}
+                disabledReason={hasBufferedIdentity ? 'Finish editing the title or author on this card before choosing an edition.' : null}
                 commandSlot={commandSlot} onSelection={adoptEdition} onPendingChange={handleSelectionPending}
                 restoreFocusRef={metadataTriggerRef}
                 onUseDetected={(edits) => { updateEdits(edits); setMetadataOpen(false); }}

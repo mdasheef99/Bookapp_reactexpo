@@ -23,8 +23,10 @@ function focus(target: View | null | undefined) {
   else { const handle = findNodeHandle(target); if (handle !== null) AccessibilityInfo.setAccessibilityFocus(handle); }
 }
 export function CandidateMetadataSheet({ identity, card, visible, disabled, onClose, onUseDetected,
-  onEditManually, commandSlot, onSelection, onPendingChange, restoreFocusRef }: {
+  onEditManually, commandSlot, onSelection, onPendingChange, restoreFocusRef, disabledReason }: {
   identity: ImageInventoryIdentity; card: Pick<OwnerBatchReviewCard, 'sessionId' | 'candidateId' | 'metadataState' | 'metadataSummary' | 'candidateVersion' | 'metadataRevision' | 'reviewVersion'>; visible: boolean; disabled: boolean;
+  // Explains a caller-owned lock; it never enables or disables anything itself.
+  disabledReason?: string | null;
   onClose: () => void; onUseDetected: (edits: CompactReviewEdits) => void;
   onEditManually: (edits: CompactReviewEdits) => void;
   commandSlot?: OwnerCandidateCommandSlot;
@@ -70,11 +72,13 @@ export function CandidateMetadataSheet({ identity, card, visible, disabled, onCl
   return <Modal visible={visible} transparent animationType="slide" accessibilityViewIsModal
     onRequestClose={close} onShow={() => focus(headingRef.current)}>
     <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#0008' }}>
-      <GlassCard padding={20} borderRadius={18} style={{ maxHeight: '90%', backgroundColor: colors.bgPrimary }}>
+      <GlassCard padding={20} borderRadius={18} contentStyle={{ flexShrink: 1, minHeight: 0 }}
+        style={{ maxHeight: '90%', backgroundColor: colors.bgPrimary }}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8 }}>
           <Text ref={headingRef} selectable accessibilityRole="header"
             style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '800' }}>Book metadata</Text>
           <Text style={{ color: colors.textSecondary }}>Status: {stateLabels[card.metadataState]}</Text>
+          {disabled && disabledReason ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{disabledReason}</Text> : null}
           {query.isLoading ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Loading metadata…</Text> : null}
           {query.error || !detail || !currentDetected ? <>
             <Text accessibilityLiveRegion="assertive" style={{ color: colors.error }}>Metadata details are unavailable right now.</Text>
@@ -82,7 +86,8 @@ export function CandidateMetadataSheet({ identity, card, visible, disabled, onCl
           </> : null}
           {commandSlot && onSelection ? <CandidateEditionPicker identity={identity} sessionId={card.sessionId}
             candidateId={card.candidateId} commandSlot={commandSlot} disabled={disabled}
-            onSelection={onSelection} onPendingChange={handlePendingChange} minimumVersions={minimumVersions}>{summary}</CandidateEditionPicker> : summary()}
+            onSelection={onSelection} onPendingChange={handlePendingChange} onEditIdentity={() => manual(false)}
+            minimumVersions={minimumVersions}>{summary}</CandidateEditionPicker> : summary()}
           {detail ? <>
             {currentDetected ? <View style={{ gap: 4 }}>
               <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Detected details</Text>

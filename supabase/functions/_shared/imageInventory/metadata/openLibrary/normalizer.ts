@@ -5,7 +5,8 @@ import { boundedInteger, canonicalBcp47, optionalString, requiredString } from '
 import { PHASE9_LIMITS } from '../../contracts/registers';
 import { PHASE9_CONTRACT_VERSION, PHASE9_METADATA_SCHEMA_VERSION } from '../../contracts/versions';
 import { evaluateEditionOption, annotateEditionRows } from '../googleBooks/editionOptions';
-import { normalizeBibliographicText, MetadataQueryIdentity } from '../queryIdentity';
+import type { MetadataQueryIdentity } from '../queryIdentity';
+import { explicitEditionLanguageMatches, explicitEditionTitleMatches } from '../explicitEditionTitle';
 
 export const OPEN_LIBRARY_HOST_POLICY = Object.freeze({
   adapterKey: 'open_library', policyVersion: 'open-library-hosts-v1',
@@ -88,9 +89,9 @@ export function mayMatchOpenLibraryIdentity(value: unknown, query: MetadataQuery
   if (!parsed || new Set(parsed.authorKeys).size > 4) return false;
   const facts = parsed.facts;
   const exactIsbn = query.normalizedIsbn13 !== null && facts.isbn13 === query.normalizedIsbn13;
-  return (!query.normalizedTitle || normalizeBibliographicText(facts.title) === query.normalizedTitle)
-    && (facts.language === query.normalizedLanguage.split('-')[0]
-      || (exactIsbn && query.normalizedLanguage === 'und'))
+  // Authors resolve later, so an unknown language admits only a title-compatible text query here.
+  const titleMatches = explicitEditionTitleMatches(query, facts);
+  return titleMatches && explicitEditionLanguageMatches(query, facts.language, exactIsbn, titleMatches)
     && (exactIsbn || Boolean(query.normalizedTitle && query.normalizedAuthors.length));
 }
 function decode(value: unknown, authors: ReadonlyMap<string,string>, context: Readonly<{
