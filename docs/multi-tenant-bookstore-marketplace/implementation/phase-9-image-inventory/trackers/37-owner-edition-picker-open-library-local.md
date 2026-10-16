@@ -1535,3 +1535,22 @@ Readback: body md5 equals the committed file for all six functions: phase9_editi
 Mutations: one migration application (functions only). No table, row, job, selection, inventory, Storage, provider flag, Auth or configuration change. Not performed: Render metadata-worker deployment, Owner API deployment, client publication, current-scan refresh (none needed: no fresh sets), M75, live Search Books acceptance.
 
 Next: Owner decision on deploying the codex/edition-picker metadata worker to Render; then Owner API/client publication and a controlled live Search Books check on Antifragile (after correcting the author), Charles Peirce and the Encyclopedia.
+
+## 59. Independent review findings and worker/app corrections, 2026-10-16
+
+Authority: the Owner asked for Haiku review agents, then authorized fixing the worker rules, Open Library ordering, app prompt and SDD wording without creating M77, committing and pushing, and stopping before any migration or deployment. Three read-only reviewers (SQL, worker, app) reported; every finding below was re-checked by direct code reading or a local probe before disposition.
+
+Confirmed and corrected (worker; live M76 stays a superset, so completion is unaffected):
+- Surname rule accepted a first name from a comma-form provider name ("John" vs "Smith, John") and joined initials as a surname ("J. O." vs "Ann Jo"); probe confirmed both true. Now surnames come only from uninverted provider names and the supplied author must be one word of two or more letters.
+- Accent folding stripped Cyrillic/Greek marks ("Йод" matched "Иод"; probe confirmed). Now only marks following Latin letters a-z fold.
+- Open Library prioritisation let unknown-language rows consume the four-author budget before known-language rows (adapter page-order allocation confirmed). openLibraryIdentityPriority now orders known-language identities first; a multi-row adapter test fails on the old ordering and passes now.
+
+Confirmed and corrected (app): the "Edit title/author" prompt appeared when every row was only unavailable and over an Owner-confirmed selection (pressing it switches to manual and drops the selection id from the draft); both cases are now excluded, and the explanation has a polite live region. Normative "Change edition" wording in the picker SDD is updated; historical tracker text is unchanged.
+
+Noted, not changed: Greek final sigma and other toLocaleLowerCase vs SQL lower() differences pre-date M76 and fail closed (a TS-eligible row could make completion reject the set); isbn10 acceptance in the strict SQL identity path pre-dates M76; SQL exception handlers map defects to a normal rejection (fail-closed by design); hyphen/apostrophe/comma name variants stay unmatched by design; a pre-existing mounted test can exceed 5 s only under heavy parallel load.
+
+Proposed M77 (NOT_CREATED / NOT_APPLIED): narrow phase9_edition_title_key/author_key/explicit_query to the corrected worker rules for exact parity. Not required for safety because SQL remains a superset.
+
+Verification actually run: matching, title-variant and all Open Library Jest suites 133/133 before the import tidy, explicit matching file 58/58 after it, with the budget test RED on the old ordering; sheet-state suite 28/28; full Jest, tsc, worker build, M76 SQL suite and the continuity validator are recorded in the closeout entry below. No database, Storage, provider, Render, Owner API or client deployment mutation.
+
+Closeout verification (2026-10-16): full Jest 343 suites, 3,500 passed, 0 failed, 4 pre-existing skips; tsc --noEmit and metadata-worker build exit 0; structural worker 14/14; M76 SQL 32/32 (SQL unchanged); Phase 9 continuity validator PASS; no literal combining characters in changed code. Nothing applied or deployed.

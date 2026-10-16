@@ -85,14 +85,20 @@ export function hasSafeOpenLibraryFacts(value: unknown): boolean {
 }
 // Picker §§4.1/13.14: prioritize bounded own-author reads, never establish eligibility here.
 export function mayMatchOpenLibraryIdentity(value: unknown, query: MetadataQueryIdentity): boolean {
+  return openLibraryIdentityPriority(value, query) !== null;
+}
+// 0 = plausible known-language identity, 1 = plausible only via an unknown (und) language.
+// Allocation serves 0 before 1 so und rows never starve a known-language row's author budget.
+export function openLibraryIdentityPriority(value: unknown, query: MetadataQueryIdentity): 0 | 1 | null {
   const parsed = ownFacts(value);
-  if (!parsed || new Set(parsed.authorKeys).size > 4) return false;
+  if (!parsed || new Set(parsed.authorKeys).size > 4) return null;
   const facts = parsed.facts;
   const exactIsbn = query.normalizedIsbn13 !== null && facts.isbn13 === query.normalizedIsbn13;
   // Authors resolve later, so an unknown language admits only a title-compatible text query here.
   const titleMatches = explicitEditionTitleMatches(query, facts);
-  return titleMatches && explicitEditionLanguageMatches(query, facts.language, exactIsbn, titleMatches)
-    && (exactIsbn || Boolean(query.normalizedTitle && query.normalizedAuthors.length));
+  if (!titleMatches || !explicitEditionLanguageMatches(query, facts.language, exactIsbn, titleMatches)
+    || !(exactIsbn || Boolean(query.normalizedTitle && query.normalizedAuthors.length))) return null;
+  return explicitEditionLanguageMatches(query, facts.language, exactIsbn, false) ? 0 : 1;
 }
 function decode(value: unknown, authors: ReadonlyMap<string,string>, context: Readonly<{
   correlationId: string; attemptId: string; fetchedAt: string;

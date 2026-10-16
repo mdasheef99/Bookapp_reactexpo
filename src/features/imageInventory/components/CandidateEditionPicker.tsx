@@ -46,6 +46,11 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
   const fresh = !!choices?.optionsExpiresAt;
   const pending = picker.lookupPending || choices?.lookupStatus === 'pending';
   const selectionRecovery = picker.selectEdition.error ? editionSelectionRecovery(picker.selectEdition.error) : null;
+  // Offer the manual identity path only for a genuine no-match: never when every row is merely
+  // unavailable, and never over an Owner-confirmed choice (switching to manual would drop it).
+  const offerIdentityEdit = !!(choices && fresh && onEditIdentity && !choices.selection?.confirmedByOwner
+    && !choices.rows.some(row => row.eligibility === 'eligible' && row.metadata)
+    && (choices.rows.length === 0 || choices.rows.some(row => row.eligibility === 'ineligible' && row.metadata)));
   const act = async (kind: 'selection' | 'lookup', work: () => Promise<unknown>) => {
     const success = kind === 'selection' ? 'Edition saved.' : 'Edition search requested.';
     setMessage(null);
@@ -84,8 +89,8 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
     {fresh && choices?.rows.length === 0 ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No book results were returned.</Text> : null}
     {choices && fresh ? <EditionOptionList rows={choices.rows} disabled={blocked}
       selectedOptionId={choices.selection?.optionId ?? null} onSelect={select} /> : null}
-    {choices && fresh && onEditIdentity && !choices.rows.some(row => row.eligibility === 'eligible' && row.metadata) ? <>
-      <Text style={{ color: colors.textSecondary }}>No result matches this book's title and author. If either was read incorrectly, correct it, save, then search again.</Text>
+    {offerIdentityEdit ? <>
+      <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No result matches this book's title and author. If either was read incorrectly, correct it, save, then search again.</Text>
       <Button title="Edit title/author" variant="secondary" disabled={blocked} onPress={() => { if (!blocked) onEditIdentity(); }} />
     </> : null}
     {message ? <Text accessibilityLiveRegion="polite" style={{ color: message === 'Edition saved.' ? colors.accent : colors.textSecondary }}>{message}</Text> : null}

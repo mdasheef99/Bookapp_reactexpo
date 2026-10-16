@@ -6085,3 +6085,7 @@ Tracker/source-doc updates: DOC-3, picker SDD, DOC-13, ACTIVE, SESSION-START, TR
 Next authorized action and gate: apply M76 with readback; then Owner decision on the Render worker deployment.
 
 M76 applied 2026-10-16 as live version 20261016153615; readback in tracker 37 section 58. Render worker, Owner API and client release remain held.
+
+## 2026-10-16 - Review corrections (worker/app/spec wording)
+
+Scope, findings and dispositions: tracker 37 section 59. Files: explicitEditionTitle.ts, openLibrary/normalizer.ts, openLibrary/adapter.ts, CandidateEditionPicker.tsx, DOC-3, picker SDD, tests. No migration (M77 proposed, not created); no Supabase/Render/Owner API/client mutation.

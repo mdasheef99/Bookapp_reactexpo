@@ -2,11 +2,13 @@ import { normalizeBibliographicText, type MetadataQueryIdentity } from './queryI
 
 // Owner decisions 2026-10-13/16; picker §4.1 / DOC-3 §5.2.1: explicit choices only.
 // Comparison keys never rewrite catalogue titles/authors or the query identity, and
-// automatic ranking stays exact. Migration M76 mirrors these rules in SQL.
+// automatic ranking stays exact. Migration M76 enforces these rules in SQL; M76 is deliberately
+// a superset here (it still folds marks on any base letter, admits comma-form and joined-initial
+// surnames), so every worker-eligible row passes completion until a parity migration narrows it.
 type EditionText = Readonly<{ title: string; language: string }>;
 const baseLanguage = (language: string) => language.split('-')[0];
-// Only Latin combining accents (U+0300-U+036F); other scripts keep their marks.
-const foldAccents = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/gu, '');
+// Only accents on Latin letters (a-z then U+0300-U+036F); Cyrillic, Greek and other scripts keep marks.
+const foldAccents = (value: string) => value.normalize('NFD').replace(/([a-z])[\u0300-\u036f]+/gu, '$1');
 const bothEnglish = (query: MetadataQueryIdentity, edition: EditionText) =>
   baseLanguage(query.normalizedLanguage) === 'en' && baseLanguage(edition.language) === 'en';
 
@@ -41,17 +43,27 @@ export function explicitEditionTitleMatches(query: MetadataQueryIdentity, editio
   return observed.length > 0 && observed === explicitEditionTitleKey(edition.title, true).replace(/^the /u, '');
 }
 
-// Every supplied author must match. A single-word supplied surname needs identical title keys.
+// A surname is one supplied word of two or more letters, never joined initials ("J. O.").
+function isSingleSurname(author: string): boolean {
+  const words = foldAccents(normalizeBibliographicText(author)).replace(/\./gu, ' ').split(/\s+/u).filter(Boolean);
+  return words.length === 1 && [...words[0]].length >= 2;
+}
+
+// Every supplied author must match. A single-word supplied surname needs identical title keys and
+// matches only the last word of an uninverted provider name ("Smith, John" never yields "john").
 export function explicitEditionAuthorsMatch(query: MetadataQueryIdentity,
   edition: EditionText & Readonly<{ authors: readonly string[] }>): boolean {
   const supplied = edition.authors.map(explicitEditionAuthorKey);
-  const surnames = supplied.map(author => { const words = author.split(' '); return words[words.length - 1]; });
+  const surnames = edition.authors.filter(author => !author.includes(',')).map(author => {
+    const words = explicitEditionAuthorKey(author).split(' ');
+    return words[words.length - 1];
+  });
   const surnameAllowed = !!query.normalizedTitle && sameTitleKey(query, edition);
   return query.normalizedAuthors.every(author => {
     const key = explicitEditionAuthorKey(author);
     if (!key) return false;
     if (supplied.includes(key)) return true;
-    return surnameAllowed && !key.includes(' ') && [...key].length >= 2 && surnames.includes(key);
+    return surnameAllowed && isSingleSurname(author) && surnames.includes(key);
   });
 }
 

@@ -236,3 +236,33 @@ describe('disabled sheet reason', () => {
     expect(open.queryByText('Finish editing the title or author on this card before choosing an edition.')).toBeNull();
   });
 });
+
+// Haiku review corrections 2026-10-16.
+describe('no selectable edition: guarded cases', () => {
+  const blocked = { optionId: '00000000-0000-4000-8000-000000000042', ordinal: 0,
+    googleBooksUrl: 'https://books.google.com/books?id=blocked', eligibility: 'ineligible' as const,
+    metadata: { ...pickerChoices().rows[0].metadata!, title: 'Other book' } };
+  const unavailable = { optionId: '00000000-0000-4000-8000-000000000043', ordinal: 0,
+    googleBooksUrl: null, eligibility: 'unavailable' as const, metadata: null };
+  const mountPrompt = () => render(<QueryClientProvider client={client}><CandidateEditionPicker identity={pickerIdentity}
+    sessionId={pickerChoices().sessionId} candidateId={pickerChoices().candidateId} commandSlot={slots}
+    disabled={false} onSelection={jest.fn()} onEditIdentity={jest.fn()}>{() => null}</CandidateEditionPicker></QueryClientProvider>);
+  it('does not blame the title/author when every result is only unavailable', async () => {
+    read.mockResolvedValue(pickerChoices({ rows: [unavailable] }));
+    const view = mountPrompt();
+    await waitFor(() => expect(view.queryByText('Result 1 unavailable')).toBeTruthy());
+    expect(view.queryByText('Edit title/author')).toBeNull();
+  });
+  it('never offers the manual switch over an Owner-confirmed choice', async () => {
+    read.mockResolvedValue(selectedChoices({ rows: [blocked] }));
+    const view = mountPrompt();
+    await waitFor(() => expect(view.queryByLabelText('Select result 1: Other book')).toBeTruthy());
+    expect(view.queryByText('Edit title/author')).toBeNull();
+  });
+  it('announces the no-match explanation politely', async () => {
+    read.mockResolvedValue(pickerChoices({ rows: [blocked] }));
+    const view = mountPrompt();
+    await waitFor(() => expect(view.queryByText('Edit title/author')).toBeTruthy());
+    expect(view.getByText(/No result matches this book's title and author/u).props.accessibilityLiveRegion).toBe('polite');
+  });
+});

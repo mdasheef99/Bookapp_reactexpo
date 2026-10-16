@@ -2,7 +2,7 @@ import type { MetadataProviderAdapter, MetadataProviderOutcome } from '../provid
 import type { EditionOptionsProviderResult } from '../contracts';
 import type { OptionsRetentionEvidence } from '../../contracts/ownerEditionPicker';
 import { boundOptionsRetentionEvidence, resolveOptionsDeadline } from '../googleBooks/editionOptions';
-import { OPEN_LIBRARY_HOST_POLICY, normalizeOpenLibraryRows, object, authorKey, hasSafeOpenLibraryFacts, mayMatchOpenLibraryIdentity } from './normalizer';
+import { OPEN_LIBRARY_HOST_POLICY, normalizeOpenLibraryRows, object, authorKey, hasSafeOpenLibraryFacts, openLibraryIdentityPriority } from './normalizer';
 import { getOpenLibraryJson, OpenLibraryFailure } from './transport';
 import type { OpenLibraryConfiguration, EditionHttpHooks } from './transport';
 
@@ -52,7 +52,9 @@ export class OpenLibraryEditionOptionsAdapter implements MetadataProviderAdapter
       const keys=new Set<string>();
       // Resolve plausible identities first; the returned/displayed positions stay untouched.
       const safe = page.entries.filter(hasSafeOpenLibraryFacts);
-      const preferred = safe.filter(entry => mayMatchOpenLibraryIdentity(entry,input.query));
+      // Known-language identities first, then unknown-language ones, each in page order.
+      const priority = (entry: unknown) => openLibraryIdentityPriority(entry,input.query);
+      const preferred = [...safe.filter(entry => priority(entry) === 0), ...safe.filter(entry => priority(entry) === 1)];
       for (const entry of [...preferred,...safe]) {
         const references=object(entry)?.authors;
         if (!Array.isArray(references) || references.length>20) continue;

@@ -3,8 +3,10 @@
 import cases from '../../tests/phase9/explicitEditionMatchingCases.json';
 import { buildMetadataQueryIdentity } from '../_shared/imageInventory/metadata/queryIdentity';
 import { normalizeGoogleEditionRows } from '../_shared/imageInventory/metadata/googleBooks/editionOptions';
-import { mayMatchOpenLibraryIdentity, normalizeOpenLibraryRows } from '../_shared/imageInventory/metadata/openLibrary/normalizer';
-import { explicitEditionAuthorKey, explicitEditionTitleKey } from '../_shared/imageInventory/metadata/explicitEditionTitle';
+import { mayMatchOpenLibraryIdentity, normalizeOpenLibraryRows, openLibraryIdentityPriority } from '../_shared/imageInventory/metadata/openLibrary/normalizer';
+import { OpenLibraryEditionOptionsAdapter } from '../_shared/imageInventory/metadata/openLibrary/adapter';
+import { explicitEditionAuthorKey, explicitEditionAuthorsMatch, explicitEditionTitleKey,
+  explicitEditionTitleMatches } from '../_shared/imageInventory/metadata/explicitEditionTitle';
 
 type Side = Readonly<{ title: string; authors: readonly string[]; language: string }>;
 const query = (side: Side) => buildMetadataQueryIdentity({ strategy: 'bibliographic', isbnClue: null,
@@ -54,4 +56,54 @@ it('folds only Latin combining accents and maps & only for English', () => {
   expect(explicitEditionTitleKey('Guerre & Paix', false)).toBe('guerre & paix');
   expect(explicitEditionTitleKey('Les Misérables', false)).toBe('les miserables');
   expect(explicitEditionTitleKey('किताब', false)).toBe('किताब'.normalize('NFD'));
+});
+
+// Haiku review corrections 2026-10-16: worker-only narrowing (M76 SQL stays a superset).
+
+it.each([
+  ['comma-form provider name never yields a first-name surname', 'Quest', ['John'], ['Smith, John'], false],
+  ['joined initials are not a surname', 'Quest', ['J. O.'], ['Ann Jo'], false],
+  ['uninverted provider surname still matches', 'Quest', ['Smith'], ['John Smith'], true],
+] as const)('surname rule: %s', (_name, title, observed, provider, expected) => {
+  expect(explicitEditionAuthorsMatch(query({ title, authors: observed, language: 'en' }),
+    { title, language: 'en', authors: provider })).toBe(expected);
+});
+
+it('folds accents only on Latin letters', () => {
+  expect(explicitEditionTitleMatches(query({ title: 'Йод', authors: ['А Б'], language: 'ru' }),
+    { title: 'Иод', language: 'ru' })).toBe(false);
+  expect(explicitEditionTitleKey('Ἀθῆναι', false)).toBe('Ἀθῆναι'.normalize('NFKC').toLowerCase().normalize('NFD'));
+  expect(explicitEditionTitleKey('Café Crème', false)).toBe('cafe creme');
+});
+
+it('ranks known-language Open Library identities before unknown-language ones', () => {
+  const q = query({ title: 'Dune', authors: ['Frank Herbert'], language: 'en' });
+  const base = { key: '/books/OL100M', title: 'Dune', authors: [{ key: '/authors/OL1A' }] };
+  expect(openLibraryIdentityPriority({ ...base, languages: [{ key: '/languages/eng' }] }, q)).toBe(0);
+  expect(openLibraryIdentityPriority({ ...base, languages: [] }, q)).toBe(1);
+  expect(openLibraryIdentityPriority({ ...base, title: 'Other', languages: [] }, q)).toBeNull();
+});
+
+it('an unknown-language row cannot starve a known-language row of author lookups', async () => {
+  const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
+  const requests: string[] = [];
+  const adapter = new OpenLibraryEditionOptionsAdapter({ timeoutMs: 1000, maxResponseBytes: 64_000,
+    fetcher: async address => {
+      const path = new URL(address instanceof Request ? address.url : String(address)).pathname;
+      requests.push(path);
+      if (path === '/search.json') return json({ docs: [{ key: '/works/OL1W' }] });
+      if (path === '/works/OL1W/editions.json') return json({ entries: [
+        { key: '/books/OL100M', title: 'Dune', languages: [],
+          authors: [10, 11, 12, 13].map(id => ({ key: '/authors/OL' + id + 'A' })) },
+        { key: '/books/OL101M', title: 'Dune', languages: [{ key: '/languages/eng' }], authors: [{ key: '/authors/OL20A' }] },
+      ] });
+      return json({ key: path.replace(/\.json$/u, ''), name: 'Frank Herbert' });
+    } });
+  const result = await adapter.lookupEditionOptions({
+    query: query({ title: 'Dune', authors: ['Frank Herbert'], language: 'en' }),
+    correlationId: 'budget-lookup', attemptId: 'budget-attempt', signal: new AbortController().signal,
+    httpHooks: { beforeRequest: async () => {}, afterRequest: async () => {} },
+  });
+  expect(requests).toContain('/authors/OL20A.json');
+  expect(result.rows[1]).toMatchObject({ ordinal: 1, eligibility: 'eligible' });
 });
