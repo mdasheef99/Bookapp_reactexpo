@@ -6083,3 +6083,5 @@ Supabase/external mutations: read-only preflight only at this entry; M76 applica
 Decisions/deviations/risks: M75 number left for the deferred exhausted-job recovery; reasons stay legacy until Owner API deployment; a worker-only release without M76 is unsafe (proved).
 Tracker/source-doc updates: DOC-3, picker SDD, DOC-13, ACTIVE, SESSION-START, TRACKER, README, tracker 37, current-vs-target, traceability, 04 Security.
 Next authorized action and gate: apply M76 with readback; then Owner decision on the Render worker deployment.
+
+M76 applied 2026-10-16 as live version 20261016153615; readback in tracker 37 section 58. Render worker, Owner API and client release remain held.
