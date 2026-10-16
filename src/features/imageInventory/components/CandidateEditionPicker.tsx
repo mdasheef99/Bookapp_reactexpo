@@ -85,7 +85,7 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
     {pending ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Searching books…</Text> : null}
     {picker.selectionPending ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Saving edition…</Text> : null}
     {choices && !fresh && !pending ? <>
-      <Text style={{ color: colors.textSecondary }}>{choices.lookupStatus === 'failed'
+      <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{choices.lookupStatus === 'failed'
         ? 'Edition search failed. Search again when ready.' : 'Alternatives are missing or expired. Your current choice is kept.'}</Text>
       <Button title="Search Books" disabled={blocked} onPress={() => {
         if (!blocked) void act('lookup', () => picker.requestOptions.mutateAsync(createEditionLookupCommand(choices)));

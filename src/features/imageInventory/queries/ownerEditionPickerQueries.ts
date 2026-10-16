@@ -12,7 +12,7 @@ import { useOwnerCardCommand, type OwnerCandidateCommandSlot } from '../identity
 import { imageInventoryKeys, type ImageInventoryIdentity } from './ownerUxQueries';
 import { acceptEditionChoices, acceptEditionLookupReceipt } from './ownerEditionPickerCache';
 import { ownerEditionPickerKeys } from './ownerEditionPickerKeys';
-import { acceptCandidateRead, assertOwnerCardCurrent, authorityChanged } from './ownerCandidateAuthority';
+import { assertOwnerCardCurrent, authorityChanged, candidateAuthorityIsCurrent } from './ownerCandidateAuthority';
 import { synchronizeCandidateReviewSuccess } from './ownerUxReviewQueries';
 
 export { ownerEditionPickerKeys } from './ownerEditionPickerKeys';
@@ -129,7 +129,10 @@ export function useOwnerEditionPicker(
           expectedMetadataRevision: request.expectedMetadataRevision,
           review: request.review, idempotencyKey: save.key, commandId: save.commandId }, signal);
         assertCurrent();
-        const detail = acceptCandidateRead(client, identity, saved);
+        // Same rule as the card's review save: a regressive save response is never replaced by the cache.
+        if (saved.sessionId !== sessionId || saved.candidateId !== candidateId
+          || !candidateAuthorityIsCurrent(client, identity, saved)) throw authorityChanged();
+        const detail = saved;
         await synchronizeCandidateReviewSuccess(client, identity, sessionId, candidateId, detail);
         assertCurrent();
         callbackRef.current.onIdentitySaved?.(detail);

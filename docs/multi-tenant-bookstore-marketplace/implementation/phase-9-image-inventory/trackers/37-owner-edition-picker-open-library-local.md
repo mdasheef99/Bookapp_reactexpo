@@ -1634,3 +1634,31 @@ Encyclopedia (read-only, public Open Library GET of OL18845155W editions with th
 Held worker on real results (read-only; stored live metadata re-evaluated with the bbc93ea+ helpers; 2026-10-16 dry run counts): False Dawn Granta 2002 (und) ineligible -> eligible; Antifragile unchanged (Anti-Fragile hyphen, Nassim N Taleb middle initial, Spanish/Hebrew titles stay ineligible; 3 eligible either way); dry-run Charles Peirce 1 eligible, Unended Quest 6/10, Encyclopedia 0/4 unavailable. A deploy now adds unknown-language rows and the M76 rules but does not fix the hyphen, middle-initial, spelling or work-author cases.
 
 Search status for the Owner: M76 (looser SQL rules) is live; the matching worker is committed but not deployed, so live searches still use the stricter deployed worker. Database/storage mutations in this entry: none.
+
+## 66. Review of 76348f3..c0c485b and bounded fixes, 2026-10-17
+
+Authority: Owner approved the review plan and gave freedom to fix findings except new migrations; push, deploys and live-data writes stay separate.
+
+Live M76 (read-only, project ahntbtktjjmvfosgkmgn): phase9_edition_title_key, _author_key, _explicit_query, _option_eligible, _rejection_reason and _choices prosrc md5 equal the bodies in 20261016000076_marketplace_phase9_edition_explicit_matching.sql; ACL postgres only; search_path ''. schema_migrations since 2026-10-15: 20261016153615 only. Owner API Edge Function phase9-owner-ingestion is version 16 (about 2026-10-12), so the optional rejectionReason header path in this range is undeployed; the client treats it as optional (confirmed).
+
+Review agents (read-only): A Sonnet matching parity; B Sonnet client data flow; C Haiku sheet checklist; D Haiku docs facts.
+
+Fixed (tests fail without the fix, pass with it):
+- B2: ownerEditionPickerQueries identity save used acceptCandidateRead, which silently returns cached detail when the save response looks older; it now throws authority-changed like the card's review save, so no stale adopt and no search.
+- B1: after an identity save, BatchReviewCard could re-adopt the older parent card authority if the card read lagged, re-enabling Add with old versions; it now waits (savedIdentityRevision guard, same as the edition-selection guard). Mounted test asserts Add stays locked.
+- C14: "Showing all results…" and the search-failed/expired message gained accessibilityLiveRegion="polite".
+- Test gap: an emptied title cannot be saved.
+
+Rejected or deferred, with reasons:
+- A1 Greek final sigma: live database uses ICU (datlocprovider i); lower('ΟΔΟΣ') = 'οδος', same as the worker. Rejected.
+- A2/A3 SQL accepts more than the worker (comma-form surnames, joined initials as surname, marks on non-Latin letters): documented superset; safety rests on the worker; the parity narrowing needs a migration. Deferred, no migration created.
+- A4 'Al' equals 'A. L.': spec-required initial joining. No change.
+- A5 shared case-file gaps (ISBN, regional tags, und with initials): cases where TS and SQL intentionally differ cannot be shared; deferred with the parity migration.
+- B3 stale expected versions after a sheet selection: not reachable; the sheet is disabled while the card awaits its read. A tried fix was reverted.
+- B4 removed choices query after a failed reread: plausible, same pattern as the existing review save; deferred.
+- B5 fresh idempotency key per identity retry: same as the existing review save; the conflict message is accurate enough. No change.
+- B6 edits after the save snapshot: not reachable while the sheet is modal. Rejected.
+- C6 unavailable rows show text, not a disabled button: existing design. C rows over ten: server ordinals cap at 0-9. C stale-selection warning: low, deferred.
+- D: newest handoff blocks identical across six files; M76/M77 and Render-held wording consistent; tracker 37 has two pre-existing "## 11." headings (historical, not renumbered); this entry adds the missing tracker 02 record.
+
+Verification: src/features/imageInventory 782 passed / 4 skipped; full Jest 3,514 passed / 0 failed / 4 skipped (344 suites); tsc clean. One mounted test timed out only on cold runs right after file changes and passed warm (about 2.8 s) at HEAD and with the fixes. Web export rebuilt; the look-only browser check was not run because the local app requires the Owner's sign-in. Proxy and static server stopped. Database/storage mutations: none.

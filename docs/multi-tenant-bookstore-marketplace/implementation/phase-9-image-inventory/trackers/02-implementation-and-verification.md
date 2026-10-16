@@ -6093,3 +6093,7 @@ Scope, findings and dispositions: tracker 37 section 59. Files: explicitEditionT
 ## 2026-10-17 - Edition-sheet title/author fix (client)
 
 Scope and evidence: tracker 37 sections 61-63 (loading-flash fix, live Select edition check, save-then-search identity fix). Files: EditionIdentityFix.tsx, CandidateEditionPicker.tsx, CandidateMetadataSheet.tsx, BatchReviewCard.tsx, ownerEditionPickerQueries.ts, compactReviewDraft.ts, tests. Full Jest 3,510 passed / 0 failed; tsc clean. No migration; no Supabase schema, Render, Owner API or client deployment. Live data writes: Owner-authorized False Dawn search and selection only (section 62).
+
+## 2026-10-17 - Edition sheet display fixes, findings, and review fixes (client)
+
+Scope and evidence: tracker 37 sections 64-66 (live Antifragile identity check, display fixes and read-only investigations, review of 76348f3..c0c485b with bounded fixes). Files: EditionOptionList.tsx, EditionIdentityFix.tsx, CandidateEditionPicker.tsx, BatchReviewCard.tsx, ownerEditionPickerQueries.ts, tests. Full Jest 3,514 passed / 0 failed / 4 skipped; tsc clean. Live M76 readback matches the file. No migration; no Supabase schema, Render, Owner API or client deployment; no database or storage writes.

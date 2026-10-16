@@ -7,7 +7,7 @@ import { CandidateEditionPicker } from '../components/CandidateEditionPicker';
 import type { EditionIdentityFixSource } from '../components/EditionIdentityFix';
 import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
 import { OwnerUxClientError, ownerUxService } from '../api/ownerUxService';
-import { resetImageInventoryIdentityForTests } from '../queries/ownerUxQueries';
+import { imageInventoryKeys, resetImageInventoryIdentityForTests } from '../queries/ownerUxQueries';
 import { identityFixReview } from '../review/compactReviewDraft';
 import { pickerCard, pickerChoices, pickerDefaults, pickerDetail, pickerIdentity, pickerReview,
   selectedChoices } from '../testing/editionPickerClientFixtures';
@@ -74,6 +74,15 @@ it('is offered even when selectable results exist, and warns that saving clears 
   expect(save).not.toHaveBeenCalled();
 });
 
+it('an emptied title cannot be saved', async () => {
+  const view = mount();
+  await openAndCorrect(view);
+  expect(button(view, 'Save and search again').props.disabled).toBe(false);
+  fireEvent.changeText(view.getByLabelText('Corrected title'), '   ');
+  expect(button(view, 'Save and search again').props.disabled).toBe(true);
+  expect(view.getByText('Fix title or author')).toBeTruthy();
+});
+
 it('omits the clear warning when nothing is chosen', async () => {
   read.mockResolvedValue(pickerChoices());
   const view = mount();
@@ -116,6 +125,19 @@ it('a changed book stops before any search', async () => {
   await waitFor(() => expect(view.getByText('This book changed. Close and reopen this sheet, then try again.')).toBeTruthy());
   expect(lookup).not.toHaveBeenCalled();
   expect(view.getByTestId('edition-identity-fix')).toBeTruthy();
+});
+
+it('a save response older than the known card is never replaced by cached state', async () => {
+  const newer = selectedChoices({ candidateVersion: 9, metadataRevision: 12 });
+  client.setQueryData(imageInventoryKeys.candidate(pickerIdentity, newer.sessionId, newer.candidateId),
+    pickerDetail(newer, pickerReview));
+  const saved = jest.fn();
+  const view = mount(source(), saved);
+  await openAndCorrect(view);
+  await act(async () => { fireEvent.press(view.getByText('Save and search again')); });
+  await waitFor(() => expect(view.getByText('This book changed. Close and reopen this sheet, then try again.')).toBeTruthy());
+  expect(saved).not.toHaveBeenCalled();
+  expect(lookup).not.toHaveBeenCalled();
 });
 
 it('an incomplete card explains itself without saving', async () => {

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Modal, Platform, StyleSheet } from 'react-native';
 import { act, cleanupAsync, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { BatchReviewCard } from '../components/BatchReviewCard';
+import { AddCandidateToInventoryAction } from '../components/AddCandidateToInventoryAction';
 import { CandidateReviewEditionSheet } from '../components/CandidateReviewEditionSheet';
 import { ownerUxService } from '../api/ownerUxService';
 import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
@@ -220,4 +221,7 @@ it('saves a title fix with the card edits, clears the draft and searches the sav
     review: { originalTitle: 'Corrected title', priceMinor: 4200, metadataChoice: { mode: 'manual', selectionId: null } } });
   expect(lookup.mock.calls[0][0]).toMatchObject({ expectedRequestGeneration: 2 });
   await waitFor(() => expect(drafts).toHaveBeenLastCalledWith(initial.candidateId, {}, `${savedChoices.candidateVersion}:${savedChoices.metadataRevision}:2`));
+  // The parent card read has not caught up: Add stays locked instead of re-adopting the older card authority.
+  await act(async () => { await Promise.resolve(); });
+  expect(view.UNSAFE_getByType(AddCandidateToInventoryAction).props.disabled).toBe(true);
 });

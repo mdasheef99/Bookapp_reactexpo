@@ -36,7 +36,7 @@ export function EditionOptionList({ rows, selectedOptionId, disabled, onSelect }
     {rows.length > 0 ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>
       {eligibleCount} selectable {eligibleCount === 1 ? 'edition' : 'editions'} in {rows.length} {rows.length === 1 ? 'result' : 'results'}.
     </Text> : null}
-    {autoExpanded ? <Text style={{ color: colors.textSecondary }}>Showing all results because the selectable editions are further down.</Text> : null}
+    {autoExpanded ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Showing all results because the selectable editions are further down.</Text> : null}
     {rows.slice(0, expanded ? 10 : 5).map(row => {
       const metadata = row.metadata;
       const provider = row.googleBooksUrl?.startsWith('https://openlibrary.org/books/') ? 'Open Library' : 'Google Books';
