@@ -1576,3 +1576,15 @@ Haiku report disposition: confirmed real and fixed in §59 (comma/initials surna
 Decision support: M77 is not required for safety; live M76 accepts every reachable worker-eligible row and selection still requires the worker's stored eligible flag. M77 stays PROPOSED / NOT_CREATED / NOT_APPLIED as an optional exact-parity cleanup. Remaining real risk is untested behaviour on real provider data until the worker is deployed and a controlled live Search Books check runs.
 
 Evidence files (scratch, not committed): parity-fuzz.mjs, live-gen.cjs, live-compact.cjs, live2.cases.json, live2.sql in this session's scratchpad. Next authorized action unchanged: Owner decision on the Render metadata-worker deployment; M77 creation separately.
+
+## 61. Metadata sheet loading-flash fix, 2026-10-16
+
+Authority: Owner approved fixing the flash found in the read-only local UI check. Client-only change; no migration, no database or storage write, no Render, Owner API or client publication.
+
+Finding: while the first candidate-detail read was in flight, CandidateMetadataSheet showed "Loading metadata…" together with the red "Metadata details are unavailable right now." block and Retry, because the error condition did not exclude the loading state. It was a transient display fault, not a failed read.
+
+Fix: the unavailable block and Retry now render only when `!query.isLoading` and (read error, or no detail, or no current detected identity).
+
+Tests: two new tests in ownerEditionPickerSheetStates.test.tsx ("metadata detail loading state"): pending first read shows only the loading text (RED before the fix); a genuinely failed read still shows the error and Retry after loading ends. Verification run: src/features/imageInventory 770 passed; full Jest 3502 passed, 4 skipped; tsc --noEmit clean.
+
+Database/storage mutations: none. Next authorized action unchanged: Owner decision on the Render metadata-worker deployment; M77 stays PROPOSED / NOT_CREATED / NOT_APPLIED.

@@ -80,7 +80,7 @@ export function CandidateMetadataSheet({ identity, card, visible, disabled, onCl
           <Text style={{ color: colors.textSecondary }}>Status: {stateLabels[card.metadataState]}</Text>
           {disabled && disabledReason ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{disabledReason}</Text> : null}
           {query.isLoading ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Loading metadata…</Text> : null}
-          {query.error || !detail || !currentDetected ? <>
+          {!query.isLoading && (query.error || !detail || !currentDetected) ? <>
             <Text accessibilityLiveRegion="assertive" style={{ color: colors.error }}>Metadata details are unavailable right now.</Text>
             <Button title="Retry metadata" variant="secondary" onPress={() => { void query.refetch(); }} />
           </> : null}

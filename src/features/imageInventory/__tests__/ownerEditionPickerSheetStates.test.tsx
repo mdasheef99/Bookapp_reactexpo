@@ -9,7 +9,7 @@ import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
 import { ownerUxService } from '../api/ownerUxService';
 import { resetImageInventoryIdentityForTests, imageInventoryKeys } from '../queries/ownerUxQueries';
 import { ownerEditionPickerKeys } from '../queries/ownerEditionPickerKeys';
-import { pickerChoices, selectedChoices, pickerIdentity, pickerCard, pickerDetail, pickerReview } from '../testing/editionPickerClientFixtures';
+import { deferred, pickerChoices, selectedChoices, pickerIdentity, pickerCard, pickerDetail, pickerReview } from '../testing/editionPickerClientFixtures';
 
 jest.mock('expo-image', () => ({ Image: (props: object) => {
   const React = require('react'); const { View } = require('react-native'); return React.createElement(View, props);
@@ -264,5 +264,32 @@ describe('no selectable edition: guarded cases', () => {
     const view = mountPrompt();
     await waitFor(() => expect(view.queryByText('Edit title/author')).toBeTruthy());
     expect(view.getByText(/No result matches this book's title and author/u).props.accessibilityLiveRegion).toBe('polite');
+  });
+});
+
+// 2026-10-16 UI check: the red "unavailable" block must not flash while the first detail read is in flight.
+describe('metadata detail loading state', () => {
+  const unavailable = 'Metadata details are unavailable right now.';
+  const mountSheet = () => render(<QueryClientProvider client={client}><CandidateMetadataSheet
+    identity={pickerIdentity} card={pickerCard()} visible disabled={false}
+    onClose={jest.fn()} onUseDetected={jest.fn()} onEditManually={jest.fn()} /></QueryClientProvider>);
+  it('shows Loading metadata without the unavailable error or Retry while the first read is pending', async () => {
+    const pending = deferred<ReturnType<typeof pickerDetail>>();
+    jest.spyOn(ownerUxService, 'readCandidate').mockReturnValue(pending.promise as never);
+    const view = mountSheet();
+    await waitFor(() => expect(view.queryByText('Loading metadata…')).toBeTruthy());
+    expect(view.queryByText(unavailable)).toBeNull();
+    expect(view.queryByText('Retry metadata')).toBeNull();
+    await act(async () => { pending.resolve(pickerDetail(selectedChoices(), pickerReview)); });
+    await waitFor(() => expect(view.queryByText('Loading metadata…')).toBeNull());
+    expect(view.queryByText(unavailable)).toBeNull();
+    expect(view.queryByText('Retry metadata')).toBeNull();
+  });
+  it('still shows the error and Retry once a read has genuinely failed', async () => {
+    jest.spyOn(ownerUxService, 'readCandidate').mockRejectedValue(new Error('read failed'));
+    const view = mountSheet();
+    await waitFor(() => expect(view.queryByText('Loading metadata…')).toBeNull());
+    expect(view.queryByText(unavailable)).toBeTruthy();
+    expect(view.queryByText('Retry metadata')).toBeTruthy();
   });
 });
