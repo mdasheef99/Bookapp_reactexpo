@@ -6,7 +6,7 @@ import { normalizeBibliographicText, type MetadataQueryIdentity } from './queryI
 type EditionText = Readonly<{ title: string; language: string }>;
 const baseLanguage = (language: string) => language.split('-')[0];
 // Only Latin combining accents (U+0300-U+036F); other scripts keep their marks.
-const foldAccents = (value: string) => value.normalize('NFD').replace(/[̀-ͯ]/gu, '');
+const foldAccents = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/gu, '');
 const bothEnglish = (query: MetadataQueryIdentity, edition: EditionText) =>
   baseLanguage(query.normalizedLanguage) === 'en' && baseLanguage(edition.language) === 'en';
 

@@ -11,7 +11,7 @@ BEGIN;
 CREATE FUNCTION marketplace_sec.phase9_edition_title_key(p_value text,p_english boolean)
 RETURNS text LANGUAGE plpgsql IMMUTABLE SET search_path='' AS $$
 DECLARE k text:=pg_catalog.regexp_replace(normalize(
- marketplace_sec.phase9_metadata_normalized_text(p_value),NFD),'[̀-ͯ]','','g');
+ marketplace_sec.phase9_metadata_normalized_text(p_value),NFD),'[\u0300-\u036f]','','g');
 BEGIN
  IF p_english THEN
   k:=pg_catalog.btrim(pg_catalog.regexp_replace(pg_catalog.replace(k,'&',' and '),'[[:space:]]+',' ','g'));
@@ -26,7 +26,7 @@ DECLARE w text; initials text:=''; result text[]:=ARRAY[]::text[];
 BEGIN
  FOR w IN SELECT x FROM pg_catalog.regexp_split_to_table(pg_catalog.btrim(pg_catalog.regexp_replace(
   pg_catalog.replace(pg_catalog.regexp_replace(normalize(
-   marketplace_sec.phase9_metadata_normalized_text(p_value),NFD),'[̀-ͯ]','','g'),'.',' '),
+   marketplace_sec.phase9_metadata_normalized_text(p_value),NFD),'[\u0300-\u036f]','','g'),'.',' '),
   '[[:space:]]+',' ','g')),' ') x WHERE x<>''
  LOOP
   IF pg_catalog.char_length(w)=1 THEN initials:=initials||w;
