@@ -10,22 +10,27 @@ import { freshEditionChoices } from '../queries/ownerEditionPickerCache';
 import { versionsRegress, type CandidateVersions } from '../queries/ownerCandidateAuthority';
 import { createEditionLookupCommand, createEditionSelectionCommand } from '../api/ownerEditionPickerCommands';
 import { EditionOptionList } from './EditionOptionList';
+import { EditionIdentityFix, type EditionIdentityFixSource } from './EditionIdentityFix';
+import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
 import { editionSelectionRecovery } from '../review/editionSelectionRecovery';
 
 // Picker §§3/6-7/13.2: only explicit Search Books acquires alternatives.
 export function CandidateEditionPicker({ identity, sessionId, candidateId, commandSlot,
-  disabled, onSelection, onPendingChange, onEditIdentity, minimumVersions, children }: {
+  disabled, onSelection, onPendingChange, onEditIdentity, identityFix, onIdentitySaved, minimumVersions, children }: {
   identity: ImageInventoryIdentity; sessionId: string; candidateId: string;
   commandSlot: OwnerCandidateCommandSlot; disabled: boolean;
   onSelection: (choices: EditionChoices, previousRevision: number) => void;
   onPendingChange?: (pending: boolean) => void;
   // Existing manual identity path; offered when a fresh result set has nothing selectable.
   onEditIdentity?: () => void;
+  // Save-then-search correction (batch card); replaces onEditIdentity when supplied.
+  identityFix?: EditionIdentityFixSource;
+  onIdentitySaved?: (detail: OwnerCandidateDetail) => void;
   minimumVersions?: CandidateVersions;
   children: (choices: EditionChoices | undefined) => ReactNode;
 }) {
   const { colors } = useTheme();
-  const picker = useOwnerEditionPicker(identity, sessionId, candidateId, commandSlot, { onSelection });
+  const picker = useOwnerEditionPicker(identity, sessionId, candidateId, commandSlot, { onSelection, onIdentitySaved });
   const [, tick] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
   const stale = !!minimumVersions && !!picker.choices.data && versionsRegress(picker.choices.data, minimumVersions);
@@ -39,18 +44,19 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
     return () => clearTimeout(timer);
   }, [expiresAt]);
   useEffect(() => {
-    onPendingChange?.(picker.selectionPending);
-  }, [onPendingChange, picker.selectionPending]);
+    onPendingChange?.(picker.selectionPending || picker.identityPending);
+  }, [onPendingChange, picker.selectionPending, picker.identityPending]);
   useEffect(() => () => onPendingChange?.(false), [onPendingChange]);
-  const blocked = disabled || picker.selectionPending || picker.isCommandActive();
+  const blocked = disabled || picker.selectionPending || picker.identityPending || picker.isCommandActive();
   const fresh = !!choices?.optionsExpiresAt;
   const pending = picker.lookupPending || choices?.lookupStatus === 'pending';
   const selectionRecovery = picker.selectEdition.error ? editionSelectionRecovery(picker.selectEdition.error) : null;
   // Offer the manual identity path only for a genuine no-match: never when every row is merely
   // unavailable, and never over an Owner-confirmed choice (switching to manual would drop it).
-  const offerIdentityEdit = !!(choices && fresh && onEditIdentity && !choices.selection?.confirmedByOwner
+  const noMatch = !!(choices && fresh && !choices.selection?.confirmedByOwner
     && !choices.rows.some(row => row.eligibility === 'eligible' && row.metadata)
     && (choices.rows.length === 0 || choices.rows.some(row => row.eligibility === 'ineligible' && row.metadata)));
+  const offerIdentityEdit = noMatch && !identityFix && !!onEditIdentity;
   const act = async (kind: 'selection' | 'lookup', work: () => Promise<unknown>) => {
     const success = kind === 'selection' ? 'Edition saved.' : 'Edition search requested.';
     setMessage(null);
@@ -91,8 +97,11 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
       selectedOptionId={choices.selection?.optionId ?? null} onSelect={select} /> : null}
     {offerIdentityEdit ? <>
       <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No result matches this book's title and author. If either was read incorrectly, correct it, save, then search again.</Text>
-      <Button title="Edit title/author" variant="secondary" disabled={blocked} onPress={() => { if (!blocked) onEditIdentity(); }} />
+      <Button title="Edit title/author" variant="secondary" disabled={blocked} onPress={() => { if (!blocked) onEditIdentity?.(); }} />
     </> : null}
+    {identityFix && noMatch ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No result matches this book's title and author. If either was read incorrectly, fix it below to save it and search again.</Text> : null}
+    {identityFix ? <EditionIdentityFix source={identityFix} blocked={blocked} clearsEdition={!!picker.choices.data?.selection}
+      onSubmit={request => picker.saveIdentityAndSearch.mutateAsync(request)} /> : null}
     {message ? <Text accessibilityLiveRegion="polite" style={{ color: message === 'Edition saved.' ? colors.accent : colors.textSecondary }}>{message}</Text> : null}
     {selectionRecovery?.kind === 'refresh' ? <Button title="Refresh edition choices" variant="secondary"
       disabled={blocked || picker.choices.isFetching} onPress={() => { void picker.choices.refetch(); }} /> : null}

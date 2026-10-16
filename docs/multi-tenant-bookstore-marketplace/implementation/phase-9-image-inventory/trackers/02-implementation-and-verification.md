@@ -6089,3 +6089,7 @@ M76 applied 2026-10-16 as live version 20261016153615; readback in tracker 37 se
 ## 2026-10-16 - Review corrections (worker/app/spec wording)
 
 Scope, findings and dispositions: tracker 37 section 59. Files: explicitEditionTitle.ts, openLibrary/normalizer.ts, openLibrary/adapter.ts, CandidateEditionPicker.tsx, DOC-3, picker SDD, tests. No migration (M77 proposed, not created); no Supabase/Render/Owner API/client mutation.
+
+## 2026-10-17 - Edition-sheet title/author fix (client)
+
+Scope and evidence: tracker 37 sections 61-63 (loading-flash fix, live Select edition check, save-then-search identity fix). Files: EditionIdentityFix.tsx, CandidateEditionPicker.tsx, CandidateMetadataSheet.tsx, BatchReviewCard.tsx, ownerEditionPickerQueries.ts, compactReviewDraft.ts, tests. Full Jest 3,510 passed / 0 failed; tsc clean. No migration; no Supabase schema, Render, Owner API or client deployment. Live data writes: Owner-authorized False Dawn search and selection only (section 62).

@@ -861,3 +861,7 @@ Owner-approved four-correction scope traces to DOC-3 §5.2.1, DOC-8 approved-fee
 ## 2026-10-16 - Explicit edition-option matching amendment
 
 DOC-3 §5.2.1 (2026-10-16) / picker §4.1 -> explicitEditionTitle.ts (worker), M76 phase9_edition_option_eligible / phase9_edition_explicit_query (SQL), shared cases supabase/tests/phase9/explicitEditionMatchingCases.json -> EP-AC02 (per-record eligibility, new positive and negative cases) and EP-AC05/11/13-15/18-20 (selection, Save/Add, expiry and authority unchanged; workflow proof in phase9EditionExplicitMatching.integration.test.mjs). Picker §3.1 reasons -> M76 phase9_edition_choices / phase9_edition_rejection_reason. Client prompts (Edit title/author, disabled reason, Find or change edition) -> picker §3 / EP-AC03 and the existing manual path; tests in ownerEditionPickerSheetStates.test.tsx. No acceptance ID added.
+
+## 2026-10-17 - Edition-sheet identity fix (save, then search)
+
+Picker §3 / EP-D07 amendment (2026-10-17) -> EditionIdentityFix.tsx, CandidateEditionPicker identityFix, useOwnerEditionPicker saveIdentityAndSearch (existing update_candidate_review, then request_candidate_edition_options with the post-save generation), BatchReviewCard identityFixReview/adoptSavedIdentity -> EP-AC09 (identity edit resets old options and selection through the existing phase9_edition_identity_change trigger) and tests ownerEditionIdentityFix.test.tsx (7) plus ownerEditionPickerMounted.test.tsx (card edits saved, draft cleared, saved identity searched). No SQL or worker change.

@@ -213,6 +213,21 @@ export function buildCompactReview(
     return validateCompactReview(card, defaults, edits, choices).review;
 }
 
+// Edition-sheet identity fix: the review Add would save, with the Owner's corrected
+// title/author confirmed and the metadata choice returned to manual.
+export function identityFixReview(
+    card: OwnerBatchReviewCard,
+    defaults: ScanSetupFormState,
+    edits: CompactReviewEdits,
+    title: string,
+    authors: string[],
+    choices?: EditionChoices,
+): CompactReviewValidation {
+    return validateCompactReview(card, defaults, {
+        ...edits, originalTitle: title, authors, metadataChoice: { mode: 'manual', selectionId: null },
+    }, choices);
+}
+
 export function detectedIdentityEdits(card: OwnerBatchReviewCard): CompactReviewEdits {
     return {
         originalTitle: card.observed.title,

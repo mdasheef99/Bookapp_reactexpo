@@ -9,7 +9,7 @@ import { candidateCommitAuthorityKey } from '../commit/inventoryCommitPolicy';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
 import type { ImageInventoryIdentity } from '../queries/ownerUxQueries';
 import {
-    buildCompactReview, compactReviewDisplay,
+    buildCompactReview, compactReviewDisplay, identityFixReview,
     validateCompactReview,
     type CompactReviewEdits,
 } from '../review/compactReviewDraft';
@@ -24,6 +24,8 @@ import { EditionChoicesReader } from './EditionChoicesReader';
 import { MetadataSheetTrigger } from './MetadataSheetTrigger';
 import type { OwnerCandidateCommandSlot } from '../identity/useOwnerCardCommand';
 import type { EditionChoices } from '../contracts/ownerEditionPicker';
+import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
+import type { EditionIdentityFixSource } from './EditionIdentityFix';
 import { applyCompactEditionSelection } from '../review/editionSelectionDraft';
 import { InlineReviewIdentity, InlineReviewValueFields } from './InlineBatchReviewFields';
 import { OwnerConfirmationDialog } from './OwnerConfirmationDialog';
@@ -142,6 +144,24 @@ export function BatchReviewCard({
         acceptChoices(canonical);
         onDraftChange(card.candidateId, next, acceptedAuthority.current);
         onEditionSelection?.(canonical);
+    };
+    const identityFix: EditionIdentityFixSource = {
+        title: display.title, authors: display.authors,
+        build: (title, authors) => {
+            const result = identityFixReview(card, defaults, latestEdits.current, title, authors, editionChoices);
+            return result.review
+                ? { review: result.review, expectedCandidateVersion: card.candidateVersion,
+                    expectedMetadataRevision: card.metadataRevision }
+                : { message: 'Complete this card first: ' + (result.issues[0]?.safeMessage ?? 'check its details.') };
+        },
+    };
+    // The save carried every card edit, so the draft is now server authority.
+    const adoptSavedIdentity = (detail: OwnerCandidateDetail) => {
+        acceptedAuthority.current = `${detail.candidateVersion}:${detail.metadata.revision}:${detail.review.reviewVersion}`;
+        latestEdits.current = {};
+        setMountedEdits({});
+        setSelectedEdition(null);
+        onDraftChange(card.candidateId, {}, acceptedAuthority.current);
     };
     const selectedSummary = selectedEdition?.selection && card.metadataRevision <= selectedEdition.metadataRevision
         ? { ...selectedEdition.selection.snapshot, selectionId: selectedEdition.selection.selectionId,
@@ -328,6 +348,7 @@ export function BatchReviewCard({
                 disabled={disabled || hasBufferedIdentity} onClose={() => setMetadataOpen(false)}
                 disabledReason={hasBufferedIdentity ? 'Finish editing the title or author on this card before choosing an edition.' : null}
                 commandSlot={commandSlot} onSelection={adoptEdition} onPendingChange={handleSelectionPending}
+                identityFix={identityFix} onIdentitySaved={adoptSavedIdentity}
                 restoreFocusRef={metadataTriggerRef}
                 onUseDetected={(edits) => { updateEdits(edits); setMetadataOpen(false); }}
                 onEditManually={(edits) => {

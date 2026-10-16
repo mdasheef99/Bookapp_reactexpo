@@ -9,6 +9,8 @@ import type { OwnerCandidateCommandSlot } from '../identity/useOwnerCardCommand'
 import type { CompactReviewEdits } from '../review/compactReviewDraft';
 import { type ImageInventoryIdentity, useOwnerInventoryCandidate } from '../queries/ownerUxQueries';
 import { CandidateEditionPicker } from './CandidateEditionPicker';
+import type { EditionIdentityFixSource } from './EditionIdentityFix';
+import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
 import { candidateVersions, versionsRegress } from '../queries/ownerCandidateAuthority';
 import { CurrentMetadataSummary, MetadataValue } from './CurrentMetadataSummary';
 
@@ -23,7 +25,7 @@ function focus(target: View | null | undefined) {
   else { const handle = findNodeHandle(target); if (handle !== null) AccessibilityInfo.setAccessibilityFocus(handle); }
 }
 export function CandidateMetadataSheet({ identity, card, visible, disabled, onClose, onUseDetected,
-  onEditManually, commandSlot, onSelection, onPendingChange, restoreFocusRef, disabledReason }: {
+  onEditManually, commandSlot, onSelection, onPendingChange, restoreFocusRef, disabledReason, identityFix, onIdentitySaved }: {
   identity: ImageInventoryIdentity; card: Pick<OwnerBatchReviewCard, 'sessionId' | 'candidateId' | 'metadataState' | 'metadataSummary' | 'candidateVersion' | 'metadataRevision' | 'reviewVersion'>; visible: boolean; disabled: boolean;
   // Explains a caller-owned lock; it never enables or disables anything itself.
   disabledReason?: string | null;
@@ -33,6 +35,8 @@ export function CandidateMetadataSheet({ identity, card, visible, disabled, onCl
   onSelection?: (choices: EditionChoices, previousRevision: number) => void;
   onPendingChange?: (pending: boolean) => void;
   restoreFocusRef?: RefObject<View | null>;
+  identityFix?: EditionIdentityFixSource;
+  onIdentitySaved?: (detail: OwnerCandidateDetail) => void;
 }) {
   const { colors } = useTheme();
   const headingRef = useRef<Text>(null);
@@ -87,6 +91,7 @@ export function CandidateMetadataSheet({ identity, card, visible, disabled, onCl
           {commandSlot && onSelection ? <CandidateEditionPicker identity={identity} sessionId={card.sessionId}
             candidateId={card.candidateId} commandSlot={commandSlot} disabled={disabled}
             onSelection={onSelection} onPendingChange={handlePendingChange} onEditIdentity={() => manual(false)}
+            identityFix={identityFix} onIdentitySaved={onIdentitySaved}
             minimumVersions={minimumVersions}>{summary}</CandidateEditionPicker> : summary()}
           {detail ? <>
             {currentDetected ? <View style={{ gap: 4 }}>

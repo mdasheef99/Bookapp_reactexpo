@@ -194,3 +194,30 @@ it('preserves the compact-row sizing and touch targets for both metadata trigger
     expect(style).toMatchObject({ minHeight: 48, flexGrow: 1, flexBasis: 150 });
   }
 });
+// Picker EP-D07 (2026-10-17): the sheet fix saves the whole card review, then searches; the draft becomes server authority.
+it('saves a title fix with the card edits, clears the draft and searches the saved identity', async () => {
+  const savedChoices = pickerChoices({ candidateVersion: initial.candidateVersion + 1, metadataRevision: initial.metadataRevision + 1,
+    reviewVersion: 2, requestGeneration: 2, rows: [], optionsExpiresAt: null, lookupStatus: 'idle', selection: null });
+  const save = jest.spyOn(ownerUxService, 'updateCandidateReview').mockImplementation(async () => {
+    read.mockResolvedValue(savedChoices);
+    mockDetail = pickerDetail({ ...savedChoices, selection: initial.selection }, pickerReview);
+    return mockDetail;
+  });
+  lookup.mockResolvedValue({ operationId: testUuid(51), status: 'pending', requestGeneration: 2, optionsVersion: 1, available: true });
+  const view = mount();
+  fireEvent.press(view.getByLabelText('Edit Price'));
+  fireEvent.changeText(view.getByLabelText('Custom whole rupees'), '42');
+  fireEvent.press(view.getByLabelText('Use custom price'));
+  fireEvent.press(view.getByText('Find or change edition'));
+  await waitFor(() => expect(view.getByText('Wrong title or author? Fix it')).toBeTruthy());
+  fireEvent.press(view.getByText('Wrong title or author? Fix it'));
+  fireEvent.changeText(view.getByLabelText('Corrected title'), 'Corrected title');
+  await act(async () => { fireEvent.press(view.getByText('Save and search again')); });
+  await waitFor(() => expect(lookup).toHaveBeenCalledTimes(1));
+  expect(save).toHaveBeenCalledTimes(1);
+  expect(save.mock.calls[0][0]).toMatchObject({ expectedCandidateVersion: initial.candidateVersion,
+    expectedMetadataRevision: initial.metadataRevision,
+    review: { originalTitle: 'Corrected title', priceMinor: 4200, metadataChoice: { mode: 'manual', selectionId: null } } });
+  expect(lookup.mock.calls[0][0]).toMatchObject({ expectedRequestGeneration: 2 });
+  await waitFor(() => expect(drafts).toHaveBeenLastCalledWith(initial.candidateId, {}, `${savedChoices.candidateVersion}:${savedChoices.metadataRevision}:2`));
+});

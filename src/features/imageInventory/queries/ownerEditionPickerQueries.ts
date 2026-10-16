@@ -1,13 +1,19 @@
 import { useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
+import { createEditionLookupCommand } from '../api/ownerEditionPickerCommands';
+import { ownerUxService } from '../api/ownerUxService';
+import { createCaptureAttempt } from '../capture/captureIds';
+import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
+import type { OwnerCandidateReview } from '../contracts/ownerUxReviewSchema';
 import { OWNER_UX_CONTRACT_VERSION } from '../contracts/ownerUxContracts';
 import type { EditionChoices, EditionLookupReceipt, RequestEditionOptionsRequest, SelectEditionRequest } from '../contracts/ownerEditionPicker';
 import { useOwnerCardCommand, type OwnerCandidateCommandSlot } from '../identity/useOwnerCardCommand';
 import { imageInventoryKeys, type ImageInventoryIdentity } from './ownerUxQueries';
 import { acceptEditionChoices, acceptEditionLookupReceipt } from './ownerEditionPickerCache';
 import { ownerEditionPickerKeys } from './ownerEditionPickerKeys';
-import { assertOwnerCardCurrent, authorityChanged } from './ownerCandidateAuthority';
+import { acceptCandidateRead, assertOwnerCardCurrent, authorityChanged } from './ownerCandidateAuthority';
+import { synchronizeCandidateReviewSuccess } from './ownerUxReviewQueries';
 
 export { ownerEditionPickerKeys } from './ownerEditionPickerKeys';
 
@@ -37,7 +43,13 @@ export function useOwnerEditionChoices(
 export type EditionPickerCallbacks = Readonly<{
   onSelection?: (canonical: EditionChoices, previousMetadataRevision: number) => void;
   onAuthority?: (canonical: EditionChoices) => void;
+  onIdentitySaved?: (canonical: OwnerCandidateDetail) => void;
 }>;
+// Owner fix from the edition sheet: the full review the card would save on Add, carrying the corrected title/author.
+export type IdentitySearchRequest = Readonly<{
+  review: OwnerCandidateReview; expectedCandidateVersion: number; expectedMetadataRevision: number;
+}>;
+export type IdentitySearchResult = Readonly<{ detail: OwnerCandidateDetail; searched: boolean }>;
 
 // Task 7 supplies the EXISTING Save/Add coordinator slot and functional draft updater.
 // This hook never creates a picker registry or starts a provider lookup on read/mount/expiry.
@@ -104,6 +116,38 @@ export function useOwnerEditionPicker(
       }, undefined, 'edition-selection');
     },
   });
+  // Saves the corrected identity first (the server resets the old search for a changed query),
+  // then starts one explicit search for the saved identity. A failed search never undoes the save.
+  const identityMutation = useMutation({
+    networkMode: 'always', retry: false,
+    mutationFn: (request: IdentitySearchRequest): Promise<IdentitySearchResult> => {
+      assertRequest(scope);
+      return lifecycle.run(async (signal, assertCurrent) => {
+        const save = createCaptureAttempt('identity-review');
+        const saved = await ownerUxService.updateCandidateReview({ ...scope,
+          expectedCandidateVersion: request.expectedCandidateVersion,
+          expectedMetadataRevision: request.expectedMetadataRevision,
+          review: request.review, idempotencyKey: save.key, commandId: save.commandId }, signal);
+        assertCurrent();
+        const detail = acceptCandidateRead(client, identity, saved);
+        await synchronizeCandidateReviewSuccess(client, identity, sessionId, candidateId, detail);
+        assertCurrent();
+        callbackRef.current.onIdentitySaved?.(detail);
+        try {
+          const current = await reread(signal, assertCurrent);
+          const receipt = await ownerEditionPickerService.requestEditionOptions(createEditionLookupCommand(current), signal);
+          assertCurrent();
+          acceptEditionLookupReceipt(client, identity, scope, receipt);
+          await reconcile(signal, assertCurrent);
+          return { detail, searched: true };
+        } catch {
+          assertCurrent();
+          await reconcile(signal, assertCurrent);
+          return { detail, searched: false };
+        }
+      }, undefined, 'identity-search');
+    },
+  });
   const lookupMutation = useMutation({
     networkMode: 'always', retry: false,
     mutationFn: (request: RequestEditionOptionsRequest) => {
@@ -143,9 +187,11 @@ export function useOwnerEditionPicker(
     pendingLookup.current = null;
     selectMutation.reset();
     lookupMutation.reset();
+    identityMutation.reset();
   }, [identity.userId, identity.storeId, sessionId, candidateId]);
   return {
     choices, selectEdition: selectMutation, requestOptions: lookupMutation,
+    saveIdentityAndSearch: identityMutation, identityPending: identityMutation.isPending,
     selectionPending: selectMutation.isPending, lookupPending: lookupMutation.isPending,
     isCommandActive: () => slot.isCommandActive(candidateId),
     retrySelection: () => {
