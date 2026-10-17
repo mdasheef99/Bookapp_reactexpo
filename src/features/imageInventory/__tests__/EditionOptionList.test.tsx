@@ -1,5 +1,5 @@
 import { fireEvent, render, within } from '@testing-library/react-native';
-import { Linking } from 'react-native';
+import { Linking, StyleSheet } from 'react-native';
 import { EditionOptionList } from '../components/EditionOptionList';
 import { MetadataCover } from '../components/MetadataCover';
 import type { EditionRow } from '../contracts/ownerEditionPicker';
@@ -88,10 +88,9 @@ it('reveals selectable Open Library editions after five unavailable positions an
     publishedDate:ordinal===7?'2022':'2017'}:null};
  });
  const view=render(<EditionOptionList rows={values} selectedOptionId={null} disabled={false} onSelect={onSelect}/>);
- expect(view.getAllByTestId(/^edition-row-/)).toHaveLength(5);
- expect(view.queryByLabelText('Select result 8: Oliver Twist')).toBeNull();
- fireEvent.press(view.getByText('Show all'));
+ // Picker §13.2 amendment 2026-10-17: shown without pressing Show all.
  expect(view.getAllByTestId(/^edition-row-/)).toHaveLength(10);
+ expect(view.queryByText('Show all')).toBeNull();
  const option=within(view.getByTestId('edition-row-'+values[7].optionId));
  expect(option.getByText('George Cruikshank, Charles Dickens')).toBeTruthy();
  expect(option.getByText('Published: 2022')).toBeTruthy();
@@ -112,4 +111,63 @@ it.each([
   expect(view.getByLabelText('Current cover').props.cachePolicy).toBeUndefined();
   fireEvent(view.getByLabelText('Current cover'), 'error');
   expect(view.getByLabelText('No current cover')).toBeTruthy();
+});
+// Owner decision2026-10-13 / picker §3.1: discoverability, genuine fields and safe reasons.
+// Picker §13.2 amendment 2026-10-17: a later-only selectable edition expands the list in original order.
+it('shows all results in original order when only a later result is selectable', () => {
+  const values = rows.map((row, ordinal) => ({ ...row, eligibility: ordinal === 7 ? 'eligible' as const : 'ineligible' as const }));
+  const view = render(<EditionOptionList rows={values} selectedOptionId={null} disabled={false} onSelect={jest.fn()} />);
+  expect(view.getByText('1 selectable edition in 10 results.')).toBeTruthy();
+  expect(view.getByText('Showing all results because the selectable editions are further down.')).toBeTruthy();
+  expect(view.getAllByTestId(/^edition-row-/).map(node => node.props.testID)).toEqual(values.map(row => 'edition-row-' + row.optionId));
+  expect(view.queryByText('Show all')).toBeNull();
+});
+it('keeps five rows and Show all when an early result is selectable', () => {
+  const values = rows.map((row, ordinal) => ({ ...row, eligibility: ordinal === 2 || ordinal === 7 ? 'eligible' as const : 'ineligible' as const }));
+  const view = render(<EditionOptionList rows={values} selectedOptionId={null} disabled={false} onSelect={jest.fn()} />);
+  expect(view.getAllByTestId(/^edition-row-/)).toHaveLength(5);
+  expect(view.queryByText('Showing all results because the selectable editions are further down.')).toBeNull();
+  expect(view.getByText('Show all')).toBeTruthy();
+});
+it('marks the chosen edition distinctly from the selectable and disabled ones', () => {
+  const values = rows.slice(0, 3).map((row, ordinal) => ({ ...row, eligibility: ordinal === 2 ? 'ineligible' as const : 'eligible' as const }));
+  const view = render(<EditionOptionList rows={values} selectedOptionId={values[0].optionId} disabled={false} onSelect={jest.fn()} />);
+  expect(view.getByText('✓')).toBeTruthy();
+  expect(view.getAllByText('Selected edition')).toHaveLength(1);
+  const style = (label: string) => StyleSheet.flatten(view.getByLabelText(label).props.style);
+  const [chosen, open, closed] = values.map((row, i) => style('Select result ' + (i + 1) + ': ' + row.metadata!.title));
+  expect(chosen.borderWidth).toBe(2);
+  expect(open.backgroundColor).not.toBe(chosen.backgroundColor);
+  expect(open.backgroundColor).not.toBe(closed.backgroundColor);
+});
+it('reports zero selectable records honestly and counts eligibility independently of a busy command', () => {
+  const view = render(<EditionOptionList rows={rows.map(row => ({ ...row, eligibility: 'ineligible' }))} selectedOptionId={null} disabled={false} onSelect={jest.fn()} />);
+  expect(view.getByText('0 selectable editions in 10 results.')).toBeTruthy();
+  expect(view.queryByText('Showing all results because the selectable editions are further down.')).toBeNull();
+  view.rerender(<EditionOptionList rows={rows} selectedOptionId={null} disabled onSelect={jest.fn()} />);
+  expect(view.getByText('10 selectable editions in 10 results.')).toBeTruthy();
+  expect(view.getByLabelText('Select result 1: Duplicate title').props.accessibilityState.disabled).toBe(true);
+});
+it('displays supplied edition and format without inventing missing details or requiring a cover', () => {
+  const values = [{ ...rows[0], metadata: { ...rows[0].metadata!, editionStatement: 'Second edition', format: 'Paperback', coverReference: null } },
+    { ...rows[1], metadata: { ...rows[1].metadata!, editionStatement: null, format: null } }];
+  const selected = jest.fn();
+  const view = render(<EditionOptionList rows={values} selectedOptionId={null} disabled={false} onSelect={selected} />);
+  expect(view.getAllByText('Edition: Second edition')).toHaveLength(1);
+  expect(view.getAllByText('Format: Paperback')).toHaveLength(1);
+  expect(view.queryByText('Format: Books')).toBeNull();
+  fireEvent.press(view.getByLabelText('Select result 1: Duplicate title'));
+  expect(selected).toHaveBeenCalledWith(values[0]);
+});
+it.each([
+  ['title_differs', 'Title differs from this book.'], ['author_differs', 'Author differs from this book.'],
+  ['language_unknown', 'Language could not be verified.'], ['language_differs', 'Language differs from this book.'],
+  ['volume_differs', 'Volume differs from this book.'], ['identity_unverified', 'Other book identity checks could not be verified.'],
+])('explains authoritative %s without enabling the disabled row', (reason, message) => {
+  const selected = jest.fn();
+  const value = { ...rows[0], eligibility: 'ineligible' as const, rejectionReason: reason as never };
+  const view = render(<EditionOptionList rows={[value]} selectedOptionId={null} disabled={false} onSelect={selected} />);
+  expect(view.getByText(message)).toBeTruthy();
+  fireEvent.press(view.getByLabelText('Select result 1: Duplicate title'));
+  expect(selected).not.toHaveBeenCalled();
 });

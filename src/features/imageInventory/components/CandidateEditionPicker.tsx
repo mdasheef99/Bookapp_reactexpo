@@ -10,19 +10,27 @@ import { freshEditionChoices } from '../queries/ownerEditionPickerCache';
 import { versionsRegress, type CandidateVersions } from '../queries/ownerCandidateAuthority';
 import { createEditionLookupCommand, createEditionSelectionCommand } from '../api/ownerEditionPickerCommands';
 import { EditionOptionList } from './EditionOptionList';
+import { EditionIdentityFix, type EditionIdentityFixSource } from './EditionIdentityFix';
+import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
+import { editionSelectionRecovery } from '../review/editionSelectionRecovery';
 
 // Picker §§3/6-7/13.2: only explicit Search Books acquires alternatives.
 export function CandidateEditionPicker({ identity, sessionId, candidateId, commandSlot,
-  disabled, onSelection, onPendingChange, minimumVersions, children }: {
+  disabled, onSelection, onPendingChange, onEditIdentity, identityFix, onIdentitySaved, minimumVersions, children }: {
   identity: ImageInventoryIdentity; sessionId: string; candidateId: string;
   commandSlot: OwnerCandidateCommandSlot; disabled: boolean;
   onSelection: (choices: EditionChoices, previousRevision: number) => void;
   onPendingChange?: (pending: boolean) => void;
+  // Existing manual identity path; offered when a fresh result set has nothing selectable.
+  onEditIdentity?: () => void;
+  // Save-then-search correction (batch card); replaces onEditIdentity when supplied.
+  identityFix?: EditionIdentityFixSource;
+  onIdentitySaved?: (detail: OwnerCandidateDetail) => void;
   minimumVersions?: CandidateVersions;
   children: (choices: EditionChoices | undefined) => ReactNode;
 }) {
   const { colors } = useTheme();
-  const picker = useOwnerEditionPicker(identity, sessionId, candidateId, commandSlot, { onSelection });
+  const picker = useOwnerEditionPicker(identity, sessionId, candidateId, commandSlot, { onSelection, onIdentitySaved });
   const [, tick] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
   const stale = !!minimumVersions && !!picker.choices.data && versionsRegress(picker.choices.data, minimumVersions);
@@ -36,28 +44,37 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
     return () => clearTimeout(timer);
   }, [expiresAt]);
   useEffect(() => {
-    onPendingChange?.(picker.selectionPending);
-  }, [onPendingChange, picker.selectionPending]);
+    onPendingChange?.(picker.selectionPending || picker.identityPending);
+  }, [onPendingChange, picker.selectionPending, picker.identityPending]);
   useEffect(() => () => onPendingChange?.(false), [onPendingChange]);
-  const blocked = disabled || picker.selectionPending || picker.isCommandActive();
+  const blocked = disabled || picker.selectionPending || picker.identityPending || picker.isCommandActive();
   const fresh = !!choices?.optionsExpiresAt;
   const pending = picker.lookupPending || choices?.lookupStatus === 'pending';
-  const act = async (work: () => Promise<unknown>, success: string) => {
+  const selectionRecovery = picker.selectEdition.error ? editionSelectionRecovery(picker.selectEdition.error) : null;
+  // Offer the manual identity path only for a genuine no-match: never when every row is merely
+  // unavailable, and never over an Owner-confirmed choice (switching to manual would drop it).
+  const noMatch = !!(choices && fresh && !choices.selection?.confirmedByOwner
+    && !choices.rows.some(row => row.eligibility === 'eligible' && row.metadata)
+    && (choices.rows.length === 0 || choices.rows.some(row => row.eligibility === 'ineligible' && row.metadata)));
+  const offerIdentityEdit = noMatch && !identityFix && !!onEditIdentity;
+  const act = async (kind: 'selection' | 'lookup', work: () => Promise<unknown>) => {
+    const success = kind === 'selection' ? 'Edition saved.' : 'Edition search requested.';
     setMessage(null);
     try { await work(); setMessage(success); }
-    catch { setMessage('The action could not be confirmed. Your current choice and selling details are preserved.'); }
+    catch (error) { setMessage(kind === 'selection' ? editionSelectionRecovery(error).message
+      : 'The action could not be confirmed. Your current choice and selling details are preserved.'); }
   };
   const select = (row: EditionRow) => {
     if (!choices || blocked || row.eligibility !== 'eligible' || !row.metadata) return;
-    void act(() => picker.selectEdition.mutateAsync(createEditionSelectionCommand(choices,
-      { source: 'edition_option', optionId: row.optionId })), 'Edition saved.');
+    void act('selection', () => picker.selectEdition.mutateAsync(createEditionSelectionCommand(choices,
+      { source: 'edition_option', optionId: row.optionId })));
   };
   return <View style={{ gap: 10 }}>
     {children(choices)}
     {choices?.selection?.source === 'current_suggestion' && !choices.selection.confirmedByOwner ? <Button title="Confirm current suggestion"
       disabled={blocked} onPress={() => {
-        if (!blocked) void act(() => picker.selectEdition.mutateAsync(createEditionSelectionCommand(choices,
-          { source: 'current_suggestion', selectionId: choices.selection!.selectionId })), 'Edition saved.');
+        if (!blocked) void act('selection', () => picker.selectEdition.mutateAsync(createEditionSelectionCommand(choices,
+          { source: 'current_suggestion', selectionId: choices.selection!.selectionId })));
       }} /> : null}
     <Text accessibilityRole="header" style={{ color: colors.textPrimary, fontWeight: '800' }}>Book search results</Text>
     {picker.choices.isLoading ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Loading edition choices…</Text> : null}
@@ -68,20 +85,29 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
     {pending ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Searching books…</Text> : null}
     {picker.selectionPending ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Saving edition…</Text> : null}
     {choices && !fresh && !pending ? <>
-      <Text style={{ color: colors.textSecondary }}>{choices.lookupStatus === 'failed'
+      <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{choices.lookupStatus === 'failed'
         ? 'Edition search failed. Search again when ready.' : 'Alternatives are missing or expired. Your current choice is kept.'}</Text>
       <Button title="Search Books" disabled={blocked} onPress={() => {
-        if (!blocked) void act(() => picker.requestOptions.mutateAsync(createEditionLookupCommand(choices)), 'Edition search requested.');
+        if (!blocked) void act('lookup', () => picker.requestOptions.mutateAsync(createEditionLookupCommand(choices)));
       }} />
     </> : null}
     {fresh && choices?.lookupStatus === 'failed' ? <Text accessibilityLiveRegion="polite" style={{ color: colors.error }}>Edition search failed. Your current choice and any fresh results are kept.</Text> : null}
     {fresh && choices?.rows.length === 0 ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No book results were returned.</Text> : null}
     {choices && fresh ? <EditionOptionList rows={choices.rows} disabled={blocked}
       selectedOptionId={choices.selection?.optionId ?? null} onSelect={select} /> : null}
+    {offerIdentityEdit ? <>
+      <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No result matches this book's title and author. If either was read incorrectly, correct it, save, then search again.</Text>
+      <Button title="Edit title/author" variant="secondary" disabled={blocked} onPress={() => { if (!blocked) onEditIdentity?.(); }} />
+    </> : null}
+    {identityFix && noMatch ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No result matches this book's title and author. If either was read incorrectly, fix it below to save it and search again.</Text> : null}
+    {identityFix ? <EditionIdentityFix source={identityFix} blocked={blocked} clearsEdition={!!picker.choices.data?.selection}
+      onSubmit={request => picker.saveIdentityAndSearch.mutateAsync(request)} /> : null}
     {message ? <Text accessibilityLiveRegion="polite" style={{ color: message === 'Edition saved.' ? colors.accent : colors.textSecondary }}>{message}</Text> : null}
-    {picker.selectEdition.error ? <Button title="Retry selection" disabled={blocked}
-      onPress={() => { if (!blocked) void act(picker.retrySelection, 'Edition saved.'); }} /> : null}
+    {selectionRecovery?.kind === 'refresh' ? <Button title="Refresh edition choices" variant="secondary"
+      disabled={blocked || picker.choices.isFetching} onPress={() => { void picker.choices.refetch(); }} /> : null}
+    {selectionRecovery?.kind === 'retry' ? <Button title="Retry selection" disabled={blocked}
+      onPress={() => { if (!blocked) void act('selection', picker.retrySelection); }} /> : null}
     {picker.requestOptions.error ? <Button title="Retry search" disabled={blocked || pending}
-      onPress={() => { if (!blocked && !pending) void act(picker.retryLookup, 'Edition search requested.'); }} /> : null}
+      onPress={() => { if (!blocked && !pending) void act('lookup', picker.retryLookup); }} /> : null}
   </View>;
 }

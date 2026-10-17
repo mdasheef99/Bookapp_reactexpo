@@ -6,6 +6,8 @@ import { requiredString, requiredIsoTimestamp } from '../../domain/validation';
 import { projectStoredEditionRow } from '../../contracts/ownerEditionPicker';
 import type { StoredEditionRow, OptionsRetentionEvidence } from '../../contracts/ownerEditionPicker';
 import { normalizeBibliographicText, MetadataQueryIdentity } from '../queryIdentity';
+import { explicitEditionAuthorsMatch, explicitEditionLanguageMatches,
+  explicitEditionTitleMatches } from '../explicitEditionTitle';
 import { decodeGoogleBooksItem, GOOGLE_BOOKS_EDITION_HOST_POLICY } from './decoder';
 import { PHASE9_LIMITS } from '../../contracts/registers';
 import { GOOGLE_BOOKS_RESULT_LIMIT } from './request';
@@ -87,11 +89,10 @@ export function evaluateEditionOption(
   try { metadata = parseNormalizedMetadataEdition(metadata, hostPolicy); }
   catch { return 'ineligible'; }
   const exactIsbn = query.normalizedIsbn13 !== null && metadata.isbn13 === query.normalizedIsbn13;
-  const titleMatches = !query.normalizedTitle || normalizeBibliographicText(metadata.title) === query.normalizedTitle;
-  const authors = metadata.authors.map(normalizeBibliographicText);
-  const authorsMatch = query.normalizedAuthors.every(author => authors.includes(author));
-  const languageMatches = metadata.language.split('-')[0] === query.normalizedLanguage.split('-')[0]
-    || (exactIsbn && query.normalizedLanguage === 'und');
+  const titleMatches = explicitEditionTitleMatches(query, metadata);
+  const authorsMatch = explicitEditionAuthorsMatch(query, metadata);
+  const languageMatches = explicitEditionLanguageMatches(query, metadata.language, exactIsbn,
+    titleMatches && authorsMatch);
   const textIdentity = Boolean(query.normalizedTitle && query.normalizedAuthors.length > 0);
   return titleMatches && authorsMatch && languageMatches && (exactIsbn || textIdentity) ? 'eligible' : 'ineligible';
 }

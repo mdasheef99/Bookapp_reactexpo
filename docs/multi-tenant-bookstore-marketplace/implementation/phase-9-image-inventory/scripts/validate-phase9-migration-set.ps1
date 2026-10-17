@@ -138,6 +138,21 @@ if ($tracker.Contains('Owner authorized local M74 creation') -and
     $tracker.Contains('CREATED_LOCAL / NOT_APPLIED')) {
     $draftMigrationNames += '20261012000074_marketplace_phase9_open_library_author_isolation.sql'
 }
+
+# Owner's 2026-10-16 explicit-matching approval permits exactly M76; M75 stays deferred.
+if ($tracker.Contains('Owner authorized local M76 creation') -and
+    $tracker.Contains('20261016000076_marketplace_phase9_edition_explicit_matching.sql') -and
+    $tracker.Contains('CREATED_LOCAL / NOT_APPLIED')) {
+    $draftMigrationNames += '20261016000076_marketplace_phase9_edition_explicit_matching.sql'
+}
+
+# Owner's 2026-10-17 decision authorizes exactly M75 (exhausted-search recovery) and M77 (matching variants).
+if ($tracker.Contains('Owner authorized M75 and M77 creation and application') -and
+    $tracker.Contains('20261017000075_marketplace_phase9_edition_picker_exhausted_lookup_recovery.sql') -and
+    $tracker.Contains('20261017000077_marketplace_phase9_edition_matching_variants.sql')) {
+    $draftMigrationNames += '20261017000075_marketplace_phase9_edition_picker_exhausted_lookup_recovery.sql'
+    $draftMigrationNames += '20261017000077_marketplace_phase9_edition_matching_variants.sql'
+}
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
     $tracker.Contains('**Implementation status:** `wu2_owner_inventory_client_locally_complete_runtime_deferred`') -or

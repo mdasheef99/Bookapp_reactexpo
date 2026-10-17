@@ -100,3 +100,24 @@ describe('Task 5 controlled review admission', () => {
     expect(parseOwnerIngestionRequest(editionSaveReviewRequest)).toEqual(editionSaveReviewRequest);
   });
 });
+
+describe('optional authoritative rejection reasons (picker §3.1/§9)', () => {
+  const readReason = (row: unknown) => parseOwnerUxResponse('read_candidate_edition_choices' as any, {
+    contractVersion: editionContractVersion, data: { ...editionChoices, rows: [row] },
+  }).data;
+  it.each(['title_differs', 'author_differs', 'language_unknown', 'language_differs', 'volume_differs', 'identity_unverified'])('accepts bounded %s for a disabled safe record', reason => {
+    expect(readReason({ ...editionRow, eligibility: 'ineligible', rejectionReason: reason })).toMatchObject({ rows: [{ rejectionReason: reason }] });
+  });
+  it('accepts unavailable metadata and a null reason on an eligible row', () => {
+    expect(readReason({ ...editionRow, eligibility: 'unavailable', metadata: null, googleBooksUrl: null, rejectionReason: 'result_unavailable' })).toMatchObject({ rows: [{ rejectionReason: 'result_unavailable' }] });
+    expect(readReason({ ...editionRow, rejectionReason: null })).toMatchObject({ rows: [{ rejectionReason: null }] });
+  });
+  it.each([
+    { ...editionRow, rejectionReason: 'author_differs' },
+    { ...editionRow, eligibility: 'ineligible', rejectionReason: 'raw provider response' },
+    { ...editionRow, eligibility: 'ineligible', rejectionReason: 'result_unavailable' },
+    { ...editionRow, eligibility: 'unavailable', metadata: null, googleBooksUrl: null, rejectionReason: 'title_differs' },
+  ])('rejects arbitrary or contradictory reasons without changing selection authority', value => {
+    expect(() => readReason(value)).toThrow();
+  });
+});

@@ -1,9 +1,15 @@
 import {
-  parseOwnerEditionPickerRequest, parseOwnerEditionPickerResponse,
+  EDITION_REASONS_CLIENT_INFO, parseOwnerEditionPickerRequest, parseOwnerEditionPickerResponse,
 } from '../contracts/ownerEditionPicker.ts';
 import type {
   EditionChoices, EditionLookupReceipt, OwnerEditionPickerAction, OwnerEditionPickerRequest,
 } from '../contracts/ownerEditionPicker.ts';
+
+// Picker §3.1/§9: a standard-header capability changes display only, never caller authority.
+export function editionPickerRpcHeaders(authorization: string, clientInfo: string | null) {
+  return { Authorization: authorization,
+    ...(clientInfo === EDITION_REASONS_CLIENT_INFO ? { 'X-Client-Info': EDITION_REASONS_CLIENT_INFO } : {}) };
+}
 
 // Narrow Supabase-compatible RPC port; no service client, tenant hints or Storage authority.
 export type OwnerEditionPickerRpcClient = Readonly<{

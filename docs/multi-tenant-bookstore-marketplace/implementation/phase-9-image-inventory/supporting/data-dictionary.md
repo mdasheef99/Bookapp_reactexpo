@@ -813,3 +813,15 @@ Service-only RPCs: phase9_register_edition_options_provider_call_v1 (attempt/job
 Worker context exposes optional current lookup adapter key/version and attempt adapter key through the existing M38 public v2 wrapper. The legacy googleBooksUrl wire key permits a validated actual-source book link; OL record identity is OL<id>M and own cover is HTTPS covers.openlibrary.org/b/id/<id>-M.jpg. Older Google-only clients require replacement before activation.
 
 Read-only shared audit: OL row/columns absent; M72 live version20261010200655, later unrelated library_manual_note_persistence20261010221843 preserved. M73 live version is absent. [Exact migration/hash/evidence](../trackers/37-owner-edition-picker-open-library-local.md).
+
+## 2026-10-13 local picker diagnostic wire proposal
+
+Authority: DOC-3 §5.2.1 / picker §3.1. Optional rejectionReason belongs only to the public fresh owned-read option projection: title_differs, author_differs, language_unknown, language_differs, volume_differs, identity_unverified, result_unavailable or null/absent. Legacy responses omit it; eligible options have null/absent reason. It is not a stored column or StoredEditionRow/selected-snapshot field and changes no table, RLS, eligibility or inventory data. Client/server compatible contracts are local; the private helper/opt-in choices projection is external PROPOSED / NOT_CREATED / NOT_APPLIED, not a live function change. Diagnostic SQL25/25 and retained current SQL gates52/52 passed locally. See current-vs-target and tracker37 §34; earlier M73 dictionary checkpoints are historical, not current live status.
+
+## 2026-10-17 - M75/M77 private edition helpers
+
+| Object | Meaning |
+|---|---|
+| marketplace_sec.phase9_edition_job_exhausted(image_extraction_jobs) | STABLE, postgres-only. True for an edition-options job (p9-owner-edition-options-v1) in open/in_progress/retry_scheduled with attempt_count >= max_attempts and no live lease. Read paths report it as failed; the Owner's explicit Search Books closes it (dead_letter, P9_METADATA_ATTEMPTS_EXHAUSTED). |
+| marketplace_sec.phase9_edition_author_middle_match(text,text) | IMMUTABLE, postgres-only. Same first/last author words and word count (>= 3), each middle word equal or a one-letter initial of the other; explicit edition options only. |
+| marketplace_sec.phase9_edition_title_key(text,boolean) (M77 body) | Adds joining (hyphens/dashes/apostrophes removed) and separating (listed punctuation to spaces) rules for all languages, and en/en æ->ae, ae->e, to the M76 key. |

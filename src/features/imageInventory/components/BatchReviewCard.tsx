@@ -9,7 +9,7 @@ import { candidateCommitAuthorityKey } from '../commit/inventoryCommitPolicy';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
 import type { ImageInventoryIdentity } from '../queries/ownerUxQueries';
 import {
-    buildCompactReview, compactReviewDisplay,
+    buildCompactReview, compactReviewDisplay, identityFixReview,
     validateCompactReview,
     type CompactReviewEdits,
 } from '../review/compactReviewDraft';
@@ -24,6 +24,8 @@ import { EditionChoicesReader } from './EditionChoicesReader';
 import { MetadataSheetTrigger } from './MetadataSheetTrigger';
 import type { OwnerCandidateCommandSlot } from '../identity/useOwnerCardCommand';
 import type { EditionChoices } from '../contracts/ownerEditionPicker';
+import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
+import type { EditionIdentityFixSource } from './EditionIdentityFix';
 import { applyCompactEditionSelection } from '../review/editionSelectionDraft';
 import { InlineReviewIdentity, InlineReviewValueFields } from './InlineBatchReviewFields';
 import { OwnerConfirmationDialog } from './OwnerConfirmationDialog';
@@ -65,6 +67,8 @@ export function BatchReviewCard({
     const [selectionPending, setSelectionPending] = useState(false);
     const [selectedEdition, setSelectedEdition] = useState<EditionChoices | null>(null);
     const [editionChoices, setEditionChoices] = useState<EditionChoices>();
+    // Metadata revision of an identity save still awaiting the parent card read.
+    const [savedIdentityRevision, setSavedIdentityRevision] = useState<number | null>(null);
     const acceptChoices = useCallback((choices: EditionChoices) => {
         setEditionChoices(choices); onEditionChoices?.(choices);
     }, [onEditionChoices]);
@@ -107,6 +111,7 @@ export function BatchReviewCard({
         if (acceptedAuthority.current === authorityKey) return;
         // Our accepted command is awaiting the parent read; keep the latest draft.
         if (selectedEdition && card.metadataRevision < selectedEdition.metadataRevision) return;
+        if (savedIdentityRevision !== null && card.metadataRevision < savedIdentityRevision) return;
         if (hasEdits || bufferedIdentity.titleActive || bufferedIdentity.authorsActive) {
             if (!authorityChanged) {
                 setAuthorityChanged(true);
@@ -118,7 +123,7 @@ export function BatchReviewCard({
             setIdentityResetKey((current) => current + 1);
         }
     }, [authorityChanged, authorityKey, card.candidateId, hasEdits,
-        bufferedIdentity.titleActive, bufferedIdentity.authorsActive, onAuthorityStateChange, selectedEdition]);
+        bufferedIdentity.titleActive, bufferedIdentity.authorsActive, onAuthorityStateChange, selectedEdition, savedIdentityRevision]);
 
     useEffect(() => () => {
         if (bufferedIdentityRef.current.titleActive || bufferedIdentityRef.current.authorsActive)
@@ -142,6 +147,25 @@ export function BatchReviewCard({
         acceptChoices(canonical);
         onDraftChange(card.candidateId, next, acceptedAuthority.current);
         onEditionSelection?.(canonical);
+    };
+    const identityFix: EditionIdentityFixSource = {
+        title: display.title, authors: display.authors,
+        build: (title, authors) => {
+            const result = identityFixReview(card, defaults, latestEdits.current, title, authors, editionChoices);
+            return result.review
+                ? { review: result.review, expectedCandidateVersion: card.candidateVersion,
+                    expectedMetadataRevision: card.metadataRevision }
+                : { message: 'Complete this card first: ' + (result.issues[0]?.safeMessage ?? 'check its details.') };
+        },
+    };
+    // The save carried every card edit, so the draft is now server authority.
+    const adoptSavedIdentity = (detail: OwnerCandidateDetail) => {
+        acceptedAuthority.current = `${detail.candidateVersion}:${detail.metadata.revision}:${detail.review.reviewVersion}`;
+        latestEdits.current = {};
+        setMountedEdits({});
+        setSelectedEdition(null);
+        setSavedIdentityRevision(detail.metadata.revision);
+        onDraftChange(card.candidateId, {}, acceptedAuthority.current);
     };
     const selectedSummary = selectedEdition?.selection && card.metadataRevision <= selectedEdition.metadataRevision
         ? { ...selectedEdition.selection.snapshot, selectionId: selectedEdition.selection.selectionId,
@@ -297,7 +321,7 @@ export function BatchReviewCard({
                             return result;
                         }} />
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                        {commandSlot && editable ? <MetadataSheetTrigger title="Change edition" focusRef={editionTriggerRef} style={{ flexGrow: 1, flexBasis: 150 }}
+                        {commandSlot && editable ? <MetadataSheetTrigger title="Find or change edition" focusRef={editionTriggerRef} style={{ flexGrow: 1, flexBasis: 150 }}
                             onPress={() => openMetadata(editionTriggerRef)} /> : null}
                         {card.allowedActions.includes('view_metadata') ? (
                             <MetadataSheetTrigger title="View metadata" focusRef={viewMetadataTriggerRef} style={{ flexGrow: 1, flexBasis: 150 }}
@@ -326,7 +350,9 @@ export function BatchReviewCard({
 
             {metadataOpen ? <CandidateMetadataSheet identity={identity} card={card} visible
                 disabled={disabled || hasBufferedIdentity} onClose={() => setMetadataOpen(false)}
+                disabledReason={hasBufferedIdentity ? 'Finish editing the title or author on this card before choosing an edition.' : null}
                 commandSlot={commandSlot} onSelection={adoptEdition} onPendingChange={handleSelectionPending}
+                identityFix={identityFix} onIdentitySaved={adoptSavedIdentity}
                 restoreFocusRef={metadataTriggerRef}
                 onUseDetected={(edits) => { updateEdits(edits); setMetadataOpen(false); }}
                 onEditManually={(edits) => {

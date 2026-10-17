@@ -185,6 +185,7 @@ export async function invokeOwnerUx<Action extends OwnerUxAction>(
     action: Action,
     body: Record<string, unknown>,
     signal?: AbortSignal,
+    clientInfo?: string,
 ) {
     const request = decodeOwnerUxRequest(action, {
         action,
@@ -195,6 +196,7 @@ export async function invokeOwnerUx<Action extends OwnerUxAction>(
     try {
         const result = await supabase.functions.invoke('phase9-owner-ingestion', {
             body: request,
+            ...(clientInfo ? { headers: { 'X-Client-Info': clientInfo } } : {}),
             ...(signal ? { signal } : {}),
         });
         if (result.error) throw await normalizeError(action, result.error);

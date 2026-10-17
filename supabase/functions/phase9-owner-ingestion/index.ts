@@ -8,6 +8,7 @@ import {
   ownerUxJsonResponse,
 } from '../_shared/imageInventory/contracts/ownerUxHttp.ts';
 import { executeOwnerIngestion } from '../_shared/imageInventory/runtime/ownerIngestion.ts';
+import { editionPickerRpcHeaders } from '../_shared/imageInventory/runtime/ownerEditionPickerGateway.ts';
 
 serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: OWNER_UX_HTTP_HEADERS });
@@ -21,7 +22,7 @@ serve(async (request) => {
     }
     const actor = await requireAuthenticatedUser(request, url, anonKey);
     const authorization = request.headers.get('authorization') ?? '';
-    const userClient = createClient(url, anonKey, { global: { headers: { Authorization: authorization } }, auth: { persistSession: false } });
+    const userClient = createClient(url, anonKey, { global: { headers: editionPickerRpcHeaders(authorization, request.headers.get('x-client-info')) }, auth: { persistSession: false } });
     const serviceClient = createClient(url, serviceKey, { auth: { persistSession: false } });
     const body = parseOwnerIngestionRequest(await request.json());
     const result = await executeOwnerIngestion(

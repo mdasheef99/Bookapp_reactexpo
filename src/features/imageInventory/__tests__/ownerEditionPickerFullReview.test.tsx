@@ -43,9 +43,9 @@ it('older unfinished full-review cards open the same sheet and adopt server sele
   const view = render(<QueryClientProvider client={client}><CandidateReview identity={pickerIdentity}
     sessionId={initial.sessionId} candidateId={initial.candidateId} /></QueryClientProvider>);
   await waitFor(() => expect(view.getByTestId('review-original-title')).toBeTruthy());
-  expect(view.queryByText('Change edition')).toBeTruthy();
+  expect(view.queryByText('Find or change edition')).toBeTruthy();
   fireEvent.changeText(view.getByTestId('review-price-minor'), '47');
-  fireEvent.press(view.getByText('Change edition'));
+  fireEvent.press(view.getByText('Find or change edition'));
   await waitFor(() => expect(view.getByLabelText('Select result 1: Chosen edition')).toBeTruthy());
   expect(ownerEditionPickerService.requestEditionOptions).not.toHaveBeenCalled();
   const accepted = selectedChoices({ reviewVersion: 2, selection: { ...selectedChoices().selection!,
@@ -103,7 +103,7 @@ it.each([{ authors: ['Chosen author'] }, { authors: ['Chosen author', 'Second ch
     const view = render(<QueryClientProvider client={client}><CandidateReview identity={pickerIdentity}
       sessionId={saved.sessionId} candidateId={saved.candidateId} /></QueryClientProvider>);
     await waitFor(() => expect(view.queryByTestId('review-original-title')).toBeTruthy());
-    fireEvent.press(view.getByText('Change edition'));
+    fireEvent.press(view.getByText('Find or change edition'));
     await waitFor(() => expect(view.queryByText('Use detected details')).toBeTruthy());
     fireEvent.press(view.getByText('Use detected details'));
     expect(view.getByTestId('confirm-title').props.accessibilityState.checked).toBe(false);
@@ -124,7 +124,7 @@ it('Edit manually preserves confirmations when it replaces no identity fields', 
   const view = render(<QueryClientProvider client={client}><CandidateReview identity={pickerIdentity}
     sessionId={saved.sessionId} candidateId={saved.candidateId} /></QueryClientProvider>);
   await waitFor(() => expect(view.queryByTestId('review-original-title')).toBeTruthy());
-  fireEvent.press(view.getByText('Change edition'));
+  fireEvent.press(view.getByText('Find or change edition'));
   await waitFor(() => expect(view.queryByText('Edit manually')).toBeTruthy());
   fireEvent.press(view.getByText('Edit manually'));
   expect(view.getByTestId('confirm-title').props.accessibilityState.checked).toBe(true);
@@ -138,7 +138,7 @@ it('keeps Close and hardware back locked through selection reconciliation', asyn
   const view = render(<QueryClientProvider client={client}><CandidateReview identity={pickerIdentity}
     sessionId={initial.sessionId} candidateId={initial.candidateId} /></QueryClientProvider>);
   await waitFor(() => expect(view.getByTestId('review-original-title')).toBeTruthy());
-  fireEvent.press(view.getByText('Change edition'));
+  fireEvent.press(view.getByText('Find or change edition'));
   await waitFor(() => expect(view.getByLabelText('Select result 1: Chosen edition')).toBeTruthy());
   fireEvent.press(view.getByLabelText('Select result 1: Chosen edition'));
   await waitFor(() => expect(ownerEditionPickerService.selectEdition).toHaveBeenCalledTimes(1));

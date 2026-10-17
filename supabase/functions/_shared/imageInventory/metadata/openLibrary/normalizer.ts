@@ -5,7 +5,8 @@ import { boundedInteger, canonicalBcp47, optionalString, requiredString } from '
 import { PHASE9_LIMITS } from '../../contracts/registers';
 import { PHASE9_CONTRACT_VERSION, PHASE9_METADATA_SCHEMA_VERSION } from '../../contracts/versions';
 import { evaluateEditionOption, annotateEditionRows } from '../googleBooks/editionOptions';
-import { normalizeBibliographicText, MetadataQueryIdentity } from '../queryIdentity';
+import type { MetadataQueryIdentity } from '../queryIdentity';
+import { explicitEditionLanguageMatches, explicitEditionTitleMatches } from '../explicitEditionTitle';
 
 export const OPEN_LIBRARY_HOST_POLICY = Object.freeze({
   adapterKey: 'open_library', policyVersion: 'open-library-hosts-v1',
@@ -48,12 +49,17 @@ function editionLanguage(record: Record<string,unknown>): string {
   return languages[key.slice(11)] ?? 'und';
 }
 // Picker §13.14: allocation and final decoding share the factual contract, without invented author names.
-function ownFacts(value: unknown) {
+// Owner decision 2026-10-17: an edition with no author references uses its work's author references
+// (from the same search result); an edition that lists its own authors always uses them.
+export type OpenLibraryWorkAuthors = readonly string[];
+function ownFacts(value: unknown, workAuthors: OpenLibraryWorkAuthors = []) {
   const record = object(value);
-  if (!record || typeof record.key !== 'string' || !/^\/books\/OL[1-9][0-9]*M$/u.test(record.key)
-    || !Array.isArray(record.authors) || record.authors.length < 1 || record.authors.length > 20) return null;
+  if (!record || typeof record.key !== 'string' || !/^\/books\/OL[1-9][0-9]*M$/u.test(record.key)) return null;
+  const inherited = (record.authors === undefined || (Array.isArray(record.authors) && record.authors.length === 0))
+    && workAuthors.length >= 1 && workAuthors.length <= 20 && workAuthors.every(authorKey);
+  if (!inherited && (!Array.isArray(record.authors) || record.authors.length < 1 || record.authors.length > 20)) return null;
   try {
-    const authorKeys = record.authors.map(reference => {
+    const authorKeys = inherited ? [...workAuthors] : (record.authors as unknown[]).map(reference => {
       const key = object(reference)?.key;
       if (!authorKey(key)) throw new Error('P9_METADATA_SCHEMA_INVALID');
       return key;
@@ -79,27 +85,40 @@ function ownFacts(value: unknown) {
     } };
   } catch { return null; }
 }
-export function hasSafeOpenLibraryFacts(value: unknown): boolean {
-  return ownFacts(value) !== null;
+export function hasSafeOpenLibraryFacts(value: unknown, workAuthors: OpenLibraryWorkAuthors = []): boolean {
+  return ownFacts(value, workAuthors) !== null;
+}
+// Author references that establish this row's identity (its own, or its work's when it has none).
+export function openLibraryRowAuthorKeys(value: unknown,
+  workAuthors: OpenLibraryWorkAuthors = []): readonly string[] | null {
+  return ownFacts(value, workAuthors)?.authorKeys ?? null;
 }
 // Picker §§4.1/13.14: prioritize bounded own-author reads, never establish eligibility here.
-export function mayMatchOpenLibraryIdentity(value: unknown, query: MetadataQueryIdentity): boolean {
-  const parsed = ownFacts(value);
-  if (!parsed || new Set(parsed.authorKeys).size > 4) return false;
+export function mayMatchOpenLibraryIdentity(value: unknown, query: MetadataQueryIdentity,
+  workAuthors: OpenLibraryWorkAuthors = []): boolean {
+  return openLibraryIdentityPriority(value, query, workAuthors) !== null;
+}
+// 0 = plausible known-language identity, 1 = plausible only via an unknown (und) language.
+// Allocation serves 0 before 1 so und rows never starve a known-language row's author budget.
+export function openLibraryIdentityPriority(value: unknown, query: MetadataQueryIdentity,
+  workAuthors: OpenLibraryWorkAuthors = []): 0 | 1 | null {
+  const parsed = ownFacts(value, workAuthors);
+  if (!parsed || new Set(parsed.authorKeys).size > 4) return null;
   const facts = parsed.facts;
   const exactIsbn = query.normalizedIsbn13 !== null && facts.isbn13 === query.normalizedIsbn13;
-  return (!query.normalizedTitle || normalizeBibliographicText(facts.title) === query.normalizedTitle)
-    && (facts.language === query.normalizedLanguage.split('-')[0]
-      || (exactIsbn && query.normalizedLanguage === 'und'))
-    && (exactIsbn || Boolean(query.normalizedTitle && query.normalizedAuthors.length));
+  // Authors resolve later, so an unknown language admits only a title-compatible text query here.
+  const titleMatches = explicitEditionTitleMatches(query, facts);
+  if (!titleMatches || !explicitEditionLanguageMatches(query, facts.language, exactIsbn, titleMatches)
+    || !(exactIsbn || Boolean(query.normalizedTitle && query.normalizedAuthors.length))) return null;
+  return explicitEditionLanguageMatches(query, facts.language, exactIsbn, false) ? 0 : 1;
 }
 function decode(value: unknown, authors: ReadonlyMap<string,string>, context: Readonly<{
   correlationId: string; attemptId: string; fetchedAt: string;
-}>): MetadataEdition | null {
-  const parsed = ownFacts(value);
+}>, workAuthors: OpenLibraryWorkAuthors): MetadataEdition | null {
+  const parsed = ownFacts(value, workAuthors);
   if (!parsed) return null;
   try {
-    // Only names resolved from this edition's own author references may establish identity.
+    // Only names resolved from this row's identity references (own, else its work's) establish identity.
     const names = parsed.authorKeys.map(key => {
       if (!authors.has(key)) throw new Error('P9_METADATA_SCHEMA_INVALID');
       return authors.get(key)!;
@@ -115,10 +134,10 @@ function decode(value: unknown, authors: ReadonlyMap<string,string>, context: Re
 }
 export function normalizeOpenLibraryRows(entries: readonly unknown[], authors: ReadonlyMap<string,string>,
   context: Readonly<{ correlationId:string; attemptId:string; fetchedAt:string }>,
-  query: MetadataQueryIdentity): readonly StoredEditionRow[] {
+  query: MetadataQueryIdentity, workAuthors: OpenLibraryWorkAuthors = []): readonly StoredEditionRow[] {
   if (entries.length > 10) throw new Error('P9_METADATA_MALFORMED_RESPONSE');
   const rows = entries.map((entry,ordinal): StoredEditionRow => {
-    const metadata = decode(entry,authors,context);
+    const metadata = decode(entry,authors,context,workAuthors);
     return { optionId: globalThis.crypto.randomUUID(), ordinal,
       googleBooksUrl: metadata ? 'https://openlibrary.org/books/' + metadata.providerRecordId : null,
       eligibility: metadata ? evaluateEditionOption(query,metadata,OPEN_LIBRARY_HOST_POLICY) : 'unavailable', metadata };

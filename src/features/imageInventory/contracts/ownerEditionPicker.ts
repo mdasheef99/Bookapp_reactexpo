@@ -47,12 +47,25 @@ const googleBooksUrl = z.string().min(1).max(2048).refine((value) => {
   } catch { return false; }
 }, 'book link is not approved');
 
+// Owner decision2026-10-13 / picker §3.1/§9: display-only, opt-in compatible reasons.
+export const EDITION_REASONS_CLIENT_INFO = 'bookconnect/edition-reasons-v1' as const;
+export const editionRejectionReasonSchema = z.enum([
+  'title_differs', 'author_differs', 'language_unknown', 'language_differs',
+  'volume_differs', 'identity_unverified', 'result_unavailable',
+]);
+export type EditionRejectionReason = z.infer<typeof editionRejectionReasonSchema>;
+
 export const editionRowSchema = z.object({
   optionId: uuid, ordinal: z.number().int().min(0).max(9).safe(),
   googleBooksUrl: googleBooksUrl.nullable(),
   eligibility: z.enum(['eligible', 'ineligible', 'unavailable']),
+  rejectionReason: editionRejectionReasonSchema.nullable().optional(),
   metadata: metadataSnapshotSchema.nullable(),
 }).strict().superRefine((row, context) => {
+  if (row.rejectionReason != null && (row.eligibility === 'eligible'
+    || (row.rejectionReason === 'result_unavailable') !== (row.eligibility === 'unavailable'))) {
+    context.addIssue({ code: 'custom', message: 'edition rejection reason is inconsistent' });
+  }
   if ((row.eligibility === 'unavailable') !== (row.metadata === null)
     || (row.metadata !== null && row.googleBooksUrl === null)) {
     context.addIssue({ code: 'custom', message: 'edition row is inconsistent' });
