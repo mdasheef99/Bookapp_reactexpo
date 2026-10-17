@@ -6224,3 +6224,6 @@ Scope and evidence: tracker 37 sections 64-66 (live Antifragile identity check, 
 
 Date/session: 2026-10-17, Claude Code session in the codex/edition-picker worktree. Scope: Owner-authorized worker rules 6-9, M75 and M77 creation, review, preflight and application; deployments and push held. Code commit 850121e (local). Gates: worker suites 234; full Jest 3,548 passed / 0 failed / 4 skipped; tsc clean; M77 SQL 48/48; M75 SQL 11/11; 4,000-pair worker/SQL parity check, 0 disagreements; full phase9 DB 761/764 (3 pre-existing phase9MetadataFoundation failures, reproduced on the clean committed code). Live: M75 20261017083027, M77 20261017083206, readback in tracker 37 §67. Database writes by this session: only the two migrations (functions only). Render worker, Owner API and client release held.
 
+## 2026-10-17 - PR #16 merged; Render metadata worker deployed
+
+PR #16 merged by the Owner as f376c26. Render metadata worker deployed from main (dep-db9mtcijnfac73ct2op0, live 12:50:09Z, /health 200). Pre-deploy: clean build PASS, worker integration 14/14, merged-tree Jest 3,650 passed / 0 failed, CI 3/3. Rollback target 76348f3. Evidence in tracker 37 §68.
