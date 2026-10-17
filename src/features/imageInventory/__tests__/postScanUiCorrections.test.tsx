@@ -54,14 +54,15 @@ function reviewCard(overrides: Partial<OwnerBatchReviewCard> = {}): OwnerBatchRe
     };
 }
 
-function renderCard(card: OwnerBatchReviewCard = reviewCard()) {
+function renderCard(card: OwnerBatchReviewCard = reviewCard(),
+    cardDefaults: Parameters<typeof BatchReviewCard>[0]['defaults'] = defaults) {
     const onDraftChange = jest.fn();
     const onAdd = jest.fn(async () => ({ status: 'succeeded' as const }));
     const screen = render(
         <BatchReviewCard
             identity={{ userId: testUuid(90), storeId: testUuid(91) }}
             card={card}
-            defaults={defaults}
+            defaults={cardDefaults}
             isOffline={false}
             canMutate
             removePending={false}
@@ -539,5 +540,55 @@ describe('Phase 9 Unit 6G bounded post-scan UI corrections', () => {
         fireEvent.changeText(screen.getByTestId('card-custom-rupees'), 'not a price');
         fireEvent.press(screen.getByLabelText('Use custom price'));
         expect(screen.getByText('Enter a whole-rupee amount.')).toBeTruthy();
+    });
+});
+
+describe('card Ready badge uses the add-now rule', () => {
+    it('does not show Ready for an unchanged saved review the server has not marked ready', () => {
+        const screen = renderCard(reviewCard({ reviewReady: false, allowedActions: ['save_review'] }));
+
+        expect(within(screen.getByTestId('card-review-status')).getByText('Review book')).toBeTruthy();
+        expect(screen.getByText('Add to inventory')).toBeDisabled();
+    });
+
+    it('does not show Ready for a server-ready review that cannot be added', () => {
+        const screen = renderCard(reviewCard({ allowedActions: ['view_metadata'] }));
+
+        expect(within(screen.getByTestId('card-review-status')).queryByText('Ready')).toBeNull();
+        expect(screen.queryByText('Add to inventory')).toBeNull();
+    });
+
+    it('shows Adding, not Ready, while the card is being added', () => {
+        const screen = render(
+            <BatchReviewCard
+                identity={{ userId: testUuid(90), storeId: testUuid(91) }}
+                card={reviewCard()} defaults={defaults} isOffline={false} canMutate
+                removePending={false} addPending onOpenFullCorrection={jest.fn()}
+                onRemove={jest.fn()} onAdd={jest.fn()} onDraftChange={jest.fn()}
+            />,
+        );
+
+        expect(within(screen.getByTestId('card-review-status')).getByText('Adding')).toBeTruthy();
+    });
+
+    it('shows Ready, not the generic review blocker, for a complete unsaved draft that Add will save', () => {
+        const screen = renderCard(reviewCard({
+            candidateState: 'needs_review', reviewVersion: null, review: null,
+            reviewDisposition: null, reviewReady: false,
+            blockers: [{ code: 'review_missing', candidateId: reviewCard().candidateId, inputId: null,
+                field: null, safeMessage: 'Review this book.' }],
+            fieldSources: { ...reviewCard().fieldSources, price: 'default' },
+            allowedActions: ['save_review'],
+        }), { ...defaults, condition: 'good' as const, priceMinor: 25000 });
+
+        expect(within(screen.getByTestId('card-review-status')).getByText('Ready')).toBeTruthy();
+        expect(screen.queryByText(/Review this book\./)).toBeNull();
+        expect(screen.getByText('Add to inventory')).not.toBeDisabled();
+    });
+
+    it('does not show Ready for a possible duplicate', () => {
+        const screen = renderCard(reviewCard({ candidateState: 'possible_duplicate' }));
+
+        expect(within(screen.getByTestId('card-review-status')).getByText('Needs attention')).toBeTruthy();
     });
 });

@@ -8,6 +8,10 @@ The old scan 93567d47-3874-4576-b3b4-1adb044b552b was closed through the authent
 
 Exact next authorized action: Owner review of the live proof and direction on the six remaining cards in active session 7a81bdb6-ed34-40cb-b5a9-cff85402cf48; separately decide whether to authorize the proposed M75 exhausted-lookup recovery. The new session remains active, and the existing expired 5/5 job remains untouched. Sources: picker SDD §13.14, DOC-3 §5.2.1, Unit 6G SDD §§14/23 (U6G-AC13/18/20). [Live picker and Add evidence](37-owner-edition-picker-open-library-local.md) (tracker 37 §26); earlier headers are historical.
 
+## 2026-10-17 - Review-screen Ready count uses one add-now rule
+
+The card badge, header Ready/Need review and Add all ready books now share `cardReadyNow` (can start Add, no attention items, not a possible duplicate). Add all excludes cards that fail it; a complete draft that Add will save no longer shows the generic review_missing attention; Need review is counted per card and excludes in-flight adds; the badge shows Adding during an add. This restores the Unit 6G SDD §13.1/§19 Ready definition. Server counts, auto-close, migrations and the database are unchanged. Verification: `tsc --noEmit` clean; full Jest 3,655 passed, 4 skipped, plus one ClubManageScreen load-timing flake (passed 87/87 twice alone and on clean main). Not checked in the running app. Evidence: tracker 37 §71.
+
 ## 2026-10-17 - Edition-picker delayed-read test made deterministic
 
 GitHub run 39041769181 (PR #17, docs-only) failed "a delayed read cannot

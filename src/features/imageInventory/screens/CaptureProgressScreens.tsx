@@ -11,7 +11,8 @@ import type { EditionChoices } from '../contracts/ownerEditionPicker';
 import { PostScanSessionHeader } from '../components/post-scan-session-header';
 import { DuplicateInputConfirmationDialog } from '../components/DuplicateInputConfirmationDialog';
 import { candidateCanStartBulkCommit } from '../commit/inventoryCommitCoordinator';
-import { candidateCommitAuthorityKey } from '../commit/inventoryCommitPolicy';
+import { candidateCanStartCommit, candidateCommitAuthorityKey } from '../commit/inventoryCommitPolicy';
+import { cardAttentionItems, cardReadyNow } from '../components/batchReviewStatus';
 import { useInventoryCommitCoordinator } from '../commit/useInventoryCommitCoordinator';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 import {
@@ -24,7 +25,7 @@ import {
     useRemoveOwnerInventoryCandidate,
 } from '../queries/ownerBatchReviewQueries';
 import {
-    buildCompactReview,
+    validateCompactReview,
     type CompactReviewEdits,
 } from '../review/compactReviewDraft';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
@@ -169,17 +170,26 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
         publication: batchReview.data?.defaults.publication ?? 'private',
         batchLabel: batchReview.data?.batchLabel ?? '',
     };
+    const attentionCandidateIds = new Set<string>();
     const commitDrafts = cards.map((card) => {
         const savedDraft = candidateDrafts.get(card.candidateId);
         const edits = savedDraft?.edits ?? {};
-        const review = buildCompactReview(card, setupDefaults, edits,
+        const validation = validateCompactReview(card, setupDefaults, edits,
             editionChoices.scope === editionScope ? editionChoices.values.get(card.candidateId) : undefined);
-        return { card, edits, ...(review ? { review } : {}),
+        const draft = { card, edits, ...(validation.review ? { review: validation.review } : {}),
             acceptedAuthorityKey: pendingIdentityAuthorities.get(card.candidateId)
                 ?? savedDraft?.acceptedAuthorityKey ?? candidateCommitAuthorityKey(card) };
+        // Same attention rule as the card badge (cardReadyNow): such cards are neither Ready nor in Add all.
+        const attentionCount = cardAttentionItems({
+            card, hasEdits: Object.keys(edits).length > 0, validationIssues: validation.issues,
+            draftSubmittable: candidateCanStartCommit(draft),
+        }).length;
+        if (!cardReadyNow(card, true, attentionCount)) attentionCandidateIds.add(card.candidateId);
+        return draft;
     });
     const blockedCandidateIds = new Set([
         ...authorityChangedCandidates, ...pendingIdentityAuthorities.keys(), ...editionPending,
+        ...attentionCandidateIds,
     ]);
     const succeededCandidateIds = new Set(inventoryCommit.bulkResult?.outcomes
         .filter((outcome) => outcome.status === 'succeeded')
@@ -205,14 +215,24 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
             return next;
         });
     }, []);
+    // One readiness rule for the header's Ready count, the card badges and Add all ready books.
+    const readyCandidateIds = new Set(commitDrafts.filter((candidate) => candidateCanStartBulkCommit(
+        candidate,
+        blockedCandidateIds,
+        inventoryCommit.inFlight,
+        inventoryCommit.outcomes,
+    )).map((candidate) => candidate.card.candidateId));
+    // Counted per card so an in-flight or just-added book is in neither bucket.
+    const reviewCounts = {
+        ready: readyCandidateIds.size,
+        needReview: cards.filter((card) => !['processing', 'commit_in_progress', 'committed'].includes(card.candidateState)
+            && !readyCandidateIds.has(card.candidateId)
+            && !inventoryCommit.inFlight.has(card.candidateId)
+            && inventoryCommit.outcomes.get(card.candidateId)?.status !== 'succeeded').length,
+    };
     const showBulkControls = !loading && !unavailable && !retryableError
         && !aggregateFailed && !unsupportedLegacyOverflow
-        && (commitDrafts.some((candidate) => candidateCanStartBulkCommit(
-            candidate,
-            blockedCandidateIds,
-            inventoryCommit.inFlight,
-            inventoryCommit.outcomes,
-        )) || inventoryCommit.bulkPending || inventoryCommit.bulkResult !== null);
+        && (reviewCounts.ready > 0 || inventoryCommit.bulkPending || inventoryCommit.bulkResult !== null);
     const commandsIdle = editionPending.size === 0 && inventoryCommit.inFlight.size === 0 && !inventoryCommit.bulkPending
         && !removeCandidate.isPending && !removal.isPending && !duplicateConfirmation.isPending;
     const autoClose = useCompletedScanAutoClose({
@@ -295,6 +315,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         isOffline={isOffline}
                         sessionActive={session.data?.status === 'active'}
                         batch={batchReview.data}
+                        reviewCounts={session.data?.status === 'active' ? reviewCounts : undefined}
                         inputItems={inputs.data?.items ?? []}
                         inputAnnouncement={inputAnnouncement}
                         removeMessage={removal.message}

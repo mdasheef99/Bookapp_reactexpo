@@ -18,6 +18,7 @@ export function PostScanSessionHeader({
     isOffline,
     sessionActive,
     batch,
+    reviewCounts,
     inputItems,
     inputAnnouncement,
     removeMessage,
@@ -40,6 +41,7 @@ export function PostScanSessionHeader({
     isOffline: boolean;
     sessionActive: boolean;
     batch: OwnerBatchReview | undefined;
+    reviewCounts?: { ready: number; needReview: number };
     inputItems: OwnerInputProgress[];
     inputAnnouncement: string | null;
     removeMessage: string | null;
@@ -99,6 +101,7 @@ export function PostScanSessionHeader({
                             visibleCount={batch.items.length}
                             batchLabel={batch.batchLabel}
                             counts={batch.counts}
+                            reviewCounts={reviewCounts}
                         />
                     ) : title}
                     <Text selectable style={{ color: colors.textSecondary }}>

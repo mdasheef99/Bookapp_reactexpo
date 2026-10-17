@@ -12,24 +12,32 @@ export function metadataStatusLabel(state: OwnerBatchReviewCard['metadataState']
     return 'Metadata failed';
 }
 
+// One readiness rule for the card badge, the session header's Ready count and
+// Add all ready books: the card can be added now and nothing on it needs attention.
+export function cardReadyNow(
+    card: OwnerBatchReviewCard,
+    canAddNow: boolean,
+    attentionCount: number,
+): boolean {
+    return canAddNow && attentionCount === 0 && card.candidateState !== 'possible_duplicate';
+}
+
 export function reviewStatusLabel(
     card: OwnerBatchReviewCard,
-    draftReady: boolean,
+    canAddNow: boolean,
     attentionCount: number,
-    editable: boolean,
-    hasEdits: boolean,
     addOutcome?: CandidateCommitOutcome,
+    adding = false,
 ): string {
     if (addOutcome?.status === 'succeeded') return 'Added';
     if (addOutcome && addOutcome.status !== 'busy') return 'Needs attention';
     if (card.candidateState === 'committed') return 'Added';
-    if (card.candidateState === 'commit_in_progress') return 'Adding';
+    if (card.candidateState === 'commit_in_progress' || adding) return 'Adding';
     if (card.candidateState === 'processing') return 'Processing';
     if (card.candidateState === 'failed') return 'Failed';
     if (card.candidateState === 'possible_duplicate' || attentionCount > 0) return 'Needs attention';
-    if (draftReady && editable && (hasEdits || card.reviewReady)) return 'Ready';
+    if (cardReadyNow(card, canAddNow, attentionCount)) return 'Ready';
     if (card.candidateState === 'needs_review') return 'Needs attention';
-    if (card.reviewReady) return 'Ready';
     return 'Review book';
 }
 
@@ -44,10 +52,14 @@ export function cardAttentionItems({
     card,
     hasEdits,
     validationIssues,
+    draftSubmittable = false,
 }: {
     card: OwnerBatchReviewCard;
     hasEdits: boolean;
     validationIssues: readonly CompactReviewValidationIssue[];
+    // The current draft can be saved and added, so Add's canonical Save resolves
+    // draft-resolvable server blockers such as review_missing (SDD §13.1).
+    draftSubmittable?: boolean;
 }) {
     const canExplainMissingReview = !hasEdits
         && card.candidateState === 'needs_review'
@@ -55,7 +67,7 @@ export function cardAttentionItems({
         && validationIssues.length > 0
         && card.blockers.some((blocker) => blocker.code === 'review_missing');
     const serverItems = card.blockers
-        .filter((blocker) => hasEdits
+        .filter((blocker) => hasEdits || draftSubmittable
             ? !draftResolvableBlockerCodes.has(blocker.code)
             : !canExplainMissingReview || blocker.code !== 'review_missing')
         .map((blocker) => ({ field: blocker.field ?? 'review', safeMessage: blocker.safeMessage }));
