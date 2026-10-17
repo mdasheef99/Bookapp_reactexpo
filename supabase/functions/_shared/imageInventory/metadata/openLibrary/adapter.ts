@@ -2,7 +2,8 @@ import type { MetadataProviderAdapter, MetadataProviderOutcome } from '../provid
 import type { EditionOptionsProviderResult } from '../contracts';
 import type { OptionsRetentionEvidence } from '../../contracts/ownerEditionPicker';
 import { boundOptionsRetentionEvidence, resolveOptionsDeadline } from '../googleBooks/editionOptions';
-import { OPEN_LIBRARY_HOST_POLICY, normalizeOpenLibraryRows, object, authorKey, hasSafeOpenLibraryFacts, openLibraryIdentityPriority } from './normalizer';
+import { OPEN_LIBRARY_HOST_POLICY, normalizeOpenLibraryRows, object, hasSafeOpenLibraryFacts, openLibraryIdentityPriority,
+  openLibraryRowAuthorKeys } from './normalizer';
 import { getOpenLibraryJson, OpenLibraryFailure } from './transport';
 import type { OpenLibraryConfiguration, EditionHttpHooks } from './transport';
 
@@ -34,7 +35,7 @@ export class OpenLibraryEditionOptionsAdapter implements MetadataProviderAdapter
     };
     try {
       const search=new URL('https://openlibrary.org/search.json');
-      search.searchParams.set('limit','1');search.searchParams.set('fields','key');
+      search.searchParams.set('limit','1');search.searchParams.set('fields','key,author_key');
       if (input.query.normalizedTitle) search.searchParams.set('title',input.query.normalizedTitle);
       if (input.query.normalizedAuthors.length) search.searchParams.set('author',input.query.normalizedAuthors.join(' '));
       if (!input.query.normalizedTitle && input.query.normalizedIsbn13) search.searchParams.set('isbn',input.query.normalizedIsbn13);
@@ -44,6 +45,11 @@ export class OpenLibraryEditionOptionsAdapter implements MetadataProviderAdapter
       if (found.docs.length===0) return {outcome:'no_acceptable_match',retryable:false,rows:[],fetchedAt,
         retentionEvidence:retention,providerRequestId:null};
       if (typeof key !== 'string' || !/^\/works\/OL[1-9][0-9]*W$/u.test(key)) throw new OpenLibraryFailure('malformed_response');
+      // The work's author references, used only by editions that list no authors of their own.
+      const workKeys=object(found.docs[0])?.author_key;
+      const workAuthors=Array.isArray(workKeys) && workKeys.length<=20
+        && workKeys.every(value=>typeof value==='string' && /^OL[1-9][0-9]*A$/u.test(value))
+        ? workKeys.map(value=>'/authors/'+value) : [];
       const editions=new URL('https://openlibrary.org'+key+'/editions.json');
       editions.searchParams.set('limit','10');
       const page=await get(editions,'editions');
@@ -51,14 +57,14 @@ export class OpenLibraryEditionOptionsAdapter implements MetadataProviderAdapter
       const authors=new Map<string,string>();
       const keys=new Set<string>();
       // Resolve plausible identities first; the returned/displayed positions stay untouched.
-      const safe = page.entries.filter(hasSafeOpenLibraryFacts);
+      const safe = page.entries.filter(entry => hasSafeOpenLibraryFacts(entry,workAuthors));
       // Known-language identities first, then unknown-language ones, each in page order.
-      const priority = (entry: unknown) => openLibraryIdentityPriority(entry,input.query);
+      const priority = (entry: unknown) => openLibraryIdentityPriority(entry,input.query,workAuthors);
       const preferred = [...safe.filter(entry => priority(entry) === 0), ...safe.filter(entry => priority(entry) === 1)];
       for (const entry of [...preferred,...safe]) {
-        const references=object(entry)?.authors;
-        if (!Array.isArray(references) || references.length>20) continue;
-        const needed=new Set(references.map(reference=>object(reference)?.key).filter(authorKey));
+        const references=openLibraryRowAuthorKeys(entry,workAuthors);
+        if (!references) continue;
+        const needed=new Set(references);
         // Admit the whole row only when all unresolved names fit; never spend a slot on a partial row.
         if ([...needed].filter(key=>!keys.has(key)).length>4-keys.size) continue;
         for (const key of needed) keys.add(key);
@@ -77,7 +83,7 @@ export class OpenLibraryEditionOptionsAdapter implements MetadataProviderAdapter
       }
       const rows=normalizeOpenLibraryRows(page.entries,authors,{
         correlationId:input.correlationId,attemptId:input.attemptId,fetchedAt,
-      },input.query);
+      },input.query,workAuthors);
       const eligible=rows.filter(row=>row.eligibility==='eligible');
       const strong=eligible.some(row=>row.metadata?.matchRationale==='exact_validated_isbn');
       return {outcome:strong?'coherent_match':eligible.length?'ambiguous_match':'no_acceptable_match',

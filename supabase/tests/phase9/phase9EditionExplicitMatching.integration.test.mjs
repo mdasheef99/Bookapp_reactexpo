@@ -1,5 +1,6 @@
 // M76 / DOC-3 §5.2.1 / picker SDD §§3.1/4.1: disposable SQL proof, synthetic data only.
 // M76_BASELINE=1 runs the same assertions against M65-M74 alone (expected RED for new rules).
+// M77_BASELINE=1 runs them against M76 without M77 (expected RED for the 2026-10-17 variants).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test, before, after } from 'node:test';
@@ -9,7 +10,9 @@ import * as operation from './editionOptionsCompletionFixture.mjs';
 
 const { metadata, row, seedCard, readSql, selectSql, resetActor, setActor } = commit;
 const M76 = '20261016000076_marketplace_phase9_edition_explicit_matching.sql';
+const M77 = '20261017000077_marketplace_phase9_edition_matching_variants.sql';
 const baseline = process.env.M76_BASELINE === '1';
+const m77Baseline = baseline || process.env.M77_BASELINE === '1';
 const marker = 'bookconnect/edition-reasons-v1';
 const shared = JSON.parse(fs.readFileSync(new URL('./explicitEditionMatchingCases.json', import.meta.url), 'utf8'));
 let db;
@@ -42,7 +45,7 @@ before(async () => {
     '20261010000072_marketplace_phase9_edition_picker_superseded_jobs.sql',
     '20261011000073_marketplace_phase9_open_library_edition_options.sql',
     '20261012000074_marketplace_phase9_open_library_author_isolation.sql',
-    ...(baseline ? [] : [M76]),
+    ...(baseline ? [] : [M76]), ...(m77Baseline ? [] : [M77]),
   ]) await db.exec(fs.readFileSync(migrationPath(file), 'utf8'));
 });
 after(async () => { await db?.close(); });
@@ -127,7 +130,7 @@ test('completion still rejects a row falsely marked eligible (OCR typo author)',
 test('new helpers are immutable, empty-path and not client-executable', { skip: baseline }, async () => {
   for (const signature of ['phase9_edition_title_key(text,boolean)', 'phase9_edition_author_key(text)',
     'phase9_edition_explicit_query(jsonb,text)', 'phase9_edition_rejection_reason(jsonb,text,jsonb)',
-    'phase9_edition_option_eligible(jsonb,text)']) {
+    'phase9_edition_option_eligible(jsonb,text)', ...(m77Baseline ? [] : ['phase9_edition_author_middle_match(text,text)'])]) {
     const info = (await asPostgres(() => db.query("SELECT provolatile,proconfig,"
       + "has_function_privilege('authenticated',oid,'EXECUTE') AS a,has_function_privilege('anon',oid,'EXECUTE') AS b,"
       + "has_function_privilege('service_role',oid,'EXECUTE') AS c FROM pg_proc WHERE oid=$1::regprocedure",

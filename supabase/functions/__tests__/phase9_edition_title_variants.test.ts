@@ -38,7 +38,8 @@ it.each([['fr', 'en'], ['en', 'fr'], ['und', 'en'], ['en', 'und'], ['fr', 'fr']]
     expect(google('Black Swan', result, undefined, query({ language: observed })).eligibility).toBe('ineligible');
   });
 it.each([
-  ['initials', ['Nassim N. Taleb']], ['different author', ['Wrong Author']],
+  // A matching middle initial is accepted since 2026-10-17; a different one is not.
+  ['different middle initial', ['Nassim K. Taleb']], ['different author', ['Wrong Author']],
   ['missing coauthor', ['Nassim Nicholas Taleb', 'Missing Coauthor']],
 ] as const)(
   'requires every supplied author without fuzzy aliases: %s', (_label, authors) => {

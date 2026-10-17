@@ -1,10 +1,10 @@
 import { normalizeBibliographicText, type MetadataQueryIdentity } from './queryIdentity';
 
-// Owner decisions 2026-10-13/16; picker §4.1 / DOC-3 §5.2.1: explicit choices only.
+// Owner decisions 2026-10-13/16/17; picker §4.1 / DOC-3 §5.2.1: explicit choices only.
 // Comparison keys never rewrite catalogue titles/authors or the query identity, and
-// automatic ranking stays exact. Migration M76 enforces these rules in SQL; M76 is deliberately
+// automatic ranking stays exact. Migrations M76/M77 enforce these rules in SQL; SQL is deliberately
 // a superset here (it still folds marks on any base letter, admits comma-form and joined-initial
-// surnames), so every worker-eligible row passes completion until a parity migration narrows it.
+// surnames), so every worker-eligible row passes completion. Character lists match M77 exactly.
 type EditionText = Readonly<{ title: string; language: string }>;
 const baseLanguage = (language: string) => language.split('-')[0];
 // Only accents on Latin letters (a-z then U+0300-U+036F); Cyrillic, Greek and other scripts keep marks.
@@ -12,9 +12,17 @@ const foldAccents = (value: string) => value.normalize('NFD').replace(/([a-z])[\
 const bothEnglish = (query: MetadataQueryIdentity, edition: EditionText) =>
   baseLanguage(query.normalizedLanguage) === 'en' && baseLanguage(edition.language) === 'en';
 
+// Explicit lists (no locale-dependent classes): hyphens/dashes and apostrophes join words
+// ("Anti-Fragile" = "Antifragile"); the other listed punctuation separates words.
+const JOINING_PUNCTUATION = /[-‐-―'‘’ʼ]/gu;
+const SEPARATING_PUNCTUATION = /[.,:;!?"“”()[\]/«»¿¡]/gu;
+
 export function explicitEditionTitleKey(value: string, english: boolean): string {
-  const key = foldAccents(normalizeBibliographicText(value));
-  return english ? key.replace(/&/gu, ' and ').replace(/\s+/gu, ' ').trim() : key;
+  let key = foldAccents(normalizeBibliographicText(value))
+    .replace(JOINING_PUNCTUATION, '').replace(SEPARATING_PUNCTUATION, ' ');
+  // English only: "&" reads "and"; British "ae"/"æ" spellings compare as "e" ("Encyclopaedia").
+  if (english) key = key.replace(/&/gu, ' and ').replace(/æ/gu, 'ae').replace(/ae/gu, 'e');
+  return key.replace(/\s+/gu, ' ').trim();
 }
 
 export function explicitEditionAuthorKey(value: string): string {
@@ -43,6 +51,21 @@ export function explicitEditionTitleMatches(query: MetadataQueryIdentity, editio
   return observed.length > 0 && observed === explicitEditionTitleKey(edition.title, true).replace(/^the /u, '');
 }
 
+// Owner decision 2026-10-17: same first and last names, and each middle name equal or given by its
+// initial ("Nassim N Taleb" = "Nassim Nicholas Taleb"). Word counts must agree.
+function authorWords(value: string): string[] {
+  return foldAccents(normalizeBibliographicText(value)).replace(/\./gu, ' ').split(/\s+/u).filter(Boolean);
+}
+export function explicitEditionMiddleInitialMatch(left: string, right: string): boolean {
+  const a = authorWords(left); const b = authorWords(right);
+  if (a.length < 3 || a.length !== b.length || a[0] !== b[0] || a[a.length - 1] !== b[b.length - 1]) return false;
+  return a.slice(1, -1).every((word, index) => {
+    const other = b[index + 1];
+    return word === other || ([...word].length === 1 && other.startsWith(word))
+      || ([...other].length === 1 && word.startsWith(other));
+  });
+}
+
 // A surname is one supplied word of two or more letters, never joined initials ("J. O.").
 function isSingleSurname(author: string): boolean {
   const words = foldAccents(normalizeBibliographicText(author)).replace(/\./gu, ' ').split(/\s+/u).filter(Boolean);
@@ -63,6 +86,7 @@ export function explicitEditionAuthorsMatch(query: MetadataQueryIdentity,
     const key = explicitEditionAuthorKey(author);
     if (!key) return false;
     if (supplied.includes(key)) return true;
+    if (edition.authors.some(name => explicitEditionMiddleInitialMatch(author, name))) return true;
     return surnameAllowed && isSingleSurname(author) && surnames.includes(key);
   });
 }

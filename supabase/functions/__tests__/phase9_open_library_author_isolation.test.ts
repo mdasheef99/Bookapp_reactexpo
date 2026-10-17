@@ -14,7 +14,8 @@ const edition = (extra: Record<string, unknown> = {}) => ({
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { 'content-type': 'application/json' },
 });
-async function lookup(entries: unknown[], badAuthor?: () => Response, query = identity) {
+async function lookup(entries: unknown[], badAuthor?: () => Response, query = identity,
+  searchDoc: Record<string, unknown> = { key: '/works/OL1W' }) {
   const requests: string[] = [];
   const receipts: Array<Parameters<EditionHttpHooks['afterRequest']>[0]> = [];
   const adapter = new OpenLibraryEditionOptionsAdapter({
@@ -22,7 +23,7 @@ async function lookup(entries: unknown[], badAuthor?: () => Response, query = id
     fetcher: async address => {
       const path = new URL(address instanceof Request ? address.url : String(address)).pathname;
       requests.push(path);
-      if (path === '/search.json') return json({ docs: [{ key: '/works/OL1W' }] });
+      if (path === '/search.json') return json({ docs: [searchDoc] });
       if (path === '/works/OL1W/editions.json') return json({ entries });
       if (path === '/authors/OL2A.json' && badAuthor) return badAuthor();
       return json({ key: path.replace(/\.json$/u, ''), name: 'Fixture Author' });
@@ -140,4 +141,32 @@ it.each([
   expect(result.rows[0]).toMatchObject({ eligibility: 'eligible', metadata: {
     language: 'und', matchRationale: 'exact_validated_isbn',
   } });
+});
+
+// Owner decision 2026-10-17 / picker §13.14 amendment: work-level authors only for author-less editions.
+describe('work-level authors', () => {
+  const work = { key: '/works/OL1W', author_key: ['OL7A'] };
+  it('lets an edition without author references use its work authors', async () => {
+    const { result, requests } = await lookup([edition({ authors: undefined })], undefined, identity, work);
+    expect(result.rows[0]).toMatchObject({ eligibility: 'eligible', metadata: { authors: ['Fixture Author'] } });
+    expect(requests).toEqual(['/search.json', '/works/OL1W/editions.json', '/authors/OL7A.json']);
+  });
+  it('treats an empty author list like a missing one', async () => {
+    const { result } = await lookup([edition({ authors: [] })], undefined, identity, work);
+    expect(result.rows[0]).toMatchObject({ eligibility: 'eligible' });
+  });
+  it('never replaces the edition own authors with the work authors', async () => {
+    const { result, requests } = await lookup([edition()], undefined, identity, work);
+    expect(result.rows[0]).toMatchObject({ eligibility: 'eligible' });
+    expect(requests).toEqual(['/search.json', '/works/OL1W/editions.json', '/authors/OL1A.json']);
+  });
+  it.each([
+    ['missing', { key: '/works/OL1W' }], ['malformed', { key: '/works/OL1W', author_key: ['/authors/OL7A'] }],
+    ['not a list', { key: '/works/OL1W', author_key: 'OL7A' }],
+    ['too many', { key: '/works/OL1W', author_key: Array.from({ length: 21 }, (_, i) => 'OL' + (i + 1) + 'A') }],
+  ] as const)('keeps an author-less edition unavailable when work authors are %s', async (_label, doc) => {
+    const { result, requests } = await lookup([edition({ authors: undefined })], undefined, identity, doc);
+    expect(result.rows[0]).toMatchObject({ eligibility: 'unavailable', metadata: null });
+    expect(requests).toEqual(['/search.json', '/works/OL1W/editions.json']);
+  });
 });
