@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-18",
+  "head": "8bce62e610406fc7a56bff29c65c74d3d16b4c4f",
+  "branch": "codex/library-cover-shelf",
+  "reviewed_source_unchanged": true,
+  "source_gates": "four true, unchanged",
+  "export_entry": "entry-bcb205393c9062fa3611d6102c664855.js",
+  "export_bytes": 5547742,
+  "export_sha256": "1fb9d8dbece977c557ab230555ab546196e3e810f4af490bd15b6fb5d49883f7",
+  "tests": {
+    "primary_tests": 390,
+    "supplemental_suites": 1,
+    "primary_suites": 30,
+    "supplemental_tests": 12
+  },
+  "native_status": "owner deferred after emulator reached real sign-in; no native OCR/save/TalkBack acceptance",
+  "synthetic_note_id": "2ab8a94a-b1ed-46bf-b1f3-c79f1a5bf623",
+  "synthetic_deleted": 1,
+  "final_book_note_count": 1,
+  "existing_note_untouched": true,
+  "index_empty": true,
+  "documentation_continuity": "PASS",
+  "whitespace": "PASS",
+  "receipt_links": "PASS",
+  "fresh_avd_scratch_removed": true,
+  "qemu_processes_remaining": 0
+}

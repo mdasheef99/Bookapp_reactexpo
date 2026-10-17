@@ -1,13 +1,15 @@
 # Manual-note forward correction plan
 
 Date: 2026-10-11 (Asia/Calcutta)
-Last verification: 2026-10-17; [application/readback receipt](./evidence/sdd06-forward-correction-application-2026-10-17/README.md)
-Status: applied once as 20261017083830; exact stored/local SQL SHA256 and catalog readback verified; four gates false, real API/native acceptance pending; stop at owner boundary
-Work unit: library_sdd06_forward_correction_applied_readback_complete_owner_stop
+Last verification: 2026-10-18; [connected enablement receipt](./evidence/sdd06-note-save-enablement-2026-10-18/README.md); [immutable application/readback receipt](./evidence/sdd06-forward-correction-application-2026-10-17/README.md)
+Status: applied once as 20261017083830; bounded connected acceptance complete and four source gates enabled 2026-10-18; full native/release acceptance pending
+Work unit: library_sdd06_note_saving_enabled_connected_verified
 Behavior: [SDD-06](./SDD-06-after-book-entry-ui.md), revision 0.4 baseline retained
 Evidence: [actual applied SQL](./evidence/sdd06-live-session-review-2026-10-11/live-migration.json); [2026-10-17 baseline catalog](./evidence/sdd06-forward-correction-local-2026-10-17/fresh-catalog.json); [2026-10-17 FK enforcement readback](./evidence/sdd06-forward-correction-independent-2026-10-17/fk-trigger-readback.json). These are recorded verification receipts; documentation reconciliation does not claim a new database read.
 
 ## 1. Authorized work and next boundary
+
+**Current 2026-10-18 handoff:** Owner requested enabling saving. [Connected receipt](./evidence/sdd06-note-save-enablement-2026-10-18/README.md) records actual signed-in PostgREST and normal UI persistence, CAS, bounded security/reconciliation checks and exact synthetic cleanup. Four default gates are true. No correction/replay/new migration or deployment occurred; full native/release acceptance remains open. The prior owner stop and preparation procedure below are historical and do not describe current capability availability. Completed task next action is use of the enabled local journey, with remaining acceptance tracked separately.
 
 Current authority/completion: owner explicitly approved the DB correction and stopping afterward. The exact reviewed file was applied once via MCP as **20261017083830** and read back with matching SHA256 `fd6b6e074260888a5f636652fdd01785a99304c3065bd5ab46458a5e094d1305`. Application-only scope is complete. No connected business test/cleanup, source gate enablement, unrelated DDL or Git publication is authorized; stop. Earlier creation-only permissions below are historical. The applied file is now immutable; do not replay/edit/split it.
 

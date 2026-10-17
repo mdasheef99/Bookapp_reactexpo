@@ -1,16 +1,16 @@
 # Manual-note persistence: bounded migration contract
 
-Date: 2026-10-17 documentation reconciliation; original contract 2026-10-11
-Status: reviewed forward correction applied/read back as 20261017083830; connected API/native acceptance pending; four gates false; owner stop boundary reached
-Work unit: library_sdd06_forward_correction_applied_readback_complete_owner_stop
+Date: 2026-10-18 availability reconciliation; original contract 2026-10-11
+Status: correction 20261017083830 applied; four source capabilities enabled after bounded connected acceptance; full native/release acceptance pending
+Work unit: library_sdd06_note_saving_enabled_connected_verified
 Behavior authority: [SDD-06](./SDD-06-after-book-entry-ui.md), revision 0.4 baseline with later correction receipts
 Evidence: [current application/readback](./evidence/sdd06-forward-correction-application-2026-10-17/README.md); [independent review/local proof](./evidence/sdd06-forward-correction-independent-2026-10-17/README.md); [historical preflight](./evidence/sdd06-persistence-preflight-2026-10-10/README.md)
 
-Current evidence: the reviewed forward file passed 34/34 local SQL cases, then was separately authorized and applied once as **20261017083830**. [Application/readback](./evidence/sdd06-forward-correction-application-2026-10-17/README.md) verifies exact SQL SHA256 and catalog/privilege targets. Earlier deletion/client results remain historical. This document retains the minimum persistence contract and original-candidate history; original recipes must not be replayed. The owner instructed stopping after application; no further shared work or enablement is authorized.
+Current evidence: [2026-10-18 connected acceptance/enablement](./evidence/sdd06-note-save-enablement-2026-10-18/README.md) supersedes the prior application-only stop. Owner requested saving enablement; real adapter and normal web UI create/reload/edit/delete, concurrency, stable create/reconciliation and bounded denials/cleanup passed. Four gates are true. Fresh 34/34 isolated SQL and 182/182 notes/capture tests pass. Full native/release acceptance remains pending. The correction remains applied once as **20261017083830**; no migration was replayed. Subsequent historical authorization/verification sections preserve earlier checkpoints; use this receipt for current availability and limits.
 
 ## 1. Scope and authorization
 
-Initial permissions covered preparation/review. The owner subsequently authorized one application of the reviewed forward correction and required stopping afterward. That application and metadata readback are complete; no connected business test writes/cleanup, gate enablement, unrelated DDL or Git publication is authorized. Historical initial variant and local proof remain preserved in their receipts.
+Initial permissions covered preparation/review, followed by one correction application and a stop. On 2026-10-18 the owner resumed the task by requesting saving enablement. Necessary bounded synthetic-note writes/cleanup and local capability enablement are now complete in the current receipt. No unrelated DDL or publication was authorized. The remaining protocol/hold checkpoints retain their historical context; native/full release acceptance is still pending.
 
 Manual notes begin inside an already-open book. Preserve the five approved labels, optional category/page, blank editor, explicit saving, contextual exits, body-only Copy and existing Saved Pages access. This persistence unit changes no OCR/UI scope. Later authorized capture/OCR work is recorded separately in SDD-06; the original proposal's OCR sequencing is historical. Shelves, numbering, cloud, new passages and durable drafts are not added by this contract.
 

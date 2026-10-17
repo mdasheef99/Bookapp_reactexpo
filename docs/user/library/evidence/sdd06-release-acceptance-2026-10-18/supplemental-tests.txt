@@ -1,0 +1,21 @@
+PASS src/features/books/utils/__tests__/ocrWordCap.test.ts
+  ocrWordCap
+    √ matches PostgreSQL code-point limits for emoji (4 ms)
+    √ builds an 800-code-point excerpt without splitting Unicode (1 ms)
+    √ getWordCount counts correctly (1 ms)
+    √ capWords truncates at limit (2 ms)
+    √ capOcrToNoteLimit returns truncated flag and capped 500 (1 ms)
+    √ buildVaultExcerpt slices at 800 (1 ms)
+    √ vault limits constants are 800/4000/800 (1 ms)
+    capToVaultLimits
+      √ returns text unchanged when within both limits
+      √ caps by words when word limit binds first (1 ms)
+      √ caps at 4000 chars on a word boundary when char limit binds first (2 ms)
+      √ handles single word longer than 4000 chars
+      √ never splits a surrogate pair at the cut
+
+Test Suites: 1 passed, 1 total
+Tests:       12 passed, 12 total
+Snapshots:   0 total
+Time:        2.131 s
+Ran all test suites matching /src\\features\\books\\utils\\__tests__\\ocrWordCap.test.ts|src\\features\\books\\reviews/i.

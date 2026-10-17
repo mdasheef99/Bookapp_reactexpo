@@ -1,0 +1,101 @@
+{
+  "project": "ahntbtktjjmvfosgkmgn",
+  "retrieved": "2026-10-18",
+  "scope": "Project-wide security advisor, not a clean release/security verdict",
+  "groups": [
+    {
+      "name": "rls_enabled_no_policy",
+      "level": "INFO",
+      "count": 71,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+    },
+    {
+      "name": "function_search_path_mutable",
+      "level": "WARN",
+      "count": 8,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable"
+    },
+    {
+      "name": "rls_disabled_in_public",
+      "level": "ERROR",
+      "count": 1,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0013_rls_disabled_in_public"
+    },
+    {
+      "name": "extension_in_public",
+      "level": "WARN",
+      "count": 1,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public"
+    },
+    {
+      "name": "anon_security_definer_function_executable",
+      "level": "WARN",
+      "count": 15,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable"
+    },
+    {
+      "name": "authenticated_security_definer_function_executable",
+      "level": "WARN",
+      "count": 154,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+    },
+    {
+      "name": "auth_leaked_password_protection",
+      "level": "WARN",
+      "count": 1,
+      "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+    }
+  ],
+  "relevantFindings": [
+    {
+      "lint": "function_search_path_mutable",
+      "level": "WARN",
+      "detail": "Function \\`public.set_user_book_pages_updated_at\\` has a role mutable search_path",
+      "metadata": {
+        "name": "set_user_book_pages_updated_at",
+        "type": "function",
+        "schema": "public"
+      },
+      "observed_at": "2026-10-17T20:21:05.980Z"
+    },
+    {
+      "lint": "anon_security_definer_function_executable",
+      "level": "WARN",
+      "detail": "Function `public.enforce_user_book_pages_owner()` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/enforce_user_book_pages_owner`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+      "metadata": {
+        "name": "enforce_user_book_pages_owner",
+        "schema": "public",
+        "language": "plpgsql",
+        "arguments": "",
+        "security_definer": true
+      },
+      "observed_at": "2026-10-17T20:21:05.980Z"
+    },
+    {
+      "lint": "authenticated_security_definer_function_executable",
+      "level": "WARN",
+      "detail": "Function `public.enforce_user_book_pages_owner()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/enforce_user_book_pages_owner`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+      "metadata": {
+        "name": "enforce_user_book_pages_owner",
+        "schema": "public",
+        "language": "plpgsql",
+        "arguments": "",
+        "security_definer": true
+      },
+      "observed_at": "2026-10-17T20:21:05.980Z"
+    },
+    {
+      "lint": "authenticated_security_definer_function_executable",
+      "level": "WARN",
+      "detail": "Function `public.get_public_book_reviews(p_book_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_public_book_reviews`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+      "metadata": {
+        "name": "get_public_book_reviews",
+        "schema": "public",
+        "language": "sql",
+        "arguments": "p_book_id uuid",
+        "security_definer": true
+      },
+      "observed_at": "2026-10-17T20:21:05.980Z"
+    }
+  ]
+}

@@ -1,5 +1,32 @@
 # Library Tracker
 
+**Release acceptance attempt — 2026-10-18:** `library_sdd06_release_acceptance_web_verified_native_deferred`. [Checklist/remaining gates](./evidence/sdd06-release-acceptance-2026-10-18/README.md): fresh 31 suites/402 tests, scoped TypeScript/export PASS; current 8083 real 500-word create/reload/edit, 501-word/page validation, dirty Back/focus, photo/crop-discard restoration and keyboard filtering PASS within scope. Exact synthetic cleanup restores the original one-note count. Emulator reached real login without auth bypass; owner said “ignore emulator for now,” so native acceptance stopped. RA-W01 global tab-label contrast 4.02:1/3.27:1 remains open outside leaf-route scope; existing W01 remains. Full SDD06-07 NOT COMPLETE. Four gates stay true; no source/migration/deployment change. Next authorized action: use enabled local notes; native acceptance waits for owner resumption/sign-in, and shared-shell contrast needs scoped correction before release. Marketplace unchanged.
+
+**Independent enablement review — 2026-10-18:** Owner-requested Sol light (`gpt-6.1-sol`, low, fresh context) approved the bounded enablement with no actionable findings. [Review receipt and immutable snapshot](./evidence/sdd06-note-save-review-2026-10-18/README.md): reviewer independently passed five focused suites/86 tests and checked activated save/cache/navigation/ownership paths; parent confirmed all four source/test hashes and patch hash remain identical. No code corrections or new external writes. Four capabilities remain enabled locally; full native/SDD06-07 acceptance and W01 remain pending. Current work unit/next action and Marketplace handoff unchanged; review documentation remains uncommitted.
+
+**Note saving enabled — 2026-10-18:** `library_sdd06_note_saving_enabled_connected_verified`. Owner requested enablement after the applied safety correction. [Connected acceptance and cleanup receipt](./evidence/sdd06-note-save-enablement-2026-10-18/README.md): real signed-in PostgREST five/null category creates, concurrent CAS winner/conflict, stale replacement rejection, metadata/validation/anonymous/forged-owner denials, stable UUID reconciliation and real committed-write/injected-response-loss recovery PASS. Separate live SQL-role foreign-actor denial probe rolled back. Four default capabilities now true; normal browser create -> reload -> edit/category-null/page-null -> reload -> confirmed delete -> reload PASS. Eight committed synthetic notes created across checks, all deleted; target-book baseline restored to zero. Fresh 182/182 across fifteen notes/capture suites, 34/34 isolated PostgreSQL and scoped TypeScript PASS; final export/docs checks in receipt. Temporary dev acceptance route removed/archived. No migration/replay/Storage change, existing note/review edit, staging, commit, push or deployment. Full native/SDD06-07 acceptance and W01 remain open. Exact next action: use the enabled local notes journey; native/release verification remains separately pending. Marketplace Unit7C/M46 unchanged. Earlier gate-closed/owner-stop entries below are historical.
+
+**Read-only note-save safety recheck — 2026-10-18:** On owner request, fresh MCP project verification identified `ahntbtktjjmvfosgkmgn` / `Bookconnect_reactexpo` / ACTIVE_HEALTHY. Metadata-only SELECT confirmed correction `20261017083830`, MD5 `ec5e6bfb4e89e845c26ab0cd00c36fb6`, 17,285 stored SQL bytes; authenticated created_at INSERT/UPDATE, table-wide UPDATE and direct revision-function EXECUTE are denied. RLS and four authenticated actor/owned-book policies are installed (UPDATE USING/WITH CHECK); revision trigger is enabled, invoker function preserves OLD.created_at/increments version; nine constraints validated and all twelve internal FK actions enabled. This bounded recheck confirms installed protections, not full catalog equality or real Auth/PostgREST acceptance. Four source save gates remain false. Known DB correction is applied; connected note create/edit/delete, denial, stale-version/concurrency and response-loss/retry acceptance remain pending. No note bodies/business rows fetched or changed; no migration/gate/runtime change, test run, staging, commit, push or deployment. Existing owner-stop work unit remains; await a new scoped instruction before connected writes or enablement. Marketplace Phase9 Unit7C/M46 unchanged.
+
+**Signed-in browser smoke check — 2026-10-18:** `library_sdd06_signed_in_web_smoke_pass_gates_closed`. Setup: Expo web dev server on localhost:8083 at `8bce62e`, against the development Supabase project. The owner signed in themselves. A Haiku subagent ran a 16-step checklist on "Clean Code"; Claude spot-checked the flagged items.
+
+PASS:
+- Library list/shelf.
+- Book Details order: Back → cover → status → Add note → Notes → Saved Pages → four collapsed sections.
+- Named "Back to Library" button; section expand/collapse.
+- Untouched blur sends no save (IR01 fix).
+- Edited blur saves; it persisted across reload. Visibility toggled and restored.
+- Composer chooser: five categories, Skip, Write/Scan; note text and optional page.
+- Discard dialog Keep/Discard. Browser Back re-shows the discard prompt with the draft intact.
+- Save shows "Saving isn't available yet. Your text is still here." (gates closed).
+- Notes collection empty state and filters; Back to Library.
+
+No console errors captured.
+
+Data: the review text and visibility were edited, then restored to their originals and re-verified after reload. No notes were created and no books were removed.
+
+**Finding W01 (P3, pre-existing, web only):** react-native-web 0.21.2 implements `Alert.alert` as a no-op. On web, "Review saved!", review error alerts, and other `Alert.alert` feedback (search, NoteCard, NoteEditor, VaultPagesList) are invisible. Native is unaffected. Not fixed.
+
 **RR01/RR02 final independent review and corrections — 2026-10-17:** `library_sdd06_review_write_final_review_corrected_locally_verified`. The owner requested two independent read-only reviews, then fixes.
 - **Reviews:** Codex gpt-6.1-sol xhigh returned CHANGES REQUESTED (IR01). opencode space-bunny-free max returned APPROVE WITH NITS. Both confirm RR01/RR02 are closed, with no F01–F03/FR01/TR01–TR03 regression. A shelf failure Codex reported came from its sandbox running with no Jest cache: the suite passes 36/36 in-band.
 

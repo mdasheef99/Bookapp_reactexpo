@@ -1,9 +1,13 @@
 # SDD-06 — After-book-entry Library UI implementation
 
-Date: 2026-10-17
-Revision: 0.24 behavior baseline retained; persistence technical handoff reconciled 2026-10-17
-Status: reviewed DB correction applied/read back as 20261017083830; four source write gates closed; connected API/native/full SDD06-07 acceptance and separate Book Details reconciliation review pending; stop after application per owner
-Work unit: library_sdd06_forward_correction_applied_readback_complete_owner_stop
+Date: 2026-10-18
+Revision: 0.24 behavior baseline retained; persistence availability reconciled 2026-10-18
+Status: manual-note source saving enabled after bounded connected acceptance; DB correction 20261017083830 retained; full native/SDD06-07 acceptance pending
+Work unit: library_sdd06_release_acceptance_web_verified_native_deferred
+
+**Release acceptance attempt — 2026-10-18:** [Checklist and evidence](./evidence/sdd06-release-acceptance-2026-10-18/README.md). Owner authorized acceptance, then explicitly deferred emulator work after native sign-in was reached. Fresh 31 suites/402 tests, scoped TypeScript and web export PASS; actual 8083 long-note create/reload/edit, dirty Back/focus, image preparation/crop discard and keyboard filtering PASS within the recorded scope. One synthetic note created/edited/deleted; original one-note baseline preserved. RA-W01 shared tab-label contrast remains OPEN (4.02:1 selected, 3.27:1 inactive at 10px); global tab behavior is outside the leaf-route scope. Existing W01 remains. Native camera/picker/OCR-to-save/TalkBack/large text/hardware Back and complete SDD06-07 acceptance are not established; deferral is not a release waiver. No source/gate/migration change or publication. Next authorized action: use enabled local notes; native acceptance waits for owner resumption/sign-in, and shared-shell contrast needs scoped correction before unqualified accessibility sign-off.
+
+**Current persistence availability — 2026-10-18:** Owner requested enabling saving after the safety correction. [Connected acceptance receipt](./evidence/sdd06-note-save-enablement-2026-10-18/README.md): all four default gates now true after real signed-in category/null, CAS/conflict, duplicate/reconciliation, metadata/validation/anonymous denials and cleanup checks. B04/B05 -> explicit confirmed B08 -> B09 edit -> reload -> delete was exercised through normal web UI; optional category/page persisted as null. Real committed-write loss was injected at the adapter boundary and reconciled by GET without another write. R01–R04/R09–R17 persistence-related criteria have bounded connected evidence, not full native/release sign-off. Fifteen notes/capture suites 182/182, isolated PostgreSQL 34/34 and scoped TypeScript PASS. New native/physical-device/TalkBack/SDD06-07 acceptance remains open. Earlier hold/application-stop statements below are historical; this owner instruction supersedes that stop for the completed enablement and synthetic cleanup only. No new migration or deployment.
 
 **Book Details review-write final review — 2026-10-17:** two independent read-only reviews ran: Codex gpt-6.1-sol xhigh and opencode space-bunny-free max. Both confirm RR01/RR02 are closed, with no F01–F03/FR01/TR01–TR03 regression. Corrections applied:
 - An untouched (clean) review blur no longer writes. This closes a confirmed race where a blur in the gap between a refetch's cache update and its re-render could overwrite newer confirmed text, and it removes the false "Review saved!".
