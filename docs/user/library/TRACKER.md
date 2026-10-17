@@ -1,5 +1,24 @@
 # Library Tracker
 
+**RR01/RR02 final independent review and corrections — 2026-10-17:** `library_sdd06_review_write_final_review_corrected_locally_verified`. The owner requested two independent read-only reviews, then fixes.
+- **Reviews:** Codex gpt-6.1-sol xhigh returned CHANGES REQUESTED (IR01). opencode space-bunny-free max returned APPROVE WITH NITS. Both confirm RR01/RR02 are closed, with no F01–F03/FR01/TR01–TR03 regression. A shelf failure Codex reported came from its sandbox running with no Jest cache: the suite passes 36/36 in-band.
+
+Verified findings and dispositions:
+1. **IR01 (P1 race):** a clean blur re-submitted rendered text and could overwrite a newer confirmed refetch in the gap before re-render, also showing a false "Review saved!". `handleSaveReview` now submits only when `reviewDraft.current.dirty`.
+2. **Lost "Review saved!":** TanStack per-call `mutate` callbacks run only for the observer's latest call. The alert moved to the review mutation's own `onSuccess`, with the same actor and text-revision guards.
+3. **F05 exclusion too narrow:** root `tsconfig.json` now excludes `docs`. Nine sibling `docs/user/library/*-evidence-*` folders had still entered the program.
+4. **Dead `booksService.addRating`:** an unsafe multi-field write path with no callers. Deleted, along with its two tests and stale mocks.
+5. **Navigate-without-blur loses typed text:** recorded in SDD-06 as an accepted limitation; durable drafts stay out of scope.
+
+Fixes 1–4 were implemented by Codex gpt-6.1-sol xhigh under a scoped spec (seven files, no git or database). Claude reviewed the diff, wrote fix 5 and this entry. The new permanent tests are the cache-update-before-rerender blur regression and exactly-once confirmation of a superseded text save; Codex reported both fail on the old code and pass after.
+
+Independent rerun by Claude:
+- Scoped `tsc`: PASS.
+- Full `tsc`: 36 errors, all in marketplace `supabase/functions/_shared/imageInventory/**` and `e2e/store-view-wu4-resilience.spec.ts`; zero Library.
+- Focused Jest (Library app tests, library and notes components, notes domain, books services, utils): **37 suites / 487 tests PASS**.
+
+No database or Storage access. Write gates unchanged (false). Exact next action: owner-authorized connected API verification of note saving ahead of gate enablement.
+
 **F05/F06 verification-debt correction — 2026-10-17:** `library_sdd06_f05_f06_corrected_locally_verified`. Owner authorized local fixes only: no database work and no write-gate change. All four `MANUAL_NOTE_WRITE_GATES` remain false. Findings are from the [independent review](./evidence/sdd06-independent-review-2026-10-16/README.md).
 - **F06 (Book Details):** `app/(tabs)/library/__tests__/[bookId].test.tsx` is reconciled with the current contracts. Reviews save through `bookReviewService.update` as one field per action, with a store-bound actor. Notes load through `manualNotesGateway`, and the copy reads "Private Review". The test now opens the collapsed My review and Community reviews sections. It keeps privacy-then-text coverage with no forced rating, community-review isolation and the Back fallback.
 - **F06 (shelf route test):** `LibraryShelf.test.tsx` now asserts that index and search keep the default animation, notes and note use `animation: 'none'`, and note-compose uses `gestureEnabled: false, animation: 'none'`.

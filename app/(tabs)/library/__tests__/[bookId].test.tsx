@@ -44,7 +44,6 @@ jest.mock('@/features/books/services/booksService', () => ({
     booksService: {
         getBookDetails: jest.fn(),
         getPublicReviewsForBook: jest.fn(),
-        addRating: jest.fn(),
         updateReadingStatus: jest.fn(),
         updateOwnership: jest.fn(),
         updateCondition: jest.fn(),

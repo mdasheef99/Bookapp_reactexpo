@@ -48,7 +48,7 @@ jest.mock('@/features/auth/hooks/useAuth', () => ({ useAuth: () => {
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 24, bottom: 16, left: 0, right: 0 }) }));
 jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight', colors: { textPrimary: '#111', textSecondary: '#444', textTertiary: '#555', bgPrimary: '#FFF', bgCard: '#FFF', bgSecondary: '#EEE', accent: '#24543C', error: '#B42318', border: '#819283' } }) }));
 jest.mock('@/features/books/services/userBookPagesService', () => ({ userBookPagesService: { getPagesForBook: jest.fn(), deletePage: jest.fn() } }));
-jest.mock('@/features/books/services/booksService', () => ({ booksService: { getBookDetails: jest.fn(), getPublicReviewsForBook: jest.fn(), addRating: jest.fn() } }));
+jest.mock('@/features/books/services/booksService', () => ({ booksService: { getBookDetails: jest.fn(), getPublicReviewsForBook: jest.fn() } }));
 jest.mock('@/features/books/services/bookReviewService', () => ({ ...jest.requireActual('@/features/books/services/bookReviewService'), bookReviewService: { update: jest.fn() } }));
 jest.mock('expo-image', () => ({ Image: require('react-native').View }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: require('react-native').View }));

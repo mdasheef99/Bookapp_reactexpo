@@ -11,6 +11,6 @@
   },
   "exclude": [
     "supabase/functions",
-    "docs/user/library/evidence"
+    "docs"
   ]
 }

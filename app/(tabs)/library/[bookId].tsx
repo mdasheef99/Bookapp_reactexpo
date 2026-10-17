@@ -205,6 +205,8 @@ export default function BookDetailScreen() {
             queryClient.setQueryData<typeof userBook>(key, (previous: typeof userBook) => previous ? {
                 ...previous, ...confirmed,
             } : previous);
+            if (typeof submission.patch.review === 'string' && isCurrentReviewActor(submission.actor) &&
+                reviewDraft.current.revision === submission.textRevision) Alert.alert('Success', 'Review saved!');
         },
         onError: (err: any, submission) => {
             if (!isCurrentReviewActor(submission.actor)) return;
@@ -246,14 +248,9 @@ export default function BookDetailScreen() {
         const submission: ReviewSubmission = { actor: reviewActor, entryId: bookId, patch, editorId,
             requestId: `${editorId}:${++requestSequence.current}`, textRevision: reviewDraft.current.revision };
         if (typeof patch.review === 'string') reviewDraft.current.textRequest = submission.requestId;
-        updateRatingMutation.mutate(submission, {
-            onSuccess: () => {
-                if (typeof patch.review === 'string' && isCurrentReviewActor(submission.actor) &&
-                    reviewDraft.current.revision === submission.textRevision) Alert.alert('Success', 'Review saved!');
-            }
-        });
+        updateRatingMutation.mutate(submission);
     };
-    const handleSaveReview = () => submitReview({ review: reviewText });
+    const handleSaveReview = () => { if (reviewDraft.current.dirty) submitReview({ review: reviewText }); };
     const handleReviewText = (text: string) => {
         reviewDraft.current.revision++;
         reviewDraft.current.textRequest = '';

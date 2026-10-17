@@ -37,7 +37,6 @@ jest.mock('@/features/books/notes/useManualNotes', () => ({ useNoteOperations: j
 jest.mock('@/features/books/notes/manualNotesGateway', () => ({ manualNotesGateway: { list: jest.fn() } }));
 jest.mock('@/features/books/services/booksService', () => ({ booksService: {
     getBookDetails: jest.fn(), getPublicReviewsForBook: jest.fn(),
-    addRating: jest.fn(),
     updateReadingStatus: jest.fn(), updateOwnership: jest.fn(), updateCondition: jest.fn(), toggleLendingAvailability: jest.fn(), removeFromLibrary: jest.fn(),
 } }));
 jest.mock('@/components/library', () => {
@@ -103,6 +102,18 @@ it.each(['text', 'rating', 'privacy'])('sends only the %s field selected by the 
     await settled();
     const expected = field === 'text' ? { review: 'Edited text' } : field === 'rating' ? { rating: 4 } : { review_is_public: false };
     expect(requests.map(request => request.patch)).toEqual([expected]);
+});
+
+it('confirms a text save exactly once when a later privacy action supersedes its observer', async () => {
+    const first = deferred(); const second = deferred(); gates.push(first, second); const ui = await screen();
+    fireEvent.changeText(ui.getByTestId('library-review-input'), 'Saved text'); fireEvent(ui.getByTestId('library-review-input'), 'blur');
+    await waitFor(() => expect(requests).toHaveLength(1)); fireEvent.press(ui.getByTestId('library-review-privacy-toggle'));
+    await waitFor(() => expect(client.isMutating()).toBe(2)); expect(requests).toHaveLength(1);
+    await act(async () => first.resolve()); await waitFor(() => expect(requests).toHaveLength(2));
+    await act(async () => second.resolve()); await settled();
+    expect(requests.map(request => request.patch)).toEqual([{ review: 'Saved text' }, { review_is_public: false }]);
+    expect(mockBook).toMatchObject({ review: 'Saved text', review_is_public: false });
+    expect(Alert.alert).toHaveBeenCalledTimes(1); expect(Alert.alert).toHaveBeenCalledWith('Success', 'Review saved!');
 });
 
 it('keeps confirmed Public feedback while a visibility change is pending or rejected', async () => {
@@ -383,14 +394,18 @@ it('reconciliation: pending text survives actual mutation GC timers after unmoun
     expect(second.queryByText(/unsaved/i)).toBeNull();
 });
 
-it('reconciliation: stale clean value can be blurred back over the later server value', async () => {
+it('reconciliation: untouched blur cannot overwrite a cache update before rerender', async () => {
     const ui = await screen(); fireEvent.changeText(ui.getByTestId('library-review-input'),'Saved B');
     fireEvent(ui.getByTestId('library-review-input'),'blur'); await settled();
+    expect(ui.getByTestId('library-review-input').props.value).toBe('Saved B'); expect(ui.queryByText(/unsaved/i)).toBeNull();
+    (Alert.alert as jest.Mock).mockClear();
     mockBook = {...mockBook,review:'Later server C'};
-    await act(async () => {await client.invalidateQueries({queryKey:['book','reader','entry'],exact:true});});
-    await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Later server C'));
+    client.setQueryData(['book','reader','entry'], mockBook);
+    expect(ui.getByTestId('library-review-input').props.value).toBe('Saved B');
     fireEvent(ui.getByTestId('library-review-input'),'blur'); await settled();
+    expect(requests.map(request => request.patch)).toEqual([{ review: 'Saved B' }]);
     expect(mockBook.review).toBe('Later server C');
+    expect(client.getQueryData<any>(['book','reader','entry']).review).toBe('Later server C'); expect(Alert.alert).not.toHaveBeenCalled();
 });
 
 it.each(['switch','return'])('reconciliation: mounted editor never inherits old-generation pending text after %s', async transition => {

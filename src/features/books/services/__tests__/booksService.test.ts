@@ -843,36 +843,6 @@ describe('booksService', () => {
     });
   });
 
-  // ──────────────────── addRating ────────────────────
-  describe('addRating', () => {
-    it('updates rating, review, and privacy when rating is provided', async () => {
-      const builder = mockQuery({ data: null, error: null });
-      (supabase.from as jest.Mock).mockReturnValueOnce(builder);
-
-      await booksService.addRating('ub1', 4, 'Great read', true);
-
-      expect(supabase.from).toHaveBeenCalledWith('user_books');
-      expect(builder.update).toHaveBeenCalledWith({
-        rating: 4,
-        review: 'Great read',
-        review_is_public: true,
-      });
-      expect(builder.eq).toHaveBeenCalledWith('id', 'ub1');
-    });
-
-    it('omits rating from the update payload for review-only saves', async () => {
-      const builder = mockQuery({ data: null, error: null });
-      (supabase.from as jest.Mock).mockReturnValueOnce(builder);
-
-      await booksService.addRating('ub1', undefined, 'Private note', false);
-
-      expect(builder.update).toHaveBeenCalledWith({
-        review: 'Private note',
-        review_is_public: false,
-      });
-    });
-  });
-
   // ──────────────────── removeFromLibrary ────────────────────
   describe('removeFromLibrary', () => {
     it('deletes from user_books by id', async () => {

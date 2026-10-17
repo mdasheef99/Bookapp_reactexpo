@@ -819,24 +819,6 @@ export const booksService = {
         if (error) throw error;
     },
 
-    async addRating(userBookId: string, rating?: number, review?: string, isPublic: boolean = true) {
-        const updates: Record<string, unknown> = {
-            review,
-            review_is_public: isPublic
-        };
-
-        if (typeof rating === 'number') {
-            updates.rating = rating;
-        }
-
-        const { error } = await supabase
-            .from('user_books')
-            .update(updates)
-            .eq('id', userBookId);
-
-        if (error) throw error;
-    },
-
     async toggleLendingAvailability(userBookId: string, available: boolean) {
         const { error } = await supabase
             .from('user_books')
