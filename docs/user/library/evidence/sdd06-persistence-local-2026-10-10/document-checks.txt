@@ -1,0 +1,8 @@
+LOCAL_LINKS=272 IN_DOCUMENTS=12
+B01_B16=16/16
+PRODUCTION_WRITE_GATES=4_FALSE
+MIGRATION_HASH=72d78fffd0cd63abe9a661059e9cb7b9dec20b68c7456429e5cdf2b68f176c22
+SCOPED_WHITESPACE_FILES=24
+SDD_LINES=488
+NOTE=Whole-file scan of unrelated existing work found four whitespace-bearing files; those were not changed. Repository diff check is separate.
+PASS

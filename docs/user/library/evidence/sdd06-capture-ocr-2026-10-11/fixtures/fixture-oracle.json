@@ -1,0 +1,57 @@
+{
+  "regions": {
+    "source": [
+      120,
+      80
+    ],
+    "crop": [
+      30,
+      20,
+      60,
+      40
+    ]
+  },
+  "exif6": {
+    "decoded": [
+      80,
+      120
+    ],
+    "clockwise90": [
+      120,
+      80
+    ]
+  },
+  "english": {
+    "source": [
+      1600,
+      2200
+    ],
+    "selection": [
+      160,
+      440,
+      1280,
+      1100
+    ],
+    "expected_lines": [
+      "A PAGE FOR CAREFUL READING",
+      "",
+      "A reader walks into a quiet library and chooses a book.",
+      "The morning light falls across the open page.",
+      "Each paragraph gives the reader time to pause.",
+      "Clear words can carry a useful idea without haste.",
+      "",
+      "Before making a note, the reader checks the source.",
+      "A question may matter as much as an answer.",
+      "A short reflection can connect a page to daily life.",
+      "The chosen passage stays inside the outlined area.",
+      "",
+      "Reading is a patient practice of attention.",
+      "This synthetic page contains no private information.",
+      "Its text was written only to verify local recognition."
+    ],
+    "excluded": [
+      "OUTSIDE TOP SENTINEL",
+      "OUTSIDE BOTTOM SENTINEL"
+    ]
+  }
+}

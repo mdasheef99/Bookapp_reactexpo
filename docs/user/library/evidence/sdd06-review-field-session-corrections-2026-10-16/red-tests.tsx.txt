@@ -1,0 +1,228 @@
+import React from 'react';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import BookDetailScreen from '../[bookId]';
+import { booksService } from '@/features/books/services/booksService';
+import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
+import { useAuthStore } from '@/features/auth/store/authStore';
+
+void [View, Text, TextInput, TouchableOpacity];
+let mockBook: any;
+let mockEntryId = 'entry';
+let mockHttp: jest.Mock;
+let client: QueryClient;
+let requests: Array<{ patch: Record<string, unknown>; headers: Headers; signal?: AbortSignal }>;
+let gates: ReturnType<typeof deferred>[];
+let returnedRow: unknown;
+const mockBack = jest.fn(); const mockPush = jest.fn(); const mockReplace = jest.fn();
+jest.mock('expo-image', () => ({ Image: 'Image' }));
+jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
+jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({ bookId: mockEntryId }), useRouter: () => ({ back: mockBack, push: mockPush, replace: mockReplace, canGoBack: () => true }) }));
+jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ colors: { bgPrimary: '#fff', bgCard: '#fafafa', bgSecondary: '#eee', border: '#555', accent: '#174f35', textPrimary: '#111', textSecondary: '#333', textTertiary: '#444', error: '#a00' } }) }));
+jest.mock('@/features/auth/hooks/useAuth', () => ({ useAuth: () => {
+    const { useAuthStore: store } = require('@/features/auth/store/authStore');
+    const session = store((state: any) => state.session);
+    return { user: session?.user, session };
+} }));
+jest.mock('@/lib/supabase', () => {
+    const { createClient } = jest.requireActual('@supabase/supabase-js');
+    return { supabase: createClient('https://fixture.supabase.co', 'synthetic-key', {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        global: { fetch: (...args: any[]) => mockHttp(...args) },
+    }) };
+});
+jest.mock('@/features/books/notes/useManualNotes', () => ({ useNoteOperations: jest.fn() }));
+jest.mock('@/features/books/notes/manualNotesGateway', () => ({ manualNotesGateway: { list: jest.fn() } }));
+jest.mock('@/features/books/services/booksService', () => ({ booksService: {
+    getBookDetails: jest.fn(), getPublicReviewsForBook: jest.fn(),
+    // Legacy boundary for observing RED before field-specific dispatch exists.
+    addRating: jest.fn(async (_id, rating, review, isPublic = true) => {
+        const response = await mockHttp('', { body: JSON.stringify({ ...(rating === undefined ? {} : { rating }), review, review_is_public: isPublic }), headers: { Authorization: `Bearer ${require('@/features/auth/store/authStore').useAuthStore.getState().session?.access_token}` } });
+        const body = await response.json(); if (!response.ok) throw new Error(body.message);
+    }),
+    updateReadingStatus: jest.fn(), updateOwnership: jest.fn(), updateCondition: jest.fn(), toggleLendingAvailability: jest.fn(), removeFromLibrary: jest.fn(),
+} }));
+jest.mock('@/components/library', () => {
+    const { Text, Pressable } = require('react-native');
+    const control = (name: string, value: string) => ({ onChange }: any) => <Pressable accessibilityRole="button" accessibilityLabel={name} onPress={() => onChange(value)}><Text>{name}</Text></Pressable>;
+    return { StatusSelector: control('Reading status', 'completed'), OwnershipSelector: control('Ownership', 'borrowed'), ConditionPicker: control('Condition', 'good'),
+        RatingInput: ({ onChange, disabled }: any) => <Pressable accessibilityRole="button" accessibilityLabel="Rate book" disabled={disabled} onPress={() => onChange(4)}><Text>Rating</Text></Pressable>,
+        DeleteBookModal: ({ visible, onConfirm }: any) => visible ? <Pressable accessibilityRole="button" accessibilityLabel="Confirm removal" onPress={onConfirm}><Text>Confirm</Text></Pressable> : null };
+});
+jest.mock('@/components/notes', () => { const { Text } = require('react-native'); return { NoteCard: ({ note }: any) => <Text>{note.content}</Text> }; });
+jest.mock('@/components/library/VaultPagesList', () => { const { Text } = require('react-native'); return { VaultPagesList: () => <Text>Retained saved excerpt</Text> }; });
+jest.mock('@/components/ui/AtmosphericBackground', () => ({ AtmosphericBackground: ({ children }: any) => children }));
+
+function deferred() {
+    let resolve!: () => void; let reject!: (error: Error) => void;
+    const promise = new Promise<void>((yes, no) => { resolve = yes; reject = no; });
+    return { promise, resolve, reject };
+}
+function actor(id: string | null, token = 'token-' + id) {
+    useAuthStore.setState({ session: id ? { user: { id }, access_token: token } as any : null, status: id ? 'authenticated' : 'unauthenticated' });
+}
+async function screen(review = true) {
+    const ui = render(<QueryClientProvider client={client}><BookDetailScreen /></QueryClientProvider>);
+    await ui.findByText('Fixture book');
+    if (review) { fireEvent.press(ui.getByRole('button', { name: 'My review' })); await ui.findByTestId('library-review-input'); }
+    return ui;
+}
+async function settled() {
+    await waitFor(() => expect(client.isMutating()).toBe(0));
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
+}
+beforeEach(() => {
+    jest.clearAllMocks(); mockEntryId = 'entry'; requests = []; gates = []; returnedRow = undefined;
+    actor('reader');
+    client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: Infinity } } });
+    mockBook = { id: 'entry', user_id: 'reader', book_id: 'catalogue', review: 'Confirmed review', review_is_public: true, rating: 2,
+        ownership: 'owned', reading_status: 'reading', condition: 'good', available_for_lending: false,
+        book: { id: 'catalogue', title: 'Fixture book', authors: ['Author'], publisher: 'Press', page_count: 320, isbn_13: '123' } };
+    mockHttp = jest.fn(async (_url, init) => {
+        const patch = JSON.parse(init.body); const headers = new Headers(init.headers);
+        requests.push({ patch, headers, signal: init.signal });
+        const gate = gates.shift();
+        try { if (gate) await gate.promise; }
+        catch (error: any) { return new Response(JSON.stringify({ message: error.message, code: '42501' }), { status: 403, headers: { 'Content-Type': 'application/json' } }); }
+        mockBook = { ...mockBook, ...patch };
+        const row = returnedRow === undefined ? { id: mockBook.id, user_id: mockBook.user_id, rating: mockBook.rating, review: mockBook.review, review_is_public: mockBook.review_is_public } : returnedRow;
+        return new Response(JSON.stringify(row), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+    (booksService.getBookDetails as jest.Mock).mockImplementation(async () => mockBook);
+    (booksService.getPublicReviewsForBook as jest.Mock).mockResolvedValue([]);
+    (manualNotesGateway.list as jest.Mock).mockResolvedValue([{ id: 'note', content: 'Saved note preview' }]);
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+});
+afterEach(() => { cleanup(); client.clear(); actor(null); jest.restoreAllMocks(); });
+
+it.each(['text', 'rating', 'privacy'])('sends only the %s field selected by the action', async field => {
+    const ui = await screen();
+    if (field === 'text') { fireEvent.changeText(ui.getByTestId('library-review-input'), 'Edited text'); fireEvent(ui.getByTestId('library-review-input'), 'blur'); }
+    else if (field === 'rating') fireEvent.press(ui.getByRole('button', { name: 'Rate book' }));
+    else fireEvent.press(ui.getByTestId('library-review-privacy-toggle'));
+    await settled();
+    const expected = field === 'text' ? { review: 'Edited text' } : field === 'rating' ? { rating: 4 } : { review_is_public: false };
+    expect(requests.map(request => request.patch)).toEqual([expected]);
+});
+
+it('keeps confirmed Public feedback while a visibility change is pending or rejected', async () => {
+    const gate = deferred(); gates.push(gate); const ui = await screen();
+    fireEvent.press(ui.getByTestId('library-review-privacy-toggle'));
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(ui.getByText('Public Review')).toBeOnTheScreen();
+    await act(async () => gate.reject(new Error('Visibility rejected'))); await settled();
+    expect(ui.getByText('Public Review')).toBeOnTheScreen();
+    expect(Alert.alert).toHaveBeenCalledWith('Error', expect.stringContaining('Visibility rejected'));
+});
+
+it.each([true, false])('preserves confirmed privacy after reopening and a later text write; first success=%s', async success => {
+    const gate = deferred(); gates.push(gate); const initial = await screen();
+    fireEvent.press(initial.getByTestId('library-review-privacy-toggle'));
+    await waitFor(() => expect(requests).toHaveLength(1)); initial.unmount();
+    const reopened = await screen();
+    fireEvent.changeText(reopened.getByTestId('library-review-input'), 'Later text'); fireEvent(reopened.getByTestId('library-review-input'), 'blur');
+    expect(requests).toHaveLength(1);
+    await act(async () => { if (success) gate.resolve(); else gate.reject(new Error('Visibility rejected')); }); await settled();
+    expect(requests[1].patch).toEqual({ review: 'Later text' });
+    expect(mockBook).toMatchObject({ review: 'Later text', review_is_public: !success });
+    expect(reopened.getByText(success ? 'Private Review' : 'Public Review')).toBeOnTheScreen();
+});
+
+it.each(['privacy', 'rating'])('retains rejected text visibly without retrying it during a later %s action', async field => {
+    const gate = deferred(); gates.push(gate); const initial = await screen();
+    fireEvent.changeText(initial.getByTestId('library-review-input'), 'Rejected draft'); fireEvent(initial.getByTestId('library-review-input'), 'blur');
+    await waitFor(() => expect(requests).toHaveLength(1)); initial.unmount(); const reopened = await screen();
+    await waitFor(() => expect(reopened.getByTestId('library-review-input').props.value).toBe('Rejected draft'));
+    await act(async () => gate.reject(new Error('Text rejected'))); await settled();
+    fireEvent.press(field === 'privacy' ? reopened.getByTestId('library-review-privacy-toggle') : reopened.getByRole('button', { name: 'Rate book' })); await settled();
+    expect(requests[1].patch).toEqual(field === 'privacy' ? { review_is_public: false } : { rating: 4 });
+    expect(mockBook.review).toBe('Confirmed review');
+    expect(reopened.getByTestId('library-review-input').props.value).toBe('Rejected draft');
+    expect(reopened.getByText(/unsaved/i)).toBeOnTheScreen();
+});
+
+it('preserves newer typing even when it returns to the old confirmed value', async () => {
+    const gate = deferred(); gates.push(gate); const ui = await screen();
+    fireEvent.changeText(ui.getByTestId('library-review-input'), 'Submitted text'); fireEvent(ui.getByTestId('library-review-input'), 'blur');
+    await waitFor(() => expect(requests).toHaveLength(1));
+    fireEvent.changeText(ui.getByTestId('library-review-input'), 'Confirmed review');
+    await act(async () => gate.resolve()); await settled();
+    expect(ui.getByTestId('library-review-input').props.value).toBe('Confirmed review');
+    expect(client.getQueryData<any>(['book', 'reader', 'entry']).review).toBe('Submitted text');
+    expect(ui.getByText(/unsaved/i)).toBeOnTheScreen();
+});
+
+it('shows inherited busy feedback and lets rating changes queue on either screen instance', async () => {
+    const first = deferred(); const second = deferred(); gates.push(first, second); const initial = await screen();
+    fireEvent.press(initial.getByTestId('library-review-privacy-toggle')); await waitFor(() => expect(requests).toHaveLength(1));
+    fireEvent.press(initial.getByRole('button', { name: 'Rate book' }));
+    await waitFor(() => expect(client.isMutating()).toBe(2)); initial.unmount(); const reopened = await screen();
+    expect(reopened.getByTestId('library-review-privacy-toggle').props.accessibilityState.busy).toBe(true);
+    expect(reopened.getByText(/Saving review changes/)).toBeOnTheScreen();
+    await act(async () => first.resolve()); await waitFor(() => expect(requests).toHaveLength(2));
+    expect(requests[1].patch).toEqual({ rating: 4 });
+    await act(async () => second.resolve()); await settled();
+    await waitFor(() => expect(reopened.queryByText(/Saving review changes/)).toBeNull());
+});
+
+it('preserves the latest queued text and explicit visibility across reopening', async () => {
+    const gate = deferred(); gates.push(gate); const initial = await screen();
+    fireEvent.changeText(initial.getByTestId('library-review-input'), 'First text'); fireEvent(initial.getByTestId('library-review-input'), 'blur');
+    await waitFor(() => expect(requests).toHaveLength(1));
+    fireEvent.changeText(initial.getByTestId('library-review-input'), 'Latest text'); fireEvent(initial.getByTestId('library-review-input'), 'blur');
+    fireEvent.press(initial.getByTestId('library-review-privacy-toggle')); initial.unmount(); const reopened = await screen();
+    await waitFor(() => expect(reopened.getByTestId('library-review-input').props.value).toBe('Latest text'));
+    fireEvent.press(reopened.getByTestId('library-review-privacy-toggle'));
+    await act(async () => gate.resolve()); await settled();
+    expect(requests.map(request => request.patch)).toEqual([{ review: 'First text' }, { review: 'Latest text' }, { review_is_public: false }, { review_is_public: true }]);
+    expect(mockBook).toMatchObject({ review: 'Latest text', review_is_public: true });
+});
+
+it.each(['switch', 'logout', 'leave-and-return'])('fences queued dispatch and late confirmation after %s', async transition => {
+    const gate = deferred(); gates.push(gate); const initial = await screen();
+    fireEvent.changeText(initial.getByTestId('library-review-input'), 'Actor A private text'); fireEvent(initial.getByTestId('library-review-input'), 'blur');
+    await waitFor(() => expect(requests).toHaveLength(1)); fireEvent.press(initial.getByTestId('library-review-privacy-toggle')); initial.unmount();
+    act(() => { actor(transition === 'logout' ? null : 'other-reader'); if (transition === 'leave-and-return') actor('reader'); });
+    await act(async () => gate.resolve()); await settled();
+    expect(requests).toHaveLength(1);
+    expect(client.getQueryData<any>(['book', 'reader', 'entry'])).toMatchObject({ review: 'Confirmed review', review_is_public: true });
+    expect(Alert.alert).not.toHaveBeenCalled();
+});
+
+it('pins the dispatch token and aborts the request on identity loss', async () => {
+    const gate = deferred(); gates.push(gate); const ui = await screen();
+    fireEvent.press(ui.getByTestId('library-review-privacy-toggle')); await waitFor(() => expect(requests).toHaveLength(1)); ui.unmount();
+    actor('other-reader');
+    expect(requests[0].headers.get('Authorization')).toBe('Bearer token-reader');
+    expect(requests[0].signal?.aborted).toBe(true);
+    await act(async () => gate.resolve()); await settled();
+});
+
+it.each([null, { id: 'foreign', user_id: 'reader', rating: 2, review: 'Wrong row', review_is_public: false }])('does not confirm an absent or wrong affected row: %j', async row => {
+    returnedRow = row; const ui = await screen(); fireEvent.press(ui.getByTestId('library-review-privacy-toggle')); await settled();
+    expect(Alert.alert).toHaveBeenCalledWith('Error', expect.any(String));
+});
+
+it('keeps pending rating separate from a later privacy action across reopening', async () => {
+    const gate = deferred(); gates.push(gate); const initial = await screen();
+    fireEvent.press(initial.getByRole('button', { name: 'Rate book' })); await waitFor(() => expect(requests).toHaveLength(1)); initial.unmount(); const reopened = await screen();
+    fireEvent.press(reopened.getByTestId('library-review-privacy-toggle')); await act(async () => gate.resolve()); await settled();
+    expect(requests.map(request => request.patch)).toEqual([{ rating: 4 }, { review_is_public: false }]);
+    expect(mockBook).toMatchObject({ rating: 4, review_is_public: false });
+});
+
+it('retains named B01 destinations, management actions, and accessible Back', async () => {
+    const ui = await screen(false); const buttons = ui.getAllByRole('button');
+    expect(buttons.indexOf(ui.getByRole('button', { name: 'Add note' }))).toBeLessThan(buttons.indexOf(ui.getByRole('button', { name: 'My review' })));
+    expect(ui.getByText('Saved note preview')).toBeOnTheScreen(); expect(ui.getByText('Retained saved excerpt')).toBeOnTheScreen();
+    fireEvent.press(ui.getByRole('button', { name: 'Book options' })); fireEvent.press(ui.getByRole('button', { name: 'Ownership' })); fireEvent.press(ui.getByRole('button', { name: 'Condition' }));
+    await waitFor(() => expect(booksService.updateCondition).toHaveBeenCalledWith('entry', 'good'));
+    fireEvent(ui.getByRole('switch', { name: 'Available for lending' }), 'valueChange', true);
+    fireEvent.press(ui.getByRole('button', { name: 'Remove from Library' })); expect(booksService.removeFromLibrary).not.toHaveBeenCalled(); fireEvent.press(ui.getByRole('button', { name: 'Confirm removal' }));
+    await waitFor(() => expect(booksService.removeFromLibrary).toHaveBeenCalledWith('entry'));
+    fireEvent.press(ui.getByRole('button', { name: 'Book information' })); expect(ui.getByText('ISBN: 123')).toBeOnTheScreen();
+    fireEvent.press(ui.getByRole('button', { name: 'Community reviews' })); expect(ui.getByText('No public reviews yet.')).toBeOnTheScreen();
+    const back = ui.getByRole('button', { name: 'Back to Library' }); const style = StyleSheet.flatten(back.props.style);
+    expect(style.minHeight).toBeGreaterThanOrEqual(48); expect(style.minWidth).toBeGreaterThanOrEqual(48); fireEvent.press(back); expect(mockReplace).toHaveBeenCalledWith('/(tabs)/library');
+});

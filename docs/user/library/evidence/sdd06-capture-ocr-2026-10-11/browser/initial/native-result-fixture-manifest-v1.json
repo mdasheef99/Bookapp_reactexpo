@@ -1,0 +1,42 @@
+{
+  "fixture": "Luna isolated synthetic native-result UI fixture; no product code changed",
+  "url": "http://127.0.0.1:8086/login?__qa_native_result=partial",
+  "parentServer": "http://127.0.0.1:8084",
+  "pid": 30376,
+  "checkout": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library",
+  "branch": "codex/library-cover-shelf",
+  "head": "1b743a13328ec30280a524aaeea15e364fc3d6c5",
+  "servedEntryPath": "/_expo/static/js/web/entry-737716bc7a3490106854ce8e88dc0f66.js",
+  "originalEntryBytes": 12600195,
+  "originalEntrySha256": "16E21C51F7EBA46EB51F14D372431C1271A564463F7B538E36F805BBDC466BCD",
+  "transformedEntryBytes": 12601589,
+  "transformedEntrySha256": "D6A093CC68BD1F9C3147EA1962A7CCB5CAB88F2BAAB6CD889D01CDCE36671FAE",
+  "patchSha256": "C7B8F73889D6EE5A05A545C84ECC69972704C142A4EB2E10647D666BB92C7E95",
+  "guardSha256": "1F31BB36F071633441644A1440962E230111FB5FAFEE2E726E9FE19BC19648A5",
+  "transformation": "On-the-fly in memory, replacing only exported adapter availability and recognize result; real pick/rotate/transform/release remain frozen bundle functions. NoteCaptureSession, NoteForm, validation, history, and write gates are untouched.",
+  "modes": [
+    "partial",
+    "complete"
+  ],
+  "authBypass": false,
+  "temporaryNativeProofRouteRemoved": true,
+  "gates": [
+    {
+      "name": "ownedBookWrites",
+      "value": false
+    },
+    {
+      "name": "stableCreateReconciliation",
+      "value": false
+    },
+    {
+      "name": "optionalFiveCategories",
+      "value": false
+    },
+    {
+      "name": "serverManagedEditVersion",
+      "value": false
+    }
+  ],
+  "network": "GET/HEAD-only local static server with CSP connect-src self; app-level guard is injected before production entry and rejects all unlisted or non-read-only external requests."
+}

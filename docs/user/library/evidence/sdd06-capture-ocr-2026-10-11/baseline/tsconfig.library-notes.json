@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true, "allowImportingTsExtensions": true },
+  "include": [
+    "app/(tabs)/library/[bookId].tsx",
+    "app/(tabs)/library/_layout.tsx",
+    "app/(tabs)/library/notes.tsx",
+    "app/(tabs)/library/note.tsx",
+    "app/(tabs)/library/note-compose.tsx",
+    "src/features/books/notes/**/*",
+    "src/components/notes/**/*"
+  ],
+  "exclude": ["node_modules", "e2e", "supabase/functions"]
+}

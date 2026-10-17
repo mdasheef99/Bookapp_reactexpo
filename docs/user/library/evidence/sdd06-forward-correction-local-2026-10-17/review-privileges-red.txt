@@ -1,0 +1,43 @@
+TAP version 13
+# LOCAL_POSTGRES_VERSION=17 LOCAL_HOST=127.0.0.1 MIGRATION=20261010172118 TEST_DATA=synthetic
+# Subtest: forward correction refuses hidden column grants and grant options without normalization
+not ok 1 - forward correction refuses hidden column grants and grant options without normalization
+  ---
+  duration_ms: 8179.3251
+  location: 'C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\supabase\\tests\\library\\manualNotePersistence.postgres.test.mjs:516:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Every unexpected grant must fail before replacement, preserving its baseline
+    + actual - expected
+    
+    + [
+    +   'column_grant',
+    +   'table_grant_option',
+    +   'function_grant_option',
+    +   'column_grant_option'
+    + ]
+    - []
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'column_grant'
+    1: 'table_grant_option'
+    2: 'function_grant_option'
+    3: 'column_grant_option'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/LEGION/Desktop/Bookconnect4_library/supabase/tests/library/manualNotePersistence.postgres.test.mjs:533:9)
+    process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    async Test.run (node:internal/test_runner/test:935:9)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11520.8045

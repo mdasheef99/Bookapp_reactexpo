@@ -1,0 +1,29 @@
+{
+  "scope": "Same-session LUNA-WEB-04 correction; actual browser GREEN pending",
+  "branch": "codex/library-cover-shelf",
+  "head": "1b743a13328ec30280a524aaeea15e364fc3d6c5",
+  "files": [
+    {
+      "path": "src/components/notes/ManualNoteUi.tsx",
+      "before": "0CCB6D804CB24C633DBFBCBF32F7CFC5CC43700D94C51D543B39ED61F323FE7F",
+      "after": "C5FB126D6AA65F65C1F22C17238BBC94D56210E4FBD5D552239E15A601F79FCB"
+    },
+    {
+      "path": "app/(tabs)/library/note-compose.tsx",
+      "before": "26AA6E22B0AC3D965FDE9ADB586CEB1E0D795AFC044567D1D412092238225225",
+      "after": "62237C0DC0603D7076CCDFD5C5ADD8E6A3CEC9D0647D6128AC49834B70BF203E"
+    }
+  ],
+  "pausedBundleDifferences": [
+    {
+      "path": "app/(tabs)/library/note-compose.tsx",
+      "before": "26AA6E22B0AC3D965FDE9ADB586CEB1E0D795AFC044567D1D412092238225225",
+      "after": "62237C0DC0603D7076CCDFD5C5ADD8E6A3CEC9D0647D6128AC49834B70BF203E"
+    },
+    {
+      "path": "src/components/notes/ManualNoteUi.tsx",
+      "before": "0CCB6D804CB24C633DBFBCBF32F7CFC5CC43700D94C51D543B39ED61F323FE7F",
+      "after": "C5FB126D6AA65F65C1F22C17238BBC94D56210E4FBD5D552239E15A601F79FCB"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "kind": "Fresh local web export served identity; not browser QA",
+  "recordedUtc": "2026-10-11T15:38:33.2427153Z",
+  "url": "http://127.0.0.1:8084",
+  "pid": 17240,
+  "checkout": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library",
+  "branch": "codex/library-cover-shelf",
+  "head": "1b743a13328ec30280a524aaeea15e364fc3d6c5",
+  "manifestHttpStatus": 200,
+  "sourceManifestSha256": "B86F37F201844DD062A70042960AC6CBD62C5A560700574FC56488224B1031CB",
+  "entryPath": ".tmp/sdd06-capture-web/_expo/static/js/web/entry-7ee6b48aa7318802a1dc60bda196e0f2.js",
+  "entryHttpStatus": 200,
+  "entrySha256": "711D5069963C6885C24336282AF6CA9B7CCAC2665207E28CFDF2E599B8457489",
+  "entryBytes": 12602231,
+  "authBypass": false,
+  "fourWriteGatesFalse": true,
+  "temporaryDiagnosticRoutesAbsent": true
+}

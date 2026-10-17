@@ -1,0 +1,406 @@
+You are performing a controlled refinement of BookConnect’s existing
+Option B Stitch design and its implementation handoff.
+
+Read this prompt completely before acting. Your task is to correct the
+existing candidate systematically and verify the result. Do not expand
+the scope or substitute screen generation for verification.
+
+TASK TYPE AND AUTHORITY
+
+This is a Stitch design/specification refinement task.
+
+You are authorized to:
+- inspect the existing Stitch project and relevant local source;
+- refine the existing target artboards;
+- update the owning design contract, plan, review record, and tracker;
+- remove a verified duplicate only when recoverable through Stitch’s
+  normal Undo/recovery and after confirming the exact node selected.
+
+You are NOT authorized by this task to:
+- implement or modify application code;
+- create or apply database migrations;
+- mutate database/storage records;
+- change dependencies;
+- deploy, stage, commit, or push;
+- redesign shelves, book entry, or global navigation;
+- implement cloud OCR or standalone saved passages.
+
+Do not confuse “implement these refinements in Stitch” with implementing
+the feature in the Expo/React Native app.
+
+SOURCE OF TRUTH
+
+Working directory:
+C:\Users\LEGION\Desktop\Bookconnect4_library
+
+Stitch project:
+https://stitch.withgoogle.com/projects/12974171775283639004
+
+Read repository AGENTS.md and follow applicable startup requirements.
+Preserve all unrelated worktree changes.
+
+Read these Library documents:
+1. docs/user/library/OPTION-B-REVIEW-20261009.md
+2. docs/user/library/OPTION-B-IMPLEMENTATION-PLAN.md
+3. docs/user/library/OPTION-B-NAVIGATION-CONTRACT.md
+4. The current after-book-entry overlay in docs/user/library/TRACKER.md
+
+Use the current explicit user requirements over older contradictory
+instructions. Historical tracker entries and old Stitch chat prompts
+are evidence of history, not current authority.
+
+The navigation contract records exact current Stitch node IDs.
+Verify those IDs against the rendered canvas before editing.
+Do not locate screens solely through similar titles or old groups.
+
+CURRENT BASELINE
+
+The last verified canvas contains:
+- 16 numbered product artboards, B01–B16;
+- one current flow/index artboard;
+- no duplicate numbered target screens or second index.
+
+Current index node:
+479a85266b434f3c87116dd466de6bc1
+
+The former index node
+97d8835d63224eb09f67c60841a35b49
+was deleted and must not be used as the current reference.
+
+Verify the baseline afresh. If it differs, record the actual inventory
+before making changes. Do not force the canvas to match a remembered
+count by deleting uncertain items.
+
+SCOPE AND USER REQUIREMENTS
+
+The experience starts with a selected book already open.
+
+Main manual journey:
+Book Details → Add note → category/input choice → blank manual editor
+→ explicit Save note → confirmed saved-note reader/collection.
+
+Main OCR journey:
+Category/input choice → camera or photo library → crop/rotate/reset
+→ recognize only the selected crop → editable recognized text
+→ explicit Save note → confirmed saved-note reader/collection.
+
+Approved categories:
+Quote, Thought, Takeaway, Action, Question.
+
+Categories must appear before input selection and remain visible and
+changeable during unsaved composition/review. OCR must preserve the
+chosen category and must never silently switch it to Quote.
+
+The current approved baseline treats category as optional and retains
+Skip/No category. Do not make it mandatory without an explicit user
+decision.
+
+The manual editor must begin empty. Existing saved text belongs in the
+saved reader/editor. OCR text appears only after recognition.
+
+Page number is optional.
+
+The reader may correct recognized text or save it immediately if it is
+already correct. Recognition and accepting incomplete text never save
+automatically.
+
+Cloud OCR and standalone passage creation remain deferred.
+
+Do not add word/character counters to this design pass. Their omission
+does not authorize removing existing code or database limits.
+
+Do not promise autosave, durable draft recovery, version history,
+processing location, upload policy, or photo deletion behavior without
+verified support and authorization.
+
+EXECUTION METHOD
+
+Create a work ledger before editing. Each item must contain:
+- finding ID;
+- exact affected screen/node/document;
+- required correction;
+- dependency or unresolved decision;
+- verification method;
+- status: pending, corrected, verified, or blocked.
+
+Work in the ordered units below. Finish and verify one unit before
+starting the next. Reuse existing artboards. Do not generate a new
+complete screen set or unrelated visual variants.
+
+For every Stitch edit:
+1. Identify the exact target node.
+2. Capture its current content/state.
+3. Send a narrowly scoped edit instruction.
+4. Read back the actual resulting screen.
+5. Inspect it visually at readable scale when layout changed.
+6. Check whether Stitch edited the target or created a replacement.
+7. Verify inventory and relevant neighbouring screens.
+8. Update the ledger.
+
+A generated response saying “updated” is not proof.
+A document saying a screen exists is not proof.
+A small board thumbnail is not a readable screen review.
+The existence of all 16 screens is not workflow completion.
+
+If Stitch creates a replacement despite an in-place instruction,
+verify the replacement before considering removal of the old frame.
+Do not delete either frame merely because their titles match.
+
+ORDERED REFINEMENT UNITS
+
+UNIT 1 — NAVIGATION AND STATE CONTRACT
+
+Reconcile the navigation contract before editing recovery layouts.
+
+Define each action separately:
+- Back;
+- Cancel;
+- hardware Back;
+- picker dismissal;
+- crop cancellation;
+- Rotate;
+- Reset crop;
+- Choose another photo;
+- Recognize text;
+- Scan again;
+- retry;
+- recovery-overlay dismissal;
+- successful save;
+- failed save.
+
+For each action record:
+- source state;
+- condition;
+- destination;
+- retained book/category/text/page/image/list context;
+- whether a confirmation is needed;
+- whether the rule is approved or proposed.
+
+Distinguish creation origin from previous step.
+Distinguish initial OCR intake from replacement scanning.
+Add the missing B16 recovery routes.
+Do not group unrelated B15 actions into one ambiguous B06/B15 row.
+Remove the stale instruction that forbids category controls in B05.
+
+Where a genuine product choice is unresolved, label it as a proposal.
+Do not silently originate product behavior.
+
+UNIT 2 — CATEGORY AND RECORD LIFECYCLE
+
+Ensure B04 offers the five categories and the existing Skip option
+before Write note / Scan text.
+
+Ensure B05 and B07:
+- carry the selected category;
+- allow changes before save;
+- clearly indicate the selected option;
+- do not default OCR to Quote;
+- keep page optional;
+- use an explicit Save note action;
+- show no saved identifier while unsaved.
+
+Use one consistent label for the uncategorized state.
+
+UNIT 3 — CONTEXTUAL FAILURE AND EXIT
+
+Refine B11 and B12 for their originating context.
+
+For a new manual/OCR note:
+- explain that the unsaved note would be abandoned;
+- preserve current text/category/page on failure;
+- return to the correct originating editor.
+
+For editing a saved note:
+- explain that only unsaved changes would be discarded;
+- explicitly preserve the stored note;
+- return to the saved reader when changes are discarded.
+
+Do not pair “Discard changes?” with “Discard note.”
+Do not use an old Add note background as a universal editing reference.
+Do not include unsupported chapter metadata.
+
+B12 policy remains pending unless explicitly decided by the user.
+You may prepare contextual candidate wording without presenting the
+underlying policy as approved.
+
+UNIT 4 — TOUCH TARGETS AND PRIMARY ACTIONS
+
+Refine B05, B07 and B15.
+
+The previous measured concepts had:
+- category buttons about 26px high in B05/B07;
+- a B07 page input about 24px high;
+- B05 Save starting near y=939;
+- B07 Save near y=902;
+- B15 Recognize text near y=945.
+
+Use touch areas at least 48×48 logical pixels for interactive controls.
+Labels must remain readable and selection must not rely only on color.
+
+Reduce unnecessary header/helper density.
+Specify a reachable primary action during typing, reviewing and cropping.
+A sticky keyboard-aware footer is a proposal to evaluate, not an
+automatic requirement.
+
+Check normal phone height, scrolling, large text, keyboard behavior,
+safe areas and overlap. Static artboards cannot verify a native keyboard;
+mark that part as a prototype/device test.
+
+UNIT 5 — OCR REPLACEMENT AND TRANSIENT STATES
+
+Preserve the previous valid text/category/page until a replacement scan
+succeeds. Canceling or failing a replacement must not erase edited text.
+
+Specify:
+- camera permission denied/unavailable;
+- photo picker canceled;
+- invalid/unsupported image;
+- crop cancel/reset/rotate;
+- recognition pending and safe cancellation;
+- no text recognized (B13);
+- incomplete recognition (B14);
+- technical processing failure (B16);
+- rescan after edits.
+
+Keep B13 and B16 distinct.
+B14 acceptance returns to editable review and never saves.
+Define when incomplete-result acknowledgement resets and how saving is
+gated until the partial result is explicitly accepted.
+
+Represent transient states inline where practical. Create a new full
+artboard only if a materially different layout cannot be represented
+clearly in an existing target, and explain the reason before doing so.
+
+UNIT 6 — SAVE, COLLECTION AND SAVED EDITING
+
+Specify:
+- blank/whitespace validation;
+- invalid optional page input;
+- save pending;
+- repeated tap prevention;
+- definite save failure;
+- uncertain save outcome and reconciliation before retry;
+- edit failure preserving the stored version.
+
+For B02:
+- define sorting;
+- filtered-empty results;
+- selected filter semantics;
+- filter/scroll restoration after reading/editing.
+
+For B08/B09:
+- long text;
+- omitted page/category;
+- Copy success/failure feedback;
+- saved versus unsaved identity;
+- contextual return and exit behavior.
+
+Do not promise safe retry if persistence/idempotency support is unverified.
+
+UNIT 7 — NUMBERING DECISION PACKAGE
+
+Numbering is proposed and requires persistence support.
+
+Current proposed examples:
+Quote Q1, Thought TH1, Takeaway TK1, Action A1, Question QS1.
+
+Produce a concise decision package covering:
+- per-book/per-category scope;
+- uncategorized notes;
+- category clearing;
+- category reassignment;
+- text-only editing;
+- deletion and number reuse;
+- concurrent saves;
+- retries and idempotency.
+
+Do not silently choose an uncategorized prefix or category-change policy.
+Mark unresolved choices visibly.
+
+No provisional identifier may appear on B05/B07.
+Show identifiers only for confirmed saved-note examples.
+
+Current local client types support four non-null categories and no
+sequence field. Treat Question, No category and durable numbering as
+implementation gates. Do not assert fresh live database support from
+local code or historical notes.
+
+UNIT 8 — RETAINED CONTROLS AND LANGUAGE
+
+Audit these controls:
+- B01 status/ownership/condition/lending/rating/removal;
+- B02 tune/settings;
+- B06 camera light;
+- B08 bookmark.
+
+For each, record its supported action, state and source evidence.
+Define it if already supported and in scope; otherwise remove the
+unsupported affordance or mark the decision pending. Do not invent
+lending, rating, favouriting or flash behavior.
+
+Use plain, category-neutral language:
+Note, Note text, Page number.
+
+Remove unsupported chapter references and decorative phrases that
+obscure the task. Keep the established visual warmth and typography.
+
+UNIT 9 — FINAL RECONCILIATION AND REVIEW
+
+Review every B01–B16 screen and the index individually.
+
+Check:
+- exact role and entry/exit;
+- category/text/page carryover;
+- explicit-save boundary;
+- empty versus error states;
+- initial versus replacement scan;
+- contextual failure/discard;
+- primary-action reachability;
+- control definitions;
+- numbering consistency;
+- long text and omitted metadata;
+- static versus runtime evidence.
+
+Reconcile the index, navigation contract, implementation plan, latest
+review and tracker. Mark older contradictory guidance as superseded.
+
+Keep one current index and one intended target per B ID.
+Do not claim design completion if unresolved behavior is still presented
+as settled instruction.
+
+STOP CONDITIONS
+
+Stop only the dependent part of the work when:
+- the exact target cannot be identified;
+- deletion recoverability cannot be established;
+- a product decision changes approved behavior;
+- a required action exceeds the authority above;
+- Stitch fails to produce a verifiable result.
+
+Continue independent authorized work.
+Record the concrete blocker and the smallest decision needed.
+Do not abandon the task merely because one decision remains pending.
+
+DELIVERABLES
+
+Return:
+1. A concise verdict: complete, partially complete, or blocked, with reasons.
+2. The final screen inventory and current index/node mapping.
+3. A work ledger showing corrected, verified and unresolved items.
+4. Before/after evidence for changed layouts, including individual readable
+   screenshots and direct links where available.
+5. Updated navigation/state contract and cross-session tracker.
+6. One exact next action.
+
+Separate:
+- changes visibly verified in Stitch;
+- rules specified in documents;
+- unresolved product/storage decisions;
+- prototype/device checks not run.
+
+Report any new/replacement/deleted artboards explicitly.
+Report app/database/Git/deployment changes accurately.
+Do not report unrun tests as passed.
+
+Finish the authorized design refinements and verification. Wait for the
+product owner’s decision before beginning app implementation.

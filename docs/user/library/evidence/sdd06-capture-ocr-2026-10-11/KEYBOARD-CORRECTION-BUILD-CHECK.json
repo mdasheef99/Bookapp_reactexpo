@@ -1,0 +1,12 @@
+{
+  "kind": "Keyboard-corrected local export inspection; not browser QA",
+  "categoryAriaCheckedPresent": true,
+  "backMinWidthPresent": true,
+  "webSpaceHandlerPresent": true,
+  "diagnosticAbsent": true,
+  "fakeRecognizerAbsent": true,
+  "fourWriteGatesFalse": true,
+  "entryPath": ".tmp/sdd06-capture-web/_expo/static/js/web/entry-e65b362a90e90576f36b96d64df2b68b.js",
+  "entrySha256": "78798A466DB04B3FCC7DC865DCFEF4344DE7B0E9D5AAF050E33352969EE4C6BC",
+  "sourceSnapshotSha256": "37632535E29E5183EB76E127239D0F3F61339B18AB178734DC4E2CA0E7F35593"
+}

@@ -1,0 +1,80 @@
+diff --git a/.tmp/sol-browser-ManualNoteUi-before.txt b/src/components/notes/ManualNoteUi.tsx
+index a9b3622..9906e41 100644
+--- a/.tmp/sol-browser-ManualNoteUi-before.txt
++++ b/src/components/notes/ManualNoteUi.tsx
+@@ -39,7 +39,7 @@ export function CategoryPicker({ selected, onChange, includeAll = false }: { sel
+   const choices = includeAll ? [{ value: null, label: 'All' }, ...NOTE_CATEGORIES] : NOTE_CATEGORIES;
+   return <View style={ui.categories} accessibilityLabel={includeAll ? 'Filter notes' : 'Category, optional'}>
+     {choices.map(choice => <Pressable key={choice.value ?? 'all'} accessibilityRole="radio" accessibilityLabel={choice.label}
+-      accessibilityState={{ selected: selected === choice.value, checked: selected === choice.value }} onPress={() => onChange(choice.value)}
++      aria-checked={selected === choice.value} accessibilityState={{ selected: selected === choice.value, checked: selected === choice.value }} onPress={() => onChange(choice.value)}
+       style={[ui.category, { backgroundColor: selected === choice.value ? colors.accent : colors.bgCard, borderColor: colors.border }]}>
+       <Text style={{ fontSize: 15, fontWeight: '600', color: selected === choice.value ? colors.bgPrimary : colors.textPrimary }}>{selected === choice.value ? '✓ ' : ''}{choice.label}</Text>
+     </Pressable>)}
+@@ -89,7 +89,7 @@ export function NoteDialog({ spec, onKeep, onDismiss }: { spec: NoteDialogSpec |
+ export function NoteLoading() { const colors = useNoteColors(); return <View style={ui.center}><ActivityIndicator accessibilityLabel="Loading notes" color={colors.accent} /></View>; }
+ export { ScrollView };
+ export const ui = StyleSheet.create({
+-  header: { paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, gap: 8 }, back: { minHeight: 48, justifyContent: 'center', alignSelf: 'flex-start' },
++  header: { paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, gap: 8 }, back: { minHeight: 48, minWidth: 48, justifyContent: 'center', alignSelf: 'flex-start' },
+   link: { fontSize: 16, fontWeight: '600' }, title: { fontSize: 25, fontWeight: '700' }, book: { fontSize: 16, lineHeight: 24 },
+   footer: { padding: 16, gap: 8, borderTopWidth: 1 }, button: { minHeight: 48, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+   buttonText: { fontSize: 16, fontWeight: '600', textAlign: 'center' }, form: { gap: 12 }, metadata: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
+diff --git a/src/components/notes/__tests__/CategoryPicker.web-semantics.test.tsx b/src/components/notes/__tests__/CategoryPicker.web-semantics.test.tsx
+new file mode 100644
+index 0000000..dc98ee1
+--- /dev/null
++++ b/src/components/notes/__tests__/CategoryPicker.web-semantics.test.tsx
+@@ -0,0 +1,52 @@
++/** Actual shared picker output mapped by the installed RN Web DOM converter; no browser claim. */
++import React from 'react';
++import { Pressable, Text, View } from 'react-native';
++import { fireEvent, render, screen } from '@testing-library/react-native';
++import { CategoryPicker } from '../ManualNoteUi';
++import { NOTE_CATEGORIES } from '@/features/books/notes/manualNoteContract';
++
++// Load lazy RN primitives before the first interaction's default timeout.
++void [Pressable, Text, View];
++jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight', colors: { textPrimary: '#111', textSecondary: '#444' } }) }));
++
++const createDOMProps = require('react-native-web/dist/cjs/modules/createDOMProps') as
++  (element: string, props: Record<string, unknown>) => Record<string, unknown>;
++type RadioInstance = { props: Record<string, unknown> & { accessibilityRole?: string; accessibilityLabel?: string } };
++function radios(): RadioInstance[] {
++  // Outermost matching instances retain the component-produced props before native Pressable normalizes them.
++  return screen.UNSAFE_root.findAll((radio: RadioInstance) => radio.props.accessibilityRole === 'radio', { deep: false });
++}
++function expectSelection(selectedLabel: string | null) {
++  for (const radio of radios()) {
++    const expected = radio.props.accessibilityLabel === selectedLabel;
++    const dom = createDOMProps('div', radio.props);
++    expect(dom.role).toBe('radio'); expect(dom['aria-label']).toBe(radio.props.accessibilityLabel);
++    expect(dom['aria-checked']).toBe(expected);
++    // Preserve the native control contract as well as the actual web mapping.
++    expect(radio.props.accessibilityState).toEqual({ checked: expected, selected: expected });
++  }
++}
++
++it('exposes every optional category as unchecked when no category is chosen', () => {
++  render(<CategoryPicker selected={null} onChange={jest.fn()} />);
++  expect(radios().map(radio => radio.props.accessibilityLabel)).toEqual(NOTE_CATEGORIES.map(category => category.label));
++  expectSelection(null);
++});
++
++it('updates checked web state for each category change and clearing category, keeping native state and labels', () => {
++  const onChange = jest.fn(); const mounted = render(<CategoryPicker selected={null} onChange={onChange} />);
++  for (const category of NOTE_CATEGORIES) {
++    fireEvent.press(screen.getByRole('radio', { name: category.label })); expect(onChange).toHaveBeenLastCalledWith(category.value);
++    mounted.rerender(<CategoryPicker selected={category.value} onChange={onChange} />);
++    expectSelection(category.label); expect(screen.getByText(`✓ ${category.label}`)).toBeTruthy();
++  }
++  mounted.rerender(<CategoryPicker selected={null} onChange={onChange} />); expectSelection(null);
++});
++
++it('treats All as the null filter without adding a sixth note category', () => {
++  const onChange = jest.fn(); const mounted = render(<CategoryPicker selected={null} includeAll onChange={onChange} />);
++  expect(radios()).toHaveLength(6); expectSelection('All');
++  mounted.rerender(<CategoryPicker selected="question" includeAll onChange={onChange} />); expectSelection('Question');
++  fireEvent.press(screen.getByRole('radio', { name: 'All' })); expect(onChange).toHaveBeenLastCalledWith(null);
++  mounted.rerender(<CategoryPicker selected={null} includeAll onChange={onChange} />); expectSelection('All');
++});

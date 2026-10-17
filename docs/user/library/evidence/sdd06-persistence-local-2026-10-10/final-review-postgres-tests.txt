@@ -1,0 +1,91 @@
+TAP version 13
+# LOCAL_POSTGRES_VERSION=17 LOCAL_HOST=127.0.0.1 MIGRATION=20261010172118 TEST_DATA=synthetic
+# Subtest: upgrades the verified notes projection without changing legacy content or Saved Pages
+ok 1 - upgrades the verified notes projection without changing legacy content or Saved Pages
+  ---
+  duration_ms: 7706.1713
+  ...
+# Subtest: round trips all five category identifiers and no category
+ok 2 - round trips all five category identifiers and no category
+  ---
+  duration_ms: 660.2428
+  ...
+# Subtest: rejects invalid category, empty text, excess words and invalid page without altering the original
+ok 3 - rejects invalid category, empty text, excess words and invalid page without altering the original
+  ---
+  duration_ms: 708.3872
+  ...
+# Subtest: denies anonymous CRUD and table-wide privileges
+ok 4 - denies anonymous CRUD and table-wide privileges
+  ---
+  duration_ms: 750.6615
+  ...
+# Subtest: foreign accounts cannot read, modify or delete a saved note
+ok 5 - foreign accounts cannot read, modify or delete a saved note
+  ---
+  duration_ms: 81.6132
+  ...
+# Subtest: rejects foreign-book and foreign-actor insertions
+ok 6 - rejects foreign-book and foreign-actor insertions
+  ---
+  duration_ms: 239.1816
+  ...
+# Subtest: denies client metadata/identity spoofing while keeping legacy updated_at compatible
+ok 7 - denies client metadata/identity spoofing while keeping legacy updated_at compatible
+  ---
+  duration_ms: 653.7815
+  ...
+# Subtest: trusted metadata is server managed and identity changes also fail for privileged writers
+ok 8 - trusted metadata is server managed and identity changes also fail for privileged writers
+  ---
+  duration_ms: 247.479
+  ...
+# Subtest: clears a stale operation marker on every unmarked legacy update, including no-op
+ok 9 - clears a stale operation marker on every unmarked legacy update, including no-op
+  ---
+  duration_ms: 88.3552
+  ...
+# Subtest: the stable create UUID rejects duplicate INSERT without replacing content
+ok 10 - the stable create UUID rejects duplicate INSERT without replacing content
+  ---
+  duration_ms: 76.5038
+  ...
+# Subtest: parent owner changes cannot strand notes; parent and account deletion still cascade
+ok 11 - parent owner changes cannot strand notes; parent and account deletion still cascade
+  ---
+  duration_ms: 98.6607
+  ...
+# Subtest: rejects ownership inconsistencies before DDL and rolls back atomically
+ok 12 - rejects ownership inconsistencies before DDL and rolls back atomically
+  ---
+  duration_ms: 917.7694
+  ...
+# Subtest: two competing real connections admit one edit and reject a stale explicit replacement
+ok 13 - two competing real connections admit one edit and reject a stale explicit replacement
+  ---
+  duration_ms: 198.9855
+  ...
+# Subtest: refuses a changed same-name constraint instead of silently replacing it
+ok 14 - refuses a changed same-name constraint instead of silently replacing it
+  ---
+  duration_ms: 842.0381
+  ...
+# Subtest: refuses word-limit helper body, execution attributes or writer-privilege drift without changing the baseline
+ok 15 - refuses word-limit helper body, execution attributes or writer-privilege drift without changing the baseline
+  ---
+  duration_ms: 5340.5683
+  ...
+# Subtest: refuses same-name policy predicate, role, command or check drift before replacing policies
+ok 16 - refuses same-name policy predicate, role, command or check drift before replacing policies
+  ---
+  duration_ms: 3698.4095
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 32047.2112

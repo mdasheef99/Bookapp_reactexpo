@@ -1,0 +1,34 @@
+// Temporary development-only OCR proof; removed after the recorded run.
+import { useEffect, useState } from 'react';
+import { ScrollView, Text } from 'react-native';
+import { Asset } from 'expo-asset';
+import { recognizePageText, ocrErrorMessage } from '@/features/books/services/ocrService';
+
+export default function OcrNativeProof() {
+ const [output, setOutput] = useState('Preparing public OCR sample…');
+ useEffect(() => {
+  if (!__DEV__) return;
+  let active = true;
+  void (async () => {
+   try {
+    const image = Asset.fromModule(require('../../docs/user/library/ocr-evidence-20261006/google-ocr-sign.jpg'));
+    await image.downloadAsync();
+    const results = [];
+    for (let run = 0; run < 3; run++) {
+     const started = Date.now();
+     const result = await recognizePageText(image.localUri ?? image.uri, { languageHint: 'en' });
+     results.push({ run: run + 1, elapsedMs: Date.now() - started, ...result });
+    }
+    const record = JSON.stringify({ fixture: 'google-public-sign', results });
+    console.log('OCR_NATIVE_PROOF ' + record);
+    if (active) setOutput(record);
+   } catch (error) {
+    const record = JSON.stringify({ error: ocrErrorMessage(error) });
+    console.log('OCR_NATIVE_PROOF ' + record);
+    if (active) setOutput(record);
+   }
+  })();
+  return () => { active = false; };
+ }, []);
+ return <ScrollView style={{ flex: 1, padding: 24, backgroundColor: 'white' }}><Text style={{ color: 'black' }}>{__DEV__ ? output : 'Unavailable'}</Text></ScrollView>;
+}

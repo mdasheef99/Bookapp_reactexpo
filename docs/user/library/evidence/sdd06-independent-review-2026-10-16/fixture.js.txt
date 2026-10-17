@@ -1,0 +1,30 @@
+// Synthetic transport only; never forwards external fetches or writes.
+(() => {
+const actor='11111111-1111-4111-8111-111111111111', id='375d1a2e-e9da-485b-89ac-b23c40791535';
+const book={id:'b600783f-be22-4814-bd60-b4109b697af2',title:'The Quiet Atlas of Long Margins and Borrowed Lanterns: Collected Essays on Memory, Place, and Reading, Volume One',authors:['Fixture Author'],page_count:300,publisher:'Synthetic Press',cover_url:null};
+const ub={id,user_id:actor,book_id:book.id,reading_status:'reading',ownership:'owned',condition:'good',rating:3,review:'Synthetic public review',review_is_public:true,available_for_lending:false,book};
+const note={id:'ffe33fb0-0ab9-4d35-a322-9662320ecb45',user_id:actor,user_book_id:id,content:'Saved synthetic fixture body stays unchanged.',tag:'question',page_number:12,version:1,created_at:'2026-01-01T00:00:00Z',updated_at:'2026-01-01T00:00:00Z'};
+const user={id:actor,email:'fixture@booktalks.test',phone:'+911234567890',aud:'authenticated',role:'authenticated',app_metadata:{},user_metadata:{}};
+const session={access_token:'fixture-access-token',refresh_token:'fixture-refresh-token',expires_in:3600,expires_at:Math.floor(Date.now()/1000)+3600,token_type:'bearer',user};
+const original=window.fetch.bind(window); window.__reviewWrites=[];
+window.fetch=async(input,init={})=>{
+ const url=new URL(typeof input==='string'?input:input.url,location.href);
+ if(url.origin===location.origin)return original(input,init);
+ const method=(init.method||(typeof input!=='string'&&input.method)||'GET').toUpperCase();
+ const response=(body,status=200)=>Promise.resolve(new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json','content-range':'0-0/1'}}));
+ if(url.hostname!=='ahntbtktjjmvfosgkmgn.supabase.co')return response({},503);
+ if(url.pathname==='/auth/v1/otp')return response({});
+ if(['/auth/v1/verify','/auth/v1/token'].includes(url.pathname))return response(session);
+ if(url.pathname==='/auth/v1/user')return response(user);
+ if(method!=='GET'&&method!=='HEAD'){window.__reviewWrites.push(method+' '+url.pathname);return response({message:'Synthetic rejected write',code:'42501'},403);}
+ const headers=new Headers(init.headers||(typeof input!=='string'?input.headers:undefined));
+ const single=(headers.get('accept')||'').includes('application/vnd.pgrst.object+json');
+ const item=path=>single?path:[path];
+ if(url.pathname==='/rest/v1/user_profiles')return response(item({id:'fixture-profile',user_id:actor,display_name:'Fixture',username:'fixture',account_type:'user',membership_tier:'free',trust_score:10}));
+ if(url.pathname==='/rest/v1/user_books')return response(item(ub));
+ if(url.pathname==='/rest/v1/books')return response(item(book));
+ if(url.pathname==='/rest/v1/reading_notes')return response(item(note));
+ return response([]);
+};
+window.WebSocket=class { constructor(){this.readyState=3;} close(){} addEventListener(){} removeEventListener(){} send(){} };
+})();

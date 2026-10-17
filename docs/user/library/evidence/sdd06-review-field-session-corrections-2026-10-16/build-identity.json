@@ -1,0 +1,8 @@
+{
+  "entry": "entry-8063d8f7417fd3e9986cee878f1d4eca.js",
+  "bytes": 5547246,
+  "sha256": "95D6EBEDFF3FF017BC10C601E9E963BB1E4226F5F3998ED95E53C5C76EAE6D58",
+  "browserExecuted": false,
+  "configuration": "development; no dotenv; dummy localhost backend",
+  "exportExitCode": 0
+}

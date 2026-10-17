@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-15",
+  "scope": "Automatic printed-text crop and optional manual override using production capture session, NoteCrop, image adapter and on-device OCR",
+  "device": {
+    "avd": "CodexBookConnectAutoCrop36",
+    "serial": "emulator-5560",
+    "androidApi": 36,
+    "architecture": "x86_64",
+    "resolution": "1080x2340",
+    "densityDpi": 440
+  },
+  "runtime": {
+    "nativeApk": "Existing same-day debug development-client APK; no native dependency changes or rebuild for this JavaScript change",
+    "apkSha256": "7c083e3dc7f2de60d813826fe78b58b1656d1e0460b6ac9466a53485cca8a961",
+    "metroPort": 8083,
+    "currentSource": {
+      "src/features/books/notes/captureGeometry.ts": "e2b38bc3b81407eee328435e7cfeabda4f00128159deb047fbe3bafe2ca8f8cf",
+      "src/features/books/notes/captureAdapter.ts": "6c8274c9b879fb743c2b85008ef62556998ab401e0d6e5a52f1c864ac32a3c5a",
+      "src/features/books/notes/captureSession.ts": "910f738690e120ed454b800aa16828087823a585212bd281818ee45372aae30e",
+      "src/features/books/services/ocrService.ts": "a5776bf4643c653f56d64e90351b088b7944df283e9e9ab1db0324be9e6fd530",
+      "src/components/notes/NoteCrop.tsx": "e516ca13e79e7962d1b01f235994307c0a656d847f34d19090420f1f32d91970",
+      "app/(tabs)/library/note-compose.tsx": "6d8c56d14836cbc026bf88045e52fb11a989fc0a5833d3a7f929652fd6f8e224",
+      "app/native-auto-crop-proof.tsx": "fcb27c41519da9bcb7723fce63a71295bd32363c8e2a4d2c1c2302b1083f834f"
+    }
+  },
+  "verification": {
+    "focusedJest": "5 suites / 67 tests PASS",
+    "scopedTypeScript": "PASS",
+    "nativePixelAndOcrOracle": "PASS; see PIXEL-AND-OCR-ORACLE.json",
+    "wholeRepositoryJest": "2523 passed / 3 failed / 4 pending tests; 296 passed / 33 failed / 1 pending suites; full failure names in JEST-SUMMARY.json",
+    "defaultControls": "Actual native UI shows Adjust crop, with no handles or edge controls before expansion",
+    "manualControls": "Actual native Adjust crop reveals accessible edge buttons and corner handles",
+    "continuity": "PASS: 195 definitions; zero duplicates/missing traceability; regression probes PASS; 76 Markdown files",
+    "diffAndWhitespace": "PASS",
+    "relativeLinks": "27 checked, zero missing"
+  },
+  "isolation": {
+    "fixture": "Original synthetic English text page including two text sentinels; automatic detection includes all printed text",
+    "fixtureIntake": "Bundled asset injected at adapter picker boundary; system picker/camera not exercised",
+    "backend": "Unreachable dummy localhost backend; no shared-service use",
+    "network": "Wi-Fi/cellular data disabled; adb reverse for local Metro only",
+    "writes": "No saved note, database, Storage, cloud-provider or migration mutation"
+  },
+  "limits": [
+    "System gallery/camera picker and permission/cancel UI were not exercised.",
+    "Physical-device/OEM image behavior, TalkBack, hardware Back and wider release acceptance remain pending.",
+    "Native harness used the production session/component/adapters; composer routing was verified by mounted tests."
+  ],
+  "cleanup": {
+    "temporaryRoute": "Removed; source archived in native/diagnostic-route-source.tsx",
+    "emulatorAndMetro": "Stopped; no emulator-5560 or listening Metro 8083 remains",
+    "freshAvdAndAndroidUserData": "Removed after stopped-device verification",
+    "remainingScratch": "Task logs and Windows-denied temp/hsperfdata_LEGION directory remain under .tmp/auto-crop-20261015",
+    "fullJest": "Exited code 1 after completed failure report and open-handle warning",
+    "git": "Staged diff empty; no stage/commit/push/deploy/apply"
+  }
+}

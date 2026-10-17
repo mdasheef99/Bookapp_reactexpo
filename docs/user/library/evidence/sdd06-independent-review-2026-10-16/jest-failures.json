@@ -1,0 +1,200 @@
+[
+  {
+    "name": "src\\features\\clubs\\screens\\__tests__\\ClubManageScreen.test.tsx",
+    "assertions": [
+      {
+        "fullName": "ClubManageScreen saves updated club settings through the manage-club settings mutation",
+        "failureMessages": [
+          "Error: thrown: \"Exceeded timeout of 5000 ms for a test.\nAdd a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout.\"\n    at it (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\features\\clubs\\screens\\__tests__\\ClubManageScreen.test.tsx:649:5)\n    at _dispatchDescribe (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\index.js:91:26)\n    at describe (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\index.js:55:5)\n    at Object.describe (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\features\\clubs\\screens\\__tests__\\ClubManageScreen.test.tsx:219:1)\n    at Runtime._execModule (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-runtime\\build\\index.js:1439:24)\n    at Runtime._loadModule (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-runtime\\build\\index.js:1022:12)\n    at Runtime.requireModule (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-runtime\\build\\index.js:882:12)\n    at jestAdapter (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\legacy-code-todo-rewrite\\jestAdapter.js:77:13)\n    at runTestInternal (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-runner\\build\\runTest.js:367:16)\n    at runTest (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-runner\\build\\runTest.js:444:34)"
+        ]
+      }
+    ],
+    "collector": "  ● ClubManageScreen › saves updated club settings through the manage-club settings mutation\n\n    th"
+  },
+  {
+    "name": ".tmp\\sdd06-capture-browser-qa-luna-20261011\\library-manual-note-web04-retest.luna.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test did not expect test.beforeEach() to be called here"
+  },
+  {
+    "name": ".tmp\\sdd06-capture-browser-qa-luna-20261011\\library-manual-note-browser-final.luna.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test did not expect test.beforeEach() to be called here"
+  },
+  {
+    "name": "src\\components\\library\\__tests__\\LibraryShelf.test.tsx",
+    "assertions": [
+      {
+        "fullName": "LibraryShelf single shelf SDD-04 F2 [bookId] route transition (SDD-05 §3) uses fade for [bookId]; siblings keep slide_from_right default",
+        "failureMessages": [
+          "Error: expect(received).toBeUndefined()\n\nReceived: {\"animation\": \"none\"}\n    at toBeUndefined (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\components\\library\\__tests__\\LibraryShelf.test.tsx:620:42)\n    at Object._loop (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\components\\library\\__tests__\\LibraryShelf.test.tsx:617:60)\n    at Promise.then.completed (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\utils.js:231:10)\n    at _callCircusTest (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\run.js:316:40)\n    at _runTest (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\run.js:252:3)\n    at _runTestsForDescribeBlock (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\run.js:126:9)\n    at _runTestsForDescribeBlock (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\run.js:121:9)\n    at _runTestsForDescribeBlock (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\run.js:121:9)\n    at run (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\run.js:71:3)\n    at runAndTransformResultsToJestFormat (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\legacy-code-todo-rewrite\\jestAdapterInit.js:122:21)\n    at jestAdapter (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\legacy-code-todo-rewrite\\jestAdapter.js:79:19)\n    at runTestInternal (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-runner\\build\\runTest.js:367:16)\n    at runTest (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-runner\\build\\runTest.js:444:34)"
+        ]
+      }
+    ],
+    "collector": "  ● LibraryShelf single shelf SDD-04 › F2 [bookId] route transition (SDD-05 §3) › uses fade for [boo"
+  },
+  {
+    "name": ".tmp\\sdd06-capture-browser-qa-luna-20261011\\library-manual-note-browser-history.luna.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test did not expect test.beforeEach() to be called here"
+  },
+  {
+    "name": ".tmp\\current-browser-qa\\history.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test did not expect test.beforeEach() to be called here"
+  },
+  {
+    "name": "app\\(tabs)\\library\\__tests__\\[bookId].test.tsx",
+    "assertions": [
+      {
+        "fullName": "BookDetailScreen review persistence uses local review state for privacy toggles and review saves without forcing rating 0",
+        "failureMessages": [
+          "Error: Unable to find an element with text: Private Note\n\n\u001b[36m<View>\u001b[39m\n  \u001b[36m<RCTScrollView>\u001b[39m\n    \u001b[36m<View>\u001b[39m\n      \u001b[36m<View>\u001b[39m\n        \u001b[36m<View\u001b[39m\n          \u001b[33maccessible\u001b[39m=\u001b[32m{true}\u001b[39m\n          \u001b[33mtestID\u001b[39m=\u001b[32m\"library-book-back-button\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<Ionicons />\u001b[39m\n        \u001b[36m</View>\u001b[39m\n      \u001b[36m</View>\u001b[39m\n      \u001b[36m<View>\u001b[39m\n        \u001b[36m<View>\u001b[39m\n          \u001b[36m<Image />\u001b[39m\n        \u001b[36m</View>\u001b[39m\n        \u001b[36m<Text>\u001b[39m\n          \u001b[0mBeloved\u001b[0m\n        \u001b[36m</Text>\u001b[39m\n        \u001b[36m<Text>\u001b[39m\n          \u001b[0mToni Morrison\u001b[0m\n        \u001b[36m</Text>\u001b[39m\n      \u001b[36m</View>\u001b[39m\n      \u001b[36m<View>\u001b[39m\n        \u001b[36m<View />\u001b[39m\n        \u001b[36m<View />\u001b[39m\n        \u001b[36m<View>\u001b[39m\n          \u001b[36m<Text>\u001b[39m\n            \u001b[0mYour Review\u001b[0m\n          \u001b[36m</Text>\u001b[39m\n          \u001b[36m<TextInput\u001b[39m\n            \u001b[33mplaceholder\u001b[39m=\u001b[32m\"Write your thoughts...\"\u001b[39m\n            \u001b[33mtestID\u001b[39m=\u001b[32m\"library-review-input\"\u001b[39m\n            \u001b[33mvalue\u001b[39m=\u001b[32m\"Updated review copy\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<View\u001b[39m\n            \u001b[33maccessible\u001b[39m=\u001b[32m{true}\u001b[39m\n            \u001b[33mtestID\u001b[39m=\u001b[32m\"library-review-privacy-toggle\"\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[36m<Ionicons />\u001b[39m\n            \u001b[36m<Text>\u001b[39m\n              \u001b[0mPrivate Review\u001b[0m\n            \u001b[36m</Text>\u001b[39m\n          \u001b[36m</View>\u001b[39m\n        \u001b[36m</View>\u001b[39m\n        \u001b[36m<View>\u001b[39m\n          \u001b[36m<Text>\u001b[39m\n            \u001b[0m320\u001b[0m\n            \u001b[0m pages • \u001b[0m\n            \u001b[0mKnopf\u001b[0m\n          \u001b[36m</Text>\u001b[39m\n          \u001b[36m<Text>\u001b[39m\n            \u001b[0mISBN: \u001b[0m\n            \u001b[0m9781400033416\u001b[0m\n          \u001b[36m</Text>\u001b[39m\n        \u001b[36m</View>\u001b[39m\n      \u001b[36m</View>\u001b[39m\n      \u001b[36m<View>\u001b[39m\n        \u001b[36m<View>\u001b[39m\n          \u001b[36m<Text>\u001b[39m\n            \u001b[0mCommunity Reviews\u001b[0m\n          \u001b[36m</Text>\u001b[39m\n        \u001b[36m</View>\u001b[39m\n        \u001b[36m<View\u001b[39m\n          \u001b[33mtestID\u001b[39m=\u001b[32m\"community-reviews-empty\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<Text>\u001b[39m\n            \u001b[0mNo public reviews yet.\u001b[0m\n          \u001b[36m</Text>\u001b[39m\n        \u001b[36m</View>\u001b[39m\n      \u001b[36m</View>\u001b[39m\n      \u001b[36m<View>\u001b[39m\n        \u001b[36m<View>\u001b[39m\n          \u001b[36m<View>\u001b[39m\n            \u001b[36m<Ionicons />\u001b[39m\n            \u001b[36m<Text>\u001b[39m\n              \u001b[0mMy Notes\u001b[0m\n            \u001b[36m</Text>\u001b[39m\n          \u001b[36m</View>\u001b[39m\n          \u001b[36m<View\u001b[39m\n            \u001b[33maccessible\u001b[39m=\u001b[32m{true}\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[36m<Text>\u001b[39m\n              \u001b[0mView All →\u001b[0m\n            \u001b[36m</Text>\u001b[39m\n          \u001b[36m</View>\u001b[39m\n        \u001b[36m</View>\u001b[39m\n        \u001b[36m<View>\u001b[39m\n          \u001b[36m<Ionicons />\u001b[39m\n          \u001b[36m<Text>\u001b[39m\n            \u001b[0mCouldn’t load your notes.\u001b[0m\n          \u001b[36m</Text>\u001b[39m\n          \u001b[36m<View\u001b[39m\n            \u001b[33maccessibilityRole\u001b[39m=\u001b[32m\"button\"\u001b[39m\n            \u001b[33maccessible\u001b[39m=\u001b[32m{true}\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[36m<Text>\u001b[39m\n              \u001b[0mRetry notes\u001b[0m\n            \u001b[36m</Text>\u001b[39m\n          \u001b[36m</View>\u001b[39m\n        \u001b[36m</View>\u001b[39m\n        \u001b[36m<View\u001b[39m\n          \u001b[33maccessibilityLabel\u001b[39m=\u001b[32m\"Add note\"\u001b[39m\n          \u001b[33maccessibilityRole\u001b[39m=\u001b[32m\"button\"\u001b[39m\n          \u001b[33maccessible\u001b[39m=\u001b[32m{true}\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<Ionicons />\u001b[39m\n          \u001b[36m<Text>\u001b[39m\n            \u001b[0mAdd a note\u001b[0m\n          \u001b[36m</Text>\u001b[39m\n        \u001b[36m</View>\u001b[39m\n      \u001b[36m</View>\u001b[39m\n      \u001b[36m<View>\u001b[39m\n        \u001b[36m<View>\u001b[39m\n          \u001b[36m<View>\u001b[39m\n            \u001b[36m<Ionicons />\u001b[39m\n            \u001b[36m<Text>\u001b[39m\n              \u001b[0mSaved Pages\u001b[0m\n            \u001b[36m</Text>\u001b[39m\n          \u001b[36m</View>\u001b[39m\n        \u001b[36m</View>\u001b[39m\n        \u001b[36m<View>\u001b[39m\n          \u001b[36m<Text\u001b[39m\n            \u001b[33maccessibilityRole\u001b[39m=\u001b[32m\"alert\"\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[0mCouldn't load saved pages.\u001b[0m\n          \u001b[36m</Text>\u001b[39m\n          \u001b[36m<View\u001b[39m\n            \u001b[33maccessibilityLabel\u001b[39m=\u001b[32m\"Retry saved pages\"\u001b[39m\n            \u001b[33maccessibilityRole\u001b[39m=\u001b[32m\"button\"\u001b[39m\n            \u001b[33maccessibilityState\u001b[39m=\u001b[32m{\n              {\n                \"disabled\": false,\n              }\n            }\u001b[39m\n            \u001b[33maccessible\u001b[39m=\u001b[32m{true}\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[36m<Text>\u001b[39m\n              \u001b[0mRetry saved pages\u001b[0m\n            \u001b[36m</Text>\u001b[39m\n          \u001b[36m</View>\u001b[39m\n        \u001b[36m</View>\u001b[39m\n      \u001b[36m</View>\u001b[39m\n      \u001b[36m<View\u001b[39m\n        \u001b[33maccessible\u001b[39m=\u001b[32m{true}\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<Text>\u001b[39m\n          \u001b[0mRemove from Library\u001b[0m\n        \u001b[36m</Text>\u001b[39m\n      \u001b[36m</View>\u001b[39m\n    \u001b[36m</View>\u001b[39m\n  \u001b[36m</RCTScrollView>\u001b[39m\n\u001b[36m</View>\u001b[39m\n    at Object.getByText (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\app\\(tabs)\\library\\__tests__\\[bookId].test.tsx:141:16)\n    at Generator.next (<anonymous>)\n    at asyncGeneratorStep (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\@babel\\runtime\\helpers\\asyncToGenerator.js:3:17)\n    at _next (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\@babel\\runtime\\helpers\\asyncToGenerator.js:17:9)"
+        ]
+      }
+    ],
+    "collector": "  ● BookDetailScreen review persistence › uses local review state for privacy toggles and review sav"
+  },
+  {
+    "name": ".tmp\\current-browser-qa\\long-title-dynamic-zoom.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": ".tmp\\current-browser-qa\\long-title-dynamic-empty.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": ".tmp\\current-browser-qa\\short-title-dynamic-zoom.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": ".tmp\\current-browser-qa\\long-title-capture.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": ".tmp\\current-browser-qa\\long-title-dynamic-empty-click.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": ".tmp\\current-browser-qa\\web05-matrix.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test did not expect test.beforeEach() to be called here"
+  },
+  {
+    "name": ".tmp\\web05-geom\\web05-matrix.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test did not expect test.beforeEach() to be called here"
+  },
+  {
+    "name": ".tmp\\current-browser-qa\\web04-crop-zoom2.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": ".tmp\\web05-geom\\web04-crop-zoom2.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": ".tmp\\current-browser-qa\\web07-contrast.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": ".tmp\\web05-geom\\web07-contrast.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": ".tmp\\current-browser-qa\\web04-crop.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": ".tmp\\web05-geom\\web04-crop.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": ".tmp\\current-browser-qa\\web07-a11y.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": ".tmp\\web05-geom\\web07-a11y.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": ".tmp\\current-browser-qa\\web05-reviewzoom.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": "supabase\\functions\\__tests__\\support\\phase9MetadataComposition.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Your test suite must contain at least one test.\n\n      at onResult"
+  },
+  {
+    "name": ".tmp\\web05-geom\\web05-reviewzoom.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": "supabase\\functions\\__tests__\\fixtures\\phase9\\searchVariantFixtures.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Your test suite must contain at least one test.\n\n      at onResult"
+  },
+  {
+    "name": ".tmp\\current-browser-qa\\web05-theme.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": ".tmp\\web05-geom\\web05-theme.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": "supabase\\functions\\__tests__\\fixtures\\phase9\\visionFixtures.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Your test suite must contain at least one test.\n\n      at onResult"
+  },
+  {
+    "name": ".tmp\\web05-geom\\web05-shots.spec.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Playwright Test needs to be invoked via 'npx playwright test' and "
+  },
+  {
+    "name": "supabase\\functions\\__tests__\\fixtures\\phase9\\googleBooksResponses.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Your test suite must contain at least one test.\n\n      at onResult"
+  },
+  {
+    "name": "supabase\\functions\\__tests__\\fixtures\\phase9\\metadataFixtures.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Your test suite must contain at least one test.\n\n      at onResult"
+  },
+  {
+    "name": "supabase\\migrations\\__tests__\\marketplacePhase9Unit7cPrivateSaveRevisionCorrection.test.ts",
+    "assertions": [
+      {
+        "fullName": "Phase 9 Unit 7C M46 private-save revision correction is one forward-only replacement of the existing Save function",
+        "failureMessages": [
+          "Error: expect(received).toContain(expected) // indexOf\n\nExpected substring: \"ELSE\n    v_revision:=NULL;\"\nReceived string:    \"BEGIN;···\n-- M46: a private-only Save must not create public history. The existing·\n-- v_public_changed calculation remains the sole gate; public changes can still·\n-- create a first valid revision when no historical revision exists.·\nCREATE OR REPLACE FUNCTION public.phase9_update_store_inventory_details_v1(·\n  p_inventory_id uuid,p_expected_inventory_version integer,p_changes jsonb,·\n  p_idempotency_key text,p_command_id uuid·\n) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$·\nDECLARE v_inventory public.store_inventory; v_proposed public.store_inventory;·\n  v_store uuid; v_replay jsonb; v_result jsonb; v_fingerprint text;·\n  v_reason text; v_revision integer; v_changed_fields text[]; v_public_changed boolean;·\nBEGIN·\n  IF p_command_id IS NULL OR coalesce(char_length(p_idempotency_key),0) NOT BETWEEN 1 AND 200·\n    OR jsonb_typeof(p_changes)<>'object' OR p_changes='{}'::jsonb THEN·\n    RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;·\n  IF EXISTS(SELECT 1 FROM jsonb_object_keys(p_changes) AS key·\n    WHERE key<>ALL(ARRAY['title','authors','language','publicDescription',·\n      'sellingPriceMinor','condition','publicConditionNote','hasDamage','damageTypes',·\n      'damageNote','isSellable','shelfLocation','internalNotes'])) THEN·\n    RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;···\n  SELECT store_id INTO v_store FROM public.store_inventory WHERE id=p_inventory_id;·\n  IF v_store IS NULL OR NOT marketplace_sec.phase9_is_store_owner(v_store) THEN·\n    RAISE EXCEPTION 'P9_OWNER_NOT_AUTHORIZED'; END IF;·\n  v_fingerprint:=encode(extensions.digest(concat_ws('|',auth.uid(),p_command_id,·\n    p_inventory_id,p_expected_inventory_version,p_changes::text),'sha256'),'hex');·\n  v_replay:=marketplace_sec.phase9_replay(auth.uid()::text,'U7CC01',·\n    p_idempotency_key,v_fingerprint);·\n  IF v_replay IS NOT NULL THEN RETURN v_replay; END IF;···\n  SELECT * INTO v_inventory FROM public.store_inventory·\n    WHERE id=p_inventory_id FOR UPDATE;·\n  IF v_inventory.id IS NULL OR NOT marketplace_sec.phase9_is_store_owner(v_inventory.store_id)·\n    THEN RAISE EXCEPTION 'P9_OWNER_NOT_AUTHORIZED'; END IF;·\n  IF v_inventory.version<>p_expected_inventory_version THEN·\n    RAISE EXCEPTION 'P9_VERSION_CONFLICT'; END IF;·\n  v_proposed:=v_inventory;···\n  IF p_changes?'title' THEN·\n    IF jsonb_typeof(p_changes->'title')<>'string' THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;·\n    v_proposed.title:=btrim(p_changes->>'title');·\n  END IF;·\n  IF p_changes?'authors' THEN·\n    IF jsonb_typeof(p_changes->'authors')<>'array' THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;·\n    SELECT coalesce(array_agg(btrim(value) ORDER BY ordinal),'{}'::text[])·\n      INTO v_proposed.authors·\n    FROM jsonb_array_elements_text(p_changes->'authors') WITH ORDINALITY AS a(value,ordinal);·\n  END IF;·\n  IF p_changes?'language' THEN·\n    IF jsonb_typeof(p_changes->'language')<>'string' THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;·\n    v_proposed.language:=replace(btrim(p_changes->>'language'),'_','-');·\n  END IF;·\n  IF p_changes?'publicDescription' THEN·\n    IF jsonb_typeof(p_changes->'publicDescription') NOT IN ('string','null') THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;·\n    v_proposed.description:=nullif(btrim(p_changes->>'publicDescription'),'');·\n  END IF;·\n  IF p_changes?'sellingPriceMinor' THEN·\n    IF jsonb_typeof(p_changes->'sellingPriceMinor')<>'number'·\n      OR (p_changes->>'sellingPriceMinor')!~ '^[0-9]+$' THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;·\n    v_proposed.selling_price_minor:=(p_changes->>'sellingPriceMinor')::integer;·\n  END IF;·\n  IF p_changes?'condition' THEN·\n    IF jsonb_typeof(p_changes->'condition')<>'string' THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;·\n    v_proposed.condition:=p_changes->>'condition';·\n  END IF;·\n  IF p_changes?'publicConditionNote' THEN·\n    IF jsonb_typeof(p_changes->'publicConditionNote') NOT IN ('string','null') THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;·\n    v_proposed.public_notes:=nullif(btrim(p_changes->>'publicConditionNote'),'');·\n  END IF;·\n  IF p_changes?'hasDamage' THEN·\n    IF jsonb_typeof(p_changes->'hasDamage')<>'boolean' THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;·\n    v_proposed.has_damage:=(p_changes->>'hasDamage')::boolean;·\n    IF NOT v_proposed.has_damage THEN·\n      v_proposed.damage_types:='{}'::text[]; v_proposed.damage_notes:=NULL;·\n    END IF;·\n  END IF;·\n  IF p_changes?'damageTypes' THEN·\n    IF jsonb_typeof(p_changes->'damageTypes')<>'array' THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;·\n    SELECT coalesce(array_agg(value ORDER BY ordinal),'{}'::text[])·\n      INTO v_proposed.damage_types·\n    FROM jsonb_array_elements_text(p_changes->'damageTypes') WITH ORDINALITY AS d(value,ordinal);·\n  END IF;·\n  IF p_changes?'damageNote' THEN·\n    IF jsonb_typeof(p_changes->'damageNote') NOT IN ('string','null') THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;·\n    v_proposed.damage_notes:=nullif(btrim(p_changes->>'damageNote'),'');·\n  END IF;·\n  IF p_changes?'isSellable' THEN·\n    IF jsonb_typeof(p_changes->'isSellable')<>'boolean' THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;·\n    v_proposed.is_sellable:=(p_changes->>'isSellable')::boolean;·\n  END IF;·\n  IF p_changes?'shelfLocation' THEN·\n    IF jsonb_typeof(p_changes->'shelfLocation') NOT IN ('string','null') THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;·\n    v_proposed.shelf_location:=nullif(btrim(p_changes->>'shelfLocation'),'');·\n  END IF;·\n  IF p_changes?'internalNotes' THEN·\n    IF jsonb_typeof(p_changes->'internalNotes') NOT IN ('string','null') THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;·\n    v_proposed.internal_notes:=nullif(btrim(p_changes->>'internalNotes'),'');·\n  END IF;···\n  IF char_length(v_proposed.title) NOT BETWEEN 1 AND 512·\n    OR coalesce(array_length(v_proposed.authors,1),0)>20·\n    OR EXISTS(SELECT 1 FROM unnest(v_proposed.authors) a·\n      WHERE char_length(a) NOT BETWEEN 1 AND 256)·\n    OR v_proposed.language IS NULL·\n    OR v_proposed.language !~ '^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$'·\n    OR coalesce(char_length(v_proposed.description),0)>5000·\n    OR v_proposed.selling_price_minor<0·\n    OR v_proposed.condition NOT IN ('new','like_new','very_good','good','acceptable')·\n    OR coalesce(char_length(v_proposed.public_notes),0)>1000·\n    OR coalesce(char_length(v_proposed.damage_notes),0)>1000·\n    OR coalesce(char_length(v_proposed.shelf_location),0)>120·\n    OR coalesce(char_length(v_proposed.internal_notes),0)>1000·\n    OR coalesce(array_length(v_proposed.damage_types,1),0)>9·\n    OR EXISTS(SELECT 1 FROM unnest(v_proposed.damage_types) d WHERE d NOT IN·\n      ('cover','binding','pages','water','staining','writing','missing_parts',·\n       'mould_or_contamination','other'))·\n    OR (v_proposed.has_damage AND (coalesce(array_length(v_proposed.damage_types,1),0)=0·\n      OR v_proposed.damage_notes IS NULL))·\n    OR (NOT v_proposed.has_damage AND (coalesce(array_length(v_proposed.damage_types,1),0)>0·\n      OR v_proposed.damage_notes IS NOT NULL))·\n  THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;···\n  v_proposed.listing_quality_status:=marketplace_sec.phase9_inventory_quality_status_v1(v_proposed);·\n  IF ROW(v_inventory.title,v_inventory.authors,v_inventory.language,v_inventory.description,·\n      v_inventory.selling_price_minor,v_inventory.condition,v_inventory.public_notes,·\n      v_inventory.has_damage,v_inventory.damage_types,v_inventory.damage_notes,·\n      v_inventory.is_sellable,v_inventory.shelf_location,v_inventory.internal_notes)·\n    IS NOT DISTINCT FROM·\n    ROW(v_proposed.title,v_proposed.authors,v_proposed.language,v_proposed.description,·\n      v_proposed.selling_price_minor,v_proposed.condition,v_proposed.public_notes,·\n      v_proposed.has_damage,v_proposed.damage_types,v_proposed.damage_notes,·\n      v_proposed.is_sellable,v_proposed.shelf_location,v_proposed.internal_notes)·\n  THEN RAISE EXCEPTION 'P9_NO_CHANGES'; END IF;·\n  v_public_changed:=ROW(v_inventory.title,v_inventory.authors,v_inventory.language,·\n      v_inventory.description,v_inventory.selling_price_minor,v_inventory.condition,·\n      v_inventory.public_notes,v_inventory.has_damage,v_inventory.damage_types,·\n      v_inventory.damage_notes,v_inventory.is_sellable,v_inventory.listing_quality_status)·\n    IS DISTINCT FROM·\n    ROW(v_proposed.title,v_proposed.authors,v_proposed.language,·\n      v_proposed.description,v_proposed.selling_price_minor,v_proposed.condition,·\n      v_proposed.public_notes,v_proposed.has_damage,v_proposed.damage_types,·\n      v_proposed.damage_notes,v_proposed.is_sellable,v_proposed.listing_quality_status);···\n  IF v_inventory.visibility_status='published'·\n    AND v_inventory.publication_status='published' THEN·\n    v_reason:=marketplace_sec.phase9_publication_ineligibility(v_proposed);·\n    IF v_reason='damage_media' THEN RAISE EXCEPTION 'P9_MEDIA_NOT_APPROVED'; END IF;·\n    IF v_reason IS NOT NULL AND v_reason<>'stock' THEN·\n      RAISE EXCEPTION 'P9_PUBLICATION_INELIGIBLE:%',v_reason; END IF;·\n  END IF;···\n  SELECT array_agg(key ORDER BY key) INTO v_changed_fields·\n  FROM jsonb_object_keys(p_changes) AS key;·\n  IF v_public_changed THEN·\n    UPDATE public.store_inventory SET·\n      title=v_proposed.title,authors=v_proposed.authors,language=v_proposed.language,·\n      description=v_proposed.description,selling_price_minor=v_proposed.selling_price_minor,·\n      condition=v_proposed.condition,public_notes=v_proposed.public_notes,·\n      has_damage=v_proposed.has_damage,damage_types=v_proposed.damage_types,·\n      damage_notes=v_proposed.damage_notes,is_sellable=v_proposed.is_sellable,·\n      shelf_location=v_proposed.shelf_location,internal_notes=v_proposed.internal_notes,·\n      listing_quality_status=v_proposed.listing_quality_status,·\n      version=version+1,updated_at=transaction_timestamp()·\n    WHERE id=p_inventory_id RETURNING * INTO v_inventory;·\n  ELSE·\n    UPDATE public.store_inventory SET shelf_location=v_proposed.shelf_location,·\n      internal_notes=v_proposed.internal_notes,version=version+1,·\n      updated_at=transaction_timestamp()·\n    WHERE id=p_inventory_id RETURNING * INTO v_inventory;·\n  END IF;···\n  IF v_public_changed THEN·\n    v_revision:=marketplace_sec.phase9_append_publication_revision_v1(·\n      v_inventory,'save_details',p_command_id,false);·\n  ELSE·\n    v_revision:=NULL;·\n  END IF;·\n  INSERT INTO public.marketplace_audit_logs(·\n    store_id,action,entity_type,entity_id,actor_user_id,details·\n  ) VALUES(v_inventory.store_id,'phase9.inventory.details_updated','store_inventory',·\n    v_inventory.id,auth.uid(),jsonb_build_object('commandId',p_command_id,·\n      'inventoryVersion',v_inventory.version,'changedFields',v_changed_fields));·\n  INSERT INTO public.marketplace_events(·\n    store_id,event_type,entity_type,entity_id,actor_user_id,source,payload·\n  ) VALUES(v_inventory.store_id,'inventory.details.updated','store_inventory',·\n    v_inventory.id,auth.uid(),'store_owner_app',jsonb_build_object(·\n      'commandId',p_command_id,'inventoryVersion',v_inventory.version));·\n  v_result:=jsonb_build_object('inventoryId',v_inventory.id,·\n    'inventoryVersion',v_inventory.version,·\n    'publicationIntentVersion',v_inventory.publication_intent_version,·\n    'publicRevisionNumber',v_revision,'outcome','details_updated');·\n  PERFORM marketplace_sec.phase9_finish_replay(auth.uid()::text,'U7CC01',·\n    p_idempotency_key,v_result,'inventory_details_updated');·\n  RETURN v_result;·\nEND$$;·····\nALTER FUNCTION public.phase9_update_store_inventory_details_v1(·\n  uuid,integer,jsonb,text,uuid·\n) OWNER TO postgres;·\nREVOKE ALL ON FUNCTION public.phase9_update_store_inventory_details_v1(·\n  uuid,integer,jsonb,text,uuid·\n) FROM PUBLIC,anon,authenticated,service_role;·\nGRANT EXECUTE ON FUNCTION public.phase9_update_store_inventory_details_v1(·\n  uuid,integer,jsonb,text,uuid·\n) TO authenticated,service_role;·\nCOMMENT ON FUNCTION public.phase9_update_store_inventory_details_v1(·\n  uuid,integer,jsonb,text,uuid·\n) IS 'Unit 7C M46: append public revision history only for customer-visible Save changes';···\nCOMMIT;·\n\"\n    at Object.toContain (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\supabase\\migrations\\__tests__\\marketplacePhase9Unit7cPrivateSaveRevisionCorrection.test.ts:13:17)\n    at Promise.then.completed (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\utils.js:231:10)\n    at _callCircusTest (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\run.js:316:40)\n    at _runTest (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\run.js:252:3)\n    at _runTestsForDescribeBlock (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\run.js:126:9)\n    at _runTestsForDescribeBlock (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\run.js:121:9)\n    at run (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\run.js:71:3)\n    at runAndTransformResultsToJestFormat (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\legacy-code-todo-rewrite\\jestAdapterInit.js:122:21)\n    at jestAdapter (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-circus\\build\\legacy-code-todo-rewrite\\jestAdapter.js:79:19)\n    at runTestInternal (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-runner\\build\\runTest.js:367:16)\n    at runTest (C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\node_modules\\jest-runner\\build\\runTest.js:444:34)"
+        ]
+      }
+    ],
+    "collector": "  ● Phase 9 Unit 7C M46 private-save revision correction › is one forward-only replacement of the ex"
+  },
+  {
+    "name": "supabase\\functions\\__tests__\\fixtures\\phase9\\aliasFixtures.ts",
+    "assertions": [],
+    "collector": "  ● Test suite failed to run\n\n    Your test suite must contain at least one test.\n\n      at onResult"
+  }
+]

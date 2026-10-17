@@ -1,0 +1,18 @@
+[
+  {
+    "path": "app/(tabs)/library/[bookId].tsx",
+    "sha256": "0F14DFA188DEF3B708343C323F9392494F931849217A4B074B454DAD10F6DBB9"
+  },
+  {
+    "path": "app/(tabs)/library/__tests__/book-details-corrections.test.tsx",
+    "sha256": "FA6721B2D366B9AEB4A51E4310D7D59AD74EDBCEA2872B96F4F2B97559A3A076"
+  },
+  {
+    "path": "src/components/notes/__tests__/ManualNoteJourney.test.tsx",
+    "sha256": "3EB907625554F1FD114E76AFEA4131B71F1496C4482DEF1E13D981743ED6D357"
+  },
+  {
+    "path": "src/features/books/notes/manualNotesGateway.ts",
+    "sha256": "B8744B2D73B83278EE125CFAB0F3789EA887EB2F57E98B8AFA07EBDDCAACC37E"
+  }
+]

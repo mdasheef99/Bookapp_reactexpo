@@ -1,0 +1,53 @@
+- main:
+  - iframe [active] [id="I0_1791390026379"] [name="I0_1791390026379"]:
+    - main:
+      - img "Product name, Stitch (beta)"
+      - button:
+      - button:
+      - button:
+      - button:
+      - button:
+      - button:
+      - button:
+      - iframe:
+        - banner:
+          - button "Go back":
+            - generic: arrow_back
+          - heading "Save status" [level=1]
+        - main:
+          - generic: Sample book • A Quiet Practice
+          - generic: Mira Vale (sample)
+          - heading "A Quiet Practice" [level=2]
+          - paragraph: Page 24 • Sample book
+          - heading "Passage Save States" [level=3]
+          - heading "Saving in progress" [level=4]
+          - paragraph: “Silence is not the withdrawal of speech, but the deliberate sanctuary where attention learns its natural weight.”
+          - generic: Folio 24
+          - generic: •
+          - generic: 142 characters
+          - button "hourglass_empty Saving passage…" [disabled]:
+            - generic: hourglass_empty
+            - generic: Saving passage…
+          - generic: error
+          - heading "Couldn’t save passage" [level=4]
+          - paragraph: An error occurred while saving your passage. Your text and page number have been safely preserved in this editor.
+          - generic: Preserved Draft
+          - generic: Safe in memory
+          - paragraph: “The small things we notice become the shape of our days. A quiet moment can make room for a better question.”
+          - button "refresh Retry save":
+            - generic: refresh
+            - generic: Retry save
+          - button "content_copy Copy text to clipboard":
+            - generic: content_copy
+            - generic: Copy text to clipboard
+          - generic: cloud_sync
+          - heading "Couldn’t confirm save" [level=4]
+          - paragraph: Your excerpt was sent, but we couldn’t verify whether it reached storage. To protect your work from accidental overwrites, we will not automatically resend.
+          - generic: info
+          - generic: Confirmed success belongs on the full saved-record view (Screen A06).
+          - button "library_books Check saved passages":
+            - generic: library_books
+            - generic: Check saved passages
+          - button "arrow_back Keep text and return to editor":
+            - generic: arrow_back
+            - generic: Keep text and return to editor

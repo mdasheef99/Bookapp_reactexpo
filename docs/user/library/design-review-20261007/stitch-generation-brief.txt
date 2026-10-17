@@ -1,0 +1,132 @@
+- main:
+  - iframe [active] [id="I0_1791356632714"] [name="I0_1791356632714"]:
+    - main:
+      - button:
+      - button "BookConnect Passage Capture Prototype"
+      - button:
+      - button:
+      - button:
+      - button "Account Menu":
+        - img "Profile image for MD ASHEEF NAGARALLI"
+      - button:
+      - button:
+      - button:
+      - button:
+      - button "Choose File"
+      - button:
+      - button:
+      - button:
+      - button "75%":
+        - generic: 75%
+      - button "Helpful Links":
+      - button "Choose File"
+      - application:
+        - generic: palette
+        - generic: Quiet Reader
+        - generic: Primary
+        - generic "Click to copy": "#394B3B"
+        - 'generic "T0 #000000 — Click to copy"'
+        - 'generic "T10 #0e1f12 — Click to copy"'
+        - 'generic "T20 #233426 — Click to copy"'
+        - 'generic "T30 #394b3b — Click to copy"'
+        - 'generic "T40 #506352 — Click to copy"'
+        - 'generic "T50 #697c6a — Click to copy"'
+        - 'generic "T60 #829683 — Click to copy"'
+        - 'generic "T70 #9cb09c — Click to copy"'
+        - 'generic "T80 #b7ccb7 — Click to copy"'
+        - 'generic "T90 #d3e8d2 — Click to copy"'
+        - 'generic "T95 #e1f6e0 — Click to copy"'
+        - 'generic "T100 #ffffff — Click to copy"'
+        - generic: Secondary
+        - generic "Click to copy": "#A37E3E"
+        - 'generic "T0 #000000 — Click to copy"'
+        - 'generic "T10 #281900 — Click to copy"'
+        - 'generic "T20 #422c00 — Click to copy"'
+        - 'generic "T30 #5f4104 — Click to copy"'
+        - 'generic "T40 #79591c — Click to copy"'
+        - 'generic "T50 #957132 — Click to copy"'
+        - 'generic "T60 #b18a49 — Click to copy"'
+        - 'generic "T70 #cea561 — Click to copy"'
+        - 'generic "T80 #ebc079 — Click to copy"'
+        - 'generic "T90 #ffdeab — Click to copy"'
+        - 'generic "T95 #ffeed9 — Click to copy"'
+        - 'generic "T100 #ffffff — Click to copy"'
+        - generic: Tertiary
+        - generic "Click to copy": "#A34836"
+        - 'generic "T0 #000000 — Click to copy"'
+        - 'generic "T10 #3e0400 — Click to copy"'
+        - 'generic "T20 #5f1608 — Click to copy"'
+        - 'generic "T30 #7d2c1c — Click to copy"'
+        - 'generic "T40 #9c4331 — Click to copy"'
+        - 'generic "T50 #bb5a47 — Click to copy"'
+        - 'generic "T60 #db735e — Click to copy"'
+        - 'generic "T70 #fb8c76 — Click to copy"'
+        - 'generic "T80 #ffb4a5 — Click to copy"'
+        - 'generic "T90 #ffdad3 — Click to copy"'
+        - 'generic "T95 #ffede9 — Click to copy"'
+        - 'generic "T100 #ffffff — Click to copy"'
+        - generic: Neutral
+        - generic "Click to copy": "#302820"
+        - 'generic "T0 #000000 — Click to copy"'
+        - 'generic "T10 #211a13 — Click to copy"'
+        - 'generic "T20 #372f27 — Click to copy"'
+        - 'generic "T30 #4f453c — Click to copy"'
+        - 'generic "T40 #675d53 — Click to copy"'
+        - 'generic "T50 #80756b — Click to copy"'
+        - 'generic "T60 #9b8f84 — Click to copy"'
+        - 'generic "T70 #b6a99e — Click to copy"'
+        - 'generic "T80 #d2c4b8 — Click to copy"'
+        - 'generic "T90 #efe0d4 — Click to copy"'
+        - 'generic "T95 #fdeee1 — Click to copy"'
+        - 'generic "T100 #ffffff — Click to copy"'
+        - generic: Headline
+        - generic: EB Garamond
+        - generic: Aa
+        - button "Primary"
+        - button "Secondary"
+        - button "Inverted"
+        - button "Outlined"
+        - generic: search
+        - generic: Search
+        - generic: Body
+        - generic: Manrope
+        - generic: Aa
+        - generic: home
+        - generic: search
+        - generic: person
+        - generic: Label
+        - generic: Manrope
+        - generic: Aa
+        - generic: edit
+        - generic: edit
+        - text: Label
+        - generic: auto_fix_high
+        - generic: category
+        - generic: sell
+        - generic: delete
+        - generic: "Tip: Ctrl+L to add selected screens to your chat prompt for context"
+        - textbox:
+          - paragraph: What would you like to change or create?
+        - button "Choose File"
+        - button:
+        - button:
+        - button:
+        - button:
+        - button "Balanced":
+          - generic: Balanced
+        - button:
+        - button [disabled]:
+        - button [expanded]:
+          - status:
+            - generic: Agent log
+        - menu "Agent log" [active]:
+          - menuitem:
+            - generic: "Create a NEW native-mobile design project named \"BookConnect — Passage Capture Review\". This is an approval prototype for an existing Expo/React Native Library, not a new app or implementation. Generate a coherent connected set of six390x844 full screens plus a capture-source sheet and note editor. Preserve existing projects; do not import their invented metrics or navigation. Theme: warm editorial reading room, EB Garamond headings/book passage text and Manrope interface/body, cream #F7F3EB, quiet white text surfaces, dark brown #302820, deep olive primary #394B3B, muted brass accents only.16px readable interface type,18px passage text/comfortable1.5line height,8px spacing scale,24px page margins,48px touch actions, restrained12px radii. No textures behind editable text, no glassmorphism, no ornamental dashboard, no faux book-page archive. Shelf retains wood/cloth/brass elsewhere but does not need redesign here. Apply Norman conceptual models/signifiers/feedback/error recovery, Krug clear scanning/navigation, Cooper goal-directed minimal excise, Tidwell mobile forms/progressive disclosure, Refactoring UI hierarchy/spacing/type/contrast. Do not quote authors in the UI. Design for one-handed Android, long text, keyboard and larger fonts. One hub with Notes/Passages states, not separate competing destinations or mixed feed. Distinguish source text and reader writing. Existing Quote notes stay notes. Use a single ORIGINAL fictional example book clearly labeled \"Sample book\": \"A Quiet Practice\", author \"Mira Vale\" (sample), reading status Reading. Original sample passage: \"The small things we notice become the shape of our days. A quiet moment can make room for a better question.\" Sample page24; sample personal Reflect note \"I want to pause before starting the next task.\" No copyrighted quotations, fabricated statistics, accuracy/confidence, streaks or reading progress numbers. Screens and connections: 01 Book Details: title/author/book context, reading status and modest existing management disclosure. Visible Notes & passages preview near reading controls. Capture passage primary creation action; Add note lower emphasis; View all opens hub. Back returns existing Library; no invented new app bottom tabs. Sample marker. 02 Notes & passages hub — Notes state: same book header, accessible Notes/Passages segments, Quote/Reflect/Distill/Apply filters, sample reflection row, Add note primary, Capture passage secondary. Tap note -> editor. Back ->01; Passages segment->03. 03 SAME hub — Passages state: sample page24 passage row with excerpt/page, Capture passage primary, Add note secondary. Tap passage->06. Back->01, Notes->02. Describe saved text, never images. Empty state variant can follow. Source choice bottom sheet over01/03: Capture passage, Take photo, Choose photo, Paste text. \"Only saved text is kept. Photos are temporary.\" \"Page required · up to800words and4,000characters.\" Photo choices->04; Paste->05 WITHOUT extraction animation. Cancel returns caller. Cloud is disabled/deferred; NO upload/retry-cloud controls. 04 Prepare photo: full-screen temporary sample printed text, optional Crop/Rotate/Reset, Use photo primary, Retake/Choose another secondary. A good photo can continue without crop. Back cancels source change keeping prior text. Use photo->extracting state (indeterminate, Cancel, no fake%) then05. Photo remains temporarily available for comparison until exit. 05 Review passage: fullscreen book context. Available extracted text / Your passage toggle rather than two cramped side-by-side panes. Clear explicit Use selected text, native selection plus editable/copy-paste fallback (do not rely on paragraph detection). Short result can start as entire available text. Your passage editor is EXACT save preview; page required positive INTEGER, word AND character counters (<=800words AND4000characters), persistent Save passage. Compare photo available for photo only; paste omits it. Use text in a note instead explicit switch preserves text and changes limit to500words/page optional without autosave. No passage category. Save valid passage->06 after confirmed success; conflicts show old/new replacement variant. All transitions retain selected book. 06 Saved passage detail: confirmed saved text, sample book/author/page24, Edit/Delete/Copy text and Add note as distinct actions. Add note uses book/page context only, no fabricated relationship; Edit->05 with existing content, Back->03. No permanent photo shown, no image download, no unimplemented batch export or AI rewrite. Note editor surface: Add/edit note, editable text, Quote/Reflect/Distill/Apply brief explanatory category choices, optional page,500-word counter, Save note. Scan/Choose photo/Paste are secondary text-source actions in NOTE operation. Source replacement of nonempty writing asks first; save returns Notes state, never silently saves passage too. Back unsaved uses Keep editing/Discard; no claim of restart recovery. Create source sheet and note editor as additional named canvas designs if needed. Wire actual prototype hotspots between named screens, not just arrows on a diagram. Base screens clean readable at390x844; no fixed footer overlaps keyboard/content. Add actual designed state variants afterward: extraction cancel/no-text, camera denied (gallery/paste remain),20,000character incomplete extraction (explicit acceptance resets on editing; no claim complete), over-limit/missing page, same-book/page old/new replace/cancel, saving/save-unconfirmed/failure, unsaved-exit, empty hub,320px/large-text review. Current storage effectively one passage per book/page: do not promise multiple excerpts; overwrite asks explicitly. Prototype only; no live camera, provider, database or public publish. Finish a connected reviewable flow, not marketing screens."
+            - generic: "Create a NEW native-mobile design project named \"BookConnect — Passage Capture Review\". This is an approval prototype for an existing Expo/React Native Library, not a new app or implementation. Generate a coherent connected set of six390x844 full screens plus a capture-source sheet and note editor. Preserve existing projects; do not import their invented metrics or navigation. Theme: warm editorial reading room, EB Garamond headings/book passage text and Manrope interface/body, cream #F7F3EB, quiet white text surfaces, dark brown #302820, deep olive primary #394B3B, muted brass accents only.16px readable interface type,18px passage text/comfortable1.5line height,8px spacing scale,24px page margins,48px touch actions, restrained12px radii. No textures behind editable text, no glassmorphism, no ornamental dashboard, no faux book-page archive. Shelf retains wood/cloth/brass elsewhere but does not need redesign here. Apply Norman conceptual models/signifiers/feedback/error recovery, Krug clear scanning/navigation, Cooper goal-directed minimal excise, Tidwell mobile forms/progressive disclosure, Refactoring UI hierarchy/spacing/type/contrast. Do not quote authors in the UI. Design for one-handed Android, long text, keyboard and larger fonts. One hub with Notes/Passages states, not separate competing destinations or mixed feed. Distinguish source text and reader writing. Existing Quote notes stay notes. Use a single ORIGINAL fictional example book clearly labeled \"Sample book\": \"A Quiet Practice\", author \"Mira Vale\" (sample), reading status Reading. Original sample passage: \"The small things we notice become the shape of our days. A quiet moment can make room for a better question.\" Sample page24; sample personal Reflect note \"I want to pause before starting the next task.\" No copyrighted quotations, fabricated statistics, accuracy/confidence, streaks or reading progress numbers. Screens and connections: 01 Book Details: title/author/book context, reading status and modest existing management disclosure. Visible Notes & passages preview near reading controls. Capture passage primary creation action; Add note lower emphasis; View all opens hub. Back returns existing Library; no invented new app bottom tabs. Sample marker. 02 Notes & passages hub — Notes state: same book header, accessible Notes/Passages segments, Quote/Reflect/Distill/Apply filters, sample reflection row, Add note primary, Capture passage secondary. Tap note -> editor. Back ->01; Passages segment->03. 03 SAME hub — Passages state: sample page24 passage row with excerpt/page, Capture passage primary, Add note secondary. Tap passage->06. Back->01, Notes->02. Describe saved text, never images. Empty state variant can follow. Source choice bottom sheet over01/03: Capture passage, Take photo, Choose photo, Paste text. \"Only saved text is kept. Photos are temporary.\" \"Page required · up to800words and4,000characters.\" Photo choices->04; Paste->05 WITHOUT extraction animation. Cancel returns caller. Cloud is disabled/deferred; NO upload/retry-cloud controls. 04 Prepare photo: full-screen temporary sample printed text, optional Crop/Rotate/Reset, Use photo primary, Retake/Choose another secondary. A good photo can continue without crop. Back cancels source change keeping prior text. Use photo->extracting state (indeterminate, Cancel, no fake%) then05. Photo remains temporarily available for comparison until exit. 05 Review passage: fullscreen book context. Available extracted text / Your passage toggle rather than two cramped side-by-side panes. Clear explicit Use selected text, native selection plus editable/copy-paste fallback (do not rely on paragraph detection). Short result can start as entire available text. Your passage editor is EXACT save preview; page required positive INTEGER, word AND character counters (<=800words AND4000characters), persistent Save passage. Compare photo available for photo only; paste omits it. Use text in a note instead explicit switch preserves text and changes limit to500words/page optional without autosave. No passage category. Save valid passage->06 after confirmed success; conflicts show old/new replacement variant. All transitions retain selected book. 06 Saved passage detail: confirmed saved text, sample book/author/page24, Edit/Delete/Copy text and Add note as distinct actions. Add note uses book/page context only, no fabricated relationship; Edit->05 with existing content, Back->03. No permanent photo shown, no image download, no unimplemented batch export or AI rewrite. Note editor surface: Add/edit note, editable text, Quote/Reflect/Distill/Apply brief explanatory category choices, optional page,500-word counter, Save note. Scan/Choose photo/Paste are secondary text-source actions in NOTE operation. Source replacement of nonempty writing asks first; save returns Notes state, never silently saves passage too. Back unsaved uses Keep editing/Discard; no claim of restart recovery. Create source sheet and note editor as additional named canvas designs if needed. Wire actual prototype hotspots between named screens, not just arrows on a diagram. Base screens clean readable at390x844; no fixed footer overlaps keyboard/content. Add actual designed state variants afterward: extraction cancel/no-text, camera denied (gallery/paste remain),20,000character incomplete extraction (explicit acceptance resets on editing; no claim complete), over-limit/missing page, same-book/page old/new replace/cancel, saving/save-unconfirmed/failure, unsaved-exit, empty hub,320px/large-text review. Current storage effectively one passage per book/page: do not promise multiple excerpts; overwrite asks explicitly. Prototype only; no live camera, provider, database or public publish. Finish a connected reviewable flow, not marketing screens."
+        - button "Collapse panel":
+        - img "MD ASHEEF NAGARALLI"
+        - paragraph: "Create a NEW native-mobile design project named \"BookConnect — Passage Capture Review\". This is an approval prototype for an existing Expo/React Native Library, not a new app or implementation. Generate a coherent connected set of six390x844 full screens plus a capture-source sheet and note editor. Preserve existing projects; do not import their invented metrics or navigation. Theme: warm editorial reading room, EB Garamond headings/book passage text and Manrope interface/body, cream #F7F3EB, quiet white text surfaces, dark brown #302820, deep olive primary #394B3B, muted brass accents only.16px readable interface type,18px passage text/comfortable1.5line height,8px spacing scale,24px page margins,48px touch actions, restrained12px radii. No textures behind editable text, no glassmorphism, no ornamental dashboard, no faux book-page archive. Shelf retains wood/cloth/brass elsewhere but does not need redesign here. Apply Norman conceptual models/signifiers/feedback/error recovery, Krug clear scanning/navigation, Cooper goal-directed minimal excise, Tidwell mobile forms/progressive disclosure, Refactoring UI hierarchy/spacing/type/contrast. Do not quote authors in the UI. Design for one-handed Android, long text, keyboard and larger fonts. One hub with Notes/Passages states, not separate competing destinations or mixed feed. Distinguish source text and reader writing. Existing Quote notes stay notes. Use a single ORIGINAL fictional example book clearly labeled \"Sample book\": \"A Quiet Practice\", author \"Mira Vale\" (sample), reading status Reading. Original sample passage: \"The small things we notice become the shape of our days. A quiet moment can make room for a better question.\" Sample page24; sample personal Reflect note \"I want to pause before starting the next task.\" No copyrighted quotations, fabricated statistics, accuracy/confidence, streaks or reading progress numbers. Screens and connections: 01 Book Details: title/author/book context, reading status and modest existing management disclosure. Visible Notes & passages preview near reading controls. Capture passage primary creation action; Add note lower emphasis; View all opens hub. Back returns existing Library; no invented new app bottom tabs. Sample marker. 02 Notes & passages hub — Notes state: same book header, accessible Notes/Passages segments, Quote/Reflect/Distill/Apply filters, sample reflection row, Add note primary, Capture passage secondary. Tap note -> editor. Back ->01; Passages segment->03. 03 SAME hub — Passages state: sample page24 passage row with excerpt/page, Capture passage primary, Add note secondary. Tap passage->06. Back->01, Notes->02. Describe saved text, never images. Empty state variant can follow. Source choice bottom sheet over01/03: Capture passage, Take photo, Choose photo, Paste text. \"Only saved text is kept. Photos are temporary.\" \"Page required · up to800words and4,000characters.\" Photo choices->04; Paste->05 WITHOUT extraction animation. Cancel returns caller. Cloud is disabled/deferred; NO upload/retry-cloud controls. 04 Prepare photo: full-screen temporary sample printed text, optional Crop/Rotate/Reset, Use photo primary, Retake/Choose another secondary. A good photo can continue without crop. Back cancels source change keeping prior text. Use photo->extracting state (indeterminate, Cancel, no fake%) then05. Photo remains temporarily available for comparison until exit. 05 Review passage: fullscreen book context. Available extracted text / Your passage toggle rather than two cramped side-by-side panes. Clear explicit Use selected text, native selection plus editable/copy-paste fallback (do not rely on paragraph detection). Short result can start as entire available text. Your passage editor is EXACT save preview; page required positive INTEGER, word AND character counters (<=800words AND4000characters), persistent Save passage. Compare photo available for photo only; paste omits it. Use text in a note instead explicit switch preserves text and changes limit to500words/page optional without autosave. No passage category. Save valid passage->06 after confirmed success; conflicts show old/new replacement variant. All transitions retain selected book. 06 Saved passage detail: confirmed saved text, sample book/author/page24, Edit/Delete/Copy text and Add note as distinct actions. Add note uses book/page context only, no fabricated relationship; Edit->05 with existing content, Back->03. No permanent photo shown, no image download, no unimplemented batch export or AI rewrite. Note editor surface: Add/edit note, editable text, Quote/Reflect/Distill/Apply brief explanatory category choices, optional page,500-word counter, Save note. Scan/Choose photo/Paste are secondary text-source actions in NOTE operation. Source replacement of nonempty writing asks first; save returns Notes state, never silently saves passage too. Back unsaved uses Keep editing/Discard; no claim of restart recovery. Create source sheet and note editor as additional named canvas designs if needed. Wire actual prototype hotspots between named screens, not just arrows on a diagram. Base screens clean readable at390x844; no fixed footer overlaps keyboard/content. Add actual designed state variants afterward: extraction cancel/no-text, camera denied (gallery/paste remain),20,000character incomplete extraction (explicit acceptance resets on editing; no claim complete), over-limit/missing page, same-book/page old/new replace/cancel, saving/save-unconfirmed/failure, unsaved-exit, empty hub,320px/large-text review. Current storage effectively one passage per book/page: do not promise multiple excerpts; overwrite asks explicitly. Prototype only; no live camera, provider, database or public publish. Finish a connected reviewable flow, not marketing screens."
+        - button "Copy prompt":
+        - button "Show more":
+        - paragraph: Generating the mobile app shell for BookConnect with top navigation bar and reading room styling.
+        - generic: Building the app skeleton

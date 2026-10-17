@@ -1,0 +1,107 @@
+{
+  "oracle": "Pillow literal source-pixel rectangles and independent clockwise transpose; not captureGeometry",
+  "checks": [
+    {
+      "file": "regions-crop.png",
+      "dimensions": [
+        60,
+        40
+      ],
+      "expected": [
+        60,
+        40
+      ],
+      "max_channel_error": 0,
+      "tolerance": 0,
+      "status": "PASS"
+    },
+    {
+      "file": "regions-rotated.png",
+      "dimensions": [
+        80,
+        120
+      ],
+      "expected": [
+        80,
+        120
+      ],
+      "max_channel_error": 0,
+      "tolerance": 0,
+      "status": "PASS"
+    },
+    {
+      "file": "regions-rotated-crop.png",
+      "dimensions": [
+        40,
+        60
+      ],
+      "expected": [
+        40,
+        60
+      ],
+      "max_channel_error": 0,
+      "tolerance": 0,
+      "status": "PASS"
+    },
+    {
+      "file": "exif-decoded.png",
+      "dimensions": [
+        80,
+        120
+      ],
+      "expected": [
+        80,
+        120
+      ],
+      "max_channel_error": 0,
+      "tolerance": 3,
+      "status": "PASS"
+    },
+    {
+      "file": "exif-rotated.png",
+      "dimensions": [
+        120,
+        80
+      ],
+      "expected": [
+        120,
+        80
+      ],
+      "max_channel_error": 0,
+      "tolerance": 3,
+      "status": "PASS"
+    },
+    {
+      "file": "english-selection.png",
+      "dimensions": [
+        1280,
+        1100
+      ],
+      "expected": [
+        1280,
+        1100
+      ],
+      "max_channel_error": 0,
+      "tolerance": 0,
+      "status": "PASS"
+    }
+  ],
+  "ocr": [
+    {
+      "fixture": "synthetic-english-page-selection",
+      "elapsedMs": 5720,
+      "excluded_sentinels_absent": true
+    },
+    {
+      "fixture": "synthetic-english-page-selection",
+      "elapsedMs": 4919,
+      "excluded_sentinels_absent": true
+    },
+    {
+      "fixture": "clockwise-page-selection",
+      "elapsedMs": 4707,
+      "excluded_sentinels_absent": true
+    }
+  ],
+  "status": "PASS"
+}

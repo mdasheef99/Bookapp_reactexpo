@@ -1,0 +1,223 @@
+{
+  "observed_date": "2026-10-11",
+  "project_ref": "ahntbtktjjmvfosgkmgn",
+  "mode": "Supabase MCP read-only catalog/ledger and aggregate integrity",
+  "rows": [
+    {
+      "live_readback": {
+        "rls": true,
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "nullable": "NO"
+          },
+          {
+            "name": "user_id",
+            "type": "uuid",
+            "default": null,
+            "nullable": "NO"
+          },
+          {
+            "name": "user_book_id",
+            "type": "uuid",
+            "default": null,
+            "nullable": "NO"
+          },
+          {
+            "name": "content",
+            "type": "text",
+            "default": null,
+            "nullable": "NO"
+          },
+          {
+            "name": "tag",
+            "type": "text",
+            "default": null,
+            "nullable": "YES"
+          },
+          {
+            "name": "page_number",
+            "type": "integer",
+            "default": null,
+            "nullable": "YES"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "nullable": "YES"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "nullable": "YES"
+          },
+          {
+            "name": "version",
+            "type": "integer",
+            "default": "1",
+            "nullable": "NO"
+          },
+          {
+            "name": "last_operation_id",
+            "type": "uuid",
+            "default": null,
+            "nullable": "YES"
+          }
+        ],
+        "policies": [
+          {
+            "name": "Users can delete own notes",
+            "check": null,
+            "roles": [
+              "public"
+            ],
+            "using": "((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM user_books b\n  WHERE ((b.id = reading_notes.user_book_id) AND (b.user_id = auth.uid())))))",
+            "command": "DELETE"
+          },
+          {
+            "name": "Users can insert own notes",
+            "check": "((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM user_books b\n  WHERE ((b.id = reading_notes.user_book_id) AND (b.user_id = auth.uid())))))",
+            "roles": [
+              "public"
+            ],
+            "using": null,
+            "command": "INSERT"
+          },
+          {
+            "name": "Users can update own notes",
+            "check": "((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM user_books b\n  WHERE ((b.id = reading_notes.user_book_id) AND (b.user_id = auth.uid())))))",
+            "roles": [
+              "public"
+            ],
+            "using": "((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM user_books b\n  WHERE ((b.id = reading_notes.user_book_id) AND (b.user_id = auth.uid())))))",
+            "command": "UPDATE"
+          },
+          {
+            "name": "Users can view own notes",
+            "check": null,
+            "roles": [
+              "public"
+            ],
+            "using": "((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM user_books b\n  WHERE ((b.id = reading_notes.user_book_id) AND (b.user_id = auth.uid())))))",
+            "command": "SELECT"
+          }
+        ],
+        "triggers": [
+          {
+            "name": "reading_notes_manage_revision",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": false,
+            "enabled": "O",
+            "function": "CREATE OR REPLACE FUNCTION public.library_manage_note_revision()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nDECLARE\n  v_expected record;\nBEGIN\n  IF TG_OP = 'INSERT' THEN\n    NEW.version := 1;\n    NEW.last_operation_id := NULL;\n    NEW.created_at := now();\n    NEW.updated_at := now();\n    RETURN NEW;\n  END IF;\n  IF TG_OP = 'UPDATE' THEN\n    NEW.version := OLD.version + 1;\n    NEW.updated_at := now();\n    IF NEW.last_operation_id IS NOT DISTINCT FROM OLD.last_operation_id THEN\n      NEW.last_operation_id := NULL;\n    END IF;\n    IF NEW.id IS DISTINCT FROM OLD.id OR NEW.user_id IS DISTINCT FROM OLD.user_id OR NEW.user_book_id IS DISTINCT FROM OLD.user_book_id THEN\n      RAISE EXCEPTION 'LIBRARY_NOTES_IDENTITY_IMMUTABLE';\n    END IF;\n    RETURN NEW;\n  END IF;\n  RETURN NULL;\nEND\n$function$\n",
+            "definition": "CREATE TRIGGER reading_notes_manage_revision BEFORE INSERT OR UPDATE ON public.reading_notes FOR EACH ROW EXECUTE FUNCTION library_manage_note_revision()"
+          }
+        ],
+        "migration": [
+          {
+            "name": "library_manual_note_persistence",
+            "sql_md5": "d187c32b7b0846e735d6696adff6a7ed",
+            "version": "20261010221843",
+            "statement_count": 1
+          }
+        ],
+        "privileges": [
+          {
+            "role": "anon",
+            "delete": false,
+            "select": false,
+            "trigger": false,
+            "maintain": false,
+            "truncate": false,
+            "table_insert": false,
+            "table_update": false,
+            "insert_content": false,
+            "update_content": false,
+            "update_version": false,
+            "update_identity": false
+          },
+          {
+            "role": "authenticated",
+            "delete": true,
+            "select": true,
+            "trigger": false,
+            "maintain": false,
+            "truncate": false,
+            "table_insert": true,
+            "table_update": true,
+            "insert_content": true,
+            "update_content": true,
+            "update_version": true,
+            "update_identity": true
+          }
+        ],
+        "constraints": [
+          {
+            "name": "reading_notes_500w_check",
+            "validated": true,
+            "definition": "CHECK (check_note_word_limit(content))"
+          },
+          {
+            "name": "reading_notes_book_owner_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (user_book_id, user_id) REFERENCES user_books(id, user_id) ON UPDATE RESTRICT ON DELETE CASCADE"
+          },
+          {
+            "name": "reading_notes_content_not_empty",
+            "validated": true,
+            "definition": "CHECK ((btrim(content) <> ''::text))"
+          },
+          {
+            "name": "reading_notes_page_number_positive",
+            "validated": true,
+            "definition": "CHECK (((page_number IS NULL) OR (page_number > 0)))"
+          },
+          {
+            "name": "reading_notes_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "reading_notes_tag_check",
+            "validated": true,
+            "definition": "CHECK (((tag IS NULL) OR (tag = ANY (ARRAY['quote'::text, 'reflect'::text, 'distill'::text, 'apply'::text, 'question'::text]))))"
+          },
+          {
+            "name": "reading_notes_user_book_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (user_book_id) REFERENCES user_books(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "reading_notes_user_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "reading_notes_version_positive",
+            "validated": true,
+            "definition": "CHECK ((version > 0))"
+          }
+        ],
+        "integrity_counts": {
+          "notes": 2,
+          "wrong_owner": 0,
+          "missing_parent": 0
+        }
+      }
+    }
+  ],
+  "extra_effective_privileges": {
+    "authenticated_can_update_created_at": true,
+    "authenticated_can_insert_created_at": true,
+    "anonymous_trigger_function_execute": true,
+    "authenticated_trigger_function_execute": true,
+    "parent_owner_key": "UNIQUE (id, user_id)"
+  },
+  "note": "No authenticated business mutation, note body or identity read; effective privileges and trigger source are catalog evidence."
+}
+

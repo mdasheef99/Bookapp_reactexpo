@@ -1,0 +1,95 @@
+{
+  "findingId": "LUNA-WEB-04",
+  "severity": "P2",
+  "status": "confirmed; browser tests paused for same-session correction",
+  "environment": {
+    "browser": "isolated Edge via user-authorized Playwright harness",
+    "fixtureUrl": "http://127.0.0.1:8086",
+    "viewportCssPx": { "width": 390, "height": 844 },
+    "dpr": 1,
+    "visualViewportScale": 1,
+    "fixtureZoom": "html { zoom: 2 }",
+    "nativeTextScaling": false,
+    "nativePicker": false,
+    "nativeOcr": false
+  },
+  "build": {
+    "checkout": "C:/Users/LEGION/Desktop/Bookconnect4_library",
+    "branch": "codex/library-shelf-motion",
+    "head": "1b743a13328ec30280a524aaeea15e364fc3d6c5",
+    "entry": "entry-e65b362a90e90576f36b96d64df2b68b.js",
+    "entryBytes": 12600608,
+    "entrySha256": "78798A466DB04B3FCC7DC865DCFEF4344DE7B0E9D5AAF050E33352969EE4C6BC",
+    "sourceManifestSha256": "37632535E29E5183EB76E127239D0F3F61339B18AB178734DC4E2CA0E7F35593",
+    "writeGates": {
+      "ownedBookWrites": false,
+      "stableCreateReconciliation": false,
+      "optionalFiveCategories": false,
+      "serverManagedEditVersion": false
+    }
+  },
+  "fixture": {
+    "serverPid": 17060,
+    "serverPort": 8086,
+    "transformedEntrySha256": "4E74013590C36B2F13EF960F33FA4C71BF964C6525878A654A0FEFD888D8027C",
+    "guardSha256": "286394A096211B055FEC0DF1039C87EF79E4344A0E84D2F313C9CC53072FC831",
+    "guardBeforeEntry": true,
+    "authBypass": false,
+    "nativeResultMode": null,
+    "syntheticFileChooser": "synthetic local PNG; operating-system picker not invoked",
+    "syntheticReadFetches": 4,
+    "blockedExternal": 0,
+    "blockedUnknown": 0,
+    "blockedMutations": 0,
+    "appWriteAttempts": 0,
+    "pageErrors": 0,
+    "expectedPlaceholderCspConsoleMessages": 1,
+    "externalHttpRequestsDispatched": 0
+  },
+  "layout": {
+    "rootScrollWidthCssPx": 399,
+    "bodyClientWidthCssPx": 195,
+    "bodyScrollWidthCssPx": 200,
+    "visibleComposerTitle": {
+      "text": "The Quiet Atlas of Long Margins and Borrowed Lanterns: Collected Essays on Memory, Place, and Reading, Volume One",
+      "rectCssPx": { "x": 40, "y": 211, "width": 310, "height": 288 }
+    },
+    "cropScrollViewClip": {
+      "rectCssPx": { "top": 600, "bottom": 600, "height": 0 },
+      "clientHeight": 0,
+      "scrollHeight": 1478,
+      "overflowY": "auto"
+    },
+    "controls": [
+      { "label": "Left edge inward", "rectCssPx": { "x": 40, "y": 600, "width": 312.765625, "height": 96 }, "hitTestTarget": false, "hitElement": "Write note instead" },
+      { "label": "Right edge outward", "rectCssPx": { "x": 33, "y": 600, "width": 357, "height": 96 }, "hitTestTarget": false, "hitElement": "Write note instead" },
+      { "label": "Rotate photo clockwise", "rectCssPx": { "x": 33, "y": 600, "width": 310, "height": 138 }, "hitTestTarget": false },
+      { "label": "Reset crop", "rectCssPx": { "x": 33, "y": 600, "width": 310, "height": 96 }, "hitTestTarget": false, "hitElement": "Write note instead" },
+      { "label": "Choose another photo", "rectCssPx": { "x": 33, "y": 600, "width": 310, "height": 138 }, "hitTestTarget": false },
+      { "label": "Write note instead", "rectCssPx": { "x": 32, "y": 608, "width": 326, "height": 138 }, "hitTestTarget": true },
+      { "label": "Cancel scan", "rectCssPx": { "x": 32, "y": 650, "width": 326, "height": 96 }, "hitTestTarget": true }
+    ]
+  },
+  "sourceContext": {
+    "composerScrollView": "app/(tabs)/library/note-compose.tsx:211",
+    "cropAndActions": "app/(tabs)/library/note-compose.tsx:250",
+    "cropAlternativeControls": "src/components/notes/NoteCrop.tsx:31",
+    "screenFlexWrapper": "src/components/notes/ManualNoteUi.tsx:21"
+  },
+  "evidence": {
+    "report": "LUNA-BROWSER-QA.md",
+    "log": {
+      "path": ".tmp/sdd06-capture-browser-qa-luna-20261011/css200-visible-clip-hit-test.log",
+      "bytes": 99440,
+      "sha256": "5D8F89DD0E3D9A049ED25208468F790834F3B644BF41E032951CAA009472A919"
+    },
+    "screenshot": {
+      "path": "browser/final-2026-10-11/css-zoom-200-narrow-crop.png",
+      "bytes": 48027,
+      "sha256": "ED1F553C57C6C3A26077D66C00DFBE51B27820C9DD2FC0EB4218B80F13AFB8AD"
+    },
+    "harnessSha256": "BA024E41A0E72FABAD6DA75DC1725BCE34634D6083EA044E21B54A8F96B55FFF",
+    "guardSha256": "0053CAEEBE0E33869A56CBD672930F11A6F45C3C886E4941F97F7F0DC27FD3B3"
+  },
+  "result": "FAIL: only 2 of 7 crop/footer controls were hit-test reachable after scrolling; all five crop/action controls were clipped by a zero-height ScrollView viewport."
+}

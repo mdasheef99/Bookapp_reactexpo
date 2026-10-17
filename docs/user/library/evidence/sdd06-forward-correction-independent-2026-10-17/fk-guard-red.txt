@@ -1,0 +1,29 @@
+TAP version 13
+# LOCAL_POSTGRES_VERSION=17 LOCAL_HOST=127.0.0.1 MIGRATION=20261010172118 TEST_DATA=synthetic
+# FK_GUARD_RED=correction_accepted_disabled_parent_trigger owner_mismatch_after_update=1
+# Subtest: forward correction refuses disabled parent ownership enforcement
+not ok 1 - forward correction refuses disabled parent ownership enforcement
+  ---
+  duration_ms: 6525.1025
+  location: 'C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\supabase\\tests\\library\\manualNotePersistence.postgres.test.mjs:519:1'
+  failureType: 'testCodeFailure'
+  error: 'Correction must reject disabled ownership enforcement before replacing notes definitions'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/LEGION/Desktop/Bookconnect4_library/supabase/tests/library/manualNotePersistence.postgres.test.mjs:534:3)
+    process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    async Test.run (node:internal/test_runner/test:935:9)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7857.5155

@@ -1,0 +1,23 @@
+{
+  "fixture": "original synthetic English text page",
+  "source": {
+    "width": 1600,
+    "height": 2200
+  },
+  "crop": {
+    "x": 0.1,
+    "y": 0.2,
+    "width": 0.7999999999999999,
+    "height": 0.49999999999999983
+  },
+  "cropPixels": {
+    "width": 1280,
+    "height": 1100
+  },
+  "elapsedMs": 5695,
+  "version": 1,
+  "provider": "on-device",
+  "languageHint": "en",
+  "reviewText": "A PAGE FOR CAREFUL READING\nA reader walks into a quiet library and chooses a book.\nThe morning light falls across the open page.\nEach paragraph gives the reader time to pause.\nClear words can carry a useful idea without haste.\nBefore making a note, the reader checks the source.\nA question may matter as much as an answer.\nA short reflection can connect a page to daily life.\nThe chosen passage stays inside the outlined area.\nReading is a patient practice of attention.\nThis synthetic page contains no private information.\nIts text was written only to verify local recognition.",
+  "reviewOverflow": false
+}

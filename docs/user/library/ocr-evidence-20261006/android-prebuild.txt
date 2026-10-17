@@ -1,0 +1,10 @@
+env: load .env
+env: export EXPO_PUBLIC_DEV_SKIP_AUTH EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_ANON_KEY EXPO_PUBLIC_APP_ENV EXPO_PUBLIC_ENABLE_SENTRY_IN_DEV EXPO_PUBLIC_SENTRY_TEST_EVENT
+- Creating native directory (./android)
+✔ Created native directory | reusing /android
+- Updating package.json
+✔ Updated package.json
+- Running prebuild
+- Running prebuild
+» android: userInterfaceStyle: Install expo-system-ui in your project to enable this feature.
+✔ Finished prebuild

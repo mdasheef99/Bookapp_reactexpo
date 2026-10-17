@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "oracle": "Pillow pixel comparison against a literal rectangle in the original fixture; no crop helper was used to compute expected bounds",
+  "sourceFixture": "../sdd06-capture-ocr-2026-10-11/fixtures/english-page.png",
+  "sourceSize": [1600, 2200],
+  "sourceRectangleExclusive": [160, 440, 1440, 1540],
+  "actualNativeCropSize": [1280, 1100],
+  "expectedCropSize": [1280, 1100],
+  "differenceBoundingBox": null,
+  "pixelIdentical": true,
+  "outsideTopAndBottomSentinelsAbsentFromOcr": true,
+  "recognitionOverflow": false
+}
