@@ -167,8 +167,16 @@ it('a delayed read cannot overwrite a selection accepted while that read was pen
   const hook = mount();
   await waitFor(() => expect(read).toHaveBeenCalledTimes(1));
   await act(async () => hook.result.current.selectEdition.mutateAsync(request));
-  await act(async () => { old.resolve(pickerChoices()); await Promise.resolve(); });
-  expect(hook.result.current.choices.data).toMatchObject({ metadataRevision: 8, selection: selectedChoices().selection });
+  const key = ownerEditionPickerKeys.choices(pickerIdentity, request.sessionId, request.candidateId);
+  expect(client.isFetching({ queryKey: key })).toBe(1);
+  await act(async () => { old.resolve(pickerChoices()); });
+  // Wait for the stale queryFn itself to settle, so the checks run after its cache write rather than before it.
+  await waitFor(() => expect(client.isFetching({ queryKey: key })).toBe(0));
+  expect(read).toHaveBeenCalledTimes(2);
+  const accepted = { metadataRevision: 8, selection: selectedChoices().selection };
+  expect(client.getQueryData(key)).toMatchObject(accepted);
+  // TanStack's notifyManager batches observer updates on a timer; the slower CI runner can lag the render.
+  await waitFor(() => expect(hook.result.current.choices.data).toMatchObject(accepted));
 });
 it('a replayed lookup returns the newer accepted receipt rather than regressing mutation state', async () => {
   const latest = { operationId: testUuid(42), status: 'ready' as const,
