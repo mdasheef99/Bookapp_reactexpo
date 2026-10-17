@@ -1684,3 +1684,40 @@ Application ledger: two apply_migration attempts for M75 failed with an MCP "Con
 Second review (2026-10-17, before push; Sonnet on the M75 lock fix and 6d7f5be, Haiku on the docs facts): no blockers. Residual risk accepted without a migration: a worker transaction on its last attempt that straddles lease expiry while the Owner presses Search Books can still deadlock with the command; Postgres aborts one side (40P01) and a retry recovers. Rejected: refreshing the cache before the identity-save throw (the throw only happens when the cache is already newer) and per-counter comparison for the saved-identity hold (an identity save bumps all counters together). Docs fixes: traceability test counts corrected to 48/48 and 11/11, the §24 proposal marked superseded, a §5 ledger pointer and a DOC-3 cross-reference added.
 
 Not done / held: Render metadata worker deployment (rules 6-9 and work-level authors only take effect after it; SQL already admits them); Owner API Edge Function deployment (reasons header path, still v16); push of codex/edition-picker; live Search Books retry of the Confessions card (an Owner action). Residual: B4 from §66 stays deferred.
+
+## 68. PR #16 merged; Render metadata worker deployed from main, 2026-10-17
+
+Authority: Owner instructions "Open a PR from codex/edition-picker to main so it can be merged, then deploy Render from main. Don't merge without asking me." and "Please, the order which you have listed." The automated merge attempt was refused by the session permission check; the Owner merged PR #16 on GitHub.
+
+Pre-deploy checks (read-only/local): a247139 clean export npm ci + build:phase9:metadata-worker PASS, built server refuses to start without configuration (startup_failed), worker integration 14/14; no environment-variable or dependency changes since 76348f3; Docker Desktop was not running, so the image itself was not built locally. Render service: web_service, free plan, docker, branch main, auto-deploy off, region singapore, /health check; no warn/error logs since 2026-10-15; free instance sleeps after about 15 idle minutes and wakes on dispatch. Supabase: 278 MB database, 13/60 connections.
+
+Merge: main had 8 Clubs commits; only DOC-13, TRACKER, tracker 02 and database-current-vs-target conflicted (parallel dated entries). Resolved by a block-level three-way union (no block changed on both sides; main edited no block this branch removed) as bcd06de; tsc clean, Jest 3,650 passed / 0 failed / 4 skipped, continuity validator PASS. PR #16 CI 3/3 passed; merged by the Owner as f376c26 at 2026-10-17T12:48:03Z.
+
+Deploy: dep-db9mtcijnfac73ct2op0, commit f376c26, started 12:48:50Z, live 12:50:09Z; service_started at 12:49:59Z; two invalid_route 404 denials at start (root-path probes); /health 200 in 1.5 s. Rollback: redeploy 76348f3. No database write, no Owner API deploy, no client publication. Pending: Owner live Search Books on the Confessions card and its read-only verification.
+
+## 69. Supabase overload, project restart and cron maintenance, 2026-10-17
+
+Symptom: Owner OTP sign-in at the local web export returned 504 seven times (13:24-13:45Z); auth logs showed `context deadline exceeded`; MCP SQL timed out. Dashboard: status Unhealthy, NANO compute, CPU 96%, memory commitment 1.71 GB against about 0.5 GB RAM (heavy swap).
+
+Evidence (read-only, after restart): cron jobs 5 and 6 ran in 0.1-0.3 s with no failures until 2026-10-16 10:00Z; every job (including light jobs 2-4) slowed and failed together in 2026-10-16 10:00-16:59Z and 2026-10-17 06:00Z until the restart (jobs 5/6 averaging 8-90 s, about a quarter failed). Degradation began before M75/M77 were applied, and they only run on Search Books, so they are not the trigger. The windows match working sessions; the exact external source is unproven because the restart reset pg_stat_statements and Render returned no metrics for those hours. `cron.job_run_details` held 278,510 rows (100 MB of a 0.29 GB database) with no retention.
+
+Mutations (Owner-authorized, project `ahntbtktjjmvfosgkmgn` verified by MCP URL):
+- Restart: Owner "why dont you restart it yourself"; restarted from Settings > General; Postgres start time changed from 2026-04-19 12:26Z to 2026-10-17 14:05:31Z.
+- Owner "purge cron history older than 7 days, add a daily cleanup job, and change job 5 to every 5 minutes": deleted 255,828 `cron.job_run_details` rows (3 batches; 22,684 remain, oldest 2026-10-10); `VACUUM ANALYZE` (space reusable, file stays 100 MB); new job 7 `cron-run-history-cleanup` `30 3 * * *` deletes rows older than 7 days; job 5 `commerce-scheduler-minute-dev` schedule `* * * * *` -> `*/5 * * * *`. Job 6 unchanged. Readback of `cron.job` confirmed all three.
+
+These are operational cron changes done through MCP SQL, not migrations; jobs 5 and 7 exist only live (job 5 was never in a migration). Residual: if the slowdown recurs, capture Query Performance while it is slow; Micro compute needs the Pro plan. Next: Owner signs in and presses Search Books on the Encyclopedia card (candidate a5da3bc6, session 7a81bdb6); then read-only verification.
+
+## 70. Live Search Books test on the Encyclopedia card, 2026-10-17
+
+Setup: local web export at localhost:8083 through the passthrough proxy to `ahntbtktjjmvfosgkmgn`; Owner signed in (OTP and verify 200) as store `2a12639f` active owner. Candidate `a5da3bc6` (Book 5, "Concise Encyclopedia of Western Philosophy & Philosophers", J. O. Urmson, Jonathan Ree), active session `7a81bdb6`. Before: two resolved jobs (12 Oct enrich NO_MATCH; 13 Oct edition-options with 0 options), `request_id` null, no selection.
+
+Action: at the Owner's request ("Why don't you do it?", "look test it please") the agent opened the session and pressed Find or change edition on Book 5, which starts Search Books in this build.
+
+Result (MCP read-only and browser readback):
+- Exactly one new job `4915b6c6`, `p9-owner-edition-options-v1`, created 14:14:22Z, resolved 14:15:48Z, attempt 1/5, no error code; the client polled about every 4 s and all 60+ `phase9-owner-ingestion` calls returned 200.
+- `options_version` 2, 4 eligible options (was 0), all ISBN 9780044453420: Unwin Hyman 1991 and 1989; HarperCollins August 1989 (two records). They match only through the new rules: "Encyclopaedia" vs "Encyclopedia" (ae->e), "and" vs "&" (joining punctuation), "Rée" vs "Ree". Options expire 2026-10-18 14:15:41Z.
+- Picker UI shows the 4 options in database ordinal order with the selected one marked; no client errors from this feature. Unrelated: four 403s on the owner dashboard's direct `store_inventory` REST read.
+- Selection: `selection_id` 951f7313 recorded at 14:17:45Z by the Owner account (option 3, Unwin Hyman 1989). The agent did not click Select edition (its actions after the picker opened were page reads, find, scroll and screenshots); attribution to a manual click in the shared pane is unconfirmed.
+- Nothing committed: candidate `needs_review`, no inventory or listing ids; selling fields on the card still show defaults.
+
+Observation (not investigated): the session header shows 0 Ready while Book 5 shows "Ready" and the footer reads "Add all ready books (2)" (it read 1 before the selection). Not verified: M75 exhausted-search recovery (no exhausted job in an active session to exercise). Next: Owner decides whether to keep the selection; commit docs commits 48e9727 and this entry via PR to main.
