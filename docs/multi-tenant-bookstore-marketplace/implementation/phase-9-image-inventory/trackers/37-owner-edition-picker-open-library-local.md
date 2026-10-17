@@ -1741,3 +1741,15 @@ Deploy: `phase9-owner-ingestion` deployed from main 050b05d with `supabase funct
 App check (local web export of main through the passthrough proxy; Owner signed in; session 7a81bdb6; read only, nothing pressed): header Detected 7, In review 5, Ready 2, Need review 3, Added 2. Badges: Book 3 False Dawn Ready, Book 5 Encyclopaedia Ready, Book 4 Antifragile "Review book", Book 6 Charles Peirce and Book 7 Unended Quest Needs attention. Footer "Add all ready books (2)". Header Ready, Ready badges and Add all agree (2); Ready + Need review = In review (5). The §71 mismatch is resolved in the running app.
 
 Mutations: Edge Function deployment only; no DB/Storage writes, no migration. Next: Owner decides on Book 4 (saved review not ready, no attention items shown) and on the remaining cards; M75 still unexercised live.
+
+## 73. Book 4 rejection reasons live; two rejections traced to pre-M77 options, 2026-10-18
+
+Owner: "click whatever you want" in this development environment, then "investigate why Anti-Fragile and the Nassim N Taleb edition are rejected, fix it if it's a bug".
+
+Live: the agent opened Find or change edition on Book 4 (Antifragile, candidate 0729c2c1, session 7a81bdb6). v17 rejection reasons render: three "Antifrágil" and the Hebrew "Anṭi shavir" read "Title differs from this book."; "Anti-Fragile" (9780718197902, en) reads "Other book identity checks could not be verified."; "Antifragile" by "Nassim N Taleb" (9789862134467, und) reads "Language could not be verified."; result 9 unavailable. Three Penguin editions are selectable; the saved selection (9781846141560, 16 Oct) is kept.
+
+Cause (MCP read-only): the stored options (options_version 2) were fetched 2026-10-16T20:02:42Z, before M77 was applied (live version 20261017083206) and before the worker shipped rules 6 and 8. The worker had marked both rows ineligible under M76. Under current rules both are eligible: live `phase9_edition_option_eligible` returns true for both stored rows, and the current worker normalizer accepts both exact inputs (scratch Jest run 2/2, not kept). The reasons are computed against current SQL rules, so a row that now passes every check falls to `identity_unverified`, and the und row stops at the raw `language_unknown` check.
+
+Decision: not a code bug, so no migration or code change. The mislabel only affects unexpired option snapshots taken before a rule change (at most 24 h). Options expire 2026-10-17T20:02:42Z; Search Books after that re-fetches under current rules. Mutations: none (read-only SQL; the picker was opened, nothing selected or added).
+
+Not verified live: Search Books on Book 4 after expiry was deferred by the Owner ("cant we just commit and push and check ater"). Exact next action: after 2026-10-17T20:02:42Z, press Search Books on Book 4 and confirm Anti-Fragile (9780718197902) and the Nassim N Taleb edition (9789862134467) are selectable.
