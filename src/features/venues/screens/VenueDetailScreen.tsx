@@ -2,6 +2,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { navigateBackOrFallback } from '@/lib/navigation';
+import { withClubOrigin } from '@/features/clubs/navigation';
 import { useVenueDetail } from '../hooks/useVenues';
 import { VenueTypeBadge } from '../components/VenueTypeBadge';
 
@@ -32,7 +33,8 @@ function formatAddress(venue: {
 }
 
 export default function VenueDetailScreen() {
-    const { venueId } = useLocalSearchParams<{ venueId: string }>();
+    const { venueId, clubOrigin } = useLocalSearchParams<{ venueId: string; clubOrigin?: string }>();
+    const venuesHref = withClubOrigin('/(tabs)/clubs/venues', clubOrigin);
     const { data: venue, isLoading, isError } = useVenueDetail(venueId ?? null);
 
     if (isLoading) {
@@ -51,7 +53,7 @@ export default function VenueDetailScreen() {
                 <TouchableOpacity
                     accessibilityRole="button"
                     accessibilityLabel="Back to venues"
-                    onPress={() => router.replace('/(tabs)/clubs/venues')}
+                    onPress={() => router.replace(venuesHref)}
                     style={[styles.errorButton, { backgroundColor: colors.accent }]}
                     testID="venue-error-back-button"
                 >
@@ -67,7 +69,7 @@ export default function VenueDetailScreen() {
                 <TouchableOpacity
                     accessibilityRole="button"
                     accessibilityLabel="Back to venues"
-                    onPress={() => navigateBackOrFallback(router, '/clubs/venues')}
+                    onPress={() => navigateBackOrFallback(router, venuesHref)}
                     style={styles.backButton}
                     testID="venue-back-button"
                 >

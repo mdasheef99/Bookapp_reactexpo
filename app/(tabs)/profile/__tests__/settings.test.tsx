@@ -8,6 +8,7 @@ const mockCanGoBack = jest.fn();
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
 const mockSignOut = jest.fn();
+let mockSearchParams: { clubOrigin?: string; returnTo?: string } = {};
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
@@ -18,6 +19,7 @@ jest.mock('expo-router', () => ({
         push: (...args: unknown[]) => mockPush(...args),
         replace: (...args: unknown[]) => mockReplace(...args),
     },
+    useLocalSearchParams: () => mockSearchParams,
 }));
 jest.mock('@/features/auth/hooks/useAuth', () => ({
     useAuth: () => ({
@@ -50,6 +52,7 @@ describe('SettingsScreen', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mockCanGoBack.mockReturnValue(false);
+        mockSearchParams = {};
     });
 
     afterEach(() => {
@@ -79,6 +82,16 @@ describe('SettingsScreen', () => {
         expect(mockBack).not.toHaveBeenCalled();
     });
 
+    it('returns to Club invitations when Settings was opened from the invitation inbox', () => {
+        mockSearchParams = { returnTo: 'club-invitations' };
+        const { getByLabelText } = render(<SettingsScreen />);
+
+        fireEvent.press(getByLabelText('Go back'));
+
+        expect(mockReplace).toHaveBeenCalledWith('/(tabs)/clubs/invitations');
+        expect(mockBack).not.toHaveBeenCalled();
+    });
+
     it('opens notification history and preferences from account settings', () => {
         const { getByText } = render(<SettingsScreen />);
 
@@ -101,4 +114,24 @@ describe('SettingsScreen', () => {
             'Please try again to finish removing this session from your device.',
         ));
     });
+    it('passes Invitations origin through both Settings children', () => {
+        mockSearchParams = { returnTo: 'club-invitations' };
+        const { getByText } = render(<SettingsScreen />);
+        fireEvent.press(getByText('Notifications'));
+        fireEvent.press(getByText('Notification preferences'));
+        expect(mockPush).toHaveBeenNthCalledWith(1, '/(tabs)/profile/notifications?returnTo=settings&settingsOrigin=club-invitations');
+        expect(mockPush).toHaveBeenNthCalledWith(2, '/(tabs)/profile/notification-settings?returnTo=settings&settingsOrigin=club-invitations');
+    });
+
+    it.each(['my-clubs', 'archived'])('preserves %s across the Settings detour', (clubOrigin) => {
+        mockSearchParams = { returnTo: 'club-invitations', clubOrigin };
+        const screen = render(<SettingsScreen />);
+        fireEvent.press(screen.getByText('Notifications'));
+        fireEvent.press(screen.getByText('Notification preferences'));
+        expect(mockPush).toHaveBeenNthCalledWith(1, `/(tabs)/profile/notifications?returnTo=settings&settingsOrigin=club-invitations&clubOrigin=${clubOrigin}`);
+        expect(mockPush).toHaveBeenNthCalledWith(2, `/(tabs)/profile/notification-settings?returnTo=settings&settingsOrigin=club-invitations&clubOrigin=${clubOrigin}`);
+        fireEvent.press(screen.getByLabelText('Go back'));
+        expect(mockReplace).toHaveBeenCalledWith(`/(tabs)/clubs/invitations?clubOrigin=${clubOrigin}`);
+    });
+
 });

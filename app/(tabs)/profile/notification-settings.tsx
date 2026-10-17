@@ -1,7 +1,8 @@
 import React from 'react';
+import { withClubOrigin } from '@/features/clubs/navigation';
 import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
@@ -29,6 +30,8 @@ const CHANNELS: Array<{ key: NotificationChannel; label: string }> = [
 ];
 
 export default function NotificationSettingsScreen() {
+    const { settingsOrigin, clubOrigin } = useLocalSearchParams<{ returnTo?: string; settingsOrigin?: string; clubOrigin?: string }>();
+    const settingsHref = settingsOrigin === 'club-invitations' ? withClubOrigin('/(tabs)/profile/settings?returnTo=club-invitations', clubOrigin) : '/(tabs)/profile/settings';
     const { session } = useAuth();
     const { colors } = useTheme();
     const userId = session?.user?.id ?? null;
@@ -60,7 +63,7 @@ export default function NotificationSettingsScreen() {
             <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.header}>
                     <TouchableOpacity
-                        onPress={() => router.replace('/(tabs)/profile/settings')}
+                        onPress={() => router.replace(settingsHref)}
                         style={styles.backButton}
                         accessibilityRole="button"
                         accessibilityLabel="Go back"

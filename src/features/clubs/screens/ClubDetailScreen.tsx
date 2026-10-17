@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { profileService } from '@/features/auth/services/profileService';
 import { navigateBackOrFallback } from '@/lib/navigation';
+import { withClubOrigin, clubDirectoryHref, clubHomeHref, clubOrigin } from '@/features/clubs/navigation';
 import { colors, radii, touchTarget, typography } from '@/features/clubs/theme';
 import { useAcceptClubAdminTransferRequest, useAcceptClubInvitation, useCastClubBookVote, useClubAdminTransferRequests, useClubBookNominations, useClubCurrentBookStatusOverview, useClubJoinQuestions, useClubMembers, useClubMembership, useClubPublicDetail, useJoinClub, useLeaveClub, useMyClubApplication, useMyClubInvitation, useRemoveClubBookVote, useSetClubCurrentBookReadingStatus } from '@/features/clubs/hooks/useClubs';
 import { ClubMemberList } from '@/features/clubs/components/ClubMemberList';
@@ -61,7 +62,12 @@ function getCurrentBookCoverUrl(coverUrl: string | null | undefined): string | n
 }
 
 export default function ClubDetailScreen() {
-    const { clubId, tab } = useLocalSearchParams<{ clubId: string; tab?: string }>();
+    const { clubId, tab, returnTo } = useLocalSearchParams<{ clubId: string; tab?: string; returnTo?: string }>();
+    const returnOrigin = clubOrigin(returnTo);
+    const backHref = clubDirectoryHref(returnOrigin);
+    const preservedReturnContext = returnOrigin
+        ? `&returnTo=${returnOrigin}`
+        : '';
     const { user } = useAuth();
     const userId = user?.id ?? null;
     const { data: club, isLoading, isError, refetch } = useClubPublicDetail(clubId ?? null);
@@ -149,7 +155,7 @@ export default function ClubDetailScreen() {
             <View style={[styles.loadingContainer, { paddingHorizontal: 24 }]}>
                 <Text style={styles.errorTitle}>Unable to load this club</Text>
                 <TouchableOpacity style={styles.retryButton} onPress={() => refetch()} accessibilityRole="button" accessibilityLabel="Retry loading club"><Text style={styles.retryButtonText}>Retry</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.goBackButton} onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')} accessibilityRole="button" accessibilityLabel="Go back to Clubs"><Text style={styles.goBackButtonText}>Go back</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.goBackButton} onPress={() => navigateBackOrFallback(router, backHref)} accessibilityRole="button" accessibilityLabel="Go back to Clubs"><Text style={styles.goBackButtonText}>Go back</Text></TouchableOpacity>
             </View>
         );
     }
@@ -453,7 +459,7 @@ export default function ClubDetailScreen() {
             <View style={styles.ledgerBlock}>
                 <TouchableOpacity
                     style={[styles.destinationButton, styles.discussButton]}
-                    onPress={() => router.push(`/clubs/${club.id}/discussion`)}
+                    onPress={() => router.push(withClubOrigin(`/clubs/${club.id}/discussion`, returnTo))}
                     testID="club-home-discuss-entry"
                     accessibilityRole="button"
                     accessibilityLabel="Discuss, open club discussion"
@@ -516,7 +522,7 @@ export default function ClubDetailScreen() {
                 )}
                 <TouchableOpacity
                     style={[styles.destinationButton, styles.eventsButton]}
-                    onPress={() => router.push(`/clubs/${club.id}/events`)}
+                    onPress={() => router.push(withClubOrigin(`/clubs/${club.id}/events`, returnTo))}
                     testID="club-home-events-entry"
                     accessibilityRole="button"
                     accessibilityLabel="Events, open club events"
@@ -546,7 +552,7 @@ export default function ClubDetailScreen() {
                         </View>
                         <TouchableOpacity
                             style={styles.toolButton}
-                            onPress={() => router.push(`/clubs/${club.id}/applications`)}
+                            onPress={() => router.push(withClubOrigin(`/clubs/${club.id}/applications`, returnTo))}
                             testID="club-review-applications"
                             accessibilityRole="button"
                             accessibilityLabel="Review applications"
@@ -563,7 +569,7 @@ export default function ClubDetailScreen() {
                         </View>
                         <TouchableOpacity
                             style={styles.toolButton}
-                            onPress={() => router.push(`/clubs/${club.id}/invite`)}
+                            onPress={() => router.push(withClubOrigin(`/clubs/${club.id}/invite`, returnTo))}
                             testID="club-invite-readers"
                             accessibilityRole="button"
                             accessibilityLabel="Invite readers"
@@ -584,7 +590,7 @@ export default function ClubDetailScreen() {
                         </View>
                         <TouchableOpacity
                             style={styles.toolButton}
-                            onPress={() => router.push(`/clubs/${club.id}/manage`)}
+                            onPress={() => router.push(withClubOrigin(`/clubs/${club.id}/manage`, returnTo))}
                             testID="club-manage"
                             accessibilityRole="button"
                             accessibilityLabel="Manage club"
@@ -647,7 +653,7 @@ export default function ClubDetailScreen() {
                             </View>
                             {currentBookFeedback ? <View style={[styles.feedbackBanner, currentBookFeedback.type === 'success' ? styles.feedbackSuccess : styles.feedbackError]}><Text style={[styles.feedbackText, currentBookFeedback.type === 'success' ? styles.feedbackSuccessText : styles.feedbackErrorText]}>{currentBookFeedback.message}</Text></View> : null}
                             <TouchableOpacity
-                                onPress={() => router.push(`/clubs/${club.id}/reading`)}
+                                onPress={() => router.push(`/clubs/${club.id}/reading?returnView=${activeTop}${preservedReturnContext}`)}
                                 style={[styles.toolButton, { alignSelf: 'flex-start', marginTop: 12 }]}
                                 testID="club-view-reading-progress"
                             >
@@ -666,7 +672,7 @@ export default function ClubDetailScreen() {
             <View style={styles.booksSection} testID="club-books-nominations">
                 <Text style={typography.sectionHeading}>Book nominations & voting</Text>
                 <Text style={styles.mutedBody}>Active club members can nominate books and vote on the next read. The book with the most votes when voting closes becomes the next current read.</Text>
-                {canManageBookActions ? <TouchableOpacity onPress={() => router.push(`/clubs/${club.id}/nominate`)} style={[styles.toolButton, { alignSelf: 'flex-start' }]} testID="club-nominate-book"><Text style={styles.toolButtonText}>Nominate a book</Text></TouchableOpacity> : null}
+                {canManageBookActions ? <TouchableOpacity onPress={() => router.push(withClubOrigin(`/clubs/${club.id}/nominate`, returnTo))} style={[styles.toolButton, { alignSelf: 'flex-start' }]} testID="club-nominate-book"><Text style={styles.toolButtonText}>Nominate a book</Text></TouchableOpacity> : null}
                 {!canManageBookActions && isMember && membership?.status === 'muted' ? (
                     <View style={styles.compatNotice}><Text style={styles.membershipTitle}>Read-only</Text><Text style={styles.mutedBody}>Muted members can view nominations but cannot vote or nominate new books.</Text></View>
                 ) : null}
@@ -736,7 +742,7 @@ export default function ClubDetailScreen() {
     const renderBooksCompat = () => (
         <View style={styles.booksCompatBlock} testID="club-books-compat">
             <TouchableOpacity
-                onPress={() => setActiveTop('home')}
+                onPress={() => router.replace(clubHomeHref(club.id, returnOrigin))}
                 style={styles.backToHomeLink}
                 testID="club-books-back-home"
                 accessibilityRole="button"
@@ -761,7 +767,7 @@ export default function ClubDetailScreen() {
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
             <View style={styles.topBar}>
                 <TouchableOpacity
-                    onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')}
+                    onPress={() => navigateBackOrFallback(router, backHref)}
                     style={styles.backButton}
                     testID="club-home-back"
                     accessibilityRole="button"

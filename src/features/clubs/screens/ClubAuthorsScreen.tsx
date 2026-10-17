@@ -1,7 +1,8 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { navigateBackOrFallback } from '@/lib/navigation';
+import { clubDirectoryHref } from '@/features/clubs/navigation';
 import { ClubCard } from '@/features/clubs/components/ClubCard';
 import { useBrowseClubs } from '@/features/clubs/hooks/useClubs';
 import type { ClubPublicDetails } from '@/features/clubs/services/clubsService';
@@ -23,11 +24,12 @@ const AUTHOR_CLUB_FILTERS = {
 };
 
 export function ClubAuthorsScreen() {
+    const { clubOrigin } = useLocalSearchParams<{ clubOrigin?: string }>();
     const { data, isLoading, isError, refetch, isRefetching } = useBrowseClubs(AUTHOR_CLUB_FILTERS);
     const clubs = data ?? [];
 
     const handleClubPress = (club: ClubPublicDetails) => {
-        router.push(`/(tabs)/clubs/${club.id}`);
+        router.push(`/(tabs)/clubs/${club.id}?returnTo=authors`);
     };
 
     if (isLoading && clubs.length === 0) {
@@ -49,7 +51,7 @@ export function ClubAuthorsScreen() {
                 ListHeaderComponent={(
                     <View style={styles.headerSection}>
                         <View style={styles.titleRow}>
-                            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to Clubs" onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="back-button">
+                            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to Clubs" onPress={() => navigateBackOrFallback(router, clubDirectoryHref(clubOrigin))} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="back-button">
                                 <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
                             </TouchableOpacity>
                             <View style={[styles.iconShell, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>

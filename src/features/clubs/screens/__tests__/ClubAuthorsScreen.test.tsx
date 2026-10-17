@@ -4,6 +4,7 @@ jest.mock('expo-router', () => ({
         push: (...args: unknown[]) => mockRouterPush(...args),
         replace: (...args: unknown[]) => mockRouterReplace(...args),
     },
+    useLocalSearchParams: () => mockSearchParams,
 }));
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
@@ -12,6 +13,7 @@ import { ClubAuthorsScreen } from '../ClubAuthorsScreen';
 const mockRouterPush = jest.fn();
 const mockRouterReplace = jest.fn();
 const mockUseBrowseClubs = jest.fn();
+let mockSearchParams: { clubOrigin?: string } = {};
 
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
@@ -36,6 +38,7 @@ jest.mock('@/features/clubs/hooks/useClubs', () => ({
 
 beforeEach(() => {
     jest.clearAllMocks();
+    mockSearchParams = {};
     mockUseBrowseClubs.mockReturnValue({
         data: [
             {
@@ -76,6 +79,16 @@ describe('ClubAuthorsScreen', () => {
         expect(mockRouterReplace).toHaveBeenCalledWith('/(tabs)/clubs');
     });
 
+    it('returns to My Clubs when author discovery was opened from My Clubs', async () => {
+        mockSearchParams = { clubOrigin: 'my-clubs' };
+        const { getByRole, getByText } = render(<ClubAuthorsScreen />);
+
+        await waitFor(() => expect(getByText('Author clubs')).toBeOnTheScreen());
+        fireEvent.press(getByRole('button', { name: 'Back to Clubs' }));
+
+        expect(mockRouterReplace).toHaveBeenCalledWith('/(tabs)/clubs?scope=mine');
+    });
+
     it('opens club detail when an author club is tapped', async () => {
         const { getByTestId, getByText } = render(<ClubAuthorsScreen />);
 
@@ -83,6 +96,6 @@ describe('ClubAuthorsScreen', () => {
 
         fireEvent.press(getByTestId('club-card-club-author-1'));
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-author-1');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-author-1?returnTo=authors');
     });
 });

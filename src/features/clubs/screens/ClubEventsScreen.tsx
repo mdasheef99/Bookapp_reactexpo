@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacit
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { navigateBackOrFallback } from '@/lib/navigation';
+import { withClubOrigin, clubHomeHref } from '@/features/clubs/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useViewerMembershipTier } from '@/features/clubs/hooks/useViewerMembershipTier';
 import { useCancelClubEvent, useClubEvents, useClubMembership, useClubPublicDetail, useDeleteClubEvent, useUpsertClubEventRsvp } from '@/features/clubs/hooks/useClubs';
@@ -28,7 +29,7 @@ function formatEventSchedule(event: Pick<ClubEventWithDetails, 'start_time' | 'e
 }
 
 export default function ClubEventsScreen() {
-    const { clubId } = useLocalSearchParams<{ clubId: string }>();
+    const { clubId, clubOrigin } = useLocalSearchParams<{ clubId: string; clubOrigin?: string }>();
     const { user } = useAuth();
     const userId = user?.id ?? null;
     const { data: club, isLoading: isClubLoading } = useClubPublicDetail(clubId ?? null);
@@ -94,7 +95,7 @@ export default function ClubEventsScreen() {
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.contentContainer}>
             <View style={styles.headerRow}>
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to club" onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)} style={styles.iconButton}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to club" onPress={() => navigateBackOrFallback(router, clubHomeHref(clubId, clubOrigin))} style={styles.iconButton}><Ionicons name="arrow-back" size={20} color={colors.textPrimary} /></TouchableOpacity>
                 <Text style={[styles.clubContext, { color: colors.textSecondary }]}>{club?.name || 'Book club'}</Text>
             </View>
 
@@ -105,7 +106,7 @@ export default function ClubEventsScreen() {
                 {userId && !canViewEvents ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Members only</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Club events are currently visible only to members of this club.</Text></View> : null}
                 {canViewEvents && !canRsvp ? <View style={[styles.noticeCard, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}><Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>Read-only event access</Text><Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Only active club members can RSVP. Muted members can still review the event schedule.</Text></View> : null}
                 {feedback ? <View style={[styles.feedbackBanner, { backgroundColor: feedback.type === 'success' ? '#DCFCE7' : '#FEE2E2', borderColor: feedback.type === 'success' ? '#22C55E' : '#EF4444' }]}><Text style={[styles.feedbackText, { color: feedback.type === 'success' ? '#166534' : '#991B1B' }]}>{feedback.message}</Text></View> : null}
-                {canCreate ? <TouchableOpacity accessibilityRole="button" onPress={() => router.push(`/clubs/${clubId}/events/create`)} style={[styles.primaryActionButton, { backgroundColor: colors.accent }]} testID="club-create-event"><Ionicons name="add" size={18} color="#FFFFFF" /><Text style={styles.primaryActionText}>Create event</Text></TouchableOpacity> : null}
+                {canCreate ? <TouchableOpacity accessibilityRole="button" onPress={() => router.push(withClubOrigin(`/clubs/${clubId}/events/create`, clubOrigin))} style={[styles.primaryActionButton, { backgroundColor: colors.accent }]} testID="club-create-event"><Ionicons name="add" size={18} color="#FFFFFF" /><Text style={styles.primaryActionText}>Create event</Text></TouchableOpacity> : null}
             </View>
 
             {canViewEvents ? <View style={styles.schedule}>
@@ -132,7 +133,7 @@ export default function ClubEventsScreen() {
                             <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Not going to ${event.title}`} accessibilityState={{ selected: event.currentUserRsvp?.status === 'not_going', disabled: rsvpMutation.isPending }} onPress={() => handleRsvp(event.id, 'not_going')} disabled={rsvpMutation.isPending} style={[styles.rsvpButton, { borderColor: event.currentUserRsvp?.status === 'not_going' ? colors.accent : colors.border, backgroundColor: event.currentUserRsvp?.status === 'not_going' ? colors.bgSecondary : colors.bgCard, opacity: rsvpMutation.isPending ? 0.65 : 1 }]} testID={`club-event-rsvp-not-going-${event.id}`}><Text style={[styles.secondaryActionText, { color: event.currentUserRsvp?.status === 'not_going' ? colors.accent : colors.textSecondary }]}>Not going</Text></TouchableOpacity>
                         </View> : null}
                         {canManage ? <View style={styles.managerRow}>
-                            <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Edit ${event.title}`} onPress={() => router.push(`/clubs/${clubId}/events/${event.id}/edit`)} style={styles.managerButton} testID={`club-event-edit-${event.id}`}><Ionicons name="create-outline" size={14} color={colors.textSecondary} /><Text style={styles.managerText}>Edit event</Text></TouchableOpacity>
+                            <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Edit ${event.title}`} onPress={() => router.push(withClubOrigin(`/clubs/${clubId}/events/${event.id}/edit`, clubOrigin))} style={styles.managerButton} testID={`club-event-edit-${event.id}`}><Ionicons name="create-outline" size={14} color={colors.textSecondary} /><Text style={styles.managerText}>Edit event</Text></TouchableOpacity>
                             <Text style={styles.managerSeparator}>·</Text>
                             {event.status === 'scheduled' ? <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Cancel ${event.title}`} onPress={() => handleCancel(event.id)} disabled={cancelMutation.isPending} style={[styles.managerButton, { opacity: cancelMutation.isPending ? 0.65 : 1 }]} testID={`club-event-cancel-${event.id}`}><Text style={styles.managerText}>Cancel</Text></TouchableOpacity> : <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Delete ${event.title}`} onPress={() => handleDelete(event.id)} disabled={deleteMutation.isPending} style={[styles.managerButton, { opacity: deleteMutation.isPending ? 0.65 : 1 }]} testID={`club-event-delete-${event.id}`}><Text style={[styles.managerText, { color: colors.accent }]}>Delete</Text></TouchableOpacity>}
                         </View> : null}

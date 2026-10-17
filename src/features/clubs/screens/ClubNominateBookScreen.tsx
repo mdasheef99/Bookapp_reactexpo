@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { navigateBackOrFallback } from '@/lib/navigation';
+import { clubHomeHref } from '@/features/clubs/navigation';
 import * as Haptics from 'expo-haptics';
 import { SearchBar } from '@/components/search/SearchBar';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -47,7 +48,7 @@ function isTooManyRequestsError(error: unknown): boolean {
 }
 
 export default function ClubNominateBookScreen() {
-    const { clubId } = useLocalSearchParams<{ clubId: string }>();
+    const { clubId, clubOrigin } = useLocalSearchParams<{ clubId: string; clubOrigin?: string }>();
     const { user } = useAuth();
     const userId = user?.id ?? null;
     const { data: club, isLoading: isClubLoading } = useClubPublicDetail(clubId ?? null);
@@ -125,7 +126,7 @@ export default function ClubNominateBookScreen() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setFeedback({ type: 'success', message: `Your nomination was submitted successfully! Voting closes in ${votingDays} days.` });
             redirectTimeoutRef.current = setTimeout(() => {
-                router.replace(`/clubs/${clubId}?tab=nominations`);
+                router.replace(clubHomeHref(clubId, clubOrigin, 'tab=nominations'));
             }, 1500);
         } catch (error) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -160,7 +161,7 @@ export default function ClubNominateBookScreen() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setFeedback({ type: 'success', message: `Your nomination was submitted successfully! Voting closes in ${votingDays} days.` });
             redirectTimeoutRef.current = setTimeout(() => {
-                router.replace(`/clubs/${clubId}?tab=nominations`);
+                router.replace(clubHomeHref(clubId, clubOrigin, 'tab=nominations'));
             }, 1500);
         } catch (error) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -177,7 +178,7 @@ export default function ClubNominateBookScreen() {
             <View style={styles.contentColumn}>
                 <View style={styles.headerRow}>
                     <TouchableOpacity
-                        onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}?tab=nominations`)}
+                        onPress={() => navigateBackOrFallback(router, clubHomeHref(clubId, clubOrigin, 'tab=nominations'))}
                         style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
                         accessibilityRole="button"
                         accessibilityLabel="Go back to club nominations"

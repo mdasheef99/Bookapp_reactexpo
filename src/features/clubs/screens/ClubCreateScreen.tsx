@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { navigateBackOrFallback } from '@/lib/navigation';
+import { clubDirectoryHref, clubHomeHref } from '@/features/clubs/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { profileService, type UserProfile } from '@/features/auth/services/profileService';
 import { useCreateClub } from '@/features/clubs/hooks/useClubs';
@@ -33,6 +33,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 }
 
 export default function ClubCreateScreen() {
+    const { clubOrigin } = useLocalSearchParams<{ clubOrigin?: string }>();
     const { user } = useAuth();
     const createClub = useCreateClub();
     const [name, setName] = useState('');
@@ -94,7 +95,7 @@ export default function ClubCreateScreen() {
                 author_id: clubType === 'author_club' ? profile?.id : undefined,
             });
             setFeedback({ type: 'success', message: 'Club created.' });
-            router.replace(`/clubs/${createdClub.id}`);
+            router.replace(clubHomeHref(createdClub.id, clubOrigin));
         } catch (error) {
             setFeedback({ type: 'error', message: getErrorMessage(error, 'Unable to create this club right now.') });
         }
@@ -144,7 +145,7 @@ export default function ClubCreateScreen() {
     return (
         <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
             <View style={[styles.header, { borderBottomColor: colors.border }]}>
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to clubs" onPress={() => navigateBackOrFallback(router, '/clubs')} style={styles.iconButton} testID="create-club-back">
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to clubs" onPress={() => router.replace(clubDirectoryHref(clubOrigin))} style={styles.iconButton} testID="create-club-back">
                     <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Create club</Text>

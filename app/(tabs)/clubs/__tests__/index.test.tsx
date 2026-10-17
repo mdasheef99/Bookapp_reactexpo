@@ -1,9 +1,10 @@
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-router', () => ({
     router: { push: (...args: unknown[]) => mockRouterPush(...args) },
+    useLocalSearchParams: () => mockSearchParams,
 }));
 
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import ClubsBrowseScreen from '../index';
 
@@ -14,6 +15,7 @@ const mockUseMyClubInvitationInbox = jest.fn();
 const mockUseViewerMembershipTier = jest.fn();
 const mockRouterPush = jest.fn();
 let mockAuthUser: { id: string } | null = { id: 'reader-1' };
+let mockSearchParams: { scope?: string } = {};
 
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
@@ -54,6 +56,7 @@ beforeEach(() => {
     jest.clearAllMocks();
     mockRouterPush.mockReset();
     mockAuthUser = { id: 'reader-1' };
+    mockSearchParams = {};
     mockUseBrowseClubs.mockReturnValue({ data: [{ id: 'club-1', name: 'Open Readers' }], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
     mockUseMyBrowseClubs.mockReturnValue({ data: [{ id: 'club-2', name: 'Quiet Members' }], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
     mockUseMyArchivedManagedClubs.mockReturnValue({ data: [{ id: 'club-3', name: 'Archived Circle' }], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
@@ -141,7 +144,35 @@ describe('ClubsBrowseScreen', () => {
 
         fireEvent.press(getByTestId('clubs-invitations-inbox'));
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/invitations');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/invitations?clubOrigin=clubs');
+    });
+
+    it('carries My Clubs context into the directory destinations', () => {
+        mockSearchParams = { scope: 'mine' };
+        mockUseViewerMembershipTier.mockReturnValue({ tier: 'pro', isLoading: false });
+        const { getByTestId } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-create-club'));
+        expect(mockRouterPush).toHaveBeenLastCalledWith('/(tabs)/clubs/create?clubOrigin=my-clubs');
+        fireEvent.press(getByTestId('clubs-invitations-inbox'));
+        expect(mockRouterPush).toHaveBeenLastCalledWith('/(tabs)/clubs/invitations?clubOrigin=my-clubs');
+        fireEvent.press(getByTestId('clubs-venues-secondary-link'));
+        expect(mockRouterPush).toHaveBeenLastCalledWith('/(tabs)/clubs/venues?clubOrigin=my-clubs');
+        fireEvent.press(getByTestId('clubs-author-browse-link'));
+        expect(mockRouterPush).toHaveBeenLastCalledWith('/(tabs)/clubs/authors?clubOrigin=my-clubs');
+    });
+
+    it('carries Archived context into the available directory destinations', () => {
+        mockSearchParams = { scope: 'archived' };
+        mockUseViewerMembershipTier.mockReturnValue({ tier: 'pro', isLoading: false });
+        const { getByTestId } = render(<ClubsBrowseScreen />);
+
+        fireEvent.press(getByTestId('clubs-create-club'));
+        expect(mockRouterPush).toHaveBeenLastCalledWith('/(tabs)/clubs/create?clubOrigin=archived');
+        fireEvent.press(getByTestId('clubs-invitations-inbox'));
+        expect(mockRouterPush).toHaveBeenLastCalledWith('/(tabs)/clubs/invitations?clubOrigin=archived');
+        fireEvent.press(getByTestId('clubs-venues-discovery-link'));
+        expect(mockRouterPush).toHaveBeenLastCalledWith('/(tabs)/clubs/venues?clubOrigin=archived');
     });
 
     it('keeps a prominent author-club destination visible when current results contain no author clubs', () => {
@@ -156,7 +187,7 @@ describe('ClubsBrowseScreen', () => {
         );
         fireEvent.press(authorBrowseButton);
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/authors');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/authors?clubOrigin=clubs');
     });
 
     it('opens venue discovery from the clubs browse screen', () => {
@@ -164,7 +195,7 @@ describe('ClubsBrowseScreen', () => {
 
         fireEvent.press(getByTestId('clubs-venues-discovery-link'));
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/venues');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/venues?clubOrigin=clubs');
     });
 
     it('maps My clubs to the mine scope with membership copy and shelf results', () => {
@@ -193,7 +224,19 @@ describe('ClubsBrowseScreen', () => {
         fireEvent.press(getByTestId('clubs-filter-scope-mine'));
         fireEvent.press(getByTestId('your-club-card-club-2'));
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-2');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-2?returnTo=my-clubs');
+    });
+
+    it('restores My clubs when its return route is applied to an already mounted directory', async () => {
+        const { getByTestId, getByText, rerender } = render(<ClubsBrowseScreen />);
+        fireEvent.press(getByTestId('clubs-filter-scope-mine'));
+        fireEvent.press(getByTestId('clubs-filter-scope-all'));
+
+        mockSearchParams = { scope: 'mine' };
+        rerender(<ClubsBrowseScreen />);
+
+        await waitFor(() => expect(getByText('Your reading circles')).toBeOnTheScreen());
+        expect(getByTestId('clubs-filter-scope-mine').props.accessibilityState).toEqual(expect.objectContaining({ selected: true }));
     });
 
     it('keeps search and filters available in Your Clubs', () => {
@@ -281,7 +324,7 @@ describe('ClubsBrowseScreen', () => {
         fireEvent.press(getByTestId('clubs-filter-scope-mine'));
 
         fireEvent.press(getByTestId('clubs-author-browse-link'));
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/authors');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/authors?clubOrigin=my-clubs');
 
         fireEvent.press(getByTestId('clubs-archived-link'));
         expect(queryByTestId('clubs-author-browse-link')).toBeNull();
@@ -293,7 +336,7 @@ describe('ClubsBrowseScreen', () => {
         fireEvent.press(getByTestId('clubs-filter-scope-mine'));
 
         fireEvent.press(getByTestId('clubs-venues-secondary-link'));
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/venues');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/venues?clubOrigin=my-clubs');
 
         fireEvent.press(getByTestId('clubs-archived-link'));
         expect(getByText('Archived clubs')).toBeOnTheScreen();
@@ -326,7 +369,7 @@ describe('ClubsBrowseScreen', () => {
 
         fireEvent.press(getByTestId('club-card-Archived Circle'));
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-3/manage?tab=lifecycle');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-3/manage?tab=lifecycle&clubOrigin=archived');
     });
 
     it('returns to All clubs from the archived scope', () => {
@@ -398,7 +441,7 @@ describe('ClubsBrowseScreen', () => {
 
         fireEvent.press(getByTestId('clubs-create-club'));
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/create');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/create?clubOrigin=clubs');
     });
 
     it('taps a discovery row through to club detail', () => {

@@ -1,4 +1,186 @@
+## 2026-10-17 - Clubs publication CI passed
+
+[GitHub run 39017350125](https://github.com/mdasheef99/Bookapp_reactexpo/actions/runs/39017350125)
+passed repository tests, TypeScript and production web export at published
+09dcd32. Its executable tree equals reviewed merge 8882efc. The first CI failure
+recorded below did not recur; retain it as a possible test-timing concern,
+without claiming a root cause or product correction. This receipt changes
+documentation only. Original dirty Clubs checkout remains preserved; no
+DB/Storage, permissions, migration application, deployment or business mutation.
+Exact next action: report publication and remaining browser/role/native gaps;
+stop before rollout or further product work. Phase 9 rollout hold is unchanged.
+
+## 2026-10-17 - Reviewed Clubs integration published to main
+
+Remote main readback matched `8882efc865e626eab290745de6a827240ad273a2` after
+a normal fast-forward push. Existing Clubs commits, navigation corrections and
+documentation are published, with newer main history preserved. Independent
+GPT-6 Luna/max rereview and final local tests/build/fixture/continuity gates
+passed. The merge CI failed one unchanged marketplace edition-picker timing test;
+all Clubs tests passed. Its isolated local rerun passed 19/19; a remote rerun was
+denied by GitHub connector permissions. Remote validation remains unresolved.
+ Original dirty Clubs checkout remains unchanged.
+No database/Storage, permissions, migration application, deployment or business
+mutation occurred. Phase 9 remains Unit 6G with its existing rollout hold.
+Exact next action: report the publication and unresolved remote-validation
+gate; investigate the unchanged marketplace test before claiming CI clearance.
+Stop before rollout or further product changes. [Exact evidence and limits](./MAIN-INTEGRATION-REVIEW-20261017.md).
+
 # Clubs local pre-PR review
+
+## Reviewed main publication candidate — 2026-10-17
+
+The user selected review in this chat and main publication. The candidate joins
+fresh main `76348f3` with all five existing Clubs commits and the existing
+navigation corrections/tests; the fixes omitted by the old commits-only
+snapshot are now included. Newer marketplace history is retained and four
+shared-document conflicts are resolved. No PR approval is being claimed.
+
+Use [the current integration review](./MAIN-INTEGRATION-REVIEW-20261017.md) for
+exact scope, verification, independent review, exclusions and publication
+readback. Historical test counts below are not today's results. The publication
+gate remains closed until the exact candidate passes its recorded checks.
+
+## Current publication handoff — 2026-10-10
+
+The current Manage application layout is retained; no full-redesign
+implementation is approved. Limited Stitch drafts remain separate from source
+delivery. The corrected 119-control matrix and open confirmation, URL-state,
+role, failure/recovery and native-verification gaps are owned by the
+[current Clubs handoff](./TRACKER.md#current-handoff--2026-10-10-documentation-refresh).
+
+Navigation P2 findings are corrected locally and independently rereviewed.
+Before any publication, refresh `origin/main`, review the complete exact
+candidate and record relevant verification. The 2026-10-10 documentation pass
+does not rerun historical tests/browser checks or authorize staging, commits,
+pushes, migrations or rollout. Older entries below are dated checkpoint evidence.
+
+## Navigation correction completed locally — 2026-10-08
+
+The aggregate review's two P2 context-loss findings are corrected in the working
+tree. Luna max independent rereview found no actionable issue. Browser chains and
+focused test counts are recorded in the Clubs tracker and aggregate review.
+TypeScript, web export and documentation closeout passed at that checkpoint.
+The inspection records a later 2026-10-10 main fetch; fetch again immediately
+before publication. The working-tree corrections remain uncommitted/unpushed.
+
+> **Historical 2026-10-08 local commit checkpoint, before navigation corrections:** User-authorized navigation checkpoint 4e1aa35 and primary corrections/applied-migration evidence 542b90f are committed. Remaining review documentation is checkpointed separately. Two P2 navigation findings still block publication; next action is correction, regression/browser verification and independent rereview. No push, deployment or database mutation in this commit step. Earlier test evidence was not rerun.
+
+## Historical 2026-10-08 whole-set review — original snapshot blocked
+
+GPT-6 Luna max independently reviewed both unpublished commits plus all relevant
+working-tree/new files against freshly fetched origin/main 2f2f383 (ancestor,
+zero behind/two ahead). Two P2 integration gaps remain: Club Home children lose
+the originating directory context, and Settings notification children lose the
+Invitations origin. No introduced migration/RPC blocker found by static review.
+Fresh regression/build/local PostgreSQL checks pass but do not cover those missing
+chains. Exact scope, evidence and limits:
+[aggregate review](./AGGREGATE-PUBLICATION-REVIEW-20261008.md).
+Active work unit: aggregate navigation-context corrections. Next: resolve both
+P2 paths, check downstream routes and browser/test regressions, then independently
+rereview before any commit/publication. No source changes, business mutations,
+staging, commit, push or deployment in this review.
+
+
+## 2026-10-08 primary-venue authorization migration applied
+
+The user explicitly approved creation and Supabase MCP application, then renewed
+approval after the first MCP call was cancelled. Readback after that cancellation
+showed no correction ledger row and the original two policies; no retry was made
+until renewed approval. Supabase MCP reverified ACTIVE_HEALTHY
+Bookconnect_reactexpo, ahntbtktjjmvfosgkmgn (PostgreSQL 17.6.1.063), before applying.
+Both Clubs and sibling Library trackers were checked; no active Library DDL was
+recorded. Exact policy/RLS read-only preflight passed and name collision was zero.
+
+Applied once through MCP as `20261008091939 clubs_primary_venue_write_authorization`.
+Local file: `supabase/migrations/20261008091939_clubs_primary_venue_write_authorization.sql`.
+CLI 2.116.0 generated initial local version 20261008090403; only the filename was
+aligned to the returned live version. SHA-256 remains
+`73FC0C028256B30710E6A11CD1E5E25376C975C0D4408C4DE1C10B964A3A47BD`.
+The earlier applied 20261007144356 migration remains byte-for-byte unchanged
+(SHA-256 CEB05DD30F00699933A6BC0BA55F729C529B830C9A675BE4F128186AC859B74C).
+Exact artifact fixture: 61/61 PASS on disposable PostgreSQL 17.6; owned process,
+port and temp-directory teardown verified. Independent GPT-6 Luna max artifact
+review found no actionable issue; it was static and did not rerun the fixture.
+
+Post-apply catalog readback confirms RLS enabled, five expected policies, old
+owner ALL policy absent, eligibility/archive checks on primary INSERT and both
+UPDATE predicates, owner SELECT/ordinary Add/Remove and member SELECT retained.
+RPC/helper definitions and ACLs, table grants, unique indexes and zero noninternal
+triggers are unchanged. No duplicate-primary club exists. Before/after link data
+count/digest match (1 / 09cafd2e2ad21b6cfd6032490294d615); event ID/location
+count/digest match (4 / 510a4c68c9088e55c07aea9bba54d3f4). Ledger is now 169 rows.
+No business-data DML, Storage mutation, runtime deployment or Git publication.
+
+Security advisors were run: existing project-wide notices remain; no club_venues
+or primary-RPC notice was returned. The existing eligibility helper has the
+SECURITY DEFINER execute advisory; its definition/ACL are unchanged and not
+remediated here. Advisor output is not a clean whole-project security verdict.
+Eligible direct writes remain allowed without RPC advisory-lock coordination;
+existing TRUNCATE grants remain a separate audit. Connected primary-selection
+submission after this migration is not claimed. Phase 9 Unit 6H/M62 runtime
+rollout and connected proof pending state is unchanged; normal db push/history
+repair remains frozen.
+
+Active work unit: Clubs aggregate-review closeout/handoff. Exact next action:
+review the exact combined local diff and select scoped commit contents before
+any user-authorized commit; preserve mixed tracker edits and unrelated screenshot.
+Do not reapply this migration. No staging, commit or push occurred.
+
+
+## 2026-10-08 second independent Luna max review
+
+A fresh GPT-6 Luna max read-only review independently reconfirmed the exact live
+project and owner-policy direct-write gap. It identified two bounded corrections:
+the proposed SQL preflight must reject disabled row security, and lost-response
+readback must not claim no primary exists when the primary is unreadable or the
+rows belong to another club. Both are corrected locally with regression coverage.
+Fresh Manage/service tests pass 137/137; affected navigation suites pass 107/107;
+local PostgreSQL proposal fixture passes 61/61 with verified teardown. Final
+independent rereview confirms both fixes and the new exact-query-readback tests by inspection. TypeScript and export pass; the export preceded the final test-only edit. No browser recheck of the recovery message was run.
+
+The proposal enforces eligibility on primary INSERT and UPDATE; it intentionally
+still allows eligible direct writes and does not force the RPC/advisory-lock path.
+Existing anon/authenticated TRUNCATE grants are a separate grant-audit concern;
+no exposed client path was verified, and this proposal does not remediate them.
+The stale DOC-13 Phase 9 table row was reconciled to the recorded latest router /
+session-start closeout (M60-M62 applied; M62 runtime rollout/proof pending), not a
+fresh live M60-M62 re-verification. No migration file, live write, staging,
+commit, push or deployment occurred in this follow-up.
+
+## Historical 2026-10-08 corrections before policy application
+
+The follow-up confirmed and corrected three local defects: primary selection now
+requires the club owner and a nonarchived club; a lost RPC response is reconciled
+only by an error-free refresh showing the same club/venue primary with readable
+venue details; externally removed focused venue controls recover focus to Add
+only if the user has not moved focus or clicked elsewhere. Add/Remove remain on
+their existing permission and mutation paths. Primary selection remains optional.
+
+Fresh verification: Manage/service Jest 135/135 PASS; TypeScript and one-worker web export PASS; disposable
+PostgreSQL 17.6 proposal fixture 60/60 PASS with teardown verified. The targeted
+pre-fix regressions reproduced four failures. Continuity validation and diff hygiene PASS (existing dependency/document-size/line-ending advisories). Independent gpt-6-luna at max
+reasoning found no actionable residual defect in these scoped corrections or the
+policy proposal; its review was static and did not rerun tests or touch live data.
+Desktop and 390x844 browser checks confirmed the removal dialog, Cancel/Escape
+focus return, Add/back navigation and no mobile horizontal overflow. No primary
+selection or removal confirmation was submitted. Connected identity-switch,
+response-loss and external-removal behavior remain unverified in the browser.
+
+Read-only Supabase MCP confirmed a separate live permission gap: the owner ALL
+policy permits direct primary UPDATE/INSERT beyond the RPC entitlement/archive
+checks. The RPC helper checks ownership, tier and access level, not active
+membership. The proposed forward policy correction and exact evidence are in
+[PRIMARY-VENUE-AUTHORIZATION-PROPOSAL.md](./PRIMARY-VENUE-AUTHORIZATION-PROPOSAL.md).
+No migration file was created or applied; owner approval is pending. Preserve the
+already-applied migration byte-for-byte. Existing dirty work is preserved; no
+staging, commit, push, deployment, database or Storage mutation occurred.
+
+Active work unit: aggregate-review corrections and authorization handoff. Exact
+next action: obtain the owner's decision on the reviewed forward migration;
+reverify the exact live project/policies before any separately approved apply.
+Phase 9 remains Unit 6H, M62 runtime rollout and connected proof pending.
+
 
 ## Aggregate Clubs publication review (2026-10-05; published)
 

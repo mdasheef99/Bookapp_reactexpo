@@ -7,6 +7,7 @@ const mockRouterCanGoBack = jest.fn();
 const mockUseAuth = jest.fn();
 const mockUseCreateClub = jest.fn();
 const mockGetProfile = jest.fn();
+let mockSearchParams: { clubOrigin?: string } = {};
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-router', () => ({
@@ -15,6 +16,7 @@ jest.mock('expo-router', () => ({
         replace: (...args: unknown[]) => mockRouterReplace(...args),
         canGoBack: (...args: unknown[]) => mockRouterCanGoBack(...args),
     },
+    useLocalSearchParams: () => mockSearchParams,
 }));
 jest.mock('@/features/auth/hooks/useAuth', () => ({ useAuth: () => mockUseAuth() }));
 jest.mock('@/features/clubs/hooks/useClubs', () => ({ useCreateClub: () => mockUseCreateClub() }));
@@ -25,6 +27,7 @@ jest.mock('@/features/auth/services/profileService', () => ({
 beforeEach(() => {
     jest.clearAllMocks();
     mockRouterCanGoBack.mockReturnValue(false);
+    mockSearchParams = {};
     mockUseAuth.mockReturnValue({ user: { id: 'reader-1' } });
     mockUseCreateClub.mockReturnValue({ mutateAsync: jest.fn().mockResolvedValue({ id: 'club-created' }), isPending: false });
     mockGetProfile.mockResolvedValue({ id: 'profile-reader-1', user_id: 'reader-1', is_verified_author: false });
@@ -137,7 +140,31 @@ describe('ClubCreateScreen', () => {
         await waitFor(() => expect(mockGetProfile).toHaveBeenCalledWith('reader-1'));
         fireEvent.press(getByTestId('create-club-back'));
         expect(mockRouterBack).not.toHaveBeenCalled();
-        expect(mockRouterReplace).toHaveBeenCalledWith('/clubs');
+        expect(mockRouterReplace).toHaveBeenCalledWith('/(tabs)/clubs');
+    });
+
+    it.each([
+        ['my-clubs', '/(tabs)/clubs?scope=mine'],
+        ['archived', '/(tabs)/clubs?scope=archived'],
+    ])('returns to the originating %s directory from the Create Club form', async (clubOrigin, expectedHref) => {
+        mockSearchParams = { clubOrigin };
+        const { getByTestId } = render(<ClubCreateScreen />);
+
+        await waitFor(() => expect(mockGetProfile).toHaveBeenCalledWith('reader-1'));
+        fireEvent.press(getByTestId('create-club-back'));
+
+        expect(mockRouterReplace).toHaveBeenCalledWith(expectedHref);
+    });
+
+    it('preserves My Clubs after successful creation', async () => {
+        mockSearchParams = { clubOrigin: 'my-clubs' };
+        const { getByTestId } = render(<ClubCreateScreen />);
+
+        await waitFor(() => expect(mockGetProfile).toHaveBeenCalledWith('reader-1'));
+        fireEvent.changeText(getByTestId('create-club-name'), 'New Reading Circle');
+        fireEvent.press(getByTestId('create-club-submit'));
+
+        await waitFor(() => expect(mockRouterReplace).toHaveBeenCalledWith('/clubs/club-created?returnTo=my-clubs'));
     });
 
     it('creates an approval club and navigates to the new detail screen', async () => {

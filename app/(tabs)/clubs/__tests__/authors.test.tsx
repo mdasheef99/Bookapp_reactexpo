@@ -1,5 +1,6 @@
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-router', () => ({
+    useLocalSearchParams: () => ({}),
     router: { push: (...args: unknown[]) => mockRouterPush(...args) },
 }));
 
@@ -55,6 +56,6 @@ describe('ClubAuthorsRoute', () => {
 
         fireEvent.press(getByTestId('author-club-author-club-1'));
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/author-club-1');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/author-club-1?returnTo=authors');
     });
 });

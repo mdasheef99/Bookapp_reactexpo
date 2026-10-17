@@ -6,6 +6,54 @@ Verification: worker suites 234 passed; full Jest 3,548 passed / 0 failed / 4 sk
 
 Active work unit: owner_edition_matching_variants_and_recovery_applied. Exact next authorized action: Owner decides on deploying the Render metadata worker (the new matching rules and work-level authors take effect only after it) and the Owner API Edge Function (reasons header), and on pushing codex/edition-picker. Tracker 37 §67 owns evidence and the ledger.
 
+## 2026-10-17 - Clubs publication CI passed
+
+[GitHub run 39017350125](https://github.com/mdasheef99/Bookapp_reactexpo/actions/runs/39017350125)
+passed repository tests, TypeScript and production web export at published
+09dcd32. Its executable tree equals reviewed merge 8882efc. The first CI failure
+recorded below did not recur; retain it as a possible test-timing concern,
+without claiming a root cause or product correction. This receipt changes
+documentation only. Original dirty Clubs checkout remains preserved; no
+DB/Storage, permissions, migration application, deployment or business mutation.
+Exact next action: report publication and remaining browser/role/native gaps;
+stop before rollout or further product work. Phase 9 rollout hold is unchanged.
+
+## 2026-10-17 - Reviewed Clubs integration published to main
+
+Remote main readback matched `8882efc865e626eab290745de6a827240ad273a2` after
+a normal fast-forward push. Existing Clubs commits, navigation corrections and
+documentation are published, with newer main history preserved. Independent
+GPT-6 Luna/max rereview and final local tests/build/fixture/continuity gates
+passed. The merge CI failed one unchanged marketplace edition-picker timing test;
+all Clubs tests passed. Its isolated local rerun passed 19/19; a remote rerun was
+denied by GitHub connector permissions. Remote validation remains unresolved.
+ Original dirty Clubs checkout remains unchanged.
+No database/Storage, permissions, migration application, deployment or business
+mutation occurred. Phase 9 remains Unit 6G with its existing rollout hold.
+Exact next action: report the publication and unresolved remote-validation
+gate; investigate the unchanged marketplace test before claiming CI clearance.
+Stop before rollout or further product changes. [Exact evidence and limits](../../../user/clubs/MAIN-INTEGRATION-REVIEW-20261017.md).
+
+## 2026-10-17 — Clubs/main integration and publication review
+
+The user authorized combining the existing Clubs commits and navigation
+corrections/tests with fresh main, reviewing here and pushing main after the
+exact candidate is verified. The isolated integration retains main's current
+Phase 9 Unit 6G Open Library publication/CI/Render-hold records. Older imported
+Clubs M62 handoffs are historical and do not roll back that authority.
+
+This is a Clubs Git integration only. No Phase 9 product code, migration bytes,
+provider activation, database/Storage, permissions or deployment is changed.
+The two already-applied Clubs SQL artifacts are published as existing history;
+they must not be reapplied. Fresh exact-project catalog reads confirm their
+ledger records and the expected five venue policies. Connected business
+submissions and whole-project security clearance are not claimed.
+
+Completed scope, verification actually run, independent review, residual gaps
+and exact next action are owned by [the integration record](../../../user/clubs/MAIN-INTEGRATION-REVIEW-20261017.md).
+At preparation, the next authorized action is complete candidate verification
+and review, then a normal fast-forward main push if clear.
+
 ## 2026-10-17 - Review of the edition-picker work (76348f3..c0c485b) and bounded fixes
 
 Phase 9 / Unit 6G remains active. Owner-authorized review with freedom to fix anything except new migrations (tracker 37 §66). Live M76 readback: all six functions match the migration file byte for byte (prosrc md5), owner-only grants and empty search_path; schema_migrations shows only 20261016153615 since 2026-10-15; no M77. Four read-only review agents (two Sonnet, two Haiku) covered matching parity, client data flow, the sheet UI checklist and docs facts; every finding was checked before action. Fixed: the identity save now rejects a save response older than the known card instead of silently adopting cached state; after an identity save the card waits for its own refreshed read instead of re-adopting the older card authority (Add stays locked meanwhile); two status messages gained polite live regions; tests added. Full Jest 3,514 passed / 0 failed / 4 skipped; tsc clean. Look-only browser check passed after the Owner signed in (tracker 37 §66); no writes.
@@ -3665,6 +3713,87 @@ transient first-read failures and font-loading toast require separate diagnosis.
 
 
 
+## Historical Clubs evidence imported during 2026-10-17 integration
+
+The following records describe their original October checkpoints. The current
+Clubs publication state is owned by docs/user/clubs/TRACKER.md. Earlier M62
+and publication-blocked wording does not supersede the newer Phase 9 Unit 6G
+Open Library records retained above. No migration is reapplied by this merge.
+
+> **2026-10-08 local commit checkpoint:** User-authorized navigation checkpoint 4e1aa35 and primary corrections/applied-migration evidence 542b90f are committed. Remaining review documentation is checkpointed separately. Two P2 navigation findings still block publication; next action is correction, regression/browser verification and independent rereview. No push, deployment or database mutation in this commit step. Earlier test evidence was not rerun.
+
+> **2026-10-08 aggregate Clubs review:** Full unpublished-set GPT-6 Luna max review
+> found two return-context integration defects; Clubs publication is blocked until
+> corrected and independently rereviewed. See [review](../../../user/clubs/AGGREGATE-PUBLICATION-REVIEW-20261008.md).
+> Phase 9 Unit 6H/M62 rollout status unchanged. No commit/push/deployment/live write.
+
+
+> **2026-10-08 Clubs migration closeout:** User-authorized forward migration
+> `20261008091939 clubs_primary_venue_write_authorization` is applied once through
+> Supabase MCP to verified Bookconnect_reactexpo (ahntbtktjjmvfosgkmgn). Exact
+> policy/RLS/name preflight and 61/61 local artifact checks passed. Live readback
+> confirms five intended policies, unchanged functions/grants/indexes and unchanged
+> venue-link/event-location data. Local filename matches live version and content
+> hash is unchanged. Ledger now 169 entries; historical repair/db push freeze and
+> Phase 9 Unit 6H/M62 rollout pending status are unchanged. No business DML,
+> Storage write, runtime deployment, staging, commit or push. Current evidence:
+> [Clubs migration closeout](../../../user/clubs/PRIMARY-VENUE-MIGRATION-REVIEW.md). Next: exact local-diff review for a
+> separately authorized scoped commit; do not reapply the migration.
+
+
+> **2026-10-08 aggregate-review correction:** Clubs owner/archive selection gating,
+> lost-response reconciliation and external-removal focus recovery are corrected
+> locally. Fresh Manage/service tests 135/135, TypeScript, web export and local
+> PostgreSQL policy-proposal checks 61/61 pass. Luna max scoped rereview found no
+> actionable residual defect. Read-only live catalog inspection confirmed direct
+> primary-write policy bypasses; forward-migration creation/application approval
+> is pending. No live writes or Git publication occurred. See the
+> [Clubs correction record](../../../user/clubs/TRACKER.md). Phase 9 Unit 6H and M62 runtime rollout /
+> connected proof pending status remain unchanged.
+
+
+> **2026-10-08 Clubs follow-up:** User-approved venue Remove confirmation and
+> real QueryClient race coverage are implemented locally. Desktop/mobile keyboard
+> checks passed. Club/account web focus handoff is now corrected locally;
+> spoken screen-reader checks are excluded by the user. Connected primary-selection
+> proof remains unverified. See [Clubs tracker](../../../user/clubs/TRACKER.md). Phase 9 M62 rollout status is unchanged.
+> No new database mutation, migration, Git publication, or deployment occurred.
+
+
+> **2026-10-07 bounded Clubs UI correction:** Separately authorized local
+> Manage Venues lifecycle corrections preserve pending/recovery feedback and
+> isolate old responses across club/account changes. No Phase 9 runtime,
+> schema, migration, deployment, or M62 evidence changed; the gate remains
+> `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING`. Correction verification,
+> residual visual/connected gaps, and the exact next action are owned by
+> [the Clubs app review](../../../user/clubs/PRIMARY-VENUE-APP-REVIEW.md#bounded-ui-correction-2026-10-07).
+
+> **2026-10-07 cross-feature Clubs UI follow-through:** The separately
+> authorized Clubs Manage Venues review updated only Clubs screen code/tests
+> and Clubs documentation. No Phase 9 behavior, runtime, deployment, migration,
+> database/Storage state, or M62 gate changed. The focused Clubs screen suite
+> passes 46/46; actual admin-screen desktop/mobile browser review remains
+> outstanding because the available seeded identity is a member. Clubs detail
+> and next action are owned by
+> [the Clubs app review](../../../user/clubs/PRIMARY-VENUE-APP-REVIEW.md).
+
+> **2026-10-07 cross-feature Clubs migration:** The corrected primary-venue
+> migration was applied separately to `ahntbtktjjmvfosgkmgn` as
+> `20261007144356 clubs_admin_primary_venue`, with matching local filename and
+> post-apply catalog readback. This did not modify Phase 9 schema/runtime or M62;
+> the M62 gate remains `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING`. The
+> shared repair set and pending July Clubs/Exchange migration remain untouched.
+
+> **2026-10-07 scoped Clubs correction:** The user authorized correcting four
+> findings in the unapplied Clubs primary-venue artifact and disposable fixture.
+> PostgreSQL 17.6 passes 49/49 with verified local teardown; syntax, diff hygiene
+> and continuity validation pass. No Phase 9 runtime, migration, database/Storage,
+> deployment or Git publication changed. Phase 9 remains
+> `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING`; its authorization gate is
+> unchanged. Clubs scope, concurrency limits and next action (user review of the
+> corrected local artifact) are owned by
+> [the Clubs review record](../../../user/clubs/PRIMARY-VENUE-MIGRATION-REVIEW.md).
+
 ## 2026-10-13 — Connected Owner edition-picker live proof
 
 Phase 9 / Unit 6G remains active. The authenticated fresh-session path completed through explicit Open Library Search Books, Owner selection, and private Add for one card. The supplied image had been used before and the app's duplicate guard was acknowledged through Proceed; this proves the fresh-session workflow on a repeated image, not a unique-photo run. Seven books were detected, one was added, and six remain in the open session for Owner review.
@@ -3740,3 +3869,4 @@ Owner now directs proceeding on E: and chose all books with main metadata; later
 ## 2026-10-15 - E: full catalogue import paused at repeatable read error
 
 E: Full catalogue experiment paused at verified read error. PostgreSQL autovacuum and a read-only targeted row scan failed on authors relation base/16384/16467 block2450. Separate Windows read-only file access failed with EIO; Win32 code23 resolves to "Data error (cyclic redundancy check)". This proves that the block cannot currently be read; it does not diagnose the hardware or all of E:. Import client stopped. E: durable checkpoint: authors 15446415 rows / EOF verified; works 600000 of 41666337; editions/covers/indexes/search not started. Database cannot be reported as a validated searchable full catalogue. No filesystem repair/deletion; prior diagnosis-only repair decision remains. Next safe step: continue read-only E: diagnosis and require a separate explicit Owner direction before any filesystem repair or retrying bulk reads. Proof C:/Users/user/.codex/visualizations/2026/10/12/01a1320a-fcf2-73b2-8517-f2ddd4d6256d/full-catalogue-20261015/io-probe-results.json and tracker37 §56. Phase9/Unit6G implementation handoff and all existing release/migration/Git holds unchanged; no C: database/source work.
+

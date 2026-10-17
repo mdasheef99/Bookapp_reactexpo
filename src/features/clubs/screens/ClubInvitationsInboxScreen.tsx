@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useAcceptClubInvitation, useMarkInvitationRead, useMyClubInvitationInbox } from '@/features/clubs/hooks/useClubs';
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
 import type { ClubInvitationInboxItem } from '@/features/clubs/services/clubsService';
 import { navigateBackOrFallback } from '@/lib/navigation';
+import { clubDirectoryHref, withClubOrigin } from '@/features/clubs/navigation';
 
 const PAGE_SIZE = 20;
 const colors = {
@@ -31,6 +32,7 @@ function getInvitationStatusLabel(invitation: ClubInvitationInboxItem) {
 }
 
 export default function ClubInvitationsInboxScreen() {
+    const { clubOrigin } = useLocalSearchParams<{ clubOrigin?: string }>();
     const { user } = useAuth();
     const userId = user?.id ?? null;
     const [visibleLimit, setVisibleLimit] = useState(PAGE_SIZE);
@@ -54,7 +56,7 @@ export default function ClubInvitationsInboxScreen() {
             if (!invitation.read_at) {
                 await markReadMutation.mutateAsync({ invitationId: invitation.id, clubId: invitation.club_id, userId });
             }
-            router.push(`/(tabs)/clubs/${invitation.club_id}`);
+            router.push(`/(tabs)/clubs/${invitation.club_id}?returnTo=invitations`);
         } catch (error) {
             setFeedback({ type: 'error', message: getClubsEntitlementErrorMessage(error, 'Unable to open this invitation right now.') });
         }
@@ -92,7 +94,7 @@ export default function ClubInvitationsInboxScreen() {
             testID="club-invitations-scroll"
         >
             <View style={styles.headerRow}>
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to clubs" onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to clubs" onPress={() => navigateBackOrFallback(router, clubDirectoryHref(clubOrigin))} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                     <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <View style={styles.headerTextBlock}>
@@ -146,7 +148,7 @@ export default function ClubInvitationsInboxScreen() {
                     </View>
                     <TouchableOpacity
                         accessibilityRole="button"
-                        onPress={() => router.push('/(tabs)/profile/settings')}
+                        onPress={() => router.push(withClubOrigin('/(tabs)/profile/settings?returnTo=club-invitations', clubOrigin))}
                         style={[styles.handoffButton, { borderColor: colors.accent }]}
                         testID="club-invitations-notification-settings"
                     >

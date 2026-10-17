@@ -1,7 +1,8 @@
 import React from 'react';
+import { withClubOrigin } from '@/features/clubs/navigation';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
@@ -19,6 +20,8 @@ function formatNotificationTime(value: string) {
 }
 
 export default function NotificationsScreen() {
+    const { returnTo, settingsOrigin, clubOrigin } = useLocalSearchParams<{ returnTo?: string; settingsOrigin?: string; clubOrigin?: string }>();
+    const settingsHref = settingsOrigin === 'club-invitations' ? withClubOrigin('/(tabs)/profile/settings?returnTo=club-invitations', clubOrigin) : '/(tabs)/profile/settings';
     const { session } = useAuth();
     const { colors } = useTheme();
     const userId = session?.user?.id ?? null;
@@ -82,7 +85,7 @@ export default function NotificationsScreen() {
             <View style={styles.container}>
                 <View style={styles.header}>
                     <TouchableOpacity
-                        onPress={() => router.replace('/(tabs)/profile')}
+                        onPress={() => router.replace(returnTo === 'settings' ? settingsHref : '/(tabs)/profile')}
                         style={styles.backButton}
                         accessibilityRole="button"
                         accessibilityLabel="Go back"

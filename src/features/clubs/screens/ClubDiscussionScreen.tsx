@@ -12,6 +12,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { navigateBackOrFallback } from '@/lib/navigation';
+import { withClubOrigin, clubHomeHref } from '@/features/clubs/navigation';
 import {
     useCreateClubDiscussionTopic,
     useClubDiscussionTopics,
@@ -55,7 +56,7 @@ function getTopicBodyPreview(topic: ClubDiscussionTopicWithDetails) {
 }
 
 export default function ClubDiscussionScreen() {
-    const { clubId } = useLocalSearchParams<{ clubId: string }>();
+    const { clubId, clubOrigin } = useLocalSearchParams<{ clubId: string; clubOrigin?: string }>();
     const colors = discussionColors;
     const discussionAccent = colors.accent;
     const discussionAccentSurface = colors.accentSubtle;
@@ -92,7 +93,7 @@ export default function ClubDiscussionScreen() {
 
     const openThread = (topicId: string) => {
         if (!clubId) return;
-        router.push(`/clubs/${clubId}/discussion/${topicId}`);
+        router.push(withClubOrigin(`/clubs/${clubId}/discussion/${topicId}`, clubOrigin));
     };
 
     if (isClubLoading || isMembershipLoading) {
@@ -106,7 +107,7 @@ export default function ClubDiscussionScreen() {
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.contentContainer}>
             <TouchableOpacity
-                onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)}
+                onPress={() => navigateBackOrFallback(router, clubHomeHref(clubId, clubOrigin))}
                 style={styles.backAction}
                 accessibilityRole="button"
                 accessibilityLabel="Back to club"

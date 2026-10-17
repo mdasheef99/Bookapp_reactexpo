@@ -1,6 +1,34 @@
 # BookConnect Agent Continuity Contract
 
-## Workspace split (2026-08-22)
+## Reviewed main integration — 2026-10-17
+
+The active publication checkout is the managed worktree
+`C:\Users\LEGION\.codex\worktrees\clubs-main-reviewed\Bookconnect4_clubs_v2`
+on `codex/clubs-main-reviewed-20261017`. The original dirty `feat/clubs-v2`
+checkout is preserved. This integration joins existing Clubs commits and the
+approved existing navigation corrections with fresh `origin/main`.
+The latest Phase 9 authority comes from main's Unit 6G Open Library publication
+records; older M62 handoffs below and in dated Clubs records are historical.
+The user authorized review here, integration and a normal main push after
+verification. This grants no database, Storage, permission, provider, migration
+application, deployment or Manage redesign authority. Publication evidence and
+remaining gaps are owned by
+[the integration review](./docs/user/clubs/MAIN-INTEGRATION-REVIEW-20261017.md).
+
+## Current checkout clarification — 2026-10-10
+
+This Clubs handoff uses `C:\Users\LEGION\Desktop\Bookconnect4_clubs_v2` on
+`feat/clubs-v2`. `git worktree list --porcelain` on 2026-10-10 lists six
+registered worktrees; the Library checkout is `Bookconnect4_library` on
+`codex/library-cover-shelf`. The original two-worktree naming below is
+historical. Resolve the actual root/branch/status at every session start and
+edit only the user's selected checkout. The isolation, port and shared-project
+rules remain in effect. Current Clubs scope and next action are owned by
+[the Clubs tracker](./docs/user/clubs/TRACKER.md#current-handoff--2026-10-10-documentation-refresh);
+Manage's current application layout is retained and no full-redesign
+implementation is approved.
+
+## Historical workspace split (2026-08-22)
 Two git worktrees share this repo. Bookconnect4_expo @ feat/clubs-ui-overhaul = clubs
 feature only. Bookconnect4_library @ feat/library-shelf-motion = library feature only.
 Each session edits only its own tree; never stage or commit sibling-feature paths.
@@ -8,6 +36,10 @@ Ports: clubs 8081, library 8083+. Shared Supabase project ahntbtktjjmvfosgkmgn �
 check both trackers before any migration.
 
 This file is the repository entrypoint for every new AI development or review session. Chat history and compacted conversation summaries are helpful context, but they are never the project source of truth.
+
+## Clubs UI/UX page work
+
+For page-by-page Clubs visual refinement, follow the [Clubs Page-by-Page UI/UX Refinement Process](./docs/user/clubs/PAGE-REFINEMENT-PROCESS.md). It supplements this repository continuity contract and does not grant database, permission, migration, deployment, commit, or push authority.
 
 ## Mandatory session start
 

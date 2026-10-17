@@ -1,7 +1,8 @@
 import React from 'react';
+import { withClubOrigin } from '@/features/clubs/navigation';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
@@ -9,6 +10,8 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 
 export default function SettingsScreen() {
+    const { returnTo, clubOrigin } = useLocalSearchParams<{ returnTo?: string; clubOrigin?: string }>();
+    const invitationsChildQuery = returnTo === 'club-invitations' ? '?returnTo=settings&settingsOrigin=club-invitations' : '';
     const { signOut, session } = useAuth();
     const { colors } = useTheme();
     const userPhone = session?.user?.phone ?? 'Not available';
@@ -31,7 +34,7 @@ export default function SettingsScreen() {
             <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.header}>
                     <TouchableOpacity
-                        onPress={() => router.replace('/(tabs)/profile')}
+                        onPress={() => router.replace(returnTo === 'club-invitations' ? withClubOrigin('/(tabs)/clubs/invitations', clubOrigin) : '/(tabs)/profile')}
                         style={styles.backButton}
                         accessibilityRole="button"
                         accessibilityLabel="Go back"
@@ -52,7 +55,7 @@ export default function SettingsScreen() {
                         </View>
                     </View>
                     <TouchableOpacity
-                        onPress={() => router.push('/(tabs)/profile/notifications')}
+                        onPress={() => router.push(withClubOrigin(`/(tabs)/profile/notifications${invitationsChildQuery}`, returnTo === 'club-invitations' ? clubOrigin : undefined))}
                         style={[styles.settingRow, { borderBottomColor: colors.border }]}
                         accessibilityRole="button"
                     >
@@ -63,7 +66,7 @@ export default function SettingsScreen() {
                         </View>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        onPress={() => router.push('/(tabs)/profile/notification-settings')}
+                        onPress={() => router.push(withClubOrigin(`/(tabs)/profile/notification-settings${invitationsChildQuery}`, returnTo === 'club-invitations' ? clubOrigin : undefined))}
                         style={[styles.settingRow, { borderBottomColor: colors.border }]}
                         accessibilityRole="button"
                     >
