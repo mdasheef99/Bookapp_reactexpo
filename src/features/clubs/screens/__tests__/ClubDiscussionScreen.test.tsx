@@ -10,6 +10,7 @@ const mockUseClubMembership = jest.fn();
 const mockUseClubDiscussionTopics = jest.fn();
 const mockUseCreateClubDiscussionTopic = jest.fn();
 const mockNavigateBackOrFallback = jest.fn();
+let mockSearchParams: { clubId: string; clubOrigin?: string } = { clubId: 'club-1' };
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-router', () => ({
@@ -17,7 +18,7 @@ jest.mock('expo-router', () => ({
         back: (...args: unknown[]) => mockRouterBack(...args),
         push: (...args: unknown[]) => mockRouterPush(...args),
     },
-    useLocalSearchParams: () => ({ clubId: 'club-1' }),
+    useLocalSearchParams: () => mockSearchParams,
 }));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
@@ -87,6 +88,7 @@ const baseTopic = {
 
 beforeEach(() => {
     jest.clearAllMocks();
+    mockSearchParams = { clubId: 'club-1' };
     mockUseAuth.mockReturnValue({ user: { id: 'reader-1' } });
     mockUseClubPublicDetail.mockReturnValue({ data: { id: 'club-1', name: 'Author Circle' }, isLoading: false });
     mockUseClubMembership.mockReturnValue({ data: { role: 'member', status: 'active' }, isLoading: false });
@@ -185,4 +187,11 @@ describe('ClubDiscussionScreen', () => {
         expect(getByText('Sign in required')).toBeOnTheScreen();
         expect(queryByText('Recent discussion')).toBeNull();
     });
+    it('returns to Home with the directory origin preserved', () => {
+        mockSearchParams = { clubId: 'club-1', clubOrigin: 'my-clubs' };
+        const { getByTestId } = render(<ClubDiscussionScreen />);
+        fireEvent.press(getByTestId('discussion-back'));
+        expect(mockNavigateBackOrFallback.mock.calls[0][1]).toBe('/clubs/club-1?returnTo=my-clubs');
+    });
+
 });

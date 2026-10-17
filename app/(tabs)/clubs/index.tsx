@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { router } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
     View,
     Text,
@@ -18,6 +18,7 @@ import { YourClubsCard } from '@/features/clubs/components/YourClubsCard';
 import { ClubFiltersSheet } from '@/features/clubs/components/ClubFiltersSheet';
 import { useBrowseClubs, useMyArchivedManagedClubs, useMyBrowseClubs, useMyClubInvitationInbox } from '@/features/clubs/hooks/useClubs';
 import { useViewerMembershipTier } from '@/features/clubs/hooks/useViewerMembershipTier';
+import { withClubOrigin } from '@/features/clubs/navigation';
 import { colors, radii, touchTarget, typography } from '@/features/clubs/theme';
 import { type AccessLevel, type ClubType, type ClubFilters, type ClubPublicDetails, type MeetingType } from '@/features/clubs/services/clubsService';
 
@@ -65,14 +66,20 @@ function QuickFilterChip({ label, selected, onPress, testID, accessibilityLabel,
 }
 
 export default function ClubsBrowseScreen() {
+    const { scope: scopeParam } = useLocalSearchParams<{ scope?: string }>();
+    const routeScope: BrowseScope = scopeParam === 'mine' || scopeParam === 'archived' ? scopeParam : 'all';
     const { user } = useAuth();
     const userId = user?.id ?? null;
     const [search, setSearch] = useState('');
-    const [browseScope, setBrowseScope] = useState<BrowseScope>('all');
+    const [browseScope, setBrowseScope] = useState<BrowseScope>(routeScope);
     const [selectedClubType, setSelectedClubType] = useState<ClubType | undefined>(undefined);
     const [selectedMeetingType, setSelectedMeetingType] = useState<MeetingType | undefined>(undefined);
     const [selectedAccessLevel, setSelectedAccessLevel] = useState<AccessLevel | undefined>(undefined);
     const [filtersVisible, setFiltersVisible] = useState(false);
+
+    useEffect(() => {
+        setBrowseScope(routeScope);
+    }, [routeScope]);
 
     const filters = useMemo<ClubFilters>(() => ({
         clubType: selectedClubType,
@@ -94,6 +101,7 @@ export default function ClubsBrowseScreen() {
     const unreadInvitationCount = (invitationInboxQuery.data ?? []).filter((invitation) => !invitation.read_at).length;
     const canCreateClub = !!userId && (viewerTier === 'pro' || viewerTier === 'pro_plus');
     const isMineScope = browseScope === 'mine';
+    const directoryOrigin = browseScope === 'mine' ? 'my-clubs' : browseScope === 'archived' ? 'archived' : 'clubs';
     const hasActiveSearchOrFilters = search.trim().length > 0
         || selectedClubType !== undefined
         || selectedMeetingType !== undefined
@@ -102,7 +110,11 @@ export default function ClubsBrowseScreen() {
         .filter((value) => value !== undefined).length;
 
     const handleClubPress = (club: ClubPublicDetails) => {
-        router.push(browseScope === 'archived' ? `/(tabs)/clubs/${club.id}/manage?tab=lifecycle` : `/(tabs)/clubs/${club.id}`);
+        router.push(browseScope === 'archived'
+            ? withClubOrigin(`/(tabs)/clubs/${club.id}/manage?tab=lifecycle`, directoryOrigin)
+            : browseScope === 'mine'
+                ? `/(tabs)/clubs/${club.id}?returnTo=my-clubs`
+                : `/(tabs)/clubs/${club.id}`);
     };
 
     const handleResetFilters = () => {
@@ -170,7 +182,7 @@ export default function ClubsBrowseScreen() {
                                 {canCreateClub ? (
                                     <TouchableOpacity
                                         activeOpacity={0.85}
-                                        onPress={() => router.push('/(tabs)/clubs/create')}
+                                        onPress={() => router.push(withClubOrigin('/(tabs)/clubs/create', directoryOrigin))}
                                         style={styles.createButton}
                                         testID="clubs-create-club"
                                         accessibilityRole="button"
@@ -182,7 +194,7 @@ export default function ClubsBrowseScreen() {
                                 {userId ? (
                                     <TouchableOpacity
                                         activeOpacity={0.85}
-                                        onPress={() => router.push('/(tabs)/clubs/invitations')}
+                                        onPress={() => router.push(withClubOrigin('/(tabs)/clubs/invitations', directoryOrigin))}
                                         style={styles.inboxButton}
                                         testID="clubs-invitations-inbox"
                                         accessibilityRole="button"
@@ -233,7 +245,7 @@ export default function ClubsBrowseScreen() {
                         {!isMineScope ? (
                         <TouchableOpacity
                             activeOpacity={0.85}
-                            onPress={() => router.push('/(tabs)/clubs/venues')}
+                            onPress={() => router.push(withClubOrigin('/(tabs)/clubs/venues', directoryOrigin))}
                             style={styles.venueRow}
                             testID="clubs-venues-discovery-link"
                             accessibilityRole="button"
@@ -254,7 +266,7 @@ export default function ClubsBrowseScreen() {
                         {browseScope !== 'archived' ? (
                             <TouchableOpacity
                                 activeOpacity={0.85}
-                                onPress={() => router.push('/(tabs)/clubs/authors')}
+                                onPress={() => router.push(withClubOrigin('/(tabs)/clubs/authors', directoryOrigin))}
                                 style={styles.authorBrowseButton}
                                 testID="clubs-author-browse-link"
                                 accessibilityRole="button"
@@ -453,7 +465,7 @@ export default function ClubsBrowseScreen() {
                             {isMineScope ? (
                                 <TouchableOpacity
                                     activeOpacity={0.85}
-                                    onPress={() => router.push('/(tabs)/clubs/venues')}
+                                    onPress={() => router.push(withClubOrigin('/(tabs)/clubs/venues', directoryOrigin))}
                                     style={styles.secondaryRow}
                                     testID="clubs-venues-secondary-link"
                                     accessibilityRole="button"

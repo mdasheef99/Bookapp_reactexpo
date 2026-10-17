@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { navigateBackOrFallback } from '@/lib/navigation';
+import { clubHomeHref } from '@/features/clubs/navigation';
 import { useClubInvitations, useClubMembership, useClubPublicDetail, useCreateClubInvitation } from '@/features/clubs/hooks/useClubs';
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
 
@@ -14,7 +15,7 @@ const colors = {
 } as const;
 
 export default function ClubInviteScreen() {
-    const { clubId } = useLocalSearchParams<{ clubId: string }>();
+    const { clubId, clubOrigin } = useLocalSearchParams<{ clubId: string; clubOrigin?: string }>();
     const { user } = useAuth();
     const userId = user?.id ?? null;
     const { data: club, isLoading, isError, refetch } = useClubPublicDetail(clubId ?? null);
@@ -42,14 +43,14 @@ export default function ClubInviteScreen() {
 
     if (isLoading || isMembershipLoading) return <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary }]}><ActivityIndicator size="large" color={colors.accent} /></View>;
     if (isError || !club) return <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}><Text style={[styles.title, { color: colors.textPrimary }]}>Unable to load invitations</Text><TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.accent }]} onPress={() => refetch()}><Text style={styles.primaryButtonText}>Retry</Text></TouchableOpacity></View>;
-    if (club.club_type !== 'invite_only') return <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}><Text style={[styles.title, { color: colors.textPrimary }]}>This club does not use invitations</Text><TouchableOpacity style={[styles.secondaryButton, { borderColor: colors.border }]} onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)}><Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>Go back</Text></TouchableOpacity></View>;
-    if (!isManager) return <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}><Text style={[styles.title, { color: colors.textPrimary }]}>Moderator access required</Text><Text style={[styles.body, { color: colors.textSecondary }]}>Only eligible moderators and admins can send invite-only club invitations.</Text><TouchableOpacity style={[styles.secondaryButton, { borderColor: colors.border }]} onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)}><Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>Go back</Text></TouchableOpacity></View>;
+    if (club.club_type !== 'invite_only') return <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}><Text style={[styles.title, { color: colors.textPrimary }]}>This club does not use invitations</Text><TouchableOpacity style={[styles.secondaryButton, { borderColor: colors.border }]} onPress={() => navigateBackOrFallback(router, clubHomeHref(clubId, clubOrigin))}><Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>Go back</Text></TouchableOpacity></View>;
+    if (!isManager) return <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}><Text style={[styles.title, { color: colors.textPrimary }]}>Moderator access required</Text><Text style={[styles.body, { color: colors.textSecondary }]}>Only eligible moderators and admins can send invite-only club invitations.</Text><TouchableOpacity style={[styles.secondaryButton, { borderColor: colors.border }]} onPress={() => navigateBackOrFallback(router, clubHomeHref(clubId, clubOrigin))}><Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>Go back</Text></TouchableOpacity></View>;
     if (isInvitationsError) return <View style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary, paddingHorizontal: 24 }]}><Text style={[styles.title, { color: colors.textPrimary }]}>Unable to load invitations</Text><Text style={[styles.body, { color: colors.textSecondary }]}>{getClubsEntitlementErrorMessage(invitationsError, 'Unable to load club invitations right now.')}</Text><TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.accent }]} onPress={() => refetchInvitations()}><Text style={styles.primaryButtonText}>Retry</Text></TouchableOpacity></View>;
 
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
             <View style={styles.headerRow}>
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to club" onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="invite-readers-back">
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to club" onPress={() => navigateBackOrFallback(router, clubHomeHref(clubId, clubOrigin))} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} testID="invite-readers-back">
                     <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <Text accessibilityRole="header" style={[styles.headerTitle, { color: colors.textPrimary }]}>Invite readers</Text>

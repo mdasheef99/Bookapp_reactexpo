@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { navigateBackOrFallback } from '@/lib/navigation';
+import { withClubOrigin, clubHomeHref } from '@/features/clubs/navigation';
 import { useAddClubVenueLink, useClubEventVenues, useClubPublicDetail } from '@/features/clubs/hooks/useClubs';
 import { getClubsEntitlementErrorMessage } from '@/features/clubs/services/clubsEntitlement';
 import { VenueCard } from '@/features/venues/components/VenueCard';
@@ -26,13 +27,14 @@ function getVenueLinkErrorMessage(error: unknown) {
 }
 
 export default function ClubVenuePickerScreen() {
-    const { clubId, returnTo, editorMode, eventId, editorReturnTo, manageTab, draft } = useLocalSearchParams<{
+    const { clubId, returnTo, editorMode, eventId, editorReturnTo, manageTab, draft, clubOrigin } = useLocalSearchParams<{
         clubId: string;
         returnTo?: string;
         editorMode?: string;
         eventId?: string;
         editorReturnTo?: string;
         manageTab?: string;
+        clubOrigin?: string;
         draft?: string;
     }>();
     const isManageVenueLinking = returnTo === 'manage-venues';
@@ -63,7 +65,7 @@ export default function ClubVenuePickerScreen() {
             setLinkError(null);
             try {
                 await addClubVenueLink.mutateAsync({ clubId, venueId });
-                router.replace(`/clubs/${clubId}/manage?tab=venues`);
+                router.replace(withClubOrigin(`/clubs/${clubId}/manage?tab=venues`, clubOrigin));
             } catch (error) {
                 setLinkError(getVenueLinkErrorMessage(error));
             } finally {
@@ -79,11 +81,11 @@ export default function ClubVenuePickerScreen() {
                 ...(manageTab ? { manageTab } : {}),
                 ...(draft ? { draft } : {}),
             }).toString();
-            router.replace(`${editorDestination}?${targetQuery}`);
+            router.replace(withClubOrigin(`${editorDestination}?${targetQuery}`, clubOrigin));
             return;
         }
         const target = returnTo && returnTo !== 'events' ? `/clubs/${clubId}/${returnTo}` : `/clubs/${clubId}/events`;
-        router.replace(`${target}?preselectedVenueId=${venueId}`);
+        router.replace(withClubOrigin(`${target}?preselectedVenueId=${venueId}`, clubOrigin));
     };
 
     const isVenueDataLoading = isManageVenueLinking ? isApprovedVenuesLoading : isVenuesLoading;
@@ -118,7 +120,7 @@ export default function ClubVenuePickerScreen() {
 
     const venuesToRender = isManageVenueLinking ? approvedVenues : linkedVenues;
     const hasVenues = venuesToRender.length > 0;
-    const backFallback = isManageVenueLinking ? `/clubs/${clubId}/manage?tab=venues` : returnTo === 'event-editor' ? editorDestinationWithQuery : `/clubs/${clubId}`;
+    const backFallback = isManageVenueLinking ? withClubOrigin(`/clubs/${clubId}/manage?tab=venues`, clubOrigin) : returnTo === 'event-editor' ? withClubOrigin(editorDestinationWithQuery, clubOrigin) : clubHomeHref(clubId, clubOrigin);
     const backLabel = isManageVenueLinking
         ? 'Back to Manage Club venues'
         : returnTo === 'event-editor'

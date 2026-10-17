@@ -1432,3 +1432,64 @@ M72 filename proposed: 20261010000072_marketplace_phase9_edition_picker_supersed
 ## 2026-10-13 - Read-only configuration/provider registry readback
 
 Verified through Supabase MCP: Bookconnect_reactexpo/ahntbtktjjmvfosgkmgn ACTIVE_HEALTHY; M73 live20261011224457 and M74 live20261012140853 present. A bounded phase9_provider_registry SELECT found Google and OL adapter1.0.0/policy_version1; OL disabled, matching/storage/public facts allowed, image cache denied, attribution required, revalidation86400/raw retention0. No schema, RLS/grant/function-definition or business-row readback was repeated here, and no write/application/activation occurred. Edge remains v15/JWT enabled; updated graph passes local Deno check. Exact observations, existing-worker health timeout/retry, compiled live-provider counts and limits: tracker37 §20. Runtime deployment remains held; Free-plan review skipped. Next: publication/source CI before any compatible runtime activation.
+
+## Historical Clubs evidence imported during 2026-10-17 integration
+
+The following records describe their original October checkpoints. The current
+Clubs publication state is owned by docs/user/clubs/TRACKER.md. Earlier M62
+and publication-blocked wording does not supersede the newer Phase 9 Unit 6G
+Open Library records retained above. No migration is reapplied by this merge.
+
+> **2026-10-08 Clubs migration closeout:** User-authorized forward migration
+> `20261008091939 clubs_primary_venue_write_authorization` is applied once through
+> Supabase MCP to verified Bookconnect_reactexpo (ahntbtktjjmvfosgkmgn). Exact
+> policy/RLS/name preflight and 61/61 local artifact checks passed. Live readback
+> confirms five intended policies, unchanged functions/grants/indexes and unchanged
+> venue-link/event-location data. Local filename matches live version and content
+> hash is unchanged. Ledger now 169 entries; historical repair/db push freeze and
+> Phase 9 Unit 6H/M62 rollout pending status are unchanged. No business DML,
+> Storage write, runtime deployment, staging, commit or push. Current evidence:
+> [Clubs migration closeout](../../../../user/clubs/VENUE-DATABASE-AUDIT.md). Next: exact local-diff review for a
+> separately authorized scoped commit; do not reapply the migration.
+
+
+> **2026-10-08 aggregate-review correction:** Clubs owner/archive selection gating,
+> lost-response reconciliation and external-removal focus recovery are corrected
+> locally. Fresh Manage/service tests 135/135, TypeScript, web export and local
+> PostgreSQL policy-proposal checks 61/61 pass. Luna max scoped rereview found no
+> actionable residual defect. Read-only live catalog inspection confirmed direct
+> primary-write policy bypasses; forward-migration creation/application approval
+> is pending. No live writes or Git publication occurred. See the
+> [Clubs correction record](../../../../user/clubs/VENUE-DATABASE-AUDIT.md). Phase 9 Unit 6H and M62 runtime rollout /
+> connected proof pending status remain unchanged.
+
+### 2026-10-08 targeted RLS/grant confirmation
+
+On the verified `Bookconnect_reactexpo` project, a read-only catalog query
+confirmed `public.spatial_ref_sys` still has RLS disabled and effective
+SELECT/INSERT/UPDATE/DELETE privileges for both `anon` and `authenticated`.
+`public.marketplace_event_schema_registry` and
+`public.marketplace_notification_type_registry` also have RLS disabled, but
+the same roles have no effective SELECT/INSERT/UPDATE/DELETE table privileges
+on those two tables. This confirms the previously recorded `spatial_ref_sys`
+advisor finding and clarifies that the two registry tables are not exposed to
+those roles by table ACLs. No grants, policies, schema, or data were changed;
+remediation remains a separate security decision.
+
+## 2026-10-17 — Read-only Clubs publication preflight
+
+Supabase MCP reverified `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as
+ACTIVE_HEALTHY, PostgreSQL 17.6.1.063. Ledger SELECT confirms existing versions
+`20261007144356 clubs_admin_primary_venue` and
+`20261008091939 clubs_primary_venue_write_authorization`. Policy readback shows
+Members SELECT, owner SELECT/INSERT/DELETE and eligible owner UPDATE with both
+USING and WITH CHECK. Owner identity, archive and entitlement expressions match
+the published correction contract. RPC readback remains SECURITY INVOKER with
+empty search_path; its definition MD5 is `0d1df1b4f8d039d1f85266dc31cb8f8e`.
+These are catalog reads, not actor/write/concurrency verification.
+
+Both SQL artifacts retain their reviewed SHA-256 values. No SQL file was
+created/edited and no migration, grant, policy, function, event, venue link,
+Storage or business row was applied or changed. Main's newer Phase 9 catalog
+and provider records are retained above. Publication review is owned by
+[the Clubs integration record](../../../../user/clubs/MAIN-INTEGRATION-REVIEW-20261017.md).

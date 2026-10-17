@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { navigateBackOrFallback } from '@/lib/navigation';
+import { clubDirectoryHref, withClubOrigin } from '@/features/clubs/navigation';
 import { useApprovedVenues } from '../hooks/useVenues';
 import { VenueCard } from '../components/VenueCard';
 
@@ -27,6 +28,7 @@ const VENUE_TYPE_FILTERS: Array<{ label: string; value?: string }> = [
 ];
 
 export default function VenuesBrowseScreen() {
+    const { clubOrigin } = useLocalSearchParams<{ clubOrigin?: string }>();
     const [search, setSearch] = useState('');
     const [selectedType, setSelectedType] = useState<string | undefined>(undefined);
     const filters = useMemo(() => ({
@@ -73,7 +75,7 @@ export default function VenuesBrowseScreen() {
                 ListHeaderComponent={
                     <View style={styles.header}>
                         <View style={styles.backRow}>
-                            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to Clubs" onPress={() => navigateBackOrFallback(router, '/(tabs)/clubs')} style={styles.backButton} testID="back-button">
+                            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to Clubs" onPress={() => navigateBackOrFallback(router, clubDirectoryHref(clubOrigin))} style={styles.backButton} testID="back-button">
                                 <View style={[styles.backIcon, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                                     <Ionicons name="arrow-back" size={18} color={colors.textPrimary} />
                                 </View>
@@ -111,7 +113,7 @@ export default function VenuesBrowseScreen() {
                         venue={item}
                         colors={colors}
                         variant="editorial"
-                        onPress={(venue) => router.push(`/(tabs)/clubs/venues/${venue.id}`)}
+                        onPress={(venue) => router.push(withClubOrigin(`/(tabs)/clubs/venues/${venue.id}`, clubOrigin))}
                     />
                 )}
                 ListEmptyComponent={

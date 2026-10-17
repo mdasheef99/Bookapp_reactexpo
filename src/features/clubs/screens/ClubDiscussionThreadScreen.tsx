@@ -21,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { navigateBackOrFallback } from '@/lib/navigation';
+import { withClubOrigin } from '@/features/clubs/navigation';
 import {
     useCreateClubDiscussionReply,
     useClubDiscussionTopic,
@@ -164,7 +165,7 @@ function flattenReplyTree(root: ReplyTreeNode): ReplyTreeNode[] {
 
 export default function ClubDiscussionThreadScreen() {
     const viewport = useWindowDimensions();
-    const { clubId, topicId } = useLocalSearchParams<{ clubId: string; topicId: string }>();
+    const { clubId, topicId, clubOrigin } = useLocalSearchParams<{ clubId: string; topicId: string; clubOrigin?: string }>();
     const colors = discussionColors;
     const { user } = useAuth();
     const userId = user?.id ?? null;
@@ -642,7 +643,7 @@ export default function ClubDiscussionThreadScreen() {
             <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.contentContainer}>
                 <View style={styles.headerRow}>
-                    <TouchableOpacity onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}/discussion`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} accessibilityRole="button" accessibilityLabel="Back to discussion">
+                    <TouchableOpacity onPress={() => navigateBackOrFallback(router, withClubOrigin(`/clubs/${clubId}/discussion`, clubOrigin))} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]} accessibilityRole="button" accessibilityLabel="Back to discussion">
                         <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
                     </TouchableOpacity>
                     <Text style={[styles.clubContext, { color: colors.textSecondary }]} numberOfLines={1} testID="discussion-club-context">{(club?.name || 'Club discussion').toUpperCase()}</Text>

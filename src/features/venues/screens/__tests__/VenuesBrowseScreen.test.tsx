@@ -4,6 +4,7 @@ jest.mock('expo-router', () => ({
         push: (...args: unknown[]) => mockRouterPush(...args),
         replace: (...args: unknown[]) => mockRouterReplace(...args),
     },
+    useLocalSearchParams: () => mockSearchParams,
 }));
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
@@ -13,6 +14,7 @@ import VenuesBrowseScreen from '../VenuesBrowseScreen';
 const mockRouterPush = jest.fn();
 const mockRouterReplace = jest.fn();
 const mockUseApprovedVenues = jest.fn();
+let mockSearchParams: { clubOrigin?: string } = {};
 
 jest.mock('@/features/venues/hooks/useVenues', () => ({
     useApprovedVenues: (...args: unknown[]) => mockUseApprovedVenues(...args),
@@ -20,6 +22,7 @@ jest.mock('@/features/venues/hooks/useVenues', () => ({
 
 beforeEach(() => {
     jest.clearAllMocks();
+    mockSearchParams = {};
     mockUseApprovedVenues.mockReturnValue({
         data: [
             { id: 'venue-1', name: 'Central Library', venue_type: 'library', address_line1: '12 Main St', address_line2: null, city: 'Bengaluru', verification_status: 'approved', amenities: ['Wi-Fi'], booking_required: false },
@@ -43,6 +46,16 @@ describe('VenuesBrowseScreen', () => {
         fireEvent.press(getByTestId('venue-card-venue-1'));
 
         expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/venues/venue-1');
+    });
+
+    it.each(['my-clubs', 'archived'])('keeps %s context when opening a venue detail', async (clubOrigin) => {
+        mockSearchParams = { clubOrigin };
+        const { getByTestId, getByText } = render(<VenuesBrowseScreen />);
+
+        await waitFor(() => expect(getByText('Central Library')).toBeOnTheScreen());
+        fireEvent.press(getByTestId('venue-card-venue-1'));
+
+        expect(mockRouterPush).toHaveBeenCalledWith(`/(tabs)/clubs/venues/venue-1?clubOrigin=${clubOrigin}`);
     });
 
     it('passes search and venue type filters to the venue hook', async () => {
@@ -103,5 +116,17 @@ describe('VenuesBrowseScreen', () => {
         fireEvent.press(getByRole('button', { name: 'Back to Clubs' }));
 
         expect(mockRouterReplace).toHaveBeenCalledWith('/(tabs)/clubs');
+    });
+
+    it.each([
+        ['my-clubs', '/(tabs)/clubs?scope=mine'],
+        ['archived', '/(tabs)/clubs?scope=archived'],
+    ])('returns to the originating %s directory from venues', (clubOrigin, expectedHref) => {
+        mockSearchParams = { clubOrigin };
+        const { getByRole } = render(<VenuesBrowseScreen />);
+
+        fireEvent.press(getByRole('button', { name: 'Back to Clubs' }));
+
+        expect(mockRouterReplace).toHaveBeenCalledWith(expectedHref);
     });
 });

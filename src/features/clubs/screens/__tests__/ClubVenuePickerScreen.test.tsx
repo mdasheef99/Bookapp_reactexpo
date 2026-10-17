@@ -124,6 +124,7 @@ describe('ClubVenuePickerScreen', () => {
             editorMode: 'create',
             editorReturnTo: 'manage',
             manageTab: 'events',
+            clubOrigin: 'my-clubs',
             draft,
         });
 
@@ -139,6 +140,7 @@ describe('ClubVenuePickerScreen', () => {
         expect(params.get('preselectedVenueId')).toBe('venue-1');
         expect(params.get('returnTo')).toBe('manage');
         expect(params.get('manageTab')).toBe('events');
+        expect(params.get('clubOrigin')).toBe('my-clubs');
         expect(JSON.parse(params.get('draft') ?? '{}')).toMatchObject({
             title: 'Draft planning night',
             eventType: 'hybrid',
@@ -258,6 +260,7 @@ describe('ClubVenuePickerScreen', () => {
             eventId: 'event-9',
             editorReturnTo: 'manage',
             manageTab: 'events',
+            clubOrigin: 'my-clubs',
             draft,
         });
 
@@ -276,6 +279,7 @@ describe('ClubVenuePickerScreen', () => {
         expect(fallbackHref).toContain('/clubs/club-1/events/event-9/edit?');
         expect(params.get('returnTo')).toBe('manage');
         expect(params.get('manageTab')).toBe('events');
+        expect(params.get('clubOrigin')).toBe('my-clubs');
         expect(JSON.parse(params.get('draft') ?? '{}')).toMatchObject({
             title: 'Draft edit event',
             eventType: 'in_person',

@@ -1,3 +1,23 @@
+## 2026-10-17 — Clubs/main integration and publication review
+
+The user authorized combining the existing Clubs commits and navigation
+corrections/tests with fresh main, reviewing here and pushing main after the
+exact candidate is verified. The isolated integration retains main's current
+Phase 9 Unit 6G Open Library publication/CI/Render-hold records. Older imported
+Clubs M62 handoffs are historical and do not roll back that authority.
+
+This is a Clubs Git integration only. No Phase 9 product code, migration bytes,
+provider activation, database/Storage, permissions or deployment is changed.
+The two already-applied Clubs SQL artifacts are published as existing history;
+they must not be reapplied. Fresh exact-project catalog reads confirm their
+ledger records and the expected five venue policies. Connected business
+submissions and whole-project security clearance are not claimed.
+
+Completed scope, verification actually run, independent review, residual gaps
+and exact next action are owned by [the integration record](../user/clubs/MAIN-INTEGRATION-REVIEW-20261017.md).
+At preparation, the next authorized action is complete candidate verification
+and review, then a normal fast-forward main push if clear.
+
 ## 2026-10-13 - Open Library published; CI passed; Render held
 
 Current status: open_library_published_ci_passed_render_held. Phase 9 / Unit 6G remains active. The Owner-authorized atomic, non-force push fast-forwarded both remote main and codex/edition-picker from d3bda38 to 96bcdde9abc39c15675c19fa763971ce208e9828; both refs matched on readback. Feature d04a333 and the two prior documentation receipts are published, with all earlier main history retained. GPT-6 Luna/max APPROVED the immutable committed snapshot; no unapproved product change was found.
@@ -2743,3 +2763,67 @@ and read back with all four overlay files matching exactly and JWT verification
 enabled. The three private staging objects remain for lifecycle cleanup. One
 new input was registered after removal and remains untouched pending a new
 explicit decision. No Git stage/commit/push occurred.
+
+## Historical Clubs evidence imported during 2026-10-17 integration
+
+The following records describe their original October checkpoints. The current
+Clubs publication state is owned by docs/user/clubs/TRACKER.md. Earlier M62
+and publication-blocked wording does not supersede the newer Phase 9 Unit 6G
+Open Library records retained above. No migration is reapplied by this merge.
+
+> **2026-10-08 local commit checkpoint:** User-authorized navigation checkpoint 4e1aa35 and primary corrections/applied-migration evidence 542b90f are committed. Remaining review documentation is checkpointed separately. Two P2 navigation findings still block publication; next action is correction, regression/browser verification and independent rereview. No push, deployment or database mutation in this commit step. Earlier test evidence was not rerun.
+
+> **2026-10-08 aggregate Clubs review:** Full unpublished-set GPT-6 Luna max review
+> found two return-context integration defects; Clubs publication is blocked until
+> corrected and independently rereviewed. See [review](../user/clubs/AGGREGATE-PUBLICATION-REVIEW-20261008.md).
+> Phase 9 Unit 6H/M62 rollout status unchanged. No commit/push/deployment/live write.
+
+
+> **2026-10-08 Clubs migration closeout:** User-authorized forward migration
+> `20261008091939 clubs_primary_venue_write_authorization` is applied once through
+> Supabase MCP to verified Bookconnect_reactexpo (ahntbtktjjmvfosgkmgn). Exact
+> policy/RLS/name preflight and 61/61 local artifact checks passed. Live readback
+> confirms five intended policies, unchanged functions/grants/indexes and unchanged
+> venue-link/event-location data. Local filename matches live version and content
+> hash is unchanged. Ledger now 169 entries; historical repair/db push freeze and
+> Phase 9 Unit 6H/M62 rollout pending status are unchanged. No business DML,
+> Storage write, runtime deployment, staging, commit or push. Current evidence:
+> [Clubs migration closeout](../user/clubs/PRIMARY-VENUE-MIGRATION-REVIEW.md). Next: exact local-diff review for a
+> separately authorized scoped commit; do not reapply the migration.
+
+
+> **2026-10-08 aggregate-review correction:** Clubs owner/archive selection gating,
+> lost-response reconciliation and external-removal focus recovery are corrected
+> locally. Fresh Manage/service tests 135/135, TypeScript, web export and local
+> PostgreSQL policy-proposal checks 61/61 pass. Luna max scoped rereview found no
+> actionable residual defect. Read-only live catalog inspection confirmed direct
+> primary-write policy bypasses; forward-migration creation/application approval
+> is pending. No live writes or Git publication occurred. See the
+> [Clubs correction record](../user/clubs/TRACKER.md). Phase 9 Unit 6H and M62 runtime rollout /
+> connected proof pending status remain unchanged.
+
+
+> **2026-10-08 Clubs follow-up:** User-approved venue Remove confirmation and
+> real QueryClient race coverage are implemented locally. Desktop/mobile keyboard
+> checks passed. Club/account web focus handoff is now corrected locally;
+> spoken screen-reader checks are excluded by the user. Connected primary-selection
+> proof remains unverified. See [Clubs tracker](../user/clubs/TRACKER.md). Phase 9 M62 rollout status is unchanged.
+> No new database mutation, migration, Git publication, or deployment occurred.
+
+
+> **2026-10-07 bounded cross-feature Clubs UI correction:** The user authorized
+> local corrections to Manage Venues pending/recovery feedback and club/account
+> response isolation. Scope and verification are owned by
+> [the Clubs app review](../user/clubs/PRIMARY-VENUE-APP-REVIEW.md#bounded-ui-correction-2026-10-07).
+> No Phase 9 runtime, schema, live data, migration, deployment, or M62 gate
+> changed. Desktop/390×844 admin-page visual review and connected selection
+> proof remain unrun; shared history and direct-permission boundaries remain.
+
+> **2026-10-07 cross-feature Clubs migration:** Under explicit user
+> authorization, the Clubs-only primary-venue migration was applied to
+> `ahntbtktjjmvfosgkmgn` as `20261007144356 clubs_admin_primary_venue`; the local
+> source filename matches the live version. M62 remains at `20260913162154` and
+> Phase 9's `M62_RUNTIME_ROLLOUT_AND_CONNECTED_PROOF_PENDING` gate is unchanged.
+> The shared historical repair set and the pending July Clubs/Exchange migration
+> remain untouched; normal production `db push` remains frozen. No Phase 9
+> runtime or business rows changed.

@@ -3,12 +3,14 @@ import { fireEvent, render } from '@testing-library/react-native';
 import NotificationSettingsScreen from '../notification-settings';
 
 const mockReplace = jest.fn();
+let mockSearchParams: { clubOrigin?: string; returnTo?: string; settingsOrigin?: string } = {};
 const mockMutate = jest.fn();
 let mockSession: { user: { id: string } } | null = { user: { id: 'reader-1' } };
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 jest.mock('expo-router', () => ({
+    useLocalSearchParams: () => mockSearchParams,
     router: {
         replace: (...args: unknown[]) => mockReplace(...args),
     },
@@ -43,6 +45,7 @@ jest.mock('@/features/notifications/hooks/useNotifications', () => ({
 describe('NotificationSettingsScreen', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockSearchParams = {};
         mockSession = { user: { id: 'reader-1' } };
     });
 
@@ -75,4 +78,18 @@ describe('NotificationSettingsScreen', () => {
 
         expect(mockMutate).not.toHaveBeenCalled();
     });
+    it('returns to Settings with the invitations origin preserved', () => {
+        mockSearchParams = { returnTo: 'settings', settingsOrigin: 'club-invitations' };
+        const { getByLabelText } = render(<NotificationSettingsScreen />);
+        fireEvent.press(getByLabelText('Go back'));
+        expect(mockReplace).toHaveBeenCalledWith('/(tabs)/profile/settings?returnTo=club-invitations');
+    });
+
+    it.each(['my-clubs', 'archived'])('keeps %s on returning to Settings', (clubOrigin) => {
+        mockSearchParams = { returnTo: 'settings', settingsOrigin: 'club-invitations', clubOrigin };
+        const screen = render(<NotificationSettingsScreen />);
+        fireEvent.press(screen.getByLabelText('Go back'));
+        expect(mockReplace).toHaveBeenCalledWith(`/(tabs)/profile/settings?returnTo=club-invitations&clubOrigin=${clubOrigin}`);
+    });
+
 });

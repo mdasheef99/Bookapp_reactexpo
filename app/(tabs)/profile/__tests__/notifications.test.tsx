@@ -4,12 +4,14 @@ import NotificationsScreen from '../notifications';
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
+let mockSearchParams: { clubOrigin?: string; returnTo?: string; settingsOrigin?: string } = {};
 const mockMarkRead = jest.fn();
 const mockArchive = jest.fn();
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 jest.mock('expo-router', () => ({
+    useLocalSearchParams: () => mockSearchParams,
     router: {
         push: (...args: unknown[]) => mockPush(...args),
         replace: (...args: unknown[]) => mockReplace(...args),
@@ -64,6 +66,7 @@ jest.mock('@/features/notifications/hooks/useNotifications', () => ({
 describe('NotificationsScreen', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockSearchParams = {};
         mockMarkRead.mockResolvedValue({ id: 'delivery-1' });
     });
 
@@ -81,4 +84,18 @@ describe('NotificationsScreen', () => {
         }));
         expect(mockPush).toHaveBeenCalledWith('/(tabs)/exchange/transaction/txn-1');
     });
+    it('returns to Settings with the invitations origin preserved', () => {
+        mockSearchParams = { returnTo: 'settings', settingsOrigin: 'club-invitations' };
+        const { getByLabelText } = render(<NotificationsScreen />);
+        fireEvent.press(getByLabelText('Go back'));
+        expect(mockReplace).toHaveBeenCalledWith('/(tabs)/profile/settings?returnTo=club-invitations');
+    });
+
+    it.each(['my-clubs', 'archived'])('keeps %s on returning to Settings', (clubOrigin) => {
+        mockSearchParams = { returnTo: 'settings', settingsOrigin: 'club-invitations', clubOrigin };
+        const screen = render(<NotificationsScreen />);
+        fireEvent.press(screen.getByLabelText('Go back'));
+        expect(mockReplace).toHaveBeenCalledWith(`/(tabs)/profile/settings?returnTo=club-invitations&clubOrigin=${clubOrigin}`);
+    });
+
 });

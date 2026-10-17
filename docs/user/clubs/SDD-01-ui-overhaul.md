@@ -1,7 +1,18 @@
 # SDD-01: Clubs UI Overhaul
 
-**Status:** draft — awaiting user approval before implementation
-**Branch:** `feat/clubs-ui-overhaul` (from `origin/main` `c5e9714`)
+## Historical proposal status — clarified 2026-10-10
+
+This is the original 2026-08-22 Library-style proposal/audit, not the current
+Clubs implementation-status board or a blanket implementation approval. The
+page-specific [refinement process](./PAGE-REFINEMENT-PROCESS.md) owns the current
+ivory/white/burgundy, Newsreader/Inter direction; the
+[Clubs tracker](./TRACKER.md#current-handoff--2026-10-10-documentation-refresh) owns
+later deliveries, verification gaps and the decision to retain Manage's layout.
+The branch, source line numbers, pending phase table and findings below describe
+the historical proposal. Recheck current code before reusing any finding.
+
+**Historical status:** draft — awaiting approval at the 2026-08-22 checkpoint
+**Historical branch:** `feat/clubs-ui-overhaul` (from `origin/main` `c5e9714`)
 **Depends on:** existing `useTheme()` hook, Library house style, installed libs only
 **Non-goals:** service/API/schema changes, navigation restructuring, new dependencies,
 chat/notifications features (separate plans), venue feature internals.

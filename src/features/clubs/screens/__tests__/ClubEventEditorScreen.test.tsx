@@ -253,4 +253,11 @@ describe('ClubEventEditorScreen', () => {
         });
     });
 
+    it('preserves directory origin when returning to Manage events', async () => {
+        mockUseLocalSearchParams.mockReturnValue({ clubId: 'club-1', returnTo: 'manage', manageTab: 'events', clubOrigin: 'my-clubs' });
+        const { getByLabelText } = render(<ClubEventEditorScreen />);
+        fireEvent.press(getByLabelText('Back to club management'));
+        expect(mockRouterReplace).toHaveBeenCalledWith('/clubs/club-1/manage?tab=events&clubOrigin=my-clubs');
+    });
+
 });

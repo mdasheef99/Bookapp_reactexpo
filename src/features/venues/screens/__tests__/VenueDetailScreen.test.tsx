@@ -82,6 +82,15 @@ describe('VenueDetailScreen', () => {
         expect(router.replace).toHaveBeenCalledWith('/(tabs)/clubs/venues');
     });
 
+    it('preserves the directory origin when returning from a venue detail', () => {
+        mockUseLocalSearchParams.mockReturnValue({ venueId: 'venue-1', clubOrigin: 'my-clubs' });
+        const { getByRole } = render(<VenueDetailScreen />);
+
+        fireEvent.press(getByRole('button', { name: 'Back to venues' }));
+
+        expect(router.replace).toHaveBeenCalledWith('/(tabs)/clubs/venues?clubOrigin=my-clubs');
+    });
+
     it('keeps the initial loading state limited to its spinner', () => {
         mockUseVenueDetail.mockReturnValue({ data: null, isLoading: true, isError: false, error: null });
 

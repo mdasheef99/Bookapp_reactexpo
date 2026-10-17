@@ -3,7 +3,9 @@ jest.mock('expo-router', () => ({
     router: {
         back: (...args: unknown[]) => mockRouterBack(...args),
         push: (...args: unknown[]) => mockRouterPush(...args),
+        replace: (...args: unknown[]) => mockRouterReplace(...args),
     },
+    useLocalSearchParams: () => mockSearchParams,
 }));
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
@@ -14,7 +16,9 @@ const mockUseMarkInvitationRead = jest.fn();
 const mockUseAcceptClubInvitation = jest.fn();
 const mockRouterBack = jest.fn();
 const mockRouterPush = jest.fn();
+const mockRouterReplace = jest.fn();
 const mockUseAuth = jest.fn();
+let mockSearchParams: { clubOrigin?: string } = {};
 
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
@@ -73,6 +77,7 @@ const acceptedInvite = {
 
 beforeEach(() => {
     jest.clearAllMocks();
+    mockSearchParams = {};
     mockUseAuth.mockReturnValue({ user: { id: 'reader-1' } });
     mockUseMyClubInvitationInbox.mockReturnValue({ data: [baseInvite], isLoading: false, isError: false, refetch: jest.fn(), isRefetching: false });
     mockUseMarkInvitationRead.mockReturnValue({ mutateAsync: jest.fn(), isPending: false });
@@ -110,7 +115,20 @@ describe('ClubInvitationsInboxScreen', () => {
 
         fireEvent.press(getByTestId('club-invitations-notification-settings'));
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/profile/settings');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/profile/settings?returnTo=club-invitations');
+    });
+
+    it.each([
+        ['my-clubs', '/(tabs)/clubs?scope=mine'],
+        ['archived', '/(tabs)/clubs?scope=archived'],
+    ])('returns to the originating %s directory from the inbox', async (clubOrigin, expectedHref) => {
+        mockSearchParams = { clubOrigin };
+        const { getByRole } = render(<ClubInvitationsInboxScreen />);
+
+        await waitFor(() => expect(getByRole('button', { name: 'Back to clubs' })).toBeOnTheScreen());
+        fireEvent.press(getByRole('button', { name: 'Back to clubs' }));
+
+        expect(mockRouterReplace).toHaveBeenCalledWith(expectedHref);
     });
 
     it('marks unread invitations read before opening club detail', async () => {
@@ -123,7 +141,7 @@ describe('ClubInvitationsInboxScreen', () => {
         await waitFor(() => {
             expect(markRead).toHaveBeenCalledWith({ invitationId: 'invite-1', clubId: 'club-1', userId: 'reader-1' });
         });
-        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-1');
+        expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-1?returnTo=invitations');
     });
 
     it('accepts an invitation from the inbox', async () => {
@@ -147,7 +165,7 @@ describe('ClubInvitationsInboxScreen', () => {
 
         fireEvent.press(getByTestId('club-invitation-open-invite-1'));
 
-        await waitFor(() => expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-1'));
+        await waitFor(() => expect(mockRouterPush).toHaveBeenCalledWith('/(tabs)/clubs/club-1?returnTo=invitations'));
         expect(markRead).not.toHaveBeenCalled();
     });
 
@@ -225,4 +243,13 @@ describe('ClubInvitationsInboxScreen', () => {
         expect(getAllByText('Current read: Beloved')).toHaveLength(3);
         expect(getAllByText('Updated ' + new Date(acceptedInvite.responded_at).toLocaleString())).toHaveLength(3);
     });
+    it.each(['my-clubs', 'archived'])('carries %s into the Settings detour and directory fallback', (clubOrigin) => {
+        mockSearchParams = { clubOrigin };
+        const screen = render(<ClubInvitationsInboxScreen />);
+        fireEvent.press(screen.getByTestId('club-invitations-notification-settings'));
+        expect(mockRouterPush).toHaveBeenCalledWith(`/(tabs)/profile/settings?returnTo=club-invitations&clubOrigin=${clubOrigin}`);
+        fireEvent.press(screen.getByLabelText('Back to clubs'));
+        expect(mockRouterReplace).toHaveBeenCalledWith(`/(tabs)/clubs?scope=${clubOrigin === 'my-clubs' ? 'mine' : 'archived'}`);
+    });
+
 });

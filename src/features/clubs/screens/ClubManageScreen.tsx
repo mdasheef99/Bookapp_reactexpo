@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, Platform, StyleSheet, TouchableOpacity } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { clubManageColors as colors } from './manage/managePalette';
 import { navigateBackOrFallback } from '@/lib/navigation';
+import { withClubOrigin, clubHomeHref } from '@/features/clubs/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { type GoogleBook } from '@/features/books/services/booksService';
 import {
@@ -34,6 +35,7 @@ import {
     useClubEventVenues,
     useAddClubVenueLink,
     useRemoveClubVenueLink,
+    useSetPrimaryClubVenue,
     useCancelClubEvent,
     useDeleteClubEvent,
     useArchiveClub,
@@ -59,6 +61,7 @@ import {
     ClubManageAnalyticsSection,
     ClubManageEventsSection,
     ClubManageVenuesSection,
+    type PrimaryVenueAction,
     ClubManageLifecycleSection,
     ClubManageReadingScheduleSection,
     ClubManageDiscussionReportsSection,
@@ -96,7 +99,28 @@ const ALL_TABS: TabDef[] = [
 ];
 
 export default function ClubManageScreen() {
-    const { clubId, tab } = useLocalSearchParams<{ clubId: string; tab?: string }>();
+    const { clubId } = useLocalSearchParams<{ clubId: string }>();
+    const { user } = useAuth();
+    const identity = JSON.stringify([clubId, user?.id]);
+    const previousIdentity = useRef(identity);
+    const managementSurface = useRef<View>(null);
+    useEffect(() => {
+        if (previousIdentity.current !== identity && Platform.OS === 'web') {
+            managementSurface.current?.focus();
+        }
+        previousIdentity.current = identity;
+    }, [identity]);
+    // A query observer's refetch follows its current key. Remount the page when
+    // identity changes so old operations cannot confirm against a new club.
+    return (
+        <View ref={managementSurface} role="region" accessibilityLabel="Club management" tabIndex={-1} style={{ flex: 1 }} testID="club-management-surface">
+            <ClubManageScreenContent key={identity} />
+        </View>
+    );
+}
+
+function ClubManageScreenContent() {
+    const { clubId, tab, clubOrigin } = useLocalSearchParams<{ clubId: string; tab?: string; clubOrigin?: string }>();
     const routeTab = typeof tab === 'string'
         ? tab
         : typeof window !== 'undefined' && window.location
@@ -108,6 +132,9 @@ export default function ClubManageScreen() {
     const { data: club, isLoading, isError, refetch: refetchClub } = useClubManageDetail(clubId ?? null);
     const { data: membership, isLoading: isMembershipLoading } = useClubMembership(clubId ?? null, userId);
     const isAdmin = !!userId && !!club && (club.admin_id === userId || membership?.role === 'admin');
+    // The primary RPC authorizes the recorded owner, not any membership admin.
+    // It remains authoritative for current tier/access eligibility.
+    const canSelectPrimaryVenue = !!userId && club?.admin_id === userId && !club.is_archived;
     const isActiveModerator = membership?.role === 'moderator' && membership?.status === 'active';
     const canManageCurrentBook = !!userId && !!club && (isAdmin || isActiveModerator);
 
@@ -157,6 +184,7 @@ export default function ClubManageScreen() {
     const revokeInvitation = useRevokeClubInvitation();
     const addClubVenueLink = useAddClubVenueLink();
     const removeClubVenueLink = useRemoveClubVenueLink();
+    const setPrimaryClubVenue = useSetPrimaryClubVenue();
     const cancelEvent = useCancelClubEvent();
     const deleteEvent = useDeleteClubEvent();
     const archiveClub = useArchiveClub();
@@ -168,10 +196,18 @@ export default function ClubManageScreen() {
 
     const [settings, setSettings] = useState<SettingsDraft | null>(null);
     const [feedback, setFeedback] = useState<FeedbackState>(null);
+    const [primaryVenueAction, setPrimaryVenueAction] = useState<PrimaryVenueAction | null>(null);
+    const primaryVenueBusyRef = useRef(false);
+    const mountedRef = useRef(true);
     const initialRouteTab = routeTab && ALL_TABS.some((item) => item.key === routeTab) ? routeTab : 'current-book';
     const [activeTab, setActiveTab] = useState(initialRouteTab);
     const [showOverride, setShowOverride] = useState(false);
     const [appliedRouteTab, setAppliedRouteTab] = useState<string | null>(null);
+
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => { mountedRef.current = false; };
+    }, []);
 
     useEffect(() => {
         if (club) setSettings(createSettingsDraft(club));
@@ -408,15 +444,15 @@ export default function ClubManageScreen() {
     };
 
     const handleCreateEvent = () => {
-        router.push(`/clubs/${clubId}/events/create?returnTo=manage&manageTab=events`);
+        router.push(withClubOrigin(`/clubs/${clubId}/events/create?returnTo=manage&manageTab=events`, clubOrigin));
     };
 
     const handleEditEvent = (eventId: string) => {
-        router.push(`/clubs/${clubId}/events/${eventId}/edit?returnTo=manage&manageTab=events`);
+        router.push(withClubOrigin(`/clubs/${clubId}/events/${eventId}/edit?returnTo=manage&manageTab=events`, clubOrigin));
     };
 
     const handleAddVenue = () => {
-        router.push(`/clubs/${clubId}/venues?returnTo=manage-venues`);
+        router.push(withClubOrigin(`/clubs/${clubId}/venues?returnTo=manage-venues`, clubOrigin));
     };
 
     const handleRemoveVenue = async (venueId: string) => {
@@ -431,12 +467,72 @@ export default function ClubManageScreen() {
         }
     };
 
+    const handleSetPrimaryVenue = async (venueId: string) => {
+        if (!clubId || !canSelectPrimaryVenue || primaryVenueBusyRef.current) return;
+        primaryVenueBusyRef.current = true;
+        setPrimaryVenueAction({ venueId, state: 'saving' });
+        try {
+            try {
+                await setPrimaryClubVenue.mutateAsync({ clubId, venueId });
+            } catch {
+                if (!mountedRef.current) return;
+                let errorMessage = 'Couldn’t update primary venue. Refresh and try again.';
+                try {
+                    const result = await refetchLinkedVenues();
+                    if (!mountedRef.current) return;
+                    if (!result.isError && Array.isArray(result.data)) {
+                        // A transport failure can occur after the server commits.
+                        // Confirm the same target with the same guards as success.
+                        if (result.data.some((venueLink) => venueLink.club_id === clubId && venueLink.venue_id === venueId && venueLink.is_primary === true && venueLink.venue != null)) {
+                            setPrimaryVenueAction(null);
+                            return;
+                        }
+                        const belongsToClub = result.data.every((venueLink) => venueLink.club_id === clubId);
+                        const currentPrimary = result.data.find((venueLink) => venueLink.is_primary === true);
+                        if (belongsToClub && (!currentPrimary || currentPrimary.venue != null)) {
+                            errorMessage = currentPrimary
+                                ? 'Couldn’t update primary venue. ' + (currentPrimary.venue?.name ?? 'The previous venue') + ' remains primary.'
+                                : 'Couldn’t update primary venue. No primary venue is set.';
+                        }
+                    }
+                } catch {
+                    // Keep the generic recovery message when the current state cannot be confirmed.
+                }
+                if (mountedRef.current) setPrimaryVenueAction({ venueId, state: 'error', errorMessage });
+                return;
+            }
+
+            if (!mountedRef.current) return;
+            try {
+                const result = await refetchLinkedVenues();
+                if (!mountedRef.current) return;
+                const isConfirmed = !result.isError
+                    && Array.isArray(result.data)
+                    && result.data.some((venueLink) => venueLink.club_id === clubId && venueLink.venue_id === venueId && venueLink.is_primary === true && venueLink.venue != null);
+                setPrimaryVenueAction(isConfirmed ? null : {
+                    venueId,
+                    state: 'error',
+                    errorMessage: 'Primary venue update succeeded, but the latest venue list could not confirm this venue as primary. Try again to set it as primary.',
+                });
+            } catch {
+                if (!mountedRef.current) return;
+                setPrimaryVenueAction({
+                    venueId,
+                    state: 'error',
+                    errorMessage: 'Primary venue update succeeded, but the latest venue list could not confirm this venue as primary. Try again to set it as primary.',
+                });
+            }
+        } finally {
+            primaryVenueBusyRef.current = false;
+        }
+    };
+
     const moderatorsCount = members.filter((m) => m.role === 'moderator').length;
 
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]} contentContainerStyle={styles.content}>
             <View style={styles.headerRow}>
-                <TouchableOpacity onPress={() => navigateBackOrFallback(router, `/clubs/${clubId}`)} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                <TouchableOpacity onPress={() => navigateBackOrFallback(router, clubHomeHref(clubId, clubOrigin))} style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                     <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>Manage Club</Text>
@@ -451,7 +547,7 @@ export default function ClubManageScreen() {
             </View>
 
             {feedback && (
-                <View style={[styles.feedbackBanner, { backgroundColor: feedback.type === 'error' ? colors.errorLight : colors.accentLight, borderColor: feedback.type === 'error' ? colors.error : colors.accent }]}>
+                <View accessibilityLiveRegion="polite" style={[styles.feedbackBanner, { backgroundColor: feedback.type === 'error' ? colors.errorLight : colors.accentLight, borderColor: feedback.type === 'error' ? colors.error : colors.accent }]}>
                     <Text style={{ color: feedback.type === 'error' ? colors.error : colors.accent }}>{feedback.message}</Text>
                 </View>
             )}
@@ -562,10 +658,14 @@ export default function ClubManageScreen() {
                 <ClubManageVenuesSection
                     venues={linkedVenues}
                     isLoading={isLinkedVenuesLoading}
-                    isSaving={addClubVenueLink.isPending || removeClubVenueLink.isPending}
+                    isSavingLinks={addClubVenueLink.isPending || removeClubVenueLink.isPending}
+                    primaryAction={primaryVenueAction}
+                    canSelectPrimary={canSelectPrimaryVenue}
                     colors={colors}
                     onAddVenue={handleAddVenue}
                     onRemoveVenue={handleRemoveVenue}
+                    onSetPrimary={handleSetPrimaryVenue}
+                    onRetryPrimary={handleSetPrimaryVenue}
                 />
             )}
 

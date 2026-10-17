@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { navigateBackOrFallback } from '@/lib/navigation';
+import { withClubOrigin } from '@/features/clubs/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useViewerMembershipTier } from '@/features/clubs/hooks/useViewerMembershipTier';
 import { useClubEvent, useClubEventVenues, useClubMembership, useClubPublicDetail, useCreateClubEvent, useUpdateClubEvent } from '@/features/clubs/hooks/useClubs';
@@ -140,12 +141,13 @@ function WebPickerField({
 }
 
 export default function ClubEventEditorScreen() {
-    const { clubId, eventId, preselectedVenueId, returnTo, manageTab, draft } = useLocalSearchParams<{
+    const { clubId, eventId, preselectedVenueId, returnTo, manageTab, draft, clubOrigin } = useLocalSearchParams<{
         clubId: string;
         eventId?: string;
         preselectedVenueId?: string;
         returnTo?: string;
         manageTab?: string;
+        clubOrigin?: string;
         draft?: string;
     }>();
     const isEditing = !!eventId;
@@ -229,8 +231,8 @@ export default function ClubEventEditorScreen() {
     const canCreate = canCreateClubEvents({ userId, club, role: membership?.role, status: membership?.status, membershipTier: viewerMembershipTier });
     const canManageCurrentEvent = event ? canManageClubEvent({ userId, club, role: membership?.role, status: membership?.status, membershipTier: viewerMembershipTier, event }) : false;
     const canSubmit = isEditing ? canManageCurrentEvent : canCreate;
-    const manageDestination = `/clubs/${clubId}/manage${manageTab ? `?tab=${manageTab}` : ''}`;
-    const exitDestination = returnTo === 'manage' ? manageDestination : `/clubs/${clubId}/events`;
+    const manageDestination = withClubOrigin(`/clubs/${clubId}/manage${manageTab ? `?tab=${manageTab}` : ''}`, clubOrigin);
+    const exitDestination = returnTo === 'manage' ? manageDestination : withClubOrigin(`/clubs/${clubId}/events`, clubOrigin);
     const venuePickerReturnQuery = new URLSearchParams({
         returnTo: 'event-editor',
         editorMode: isEditing ? 'edit' : 'create',
@@ -472,7 +474,7 @@ export default function ClubEventEditorScreen() {
                     {hasLinkedVenues ? <View style={styles.row}><TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: locationMode === 'linked_venue' }} onPress={() => setLocationMode('linked_venue')} style={[styles.choiceButton, { backgroundColor: locationMode === 'linked_venue' ? colors.accent : colors.bgPrimary, borderColor: locationMode === 'linked_venue' ? colors.accent : colors.border }]} testID="club-event-location-linked"><Text style={[styles.choiceText, { color: locationMode === 'linked_venue' ? '#FFFFFF' : colors.textPrimary }]}>Use linked venue</Text></TouchableOpacity><TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: locationMode === 'manual_location' }} onPress={() => setLocationMode('manual_location')} style={[styles.choiceButton, { backgroundColor: locationMode === 'manual_location' ? colors.accent : colors.bgPrimary, borderColor: locationMode === 'manual_location' ? colors.accent : colors.border }]} testID="club-event-location-manual"><Text style={[styles.choiceText, { color: locationMode === 'manual_location' ? '#FFFFFF' : colors.textPrimary }]}>Enter meetup place</Text></TouchableOpacity></View> : <Text style={[styles.sectionBody, { color: colors.textSecondary }]}>This club does not have a linked venue yet, so this event will use a meetup-place field.</Text>}
                     {locationMode === 'linked_venue' && hasLinkedVenues ? <>
                         <TouchableOpacity
-                            onPress={() => router.push(`/clubs/${clubId}/venues?${venuePickerReturnQuery}`)}
+                            onPress={() => router.push(withClubOrigin(`/clubs/${clubId}/venues?${venuePickerReturnQuery}`, clubOrigin))}
                             style={[styles.secondaryActionButton, { borderColor: colors.accent, marginBottom: 12 }]}
                             testID="event-browse-venues"
                         >
