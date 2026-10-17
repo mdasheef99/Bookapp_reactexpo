@@ -60,3 +60,7 @@ supabase/.temp/
 
 # IDE/tooling artifacts
 .codex/
+
+# Local QA scratch and generated coverage
+.tmp/
+coverage/
