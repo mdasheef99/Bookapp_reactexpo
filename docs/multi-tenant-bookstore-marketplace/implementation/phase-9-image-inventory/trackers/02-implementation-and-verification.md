@@ -6097,3 +6097,7 @@ Scope and evidence: tracker 37 sections 61-63 (loading-flash fix, live Select ed
 ## 2026-10-17 - Edition sheet display fixes, findings, and review fixes (client)
 
 Scope and evidence: tracker 37 sections 64-66 (live Antifragile identity check, display fixes and read-only investigations, review of 76348f3..c0c485b with bounded fixes). Files: EditionOptionList.tsx, EditionIdentityFix.tsx, CandidateEditionPicker.tsx, BatchReviewCard.tsx, ownerEditionPickerQueries.ts, tests. Full Jest 3,514 passed / 0 failed / 4 skipped; tsc clean. Live M76 readback matches the file. No migration; no Supabase schema, Render, Owner API or client deployment; no database or storage writes.
+
+## 2026-10-17 - Matching variants (M77), exhausted-search recovery (M75), applied
+
+Date/session: 2026-10-17, Claude Code session in the codex/edition-picker worktree. Scope: Owner-authorized worker rules 6-9, M75 and M77 creation, review, preflight and application; deployments and push held. Code commit 850121e (local). Gates: worker suites 234; full Jest 3,548 passed / 0 failed / 4 skipped; tsc clean; M77 SQL 48/48; M75 SQL 11/11; 4,000-pair worker/SQL parity check, 0 disagreements; full phase9 DB 761/764 (3 pre-existing phase9MetadataFoundation failures, reproduced on the clean committed code). Live: M75 20261017083027, M77 20261017083206, readback in tracker 37 §67. Database writes by this session: only the two migrations (functions only). Render worker, Owner API and client release held.
