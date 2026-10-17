@@ -28,8 +28,8 @@ beforeEach(() => {
 describe('notesService', () => {
   // ──────────────────── NOTE_TAG_CONFIG ────────────────────
   describe('NOTE_TAG_CONFIG', () => {
-    it('has all 4 tag types with required properties', () => {
-      const tags: NoteTag[] = ['quote', 'reflect', 'distill', 'apply'];
+    it('has all five tag types with required properties', () => {
+      const tags: NoteTag[] = ['quote', 'reflect', 'distill', 'apply', 'question'];
       tags.forEach((tag) => {
         expect(NOTE_TAG_CONFIG[tag]).toBeDefined();
         expect(NOTE_TAG_CONFIG[tag]).toHaveProperty('label');
@@ -106,6 +106,12 @@ describe('notesService', () => {
 
   // ──────────────────── createNote ────────────────────
   describe('createNote', () => {
+    it.each([null, 'question'] as const)('preserves category %s in the storage payload', async tag => {
+      const builder = mockQuery({ data: { id: 'n1', tag }, error: null });
+      (supabase.from as jest.Mock).mockReturnValueOnce(builder);
+      await notesService.createNote('u1', 'ub1', 'Text', tag);
+      expect(builder.insert).toHaveBeenCalledWith(expect.objectContaining({ tag, page_number: null }));
+    });
     it('inserts note with correct fields', async () => {
       const createdNote = { id: 'n1', content: 'Test', tag: 'quote' };
       const builder = mockQuery({ data: createdNote, error: null });

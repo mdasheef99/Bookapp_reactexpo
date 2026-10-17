@@ -6,21 +6,21 @@ import { NoteTag, NOTE_TAG_CONFIG } from '@/features/books/services/notesService
 
 interface TagSelectorProps {
     selected: NoteTag | null;
-    onChange: (tag: NoteTag) => void;
+    onChange: (tag: NoteTag | null) => void;
     /** When true, allows deselecting (used for filtering) */
     allowDeselect?: boolean;
     /** Compact mode for inline use */
     compact?: boolean;
 }
 
-const TAGS: NoteTag[] = ['quote', 'reflect', 'distill', 'apply'];
+const TAGS: NoteTag[] = ['quote', 'reflect', 'distill', 'apply', 'question'];
 
 export const TagSelector = ({ selected, onChange, allowDeselect = false, compact = false }: TagSelectorProps) => {
     const { colors } = useTheme();
 
     const handlePress = (tag: NoteTag) => {
         if (allowDeselect && selected === tag) {
-            onChange(null as any); // Deselect
+            onChange(null);
         } else {
             onChange(tag);
         }

@@ -1,16 +1,20 @@
 import { supabase } from '@/lib/supabase';
+import { getWordCount, NOTE_WORD_LIMIT, capWords } from '@/features/books/utils/ocrWordCap';
+import type { NoteCategory } from '@/features/books/notes/manualNoteContract';
 
-export type NoteTag = 'quote' | 'reflect' | 'distill' | 'apply';
+export type NoteTag = NoteCategory;
 
 export interface ReadingNote {
     id: string;
     user_id: string;
     user_book_id: string;
     content: string;
-    tag: NoteTag;
+    tag: NoteTag | null;
     page_number: number | null;
     created_at: string;
     updated_at: string;
+    version?: number;
+    last_operation_id?: string | null;
 }
 
 export const NOTE_TAG_CONFIG: Record<NoteTag, { label: string; icon: string; color: string; bgColor: string; description: string }> = {
@@ -22,25 +26,32 @@ export const NOTE_TAG_CONFIG: Record<NoteTag, { label: string; icon: string; col
         description: 'Passages, excerpts, or favorite lines',
     },
     reflect: {
-        label: 'Reflect',
+        label: 'Thought',
         icon: 'bulb-outline',
         color: '#7C3AED',
         bgColor: 'rgba(124, 58, 237, 0.12)',
-        description: 'Personal thoughts, reactions, or questions',
+        description: 'Your reactions, interpretations, or connections',
     },
     distill: {
-        label: 'Distill',
+        label: 'Takeaway',
         icon: 'flask-outline',
         color: '#D97706',
         bgColor: 'rgba(217, 119, 6, 0.12)',
-        description: 'Key takeaways, summaries, or core ideas',
+        description: 'An important idea in your own words',
     },
     apply: {
-        label: 'Apply',
+        label: 'Action',
         icon: 'rocket-outline',
         color: '#059669',
         bgColor: 'rgba(5, 150, 105, 0.12)',
-        description: 'Actions, habits, or experiments to try',
+        description: 'Something you want to try or put into practice',
+    },
+    question: {
+        label: 'Question',
+        icon: 'help-circle-outline',
+        color: '#6366F1',
+        bgColor: 'rgba(99, 102, 241, 0.12)',
+        description: 'Something you want to understand or explore',
     },
 };
 
@@ -79,21 +90,33 @@ export const notesService = {
     },
 
     /**
-     * Create a new reading note.
+     * Create a new reading note. Enforces SDD-03 500w cap client + RPC.
      */
     async createNote(
         userId: string,
         userBookId: string,
         content: string,
-        tag: NoteTag,
+        tag: NoteTag | null,
         pageNumber?: number
     ): Promise<ReadingNote> {
+        const trimmed = content.trim();
+        if (!trimmed) throw new Error('Note content cannot be empty.');
+        if (getWordCount(trimmed) > NOTE_WORD_LIMIT) {
+            throw new Error(`Note exceeds ${NOTE_WORD_LIMIT} words.`);
+        }
+        // Server re-check via RPC (no trust client alone)
+        const { data: rpcOk, error: rpcError } = await supabase.rpc('check_note_word_limit', {
+            p_content: trimmed,
+        });
+        if (rpcError) throw rpcError;
+        if (rpcOk === false) throw new Error(`Note exceeds ${NOTE_WORD_LIMIT} words (server check).`);
+
         const { data, error } = await supabase
             .from('reading_notes')
             .insert({
                 user_id: userId,
                 user_book_id: userBookId,
-                content,
+                content: trimmed,
                 tag,
                 page_number: pageNumber || null,
             })
@@ -105,16 +128,29 @@ export const notesService = {
     },
 
     /**
-     * Update an existing note.
+     * Update an existing note. Caps content at 500w if content is being updated.
      */
     async updateNote(
         noteId: string,
         updates: {
             content?: string;
-            tag?: NoteTag;
+            tag?: NoteTag | null;
             page_number?: number | null;
         }
     ): Promise<ReadingNote> {
+        if (updates.content !== undefined) {
+            const trimmed = updates.content.trim();
+            if (!trimmed) throw new Error('Note content cannot be empty.');
+            if (getWordCount(trimmed) > NOTE_WORD_LIMIT) {
+                throw new Error(`Note exceeds ${NOTE_WORD_LIMIT} words.`);
+            }
+            const { data: rpcOk, error: rpcError } = await supabase.rpc('check_note_word_limit', {
+                p_content: trimmed,
+            });
+            if (rpcError) throw rpcError;
+            if (rpcOk === false) throw new Error(`Note exceeds ${NOTE_WORD_LIMIT} words (server check).`);
+            updates = { ...updates, content: trimmed };
+        }
         const { data, error } = await supabase
             .from('reading_notes')
             .update({

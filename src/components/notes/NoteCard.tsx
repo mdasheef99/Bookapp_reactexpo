@@ -1,25 +1,29 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
+import { useNoteColors } from './ManualNoteUi';
 import { ReadingNote, NoteTag, NOTE_TAG_CONFIG } from '@/features/books/services/notesService';
+import { ManualNote, categoryLabel } from '@/features/books/notes/manualNoteContract';
 
 interface NoteCardProps {
-    note: ReadingNote;
-    onEdit: (note: ReadingNote) => void;
-    onDelete: (noteId: string) => void;
+    note: ReadingNote | ManualNote;
+    onRead?: () => void;
+    onEdit?: (note: ReadingNote) => void;
+    onDelete?: (noteId: string) => void;
 }
 
-export const NoteCard = ({ note, onEdit, onDelete }: NoteCardProps) => {
-    const { colors } = useTheme();
-    const tagConfig = NOTE_TAG_CONFIG[note.tag];
+export const NoteCard = ({ note, onRead, onEdit, onDelete }: NoteCardProps) => {
+    const colors = useNoteColors();
+    const tagConfig = note.tag ? NOTE_TAG_CONFIG[note.tag as NoteTag] : undefined;
 
     const handleLongPress = () => {
+        if (onRead) { onRead(); return; }
+        if (!onEdit || !onDelete) return;
         Alert.alert(
             'Note Options',
             '',
             [
-                { text: 'Edit', onPress: () => onEdit(note) },
+                { text: 'Edit', onPress: () => onEdit(note as ReadingNote) },
                 {
                     text: 'Delete',
                     onPress: () => {
@@ -55,7 +59,9 @@ export const NoteCard = ({ note, onEdit, onDelete }: NoteCardProps) => {
     return (
         <TouchableOpacity
             onLongPress={handleLongPress}
-            onPress={() => onEdit(note)}
+            onPress={() => onRead ? onRead() : onEdit?.(note as ReadingNote)}
+            accessibilityRole="button"
+            accessibilityLabel={`Read note${note.tag ? `, ${categoryLabel(note.tag)}` : ''}${note.page_number ? `, page ${note.page_number}` : ''}`}
             activeOpacity={0.8}
             style={[
                 styles.card,
@@ -65,19 +71,18 @@ export const NoteCard = ({ note, onEdit, onDelete }: NoteCardProps) => {
                 },
                 isQuote && {
                     borderLeftWidth: 3,
-                    borderLeftColor: tagConfig.color,
+                    borderLeftColor: tagConfig?.color ?? colors.accent,
                 },
             ]}
         >
             {/* Tag Badge + Timestamp Row */}
             <View style={styles.topRow}>
-                <View style={[styles.tagBadge, { backgroundColor: tagConfig.bgColor }]}>
-                    <Ionicons name={tagConfig.icon as any} size={12} color={tagConfig.color} />
-                    <Text style={[styles.tagLabel, { color: tagConfig.color }]}>
-                        {tagConfig.label}
+                {note.tag && <View style={[styles.tagBadge, { backgroundColor: colors.bgSecondary }]}>
+                    <Text style={[styles.tagLabel, { color: colors.textSecondary }]}>
+                        {categoryLabel(note.tag)}
                     </Text>
-                </View>
-                <Text style={[styles.timestamp, { color: colors.textTertiary }]}>
+                </View>}
+                <Text style={[styles.timestamp, { color: colors.textSecondary }]}>
                     {formattedDate} • {formattedTime}
                 </Text>
             </View>
@@ -87,18 +92,17 @@ export const NoteCard = ({ note, onEdit, onDelete }: NoteCardProps) => {
                 style={[
                     styles.content,
                     { color: colors.textPrimary },
-                    isQuote && styles.quoteContent,
                 ]}
                 numberOfLines={6}
             >
-                {isQuote ? `"${note.content}"` : note.content}
+                {note.content}
             </Text>
 
             {/* Page Number (if set) */}
             {note.page_number && (
                 <View style={styles.pageRow}>
-                    <Ionicons name="document-text-outline" size={12} color={colors.textTertiary} />
-                    <Text style={[styles.pageText, { color: colors.textTertiary }]}>
+                    <Ionicons name="document-text-outline" size={12} color={colors.textSecondary} />
+                    <Text style={[styles.pageText, { color: colors.textSecondary }]}>
                         Page {note.page_number}
                     </Text>
                 </View>
@@ -121,6 +125,8 @@ const styles = StyleSheet.create({
     },
     topRow: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 10,
@@ -134,13 +140,12 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     tagLabel: {
-        fontSize: 11,
+        fontSize: 14,
         fontWeight: '700',
-        textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
     timestamp: {
-        fontSize: 11,
+        fontSize: 13,
     },
     content: {
         fontSize: 15,
@@ -157,6 +162,6 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     pageText: {
-        fontSize: 12,
+        fontSize: 14,
     },
 });
