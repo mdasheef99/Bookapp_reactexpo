@@ -9,7 +9,7 @@ import NoteReaderScreen from '../../../../app/(tabs)/library/note';
 import NotesScreen from '../../../../app/(tabs)/library/notes';
 import BookDetailScreen from '../../../../app/(tabs)/library/[bookId]';
 import { VaultPagesList } from '@/components/library/VaultPagesList';
-import { createManualNoteDeleteAdapter, manualNoteDeleteAdapter, MANUAL_NOTE_WRITE_GATES, manualNotesGateway, manualNoteSaveAdapter, noteSaves } from '@/features/books/notes/manualNotesGateway';
+import { createManualNoteSaveAdapter, createManualNoteDeleteAdapter, manualNoteDeleteAdapter, MANUAL_NOTE_WRITE_GATES, manualNotesGateway, manualNoteSaveAdapter, noteSaves } from '@/features/books/notes/manualNotesGateway';
 import * as noteGatewayModule from '@/features/books/notes/manualNotesGateway';
 import { ManualNote, NoteSubmission, NoteWriteError, noteKeys } from '@/features/books/notes/manualNoteContract';
 import { registerNoteContext } from '@/features/books/notes/noteNavigation';
@@ -65,7 +65,7 @@ let client: QueryClient;
 let noteRecord: ManualNote | null;
 const wrap = (element: React.ReactElement) => <QueryClientProvider client={client}>{element}</QueryClientProvider>;
 async function settle() { await act(async () => { for (let n = 0; n < 8; n++) await Promise.resolve(); }); }
-/** Authorize only this test's simulated delete path; production save/delete gates remain false. */
+/** Route simulated deletion through the production adapter with mocked transport. */
 function authorizeSimulatedReaderDeletion() {
   const adapter = createManualNoteDeleteAdapter({ ...MANUAL_NOTE_WRITE_GATES, ownedBookWrites: true });
   jest.spyOn(noteGatewayModule, 'isManualNoteDeleteAuthorized').mockReturnValue(true);
@@ -96,7 +96,7 @@ it.each(['record', 'book'] as const)('retains an initialized dirty editor after 
   fireEvent.changeText(screen.getByLabelText('Note text'), 'Still editable'); expect(screen.getByLabelText('Note text').props.value).toBe('Still editable');
   expect(screen.getByText(/refresh.*failed/i)).toBeTruthy();
 });
-it('rejects production Save before dispatch through the mounted editor and retains all fields', async () => {
+it('retains all fields when Save is explicitly held through the mounted editor', async () => {
   delete mockParams.noteId; const write = jest.spyOn(manualNoteSaveAdapter, 'write');
   render(wrap(<NoteComposeScreen />)); await screen.findByRole('button', { name: 'Write note' });
   fireEvent.press(screen.getByRole('radio', { name: 'Question' })); fireEvent.press(screen.getByRole('button', { name: 'Skip category' }));
@@ -105,6 +105,7 @@ it('rejects production Save before dispatch through the mounted editor and retai
   fireEvent.press(screen.getByRole('button', { name: 'Save note' })); expect(screen.getByText('Remove 1 word to save. Your text has been kept.')).toBeTruthy();
   expect(screen.getByLabelText('Note text').props.value).toBe(tooLong); expect(write).not.toHaveBeenCalled();
   fireEvent.changeText(screen.getByLabelText('Note text'), 'Complete retained draft'); fireEvent.changeText(screen.getByLabelText('Page, optional'), '24');
+  write.mockImplementation(createManualNoteSaveAdapter({ ownedBookWrites: false, stableCreateReconciliation: false, optionalFiveCategories: false, serverManagedEditVersion: false }).write);
   fireEvent.press(screen.getByRole('button', { name: 'Save note' })); await screen.findByText("Saving isn't available yet. Your text is still here.");
   expect(screen.getByLabelText('Note text').props.value).toBe('Complete retained draft'); expect(screen.getByLabelText('Page, optional').props.value).toBe('24');
   expect(write).toHaveBeenCalledWith(expect.objectContaining({ tag: null, page_number: 24 })); expect(supabase.from).not.toHaveBeenCalled(); expect(mockRouter.replace).not.toHaveBeenCalled();
@@ -131,7 +132,8 @@ it.each(['missing', 'failed'] as const)('renders the reader %s state without sho
   render(wrap(<NoteReaderScreen />)); await screen.findByText("This note is missing or couldn't be opened.");
   expect(screen.queryByText(original.content)).toBeNull(); expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
 });
-it('keeps production Delete disabled without opening a dialog or dispatching', async () => {
+it('keeps Delete disabled when capabilities are explicitly held, without dispatching', async () => {
+  jest.spyOn(noteGatewayModule, 'isManualNoteDeleteAuthorized').mockReturnValue(false);
   const remove = jest.spyOn(manualNoteDeleteAdapter, 'remove');
   render(wrap(<NoteReaderScreen />)); await screen.findByText(original.content);
   const button = screen.getByRole('button', { name: 'Delete note' });
@@ -139,7 +141,7 @@ it('keeps production Delete disabled without opening a dialog or dispatching', a
   fireEvent.press(button);
   expect(screen.queryByText('Delete this note?')).toBeNull();
   expect(remove).not.toHaveBeenCalled(); expect(supabase.from).not.toHaveBeenCalled();
-  expect(Object.values(MANUAL_NOTE_WRITE_GATES)).toEqual([false, false, false, false]);
+  expect(Object.values(MANUAL_NOTE_WRITE_GATES)).toEqual([true, true, true, true]);
 });
 it('refreshes the real collection cache after confirmed simulated reader deletion', async () => {
   authorizeSimulatedReaderDeletion();

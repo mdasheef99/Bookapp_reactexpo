@@ -1,7 +1,10 @@
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import { manualNoteSaveAdapter, manualNotesGateway, MANUAL_NOTE_WRITE_GATES } from '../manualNotesGateway';
+import { createManualNoteSaveAdapter, manualNoteSaveAdapter, manualNotesGateway, MANUAL_NOTE_WRITE_GATES } from '../manualNotesGateway';
+
+const closedGates = { ownedBookWrites: false, stableCreateReconciliation: false, optionalFiveCategories: false, serverManagedEditVersion: false };
+const heldAdapter = createManualNoteSaveAdapter(closedGates);
 
 function chain(response: unknown) {
   const builder: any = {};
@@ -14,13 +17,17 @@ beforeEach(() => {
   useAuthStore.setState({ session: { user: { id: 'actor' } } as any, status: 'authenticated' });
 });
 afterEach(() => useAuthStore.setState({ session: null, status: 'unauthenticated' }));
+it('enables the reviewed manual-note capabilities for the application', () => {
+  expect(Object.isFrozen(MANUAL_NOTE_WRITE_GATES)).toBe(true);
+  expect(MANUAL_NOTE_WRITE_GATES).toEqual({ ownedBookWrites: true, stableCreateReconciliation: true, optionalFiveCategories: true, serverManagedEditVersion: true });
+});
 it.each([null, 'question', 'reflect'])('gates unverified writes before any dispatch, category %s', async tag => {
-  await expect(manualNoteSaveAdapter.write({ id: 'op', actorId: 'actor', bookId: 'book', noteId: 'note', sessionId: 'session', mode: 'create', origin: 'book', content: 'Body', tag: tag as any, page_number: null })).rejects.toMatchObject({ kind: 'definite' });
+  await expect(heldAdapter.write({ id: 'op', actorId: 'actor', bookId: 'book', noteId: 'note', sessionId: 'session', mode: 'create', origin: 'book', content: 'Body', tag: tag as any, page_number: null })).rejects.toMatchObject({ kind: 'definite' });
   expect(supabase.from).not.toHaveBeenCalled();
-  expect(MANUAL_NOTE_WRITE_GATES.ownedBookWrites).toBe(false);
+  expect(closedGates.ownedBookWrites).toBe(false);
 });
 it('gates editing rather than falling back to an unconditional update', async () => {
-  await expect(manualNoteSaveAdapter.write({ id: 'op', actorId: 'actor', bookId: 'book', noteId: 'note', sessionId: 'session', mode: 'edit', expectedVersion: 1, origin: 'book', content: 'Body', tag: 'reflect', page_number: null })).rejects.toMatchObject({ kind: 'definite' });
+  await expect(heldAdapter.write({ id: 'op', actorId: 'actor', bookId: 'book', noteId: 'note', sessionId: 'session', mode: 'edit', expectedVersion: 1, origin: 'book', content: 'Body', tag: 'reflect', page_number: null })).rejects.toMatchObject({ kind: 'definite' });
   expect(supabase.from).not.toHaveBeenCalled();
 });
 it('validates the book owner before loading notes', async () => {

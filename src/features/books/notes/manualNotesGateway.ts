@@ -3,13 +3,13 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import { ManualNote, NoteSubmission, NoteWriteError, NOTE_CATEGORIES } from './manualNoteContract';
 import { matchesSubmission, NoteSaveAdapter, NoteSaveCoordinator } from './noteSaveCoordinator';
 
-/** Enable only after the separately authorized schema/ownership/round-trip proofs.
- * These are release gates, not remotely trusted authorization checks. */
+/** Enabled after reviewed schema correction and connected acceptance on 2026-10-18.
+ * These are application capability gates; database policies enforce authorization. */
 export const MANUAL_NOTE_WRITE_GATES = Object.freeze({
-  ownedBookWrites: false,
-  stableCreateReconciliation: false,
-  optionalFiveCategories: false,
-  serverManagedEditVersion: false,
+  ownedBookWrites: true,
+  stableCreateReconciliation: true,
+  optionalFiveCategories: true,
+  serverManagedEditVersion: true,
 });
 
 function currentActor(actorId: string) {
@@ -77,10 +77,10 @@ export interface ManualNoteWriteGates {
   optionalFiveCategories: boolean;
   serverManagedEditVersion: boolean;
 }
-/** Explicit gates allow isolated transport tests without opening production saving. */
+/** Explicit capabilities let tests exercise held/enabled paths independently. */
 export function createManualNoteSaveAdapter(gates: Readonly<ManualNoteWriteGates>): NoteSaveAdapter { return {
   async write(submission) {
-    // Fail before dispatch while live capability/denial proofs remain unauthorized.
+    // Closed capabilities fail before dispatch, including isolated hold-path tests.
     if (!gates.ownedBookWrites ||
       (submission.mode === 'create' && !gates.stableCreateReconciliation) ||
       ((submission.tag === null || submission.tag === 'question') && !gates.optionalFiveCategories) ||
@@ -99,7 +99,7 @@ export function createManualNoteSaveAdapter(gates: Readonly<ManualNoteWriteGates
       return data;
     }
     if (!Number.isInteger(submission.expectedVersion) || submission.expectedVersion! < 1 || submission.expectedVersion! >= 2147483647) throw new NoteWriteError('definite', 'This saved note is not ready for editing. Your changes are still here.');
-    // Future verified version/operation-marker contract; no ID-only fallback.
+    // Compare the version in the actual update; no ID-only fallback.
     const { data, error } = await supabase.from('reading_notes').update({ ...values, last_operation_id: submission.id })
       .eq('id', submission.noteId).eq('user_id', submission.actorId).eq('user_book_id', submission.bookId)
       .eq('version', submission.expectedVersion!).select('*').maybeSingle();

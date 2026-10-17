@@ -15,6 +15,7 @@ function response(data: unknown) {
   return builder;
 }
 const ownedBook = () => response({ id: 'book', user_id: 'actor', book: { title: 'Book' } });
+const closedGates = { ownedBookWrites: false, stableCreateReconciliation: false, optionalFiveCategories: false, serverManagedEditVersion: false };
 const authorizedAdapter = () => createManualNoteDeleteAdapter({ ...MANUAL_NOTE_WRITE_GATES, ownedBookWrites: true });
 
 beforeEach(() => {
@@ -24,19 +25,17 @@ beforeEach(() => {
 afterEach(() => useAuthStore.setState({ session: null, status: 'unauthenticated' }));
 
 it('gates delete before any dispatch while ownedBookWrites is false', async () => {
-  const adapter = createManualNoteDeleteAdapter(MANUAL_NOTE_WRITE_GATES);
+  const adapter = createManualNoteDeleteAdapter(closedGates);
   await expect(adapter.remove('actor', 'book', 'note')).rejects.toMatchObject({ kind: 'definite' });
   expect(supabase.from).not.toHaveBeenCalled();
-  expect(MANUAL_NOTE_WRITE_GATES.ownedBookWrites).toBe(false);
+  expect(isManualNoteDeleteAuthorized(closedGates)).toBe(false);
 });
 
-it('gates the default delete adapter without dispatching', async () => {
-  await expect(manualNoteDeleteAdapter.remove('actor', 'book', 'note')).rejects.toMatchObject({
-    kind: 'definite',
-    message: "Deleting isn't available yet.",
-  });
-  expect(supabase.from).not.toHaveBeenCalled();
-  expect(isManualNoteDeleteAuthorized()).toBe(false);
+it('enables the default delete adapter and still checks owned-book identity', async () => {
+  (supabase.from as jest.Mock).mockReturnValueOnce(ownedBook()).mockReturnValueOnce(response([{ id: 'note' }]));
+  await expect(manualNoteDeleteAdapter.remove('actor', 'book', 'note')).resolves.toBeUndefined();
+  expect((supabase.from as jest.Mock).mock.calls).toEqual([['user_books'], ['reading_notes']]);
+  expect(isManualNoteDeleteAuthorized()).toBe(true);
 });
 
 it('dispatches one owned deletion through the real adapter with isolated authorization', async () => {
@@ -47,8 +46,8 @@ it('dispatches one owned deletion through the real adapter with isolated authori
   expect(deletion.delete).toHaveBeenCalledTimes(1);
   expect(deletion.eq.mock.calls).toEqual([['id', 'note'], ['user_id', 'actor'], ['user_book_id', 'book']]);
   expect(deletion.select).toHaveBeenCalledWith('id');
-  expect(Object.values(MANUAL_NOTE_WRITE_GATES)).toEqual([false, false, false, false]);
-  expect(isManualNoteDeleteAuthorized()).toBe(false);
+  expect(Object.values(MANUAL_NOTE_WRITE_GATES)).toEqual([true, true, true, true]);
+  expect(isManualNoteDeleteAuthorized()).toBe(true);
 });
 
 it.each([{ rows: [] }, { rows: [{ id: 'note' }, { id: 'other' }] }])('does not confirm a deletion with an unexpected returned row count: $rows', async ({ rows }) => {
