@@ -103,7 +103,7 @@ New private helpers revoke public/client execution; public worker wrappers are s
 
 ## 5. Current migration ledger and shared application/readback audit
 
-Current ledger: M73 below remains APPLIED_VERIFIED and disabled. M74 is now APPLIED_VERIFIED / live 20261012140853 under separate Owner authority; §15.3 records application/readback. §14.3 retains the historical local-only creation checkpoint.
+Current ledger: M76 is live 20261016153615 (§58); M75 is live 20261017083027 and M77 is live 20261017083206 (§67). M73 below remains APPLIED_VERIFIED and disabled. M74 is now APPLIED_VERIFIED / live 20261012140853 under separate Owner authority; §15.3 records application/readback. §14.3 retains the historical local-only creation checkpoint.
 
 
 | Item | Exact evidence |
@@ -1098,7 +1098,7 @@ Proposed M75 only: make exhausted expired edition requests report failed, and le
 
 Focused proof must cover expired fifth attempt, active fifth lease, reclaimable earlier attempt, wrong Owner/card/generation, command replay/concurrent fresh requests, chosen/selling preservation, and late stale completion. Review precedes a fresh exact-project preflight and conditional application. The existing API/client protocol remains unchanged; no Render/API rebuild is required.
 
-Proposed filename: 20261013000075_marketplace_phase9_edition_picker_exhausted_lookup_recovery.sql. M75 is PROPOSED / NOT_CREATED / NOT_APPLIED; no migration file or SQL mutation has occurred. The repository entrypoint separately gates file creation and live application. Owner authorization is requested for that exact correction workflow.
+Superseded 2026-10-17 by §67: M75 was created as 20261017000075_marketplace_phase9_edition_picker_exhausted_lookup_recovery.sql and applied as 20261017083027. Historical text follows. Proposed filename: 20261013000075_marketplace_phase9_edition_picker_exhausted_lookup_recovery.sql. M75 is PROPOSED / NOT_CREATED / NOT_APPLIED; no migration file or SQL mutation has occurred. The repository entrypoint separately gates file creation and live application. Owner authorization is requested for that exact correction workflow.
 
 Current mutations: one successful Owner API deployment to version16 and a local preview restart. No registry activation, shared job/metadata/selection/inventory/Auth/Storage mutation, migration, commit/push or additional Render deployment. M65-M74 and all product files are preserved. Only the sixteen existing routed documentation paths are updated; they remain uncommitted.
 
@@ -1680,5 +1680,7 @@ Tests: M77 SQL suite 48/48, 10 expected RED with M77_BASELINE=1; M75 suite 11/11
 Preflight (read-only, project ahntbtktjjmvfosgkmgn re-verified via get_project_url): latest migration 20261016153615; md5(prosrc) and ACLs of the five replaced functions equal the local pre-M75/M77 stack; new helpers absent; one affected job, 4ffe137d (candidate f387251c), in_progress 5/5, lease expired 2026-10-12.
 
 Application ledger: two apply_migration attempts for M75 failed with an MCP "Connection terminated due to connection timeout" before any change (latest version and helper absence re-checked after each); the third succeeded. M75 APPLIED_VERIFIED as 20261017083027, M77 APPLIED_VERIFIED as 20261017083206, both from commit 850121e. Server statement SHA-256 equals the files (M75 df74e0f5778f44c38c08e6088788a4e38e5aa532a0a7a462b806f3c3c7c255d0, M77 03f0ffd0c2a5c3994635e81ee2d677ac337b10798ec866e04a0b90c2d402e4f4). Readback md5: job_exhausted b8f651b7..., legacy_choices b27ec64e..., lookup_receipt 991b81ad..., request_candidate_edition_options_v1 c5e3e935..., title_key fb4bfb1f..., explicit_query b290d65a..., author_middle_match 27ffac21...; ACLs postgres-only, request function keeps authenticated EXECUTE. Live spot checks: title_key("Encyclopædia Britannica: Anti-fragile", en) = "encyclopedia britannica antifragile"; Taleb N./Nicholas true, K./N. false. Confessions card reads lookupStatus failed; its job is unchanged until the Owner presses Search Books.
+
+Second review (2026-10-17, before push; Sonnet on the M75 lock fix and 6d7f5be, Haiku on the docs facts): no blockers. Residual risk accepted without a migration: a worker transaction on its last attempt that straddles lease expiry while the Owner presses Search Books can still deadlock with the command; Postgres aborts one side (40P01) and a retry recovers. Rejected: refreshing the cache before the identity-save throw (the throw only happens when the cache is already newer) and per-counter comparison for the saved-identity hold (an identity save bumps all counters together). Docs fixes: traceability test counts corrected to 48/48 and 11/11, the §24 proposal marked superseded, a §5 ledger pointer and a DOC-3 cross-reference added.
 
 Not done / held: Render metadata worker deployment (rules 6-9 and work-level authors only take effect after it; SQL already admits them); Owner API Edge Function deployment (reasons header path, still v16); push of codex/edition-picker; live Search Books retry of the Confessions card (an Owner action). Residual: B4 from §66 stays deferred.
