@@ -1,0 +1,6 @@
+appId: host.exp.exponent
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "My Library"
+    timeout: 30000
