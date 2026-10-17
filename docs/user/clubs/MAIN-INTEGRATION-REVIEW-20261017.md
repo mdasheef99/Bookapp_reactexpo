@@ -1,3 +1,20 @@
+## Final CI readback - 2026-10-17
+
+[GitHub run 39017350125](https://github.com/mdasheef99/Bookapp_reactexpo/actions/runs/39017350125)
+completed SUCCESS for published `09dcd323e36f14de30b39e85a78081d6b614746c`:
+repository tests, TypeScript and production web export all passed. Its source,
+tests, SQL and dependencies are identical to reviewed merge 8882efc; 09dcd32
+changed six documentation receipts only. The first CI failure below remains
+historical evidence of a possible test timing issue, not a confirmed product
+root cause; it did not recur in the successful run. No source fix or permission
+change was made in response. The failed-job API request remains denied, with no
+bypass; this successful run was the ordinary documentation-push workflow.
+
+Publication and CI are now verified for the reviewed executable tree. This final
+receipt updates documentation only; no product tests were repeated for it.
+Exact next action: report the published work and recorded browser/role/native
+limits, then stop before rollout, business submissions or new product changes.
+
 # Clubs main integration review — 2026-10-17
 
 ## Authority and exact candidate

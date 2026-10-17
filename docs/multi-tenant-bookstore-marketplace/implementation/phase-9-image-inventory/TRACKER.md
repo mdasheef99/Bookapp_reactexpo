@@ -1,3 +1,15 @@
+## 2026-10-17 - Clubs publication CI passed
+
+[GitHub run 39017350125](https://github.com/mdasheef99/Bookapp_reactexpo/actions/runs/39017350125)
+passed repository tests, TypeScript and production web export at published
+09dcd32. Its executable tree equals reviewed merge 8882efc. The first CI failure
+recorded below did not recur; retain it as a possible test-timing concern,
+without claiming a root cause or product correction. This receipt changes
+documentation only. Original dirty Clubs checkout remains preserved; no
+DB/Storage, permissions, migration application, deployment or business mutation.
+Exact next action: report publication and remaining browser/role/native gaps;
+stop before rollout or further product work. Phase 9 rollout hold is unchanged.
+
 ## 2026-10-17 - Reviewed Clubs integration published to main
 
 Remote main readback matched `8882efc865e626eab290745de6a827240ad273a2` after
