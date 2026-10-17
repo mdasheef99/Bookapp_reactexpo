@@ -7,6 +7,7 @@ Fresh exact-project preflight matched Bookconnect_reactexpo / ahntbtktjjmvfosgkm
 The old scan 93567d47-3874-4576-b3b4-1adb044b552b was closed through the authenticated app at 2026-10-12T22:08:44.023344Z. Live readback: closed/version3, all five candidates retained, all four committed inventory rows present, unchanged candidate states/versions/links. The unfinished card is read-only session history; its exhausted job is still in_progress at 5/5. No job reset or recovery fix was performed.
 
 Exact next authorized action: Owner review of the live proof and direction on the six remaining cards in active session 7a81bdb6-ed34-40cb-b5a9-cff85402cf48; separately decide whether to authorize the proposed M75 exhausted-lookup recovery. The new session remains active, and the existing expired 5/5 job remains untouched. Sources: picker SDD §13.14, DOC-3 §5.2.1, Unit 6G SDD §§14/23 (U6G-AC13/18/20). [Live picker and Add evidence](37-owner-edition-picker-open-library-local.md) (tracker 37 §26); earlier headers are historical.
+
 ## 2026-10-17 - Edition-picker delayed-read test made deterministic
 
 GitHub run 39041769181 (PR #17, docs-only) failed "a delayed read cannot
@@ -21,9 +22,11 @@ assertion fail (revision 7, no selection), so the test still proves the rule.
 The guard was restored to main's version. Verification: the file passed 20/20
 `--runInBand` runs, it passed in a parallel full run, and `tsc --noEmit` was
 clean. In that parallel run, `ClubManageScreen.test.tsx` failed 2 tests, but it
-passed 87/87 alone. That suite is unrelated and is recorded as a load-timing
-follow-up. Test-only change: no DB/Storage, migration, deployment or product
-code change. Exact next action: user go-ahead to push the branch and open a PR.
+passed 87/87 alone, and a second parallel full run passed all 345 suites
+(3,650 tests, 4 skipped). That suite is unrelated and is recorded as a
+load-timing follow-up. Test-only change: no DB/Storage, migration, deployment
+or product code change. The user authorized pushing the branch and opening a PR.
+Exact next action: confirm PR CI passes, then the user decides on merging.
 
 ## 2026-10-17 - Clubs publication CI passed
 
