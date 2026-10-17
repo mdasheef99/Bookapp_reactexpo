@@ -1,10 +1,30 @@
 # Library Screens and Interaction Map
 
-**Reviewed:** 2026-10-03 (R1–R5 Home corrections and R2 entrance-contrast follow-up; other routes retain their earlier evidence)
+**Current reconciliation correction — 2026-10-16:** [Receipt](./evidence/sdd06-reconciliation-corrections-2026-10-16/README.md), SDD-06 rev0.24. B01 consumes only the current draft's exact submitted/inherited text request while its edit revision is unchanged. Later confirmed refetches update a clean editor; newer dirty text survives refetch and same-mounted book revisits. Queue text/busy state is selected synchronously for exact actor/book/session generation, and inherited success is consumed before mutation GC. Existing one-field writes, failed-draft policy, management hierarchy, named Back and persistence hold remain. No new destination/product behavior or live acceptance claim.
+
+**Current retained-review correction — 2026-10-16:** [Receipt](./evidence/sdd06-review-field-session-corrections-2026-10-16/README.md), SDD-06 rev 0.23/D06-17. B01 text blur/rating/visibility each writes only its selected field through the same actor/book/identity-generation queue. Failed text remains unsaved; unrelated actions do not retry it or rejected visibility/rating. New input revisions survive old responses, current-actor affected-row confirmations govern the cache, and shared busy feedback survives reopening. Six suites/116 tests/scoped TS/export PASS with synthetic HTTP, no live-write/native claim. F02/F03 layout/retained controls remain; persistence gates closed.
+
+**Current FR01 lifecycle correction — 2026-10-16:** [Receipt](./evidence/sdd06-fr01-queue-lifetime-fix-2026-10-16/README.md). B01 My review preserves queued visibility/rating/submitted text across leaving and reopening the screen in the same actor/book/QueryClient lifetime. Confirmed labels remain truthful; latest waiting payload supplies later submissions; failed settled intents are dropped. Eight new mounted regressions, 61 focused tests and exact original reproduction pass; scoped compiler/export pass. No new browser/native claim, route, durable draft or persistence authority. Four note gates remain false.
+
+**Current B01/F01–F03 correction — 2026-10-16:** [Receipt](./evidence/sdd06-f01-f03-corrections-2026-10-16/README.md). Status → primary Add note → Notes/previews → Saved Pages → separate named My review, Book options, Community reviews and Book information. Review label reflects confirmed visibility; actor/book serial submissions retain pending rating/visibility and newer text. Named Back to Library has ≥48dp activation area and retains explicit Library navigation. Focused 53 tests/scoped TS/current-bundle synthetic browser checks pass; actual transport/native acceptance open. Persistence ON HOLD/four gates false; F04–F06 excluded.
+
+**Current capture/OCR browser closeout & SDD06-07 starter — 2026-10-14:** See [SDD-06 rev 0.19](./SDD-06-after-book-entry-ui.md) and the [current receipt](./evidence/sdd06-capture-ocr-2026-10-11/README.md). After Luna confirmed WEB-05 on the earlier `7ee` build (B05 form ScrollView zero-height at 200% CSS zoom) and `gpt-6.1-sol` was unavailable, the owner authorized alternate-executor correction (rev 0.18) and waived the same-Luna rerun (rev 0.19). On deterministic export `entry-fdf8fbc020559039f64614ae54e9af59.js`, `note-compose.tsx` gives the composer `ScrollView` `flex: 1` and `flexGrow: 1` for `formStep || scanStep`. Parent Playwright verified history 7/7, WEB-05 geometry 1/1 (`ch 70 / sh 601`), WEB-04 crop zoom 1 & zoom 2 (`ch 373 / sh 1857`), matrix 4/4, dark/reduced-motion 1/1, review-state zoom 1/1, and SDD06-07 target-size starter 1/1 (`web07-a11y.spec.ts`). No route or behavior contract changes here; persistence remains held and all four write gates false. Exact next action: await owner authorization for the next slice (remaining SDD06-07 release/native checks or held persistence forward correction).
+
+**Current retained-reader cache correction — 2026-10-10:** SDD-06 revision 0.8 and [correction evidence](./evidence/sdd06-manual-local-2026-10-10/CORRECTIONS.md) record the two bounded cache fixes. Confirmed note deletion publishes null to the shared actor/book/note record query, removes body/edit/copy controls from retained readers, cancels stale reads and prevents old/late confirmations from restoring deleted data. Retained confirmations apply cache effects once per QueryClient/account lifetime; fresh equal/newer versions survive unrelated operations, remounts and composer refresh. Four new mounted regressions use real QueryClient state with simulated transport. Eight suites pass 104/104 without timeout override; lazy React Native exports are initialized before behavioral test timing. Previous five corrections remain verified. All save gates stay false; no database/native/visual acceptance or new product policy is inferred.
+
+**Previous manual-note correction overlay — 2026-10-10:** SDD-06 revision 0.7 and [correction evidence](./evidence/sdd06-manual-local-2026-10-10/CORRECTIONS.md) record the repeated retry/re-entry follow-up. The earlier 99-test checkpoint left finding 2 partly open: an edit's exact reader key could be lost after another remount. Every edit attempt now retains the resolved original reader context in account-scoped memory; the mounted regression preserves it through two leave/re-entry cycles despite a competing same-note reader. Focused tests pass 100/100; service/router effects remain simulated. Approved Leave still fences confirmation, initialized editors retain fields on refresh failure, Saved Pages separates errors/empty, and private reviews say Private Review. Current route/notes/review/Saved Pages rows below match source; section 6 is explicitly historical. Native navigation/scroll/focus and persistence remain unproved; all manual create/update gates remain false. No category-only policy change, OCR/design expansion or global-navigation change.
+
+**Previous initial manual-note overlay — 2026-10-10:** SDD-06 revision 0.5 and [local receipt](./evidence/sdd06-manual-local-2026-10-10/README.md) own current B01–B05/B08–B12 behavior/evidence. B01 Add opens the optional category/method chooser; preview/list cards open saved readers; compact form -> explicit save -> confirmed reader -> edit preserves contextual return. Notes distinguishes loading/error/empty/filter-empty, retains filter/list context and exposes account-scoped pending submissions. Manual create/update remain visibly gated pending real database/atomic/ownership proof; component simulations do not complete the journey. Existing Saved Pages and management access retained. Scan is disabled for this manual slice; older immediate-OCR/Vault-creation editor descriptions below are historical and not the new entry path. No global navigation, shelves, search or marketplace behavior changed.
+
+**Reviewed:** 2026-10-10 (manual-note correction/source rows); Horizontal tier membership retains 2026-10-05 evidence
 **Worktree:** `Bookconnect4_library` / `codex/library-cover-shelf`  
 **Purpose:** Trace each current Library route and interactive control to its code-wired result, including no-op controls and missing states. This is the source-of-truth map for planning the Stitch flow; it does not define new product behavior.
 
 ## Scope and evidence
+
+### Current horizontal controls (2026-10-05)
+
+In Shelf, **Book layout → Vertical/Horizontal** switches presentation and saves `library_shelfStyle:v1`; absent in List. Data/filter/Home draft are shared. Style switches preserve draft/Undo and reset selection; Save/drag disables switching. Tap opens the actual entry route; hover/focus/press provides motion-safe feedback/caption. Focus and hover are tracked independently: hover-out clears only hover feedback, while keyboard focus continues to drive the caption until blur; focus takes caption priority. A 450ms hold opens loaded-facts Quick look, also available per entry in the chooser; movement/scroll cancels hold/tap, a completed hold consumes release. Close/backdrop/Escape/back dismiss; View details routes by ID. Arrange suppresses browsing actions: tap/chooser selects, selected drag reorders within a tier or transfers only the dragged book to another tier, and edge hold advances only the destination track. Earlier/Later changes the shared order; Undo restores order and tier assignment, Save stores both on-device, and Cancel discards both. Horizontal tier membership uses the v2 local arrangement format and can produce unequal row lengths; older v1 order is read with a balanced initial split. Overflow controls are independent and reflect boundaries. Prior live web evidence covered the former balanced-half drag behavior; this correction's source tests pass, but the current live transfer gesture did not reproduce and remains unverified. The Library tracker records the exact result and next action. Native/assistive/performance acceptance remains unverified; Horizontal contract §§12 and 16 own implementation and handoff.
 
 This map covers the Library route stack, its rendered Library/search/note components, and the app-level tabs visible while using Library. Controls are traced from current source. The app was manually opened during the 2026-10-01 review, but most individual controls and all external service outcomes were not exercised end to end. “Code-wired” therefore describes the handler and intended route/state transition found in source, not a claim that every service call was live-verified.
 
@@ -15,9 +35,11 @@ The currently configured Library routes are:
 | `/(tabs)/library` | Library Home, with List and Shelf modes | App-level Library tab; back/fallback destinations |
 | `/(tabs)/library/search` | Catalogue Search / Find and Add Books | Home magnifier; Home `+ Add Book` |
 | `/(tabs)/library/[bookId]` | One book’s details and management | Tapping a list row or shelf spine |
-| `/(tabs)/library/notes` | Notes for one book | Book Details “View all” notes action, shown only when the book already has notes |
+| `/(tabs)/library/notes` | Notes for one book | Book Details “View All”, including an empty collection |
+| `/(tabs)/library/note` | Saved-note reader (B08) | Book Details previews and Notes cards; identifies book/note/context |
+| `/(tabs)/library/note-compose` | Category/manual editor and saved-note edit (B04/B05/B09) | Add note, reader Edit, account-scoped pending re-entry |
 
-Saved Pages is an embedded Book Details section, not a route. The Note Editor, manual-book-entry form, filter/sort sheets, and delete confirmations are overlays/alerts, not routes. No Saved Page detail route, global notes route, local-library search route, or reading-stats route currently exists.
+Saved Pages is an embedded Book Details section, not a route. The current manual composer is a leaf route; category selection and editor share that route. Manual-book-entry forms, filter/sort sheets and delete confirmations remain overlays/alerts. Section 6 preserves the historical NoteEditor component behavior, which is not the current Book Details/Notes entry path. No Saved Page detail route, global notes route, local-library search route, or reading-stats route currently exists.
 
 ## Route flow
 
@@ -32,20 +54,26 @@ flowchart TD
     Search -->|Add book / manual add| Search
     Search -->|Swipe/card actions| Search
     Detail -->|Back| Home
-    Detail -->|View all notes, only when count > 0| Notes[Per-book Notes]
-    Detail -->|Add a note| Editor[Note Editor overlay]
-    Detail -->|Tap recent note| Editor
+    Detail -->|View All, including empty| Notes[Per-book Notes]
+    Detail -->|Add a note| Options[Category and method chooser]
+    Detail -->|Tap recent note| Reader[Saved-note reader]
     Notes -->|Back| Detail
-    Notes -->|Add or tap a note| Editor
-    Editor -->|Save Note| NotesOrDetail[Return to calling screen]
-    Editor -->|Save to Vault / close modal| NotesOrDetail
+    Notes -->|Add note| Options
+    Notes -->|Tap note| Reader
+    Options -->|Write note| Editor[Manual composer]
+    Editor -->|Back to options, retain fields| Options
+    Reader -->|Edit note| Edit[Saved-note editor]
+    Reader -->|Contextual Back| NotesOrDetail[Original collection or Book Details]
+    Editor -->|Confirmed create, simulated only| Reader
+    Edit -->|Confirmed edit, simulated only| Reader
+    Notes -->|Pending submission| Editor
     Detail --> Pages[Saved Pages section embedded in Details]
-    Editor -->|Scan Page| Camera[Camera/OCR, build and permission dependent]
-    Camera --> Editor
     Detail -->|Remove from Library| Remove[Confirmation modal]
     Remove -->|Confirm| Home
     Pages -->|Delete| DeletePage[Confirmation alert]
 ```
+
+All manual create/update gates remain false: Save reports unavailable and retains fields. Confirmed-success edges describe locally tested simulated transitions; Scan is disabled. Existing Saved Pages browse/delete remains available.
 
 ## 1. App-level navigation around Library
 
@@ -100,19 +128,19 @@ This page searches Google Books with cached/Open Library fallback behavior. It d
 | Visible control / element | Current behavior | Result / route | Status or caveat |
 |---|---|---|---|
 | Back arrow | `navigateBackOrFallback` to Library Home | Home | Code-wired. |
-| Search text input | Updates query; after 2 characters while focused, loads suggestions; after 3 characters, auto-searches when online; submit also searches | Same Search screen; suggestions or results replace content | Code-wired. Search begins after debounce; no explicit submit button is visible. |
-| Clear `×` | Clears query, results, pagination and suggestions | Same Search screen, discovery/recent state | Code-wired. |
+| Search text input | Updates query; after 2 characters while focused, loads suggestions; after 3 characters, auto-searches when online; submit searches if that exact query/filter request has not already run | Same Search screen; suggestions or results replace content | Code-wired. Search begins after debounce; no explicit submit button is visible. A changed query clears prior results immediately and ignores late responses. Under 3 characters, the page asks the reader to keep typing instead of claiming there are no matches. |
+| Clear `×` | Clears query, results, pagination and suggestions | Same Search screen, discovery/recent state | Code-wired; invalidates an in-flight response. |
 | Search suggestion row | Selects the suggestion, closes dropdown, performs search, and may save a recent query | Same Search screen, results | Code-wired. Dropdown includes up to 3 recent terms and API suggestions when available. |
 | Recent-search chip | Re-runs that query | Same Search screen, results | Code-wired. The recent-search list is shown when the query/results are empty. |
 | Recent-search `×` | Removes that term from local recent history | Same Search screen | Code-wired. It is nested inside the chip; ensure both hit targets behave distinctly in the UI. |
-| Active filter chip `×` | Removes just that filter and reruns current query | Same Search screen, updated results | Code-wired. Chips appear only for active genre, language, or price filters. |
-| Filter button | Opens bottom-sheet Filter modal | Overlay over Search | Code-wired when results exist. Choices: genre, language, price. Genre values include All, Fiction, Non-Fiction, Mystery, Romance, Sci-Fi, Fantasy, Biography, History, Self-Help, Business; languages All, English, Hindi, Spanish, French, German; prices All, Free, Paid. |
-| Filter modal option | Changes modal-local selection | Filter modal | Local draft only until Apply. |
+| Active filter chip `×` | Removes just that filter and reruns current query once | Same Search screen, updated results | Code-wired. Chips appear only for active genre, language, or price filters; late results from an older filter are ignored. |
+| Filter button | Opens bottom-sheet Filter modal | Overlay over Search | Code-wired when results exist. Choices: genre, language, price. Genre values include All, Fiction, Non-Fiction, Mystery, Romance, Sci-Fi, Fantasy, Biography, History, Self-Help, Business; languages All, English, Hindi, Spanish, French, German; prices All, Free, Paid. Exposed as an accessible button with selected/expanded state. |
+| Filter modal option | Changes modal-local selection | Filter modal | Local draft only until Apply; selected state is announced, and reopening syncs to the last applied filters. |
 | Filter `Reset` | Clears local draft filters | Filter modal | Does not itself rerun search; Apply is needed. |
-| Filter `Apply Filters` | Commits local filters, reruns the query when query is nonempty, closes sheet | Same Search screen, updated results | Code-wired. |
-| Filter backdrop / system close | Closes the modal | Search screen | The modal draft is not applied. Source does not explicitly reinitialize its local draft on each reopen; verify whether canceled selections reappear. |
-| Sort button | Opens Sort Results sheet | Overlay over Search | Code-wired when results exist. |
-| Sort option | Applies one of Relevance, Highest Rated, Newest First, Title A–Z and closes sheet | Same Search screen, reordered results | Code-wired; sorting is local over fetched results. |
+| Filter `Apply Filters` | Commits local filters, reruns the query once when query is at least 3 characters, closes sheet | Same Search screen, updated results | Code-wired; one state-driven request avoids an old-filter request racing the new one. |
+| Filter backdrop / system close | Closes the modal | Search screen | The modal draft is not applied; reopening restores applied values. |
+| Sort button | Opens Sort Results sheet | Overlay over Search | Code-wired when results exist; accessible label and expanded state. |
+| Sort option | Applies one of Relevance, Highest Rated, Newest First, Title A–Z and closes sheet | Same Search screen, reordered results | Code-wired; sorting is local over fetched results, and the selected option is announced. |
 | Sort backdrop / system close | Closes sheet without selecting a new sort | Search screen | Code-wired. |
 | Book-card `Add` | Adds catalogue book to user library; invalidates library query; shows success/error alert | Stays on Search screen | Code-wired. Button shows busy state. “Added” is passive status for books already in library. |
 | Book-card heart / Wishlist | Toggles wishlist membership, refreshes wishlist and library data | Stays on Search screen | Code-wired with haptic feedback and error alerts; successful toggle has no visible confirmation. If already in the full library but not a wishlist item, it reports “Already in Library.” |
@@ -123,35 +151,40 @@ This page searches Google Books with cached/Open Library fallback behavior. It d
 | Pull to refresh | Repeats the current query from page zero | Same Search screen | Code-wired while online with a nonempty query. |
 | Scroll to list end | Loads next result page if `hasMore` | Same Search screen, appended results | Automatic pagination; no explicit Next button. |
 | `Try Again` in error state | Repeats current search | Same Search screen | Code-wired. |
-| `Add it manually` in no-results state | Opens Manual Entry modal, pre-filling title from query | Manual Entry overlay | Only shown after a nonempty query returns no results. |
+| `Add it manually` in no-results state | Opens Manual Entry modal, pre-filling title from query | Manual Entry overlay | Only shown after an online nonempty query returns no results; offline state does not imply that saving is available. |
 | Manual Entry title / author fields | Edit required title and optional author | Manual Entry overlay | Code-wired text inputs. |
 | Manual Entry `Cancel` / system close | Closes and clears title/author draft | Search screen | Code-wired. Tapping outside the modal is not wired to close it. |
 | Manual Entry `Save to library` | Validates title, creates basic book, refreshes library/wishlist, closes modal, clears search, shows success/error alert | Search screen | Code-wired. Empty title produces “Title required.” It does not navigate to the new book’s details. |
-| Offline banner | Explains that catalogue search needs a network; cached-result notice can show after cached response | None | Banner is passive. During the 2026-10-01 manual run the Search page showed its offline message; no query was submitted. Localhost preview has a special offline bypass in source. |
-| Initial discovery / no-results copy | Explains search or no matches | None | Initial discovery state may show Recent Searches. No-results state offers manual entry. |
+| Offline banner | Explains that new catalogue searches need a network; cached-result notice can show after cached response | None | Banner is passive and announces as an alert while visible; the translated-away copy is hidden from assistive technology. Existing loaded results may remain visible if connectivity changes. Localhost preview has a special offline bypass in source. |
+| Initial discovery / no-results copy | Explains search, offline unavailability, or no matches | None | Initial discovery may show Recent Searches. A short query asks the reader to keep typing; offline search does not claim no matches and does not offer manual save. |
 
 Each result card itself is not a pressable detail link. Its available actions are Add/Added, Wishlist, Preview when available, Share, and swipe actions.
+
+Open Library fallback now receives genre (`subject:`) and supported language filters. Under a language filter, a returned matching nested edition supplies edition metadata. If nested editions are absent, only a work-level title/author is retained when the work language confirms the filter; aggregate ISBN, cover, first-publication year, publisher and page count are omitted. A nonmatching work is excluded, and the page offset still advances over provider rows consumed. Open Library has no pricing data, so Free/Paid is reported as unapplied and the page shows the number of currently loaded results rather than an unfiltered catalogue total. Counts are labeled approximate unless the provider confirms an exact total. Filter changes trigger one request, repeated submission does not repeat an already-fetched query/filter combination, and late responses cannot replace newer query/filter results. These corrections were verified by focused tests and a fresh web export on 2026-10-04; native accessibility and device network transitions remain unverified.
 
 ## 4. Book Details (`/(tabs)/library/[bookId]`)
 
 | Visible control / element | Current behavior | Result / route | Status or caveat |
 |---|---|---|---|
-| Back arrow | Returns to previous route, with Library fallback | Previous route/Home | Code-wired. |
+| Back to Library | Named button, visible arrow/Library, ≥48dp | Explicit Library Home via existing helper | Narrow browser measured 100.3×48; native accessibility untested. |
 | Cover, title, author, metadata | Displays book information | None | No action. Metadata is conditional when source data exists. |
 | Want to Read / Reading / Completed | Immediately writes selected reading status and invalidates library/detail queries | Same Book Details screen | Code-wired, disabled during that mutation. No explicit success/error feedback is wired for mutation failures. |
 | Owned / Lent Out / Borrowed / Wishlist | Immediately writes selected ownership | Same Book Details screen | Code-wired, disabled during that mutation. Conditional sections update after query refresh. No explicit success/error feedback is wired for mutation failures. |
 | Available for Lending switch | Writes lending availability | Same Book Details screen | Only shown for ownership=`owned`. No explicit success/error feedback is wired for mutation failures. |
 | New / Like New / Good / Fair / Poor condition | Immediately writes condition | Same Book Details screen | Only shown for ownership=`owned` or `lent_out`; disabled during mutation. No explicit success/error feedback is wired for mutation failures. |
-| 1–5 rating stars | Immediately writes selected rating plus current review/privacy values | Same Book Details screen | Code-wired, disabled during mutation. No visible “clear rating” control. |
-| Your Review text field | Edits draft text; saves automatically on blur | Same Book Details screen | No explicit Save button. Save failures show an alert. |
-| Public Review / Private Note toggle | Flips `review_is_public` and saves current rating/review | Same Book Details screen | Code-wired. Label calls a private review “Private Note”; reading-note records are managed separately. |
+| My review | Named expanded-state button opens rating/text/visibility together | Inline review destination | Starts collapsed; keyboard activation checked. |
+| Book options | Opens ownership, conditional lending/condition and confirmed removal | Inline management destination | Other destinations are separate, named sections. |
+| Book information | Opens existing pages/publisher/ISBN metadata | Inline metadata destination | Conditional source fields retained. |
+| 1–5 rating stars | Queues rating with current review/visibility intent | My review | Serial actor/book writes; pending rating survives later privacy/blur. No clear-rating feature. |
+| Your Review text field | Edits draft, queues save on blur | My review | Newer typed text survives confirmation/refetch; failure alert retained. |
+| Public Review / Private Review toggle | Queues requested visibility with current review/rating intent | My review | Label stays confirmed until success; rejection cannot falsely claim Private. Mounted overlap/rejection tests pass. |
 | Community Reviews list | Shows public reviews, loading, empty, or unavailable message | Same Book Details screen | Current cards are informational; no visible review actions or retry button. |
-| `View all` in My Notes | Opens per-book Notes with `userBookId` and title params | Notes route | Only rendered when note count is greater than zero. |
-| Recent note card tap | Opens that note in Note Editor for editing | Note Editor overlay | Up to the three newest notes are shown. |
-| Recent note long press | Opens Note Options; Edit opens editor; Delete opens a second confirmation; Cancel dismisses | Alert/editor overlay | Code-wired. The note card has no visible overflow button, so long-press is the only options menu. |
-| `Add a note` | Opens blank Note Editor | Note Editor overlay | Available even when there are no notes. |
+| `View All` in My Notes | Opens per-book Notes with `userBookId` | Notes route | Visible even when no notes have been loaded. |
+| Recent note card tap / long press | Opens that saved note's reader | B08 reader route | Up to the three newest notes; reader supplies Edit and protected Delete. |
+| `Add a note` | Opens optional category/method chooser; Write starts blank, Scan starts transient intake | B04/B05/B06 composer route | No category default; capture/OCR locally implemented; saving remains gated. |
+| Notes-preview read states | Distinct loading/error/empty; refresh failure retains loaded previews | Same Book Details screen | Retry targets notes; failure is not presented as a confirmed zero count. |
 | Saved Pages cards | Show page number, word count, updated date, excerpt | None | Cards are not pressable; no page-reading/detail route exists. |
-| Saved Page `Delete` | Opens confirmation alert; confirm deletes the page and refreshes the list | Same Book Details screen | Code-wired. Delete failures show alert. Query error is not separately rendered and may look like empty state. |
+| Saved Page `Delete` | Opens confirmation alert; confirm deletes the page and refreshes the list | Same Book Details screen | Delete failures show an alert; initial/refresh read errors have separate feedback and retry. |
 | `Remove from Library` | Opens confirmation modal | Confirmation overlay | Code-wired. |
 | Remove modal `Cancel` / system close | Dismisses modal | Book Details | Disabled while removing. |
 | Remove modal `Remove` | Removes user-book entry; invalidates library and returns to previous/Home | Library Home | Code-wired. Failure shows an alert. |
@@ -166,23 +199,36 @@ The Book Details page is currently one long scroll, not three tabbed subpages. S
 |---|---|---|---|
 | Back arrow | Returns to the associated Book Details when `userBookId` exists; otherwise falls back to Library | Book Details/Home | Code-wired. |
 | Book title subtitle | Identifies the current book | None | Informational. This route is per-book, not a global notebook. |
-| Note/tag counts | Shows total and counts by category | None | Informational text, not clickable filters. |
-| Quote / Reflect / Distill / Apply tag chips | Filters the displayed notes; tapping selected chip clears the filter | Same Notes screen | Code-wired. Chips are only shown when notes exist. |
-| Note card tap | Opens the selected note prefilled in Note Editor | Note Editor overlay | Code-wired. |
-| Note card long press → `Edit` | Opens the selected note in Note Editor | Note Editor overlay | Code-wired. |
-| Note card long press → `Delete` | Opens delete confirmation; confirm deletes and refreshes notes/counts | Same Notes screen | Code-wired. Cancel keeps note. |
-| Note card long press → `Cancel` | Closes Note Options | Same Notes screen | Code-wired. There is no visible overflow affordance. |
-| Pull to refresh | Refetches notes | Same Notes screen | Code-wired; the refresh indicator is statically `false`, so visible progress feedback may be absent. |
-| Floating `+` button | Opens a blank Note Editor | Note Editor overlay | Code-wired. |
-| Empty state | Shows “Start capturing your thoughts” or empty-filter copy | None | FAB remains available. |
+| Saved-note total | Shows total loaded saved records, independent of active filter | None | Distinct from pending submissions; no count-by-category claim. |
+| All / Quote / Thought / Takeaway / Action / Question | Filters loaded saved notes; All includes uncategorized records | Same Notes screen | Retains filter while viewing/editing; selected state exposed. |
+| Note card tap / long press | Opens the selected saved reader | B08 reader route | Edit and protected Delete are reader actions. |
+| Pending submission entry | Reopens retained account/book-scoped operation and submitted fields | Composer route | Outcomes can be pending, failed, conflicted or confirmed; no durable restart recovery. |
+| Pull to refresh | Refetches notes with a refresh indicator | Same Notes screen | Cached records remain on refresh failure. |
+| Add note / Add your first note | Opens optional category/method chooser | B04 composer route | No default category; Write and Scan available; browser OCR truthfully unavailable. |
+| Empty / filtered-empty state | Shows No notes yet or a named empty filter | Same Notes screen | Add for true empty; Show all notes for filtered empty. |
 | Loading state | Shows spinner | None | Code-wired. |
-| Query error | Error is not consumed/rendered as its own state | Appears as empty notes because data defaults to `[]` | **Missing error state:** this can mislead a reader into thinking no notes exist. |
+| Query error | Initial error offers Retry; refresh error retains loaded notes | Same Notes screen | Does not present failed loading as successful empty data. |
 
 `src/components/notes/NotesList.tsx` is exported but is not rendered by either current Library route; its helper-level filter behavior is not an additional live screen/control in this map.
 
-## 6. Note Editor overlay
+### 5.1 Mounted note composer capture/review (`/(tabs)/library/note-compose`)
 
-Used from Book Details and Notes. `Save` creates/updates a `reading_notes` record; `Save to Vault` writes a separate saved-page record. Saving one does not implicitly save the other.
+| Control / state | Behavior | Evidence boundary |
+|---|---|---|
+| Scan text / Scan again | Explains replacement when text exists; creates one immediate checkpoint with fields, partial revision, mode/identity, baseline and view position | Local transient session; no append/autosave/durable draft |
+| Capture page / Choose photo | Uses system picker; camera refusal, unavailable camera, dismissal and invalid asset differ | Native picker code + isolated tests; camera UX/device acceptance pending |
+| Prepare photo | Actual selected image, full crop, corner handles and labeled edge buttons, clockwise rotation, Reset and replacement photo | Decoded oriented dimensions; temporary transformed image; actual pixel proof tracked in receipt |
+| Recognize text | Transforms selected region first, then on-device English service; transformation failure never falls back to original | Browser/Expo Go availability is reported truthfully; no fake recognizer shipped |
+| Review scanned text | Shared NoteForm, category Change, optional page; Save note / Save changes; Scan again secondary | Existing 500-word/page validation and all four closed write gates; simulated outcomes only |
+| No text / incomplete / technical failure | Distinct contextual recovery; revision-bound incomplete warning; acceptance returns to form and requires a separate Save | No cloud retry or image-as-engine-fix copy |
+| Back / cancellation | Retained crop/intake steps preserve work; Cancel recognition invalidates adoption and stays on crop; protected Cancel scan restores its checkpoint | Browser whole-note exit guard and original saved-reader return retained; native computation may settle later |
+| Repeated scan / account change | Scan 2 records candidate B as sole checkpoint; account/book/unmount invalidates obsolete results and releases owned resources safely | Gallery originals never deleted; no image archive/restart recovery |
+
+Current local source and pending independent/native/browser acceptance: [capture/OCR receipt](./evidence/sdd06-capture-ocr-2026-10-11/README.md). Persistence correction remains held; this map does not claim production completion.
+
+## 6. Historical NoteEditor overlay (pre-SDD-06 entry path)
+
+The table below records retained legacy component behavior and regression evidence. Book Details and Notes now use the composer/reader routes above; this overlay is not their current entry path. Legacy `Save` creates/updates a `reading_notes` record; `Save to Vault` writes a separate saved-page record. Saving one does not implicitly save the other. These historical OCR/Vault controls do not establish availability in the gated manual slice.
 
 | Visible control / element | Current behavior | Result / route | Status or caveat |
 |---|---|---|---|
@@ -203,9 +249,9 @@ Used from Book Details and Notes. `Save` creates/updates a `reading_notes` recor
 |---|---|---|---|
 | Page number, word count, date, excerpt | Displays saved text metadata and excerpt | None | Informational only. Tapping a page card does nothing. |
 | `Delete` | Opens confirmation alert; confirm deletes the saved page and invalidates the vault query | Same Book Details screen | Code-wired. No edit/open action is implemented. |
-| Empty message | Says “No saved pages yet. Save from NoteEditor.” | None | No direct Add/Scan button in this section. User must use `Add a note` to open the shared editor. |
+| Empty message | Says “No saved pages yet.” after a successful empty read | None | Neutral copy; no direction toward deferred creation. |
 | Loading state | Shows a small spinner | None | Code-wired. |
-| Query error | Not displayed distinctly | Can fall through to the empty state | **Missing error state** in the current component. |
+| Query error / Retry saved pages | Initial failure shows Couldn't load saved pages; refresh failure retains cached excerpts | Same Book Details screen | Retry rereads the same book; deletion failure does not optimistically remove cached excerpts. |
 
 ## 8. Current dead ends and follow-up checks
 
@@ -216,10 +262,10 @@ These are part of the map because they affect what a reader believes a control d
 3. **List and Shelf share filtering, but Wishlist and Want to Read are different fields.** Home has a Wishlist ownership filter and no Want to Read reading-status filter.
 4. **Search result card body has no detail navigation.** Only the explicit controls and swipe actions work.
 5. **Manual Add and catalogue Add stay on Search.** Success does not open the newly added book’s detail page.
-6. **View all Notes disappears at zero notes.** The Add a note action remains, but there is no empty-state route to the full Notes page.
-7. **Saved Pages has no open/edit/page-detail action and no direct Add action.** Creation is indirectly routed through Note Editor.
-8. **Notes and Saved Pages query errors lack dedicated UI.** Their empty states can be mistaken for successful empty data.
-9. **OCR paths are build/service dependent.** Expo Go blocks native OCR; the cloud Indic fallback is not confirmed as available in the current development environment. Manual paste/edit is the available fallback.
+6. **Resolved in the manual slice:** View All Notes remains available at zero notes.
+7. **Saved Pages has no open/edit/page-detail action or new creation action.** Existing browse/delete is retained; standalone passage creation remains deferred.
+8. **Resolved in the manual slice:** Notes and Saved Pages distinguish initial/refresh errors from successful empty reads.
+9. **Capture/OCR locally authorized:** the composer now connects system intake, oriented crop and on-device review; persistence correction is held and all write gates remain false. Native/browser/review acceptance is tracked in the [capture receipt](./evidence/sdd06-capture-ocr-2026-10-11/README.md), separately from historical legacy behavior.
 10. **The app-tab runtime showed four raw Marketplace route labels** in the 2026-10-01 manual browser review, although static `app/(tabs)/_layout.tsx` lists five app tabs plus one hidden store route. Recheck the running build before accepting the global navigation as correct.
 11. **Resolved in the vertical unit:** Home uses supported Ionicons `book-outline`; the old `menu-book` type diagnostic is gone.
 12. **Book status/ownership/condition/lending writes have no explicit mutation error UI** in their current handlers. The controls are wired to service calls, but a failed write can lack reader feedback.
@@ -288,3 +334,49 @@ The 2026-10-02 user-directed Horizontal Stacks handoff remains a separate planne
 | Future Shelf-style switch | Project the same draft/order into the other layout | Clear gesture measurements, retain shared draft/Undo; no implicit Save; LIB-ARR01/02 |
 
 Save is the only durable order write. An addition/removal cancels the draft with feedback; new IDs append to surviving saved IDs during reconciliation. Leaving Library cancels an unsaved draft. Exiting Arrange restores book Details and brush feedback. Searchable destinations, extended Undo, horizontal gestures and cross-device sync are deferred. No route, migration or database mutation is added.
+
+### Search reliability and disclosure (2026-10-05)
+
+| Control | Result |
+| --- | --- |
+| Submit after automatic search | Save successful recent query without a duplicate request; if pending, save on successful completion |
+| Record details / Hide record details | Toggle the available catalogue metadata within that result card; no route or write |
+| Filter / Sort | Open the existing Library-styled sheet; supported filters are applied, unsupported fallback pricing is explained, and local sort options reorder currently loaded results |
+
+Cache hits and stale rate-limit recovery preserve pagination metadata. Open Library uses returned matching nested-edition metadata for a supported language filter; if nested edition data is absent, only confirmed work-level title/author fields remain and pagination advances by raw provider rows, including omitted works. Unfiltered work records remain separate catalogue results. Newest First compares parsed date values and puts missing/unreadable dates last; all local sort options cover loaded results only. Existing add/wishlist/preview/share actions remain in place. See SDD-05 LIB-SR01–04.
+
+## Planned OCR capture and reading-memory expansion — 2026-10-05
+
+User approved documentation scope only. [SDD-03 section 10](./SDD-03-ocr-vault.md#10-expanded-capture-and-reading-memory-plan-2026-10-05) is authoritative for OCR-P01–13: reliable explicit-consent hybrid OCR; Camera/Choose photo/Paste; crop/rotation; bounded full extraction review and passage selection; separate note/vault limits and overwrite previews; device-only draft recovery; private all-books capture search; attributed text/Markdown export; quiet From your reading resurfacing. These controls/routes are PLANNED/PENDING, not current source-wired behavior. Catalogue Search remains separate. Saved passage detail and Home search/resurfacing entry points require their implementation units; no new app-level tab or photo archive is approved. Planned flow: book -> capture -> prepare -> extract -> review/select -> explicit save -> reopen/search/export/resurface. Resume/Discard drafts and cloud Retry/Cancel preserve reader control. U0–U6 and exact acceptance mapping are in the owning SDD; existing maps of implemented controls remain historical/current evidence only.
+
+## 2026-10-06 — Bounded Search continuation and filter contract
+
+Search continuation pages use the provider chosen by the first successful page, preserving that provider's cursor and totals. A Google continuation failure is surfaced; it cannot silently append Open Library records. Open Library continuations do not retry Google. New first-page searches, refreshes and filter changes may select a provider anew. Explicitly submitted queries shorter than three characters requery on filter apply/remove; unsubmitted short queries keep typing guidance. Open Library fallback and unsupported-filter notices are visible for empty results as well as populated results. This corrects confirmed review defects without adding catalogue features. Acceptance is covered by the 2026-10-06 regression evidence in TRACKER.md; real Google success/native/assistive-technology validation remains unverified.
+**2026-10-06 OCR preflight:** [U0 report](./OCR-U0-PREFLIGHT.md) completes the source/API/platform/storage review and records U1 corrections. Expanded controls remain PLANNED. Installed ML Kit 1.5.2 is present and bundles five scripts; loader/result mismatch is proven, native scanning/cloud remains unverified. No current UI capability was added.
+
+### OCR U1 implemented locally — 2026-10-06
+
+NoteEditor now offers explicit Retry with cloud confirmation for the current captured image, preserves bounded full review, prevents silent note trimming, reports safe failures and ignores canceled/account-stale results. Editing/closing clears pending image work. Cloud backend remains disabled pending quota provisioning. Gallery/crop/passage selection and other OCR-P additions remain PLANNED. Runtime proof pending; see [U1 evidence](./ocr-evidence-20261006/README.md) and SDD-03 section 11.
+
+### Android OCR runtime evidence — 2026-10-06
+
+Bounded English native service smoke now PASS in SDK54 development client on Android16/API36 emulator offline; actual sample text/timings and recognition errors recorded in [evidence](./ocr-evidence-20261006/README.md). Temporary diagnostic removed; no new permanent screen/flow. Camera/editor saves, broader language/device/cloud proof and U2–U6 remain pending.
+
+
+**2026-10-06 OCR R2 correction (implemented):** Overflow retains only first 20,000 characters and explicitly warns that text is missing. Note and vault saves are blocked until Use partial OCR text confirmation; editing invalidates acceptance, confirmation does not autosave, and existing destination limits remain. Scan a smaller area remains the recovery action; gallery/crop/full passage-selection controls remain planned. R3 cloud cancellation is deferred by user; cloud remains disabled. Source regression evidence is in TRACKER.md.
+
+## 2026-10-07 — Approved five-category notes direction
+
+User approved Quote, Thought, Takeaway, Action and Question. Shared app labels now map quote/reflect/distill/apply to Quote/Thought/Takeaway/Action; stored values and default reflect (Thought) preserved. Writing prompts remain optional. Exact-project Supabase MCP verified Bookconnect_reactexpo/ahntbtktjjmvfosgkmgn ACTIVE_HEALTHY; metadata-only readback confirmed reading_notes_tag_check allows only the original four. Question remains designed/pending storage enablement, never silently mapped to reflect or exposed as savable yet. No note contents read or database writes. Concrete migration creation/application/compatibility/verification plan: docs/user/library/NOTE-CATEGORY-ROLLOUT.md. No migration created/applied. Topic tags and answered/done states remain later proposals. Full capture UI approval and Android correction acceptance remain pending independently.
+
+Active scoped unit library_note_labels_complete_question_schema_pending. Exact next action: obtain explicit authorization to create and verify the narrow question constraint-expansion migration plan; application requires separate approval. Marketplace Phase9 Unit7C/M46 and DOC13/ACTIVE unchanged. Existing mixed changes preserved; no stage/commit/push/deploy, database/Storage/provider mutation. Stitch category refinement requested under user-approved design scope; completion evidence recorded at closeout.
+
+## 2026-10-07 — Optional swipe note-review design
+
+User requested left/right note review, a Stitch design and smoothness/book-principle assessment. Proposed left Review again/right Reviewed are session-only outcomes, no deletion/favorite/Action completion/Question answer or memory claim. Visible buttons/Undo/full-note/Exit, no automatic endless requeue, reduced-motion and long-text gesture safety included. Owning proposal docs/user/library/NOTE-REVIEW-DESIGN.md; existing NoteCard and Shelf reduced-motion code inspected. Stitch live picker confirmed Balanced Gemini3.8Flash vs Speed Gemini3.5Flash-Lite; Balanced used. Design generation/inspection is authorized, application/persistence changes are not. Question migration creation approval still pending; earlier approval request not answered by this new design request.
+
+Active scoped unit library_note_review_design_in_progress. Exact next action: inspect/refine concrete Stitch review frames, present gesture semantics/visual proposal for user approval. Marketplace Phase9 Unit7C/M46 and DOC13/ACTIVE unchanged. No app/dependency/migration, database/Storage/provider write, staging, commit, push or deployment. Existing mixed changes preserved; evidence uncommitted.
+
+## 2026-10-10 — Manual composer browser-history correction
+
+A focused note editor with meaningful unsaved fields now protects same-document browser Back/Forward through the existing contextual discard dialog. Keep retains fields and returns focus after web dialog dismissal; Discard replays the requested history destination once. Blank/category-only history exits and internal Back to options remain as before. This routes composer state through an app-start dispatcher because Expo's web linker resets root state before route-local popstate listeners. It remains dormant outside a focused dirty/pending-save composer and does not add history entries. See SDD-06 revision 0.9 and the dated correction receipt for source, test and browser evidence. Edge browser verification does not establish compatibility where the Navigation API is unavailable, persistence, security or native acceptance. All save gates stay closed.
