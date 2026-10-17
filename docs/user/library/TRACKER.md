@@ -1,5 +1,18 @@
 # Library Tracker
 
+**F05/F06 verification-debt correction — 2026-10-17:** `library_sdd06_f05_f06_corrected_locally_verified`. Owner authorized local fixes only: no database work and no write-gate change. All four `MANUAL_NOTE_WRITE_GATES` remain false. Findings are from the [independent review](./evidence/sdd06-independent-review-2026-10-16/README.md).
+- **F06 (Book Details):** `app/(tabs)/library/__tests__/[bookId].test.tsx` is reconciled with the current contracts. Reviews save through `bookReviewService.update` as one field per action, with a store-bound actor. Notes load through `manualNotesGateway`, and the copy reads "Private Review". The test now opens the collapsed My review and Community reviews sections. It keeps privacy-then-text coverage with no forced rating, community-review isolation and the Back fallback.
+- **F06 (shelf route test):** `LibraryShelf.test.tsx` now asserts that index and search keep the default animation, notes and note use `animation: 'none'`, and note-compose uses `gestureEnabled: false, animation: 'none'`.
+- **F05:** the root `tsconfig.json` excludes `docs/user/library/evidence`. Archived diagnostic and baseline sources stay as unchanged, noncompiled proof.
+
+Verification:
+- Full `tsc --noEmit`: 37 → 36 errors. Zero Library errors remain; all 36 are in marketplace `supabase/functions/_shared/imageInventory/**` and `e2e/store-view-wu4-resilience.spec.ts`, which are outside Library ownership and unchanged.
+- Scoped `tsc -p tsconfig.library-notes.json`: PASS.
+- Focused Jest (notes domain, notes components, notes/OCR/Saved Pages services, word cap, `app/(tabs)/library/__tests__`, `src/components/library/__tests__`): **29 suites / 346 tests PASS**.
+- PostgreSQL harness not rerun. No database or Storage read or write. No source change outside the two tests and the tsconfig exclusion.
+
+Exact next action: independent final RR01/RR02 reconciliation review, or owner-authorized connected API verification ahead of gate enablement.
+
 **Migration filename reconciliation and checkpoint commits — 2026-10-17:** `library_checkpoint_commits_migration_filenames_reconciled`. The owner approved a local-only checkpoint (no push, no branch rename, no DB/Storage mutation). A fresh read-only MCP SELECT on `ahntbtktjjmvfosgkmgn` `supabase_migrations.schema_migrations` returned these hashes. Live **20261010221843** `library_manual_note_persistence`: SHA256 `185ec906e0205af932e3873aecbd43a1a97cfc21fba1cfafb9cb99bd6c5a1af6`, MD5 `d187c32b7b0846e735d6696adff6a7ed`. Live **20261017083830** `library_manual_note_privilege_revision_correction`: SHA256 `fd6b6e074260888a5f636652fdd01785a99304c3065bd5ab46458a5e094d1305`. Local changes:
 - Created `supabase/migrations/20261010221843_library_manual_note_persistence.sql` verbatim from the stored statement in [live-migration.json](./evidence/sdd06-live-session-review-2026-10-11/live-migration.json). Its SHA256 equals the live value above.
 - Moved the unapplied pre-application candidate `20261010172118_library_manual_note_persistence.sql` (SHA256 `eadd4d8a16d87801735ec59a101a95732a59e64e9902a576000b5cf0aafb291d`) to [superseded-candidate-20261010172118.sql](./evidence/sdd06-live-session-review-2026-10-11/superseded-candidate-20261010172118.sql), so `db push` can never apply it.

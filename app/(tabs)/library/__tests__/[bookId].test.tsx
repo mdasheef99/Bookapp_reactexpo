@@ -4,7 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import BookDetailScreen from '../[bookId]';
 import { booksService } from '@/features/books/services/booksService';
-import { notesService } from '@/features/books/services/notesService';
+import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
+import { bookReviewService } from '@/features/books/services/bookReviewService';
+import { useAuthStore } from '@/features/auth/store/authStore';
 
 let mockUserBook: any;
 const mockBack = jest.fn();
@@ -19,6 +21,7 @@ jest.mock('expo-router', () => ({
     useLocalSearchParams: () => ({ bookId: 'user-book-1' }),
     useRouter: () => ({
         back: mockBack,
+        push: jest.fn(),
         replace: mockReplace,
         canGoBack: mockCanGoBack,
     }),
@@ -31,9 +34,12 @@ jest.mock('@/hooks/useTheme', () => ({
         },
     }),
 }));
-jest.mock('@/features/auth/hooks/useAuth', () => ({
-    useAuth: () => ({ user: { id: 'reader-1' } }),
-}));
+// Review writes are bound to the authenticated store actor, so useAuth reads the same session.
+jest.mock('@/features/auth/hooks/useAuth', () => ({ useAuth: () => {
+    const { useAuthStore: store } = require('@/features/auth/store/authStore');
+    const session = store((state: any) => state.session);
+    return { user: session?.user, session };
+} }));
 jest.mock('@/features/books/services/booksService', () => ({
     booksService: {
         getBookDetails: jest.fn(),
@@ -46,15 +52,8 @@ jest.mock('@/features/books/services/booksService', () => ({
         removeFromLibrary: jest.fn(),
     },
 }));
-jest.mock('@/features/books/services/notesService', () => ({
-    notesService: {
-        getNotesForBook: jest.fn(),
-        createNote: jest.fn(),
-        updateNote: jest.fn(),
-        deleteNote: jest.fn(),
-    },
-    NOTE_TAG_CONFIG: {},
-}));
+jest.mock('@/features/books/notes/useManualNotes', () => ({ useNoteOperations: jest.fn() }));
+jest.mock('@/features/books/notes/manualNotesGateway', () => ({ manualNotesGateway: { list: jest.fn() } }));
 jest.mock('@/components/library', () => ({
     StatusSelector: () => null,
     OwnershipSelector: () => null,
@@ -62,9 +61,9 @@ jest.mock('@/components/library', () => ({
     RatingInput: () => null,
     DeleteBookModal: () => null,
 }));
+jest.mock('@/components/library/VaultPagesList', () => ({ VaultPagesList: () => null }));
 jest.mock('@/components/notes', () => ({
     NoteCard: () => null,
-    NoteEditor: () => null,
 }));
 jest.mock('@/components/ui/AtmosphericBackground', () => ({
     AtmosphericBackground: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -92,8 +91,10 @@ describe('BookDetailScreen review persistence', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mockCanGoBack.mockReturnValue(true);
+        useAuthStore.setState({ session: { user: { id: 'reader-1' }, access_token: 'token-reader-1' } as any, status: 'authenticated' });
         mockUserBook = {
             id: 'user-book-1',
+            user_id: 'reader-1',
             book_id: 'book-1',
             rating: null,
             review: 'Existing review',
@@ -112,50 +113,41 @@ describe('BookDetailScreen review persistence', () => {
             },
         };
         (booksService.getBookDetails as jest.Mock).mockImplementation(async () => mockUserBook);
-        (booksService.addRating as jest.Mock).mockImplementation(async (_id, rating, review, isPublic) => {
-            mockUserBook = {
-                ...mockUserBook,
-                rating: rating ?? mockUserBook.rating,
-                review,
-                review_is_public: isPublic ?? mockUserBook.review_is_public,
-            };
-        });
         (booksService.getPublicReviewsForBook as jest.Mock).mockResolvedValue([]);
-        (notesService.getNotesForBook as jest.Mock).mockResolvedValue([]);
+        (manualNotesGateway.list as jest.Mock).mockResolvedValue([]);
+        jest.spyOn(bookReviewService, 'update').mockImplementation(async (_actor, entryId, patch) => {
+            mockUserBook = { ...mockUserBook, ...patch };
+            const { rating, review, review_is_public } = mockUserBook;
+            return { id: entryId, user_id: 'reader-1', rating, review, review_is_public };
+        });
         jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+        useAuthStore.setState({ session: null, status: 'unauthenticated' });
     });
 
-    it('uses local review state for privacy toggles and review saves without forcing rating 0', async () => {
-        const { getByTestId, getByText, unmount, queryClient } = renderScreen();
+    it('saves privacy and review text as single-field writes without forcing a rating', async () => {
+        const { getByRole, getByTestId, findByTestId, findByText, unmount, queryClient } = renderScreen();
 
-        await waitFor(() => expect(getByText('Beloved')).toBeOnTheScreen());
+        await findByText('Beloved');
+        fireEvent.press(getByRole('button', { name: 'My review' }));
+        await findByTestId('library-review-input');
         await waitFor(() => expect(getByTestId('library-review-input').props.value).toBe('Existing review'));
 
         fireEvent.changeText(getByTestId('library-review-input'), 'Updated review copy');
         fireEvent.press(getByTestId('library-review-privacy-toggle'));
-
-        expect(getByText('Private Note')).toBeOnTheScreen();
-
-        await waitFor(() => expect(booksService.addRating).toHaveBeenCalledWith(
-            'user-book-1',
-            undefined,
-            'Updated review copy',
-            false
-        ));
-
         fireEvent(getByTestId('library-review-input'), 'blur');
 
-        await waitFor(() => expect(booksService.addRating).toHaveBeenLastCalledWith(
-            'user-book-1',
-            undefined,
-            'Updated review copy',
-            false
-        ));
         await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith('Success', 'Review saved!'));
+        const patches = (bookReviewService.update as jest.Mock).mock.calls.map(([, entryId, patch]) => [entryId, patch]);
+        expect(patches).toEqual([
+            ['user-book-1', { review_is_public: false }],
+            ['user-book-1', { review: 'Updated review copy' }],
+        ]);
+        expect(patches.some(([, patch]) => 'rating' in patch)).toBe(false);
+        expect(await findByText('Private Review')).toBeOnTheScreen();
 
         unmount();
         queryClient.clear();
@@ -176,15 +168,18 @@ describe('BookDetailScreen review persistence', () => {
             },
         }]);
 
-        const { getByText, queryByText, queryClient, unmount } = renderScreen();
+        const { getByRole, findByText, getByText, queryByText, queryByTestId, queryClient, unmount } = renderScreen();
 
         await waitFor(() => expect(booksService.getPublicReviewsForBook).toHaveBeenCalledWith('book-1'));
+        await findByText('Beloved');
+        fireEvent.press(getByRole('button', { name: 'Community reviews' }));
 
-        expect(getByText('Community Reviews')).toBeOnTheScreen();
-        expect(getByText('Reader Two')).toBeOnTheScreen();
+        expect(await findByText('Reader Two')).toBeOnTheScreen();
         expect(getByText('@reader-two')).toBeOnTheScreen();
         expect(getByText('A beautifully written review from another reader.')).toBeOnTheScreen();
         expect(queryByText('No public reviews yet.')).not.toBeOnTheScreen();
+        expect(queryByText('Existing review')).not.toBeOnTheScreen();
+        expect(queryByTestId('library-review-input')).toBeNull();
 
         unmount();
         queryClient.clear();

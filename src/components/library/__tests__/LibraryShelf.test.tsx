@@ -605,7 +605,7 @@ describe('LibraryShelf single shelf SDD-04', () => {
     });
 
     describe('F2 [bookId] route transition (SDD-05 §3)', () => {
-        it('uses fade for [bookId]; siblings keep slide_from_right default', () => {
+        it('uses fade for [bookId]; index/search keep slide_from_right; notes family opts out of animation', () => {
             const routerModule = require('expo-router');
             const LibraryLayout = require('../../../../app/(tabs)/library/_layout').default;
             routerModule.__mockCapturedScreens.length = 0;
@@ -614,11 +614,15 @@ describe('LibraryShelf single shelf SDD-04', () => {
             const bookIdScreen = captured.find((s) => s.name === '[bookId]');
             expect(bookIdScreen).toBeDefined();
             expect(bookIdScreen!.options).toEqual({ animation: 'fade' });
-            for (const name of ['index', 'search', 'notes']) {
+            for (const name of ['index', 'search']) {
                 const sibling = captured.find((s) => s.name === name);
                 expect(sibling).toBeDefined();
                 expect(sibling!.options).toBeUndefined();
             }
+            // SDD-06 notes collection, reader and composer swap in place; the composer also blocks swipe-dismiss.
+            expect(captured.find((s) => s.name === 'notes')!.options).toEqual({ animation: 'none' });
+            expect(captured.find((s) => s.name === 'note')!.options).toEqual({ animation: 'none' });
+            expect(captured.find((s) => s.name === 'note-compose')!.options).toEqual({ gestureEnabled: false, animation: 'none' });
         });
     });
 
