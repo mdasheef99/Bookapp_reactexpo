@@ -1,3 +1,19 @@
+## 2026-10-17 - Reviewed Clubs integration published to main
+
+Remote main readback matched `8882efc865e626eab290745de6a827240ad273a2` after
+a normal fast-forward push. Existing Clubs commits, navigation corrections and
+documentation are published, with newer main history preserved. Independent
+GPT-6 Luna/max rereview and final local tests/build/fixture/continuity gates
+passed. The merge CI failed one unchanged marketplace edition-picker timing test;
+all Clubs tests passed. Its isolated local rerun passed 19/19; a remote rerun was
+denied by GitHub connector permissions. Remote validation remains unresolved.
+ Original dirty Clubs checkout remains unchanged.
+No database/Storage, permissions, migration application, deployment or business
+mutation occurred. Phase 9 remains Unit 6G with its existing rollout hold.
+Exact next action: report the publication and unresolved remote-validation
+gate; investigate the unchanged marketplace test before claiming CI clearance.
+Stop before rollout or further product changes. [Exact evidence and limits](../../../user/clubs/MAIN-INTEGRATION-REVIEW-20261017.md).
+
 ## 2026-10-17 — Clubs/main integration and publication review
 
 The user authorized combining the existing Clubs commits and navigation

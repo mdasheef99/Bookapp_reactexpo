@@ -140,3 +140,46 @@ these receipts, then the user-authorized merge commit can be published normally
 to refs/heads/main after a fresh remote check. Never force-push. No PR is needed.
 Publication readback and CI status will be appended as a documentation receipt;
 local gates do not imply remote CI success. No push had occurred at this gate.
+
+## Publication readback - 2026-10-17
+
+The authorized normal push fast-forwarded remote main from `76348f3` to
+`8882efc865e626eab290745de6a827240ad273a2`. Remote readback matched. This merge
+preserves both main and Clubs parents and contains the reviewed corrections.
+The feature remote remains `382e50e`; the original dirty feat/clubs-v2 checkout
+remains at `0799825`, with all 52 modified tracked and four untracked files
+preserved, nothing staged. Integration checkout is clean at publication.
+
+Final local checks passed: 341 suites / 3,457 tests (one suite / four tests
+skipped), TypeScript, production web export, 49/49 disposable SQL checks with
+verified teardown, continuity validation (96 Markdown files), and diff hygiene.
+GPT-6 Luna/max aggregate review and bounded rereview are recorded above.
+
+GitHub validation for the merge is [run 39017120035](https://github.com/mdasheef99/Bookapp_reactexpo/actions/runs/39017120035).
+The first CI attempt FAILED: 340 suites / 3,456 tests passed, one suite /
+one test failed, one suite / four tests skipped. The failure is the unchanged
+marketplace test ownerEditionPickerQueries.test.tsx:171, delayed-read versus
+accepted-selection case: hook choices.data was undefined at an immediate
+assertion. CI skipped TypeScript/export after the test failure; their local
+checks passed. The test, runtime, Jest configuration and dependencies have no
+diff against main base 76348f3. Fresh isolated local rerun passed 19/19; the
+final local full suite had also passed this test. Asynchronous observer timing
+is a hypothesis, not a confirmed root cause or a product fix.
+
+A failed-job rerun request returned GitHub 403 Resource not accessible by
+integration; no rerun started. No credentials or permissions were changed.
+This documentation-only publication receipt will receive its normal push CI;
+that result must be read separately. The failed source attempt remains part of
+the evidence and publication is not called fully remote-validated.
+
+No database, Storage, permissions, migration application, runtime deployment or
+business submission occurred. Existing confirmation, URL-state, connected-role
+and native gaps remain recorded. Manage's layout is retained. The excluded Home
+screenshot and unrelated uncommitted audit advisory remain only in the original
+checkout. No further product change is authorized by this publication.
+
+Exact next action: report publication and the unresolved remote-validation
+gate. The unchanged marketplace test needs investigation before CI clearance;
+stop before rollout, operational corrections or redesign implementation. This
+publication receipt changes documentation only; reviewed source/tests, SQL and
+dependencies match the published merge.
