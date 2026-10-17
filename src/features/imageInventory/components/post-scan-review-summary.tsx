@@ -9,17 +9,19 @@ function reviewStageLabel({
     inputCount,
     visibleCount,
     counts,
+    needReview,
 }: {
     sessionStatus: OwnerBatchReview['status'];
     inputCount: number;
     visibleCount: number;
     counts: ReviewCounts;
+    needReview: number;
 }): string {
     if (sessionStatus === 'closed') return 'Closed · Read only';
     if (sessionStatus === 'expired') return 'Expired · Read only';
     if (sessionStatus === 'closing') return 'Closing session';
     if (counts.processing > 0) return 'Processing scan';
-    if (counts.needsAttention > 0) return 'Needs review';
+    if (needReview > 0) return 'Needs review';
     if (visibleCount > 0) return 'Ready to review';
     if (inputCount === 0) return 'Waiting for image';
     return 'Checking image';
@@ -61,27 +63,33 @@ export function PostScanReviewSummary({
     visibleCount,
     batchLabel,
     counts,
+    reviewCounts,
 }: {
     sessionStatus: OwnerBatchReview['status'];
     inputCount: number;
     visibleCount: number;
     batchLabel: string | null;
     counts: ReviewCounts;
+    // Per-card counts from the same rule as the card badges and Add all ready
+    // books. Server counts stay authoritative for auto-close and read-only views.
+    reviewCounts?: { ready: number; needReview: number };
 }) {
     const { colors } = useTheme();
-    const stage = reviewStageLabel({ sessionStatus, inputCount, visibleCount, counts });
+    const ready = reviewCounts?.ready ?? counts.reviewReadySaved;
+    const needReview = reviewCounts?.needReview ?? counts.needsAttention;
+    const stage = reviewStageLabel({ sessionStatus, inputCount, visibleCount, counts, needReview });
     return (
         <View testID="post-scan-review-summary" style={{ gap: 14 }}>
             <View style={{ gap: 8 }}>
                 <View style={{
                     alignSelf: 'flex-start',
                     borderRadius: 999,
-                    backgroundColor: counts.needsAttention > 0 ? colors.bgSecondary : colors.accent,
+                    backgroundColor: needReview > 0 ? colors.bgSecondary : colors.accent,
                     paddingHorizontal: 10,
                     paddingVertical: 5,
                 }}>
                     <Text selectable style={{
-                        color: counts.needsAttention > 0 ? colors.textPrimary : '#FFFFFF',
+                        color: needReview > 0 ? colors.textPrimary : '#FFFFFF',
                         fontSize: 12,
                         fontWeight: '800',
                     }}>
@@ -104,13 +112,13 @@ export function PostScanReviewSummary({
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 <SummaryMetric value={counts.detected} label="Detected" />
                 <SummaryMetric value={visibleCount} label="In review" />
-                <SummaryMetric value={counts.reviewReadySaved} label="Ready" />
-                <SummaryMetric value={counts.needsAttention} label="Need review" />
+                <SummaryMetric value={ready} label="Ready" />
+                <SummaryMetric value={needReview} label="Need review" />
                 <SummaryMetric value={counts.committed} label="Added" />
             </View>
 
             <Text selectable style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>
-                Detected is the session total. Need review counts individual books; image attention above only describes scan processing. Cards below show active review only; added and removed books are not repeated.
+                Detected is the session total. Ready counts books you can add now, including edits saved when added; Need review counts individual books still to fix; image attention above only describes scan processing. Cards below show active review only; added and removed books are not repeated.
             </Text>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>

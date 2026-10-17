@@ -57,4 +57,26 @@ describe('Phase 9 post-scan review summary', () => {
 
         expect(screen.getByText('Closed · Read only')).toBeTruthy();
     });
+    it('shows the per-card Ready and Need review counts when provided', () => {
+        const counts = {
+            detected: 7, processing: 0, needsAttention: 5, reviewReadySaved: 0,
+            committed: 2, ownerRemoved: 0, falseDetections: 0,
+        };
+        const screen = render(
+            <PostScanReviewSummary sessionStatus="active" inputCount={1} visibleCount={5}
+                batchLabel={null} counts={counts} reviewCounts={{ ready: 2, needReview: 3 }} />,
+        );
+
+        expect(screen.getAllByText('2')).toHaveLength(2);
+        expect(screen.getByText('3')).toBeTruthy();
+        expect(screen.getByText('Needs review')).toBeTruthy();
+
+        screen.rerender(
+            <PostScanReviewSummary sessionStatus="active" inputCount={1} visibleCount={5}
+                batchLabel={null} counts={counts} reviewCounts={{ ready: 5, needReview: 0 }} />,
+        );
+        expect(screen.getAllByText('5')).toHaveLength(2);
+        expect(screen.getByText('0')).toBeTruthy();
+        expect(screen.getByText('Ready to review')).toBeTruthy();
+    });
 });

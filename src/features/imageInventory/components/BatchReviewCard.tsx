@@ -206,13 +206,14 @@ export function BatchReviewCard({
         onAuthorityStateChange?.(card.candidateId, false);
     };
     const attentionItems = useMemo(() => cardAttentionItems({
-        card, hasEdits, validationIssues: validation.issues,
-    }), [card, hasEdits, validation.issues]);
+        card, hasEdits, validationIssues: validation.issues, draftSubmittable: canStartCommit,
+    }), [card, hasEdits, validation.issues, canStartCommit]);
     const errorFields = useMemo(() => new Set(attentionItems.map((item) => item.field)),
         [attentionItems]);
-    const status = reviewStatusLabel(
-        card, review !== null, attentionItems.length, editable, hasEdits, addOutcome,
-    );
+    // Mirrors the screen's bulk eligibility: blocked, pending and in-flight cards are not Ready.
+    const canAddNow = canStartCommit && !authorityChanged && !hasBufferedIdentity
+        && !selectionPending && !addPending;
+    const status = reviewStatusLabel(card, canAddNow, attentionItems.length, addOutcome, addPending);
     const needsAttention = status === 'Needs attention' || status === 'Failed';
 
     return (
