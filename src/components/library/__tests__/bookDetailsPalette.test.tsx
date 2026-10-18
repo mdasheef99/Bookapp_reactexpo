@@ -148,7 +148,8 @@ describe.each(PHASES)('Book Details palette: %s', phase => {
             fireEvent.press(ui.getByRole('button', { name: 'Remove from Library' }));
             const removal = normalize(ui.toJSON());
             const baseline = serialize({ collapsed, expanded, removal });
-            expect(baseline).toBe(fs.readFileSync(path.join(fixtureDir, fixtureName), 'utf8'));
+            // Git may check the fixture out with CRLF on Windows; compare content, not line endings.
+            expect(baseline).toBe(fs.readFileSync(path.join(fixtureDir, fixtureName), 'utf8').replace(/\r\n/g, '\n'));
         } finally {
             ui.unmount();
             ui.client.clear();
