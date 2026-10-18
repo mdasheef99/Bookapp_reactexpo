@@ -25,6 +25,12 @@ Store Owner gate, onboarding and console basics.
   the Owner orders screen and nearly every Store Owner console screen (gate,
   onboarding, review status, setup checklist, dashboard, profile, subscription)
   use it to resolve the Owner's store, so a change here affects the whole console.
+- **Approval does not make a store sellable.** A `store-review` approval sets
+  `setup_status = incomplete` and `selling_status = not_allowed`. Selling becomes
+  `allowed` only when the Owner completes setup through `store-profile`, which
+  checks profile, hours, fulfillment, return policy, payout, agreements and an
+  active subscription. Rejection keeps `not_allowed`; suspend and restrict set
+  `restricted`.
 - Screens: `StoreOwnerGateScreen`, `StoreOnboardingScreen`,
   `StoreReviewStatusScreen`, `StoreSetupChecklistScreen`, `StoreDashboardScreen`,
   `StoreProfileScreen`, `SubscriptionStatusScreen`.
