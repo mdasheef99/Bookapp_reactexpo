@@ -32,7 +32,8 @@
     "smoke:phase9:worker-containers": "node scripts/smoke-phase9-worker-containers.js",
     "validate:phase9:deployment-runtime": "node scripts/validate-phase9-deployment-runtime.js",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "lint:library": "eslint \"app/(tabs)/library\" src/components/library src/components/notes src/features/books/notes"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -92,6 +93,8 @@
     "@types/node": "25.0.3",
     "@types/react": "~19.1.0",
     "babel-preset-expo": "~54.0.10",
+    "eslint": "~9.39.5",
+    "eslint-config-expo": "~10.0.0",
     "jest-expo": "~54.0.17",
     "react-test-renderer": "^19.1.0",
     "typescript": "~5.9.2"
