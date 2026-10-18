@@ -49,8 +49,9 @@ Before proposing, editing, migrating, or implementing:
 2. Read [the marketplace active-phase router](./docs/multi-tenant-bookstore-marketplace/implementation/ACTIVE.md).
 3. Read [DOC-13](./docs/multi-tenant-bookstore-marketplace/DOC-13-implementation-tracker.md) for global status, blockers, and the authoritative active phase.
 4. Follow the ordered reading list in the active-phase router and its session-start document.
-5. Inspect the relevant current code and migrations before assuming the documented target is already implemented.
-6. State the current phase, completed milestone, active work unit, next authorized action, blockers, and database-mutation authority back to the user before acting.
+5. Read [`CODEBASE_MAP/README.md`](./CODEBASE_MAP/README.md) and the map file for the area you are touching. The map is orientation only: it never gives status, next actions or product rules.
+6. Inspect the relevant current code and migrations before assuming the documented target is already implemented.
+7. State the current phase, completed milestone, active work unit, next authorized action, blockers, and database-mutation authority back to the user before acting.
 
 If `ACTIVE.md`, DOC-13, and the active phase tracker disagree, stop implementation. Reconcile the documentation from evidence or ask the user when the conflict changes scope or authority.
 
@@ -134,10 +135,11 @@ Before ending a session that changed files or external state:
 2. Record verification actually run; never imply an unrun test passed.
 3. Record database/storage mutations or explicitly state none.
 4. Record new decisions, deviations, blockers, and residual risk in their owning documents.
-5. Set one exact next authorized action and active work unit; do not leave vague “continue implementation” text.
-6. Update DOC-13 if the global handoff changed.
-7. Run the active phase documentation validator and relevant code/security tests.
-8. Report uncommitted changes and whether anything was staged, committed, pushed, deployed, or applied.
+5. If the change moved or renamed code, routes, Edge Functions, workers, buckets, test commands, CI, or marketplace rules, update the matching `CODEBASE_MAP/` file in the same change, following its README "Keeping this folder accurate". Never add status to the map.
+6. Set one exact next authorized action and active work unit; do not leave vague “continue implementation” text.
+7. Update DOC-13 if the global handoff changed.
+8. Run the active phase documentation validator and relevant code/security tests.
+9. Report uncommitted changes and whether anything was staged, committed, pushed, deployed, or applied.
 
 ## Superseded kickstart material
 

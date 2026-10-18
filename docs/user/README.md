@@ -8,4 +8,4 @@ Worktrees: clubs lives on `feat/clubs-ui-overhaul` in `Bookconnect4_expo`, libra
 - Next: `library/SDD-04-shelf` `getHighResCoverUrl` color + `viewMode` + `useTheme`
 - `clubs/` - `SDD-01-ui-overhaul` audit complete docs-only on `feat/clubs-ui-overhaul`, baseline Jest 18 suites/190 tests, P1-P5 phases pending approval, `TRACKER.md` SOT
 
-`CODEBASE_INTELLIGENCE` read-only shape only, no writes. `docs/multi-tenant-bookstore-marketplace` is marketplace SOT, not user.
+`CODEBASE_MAP/` is orientation only; update it as its README describes. `docs/multi-tenant-bookstore-marketplace` is marketplace SOT, not user.
