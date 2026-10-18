@@ -49,7 +49,7 @@ Before proposing, editing, migrating, or implementing:
 2. Read [the marketplace active-phase router](./docs/multi-tenant-bookstore-marketplace/implementation/ACTIVE.md).
 3. Read [DOC-13](./docs/multi-tenant-bookstore-marketplace/DOC-13-implementation-tracker.md) for global status, blockers, and the authoritative active phase.
 4. Follow the ordered reading list in the active-phase router and its session-start document.
-5. Read [`CODEBASE_MAP/README.md`](./CODEBASE_MAP/README.md) and the map file for the area you are touching. The map is orientation only: it never gives status, next actions or product rules.
+5. Read [`CODEBASE_MAP/README.md`](./CODEBASE_MAP/README.md) and follow its reading order for the area you are touching. The map is orientation only: it never gives status, next actions or product rules.
 6. Inspect the relevant current code and migrations before assuming the documented target is already implemented.
 7. State the current phase, completed milestone, active work unit, next authorized action, blockers, and database-mutation authority back to the user before acting.
 
@@ -135,7 +135,7 @@ Before ending a session that changed files or external state:
 2. Record verification actually run; never imply an unrun test passed.
 3. Record database/storage mutations or explicitly state none.
 4. Record new decisions, deviations, blockers, and residual risk in their owning documents.
-5. If the change moved or renamed code, routes, Edge Functions, workers, buckets, test commands, CI, or marketplace rules, update the matching `CODEBASE_MAP/` file in the same change, following its README "Keeping this folder accurate". Never add status to the map.
+5. If the change altered anything `CODEBASE_MAP/` describes (see the "When to update" table in its README), update the matching map file in the same change, following that README's "Keeping this folder accurate". Never add status to the map.
 6. Set one exact next authorized action and active work unit; do not leave vague “continue implementation” text.
 7. Update DOC-13 if the global handoff changed.
 8. Run the active phase documentation validator and relevant code/security tests.

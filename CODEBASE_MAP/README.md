@@ -84,7 +84,8 @@ the matching file **in the same commit**.
 3. Confirm every link and file path you added resolves.
 4. The **Last checked** line at the top of a file records when the *whole file*
    was last re-verified. Update it only when you re-check the whole file, not
-   after a one-line edit.
+   after a one-line edit. If a file you rely on for a large change was last
+   checked several months ago, re-verify the parts you depend on first.
 5. If you notice a wrong statement here while doing other work, fix it in the
    same change, or tell the user if it is outside your change's scope.
 
