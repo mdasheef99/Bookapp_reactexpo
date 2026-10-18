@@ -61,7 +61,7 @@ Practical checklist for each session:
 
 These are the files the AI will read to understand your project:
 
-- **CODEBASE_INTELLIGENCE/README.md** - Durable codebase map; read this first, especially if Augment/codebase-retrieval is unavailable
+- **CODEBASE_MAP/README.md** - Codebase orientation map; read this first
 - **docs/README.md** - Project overview and navigation
 - **docs/strategic-planning/STRATEGIC_PLAN_TECHNICAL.md** - Implementation tasks (879 lines)
 - **docs/architecture/architecture_react_expo.md** - Technical architecture (1649 lines)
@@ -143,7 +143,7 @@ Update documentation when you complete tasks.
 
 ```
 BookConnect_new_react_app/
-├── CODEBASE_INTELLIGENCE/             ← Durable codebase map and future-agent instructions
+├── CODEBASE_MAP/                      ← Codebase orientation map (no status)
 ├── DEVELOPMENT_SESSION_KICKSTART.md  ← Main prompt
 ├── KICKSTART_EXTENDED_GUIDE.md       ← Extended reference
 ├── SESSION_CHECKLIST.md              ← Session checklist
