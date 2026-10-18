@@ -22,7 +22,7 @@ import { useWishlist } from '@/hooks/useWishlist';
 import * as Haptics from 'expo-haptics';
 import { SortOption } from '@/lib/constants';
 import { navigateBackOrFallback } from '@/lib/navigation';
-import { LibraryTypographyProvider, useLibraryTypography } from '@/components/library/LibraryTypography';
+import { useLibraryTypography } from '@/components/library/LibraryTypography';
 import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { sortSearchResults } from '@/features/books/utils/searchResults';
 
@@ -56,7 +56,8 @@ const getSearchSignature = (searchQuery: string, filters: SearchFilters) =>
     JSON.stringify([searchQuery.trim(), filters]);
 
 export default function SearchBooksScreen() {
-    return <LibraryTypographyProvider><SearchBooksScreenContent /></LibraryTypographyProvider>;
+    // FU-2: fonts come from app/(tabs)/library/_layout.tsx (LibraryTypographyProvider).
+    return <SearchBooksScreenContent />;
 }
 
 function SearchBooksScreenContent() {

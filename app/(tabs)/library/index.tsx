@@ -25,7 +25,6 @@ import {
     LibraryShelf,
     LibrarySummary,
 } from '@/components/library';
-import { LibraryTypographyProvider } from '@/components/library/LibraryTypography';
 import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
 
 const LIBRARY_VIEW_MODE_KEY = 'library_viewMode';
@@ -37,7 +36,8 @@ function LibraryPageBackground({ children }: { children: ReactNode }) {
 }
 
 export default function LibraryScreen() {
-    return <LibraryTypographyProvider><LibraryHome /></LibraryTypographyProvider>;
+    // FU-2: fonts come from app/(tabs)/library/_layout.tsx (LibraryTypographyProvider).
+    return <LibraryHome />;
 }
 
 function LibraryHome() {
