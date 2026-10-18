@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from './LibraryAppearance';
 import { userBookPagesService, UserBookPage } from '@/features/books/services/userBookPagesService';
 
 interface VaultPagesListProps {
@@ -11,7 +11,7 @@ interface VaultPagesListProps {
 }
 
 export function VaultPagesList({ userBookId }: VaultPagesListProps) {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
     const queryClient = useQueryClient();
 
     const { data: pages, isLoading, isError, isFetching, refetch } = useQuery({
@@ -57,15 +57,15 @@ export function VaultPagesList({ userBookId }: VaultPagesListProps) {
                 <Text style={[styles.emptyText, { color: colors.textTertiary }]}>No saved pages yet.</Text>
             </View>}
             {pages.map((page) => (
-                <View key={page.id} style={[styles.card, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+                <View key={page.id} style={[styles.card, { backgroundColor: colors.bgSecondary, borderColor: colors.divider }]}>
                     <View style={styles.header}>
                         <Text style={[styles.pageNum, { color: colors.accent }]}>Page {page.page_number}</Text>
                         <Text style={[styles.meta, { color: colors.textTertiary }]}>{page.word_count} words • {new Date(page.updated_at).toLocaleDateString()}</Text>
                     </View>
                     <Text style={[styles.excerpt, { color: colors.textPrimary }]} numberOfLines={3}>{page.content_excerpt}</Text>
                     <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Delete page ${page.page_number}`} disabled={deleteMutation.isPending} onPress={() => handleDelete(page)} style={styles.deleteBtn}>
-                        <Ionicons name="trash-outline" size={14} color="#EF4444" />
-                        <Text style={styles.deleteText}>{deleteMutation.isPending && deleteMutation.variables === page.id ? 'Deleting…' : 'Delete'}</Text>
+                        <Ionicons name="trash-outline" size={14} color={colors.error} />
+                        <Text style={[styles.deleteText, { color: colors.error }]}>{deleteMutation.isPending && deleteMutation.variables === page.id ? 'Deleting…' : 'Delete'}</Text>
                     </TouchableOpacity>
                 </View>
             ))}
@@ -84,5 +84,5 @@ const styles = StyleSheet.create({
     excerpt: { fontSize: 14, lineHeight: 20 },
     deleteBtn: { minHeight: 48, minWidth: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-end' },
     retryBtn: { minHeight: 48, justifyContent: 'center', paddingHorizontal: 12 },
-    deleteText: { color: '#EF4444', fontSize: 12, fontWeight: '600' },
+    deleteText: { fontSize: 12, fontWeight: '600' },
 });

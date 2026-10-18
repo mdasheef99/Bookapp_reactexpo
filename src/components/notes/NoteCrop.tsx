@@ -2,13 +2,28 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, PanResponder, Text, View } from 'react-native';
 import type { CapturePhoto } from '@/features/books/notes/captureAdapter';
 import { adjustCropEdge, containedImage, CropSelection, moveCropCorner } from '@/features/books/notes/captureGeometry';
-import { NoteButton, ui, useNoteColors } from './ManualNoteUi';
+import { NoteButton, ui } from './ManualNoteUi';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+
+/**
+ * SDD-07 FU-1b: the one tint the palette does not carry as its own token (a faint
+ * darkening over the crop area) is derived from `shadow`, the palette's darkest hue,
+ * instead of restating a literal rgba.
+ */
+const withAlpha = (color: string, alpha: number) => {
+    const hex = color.startsWith('#') ? color.slice(1) : '';
+    const digits = hex.length === 3 ? [...hex].map(digit => digit + digit).join('') : hex;
+    const channels = hex
+        ? (digits.match(/../g) ?? []).map(part => Number.parseInt(part, 16))
+        : color.slice(color.indexOf('(') + 1, color.lastIndexOf(')')).split(',').slice(0, 3).map(part => Number.parseFloat(part.trim()));
+    return `rgba(${channels.join(', ')}, ${alpha})`;
+};
 
 export function NoteCrop({ photo, crop, onChange, disabled, cropMode, autoDetected, cropNotice, onReset }: {
   photo: CapturePhoto; crop: CropSelection; onChange: (crop: CropSelection) => void; disabled: boolean;
   cropMode: 'automatic' | 'manual'; autoDetected: boolean; cropNotice?: string; onReset: () => void;
 }) {
-  const colors = useNoteColors(); const [frame, setFrame] = useState({ width: 320, height: 280 }); const [adjusting, setAdjusting] = useState(false);
+  const colors = useLibraryAppearance(); const [frame, setFrame] = useState({ width: 320, height: 280 }); const [adjusting, setAdjusting] = useState(false);
   useEffect(() => setAdjusting(false), [photo.uri]);
   const displayed = containedImage(photo, frame);
   const selection = { left: displayed.x + crop.x * displayed.width, top: displayed.y + crop.y * displayed.height, width: crop.width * displayed.width, height: crop.height * displayed.height };
@@ -16,7 +31,7 @@ export function NoteCrop({ photo, crop, onChange, disabled, cropMode, autoDetect
     <View accessibilityLabel="Selected photo and crop" style={{ height: 280, width: '100%', backgroundColor: colors.bgCard }}
       onLayout={event => setFrame({ width: event.nativeEvent.layout.width, height: event.nativeEvent.layout.height })}>
       <Image source={{ uri: photo.uri }} accessibilityLabel="Selected page photo" resizeMode="contain" style={{ width: '100%', height: '100%' }} />
-      <View pointerEvents="none" style={{ position: 'absolute', ...selection, borderWidth: 3, borderColor: colors.accent, backgroundColor: 'rgba(0,0,0,0.06)' }} />
+      <View pointerEvents="none" style={{ position: 'absolute', ...selection, borderWidth: 3, borderColor: colors.controlBorder, backgroundColor: withAlpha(colors.shadow, 0.06) }} />
       {adjusting && <>
         <CropHandle corner="start" crop={crop} displayed={displayed} onChange={onChange} disabled={disabled}
           left={Math.max(0, Math.min(frame.width - 48, selection.left - 24))} top={Math.max(0, Math.min(frame.height - 48, selection.top - 24))} />
@@ -47,7 +62,7 @@ export function NoteCrop({ photo, crop, onChange, disabled, cropMode, autoDetect
 function CropHandle({ corner, crop, displayed, onChange, disabled, left, top }: {
   corner: 'start' | 'end'; crop: CropSelection; displayed: { width: number; height: number }; onChange: (crop: CropSelection) => void; disabled: boolean; left: number; top: number;
 }) {
-  const colors = useNoteColors(); const latest = useRef(crop); latest.current = crop; const starting = useRef(crop);
+  const colors = useLibraryAppearance(); const latest = useRef(crop); latest.current = crop; const starting = useRef(crop);
   const callback = useRef(onChange); callback.current = onChange;
   const responder = useMemo(() => PanResponder.create({
     onStartShouldSetPanResponder: () => !disabled,
@@ -57,7 +72,7 @@ function CropHandle({ corner, crop, displayed, onChange, disabled, left, top }: 
   }), [corner, disabled, displayed.width, displayed.height]);
   return <View {...responder.panHandlers} accessibilityRole="adjustable" accessibilityLabel={corner === 'start' ? 'Top left crop corner' : 'Bottom right crop corner'}
     accessibilityState={{ disabled }} accessibilityHint="Use the labeled edge buttons below to adjust without dragging."
-    style={{ position: 'absolute', left, top, width: 48, height: 48, borderRadius: 12, borderWidth: 2, borderColor: colors.border, backgroundColor: colors.bgCard, alignItems: 'center', justifyContent: 'center' }}>
+    style={{ position: 'absolute', left, top, width: 48, height: 48, borderRadius: 12, borderWidth: 2, borderColor: colors.controlBorder, backgroundColor: colors.bgCard, alignItems: 'center', justifyContent: 'center' }}>
     <Text style={{ color: colors.accent, fontSize: 24 }}>{corner === 'start' ? '↖' : '↘'}</Text>
   </View>;
 }

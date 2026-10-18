@@ -3,7 +3,9 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { NoteCrop } from '../NoteCrop';
 import type { CapturePhoto } from '@/features/books/notes/captureAdapter';
 
-jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight', colors: { textPrimary: '#111', textSecondary: '#444' } }) }));
+// SDD-07 FU-1b: NoteCrop and NoteButton resolve every colour from the book-section palette,
+// which useLibraryAppearance derives from `phase` alone.
+jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight', colors: {} }) }));
 
 const photo: CapturePhoto = { uri: 'page.jpg', width: 1000, height: 800, sourceWidth: 1000, sourceHeight: 800, rotation: 0 };
 it('keeps crop handles and edge controls behind one optional Adjust crop action', () => {

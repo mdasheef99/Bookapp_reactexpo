@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, Dimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from './LibraryAppearance';
 
 interface DeleteBookModalProps {
     visible: boolean;
@@ -12,7 +12,7 @@ interface DeleteBookModalProps {
 }
 
 export const DeleteBookModal = ({ visible, onClose, onConfirm, isDeleting }: DeleteBookModalProps) => {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
 
     return (
         <Modal
@@ -21,11 +21,11 @@ export const DeleteBookModal = ({ visible, onClose, onConfirm, isDeleting }: Del
             animationType="fade"
             onRequestClose={onClose}
         >
-            <View style={styles.overlay}>
+            <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>
                 <BlurView intensity={20} style={StyleSheet.absoluteFill} />
-                <View style={[styles.modal, { backgroundColor: colors.bgCard }]}>
-                    <View style={styles.iconContainer}>
-                        <Ionicons name="trash-outline" size={40} color="#ef4444" />
+                <View style={[styles.modal, { backgroundColor: colors.bgRaised, shadowColor: colors.shadow }]}>
+                    <View style={[styles.iconContainer, { backgroundColor: colors.errorSurface }]}>
+                        <Ionicons name="trash-outline" size={40} color={colors.error} />
                     </View>
                     <Text style={[styles.title, { color: colors.textPrimary }]}>Remove from Library?</Text>
                     <Text style={[styles.message, { color: colors.textSecondary }]}>
@@ -34,7 +34,7 @@ export const DeleteBookModal = ({ visible, onClose, onConfirm, isDeleting }: Del
 
                     <View style={styles.buttons}>
                         <TouchableOpacity
-                            style={[styles.button, styles.cancelButton, { backgroundColor: colors.bgSecondary }]}
+                            style={[styles.button, styles.cancelButton, { backgroundColor: colors.bgSecondary, borderColor: colors.controlBorder }]}
                             onPress={onClose}
                             disabled={isDeleting}
                         >
@@ -42,11 +42,11 @@ export const DeleteBookModal = ({ visible, onClose, onConfirm, isDeleting }: Del
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={[styles.button, styles.deleteButton]}
+                            style={[styles.button, styles.deleteButton, { backgroundColor: colors.error }]}
                             onPress={onConfirm}
                             disabled={isDeleting}
                         >
-                            <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>
+                            <Text style={[styles.buttonText, { color: colors.onErrorSurface }]}>
                                 {isDeleting ? 'Removing...' : 'Remove'}
                             </Text>
                         </TouchableOpacity>
@@ -60,7 +60,6 @@ export const DeleteBookModal = ({ visible, onClose, onConfirm, isDeleting }: Del
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
@@ -71,7 +70,6 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         padding: 24,
         alignItems: 'center',
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.25,
         shadowRadius: 20,
@@ -81,7 +79,6 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
@@ -109,10 +106,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     cancelButton: {
-        // backgroundColor set in component
+        paddingVertical: 13,
+        borderWidth: 1,
+        // backgroundColor and borderColor set in component
     },
     deleteButton: {
-        backgroundColor: '#ef4444',
     },
     buttonText: {
         fontSize: 16,

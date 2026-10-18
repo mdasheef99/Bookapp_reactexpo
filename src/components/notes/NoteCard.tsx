@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNoteColors } from './ManualNoteUi';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { ReadingNote, NoteTag, NOTE_TAG_CONFIG } from '@/features/books/services/notesService';
 import { ManualNote, categoryLabel } from '@/features/books/notes/manualNoteContract';
 
@@ -13,7 +13,7 @@ interface NoteCardProps {
 }
 
 export const NoteCard = ({ note, onRead, onEdit, onDelete }: NoteCardProps) => {
-    const colors = useNoteColors();
+    const colors = useLibraryAppearance();
     const tagConfig = note.tag ? NOTE_TAG_CONFIG[note.tag as NoteTag] : undefined;
 
     const handleLongPress = () => {
@@ -67,7 +67,10 @@ export const NoteCard = ({ note, onRead, onEdit, onDelete }: NoteCardProps) => {
                 styles.card,
                 {
                     backgroundColor: colors.bgCard,
-                    borderColor: colors.border,
+                    // The quote stripe keeps its own tag colour (NOTE_TAG_CONFIG, Flow B / D07-04);
+                    // accent is only the fallback for a note with no configured tag.
+                    borderColor: colors.divider,
+                    shadowColor: colors.shadow,
                 },
                 isQuote && {
                     borderLeftWidth: 3,
@@ -117,7 +120,6 @@ const styles = StyleSheet.create({
         padding: 16,
         marginBottom: 12,
         borderWidth: 1,
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.04,
         shadowRadius: 6,

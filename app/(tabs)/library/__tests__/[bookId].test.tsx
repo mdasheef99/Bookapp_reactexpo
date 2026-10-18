@@ -28,10 +28,7 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({
-        colors: {
-            bgPrimary: '#FFFFFF', bgCard: '#F8FAFC', bgSecondary: '#EEF2FF', border: '#CBD5E1', accent: '#4F46E5',
-            textPrimary: '#0F172A', textSecondary: '#475569', textTertiary: '#94A3B8', shadow: '#0F172A',
-        },
+        phase: 'daylight',
     }),
 }));
 // Review writes are bound to the authenticated store actor, so useAuth reads the same session.

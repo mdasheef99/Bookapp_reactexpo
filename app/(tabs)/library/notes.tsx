@@ -3,7 +3,8 @@ import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { NoteCard } from '@/components/notes';
-import { CategoryPicker, NoteButton, NoteLoading, NoteMessage, NoteScreen, ui, useNoteColors } from '@/components/notes/ManualNoteUi';
+import { CategoryPicker, NoteButton, NoteLoading, NoteMessage, NoteScreen, ui } from '@/components/notes/ManualNoteUi';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { categoryLabel, NoteCategory, ManualNote, noteKeys } from '@/features/books/notes/manualNoteContract';
 import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
 import { composeHref, openNoteComposer, openNoteReader, registerNoteContext, returnToBook } from '@/features/books/notes/noteNavigation';
@@ -11,7 +12,7 @@ import { useNoteContext, useNoteOperations } from '@/features/books/notes/useMan
 
 export default function NotesScreen() {
   const { userBookId = '' } = useLocalSearchParams<{ userBookId: string }>();
-  const router = useRouter(); const navigation = useNavigation(); const colors = useNoteColors(); const { actorId, book } = useNoteContext(userBookId);
+  const router = useRouter(); const navigation = useNavigation(); const colors = useLibraryAppearance(); const { actorId, book } = useNoteContext(userBookId);
   const [filter, setFilter] = useState<NoteCategory | null>(null);
   const anchor = useRef(0); const list = useRef<FlatList<ManualNote>>(null);
   const operations = useNoteOperations(actorId, userBookId);
@@ -22,7 +23,7 @@ export default function NotesScreen() {
     {query.data && <NoteMessage message={`${notes.length} saved note${notes.length === 1 ? '' : 's'}`} />}
     <CategoryPicker selected={filter} includeAll onChange={value => { setFilter(value); anchor.current = 0; list.current?.scrollToOffset({ offset: 0, animated: false }); }} />
     {filter && <NoteMessage message={`Showing ${categoryLabel(filter)} notes. Notes in other categories are available under All.`} />}
-    {operations.map(operation => <View key={operation.submission.id} style={{ padding: 14, gap: 8, borderWidth: 1, borderRadius: 12, borderColor: colors.border, backgroundColor: colors.bgCard }}>
+    {operations.map(operation => <View key={operation.submission.id} style={{ padding: 14, gap: 8, borderWidth: 1, borderRadius: 12, borderColor: colors.divider, backgroundColor: colors.bgCard }}>
       <NoteMessage message={operation.status === 'confirmed' ? 'Saved submission ready to read' : operation.status === 'failed' ? 'Submission was not saved' : operation.status === 'conflict' ? 'Submission needs comparison' : 'Pending submission — save not confirmed'} />
       <NoteButton label={operation.status === 'confirmed' ? 'Open saved submission' : 'Open pending submission'} secondary onPress={() => {
         const contextId = registerNoteContext({ actorId, bookId: userBookId, origin: operation.submission.origin, canBack: true });

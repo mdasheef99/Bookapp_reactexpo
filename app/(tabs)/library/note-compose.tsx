@@ -4,7 +4,8 @@ import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { usePreventRemove } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { randomUUID } from 'expo-crypto';
-import { CategoryPicker, NoteButton, NoteDialog, NoteDialogSpec, NoteForm, NoteLoading, NoteMessage, NoteScreen, ScrollView, ui, useNoteColors } from '@/components/notes/ManualNoteUi';
+import { CategoryPicker, NoteButton, NoteDialog, NoteDialogSpec, NoteForm, NoteLoading, NoteMessage, NoteScreen, ScrollView, ui } from '@/components/notes/ManualNoteUi';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { categoryLabel, fieldsChanged, ManualNote, noteFields, NoteFields, noteKeys, validateNote } from '@/features/books/notes/manualNoteContract';
 import { manualNotesGateway, noteSaves } from '@/features/books/notes/manualNotesGateway';
 import { noteRouteContext, readerHref, registerNoteContext, returnFromNote, returnToSavedReader } from '@/features/books/notes/noteNavigation';
@@ -16,7 +17,7 @@ import { NoteCaptureSession } from '@/features/books/notes/captureSession';
 
 export default function NoteComposeScreen() {
   const { bookId = '', noteId, contextId, operationId } = useLocalSearchParams<{ bookId: string; noteId?: string; contextId?: string; operationId?: string }>();
-  const router = useRouter(); const navigation = useNavigation(); const colors = useNoteColors();
+  const router = useRouter(); const navigation = useNavigation(); const colors = useLibraryAppearance();
   const { actorId, book } = useNoteContext(bookId); const refresh = useNoteRefresh(actorId, bookId);
   const context = noteRouteContext(contextId, actorId, bookId);
   const operations = useNoteOperations(actorId, bookId);

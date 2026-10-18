@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from './LibraryAppearance';
 
 interface RatingInputProps {
     rating: number; // 0-5
@@ -10,7 +10,7 @@ interface RatingInputProps {
 }
 
 export const RatingInput = ({ rating, onChange, disabled }: RatingInputProps) => {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
 
     return (
         <View style={styles.container}>
@@ -26,7 +26,7 @@ export const RatingInput = ({ rating, onChange, disabled }: RatingInputProps) =>
                         <Ionicons
                             name={star <= rating ? 'star' : 'star-outline'}
                             size={32}
-                            color={star <= rating ? '#eab308' : colors.textTertiary}
+                            color={star <= rating ? colors.accent : colors.textTertiary}
                             style={{ marginRight: 8 }}
                         />
                     </TouchableOpacity>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from './LibraryAppearance';
 
 export type Ownership = 'owned' | 'lent_out' | 'borrowed' | 'wishlist';
 
@@ -12,7 +12,7 @@ interface OwnershipSelectorProps {
 }
 
 export const OwnershipSelector = ({ ownership, onChange, disabled }: OwnershipSelectorProps) => {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
 
     const options: { value: Ownership; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
         { value: 'owned', label: 'Owned', icon: 'home-outline' },
@@ -35,8 +35,8 @@ export const OwnershipSelector = ({ ownership, onChange, disabled }: OwnershipSe
                             style={[
                                 styles.badge,
                                 {
-                                    backgroundColor: isSelected ? colors.accent + '20' : colors.bgSecondary,
-                                    borderColor: isSelected ? colors.accent : 'transparent',
+                                    backgroundColor: isSelected ? colors.chipSelectedBackground : colors.bgSecondary,
+                                    borderColor: isSelected ? colors.chipSelectedBackground : colors.controlBorder,
                                     borderWidth: 1,
                                 },
                             ]}
@@ -44,13 +44,13 @@ export const OwnershipSelector = ({ ownership, onChange, disabled }: OwnershipSe
                             <Ionicons
                                 name={option.icon}
                                 size={14}
-                                color={isSelected ? colors.accent : colors.textSecondary}
+                                color={isSelected ? colors.chipSelectedText : colors.textSecondary}
                             />
                             <Text
                                 style={[
                                     styles.badgeText,
                                     {
-                                        color: isSelected ? colors.accent : colors.textSecondary,
+                                        color: isSelected ? colors.chipSelectedText : colors.textSecondary,
                                         fontWeight: isSelected ? '600' : '400',
                                     },
                                 ]}

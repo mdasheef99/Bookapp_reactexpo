@@ -21,7 +21,9 @@ jest.mock('expo-crypto', () => ({ randomUUID: () => `fixture-${++mockId}` }));
 jest.mock('expo-router', () => ({ useLocalSearchParams: () => mockParams, useRouter: () => mockRouter, useNavigation: () => mockNavigation }));
 jest.mock('@react-navigation/native', () => ({ usePreventRemove: jest.fn() }));
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 24, bottom: 16 }) }));
-jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight', colors: { textPrimary: '#111', textSecondary: '#444' } }) }));
+// SDD-07 FU-1b: the composer resolves every colour from the book-section palette, which
+// useLibraryAppearance derives from `phase` alone.
+jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight', colors: {} }) }));
 jest.mock('@tanstack/react-query', () => ({ useQuery: () => ({ data: mockRecord, isPending: false, isError: false, refetch: jest.fn(async () => ({ data: mockRecord })) }) }));
 jest.mock('@/features/books/notes/manualNotesGateway', () => {
   const { NoteSaveCoordinator } = require('@/features/books/notes/noteSaveCoordinator'); const adapter = { write: jest.fn(), reconcile: jest.fn() };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from './LibraryAppearance';
 
 export type Condition = 'new' | 'like_new' | 'good' | 'acceptable' | 'poor';
 
@@ -11,14 +11,14 @@ interface ConditionPickerProps {
 }
 
 export const ConditionPicker = ({ condition, onChange, disabled }: ConditionPickerProps) => {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
 
     const levels: { value: Condition; label: string; color: string }[] = [
-        { value: 'new', label: 'New', color: '#22c55e' },
-        { value: 'like_new', label: 'Like New', color: '#84cc16' },
-        { value: 'good', label: 'Good', color: '#eab308' },
-        { value: 'acceptable', label: 'Fair', color: '#f97316' },
-        { value: 'poor', label: 'Poor', color: '#ef4444' },
+        { value: 'new', label: 'New', color: colors.chipSelectedBackground },
+        { value: 'like_new', label: 'Like New', color: colors.chipSelectedBackground },
+        { value: 'good', label: 'Good', color: colors.chipSelectedBackground },
+        { value: 'acceptable', label: 'Fair', color: colors.chipSelectedBackground },
+        { value: 'poor', label: 'Poor', color: colors.chipSelectedBackground },
     ];
 
     return (
@@ -36,7 +36,7 @@ export const ConditionPicker = ({ condition, onChange, disabled }: ConditionPick
                                 styles.level,
                                 {
                                     backgroundColor: isSelected ? level.color : colors.bgSecondary,
-                                    borderColor: isSelected ? 'transparent' : colors.border,
+                                    borderColor: isSelected ? colors.chipSelectedBackground : colors.controlBorder,
                                 },
                             ]}
                         >
@@ -44,7 +44,7 @@ export const ConditionPicker = ({ condition, onChange, disabled }: ConditionPick
                                 style={[
                                     styles.levelText,
                                     {
-                                        color: isSelected ? '#FFFFFF' : colors.textSecondary,
+                                        color: isSelected ? colors.chipSelectedText : colors.textSecondary,
                                         fontWeight: isSelected ? '700' : '400',
                                     },
                                 ]}

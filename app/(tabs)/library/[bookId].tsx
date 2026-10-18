@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, useId } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Switch, TextInput, Alert, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Switch, TextInput, Alert, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient, useMutationState } from '@tanstack/react-query';
 import { Image } from 'expo-image';
@@ -11,7 +11,7 @@ import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
 import { noteKeys } from '@/features/books/notes/manualNoteContract';
 import { openNoteComposer, openNoteReader } from '@/features/books/notes/noteNavigation';
 import { useNoteOperations } from '@/features/books/notes/useManualNotes';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
     StatusSelector,
@@ -52,8 +52,8 @@ type ReviewSubmission = { actor: ReviewActor; entryId: string; patch: ReviewPatc
 
 function BookSection({ title, children }: { title: string; children: React.ReactNode }) {
     const [expanded, setExpanded] = useState(false);
-    const { colors } = useTheme();
-    return <View style={[styles.notesSection, { backgroundColor: colors.bgCard }]}>
+    const colors = useLibraryAppearance();
+    return <View style={[styles.notesSection, { backgroundColor: colors.bgCard, shadowColor: colors.shadow }]}>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ expanded }}
             onPress={() => setExpanded(value => !value)} style={styles.sectionButton}>
             <Text style={[styles.notesSectionTitle, { color: colors.textPrimary }]}>{title}</Text>
@@ -67,7 +67,7 @@ export default function BookDetailScreen() {
     const { bookId } = useLocalSearchParams<{ bookId: string }>();
     const router = useRouter();
     const queryClient = useQueryClient();
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
     const { user } = useAuth();
     useNoteOperations(user?.id ?? '', bookId);
 
@@ -278,6 +278,10 @@ export default function BookDetailScreen() {
         );
     }
 
+    const lendingThumbProps: { activeThumbColor?: string; thumbColor?: string } = Platform.OS === 'web'
+        ? { activeThumbColor: colors.textOnAccent }
+        : { thumbColor: userBook.available_for_lending ? colors.textOnAccent : undefined };
+
     return (
         <AtmosphericBackground>
             <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
@@ -290,7 +294,7 @@ export default function BookDetailScreen() {
                             accessibilityRole="button"
                             accessibilityLabel="Back to Library"
                             testID="library-book-back-button"
-                            style={[styles.backButton, { backgroundColor: colors.bgCard }]}
+                            style={[styles.backButton, { backgroundColor: colors.bgCard, shadowColor: colors.shadow }]}
                         >
                             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                             <Text style={{ color: colors.textPrimary, fontWeight: '600' }}>Library</Text>
@@ -299,10 +303,10 @@ export default function BookDetailScreen() {
 
                     {/* Cover & Hero */}
                     <View style={styles.hero}>
-                        <View style={styles.coverContainer}>
+                        <View style={[styles.coverContainer, { shadowColor: colors.shadow }]}>
                             <Image
-                                source={{ uri: book.cover_url || 'https://via.placeholder.com/150x220' }}
-                                style={styles.coverImage}
+                                source={book.cover_url ? { uri: book.cover_url } : undefined}
+                                style={[styles.coverImage, { backgroundColor: colors.coverPlaceholder }]}
                                 contentFit="cover"
                             />
                         </View>
@@ -312,7 +316,7 @@ export default function BookDetailScreen() {
                         </Text>
                     </View>
 
-                    <View style={[styles.card, { backgroundColor: colors.bgCard }]}>
+                    <View style={[styles.card, { backgroundColor: colors.bgCard, shadowColor: colors.shadow }]}>
                         <StatusSelector
                             status={userBook.reading_status as ReadingStatus}
                             onChange={(val) => updateStatusMutation.mutate(val)}
@@ -324,11 +328,11 @@ export default function BookDetailScreen() {
                     <TouchableOpacity accessibilityRole="button" accessibilityLabel="Add note"
                         onPress={() => openNoteComposer(router, user!.id, bookId, 'book')}
                         style={[styles.primaryNote, { backgroundColor: colors.accent }]}>
-                        <Text style={[styles.primaryNoteText, { color: colors.bgPrimary }]}>Add note</Text>
+                        <Text style={[styles.primaryNoteText, { color: colors.textOnAccent }]}>Add note</Text>
                     </TouchableOpacity>
 
                     {/* === My Notes Section === */}
-                    <View style={[styles.notesSection, { backgroundColor: colors.bgCard }]}>
+                    <View style={[styles.notesSection, { backgroundColor: colors.bgCard, shadowColor: colors.shadow }]}>
                         <View style={styles.notesSectionHeader}>
                             <View style={styles.notesTitleRow}>
                                 <Ionicons name="pencil-outline" size={18} color={colors.accent} />
@@ -337,7 +341,7 @@ export default function BookDetailScreen() {
                                 </Text>
                                 {!notesLoading && !notesError && (
                                     <View style={[styles.notesBadge, { backgroundColor: colors.accent }]}>
-                                        <Text style={styles.notesBadgeText}>{notesCount}</Text>
+                                        <Text style={[styles.notesBadgeText, { color: colors.textOnAccent }]}>{notesCount}</Text>
                                     </View>
                                 )}
                             </View>
@@ -383,7 +387,7 @@ export default function BookDetailScreen() {
                     </View>
 
                     {/* Vault Pages — SDD-03 browse/delete via getPagesForBook */}
-                    <View style={[styles.notesSection, { backgroundColor: colors.bgCard }]}>
+                    <View style={[styles.notesSection, { backgroundColor: colors.bgCard, shadowColor: colors.shadow }]}>
                         <View style={styles.notesSectionHeader}>
                             <View style={styles.notesTitleRow}>
                                 <Ionicons name="bookmark-outline" size={18} color={colors.accent} />
@@ -406,7 +410,7 @@ export default function BookDetailScreen() {
                                 style={[styles.input, {
                                     backgroundColor: colors.bgSecondary,
                                     color: colors.textPrimary,
-                                    borderColor: colors.border
+                                    borderColor: colors.controlBorder
                                 }]}
                                 testID="library-review-input"
                                 placeholder="Write your thoughts..."
@@ -460,12 +464,13 @@ export default function BookDetailScreen() {
                                     disabled={toggleLendingMutation.isPending}
                                     value={userBook.available_for_lending}
                                     onValueChange={(val) => toggleLendingMutation.mutate(val)}
-                                    trackColor={{ false: colors.border, true: colors.accent }}
+                                    trackColor={{ false: colors.controlBorder, true: colors.accent }}
+                                    {...lendingThumbProps}
                                 />
                             </View>
                         )}
 
-                        <View style={[styles.divider, { marginVertical: 16 }]} />
+                        <View style={[styles.divider, { marginVertical: 16, backgroundColor: colors.divider }]} />
 
                         {/* Condition (Only if Owned/Lent) */}
                         {['owned', 'lent_out'].includes(userBook.ownership) && (
@@ -475,7 +480,7 @@ export default function BookDetailScreen() {
                                     onChange={(val) => updateConditionMutation.mutate(val)}
                                     disabled={updateConditionMutation.isPending}
                                 />
-                                <View style={[styles.divider, { marginVertical: 16 }]} />
+                                <View style={[styles.divider, { marginVertical: 16, backgroundColor: colors.divider }]} />
                             </>
                         )}
 
@@ -486,7 +491,7 @@ export default function BookDetailScreen() {
                         onPress={() => setShowDeleteModal(true)}
                         style={styles.deleteButtonContainer}
                     >
-                        <Text style={styles.deleteText}>Remove from Library</Text>
+                        <Text style={[styles.deleteText, { color: colors.error }]}>Remove from Library</Text>
                     </TouchableOpacity>
 
                     </BookSection>
@@ -519,7 +524,7 @@ export default function BookDetailScreen() {
                                         testID={`community-review-${review.user_book_id}`}
                                         style={[
                                             styles.communityReviewCard,
-                                            { backgroundColor: colors.bgSecondary, borderColor: colors.border },
+                                            { backgroundColor: colors.bgSecondary, borderColor: colors.divider },
                                         ]}
                                     >
                                         <View style={styles.communityReviewHeader}>
@@ -606,7 +611,6 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -619,7 +623,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     coverContainer: {
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.25,
         shadowRadius: 12,
@@ -630,7 +633,6 @@ const styles = StyleSheet.create({
         width: 140,
         height: 220,
         borderRadius: 12,
-        backgroundColor: '#eee',
     },
     title: {
         fontSize: 24,
@@ -647,7 +649,6 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
         borderRadius: 24,
         padding: 20,
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
         shadowRadius: 10,
@@ -655,7 +656,6 @@ const styles = StyleSheet.create({
     },
     divider: {
         height: 1,
-        backgroundColor: 'rgba(0,0,0,0.05)',
         marginVertical: 4,
     },
     rowBetween: {
@@ -696,7 +696,6 @@ const styles = StyleSheet.create({
         marginTop: 16,
         borderRadius: 24,
         padding: 20,
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
         shadowRadius: 10,
@@ -775,7 +774,6 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     deleteText: {
-        color: '#ef4444',
         fontSize: 15,
         fontWeight: '600',
     },
@@ -785,7 +783,6 @@ const styles = StyleSheet.create({
         marginTop: 16,
         borderRadius: 24,
         padding: 20,
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
         shadowRadius: 10,
@@ -815,7 +812,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 6,
     },
     notesBadgeText: {
-        color: '#FFFFFF',
         fontSize: 12,
         fontWeight: '700',
     },

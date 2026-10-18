@@ -20,7 +20,7 @@ const mockBack = jest.fn(); const mockPush = jest.fn(); const mockReplace = jest
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({ bookId: mockEntryId }), useRouter: () => ({ back: mockBack, push: mockPush, replace: mockReplace, canGoBack: () => true }) }));
-jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ colors: { bgPrimary: '#fff', bgCard: '#fafafa', bgSecondary: '#eee', border: '#555', accent: '#174f35', textPrimary: '#111', textSecondary: '#333', textTertiary: '#444', error: '#a00' } }) }));
+jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight' }) }));
 jest.mock('@/features/auth/hooks/useAuth', () => ({ useAuth: () => {
     const { useAuthStore: store } = require('@/features/auth/store/authStore');
     const session = store((state: any) => state.session);

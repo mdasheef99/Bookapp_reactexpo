@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from './LibraryAppearance';
 
 export type ReadingStatus = 'want_to_read' | 'reading' | 'completed';
 
@@ -12,7 +12,7 @@ interface StatusSelectorProps {
 }
 
 export const StatusSelector = ({ status, onChange, disabled }: StatusSelectorProps) => {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
 
     const options: { value: ReadingStatus; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
         { value: 'want_to_read', label: 'Want to Read', icon: 'bookmark-outline' },
@@ -33,21 +33,22 @@ export const StatusSelector = ({ status, onChange, disabled }: StatusSelectorPro
                         style={[
                             styles.option,
                             {
-                                backgroundColor: isSelected ? colors.accent : colors.bgCard,
-                                borderColor: isSelected ? colors.accent : colors.border,
+                                backgroundColor: isSelected ? colors.chipSelectedBackground : colors.bgCard,
+                                borderColor: isSelected ? colors.chipSelectedBackground : colors.controlBorder,
+                                shadowColor: colors.shadow,
                             },
                         ]}
                     >
                         <Ionicons
                             name={option.icon}
                             size={18}
-                            color={isSelected ? '#FFFFFF' : colors.textSecondary}
+                            color={isSelected ? colors.chipSelectedText : colors.textSecondary}
                         />
                         <Text
                             style={[
                                 styles.label,
                                 {
-                                    color: isSelected ? '#FFFFFF' : colors.textSecondary,
+                                    color: isSelected ? colors.chipSelectedText : colors.textSecondary,
                                     fontWeight: isSelected ? '700' : '500',
                                 },
                             ]}
@@ -75,7 +76,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         borderRadius: 20,
         borderWidth: 1,
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 4,

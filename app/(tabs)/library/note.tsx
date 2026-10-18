@@ -2,7 +2,8 @@ import React, { useRef, useState } from 'react';
 import { Clipboard, Platform, Text, View } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { NoteButton, NoteDialog, NoteDialogSpec, NoteLoading, NoteMessage, NoteScreen, ScrollView, ui, useNoteColors } from '@/components/notes/ManualNoteUi';
+import { NoteButton, NoteDialog, NoteDialogSpec, NoteLoading, NoteMessage, NoteScreen, ScrollView, ui } from '@/components/notes/ManualNoteUi';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { categoryLabel, noteKeys, NoteWriteError } from '@/features/books/notes/manualNoteContract';
 import { isManualNoteDeleteAuthorized, manualNoteDeleteAdapter, manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
 import { composeHref, noteRouteContext, registerNoteContext, retainedReaderKey, returnFromNote } from '@/features/books/notes/noteNavigation';
@@ -10,7 +11,7 @@ import { useNoteContext, useNoteOperations, useNoteRemovalRefresh } from '@/feat
 
 export default function NoteReaderScreen() {
   const { bookId = '', noteId = '', contextId } = useLocalSearchParams<{ bookId: string; noteId: string; contextId?: string }>();
-  const router = useRouter(); const navigation = useNavigation(); const colors = useNoteColors(); const { actorId, book } = useNoteContext(bookId);
+  const router = useRouter(); const navigation = useNavigation(); const colors = useLibraryAppearance(); const { actorId, book } = useNoteContext(bookId);
   const context = noteRouteContext(contextId, actorId, bookId); const removeFromCache = useNoteRemovalRefresh(actorId, bookId);
   const query = useQuery({ queryKey: noteKeys.record(actorId, bookId, noteId), queryFn: ({ signal }) => manualNotesGateway.record(actorId, bookId, noteId, signal), enabled: !!actorId && !!book.data && !!noteId });
   const operations = useNoteOperations(actorId, bookId);

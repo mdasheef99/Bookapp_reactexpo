@@ -25,7 +25,9 @@ jest.mock('expo-router', () => ({ useLocalSearchParams: () => mockParams, useRou
 } }) }));
 jest.mock('@react-navigation/native', () => ({ usePreventRemove: jest.fn() }));
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 24, bottom: 16, left: 0, right: 0 }) }));
-jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight', colors: { textPrimary: '#111111', textSecondary: '#444444', bgPrimary: '#FFFFFF', bgCard: '#FFFFFF', accent: '#24543C', error: '#B42318', border: '#D4DACF' } }) }));
+// SDD-07 FU-1b: the notes routes resolve every colour from the book-section palette, which
+// useLibraryAppearance derives from `phase` alone.
+jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight', colors: {} }) }));
 jest.mock('@tanstack/react-query', () => ({ useQuery: (options: any) => ({ data: options.queryKey[0] === 'notes' ? mockCollection : mockRecord, isPending: false, isError: false, refetch: jest.fn(async () => ({ data: mockRecord, isError: mockRefetchError })) }) }));
 jest.mock('@/features/books/notes/manualNotesGateway', () => {
   const { NoteSaveCoordinator } = require('@/features/books/notes/noteSaveCoordinator');

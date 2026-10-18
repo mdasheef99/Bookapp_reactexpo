@@ -7,7 +7,9 @@ import { NOTE_CATEGORIES } from '@/features/books/notes/manualNoteContract';
 
 // Load lazy RN primitives before the first interaction's default timeout.
 void [Pressable, Text, View];
-jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight', colors: { textPrimary: '#111', textSecondary: '#444' } }) }));
+// SDD-07 FU-1b: the picker resolves every colour from the book-section palette, which
+// useLibraryAppearance derives from `phase` alone, so the phase is this mock's only key.
+jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight', colors: {} }) }));
 
 const createDOMProps = require('react-native-web/dist/cjs/modules/createDOMProps') as
   (element: string, props: Record<string, unknown>) => Record<string, unknown>;
