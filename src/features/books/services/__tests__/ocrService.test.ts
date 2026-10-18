@@ -1,13 +1,23 @@
 jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
 jest.mock('@react-native-ml-kit/text-recognition', () => ({ __esModule: true, default: { recognize: jest.fn() } }));
 import TextRecognition from '@react-native-ml-kit/text-recognition';
-import { ocrService } from '../ocrService';
+import { boundedReview, ocrErrorMessage, ocrService } from '../ocrService';
 import { supabase } from '@/lib/supabase';
 import { setAuthState } from '@/features/auth/store/authStore';
 const native = TextRecognition.recognize as jest.Mock;
 const invoke = supabase.functions.invoke as jest.Mock;
 const requestId = '92000000-0000-4000-8000-000000000001';
 const cloudOptions = { imageBase64: '/9j/AAAA', languageHint: 'en' as const, requestId, consent: true, userId: 'reader-a' };
+it('bounds a single-word extraction at the review character limit', () => {
+ const result = boundedReview('x'.repeat(20001), 'en', 'on-device');
+ expect(result.reviewText).toBe('x'.repeat(20000));
+ expect(result.reviewOverflow).toBe(true);
+});
+it('keeps raw provider errors out of the displayed OCR failure', () => {
+ const message = ocrErrorMessage(new Error('secret provider error'));
+ expect(message).toBe('The page could not be read on this device. Adjust the photo or return to writing.');
+ expect(message).not.toContain('secret provider');
+});
 it('times out stalled local recognition without triggering a cloud request', async () => {
  jest.useFakeTimers();
  try {

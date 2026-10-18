@@ -138,7 +138,7 @@ export const LIBRARY_SPACING = {
 } as const;
 
 // control/card/cabinet are the shipped radii. chip: 20 and dialog: 18 are taken from
-// radii already in use in the book section (StatusSelector option 20, TagSelector tag
+// radii already in use in the book section (StatusSelector option 20, the former TagSelector tag
 // 20, ManualNoteUi dialog 18, LibraryBookQuickLook panel 18).
 export const LIBRARY_RADIUS = { control: 12, card: 14, cabinet: 16, chip: 20, dialog: 18 } as const;
 

@@ -45,7 +45,6 @@ export function useNoteOperations(actorId: string, bookId: string) {
       if (memory.deleted.has(recordIdentity(actorId, bookId, operation.record.id))) continue;
       seedRecord(client, actorId, bookId, operation.record);
       void client.invalidateQueries({ queryKey: noteKeys.collection(actorId, bookId) });
-      void client.invalidateQueries({ queryKey: ['notesCount', actorId, bookId] });
     }
   }, [revision, client, actorId, bookId]);
   return noteSaves.forBook(actorId, bookId);
@@ -55,7 +54,6 @@ export function useNoteRefresh(actorId: string, bookId: string) {
   return useCallback((record?: ManualNote) => {
     if (record) seedRecord(client, actorId, bookId, record);
     void client.invalidateQueries({ queryKey: noteKeys.collection(actorId, bookId) });
-    void client.invalidateQueries({ queryKey: ['notesCount', actorId, bookId] });
     if (record) void client.invalidateQueries({ queryKey: noteKeys.record(actorId, bookId, record.id) });
   }, [client, actorId, bookId]);
 }
@@ -74,6 +72,5 @@ export function useNoteRemovalRefresh(actorId: string, bookId: string) {
       if (operation.submission.noteId === noteId && operation.status === 'confirmed') noteSaves.forget(operation.submission.id);
     }
     void client.invalidateQueries({ queryKey: noteKeys.collection(actorId, bookId) });
-    void client.invalidateQueries({ queryKey: ['notesCount', actorId, bookId] });
   }, [client, actorId, bookId]);
 }
