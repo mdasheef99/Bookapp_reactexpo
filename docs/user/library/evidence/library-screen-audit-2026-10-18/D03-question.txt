@@ -1,0 +1,44 @@
+‹ Book details
+Notes
+Many Notes Fixture Book
+7 saved notes
+All
+Quote
+Thought
+Takeaway
+Action
+✓ Question
+Showing Question notes. Notes in other categories are available under All.
+Question
+18 Sept 2026 • 03:30 pm
+A question I still have about this chapter?
+
+Page 5
+Add note
+⏷
+⏷
+My Library
+⏷
+⏷
+Exchange
+⏷
+⏷
+Marketplace
+⏷
+⏷
+Clubs
+⏷
+⏷
+Profile
+⏷
+⏷
+marketplace/cart
+⏷
+⏷
+marketplace/requests/index
+⏷
+⏷
+marketplace/book/[listingId]
+⏷
+⏷
+marketplace/requests/[requestId]

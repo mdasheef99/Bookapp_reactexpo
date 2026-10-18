@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Book Details — Shelf card (Direction A1, midnight)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&amp;family=Manrope:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            page: '#faf6ee',
+            card: '#fffdf8',
+            ink: '#30291f',
+            secondary: '#685d4d',
+            btnFill: '#3e3225',
+            btnText: '#fffaf1',
+            divider: '#ded3c1',
+            mutedBorder: '#e7decb',
+          },
+          fontFamily: {
+            serif: ['"EB Garamond"', 'serif'],
+            sans: ['"Manrope"', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    body {
+      background-color: #faf6ee;
+      color: #30291f;
+      font-family: 'Manrope', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-serif {
+      font-family: 'EB Garamond', serif;
+    }
+  </style>
+</head>
+<body class="bg-[#211e1a] text-[#f3eada] min-h-screen flex justify-center selection:bg-[#383229]">
+<!-- Phone Frame (390px fixed width target) -->
+<div class="w-full max-w-[390px] bg-[#211e1a] min-h-screen flex flex-col relative px-5 pb-12 pt-3"><!-- 1. TOP BAR (y ~ 12px to 64px) with 48x48 touch targets -->
+<header class="flex items-center justify-between h-12 w-full mb-4"><button aria-label="Back to Library" class="text-[#f3eada] font-sans text-[16px] font-medium tracking-tight hover:opacity-80 active:opacity-60 transition-opacity inline-flex items-center gap-1.5 focus:outline-none h-12 pr-3" type="button">
+<span aria-hidden="true" class="text-xl leading-none">‹</span>
+<span>Library</span>
+</button>
+<button aria-label="More options" class="w-12 h-12 flex items-center justify-center rounded-full text-[#f3eada] hover:bg-[#383229] active:opacity-60 transition-all focus:outline-none" title="More options" type="button">
+<span class="text-2xl tracking-widest font-sans leading-none">⋯</span>
+</button></header>
+<!-- 2. HORIZONTAL BOOK HEADER: Cover 112x168 beside Title & Author -->
+<section class="flex gap-4 items-start"><div class="w-[112px] h-[168px] flex-shrink-0 rounded-[4px] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-[#504638] bg-[#2d2923]">
+<img alt="Cover of A Quiet Practice by Mira Vale" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1UFuOU-G7F7bfv8StYG1qmHNwoh96hc4gII1Yd4u4JseiOGc4whQyP8lVdm3bVH1x61GzF9ndKYzMyht_Z_4lSyoRmOI-T1W_MzesiRVhmg6kAbTIqaMOZ5ZY-4Ezif56_-8atBUlwrcbw3sRayKAfW2mlj3gkZqLEqdb33_VuCJTt_ifQDT9WFL9ec4soKdNRzEbbBkT62OcDeW1CbD6mX7PxecehFhLS5UlmnB8YelMb7PeDmZ2SsBF1Q" style="width: 112px; height: 168px; object-fit: cover; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);"/>
+</div>
+<div class="flex-1 min-w-0 flex flex-col pt-1">
+<h1 class="font-serif text-[28px] leading-tight font-medium text-[#f3eada] tracking-[-0.01em] mb-1.5">
+          A Quiet Practice
+        </h1>
+<p class="font-sans text-[16px] text-[#c4b8a4] font-normal">
+          Mira Vale
+        </p>
+</div></section>
+<!-- 3. STATUS ROW: Full-width segmented control directly below book header, 48px tall -->
+<section class="mt-4"><div aria-label="Reading status" class="w-full h-12 bg-[#383229] p-[2px] rounded-lg border border-[#504638] grid grid-cols-3 items-center text-[16px] font-sans font-medium" role="radiogroup" style="height: 48px;">
+<button aria-checked="false" class="h-full flex items-center justify-center rounded-[6px] text-[#c4b8a4] hover:text-[#f3eada] transition-colors focus:outline-none whitespace-nowrap text-[16px] font-medium" role="radio" type="button">
+          Want to read
+        </button>
+<button aria-checked="true" class="h-full flex items-center justify-center rounded-[6px] bg-[#2d2923] text-[#f3eada] shadow-[0_1px_3px_rgba(0,0,0,0.25)] border border-[#504638] font-medium focus:outline-none whitespace-nowrap text-[16px]" role="radio" type="button">
+          Reading
+        </button>
+<button aria-checked="false" class="h-full flex items-center justify-center rounded-[6px] text-[#c4b8a4] hover:text-[#f3eada] transition-colors focus:outline-none whitespace-nowrap text-[16px] font-medium" role="radio" type="button">
+          Finished
+        </button>
+</div>
+<p class="text-[14px] text-[#b4a58c] font-sans mt-2 font-normal">
+        Started 2 Oct
+      </p></section>
+<!-- 4. YOUR NOTES SECTION (STATIC PREVIEW CARDS) -->
+<section class="mt-5"><div class="flex items-baseline justify-between mb-3">
+<h2 class="font-serif text-[22px] font-medium text-[#f3eada]">
+          Your notes
+        </h2>
+<span class="font-sans text-[16px] text-[#b4a58c] font-normal">
+          3 notes
+        </span>
+</div>
+<div class="space-y-3">
+<!-- Card 1: Quote (Static preview) -->
+<div class="bg-[#2d2923] rounded-lg p-3.5 border border-[#504638] shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
+<div class="text-[14px] font-sans text-[#b4a58c] font-normal mb-1.5">
+            Quote · p. 42 · 14 Oct
+          </div>
+<p class="font-serif italic text-[18px] leading-[1.4] text-[#f3eada] font-normal">
+            “Attention grows when we give one task our time.”
+          </p>
+</div>
+<!-- Card 2: Thought (Static preview) -->
+<div class="bg-[#2d2923] rounded-lg p-3.5 border border-[#504638] shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
+<div class="text-[14px] font-sans text-[#b4a58c] font-normal mb-1.5">
+            Thought · 12 Oct
+          </div>
+<p class="font-sans text-[16px] leading-[1.4] text-[#c4b8a4] font-normal">
+            I keep noticing how often I split my attention while reading on the train.
+          </p>
+</div>
+</div>
+<!-- 5. PRIMARY BUTTON: Full-width 48px CTA 'Add note' -->
+<button class="w-full mt-4 h-12 bg-[#dfc496] text-[#2c2318] font-sans text-[16px] font-medium rounded-lg flex items-center justify-center hover:opacity-95 active:opacity-90 transition-opacity focus:outline-none shadow-[0_1px_3px_rgba(0,0,0,0.25)]" style="height: 48px;" type="button">
+        Add note
+      </button></section>
+<!-- DP-01 Separation Spacer: Ensures no interactive elements start before y = 860px -->
+<div class="pt-8 mt-4 border-t border-[#504638]"><!-- BELOW THE FOLD: 56px hairline-separated quiet rows -->
+<section class="divide-y divide-[#504638]">
+<!-- Row 1: All 3 notes -->
+<button class="w-full min-h-[56px] py-3.5 flex items-center justify-between text-left group focus:outline-none" type="button">
+<span class="font-sans text-[16px] font-normal text-[#c4b8a4] group-hover:text-[#f3eada] transition-colors">
+            All 3 notes
+          </span>
+<span aria-hidden="true" class="text-[#c4b8a4] text-base font-sans">›</span>
+</button>
+<!-- Row 2: My review -->
+<button class="w-full min-h-[56px] py-3.5 flex items-center justify-between text-left group focus:outline-none gap-2" type="button">
+<span class="font-sans text-[16px] font-normal text-[#c4b8a4] flex-shrink-0 group-hover:text-[#f3eada] transition-colors">
+            My review
+          </span>
+<span class="font-sans text-[16px] font-normal text-[#b4a58c] truncate text-right flex-1 group-hover:text-[#c4b8a4] transition-colors">
+            A gentle book about doing less…
+          </span>
+<span aria-hidden="true" class="text-[#c4b8a4] text-base font-sans flex-shrink-0">›</span>
+</button>
+<!-- Row 3: Saved pages -->
+<button class="w-full min-h-[56px] py-3.5 flex items-center justify-between text-left group focus:outline-none" type="button">
+<span class="font-sans text-[16px] font-normal text-[#c4b8a4] group-hover:text-[#f3eada] transition-colors">
+            Saved pages
+          </span>
+<div class="flex items-center gap-2">
+<span class="font-sans text-[16px] text-[#b4a58c] font-normal">1 page</span>
+<span aria-hidden="true" class="text-[#c4b8a4] text-base font-sans">›</span>
+</div>
+</button>
+<!-- Row 4: Book information -->
+<button class="w-full min-h-[56px] py-3.5 flex items-center justify-between text-left group focus:outline-none" type="button">
+<span class="font-sans text-[16px] font-normal text-[#c4b8a4] group-hover:text-[#f3eada] transition-colors">
+            Book information
+          </span>
+<span aria-hidden="true" class="text-[#c4b8a4] text-base font-sans">›</span>
+</button>
+<!-- Row 5: Ownership & condition -->
+<button class="w-full min-h-[56px] py-3.5 flex items-center justify-between text-left group focus:outline-none" type="button">
+<span class="font-sans text-[16px] font-normal text-[#c4b8a4] group-hover:text-[#f3eada] transition-colors">
+            Ownership &amp; condition
+          </span>
+<span aria-hidden="true" class="text-[#c4b8a4] text-base font-sans">›</span>
+</button>
+</section>
+<!-- VERY BOTTOM: REMOVE FROM LIBRARY (48px tall touch target, text #c4b8a4) -->
+<div class="mt-8 pt-2 pb-4 text-center flex justify-center">
+<button class="font-sans text-[16px] font-normal text-[#c4b8a4] hover:text-[#f3eada] active:opacity-70 transition-colors focus:outline-none underline-offset-4 hover:underline min-h-[48px] inline-flex items-center justify-center px-4" type="button">
+          Remove from library
+        </button>
+</div></div></div>
+</body>
+</html>

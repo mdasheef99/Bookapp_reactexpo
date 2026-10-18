@@ -1,0 +1,511 @@
+{
+  "totalWrites": 0,
+  "writes": [],
+  "perTest": [
+    {
+      "test": "A01 home populated list mode",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "A02 home shelf mode",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "A03 home empty library",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "A04 home loading (user_books delayed ~8s)",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "A05 home error (user_books 500)",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "A06 home long-title book visible",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "A07 home desktop 1280x800 populated",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "B01 search initial empty query",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "B02 search typed query with results (fake provider JSON)",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": [
+        "googleapis GET",
+        "googleapis GET"
+      ]
+    },
+    {
+      "test": "B03 search no results",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": [
+        "googleapis GET",
+        "googleapis GET"
+      ]
+    },
+    {
+      "test": "B04 search provider error (500)",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": [
+        "googleapis GET",
+        "googleapis GET",
+        "openlibrary GET"
+      ]
+    },
+    {
+      "test": "B05 search loading (provider delayed)",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": [
+        "googleapis GET",
+        "googleapis GET"
+      ]
+    },
+    {
+      "test": "C01 book details populated with notes",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "C02 book details zero notes",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "C03 book details no cover",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "C04 book details long title and author",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "C05 book details loading (user_books single delayed)",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "C06 book details error (user_books single 500)",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "C06b book details not found (406 no rows)",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "C07 book details each collapsible section expanded",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "C08 book details saved pages present",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "C09 book details desktop 1280x800",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "D01 notes list populated",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "D02 notes list empty",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "D03 notes list category chips applied (Quote, Thought, Question)",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "D04 notes list loading (reading_notes delayed)",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "D05 notes list error (reading_notes 500)",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "E01 note reader normal note with category and page",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "E02 note reader no category",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "E03 note reader ~500-word note",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "E04 note reader note not found",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "F01 composer choose step",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "F02 composer write step empty",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "F03 composer write step with typed text (not saved)",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "F04 composer word-limit state (501 words pasted, not saved)",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "F05 composer discard dialog on Back with dirty draft",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "F06 composer intake step (scan) with file chooser",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "F07 composer crop step if reached",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "F08 composer what follows scan on web (crop action)",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "F09 composer edit mode (existing note, not saved)",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "G01 CSS zoom 200% approximation on book details and composer",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews",
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "G02 theme phase daylight (hour 12)",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews",
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "G02 theme phase golden (hour 18)",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews",
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "G02 theme phase midnight (hour 22)",
+      "writes": [],
+      "rpcReads": [
+        "POST get_public_book_reviews",
+        "POST get_public_book_reviews"
+      ],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    },
+    {
+      "test": "G03 offline after load: click a book inside the app",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    }
+  ]
+}

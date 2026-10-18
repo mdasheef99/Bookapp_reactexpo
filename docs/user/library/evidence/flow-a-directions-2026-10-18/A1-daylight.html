@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Direction A1 Shelf Card — Book Details</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            page: '#faf6ee',
+            card: '#fffdf8',
+            ink: '#30291f',
+            secondary: '#685d4d',
+            btnFill: '#3e3225',
+            btnText: '#fffaf1',
+            divider: '#ded3c1',
+            mutedBorder: '#e7decb',
+          },
+          fontFamily: {
+            serif: ['"EB Garamond"', 'serif'],
+            sans: ['"Manrope"', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background-color: #faf6ee;
+      color: #30291f;
+      font-family: 'Manrope', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-serif {
+      font-family: 'EB Garamond', serif;
+    }
+  </style>
+</head>
+<body class="bg-page text-ink min-h-screen flex justify-center selection:bg-[#ded3c1]/50">
+  <!-- Phone Frame (390px fixed width target) -->
+  <div class="w-full max-w-[390px] bg-page min-h-screen flex flex-col relative px-5 pb-12 pt-3">
+    
+    <!-- 1. TOP BAR -->
+    <header class="flex items-center justify-between h-12 w-full mb-3">
+      <button type="button" class="text-ink font-sans text-[16px] font-medium tracking-tight hover:opacity-80 active:opacity-60 transition-opacity flex items-center gap-1.5 focus:outline-none" aria-label="Back to Library">
+        <span class="text-lg leading-none" aria-hidden="true">‹</span>
+        <span>Library</span>
+      </button>
+
+      <button type="button" class="w-9 h-9 flex items-center justify-center rounded-full text-ink hover:bg-[#ded3c1]/30 active:opacity-60 transition-all focus:outline-none" aria-label="More options" title="More options">
+        <span class="text-xl tracking-widest font-sans leading-none">⋯</span>
+      </button>
+    </header>
+
+    <!-- 2. HORIZONTAL BOOK HEADER -->
+    <section class="flex gap-4 items-start pb-5 border-b border-divider">
+      <!-- Book cover: 96x144 -->
+      <div class="w-[96px] h-[144px] flex-shrink-0 rounded-[4px] overflow-hidden shadow-[0_2px_8px_rgba(48,41,31,0.08)] border border-divider/60 bg-[#eae2d3]">
+        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlizU_8HUPcbN5DL1TJt8gOM6B5iY3H4zcuSRkanXhN5lpcFcu2zxR8DRwlvj7-g7HrdnMezREzMVebdP7ldY9VCdqBVCJX6yjkEoPafW7Cl7spawAHCaJZastyX2Kht0RlqxefJnEnOdQkzx4ilzFOuRwLGInb2yp09p-S1Q0YATnZts9D6dI8gHsjihQ4wEktquQ5NcfqcYzRnmaPKjvypMb228XZl-017H3Lo8YIOK7pDt1e52RFJiSOw-s3T9-4J8ACIAOOA-i" alt="Cover of A Quiet Practice by Mira Vale" class="w-full h-full object-cover" />
+      </div>
+
+      <!-- Book info & segmented status -->
+      <div class="flex-1 min-w-0 flex flex-col pt-0.5">
+        <h1 class="font-serif text-[28px] leading-[1.15] font-medium text-ink tracking-[-0.01em] mb-1">
+          A Quiet Practice
+        </h1>
+        <p class="font-sans text-[16px] text-secondary font-normal mb-3.5">
+          Mira Vale
+        </p>
+
+        <!-- Segmented Control: Want to read · Reading · Finished -->
+        <div class="inline-flex self-start items-center bg-[#efe9dc] p-[2px] rounded-lg border border-divider/70 text-[13px] font-sans font-medium text-secondary" role="radiogroup" aria-label="Reading status">
+          <button type="button" role="radio" aria-checked="false" class="px-2 py-1 rounded-[6px] text-secondary hover:text-ink transition-colors focus:outline-none">
+            Want to read
+          </button>
+          <button type="button" role="radio" aria-checked="true" class="px-2.5 py-1 rounded-[6px] bg-card text-ink shadow-[0_1px_3px_rgba(48,41,31,0.08)] border border-divider/40 font-medium focus:outline-none">
+            Reading
+          </button>
+          <button type="button" role="radio" aria-checked="false" class="px-2 py-1 rounded-[6px] text-secondary hover:text-ink transition-colors focus:outline-none">
+            Finished
+          </button>
+        </div>
+
+        <p class="text-[14px] text-secondary font-sans mt-2 font-normal">
+          Started 2 Oct
+        </p>
+      </div>
+    </section>
+
+    <!-- 3. SECTION "YOUR NOTES" -->
+    <section class="pt-5 pb-2">
+      <div class="flex items-baseline justify-between mb-3">
+        <h2 class="font-serif text-[21px] font-medium text-ink">
+          Your notes
+        </h2>
+        <span class="font-sans text-[14px] text-secondary font-normal">
+          3 notes
+        </span>
+      </div>
+
+      <!-- 4. TWO LATEST NOTE CARDS -->
+      <div class="space-y-3">
+        <!-- Note 1 -->
+        <article class="bg-card rounded-lg p-3.5 border border-mutedBorder shadow-[0_1px_2px_rgba(48,41,31,0.04)]">
+          <div class="text-[14px] font-sans text-secondary font-medium tracking-wide uppercase text-[12px] mb-1.5">
+            Quote
+          </div>
+          <p class="font-serif text-[18px] leading-[1.4] text-ink font-normal mb-2.5">
+            “Attention grows when we give one task our time.”
+          </p>
+          <footer class="text-[14px] font-sans text-secondary">
+            p. 42 · 14 Oct
+          </footer>
+        </article>
+
+        <!-- Note 2 -->
+        <article class="bg-card rounded-lg p-3.5 border border-mutedBorder shadow-[0_1px_2px_rgba(48,41,31,0.04)]">
+          <div class="text-[14px] font-sans text-secondary font-medium tracking-wide uppercase text-[12px] mb-1.5">
+            Thought
+          </div>
+          <p class="font-serif text-[18px] leading-[1.4] text-ink font-normal mb-2.5">
+            “I want to try one slow morning a week, no phone until noon.”
+          </p>
+          <footer class="text-[14px] font-sans text-secondary">
+            p. 78 · 18 Oct
+          </footer>
+        </article>
+      </div>
+
+      <!-- 5. ONE FULL-WIDTH PRIMARY BUTTON "Add note" -->
+      <button type="button" class="w-full mt-4 h-12 bg-btnFill text-btnText font-sans text-[16px] font-medium rounded-lg flex items-center justify-center hover:opacity-95 active:opacity-90 transition-opacity focus:outline-none shadow-[0_1px_3px_rgba(62,50,37,0.12)]">
+        Add note
+      </button>
+    </section>
+
+    <!-- BELOW THE FOLD: QUIET COLLAPSED ROWS -->
+    <section class="mt-4 pt-1 border-t border-divider divide-y divide-divider/70">
+      <!-- Row 1: View all 3 notes -->
+      <button type="button" class="w-full py-3.5 flex items-center justify-between text-left group focus:outline-none">
+        <span class="font-sans text-[15px] font-normal text-ink group-hover:text-secondary transition-colors">
+          View all 3 notes
+        </span>
+        <span class="text-secondary text-sm font-sans" aria-hidden="true">›</span>
+      </button>
+
+      <!-- Row 2: My review -->
+      <button type="button" class="w-full py-3.5 flex items-center justify-between text-left group focus:outline-none">
+        <span class="font-sans text-[15px] font-normal text-ink truncate pr-3 group-hover:text-secondary transition-colors">
+          My review — ‘A gentle book about doing less…’
+        </span>
+        <span class="text-secondary text-sm font-sans flex-shrink-0" aria-hidden="true">›</span>
+      </button>
+
+      <!-- Row 3: Saved pages · 1 -->
+      <button type="button" class="w-full py-3.5 flex items-center justify-between text-left group focus:outline-none">
+        <span class="font-sans text-[15px] font-normal text-ink group-hover:text-secondary transition-colors">
+          Saved pages · 1
+        </span>
+        <span class="text-secondary text-sm font-sans" aria-hidden="true">›</span>
+      </button>
+
+      <!-- Row 4: Book information -->
+      <button type="button" class="w-full py-3.5 flex items-center justify-between text-left group focus:outline-none">
+        <span class="font-sans text-[15px] font-normal text-ink group-hover:text-secondary transition-colors">
+          Book information
+        </span>
+        <span class="text-secondary text-sm font-sans" aria-hidden="true">›</span>
+      </button>
+
+      <!-- Row 5: Ownership & condition -->
+      <button type="button" class="w-full py-3.5 flex items-center justify-between text-left group focus:outline-none">
+        <span class="font-sans text-[15px] font-normal text-ink group-hover:text-secondary transition-colors">
+          Ownership & condition
+        </span>
+        <span class="text-secondary text-sm font-sans" aria-hidden="true">›</span>
+      </button>
+    </section>
+
+    <!-- VERY BOTTOM: REMOVE FROM LIBRARY -->
+    <div class="mt-8 pt-4 pb-2 text-center">
+      <button type="button" class="font-sans text-[15px] font-normal text-secondary hover:text-ink active:opacity-70 transition-colors focus:outline-none underline-offset-4 hover:underline">
+        Remove from library
+      </button>
+    </div>
+
+  </div>
+</body>
+</html>

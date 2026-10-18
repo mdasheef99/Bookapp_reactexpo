@@ -1,0 +1,114 @@
+{
+  "zoom2-390-daylight-populated": {
+    "innerWidth": 390,
+    "docScrollWidth": 399,
+    "labels": [
+      {
+        "text": "Want to read",
+        "scrollW": 153,
+        "clientW": 153,
+        "lineBoxes": 2,
+        "top": 584
+      },
+      {
+        "text": "Reading",
+        "scrollW": 153,
+        "clientW": 153,
+        "lineBoxes": 2,
+        "top": 680
+      },
+      {
+        "text": "Finished",
+        "scrollW": 153,
+        "clientW": 153,
+        "lineBoxes": 2,
+        "top": 776
+      }
+    ],
+    "h1": "Walden"
+  },
+  "zoom2-390-daylight-long-title": {
+    "innerWidth": 390,
+    "docScrollWidth": 399,
+    "labels": [
+      {
+        "text": "Want to read",
+        "scrollW": 153,
+        "clientW": 153,
+        "lineBoxes": 2,
+        "top": 840
+      },
+      {
+        "text": "Reading",
+        "scrollW": 153,
+        "clientW": 153,
+        "lineBoxes": 2,
+        "top": 936
+      },
+      {
+        "text": "Finished",
+        "scrollW": 153,
+        "clientW": 153,
+        "lineBoxes": 2,
+        "top": 1032
+      }
+    ],
+    "h1": "The Life and Opinions of Tristram Shandy, Gentleman"
+  },
+  "zoom2-390-midnight-populated": {
+    "innerWidth": 390,
+    "docScrollWidth": 399,
+    "labels": [
+      {
+        "text": "Want to read",
+        "scrollW": 153,
+        "clientW": 153,
+        "lineBoxes": 2,
+        "top": 584
+      },
+      {
+        "text": "Reading",
+        "scrollW": 153,
+        "clientW": 153,
+        "lineBoxes": 2,
+        "top": 680
+      },
+      {
+        "text": "Finished",
+        "scrollW": 153,
+        "clientW": 153,
+        "lineBoxes": 2,
+        "top": 776
+      }
+    ],
+    "h1": "Walden"
+  },
+  "zoom2-390-golden-populated": {
+    "innerWidth": 390,
+    "docScrollWidth": 399,
+    "labels": [
+      {
+        "text": "Want to read",
+        "scrollW": 153,
+        "clientW": 153,
+        "lineBoxes": 2,
+        "top": 584
+      },
+      {
+        "text": "Reading",
+        "scrollW": 153,
+        "clientW": 153,
+        "lineBoxes": 2,
+        "top": 680
+      },
+      {
+        "text": "Finished",
+        "scrollW": 153,
+        "clientW": 153,
+        "lineBoxes": 2,
+        "top": 776
+      }
+    ],
+    "h1": "Walden"
+  }
+}

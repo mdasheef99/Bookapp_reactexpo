@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Book Details — Reading journal (Direction A3, revised)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..700;1,400..700&amp;family=Manrope:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    :root {
+      --page-bg: #faf6ee;
+      --card-bg: #fffdf8;
+      --ink: #30291f;
+      --secondary: #685d4d;
+      --border-hairline: #ded3c1;
+      --button-border: #8a7b66;
+      --primary-fill: #3e3225;
+      --primary-text: #fffaf1;
+      --thumbnail-bg: #e4dac8;
+    }
+    body {
+      background-color: var(--page-bg);
+      color: var(--ink);
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-serif {
+      font-family: 'EB Garamond', Georgia, serif;
+    }
+    .font-sans {
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+  </style>
+</head>
+<body class="flex justify-center min-h-screen bg-[#faf6ee] text-[#30291f]">
+<!-- Mobile Container: max 390px wide -->
+<main class="w-full max-w-[390px] min-h-screen bg-[#faf6ee] flex flex-col px-5 pb-14 pt-2 selection:bg-[#ded3c1] selection:text-[#30291f]">
+<!-- ABOVE THE FOLD (first 844px) -->
+<div class="flex flex-col">
+<!-- 1. Compact header row (72px tall) -->
+<header class="h-[72px] flex items-center justify-between gap-3 border-b border-[#ded3c1]/60">
+<!-- Back button (48x48) -->
+<button aria-label="Back to Library" class="w-12 h-12 flex items-center justify-center -ml-2 text-2xl text-[#30291f] hover:text-[#685d4d] focus:outline-none transition-colors" type="button">
+<span aria-hidden="true" class="font-serif leading-none select-none">‹</span>
+</button>
+<!-- Book metadata: thumbnail + title & author stacked -->
+<div class="flex items-center gap-3 flex-1 min-w-0">
+<!-- Muted placeholder thumbnail (48x72) -->
+<div aria-hidden="true" class="w-[48px] h-[72px] shrink-0 bg-[#e4dac8] rounded-sm border border-[#ded3c1] flex items-center justify-center my-auto shadow-xs">
+<span class="font-serif text-[#685d4d] text-lg font-medium tracking-normal select-none">AQ</span>
+</div>
+<div class="flex flex-col justify-center min-w-0">
+<h1 class="font-serif text-[22px] leading-[1.2] font-normal text-[#30291f] truncate">
+              A Quiet Practice
+            </h1>
+<p class="font-sans text-[16px] leading-[1.3] text-[#685d4d] truncate">
+              Mira Vale
+            </p>
+</div>
+</div>
+<!-- More options button (48x48) -->
+</header>
+<!-- 2. Status row as a single control (48px tall, 1px #8a7b66 border) -->
+<div class="pt-5 pb-6">
+<button class="w-full h-[48px] px-4 rounded-xl border border-[#ded3c1] bg-[#faf6ee] hover:bg-[#fffdf8] flex items-center justify-between text-left transition-colors focus:outline-none" type="button"><span class="font-sans text-[16px] text-[#30291f] font-normal">Reading · Started 2 Oct</span><span aria-hidden="true" class="text-[16px] text-[#685d4d] font-sans ml-2 select-none leading-none">▾</span></button>
+</div>
+<!-- 3. Section Heading: "Your notes" + "3 notes" plain text -->
+<!-- 4. The latest two notes as a journal -->
+<button aria-label="Your notes, 3 notes, open all notes" class="w-full text-left bg-[#fffdf8] p-4 rounded-xl border border-[#ded3c1]/60 hover:border-[#8a7b66]/60 transition-colors focus:outline-none flex flex-col cursor-pointer" type="button"><div class="flex items-baseline justify-between w-full mb-3"><h2 class="font-serif text-[24px] font-normal text-[#30291f] leading-none m-0">Your notes</h2><span class="font-sans text-[16px] text-[#685d4d] flex items-center gap-1">3 notes <span aria-hidden="true" class="text-[16px] leading-none select-none">›</span></span></div><div class="w-full flex flex-col"><article class="m-0 p-0 text-left"><div class="font-sans text-[14px] text-[#685d4d] mb-1.5">Quote · p. 42 · 14 Oct</div><blockquote class="m-0 p-0 font-serif italic text-[19px] leading-[1.4] text-[#30291f]">“Attention grows when we give one task our time.”</blockquote></article><article class="m-0 border-t border-[#ded3c1]/50 pt-3 mt-3 text-left"><div class="font-sans text-[14px] text-[#685d4d] mb-1.5">Thought · 12 Oct</div><p class="m-0 p-0 font-sans text-[16px] leading-[1.45] text-[#30291f]">I keep noticing how often I split my attention while reading on the train.</p></article><article class="m-0 border-t border-[#ded3c1]/50 pt-3 mt-3 text-left"><div class="font-sans text-[14px] text-[#685d4d] mb-1.5">Question · p. 31 · 9 Oct</div><p class="m-0 p-0 font-sans text-[16px] leading-[1.45] text-[#30291f]">Is boredom a signal or just a habit?</p></article></div></button>
+<!-- 5. Primary full-width button "Add note" -->
+<div class="pt-4 pb-14"><button class="w-full h-[48px] rounded-xl bg-[#3e3225] text-[#fffaf1] font-sans text-[16px] font-medium flex items-center justify-center hover:bg-[#2f251b] active:bg-[#241c14] transition-colors focus:outline-none" type="button">Add note</button></div>
+</div>
+<!-- Divider between Above the Fold and Below the Fold -->
+<div class="w-full h-px bg-[#ded3c1] mb-2"></div>
+<!-- BELOW THE FOLD: hairline-separated collapsed rows (56px tall) -->
+<nav aria-label="Book sections" class="flex flex-col"><button class="w-full h-[56px] flex items-center justify-between border-b border-[#ded3c1] text-left hover:opacity-80 transition-opacity focus:outline-none" type="button"><span class="font-sans text-[16px] text-[#30291f] truncate pr-3">My review — A gentle book about doing less…</span><span aria-hidden="true" class="text-[16px] text-[#685d4d] select-none shrink-0">›</span></button><button class="w-full h-[56px] flex items-center justify-between border-b border-[#ded3c1] text-left hover:opacity-80 transition-opacity focus:outline-none" type="button"><span class="font-sans text-[16px] text-[#30291f]">Book information</span><span aria-hidden="true" class="text-[16px] text-[#685d4d] select-none shrink-0">›</span></button><button class="w-full h-[56px] flex items-center justify-between border-b border-[#ded3c1] text-left hover:opacity-80 transition-opacity focus:outline-none" type="button"><span class="font-sans text-[16px] text-[#30291f]">Ownership &amp; condition</span><span aria-hidden="true" class="text-[16px] text-[#685d4d] select-none shrink-0">›</span></button><button class="w-full h-[56px] flex items-center justify-between border-b border-[#ded3c1] text-left hover:opacity-80 transition-opacity focus:outline-none" type="button"><span class="font-sans text-[16px] text-[#30291f]">Book options</span><span aria-hidden="true" class="text-[16px] text-[#685d4d] select-none shrink-0">›</span></button></nav>
+<!-- Quiet action: Remove from library -->
+<div class="mt-8 text-center">
+<button class="font-sans text-[16px] text-[#685d4d] hover:text-[#30291f] transition-colors focus:outline-none py-2 px-4" type="button">
+        Remove from library
+      </button>
+</div>
+</main>
+</body>
+</html>

@@ -1,5 +1,122 @@
 # Library Tracker
 
+**Flow A design FINALIZED (FA-P1 rounds 2–4) — 2026-10-18:** `library_sdd07_flow_a_finalized_commit_pending`.
+- **Authority:** the owner, in the orchestrating session: "ok look i leave it to your judgement ... please ensure you have understood the essence of the philosophy and proceed and finalyze the design". The orchestrator (Opus) made and verified the calls under that delegation. Recorded as [SDD-07](./SDD-07-book-section-ui-overhaul.md) D07-11.
+- **Design:** A1 Shelf card + A2 unboxed serif passages (D07-09). The FA-P1 prototype is in worktree `Bookconnect4_fu1a`, branch `sdd07/fu1a-fu3`, **uncommitted**: `app/(tabs)/library/dev-flow-a.tsx` and `src/prototypes/flowA/**`. SDD-07 §10 records it with the essence checklist (Appendix A: C1–C8, R1–R4, T1–T3, K1–K4, A1).
+- **Round 2:** Codex review F01–F13, all applied. Honest Remove copy (D07-14); quiet offline line with status and Add note disabled; refresh-failed state keeps content; `h1`/`h2` headings; All notes is a link; non-interactive empty community reviews; serif notes; 80×120 narrow cover; "Your review" / "No review yet.".
+- **Round 3:** layout from measured container width. The title stacks when there is under 180 px beside the cover; the status control becomes a vertical list when labels do not fit or the container is under 360 px; no mid-word breaks.
+- **Round 4:** space-bunny review, 7 of 10 accepted:
+  - Remove disabled offline.
+  - Radio group no longer `accessible`.
+  - Ownership row non-interactive when expanding adds nothing, with condition read from data.
+  - Public/Private only when a review exists; the empty review row opens the editor.
+  - Local-time note dates, with the year when not current.
+  - "Page 42" caption plus serif excerpt for saved pages.
+  - **Daylight `controlBorder` `#948669` → `#8a7c60`**: a deviation from the approved swatch for WCAG 1.4.11. It was 2.86:1 and is now 3.28:1 against `bgSecondary`, 4.02:1 against `bgCard`. The pair is added to the test registry (D07-12).
+  - Rejected: "Completed" wording (keep "Finished"; **the real build renames "Completed" to "Finished" app-wide**, D07-13); showing empty Saved pages (conflicts with D07-03); community-reviews wording (the real build drives it from query state).
+- **Final sign-off:** Gemini 4 Argon, read-only: "Ready to finalize: YES", findings none.
+- **Reviews copied** into `evidence/fa-p1-prototype-2026-10-18/reviews/` (terminal colour codes stripped): `round2-review-codex.md`, `round4-review-space-bunny.md`, `final-review-gemini-argon.md` and `essence-checklist.md`.
+- **Verification (run by the orchestrating session):**
+  - Jest `src/prototypes` + `src/components/library` 369/369 in 12 suites.
+  - `tsc`: 36 known diagnostics, zero new.
+  - FU-1a colour diff equals the approved patch except the `controlBorder` value and its test row.
+  - Browser, round 2: 60 of 60 captures; keyboard K1–K7 and K9 pass.
+  - Browser, round 3: no mid-word breaks at 200% in all three phases, including the long title; no overflow at 320/360/390/430 px; keyboard 8/8.
+  - Round 3 overflow: the 9 px overflow at 200%/390 px is the global tab bar (`scrollWidth` 399 → 390 with it hidden). Reassigned to D07-01 (D07-15).
+  - **Round 4 changes were not re-captured in a browser (Jest only).**
+  - This session checked the `controlBorder` contrast values and the overflow JSON (read-only).
+- **Residual risk:** the tab-bar unit (D07-01) now also owns the 200%-zoom overflow. Axe not run (FU-5 tools not installed). Native TalkBack/VoiceOver not tested. No real-user test.
+- **Mutations:** docs only in `Bookconnect4_library`. No database or storage mutations. Nothing staged, committed or pushed.
+- **Next authorized action:** owner approval to commit the `Bookconnect4_fu1a` work (FU-1a + FU-3 tokens and the FA-P1 prototype). Then the real Flow A build on `[bookId].tsx`, including the D07-13 rename and the owner's D07-08 lending-switch confirmation.
+
+**Flow A direction chosen, DP-01 amended, FA-P1 prototype spec written — 2026-10-18:** `library_sdd07_fa_p1_spec_ready`.
+- **Owner decision:** relayed by the orchestrating session, quoting the owner: "Go with A1 Shelf card, using A2's unboxed serif note passages, and amend DP-01 to count controls only down to the primary action. Build it as the Expo web prototype."
+- **Recorded:**
+  - [SDD-07](./SDD-07-book-section-ui-overhaul.md) D07-09: Flow A = A1 Shelf card + A2 unboxed serif note passages. Fixes carried in: 48px status segments, 48px "Remove from library" target, exact token inks, muted no-cover placeholder.
+  - D07-10: DP-01 counts focusable controls only down to and including the primary action. Plain collapsed rows after it may enter the fold on short pages.
+  - SDD-07 §3 DP-01, §8 gate 3 and the status line are updated. The roadmap and the [Flow A README](./evidence/flow-a-directions-2026-10-18/README.md) status are updated.
+- **Spec:** [SDD-07-FLOW-A-PROTOTYPE.md](./SDD-07-FLOW-A-PROTOTYPE.md), unit **FA-P1**. It is a fixture-only Expo web prototype:
+  - Route `app/(tabs)/library/dev-flow-a.tsx`, guarded by `__DEV__` with a require that is stripped from release bundles. All code is in `src/prototypes/flowA/`.
+  - 17 presets, plus `phase`, `open` and `slots` URL parameters.
+  - Tests for DP-01 to DP-06, isolation and the release guard. The release-bundle marker check is a done criterion.
+  - Depends on FU-1a tokens (branch `sdd07/fu1a-fu3`; values still PROPOSED). Falls back to a local FU-2 type-scale mirror until FU-2 lands.
+  - Fixture cover `evidence/flow-a-directions-2026-10-18/fixture-cover-walden.png`, a plain generated image.
+- **Spec choices for owner review at the prototype stage:**
+  - The header ⋯ is a reserved SDD-08 slot only, not built (§7). The existing "Book options" content becomes the "Ownership & condition" row and the bottom "Remove from library".
+  - No "Started …" caption, since there is no date data before SDD-09.
+  - Status labels "Want to read / Reading / Finished" (today the app says "Completed").
+  - A collapsed "Community reviews" row with only the honest empty state in fixtures.
+  - The D07-08 lending-switch removal still needs the owner's confirmation for the real build.
+- **Verification:** Phase 9 continuity validator PASS (76 Markdown files / 55 required); `git diff --check` PASS. Read-only checks of the FU-1a worktree token names, the library layout, root auth gating, the note category contract and `[bookId].tsx` sections.
+- **Mutations:** docs only. No app code, installs, database or storage. Nothing staged, committed or pushed. No Stitch calls.
+- **Next authorized action:** the orchestrating session hands FA-P1 to a builder in its own worktree branched from `sdd07/fu1a-fu3` once FU-1a is committed there. The owner then reviews the prototype captures.
+
+**Foundation plan approved; Flow A Stitch directions ready for the owner's choice — 2026-10-18:** `library_sdd07_flow_a_directions_awaiting_choice`.
+- **Owner approval:** relayed by the orchestrating session, quoting the owner: "Approve the foundation plan and the 3 developer tools. Also start Flow A now: generate 2–3 Book Details directions in a new Stitch project (generation approved), following SDD-07's rules and the decisions, and show me the screenshots to choose from." The foundation units are built by external models in their own worktrees, orchestrated from the other session. This session did not start them.
+- **Done:**
+  - Three Book Details directions in a new Stitch project, `13565935267482128443` (Option B not touched): A1 Shelf card, A2 Frontispiece, A3 Reading journal.
+  - Each had one fix-and-regenerate round. Each has daylight and midnight versions; A2 midnight is a labelled local recolour, because Stitch returned no export for it. Golden was not produced.
+  - Evidence, DP-01..07 scores and screen ids are in [the Flow A directions README](./evidence/flow-a-directions-2026-10-18/README.md); the side-by-side is `COMPARE-fold-390x844.png`.
+- **Generation count:** 12 Stitch calls — 3 generate, 9 edit, of which 4 were lost to timeout or a missing id. 11 screens were retrieved. Nothing was deleted.
+- **Scores:**
+  - All three PASS DP-02, DP-03 and DP-04.
+  - All three are PARTIAL on DP-05 and DP-06: target sizes and the A2 pill border.
+  - DP-07: A1 and A2 PASS; A3 is PARTIAL.
+  - All three **FAIL DP-01 as rendered** (6 / 5 / 8 controls in the 390×844 fold, against 4 intended). Collapsed rows below "Add note" rise into the fold on short pages.
+- **Owner decisions needed:**
+  1. Choose a direction. Recommended: A1 with A2's unboxed note passages.
+  2. Choose a DP-01 short-page treatment: keep the rule and pad the reader area, or amend it to count only down to the primary action (recommended).
+  3. Confirm D07-08's removal of the lending switch on Book Details. None of the directions shows a lending row.
+- **Verification:**
+  - Edge/Playwright render of each export at 390×844: control positions, text sizes, target heights and a banned-term scan, via `measure-390.cjs`.
+  - WCAG contrast on the exported hex pairs.
+  - Not measured: line height, 200% text, screen-reader order, the real tab-bar height.
+- **Mutations:** none to app code, dependencies, the database or storage. Nothing staged, committed or pushed. Stitch writes were limited to the new project.
+- **Next authorized action:** the owner chooses a Flow A direction and decides the DP-01 short-page question. Per D07-07, the chosen direction is then built as an Expo web prototype on the real tokens, after FU-1a (token module) lands. No Flow A build before that choice.
+
+**SDD-07 approved; independent review applied; foundation plan drafted — 2026-10-18:** `library_sdd07_approved_foundation_plan_pending`.
+- **Owner approval:** relayed by the orchestrating session, quoting the owner: "I approve the SDD-07 draft with your recommended answers to the 8 open questions. Record the decisions in SDD-07 and the tracker, then plan the foundation unit." Recorded as [SDD-07 §9](./SDD-07-book-section-ui-overhaul.md) decisions D07-01–D07-08:
+  - D07-01: tab bar is its own app-wide unit, coordinated with clubs; the fallback icons/extra tabs are to verify.
+  - D07-02: review below the fold, collapsed.
+  - D07-03: Saved Pages hidden when empty, collapsed when present.
+  - D07-04: inline category chips.
+  - D07-05: discard wording (already built).
+  - D07-06: lint/axe approved in principle; exact list needs confirmation.
+  - D07-07: Expo web prototypes on real tokens; Stitch only in a new project, with approval.
+  - D07-08: "Lent out" kept as a plain fact. Removing the live lending switch/tag/quick-look row is flagged for owner confirmation at flow A.
+- **Independent review:** a Sonnet subagent, read-only, returned APPROVE WITH CHANGES (0 P1, 13 P2, 11 P3). Claude verified the key claims in code: the remote `via.placeholder.com` cover on `#eee`; live lending UI (`[bookId].tsx:457-462`, `LibraryBookList.tsx:50`, `LibraryBookQuickLook.tsx:24`); library `border` contrast 1.37/1.39/1.80:1; discard wording built at `note-compose.tsx:91-92`; only one `href: null` and no `tabBarIcon` in `app/(tabs)/_layout.tsx`; stale SDD-06 D06-03 row.
+  - Applied:
+    - DP-01: ≤ 4 focusable controls, defined.
+    - DP-02: ratchet + explicit allow-list + caption definition; body line height 1.35–1.5.
+    - "CI" → local verification run.
+    - DP-03: dialog/destructive rule.
+    - DP-04: literal-only rating rule; count-container rule; passive surfaces.
+    - DP-06: pair registry, `controlBorder` vs `divider`, 48dp project minimum, WCAG 2.4.11/2.5.7.
+    - §4.2: corrected causes and a "→ fix location" per problem; lending leftovers and community reviews added.
+    - F-2: font provider lift.
+    - F-6: orphaned service paths kept.
+    - §7: reserved slots made provisional.
+    - Roadmap: scope wording.
+    - Scorecard: B01 DP-01 FAIL, B04 DP-03 PASS, FAIL\* for annotation-driven sizes.
+    - SDD-06: D06-03 row.
+  - Not applied:
+    - The reviewer's suggestion to use `eslint-plugin-react-native-a11y`: its peer range is ESLint ≤ 8 (verified with `npm view`).
+    - The claim that `recognizePageText` would be orphaned: it is still used at `captureAdapter.ts:87`.
+    - Roadmap wording flagged as "not in brief": it was in the brief.
+- **Foundation plan:** [SDD-07-FOUNDATION-PLAN.md](./SDD-07-FOUNDATION-PLAN.md), 15 self-contained units FU-1a…FU-6c in 4 waves, plus the exact dev-dependency list for confirmation: `eslint ~9.39.5`, `eslint-config-expo ~10.0.0` (the SDK 54 pin), `@axe-core/playwright 4.13.0`. Versions were checked read-only against the npm registry.
+- **Verification run:** Phase 9 continuity validator PASS (76 Markdown files, 55 required); `git diff --check` on library docs PASS. No tests run (docs only). No source, dependency, migration, database, storage, Stitch, stage, commit or push.
+- **Next authorized action:** owner approves the foundation plan and confirms the dependency list. Then wave 1 (FU-1a, FU-2, FU-3, FU-6a–c) goes through the model-probe protocol.
+
+**Roadmap, SDD-07 draft, screen audit and Stitch scoring — 2026-10-18:** `library_sdd07_draft_for_approval`. Docs and read-only work only, delegated from the orchestrating session.
+- **Created:** [LIBRARY-ROADMAP.md](./LIBRARY-ROADMAP.md) (owner-agreed scope: SDD-07 main track; SDD-08 export & share; SDD-09 reading history; SDD-10 notes retrieval & organising; deferred barcode/import/matcher; removed lending, shareable wishlist, wishlist→stores, club book→library, premium templates; wishlist unification dropped as already done). [SDD-07 DRAFT](./SDD-07-book-section-ui-overhaul.md) (Calm Technology approach, DP-01–DP-07 with checks, foundation unit, flows A–D, reserved slots, gates, 8 open questions). [Stitch scorecard](./SDD-07-STITCH-SCORECARD-20261018.md). [Screen audit evidence](./evidence/library-screen-audit-2026-10-18/README.md).
+- **Changed:** SDD-06 §2 Categories row, ¶73 and ¶140 no longer say Question/NULL writes are gated (enabled 2026-10-18, `1e4924a`). Docs only.
+- **SDD-05 settled:** "reading room" was the name of the shelf-refinement track and its palette, not a screen. Shipped: shelf/list + palettes (`809e18e`), vertical realism + Arrange (`60ac8dd`, `e372945`), materials (`f8b171a`), horizontal shelf + quick look (`3460035`). See SDD-07 §4.1.
+- **Audit:** a Haiku subagent captured 45 fixture states with Playwright on the 8083 dev server. Fake auth; every non-GET aborted and asserted empty per test; no real database contact. It also did a read-only real-session pass in the browser pane. Claude reviewed the flagged screenshots and reran the full capture: 45 passed, 0 non-GET writes across all 45 tests. Top finding: three visual identities in the book section (home = library palette, Book Details = base `useTheme`, notes = `useNoteColors`). Others: errors/offline shown as "Book not found", white no-cover placeholder, Delete above Edit in the reader, no live word count, broken/truncated tab bar, spinner-only loading.
+- **Stitch:** read-only `list_projects`/`list_screens` only; HTML parsed in the scratchpad. Option B is the reference, with fixes needed. The Personal Library project is discarded and Editorial Reader is clubs-only. Passage Capture HTML returned 401 and was scored from titles.
+- **Verification run:** Phase 9 continuity validator PASS (76 Markdown files, 55 required). `git diff --check` on library docs PASS. **Not run:** contrast measurement of Stitch designs, native checks, Jest/tsc (no code changed).
+- **No** source, migration, database, storage, Stitch generation/edit, stage, commit or push.
+- **Next authorized action:** owner reviews the SDD-07 draft and answers its §9 questions. No design directions until approved.
+
 **Release acceptance attempt — 2026-10-18:** `library_sdd06_release_acceptance_web_verified_native_deferred`. [Checklist/remaining gates](./evidence/sdd06-release-acceptance-2026-10-18/README.md): fresh 31 suites/402 tests, scoped TypeScript/export PASS; current 8083 real 500-word create/reload/edit, 501-word/page validation, dirty Back/focus, photo/crop-discard restoration and keyboard filtering PASS within scope. Exact synthetic cleanup restores the original one-note count. Emulator reached real login without auth bypass; owner said “ignore emulator for now,” so native acceptance stopped. RA-W01 global tab-label contrast 4.02:1/3.27:1 remains open outside leaf-route scope; existing W01 remains. Full SDD06-07 NOT COMPLETE. Four gates stay true; no source/migration/deployment change. Next authorized action: use enabled local notes; native acceptance waits for owner resumption/sign-in, and shared-shell contrast needs scoped correction before release. Marketplace unchanged.
 
 **Independent enablement review — 2026-10-18:** Owner-requested Sol light (`gpt-6.1-sol`, low, fresh context) approved the bounded enablement with no actionable findings. [Review receipt and immutable snapshot](./evidence/sdd06-note-save-review-2026-10-18/README.md): reviewer independently passed five focused suites/86 tests and checked activated save/cache/navigation/ownership paths; parent confirmed all four source/test hashes and patch hash remain identical. No code corrections or new external writes. Four capabilities remain enabled locally; full native/SDD06-07 acceptance and W01 remain pending. Current work unit/next action and Marketplace handoff unchanged; review documentation remains uncommitted.

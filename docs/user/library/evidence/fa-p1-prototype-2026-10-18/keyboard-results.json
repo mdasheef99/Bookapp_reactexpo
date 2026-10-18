@@ -1,0 +1,452 @@
+{
+  "results": {
+    "radioDom": [
+      "<div aria-label=\"Want to read\" role=\"radio\" tabindex=\"-1\" class=\"css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-1q9bdsx r-borderWidth-rs99b7 r-flex-13awgt0 r-justifyContent-1777fci r-minHeight-1pl7oy7 r-minWidth-1v6e3re r-paddingBlock-11f147o r-paddingInline-n7gxbd\" style=\"background-color: rgb(238, 229, 214); border-color: rgb(238, 229, 214);\"><div dir=",
+      "<div aria-label=\"Reading\" role=\"radio\" tabindex=\"0\" class=\"css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-1q9bdsx r-borderWidth-rs99b7 r-flex-13awgt0 r-justifyContent-1777fci r-minHeight-1pl7oy7 r-minWidth-1v6e3re r-paddingBlock-11f147o r-paddingInline-n7gxbd\" style=\"background-color: rgb(255, 253, 248); border-color: rgb(148, 134, 105);\"><div dir=\"auto\"",
+      "<div aria-label=\"Finished\" role=\"radio\" tabindex=\"-1\" class=\"css-view-g5y9jx r-cursor-1loqt21 r-touchAction-1otgn73 r-alignItems-1awozwy r-borderRadius-1q9bdsx r-borderWidth-rs99b7 r-flex-13awgt0 r-justifyContent-1777fci r-minHeight-1pl7oy7 r-minWidth-1v6e3re r-paddingBlock-11f147o r-paddingInline-n7gxbd\" style=\"background-color: rgb(238, 229, 214); border-color: rgb(238, 229, 214);\"><div dir=\"aut"
+    ],
+    "K1": {
+      "sequence": [
+        "button \"Back to Library\"",
+        "radio \"Reading\"",
+        "button \"Add note\""
+      ],
+      "count": 3,
+      "infos": [
+        {
+          "tag": "BUTTON",
+          "role": "button",
+          "name": "Back to Library",
+          "ariaChecked": null,
+          "ariaExpanded": null,
+          "tabindex": "0",
+          "inTabBar": false,
+          "outline": "auto 1px rgb(16, 16, 16)",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "DIV",
+          "role": "radio",
+          "name": "Reading",
+          "ariaChecked": null,
+          "ariaExpanded": null,
+          "tabindex": "0",
+          "inTabBar": false,
+          "outline": "auto 1px rgb(16, 16, 16)",
+          "boxShadow": "none"
+        },
+        {
+          "tag": "BUTTON",
+          "role": "button",
+          "name": "Add note",
+          "ariaChecked": null,
+          "ariaExpanded": null,
+          "tabindex": "0",
+          "inTabBar": false,
+          "outline": "auto 1px rgb(16, 16, 16)",
+          "boxShadow": "none"
+        }
+      ]
+    },
+    "K2": {
+      "radioCount": 3,
+      "checkedIndex": 1,
+      "initial": [
+        {
+          "name": "Want to read",
+          "checked": null,
+          "tabindex": "-1",
+          "focused": false
+        },
+        {
+          "name": "Reading",
+          "checked": null,
+          "tabindex": "0",
+          "focused": false
+        },
+        {
+          "name": "Finished",
+          "checked": null,
+          "tabindex": "-1",
+          "focused": false
+        }
+      ],
+      "steps": [
+        {
+          "action": "start",
+          "focused": "radio \"Reading\"",
+          "states": [
+            {
+              "name": "Want to read",
+              "checked": null,
+              "tabindex": "-1",
+              "focused": false
+            },
+            {
+              "name": "Reading",
+              "checked": null,
+              "tabindex": "0",
+              "focused": true
+            },
+            {
+              "name": "Finished",
+              "checked": null,
+              "tabindex": "-1",
+              "focused": false
+            }
+          ]
+        },
+        {
+          "action": "ArrowRight",
+          "focused": "radio \"Finished\"",
+          "states": [
+            {
+              "name": "Want to read",
+              "checked": null,
+              "tabindex": "-1",
+              "focused": false
+            },
+            {
+              "name": "Reading",
+              "checked": null,
+              "tabindex": "-1",
+              "focused": false
+            },
+            {
+              "name": "Finished",
+              "checked": null,
+              "tabindex": "0",
+              "focused": true
+            }
+          ]
+        },
+        {
+          "action": "ArrowLeft",
+          "focused": "radio \"Reading\"",
+          "states": [
+            {
+              "name": "Want to read",
+              "checked": null,
+              "tabindex": "-1",
+              "focused": false
+            },
+            {
+              "name": "Reading",
+              "checked": null,
+              "tabindex": "0",
+              "focused": true
+            },
+            {
+              "name": "Finished",
+              "checked": null,
+              "tabindex": "-1",
+              "focused": false
+            }
+          ]
+        }
+      ]
+    },
+    "K3": {
+      "back": {
+        "blurred": "none 3px|none",
+        "focused": "auto 1px rgb(16, 16, 16)|none",
+        "screenshot": "kb-k3-focus-back.png",
+        "focusedIsActive": true
+      },
+      "radio": {
+        "blurred": "none 3px|none",
+        "focused": "auto 1px rgb(16, 16, 16)|none",
+        "screenshot": "kb-k3-focus-radio.png",
+        "focusedIsActive": true
+      },
+      "addnote": {
+        "blurred": "none 3px|none",
+        "focused": "auto 1px rgb(16, 16, 16)|none",
+        "screenshot": "kb-k3-focus-addnote.png",
+        "focusedIsActive": true
+      }
+    },
+    "K4": {
+      "next6": [
+        "button \"All notes\"",
+        "button \"My review, A book I want to return to slowly. The small observations stay with me after I put it down.\"",
+        "button \"Saved pages, 1 page\"",
+        "button \"Book information\"",
+        "button \"Ownership & condition, Owned · Good\"",
+        "button \"Community reviews, None yet\""
+      ],
+      "myReviewRowFound": true,
+      "ariaExpandedBefore": null,
+      "ariaExpandedAfter": null
+    },
+    "K5": {
+      "focusAtOpen": "button \"Cancel\"",
+      "tabSixTimes": [
+        "button \"Remove\"",
+        "button \"Cancel\"",
+        "button \"Remove\"",
+        "button \"Cancel\"",
+        "button \"Remove\"",
+        "button \"Cancel\""
+      ],
+      "pageAriaHidden": "true",
+      "pageInert": false,
+      "pageImportantForAccessibility": null,
+      "dialogAriaModal": "true",
+      "dialogRole": "dialog",
+      "dialogPresent": true,
+      "escapeClosesDialog": true,
+      "focusAfterEscape": "button \"Remove from library\""
+    },
+    "K6": {
+      "total": 12,
+      "emptyNames": [],
+      "items": [
+        {
+          "role": "button",
+          "name": "Back to Library",
+          "testid": null,
+          "hiddenAncestor": false
+        },
+        {
+          "role": "radio",
+          "name": "Want to read",
+          "testid": null,
+          "hiddenAncestor": false
+        },
+        {
+          "role": "radio",
+          "name": "Reading",
+          "testid": null,
+          "hiddenAncestor": false
+        },
+        {
+          "role": "radio",
+          "name": "Finished",
+          "testid": null,
+          "hiddenAncestor": false
+        },
+        {
+          "role": "button",
+          "name": "Add note",
+          "testid": "fa-primary",
+          "hiddenAncestor": false
+        },
+        {
+          "role": "button",
+          "name": "All notes",
+          "testid": "fa-row-notes",
+          "hiddenAncestor": false
+        },
+        {
+          "role": "button",
+          "name": "My review, A book I want to return to slowly. The small observations stay with me after I put it down.",
+          "testid": "fa-row-review",
+          "hiddenAncestor": false
+        },
+        {
+          "role": "button",
+          "name": "Saved pages, 1 page",
+          "testid": "fa-row-saved",
+          "hiddenAncestor": false
+        },
+        {
+          "role": "button",
+          "name": "Book information",
+          "testid": "fa-row-info",
+          "hiddenAncestor": false
+        },
+        {
+          "role": "button",
+          "name": "Ownership & condition, Owned · Good",
+          "testid": "fa-row-ownership",
+          "hiddenAncestor": false
+        },
+        {
+          "role": "button",
+          "name": "Community reviews, None yet",
+          "testid": "fa-row-community",
+          "hiddenAncestor": false
+        },
+        {
+          "role": "button",
+          "name": "Remove from library",
+          "testid": null,
+          "hiddenAncestor": false
+        }
+      ]
+    },
+    "K7": {
+      "headings": [],
+      "landmarks": []
+    },
+    "K8": {
+      "fontSize200": {
+        "innerWidth": 390,
+        "docScrollWidth": 390,
+        "horizontalOverflow": false,
+        "clipped": [
+          {
+            "tag": "DIV",
+            "text": "A book I want to return to slowly. The small observations st",
+            "right": 346,
+            "scrollW": 639,
+            "clientW": 249
+          },
+          {
+            "tag": "DIV",
+            "text": "My Library",
+            "right": 38,
+            "scrollW": 49,
+            "clientW": 33
+          },
+          {
+            "tag": "DIV",
+            "text": "Exchange",
+            "right": 82,
+            "scrollW": 43,
+            "clientW": 33
+          },
+          {
+            "tag": "DIV",
+            "text": "Marketplace",
+            "right": 125,
+            "scrollW": 56,
+            "clientW": 33
+          },
+          {
+            "tag": "DIV",
+            "text": "marketplace/cart",
+            "right": 255,
+            "scrollW": 77,
+            "clientW": 33
+          },
+          {
+            "tag": "DIV",
+            "text": "marketplace/requests/index",
+            "right": 298,
+            "scrollW": 127,
+            "clientW": 33
+          },
+          {
+            "tag": "DIV",
+            "text": "marketplace/book/[listingId]",
+            "right": 342,
+            "scrollW": 130,
+            "clientW": 33
+          },
+          {
+            "tag": "DIV",
+            "text": "marketplace/requests/[requestId]",
+            "right": 385,
+            "scrollW": 152,
+            "clientW": 33
+          }
+        ]
+      },
+      "fontSize200PlusZoom2": {
+        "innerWidth": 390,
+        "docScrollWidth": 399,
+        "horizontalOverflow": true,
+        "clipped": [
+          {
+            "tag": "DIV",
+            "text": "A book I want to return to slowly. The small observations st",
+            "right": 302,
+            "scrollW": 639,
+            "clientW": 54
+          },
+          {
+            "tag": "DIV",
+            "text": "1 page",
+            "right": 302,
+            "scrollW": 47,
+            "clientW": 33
+          },
+          {
+            "tag": "DIV",
+            "text": "My Library",
+            "right": 33,
+            "scrollW": 49,
+            "clientW": 12
+          },
+          {
+            "tag": "DIV",
+            "text": "Exchange",
+            "right": 77,
+            "scrollW": 43,
+            "clientW": 12
+          },
+          {
+            "tag": "DIV",
+            "text": "Marketplace",
+            "right": 120,
+            "scrollW": 56,
+            "clientW": 12
+          },
+          {
+            "tag": "DIV",
+            "text": "Clubs",
+            "right": 163,
+            "scrollW": 25,
+            "clientW": 12
+          },
+          {
+            "tag": "DIV",
+            "text": "Profile",
+            "right": 207,
+            "scrollW": 29,
+            "clientW": 12
+          },
+          {
+            "tag": "DIV",
+            "text": "marketplace/cart",
+            "right": 250,
+            "scrollW": 77,
+            "clientW": 12
+          },
+          {
+            "tag": "DIV",
+            "text": "marketplace/requests/index",
+            "right": 293,
+            "scrollW": 127,
+            "clientW": 12
+          },
+          {
+            "tag": "DIV",
+            "text": "marketplace/book/[listingId]",
+            "right": 337,
+            "scrollW": 130,
+            "clientW": 12
+          },
+          {
+            "tag": "DIV",
+            "text": "⏷",
+            "right": 393,
+            "scrollW": 25,
+            "clientW": 25
+          },
+          {
+            "tag": "DIV",
+            "text": "⏷",
+            "right": 393,
+            "scrollW": 25,
+            "clientW": 25
+          },
+          {
+            "tag": "DIV",
+            "text": "marketplace/requests/[requestId]",
+            "right": 380,
+            "scrollW": 152,
+            "clientW": 12
+          }
+        ]
+      }
+    }
+  },
+  "writesBlocked": [],
+  "nonGet": [
+    "POST https://ahntbtktjjmvfosgkmgn.supabase.co/auth/v1/otp",
+    "POST https://ahntbtktjjmvfosgkmgn.supabase.co/auth/v1/verify"
+  ]
+}
