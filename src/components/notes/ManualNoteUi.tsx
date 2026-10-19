@@ -2,32 +2,26 @@ import React, { useRef } from 'react';
 import { AccessibilityInfo, ActivityIndicator, findNodeHandle, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { BookButton, BookScreenHeader } from '@/components/library/ui';
 import { categoryLabel, NOTE_CATEGORIES, NoteCategory, NoteFields, validateNote } from '@/features/books/notes/manualNoteContract';
 
 // SDD-07 FU-1b: the notes screens read the book-section palette directly. Each former
 // colour source names the token that replaced it, so the merge stays auditable:
-//   screen surface ............ bgPrimary        primary fill .............. accent
-//   card / input surface ...... bgCard           primary fill ink ........... textOnAccent
-//   selected chip fill ....... chipSelectedBackground   chip ink ....... chipSelectedText
+//   screen surface ............ bgPrimary        selected chip fill ........ chipSelectedBackground
+//   card / input surface ...... bgCard           selected chip ink ......... chipSelectedText
 //   body / title ink ......... textPrimary      secondary ink ............. textSecondary
-//   back link, spinner ....... accent            error ink .................. error
-//   input boundary ........... controlBorder     button / chip boundary .... controlBorder
-//   hairline (header, footer) divider            dialog surface ............ bgRaised
-//   dialog scrim ............. overlay
+//   spinner .................. accent            error ink .................. error
+//   input / chip boundary .... controlBorder     footer hairline ........... divider
+//   dialog surface ........... bgRaised          dialog scrim .............. overlay
+// SDD-07 FU-4a: the button (accent fill, textOnAccent ink, controlBorder boundary) and the
+// header (accent back link, divider hairline) are painted by BookButton and BookScreenHeader
+// in src/components/library/ui; NoteButton and the NoteScreen header only delegate to them.
 export function NoteButton({ label, onPress, secondary = false, disabled = false }: { label: string; onPress: () => void; secondary?: boolean; disabled?: boolean }) {
-  const colors = useLibraryAppearance();
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress}
-    style={({ pressed }) => [ui.button, { backgroundColor: secondary ? colors.bgCard : colors.accent, borderColor: colors.controlBorder, opacity: disabled ? 0.55 : pressed ? 0.8 : 1 }]}>
-    <Text style={[ui.buttonText, { color: secondary ? colors.textPrimary : colors.textOnAccent }]}>{label}</Text>
-  </Pressable>;
+  return <BookButton label={label} variant={secondary ? 'secondary' : 'primary'} onPress={onPress} disabled={disabled} />;
 }
 export function NoteScreen({ title, bookTitle, backLabel, onBack, children, footer, scrollChrome = false }: { title: string; bookTitle?: string; backLabel: string; onBack: () => void; footer?: React.ReactNode; scrollChrome?: boolean; children?: React.ReactNode | ((header: React.ReactNode, footer: React.ReactNode) => React.ReactNode) }) {
   const colors = useLibraryAppearance(); const insets = useSafeAreaInsets();
-  const header = <View style={[ui.header, { paddingTop: insets.top + 8, borderColor: colors.divider }]}>
-      <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel={backLabel} style={ui.back}><Text style={[ui.link, { color: colors.accent }]}>‹ {backLabel}</Text></Pressable>
-      <Text accessibilityRole="header" style={[ui.title, { color: colors.textPrimary }]}>{title}</Text>
-      {!!bookTitle && <Text style={[ui.book, { color: colors.textSecondary }]}>{bookTitle}</Text>}
-    </View>;
+  const header = <BookScreenHeader title={title} bookTitle={bookTitle} backLabel={backLabel} onBack={onBack} />;
   const actions = footer ? <View style={[ui.footer, { backgroundColor: colors.bgPrimary, borderColor: colors.divider, paddingBottom: Math.max(insets.bottom, 12) }]}>{footer}</View> : null;
   return <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bgPrimary }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
     {!scrollChrome && header}
@@ -101,8 +95,7 @@ export function NoteDialog({ spec, onKeep, onDismiss }: { spec: NoteDialogSpec |
 export function NoteLoading() { const colors = useLibraryAppearance(); return <View style={ui.center}><ActivityIndicator accessibilityLabel="Loading notes" color={colors.accent} /></View>; }
 export { ScrollView };
 export const ui = StyleSheet.create({
-  header: { paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, gap: 8 }, back: { minHeight: 48, minWidth: 48, justifyContent: 'center', alignSelf: 'flex-start' },
-  link: { fontSize: 16, fontWeight: '600' }, title: { fontSize: 25, fontWeight: '700' }, book: { fontSize: 16, lineHeight: 24 },
+  title: { fontSize: 25, fontWeight: '700' },
   footer: { padding: 16, gap: 8, borderTopWidth: 1 }, button: { minHeight: 48, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   buttonText: { fontSize: 16, fontWeight: '600', textAlign: 'center' }, form: { gap: 12 }, metadata: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
   label: { fontSize: 16, fontWeight: '600' }, input: { minHeight: 48, borderRadius: 12, borderWidth: 1, padding: 14, fontSize: 17 }, textArea: { minHeight: 240, lineHeight: 27 },
