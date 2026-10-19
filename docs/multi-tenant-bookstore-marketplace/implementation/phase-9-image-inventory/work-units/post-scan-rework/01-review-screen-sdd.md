@@ -232,7 +232,7 @@ whether the reset happened before Add or was caused by Add's own save
 |---|---|
 | AC1-1: Given a card with a saved review, `review_ready=false`, no edits and no blockers, when Add is pressed, then the app rereads the card, saves the server's review, adds the book, and the card shows Added (D02, D03). | `__tests__/inventoryCommitCoordinator.test.ts` → "re-saves the server's stored review for a reset card, then adds" |
 | AC1-2: Given the same card, then its label is Ready, Add is enabled, and "Add all ready books" counts it (D04). | `__tests__/postScanUiCorrections.test.tsx` → rewrite the L547 test as "shows Ready for a reset saved review that Add will re-save"; `inventoryCommitCoordinator.test.ts` → update `savedNoop` at L133–134 (it now needs `save_review`); `__tests__/BatchInventoryCommitControls.test.tsx` → "includes a reset saved review in Add all" |
-| AC1-3: Given a card with real blockers, then Add stays disabled, and the card shows Needs details with the blocker text (R07). | `inventoryCommitCoordinator.test.ts` → "does not force a re-save when blockers exist" |
+| AC1-3: Given a card with real blockers, then Add stays disabled, no re-save is forced, and the card keeps today's Needs attention label with the blocker text (R07). *Corrected 2026-10-19 at slice 1 start: blockers become attention items (`BatchReviewCard.tsx` L208–216), so `reviewStatusLabel` returns Needs attention (L38) before the fall-through; this slice changes no label but "Review book" (tracker 38 §17).* | `inventoryCommitCoordinator.test.ts` → "does not force a re-save when blockers exist" |
 | AC1-4: Given the re-save fails with a version conflict, then the card shows the existing "no longer eligible" message, no commit request is sent, and no inventory row is created (R01). | `inventoryCommitCoordinator.test.ts` → "stops before commit when the forced re-save conflicts" |
 | AC1-5: Given the card's cached review names an edition that the server has since reset to manual, when Add is pressed, then the saved review is the server's, with a manual choice, and the eligibility check passes with that review (F3, R07). | `inventoryCommitCoordinator.test.ts` → "forced re-save uses the reread review and passes the controlled-choice check" |
 | AC1-6: Given the reread after a re-save still shows `reviewReady=false`, then the attempt ends as `no_longer_eligible` after exactly one re-save. | `inventoryCommitCoordinator.test.ts` → "forces at most one re-save per command" |
@@ -246,6 +246,11 @@ whether the reset happened before Add or was caused by Add's own save
 - the old "Review book" assertion is rewritten, not deleted;
 - one in-app check on the dev build: edit a card's title, press Add once, and
   the book is added.
+  *Note (slice 1, 2026-10-19):* this holds for a card with manual details.
+  On a card that keeps a chosen edition (`edition_option`), the first save is
+  refused before any write (blocker `metadata_choice_missing`, then
+  `P9_STATE_CONFLICT`), because §1's identity rule applies. Slice 2 AC2-10
+  closes that case (tracker 38 §17).
 
 ---
 

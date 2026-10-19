@@ -1,5 +1,6 @@
 import { act, fireEvent, render, within } from '@testing-library/react-native';
 import { BatchReviewCard } from '../components/BatchReviewCard';
+import { AddCandidateToInventoryAction } from '../components/AddCandidateToInventoryAction';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
 import { testUuid } from '../testing/ownerUxTestFixtures';
 
@@ -544,11 +545,32 @@ describe('Phase 9 Unit 6G bounded post-scan UI corrections', () => {
 });
 
 describe('card Ready badge uses the add-now rule', () => {
-    it('does not show Ready for an unchanged saved review the server has not marked ready', () => {
+    it('shows Ready for a reset saved review that Add will re-save', () => {
         const screen = renderCard(reviewCard({ reviewReady: false, allowedActions: ['save_review'] }));
 
-        expect(within(screen.getByTestId('card-review-status')).getByText('Review book')).toBeTruthy();
-        expect(screen.getByText('Add to inventory')).toBeDisabled();
+        expect(within(screen.getByTestId('card-review-status')).getByText('Ready')).toBeTruthy();
+        expect(screen.getByText('Add to inventory')).not.toBeDisabled();
+    });
+
+    it('uses Needs details for the fall-through review label', () => {
+        const screen = renderCard(reviewCard({ reviewReady: false, allowedActions: ['view_metadata'] }));
+        expect(within(screen.getByTestId('card-review-status')).getByText('Needs details')).toBeTruthy();
+        expect(screen.queryByText('Add to inventory')).toBeNull();
+    });
+
+    it('announces a changed review while keeping other eligibility messages', () => {
+        const card = reviewCard();
+        const props = { card, disabled: false, isOffline: false, pending: false, onAdd: jest.fn(),
+            outcome: { candidateId: card.candidateId, status: 'no_longer_eligible' as const,
+                stage: 'revalidate' as const, code: 'review_changed' } };
+        const screen = render(<AddCandidateToInventoryAction {...props} />);
+        const message = screen.getByText('This book changed. Check it and press Add again.');
+        expect(message.props.accessibilityLiveRegion).toBe('polite');
+        expect(screen.queryByText('This book is no longer eligible. Review the latest saved details.')).toBeNull();
+        screen.rerender(<AddCandidateToInventoryAction {...props}
+            outcome={{ ...props.outcome, code: 'P9_CANDIDATE_VERSION_CONFLICT' }} />);
+        expect(screen.getByText('This book is no longer eligible. Review the latest saved details.')).toBeTruthy();
+        expect(screen.queryByText('This book changed. Check it and press Add again.')).toBeNull();
     });
 
     it('does not show Ready for a server-ready review that cannot be added', () => {

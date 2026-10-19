@@ -70,7 +70,9 @@ function CoordinatedAddCandidateAction({
         <View style={{ gap: 6 }}>
             {outcome?.status === 'no_longer_eligible' ? (
                 <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error }}>
-                    This book is no longer eligible. Review the latest saved details.
+                    {outcome.code === 'review_changed'
+                        ? 'This book changed. Check it and press Add again.'
+                        : 'This book is no longer eligible. Review the latest saved details.'}
                 </Text>
             ) : outcome?.status === 'still_pending' ? (
                 <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error }}>
