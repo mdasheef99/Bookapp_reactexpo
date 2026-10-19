@@ -1,0 +1,13 @@
+{
+  "totalWrites": 0,
+  "writes": [],
+  "perTest": [
+    {
+      "test": "W2 midnight details review and controls",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [],
+      "externalReads": []
+    }
+  ]
+}

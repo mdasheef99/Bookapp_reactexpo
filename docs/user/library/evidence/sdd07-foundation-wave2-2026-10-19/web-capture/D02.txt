@@ -1,0 +1,41 @@
+‹ Book details
+Notes
+Zero Notes Fixture
+0 saved notes
+✓ All
+Quote
+Thought
+Takeaway
+Action
+Question
+No notes yet
+Add a note for this book.
+Add your first note
+Add note
+⏷
+⏷
+My Library
+⏷
+⏷
+Exchange
+⏷
+⏷
+Marketplace
+⏷
+⏷
+Clubs
+⏷
+⏷
+Profile
+⏷
+⏷
+marketplace/cart
+⏷
+⏷
+marketplace/requests/index
+⏷
+⏷
+marketplace/book/[listingId]
+⏷
+⏷
+marketplace/requests/[requestId]

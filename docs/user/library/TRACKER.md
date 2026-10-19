@@ -1,5 +1,239 @@
 # Library Tracker
 
+**SDD-07 FU-5b/5c/5d verified and fast-forwarded into `sdd07/wave3` — 2026-10-19:** `library_sdd07_wave3_foundation_merged_not_pushed`. `git merge --ff-only sdd07/fu5bc` in `Bookconnect4_wave3`: `8ef4ef5` → `48250cc` (no merge commit). Not pushed.
+- **Lead verification** (diff read: only tooling files, no app code): on `Bookconnect4_fu5bc` and again on merged wave3, Jest library set + `eslint-rules` + `src/test-utils` 51 suites / 1040 tests pass; scoped `tsc` 0; `lint:library` 465 (3 errors, 462 warnings), unchanged. Whole-repo `tsc`: 36 on fu5bc; **39 on wave3**, the 3 extra are all `e2e/library-a11y.spec.ts` (missing module `@axe-core/playwright` plus 2 implicit-any errors that follow from it) because wave3's `node_modules` was not reinstalled. Owner approved `npm ci` in wave3 (no other installs): ran from the committed lockfile, working tree unchanged, `@axe-core` present; whole-repo `tsc` back to **36**, 0 errors in `library-a11y`.
+- **Not run:** the axe scan on wave3 (needs the package and a dev server); no browser check.
+- **Mutations:** none to database or storage. Nothing pushed.
+
+**SDD-07 FU-4 real-browser check on `sdd07/wave3` — 2026-10-19:** `library_sdd07_wave3_browser_checked`. Supersedes the "no browser check" line in the wave3 entry below.
+- **How:** Expo web served from `Bookconnect4_wave3` (`8ef4ef5`) on port 8085 with a cleared cache; the served bundle was grep-checked for the FU-4 components. The owner logged in; a Haiku subagent ran a read-only checklist, and the lead spot-checked and ran the FU-4c checks. Real Supabase project, no writes.
+- **Read-only pass (Haiku, spot-checked):** Library home, Book Details (Clean Code and a no-cover book), notes list and composer all load; no console errors; shared header Back "‹ Book details" 99x48 and composer buttons 48 high; no-cover placeholder is a muted beige block, not white. Pre-existing, not from FU-4: tab-bar labels truncated and raw route names (TB-1, parked); Book Details status pills ~42 px (Flow A); Add note under the tab bar on a short window; raw "Lent_out" tag.
+- **FU-4c on web:** (1) manual entry with the title cleared and Save pressed shows a visible red message "Enter a book title to add it manually." with Dismiss, inside the modal (role alert, live region); it persisted 6 s and Dismiss removed it. (2) Remove from Library dialog opens and Cancel closes it with the book intact.
+- **Writes:** none. Page-side request log: 11 requests, the only non-GET `POST /rpc/get_public_book_reviews` (a read function).
+- **Not verified:** the "Review saved!" success message and its exactly-once behaviour, the delete-saved-page confirm, and the confirm Keep/Confirm flow; each needs a real write. Left to flow acceptance or an explicit owner-chosen test book.
+- **Cleanup:** dev server stopped (nothing on 8085), the copied `.env` deleted from `Bookconnect4_wave3` and no `.env` left in the fu4a/fu4b/fu4c/wave3/fu5bc worktrees; wave3 working tree clean. Nothing staged, committed or pushed by this check.
+
+**SDD-07 FU-5d (axe scan on web) BUILT, RUN and RECORDED — 2026-10-19:** `library_sdd07_fu5d_committed_not_pushed`. On `sdd07/fu5bc` in `Bookconnect4_fu5bc`, committed together with the `@axe-core/playwright` 4.13.0 install (owner approved the install and "build the FU-5d scan first and commit them together"). Not pushed. No other package was added (lockfile +24 lines: `@axe-core/playwright` and `axe-core` 4.13.0, both dev-only).
+- **What the owner would notice:** nothing in the app. A new web check, `npm run e2e:library-a11y`.
+- **Built** (opencode Muse Spark 1.3 xhigh, because Codex was out of credits): `e2e/fixtures/libraryFixture.ts` (the transport-fixture harness extracted from the 2026-10-18 audit capture; behaviour-identical apart from an inline 1x1 PNG cover, exports, removed screenshot code; every https request is intercepted and any non-GET is recorded and must be zero), `e2e/library-a11y.spec.ts` (9 states x 3 theme phases = 27 scans: home list/empty/error, Book Details populated/no-cover, notes list, reader, composer choose/write; axe tags `wcag2a, wcag2aa, wcag21aa, wcag22aa`; bottom tab bar `[role="tablist"]` excluded, D07-01 owns it; `DISABLED_RULES` empty), `e2e/library-a11y.baseline.json`, `playwright.library-a11y.config.ts` (dev server on 8083, Edge), `playwright.config.ts` `testIgnore` for the spec (default suite unchanged), `package.json` script `e2e:library-a11y`.
+- **Baseline policy:** compares rule ids and node counts per state. A new rule, a higher count, a lower count or a vanished rule all fail (fixed entries must be removed with `UPDATE_A11Y_BASELINE=1`).
+- **Result recorded:** 27 scans; only `image-alt` (1 node, critical, an `<img>` with no alt text) on the home list in all three phases. No contrast or other violations in any of the 27 states. Not yet traced which image (candidates: list cover in `LibraryBookList.tsx:27`, shelf texture in `LibraryShelf.tsx:250`).
+- **Verification (lead):** update run 27/27; compare run on the final tree 27 passed (4.4 min). Sanity check: with the tab-bar exclusion removed, the known tab-bar `color-contrast` failures (9 nodes, RA-W01) appear, so the scan sees real content and the exclusion is what hides them. Baseline logic mutation-checked three ways (baseline emptied: "no baseline entry" fails; count raised: "fixed" fails; phantom rule: "fixed" fails). `tsc --noEmit` 36, scoped 0; `eslint-rules` + `src/test-utils` 188 tests pass; `lint:library` 465 unchanged. Review by Muse Spark (read-only): no findings; it is a light review, no Codex review ran.
+- **How it ran:** a placeholder-only `.env` (fixture Supabase host, dummy anon key; no real credentials) was created for the dev server and deleted afterwards; `.env` is git-ignored. Port 8083 free afterwards.
+- **Known limits:** default theme phases are pinned by hour (12 / 18 / 22) only. Scans cover the first viewport state after load, not every interaction (crop step is not reachable on web). The baseline is deterministic only while fixture data and waits stay as they are.
+- **Next exact action:** owner decides on pushing; then the real Flow A build. The `image-alt` finding is a small fix candidate for that flow.
+
+**SDD-07 FU-5b (local lint rules + ratchet) and FU-5c (primary-button count helper) BUILT and REVIEWED — 2026-10-19:** `library_sdd07_fu5bc_committed_not_pushed` (`205c6b2`). Worktree `Bookconnect4_fu5bc`, branch `sdd07/fu5bc` off `sdd07/wave3` (`8ef4ef5`). Nothing staged, committed or pushed; `.spec/` untracked. Lean process (L1–L7). No package installed; lockfile unchanged.
+- **What the owner would notice:** nothing in the app. Developer checks only.
+- **FU-5b built** (Codex `gpt-6.1-sol` xhigh, direct from the brief; Codex hit its usage limit after the files were written, so its final report was lost and everything was re-verified by the lead). New `eslint-rules/book-section/`: plugin `index.js`, rules `no-raw-style-values` (DP-02: hex/rgb/hsl colour strings; numeric `fontSize`/`lineHeight`; numeric padding/margin/gap other than 0 and 1, also inside `a + 8`, ternaries and `||`/`??`), `require-accessible-name` (DP-06: `Pressable`, `TouchableOpacity`, `TextInput`, `BookButton`), `no-fabricated-ratings` (DP-04: star glyph plus digit, `(12 reviews)`, `4.5/5`); `config.js` (`createBookSectionConfig`, `STRICT_FILES = []`, nine-file `RAW_VALUE_ALLOW_LIST`); `ratchet-baseline.json`; README; five Jest test files; `eslint.config.js` +2 lines. `warn` everywhere in the book section, `error` only for `STRICT_FILES`; the allow-list turns off only `no-raw-style-values`. `NOTE_TAG_CONFIG` lives in `notesService.ts`, outside the lint scope, so it needs no entry.
+- **Lint accounting:** baseline 32 problems (3 errors, 29 warnings) **+ 429 `no-raw-style-values` + 4 `require-accessible-name` + 0 `no-fabricated-ratings` = 465** (3 errors, 462 warnings). The 32 pre-existing problems are unchanged (same rule, file, line and column). Ratchet baseline recorded: **429 / 4 / 0**. The 429 split as 265 spacing, 114 `fontSize`, 39 `lineHeight`, 11 colours. The 4 accessible-name hits are real gaps or near-real: `[bookId].tsx:411` review `TextInput` (placeholder only), `LibraryPillNav.tsx:16` (label is conditional), `RatingInput.tsx:20` (star buttons have no name), `ManualNoteUi.tsx:84` (dialog container Pressable, arguably a false positive). Nothing was fixed (out of scope).
+- **FU-5c built** (opencode Muse Spark 1.3 xhigh, because Codex was out of credits): `src/test-utils/bookSection.ts` with `countPrimaryButtons` and `expectSinglePrimary(screen, { allow?: 2 })`: counts `BookButton` elements by their `variant` prop only, skips ones hidden from accessibility (display none, `accessibilityElementsHidden`, `importantForAccessibility="no-hide-descendants"`, `aria-hidden`), counts disabled primaries, passes only on an exact count (1, or 2 with `allow: 2`). 13 tests, `NoteButton` counts through the `BookButton` it renders. **Limit:** a destructive-confirm dialog is not counted as the primary (the plan counts `variant="primary"` only), so flows assert such dialogs directly.
+- **Verification (lead, final tree):** Jest library set 45 suites / 852 tests, all passing (= baseline); new `eslint-rules` + `src/test-utils` 6 suites / 188 tests (175 + 13), all passing; scoped `tsc -p tsconfig.library-notes.json` 0; whole-repo `tsc --noEmit` 36 (= baseline); `lint:library` 465 as above. **New regression command:** `npx jest --runInBand eslint-rules src/test-utils` (the old library glob does not cover them). The ratchet test spawns ESLint as a child process (about 14 s), because ESLint's config loader cannot run inside the Jest VM.
+- **Lead's own fixes:** the specified "skip anything under a `TS*` parent" also skipped `'#fff' as const` / `'4/5' as string`; changed to skip only type positions (tests added; mutation-checked, 5 tests fail without the fix; counts unchanged); a test that pinned `STRICT_FILES` to `[]` was loosened (it would break the first flow that adds a file); duplicate JSDoc removed. FU-5c mutations (hidden filter removed, `variant` check changed, `allow` ignored, exact count changed to `<=`) each fail 1–4 tests.
+- **Review:** Codex was out of credits until 19:13 and the free space-bunny model returned an API error twice, so the review is **Muse Spark 1.3 xhigh, read-only**, second attempt (the first stopped on a temp-file permission): "No findings", sampled 15 raw + 4 accessible-name hits, 0 wrong. This is a lighter review than the planned Codex one; no Codex review has run.
+- **Not verified / known gaps:** no browser or device check (L3, not applicable). Named CSS colours, values via variables or `Math.max`, `*`/`/` expressions, `${}` colour templates, `borderRadius`/`borderWidth`, conditional `Text` children and split rating text are not flagged (listed in the rules README). The ratchet only fails when counts rise; it does not force the baseline down when they fall. `STRICT_FILES` is empty by plan.
+- **Mutations:** none to database or storage.
+- **Next exact action:** owner decides whether to commit `sdd07/fu5bc` (code files only, no push) and whether to want a Codex review after 19:13. FU-5d still needs the owner's OK to install `@axe-core/playwright` 4.13.0. Then the real Flow A build.
+
+**SDD-07 FU-4 integration branch `sdd07/wave3` — 2026-10-19:** `library_sdd07_wave3_merged_not_pushed`.
+- **What:** FU-4b (`36b801b`, committed by the lead on the owner's go) merged with FU-4c (`bc543b8`) on top of FU-4a (`43931c6`) into `sdd07/wave3`, merge commit `8ef4ef5`, worktree `Bookconnect4_wave3`. Not pushed. The only conflict was the export list in `src/components/library/ui/index.ts`; both sets kept.
+- **Verification (lead, on the merged tree):** Jest (`app/(tabs)/library`, `src/components/library`, `src/components/notes`, `src/features/books`, `--runInBand`) 45 suites / 852 tests, all passing; scoped `tsc -p tsconfig.library-notes.json` 0 errors; whole-repo `tsc --noEmit` 36 errors (baseline); `lint:library` 32 problems (3 errors, 29 warnings, baseline); `Alert.alert` in the book-section source files: 0.
+- **Owner skipped** the Haiku browser test for FU-4c (L3: captures wait for flow acceptance). FU-4c's web fix is proved by Jest only; no browser or device check has run.
+- **Next exact action:** FU-5b (local lint rules) and FU-5c (primary-button count helper) are built off `sdd07/wave3` in a fresh session. FU-5d still needs the owner's OK to install `@axe-core/playwright` 4.13.0. Then the real Flow A build.
+
+**SDD-07 FU-4c (cross-platform feedback and confirm, fixes W01) BUILT and REVIEWED — 2026-10-19:** `library_sdd07_fu4c_committed_not_pushed`. Committed `bc543b8` on `sdd07/fu4c` in `Bookconnect4_fu4c` (off `sdd07/fu4a`, `43931c6`); `.spec/` untracked; not pushed. Lean process (L1–L7).
+- **Built** (Codex `gpt-6.1-sol` xhigh, direct from the brief): `src/components/library/ui/BookFeedback.tsx` with `BookFeedbackProvider`, `useBookFeedback()` (`notify`, `confirm`, stable identities, throws outside the provider) and `BookFeedbackSlot`; provider mounted in `_layout.tsx` inside the typography provider.
+  - Toast: top, one at a time, newest replaces; success/info 4 s, error until Dismiss; always-mounted live region; iOS-only `announceForAccessibility` (react-native-web's is an empty function); never takes focus.
+  - Confirm: own modal built from `BookButton` (Keep secondary, Confirm primary or destructive); Back, Escape and scrim = Keep; settles once; a second confirm settles the first as false; unmount settles false.
+  - Slot: rendered inside `DeleteBookModal`, `ManualEntryModal` and the confirm dialog so feedback is not hidden behind an open Modal.
+  - Call sites: `[bookId].tsx` (3, display calls only), `VaultPagesList` (confirm + error), `search.tsx` (10, same step), `NoteCard` (dead long-press Alert branch and `onDelete` prop deleted: no consumer passed them).
+  - `BookButton` gained an optional `ref` (used for native focus on Keep).
+- **What the owner would notice:** on web, "Review saved!", errors and delete-page / search messages now appear (they were invisible); deleting a saved page asks in an in-app dialog. Toast at the top, blocking nothing (success/info are touch-through).
+- **Decisions** (agreed before the build, plus lead): confirm built in `library/ui`, `NoteDialog` untouched; search in this unit; strict provider; **to be shown to the owner:** toast at top, newest replaces older, Keep/destructive Confirm.
+- **Alert.alert count in the listed files:** 17 before (3 + 2 + 2 + 10), 0 after.
+- **Verification (lead, fresh worktree):** baseline Jest 43 / 743; after 44 / 778 all passing; scoped `tsc` 0; whole-repo `tsc` 36; `lint:library` 32 (3 errors, 29 warnings), all equal to baseline. Protected `[bookId].tsx` hunks read one by one: only the three display calls, the import and one hook line changed; the success guard is byte-identical.
+- **Existing tests changed** (only Alert assertions, provider wrappers, one layout-structure assertion): `[bookId].test`, `book-details-corrections.test` (count/text intent kept through a `notify` mock, `Alert.alert` not-called kept), `search.test`, `ManualNoteJourney.test` (`wrap` + Vault delete now presses the dialog), `LibraryTypography.test` (Stack now one level deeper), `bookDetailsPalette.test` (feedback is a passthrough mock there so the 4,000-line colour fixture stays byte-identical).
+- **Reviews:** Codex xhigh "NO": R1 (palette passthrough mock weakens coverage; rejected as a blocker, slot coverage added in a dedicated test), R2 (confirm modal hid toasts: fixed, slot added), R3 (native Keep wrapper had two focus targets: fixed with a `BookButton` ref), R4 (scrim/card web tab stops: fixed with `focusable={false}`). space-bunny "YES WITH FIXES": R1 (toast covered the Back control: fixed, success/info `pointerEvents none`), R2 (focus test could pass with a dropped ref: tightened), R3 (toast jumps into a slot-bearing modal opened while it shows and may not be re-announced: **accepted, not fixed**). New tests mutation-checked (removing each slot, and the pointer-events fix, makes them fail). The first space-bunny run died on an API error and was rerun.
+- **Not verified:** no browser or device check (L3); Jest does not run the react-native-web DOM, so web is proved by `Platform.OS = 'web'` tests only. Residual: `NoteDialog`, `SortModal`, `FilterModal` have no slot (a result arriving while they are open stays hidden); an error toast stays over the top Back area until dismissed.
+- **Mutations:** none to database or storage. `npm install` in the new worktree (lockfile unchanged). Nothing staged, committed or pushed.
+- **Next exact action:** owner decides whether to commit `sdd07/fu4c` (no push). FU-4b is on its own branch; the two touch only `ui/index.ts` in common.
+
+**SDD-07 FU-4b (shared state components) BUILT and REVIEWED — 2026-10-19:** `library_sdd07_fu4b_committed_not_pushed`. Committed `36b801b` on `sdd07/fu4b` in `Bookconnect4_fu4b` (off `sdd07/fu4a`, `43931c6`); `.spec/` untracked; not pushed. Lean process (L1–L7).
+- **Built** (Codex `gpt-6.1-sol` xhigh, direct from the brief): new `src/components/library/ui/BookStates.tsx` + `__tests__/BookStates.test.tsx` (74 tests) + exports in `ui/index.ts`.
+  - `BookLoading`: `role=status`, polite, one label (default "Loading"), visual children hidden from assistive tech; static skeletons (no shimmer) `list` (5 rows), `details`, `note`; accent spinner when no variant.
+  - `BookEmpty`: required title, optional message, no default copy; optional single `BookButton` (default `primary`, overridable to `secondary`) only when label and callback are both given.
+  - `BookError`: `alert`/polite; `subject` required; owner-approved copy for server ("Couldn't load {subject}."), offline ("You're offline.") and notFound ("We can't find {subject}."), pairwise distinct. Server/offline show "Try again" (primary) when `onRetry` is given; notFound never retries and shows a caller-labelled Back (primary) only with both back props.
+  - `BookOffline`: new in-flow `infoSurface`/`info` notice, `role=status` (not alert). `OfflineBanner` not reused: its copy is Search-specific, it is absolutely positioned and announces as alert.
+- **Decisions** (owner approved copy and design calls): neutral text colours, no red; `LIBRARY_TEXT` used directly (first app use); sizes from tokens; only registered contrast pairs.
+- **What the owner would notice:** nothing. No screen uses these yet. Audit #2 ("Book not found" for server/offline) is fixed only when flows wire the components and classify errors.
+- **Verification (lead, fresh worktree):** baseline Jest 43 / 743; after 44 / 817 all passing. Scoped `tsc` 0; whole-repo `tsc` 36; `lint:library` 32 (3 errors, 29 warnings); all equal baseline. Diff read in full; only the 3 allowed files changed; worktree fingerprint unchanged across the review.
+- **Review** (one read-only Codex xhigh, "YES WITH FIXES"): R1 should-fix, the hidden-skeleton assertion counted the wrapper itself and was vacuous. Verified and fixed by the lead (every painted block must sit inside the hidden wrapper). Mutation check: moving the skeleton out of the wrapper now fails 27 tests; restored, 106 pass in `ui`.
+- **Not verified:** no device/browser look, no TalkBack/VoiceOver run (L3).
+- **Mutations:** none to database or storage. `npm install` run in the new worktree (lockfile unchanged). Nothing staged, committed or pushed.
+- **Next exact action:** owner decides whether to commit `sdd07/fu4b` (no push).
+
+**SDD-07 FU-4a (shared BookButton + BookScreenHeader) BUILT, REVIEWED and COMMITTED — 2026-10-19:** `library_sdd07_fu4a_committed_not_pushed`. Commit `43931c6` on `sdd07/fu4a` (7 code files; `.spec/` left untracked; not pushed). Lean process (L1–L7).
+- **Where:** worktree `Bookconnect4_fu4a`, branch `sdd07/fu4a` off `sdd07/wave2` (`eba9054`). Uncommitted; `.spec/` holds the brief and review prompt and must not be committed.
+- **Built** (Codex `gpt-6.1-sol` xhigh, workspace-write, direct from the written brief; no probes):
+  - New `src/components/library/ui/`: `BookButton.tsx` (variants `primary | secondary | text | destructive`, `variant` and `label` required, min 48 height and width, `disabled` = opacity 0.55 plus `accessibilityState`), `BookScreenHeader.tsx` (named Back, title, optional book title), `index.ts`, and tests for both.
+  - `ManualNoteUi.tsx`: `NoteButton` and the `NoteScreen` header are thin wrappers over the new components; four unused `ui` style keys removed. New `NoteWrappers.test.tsx` proves the delegation.
+  - Unchanged on purpose: `src/components/ui/Button.tsx` (not edited, not wrapped: its API does not fit), `NoteDialog`'s Keep button, fonts (still the old `fontSize 16 / 600`, no `LIBRARY_TEXT` yet).
+- **What the owner would notice:** nothing. The notes screens render the same; the existing palette tests pass unchanged.
+- **Decisions made in the brief** (not written in the plan; **to be shown to the owner**): `text` variant = transparent fill and border with `accent` ink; `destructive` = `error` fill and border with `onErrorSurface` ink (the token's documented ink for `error` used as a fill); `variant` prop is the single source for tests (no testID contract).
+- **Verification (lead, fresh worktree):**
+  - Baseline before building: Jest (`app/(tabs)/library`, `src/components/library`, `src/components/notes`, `src/features/books`, `--runInBand`) 40 suites / 706 tests, **all passing**. The 2 pre-existing shelf failures did not reproduce in this set.
+  - After: 43 suites / 743 tests, all passing (3 new suites, 37 new tests).
+  - `tsc -p tsconfig.library-notes.json --noEmit`: 0 errors. Whole-repo `tsc --noEmit`: 36 errors, same as baseline.
+  - `lint:library`: 32 problems (3 errors, 29 warnings), same as baseline.
+- **Review** (one read-only Codex `gpt-6.1-sol` xhigh, "YES WITH FIXES"): R1 minor, the no-book-title assertion could not fail; R2 minor, four unused `ui` style keys. Both verified against the code and fixed by the lead (T5, mechanical). R1's new assertion was mutation-checked: removing the `!!bookTitle &&` guard fails it in all 3 phases. Full verification rerun after the fixes gave the numbers above. **Second review at the owner's request** (read-only `opencode/space-bunny-free` max, worktree fingerprint unchanged): "Safe to commit: YES", one minor finding, R1: the FU-1b token-map comment above `NoteButton` still claimed the button and header paint sites live in `ManualNoteUi.tsx`. Verified and fixed (comment only, with a pointer to `src/components/library/ui`); Jest 43 / 743, scoped `tsc` 0 and lint 32 rerun after.
+- **Not verified:** no device or browser look-and-feel comparison (L3: captures wait for flow acceptance). Equivalence of the notes screens rests on the unchanged palette and journey tests plus the diff read.
+- **Mutations:** none to the database or storage. `npm install` was run in the new worktree (lockfile unchanged). Nothing staged, committed or pushed.
+- **Next exact action:** FU-4b (shared state components) and FU-4c (feedback and confirm) can start when the owner says go, in separate fresh sessions off `sdd07/fu4a`. Nothing is pushed.
+
+**Correction (2026-10-19):** SDD-07 foundation Wave 2 (FU-1b, FU-1c) is **committed** on `sdd07/wave2` as `97d9ac3` plus `eba9054` (not pushed). The entry below was written before that commit.
+
+**SDD-07 foundation Wave 2 (FU-1b, FU-1c) BUILT and REVIEWED — 2026-10-19:** `library_sdd07_wave2_built_commit_pending` (now committed, see correction above).
+- **Where:** worktree `Bookconnect4_wave2`, branch `sdd07/wave2`, base `6644689`. Evidence: [Wave 2 README](./evidence/sdd07-foundation-wave2-2026-10-19/README.md).
+- **Built:** FU-1c (Book Details) by Codex `gpt-6.1-sol`; FU-1b (notes list, reader, composer) built in `wave2n` and applied as a patch. Colour-only move onto `useLibraryAppearance` tokens.
+  - Protected logic in `[bookId].tsx` (`handleSaveReview`, `reviewDraft`, queries, mutations, navigation) unchanged, per both reviews and the lead's diff check.
+- **Design decisions** (lead, under the owner's design delegation; **to be shown to the owner**):
+  - `ConditionPicker` failing green/red hues → chip tokens;
+  - `RatingInput` gold → `accent`;
+  - control borders → `controlBorder`;
+  - no-cover → `coverPlaceholder`;
+  - dialogs → `bgRaised`;
+  - note quote stripe unchanged (D07-04).
+- **Reviews** (read-only):
+  - Gemini Argon, "YES WITH FIXES": F1 test gaps (crop, handle, "Keep editing"); F2 source guard missing 3 note routes; F3 `DeleteBookModal` Cancel 1.01:1 in midnight; F4 3 duplicate 463 KB fixtures; F5 a stale mock.
+  - Codex `gpt-6.1-sol` xhigh, "YES WITH FIXES": R1 web `Switch` default teal thumb 2.18:1 against the midnight accent; R2 crop outline `accent` 1.68:1 against the white page; R3 no-cover loads remote `via.placeholder.com`, hiding `coverPlaceholder`.
+  - All 8 verified by the lead and fixed by Codex: thumb `textOnAccent` (web `activeThumbColor` / native `thumbColor` when on); crop outline `controlBorder`; no-cover source `undefined`; Cancel 1px `controlBorder` border with padding 14 → 13 (height unchanged — the one visible change); one `book-details.json` fixture; tests extended; mock cleaned.
+- **Verification (lead):**
+  - Jest `--runInBand` library + notes: 27 suites / 520 tests pass.
+  - `lint:library`: 32 problems (3 errors, 29 warnings), same as the baseline.
+  - Whole-repo `tsc --noEmit`: 36 errors, the same count on the base branch; all pre-existing, in marketplace `supabase/functions` and one e2e spec.
+  - **Correction:** earlier "tsc 0" entries in this tracker came from the narrower `tsc -p tsconfig.library-notes.json`. They are scoped results, not whole-repo results.
+  - Codex's broader run: 695 / 697; the 2 shelf failures reproduce on the pre-edit sources.
+- **Web capture** (Haiku, Playwright, placeholder `.env`, all https intercepted; [web-capture](./evidence/sdd07-foundation-wave2-2026-10-19/web-capture/README.md)): 32 passed, 0 non-GET requests, 0 page errors. Captures predate the R1–R3/F3 fixes. Gaps covered by Jest: rating stars not found on web; crop step unreachable on web.
+- **Mutations:** no database or storage writes. The placeholder `.env` was deleted from `Bookconnect4_wave2`. Docs only here; nothing staged, committed or pushed.
+- **Residual:** `via.placeholder.com` remote fallback still used in `LibraryBookList.tsx` (Library, a later unit) and in exchange/clubs files (out of scope).
+- **Next exact action:** superseded. Wave 2 is committed; see the FU-4a entry above. TB-1 stays parked (the "Marketplace" label decision and commit approval).
+
+**SDD-07 tab-bar unit TB-1 BUILT, REVIEWED and PARKED — 2026-10-19:** `library_sdd07_tb1_parked_wave2_next`.
+- **Owner context:** focus is back on the library section ("we are working in the library section right??"); review requested: "why dont you review them using codex and open code and follow the process, and later we will go to the next task".
+- **Where:** uncommitted on `sdd07/tab-bar` in `Bookconnect4_fu1a` (off `6644689`). Files: `app/(tabs)/_layout.tsx`, `app/(tabs)/__tests__/_layout.test.tsx`, new `tabBarContrast.test.ts`.
+- **Probes:** Codex ≈ space-bunny > Muse; Codex built it.
+- **Web verification** (Haiku; [evidence](./evidence/tb1-tab-bar-2026-10-18/README.md)):
+  - PASS: 5 tabs, real icons, bar not white at midnight, 200% zoom `scrollWidth` 390 (D07-15 closed on this branch), Back history, keyboard order, focus-visible ring and Space, hidden marketplace routes still open.
+  - **OPEN:** icon-only at 390 and 360 px, because bold "Marketplace" plus padding (~80 px) exceeds the 78 px slot (the spec estimated 66 px). Owner decides: rename to "Market", keep "Marketplace" with tighter padding, or accept icon-only.
+  - Placeholder-only `.env` (no real key), deleted after the run.
+  - The evidence README's claim that `marketplace_get_active_cart` writes is **false** (`STABLE` in `20260716000007`; the `UPDATE` is in another function). A correction is appended there; not recorded as a finding.
+- **Review** (read-only; [reviews](./evidence/tb1-tab-bar-2026-10-18/reviews/)):
+  - Gemini Argon and space-bunny: both "YES WITH FIXES". Codex hit its usage limit and left no findings.
+  - Applied by space-bunny: iOS role back to `button` with ", tab, N of 5" kept in the label; ref write in `useLayoutEffect`; safe-area insets in the measurement key; caller `onKeyDown`/`onKeyUp` composed; focus CSS `:focus:not(:focus-visible)`.
+  - Rejected: Argon F1 (native probe clamping); a clamped probe equals the slot, and slot + 10 > slot still triggers icon-only.
+  - Deferred: first-frame labels before measurement; a real-`BottomTabItem` prop test; a shared contrast helper.
+- **Verified by the orchestrator:** Jest 83 suites / 1,145 tests pass; `tsc` 36 pre-existing errors, 0 in `app/(tabs)`.
+- **Mutations:** docs only here. No database or storage writes. Nothing staged, committed or pushed.
+- **Next exact action:** TB-1 stays parked until the owner's "Marketplace" label decision and commit approval. Library work resumes with foundation Wave 2 (FU-1b notes screens, FU-1c Book Details onto library tokens) when the owner says go.
+
+**SDD-07 tab-bar unit TB-1 APPROVED — 2026-10-18:** `library_sdd07_tb1_approved_probe_then_build`.
+- **Owner approval:** "I approve TB-1 decisions TB-D1 to TB-D5 as recommended. I'll forward the clubs heads-up myself. Build TB-1 on sdd07/tab-bar (probe the models first), don't commit until I approve."
+- **Decisions:** TB-D1 to TB-D5 approved as recommended ([spec](./SDD-07-TAB-BAR-UNIT.md) §5).
+- **Clubs heads-up:** spec §10; the owner forwards it personally.
+- **Branch:** `sdd07/tab-bar` created in `Bookconnect4_fu1a` off `sdd07/fu1a-fu3` at `6644689` (reported by the orchestrating session).
+- **Authority:** build authorized; **commit NOT authorized** until the owner approves the result. No push.
+- **Mutations:** docs only here. No code, database or storage writes. Nothing staged or committed.
+- **Next exact action:** model probes (Codex `gpt-6.1-sol` xhigh, Muse Spark 1.3 xhigh, space-bunny-free max) on the TB-1 spec, then build TB-1 on `sdd07/tab-bar` with the best scorer.
+
+**SDD-07 tab-bar unit TB-1 (D07-01) — SPEC DRAFT, 2026-10-18:** `library_sdd07_tb1_spec_draft_owner_review`.
+- **Authority:** owner's words: "Start the tab-bar unit D07-01: write its spec first (docs only), including the clubs heads-up, and show me before any build."
+- **Spec:** [SDD-07-TAB-BAR-UNIT.md](./SDD-07-TAB-BAR-UNIT.md). **Status: SPEC DRAFT, awaiting owner review.**
+- **Findings recorded in the spec (read-only):**
+  - `app/(tabs)/marketplace/` has no `_layout.tsx`, so `cart`, `book/[listingId]`, `requests/index` and `requests/[requestId]` surface as four extra tabs; only `store/[storeId]` is hidden.
+  - Seven call sites push those routes; all must stay reachable.
+  - The tab router default is `backBehavior: 'firstRoute'`, so Back from those routes goes to My Library.
+  - Contrast of `useTheme` colours on `bgCard`: `textPrimary` ≥ 8.15, `textSecondary` ≥ 5.71, `accent` 3.20–4.90 (UI part only), `textTertiary` fails.
+- **Decisions for the owner** (recommendation first): TB-D1 hide the 4 routes with `href: null` + `backBehavior="history"`; TB-D2 bar follows `useTheme` (bgCard / textPrimary / textSecondary / accent indicator); TB-D3 Ionicons outline/filled; TB-D4 "Library" label at 12/16; TB-D5 (new) icon-only fallback with accessible names when labels don't fit (closes D07-15).
+- **Clubs heads-up:** drafted in spec §10; not yet sent. It goes out after the owner approves the spec.
+- **Mutations:** docs only. No code, installs, database or storage writes. Nothing staged, committed or pushed.
+- **Next exact action:** the owner reviews TB-1 §5 decisions. On approval, send the clubs heads-up, then build TB-1 on `sdd07/tab-bar` off `sdd07/fu1a-fu3`. Wave 2 (FU-1b, FU-1c, FU-5d) follows; FU-5d's `@axe-core/playwright` install needs the owner's OK.
+
+**SDD-07 foundation Wave 1 DONE — 2026-10-18:** `library_sdd07_wave1_done_tabbar_next`.
+- **Owner approval:** "I approve the FU-2 type scale with display 32/40. Commit Wave 1 (FU-5a, FU-6a/b/c, FU-2) on sdd07/fu1a-fu3, don't push. You may copy the library .env into fu1a again for one home/search web capture, then delete it."
+- **Commits** on `sdd07/fu1a-fu3` (worktree `Bookconnect4_fu1a`), **not pushed**:
+  - `a36b8e5` FU-5a lint;
+  - `640ef30` FU-6a/b/c cleanup;
+  - `6644689` FU-2 type scale (display 32/40).
+  - Earlier on the same branch: `db715d3` tokens and `17ad84f` FA-P1 prototype.
+  - This session checked the log read-only; the fu1a working tree is clean apart from the untracked `.spec/` and `.spec-out/`.
+- **Web capture after FU-2** (Haiku; [evidence](./evidence/sdd07-foundation-wave1-2026-10-18/fu2-web-capture/README.md)):
+  - C1 no page errors: PASS.
+  - C2 library fonts loaded and used on home and search: PASS. `LibraryGaramondMedium` is not loaded there because it is unused. Home has no heading element, so the "My Library" probe hit the tab bar.
+  - C3 the 9 G02 captures are byte-identical to the 2026-10-18 audit: PASS (orchestrator spot-checked 2 MD5s).
+  - C4 the loading state is not blank: PASS. It was taken after the login redirect with data held 4 s, not a cold load.
+  - C5 writes: 0, PASS.
+- **Cleanup:** the copied `.env` was deleted after the run. The orchestrator verified this, and this session confirmed `Bookconnect4_fu1a/.env` is absent. Port 8084 is closed.
+- **Status:** the foundation plan §8 rows are updated to DONE.
+- **Mutations:** docs only here. No database or storage mutations. Nothing pushed.
+- **Next exact action:**
+  1. The tab-bar unit D07-01: write its spec and send the clubs worktree a heads-up (the tab bar is shared).
+  2. Then Wave 2: FU-1b, FU-1c and FU-5d.
+  - FU-5d's install of `@axe-core/playwright` 4.13.0 needs the owner's OK first.
+
+**SDD-07 foundation Wave 1 built — FU-5a, FU-6a/b/c, FU-2 — 2026-10-18:** `library_sdd07_wave1_built_commit_pending`.
+- **Authority:** the owner said "ok proceed please" (2026-10-18) to committing the Flow A work, then starting Wave 1.
+  - Flow A is committed in worktree `Bookconnect4_fu1a`, branch `sdd07/fu1a-fu3`: `db715d3` (FU-1a + FU-3 tokens) and `17ad84f` (FA-P1 prototype).
+  - Wave 1 is built and verified by the orchestrating session, **uncommitted, awaiting the owner's commit approval**.
+  - Evidence: [Wave 1 README](./evidence/sdd07-foundation-wave1-2026-10-18/README.md). Plan status: [foundation plan §8](./SDD-07-FOUNDATION-PLAN.md).
+- **FU-5a** (orchestrator):
+  - devDependencies `eslint` ~9.39.5 (resolved 9.39.5) and `eslint-config-expo` ~10.0.0, exactly the §4 list.
+  - Lockfile +218 packages, 0 removed, 3 transitive bumps: es-object-atoms 1.1.1→1.1.2, hasown 2.0.2→2.0.4, is-core-module 2.16.1→2.17.0.
+  - New flat `eslint.config.js` extending `eslint-config-expo/flat`, limited to the library/notes paths, with test files ignored. Script `lint:library` runs in ~18 s.
+  - Baseline before FU-6: 38 problems (3 errors, 35 warnings: 17 exhaustive-deps, 12 no-unused-vars, 5 no-require-imports, 3 no-unescaped-entities errors, 1 array-type). After FU-6 + FU-2: 32 (3 errors, 29 warnings). No code fixes, per spec.
+  - `@axe-core/playwright` (FU-5d) is not installed.
+- **FU-6a/b/c** (Codex `gpt-6.1-sol` xhigh; receipt and grep logs copied into `fu6-cleanup/`):
+  - Deleted NoteEditor/NotesList/TagSelector, `NoteEditor.ocr.test.tsx` and the barrel exports, after moving 2 OCR helper cases into the `ocrService` tests.
+  - Removed 5 `notesService` methods and 13 method-only tests. Kept ReadingNote, NoteTag/NoteCategory and NOTE_TAG_CONFIG.
+  - Removed 3 `notesCount` invalidations after proving no producer.
+  - Kept without caller: `userBookPagesService.upsertPage` (+`capToVaultLimits`) and `ocrService.recognizePageViaCloud` (SDD-10 decides).
+  - Residual: a stale NoteEditor comment at `e2e/library-vault-smoke.spec.ts:164`.
+  - Codex's own tracker paragraph, written in the fu1a copy, was moved out by the orchestrator. It is kept as `fu6-cleanup/codex-proposed-tracker-entry.diff` and used as source text here.
+- **FU-2** (Muse Spark 1.3 xhigh):
+  - `LIBRARY_TEXT` added:
+
+    | Style | Font | Size / line height |
+    |---|---|---|
+    | display | Garamond SemiBold | 32/40 |
+    | title | Garamond SemiBold | 26/32 |
+    | heading | Garamond Medium | 21/27 |
+    | bodySerif | Garamond Medium | 18/26 |
+    | body | Manrope | 16/24 |
+    | label | Manrope Bold | 16/22 |
+    | caption | Manrope | 14/20 |
+
+  - Provider moved to `app/(tabs)/library/_layout.tsx`; the fallback is kept and children always render. Per-screen providers removed from `index.tsx` and `search.tsx`.
+  - New `LibraryTypography.test.tsx`: 9 tests, including the note reader and Book Details rendering inside the layout provider.
+  - `display` was 32/38 (ratio 1.19, under the 1.2 floor) and was changed to **32/40** after review, so the line-height test has no per-style exceptions.
+  - **The owner still needs to approve the type scale** (plan §7 item 4).
+- **Verification (orchestrator):**
+  - Jest `app/(tabs)/library` + `src/components/library` + `src/components/notes` + `src/features/books` + `src/prototypes`: 44 suites / 815 tests before → 44 suites / 801 tests after, all pass. FU-6 alone gave 43 / 792; FU-2 added 1 suite and 9 tests.
+  - `tsc -p tsconfig.library-notes.json`: 0 errors before and after.
+  - **Not done:** web capture of home and search after the provider move. It needs the app `.env` in fu1a, which was removed, and is pending the owner's OK.
+  - This session checked the lint baseline breakdown against the copied output.
+- **Independent review (read-only):**
+  - Codex `gpt-6.1-sol` xhigh and Gemini 4 Argon both said "Safe to commit: YES WITH FIXES"; the repo fingerprint was unchanged.
+  - The shared FU-2 test findings were fixed by Muse Spark 1.3: `display` set to 32/40, and the render tests now mount through the real `LibraryLayout`, with no `act()` warnings.
+  - Re-verified: Jest 44 suites / 801 tests pass, 0 `act` warnings, scoped tsc 0 errors.
+  - Codex's FU-5a baseline finding is covered by this entry. Lint stays at 32 problems, exiting 1 by design.
+  - Codex saw 2 native-view animation failures only with the Jest disk cache off; they reproduce on HEAD (pre-existing).
+  - Argon noted that standalone home and search unit renders now use fallback fonts. Not acted on.
+  - Reviews: `evidence/sdd07-foundation-wave1-2026-10-18/reviews/`.
+- **Mutations:** docs only in `Bookconnect4_library`. No database or storage mutations. Nothing staged, committed or pushed for Wave 1.
+- **Next exact action:**
+  1. The owner approves (a) the FU-2 type scale and (b) committing Wave 1 on `sdd07/fu1a-fu3`.
+  2. Web capture of home and search.
+  3. The tab-bar unit D07-01.
+
 **Flow A design FINALIZED (FA-P1 rounds 2–4) — 2026-10-18:** `library_sdd07_flow_a_finalized_commit_pending`.
 - **Authority:** the owner, in the orchestrating session: "ok look i leave it to your judgement ... please ensure you have understood the essence of the philosophy and proceed and finalyze the design". The orchestrator (Opus) made and verified the calls under that delegation. Recorded as [SDD-07](./SDD-07-book-section-ui-overhaul.md) D07-11.
 - **Design:** A1 Shelf card + A2 unboxed serif passages (D07-09). The FA-P1 prototype is in worktree `Bookconnect4_fu1a`, branch `sdd07/fu1a-fu3`, **uncommitted**: `app/(tabs)/library/dev-flow-a.tsx` and `src/prototypes/flowA/**`. SDD-07 §10 records it with the essence checklist (Appendix A: C1–C8, R1–R4, T1–T3, K1–K4, A1).

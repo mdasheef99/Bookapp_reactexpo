@@ -1,0 +1,44 @@
+‹ Book details
+Notes
+Many Notes Fixture Book
+7 saved notes
+All
+✓ Quote
+Thought
+Takeaway
+Action
+Question
+Showing Quote notes. Notes in other categories are available under All.
+Quote
+14 Sept 2026 • 03:30 pm
+A quoted line from the fixture book that should render in the note card.
+
+Page 42
+Add note
+⏷
+⏷
+My Library
+⏷
+⏷
+Exchange
+⏷
+⏷
+Marketplace
+⏷
+⏷
+Clubs
+⏷
+⏷
+Profile
+⏷
+⏷
+marketplace/cart
+⏷
+⏷
+marketplace/requests/index
+⏷
+⏷
+marketplace/book/[listingId]
+⏷
+⏷
+marketplace/requests/[requestId]
