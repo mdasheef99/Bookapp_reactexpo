@@ -1,7 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
 // Deterministic, transport-level fixtures for the Library screen audit.
-// Every https request is intercepted. Supabase GET/HEAD reads are answered from
+// Every HTTP(S) request outside the local dev server origins is intercepted. Supabase GET/HEAD reads are answered from
 // per-test fixture data; any other method is aborted and recorded as a write.
 // Read-only RPCs that the app calls with POST are answered and listed separately.
 // Nothing is saved, edited or deleted; no real credentials are used.
@@ -142,7 +142,8 @@ function applyFilters(rows: any[], sp: URLSearchParams) {
 }
 
 async function installRoutes(page: Page) {
-  await page.route(/^https:\/\//, async route => {
+  await page.route(url => /^https?:$/.test(url.protocol)
+    && !['http://localhost:8083', 'http://127.0.0.1:8083'].includes(url.origin), async route => {
     const req = route.request();
     const url = new URL(req.url());
     const method = req.method();
@@ -243,4 +244,8 @@ export async function openWrite(page: Page, ub: string) {
 
 export function currentFixtureWrites(): string[] {
   return [...fx.writes];
+}
+
+export function currentFixtureUnhandledReads(): string[] {
+  return [...fx.unhandledReads];
 }

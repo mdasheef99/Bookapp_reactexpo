@@ -1,6 +1,7 @@
 const childProcess = require('node:child_process');
 const path = require('node:path');
 const baseline = require('../ratchet-baseline.json');
+const { summarizeRatchet } = require('../ratchetSummary');
 
 const repoRoot = path.resolve(__dirname, '../../..');
 const ruleIds = [
@@ -30,20 +31,7 @@ describe('book-section warning ratchet', () => {
         }
 
         const results = JSON.parse(result.stdout);
-        const messages = results.flatMap(file => file.messages
-            .filter(message => message.ruleId?.startsWith('book-section/'))
-            .map(message => ({ ...message, file: path.relative(repoRoot, file.filePath).replace(/\\/g, '/') })));
-        const counts = {};
-        for (const message of messages) {
-            counts[message.ruleId] ??= { 1: 0, 2: 0 };
-            counts[message.ruleId][message.severity] += 1;
-        }
-
-        const errors = messages.filter(message => message.severity === 2);
-        if (errors.length) {
-            throw new Error(`Book-section errors must be zero; found ${errors.length}:\n${errors
-                .map(message => `${message.file}:${message.line} ${message.ruleId}`).join('\n')}`);
-        }
+        const { counts, messages } = summarizeRatchet(results, repoRoot);
 
         const increases = ruleIds.flatMap(ruleId => {
             const current = counts[ruleId]?.[1] || 0;

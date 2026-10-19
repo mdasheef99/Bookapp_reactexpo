@@ -280,8 +280,10 @@ it.each(['DeleteBookModal', 'ManualEntryModal'] as const)('shows an error raised
   expect(within(screen.getByTestId('book-feedback-host')).queryByText('Something failed')).toBeNull();
 });
 
-it('lets taps pass through success and info toasts but keeps error toasts tappable', () => {
-  mount();
+it.each(['host', 'slot'] as const)('lets taps pass through success and info toasts in the %s but keeps error toasts tappable', location => {
+  mount(location === 'slot' ? <BookFeedbackSlot /> : undefined);
+  const region = within(screen.getByTestId(`book-feedback-${location}`)).getByTestId('book-feedback-live-region');
+  expect(region.props.pointerEvents).toBe('box-none');
   notify('success', 'Saved'); expect(screen.getByTestId('book-feedback-toast').props.pointerEvents).toBe('none');
   notify('info', 'FYI'); expect(screen.getByTestId('book-feedback-toast').props.pointerEvents).toBe('none');
   notify('error', 'Oops'); expect(screen.getByTestId('book-feedback-toast').props.pointerEvents).toBe('auto');

@@ -9,6 +9,7 @@ import {
   openComposer,
   openWrite,
   currentFixtureWrites,
+  currentFixtureUnhandledReads,
 } from './fixtures/libraryFixture';
 
 test.use({ viewport: { width: 390, height: 844 } });
@@ -102,6 +103,7 @@ async function runScan(page: Page): Promise<StateSummary> {
     .analyze();
   const summary = summarise(results.violations);
   expect(currentFixtureWrites()).toEqual([]);
+  expect(currentFixtureUnhandledReads()).toEqual([]);
   return summary;
 }
 
@@ -114,12 +116,13 @@ async function reachState(page: Page, state: string, hour: number) {
   } else if (state === 'home-empty') {
     await startLibrarySession(page, { userBooks: [] }, hour);
     await expect(page.getByText('My Library').first()).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText('Your library is empty', { exact: true })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText('Tap the "+ Add Book" button to start building your collection.', { exact: true })).toBeVisible();
     await page.waitForTimeout(1500);
   } else if (state === 'home-error') {
     await startLibrarySession(page, { status: { 'user_books:list': 500 } }, hour);
-    await expect(page.getByText(/couldn.t|went wrong|try again|retry|error/i).first())
-      .toBeVisible({ timeout: 25000 })
-      .catch(() => {});
+    await expect(page.getByText('Could not load your library', { exact: true })).toBeVisible({ timeout: 25000 });
+    await expect(page.getByLabel('Retry loading library', { exact: true })).toBeVisible();
     await page.waitForTimeout(1000);
   } else if (state === 'details-populated') {
     await startLibrarySession(page, {}, hour);
