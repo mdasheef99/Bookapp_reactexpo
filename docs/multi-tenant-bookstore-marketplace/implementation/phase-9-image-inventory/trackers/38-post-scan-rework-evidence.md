@@ -471,6 +471,13 @@ Supabase/external mutations: no direct DB/Storage write, migration, Edge,
   inventory (4a90c2e2, bbf3f48d) and saved their reviews. Nothing committed or
   pushed.
 Decisions/deviations/risks:
+  - Role deviation: the orchestrating session ran the in-app check itself,
+    driving the browser and choosing the cards. Under the roles in §16 and
+    SDD-0 §15, a Haiku subagent should have run it from a strict script.
+    The server-state readings above were made read-only by the orchestrator
+    through Supabase MCP. The Owner chose not to re-run it (2026-10-19). From
+    slice 2 on, in-app and browser checks are delegated to Haiku, and the
+    orchestrator verifies the server state.
   - AC1-3 corrected (SDD-1 §3): Codex stopped and reported that blockers are
     attention items (BatchReviewCard.tsx L208–216), so reviewStatusLabel
     returns "Needs attention" (L38) before the fall-through. Because §3 puts
