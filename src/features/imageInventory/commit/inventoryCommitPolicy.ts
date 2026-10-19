@@ -25,6 +25,7 @@ export function candidateCommitAuthorityKey(card: OwnerBatchReviewCard): string 
 export function candidateCommitPreparation(value: CandidateCommitDraft): {
     draft: OwnerCandidateReview;
     needsSave: boolean;
+    resave: 'review_reset' | null;
 } | null {
     const merged = value.review ?? (value.card.review
         ? { ...value.card.review, ...value.edits }
@@ -32,10 +33,12 @@ export function candidateCommitPreparation(value: CandidateCommitDraft): {
     if (!merged) return null;
     const parsed = ownerCandidateReviewSchema.safeParse(merged);
     if (!parsed.success) return null;
+    const needsSave = value.card.review === null
+        || JSON.stringify(parsed.data) !== JSON.stringify(value.card.review);
     return {
-        draft: parsed.data,
-        needsSave: value.card.review === null
-            || JSON.stringify(parsed.data) !== JSON.stringify(value.card.review),
+        draft: parsed.data, needsSave,
+        resave: !needsSave && !value.card.reviewReady && value.card.blockers.length === 0
+            ? 'review_reset' : null,
     };
 }
 
@@ -43,7 +46,7 @@ export function candidateCanStartCommit(value: CandidateCommitDraft): boolean {
     if (value.acceptedAuthorityKey !== candidateCommitAuthorityKey(value.card)) return false;
     const preparation = candidateCommitPreparation(value);
     if (!preparation) return false;
-    return preparation.needsSave
+    return preparation.needsSave || preparation.resave
         ? value.card.allowedActions.includes('save_review')
         : value.card.reviewReady
             && value.card.allowedActions.includes('add_to_inventory');
@@ -75,9 +78,45 @@ export function canonicalEligible(detail: OwnerCandidateDetail): boolean {
         && detail.allowedActions.includes('add_to_inventory');
 }
 
-// Save identity is equivalent only for the same review fingerprint and the
-// same candidate/metadata base revisions. A changed value or base authority
-// supersedes the frozen command and must never be silently replayed.
+// SDD-1 §3 / D2-3: only an edition-to-manual reset may change the hidden Save.
+export function reviewMatchesReset(
+    seen: OwnerCandidateReview, current: OwnerCandidateReview | null,
+): boolean {
+    if (!current) return false;
+    if (JSON.stringify(seen) === JSON.stringify(current)) return true;
+    return (seen.metadataChoice.mode === 'selected' || seen.metadataChoice.mode === 'edition_option')
+        && current.metadataChoice.mode === 'manual' && current.metadataChoice.selectionId === null
+        && JSON.stringify({ ...seen, metadataChoice: current.metadataChoice }) === JSON.stringify(current);
+}
+
+// SDD-1 §3 / D2-2: retain the entire request, including the reread's versions.
+export function freezeReviewSave(
+    command: FrozenCandidateCommand, detail?: OwnerCandidateDetail,
+): FrozenCandidateCommand {
+    const draft = detail ? ownerCandidateReviewSchema.parse(detail.review.value) : command.draft;
+    const request = Object.freeze({
+        sessionId: command.sessionId, candidateId: command.candidateId,
+        expectedCandidateVersion: detail?.candidateVersion ?? command.candidateVersion,
+        expectedMetadataRevision: detail?.metadata.revision ?? command.metadataRevision,
+        review: draft,
+        idempotencyKey: detail ? command.resaveIdempotencyKey : command.saveIdempotencyKey,
+        commandId: detail ? command.resaveCommandId : command.saveCommandId,
+    });
+    return detail ? { ...command, draft, resaveRequest: request, saveCompleted: false }
+        : { ...command, saveRequest: request };
+}
+
+export function canResaveAfterSave(detail: OwnerCandidateDetail, command: FrozenCandidateCommand): boolean {
+    return !command.resaveRequest && Boolean(command.saveRequest)
+        && !detail.readiness.reviewReady && detail.readiness.blockers.length === 0
+        && detail.metadata.revision > command.saveRequest!.expectedMetadataRevision
+        && detail.review.value?.metadataChoice.mode === 'manual'
+        && reviewMatchesReset(command.draft, detail.review.value);
+}
+
+// Ordinary Saves match values and base revisions. Re-saves also match the
+// Owner-seen review: the lost response may have advanced server authority
+// while the mounted card still carries its pre-reset edition choice.
 export function draftMatchesCommand(
     refreshed: CandidateCommitDraft,
     command: FrozenCandidateCommand,
@@ -88,10 +127,13 @@ export function draftMatchesCommand(
         ? { ...refreshed.card.review, ...refreshed.edits }
         : null);
     if (!merged) return false;
-    return JSON.stringify(merged) === JSON.stringify(command.draft)
-        && refreshed.card.candidateVersion === command.candidateVersion
-        && refreshed.card.metadataRevision === command.metadataRevision
-        && refreshed.card.reviewVersion === command.reviewVersion;
+    const matches = JSON.stringify(merged) === JSON.stringify(command.draft)
+        || (command.resaveRequest && JSON.stringify(merged) === JSON.stringify(command.ownerSeenDraft));
+    // A lost re-save response may already have advanced the card's authority.
+    return Boolean(matches) && (Boolean(command.resaveRequest)
+        || (refreshed.card.candidateVersion === command.candidateVersion
+            && refreshed.card.metadataRevision === command.metadataRevision
+            && refreshed.card.reviewVersion === command.reviewVersion));
 }
 
 export function classifyFailure(

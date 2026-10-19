@@ -2,6 +2,7 @@ import { runCandidateCommands } from './inventoryCommitBatchExecution';
 import type { AddCandidateToInventoryRequest } from '../api/ownerUxService';
 import type {
     OwnerCandidateCommitResult,
+    OwnerCandidateDetail,
 } from '../contracts/ownerUxContracts';
 import {
     CandidateCommandRegistry,
@@ -11,6 +12,7 @@ import {
     type FrozenAddAllCommand,
     type FrozenCandidateCommand,
     type InventoryCommitCoordinatorDependencies,
+    type RetryState,
 } from './inventoryCommitTypes';
 import {
     aggregate,
@@ -21,6 +23,9 @@ import {
     canonicalEligible,
     classifyFailure,
     draftMatchesCommand,
+    canResaveAfterSave,
+    freezeReviewSave,
+    reviewMatchesReset,
 } from './inventoryCommitPolicy';
 
 export {
@@ -36,12 +41,6 @@ export {
     type FrozenAddAllCommand,
     type InventoryCommitCoordinatorDependencies,
 } from './inventoryCommitTypes';
-
-type RetryState = {
-    command: FrozenCandidateCommand;
-    commitRequest?: AddCandidateToInventoryRequest;
-    ambiguousCommit: boolean;
-};
 
 export class InventoryCommitCoordinator {
     private readonly retries = new Map<string, RetryState>();
@@ -59,12 +58,16 @@ export class InventoryCommitCoordinator {
             candidateId: value.card.candidateId,
             sessionId: value.card.sessionId,
             draft: preparation.draft,
+            ownerSeenDraft: preparation.draft,
             needsSave: preparation.needsSave,
+            resave: preparation.resave,
             candidateVersion: value.card.candidateVersion,
             metadataRevision: value.card.metadataRevision,
             reviewVersion: value.card.reviewVersion,
             saveIdempotencyKey: this.dependencies.createIdempotencyKey('save-review'),
             saveCommandId: this.dependencies.createCommandId(),
+            resaveIdempotencyKey: this.dependencies.createIdempotencyKey('resave-review'),
+            resaveCommandId: this.dependencies.createCommandId(),
             commitIdempotencyKey: this.dependencies.createIdempotencyKey('commit'),
             commitCommandId: this.dependencies.createCommandId(),
             claimToken,
@@ -269,28 +272,36 @@ export class InventoryCommitCoordinator {
         command: FrozenCandidateCommand,
         synchronize: boolean,
     ): Promise<CandidateCommitOutcome> {
-        let stage: CandidateCommitOutcome['stage'] = command.needsSave ? 'save' : 'revalidate';
+        let stage: CandidateCommitOutcome['stage'] = 'revalidate';
         try {
-            if (command.needsSave) {
-                await this.dependencies.saveReview({
-                    sessionId: command.sessionId,
-                    candidateId: command.candidateId,
-                    expectedCandidateVersion: command.candidateVersion,
-                    expectedMetadataRevision: command.metadataRevision,
-                    review: command.draft,
-                    idempotencyKey: command.saveIdempotencyKey,
-                    commandId: command.saveCommandId,
-                });
+            if (command.resave && !command.resaveRequest) {
+                const detail = await this.dependencies.readCandidate(command.sessionId, command.candidateId);
+                if (!reviewMatchesReset(command.ownerSeenDraft, detail.review.value)) {
+                    this.retries.delete(command.candidateId);
+                    await this.dependencies.synchronizeIneligible([command.candidateId]);
+                    return { candidateId: command.candidateId, status: 'no_longer_eligible',
+                        stage, code: 'review_changed' };
+                }
+                command = freezeReviewSave(command, detail);
             }
-            stage = 'revalidate';
-            const authority = await this.dependencies.readCandidate(
-                command.sessionId, command.candidateId,
-            );
+            if (command.needsSave && !command.saveRequest && !command.resaveRequest)
+                command = freezeReviewSave(command);
+            let authority: OwnerCandidateDetail;
+            for (;;) {
+                const request = command.resaveRequest ?? command.saveRequest;
+                if (request && !command.saveCompleted) {
+                    stage = 'save';
+                    await this.dependencies.saveReview(request);
+                    command = { ...command, saveCompleted: true };
+                }
+                stage = 'revalidate';
+                authority = await this.dependencies.readCandidate(command.sessionId, command.candidateId);
+                if (!canResaveAfterSave(authority, command)) break;
+                command = freezeReviewSave(command, authority);
+            }
             if (!canonicalEligible(authority) || !canonicalMatchesControlledChoice(authority, command.draft)) {
                 this.retries.delete(command.candidateId);
-                // Fresh authority rejected the candidate; synchronize the
-                // exact candidate/review/readiness roots so the UI can no
-                // longer present stale Add eligibility. M39 is never called.
+                // SDD-1 §3: one re-save only; synchronize rejected authority.
                 await this.dependencies.synchronizeIneligible([command.candidateId]);
                 return {
                     candidateId: command.candidateId,
@@ -316,15 +327,18 @@ export class InventoryCommitCoordinator {
             return outcome;
         } catch (error) {
             const outcome = classifyFailure(command.candidateId, stage, error);
-            const retry = this.retries.get(command.candidateId) ?? {
+            const retry = {
+                ...this.retries.get(command.candidateId),
                 command, ambiguousCommit: false,
             };
             retry.ambiguousCommit = stage === 'commit' && outcome.status === 'still_pending';
-            this.retries.set(command.candidateId, retry);
             if (outcome.status === 'no_longer_eligible') {
+                this.retries.delete(command.candidateId);
                 // Authoritative server conflict/non-retryable rejection:
                 // reconcile candidate/review/readiness authority immediately.
                 await this.dependencies.synchronizeIneligible([command.candidateId]);
+            } else {
+                this.retries.set(command.candidateId, retry);
             }
             return outcome;
         } finally {

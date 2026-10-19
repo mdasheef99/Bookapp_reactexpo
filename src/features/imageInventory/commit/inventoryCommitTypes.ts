@@ -30,17 +30,30 @@ export type FrozenCandidateCommand = Readonly<{
     candidateId: string;
     sessionId: string;
     draft: OwnerCandidateReview;
+    ownerSeenDraft: OwnerCandidateReview;
     needsSave: boolean;
+    resave: 'review_reset' | null;
     candidateVersion: number;
     metadataRevision: number;
     reviewVersion: number | null;
     saveIdempotencyKey: string;
     saveCommandId: string;
+    resaveIdempotencyKey: string;
+    resaveCommandId: string;
+    saveRequest?: UpdateCandidateReviewRequest;
+    resaveRequest?: UpdateCandidateReviewRequest;
+    saveCompleted?: boolean;
     commitIdempotencyKey: string;
     commitCommandId: string;
     claimToken: string;
     claimed: boolean;
 }>;
+
+export type RetryState = {
+    command: FrozenCandidateCommand;
+    commitRequest?: AddCandidateToInventoryRequest;
+    ambiguousCommit: boolean;
+};
 
 export type FrozenAddAllCommand = Readonly<{
     commandId: string;

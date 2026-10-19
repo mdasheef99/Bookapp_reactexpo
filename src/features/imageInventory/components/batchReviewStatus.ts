@@ -38,7 +38,7 @@ export function reviewStatusLabel(
     if (card.candidateState === 'possible_duplicate' || attentionCount > 0) return 'Needs attention';
     if (cardReadyNow(card, canAddNow, attentionCount)) return 'Ready';
     if (card.candidateState === 'needs_review') return 'Needs attention';
-    return 'Review book';
+    return 'Needs details';
 }
 
 export const draftResolvableBlockerCodes = new Set([

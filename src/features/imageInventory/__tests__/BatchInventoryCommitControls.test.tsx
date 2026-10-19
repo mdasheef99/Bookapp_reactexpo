@@ -52,6 +52,29 @@ function candidate(index: number): CandidateCommitDraft {
 }
 
 describe('Phase 9 NEW 6G-D Add-all controls', () => {
+    it('includes a reset saved review in Add all', async () => {
+        const original = candidate(1);
+        const reset = { ...original, card: { ...original.card, reviewReady: false,
+            allowedActions: ['save_review' as const] } };
+        const onAddAll = jest.fn(async (values: readonly CandidateCommitDraft[]) => ({
+            command: { commandId: testUuid(40), exactN: values.length,
+                candidateIds: values.map((value) => value.card.candidateId),
+                commands: [], outcomes: new Map() },
+            result: { exactN: values.length, candidateIds: values.map((value) => value.card.candidateId),
+                outcomes: [], succeeded: values.length, failedRetryable: 0,
+                noLongerEligible: 0, needsAttention: 0, stillPending: 0, busy: 0 },
+        }));
+        const screen = render(
+            <BatchInventoryCommitControls candidates={[reset]} disabled={false}
+                pending={false} result={null} onAddAll={onAddAll} onRetry={jest.fn()} />,
+        );
+        expect(screen.getByText('Add all ready books (1)')).not.toBeDisabled();
+        fireEvent.press(screen.getByText('Add all ready books (1)'));
+        expect(screen.getByText('Add exactly 1 books?')).toBeTruthy();
+        await act(async () => { fireEvent.press(screen.getByText('Add all 1')); });
+        expect(onAddAll).toHaveBeenCalledWith([reset]);
+    });
+
     it('describes the current review count before any bulk result exists', () => {
         const screen = render(
             <BatchInventoryCommitControls candidates={[candidate(1)]} disabled={false}

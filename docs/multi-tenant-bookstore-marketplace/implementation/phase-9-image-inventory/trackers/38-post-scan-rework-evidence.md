@@ -390,3 +390,177 @@ Active work unit: `post_scan_rework_slice1_add_resave`. Exact next authorized
 action: after the docs PR is merged, start a new session for slice 1 (SDD-1
 §3) from main, under the roles above. Building the slice needs the Owner's
 go-ahead in that session. No migration.
+
+## 17. Slice 1 built: Add re-saves a reset review, 2026-10-19
+
+```text
+Date/session: 2026-10-19; slice-1 session started from the planning session.
+Authorized work unit and scope: post_scan_rework_slice1_add_resave. Owner: "Go
+  ahead: build slice 1 (SDD-1 §3) red-first on a new branch from main, with
+  Codex gpt-6.1-sol xhigh writing the code." Branch
+  claude/phase9-psr-slice1-add-resave from main 6a41033. No migration.
+Completed: SDD-1 §3 steps 1–6 and AC1-1 to AC1-9, written by Codex
+  gpt-6.1-sol (xhigh) from a strict brief; every diff line read and the
+  retry paths traced by the orchestrating session.
+  - Admission: candidateCommitPreparation returns resave 'review_reset' for a
+    saved, unedited, not-ready card with no blockers; such a card needs
+    save_review (card, bulk and frozen Add all share the rule).
+  - Reset before Add: reread first; any difference from the review the Owner
+    saw, other than an edition choice turning manual, stops Add with code
+    review_changed ("This book changed. Check it and press Add again.").
+    Otherwise the draft becomes the server's review and one frozen save runs.
+  - Reset caused by Add's own save: after the save, reread; if not ready, no
+    blockers, metadata revision went up and the review matches except for a
+    manual choice, one more frozen save runs with its own key and command ID
+    (minted at freeze), then reread and add.
+  - At most one re-save per command; a still-unready reread ends as
+    no_longer_eligible and the card is synchronized.
+  - D2-2: the save and re-save requests are frozen whole (payload, expected
+    versions, key, command ID) in the retry state; a retry resumes at the
+    right step and replays the stored request.
+  - Label: the fall-through "Review book" is now "Needs details".
+Files/components/migrations: src/features/imageInventory/commit/
+  inventoryCommitPolicy.ts, inventoryCommitCoordinator.ts,
+  inventoryCommitTypes.ts (RetryState moved here; frozen request fields);
+  components/batchReviewStatus.ts; components/AddCandidateToInventoryAction.tsx
+  (review_changed message only). Tests: __tests__/inventoryCommitCoordinator
+  .test.ts (8 named AC tests; savedNoop updated, plus a reset card without
+  save_review that still cannot start), postScanUiCorrections.test.tsx (L547
+  test rewritten as "shows Ready for a reset saved review that Add will
+  re-save"; Needs details and review_changed message tests),
+  BatchInventoryCommitControls.test.tsx ("includes a reset saved review in Add
+  all"). The L415–425 exact-save replay regression is unchanged. No migration;
+  no server code.
+Verification actually run:
+  - RED (tests first, no product change; Codex run): 5 named suites, 3 failed /
+    2 passed; 13 failed / 105 passed tests. Every failure was a behaviour
+    assertion (no syntax or type error); the L415 replay regression passed.
+  - GREEN, re-run by a Haiku subagent with a strict prompt and checked from its
+    raw output by the orchestrator: npx tsc --noEmit exit 0, no output; the 5
+    named suites (inventoryCommitCoordinator, postScanUiCorrections,
+    BatchInventoryCommitControls, batchReviewCard, useInventoryCommitCoordinator)
+    5/5 suites, 118/118 tests; npx jest src/features/imageInventory 75 passed /
+    1 skipped suites, 799 passed / 4 skipped tests, 0 failed.
+  - In-app check, Expo web dev build on localhost:8081, signed in by the
+    Owner; session 7a81bdb6 ("Edition picker live test"); server state read
+    only through Supabase MCP on ahntbtktjjmvfosgkmgn:
+    - Book 4 (candidate 0729c2c1; saved review with an edition choice,
+      review_ready=false, 0 blockers; stuck before this slice): showed Ready.
+      One Add press: committed_private, inventory 4a90c2e2, review_version
+      4 -> 5 (one re-save), candidate version 5 -> 7. Live AC1-1: pass.
+    - Book 7 (candidate ac394157; no saved review): "Edit manually", title
+      edited to "Unended Quest: An Intellectual Autobiography", one Add press:
+      committed_private, inventory bbf3f48d, manual choice, edited title saved,
+      review_version null -> 2, metadata_revision 4 -> 5 (Add's own save, the
+      identity reset, then one re-save). Live AC1-7 and the Done-means check:
+      pass.
+    - Book 3 (candidate 38674cf9; chosen edition, edition_option "False
+      Dawn"): title edited, one Add press: "This book is no longer eligible".
+      Nothing saved (version 2, review_version null, updated 2026-10-16).
+      Postgres log at 10:25:33Z: P9_STATE_CONFLICT. Cause, read from the live
+      functions: the inline edit keeps the edition_option choice, so
+      phase9_edition_saved_choice_valid fails (the title must equal the
+      edition's), phase9_owner_ux_review_blockers adds metadata_choice_missing,
+      and save v2 refuses before any write. This is the known gap that slice 2
+      AC2-10 closes (SDD-1 §1 "Inline edits keep the chosen edition"); not a
+      slice-1 regression, since slice 1 only acts after a save succeeds. The
+      card keeps an unsaved local edit only.
+Supabase/external mutations: no direct DB/Storage write, migration, Edge,
+  Render or deployment by this session. The in-app check, run through the app
+  under the Owner's sign-in, added two books to the dev store's private
+  inventory (4a90c2e2, bbf3f48d) and saved their reviews. Nothing committed or
+  pushed.
+Decisions/deviations/risks:
+  - Role deviation: the orchestrating session ran the in-app check itself,
+    driving the browser and choosing the cards. Under the roles in §16 and
+    SDD-0 §15, a Haiku subagent should have run it from a strict script.
+    The server-state readings above were made read-only by the orchestrator
+    through Supabase MCP. The Owner chose not to re-run it (2026-10-19). From
+    slice 2 on, in-app and browser checks are delegated to Haiku, and the
+    orchestrator verifies the server state.
+  - AC1-3 corrected (SDD-1 §3): Codex stopped and reported that blockers are
+    attention items (BatchReviewCard.tsx L208–216), so reviewStatusLabel
+    returns "Needs attention" (L38) before the fall-through. Because §3 puts
+    every label other than "Review book" out of scope, a blocked card keeps
+    "Needs attention" with the blocker text; no re-save is forced and Add
+    stays disabled. Verified in code by the orchestrator.
+  - Re-saves send the expected versions from the reread that triggered them
+    (the server's current ones).
+  - The frozen command also keeps the review the Owner saw (ownerSeenDraft).
+    After a re-save is frozen, a retry matches either that review or the
+    server's review, and skips the base-version check. This covers the case
+    where the card still shows the old edition choice after a lost response
+    (AC1-8). If versions moved since, the server refuses the replayed request
+    as a version conflict, and Add ends as no_longer_eligible (fail-safe).
+Tracker/source-doc updates: SDD-1 §3 AC1-3; this section; TRACKER, SESSION-
+  START, ACTIVE and DOC-13 handoffs. CODEBASE_MAP unchanged (no module added,
+  moved or retired).
+Next authorized action and gate: see the handoff entry.
+
+## 18. Slice 1 review loop and process refinement, 2026-10-19
+
+The Owner added a review loop for risky slices. The orchestrator judged
+slice 1 risky, because it changes Add's retry and idempotency paths, and ran
+the loop before merge.
+
+**Round 1** (read-only; OpenCode Go Space Bunny max, Muse Spark 1.3 xhigh;
+both `approve_with_fixes`). The orchestrator checked every finding in code:
+
+| # | Finding | Verdict |
+|---|---|---|
+| Muse-1 | A refused re-save stayed frozen in `retries`. Because `draftMatchesCommand` skips the base-version check once a re-save is frozen, the next Add replayed the same refused request. | Confirmed, major (the reviewer said minor). Fixed (C1). |
+| Muse-2 | No test for a re-save refused with `P9_STATE_CONFLICT`. | Confirmed, minor. Test added (C2). |
+| SB-1 | "Press Add again" was shown, but Add was disabled for every `no_longer_eligible` outcome, and outcomes persist until the screen scope changes (`useInventoryCommitCoordinator.ts` L92–97). | Confirmed, major. Fixed (C3). |
+| SB-2 | Tighten `draftMatchesCommand` to require versions at or above the re-save's. | Rejected. It breaks the AC1-8 stale-card replay. The underlying risk is closed by C1, with a test. |
+| SB-3 | The AC1-7 fixture uses an edition choice, which the live server refuses at the first save (seen on Book 3). | Confirmed, minor. Manual variant added (C4). |
+
+**Corrections** (Codex `gpt-6.1-sol` xhigh, bounded, red-first):
+- C1: the `executeClaimed` catch block drops the retry on
+  `no_longer_eligible`.
+- C3: Add stays enabled for `review_changed` only.
+- C2 and C4: tests only.
+
+RED: 2 failed / 68 passed (the C1 and C3 tests). GREEN: 70/70; tsc clean.
+
+**Tests re-run by Haiku** on the corrected code, raw output checked by the
+orchestrator:
+- `tsc`: clean;
+- the 5 named suites: 122/122;
+- `src/features/imageInventory`: 75 passed / 1 skipped suites, 803 passed /
+  4 skipped tests, 0 failed.
+
+**Round 2** (Space Bunny max, correction diff only): the first run, Space Bunny max, hung with no output for about 1.5 hours and was stopped.
+Rerun with Muse Spark 1.3 xhigh, capped at 30 minutes: `approve`, no findings. It confirmed that C1 keeps
+every retryable state (still_pending, failed_retryable, bulk retry), that C3 re-enables Add only for
+review_changed, and that the new tests fail without the fixes. Loop closed after round 2.
+
+**Browser check:** not re-run after the corrections, by Owner decision
+("finish fast"). The fixes are covered by tests that failed first, and the
+§17 in-app check covers the happy paths.
+
+**Process refinement.** Approved by the Owner and written into SDD-0 §15:
+- the slice order;
+- a written trace for each new outcome in the orchestrator's review;
+- the review loop for risky slices only, with a stop after round 2;
+- Haiku runs browser checks from a script the Owner sees first;
+- changes to the SDD, an acceptance check, the planned check or a port go to
+  the Owner first.
+
+**Slice 2 planning decisions (Owner, 2026-10-19):**
+- Year rule: the edition line's year is the first stand-alone four-digit
+  number in `publishedDate`. SDD-1 §4 is corrected; live data has dates like
+  "April 1, 1999".
+- Haiku's browser script is approved, including adding Book 3.
+- The browser check runs on port 8081.
+- Test cards, from session 7a81bdb6:
+  - Book 3 (38674cf9): edition chosen;
+  - Book 5 (a5da3bc6): edition chosen;
+  - Book 6 (1f0d763f): no edition.
+
+Mutations: none in this step (no DB/Storage, migration, Edge, Render or
+deployment). The Supabase reads were read only.
+
+Active work unit: `post_scan_rework_slice2_declutter`. Exact next authorized action: the Owner merges
+PR #24 (slice 1). Slice 2 (SDD-1 §4) starts on the Owner's go-ahead of 2026-10-19 ("Finish fast + start
+slice 2"), on a branch from slice 1's tip, under the SDD-0 §15 process. It is a risky slice, so it gets the
+review loop. No migration.

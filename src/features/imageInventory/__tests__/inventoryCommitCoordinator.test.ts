@@ -10,7 +10,8 @@ import {
     type CandidateCommitDraft,
     type InventoryCommitCoordinatorDependencies,
 } from '../commit/inventoryCommitCoordinator';
-import { candidateCommitAuthorityKey } from '../commit/inventoryCommitPolicy';
+import { candidateCommitAuthorityKey, candidateCommitPreparation } from '../commit/inventoryCommitPolicy';
+import { cardAttentionItems, reviewStatusLabel } from '../components/batchReviewStatus';
 import { candidateDetailFixture, testUuid } from '../testing/ownerUxTestFixtures';
 
 const sessionId = testUuid(1);
@@ -119,10 +120,11 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
             review,
         };
         const savedNoop = {
-            ...draft(2, { allowedActions: ['save_review'] }),
+            ...draft(2, { reviewReady: false, allowedActions: ['save_review'] }),
             edits: { baseCondition: 'good' as const },
         };
         const savedDirect = draft(3, { allowedActions: ['add_to_inventory'] });
+        const resetWithoutSave = draft(5, { reviewReady: false, allowedActions: ['add_to_inventory'] });
         const changedWithoutSave = {
             ...draft(4, { allowedActions: ['add_to_inventory'] }),
             edits: { baseCondition: 'acceptable' as const },
@@ -130,24 +132,283 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
 
         expect(candidateCanStartCommit(unsaved)).toBe(true);
         expect(candidateCanStartBulkCommit(unsaved)).toBe(true);
-        expect(candidateCanStartCommit(savedNoop)).toBe(false);
-        expect(candidateCanStartBulkCommit(savedNoop)).toBe(false);
+        expect(candidateCanStartCommit(savedNoop)).toBe(true);
+        expect(candidateCanStartBulkCommit(savedNoop)).toBe(true);
+        expect(candidateCanStartCommit(resetWithoutSave)).toBe(false);
+        expect(candidateCanStartBulkCommit(resetWithoutSave)).toBe(false);
         expect(candidateCanStartCommit(savedDirect)).toBe(true);
         expect(candidateCanStartCommit(changedWithoutSave)).toBe(false);
 
         const test = harness();
         const command = test.coordinator.freezeAddAll([
-            unsaved, savedNoop, savedDirect, changedWithoutSave,
+            unsaved, savedNoop, savedDirect, changedWithoutSave, resetWithoutSave,
         ]);
         expect(command.candidateIds).toEqual([
-            unsaved.card.candidateId, savedDirect.card.candidateId,
+            unsaved.card.candidateId, savedNoop.card.candidateId, savedDirect.card.candidateId,
         ]);
         const direct = harness();
         await expect(direct.coordinator.addCandidate(unsaved)).resolves.toMatchObject({ status: 'succeeded' });
         expect(direct.saveReview).toHaveBeenCalledTimes(1);
-        await expect(direct.coordinator.addCandidate(savedNoop)).resolves.toMatchObject({
+        await expect(direct.coordinator.addCandidate(savedNoop)).resolves.toMatchObject({ status: 'succeeded' });
+        expect(direct.saveReview).toHaveBeenCalledTimes(2);
+        await expect(direct.coordinator.addCandidate(resetWithoutSave)).resolves.toMatchObject({
             status: 'no_longer_eligible', stage: 'claim',
         });
+    });
+
+    // SDD-1 §3 AC1-1..AC1-9; AC1-3 retains the existing blocker label.
+    it("re-saves the server's stored review for a reset card, then adds", async () => {
+        const item = draft(1, { reviewReady: false, allowedActions: ['save_review'] });
+        const before = readyDetail(item.card.candidateId, { candidateVersion: 6,
+            metadata: { ...readyDetail(item.card.candidateId).metadata, revision: 8 },
+            readiness: { ...readyDetail(item.card.candidateId).readiness, reviewReady: false } });
+        const after = readyDetail(item.card.candidateId, { candidateVersion: 7,
+            review: { value: review, reviewVersion: 4 },
+            metadata: { ...before.metadata } });
+        const test = harness({ readCandidate: jest.fn().mockResolvedValueOnce(before).mockResolvedValue(after) });
+
+        const outcome = await test.coordinator.addCandidate(item);
+        expect(outcome.status).toBe('succeeded');
+        expect(test.saveReview).toHaveBeenCalledTimes(1);
+        expect(test.saveReview).toHaveBeenCalledWith(expect.objectContaining({
+            review: before.review.value, expectedCandidateVersion: 6, expectedMetadataRevision: 8,
+        }));
+        expect(test.readCandidate).toHaveBeenCalledTimes(2);
+        expect(test.readCandidate.mock.invocationCallOrder[0]).toBeLessThan(test.saveReview.mock.invocationCallOrder[0]);
+        expect(test.saveReview.mock.invocationCallOrder[0]).toBeLessThan(test.readCandidate.mock.invocationCallOrder[1]);
+        expect(test.commitCandidate).toHaveBeenCalledWith(expect.objectContaining({
+            expectedCandidateVersion: 7, expectedMetadataRevision: 8, expectedReviewVersion: 4,
+        }));
+        expect(test.synchronizeSuccess).toHaveBeenCalledWith([outcome.result]);
+        expect(reviewStatusLabel(item.card, false, 0, outcome)).toBe('Added');
+    });
+
+    it('does not force a re-save when blockers exist', async () => {
+        const item = draft(1, { reviewReady: false, allowedActions: ['save_review'], blockers: [{
+            code: 'price_invalid', candidateId: testUuid(11), inputId: null,
+            field: 'priceMinor', safeMessage: 'Price is required.',
+        }] });
+        expect(candidateCommitPreparation(item)).toMatchObject({ needsSave: false, resave: null });
+        expect(candidateCanStartCommit(item)).toBe(false);
+        expect(candidateCanStartBulkCommit(item)).toBe(false);
+        const attention = cardAttentionItems({ card: item.card, hasEdits: false, validationIssues: [] });
+        expect(attention).toEqual([{ field: 'priceMinor', safeMessage: 'Price is required.' }]);
+        expect(reviewStatusLabel(item.card, false, attention.length)).toBe('Needs attention');
+        const test = harness();
+        await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({
+            status: 'no_longer_eligible', stage: 'claim',
+        });
+        expect(test.coordinator.freezeAddAll([item]).exactN).toBe(0);
+        expect(test.readCandidate).not.toHaveBeenCalled();
+        expect(test.saveReview).not.toHaveBeenCalled();
+        expect(test.commitCandidate).not.toHaveBeenCalled();
+    });
+
+    it('stops before commit when the forced re-save conflicts', async () => {
+        const item = draft(1, { reviewReady: false, allowedActions: ['save_review'] });
+        const test = harness({ saveReview: jest.fn().mockRejectedValue(
+            new OwnerUxClientError('P9_CANDIDATE_VERSION_CONFLICT', false, 'Changed'),
+        ) });
+        await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({
+            status: 'no_longer_eligible', stage: 'save', code: 'P9_CANDIDATE_VERSION_CONFLICT',
+        });
+        expect(test.saveReview).toHaveBeenCalledTimes(1);
+        expect(test.commitCandidate).not.toHaveBeenCalled();
+        expect(test.synchronizeIneligible).toHaveBeenCalledWith([item.card.candidateId]);
+    });
+
+    it('starts a fresh command after a refused re-save', async () => {
+        const item = draft(1, { reviewReady: false, allowedActions: ['save_review'] });
+        const before = readyDetail(item.card.candidateId, { candidateVersion: 6,
+            metadata: { ...readyDetail(item.card.candidateId).metadata, revision: 8 },
+            readiness: { ...readyDetail(item.card.candidateId).readiness, reviewReady: false },
+        });
+        const current = readyDetail(item.card.candidateId, { candidateVersion: 7,
+            review: { value: review, reviewVersion: 4 },
+            metadata: { ...before.metadata, revision: 9 }, readiness: before.readiness,
+        });
+        const after = readyDetail(item.card.candidateId, { candidateVersion: 8,
+            review: { value: review, reviewVersion: 5 }, metadata: current.metadata });
+        const test = harness({
+            readCandidate: jest.fn().mockResolvedValueOnce(before)
+                .mockResolvedValueOnce(current).mockResolvedValue(after),
+            saveReview: jest.fn().mockRejectedValueOnce(
+                new OwnerUxClientError('P9_CANDIDATE_VERSION_CONFLICT', false, 'Changed'),
+            ).mockResolvedValue(after),
+        });
+        await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({
+            status: 'no_longer_eligible', stage: 'save', code: 'P9_CANDIDATE_VERSION_CONFLICT',
+        });
+        const refused = test.saveReview.mock.calls[0][0];
+        expect(test.commitCandidate).not.toHaveBeenCalled();
+        const refreshed = draft(1, { candidateVersion: 7, metadataRevision: 9, reviewVersion: 4,
+            reviewReady: false, allowedActions: ['save_review'] });
+        const outcome = await test.coordinator.addCandidate(refreshed);
+        const fresh = test.saveReview.mock.calls[1][0];
+        expect(fresh.idempotencyKey).not.toBe(refused.idempotencyKey);
+        expect(fresh.commandId).not.toBe(refused.commandId);
+        expect(fresh).toMatchObject({ review, expectedCandidateVersion: 7, expectedMetadataRevision: 9 });
+        expect(test.saveReview).toHaveBeenCalledTimes(2);
+        expect(test.readCandidate).toHaveBeenCalledTimes(3);
+        expect(test.readCandidate.mock.invocationCallOrder[1]).toBeLessThan(test.saveReview.mock.invocationCallOrder[1]);
+        expect(outcome.status).toBe('succeeded');
+        expect(test.commitCandidate).toHaveBeenCalledTimes(1);
+        expect(test.commitCandidate).toHaveBeenCalledWith(expect.objectContaining({
+            expectedCandidateVersion: 8, expectedReviewVersion: 5, expectedMetadataRevision: 9,
+        }));
+        await test.coordinator.addCandidate(refreshed);
+        expect(test.commitCandidate).toHaveBeenCalledTimes(1);
+    });
+
+    it('stops before commit when the forced re-save hits server blockers', async () => {
+        const item = draft(1, { reviewReady: false, allowedActions: ['save_review'] });
+        const test = harness({ saveReview: jest.fn().mockRejectedValue(
+            new OwnerUxClientError('P9_STATE_CONFLICT', false, 'Blocked'),
+        ) });
+        await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({
+            status: 'no_longer_eligible', stage: 'save', code: 'P9_STATE_CONFLICT',
+        });
+        expect(test.saveReview).toHaveBeenCalledTimes(1);
+        expect(test.commitCandidate).not.toHaveBeenCalled();
+        expect(test.synchronizeIneligible).toHaveBeenCalledWith([item.card.candidateId]);
+    });
+
+    it('forced re-save uses the reread review and passes the controlled-choice check', async () => {
+        for (const mode of ['selected', 'edition_option'] as const) {
+            const seen = { ...review, metadataChoice: { mode, selectionId: testUuid(77) } };
+            const item = draft(1, { review: seen, reviewReady: false, allowedActions: ['save_review'] });
+            const reset = readyDetail(item.card.candidateId, {
+                metadata: { ...readyDetail(item.card.candidateId).metadata, revision: 8 },
+                readiness: { ...readyDetail(item.card.candidateId).readiness, reviewReady: false },
+            });
+            const after = readyDetail(item.card.candidateId, { candidateVersion: 6, metadata: reset.metadata });
+            const test = harness({ readCandidate: jest.fn().mockResolvedValueOnce(reset).mockResolvedValue(after) });
+            await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({ status: 'succeeded' });
+            expect(test.saveReview).toHaveBeenCalledTimes(1);
+            expect(test.saveReview.mock.calls[0][0].review).toEqual(review);
+            expect(test.saveReview.mock.calls[0][0].review.metadataChoice).toEqual({ mode: 'manual', selectionId: null });
+            expect(test.commitCandidate).toHaveBeenCalledTimes(1);
+        }
+    });
+
+    it('forces at most one re-save per command', async () => {
+        for (const alreadyReset of [true, false]) {
+            const seen = { ...review, metadataChoice: { mode: 'edition_option' as const, selectionId: testUuid(77) } };
+            const item = { ...draft(1, { review: seen, reviewReady: !alreadyReset }),
+                edits: alreadyReset ? {} : { originalTitle: 'Owner title' } };
+            const manual = { ...review, originalTitle: alreadyReset ? review.originalTitle : 'Owner title' };
+            let reads = 0;
+            const test = harness({ readCandidate: jest.fn(async () => {
+                reads += 1;
+                return readyDetail(item.card.candidateId, { candidateVersion: 4 + reads,
+                    review: { value: manual, reviewVersion: 2 + reads },
+                    metadata: { ...readyDetail(item.card.candidateId).metadata, revision: 7 + reads },
+                    readiness: { ...readyDetail(item.card.candidateId).readiness, reviewReady: false },
+                });
+            }) });
+            await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({
+                status: 'no_longer_eligible', stage: 'revalidate',
+            });
+            expect(test.saveReview).toHaveBeenCalledTimes(alreadyReset ? 1 : 2);
+            expect(test.readCandidate).toHaveBeenCalledTimes(2);
+            expect(test.commitCandidate).not.toHaveBeenCalled();
+            expect(test.synchronizeIneligible).toHaveBeenCalledWith([item.card.candidateId]);
+        }
+    });
+
+    it.each(['edition_option', 'manual'] as const)("re-saves once when the command's own save reset readiness (%s)", async (mode) => {
+        const seen = { ...review, metadataChoice: { mode, selectionId: mode === 'manual' ? null : testUuid(77) } };
+        const item = { ...draft(1, { review: seen }), edits: { originalTitle: 'Owner title' } };
+        const manual = { ...review, originalTitle: 'Owner title' };
+        const reset = readyDetail(item.card.candidateId, { candidateVersion: 5,
+            review: { value: manual, reviewVersion: 3 },
+            metadata: { ...readyDetail(item.card.candidateId).metadata, revision: 8 },
+            readiness: { ...readyDetail(item.card.candidateId).readiness, reviewReady: false },
+        });
+        const after = readyDetail(item.card.candidateId, { candidateVersion: 6,
+            review: { value: manual, reviewVersion: 4 }, metadata: reset.metadata });
+        const test = harness({ readCandidate: jest.fn().mockResolvedValueOnce(reset).mockResolvedValue(after) });
+        await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({ status: 'succeeded' });
+        expect(test.saveReview).toHaveBeenCalledTimes(2);
+        const [first, resave] = test.saveReview.mock.calls.map(([request]) => request);
+        expect(first).toMatchObject({ review: { ...seen, originalTitle: 'Owner title' },
+            expectedCandidateVersion: 4, expectedMetadataRevision: 7 });
+        expect(resave).toMatchObject({ review: manual, expectedCandidateVersion: 5, expectedMetadataRevision: 8 });
+        expect(resave.idempotencyKey).not.toBe(first.idempotencyKey);
+        expect(resave.commandId).not.toBe(first.commandId);
+        expect(test.commitCandidate).toHaveBeenCalledTimes(1);
+        expect(test.commitCandidate.mock.calls[0][0]).toMatchObject({
+            expectedCandidateVersion: 6, expectedReviewVersion: 4, expectedMetadataRevision: 8,
+        });
+    });
+
+    it('replays the frozen re-save request after a lost response', async () => {
+        for (const scenario of ['cached-edition', 'refreshed-manual', 'own-save', 'bulk'] as const) {
+            const seen = { ...review, metadataChoice: { mode: 'edition_option' as const, selectionId: testUuid(77) } };
+            const ownSave = scenario === 'own-save';
+            const item = { ...draft(1, { review: seen, reviewReady: ownSave }),
+                edits: ownSave ? { originalTitle: 'Owner title' } : {} };
+            const manual = { ...review, originalTitle: ownSave ? 'Owner title' : review.originalTitle };
+            const reset = readyDetail(item.card.candidateId, { candidateVersion: 6,
+                review: { value: manual, reviewVersion: 3 },
+                metadata: { ...readyDetail(item.card.candidateId).metadata, revision: 8 },
+                readiness: { ...readyDetail(item.card.candidateId).readiness, reviewReady: false },
+            });
+            const after = readyDetail(item.card.candidateId, { candidateVersion: 7,
+                review: { value: manual, reviewVersion: 4 }, metadata: reset.metadata });
+            let saves = 0;
+            let firstResave: unknown;
+            const test = harness({
+                readCandidate: jest.fn().mockResolvedValueOnce(reset).mockResolvedValue(after),
+                saveReview: jest.fn(async (request) => {
+                    saves += 1;
+                    if (ownSave && saves === 1) return reset;
+                    if (!firstResave) {
+                        firstResave = JSON.parse(JSON.stringify(request));
+                        throw new Error('response lost after the server saved');
+                    }
+                    return after;
+                }),
+            });
+            const bulk = scenario === 'bulk' ? test.coordinator.freezeAddAll([item]) : null;
+            if (bulk) await expect(test.coordinator.runAddAll(bulk)).resolves.toMatchObject({ failedRetryable: 1 });
+            else await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({
+                status: 'failed_retryable', stage: 'save',
+            });
+            expect(test.commitCandidate).not.toHaveBeenCalled();
+            const refreshed = scenario === 'cached-edition' ? item : draft(1, {
+                review: manual, candidateVersion: 7, metadataRevision: 8, reviewVersion: 4,
+            });
+            if (bulk) await expect(test.coordinator.retryAddAll(bulk, [refreshed])).resolves.toMatchObject({ succeeded: 1 });
+            else await expect(test.coordinator.addCandidate(refreshed)).resolves.toMatchObject({ status: 'succeeded' });
+            expect(test.saveReview.mock.calls.at(-1)![0]).toEqual(firstResave);
+            expect(test.saveReview).toHaveBeenCalledTimes(ownSave ? 3 : 2);
+            expect(test.readCandidate).toHaveBeenCalledTimes(2);
+            expect(test.commitCandidate).toHaveBeenCalledTimes(1);
+            await test.coordinator.addCandidate(refreshed);
+            expect(test.commitCandidate).toHaveBeenCalledTimes(1);
+        }
+    });
+
+    it('stops when the reread review differs from what the Owner saw', async () => {
+        for (const patch of [
+            { priceMinor: 999 }, { originalTitle: 'Other device title' },
+            { authors: ['Other author'] }, { originalLanguage: 'fr' }, { script: 'Cyrl' },
+            { metadataChoice: { mode: 'edition_option', selectionId: testUuid(78) } },
+        ] as const) {
+            const seen = { ...review, metadataChoice: { mode: 'edition_option' as const, selectionId: testUuid(77) } };
+            const item = draft(1, { review: seen, reviewReady: false, allowedActions: ['save_review'] });
+            const changed = readyDetail(item.card.candidateId, {
+                review: { value: { ...review, ...patch } as OwnerCandidateReview, reviewVersion: 3 },
+            });
+            const test = harness({ readCandidate: jest.fn().mockResolvedValue(changed) });
+            await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({
+                status: 'no_longer_eligible', stage: 'revalidate', code: 'review_changed',
+            });
+            expect(test.saveReview).not.toHaveBeenCalled();
+            expect(test.commitCandidate).not.toHaveBeenCalled();
+            expect(test.synchronizeIneligible).toHaveBeenCalledWith([item.card.candidateId]);
+        }
     });
     it('rejects a draft whose accepted authority is older than its current card', async () => {
         const current = draft(1, { candidateVersion: 5 });
