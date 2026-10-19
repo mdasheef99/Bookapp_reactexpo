@@ -1,7 +1,21 @@
 const plugin = require('./index');
 
 // Each flow adds its migrated files; entries are repo-relative paths with forward slashes.
-const STRICT_FILES = [];
+const STRICT_FILES = [
+    'app/(tabs)/library/[bookId].tsx',
+    'src/components/library/StatusSelector.tsx',
+    'src/components/library/OwnershipSelector.tsx',
+    'src/components/library/ConditionPicker.tsx',
+    'src/components/library/RatingInput.tsx',
+    'src/components/library/DeleteBookModal.tsx',
+    'src/components/library/VaultPagesList.tsx',
+    'src/components/library/bookDetails/BookCover.tsx',
+    'src/components/library/bookDetails/ChoiceRadioGroup.tsx',
+    'src/components/library/bookDetails/DetailRow.tsx',
+    'src/components/library/bookDetails/NotePassages.tsx',
+    'src/components/library/bookDetails/bookDetailsTokens.ts',
+    'src/components/library/bookDetails/classifyBookLoadError.ts',
+];
 
 const RAW_VALUE_ALLOW_LIST = [
     'src/components/library/LibraryAppearance.ts',
@@ -26,7 +40,8 @@ function createBookSectionConfig({ files, strictFiles, rawValueAllowFiles }) {
     };
     const config = [{ files, plugins: { 'book-section': plugin }, rules }];
     if (strictFiles.length > 0) {
-        config.push({ files: strictFiles, rules: Object.fromEntries(Object.keys(rules).map(ruleId => [ruleId, 'error'])) });
+        const strictPatterns = strictFiles.map(filename => filename.replace(/[()[\]{}*?!+@]/g, '\\$&'));
+        config.push({ files: strictPatterns, rules: Object.fromEntries(Object.keys(rules).map(ruleId => [ruleId, 'error'])) });
     }
     if (rawValueAllowFiles.length > 0) {
         config.push({ files: rawValueAllowFiles, rules: { 'book-section/no-raw-style-values': 'off' } });

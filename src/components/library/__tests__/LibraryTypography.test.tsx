@@ -109,7 +109,7 @@ jest.mock('@/components/library', () => {
         DeleteBookModal: View,
     };
 });
-jest.mock('@/components/library/VaultPagesList', () => ({ VaultPagesList: () => null }));
+jest.mock('@/components/library/VaultPagesList', () => ({ VaultPagesList: () => null, useVaultPages: () => ({ data: undefined, isLoading: false }) }));
 jest.mock('@/components/notes', () => ({ NoteCard: () => null }));
 
 const mockedUseFonts = useFonts as unknown as jest.Mock;

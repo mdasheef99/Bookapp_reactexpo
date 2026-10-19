@@ -1,6 +1,6 @@
 import React from 'react';
-import { Platform, StyleSheet, Switch, View } from 'react-native';
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { StyleSheet, View } from 'react-native';
+import { fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -148,12 +148,12 @@ describe.each(PHASES)('Book Details palette: %s', phase => {
         try {
             await ui.findByText('Beloved');
             const collapsed = normalize(ui.toJSON());
-            for (const name of ['My review', 'Book options', 'Community reviews', 'Book information']) {
-                fireEvent.press(ui.getByRole('button', { name }));
+            for (const id of ['review', 'saved', 'info', 'ownership', 'community']) {
+                fireEvent.press(ui.getByTestId(`book-row-${id}`));
             }
             await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Existing review'));
             const expanded = normalize(ui.toJSON());
-            fireEvent.press(ui.getByRole('button', { name: 'Remove from Library' }));
+            fireEvent.press(ui.getByRole('button', { name: 'Remove from library' }));
             const removal = normalize(ui.toJSON());
             const baseline = serialize({ collapsed, expanded, removal });
             // Git may check the fixture out with CRLF on Windows; compare content, not line endings.
@@ -164,93 +164,64 @@ describe.each(PHASES)('Book Details palette: %s', phase => {
         }
     }, 30000);
 
-    it.each(['web', 'ios', 'android'] as const)('uses a contrasting active lending thumb on %s', async platform => {
-        const colors = getLibraryAppearance(phase);
-        const previousOS = Platform.OS;
-        Platform.OS = platform;
-        const ui = renderScreen(true);
-        try {
-            await ui.findByText('Beloved');
-            fireEvent.press(ui.getByRole('button', { name: 'Book options' }));
-            const props = ui.UNSAFE_getByType(Switch).props;
-            expect(props.value).toBe(true);
-            expect(platform === 'web' ? props.activeThumbColor : props.thumbColor).toBe(colors.textOnAccent);
-            expect(platform === 'web' ? props.thumbColor : props.activeThumbColor).toBeUndefined();
-            expect(contrast(colors.textOnAccent, colors.accent)).toBeGreaterThanOrEqual(3);
-        } finally {
-            ui.unmount();
-            ui.client.clear();
-            Platform.OS = previousOS;
-        }
-    });
-
     it('maps screen, selected/unselected controls, stars and destructive surfaces to this phase', async () => {
         const colors = getLibraryAppearance(phase);
         const ui = renderScreen();
         try {
             await ui.findByText('Beloved');
-            const cover = ui.UNSAFE_getByType('Image' as any);
-            expect(cover.props.source).toBeUndefined();
-            expect(StyleSheet.flatten(cover.props.style).backgroundColor).toBe(colors.coverPlaceholder);
+            const placeholder = ui.getByTestId('book-cover-placeholder', { includeHiddenElements: true });
+            expect(StyleSheet.flatten(placeholder.props.style).backgroundColor).toBe(colors.coverPlaceholder);
+            expect(ui.UNSAFE_queryAllByType('Image' as any)).toHaveLength(0);
             expect(StyleSheet.flatten(ui.getByTestId('library-book-back-button').props.style)).toMatchObject({
-                backgroundColor: colors.bgCard, shadowColor: colors.shadow,
+                minHeight: 48, minWidth: 48,
             });
             expect(StyleSheet.flatten(ui.getByText('Add note').props.style).color).toBe(colors.textOnAccent);
-            expect(StyleSheet.flatten(ui.getByText('0').props.style).color).toBe(colors.textOnAccent);
-            for (const [label, selected] of [['Want to Read', false], ['Reading', true], ['Completed', false]] as const) {
+            for (const [label, selected] of [['Want to read', false], ['Reading', true], ['Finished', false]] as const) {
                 expect(backgroundStyle(ui.getByText(label))).toMatchObject({
-                    backgroundColor: selected ? colors.chipSelectedBackground : colors.bgCard,
-                    borderColor: selected ? colors.chipSelectedBackground : colors.controlBorder,
-                    shadowColor: colors.shadow,
+                    backgroundColor: selected ? colors.bgCard : colors.bgSecondary,
+                    borderColor: selected ? colors.controlBorder : colors.bgSecondary,
                 });
                 expect(StyleSheet.flatten(ui.getByText(label).props.style)).toMatchObject({
-                    color: selected ? colors.chipSelectedText : colors.textSecondary,
-                    fontWeight: selected ? '700' : '500',
+                    color: selected ? colors.textPrimary : colors.textSecondary,
                 });
-                const icon = ui.UNSAFE_getAllByType('Ionicons' as any).find(node => node.props.name ===
-                    ({ 'Want to Read': 'bookmark-outline', Reading: 'book-outline', Completed: 'checkmark-circle-outline' }[label]));
-                expect(icon?.props.color).toBe(selected ? colors.chipSelectedText : colors.textSecondary);
             }
-            fireEvent.press(ui.getByRole('button', { name: 'My review' }));
-            fireEvent.press(ui.getByRole('button', { name: 'Book options' }));
+            expect(ui.queryByText('Completed')).toBeNull();
+            expect(within(ui.getByLabelText('Reading status')).UNSAFE_queryAllByType('Ionicons' as any)).toHaveLength(0);
+            fireEvent.press(ui.getByTestId('book-row-review'));
+            fireEvent.press(ui.getByTestId('book-row-saved'));
+            fireEvent.press(ui.getByTestId('book-row-ownership'));
             expect(StyleSheet.flatten(ui.getByTestId('library-review-input').props.style).borderColor).toBe(colors.controlBorder);
-            expect(ui.UNSAFE_getByType(Switch).props.trackColor).toEqual({ false: colors.controlBorder, true: colors.accent });
-            expect(ui.UNSAFE_getByType(Switch).props.thumbColor).toBeUndefined();
-            for (const [label, selected] of [['Owned', true], ['Lent Out', false], ['Borrowed', false], ['Wishlist', false]] as const) {
+            for (const [label, selected] of [['Owned', true], ['Lent out', false], ['Borrowed', false], ['Wishlist', false]] as const) {
                 expect(backgroundStyle(ui.getByText(label))).toMatchObject({
-                    backgroundColor: selected ? colors.chipSelectedBackground : colors.bgSecondary,
-                    borderColor: selected ? colors.chipSelectedBackground : colors.controlBorder,
+                    backgroundColor: selected ? colors.bgCard : colors.bgSecondary,
+                    borderColor: selected ? colors.controlBorder : colors.bgSecondary,
                 });
                 expect(StyleSheet.flatten(ui.getByText(label).props.style)).toMatchObject({
-                    color: selected ? colors.chipSelectedText : colors.textSecondary,
-                    fontWeight: selected ? '600' : '400',
+                    color: selected ? colors.textPrimary : colors.textSecondary,
                 });
+                expect(StyleSheet.flatten(ui.getByText(label).props.style).fontWeight ?? '400').toBe(selected ? '700' : '400');
             }
             const icons = ui.UNSAFE_getAllByType('Ionicons' as any);
             const filled = icons.filter(node => node.props.name === 'star');
             const outline = icons.filter(node => node.props.name === 'star-outline');
             expect(filled).toHaveLength(2);
             expect(outline).toHaveLength(3);
-            filled.forEach(node => expect(node.props.color).toBe(colors.accent));
-            outline.forEach(node => expect(node.props.color).toBe(colors.textTertiary));
-            expect(backgroundStyle(ui.getByText('A saved excerpt.'))).toMatchObject({ backgroundColor: colors.bgSecondary, borderColor: colors.divider });
-            expect(StyleSheet.flatten(ui.getByText('Delete').props.style).color).toBe(colors.error);
-            expect(StyleSheet.flatten(ui.getByText('Remove from Library').props.style).color).toBe(colors.error);
-            fireEvent.press(ui.getByRole('button', { name: 'Remove from Library' }));
-            expect(backgroundStyle(ui.getByText('Remove from Library?'))).toMatchObject({ backgroundColor: colors.bgRaised, shadowColor: colors.shadow });
-            expect(backgroundStyle(ui.getByText('Remove')).backgroundColor).toBe(colors.error);
-            expect(StyleSheet.flatten(ui.getByText('Remove').props.style).color).toBe(colors.onErrorSurface);
+            filled.forEach(node => expect(node.props.color).toBe(colors.textPrimary));
+            outline.forEach(node => expect(node.props.color).toBe(colors.textSecondary));
+            expect(StyleSheet.flatten(ui.getByText('Page 12').props.style).color).toBe(colors.textSecondary);
+            expect(StyleSheet.flatten(ui.getByText('A saved excerpt.').props.style).color).toBe(colors.textPrimary);
+            expect(StyleSheet.flatten(ui.getByText('Delete page 12').props.style).color).toBe(colors.accent);
+            expect(StyleSheet.flatten(ui.getByText('Remove from library').props.style).color).toBe(colors.accent);
+            fireEvent.press(ui.getByRole('button', { name: 'Remove from library' }));
+            expect(backgroundStyle(ui.getByText('Remove “Beloved” from your library?'))).toMatchObject({ backgroundColor: colors.bgRaised });
+            expect(backgroundStyle(ui.getByText('Remove book')).backgroundColor).toBe(colors.error);
+            expect(StyleSheet.flatten(ui.getByText('Remove book').props.style).color).toBe(colors.onErrorSurface);
             expect(backgroundStyle(ui.getByText('Cancel'))).toMatchObject({
-                borderWidth: 1, borderColor: colors.controlBorder, paddingVertical: 13,
+                backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.controlBorder,
             });
             expect(contrast(colors.controlBorder, colors.bgRaised)).toBeGreaterThanOrEqual(3);
-            const trash = ui.UNSAFE_getAllByType('Ionicons' as any).filter(node => node.props.name === 'trash-outline');
-            expect(trash).toHaveLength(2);
-            trash.forEach(node => expect(node.props.color).toBe(colors.error));
-            expect(backgroundStyle(trash.find(node => node.props.size === 40))).toMatchObject({ backgroundColor: colors.errorSurface });
             const surfaces = ui.UNSAFE_getAllByType(View).map(node => StyleSheet.flatten(node.props.style));
             expect(surfaces.some(style => style?.backgroundColor === colors.overlay)).toBe(true);
-            expect(surfaces.filter(style => style?.height === 1).map(style => style.backgroundColor)).toEqual([colors.divider, colors.divider]);
         } finally {
             ui.unmount();
             ui.client.clear();
@@ -259,7 +230,7 @@ describe.each(PHASES)('Book Details palette: %s', phase => {
 
     it('uses the same selected tokens for all five conditions while preserving labels and weight', () => {
         const levels = [
-            ['new', 'New'], ['like_new', 'Like New'], ['good', 'Good'], ['acceptable', 'Fair'], ['poor', 'Poor'],
+            ['new', 'New'], ['like_new', 'Like new'], ['good', 'Good'], ['acceptable', 'Fair'], ['poor', 'Poor'],
         ] as const;
         const colors = getLibraryAppearance(phase);
         const ui = render(<ConditionPicker condition="new" onChange={jest.fn()} />);
@@ -269,13 +240,13 @@ describe.each(PHASES)('Book Details palette: %s', phase => {
                 for (const [value, label] of levels) {
                     const selected = condition === value;
                     expect(backgroundStyle(ui.getByText(label))).toMatchObject({
-                        backgroundColor: selected ? colors.chipSelectedBackground : colors.bgSecondary,
-                        borderColor: selected ? colors.chipSelectedBackground : colors.controlBorder,
+                        backgroundColor: selected ? colors.bgCard : colors.bgSecondary,
+                        borderColor: selected ? colors.controlBorder : colors.bgSecondary,
                     });
                     expect(StyleSheet.flatten(ui.getByText(label).props.style)).toMatchObject({
-                        color: selected ? colors.chipSelectedText : colors.textSecondary,
-                        fontWeight: selected ? '700' : '400',
+                        color: selected ? colors.textPrimary : colors.textSecondary,
                     });
+                    expect(StyleSheet.flatten(ui.getByText(label).props.style).fontWeight ?? '400').toBe(selected ? '700' : '400');
                 }
             }
         } finally { ui.unmount(); }

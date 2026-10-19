@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { LIBRARY_RADIUS, useLibraryAppearance } from './LibraryAppearance';
 import { useLibraryTypography } from './LibraryTypography';
 import { LibraryBookEntry, LibraryFilter } from '@/features/books/utils/libraryShelf';
+import { ownershipLabel, readingStatusLabel } from '@/features/books/utils/libraryLabels';
 
 type LibraryBookRowProps = {
     item: LibraryBookEntry;
@@ -37,23 +38,16 @@ export function LibraryBookRow({ item, onPress }: LibraryBookRowProps) {
                             {item.book.authors?.join(', ')}
                         </Text>
                         <View style={styles.tagContainer}>
-                            <View style={[styles.tag, { backgroundColor: colors.tagBackground }]}>
+                            {typeof item.reading_status === 'string' && item.reading_status.length > 0 && <View style={[styles.tag, { backgroundColor: colors.tagBackground }]}>
                                 <Text style={[styles.tagText, { color: colors.tagText, fontFamily: fonts.body }]}>
-                                    {item.reading_status?.replace(/_/g, ' ')}
+                                    {readingStatusLabel(item.reading_status)}
                                 </Text>
-                            </View>
-                            <View style={[styles.tag, { backgroundColor: colors.tagBackground }]}>
+                            </View>}
+                            {typeof item.ownership === 'string' && item.ownership.length > 0 && <View style={[styles.tag, { backgroundColor: colors.tagBackground }]}>
                                 <Text style={[styles.tagText, { color: colors.tagText, fontFamily: fonts.body }]}>
-                                    {item.ownership}
+                                    {ownershipLabel(item.ownership)}
                                 </Text>
-                            </View>
-                            {item.available_for_lending && (
-                                <View style={[styles.tag, { backgroundColor: colors.tagBackground }]}>
-                                    <Text style={[styles.tagText, { color: colors.tagText, fontFamily: fonts.body }]}>
-                                        lendable
-                                    </Text>
-                                </View>
-                            )}
+                            </View>}
                         </View>
                     </View>
                 </View>
@@ -209,7 +203,6 @@ const styles = StyleSheet.create({
     tagText: {
         fontSize: 12,
         lineHeight: 16,
-        textTransform: 'capitalize',
     },
     emptyContainer: {
         alignItems: 'center',

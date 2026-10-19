@@ -17,8 +17,8 @@ const libraryFonts = {
 };
 
 // SDD-07 FU-2: named type scale for all six library routes (DP-02 type part).
-// Sizes/line-heights mirror the finalized Book Details prototype scale in
-// src/prototypes/flowA/prototypeTokens.ts (plus display 32/40). Each style
+// Sizes/line-heights mirror the finalized Book Details prototype scale (FA-P1,
+// SDD-07 §10; prototype removed with the Flow A build) plus display 32/40. Each style
 // references a font family name loaded by LibraryTypographyProvider above;
 // allowFontScaling behaviour is unchanged (Text defaults still apply).
 export const LIBRARY_TEXT = {

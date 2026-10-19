@@ -1,88 +1,99 @@
-import React, { useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Ionicons } from '@expo/vector-icons';
-import { useLibraryAppearance } from './LibraryAppearance';
-import { useBookFeedback } from './ui';
-import { userBookPagesService, UserBookPage } from '@/features/books/services/userBookPagesService';
+import React, { useCallback, useRef } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { LIBRARY_SPACING, useLibraryAppearance } from './LibraryAppearance';
+import { LIBRARY_TEXT } from './LibraryTypography';
+import { BookButton, useBookFeedback } from './ui';
+import { UserBookPage, userBookPagesService } from '@/features/books/services/userBookPagesService';
 
-interface VaultPagesListProps {
-    userBookId: string;
-    onEmpty?: () => void;
+export interface VaultPagesListProps {
+  userBookId: string;
+  disabled?: boolean;
 }
 
-export function VaultPagesList({ userBookId }: VaultPagesListProps) {
-    const { notify, confirm } = useBookFeedback();
-    const colors = useLibraryAppearance();
-    const queryClient = useQueryClient();
+export function useVaultPages(userBookId: string) {
+  return useQuery({
+    queryKey: ['vault-pages', userBookId],
+    queryFn: () => userBookPagesService.getPagesForBook(userBookId),
+    enabled: !!userBookId,
+  });
+}
 
-    const { data: pages, isLoading, isError, isFetching, refetch } = useQuery({
-        queryKey: ['vault-pages', userBookId],
-        queryFn: () => userBookPagesService.getPagesForBook(userBookId),
-        enabled: !!userBookId,
-    });
+export function VaultPagesList({ userBookId, disabled = false }: VaultPagesListProps) {
+  const disabledRef = useRef(disabled);
+  disabledRef.current = disabled;
+  const { notify, confirm } = useBookFeedback();
+  const colors = useLibraryAppearance();
+  const queryClient = useQueryClient();
 
-    const deleteMutation = useMutation({
-        mutationFn: (pageId: string) => userBookPagesService.deletePage(pageId),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vault-pages', userBookId] }),
-        onError: (e: any) => notify({ kind: 'error', message: e.message || 'Failed to delete page' }),
-    });
+  const { data: pages, isError, refetch } = useVaultPages(userBookId);
 
-    const handleDelete = useCallback(async (page: UserBookPage) => {
-        const ok = await confirm({ title: `Delete page ${page.page_number}?`, message: 'This will remove the saved page from your vault.', keep: 'Cancel', confirm: 'Delete', destructive: true });
-        if (ok) deleteMutation.mutate(page.id);
-    }, [confirm, deleteMutation]);
+  const deleteMutation = useMutation({
+    mutationFn: (pageId: string) => userBookPagesService.deletePage(pageId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vault-pages', userBookId] }),
+    onError: (e: any) => notify({ kind: 'error', message: e.message || 'Failed to delete page' }),
+  });
 
-    if (isLoading) {
-        return <View style={styles.center}><ActivityIndicator size="small" color={colors.accent} /></View>;
-    }
+  const handleDelete = useCallback(
+    async (page: UserBookPage) => {
+      const ok = await confirm({
+        title: `Delete page ${page.page_number}?`,
+        message: 'This will remove the saved page from your vault.',
+        keep: 'Cancel',
+        confirm: 'Delete',
+        destructive: true,
+      });
+      if (!ok || disabledRef.current) return;
+      deleteMutation.mutate(page.id);
+    },
+    [confirm, deleteMutation],
+  );
 
-    const retry = <TouchableOpacity accessibilityRole="button" accessibilityLabel="Retry saved pages" disabled={isFetching}
-        onPress={() => { void refetch(); }} style={styles.retryBtn}>
-        <Text style={{ color: colors.accent }}>Retry saved pages</Text>
-    </TouchableOpacity>;
-    if (!pages) {
-        return (
-            <View style={styles.empty}><Text accessibilityRole="alert" style={[styles.emptyText, { color: colors.error }]}>Couldn't load saved pages.</Text>{retry}</View>
-        );
-    }
+  if (!pages || pages.length === 0) {
+    return null;
+  }
 
-    return (
-        <View>
-            {isError && <View style={styles.empty}>
-                <Text accessibilityRole="alert" style={[styles.emptyText, { color: colors.error }]}>Couldn't refresh saved pages. Previously loaded pages are still shown.</Text>{retry}
-            </View>}
-            {pages.length === 0 && <View style={styles.empty}>
-                <Ionicons name="bookmark-outline" size={24} color={colors.textTertiary} />
-                <Text style={[styles.emptyText, { color: colors.textTertiary }]}>No saved pages yet.</Text>
-            </View>}
-            {pages.map((page) => (
-                <View key={page.id} style={[styles.card, { backgroundColor: colors.bgSecondary, borderColor: colors.divider }]}>
-                    <View style={styles.header}>
-                        <Text style={[styles.pageNum, { color: colors.accent }]}>Page {page.page_number}</Text>
-                        <Text style={[styles.meta, { color: colors.textTertiary }]}>{page.word_count} words • {new Date(page.updated_at).toLocaleDateString()}</Text>
-                    </View>
-                    <Text style={[styles.excerpt, { color: colors.textPrimary }]} numberOfLines={3}>{page.content_excerpt}</Text>
-                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Delete page ${page.page_number}`} disabled={deleteMutation.isPending} onPress={() => handleDelete(page)} style={styles.deleteBtn}>
-                        <Ionicons name="trash-outline" size={14} color={colors.error} />
-                        <Text style={[styles.deleteText, { color: colors.error }]}>{deleteMutation.isPending && deleteMutation.variables === page.id ? 'Deleting…' : 'Delete'}</Text>
-                    </TouchableOpacity>
-                </View>
-            ))}
+  return (
+    <View style={styles.list}>
+      {isError && (
+        <View style={styles.refreshNotice}>
+          <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>
+            Couldn&apos;t refresh saved pages.
+          </Text>
+          <BookButton label="Try again" variant="text" onPress={() => { void refetch(); }} />
         </View>
-    );
+      )}
+      {pages.map((page) => (
+        <View key={page.id} style={styles.page}>
+          <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>
+            {`Page ${page.page_number}`}
+          </Text>
+          <Text style={[LIBRARY_TEXT.bodySerif, { color: colors.textPrimary }]}>
+            {page.content_excerpt.split('\n')[0]}
+          </Text>
+          <BookButton
+            label={`Delete page ${page.page_number}`}
+            variant="text"
+            disabled={disabled || deleteMutation.isPending}
+            onPress={() => { void handleDelete(page); }}
+          />
+        </View>
+      ))}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    center: { padding: 12, alignItems: 'center' },
-    empty: { alignItems: 'center', gap: 6, paddingVertical: 16 },
-    emptyText: { fontSize: 13, textAlign: 'center' },
-    card: { borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 10 },
-    header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-    pageNum: { fontSize: 13, fontWeight: '700' },
-    meta: { fontSize: 11 },
-    excerpt: { fontSize: 14, lineHeight: 20 },
-    deleteBtn: { minHeight: 48, minWidth: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-end' },
-    retryBtn: { minHeight: 48, justifyContent: 'center', paddingHorizontal: 12 },
-    deleteText: { fontSize: 12, fontWeight: '600' },
+  list: {
+    gap: LIBRARY_SPACING.md,
+  },
+  refreshNotice: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: LIBRARY_SPACING.sm,
+  },
+  page: {
+    gap: LIBRARY_SPACING.xxs,
+  },
 });

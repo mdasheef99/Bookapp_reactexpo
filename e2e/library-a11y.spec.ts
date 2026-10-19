@@ -128,7 +128,7 @@ async function reachState(page: Page, state: string, hour: number) {
     await startLibrarySession(page, {}, hour);
     await page.goto(`/library/${UB.manyNotes}`);
     await expect(page.getByText('Many Notes Fixture Book').first()).toBeVisible({ timeout: 20000 });
-    await expect(page.getByText('Notes', { exact: true }).first()).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText('Your notes', { exact: true }).first()).toBeVisible({ timeout: 20000 });
     await page.waitForTimeout(1000);
   } else if (state === 'details-no-cover') {
     await startLibrarySession(page, {}, hour);

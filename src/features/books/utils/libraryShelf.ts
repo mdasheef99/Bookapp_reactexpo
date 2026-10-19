@@ -26,7 +26,7 @@ export function getLibraryFilterChips(entries: LibraryBookEntry[]): LibraryFilte
     return [
         { key: 'all', label: 'All', count: filterLibraryBooks(entries, 'all').length },
         { key: 'reading', label: 'Reading', count: filterLibraryBooks(entries, 'reading').length },
-        { key: 'completed', label: 'Completed', count: filterLibraryBooks(entries, 'completed').length },
+        { key: 'completed', label: 'Finished', count: filterLibraryBooks(entries, 'completed').length },
         { key: 'wishlist', label: 'Wishlist', count: filterLibraryBooks(entries, 'wishlist').length },
     ];
 }

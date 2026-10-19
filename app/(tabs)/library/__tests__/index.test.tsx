@@ -110,14 +110,14 @@ describe('LibraryScreen', () => {
             },
         ]);
 
-        const { getByText, queryByText, queryClient, unmount } = renderScreen();
+        const { getByText, getByRole, queryByText, queryClient, unmount } = renderScreen();
 
         await waitFor(() => expect(getByText('3 books')).toBeOnTheScreen());
         expect(getByText('Currently Reading')).toBeOnTheScreen();
         expect(getByText('Finished Book')).toBeOnTheScreen();
         expect(getByText('Wanted Book')).toBeOnTheScreen();
 
-        fireEvent.press(getByText('Reading'));
+        fireEvent.press(getByRole('button', { name: 'Reading, 1 books' }));
 
         await waitFor(() => expect(getByText('1 book')).toBeOnTheScreen());
         expect(getByText('Currently Reading')).toBeOnTheScreen();
@@ -166,9 +166,9 @@ describe('LibraryScreen', () => {
 
         await waitFor(() => expect(getByText('Currently Reading')).toBeOnTheScreen());
 
-        fireEvent.press(getByText('Completed'));
+        fireEvent.press(getByText('Finished'));
 
-        await waitFor(() => expect(getByText('No completed books yet')).toBeOnTheScreen());
+        await waitFor(() => expect(getByText('No finished books yet')).toBeOnTheScreen());
         expect(getByText('Switch shelves or add more books to round out this part of your library.')).toBeOnTheScreen();
 
         unmount();

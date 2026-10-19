@@ -24,6 +24,8 @@ These syntax checks do not replace visual or accessibility review.
 
 To migrate a file, resolve its three rule findings, then add its repo-relative
 forward-slash path to `STRICT_FILES` in `config.js`. Tests check listed paths exist.
+Strict paths stay plain for filesystem checks; config escapes glob metacharacters
+so routes such as `app/(tabs)/library/[bookId].tsx` receive errors in the real config.
 The raw-value allow-list covers reviewed shelf materials/geometry and token modules;
 it disables only DP-02. Allow-list changes require reviewer sign-off and an explicit
 update to the exact-list assertion in `__tests__/config.test.js`.

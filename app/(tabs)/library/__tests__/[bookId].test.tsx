@@ -58,7 +58,7 @@ jest.mock('@/components/library', () => ({
     RatingInput: () => null,
     DeleteBookModal: () => null,
 }));
-jest.mock('@/components/library/VaultPagesList', () => ({ VaultPagesList: () => null }));
+jest.mock('@/components/library/VaultPagesList', () => ({ VaultPagesList: () => null, useVaultPages: () => ({ data: undefined, isLoading: false }) }));
 jest.mock('@/components/notes', () => ({
     NoteCard: () => null,
 }));
@@ -129,7 +129,7 @@ describe('BookDetailScreen review persistence', () => {
         const { getByRole, getByTestId, findByTestId, findByText, unmount, queryClient } = renderScreen();
 
         await findByText('Beloved');
-        fireEvent.press(getByRole('button', { name: 'My review' }));
+        fireEvent.press(getByTestId('book-row-review'));
         await findByTestId('library-review-input');
         await waitFor(() => expect(getByTestId('library-review-input').props.value).toBe('Existing review'));
 
@@ -166,17 +166,18 @@ describe('BookDetailScreen review persistence', () => {
             },
         }]);
 
-        const { getByRole, findByText, getByText, queryByText, queryByTestId, queryClient, unmount } = renderScreen();
+        const { getByTestId, findByText, getByText, queryByText, queryByTestId, queryClient, unmount } = renderScreen();
 
         await waitFor(() => expect(booksService.getPublicReviewsForBook).toHaveBeenCalledWith('book-1'));
         await findByText('Beloved');
-        fireEvent.press(getByRole('button', { name: 'Community reviews' }));
+        fireEvent.press(getByTestId('book-row-community'));
 
+        const communitySection = getByTestId('book-expanded-community');
         expect(await findByText('Reader Two')).toBeOnTheScreen();
         expect(getByText('@reader-two')).toBeOnTheScreen();
         expect(getByText('A beautifully written review from another reader.')).toBeOnTheScreen();
         expect(queryByText('No public reviews yet.')).not.toBeOnTheScreen();
-        expect(queryByText('Existing review')).not.toBeOnTheScreen();
+        expect(communitySection.findAll((node: any) => node.children?.includes('Existing review'))).toHaveLength(0);
         expect(queryByTestId('library-review-input')).toBeNull();
 
         unmount();

@@ -46,4 +46,36 @@ describe.each(PHASES)('BookScreenHeader in %s', phase => {
     expect(tree.UNSAFE_getAllByType(Text)).toHaveLength(2);
     expect(StyleSheet.flatten(tree.UNSAFE_getAllByType(View)[0].props.style).paddingTop).toBe(8);
   });
+
+  it('renders back-only with no title text and no bottom border', () => {
+    const colors = getLibraryAppearance(phase);
+    const onBack = jest.fn();
+    const tree = render(<BookScreenHeader backLabel="Back to Library" backTestID="library-book-back-button" onBack={onBack} />);
+    const back = tree.getByRole('button', { name: 'Back to Library' });
+    expect(back.props.testID).toBe('library-book-back-button');
+    expect(tree.queryByRole('header')).toBeNull();
+    expect(tree.UNSAFE_getAllByType(Text)).toHaveLength(1);
+    expect(tree.getByText('‹ Back to Library')).toBeTruthy();
+    expect(StyleSheet.flatten(tree.UNSAFE_getAllByType(View)[0].props.style)).toMatchObject({
+      borderBottomWidth: 0, borderColor: colors.divider,
+    });
+    fireEvent.press(back);
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('can show a short visible Back label with a fuller accessible name', () => {
+    const tree = render(<BookScreenHeader backLabel="Library" backAccessibilityLabel="Back to Library" onBack={jest.fn()} />);
+    expect(tree.getByText('‹ Library')).toBeTruthy();
+    expect(tree.getByRole('button', { name: 'Back to Library' })).toBeTruthy();
+    expect(tree.queryByRole('button', { name: 'Library' })).toBeNull();
+  });
+
+  it('keeps the bottom border when a title is given even with a back testID', () => {
+    const colors = getLibraryAppearance(phase);
+    const tree = render(<BookScreenHeader title="Notes" backLabel="Back to Library" backTestID="library-book-back-button" onBack={jest.fn()} />);
+    expect(tree.getByRole('header').props.children).toBe('Notes');
+    expect(tree.getByRole('button', { name: 'Back to Library' }).props.testID).toBe('library-book-back-button');
+    expect(StyleSheet.flatten(tree.UNSAFE_getAllByType(View)[0].props.style).borderBottomWidth).toBe(1);
+    expect(StyleSheet.flatten(tree.UNSAFE_getAllByType(View)[0].props.style).borderColor).toBe(colors.divider);
+  });
 });

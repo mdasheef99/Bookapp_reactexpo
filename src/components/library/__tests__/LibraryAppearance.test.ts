@@ -269,8 +269,8 @@ describe('Spacing, radius and target scale', () => {
 
     it('takes chip and dialog from radii the book section already uses', () => {
         const read = (relative: string) => fs.readFileSync(path.join(__dirname, relative), 'utf8');
-        // chip 20: the status chips; dialog 18: the shared note dialog and quick-look sheet.
-        expect(read('../StatusSelector.tsx')).toContain('borderRadius: 20');
+        // chip 20 came from the former status chips, which Flow A replaced with a radio group on `control`;
+        // the LIBRARY_RADIUS assertion above still pins it. dialog 18: the shared note dialog and quick-look sheet.
         expect(read('../../notes/ManualNoteUi.tsx')).toContain('borderRadius: 18');
         expect(read('../LibraryBookQuickLook.tsx')).toContain('borderRadius: 18');
     });

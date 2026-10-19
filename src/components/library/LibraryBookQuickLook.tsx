@@ -4,10 +4,7 @@ import { Image } from 'expo-image';
 import { LibraryBookEntry } from '@/features/books/utils/libraryShelf';
 import { useLibraryAppearance } from './LibraryAppearance';
 import { useLibraryTypography } from './LibraryTypography';
-
-const statusLabels: Record<string, string> = { reading: 'Reading', completed: 'Completed', want_to_read: 'Want to read', paused: 'Paused', abandoned: 'Abandoned' };
-const ownershipLabels: Record<string, string> = { owned: 'Owned', borrowed: 'Borrowed', lent_out: 'Lent out', wishlist: 'Wishlist' };
-const conditionLabels: Record<string, string> = { new: 'New', like_new: 'Like new', good: 'Good', acceptable: 'Acceptable', poor: 'Poor' };
+import { conditionLabel, ownershipLabel, readingStatusLabel } from '@/features/books/utils/libraryLabels';
 
 /** Facts already loaded with the Library entry; no invented progress or extra request. */
 export function LibraryBookQuickLook({ book, onClose, onDetails }: {
@@ -17,11 +14,10 @@ export function LibraryBookQuickLook({ book, onClose, onDetails }: {
     const closeRef = React.useRef<any>(null);
     if (!book) return null;
     const facts = [
-        ['Reading status', statusLabels[book.reading_status ?? ''] ?? 'Not recorded'],
-        ['Collection', ownershipLabels[book.ownership ?? ''] ?? 'Not recorded'],
+        ['Reading status', book.reading_status ? readingStatusLabel(book.reading_status) : 'Not recorded'],
+        ['Collection', book.ownership ? ownershipLabel(book.ownership) : 'Not recorded'],
         ...(typeof book.book.page_count === 'number' && Number.isFinite(book.book.page_count) && book.book.page_count > 0 ? [['Pages', String(book.book.page_count)]] : []),
-        ...(book.condition && conditionLabels[book.condition] ? [['Condition', conditionLabels[book.condition]]] : []),
-        ...(typeof book.available_for_lending === 'boolean' ? [['Lending', book.available_for_lending ? 'Available to lend' : 'Not available to lend']] : []),
+        ...(typeof book.condition === 'string' && book.condition.length > 0 ? [['Condition', conditionLabel(book.condition)]] : []),
         ...(typeof book.rating === 'number' && Number.isFinite(book.rating) && book.rating >= 1 && book.rating <= 5 ? [['Your rating', `${book.rating} / 5`]] : []),
     ];
     return <Modal transparent animationType="none" accessibilityLabel="Book quick look" onRequestClose={onClose}

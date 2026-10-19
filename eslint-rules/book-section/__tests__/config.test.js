@@ -1,6 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { Linter } = require('eslint');
+const { ESLint, Linter } = require('eslint');
 const { createBookSectionConfig, STRICT_FILES, RAW_VALUE_ALLOW_LIST } = require('../config');
 
 const repoRoot = path.resolve(__dirname, '../../..');
@@ -68,6 +68,47 @@ describe('book-section flat config', () => {
 
     it('exports the strict file list', () => {
         expect(Array.isArray(STRICT_FILES)).toBe(true);
+    });
+
+    it('keeps the reviewed Flow A strict file list exact and ordered', () => {
+        expect(STRICT_FILES).toEqual([
+            'app/(tabs)/library/[bookId].tsx',
+            'src/components/library/StatusSelector.tsx',
+            'src/components/library/OwnershipSelector.tsx',
+            'src/components/library/ConditionPicker.tsx',
+            'src/components/library/RatingInput.tsx',
+            'src/components/library/DeleteBookModal.tsx',
+            'src/components/library/VaultPagesList.tsx',
+            'src/components/library/bookDetails/BookCover.tsx',
+            'src/components/library/bookDetails/ChoiceRadioGroup.tsx',
+            'src/components/library/bookDetails/DetailRow.tsx',
+            'src/components/library/bookDetails/NotePassages.tsx',
+            'src/components/library/bookDetails/bookDetailsTokens.ts',
+            'src/components/library/bookDetails/classifyBookLoadError.ts',
+        ]);
+    });
+
+    it('resolves the real eslint.config.js to errors for every exact strict path and warnings elsewhere', async () => {
+        let eslint = new ESLint({ cwd: repoRoot });
+        try {
+            await eslint.calculateConfigForFile(path.join(repoRoot, STRICT_FILES[0]));
+        } catch (error) {
+            // Jest's VM may forbid dynamic imports. Still evaluate the real flat config
+            // and all its file patterns; never replace it with a test-only config.
+            if (error.code !== 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING_FLAG') throw error;
+            eslint = new ESLint({ cwd: repoRoot, overrideConfigFile: true,
+                overrideConfig: require(path.join(repoRoot, 'eslint.config.js')) });
+        }
+        const filenames = [...STRICT_FILES, 'src/components/library/LibraryBookList.tsx'];
+        for (const filename of filenames) {
+            const { rules } = await eslint.calculateConfigForFile(path.join(repoRoot, filename));
+            for (const ruleId of ruleIds) {
+                const severity = rules[ruleId][0];
+                expect([filename, ruleId, severity === 'error' ? 2 : severity === 'warn' ? 1 : severity]).toEqual([
+                    filename, ruleId, STRICT_FILES.includes(filename) ? 2 : 1,
+                ]);
+            }
+        }
     });
 
     it('keeps the reviewed nine-file raw-value allow-list exact', () => {

@@ -1,0 +1,20 @@
+export const COVER_SIZE = { width: 112, height: 168 } as const;
+export const NARROW_COVER_SIZE = { width: 80, height: 120 } as const;
+export const COVER_RADIUS = 4;
+export const COLUMN_MAX_WIDTH = 600;
+export const NARROW_COVER_BELOW = 340;
+export const MIN_TITLE_BLOCK_WIDTH = 180;
+export const TITLE_LINE_LIMIT = 4;
+export const STACK_STATUS_BELOW = 360;
+export const STATUS_SEGMENT_BORDER = 1;
+export const NOTE_PREVIEW_LINES = 4;
+export const ROW_MIN_HEIGHT = 56;
+export const ROW_SUMMARY_LINES = 2;
+export const ICON_SIZE = 20;
+export const DIALOG_MAX_WIDTH = 420;
+export const MAX_SCORE = 5;
+export const PRIVACY_ICON_SIZE = 16;
+export const REVIEW_INPUT_HEIGHT = 100;
+export const CONTROL_DISABLED_OPACITY = 0.5;
+export const CONTROL_FOCUS_RING = { outlineWidth: 2, outlineOffset: 2, outlineStyle: 'solid' } as const;
+

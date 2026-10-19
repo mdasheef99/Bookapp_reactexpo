@@ -136,7 +136,7 @@ test.describe('SDD-03 OCR Vault Library web smoke', () => {
     await expect(page.getByText('All').first()).toBeVisible();
     await expect(page.getByText('Reading').first()).toBeVisible();
     // Completed/Wishlist may be counts, use first
-    await expect(page.getByText('Completed').first()).toBeVisible();
+    await expect(page.getByText('Finished').first()).toBeVisible();
     await expect(page.getByText('Wishlist').first()).toBeVisible();
 
     // LibraryBookRow - title from live vault test

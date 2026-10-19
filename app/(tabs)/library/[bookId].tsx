@@ -1,19 +1,32 @@
 import React, { useState, useCallback, useEffect, useRef, useId } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Switch, TextInput, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient, useMutationState } from '@tanstack/react-query';
-import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 
 import { booksService } from '@/features/books/services/booksService';
 import { bookReviewService, currentReviewActor, isCurrentReviewActor, ReviewActor, ReviewPatch, BookReviewFields } from '@/features/books/services/bookReviewService';
 import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
 import { noteKeys } from '@/features/books/notes/manualNoteContract';
-import { openNoteComposer, openNoteReader } from '@/features/books/notes/noteNavigation';
+import { openNoteComposer } from '@/features/books/notes/noteNavigation';
 import { useNoteOperations } from '@/features/books/notes/useManualNotes';
-import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
-import { useBookFeedback } from '@/components/library/ui';
+import { conditionLabel, ownershipLabel } from '@/features/books/utils/libraryLabels';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useLibraryAppearance, LIBRARY_SPACING, LIBRARY_RADIUS, MIN_TARGET } from '@/components/library/LibraryAppearance';
+import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
+import { BookButton, BookScreenHeader, BookLoading, BookError, BookOffline, useBookFeedback } from '@/components/library/ui';
+import { BookCover } from '@/components/library/bookDetails/BookCover';
+import { DetailRow } from '@/components/library/bookDetails/DetailRow';
+import { NotePassages } from '@/components/library/bookDetails/NotePassages';
+import { classifyBookLoadError } from '@/components/library/bookDetails/classifyBookLoadError';
+import {
+    COLUMN_MAX_WIDTH,
+    ICON_SIZE,
+    MAX_SCORE,
+    PRIVACY_ICON_SIZE,
+    REVIEW_INPUT_HEIGHT,
+} from '@/components/library/bookDetails/bookDetailsTokens';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import {
     StatusSelector,
     OwnershipSelector,
@@ -24,9 +37,7 @@ import {
     Ownership,
     Condition
 } from '@/components/library';
-import { NoteCard } from '@/components/notes';
-import { VaultPagesList } from '@/components/library/VaultPagesList';
-import { AtmosphericBackground } from '@/components/ui/AtmosphericBackground';
+import { VaultPagesList, useVaultPages } from '@/components/library/VaultPagesList';
 import { navigateBackOrFallback } from '@/lib/navigation';
 
 const formatReviewDate = (value?: string | null) => {
@@ -51,18 +62,13 @@ const getReviewerName = (review: {
 
 type ReviewSubmission = { actor: ReviewActor; entryId: string; patch: ReviewPatch; editorId: string; requestId: string; textRevision: number };
 
-function BookSection({ title, children }: { title: string; children: React.ReactNode }) {
-    const [expanded, setExpanded] = useState(false);
-    const colors = useLibraryAppearance();
-    return <View style={[styles.notesSection, { backgroundColor: colors.bgCard, shadowColor: colors.shadow }]}>
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ expanded }}
-            onPress={() => setExpanded(value => !value)} style={styles.sectionButton}>
-            <Text style={[styles.notesSectionTitle, { color: colors.textPrimary }]}>{title}</Text>
-            <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={20} color={colors.textSecondary} />
-        </TouchableOpacity>
-        {expanded && children}
-    </View>;
-}
+type OpenRowsState = {
+    review?: boolean;
+    saved?: boolean;
+    info?: boolean;
+    ownership?: boolean;
+    community?: boolean;
+};
 
 export default function BookDetailScreen() {
     const { notify } = useBookFeedback();
@@ -72,20 +78,46 @@ export default function BookDetailScreen() {
     const colors = useLibraryAppearance();
     const { user } = useAuth();
     useNoteOperations(user?.id ?? '', bookId);
+    const { isOffline } = useNetworkStatus();
 
     const [reviewText, setReviewText] = useState('');
     const [reviewDirty, setReviewDirty] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [openRows, setOpenRows] = useState<OpenRowsState>({});
     const editorId = useId();
     const requestSequence = useRef(0);
     const reviewDraft = useRef({ identity: '', revision: 0, dirty: false, textRequest: '' });
+    const [optimisticStatus, setOptimisticStatus] = useState<ReadingStatus | null>(null);
+    const removeTrigger = useRef<View>(null);
+    const pageRef = useRef<View>(null);
+
+    useEffect(() => {
+        setOptimisticStatus(null);
+    }, [user?.id, bookId]);
+
+    useEffect(() => {
+        if (Platform.OS !== 'web' || !pageRef.current) return;
+        const page = pageRef.current as unknown as { inert: boolean };
+        page.inert = showDeleteModal;
+        return () => {
+            page.inert = false;
+        };
+    }, [showDeleteModal]);
+
+    const wasDeleteOpen = useRef(showDeleteModal);
+    useEffect(() => {
+        if (wasDeleteOpen.current && !showDeleteModal) {
+            removeTrigger.current?.focus();
+        }
+        wasDeleteOpen.current = showDeleteModal;
+    }, [showDeleteModal]);
 
     const handleBackPress = useCallback(() => {
         navigateBackOrFallback(router, '/(tabs)/library');
     }, [router]);
 
     // Fetch Book Details
-    const { data: userBook, isLoading, error } = useQuery({
+    const { data: userBook, isPending: bookPending, isError: bookIsError, error: bookError, fetchStatus: bookFetchStatus, refetch: refetchBook } = useQuery({
         queryKey: ['book', user?.id, bookId],
         queryFn: () => booksService.getBookDetails(bookId!),
         enabled: !!user?.id && !!bookId,
@@ -151,8 +183,9 @@ export default function BookDetailScreen() {
     const isReviewPublic = userBook?.review_is_public ?? true;
 
     const {
-        data: publicReviews = [],
-        isLoading: publicReviewsLoading,
+        data: publicReviews,
+        isPending: publicReviewsPending,
+        fetchStatus: publicReviewsFetchStatus,
         error: publicReviewsError,
     } = useQuery({
         queryKey: ['book-public-reviews', userBook?.book_id],
@@ -168,9 +201,7 @@ export default function BookDetailScreen() {
         enabled: !!user?.id && !!bookId,
     });
 
-    // Notes count for badge
-    const notesCount = notes?.length ?? 0;
-    const recentNotes = notes?.slice(0, 3) ?? [];
+    const { data: vaultPages, isLoading: vaultPagesLoading } = useVaultPages(bookId ?? '');
 
     // Mutation helpers
     const invalidateQueries = () => {
@@ -182,17 +213,31 @@ export default function BookDetailScreen() {
 
     const updateStatusMutation = useMutation({
         mutationFn: (status: ReadingStatus) => booksService.updateReadingStatus(bookId!, status),
-        onSuccess: invalidateQueries,
+        onSuccess: (_data, status) => {
+            queryClient.setQueryData<typeof userBook>(['book', user?.id, bookId], (prev: typeof userBook) => prev ? { ...prev, reading_status: status } : prev);
+            setOptimisticStatus(null);
+            invalidateQueries();
+        },
+        onError: () => {
+            setOptimisticStatus(null);
+            notify({ kind: 'error', message: "Couldn't update reading status." });
+        },
     });
 
     const updateOwnershipMutation = useMutation({
         mutationFn: (ownership: Ownership) => booksService.updateOwnership(bookId!, ownership),
         onSuccess: invalidateQueries,
+        onError: () => {
+            notify({ kind: 'error', message: "Couldn't update ownership." });
+        },
     });
 
     const updateConditionMutation = useMutation({
         mutationFn: (condition: Condition) => booksService.updateCondition(bookId!, condition),
         onSuccess: invalidateQueries,
+        onError: () => {
+            notify({ kind: 'error', message: "Couldn't update condition." });
+        },
     });
 
     const updateRatingMutation = useMutation({
@@ -227,11 +272,6 @@ export default function BookDetailScreen() {
         },
     });
 
-    const toggleLendingMutation = useMutation({
-        mutationFn: (val: boolean) => booksService.toggleLendingAvailability(bookId!, val),
-        onSuccess: invalidateQueries,
-    });
-
     const deleteMutation = useMutation({
         mutationFn: () => booksService.removeFromLibrary(bookId!),
         onSuccess: () => {
@@ -261,590 +301,422 @@ export default function BookDetailScreen() {
         setReviewText(text);
     };
 
-    if (isLoading) {
-        return (
-            <View style={[styles.center, { backgroundColor: colors.bgPrimary }]}>
-                <ActivityIndicator size="large" color={colors.accent} />
-            </View>
+    const handleStatusChange = useCallback((val: ReadingStatus) => {
+        if (!userBook || val === userBook.reading_status) return;
+        setOptimisticStatus(val);
+        updateStatusMutation.mutate(val);
+    }, [userBook, updateStatusMutation]);
+
+    const toggleRow = (id: keyof OpenRowsState) => {
+        setOpenRows((prev) => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    const handleToggleReview = () => {
+        if (openRows.review && reviewDraft.current.dirty && reviewDraft.current.textRequest === '' && !isOffline) {
+            handleSaveReview();
+        }
+        setOpenRows((prev) => ({ ...prev, review: !prev.review }));
+    };
+
+    const backHeader = (
+        <BookScreenHeader backLabel="Library" backAccessibilityLabel="Back to Library" backTestID="library-book-back-button" onBack={handleBackPress} />
+    );
+
+    if (userBook) {
+        const displayedStatus = (optimisticStatus ?? userBook.reading_status) as ReadingStatus;
+        const statusPending = updateStatusMutation.isPending;
+        const statusDisabled = statusPending || isOffline;
+
+        const reviewFirstLine = userBook.review?.split('\n')[0] || '';
+        const hasConfirmedReview = Boolean(reviewFirstLine);
+        const showSavedPages = !vaultPagesLoading && Array.isArray(vaultPages) && vaultPages.length > 0;
+
+        const publishedYear = book.published_date ? String(book.published_date).slice(0, 4) : '';
+        const hasBookInfo = Boolean(
+            book.page_count || book.publisher || publishedYear || book.isbn_13 || book.description,
         );
-    }
 
-    if (error || !userBook) {
+        const showCondition =
+            (userBook.ownership === 'owned' || userBook.ownership === 'lent_out') && Boolean(userBook.condition);
+        const ownershipSecondary = showCondition
+            ? `${ownershipLabel(userBook.ownership)} · ${conditionLabel(userBook.condition)}`
+            : ownershipLabel(userBook.ownership);
+
+        const bodyStyle = [LIBRARY_TEXT.body, { color: colors.textPrimary }];
+
         return (
-            <View style={[styles.center, { backgroundColor: colors.bgPrimary }]}>
-                <Text style={{ color: colors.textSecondary }}>Book not found.</Text>
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to Library" onPress={handleBackPress} style={{ marginTop: 20, minHeight: 48, minWidth: 48, justifyContent: 'center' }}>
-                    <Text style={{ color: colors.accent, fontWeight: '700' }}>Go Back</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    }
-
-    const lendingThumbProps: { activeThumbColor?: string; thumbColor?: string } = Platform.OS === 'web'
-        ? { activeThumbColor: colors.textOnAccent }
-        : { thumbColor: userBook.available_for_lending ? colors.textOnAccent : undefined };
-
-    return (
-        <AtmosphericBackground>
             <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
-
-                <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-                    {/* Header / Nav */}
-                    <View style={styles.header}>
-                        <TouchableOpacity
-                            onPress={handleBackPress}
-                            accessibilityRole="button"
-                            accessibilityLabel="Back to Library"
-                            testID="library-book-back-button"
-                            style={[styles.backButton, { backgroundColor: colors.bgCard, shadowColor: colors.shadow }]}
-                        >
-                            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-                            <Text style={{ color: colors.textPrimary, fontWeight: '600' }}>Library</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Cover & Hero */}
-                    <View style={styles.hero}>
-                        <View style={[styles.coverContainer, { shadowColor: colors.shadow }]}>
-                            <Image
-                                source={book.cover_url ? { uri: book.cover_url } : undefined}
-                                style={[styles.coverImage, { backgroundColor: colors.coverPlaceholder }]}
-                                contentFit="cover"
-                            />
-                        </View>
-                        <Text style={[styles.title, { color: colors.textPrimary }]}>{book.title}</Text>
-                        <Text style={[styles.author, { color: colors.textSecondary }]}>
-                            {book.authors?.join(', ')}
-                        </Text>
-                    </View>
-
-                    <View style={[styles.card, { backgroundColor: colors.bgCard, shadowColor: colors.shadow }]}>
-                        <StatusSelector
-                            status={userBook.reading_status as ReadingStatus}
-                            onChange={(val) => updateStatusMutation.mutate(val)}
-                            disabled={updateStatusMutation.isPending}
-                        />
-
-                    </View>
-
-                    <TouchableOpacity accessibilityRole="button" accessibilityLabel="Add note"
-                        onPress={() => openNoteComposer(router, user!.id, bookId, 'book')}
-                        style={[styles.primaryNote, { backgroundColor: colors.accent }]}>
-                        <Text style={[styles.primaryNoteText, { color: colors.textOnAccent }]}>Add note</Text>
-                    </TouchableOpacity>
-
-                    {/* === My Notes Section === */}
-                    <View style={[styles.notesSection, { backgroundColor: colors.bgCard, shadowColor: colors.shadow }]}>
-                        <View style={styles.notesSectionHeader}>
-                            <View style={styles.notesTitleRow}>
-                                <Ionicons name="pencil-outline" size={18} color={colors.accent} />
-                                <Text style={[styles.notesSectionTitle, { color: colors.textPrimary }]}>
-                                    Notes
-                                </Text>
-                                {!notesLoading && !notesError && (
-                                    <View style={[styles.notesBadge, { backgroundColor: colors.accent }]}>
-                                        <Text style={[styles.notesBadgeText, { color: colors.textOnAccent }]}>{notesCount}</Text>
-                                    </View>
-                                )}
+                <View
+                    ref={pageRef}
+                    testID="book-page"
+                    aria-hidden={showDeleteModal}
+                    importantForAccessibility={showDeleteModal ? 'no-hide-descendants' : 'auto'}
+                    style={topStyles.page}
+                >
+                    {backHeader}
+                    <ScrollView contentContainerStyle={topStyles.content}>
+                        {isOffline && <BookOffline message="Offline · Showing saved content." />}
+                        {bookIsError && (
+                            <View style={topStyles.refreshNotice}>
+                                <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>Couldn&apos;t refresh.</Text>
+                                <BookButton label="Try again" variant="text" onPress={() => { void refetchBook(); }} />
                             </View>
-                            {(
-                                <TouchableOpacity
-                                    onPress={() => router.push({
-                                        pathname: '/(tabs)/library/notes',
-                                        params: { userBookId: bookId },
-                                    })}
-                                    accessibilityRole="button"
-                                    accessibilityLabel="View all notes"
-                                    style={styles.sectionButton}
-                                >
-                                    <Text style={[styles.viewAllText, { color: colors.accent }]}>
-                                        View All →
-                                    </Text>
-                                </TouchableOpacity>
+                        )}
+                        <BookCover title={book.title} authors={book.authors ?? []} coverUrl={book.cover_url} />
+                        <StatusSelector status={displayedStatus} onChange={handleStatusChange} disabled={statusDisabled} busy={statusPending} />
+                        <NotePassages notes={notes} isPending={notesLoading} isError={notesError} onRetry={() => { void refetchNotes(); }} />
+                        <View style={topStyles.action}>
+                            {isOffline && (
+                                <Text testID="book-connection-notice" style={[LIBRARY_TEXT.body, topStyles.connectionNotice, { color: colors.textSecondary }]}>
+                                    Changes need a connection.
+                                </Text>
                             )}
+                            <BookButton label="Add note" variant="primary" disabled={isOffline} onPress={() => openNoteComposer(router, user!.id, bookId, 'book')} />
                         </View>
 
-                        {notesError && !!notes?.length && <Text accessibilityRole="alert" style={{ color: colors.error, paddingVertical: 8 }}>Couldn’t refresh notes. Previously loaded notes are still shown.</Text>}
-                        {/* Recent Notes Preview */}
-                        {recentNotes.length > 0 ? (
-                            <View style={styles.notesPreview}>
-                                {recentNotes.map((note) => (
-                                    <NoteCard
-                                        key={note.id}
-                                        note={note}
-                                        onRead={() => openNoteReader(router, user!.id, bookId, note.id, 'book')}
-                                    />
-                                ))}
-                            </View>
-                        ) : (
-                            <View style={styles.notesEmptyState}>
-                                <Ionicons name="bulb-outline" size={28} color={colors.textTertiary} />
-                                <Text style={[styles.notesEmptyText, { color: colors.textTertiary }]}>
-                                    {notesLoading ? 'Loading notes…' : notesError ? 'Couldn’t load your notes.' : 'No notes yet. Add a note for this book.'}
-                                </Text>
-                                {notesError && <TouchableOpacity accessibilityRole="button" onPress={() => { void refetchNotes(); }} style={{ minHeight: 48, justifyContent: 'center' }}><Text style={{ color: colors.accent }}>Retry notes</Text></TouchableOpacity>}
-                            </View>
-                        )}
+                        <View style={topStyles.rows}>
+                            {notes && notes.length > 0 && (
+                                <DetailRow
+                                    id="notes"
+                                    label="All notes"
+                                    link
+                                    onPress={() => router.push({ pathname: '/(tabs)/library/notes', params: { userBookId: bookId } })}
+                                />
+                            )}
 
-                    </View>
-
-                    {/* Vault Pages — SDD-03 browse/delete via getPagesForBook */}
-                    <View style={[styles.notesSection, { backgroundColor: colors.bgCard, shadowColor: colors.shadow }]}>
-                        <View style={styles.notesSectionHeader}>
-                            <View style={styles.notesTitleRow}>
-                                <Ionicons name="bookmark-outline" size={18} color={colors.accent} />
-                                <Text style={[styles.notesSectionTitle, { color: colors.textPrimary }]}>Saved Pages</Text>
-                            </View>
-                        </View>
-                        <VaultPagesList userBookId={bookId!} />
-                    </View>
-
-                    <BookSection title="My review">
-                        {/* Rating & Review */}
-                        <RatingInput
-                            rating={userBook.rating || 0}
-                            onChange={(val) => submitReview({ rating: val })}
-                        />
-
-                        <View style={styles.reviewSection}>
-                            <Text style={[styles.label, { color: colors.textPrimary, marginBottom: 8 }]}>Your Review</Text>
-                            <TextInput
-                                style={[styles.input, {
-                                    backgroundColor: colors.bgSecondary,
-                                    color: colors.textPrimary,
-                                    borderColor: colors.controlBorder
-                                }]}
-                                testID="library-review-input"
-                                placeholder="Write your thoughts..."
-                                placeholderTextColor={colors.textTertiary}
-                                multiline
-                                value={reviewText}
-                                onChangeText={handleReviewText}
-                                onBlur={handleSaveReview} // Auto-save on blur
-                            />
-                            <TouchableOpacity
-                                testID="library-review-privacy-toggle"
-                                style={styles.publicToggle}
-                                accessibilityRole="button"
-                                accessibilityLabel="Change review visibility"
-                                accessibilityState={{ busy: reviewBusy }}
-                                onPress={() => {
-                                    const pending = queryClient.getMutationCache().findAll({ mutationKey: reviewMutationKey, exact: true, status: 'pending' })
-                                        .map(mutation => mutation.state.variables as ReviewSubmission)
-                                        .filter(submission => typeof submission.patch.review_is_public === 'boolean').pop();
-                                    const confirmed = queryClient.getQueryData<typeof userBook>(['book', user?.id, bookId]);
-                                    submitReview({ review_is_public: !(pending?.patch.review_is_public ?? confirmed?.review_is_public ?? true) });
-                                }}
+                            <DetailRow
+                                id="review"
+                                label="Your review"
+                                secondary={hasConfirmedReview ? reviewFirstLine : 'No review yet.'}
+                                absent={!hasConfirmedReview}
+                                expanded={Boolean(openRows.review)}
+                                onPress={handleToggleReview}
                             >
-                                <Ionicons
-                                    name={isReviewPublic ? "eye-outline" : "eye-off-outline"}
-                                    size={16}
-                                    color={colors.textSecondary}
+                                <RatingInput
+                                    rating={userBook.rating || 0}
+                                    onChange={(val) => submitReview({ rating: val })}
+                                    disabled={isOffline}
                                 />
-                                <Text style={{ color: colors.textSecondary, fontSize: 13, marginLeft: 6 }}>
-                                    {isReviewPublic ? 'Public Review' : 'Private Review'}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                        {reviewDirty && <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Review text has unsaved changes.</Text>}
-                        {reviewBusy && <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Saving review changes… Rating and visibility shown are the last confirmed settings.</Text>}
-
-                    </BookSection>
-                    <BookSection title="Book options">
-                        <OwnershipSelector
-                            ownership={userBook.ownership as Ownership}
-                            onChange={(val) => updateOwnershipMutation.mutate(val)}
-                            disabled={updateOwnershipMutation.isPending}
-                        />
-
-                        {/* Lending Toggle (Only if Owned) */}
-                        {userBook.ownership === 'owned' && (
-                            <View style={styles.rowBetween}>
-                                <Text style={[styles.label, { color: colors.textPrimary }]}>Available for Lending</Text>
-                                <Switch
-                                    accessibilityLabel="Available for lending"
-                                    disabled={toggleLendingMutation.isPending}
-                                    value={userBook.available_for_lending}
-                                    onValueChange={(val) => toggleLendingMutation.mutate(val)}
-                                    trackColor={{ false: colors.controlBorder, true: colors.accent }}
-                                    {...lendingThumbProps}
-                                />
-                            </View>
-                        )}
-
-                        <View style={[styles.divider, { marginVertical: 16, backgroundColor: colors.divider }]} />
-
-                        {/* Condition (Only if Owned/Lent) */}
-                        {['owned', 'lent_out'].includes(userBook.ownership) && (
-                            <>
-                                <ConditionPicker
-                                    condition={userBook.condition as Condition}
-                                    onChange={(val) => updateConditionMutation.mutate(val)}
-                                    disabled={updateConditionMutation.isPending}
-                                />
-                                <View style={[styles.divider, { marginVertical: 16, backgroundColor: colors.divider }]} />
-                            </>
-                        )}
-
-                    {/* Delete Button */}
-                    <TouchableOpacity
-                        accessibilityRole="button"
-                        accessibilityLabel="Remove from Library"
-                        onPress={() => setShowDeleteModal(true)}
-                        style={styles.deleteButtonContainer}
-                    >
-                        <Text style={[styles.deleteText, { color: colors.error }]}>Remove from Library</Text>
-                    </TouchableOpacity>
-
-                    </BookSection>
-                    <BookSection title="Community reviews">
-                        {publicReviews.length > 0 && <Text style={{ color: colors.textSecondary }}>{publicReviews.length} public reviews</Text>}
-                        {publicReviewsLoading ? (
-                            <View style={styles.communityReviewsState}>
-                                <ActivityIndicator size="small" color={colors.accent} />
-                            </View>
-                        ) : publicReviewsError ? (
-                            <View style={styles.communityReviewsState}>
-                                <Text style={[styles.communityReviewsStateText, { color: colors.textSecondary }]}>
-                                    Community reviews are temporarily unavailable.
-                                </Text>
-                            </View>
-                        ) : publicReviews.length === 0 ? (
-                            <View style={styles.communityReviewsState} testID="community-reviews-empty">
-                                <Text style={[styles.communityReviewsStateText, { color: colors.textSecondary }]}>
-                                    No public reviews yet.
-                                </Text>
-                            </View>
-                        ) : (
-                            publicReviews.map((review) => {
-                                const authorName = getReviewerName(review);
-                                const authorHandle = review.author.username?.trim();
-
-                                return (
-                                    <View
-                                        key={review.user_book_id}
-                                        testID={`community-review-${review.user_book_id}`}
+                                <View>
+                                    <TextInput
                                         style={[
-                                            styles.communityReviewCard,
-                                            { backgroundColor: colors.bgSecondary, borderColor: colors.divider },
+                                            LIBRARY_TEXT.body,
+                                            topStyles.reviewInput,
+                                            {
+                                                backgroundColor: colors.bgSecondary,
+                                                color: colors.textPrimary,
+                                                borderColor: colors.controlBorder,
+                                            },
                                         ]}
+                                        testID="library-review-input"
+                                        accessibilityLabel="Your review"
+                                        placeholder="Write your thoughts…"
+                                        placeholderTextColor={colors.textTertiary}
+                                        multiline
+                                        editable={!isOffline}
+                                        value={reviewText}
+                                        onChangeText={handleReviewText}
+                                        onBlur={isOffline ? undefined : handleSaveReview}
+                                    />
+                                    <Pressable
+                                        testID="library-review-privacy-toggle"
+                                        style={topStyles.publicToggle}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Change review visibility"
+                                        accessibilityState={{ busy: reviewBusy, disabled: isOffline }}
+                                        aria-busy={reviewBusy}
+                                        disabled={isOffline}
+                                        onPress={() => {
+                                            const pending = queryClient.getMutationCache().findAll({ mutationKey: reviewMutationKey, exact: true, status: 'pending' })
+                                                .map(mutation => mutation.state.variables as ReviewSubmission)
+                                                .filter(submission => typeof submission.patch.review_is_public === 'boolean').pop();
+                                            const confirmed = queryClient.getQueryData<typeof userBook>(['book', user?.id, bookId]);
+                                            submitReview({ review_is_public: !(pending?.patch.review_is_public ?? confirmed?.review_is_public ?? true) });
+                                        }}
                                     >
-                                        <View style={styles.communityReviewHeader}>
-                                            <View style={styles.communityReviewAuthorBlock}>
-                                                <Text style={[styles.communityReviewAuthor, { color: colors.textPrimary }]}>
+                                        <Ionicons
+                                            name={isReviewPublic ? 'eye-outline' : 'eye-off-outline'}
+                                            size={PRIVACY_ICON_SIZE}
+                                            color={colors.textSecondary}
+                                            accessible={false}
+                                            aria-hidden
+                                        />
+                                        <Text style={[LIBRARY_TEXT.label, { color: colors.textSecondary }]}>
+                                            {isReviewPublic ? 'Public Review' : 'Private Review'}
+                                        </Text>
+                                    </Pressable>
+                                </View>
+                                {reviewDirty && (
+                                    <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>
+                                        Review text has unsaved changes.
+                                    </Text>
+                                )}
+                                {reviewBusy && (
+                                    <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>
+                                        Saving review changes… Rating and visibility shown are the last confirmed settings.
+                                    </Text>
+                                )}
+                            </DetailRow>
+
+                            {showSavedPages && (
+                                <DetailRow
+                                    id="saved"
+                                    label="Saved pages"
+                                    secondary={`${vaultPages.length} ${vaultPages.length === 1 ? 'page' : 'pages'}`}
+                                    expanded={Boolean(openRows.saved)}
+                                    onPress={() => toggleRow('saved')}
+                                >
+                                    <VaultPagesList userBookId={bookId!} disabled={isOffline} />
+                                </DetailRow>
+                            )}
+
+                            <DetailRow
+                                id="info"
+                                label="Book information"
+                                secondary={hasBookInfo ? undefined : 'No details'}
+                                absent={!hasBookInfo}
+                                expanded={hasBookInfo ? Boolean(openRows.info) : undefined}
+                                onPress={hasBookInfo ? () => toggleRow('info') : undefined}
+                            >
+                                {book.page_count ? <Text style={bodyStyle}>{`Pages · ${book.page_count}`}</Text> : null}
+                                {book.publisher ? <Text style={bodyStyle}>{`Publisher · ${book.publisher}`}</Text> : null}
+                                {publishedYear ? <Text style={bodyStyle}>{`Published · ${publishedYear}`}</Text> : null}
+                                {book.isbn_13 ? <Text style={bodyStyle}>{`ISBN-13 · ${book.isbn_13}`}</Text> : null}
+                                {book.description ? <Text style={bodyStyle}>{book.description}</Text> : null}
+                            </DetailRow>
+
+                            <DetailRow
+                                id="ownership"
+                                label="Ownership & condition"
+                                secondary={ownershipSecondary}
+                                expanded={Boolean(openRows.ownership)}
+                                onPress={() => toggleRow('ownership')}
+                            >
+                                <OwnershipSelector
+                                    ownership={userBook.ownership as Ownership}
+                                    onChange={(val) => {
+                                        if (val === userBook.ownership) return;
+                                        updateOwnershipMutation.mutate(val);
+                                    }}
+                                    disabled={updateOwnershipMutation.isPending || isOffline}
+                                />
+                                {(userBook.ownership === 'owned' || userBook.ownership === 'lent_out') && (
+                                    <ConditionPicker
+                                        condition={userBook.condition as Condition}
+                                        onChange={(val) => {
+                                            if (val === userBook.condition) return;
+                                            updateConditionMutation.mutate(val);
+                                        }}
+                                        disabled={updateConditionMutation.isPending || isOffline}
+                                    />
+                                )}
+                            </DetailRow>
+
+                            {publicReviews && publicReviews.length > 0 ? (
+                                <DetailRow
+                                    id="community"
+                                    label="Community reviews"
+                                    secondary={`${publicReviews.length} ${publicReviews.length === 1 ? 'review' : 'reviews'}`}
+                                    expanded={Boolean(openRows.community)}
+                                    onPress={() => toggleRow('community')}
+                                >
+                                    {publicReviews.map((review, index) => {
+                                        const authorName = getReviewerName(review);
+                                        const authorHandle = review.author.username?.trim();
+                                        return (
+                                            <View
+                                                key={review.user_book_id}
+                                                testID={`community-review-${review.user_book_id}`}
+                                                style={[
+                                                    index > 0 && topStyles.communityReviewDivider,
+                                                    index > 0 && { borderColor: colors.divider },
+                                                    topStyles.communityReviewItem,
+                                                ]}
+                                            >
+                                                <Text style={[LIBRARY_TEXT.label, { color: colors.textPrimary }]}>
                                                     {authorName}
                                                 </Text>
-                                                {authorHandle && (
-                                                    <Text style={[styles.communityReviewHandle, { color: colors.textSecondary }]}>
+                                                {authorHandle ? (
+                                                    <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>
                                                         @{authorHandle}
                                                     </Text>
-                                                )}
-                                            </View>
-
-                                            <View style={styles.communityReviewMeta}>
-                                                {typeof review.rating === 'number' && review.rating > 0 && (
-                                                    <Text style={[styles.communityReviewRating, { color: colors.accent }]}> 
-                                                        {'★'.repeat(review.rating)}
-                                                    </Text>
-                                                )}
-                                                <Text style={[styles.communityReviewDate, { color: colors.textTertiary }]}>
+                                                ) : null}
+                                                <Text style={[LIBRARY_TEXT.caption, { color: colors.textTertiary }]}>
                                                     {formatReviewDate(review.created_at)}
                                                 </Text>
+                                                {typeof review.rating === 'number' && review.rating > 0 && (
+                                                    <View
+                                                        accessible
+                                                        accessibilityLabel={`Rated ${review.rating} of ${MAX_SCORE}`}
+                                                        style={topStyles.stars}
+                                                    >
+                                                        {Array.from({ length: MAX_SCORE }, (_, starIndex) => (
+                                                            <Ionicons
+                                                                key={starIndex}
+                                                                name={starIndex < review.rating! ? 'star' : 'star-outline'}
+                                                                size={ICON_SIZE}
+                                                                color={colors.textPrimary}
+                                                                accessible={false}
+                                                                aria-hidden
+                                                            />
+                                                        ))}
+                                                    </View>
+                                                )}
+                                                <Text style={bodyStyle}>{review.review}</Text>
                                             </View>
-                                        </View>
-
-                                        <Text style={[styles.communityReviewText, { color: colors.textPrimary }]}>
-                                            {review.review}
-                                        </Text>
-                                    </View>
-                                );
-                            })
-                        )}
-                    </BookSection>
-                    <BookSection title="Book information">
-                        <View style={styles.metadata}>
-                            {book.page_count && (
-                                <Text style={[styles.metaText, { color: colors.textTertiary }]}>
-                                    {book.page_count} pages • {book.publisher}
-                                </Text>
-                            )}
-                            {book.isbn_13 && (
-                                <Text style={[styles.metaText, { color: colors.textTertiary }]}>
-                                    ISBN: {book.isbn_13}
-                                </Text>
+                                        );
+                                    })}
+                                </DetailRow>
+                            ) : publicReviewsPending ? (
+                                <DetailRow id="community" label="Community reviews" secondary={isOffline || publicReviewsFetchStatus === 'paused' ? 'Unavailable offline.' : 'Loading…'} />
+                            ) : publicReviewsError ? (
+                                <DetailRow id="community" label="Community reviews" secondary="Unavailable right now." />
+                            ) : (
+                                <DetailRow id="community" label="Community reviews" secondary="None yet" absent />
                             )}
                         </View>
-                    </BookSection>
-                </ScrollView>
+
+                        <View style={topStyles.remove}>
+                            <BookButton
+                                ref={removeTrigger}
+                                label="Remove from library"
+                                variant="text"
+                                disabled={isOffline}
+                                onPress={() => setShowDeleteModal(true)}
+                            />
+                        </View>
+                    </ScrollView>
+                </View>
 
                 <DeleteBookModal
                     visible={showDeleteModal}
                     onClose={() => setShowDeleteModal(false)}
-                    onConfirm={() => deleteMutation.mutate()}
+                    onConfirm={() => { if (!isOffline) deleteMutation.mutate(); }}
                     isDeleting={deleteMutation.isPending}
+                    disabled={isOffline}
+                    bookTitle={book.title}
                 />
-
-
             </View>
-        </AtmosphericBackground>
+        );
+    }
+
+    if (!user?.id || !bookId || (bookPending && bookFetchStatus !== 'paused')) {
+        return (
+            <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
+                {backHeader}
+                <View style={topStyles.centerState}>
+                    <BookLoading variant="details" label="Loading book" />
+                </View>
+            </View>
+        );
+    }
+
+    if (isOffline || bookFetchStatus === 'paused') {
+        return (
+            <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
+                {backHeader}
+                <View style={topStyles.centerState}>
+                    <BookError kind="offline" subject="this book" onRetry={() => { void refetchBook(); }} />
+                </View>
+            </View>
+        );
+    }
+
+    if (bookIsError && bookError) {
+        const kind = classifyBookLoadError(bookError, isOffline);
+        if (kind === 'notFound') {
+            return (
+                <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
+                    {backHeader}
+                    <View style={topStyles.centerState}>
+                        <BookError kind="notFound" subject="this book" backLabel="Back to Library" onBack={handleBackPress} />
+                    </View>
+                </View>
+            );
+        }
+        return (
+            <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
+                {backHeader}
+                <View style={topStyles.centerState}>
+                    <BookError kind="server" subject="this book" onRetry={() => { void refetchBook(); }} />
+                </View>
+            </View>
+        );
+    }
+
+    return (
+        <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
+            {backHeader}
+            <View style={topStyles.centerState}>
+                <BookLoading variant="details" label="Loading book" />
+            </View>
+        </View>
     );
 }
 
-const styles = StyleSheet.create({
-    sectionButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-    primaryNote: { minHeight: 48, marginHorizontal: 16, marginTop: 16, padding: 14, borderRadius: 16, alignItems: 'center' },
-    primaryNoteText: { fontSize: 17, fontWeight: '700' },
-    center: {
+const topStyles = StyleSheet.create({
+    page: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
     },
-    header: {
-        paddingTop: 60,
-        paddingHorizontal: 20,
+    content: {
+        width: '100%',
+        maxWidth: COLUMN_MAX_WIDTH,
+        alignSelf: 'center',
+        paddingHorizontal: LIBRARY_SPACING.md,
+        paddingBottom: LIBRARY_SPACING.xl,
     },
-    backButton: {
-        minWidth: 48,
-        minHeight: 48,
-        paddingHorizontal: 12,
+    refreshNotice: {
         flexDirection: 'row',
-        gap: 8,
-        alignSelf: 'flex-start',
-        borderRadius: 24,
-        justifyContent: 'center',
+        flexWrap: 'wrap',
         alignItems: 'center',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        gap: LIBRARY_SPACING.sm,
+        marginBottom: LIBRARY_SPACING.md,
     },
-    hero: {
-        alignItems: 'center',
-        marginTop: 20,
-        marginBottom: 30,
-        paddingHorizontal: 20,
+    action: {
+        marginTop: LIBRARY_SPACING.lg,
     },
-    coverContainer: {
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.25,
-        shadowRadius: 12,
-        elevation: 10,
-        marginBottom: 20,
+    connectionNotice: {
+        marginBottom: LIBRARY_SPACING.xs,
     },
-    coverImage: {
-        width: 140,
-        height: 220,
-        borderRadius: 12,
+    rows: {
+        marginTop: LIBRARY_SPACING.xl,
     },
-    title: {
-        fontSize: 24,
-        fontWeight: '800',
-        textAlign: 'center',
-        marginBottom: 8,
-    },
-    author: {
-        fontSize: 16,
-        fontWeight: '500',
-        textAlign: 'center',
-    },
-    card: {
-        marginHorizontal: 16,
-        borderRadius: 24,
-        padding: 20,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
-    },
-    divider: {
-        height: 1,
-        marginVertical: 4,
-    },
-    rowBetween: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginVertical: 12,
-    },
-    label: {
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    reviewSection: {
-        marginTop: 16,
-    },
-    input: {
-        borderRadius: 16,
-        padding: 12,
-        height: 100,
+    reviewInput: {
+        borderRadius: LIBRARY_RADIUS.control,
+        padding: LIBRARY_SPACING.sm,
+        height: REVIEW_INPUT_HEIGHT,
         textAlignVertical: 'top',
         borderWidth: 1,
-        fontSize: 15,
     },
     publicToggle: {
-        minHeight: 48,
-        paddingHorizontal: 8,
+        minHeight: MIN_TARGET,
+        minWidth: MIN_TARGET,
+        paddingHorizontal: LIBRARY_SPACING.xs,
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 8,
+        gap: LIBRARY_SPACING.xs,
+        marginTop: LIBRARY_SPACING.xs,
         alignSelf: 'flex-end',
     },
-    metadata: {
-        marginTop: 24,
-        alignItems: 'center',
+    communityReviewItem: {
+        gap: LIBRARY_SPACING.xxs,
     },
-    communityReviewsSection: {
-        marginHorizontal: 16,
-        marginTop: 16,
-        borderRadius: 24,
-        padding: 20,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
+    communityReviewDivider: {
+        borderTopWidth: StyleSheet.hairlineWidth,
+        paddingTop: LIBRARY_SPACING.md,
     },
-    communityReviewsHeader: {
+    stars: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
+        gap: LIBRARY_SPACING.xxs,
     },
-    communityReviewsTitle: {
-        fontSize: 16,
-        fontWeight: '700',
+    remove: {
+        alignSelf: 'center',
+        marginTop: LIBRARY_SPACING.lg,
     },
-    communityReviewsCount: {
-        fontSize: 13,
-        fontWeight: '600',
-    },
-    communityReviewsState: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 16,
-    },
-    communityReviewsStateText: {
-        fontSize: 14,
-        textAlign: 'center',
-    },
-    communityReviewCard: {
-        borderWidth: 1,
-        borderRadius: 18,
-        padding: 14,
-        marginBottom: 12,
-    },
-    communityReviewHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        gap: 12,
-        marginBottom: 10,
-    },
-    communityReviewAuthorBlock: {
+    centerState: {
         flex: 1,
-    },
-    communityReviewAuthor: {
-        fontSize: 14,
-        fontWeight: '700',
-    },
-    communityReviewHandle: {
-        fontSize: 12,
-        marginTop: 2,
-    },
-    communityReviewMeta: {
-        alignItems: 'flex-end',
-    },
-    communityReviewRating: {
-        fontSize: 12,
-        fontWeight: '700',
-        marginBottom: 2,
-    },
-    communityReviewDate: {
-        fontSize: 11,
-    },
-    communityReviewText: {
-        fontSize: 14,
-        lineHeight: 21,
-    },
-    metaText: {
-        fontSize: 12,
-        marginBottom: 4,
-    },
-    deleteButtonContainer: {
-        alignItems: 'center',
-        marginTop: 30,
-        marginBottom: 20,
-        padding: 16,
-    },
-    deleteText: {
-        fontSize: 15,
-        fontWeight: '600',
-    },
-    // Notes Section
-    notesSection: {
-        marginHorizontal: 16,
-        marginTop: 16,
-        borderRadius: 24,
-        padding: 20,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
-    },
-    notesSectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    notesTitleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    notesSectionTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-    },
-    notesBadge: {
-        minWidth: 22,
-        height: 22,
-        borderRadius: 11,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 6,
-    },
-    notesBadgeText: {
-        fontSize: 12,
-        fontWeight: '700',
-    },
-    viewAllText: {
-        fontSize: 13,
-        fontWeight: '600',
-    },
-    notesPreview: {
-        marginBottom: 8,
-    },
-    notesEmptyState: {
-        alignItems: 'center',
-        paddingVertical: 24,
-        gap: 8,
-    },
-    notesEmptyText: {
-        fontSize: 14,
-        textAlign: 'center',
-    },
-    addNoteButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-        paddingVertical: 12,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderStyle: 'dashed',
-    },
-    addNoteText: {
-        fontSize: 14,
-        fontWeight: '600',
+        paddingHorizontal: LIBRARY_SPACING.md,
     },
 });

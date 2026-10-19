@@ -53,7 +53,13 @@ jest.mock('@/components/library', () => {
         DeleteBookModal: ({ visible, onConfirm }: any) => visible ? <Pressable accessibilityRole="button" accessibilityLabel="Confirm removal" onPress={onConfirm}><Text>Confirm</Text></Pressable> : null };
 });
 jest.mock('@/components/notes', () => { const { Text } = require('react-native'); return { NoteCard: ({ note }: any) => <Text>{note.content}</Text> }; });
-jest.mock('@/components/library/VaultPagesList', () => { const { Text } = require('react-native'); return { VaultPagesList: () => <Text>Retained saved excerpt</Text> }; });
+jest.mock('@/components/library/VaultPagesList', () => {
+    const { Text } = require('react-native');
+    return {
+        VaultPagesList: () => <Text>Retained saved excerpt</Text>,
+        useVaultPages: () => ({ data: [{ id: 'page-1', page_number: 12, content_excerpt: 'Retained saved excerpt' }], isLoading: false, isError: false }),
+    };
+});
 jest.mock('@/components/ui/AtmosphericBackground', () => ({ AtmosphericBackground: ({ children }: any) => children }));
 
 function deferred() {
@@ -67,7 +73,7 @@ function actor(id: string | null, token = 'token-' + id) {
 async function screen(review = true) {
     const ui = render(<QueryClientProvider client={client}><BookFeedbackProvider><BookDetailScreen /></BookFeedbackProvider></QueryClientProvider>);
     await ui.findByText('Fixture book');
-    if (review) { fireEvent.press(ui.getByRole('button', { name: 'My review' })); await ui.findByTestId('library-review-input'); }
+    if (review) { fireEvent.press(ui.getByTestId('book-row-review')); await ui.findByTestId('library-review-input'); }
     return ui;
 }
 async function settled() {
@@ -277,18 +283,20 @@ it('keeps pending rating separate from a later privacy action across reopening',
 });
 
 it('retains named B01 destinations, management actions, and accessible Back', async () => {
+    mockBook = { ...mockBook, condition: 'new' };
     const ui = await screen(false); const buttons = ui.getAllByRole('button');
-    expect(buttons.indexOf(ui.getByRole('button', { name: 'Add note' }))).toBeLessThan(buttons.indexOf(ui.getByRole('button', { name: 'My review' })));
-    expect(ui.getByText('Saved note preview')).toBeOnTheScreen(); expect(ui.getByText('Retained saved excerpt')).toBeOnTheScreen();
-    fireEvent.press(ui.getByRole('button', { name: 'Book options' })); fireEvent.press(ui.getByRole('button', { name: 'Ownership' })); fireEvent.press(ui.getByRole('button', { name: 'Condition' }));
+    expect(buttons.indexOf(ui.getByRole('button', { name: 'Add note' }))).toBeLessThan(buttons.indexOf(ui.getByTestId('book-row-review')));
+    expect(ui.getByText('Saved note preview')).toBeOnTheScreen();
+    fireEvent.press(ui.getByTestId('book-row-saved')); expect(ui.getByText('Retained saved excerpt')).toBeOnTheScreen();
+    fireEvent.press(ui.getByTestId('book-row-ownership')); fireEvent.press(ui.getByRole('button', { name: 'Ownership' })); fireEvent.press(ui.getByRole('button', { name: 'Condition' }));
+    await waitFor(() => expect(booksService.updateOwnership).toHaveBeenCalledWith('entry', 'borrowed'));
     await waitFor(() => expect(booksService.updateCondition).toHaveBeenCalledWith('entry', 'good'));
-    fireEvent(ui.getByRole('switch', { name: 'Available for lending' }), 'valueChange', true);
-    fireEvent.press(ui.getByRole('button', { name: 'Remove from Library' })); expect(booksService.removeFromLibrary).not.toHaveBeenCalled(); fireEvent.press(ui.getByRole('button', { name: 'Confirm removal' }));
-    await waitFor(() => expect(booksService.removeFromLibrary).toHaveBeenCalledWith('entry'));
-    fireEvent.press(ui.getByRole('button', { name: 'Book information' })); expect(ui.getByText('ISBN: 123')).toBeOnTheScreen();
-    fireEvent.press(ui.getByRole('button', { name: 'Community reviews' })); expect(ui.getByText('No public reviews yet.')).toBeOnTheScreen();
+    fireEvent.press(ui.getByTestId('book-row-info')); expect(ui.getByText('ISBN-13 · 123')).toBeOnTheScreen();
+    expect(within(ui.getByTestId('book-row-community')).getByText('None yet')).toBeOnTheScreen();
     const back = ui.getByRole('button', { name: 'Back to Library' }); const style = StyleSheet.flatten(back.props.style);
     expect(style.minHeight).toBeGreaterThanOrEqual(48); expect(style.minWidth).toBeGreaterThanOrEqual(48); fireEvent.press(back); expect(mockReplace).toHaveBeenCalledWith('/(tabs)/library');
+    fireEvent.press(ui.getByRole('button', { name: 'Remove from library' })); expect(booksService.removeFromLibrary).not.toHaveBeenCalled(); fireEvent.press(ui.getByRole('button', { name: 'Confirm removal' }));
+    await waitFor(() => expect(booksService.removeFromLibrary).toHaveBeenCalledWith('entry'));
 });
 
 it('reconciliation: clean original editor adopts a later confirmed refetch after saving', async () => {
@@ -366,7 +374,7 @@ it('reconciliation: two mounted instances preserve a newer local draft and share
     const both = render(<QueryClientProvider client={client}><BookFeedbackProvider><View testID="first"><BookDetailScreen /></View><View testID="second"><BookDetailScreen /></View></BookFeedbackProvider></QueryClientProvider>);
     const first = within(both.getByTestId('first')); const second = within(both.getByTestId('second'));
     await first.findByText('Fixture book'); await second.findByText('Fixture book');
-    fireEvent.press(first.getByRole('button', {name:'My review'})); fireEvent.press(second.getByRole('button', {name:'My review'}));
+    fireEvent.press(first.getByTestId('book-row-review')); fireEvent.press(second.getByTestId('book-row-review'));
     fireEvent.changeText(second.getByTestId('library-review-input'), 'Local unsaved C');
     fireEvent.changeText(first.getByTestId('library-review-input'), 'Submitted B'); fireEvent(first.getByTestId('library-review-input'), 'blur');
     await waitFor(() => expect(requests).toHaveLength(1));
@@ -424,7 +432,7 @@ it.each(['switch','return'])('reconciliation: mounted editor never inherits old-
     act(() => {actor(null); actor(transition === 'switch' ? 'other-reader':'reader','new-token');});
         await act(async () => { await client.invalidateQueries({queryKey:['book',transition === 'switch' ? 'other-reader':'reader','entry'],exact:true}); });
     await waitFor(() => expect(client.getQueryData<any>(['book', transition === 'switch' ? 'other-reader':'reader', 'entry'])?.review).toBe('Current session confirmed'));
-    await ui.findByRole('button',{name:'My review'}); if (!ui.queryByTestId('library-review-input')) fireEvent.press(ui.getByRole('button',{name:'My review'}));
+    await ui.findByTestId('book-row-review'); if (!ui.queryByTestId('library-review-input')) fireEvent.press(ui.getByTestId('book-row-review'));
     await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Current session confirmed'));
     expect(ui.queryByText(/Saving review changes/)).toBeNull();
     await act(async () => one.resolve()); await settled();
@@ -438,8 +446,8 @@ it('reconciliation: same mounted screen isolates a changed book identity from ol
     await waitFor(() => expect(requests).toHaveLength(1));
     mockEntryId='other-entry'; mockBook={...mockBook,id:mockEntryId,book_id:'other-catalogue',review:'Other book confirmed'};
     ui.rerender(<QueryClientProvider client={client}><BookFeedbackProvider><BookDetailScreen /></BookFeedbackProvider></QueryClientProvider>);
-    await ui.findByRole('button',{name:'My review'});
-    if(!ui.queryByTestId('library-review-input')) fireEvent.press(ui.getByRole('button',{name:'My review'}));
+    await ui.findByTestId('book-row-review');
+    if(!ui.queryByTestId('library-review-input')) fireEvent.press(ui.getByTestId('book-row-review'));
     await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Other book confirmed'));
     await act(async () => one.resolve()); await settled();
 });
@@ -451,8 +459,8 @@ it('reconciliation: consumed history cannot clear a dirty draft after revisiting
     const savedBook = mockBook;
     mockEntryId = 'other-entry'; mockBook = { ...mockBook, id: mockEntryId, book_id: 'other-catalogue', review: 'Other book review' };
     ui.rerender(<QueryClientProvider client={client}><BookFeedbackProvider><BookDetailScreen /></BookFeedbackProvider></QueryClientProvider>);
-    await ui.findByRole('button', { name: 'My review' });
-    if (!ui.queryByTestId('library-review-input')) fireEvent.press(ui.getByRole('button', { name: 'My review' }));
+    await ui.findByTestId('book-row-review');
+    if (!ui.queryByTestId('library-review-input')) fireEvent.press(ui.getByTestId('book-row-review'));
     await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Other book review'));
     mockEntryId = 'entry'; mockBook = savedBook;
     ui.rerender(<QueryClientProvider client={client}><BookFeedbackProvider><BookDetailScreen /></BookFeedbackProvider></QueryClientProvider>);

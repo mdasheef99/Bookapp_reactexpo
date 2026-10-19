@@ -293,18 +293,24 @@ it('retains the exact original reader after a reopened edit retries, becomes unc
   expect(state.routes.filter((route: any) => route.name === 'note')).toHaveLength(1);
   expect(noteSaves.forBook('actor', 'book')[0].status).toBe('unknown'); expect(write).toHaveBeenCalledTimes(2);
 }, 15000);
-it('distinguishes failed Saved Pages loading from a successful empty read and supports retry', async () => {
+it('hides Saved Pages when loading fails without data or when the list is empty', async () => {
   (userBookPagesService.getPagesForBook as jest.Mock).mockRejectedValueOnce(new Error('Offline'));
-  render(wrap(<VaultPagesList userBookId="book" />)); await screen.findByText("Couldn't load saved pages.");
-  expect(screen.queryByText(/No saved pages/)).toBeNull(); fireEvent.press(screen.getByRole('button', { name: 'Retry saved pages' }));
-  await screen.findByText('No saved pages yet.'); expect(screen.queryByText(/NoteEditor|Save to Vault/)).toBeNull();
+  render(wrap(<VaultPagesList userBookId="book" />));
+  await waitFor(() => expect(userBookPagesService.getPagesForBook).toHaveBeenCalledTimes(1));
+  await settle();
+  expect(screen.queryByText(/No saved pages/)).toBeNull();
+  expect(screen.queryByText(/NoteEditor|Save to Vault/)).toBeNull();
+  (userBookPagesService.getPagesForBook as jest.Mock).mockResolvedValue([]);
+  await act(async () => { await client.refetchQueries({ queryKey: ['vault-pages', 'book'] }); });
+  expect(screen.queryByText(/No saved pages/)).toBeNull();
+  expect(screen.queryByText(/NoteEditor|Save to Vault/)).toBeNull();
 });
 it('retains Saved Pages excerpts during refresh failure and preserves confirmed deletion', async () => {
   (userBookPagesService.getPagesForBook as jest.Mock).mockResolvedValue([page]); const alert = jest.spyOn(Alert, 'alert');
   render(wrap(<VaultPagesList userBookId="book" />)); await screen.findByText(page.content_excerpt);
   (userBookPagesService.getPagesForBook as jest.Mock).mockRejectedValueOnce(new Error('Offline'));
   await act(async () => { await client.refetchQueries({ queryKey: ['vault-pages', 'book'] }); });
-  await screen.findByText("Couldn't refresh saved pages. Previously loaded pages are still shown."); expect(screen.getByText(page.content_excerpt)).toBeTruthy();
+  await screen.findByText("Couldn't refresh saved pages."); expect(screen.getByText(page.content_excerpt)).toBeTruthy();
   fireEvent.press(screen.getByRole('button', { name: 'Delete page 12' })); expect(userBookPagesService.deletePage).not.toHaveBeenCalled();
   expect(screen.getByText('Delete page 12?')).toBeOnTheScreen();
   fireEvent.press(screen.getByRole('button', { name: 'Cancel' })); await settle();
@@ -312,7 +318,8 @@ it('retains Saved Pages excerpts during refresh failure and preserves confirmed 
   fireEvent.press(screen.getByRole('button', { name: 'Delete page 12' }));
   (userBookPagesService.deletePage as jest.Mock).mockResolvedValue(undefined);
   (userBookPagesService.getPagesForBook as jest.Mock).mockResolvedValue([]); fireEvent.press(within(screen.getByTestId('book-confirm-card')).getByRole('button', { name: 'Delete' }));
-  await screen.findByText('No saved pages yet.'); expect(userBookPagesService.deletePage).toHaveBeenCalledWith('page');
+  await waitFor(() => expect(userBookPagesService.deletePage).toHaveBeenCalledWith('page'));
+  await waitFor(() => expect(screen.queryByText(page.content_excerpt)).toBeNull());
   expect(userBookPagesService.deletePage).toHaveBeenCalledTimes(1); expect(alert).not.toHaveBeenCalled();
 });
 it('labels private book reviews as reviews while submitting only explicit visibility changes', async () => {
@@ -321,7 +328,7 @@ it('labels private book reviews as reviews while submitting only explicit visibi
   (booksService.getBookDetails as jest.Mock).mockImplementation(async () => details);
   (bookReviewService.update as jest.Mock).mockImplementation(async (_actor, _id, patch) => { Object.assign(details, patch); return details; });
   delete mockParams.noteId; render(wrap(<BookDetailScreen />));
-  fireEvent.press(await screen.findByRole('button', { name: 'My review' })); await screen.findByText('Public Review');
+  fireEvent.press(await screen.findByTestId('book-row-review')); await screen.findByText('Public Review');
   fireEvent.press(screen.getByTestId('library-review-privacy-toggle')); await screen.findByText('Private Review');
   expect(bookReviewService.update).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'actor' }), 'book', { review_is_public: false }); expect(screen.queryByText('Private Note')).toBeNull();
   fireEvent.press(screen.getByTestId('library-review-privacy-toggle')); await screen.findByText('Public Review');

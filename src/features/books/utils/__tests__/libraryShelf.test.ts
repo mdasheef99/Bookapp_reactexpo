@@ -1,10 +1,15 @@
-import { filterLibraryBooks, getLibraryFilterChips, LibraryBookEntry } from '../libraryShelf';
+import { filterLibraryBooks, getLibraryFilterChips, getLibraryFilterLabel, LibraryBookEntry } from '../libraryShelf';
 
 const entry = (id: string, status: string | null, ownership: string | null): LibraryBookEntry => ({
     id, reading_status: status, ownership, book: { title: id },
 });
 
 describe('Library filter count parity (review R3)', () => {
+    it('labels the completed key Finished in the chip and active-filter lookup', () => {
+        const chips = getLibraryFilterChips([]);
+        expect(chips.find(chip => chip.key === 'completed')).toEqual({ key: 'completed', label: 'Finished', count: 0 });
+        expect(getLibraryFilterLabel(chips, 'completed')).toBe('Finished');
+    });
     it('excludes wishlist reading/completed entries from the corresponding chip counts', () => {
         const books = [entry('owned-reading', 'reading', 'owned'), entry('wanted-reading', 'reading', 'wishlist'),
             entry('owned-completed', 'completed', 'owned'), entry('wanted-completed', 'completed', 'wishlist')];

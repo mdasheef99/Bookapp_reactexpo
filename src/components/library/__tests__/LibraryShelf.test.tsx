@@ -7,6 +7,8 @@ import LibraryScreen from '../../../../app/(tabs)/library/index';
 import { booksService } from '@/features/books/services/booksService';
 import { LibraryShelf } from '../LibraryShelf';
 import { LibraryHorizontalShelf } from '../LibraryHorizontalShelf';
+import { LibraryBookRow } from '../LibraryBookList';
+import { LibraryBookQuickLook } from '../LibraryBookQuickLook';
 
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('react-native-gesture-handler', () => ({
@@ -123,7 +125,7 @@ describe('horizontal browsing and quick look', () => {
         fireEvent(volume, 'longPress'); fireEvent.press(volume);
         expect(navigate).not.toHaveBeenCalled();
         expect(screen.getByTestId('library-book-quick-look')).toBeTruthy();
-        for (const value of ['Reading', 'Owned', '320', 'Good', '4 / 5', 'A personal review', 'Not available to lend']) expect(screen.getByText(value)).toBeTruthy();
+        for (const value of ['Reading', 'Owned', '320', 'Good', '4 / 5', 'A personal review']) expect(screen.getByText(value)).toBeTruthy();
         expect(screen.queryByText(/progress|minutes|streak/i)).toBeNull();
         fireEvent.press(screen.getByTestId('library-quick-look-details'));
         expect(navigate).toHaveBeenCalledWith(book); expect(screen.queryByTestId('library-book-quick-look')).toBeNull();
@@ -173,6 +175,35 @@ describe('horizontal browsing and quick look', () => {
         fireEvent.scroll(screen.getByTestId('library-horizontal-scroll-top'), { nativeEvent: { contentOffset: { x: 548 } } });
         expect(screen.getByTestId('library-horizontal-top-next').props.accessibilityState.disabled).toBe(true);
         expect(screen.getByTestId('library-horizontal-bottom-previous').props.accessibilityState.disabled).toBe(true);
+    });
+});
+
+describe('D07-08 / D07-13 home and quick-look labels', () => {
+    it('omits the lendable home tag even when lending is available', () => {
+        const item = { id: 'home', ownership: 'owned', reading_status: 'reading', available_for_lending: true, book: { title: 'A book' } };
+        const ui = render(<LibraryBookRow item={item} onPress={jest.fn()} />);
+        expect(ui.queryByText(/lend/i)).toBeNull();
+    });
+    it.each([['completed', 'Finished'], ['want_to_read', 'Want to read']])('labels home status %s and lent_out', (reading_status, label) => {
+        const item = { id: 'home', ownership: 'lent_out', reading_status, book: { title: 'A book' } };
+        const ui = render(<LibraryBookRow item={item} onPress={jest.fn()} />);
+        expect(ui.getByText(label)).toBeOnTheScreen();
+        expect(ui.getByText('Lent out')).toBeOnTheScreen();
+    });
+    it.each([true, false])('omits every Lending fact for available_for_lending=%s and uses shared labels', available_for_lending => {
+        const book = { id: 'quick', ownership: 'lent_out', reading_status: 'completed', condition: 'acceptable', available_for_lending,
+            book: { title: 'A book' } };
+        const ui = render(<LibraryBookQuickLook book={book} onClose={jest.fn()} onDetails={jest.fn()} />);
+        expect(ui.queryByText('Lending')).toBeNull();
+        expect(ui.queryByText('Available to lend')).toBeNull();
+        expect(ui.queryByText('Not available to lend')).toBeNull();
+        for (const label of ['Finished', 'Lent out', 'Fair']) expect(ui.getByText(label)).toBeOnTheScreen();
+    });
+    it.each([null, ''])('keeps Not recorded for missing status/ownership %s and omits an empty condition', missing => {
+        const book = { id: 'quick', ownership: missing, reading_status: missing, condition: '', book: { title: 'A book' } };
+        const ui = render(<LibraryBookQuickLook book={book} onClose={jest.fn()} onDetails={jest.fn()} />);
+        expect(ui.getAllByText('Not recorded')).toHaveLength(2);
+        expect(ui.queryByText('Condition')).toBeNull();
     });
 });
 

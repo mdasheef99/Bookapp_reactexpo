@@ -277,7 +277,12 @@ it.each(['DeleteBookModal', 'ManualEntryModal'] as const)('shows an error raised
   mount(element);
   notify('error', 'Something failed');
   expect(screen.getAllByText('Something failed')).toHaveLength(1);
-  expect(within(screen.getByTestId('book-feedback-host')).queryByText('Something failed')).toBeNull();
+  expect(
+    within(screen.getByTestId('book-feedback-host', { includeHiddenElements: true })).queryByText(
+      'Something failed',
+      { includeHiddenElements: true },
+    ),
+  ).toBeNull();
 });
 
 it.each(['host', 'slot'] as const)('lets taps pass through success and info toasts in the %s but keeps error toasts tappable', location => {
