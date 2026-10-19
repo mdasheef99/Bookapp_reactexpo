@@ -1,6 +1,7 @@
 // SDD-07 FU-5a: lint is scoped to the book section only; the wider app is not linted yet.
 const { defineConfig } = require('eslint/config');
 const expoConfig = require('eslint-config-expo/flat');
+const { createBookSectionConfig, STRICT_FILES, RAW_VALUE_ALLOW_LIST } = require('./eslint-rules/book-section/config');
 
 const BOOK_SECTION = [
     'app/(tabs)/library/**/*.{ts,tsx}',
@@ -12,4 +13,5 @@ const BOOK_SECTION = [
 module.exports = defineConfig([
     ...expoConfig.map(config => ({ ...config, files: BOOK_SECTION })),
     { ignores: ['**/__tests__/**', '**/*.test.{ts,tsx}'] },
+    ...createBookSectionConfig({ files: BOOK_SECTION, strictFiles: STRICT_FILES, rawValueAllowFiles: RAW_VALUE_ALLOW_LIST }),
 ]);
