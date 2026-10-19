@@ -4,6 +4,8 @@ const edgePath = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.
 
 export default defineConfig({
   testDir: './e2e',
+  // library-a11y.spec.ts needs its own dev-server config and fixtures, so the default suite never runs it.
+  testIgnore: '**/library-a11y.spec.ts',
   timeout: 30_000,
   expect: {
     timeout: 10_000,

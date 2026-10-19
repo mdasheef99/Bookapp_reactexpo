@@ -33,7 +33,8 @@
     "validate:phase9:deployment-runtime": "node scripts/validate-phase9-deployment-runtime.js",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint:library": "eslint \"app/(tabs)/library\" src/components/library src/components/notes src/features/books/notes"
+    "lint:library": "eslint \"app/(tabs)/library\" src/components/library src/components/notes src/features/books/notes",
+    "e2e:library-a11y": "playwright test -c playwright.library-a11y.config.ts"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -86,6 +87,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@electric-sql/pglite": "^0.5.4",
     "@playwright/test": "^1.59.1",
     "@testing-library/react-native": "^13.3.3",
