@@ -87,7 +87,8 @@ function CoordinatedAddCandidateAction({
                 title={retry ? 'Retry add to inventory' : 'Add to inventory'}
                 onPress={() => { void onAdd(); }}
                 loading={pending}
-                disabled={disabled || isOffline || pending || outcome?.status === 'no_longer_eligible'}
+                disabled={disabled || isOffline || pending
+                    || (outcome?.status === 'no_longer_eligible' && outcome.code !== 'review_changed')}
                 accessibilityHint="Saves displayed review changes, revalidates authority, then creates one private inventory item."
             />
         </View>

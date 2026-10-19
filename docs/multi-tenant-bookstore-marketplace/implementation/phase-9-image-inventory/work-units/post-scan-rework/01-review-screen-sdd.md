@@ -290,7 +290,7 @@ loads (`ownerUxCandidateSchemas.ts` L63–82).
 
 | Card state | Edition line shows |
 |---|---|
-| An edition is chosen | "publisher · year · ISBN-13", leaving out missing parts. The year is the first four digits of `publishedDate`. ISBN-10 is used when there is no ISBN-13. |
+| An edition is chosen | "publisher · year · ISBN-13", leaving out missing parts. The year is the first stand-alone four-digit number in `publishedDate` ("April 1, 1999" gives 1999), and is left out when there is none (Owner, 2026-10-19, at slice 2 planning; live data showed dates like "April 1, 1999"). ISBN-10 is used when there is no ISBN-13. |
 | An edition is chosen but none of those parts exist | "Edition chosen" |
 | The lookup is pending | "Finding edition…" |
 | No edition is chosen | "No edition chosen" |

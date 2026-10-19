@@ -611,3 +611,46 @@ plus the in-app click-through and read-only SQL readback for AC17-2 to AC17-5.
   strict prompt: run exactly the listed commands, report raw pass/fail counts
   and failures verbatim, and change nothing. The orchestrating session checks
   the raw output itself before recording a result.
+- **Browser checks (Owner, 2026-10-19):** in-app and browser checks are test
+  runs, so a Haiku subagent runs them from a strict script: the exact card,
+  the clicks and typing, and what to report verbatim. If a step cannot be done
+  as written, Haiku stops and reports; it never improvises. The orchestrating
+  session starts the dev server and confirms the result from server state,
+  read only. It never signs in; the Owner does.
+- **Slice order (Owner, 2026-10-19, after slice 1):**
+  1. Codex implements red-first.
+  2. The orchestrating session reviews the diff, with a written trace for
+     each new outcome: what the server does, what the screen shows, and what
+     the Owner can do next.
+  3. The review loop runs when the slice is risky (see below).
+  4. Haiku runs the tests.
+  5. Haiku runs the browser check.
+  6. Documentation, validator and `git diff --check`.
+  7. Commit, push and PR, only when the Owner asks.
+- **Review loop, for risky slices:** a slice is risky when it touches save,
+  Add, retry or idempotency logic, server contracts, tenant or security rules,
+  or SQL. The orchestrating session decides this at slice start and says why.
+  UI-only or deletion slices with strong tests skip the loop.
+  1. Two read-only reviews run in parallel: OpenCode Go Space Bunny (max) and
+     Muse Spark 1.3 (xhigh).
+  2. The orchestrating session verifies every finding in the code and rejects,
+     with a reason, any that are wrong.
+  3. Codex `gpt-6.1-sol` (xhigh) makes bounded corrections for the confirmed
+     findings only, red-first.
+  4. Round 2 reviews only the correction diff. Confirmed findings get one last
+     bounded correction, by an OpenCode session the orchestrating session
+     chooses.
+  5. Stop. There is no third round; anything still open goes to the Owner.
+
+  Findings, verdicts and corrections are recorded in the slice's tracker
+  entry.
+- **Planning the browser check:** at slice start, the orchestrating session:
+  - picks the test cards and confirms their server state, read only;
+  - writes Haiku's script and shows it to the Owner before code is written.
+
+  If the scan session no longer has suitable cards, it asks the Owner for a
+  new scan.
+- **Owner decisions:** any change to an SDD's wording, an acceptance check,
+  the planned browser check, or a shared resource such as a dev-server port
+  goes to the Owner first, with a recommendation. The orchestrating session
+  does not decide these itself.

@@ -573,6 +573,22 @@ describe('card Ready badge uses the add-now rule', () => {
         expect(screen.queryByText('This book changed. Check it and press Add again.')).toBeNull();
     });
 
+    it('keeps Add enabled after review_changed and disabled after a version conflict', () => {
+        const card = reviewCard();
+        const props = { card, disabled: false, isOffline: false, pending: false, onAdd: jest.fn(),
+            outcome: { candidateId: card.candidateId, status: 'no_longer_eligible' as const,
+                stage: 'revalidate' as const, code: 'review_changed' } };
+        const screen = render(<AddCandidateToInventoryAction {...props} />);
+        expect(screen.getByText('Add to inventory')).not.toBeDisabled();
+        fireEvent.press(screen.getByText('Add to inventory'));
+        expect(props.onAdd).toHaveBeenCalledTimes(1);
+        screen.rerender(<AddCandidateToInventoryAction {...props}
+            outcome={{ ...props.outcome, code: 'P9_CANDIDATE_VERSION_CONFLICT' }} />);
+        expect(screen.getByText('Add to inventory')).toBeDisabled();
+        fireEvent.press(screen.getByText('Add to inventory'));
+        expect(props.onAdd).toHaveBeenCalledTimes(1);
+    });
+
     it('does not show Ready for a server-ready review that cannot be added', () => {
         const screen = renderCard(reviewCard({ allowedActions: ['view_metadata'] }));
 

@@ -496,3 +496,71 @@ Tracker/source-doc updates: SDD-1 §3 AC1-3; this section; TRACKER, SESSION-
   START, ACTIVE and DOC-13 handoffs. CODEBASE_MAP unchanged (no module added,
   moved or retired).
 Next authorized action and gate: see the handoff entry.
+
+## 18. Slice 1 review loop and process refinement, 2026-10-19
+
+The Owner added a review loop for risky slices. The orchestrator judged
+slice 1 risky, because it changes Add's retry and idempotency paths, and ran
+the loop before merge.
+
+**Round 1** (read-only; OpenCode Go Space Bunny max, Muse Spark 1.3 xhigh;
+both `approve_with_fixes`). The orchestrator checked every finding in code:
+
+| # | Finding | Verdict |
+|---|---|---|
+| Muse-1 | A refused re-save stayed frozen in `retries`. Because `draftMatchesCommand` skips the base-version check once a re-save is frozen, the next Add replayed the same refused request. | Confirmed, major (the reviewer said minor). Fixed (C1). |
+| Muse-2 | No test for a re-save refused with `P9_STATE_CONFLICT`. | Confirmed, minor. Test added (C2). |
+| SB-1 | "Press Add again" was shown, but Add was disabled for every `no_longer_eligible` outcome, and outcomes persist until the screen scope changes (`useInventoryCommitCoordinator.ts` L92–97). | Confirmed, major. Fixed (C3). |
+| SB-2 | Tighten `draftMatchesCommand` to require versions at or above the re-save's. | Rejected. It breaks the AC1-8 stale-card replay. The underlying risk is closed by C1, with a test. |
+| SB-3 | The AC1-7 fixture uses an edition choice, which the live server refuses at the first save (seen on Book 3). | Confirmed, minor. Manual variant added (C4). |
+
+**Corrections** (Codex `gpt-6.1-sol` xhigh, bounded, red-first):
+- C1: the `executeClaimed` catch block drops the retry on
+  `no_longer_eligible`.
+- C3: Add stays enabled for `review_changed` only.
+- C2 and C4: tests only.
+
+RED: 2 failed / 68 passed (the C1 and C3 tests). GREEN: 70/70; tsc clean.
+
+**Tests re-run by Haiku** on the corrected code, raw output checked by the
+orchestrator:
+- `tsc`: clean;
+- the 5 named suites: 122/122;
+- `src/features/imageInventory`: 75 passed / 1 skipped suites, 803 passed /
+  4 skipped tests, 0 failed.
+
+**Round 2** (Space Bunny max, correction diff only): the first run, Space Bunny max, hung with no output for about 1.5 hours and was stopped.
+Rerun with Muse Spark 1.3 xhigh, capped at 30 minutes: `approve`, no findings. It confirmed that C1 keeps
+every retryable state (still_pending, failed_retryable, bulk retry), that C3 re-enables Add only for
+review_changed, and that the new tests fail without the fixes. Loop closed after round 2.
+
+**Browser check:** not re-run after the corrections, by Owner decision
+("finish fast"). The fixes are covered by tests that failed first, and the
+§17 in-app check covers the happy paths.
+
+**Process refinement.** Approved by the Owner and written into SDD-0 §15:
+- the slice order;
+- a written trace for each new outcome in the orchestrator's review;
+- the review loop for risky slices only, with a stop after round 2;
+- Haiku runs browser checks from a script the Owner sees first;
+- changes to the SDD, an acceptance check, the planned check or a port go to
+  the Owner first.
+
+**Slice 2 planning decisions (Owner, 2026-10-19):**
+- Year rule: the edition line's year is the first stand-alone four-digit
+  number in `publishedDate`. SDD-1 §4 is corrected; live data has dates like
+  "April 1, 1999".
+- Haiku's browser script is approved, including adding Book 3.
+- The browser check runs on port 8081.
+- Test cards, from session 7a81bdb6:
+  - Book 3 (38674cf9): edition chosen;
+  - Book 5 (a5da3bc6): edition chosen;
+  - Book 6 (1f0d763f): no edition.
+
+Mutations: none in this step (no DB/Storage, migration, Edge, Render or
+deployment). The Supabase reads were read only.
+
+Active work unit: `post_scan_rework_slice2_declutter`. Exact next authorized action: the Owner merges
+PR #24 (slice 1). Slice 2 (SDD-1 §4) starts on the Owner's go-ahead of 2026-10-19 ("Finish fast + start
+slice 2"), on a branch from slice 1's tip, under the SDD-0 §15 process. It is a risky slice, so it gets the
+review loop. No migration.

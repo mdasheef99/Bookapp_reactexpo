@@ -217,6 +217,62 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
         expect(test.synchronizeIneligible).toHaveBeenCalledWith([item.card.candidateId]);
     });
 
+    it('starts a fresh command after a refused re-save', async () => {
+        const item = draft(1, { reviewReady: false, allowedActions: ['save_review'] });
+        const before = readyDetail(item.card.candidateId, { candidateVersion: 6,
+            metadata: { ...readyDetail(item.card.candidateId).metadata, revision: 8 },
+            readiness: { ...readyDetail(item.card.candidateId).readiness, reviewReady: false },
+        });
+        const current = readyDetail(item.card.candidateId, { candidateVersion: 7,
+            review: { value: review, reviewVersion: 4 },
+            metadata: { ...before.metadata, revision: 9 }, readiness: before.readiness,
+        });
+        const after = readyDetail(item.card.candidateId, { candidateVersion: 8,
+            review: { value: review, reviewVersion: 5 }, metadata: current.metadata });
+        const test = harness({
+            readCandidate: jest.fn().mockResolvedValueOnce(before)
+                .mockResolvedValueOnce(current).mockResolvedValue(after),
+            saveReview: jest.fn().mockRejectedValueOnce(
+                new OwnerUxClientError('P9_CANDIDATE_VERSION_CONFLICT', false, 'Changed'),
+            ).mockResolvedValue(after),
+        });
+        await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({
+            status: 'no_longer_eligible', stage: 'save', code: 'P9_CANDIDATE_VERSION_CONFLICT',
+        });
+        const refused = test.saveReview.mock.calls[0][0];
+        expect(test.commitCandidate).not.toHaveBeenCalled();
+        const refreshed = draft(1, { candidateVersion: 7, metadataRevision: 9, reviewVersion: 4,
+            reviewReady: false, allowedActions: ['save_review'] });
+        const outcome = await test.coordinator.addCandidate(refreshed);
+        const fresh = test.saveReview.mock.calls[1][0];
+        expect(fresh.idempotencyKey).not.toBe(refused.idempotencyKey);
+        expect(fresh.commandId).not.toBe(refused.commandId);
+        expect(fresh).toMatchObject({ review, expectedCandidateVersion: 7, expectedMetadataRevision: 9 });
+        expect(test.saveReview).toHaveBeenCalledTimes(2);
+        expect(test.readCandidate).toHaveBeenCalledTimes(3);
+        expect(test.readCandidate.mock.invocationCallOrder[1]).toBeLessThan(test.saveReview.mock.invocationCallOrder[1]);
+        expect(outcome.status).toBe('succeeded');
+        expect(test.commitCandidate).toHaveBeenCalledTimes(1);
+        expect(test.commitCandidate).toHaveBeenCalledWith(expect.objectContaining({
+            expectedCandidateVersion: 8, expectedReviewVersion: 5, expectedMetadataRevision: 9,
+        }));
+        await test.coordinator.addCandidate(refreshed);
+        expect(test.commitCandidate).toHaveBeenCalledTimes(1);
+    });
+
+    it('stops before commit when the forced re-save hits server blockers', async () => {
+        const item = draft(1, { reviewReady: false, allowedActions: ['save_review'] });
+        const test = harness({ saveReview: jest.fn().mockRejectedValue(
+            new OwnerUxClientError('P9_STATE_CONFLICT', false, 'Blocked'),
+        ) });
+        await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({
+            status: 'no_longer_eligible', stage: 'save', code: 'P9_STATE_CONFLICT',
+        });
+        expect(test.saveReview).toHaveBeenCalledTimes(1);
+        expect(test.commitCandidate).not.toHaveBeenCalled();
+        expect(test.synchronizeIneligible).toHaveBeenCalledWith([item.card.candidateId]);
+    });
+
     it('forced re-save uses the reread review and passes the controlled-choice check', async () => {
         for (const mode of ['selected', 'edition_option'] as const) {
             const seen = { ...review, metadataChoice: { mode, selectionId: testUuid(77) } };
@@ -260,8 +316,8 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
         }
     });
 
-    it("re-saves once when the command's own save reset readiness", async () => {
-        const seen = { ...review, metadataChoice: { mode: 'edition_option' as const, selectionId: testUuid(77) } };
+    it.each(['edition_option', 'manual'] as const)("re-saves once when the command's own save reset readiness (%s)", async (mode) => {
+        const seen = { ...review, metadataChoice: { mode, selectionId: mode === 'manual' ? null : testUuid(77) } };
         const item = { ...draft(1, { review: seen }), edits: { originalTitle: 'Owner title' } };
         const manual = { ...review, originalTitle: 'Owner title' };
         const reset = readyDetail(item.card.candidateId, { candidateVersion: 5,

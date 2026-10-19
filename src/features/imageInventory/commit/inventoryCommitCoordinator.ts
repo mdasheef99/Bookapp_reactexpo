@@ -332,11 +332,13 @@ export class InventoryCommitCoordinator {
                 command, ambiguousCommit: false,
             };
             retry.ambiguousCommit = stage === 'commit' && outcome.status === 'still_pending';
-            this.retries.set(command.candidateId, retry);
             if (outcome.status === 'no_longer_eligible') {
+                this.retries.delete(command.candidateId);
                 // Authoritative server conflict/non-retryable rejection:
                 // reconcile candidate/review/readiness authority immediately.
                 await this.dependencies.synchronizeIneligible([command.candidateId]);
+            } else {
+                this.retries.set(command.candidateId, retry);
             }
             return outcome;
         } finally {
