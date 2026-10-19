@@ -1,5 +1,34 @@
 # Library Tracker
 
+**SDD-07 Flow A (real Book Details build) BUILT, REVIEWED, FIXED and ACCEPTED on `sdd07/flow-a` — 2026-10-20:** `library_sdd07_flow_a_accepted_uncommitted`. Worktree `Bookconnect4_flowa`, off `sdd07/wave3` (`f568288`, pushed). **Nothing staged, committed or pushed**; `.spec/` (briefs, reports, triage, cascade evidence) is untracked and is never committed. Full record: SDD-07 §10.8, decisions D07-16 and D07-17.
+- **What the owner would notice:**
+  - Book Details is the finalized FA-P1 design on real data: a Back-only header, cover and title, a three-option status control, "Your notes" passages, one Add note, plain inline-expanding rows, and a quiet Remove.
+  - "Finished" replaces "Completed" everywhere.
+  - The lending switch, the home "lendable" tag and the quick-look Lending row are gone.
+  - Ownership and condition show true labels.
+  - Offline disables every write.
+  - Load errors say offline, not found or server.
+  - The only success toast is "Review saved!".
+  - Row summaries wrap to two lines at narrow widths.
+- **Built:** three Codex `gpt-6.1-sol` xhigh briefs (A, B, C), each verified by the lead. Then two parallel independent read-only reviews (Gemini 4 Argon, DeepSeek v4.1; both "PASS WITH FINDINGS"; fingerprint unchanged). Ten confirmed findings R1–R10 were fixed in one Codex round, and the lead made the D07-17 change. Mutation checks: brief C 12/12, fix round 17/17, D07-17 1/1 killed.
+- **Delete cascade:** read-only Supabase catalog check on project `ahntbtktjjmvfosgkmgn` (owner approved). The D07-14 copy is true. Exchange-listing residual: such a book can't be removed and the raw error shows. The owner left this out of Flow A.
+- **Verification (lead, final tree):**
+  - Jest (library, notes, books, `src/test-utils`, `eslint-rules`, ratchet included) 65 suites / 1210 tests pass.
+  - Scoped `tsc` 0; whole-repo `tsc` 36 (= baseline).
+  - `lint:library` 329 (465 before): 1 pre-existing `LibraryHeader` error, 328 warnings. Ratchet 298 / 2 / 0; 13 `STRICT_FILES`.
+  - axe 27/27 against the unchanged baseline, after the Book Details wait moved to "Your notes". Not re-run after D07-17.
+  - Docs: Phase 9 continuity validator PASS (76 Markdown files, 55 required); `git diff --check` on library docs PASS.
+  - Real-data web check on 8083 (real `.env`, owner logged in, Haiku): all listed items pass, on *Animal Farm* only, and every write was restored (details in SDD-07 §10.8). Quick look skipped (no long-press); rating, condition and offline are Jest-only. The 320 px / 200% recheck after D07-17 passes.
+- **Mutations:** no migrations. No database writes except the owner-allowed status, ownership, review and privacy test edits on *Animal Farm*, restored and re-read. One read-only catalog query.
+- **Residual:**
+  - exchange-listing delete copy;
+  - axe `image-alt` on the home list;
+  - tab bar labels truncated at 320 px (TB-1);
+  - no native device or screen-reader run for Flow A;
+  - `toggleLendingAvailability` has no caller;
+  - the real `.env` is still in `Bookconnect4_flowa` and the dev server on 8083 is still running (kept open on the owner's request; delete and stop after acceptance).
+- **Next exact action:** the owner approves (or not) the Flow A commit on `sdd07/flow-a`, including deleting `src/prototypes/flowA/**` and `dev-flow-a.tsx`, plus the matching docs commit in `Bookconnect4_library`. Push only on separate approval.
+
 **SDD-07 whole-foundation review, Android emulator check and fix round on `sdd07/wave3` — 2026-10-19:** `library_sdd07_foundation_reviewed_fixes_committed_not_pushed`. Fixes committed as `f568288` on `sdd07/wave3` (owner approved). Nothing pushed.
 - **Review** (owner asked for Muse + space-bunny, read-only, brief `.spec/REVIEW-FOUNDATION.md`, scope `git diff db715d3^..48250cc -- . ':!docs'`, 97 files): space-bunny failed twice with an opencode server error; Muse Spark 1.3 xhigh "SAFE WITH FIXES" (13 findings); Codex `gpt-6.1-sol` xhigh ran as the replacement second reviewer, "SAFE WITH FIXES" (4 findings). Worktree fingerprint unchanged after every run. **No SDD-07 regression confirmed.**
 - **Lead verdicts:** rejected Muse F1 (toasts lost in hidden modals: RN and RN-web Modals render `null` when not visible, so slots never register), F2 web part (RN-web `ModalFocusTrap` focuses and restores), F5 (toast region is a polite live region on Android/web; iOS uses `announceForAccessibility`), F6/F7/F8 (documented rule/ratchet limits), F13 (`tsc` catches the `@ts-expect-error`). Pre-existing, moved to the Flow A list: Muse F3 (condition/ownership/rating buttons lack roles/state), F4 (44 px targets in search/manual entry/pickers), F10 (manual-entry hard-coded scrim, `bgCard`/`border` tokens). Accepted low, not fixed: F11 (palette tests overclaim), F12 (rating phrasing gaps). **Confirmed and fixed (4):** (1) Codex F4: the toast live region intercepted taps for 4 s over the screen top; (2) Codex F2/Muse F9: `home-error` scan swallowed its readiness check, `home-empty` checked only the title; (3) Codex F3: ratchet dropped fatal parse diagnostics; (4) Codex F1/Muse F9: fixture routed only `https`, and `unhandledReads` was never asserted.

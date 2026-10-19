@@ -181,14 +181,16 @@ Each design keeps an agreed, unused location so later features do not need anoth
 | D07-05 | Discard wording | **Approved:** "Discard note" for new notes, "Discard changes" for edits. | Already built this way (`note-compose.tsx:91-92`; SDD-06 records it). Flow B keeps it. Option B B12 still says "decision pending", but Option B is reference-only and is not edited (D07-07). |
 | D07-06 | Lint/axe dev dependencies | **Approved in principle.** | The foundation plan lists exact packages and versions; the owner confirms that list before anything is installed. |
 | D07-07 | How design directions are made | **Expo web prototypes on the real tokens** (what is approved is close to what ships). Stitch only for optional quick exploration, in a **new** Stitch project, never editing Option B (it stays a reference). | Any Stitch generation needs separate owner approval. |
-| D07-08 | Ownership "Lent out" | **Keep it as a plain ownership fact with a proper label ("Lent out")**, no lending features. Not hidden, since real rows have that value. | Flow D fixes the raw enum at `LibraryBookList.tsx:47`; `OwnershipSelector` keeps `lent_out`. Applying "no lending features": flows A/D plan to remove the live lending leftovers — the Book Details "Available for Lending" switch, the home-card lending tag and the quick-look "Lending" row (§4.2 #8). The `available_for_lending` column is left as is (no migration). **Owner to confirm at flow A design review.** |
-| D07-09 | Flow A direction | **A1 Shelf card, using A2's unboxed serif note passages** instead of A1's boxed note cards. Fixes carried in: status segments 48px tall; "Remove from library" with a 48px target; exact token inks (no near-token literals); the muted no-cover placeholder (`coverPlaceholder`/`coverPlaceholderInk`) when a book has no cover. Owner's words (2026-10-18, relayed by the orchestrating session): "Go with A1 Shelf card, using A2's unboxed serif note passages, and amend DP-01 to count controls only down to the primary action. Build it as the Expo web prototype." | Built first as the fixture-only prototype [FA-P1](./SDD-07-FLOW-A-PROTOTYPE.md); the owner reviews it before the real Flow A build. Evidence: [Flow A directions](./evidence/flow-a-directions-2026-10-18/README.md). Still open from D07-08: the owner's confirmation that the live "Available for Lending" switch is removed in the real build (the prototype simply does not show it). |
+| D07-08 | Ownership "Lent out" | **Keep it as a plain ownership fact with a proper label ("Lent out")**, no lending features. Not hidden, since real rows have that value. | Flow D fixes the raw enum at `LibraryBookList.tsx:47`; `OwnershipSelector` keeps `lent_out`. Applying "no lending features": flows A/D plan to remove the live lending leftovers — the Book Details "Available for Lending" switch, the home-card lending tag and the quick-look "Lending" row (§4.2 #8). The `available_for_lending` column is left as is (no migration). **Confirmed by the owner for the Flow A build (2026-10-20)** and built on `sdd07/flow-a`: the switch, the home "lendable" tag and the quick-look Lending row are gone; `booksService.toggleLendingAvailability` stays with no caller. |
+| D07-09 | Flow A direction | **A1 Shelf card, using A2's unboxed serif note passages** instead of A1's boxed note cards. Fixes carried in: status segments 48px tall; "Remove from library" with a 48px target; exact token inks (no near-token literals); the muted no-cover placeholder (`coverPlaceholder`/`coverPlaceholderInk`) when a book has no cover. Owner's words (2026-10-18, relayed by the orchestrating session): "Go with A1 Shelf card, using A2's unboxed serif note passages, and amend DP-01 to count controls only down to the primary action. Build it as the Expo web prototype." | Built first as the fixture-only prototype [FA-P1](./SDD-07-FLOW-A-PROTOTYPE.md); the owner reviews it before the real Flow A build. Evidence: [Flow A directions](./evidence/flow-a-directions-2026-10-18/README.md). D07-08's lending removal was confirmed on 2026-10-20 and is built (see D07-08). |
 | D07-10 | DP-01 on short pages | **DP-01 amended:** count focusable controls only down to and including the primary action. Collapsed secondary rows after it may enter the fold on short pages if visually secondary (plain rows, no fills, no counts in containers). | Same owner's words as D07-09. Option 2 of the Flow A README §3. §3 DP-01 updated; FA-P1 tests count controls in document order up to the primary. |
 | D07-11 | Who finalizes the Flow A design | **Delegated by the owner to the orchestrating session.** Owner's words (2026-10-18): "ok look i leave it to your judgement ... please ensure you have understood the essence of the philosophy and proceed and finalyze the design". The orchestrator (Opus) made the round 2–4 calls in §10 against the essence checklist (Appendix A) and verified each one. | The Flow A design is **FINALIZED** (§10). The real build still needs its own approval and acceptance (§8). |
 | D07-12 | Daylight `controlBorder` value | **Deviation from the approved FU-1a swatch:** daylight `controlBorder` `#948669` → `#8a7c60`. The selected status segment's only boundary was 2.86:1 against `bgSecondary` (fails WCAG 1.4.11); it is now 3.28:1 against `bgSecondary` and 4.02:1 against `bgCard`. Golden and midnight are unchanged. | Made under D07-11 for WCAG 1.4.11. `controlBorder`/`bgSecondary` is added to `BOOK_TOKEN_PAIRS`. Recorded so the swatch table is not taken as the final value. |
 | D07-13 | Reading status wording | **"Want to read / Reading / Finished"** (the round 4 review asked for "Completed"; rejected). | **The real build renames "Completed" to "Finished" app-wide** (Book Details, home filters, search, `StatusSelector`) so one word names one state (K3). Display copy only; the `completed` value is unchanged. |
-| D07-14 | Remove-from-library wording | The dialog names the book. Body: "Your notes, review and saved pages for this book will be deleted too. You can't undo this." Button: "Remove book". Remove is disabled offline. | The cascade was verified earlier in the database (read-only). The real build keeps this copy unless the cascade changes. |
+| D07-14 | Remove-from-library wording | The dialog names the book. Body: "Your notes, review and saved pages for this book will be deleted too. You can't undo this." Button: "Remove book". Remove is disabled offline. | The cascade was verified earlier in the database (read-only) and re-verified read-only on 2026-10-20 for the Flow A build (`reading_notes` and `user_book_pages` cascade; no delete triggers). The real build keeps this copy unless the cascade changes. **Residual:** a book with an exchange listing (`listings_user_book_id_fkey`, NO ACTION) cannot be removed; nothing is deleted and the raw error message is shown. The owner left friendlier copy out of Flow A (2026-10-20); exchange is outside library scope. |
 | D07-15 | 9px overflow at 200% zoom, 390 px | **Assigned to the tab-bar unit (D07-01).** The overflow is the global tab bar: page `scrollWidth` 399 → 390 with the tab bar hidden. | Not a Flow A defect. Evidence: `round3/overflow/overflow-results.json`. **Closed on `sdd07/tab-bar` (TB-1, uncommitted, 2026-10-19):** `scrollWidth` 390 at zoom 2 on library home and Book Details ([evidence](./evidence/tb1-tab-bar-2026-10-18/README.md)). Final once TB-1 is committed. |
+| D07-16 | Flow A real-build rules (2026-10-20) | **Owner decisions for the build:** lending removed (D07-08); rows expand inline (no sheets); collapsing the review row never loses typed text; ownership shows its true label ("Lent out", not an enum); offline disables every write (status, review, privacy, rating, ownership, condition, Add note, Remove, delete saved page); load errors are classified (offline / not found / server, via `classifyBookLoadError`); `DeleteBookModal` reworked to D07-14; Back-only header; no success toasts except "Review saved!"; the lint ratchet must end at or below 298 / 2 / 0. | Built on `sdd07/flow-a` (§10.8). |
+| D07-17 | Row summaries at 320 px | **Lead decision under D07-11:** a `DetailRow` summary wraps to at most two lines (`ROW_SUMMARY_LINES = 2`) instead of one, after real data at 320 px cut "Owned · New" to an ellipsis. | Re-checked at 320 px and 200% text on real data: full text, no horizontal scroll. |
 
 ### 9.1 Original questions (kept for traceability)
 
@@ -203,8 +205,8 @@ Each design keeps an agreed, unused location so later features do not need anoth
 
 ## 10. Flow A — finalized design (FA-P1 rounds 2–4)
 
-**Status:** FINALIZED 2026-10-18 under D07-11. The design is the FA-P1 fixture prototype, not yet the shipped screen.
-**Where it lives:** worktree `Bookconnect4_fu1a`, branch `sdd07/fu1a-fu3`, **uncommitted**:
+**Status:** FINALIZED 2026-10-18 under D07-11. The design was the FA-P1 fixture prototype; the real screen is built on `sdd07/flow-a` (§10.8).
+**Where it lives:** committed `17ad84f` on `sdd07/fu1a-fu3` (carried into `sdd07/wave3`); the Flow A commit deletes the prototype files:
 - `app/(tabs)/library/dev-flow-a.tsx`
 - `src/prototypes/flowA/**`
 - the FU-1a + FU-3 token changes in `src/components/library/LibraryAppearance.ts` and its test.
@@ -286,7 +288,7 @@ Gemini 4 Argon, read-only: "Ready to finalize: YES", findings none ([`reviews/fi
 
 **Residual risk:**
 - The 200%-zoom overflow now belongs to the tab-bar unit (D07-01).
-- The axe scan was not run (FU-5 tools not installed).
+- The axe scan was not run (FU-5 tools not installed). *Closed 2026-10-20: 27/27 in the Flow A build (§10.8).*
 - Native TalkBack/VoiceOver not tested.
 - No real-user test.
 - Round 4 not re-captured in a browser.
@@ -296,6 +298,37 @@ Gemini 4 Argon, read-only: "Ready to finalize: YES", findings none ([`reviews/fi
 - keeps the review blur-save fixes;
 - applies D07-13 (rename "Completed" to "Finished" app-wide);
 - has the owner confirm D07-08's lending-switch removal.
+
+**Superseded 2026-10-20:** the prototype was committed (`17ad84f`) and the real Flow A build is done on `sdd07/flow-a`; see §10.8.
+
+### 10.8 Real Flow A build (2026-10-20)
+
+**Status:** BUILT, REVIEWED, FIXED and ACCEPTED in worktree `Bookconnect4_flowa`, branch `sdd07/flow-a` off `sdd07/wave3` (`f568288`). **Uncommitted**; the commit waits for owner approval and will also delete `src/prototypes/flowA/**` and `app/(tabs)/library/dev-flow-a.tsx`. Rules: D07-16, D07-17.
+**Scope:** `app/(tabs)/library/[bookId].tsx` and its direct children, on real data, to the §10.1 design. New `src/components/library/bookDetails/` (`BookCover`, `NotePassages`, `DetailRow`, `ChoiceRadioGroup`, `classifyBookLoadError`, `bookDetailsTokens`) and `src/features/books/utils/libraryLabels.ts`; reworked `StatusSelector`, `OwnershipSelector`, `ConditionPicker`, `RatingInput` (radio groups with names, roving focus and arrow keys), `VaultPagesList`, `DeleteBookModal`; `BookScreenHeader` gained a Back-only form. "Completed" → "Finished" app-wide (D07-13). Lending removed (D07-08). 13 files moved to lint `STRICT_FILES`; ratchet 429 / 4 / 0 → **298 / 2 / 0**.
+**How it was built:** three briefs (A: top of screen, states and status; B: rows, saved pages, Remove dialog; C: choice controls, labels, home/quick-look, strict lint) by Codex `gpt-6.1-sol` xhigh, each verified by the lead (diff read, Jest, `tsc`, lint, mutation checks: brief C 12/12, fix round 17/17 mutants killed).
+**Review:** two independent full-scope read-only reviews in parallel, Gemini 4 Argon and DeepSeek v4.1 (owner's choice), both "PASS WITH FINDINGS"; worktree fingerprint unchanged. Ten confirmed findings R1–R10, all fixed in one Codex round: status flashed back after save; review blur saved while offline; Community reviews hid loaded data on a failed refetch and showed "None yet" offline; Remove/delete-page dialogs stayed actionable when going offline mid-dialog; privacy label used the caption style; `busy` not reaching the web DOM (`aria-busy`); `StatusSelector` lost its tab stop for an unknown value; initials empty for an all-stop-word title; Back/Escape closed the dialog mid-delete; inline error lines not announced (live regions). Two sub-claims rejected with reasons.
+**Delete cascade** (read-only Supabase catalog check, project `ahntbtktjjmvfosgkmgn`, 2026-10-20): D07-14 copy is true; exchange-listing residual recorded at D07-14.
+
+**Verification (lead):**
+- Jest (library, notes, books, `src/test-utils`, `eslint-rules`): 65 suites / 1210 tests pass. Scoped `tsc` 0; whole-repo `tsc` 36 (= baseline); `lint:library` 329 problems (was 465): 1 error, which is the pre-existing `react/no-unescaped-entities` in `LibraryHeader.tsx`, and 328 warnings; no `book-section` errors. Ratchet test passes at 298 / 2 / 0.
+- axe (`npm run e2e:library-a11y`, fixture data, 0 writes): 27/27 against the unchanged baseline, after updating the Book Details wait to the new "Your notes" heading. Not re-run after the D07-17 two-line change (Jest + browser check only).
+- Real-data browser check (Expo web on 8083 with the real `.env`, owner logged in; Haiku drove a checklist on one owner-allowed book, *Animal Farm*). PASS:
+  - home: true ownership labels, no "lendable", a "Finished" chip;
+  - Book Details in all three phases at 390 px, daylight at 320/430 px and at 200% text: Back-only header, no horizontal scroll, cover/title, a three-option status radio group (stacked at 320 and 200%), one primary, the rows, Remove;
+  - writes, each restored: status, ownership (Condition hides for Borrowed), review typed → collapse → "Review saved!" → text kept → cleared, privacy toggle;
+  - Remove dialog copy, then Cancel only.
+
+  SKIPPED: quick look (no long-press in the browser tools; Jest covers it). Not driven on real data: rating, condition, offline (Jest covers them). Golden phase looked close to daylight in screenshots (expected from the tokens, `#fbf2e4` vs `#faf6ee`). The 320 px ellipsis it flagged led to D07-17; the recheck at 320 px and 200% text shows the full "Owned · New" with no horizontal scroll.
+- Database/storage: no migrations. The only writes were those owner-allowed test edits on *Animal Farm* (status, ownership, review, privacy), all restored to the original values and re-read afterwards.
+
+**Residual risk:**
+- Exchange-listing delete shows the raw error (D07-14).
+- Axe `image-alt` ×1 on the home list (outside Flow A, still in the baseline).
+- Tab bar truncated labels at 320 px (TB-1, D07-01).
+- Native TalkBack/VoiceOver and Android/iOS devices not tested for the Flow A build.
+- `booksService.toggleLendingAvailability` has no caller.
+
+**Next authorized action:** the owner approves (or not) the Flow A commit on `sdd07/flow-a` (code in `Bookconnect4_flowa`, docs in `Bookconnect4_library`, prototype deleted, never `.spec/`). Push only on separate approval.
 
 ## Appendix A — Essence checklist (used for every Flow A review)
 
