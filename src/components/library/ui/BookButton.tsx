@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { LIBRARY_RADIUS, LIBRARY_SPACING, MIN_TARGET, useLibraryAppearance } from '@/components/library/LibraryAppearance';
 
@@ -11,9 +11,10 @@ export interface BookButtonProps {
   onPress: () => void;
   disabled?: boolean;
   testID?: string;
+  ref?: React.Ref<View>;
 }
 
-export function BookButton({ label, variant, onPress, disabled = false, testID }: BookButtonProps) {
+export function BookButton({ label, variant, onPress, disabled = false, testID, ref }: BookButtonProps) {
   const colors = useLibraryAppearance();
   const variants = {
     primary: { backgroundColor: colors.accent, borderColor: colors.controlBorder, color: colors.textOnAccent },
@@ -23,7 +24,7 @@ export function BookButton({ label, variant, onPress, disabled = false, testID }
   };
   const { color, ...surface } = variants[variant];
 
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }}
+  return <Pressable ref={ref} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }}
     disabled={disabled} onPress={onPress} testID={testID}
     style={({ pressed }) => [styles.button, surface, { opacity: disabled ? 0.55 : pressed ? 0.8 : 1 }]}>
     <Text style={[styles.label, { color }]}>{label}</Text>

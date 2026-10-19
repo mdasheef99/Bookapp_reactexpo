@@ -3,6 +3,7 @@ import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'reac
 import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import BookDetailScreen from '../[bookId]';
+import { BookFeedbackProvider } from '@/components/library/ui/BookFeedback';
 import { booksService } from '@/features/books/services/booksService';
 import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -17,6 +18,11 @@ let requests: Array<{ patch: Record<string, unknown>; headers: Headers; signal?:
 let gates: ReturnType<typeof deferred>[];
 let returnedRow: unknown;
 const mockBack = jest.fn(); const mockPush = jest.fn(); const mockReplace = jest.fn();
+const mockFeedback = { notify: jest.fn(), confirm: jest.fn() };
+jest.mock('@/components/library/ui/BookFeedback', () => ({
+    ...jest.requireActual('@/components/library/ui/BookFeedback'),
+    useBookFeedback: () => mockFeedback,
+}));
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({ bookId: mockEntryId }), useRouter: () => ({ back: mockBack, push: mockPush, replace: mockReplace, canGoBack: () => true }) }));
@@ -59,7 +65,7 @@ function actor(id: string | null, token = 'token-' + id) {
     useAuthStore.setState({ session: id ? { user: { id }, access_token: token } as any : null, status: id ? 'authenticated' : 'unauthenticated' });
 }
 async function screen(review = true) {
-    const ui = render(<QueryClientProvider client={client}><BookDetailScreen /></QueryClientProvider>);
+    const ui = render(<QueryClientProvider client={client}><BookFeedbackProvider><BookDetailScreen /></BookFeedbackProvider></QueryClientProvider>);
     await ui.findByText('Fixture book');
     if (review) { fireEvent.press(ui.getByRole('button', { name: 'My review' })); await ui.findByTestId('library-review-input'); }
     return ui;
@@ -69,6 +75,7 @@ async function settled() {
     await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
 }
 beforeEach(() => {
+    mockFeedback.notify.mockReset(); mockFeedback.confirm.mockReset();
     jest.clearAllMocks(); mockEntryId = 'entry'; requests = []; gates = []; returnedRow = undefined;
     actor('reader');
     client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: Infinity } } });
@@ -113,7 +120,8 @@ it('confirms a text save exactly once when a later privacy action supersedes its
     await act(async () => second.resolve()); await settled();
     expect(requests.map(request => request.patch)).toEqual([{ review: 'Saved text' }, { review_is_public: false }]);
     expect(mockBook).toMatchObject({ review: 'Saved text', review_is_public: false });
-    expect(Alert.alert).toHaveBeenCalledTimes(1); expect(Alert.alert).toHaveBeenCalledWith('Success', 'Review saved!');
+    expect(mockFeedback.notify).toHaveBeenCalledTimes(1); expect(mockFeedback.notify).toHaveBeenCalledWith({ kind: 'success', message: 'Review saved!' });
+    expect(Alert.alert).not.toHaveBeenCalled();
 });
 
 it('keeps confirmed Public feedback while a visibility change is pending or rejected', async () => {
@@ -123,7 +131,7 @@ it('keeps confirmed Public feedback while a visibility change is pending or reje
     expect(ui.getByText('Public Review')).toBeOnTheScreen();
     await act(async () => gate.reject(new Error('Visibility rejected'))); await settled();
     expect(ui.getByText('Public Review')).toBeOnTheScreen();
-    expect(Alert.alert).toHaveBeenCalledWith('Error', expect.stringContaining('Visibility rejected'));
+    expect(mockFeedback.notify).toHaveBeenCalledWith({ kind: 'error', message: expect.stringContaining('Visibility rejected') });
 });
 
 it.each([true, false])('preserves confirmed privacy after reopening and a later text write; first success=%s', async success => {
@@ -197,7 +205,7 @@ it.each(['switch', 'logout', 'leave-and-return'])('fences queued dispatch and la
     await act(async () => gate.resolve()); await settled();
     expect(requests).toHaveLength(1);
     expect(client.getQueryData<any>(['book', 'reader', 'entry'])).toMatchObject({ review: 'Confirmed review', review_is_public: true });
-    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(mockFeedback.notify).not.toHaveBeenCalled(); expect(Alert.alert).not.toHaveBeenCalled();
 });
 
 it('pins the dispatch token and aborts the request on identity loss', async () => {
@@ -212,7 +220,7 @@ it('pins the dispatch token and aborts the request on identity loss', async () =
 it.each([null, { id: 'foreign', user_id: 'reader', rating: 2, review: 'Wrong row', review_is_public: false },
     { id: 'entry', user_id: 'foreign', rating: 2, review: 'Wrong owner', review_is_public: false }])('does not confirm an absent or wrong affected row: %j', async row => {
     returnedRow = row; const ui = await screen(); fireEvent.press(ui.getByTestId('library-review-privacy-toggle')); await settled();
-    expect(Alert.alert).toHaveBeenCalledWith('Error', expect.any(String));
+    expect(mockFeedback.notify).toHaveBeenCalledWith({ kind: 'error', message: expect.any(String) });
     expect(ui.getByText('Public Review')).toBeOnTheScreen();
     expect(client.getQueryData<any>(['book', 'reader', 'entry']).review_is_public).toBe(true);
 });
@@ -237,7 +245,7 @@ it('rechecks identity after cancellation before adopting a returned row', async 
     actor('other-reader');
     await act(async () => cancellation.resolve()); await settled();
     expect(client.getQueryData<any>(['book', 'reader', 'entry']).review_is_public).toBe(true);
-    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(mockFeedback.notify).not.toHaveBeenCalled(); expect(Alert.alert).not.toHaveBeenCalled();
 });
 
 it('isolates another book from pending text and busy state', async () => {
@@ -355,7 +363,7 @@ it('reconciliation: transport errors do not confirm', async () => {
 
 it('reconciliation: two mounted instances preserve a newer local draft and share busy', async () => {
     const one = deferred(); gates.push(one);
-    const both = render(<QueryClientProvider client={client}><View testID="first"><BookDetailScreen /></View><View testID="second"><BookDetailScreen /></View></QueryClientProvider>);
+    const both = render(<QueryClientProvider client={client}><BookFeedbackProvider><View testID="first"><BookDetailScreen /></View><View testID="second"><BookDetailScreen /></View></BookFeedbackProvider></QueryClientProvider>);
     const first = within(both.getByTestId('first')); const second = within(both.getByTestId('second'));
     await first.findByText('Fixture book'); await second.findByText('Fixture book');
     fireEvent.press(first.getByRole('button', {name:'My review'})); fireEvent.press(second.getByRole('button', {name:'My review'}));
@@ -398,14 +406,14 @@ it('reconciliation: untouched blur cannot overwrite a cache update before rerend
     const ui = await screen(); fireEvent.changeText(ui.getByTestId('library-review-input'),'Saved B');
     fireEvent(ui.getByTestId('library-review-input'),'blur'); await settled();
     expect(ui.getByTestId('library-review-input').props.value).toBe('Saved B'); expect(ui.queryByText(/unsaved/i)).toBeNull();
-    (Alert.alert as jest.Mock).mockClear();
+    mockFeedback.notify.mockClear(); (Alert.alert as jest.Mock).mockClear();
     mockBook = {...mockBook,review:'Later server C'};
     client.setQueryData(['book','reader','entry'], mockBook);
     expect(ui.getByTestId('library-review-input').props.value).toBe('Saved B');
     fireEvent(ui.getByTestId('library-review-input'),'blur'); await settled();
     expect(requests.map(request => request.patch)).toEqual([{ review: 'Saved B' }]);
     expect(mockBook.review).toBe('Later server C');
-    expect(client.getQueryData<any>(['book','reader','entry']).review).toBe('Later server C'); expect(Alert.alert).not.toHaveBeenCalled();
+    expect(client.getQueryData<any>(['book','reader','entry']).review).toBe('Later server C'); expect(mockFeedback.notify).not.toHaveBeenCalled(); expect(Alert.alert).not.toHaveBeenCalled();
 });
 
 it.each(['switch','return'])('reconciliation: mounted editor never inherits old-generation pending text after %s', async transition => {
@@ -429,7 +437,7 @@ it('reconciliation: same mounted screen isolates a changed book identity from ol
     fireEvent.changeText(ui.getByTestId('library-review-input'),'Old book pending'); fireEvent(ui.getByTestId('library-review-input'),'blur');
     await waitFor(() => expect(requests).toHaveLength(1));
     mockEntryId='other-entry'; mockBook={...mockBook,id:mockEntryId,book_id:'other-catalogue',review:'Other book confirmed'};
-    ui.rerender(<QueryClientProvider client={client}><BookDetailScreen /></QueryClientProvider>);
+    ui.rerender(<QueryClientProvider client={client}><BookFeedbackProvider><BookDetailScreen /></BookFeedbackProvider></QueryClientProvider>);
     await ui.findByRole('button',{name:'My review'});
     if(!ui.queryByTestId('library-review-input')) fireEvent.press(ui.getByRole('button',{name:'My review'}));
     await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Other book confirmed'));
@@ -442,12 +450,12 @@ it('reconciliation: consumed history cannot clear a dirty draft after revisiting
     fireEvent(ui.getByTestId('library-review-input'), 'blur'); await settled();
     const savedBook = mockBook;
     mockEntryId = 'other-entry'; mockBook = { ...mockBook, id: mockEntryId, book_id: 'other-catalogue', review: 'Other book review' };
-    ui.rerender(<QueryClientProvider client={client}><BookDetailScreen /></QueryClientProvider>);
+    ui.rerender(<QueryClientProvider client={client}><BookFeedbackProvider><BookDetailScreen /></BookFeedbackProvider></QueryClientProvider>);
     await ui.findByRole('button', { name: 'My review' });
     if (!ui.queryByTestId('library-review-input')) fireEvent.press(ui.getByRole('button', { name: 'My review' }));
     await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Other book review'));
     mockEntryId = 'entry'; mockBook = savedBook;
-    ui.rerender(<QueryClientProvider client={client}><BookDetailScreen /></QueryClientProvider>);
+    ui.rerender(<QueryClientProvider client={client}><BookFeedbackProvider><BookDetailScreen /></BookFeedbackProvider></QueryClientProvider>);
     await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Saved B'));
     fireEvent.changeText(ui.getByTestId('library-review-input'), 'New dirty C');
     mockBook = { ...mockBook, review: 'Later server D' };

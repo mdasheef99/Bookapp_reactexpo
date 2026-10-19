@@ -9,6 +9,7 @@ import NoteReaderScreen from '../../../../app/(tabs)/library/note';
 import NotesScreen from '../../../../app/(tabs)/library/notes';
 import BookDetailScreen from '../../../../app/(tabs)/library/[bookId]';
 import { VaultPagesList } from '@/components/library/VaultPagesList';
+import { BookFeedbackProvider } from '@/components/library/ui/BookFeedback';
 import { createManualNoteSaveAdapter, createManualNoteDeleteAdapter, manualNoteDeleteAdapter, MANUAL_NOTE_WRITE_GATES, manualNotesGateway, manualNoteSaveAdapter, noteSaves } from '@/features/books/notes/manualNotesGateway';
 import * as noteGatewayModule from '@/features/books/notes/manualNotesGateway';
 import { ManualNote, NoteSubmission, NoteWriteError, noteKeys } from '@/features/books/notes/manualNoteContract';
@@ -65,7 +66,7 @@ const original: ManualNote = { id: 'note', user_id: 'actor', user_book_id: 'book
 const page = { id: 'page', user_id: 'actor', user_book_id: 'book', page_number: 12, content_excerpt: 'Retained saved excerpt', full_text: 'Retained saved excerpt', word_count: 3, created_at: '2026-10-10T00:00:00Z', updated_at: '2026-10-10T00:00:00Z' };
 let client: QueryClient;
 let noteRecord: ManualNote | null;
-const wrap = (element: React.ReactElement) => <QueryClientProvider client={client}>{element}</QueryClientProvider>;
+const wrap = (element: React.ReactElement) => <QueryClientProvider client={client}><BookFeedbackProvider>{element}</BookFeedbackProvider></QueryClientProvider>;
 async function settle() { await act(async () => { for (let n = 0; n < 8; n++) await Promise.resolve(); }); }
 /** Route simulated deletion through the production adapter with mocked transport. */
 function authorizeSimulatedReaderDeletion() {
@@ -305,9 +306,14 @@ it('retains Saved Pages excerpts during refresh failure and preserves confirmed 
   await act(async () => { await client.refetchQueries({ queryKey: ['vault-pages', 'book'] }); });
   await screen.findByText("Couldn't refresh saved pages. Previously loaded pages are still shown."); expect(screen.getByText(page.content_excerpt)).toBeTruthy();
   fireEvent.press(screen.getByRole('button', { name: 'Delete page 12' })); expect(userBookPagesService.deletePage).not.toHaveBeenCalled();
-  const buttons = alert.mock.calls.at(-1)![2]!; (userBookPagesService.deletePage as jest.Mock).mockResolvedValue(undefined);
-  (userBookPagesService.getPagesForBook as jest.Mock).mockResolvedValue([]); act(() => buttons.find(button => button.text === 'Delete')!.onPress!());
+  expect(screen.getByText('Delete page 12?')).toBeOnTheScreen();
+  fireEvent.press(screen.getByRole('button', { name: 'Cancel' })); await settle();
+  expect(userBookPagesService.deletePage).not.toHaveBeenCalled();
+  fireEvent.press(screen.getByRole('button', { name: 'Delete page 12' }));
+  (userBookPagesService.deletePage as jest.Mock).mockResolvedValue(undefined);
+  (userBookPagesService.getPagesForBook as jest.Mock).mockResolvedValue([]); fireEvent.press(within(screen.getByTestId('book-confirm-card')).getByRole('button', { name: 'Delete' }));
   await screen.findByText('No saved pages yet.'); expect(userBookPagesService.deletePage).toHaveBeenCalledWith('page');
+  expect(userBookPagesService.deletePage).toHaveBeenCalledTimes(1); expect(alert).not.toHaveBeenCalled();
 });
 it('labels private book reviews as reviews while submitting only explicit visibility changes', async () => {
   const details: any = { id: 'book', user_id: 'actor', book_id: 'catalogue', reading_status: 'reading', ownership: 'owned', condition: 'good', rating: 4, review: 'My book review', review_is_public: true, available_for_lending: false,

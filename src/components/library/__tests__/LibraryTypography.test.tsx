@@ -14,6 +14,7 @@ import {
     useLibraryTypography,
 } from '../LibraryTypography';
 import LibraryLayout from '../../../../app/(tabs)/library/_layout';
+import { BookFeedbackProvider } from '../ui/BookFeedback';
 import NoteReaderScreen from '../../../../app/(tabs)/library/note';
 import BookDetailScreen from '../../../../app/(tabs)/library/[bookId]';
 import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
@@ -214,7 +215,8 @@ describe('LibraryTypographyProvider', () => {
         const element = LibraryLayout() as React.ReactElement<{ children?: React.ReactNode }>;
         expect(element.type).toBe(LibraryTypographyProvider);
         const child = element.props.children as React.ReactElement;
-        expect(child.type).toBe(Stack);
+        expect(child.type).toBe(BookFeedbackProvider);
+        expect((child.props as { children: React.ReactElement }).children.type).toBe(Stack);
     });
 });
 

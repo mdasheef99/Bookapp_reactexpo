@@ -1,9 +1,11 @@
 import { Stack } from 'expo-router';
 import { LibraryTypographyProvider } from '@/components/library/LibraryTypography';
+import { BookFeedbackProvider } from '@/components/library/ui';
 
 export default function LibraryLayout() {
     return (
         <LibraryTypographyProvider>
+        <BookFeedbackProvider>
         <Stack
             screenOptions={{
                 headerShown: false,
@@ -18,6 +20,7 @@ export default function LibraryLayout() {
             <Stack.Screen name="note" options={{ animation: 'none' }} />
             <Stack.Screen name="note-compose" options={{ gestureEnabled: false, animation: 'none' }} />
         </Stack>
+        </BookFeedbackProvider>
         </LibraryTypographyProvider>
     );
 }

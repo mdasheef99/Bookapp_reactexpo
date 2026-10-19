@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { ReadingNote, NoteTag, NOTE_TAG_CONFIG } from '@/features/books/services/notesService';
@@ -9,38 +9,14 @@ interface NoteCardProps {
     note: ReadingNote | ManualNote;
     onRead?: () => void;
     onEdit?: (note: ReadingNote) => void;
-    onDelete?: (noteId: string) => void;
 }
 
-export const NoteCard = ({ note, onRead, onEdit, onDelete }: NoteCardProps) => {
+export const NoteCard = ({ note, onRead, onEdit }: NoteCardProps) => {
     const colors = useLibraryAppearance();
     const tagConfig = note.tag ? NOTE_TAG_CONFIG[note.tag as NoteTag] : undefined;
 
     const handleLongPress = () => {
-        if (onRead) { onRead(); return; }
-        if (!onEdit || !onDelete) return;
-        Alert.alert(
-            'Note Options',
-            '',
-            [
-                { text: 'Edit', onPress: () => onEdit(note as ReadingNote) },
-                {
-                    text: 'Delete',
-                    onPress: () => {
-                        Alert.alert(
-                            'Delete Note',
-                            'Are you sure you want to delete this note?',
-                            [
-                                { text: 'Cancel', style: 'cancel' },
-                                { text: 'Delete', style: 'destructive', onPress: () => onDelete(note.id) },
-                            ]
-                        );
-                    },
-                    style: 'destructive',
-                },
-                { text: 'Cancel', style: 'cancel' },
-            ]
-        );
+        if (onRead) onRead();
     };
 
     const formattedDate = new Date(note.created_at).toLocaleDateString('en-IN', {

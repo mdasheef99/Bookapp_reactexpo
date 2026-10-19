@@ -11,6 +11,14 @@ import { getLibraryAppearance } from '../LibraryAppearance';
 import { ConditionPicker } from '../ConditionPicker';
 import type { ThemePhase } from '@/hooks/useTheme';
 
+// This test compares colours against a render fixture, so the feedback layer is a passthrough here
+// (its own behaviour is tested in ui/__tests__/BookFeedback.test.tsx).
+jest.mock('../ui/BookFeedback', () => ({
+    BookFeedbackProvider: ({ children }: { children: React.ReactNode }) => children,
+    BookFeedbackSlot: () => null,
+    useBookFeedback: () => ({ notify: jest.fn(), confirm: jest.fn() }),
+}));
+
 let mockPhase: ThemePhase = 'daylight';
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));

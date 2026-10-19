@@ -1,6 +1,7 @@
 import { KeyboardAvoidingView, Modal, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { useLibraryTypography } from '@/components/library/LibraryTypography';
+import { BookFeedbackSlot } from '@/components/library/ui';
 
 type ManualEntryModalProps = {
     visible: boolean;
@@ -51,6 +52,7 @@ export function ManualEntryModal({
                         borderColor: colors.border,
                     }}
                 >
+                    <BookFeedbackSlot />
                     <Text accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 23, fontFamily: fonts.heading }}>
                         Add book manually
                     </Text>

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Modal, StyleSheet, Dimensions } from 'rea
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useLibraryAppearance } from './LibraryAppearance';
+import { BookFeedbackSlot } from './ui';
 
 interface DeleteBookModalProps {
     visible: boolean;
@@ -24,6 +25,7 @@ export const DeleteBookModal = ({ visible, onClose, onConfirm, isDeleting }: Del
             <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>
                 <BlurView intensity={20} style={StyleSheet.absoluteFill} />
                 <View style={[styles.modal, { backgroundColor: colors.bgRaised, shadowColor: colors.shadow }]}>
+                    <BookFeedbackSlot />
                     <View style={[styles.iconContainer, { backgroundColor: colors.errorSurface }]}>
                         <Ionicons name="trash-outline" size={40} color={colors.error} />
                     </View>

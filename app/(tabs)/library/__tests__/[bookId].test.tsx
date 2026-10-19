@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import BookDetailScreen from '../[bookId]';
+import { BookFeedbackProvider } from '@/components/library/ui/BookFeedback';
 import { booksService } from '@/features/books/services/booksService';
 import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
 import { bookReviewService } from '@/features/books/services/bookReviewService';
@@ -77,7 +78,7 @@ const renderScreen = () => {
         queryClient,
         ...render(
             <QueryClientProvider client={queryClient}>
-                <BookDetailScreen />
+                <BookFeedbackProvider><BookDetailScreen /></BookFeedbackProvider>
             </QueryClientProvider>
         ),
     };
@@ -136,7 +137,8 @@ describe('BookDetailScreen review persistence', () => {
         fireEvent.press(getByTestId('library-review-privacy-toggle'));
         fireEvent(getByTestId('library-review-input'), 'blur');
 
-        await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith('Success', 'Review saved!'));
+        expect(await findByText('Review saved!')).toBeOnTheScreen();
+        expect(Alert.alert).not.toHaveBeenCalled();
         const patches = (bookReviewService.update as jest.Mock).mock.calls.map(([, entryId, patch]) => [entryId, patch]);
         expect(patches).toEqual([
             ['user-book-1', { review_is_public: false }],

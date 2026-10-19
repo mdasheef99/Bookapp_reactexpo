@@ -1,8 +1,9 @@
 import React, { useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useLibraryAppearance } from './LibraryAppearance';
+import { useBookFeedback } from './ui';
 import { userBookPagesService, UserBookPage } from '@/features/books/services/userBookPagesService';
 
 interface VaultPagesListProps {
@@ -11,6 +12,7 @@ interface VaultPagesListProps {
 }
 
 export function VaultPagesList({ userBookId }: VaultPagesListProps) {
+    const { notify, confirm } = useBookFeedback();
     const colors = useLibraryAppearance();
     const queryClient = useQueryClient();
 
@@ -23,15 +25,13 @@ export function VaultPagesList({ userBookId }: VaultPagesListProps) {
     const deleteMutation = useMutation({
         mutationFn: (pageId: string) => userBookPagesService.deletePage(pageId),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vault-pages', userBookId] }),
-        onError: (e: any) => Alert.alert('Error', e.message || 'Failed to delete page'),
+        onError: (e: any) => notify({ kind: 'error', message: e.message || 'Failed to delete page' }),
     });
 
-    const handleDelete = useCallback((page: UserBookPage) => {
-        Alert.alert(`Delete page ${page.page_number}?`, 'This will remove the saved page from your vault.', [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Delete', style: 'destructive', onPress: () => deleteMutation.mutate(page.id) },
-        ]);
-    }, [deleteMutation]);
+    const handleDelete = useCallback(async (page: UserBookPage) => {
+        const ok = await confirm({ title: `Delete page ${page.page_number}?`, message: 'This will remove the saved page from your vault.', keep: 'Cancel', confirm: 'Delete', destructive: true });
+        if (ok) deleteMutation.mutate(page.id);
+    }, [confirm, deleteMutation]);
 
     if (isLoading) {
         return <View style={styles.center}><ActivityIndicator size="small" color={colors.accent} /></View>;

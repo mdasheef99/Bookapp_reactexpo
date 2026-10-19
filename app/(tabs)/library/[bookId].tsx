@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, useId } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Switch, TextInput, Alert, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Switch, TextInput, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient, useMutationState } from '@tanstack/react-query';
 import { Image } from 'expo-image';
@@ -12,6 +12,7 @@ import { noteKeys } from '@/features/books/notes/manualNoteContract';
 import { openNoteComposer, openNoteReader } from '@/features/books/notes/noteNavigation';
 import { useNoteOperations } from '@/features/books/notes/useManualNotes';
 import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { useBookFeedback } from '@/components/library/ui';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
     StatusSelector,
@@ -64,6 +65,7 @@ function BookSection({ title, children }: { title: string; children: React.React
 }
 
 export default function BookDetailScreen() {
+    const { notify } = useBookFeedback();
     const { bookId } = useLocalSearchParams<{ bookId: string }>();
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -206,11 +208,11 @@ export default function BookDetailScreen() {
                 ...previous, ...confirmed,
             } : previous);
             if (typeof submission.patch.review === 'string' && isCurrentReviewActor(submission.actor) &&
-                reviewDraft.current.revision === submission.textRevision) Alert.alert('Success', 'Review saved!');
+                reviewDraft.current.revision === submission.textRevision) notify({ kind: 'success', message: 'Review saved!' });
         },
         onError: (err: any, submission) => {
             if (!isCurrentReviewActor(submission.actor)) return;
-            Alert.alert('Error', err.message || 'Failed to save review');
+            notify({ kind: 'error', message: err.message || 'Failed to save review' });
         },
         onSettled: (_data, _error, submission) => {
             if (!isCurrentReviewActor(submission.actor)) return;
@@ -237,7 +239,7 @@ export default function BookDetailScreen() {
             handleBackPress();
         },
         onError: (err: any) => {
-            Alert.alert('Error', err.message || 'Failed to remove book');
+            notify({ kind: 'error', message: err.message || 'Failed to remove book' });
         }
     });
 

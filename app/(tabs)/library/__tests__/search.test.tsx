@@ -2,6 +2,7 @@ import React from 'react';
 import { Alert, FlatList } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { BookFeedbackProvider } from '@/components/library/ui/BookFeedback';
 import SearchBooksScreen from '../search';
 import { booksService } from '@/features/books/services/booksService';
 
@@ -147,7 +148,7 @@ const renderScreen = () => {
 
     return render(
         <QueryClientProvider client={queryClient}>
-            <SearchBooksScreen />
+            <BookFeedbackProvider><SearchBooksScreen /></BookFeedbackProvider>
         </QueryClientProvider>
     );
 };
@@ -209,7 +210,7 @@ describe('SearchBooksScreen manual entry', () => {
     });
 
     it('opens the manual-entry modal from no-results and saves a manual book to the library', async () => {
-        const { getByTestId, queryByTestId } = renderScreen();
+        const { getByTestId, queryByTestId, findByText } = renderScreen();
 
         fireEvent.changeText(getByTestId('library-search-input'), 'Manual Title');
         fireEvent.press(getByTestId('library-search-submit'));
@@ -228,7 +229,8 @@ describe('SearchBooksScreen manual entry', () => {
             author: 'Manual Author',
         }));
         await waitFor(() => expect(mockRefreshWishlist).toHaveBeenCalled());
-        await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith('Added!', '"Manual Title" is now in your library'));
+        expect(await findByText('"Manual Title" is now in your library')).toBeOnTheScreen();
+        expect(Alert.alert).not.toHaveBeenCalled();
         await waitFor(() => expect(queryByTestId('library-manual-entry-title')).toBeNull());
     });
 

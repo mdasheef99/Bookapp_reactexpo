@@ -3,7 +3,6 @@ import {
     Text,
     FlatList,
     TouchableOpacity,
-    Alert,
     Share,
     Linking,
     RefreshControl,
@@ -24,6 +23,7 @@ import { SortOption } from '@/lib/constants';
 import { navigateBackOrFallback } from '@/lib/navigation';
 import { useLibraryTypography } from '@/components/library/LibraryTypography';
 import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { useBookFeedback } from '@/components/library/ui';
 import { sortSearchResults } from '@/features/books/utils/searchResults';
 
 // Import components
@@ -61,6 +61,7 @@ export default function SearchBooksScreen() {
 }
 
 function SearchBooksScreenContent() {
+    const { notify } = useBookFeedback();
     const router = useRouter();
     const { session } = useAuth();
     const colors = useLibraryAppearance();
@@ -339,15 +340,15 @@ function SearchBooksScreenContent() {
                 refreshWishlist(),
             ]);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            Alert.alert('Added!', `"${book.volumeInfo.title}" is now in your library`);
+            notify({ kind: 'success', message: `"${book.volumeInfo.title}" is now in your library` });
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Failed to add book. Please try again.';
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Oops!', message);
+            notify({ kind: 'error', message });
         } finally {
             setAddingId(null);
         }
-    }, [session, queryClient, refreshWishlist]);
+    }, [session, queryClient, refreshWishlist, notify]);
 
     const handleManualAddBook = useCallback(async () => {
         if (!session?.user) return;
@@ -356,7 +357,7 @@ function SearchBooksScreenContent() {
         const trimmedAuthor = manualAuthor.trim();
 
         if (!trimmedTitle) {
-            Alert.alert('Title required', 'Enter a book title to add it manually.');
+            notify({ kind: 'error', message: 'Enter a book title to add it manually.' });
             return;
         }
 
@@ -377,28 +378,28 @@ function SearchBooksScreenContent() {
             closeManualEntryModal();
             handleClear();
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            Alert.alert('Added!', `"${bookData.title}" is now in your library`);
+            notify({ kind: 'success', message: `"${bookData.title}" is now in your library` });
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Failed to add book manually.';
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Oops!', message);
+            notify({ kind: 'error', message });
         } finally {
             setManualSubmitting(false);
         }
-    }, [session, manualTitle, manualAuthor, queryClient, refreshWishlist, closeManualEntryModal, handleClear]);
+    }, [session, manualTitle, manualAuthor, queryClient, refreshWishlist, closeManualEntryModal, handleClear, notify]);
 
     const handlePreview = useCallback(async (previewLink?: string) => {
         if (!previewLink) {
-            Alert.alert('No Preview', 'Preview is not available for this book.');
+            notify({ kind: 'info', message: 'Preview is not available for this book.' });
             return;
         }
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         try {
             await Linking.openURL(previewLink);
         } catch (err) {
-            Alert.alert('Error', 'Could not open preview link.');
+            notify({ kind: 'error', message: 'Could not open preview link.' });
         }
-    }, []);
+    }, [notify]);
 
     const handleShare = useCallback(async (book: GoogleBook) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -415,7 +416,7 @@ function SearchBooksScreenContent() {
 
         if (libraryBookIds.has(book.id) && !wishlistBookIds.has(book.id)) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Already in Library', 'This book is already in your library.');
+            notify({ kind: 'info', message: 'This book is already in your library.' });
             return;
         }
 
@@ -427,7 +428,7 @@ function SearchBooksScreenContent() {
 
             if (!success) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                Alert.alert('Oops!', 'Failed to update wishlist');
+                notify({ kind: 'error', message: 'Failed to update wishlist' });
                 return;
             }
 
@@ -436,11 +437,11 @@ function SearchBooksScreenContent() {
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Failed to update wishlist';
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Oops!', message);
+            notify({ kind: 'error', message });
         } finally {
             setWishlistTogglingId(null);
         }
-    }, [session, libraryBookIds, wishlistBookIds, toggleWishlist, queryClient]);
+    }, [session, libraryBookIds, wishlistBookIds, toggleWishlist, queryClient, notify]);
 
     // Render book card using extracted component
     const renderItem = useCallback(({ item, index }: { item: GoogleBook; index: number }) => (
