@@ -361,7 +361,8 @@ Builds run in worktree `Bookconnect4_fu1a`, branch `sdd07/fu1a-fu3`, orchestrate
 
 **Next exact action:**
 1. Foundation FU-1a … FU-6c are all committed. `sdd07/wave3` (worktree `Bookconnect4_wave3`) was fast-forwarded to `48250cc` on 2026-10-19 (FU-4a/4b/4c + FU-5b/5c/5d; not pushed). Lead verification on the merged tree: Jest library set + `eslint-rules` + `src/test-utils` 51 suites / 1040 tests pass; scoped `tsc` 0; `lint:library` 465 (3 errors, 462 warnings) = 32 baseline + 429 + 4 + 0; whole-repo `tsc` 36 (= baseline) after the owner-approved `npm ci` in wave3 (it was 39 before, all 3 from `@axe-core/playwright` missing from `node_modules`).
-2. Then: the owner decides on pushing; then the Flow A build from `sdd07/wave3` (the axe `image-alt` home-list finding and the 4 accessible-name gaps are Flow A fix candidates).
-3. TB-1 stays parked until the "Marketplace" label decision and commit approval.
+2. Whole-foundation review done 2026-10-19 (Muse + Codex; no SDD-07 regression). Four confirmed fixes committed as `f568288` on `sdd07/wave3` (Jest 52 / 1045, `tsc` 0 / 36, lint 465, axe 27/27; not pushed). Next: the owner decides on a backup push; then the Flow A build from `sdd07/wave3` (`f568288`).
+3. Flow A fix list from the review and the Android check: axe `image-alt` on the home list; the 4 accessible-name gaps; roles/state on condition, ownership and rating buttons; 44 px targets in search, manual entry and pickers; manual-entry scrim and tokens; skip a status update when the value is unchanged.
+4. TB-1 stays parked until the "Marketplace" label decision and commit approval.
 
 FU-5d's `@axe-core/playwright` 4.13.0 install was approved by the owner on 2026-10-19 and is done.
