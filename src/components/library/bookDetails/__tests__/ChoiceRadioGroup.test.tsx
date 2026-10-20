@@ -1,6 +1,6 @@
 import React from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
-import { fireEvent, render, within } from '@testing-library/react-native';
+import { act, fireEvent, render, within } from '@testing-library/react-native';
 import { ChoiceRadioGroup } from '../ChoiceRadioGroup';
 import { getLibraryAppearance } from '../../LibraryAppearance';
 
@@ -20,6 +20,44 @@ function radioControl(radio: any): any {
 
 
 describe('ChoiceRadioGroup', () => {
+  it('web Space selects a focused unchecked radio once, ignoring repeats and checked values', async () => {
+    const previousOS = Platform.OS;
+    Platform.OS = 'web';
+    try {
+      const onChange = jest.fn();
+      const ui = render(<ChoiceRadioGroup label="Choose" value="a" options={options} onChange={onChange} />);
+      const beta = ui.getByRole('radio', { name: 'Beta' });
+      fireEvent(beta, 'focus');
+      const event = { ...keyEvent(' '), repeat: true };
+      fireEvent(beta, 'keyDown', event);
+      await act(async () => { await Promise.resolve(); });
+      expect(onChange).not.toHaveBeenCalled();
+      fireEvent(beta, 'keyDown', { ...event, repeat: false });
+      expect(onChange.mock.calls).toEqual([['b']]);
+      expect(event.preventDefault).toHaveBeenCalledTimes(2);
+      ui.rerender(<ChoiceRadioGroup label="Choose" value="b" options={options} onChange={onChange} />);
+      expect(ui.getAllByRole('radio').map(radio => radio.props.accessibilityState.checked)).toEqual([false, true, false]);
+      expect(ui.getAllByRole('radio').map(radio => radio.props.tabIndex)).toEqual([-1, 0, -1]);
+      fireEvent(ui.getByRole('radio', { name: 'Beta' }), 'keyDown', keyEvent(' '));
+      await act(async () => { await Promise.resolve(); });
+      expect(onChange).toHaveBeenCalledTimes(1);
+    } finally { Platform.OS = previousOS; }
+  });
+
+  it.each(['web', 'ios'] as const)('Space respects disabled on web and leaves native activation alone (%s)', async platform => {
+    const previousOS = Platform.OS;
+    Platform.OS = platform;
+    try {
+      const onChange = jest.fn();
+      const ui = render(<ChoiceRadioGroup label="Choose" value="a" options={options} onChange={onChange} disabled={platform === 'web'} />);
+      const event = keyEvent(' ');
+      act(() => radioControl(ui.getByRole('radio', { name: 'Beta' })).props.onKeyDown(event));
+      await act(async () => { await Promise.resolve(); });
+      expect(onChange).not.toHaveBeenCalled();
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    } finally { Platform.OS = previousOS; }
+  });
+
   it('names the group and ordered radios, checks one, and roves with the controlled value', () => {
     const ui = render(<ChoiceRadioGroup label="Choose" value="b" options={options} onChange={jest.fn()} testID="choices" />);
     const group = ui.getByLabelText('Choose');

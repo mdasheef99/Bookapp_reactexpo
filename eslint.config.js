@@ -8,6 +8,7 @@ const BOOK_SECTION = [
     'src/components/library/**/*.{ts,tsx}',
     'src/components/notes/**/*.{ts,tsx}',
     'src/features/books/notes/**/*.{ts,tsx}',
+    'src/features/books/utils/searchErrorCopy.ts',
 ];
 
 module.exports = defineConfig([

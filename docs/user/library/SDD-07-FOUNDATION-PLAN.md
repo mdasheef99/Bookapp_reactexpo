@@ -363,7 +363,9 @@ Builds run in worktree `Bookconnect4_fu1a`, branch `sdd07/fu1a-fu3`, orchestrate
 
 **Active work unit:** `sdd07_flow_d_design`.
 
-**Next exact action (2026-10-21, Flow D):** the lead finalizes the Flow D design (`.spec/FLOWD-DESIGN.md` in `Bookconnect4_flowd`, branch `sdd07/flow-d`, base `main` `60a6b6c`) under the owner's delegation and shows the owner a summary; then the Codex build. Commit and push only on owner approval. See the TRACKER top entry.
+**Next exact action (2026-10-21, after Flow D):** the owner picks the next library unit: the Book Details cover alt fix (`BookCover.tsx`), the `search.tsx` presentation split, or TB-1 re-scoped against `main`. Flow D is built, verified and merged to `main` (SDD-07 §13, D07-20, D07-21). See the TRACKER top entry.
+
+**Earlier next action (2026-10-21, Flow D, done — merged to `main`):** the lead finalizes the Flow D design (`.spec/FLOWD-DESIGN.md` in `Bookconnect4_flowd`, branch `sdd07/flow-d`, base `main` `60a6b6c`) under the owner's delegation and shows the owner a summary; then the Codex build. Commit and push only on owner approval. See the TRACKER top entry.
 
 **Earlier next action (2026-10-20, Flow C, done — merged to `main` at `60a6b6c`):** the owner approves the Flow C commit: uncommitted code and docs on `sdd07/flow-c` in `Bookconnect4_flowc`, base `main` `0a083f1` (SDD-07 §12, D07-19). Push/merge to `main` only on separate approval, after `git fetch`. Then Flow D — Remaining, or TB-1 re-scoped against `main`'s marketplace layout. `.spec/` and `.env` stay outside the commit.
 

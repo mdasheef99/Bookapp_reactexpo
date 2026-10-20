@@ -10,11 +10,15 @@ export interface BookButtonProps {
   variant: BookButtonVariant;
   onPress: () => void;
   disabled?: boolean;
+  /** Disclosure triggers (e.g. a button that opens a sheet) report whether it is open. */
+  expanded?: boolean;
+  /** Toggle-like triggers report an active state (e.g. Filter with filters applied). */
+  selected?: boolean;
   testID?: string;
   ref?: React.Ref<View>;
 }
 
-export function BookButton({ label, variant, onPress, disabled = false, testID, ref }: BookButtonProps) {
+export function BookButton({ label, variant, onPress, disabled = false, expanded, selected, testID, ref }: BookButtonProps) {
   const colors = useLibraryAppearance();
   const variants = {
     primary: { backgroundColor: colors.accent, borderColor: colors.controlBorder, color: colors.textOnAccent },
@@ -23,9 +27,16 @@ export function BookButton({ label, variant, onPress, disabled = false, testID, 
     destructive: { backgroundColor: colors.error, borderColor: colors.error, color: colors.onErrorSurface },
   };
   const { color, ...surface } = variants[variant];
+  const accessibilityState = {
+    disabled,
+    ...(expanded === undefined ? {} : { expanded }),
+    ...(selected === undefined ? {} : { selected }),
+  };
 
-  return <Pressable ref={ref} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }}
-    disabled={disabled} onPress={onPress} testID={testID}
+  // RN Web ignores accessibilityState, so the open state also goes out as aria-expanded.
+  // `selected` stays native-only: aria-selected is not valid on a web button.
+  return <Pressable ref={ref} accessibilityRole="button" accessibilityLabel={label} accessibilityState={accessibilityState}
+    aria-expanded={expanded} disabled={disabled} onPress={onPress} testID={testID}
     style={({ pressed }) => [styles.button, surface, { opacity: disabled ? 0.55 : pressed ? 0.8 : 1 }]}>
     <Text style={[styles.label, { color }]}>{label}</Text>
   </Pressable>;

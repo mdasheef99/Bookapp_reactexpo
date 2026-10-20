@@ -1,25 +1,13 @@
-import { View, Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
-import { useLibraryTypography } from '@/components/library/LibraryTypography';
+import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
+import { ICON_SIZE } from '@/components/library/bookDetails/bookDetailsTokens';
 
 export const InLibraryBadge = () => {
     const colors = useLibraryAppearance();
-    const fonts = useLibraryTypography();
-    return (
-        <View style={{
-            backgroundColor: colors.tagBackground,
-            paddingHorizontal: 9,
-            minHeight: 24,
-            borderRadius: 9,
-            flexDirection: 'row',
-            alignItems: 'center',
-            alignSelf: 'flex-start',
-            borderWidth: 1,
-            borderColor: colors.border,
-        }}>
-            <Ionicons name="checkmark-circle" size={14} color={colors.tagText} />
-            <Text style={{ color: colors.tagText, fontSize: 11, fontFamily: fonts.label, marginLeft: 4 }}>In Library</Text>
-        </View>
-    );
+    return <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: LIBRARY_SPACING.xxs }}>
+        <Ionicons name="checkmark-circle" size={ICON_SIZE} color={colors.textSecondary} />
+        <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>In your library</Text>
+    </View>;
 };

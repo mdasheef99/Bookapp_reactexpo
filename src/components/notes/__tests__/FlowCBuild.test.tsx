@@ -3,7 +3,7 @@
  * Reverting the corresponding label, variant, caption or busy-action change must fail these tests.
  */
 import React from 'react';
-import { Image, KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import NoteComposeScreen from '../../../../app/(tabs)/library/note-compose';
 import { BookButton } from '@/components/library/ui';
@@ -90,6 +90,21 @@ function instruction(message: string) {
   expect(node.props.accessibilityLiveRegion).toBe('polite');
 }
 const press = (label: string) => fireEvent.press(screen.getByRole('button', { name: label }));
+
+it('D07-20 hides Scan again on web when a retained scan is reviewed', async () => {
+  const priorOS = Platform.OS;
+  Platform.OS = 'web';
+  try {
+    mountScan({ step: 'review', photo });
+    fireEvent.changeText(screen.getByLabelText('Note text'), 'Retained scan');
+    await act(async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); });
+    expect(screen.getByText('Review scanned text')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Scan again' })).toBeNull();
+    expect(screen.getByLabelText('Note text').props.value).toBe('Retained scan');
+    primary('Save note');
+    screen.unmount();
+  } finally { Platform.OS = priorOS; }
+});
 
 it('C1 intake names Take photo as the sole primary with plain intake copy and caption metadata', () => {
   mountScan({}); primary('Take photo');

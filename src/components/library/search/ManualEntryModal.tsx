@@ -1,7 +1,8 @@
-import { KeyboardAvoidingView, Modal, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
-import { useLibraryTypography } from '@/components/library/LibraryTypography';
-import { BookFeedbackSlot } from '@/components/library/ui';
+import { KeyboardAvoidingView, Modal, Platform, Text, TextInput, StyleSheet, View } from 'react-native';
+import { LIBRARY_RADIUS, LIBRARY_SPACING, MIN_TARGET, useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
+import { DIALOG_MAX_WIDTH } from '@/components/library/bookDetails/bookDetailsTokens';
+import { BookButton, BookFeedbackSlot } from '@/components/library/ui';
 
 type ManualEntryModalProps = {
     visible: boolean;
@@ -25,135 +26,39 @@ export function ManualEntryModal({
     onSave,
 }: ManualEntryModalProps) {
     const colors = useLibraryAppearance();
-    const fonts = useLibraryTypography();
 
     return (
-        <Modal
-            visible={visible}
-            transparent
-            animationType="fade"
-            onRequestClose={onCancel}
-        >
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    padding: 24,
-                        backgroundColor: 'rgba(32, 26, 19, 0.42)',
-                }}
-            >
-                <View
-                    style={{
-                        backgroundColor: colors.bgCard,
-                        borderRadius: 18,
-                        padding: 20,
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                    }}
-                >
+        <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}
+            {...(Platform.OS === 'web' ? { accessibilityLabel: 'Add book manually' } : {})}>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={[styles.scrim, { backgroundColor: colors.overlay }]}>
+                <View style={[styles.panel, { backgroundColor: colors.bgRaised, borderColor: colors.controlBorder }]}>
                     <BookFeedbackSlot />
-                    <Text accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 23, fontFamily: fonts.heading }}>
-                        Add book manually
+                    <Text accessibilityRole="header" style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}>Add book manually</Text>
+                    <Text style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>
+                        {"Add a basic library entry when search doesn't return the title you need."}
                     </Text>
-                    <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginTop: 8, fontFamily: fonts.body }}>
-                        Add a basic library entry when search doesn't return the title you need.
-                    </Text>
-
-                    <View style={{ marginTop: 18 }}>
-                        <Text style={{ color: colors.textPrimary, fontSize: 13, fontFamily: fonts.label, marginBottom: 8 }}>
-                            Title
-                        </Text>
-                        <TextInput
-                            testID="library-manual-entry-title"
-                            accessibilityLabel="Book title"
-                            value={title}
-                            onChangeText={onTitleChange}
-                            placeholder="Enter the book title"
-                            placeholderTextColor={colors.textTertiary}
-                            style={{
-                                borderWidth: 1,
-                                borderColor: colors.border,
-                                borderRadius: 14,
-                                paddingHorizontal: 14,
-                                paddingVertical: 12,
-                                fontSize: 15,
-                                color: colors.textPrimary,
-                                backgroundColor: colors.bgPrimary,
-                                fontFamily: fonts.body,
-                            }}
-                        />
-                    </View>
-
-                    <View style={{ marginTop: 14 }}>
-                        <Text style={{ color: colors.textPrimary, fontSize: 13, fontFamily: fonts.label, marginBottom: 8 }}>
-                            Author (optional)
-                        </Text>
-                        <TextInput
-                            testID="library-manual-entry-author"
-                            accessibilityLabel="Book author, optional"
-                            value={author}
-                            onChangeText={onAuthorChange}
-                            placeholder="Enter the author name"
-                            placeholderTextColor={colors.textTertiary}
-                            style={{
-                                borderWidth: 1,
-                                borderColor: colors.border,
-                                borderRadius: 14,
-                                paddingHorizontal: 14,
-                                paddingVertical: 12,
-                                fontSize: 15,
-                                color: colors.textPrimary,
-                                backgroundColor: colors.bgPrimary,
-                                fontFamily: fonts.body,
-                            }}
-                        />
-                    </View>
-
-                    <View style={{ flexDirection: 'row', marginTop: 22, gap: 12 }}>
-                        <TouchableOpacity
-                            testID="library-manual-entry-cancel"
-                            onPress={onCancel}
-                            accessibilityRole="button"
-                            accessibilityLabel="Cancel manual book entry"
-                            style={{
-                                flex: 1,
-                                borderWidth: 1,
-                                borderColor: colors.border,
-                                borderRadius: 14,
-                            minHeight: 44,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backgroundColor: colors.bgPrimary,
-                            }}
-                        >
-                            <Text style={{ color: colors.textPrimary, fontSize: 14, fontFamily: fonts.label }}>
-                                Cancel
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            testID="library-manual-entry-save"
-                            onPress={onSave}
-                            disabled={submitting}
-                            accessibilityRole="button"
-                            accessibilityLabel={submitting ? 'Saving book to library' : 'Save book to library'}
-                            accessibilityState={{ disabled: submitting }}
-                            style={{
-                                flex: 1,
-                                borderRadius: 14,
-                            minHeight: 44,
-                                alignItems: 'center',
-                            justifyContent: 'center',
-                                backgroundColor: submitting ? colors.textTertiary : colors.accent,
-                            }}
-                        >
-                            <Text style={{ color: colors.onAccent, fontSize: 14, fontFamily: fonts.label }}>
-                                {submitting ? 'Saving...' : 'Save to library'}
-                            </Text>
-                        </TouchableOpacity>
+                    <Text style={[LIBRARY_TEXT.label, { color: colors.textPrimary }]}>Title</Text>
+                    <TextInput testID="library-manual-entry-title" accessibilityLabel="Book title" value={title}
+                        onChangeText={onTitleChange} placeholder="Enter the book title" placeholderTextColor={colors.textTertiary}
+                        style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.bgCard, borderColor: colors.controlBorder }]} />
+                    <Text style={[LIBRARY_TEXT.label, { color: colors.textPrimary }]}>Author (optional)</Text>
+                    <TextInput testID="library-manual-entry-author" accessibilityLabel="Book author, optional" value={author}
+                        onChangeText={onAuthorChange} placeholder="Enter the author name" placeholderTextColor={colors.textTertiary}
+                        style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.bgCard, borderColor: colors.controlBorder }]} />
+                    <View style={styles.actions}>
+                        <BookButton testID="library-manual-entry-cancel" label="Cancel" variant="secondary" onPress={onCancel} />
+                        <BookButton testID="library-manual-entry-save" label={submitting ? 'Saving…' : 'Save to library'} variant="primary" disabled={submitting} onPress={onSave} />
                     </View>
                 </View>
             </KeyboardAvoidingView>
         </Modal>
     );
 }
+
+const styles = StyleSheet.create({
+    scrim: { flex: 1, justifyContent: 'center', padding: LIBRARY_SPACING.lg },
+    panel: { width: '100%', maxWidth: DIALOG_MAX_WIDTH, alignSelf: 'center', padding: LIBRARY_SPACING.lg, borderWidth: 1, borderRadius: LIBRARY_RADIUS.dialog, gap: LIBRARY_SPACING.sm },
+    input: { ...LIBRARY_TEXT.body, minHeight: MIN_TARGET, borderWidth: 1, borderRadius: LIBRARY_RADIUS.control, paddingHorizontal: LIBRARY_SPACING.sm, paddingVertical: LIBRARY_SPACING.sm },
+    actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: LIBRARY_SPACING.sm, marginTop: LIBRARY_SPACING.xs },
+});

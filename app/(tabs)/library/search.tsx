@@ -2,7 +2,7 @@ import {
     View,
     Text,
     FlatList,
-    TouchableOpacity,
+    ActivityIndicator,
     Share,
     Linking,
     RefreshControl,
@@ -10,10 +10,9 @@ import {
 } from 'react-native';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'expo-router';
-import { booksService, GoogleBook, SearchFilters, PaginatedResult } from '@/features/books/services/booksService';
+import { booksService, GoogleBook, SearchFilters } from '@/features/books/services/booksService';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-import { Ionicons } from '@expo/vector-icons';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useRecentSearches } from '@/hooks/useRecentSearches';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -21,14 +20,16 @@ import { useWishlist } from '@/hooks/useWishlist';
 import * as Haptics from 'expo-haptics';
 import { SortOption } from '@/lib/constants';
 import { navigateBackOrFallback } from '@/lib/navigation';
-import { useLibraryTypography } from '@/components/library/LibraryTypography';
-import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
+import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { useTheme } from '@/hooks/useTheme';
-import { useBookFeedback } from '@/components/library/ui';
+import { BookButton, BookEmpty, BookLoading, BookScreenHeader, useBookFeedback } from '@/components/library/ui';
+import { COLUMN_MAX_WIDTH } from '@/components/library/bookDetails/bookDetailsTokens';
+import { addBookErrorMessage, manualAddErrorMessage, searchErrorMessage, wishlistErrorMessage } from '@/features/books/utils/searchErrorCopy';
 import { sortSearchResults } from '@/features/books/utils/searchResults';
 
 // Import components
-import { SkeletonCard, SearchBar } from '@/components/search';
+import { SearchBar } from '@/components/search';
 import {
     SortModal,
     RecentSearches,
@@ -38,16 +39,14 @@ import {
     SwipeableBookCard,
     ManualEntryModal,
 } from '@/components/library/search';
-import { OfflineBanner } from '@/components/ui/OfflineBanner';
 
 // Loading footer for pagination
 const LoadingFooter = ({ loading }: { loading: boolean }) => {
     const colors = useLibraryAppearance();
-    const fonts = useLibraryTypography();
     if (!loading) return null;
     return (
-        <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-            <Text style={{ color: colors.textTertiary, fontSize: 12, fontFamily: fonts.body }}>Loading more...</Text>
+        <View style={styles.loadingFooter}>
+            <ActivityIndicator color={colors.accent} accessibilityLabel="Loading more results" />
         </View>
     );
 };
@@ -65,7 +64,6 @@ function SearchBooksScreenContent() {
     const router = useRouter();
     const { session } = useAuth();
     const colors = useLibraryAppearance();
-    const fonts = useLibraryTypography();
     const { colors: themeColors } = useTheme();
     // The shared SearchBar takes a full theme palette; library colours win.
     const searchPalette = useMemo(() => ({ ...themeColors, ...colors }), [themeColors, colors]);
@@ -209,7 +207,8 @@ function SearchBooksScreenContent() {
             }
         } catch (err) {
             if (requestId !== searchRequestId.current) return;
-            const message = err instanceof Error ? err.message : 'Failed to search. Please try again.';
+            if (__DEV__) console.warn('Book search failed', err);
+            const message = searchErrorMessage(err);
             setError(message);
         } finally {
             if (requestId === searchRequestId.current) {
@@ -345,7 +344,8 @@ function SearchBooksScreenContent() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             notify({ kind: 'success', message: `"${book.volumeInfo.title}" is now in your library` });
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Failed to add book. Please try again.';
+            if (__DEV__) console.warn('Add book failed', error);
+            const message = addBookErrorMessage(error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             notify({ kind: 'error', message });
         } finally {
@@ -383,7 +383,8 @@ function SearchBooksScreenContent() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             notify({ kind: 'success', message: `"${bookData.title}" is now in your library` });
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Failed to add book manually.';
+            if (__DEV__) console.warn('Manual add failed', error);
+            const message = manualAddErrorMessage(error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             notify({ kind: 'error', message });
         } finally {
@@ -400,7 +401,7 @@ function SearchBooksScreenContent() {
         try {
             await Linking.openURL(previewLink);
         } catch (err) {
-            notify({ kind: 'error', message: 'Could not open preview link.' });
+            notify({ kind: 'error', message: "Couldn't open the preview." });
         }
     }, [notify]);
 
@@ -431,14 +432,15 @@ function SearchBooksScreenContent() {
 
             if (!success) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                notify({ kind: 'error', message: 'Failed to update wishlist' });
+                notify({ kind: 'error', message: wishlistErrorMessage(false) });
                 return;
             }
 
             await queryClient.invalidateQueries({ queryKey: ['library'] });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Failed to update wishlist';
+            if (__DEV__) console.warn('Wishlist update failed', error);
+            const message = wishlistErrorMessage(error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             notify({ kind: 'error', message });
         } finally {
@@ -463,88 +465,40 @@ function SearchBooksScreenContent() {
     ), [libraryBookIds, addingId, wishlistBookIds, wishlistTogglingId, handleAddBook, handlePreview, handleShare, handleWishlistToggle]);
 
     // Render helpers
-    const renderSkeletons = () => (
-        <View>
-            {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)}
-        </View>
-    );
-
     const renderError = () => (
-        <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 64, paddingHorizontal: 32 }}>
-            <View style={{ width: 68, height: 68, backgroundColor: colors.bgSecondary, borderRadius: 34, alignItems: 'center', justifyContent: 'center', marginBottom: 16, borderWidth: 1, borderColor: colors.border }}>
-                <Ionicons name="alert-circle-outline" size={34} color={colors.error} />
-            </View>
-            <Text style={{ color: colors.textPrimary, fontSize: 22, fontFamily: fonts.heading, textAlign: 'center' }}>Search couldn’t finish</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: fonts.body, textAlign: 'center', marginTop: 8 }}>{error}</Text>
-            <TouchableOpacity
-                onPress={handleSearch}
-                style={{ backgroundColor: colors.accent, paddingHorizontal: 18, minHeight: 44, borderRadius: 12, marginTop: 20, flexDirection: 'row', alignItems: 'center' }}
-                accessibilityLabel="Try Again"
-                accessibilityHint="Retry the failed search"
-            >
-                <Ionicons name="refresh" size={18} color={colors.onAccent} />
-                <Text style={{ color: colors.onAccent, fontSize: 14, fontFamily: fonts.label, marginLeft: 8 }}>Try Again</Text>
-            </TouchableOpacity>
+        <View accessibilityRole="alert" style={styles.state}>
+            <BookEmpty title="Search couldn’t finish" message={error ?? undefined}
+                actionLabel="Try again" onAction={handleSearch} />
         </View>
     );
 
     const renderEmptyState = () => (
-        <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 54, paddingHorizontal: 32 }}>
-            <View style={{ width: 82, height: 82, backgroundColor: colors.bgCard, borderRadius: 41, alignItems: 'center', justifyContent: 'center', marginBottom: 16, borderWidth: 1, borderColor: colors.border }}>
-                <Ionicons name="book-outline" size={38} color={colors.accent} />
-            </View>
-            <Text style={{ color: colors.textPrimary, fontSize: 26, fontFamily: fonts.heading, textAlign: 'center', marginBottom: 6 }}>Find your next read</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: fonts.body, textAlign: 'center', lineHeight: 21 }}>
-                Search books, authors, or ISBNs. Add a title to your shelf or wishlist.
+        <View style={styles.state}>
+            <Text style={[LIBRARY_TEXT.heading, styles.centerText, { color: colors.textPrimary }]}>Find your next book</Text>
+            <Text style={[LIBRARY_TEXT.body, styles.centerText, { color: colors.textSecondary }]}>
+                Search books, authors or ISBNs, then add a title to your library or wishlist.
             </Text>
         </View>
     );
 
     const renderNoResults = () => (
-        <View style={styles.noResultsContainer}>
-            <View style={[styles.noResultsIconCircle, { backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border }]}>
-                <Ionicons name="search-outline" size={36} color={colors.textTertiary} />
-            </View>
-            <Text style={{ color: colors.textPrimary, fontSize: 22, fontFamily: fonts.heading, textAlign: 'center' }}>
-                {searchIsOffline ? 'Search unavailable offline' : 'No books found'}
-            </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: fonts.body, textAlign: 'center', marginTop: 8, lineHeight: 21 }}>
-                {searchIsOffline
-                    ? 'Reconnect to the internet to search book catalogues.'
-                    : 'Try a different search term or adjust filters'}
-            </Text>
+        <View style={styles.state}>
+            <BookEmpty title={searchIsOffline ? 'Search needs a connection' : 'No books found'}
+                message={searchIsOffline ? 'Reconnect to search the catalogues.' : 'Try another search or change the filters.'} />
             {!searchIsOffline && showOpenLibraryFallbackNotice && (
-                <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body, textAlign: 'center', marginTop: 12, lineHeight: 18 }}>
-                    {providerNotice}
-                </Text>
+                <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.caption, styles.centerText, { color: colors.textSecondary }]}>{providerNotice}</Text>
             )}
-            {!searchIsOffline && <TouchableOpacity
-                testID="library-manual-entry-open"
-                onPress={openManualEntryModal}
-                style={[styles.manualEntryButton, { backgroundColor: colors.accent }]}
-                accessibilityRole="button"
-                accessibilityLabel="Add book manually"
-                accessibilityHint="Opens a form to add a book without Google Books results"
-            >
-                <Ionicons name="create-outline" size={18} color={colors.onAccent} />
-                <Text style={[styles.manualEntryButtonText, { color: colors.onAccent, fontFamily: fonts.label }]}>
-                    Add it manually
-                </Text>
-            </TouchableOpacity>}
-            {!searchIsOffline && <Text style={{ color: colors.textTertiary, fontSize: 12, fontFamily: fonts.body, textAlign: 'center', marginTop: 10 }}>
-                Can’t find the book? Save a basic title and optional author to your library.
+            {!searchIsOffline && <BookButton testID="library-manual-entry-open" label="Add it manually"
+                variant="primary" onPress={openManualEntryModal} />}
+            {!searchIsOffline && <Text style={[LIBRARY_TEXT.body, styles.centerText, { color: colors.textSecondary }]}>
+                {"Can't find it? Save a title and author to your library."}
             </Text>}
         </View>
     );
 
     const renderShortQuery = () => (
-        <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 60, paddingHorizontal: 40 }}>
-            <Text style={{ color: colors.textPrimary, fontSize: 21, fontFamily: fonts.heading, textAlign: 'center' }}>
-                Keep typing to search
-            </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: fonts.body, textAlign: 'center', marginTop: 8 }}>
-                Enter at least 3 characters to search the catalogues.
-            </Text>
+        <View style={styles.state}>
+            <BookEmpty title="Keep typing" message="Enter at least 3 characters to search." />
         </View>
     );
 
@@ -565,42 +519,19 @@ function SearchBooksScreenContent() {
         : 'Showing results from Open Library while Google Books is unavailable.';
 
     return (
-        <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
-            {/* Offline Banner */}
-            <OfflineBanner visible={searchIsOffline} variant="library" />
-
-            <View style={{ flex: 1, paddingTop: 56, paddingHorizontal: 18, width: '100%', maxWidth: 1000, alignSelf: 'center' }}>
-                {/* Header with Back Button */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
-                    <TouchableOpacity
-                        onPress={() => navigateBackOrFallback(router, '/(tabs)/library')}
-                        style={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: 12,
-                            backgroundColor: colors.bgCard,
-                            borderWidth: 1,
-                            borderColor: colors.border,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                        }}
-                        accessibilityRole="button"
-                        accessibilityLabel="Back to Library"
-                    >
-                        <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
-                    </TouchableOpacity>
-                    <View style={{ marginLeft: 12, flex: 1, minWidth: 0 }}>
-                        <Text accessibilityRole="header" style={{ fontSize: 27, lineHeight: 31, fontFamily: fonts.heading, color: colors.textPrimary }}>
-                            Find books
-                        </Text>
-                        <Text style={{ fontSize: 12, fontFamily: fonts.body, color: colors.textSecondary, marginTop: 1 }}>
-                            Search the catalogue by title, author, or ISBN
-                        </Text>
-                    </View>
+        <View style={[styles.screen, { backgroundColor: colors.bgPrimary }]}>
+            <View style={styles.column} aria-hidden={showManualEntryModal || showFilterModal || showSortModal}
+                accessibilityElementsHidden={showManualEntryModal || showFilterModal || showSortModal}
+                importantForAccessibility={showManualEntryModal || showFilterModal || showSortModal ? 'no-hide-descendants' : 'auto'}>
+                <BookScreenHeader backLabel="Back to library" onBack={() => navigateBackOrFallback(router, '/(tabs)/library')} />
+                <View style={styles.heading}>
+                    <Text accessibilityRole="header" role="heading" aria-level={1} style={[LIBRARY_TEXT.title, { color: colors.textPrimary }]}>Find books</Text>
+                    <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>Search by title, author or ISBN.</Text>
+                    {searchIsOffline && <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>Offline · Search needs a connection.</Text>}
                 </View>
 
                 {/* Search Bar */}
-                <View style={{ position: 'relative', zIndex: 100 }}>
+                <View style={styles.search}>
                     <SearchBar
                         query={query}
                         onQueryChange={handleQueryChange}
@@ -641,109 +572,23 @@ function SearchBooksScreenContent() {
                 {results.length > 0 && !loading && (
                     <>
                         {showCachedResultsNotice && (
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    marginBottom: 12,
-                                    paddingHorizontal: 12,
-                                    paddingVertical: 10,
-                                    borderRadius: 14,
-                                    backgroundColor: colors.bgCard,
-                                    borderWidth: 1,
-                                    borderColor: colors.border,
-                                }}
-                            >
-                                <Ionicons name="cloud-offline-outline" size={16} color={colors.textSecondary} />
-                                <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body, marginLeft: 8, flex: 1 }}>
-                                    Showing recent cached Google Books results.
-                                </Text>
-                            </View>
+                            <Text style={[LIBRARY_TEXT.caption, styles.notice, { color: colors.textSecondary }]}>Showing recent cached Google Books results.</Text>
                         )}
                         {showOpenLibraryFallbackNotice && (
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    marginBottom: 12,
-                                    paddingHorizontal: 12,
-                                    paddingVertical: 10,
-                                    borderRadius: 14,
-                                    backgroundColor: colors.bgCard,
-                                    borderWidth: 1,
-                                    borderColor: colors.border,
-                                }}
-                            >
-                                <Ionicons name="library-outline" size={16} color={colors.textSecondary} />
-                                <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body, marginLeft: 8, flex: 1 }}>
-                                    {providerNotice}
-                                </Text>
-                            </View>
+                            <Text style={[LIBRARY_TEXT.caption, styles.notice, { color: colors.textSecondary }]}>{providerNotice}</Text>
                         )}
-
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                            <Text accessibilityLiveRegion="polite" style={{ fontSize: 13, color: colors.textSecondary, fontFamily: fonts.body }}>
-                                {resultsCountLabel}
-                            </Text>
-                            <View style={{ flexDirection: 'row', gap: 8 }}>
-                                {/* Filter Button */}
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        setShowFilterModal(true);
-                                    }}
-                                    style={{
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        minHeight: 44,
-                                        minWidth: 88,
-                                        backgroundColor: activeFiltersCount > 0 ? colors.accent : colors.bgCard,
-                                        paddingHorizontal: 12,
-                                        borderRadius: 12,
-                                        borderWidth: 1,
-                                        borderColor: activeFiltersCount > 0 ? colors.accent : colors.border,
-                                    }}
-                                    accessibilityLabel="Filter results"
-                                    accessibilityHint="Opens filter options"
-                                    accessibilityRole="button"
-                                    accessibilityState={{ selected: activeFiltersCount > 0, expanded: showFilterModal }}
-                                >
-                                    <Ionicons name="filter-outline" size={16} color={activeFiltersCount > 0 ? colors.onAccent : colors.textSecondary} />
-                                    <Text style={{ color: activeFiltersCount > 0 ? colors.onAccent : colors.textPrimary, fontSize: 12, fontFamily: fonts.label, marginLeft: 5 }}>Filter</Text>
-                                    {activeFiltersCount > 0 && (
-                                        <Text style={{ color: colors.onAccent, fontSize: 11, fontFamily: fonts.label, marginLeft: 4 }}>
-                                            {activeFiltersCount}
-                                        </Text>
-                                    )}
-                                </TouchableOpacity>
-
-                                {/* Sort Button */}
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        setShowSortModal(true);
-                                    }}
-                                    style={{
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        minHeight: 44,
-                                        minWidth: 78,
-                                        backgroundColor: colors.bgCard,
-                                        paddingHorizontal: 12,
-                                        borderRadius: 12,
-                                        borderWidth: 1,
-                                        borderColor: colors.border,
-                                    }}
-                                    accessibilityLabel="Sort results"
-                                    accessibilityHint="Opens sort options"
-                                    accessibilityRole="button"
-                                    accessibilityState={{ expanded: showSortModal }}
-                                >
-                                    <Ionicons name="swap-vertical" size={16} color={colors.textSecondary} />
-                                    <Text style={{ color: colors.textPrimary, fontSize: 12, fontFamily: fonts.label, marginLeft: 5 }}>Sort</Text>
-                                </TouchableOpacity>
+                        <View style={styles.resultsHeader}>
+                            <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>{resultsCountLabel}</Text>
+                            <View style={styles.resultControls}>
+                                <BookButton label={activeFiltersCount > 0 ? `Filter (${activeFiltersCount})` : 'Filter'} variant="secondary"
+                                    selected={activeFiltersCount > 0} expanded={showFilterModal} onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setShowFilterModal(true);
+                                }} />
+                                <BookButton label="Sort" variant="secondary" expanded={showSortModal} onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setShowSortModal(true);
+                                }} />
                             </View>
                         </View>
                     </>
@@ -753,13 +598,13 @@ function SearchBooksScreenContent() {
                 {error ? (
                     renderError()
                 ) : loading ? (
-                    renderSkeletons()
+                    <BookLoading variant="list" label="Searching books" />
                 ) : (
                     <FlatList
                         data={sortedResults}
                         keyExtractor={(item, index) => `${item.id}-${index}`}
                         renderItem={renderItem}
-                        contentContainerStyle={{ paddingBottom: 100 }}
+                        contentContainerStyle={styles.results}
                         showsVerticalScrollIndicator={false}
                         onEndReached={handleLoadMore}
                         onEndReachedThreshold={0.5}
@@ -813,30 +658,15 @@ function SearchBooksScreenContent() {
 }
 
 const styles = StyleSheet.create({
-    noResultsContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 80,
-        paddingHorizontal: 32,
-    },
-    noResultsIconCircle: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 16,
-    },
-    manualEntryButton: {
-        marginTop: 20,
-        paddingHorizontal: 18,
-        minHeight: 44,
-        borderRadius: 14,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    manualEntryButtonText: {
-        fontSize: 14,
-        marginLeft: 8,
-    },
+    screen: { flex: 1 },
+    column: { flex: 1, width: '100%', maxWidth: COLUMN_MAX_WIDTH, alignSelf: 'center', paddingHorizontal: LIBRARY_SPACING.md },
+    heading: { gap: LIBRARY_SPACING.xs, marginBottom: LIBRARY_SPACING.md },
+    search: { position: 'relative', zIndex: 100 },
+    resultsHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: LIBRARY_SPACING.xs, marginBottom: LIBRARY_SPACING.sm },
+    resultControls: { flexDirection: 'row', gap: LIBRARY_SPACING.xs },
+    notice: { marginBottom: LIBRARY_SPACING.sm },
+    results: { paddingBottom: LIBRARY_SPACING.xxl },
+    state: { alignItems: 'center', paddingVertical: LIBRARY_SPACING.xl, gap: LIBRARY_SPACING.md },
+    centerText: { textAlign: 'center' },
+    loadingFooter: { paddingVertical: LIBRARY_SPACING.lg, alignItems: 'center' },
 });

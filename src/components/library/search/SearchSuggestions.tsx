@@ -1,15 +1,14 @@
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
-import { useLibraryTypography } from '@/components/library/LibraryTypography';
-
+import { LIBRARY_RADIUS, LIBRARY_SPACING, MIN_TARGET, useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
+import { ICON_SIZE } from '@/components/library/bookDetails/bookDetailsTokens';
 interface SearchSuggestionsProps {
     suggestions: string[];
     recentSearches: string[];
     onSelect: (query: string) => void;
     visible: boolean;
 }
-
 export const SearchSuggestions = ({
     suggestions,
     recentSearches,
@@ -17,44 +16,39 @@ export const SearchSuggestions = ({
     visible,
 }: SearchSuggestionsProps) => {
     const colors = useLibraryAppearance();
-    const fonts = useLibraryTypography();
     if (!visible) return null;
-
     const hasContent = suggestions.length > 0 || recentSearches.length > 0;
     if (!hasContent) return null;
-
     return (
         <View
             style={{
                 position: 'absolute',
-                top: 70,
+                top: MIN_TARGET + LIBRARY_SPACING.md,
                 left: 0,
                 right: 0,
                 zIndex: 100,
                 backgroundColor: colors.bgCard,
-                borderRadius: 14,
+                borderRadius: LIBRARY_RADIUS.control,
                 borderWidth: 1,
                 borderColor: colors.border,
                 shadowColor: colors.shadow,
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.2,
-                shadowRadius: 12,
+                shadowRadius: LIBRARY_SPACING.sm,
                 elevation: 8,
-                maxHeight: 300,
+                maxHeight: MIN_TARGET * 6,
             }}
         >
             <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
                 {/* Recent searches - Always show top 3 if available */}
                 {recentSearches.length > 0 && (
-                    <View style={{ paddingTop: 8, paddingBottom: 4 }}>
+                    <View style={{ paddingTop: LIBRARY_SPACING.xs, paddingBottom: LIBRARY_SPACING.xxs }}>
                         <Text style={{
                             color: colors.textTertiary,
-                            fontSize: 11,
-                            fontFamily: fonts.label,
-                            paddingHorizontal: 16,
-                            paddingBottom: 4,
+                            ...LIBRARY_TEXT.caption,
+                            paddingHorizontal: LIBRARY_SPACING.md,
+                            paddingBottom: LIBRARY_SPACING.xxs,
                             textTransform: 'uppercase',
-                            letterSpacing: 0.5,
                         }}>
                             Recent
                         </Text>
@@ -67,18 +61,17 @@ export const SearchSuggestions = ({
                                 style={{
                                     flexDirection: 'row',
                                     alignItems: 'center',
-                                    minHeight: 44,
-                                    paddingVertical: 8,
-                                    paddingHorizontal: 16,
+                                    minHeight: MIN_TARGET,
+                                    paddingVertical: LIBRARY_SPACING.xs,
+                                    paddingHorizontal: LIBRARY_SPACING.md,
                                 }}
                             >
-                                <Ionicons name="time-outline" size={16} color={colors.textTertiary} />
+                                <Ionicons name="time-outline" size={ICON_SIZE} color={colors.textTertiary} />
                                 <Text
                                     style={{
                                         color: colors.textPrimary,
-                                        fontSize: 15,
-                                        fontFamily: fonts.body,
-                                        marginLeft: 12,
+                                        ...LIBRARY_TEXT.body,
+                                        marginLeft: LIBRARY_SPACING.sm,
                                         flex: 1,
                                     }}
                                     numberOfLines={1}
@@ -89,21 +82,18 @@ export const SearchSuggestions = ({
                         ))}
                     </View>
                 )}
-
                 {/* Suggestions from API */}
                 {suggestions.length > 0 && (
-                    <View style={{ paddingTop: recentSearches.length > 0 ? 4 : 8, paddingBottom: 8 }}>
+                    <View style={{ paddingTop: recentSearches.length > 0 ? LIBRARY_SPACING.xxs : LIBRARY_SPACING.xs, paddingBottom: LIBRARY_SPACING.xs }}>
                         {recentSearches.length > 0 && (
-                            <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: 16, marginBottom: 8 }} />
+                            <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: LIBRARY_SPACING.md, marginBottom: LIBRARY_SPACING.xs }} />
                         )}
                         <Text style={{
                             color: colors.textTertiary,
-                            fontSize: 11,
-                            fontFamily: fonts.label,
-                            paddingHorizontal: 16,
-                            paddingBottom: 4,
+                            ...LIBRARY_TEXT.caption,
+                            paddingHorizontal: LIBRARY_SPACING.md,
+                            paddingBottom: LIBRARY_SPACING.xxs,
                             textTransform: 'uppercase',
-                            letterSpacing: 0.5,
                         }}>
                             Suggestions
                         </Text>
@@ -116,25 +106,24 @@ export const SearchSuggestions = ({
                                 style={{
                                     flexDirection: 'row',
                                     alignItems: 'center',
-                                    minHeight: 44,
-                                    paddingVertical: 8,
-                                    paddingHorizontal: 16,
+                                    minHeight: MIN_TARGET,
+                                    paddingVertical: LIBRARY_SPACING.xs,
+                                    paddingHorizontal: LIBRARY_SPACING.md,
                                 }}
                             >
-                                <Ionicons name="search" size={16} color={colors.textTertiary} />
+                                <Ionicons name="search" size={ICON_SIZE} color={colors.textTertiary} />
                                 <Text
                                     style={{
                                         color: colors.textPrimary,
-                                        fontSize: 15,
-                                        fontFamily: fonts.body,
-                                        marginLeft: 12,
+                                        ...LIBRARY_TEXT.body,
+                                        marginLeft: LIBRARY_SPACING.sm,
                                         flex: 1,
                                     }}
                                     numberOfLines={1}
                                 >
                                     {suggestion}
                                 </Text>
-                                <Ionicons name="arrow-up-outline" size={14} color={colors.textTertiary} style={{ transform: [{ rotate: '45deg' }] }} />
+                                <Ionicons name="arrow-up-outline" size={ICON_SIZE} color={colors.textTertiary} style={{ transform: [{ rotate: '45deg' }] }} />
                             </TouchableOpacity>
                         ))}
                     </View>

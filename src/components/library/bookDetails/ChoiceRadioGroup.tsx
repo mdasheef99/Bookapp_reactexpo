@@ -40,7 +40,7 @@ export function ChoiceRadioGroup<T extends string>({
             onChange(next);
           };
           const keyboard = {
-            onKeyDown: (event: { key?: string; nativeEvent?: { key: string }; preventDefault: () => void }) => {
+            onKeyDown: (event: { key?: string; nativeEvent?: { key: string }; repeat?: boolean; preventDefault: () => void }) => {
               const key = event.nativeEvent?.key ?? event.key;
               if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key ?? '')) return;
               event.preventDefault();
@@ -49,6 +49,18 @@ export function ChoiceRadioGroup<T extends string>({
               refs.current[next]?.focus();
             },
           };
+          if (Platform.OS === 'web') {
+            const onArrowKeyDown = keyboard.onKeyDown;
+            keyboard.onKeyDown = event => {
+              if ((event.nativeEvent?.key ?? event.key) !== ' ') {
+                onArrowKeyDown(event);
+                return;
+              }
+              if (disabled) return;
+              event.preventDefault();
+              if (!event.repeat) select(option.value);
+            };
+          }
           return (
             <Pressable
               key={option.value}

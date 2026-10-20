@@ -1,43 +1,15 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { useLibraryAppearance } from './LibraryAppearance';
-import { useLibraryTypography } from './LibraryTypography';
+import { StyleSheet, Text } from 'react-native';
+import { LIBRARY_SPACING, useLibraryAppearance } from './LibraryAppearance';
+import { LIBRARY_TEXT } from './LibraryTypography';
 
-type LibrarySummaryProps = {
-    count: number;
-    activeFilterLabel: string;
-};
-
-export function LibrarySummary({ count, activeFilterLabel }: LibrarySummaryProps) {
+export function LibrarySummary({ count }: { count: number }) {
     const colors = useLibraryAppearance();
-    const fonts = useLibraryTypography();
-
-    return (
-        <View style={styles.summaryRow}>
-            <Text style={[styles.summaryValue, { color: colors.textSecondary, fontFamily: fonts.body }]} accessibilityLiveRegion="polite">
-                {count} {count === 1 ? 'book' : 'books'}
-            </Text>
-            <Text style={[styles.summaryMetaText, { color: colors.textSecondary, fontFamily: fonts.body }]}>
-                Showing {activeFilterLabel.toLowerCase()}
-            </Text>
-        </View>
-    );
+    return <Text style={[styles.summary, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
+        {count} {count === 1 ? 'book' : 'books'}
+    </Text>;
 }
 
 const styles = StyleSheet.create({
-    summaryRow: {
-        paddingTop: 12,
-        paddingBottom: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    summaryValue: {
-        fontSize: 12,
-        lineHeight: 18,
-    },
-    summaryMetaText: {
-        fontSize: 12,
-        lineHeight: 18,
-    },
+    summary: { ...LIBRARY_TEXT.caption, paddingTop: LIBRARY_SPACING.sm, paddingBottom: LIBRARY_SPACING.md },
 });

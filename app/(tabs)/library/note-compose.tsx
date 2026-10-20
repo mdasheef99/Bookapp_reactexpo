@@ -230,14 +230,14 @@ export default function NoteComposeScreen() {
         <CategoryPicker selected={fields.category} includeNone onChange={category => setFields({ ...fields, category })} />
         {/* DP-03 approved exception: Write and Scan are the two equal ways in. */}
         <NoteButton label="Write note" onPress={() => setStep('write')} />
-        <NoteButton label="Scan text" onPress={startScan} />
+        {Platform.OS !== 'web' && <NoteButton label="Scan text" onPress={startScan} />}
       </> : formStep ? <>
         <NoteForm fields={fields} onChange={setFields} locked={locked} showErrors={showErrors} saveAttempt={saveAttempt} inputRef={inputRef} pageRef={pageRef}
           onFocusField={focus => capture.setPosition({ focus })} onSelectionChange={selection => capture.setPosition({ selection })} selection={captureState.position.selection} />
         {step === 'review' && <NoteMessage message={`Check the scanned text and fix any mistakes. Nothing is saved until you choose ${mode === 'edit' ? 'Save changes' : 'Save note'}.`} />}
         {/* DP-04: a possibly cut-off scan is a caution, not an error, so it uses secondary ink. */}
         {!!captureState.partial && <NoteMessage message={capture.partialUnaccepted ? 'Some text may be missing from this scan. Save will ask you to check it first.' : 'You chose to use this scan. Check that nothing is missing before saving.'} />}
-        {!locked && <NoteButton label={step === 'review' ? 'Scan again' : 'Scan text'} secondary onPress={startScan} />}
+        {!locked && Platform.OS !== 'web' && <NoteButton label={step === 'review' ? 'Scan again' : 'Scan text'} secondary onPress={startScan} />}
         {!!feedback && <NoteMessage message={feedback} error />}
         {operation?.status === 'failed' && <NoteMessage message={operation.message ?? "This note wasn't saved. Your text is still here."} error />}
         {!!compare && <View style={{ gap: LIBRARY_SPACING.sm }}>

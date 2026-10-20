@@ -2,7 +2,8 @@ import { TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRef, useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
-import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { ICON_SIZE } from '@/components/library/bookDetails/bookDetailsTokens';
+import { MIN_TARGET, useLibraryAppearance } from '@/components/library/LibraryAppearance';
 
 interface WishlistButtonProps {
     isWishlisted: boolean;
@@ -17,12 +18,12 @@ export const WishlistButton = ({
     isWishlisted,
     isLoading = false,
     onToggle,
-    size = 20,
+    size = ICON_SIZE,
     color,
     accessibilityLabel,
 }: WishlistButtonProps) => {
     const colors = useLibraryAppearance();
-    const heartColor = color ?? colors.error;
+    const heartColor = color ?? colors.accent;
     const scaleAnim = useRef(new Animated.Value(1)).current;
 
     // Animate on wishlist state change
@@ -54,11 +55,11 @@ export const WishlistButton = ({
             disabled={isLoading}
             accessibilityRole="button"
             accessibilityLabel={accessibilityLabel ?? (isWishlisted ? 'Remove from wishlist' : 'Add to wishlist')}
-            accessibilityState={{ disabled: isLoading, selected: isWishlisted }}
+            accessibilityState={{ disabled: isLoading, busy: isLoading, selected: isWishlisted }}
             accessibilityHint={isWishlisted ? 'Removes this book from your wishlist' : 'Adds this book to your wishlist'}
             style={{
-                width: 44,
-                height: 44,
+                minWidth: MIN_TARGET,
+                minHeight: MIN_TARGET,
                 alignItems: 'center',
                 justifyContent: 'center',
                 opacity: isLoading ? 0.5 : 1,

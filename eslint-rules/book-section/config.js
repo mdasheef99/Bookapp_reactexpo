@@ -2,6 +2,28 @@ const plugin = require('./index');
 
 // Each flow adds its migrated files; entries are repo-relative paths with forward slashes.
 const STRICT_FILES = [
+    'app/(tabs)/library/search.tsx',
+    'src/features/books/utils/searchErrorCopy.ts',
+    'src/components/library/search/BookCard.tsx',
+    'src/components/library/search/FilterModal.tsx',
+    'src/components/library/search/GenreTag.tsx',
+    'src/components/library/search/InLibraryBadge.tsx',
+    'src/components/library/search/ManualEntryModal.tsx',
+    'src/components/library/search/PriceBadge.tsx',
+    'src/components/library/search/RatingStars.tsx',
+    'src/components/library/search/RecentSearches.tsx',
+    'src/components/library/search/SearchSuggestions.tsx',
+    'src/components/library/search/SortModal.tsx',
+    'src/components/library/search/SwipeableBookCard.tsx',
+    'src/components/library/search/WishlistButton.tsx',
+
+    'app/(tabs)/library/index.tsx',
+    'src/components/library/LibraryBookThumb.tsx',
+    'src/components/library/LibraryBookList.tsx',
+    'src/components/library/LibraryHeader.tsx',
+    'src/components/library/LibraryFilterBar.tsx',
+    'src/components/library/LibrarySummary.tsx',
+    'src/components/library/index.ts',
     'app/(tabs)/library/[bookId].tsx',
     'src/components/library/StatusSelector.tsx',
     'src/components/library/OwnershipSelector.tsx',

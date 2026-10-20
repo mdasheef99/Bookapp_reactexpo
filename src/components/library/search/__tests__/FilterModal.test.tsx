@@ -15,19 +15,19 @@ jest.mock('@/hooks/useTheme', () => ({
 }));
 
 describe('Library search filter accessibility and state', () => {
-    it('exposes selected filter buttons and applies the current selection', () => {
+    it('exposes checked filter radios and applies the current selection', () => {
         const onApply = jest.fn();
         const onClose = jest.fn();
         const screen = render(
             <FilterModal visible onClose={onClose} filters={{ genre: 'fiction' }} onApply={onApply} />,
         );
 
-        const selectedGenre = screen.getByLabelText('Fiction genre');
-        expect(selectedGenre.props.accessibilityRole).toBe('button');
-        expect(selectedGenre.props.accessibilityState).toEqual({ selected: true });
-        expect(screen.getByLabelText('Mystery genre').props.accessibilityState).toEqual({ selected: false });
+        const selectedGenre = screen.getByLabelText('Fiction');
+        expect(selectedGenre.props.accessibilityRole).toBe('radio');
+        expect(selectedGenre.props.accessibilityState).toEqual({ checked: true, disabled: false });
+        expect(screen.getByLabelText('Mystery').props.accessibilityState).toEqual({ checked: false, disabled: false });
 
-        fireEvent.press(screen.getByLabelText('Mystery genre'));
+        fireEvent.press(screen.getByLabelText('Mystery'));
         fireEvent.press(screen.getByLabelText('Apply filters'));
         expect(onApply).toHaveBeenCalledWith({ genre: 'mystery' });
         expect(onClose).toHaveBeenCalledTimes(1);
@@ -36,10 +36,10 @@ describe('Library search filter accessibility and state', () => {
     it('resynchronizes selected values whenever the modal reopens', async () => {
         const props = { visible: true, onClose: jest.fn(), filters: { genre: 'fiction' }, onApply: jest.fn() };
         const screen = render(<FilterModal {...props} />);
-        expect(screen.getByLabelText('Fiction genre').props.accessibilityState.selected).toBe(true);
+        expect(screen.getByLabelText('Fiction').props.accessibilityState.checked).toBe(true);
 
         screen.rerender(<FilterModal {...props} visible={false} filters={{ genre: 'mystery' }} />);
         screen.rerender(<FilterModal {...props} visible filters={{ genre: 'mystery' }} />);
-        await waitFor(() => expect(screen.getByLabelText('Mystery genre').props.accessibilityState.selected).toBe(true));
+        await waitFor(() => expect(screen.getByLabelText('Mystery').props.accessibilityState.checked).toBe(true));
     });
 });

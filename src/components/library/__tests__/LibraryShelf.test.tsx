@@ -187,8 +187,7 @@ describe('D07-08 / D07-13 home and quick-look labels', () => {
     it.each([['completed', 'Finished'], ['want_to_read', 'Want to read']])('labels home status %s and lent_out', (reading_status, label) => {
         const item = { id: 'home', ownership: 'lent_out', reading_status, book: { title: 'A book' } };
         const ui = render(<LibraryBookRow item={item} onPress={jest.fn()} />);
-        expect(ui.getByText(label)).toBeOnTheScreen();
-        expect(ui.getByText('Lent out')).toBeOnTheScreen();
+        expect(ui.getByText(`${label} · Lent out`)).toBeOnTheScreen();
     });
     it.each([true, false])('omits every Lending fact for available_for_lending=%s and uses shared labels', available_for_lending => {
         const book = { id: 'quick', ownership: 'lent_out', reading_status: 'completed', condition: 'acceptable', available_for_lending,
@@ -245,7 +244,7 @@ describe('horizontal Shelf layout checkpoint', () => {
         await waitFor(() => expect(screen.getByTestId('library-horizontal-shelf')).toBeTruthy());
         fireEvent.press(screen.getByTestId('library-horizontal-book-actual-id'));
         expect(require('expo-router').router.push).toHaveBeenCalledWith('/(tabs)/library/actual-id');
-        fireEvent.press(screen.getByLabelText('Wishlist, 1 books'));
+        fireEvent.press(screen.getByLabelText('Wishlist, 1 book'));
         expect(screen.queryByTestId('library-horizontal-book-actual-id')).toBeNull();
         expect(screen.getByTestId('library-horizontal-book-wanted-id')).toBeTruthy();
         fireEvent.press(screen.getByTestId('library-view-list'));
@@ -364,7 +363,7 @@ describe('LibraryShelf single shelf SDD-04', () => {
         (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce('shelf');
         const { getByTestId, getByLabelText, queryByTestId, queryClient, unmount } = renderLibraryScreen();
         await waitFor(() => expect(getByTestId('library-shelf')).toBeTruthy());
-        fireEvent.press(getByLabelText('Wishlist, 1 books'));
+        fireEvent.press(getByLabelText('Wishlist, 1 book'));
         fireEvent.press(getByTestId('library-book-picker-open'));
         const choice = getByTestId('library-book-picker-entry-wanted');
         expect(StyleSheet.flatten(choice.props.style).minHeight).toBeGreaterThanOrEqual(44);
@@ -400,7 +399,7 @@ describe('LibraryShelf single shelf SDD-04', () => {
         const savedCalls = (AsyncStorage.setItem as jest.Mock).mock.calls.length;
         fireEvent.press(getByTestId('library-view-shelf'));
         expect(AsyncStorage.setItem).toHaveBeenCalledTimes(savedCalls);
-        expect(getByText('+ Add Book')).toBeTruthy();
+        expect(getByText('Add a book')).toBeTruthy();
         expect(getAllByText('Vault Book').length).toBeGreaterThanOrEqual(1); // shelf spine + bento current read
 
         // toggle back to list
@@ -422,13 +421,13 @@ describe('LibraryShelf single shelf SDD-04', () => {
         const { getByTestId, getByLabelText, getAllByTestId, queryClient, unmount } = renderLibraryScreen();
         const order = () => getAllByTestId(/^library-shelf-spine-/).map((spine) => spine.props.testID.replace('library-shelf-spine-', ''));
         await waitFor(() => expect(getByTestId('library-arrange-arrange-shelf')).toBeEnabled());
-        fireEvent.press(getByLabelText('Wishlist, 1 books'));
+        fireEvent.press(getByLabelText('Wishlist, 1 book'));
         expect(order()).toEqual(['c']);
         fireEvent.press(getByTestId('library-arrange-arrange-shelf'));
         expect(order()).toEqual(['a', 'b', 'c']);
         expect(getByTestId('library-view-list')).toBeDisabled();
-        expect(getByLabelText('Wishlist, 1 books')).toBeDisabled();
-        expect(getByLabelText('Add a new book to your library')).toBeDisabled();
+        expect(getByLabelText('Wishlist, 1 book')).toBeDisabled();
+        expect(getByLabelText('Add a book')).toBeDisabled();
         expect(getByTestId('library-arrange-undo')).toBeDisabled();
         fireEvent.press(getByTestId('library-book-picker-open'));
         expect(getByTestId('library-book-picker-entry-c').props.accessibilityLabel).toBe('Select Same title by An Author');
@@ -477,7 +476,7 @@ describe('LibraryShelf single shelf SDD-04', () => {
         };
         visit(toJSON());
         expect(order.indexOf('library-collection-controls')).toBeLessThan(order.indexOf('library-shelf'));
-        fireEvent.press(getByLabelText('Add a new book to your library'));
+        fireEvent.press(getByLabelText('Add a book'));
         expect(require('expo-router').router.push).toHaveBeenCalledWith('/(tabs)/library/search');
         fireEvent.press(getByTestId('library-view-list'));
         expect(getByTestId('library-collection-controls')).toBeTruthy();
@@ -551,24 +550,54 @@ describe('LibraryShelf single shelf SDD-04', () => {
     });
 
     it('plays tak 80ms wood and Haptics Light on spine press with debounce 100ms', async () => {
-        const Haptics = require('expo-haptics');
-        const books = [
-            { id: 'ub-1', reading_status: 'reading', ownership: 'owned', book: { title: 'Tap Book', authors: ['A'], cover_url: null } },
-        ];
-        const onPress = jest.fn();
-        const { getByTestId } = render(<LibraryShelf books={books as any} onBookPress={onPress} />);
-        const spine = getByTestId('library-shelf-spine-ub-1');
-        // First press should trigger Haptics (audio preload is async, may not have completed in test)
-        fireEvent(spine, 'pressIn');
-        // Haptics may be debounced 100ms, wait a tick
-        await waitFor(() => expect(Haptics.impactAsync).toHaveBeenCalled(), { timeout: 2000 });
-        // Press should also still allow onPress for navigation
-        fireEvent.press(spine);
-        expect(onPress).toHaveBeenCalled();
-        // Second rapid press within 100ms should be debounced for audio but Haptics at least 1
-        const callCountBefore = (Haptics.impactAsync as jest.Mock).mock.calls.length;
-        fireEvent(spine, 'pressIn');
-        await waitFor(() => expect((Haptics.impactAsync as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(callCountBefore));
+        jest.useFakeTimers();
+        jest.setSystemTime(new Date('2026-10-21T12:00:00Z'));
+        const originalUseRef = React.useRef;
+        let audioRef: React.RefObject<any> | undefined;
+        const refSpy = jest.spyOn(React, 'useRef').mockImplementationOnce(() => {
+            const ref = originalUseRef(null);
+            audioRef = ref;
+            return ref;
+        });
+        try {
+            const Haptics = require('expo-haptics');
+            const audio = require('expo-audio');
+            const books = [{ id: 'ub-1', reading_status: 'reading', ownership: 'owned', book: { title: 'Tap Book', authors: ['A'], cover_url: null } }];
+            const onPress = jest.fn();
+            const ui = render(<LibraryShelf books={books} onBookPress={onPress} />);
+            refSpy.mockRestore();
+            const flush = async () => { await act(async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); }); };
+            await flush();
+            // Jest cannot execute the native dynamic import; seed the loaded-player ref.
+            const player = audio.createAudioPlayer();
+            expect(audioRef).toBeDefined();
+            audioRef!.current = player;
+            const spine = ui.getByTestId('library-shelf-spine-ub-1');
+            expect(player.play).toHaveBeenCalledTimes(0);
+            expect(Haptics.impactAsync).toHaveBeenCalledTimes(0);
+            fireEvent(spine, 'pressIn'); await flush();
+            expect(player.seekTo).toHaveBeenLastCalledWith(0);
+            expect(player.play).toHaveBeenCalledTimes(1);
+            expect(Haptics.impactAsync).toHaveBeenCalledTimes(1);
+            expect(Haptics.impactAsync).toHaveBeenLastCalledWith(Haptics.ImpactFeedbackStyle.Light);
+            fireEvent(spine, 'pressOut');
+            act(() => jest.advanceTimersByTime(50));
+            fireEvent(spine, 'pressIn'); await flush();
+            // Only audio is debounced; BookSpine fires Light haptics on every press-in.
+            expect(player.play).toHaveBeenCalledTimes(1);
+            expect(player.seekTo).toHaveBeenCalledTimes(1);
+            expect(Haptics.impactAsync).toHaveBeenCalledTimes(2);
+            fireEvent(spine, 'pressOut');
+            act(() => jest.advanceTimersByTime(50));
+            fireEvent(spine, 'pressIn'); await flush();
+            expect(player.play).toHaveBeenCalledTimes(2);
+            expect(player.seekTo).toHaveBeenCalledTimes(2);
+            expect(Haptics.impactAsync.mock.calls).toEqual([['Light'], ['Light'], ['Light']]);
+            fireEvent.press(spine);
+            expect(onPress).toHaveBeenCalledTimes(1);
+            expect(onPress).toHaveBeenCalledWith(books[0]);
+            ui.unmount();
+        } finally { refSpy.mockRestore(); jest.useRealTimers(); }
     });
 
     describe('F2 pull-out press contract (SDD-05 §3)', () => {

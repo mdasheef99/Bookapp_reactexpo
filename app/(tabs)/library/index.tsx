@@ -1,4 +1,4 @@
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Text, Platform } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,6 +26,11 @@ import {
     LibrarySummary,
 } from '@/components/library';
 import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
+import { BookButton } from '@/components/library/ui';
+import { COLUMN_MAX_WIDTH } from '@/components/library/bookDetails/bookDetailsTokens';
+import { classifyBookLoadError } from '@/components/library/bookDetails/classifyBookLoadError';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
 const LIBRARY_VIEW_MODE_KEY = 'library_viewMode';
 export type LibraryViewMode = 'shelf' | 'list';
@@ -42,13 +47,16 @@ export default function LibraryScreen() {
 
 function LibraryHome() {
     const { session } = useAuth();
+    const colors = useLibraryAppearance();
+    const { isOffline } = useNetworkStatus();
     const [activeFilter, setActiveFilter] = useState<LibraryFilter>('all');
     const [viewMode, setViewMode] = useState<LibraryViewMode>('list');
     const [shelfStyle, setShelfStyle] = useState<LibraryShelfStyle>('vertical');
     const shelfStyleChanged = useRef(false);
     const [focusSelectedView, setFocusSelectedView] = useState(false);
     const isShelf = viewMode === 'shelf';
-    const { data: books = [], error, isError, isLoading, isRefetching, refetch } = useLibraryBooks(session?.user?.id);
+    const { data, error, isError, isLoading, isRefetching, refetch } = useLibraryBooks(session?.user?.id);
+    const books = useMemo(() => data ?? [], [data]);
     const [shelfDragging, setShelfDragging] = useState(false);
 
     useEffect(() => {
@@ -93,14 +101,16 @@ function LibraryHome() {
     const openSearch = () => router.push('/(tabs)/library/search');
     const openBook = (item: LibraryBookEntry) => router.push(`/(tabs)/library/${item.id}`);
 
-    if (isLoading) return <LibraryPageBackground><LibraryLoadingState /></LibraryPageBackground>;
-    if (isError) {
-        const errorMessage = error instanceof Error ? error.message : 'Please try again in a moment.';
+    if (isLoading) return <LibraryPageBackground><View style={styles.content}>
+        <LibraryHeader onAdd={openSearch} viewMode={viewMode} onViewModeChange={handleViewModeChange} viewDisabled />
+        <LibraryLoadingState />
+    </View></LibraryPageBackground>;
+    if (isError && data === undefined) {
         return (
             <LibraryPageBackground>
                 <View style={styles.content}>
-                    <LibraryHeader showAddButton={false} onSearch={openSearch} viewMode={viewMode} onViewModeChange={handleViewModeChange} />
-                    <LibraryErrorState message={errorMessage} onRetry={refetch} />
+                    <LibraryHeader viewMode={viewMode} onViewModeChange={handleViewModeChange} />
+                    <LibraryErrorState kind={classifyBookLoadError(error, isOffline)} onRetry={refetch} />
                 </View>
             </LibraryPageBackground>
         );
@@ -108,10 +118,19 @@ function LibraryHome() {
 
     const collectionHeader = (
         <View>
-            <LibraryHeader onSearch={openSearch} viewMode={viewMode} onViewModeChange={handleViewModeChange} focusSelectedView={focusSelectedView} disabled={arrangement.active} />
+            <LibraryHeader onAdd={openSearch} viewMode={viewMode} onViewModeChange={handleViewModeChange} focusSelectedView={focusSelectedView} disabled={arrangement.active} />
             <View testID="library-collection-controls">
                 <LibraryFilterBar chips={filterChips} activeFilter={activeFilter} onChange={setActiveFilter} disabled={arrangement.active} />
-                <LibrarySummary count={filteredBooks.length} activeFilterLabel={activeFilterLabel} />
+                <LibrarySummary count={filteredBooks.length} />
+                {isOffline && books.length > 0 && <Text accessibilityLiveRegion="polite"
+                    {...(Platform.OS === 'web' ? { 'aria-live': 'polite', role: 'status' } as const : {})}
+                    style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>Offline · Showing saved content.</Text>}
+                {isError && <View style={styles.refreshNotice}>
+                    <Text accessibilityLiveRegion="polite"
+                        {...(Platform.OS === 'web' ? { 'aria-live': 'polite', role: 'status' } as const : {})}
+                        style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>{"Couldn't refresh."}</Text>
+                    <BookButton label="Try again" variant="text" onPress={refetch} />
+                </View>}
             </View>
         </View>
     );
@@ -141,7 +160,7 @@ function LibraryHome() {
             ) : (
                 <View style={[styles.content, styles.listViewport]}>
                     <LibraryBookList books={filteredBooks} activeFilter={activeFilter} activeFilterLabel={activeFilterLabel}
-                        isRefetching={isRefetching} onRefresh={refetch} onBookPress={openBook} header={collectionHeader} />
+                        isRefetching={isRefetching} onRefresh={refetch} onBookPress={openBook} onShowAll={() => setActiveFilter('all')} header={collectionHeader} />
                 </View>
             )}
         </LibraryPageBackground>
@@ -151,7 +170,8 @@ function LibraryHome() {
 const styles = StyleSheet.create({
     page: { flex: 1 },
     scrollView: { flex: 1 },
-    scrollContent: { paddingBottom: 40, flexGrow: 1 },
-    content: { width: '100%', maxWidth: 600, alignSelf: 'center', paddingHorizontal: LIBRARY_SPACING.large },
+    scrollContent: { paddingBottom: LIBRARY_SPACING.xl, flexGrow: 1 },
+    content: { width: '100%', maxWidth: COLUMN_MAX_WIDTH, alignSelf: 'center', paddingHorizontal: LIBRARY_SPACING.large },
     listViewport: { flex: 1 },
+    refreshNotice: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: LIBRARY_SPACING.xs },
 });

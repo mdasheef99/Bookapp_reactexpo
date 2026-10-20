@@ -1,7 +1,8 @@
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
-import { useLibraryTypography } from '@/components/library/LibraryTypography';
+import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
+import { ICON_SIZE } from '@/components/library/bookDetails/bookDetailsTokens';
 
 interface RatingStarsProps {
     rating?: number;
@@ -10,15 +11,14 @@ interface RatingStarsProps {
 
 export const RatingStars = ({ rating, count }: RatingStarsProps) => {
     const colors = useLibraryAppearance();
-    const fonts = useLibraryTypography();
     if (!rating) return null;
 
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating - fullStars >= 0.5;
 
     return (
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
-            <View style={{ flexDirection: 'row', gap: 2 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', marginTop: LIBRARY_SPACING.xxs }}>
+            <View accessible={false} aria-hidden style={{ flexDirection: 'row' }}>
                 {[...Array(5)].map((_, i) => {
                     let iconName: 'star' | 'star-half' | 'star-outline' = 'star-outline';
                     if (i < fullStars) {
@@ -30,14 +30,14 @@ export const RatingStars = ({ rating, count }: RatingStarsProps) => {
                         <Ionicons
                             key={i}
                             name={iconName}
-                            size={16}
-                            color="#F59E0B"
+                            size={ICON_SIZE}
+                            color={colors.textSecondary}
                         />
                     );
                 })}
             </View>
-            <Text style={{ fontSize: 12, color: colors.textTertiary, marginLeft: 8, fontFamily: fonts.body }}>
-                {rating.toFixed(1)} ({count?.toLocaleString() || 0})
+            <Text style={{ ...LIBRARY_TEXT.caption, color: colors.textSecondary, marginLeft: LIBRARY_SPACING.xs }}>
+                {rating.toFixed(1)}{count !== undefined ? ` (${count.toLocaleString()})` : ''}
             </Text>
         </View>
     );

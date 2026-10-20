@@ -70,8 +70,29 @@ describe('book-section flat config', () => {
         expect(Array.isArray(STRICT_FILES)).toBe(true);
     });
 
-    it('keeps the reviewed Flow A, Flow B and C1 strict file list exact and ordered', () => {
+    it('keeps the reviewed Flow A, Flow B, C1, D1 and D2 strict file list exact and ordered', () => {
         expect(STRICT_FILES).toEqual([
+            'app/(tabs)/library/search.tsx',
+            'src/features/books/utils/searchErrorCopy.ts',
+            'src/components/library/search/BookCard.tsx',
+            'src/components/library/search/FilterModal.tsx',
+            'src/components/library/search/GenreTag.tsx',
+            'src/components/library/search/InLibraryBadge.tsx',
+            'src/components/library/search/ManualEntryModal.tsx',
+            'src/components/library/search/PriceBadge.tsx',
+            'src/components/library/search/RatingStars.tsx',
+            'src/components/library/search/RecentSearches.tsx',
+            'src/components/library/search/SearchSuggestions.tsx',
+            'src/components/library/search/SortModal.tsx',
+            'src/components/library/search/SwipeableBookCard.tsx',
+            'src/components/library/search/WishlistButton.tsx',
+            'app/(tabs)/library/index.tsx',
+            'src/components/library/LibraryBookThumb.tsx',
+            'src/components/library/LibraryBookList.tsx',
+            'src/components/library/LibraryHeader.tsx',
+            'src/components/library/LibraryFilterBar.tsx',
+            'src/components/library/LibrarySummary.tsx',
+            'src/components/library/index.ts',
             'app/(tabs)/library/[bookId].tsx',
             'src/components/library/StatusSelector.tsx',
             'src/components/library/OwnershipSelector.tsx',
@@ -105,7 +126,7 @@ describe('book-section flat config', () => {
             eslint = new ESLint({ cwd: repoRoot, overrideConfigFile: true,
                 overrideConfig: require(path.join(repoRoot, 'eslint.config.js')) });
         }
-        const filenames = [...STRICT_FILES, 'src/components/library/LibraryBookList.tsx'];
+        const filenames = [...STRICT_FILES, 'src/components/library/LibraryBookPicker.tsx'];
         for (const filename of filenames) {
             const { rules } = await eslint.calculateConfigForFile(path.join(repoRoot, filename));
             for (const ruleId of ruleIds) {

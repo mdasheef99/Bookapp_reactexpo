@@ -194,8 +194,8 @@ describe('SearchBooksScreen manual entry', () => {
         const screen = renderScreen();
         fireEvent.changeText(screen.getByTestId('library-search-input'), 'It');
         fireEvent.press(screen.getByTestId('library-search-submit'));
-        await waitFor(() => expect(screen.getByLabelText('Filter results')).toBeOnTheScreen());
-        fireEvent.press(screen.getByLabelText('Filter results'));
+        await waitFor(() => expect(screen.getByLabelText(/^Filter(?: \(\d+\))?$/)).toBeOnTheScreen());
+        fireEvent.press(screen.getByLabelText(/^Filter(?: \(\d+\))?$/));
         fireEvent.press(screen.getByTestId('test-apply-fiction'));
         await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalledWith('It', 0, 20, { genre: 'fiction' }));
         fireEvent.press(screen.getByTestId('test-remove-genre'));
@@ -221,8 +221,8 @@ describe('SearchBooksScreen manual entry', () => {
             .mockResolvedValueOnce({ items: [], totalItems: 0, hasMore: false, providerUsed: 'openLibrary', fallbackUsed: true, unsupportedFilters: ['priceType'] });
         const screen = renderScreen();
         fireEvent.changeText(screen.getByTestId('library-search-input'), 'Dune');
-        await waitFor(() => expect(screen.getByLabelText('Filter results')).toBeOnTheScreen());
-        fireEvent.press(screen.getByLabelText('Filter results'));
+        await waitFor(() => expect(screen.getByLabelText(/^Filter(?: \(\d+\))?$/)).toBeOnTheScreen());
+        fireEvent.press(screen.getByLabelText(/^Filter(?: \(\d+\))?$/));
         fireEvent.press(screen.getByTestId('test-apply-free'));
         await waitFor(() => expect(screen.getByText('No books found')).toBeOnTheScreen());
         expect(screen.getByText(/Free\/Paid filter was not applied/)).toBeOnTheScreen();
@@ -291,7 +291,7 @@ describe('SearchBooksScreen manual entry', () => {
         fireEvent.changeText(screen.getByTestId('library-search-input'), 'Dune');
         await waitFor(() => expect(screen.getByText('48,254 results')).toBeOnTheScreen());
         (booksService.searchGoogleBooksCached as jest.Mock).mockClear();
-        fireEvent.press(screen.getByLabelText('Filter results'));
+        fireEvent.press(screen.getByLabelText(/^Filter(?: \(\d+\))?$/));
         fireEvent.press(screen.getByTestId('test-apply-free'));
 
         await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalledTimes(1));
@@ -339,10 +339,10 @@ describe('SearchBooksScreen manual entry', () => {
         fireEvent.changeText(screen.getByTestId('library-search-input'), 'Dune');
         await waitFor(() => expect(booksService.searchGoogleBooksCached).toHaveBeenCalledTimes(1));
         fireEvent.changeText(screen.getByTestId('library-search-input'), 'Du');
-        expect(screen.getByText('Keep typing to search')).toBeOnTheScreen();
+        expect(screen.getByText('Keep typing')).toBeOnTheScreen();
         expect(screen.queryByText('No books found')).toBeNull();
         await act(async () => finishSearch({ items: [{ id: 'late', volumeInfo: { title: 'Late result' } }], totalItems: 1, hasMore: false }));
-        expect(screen.getByText('Keep typing to search')).toBeOnTheScreen();
+        expect(screen.getByText('Keep typing')).toBeOnTheScreen();
         expect(screen.queryByText('1 result')).toBeNull();
     });
 });

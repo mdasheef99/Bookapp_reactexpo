@@ -228,6 +228,25 @@ describe('offline saving', () => {
 });
 
 describe('choose step', () => {
+  it('shows only Write note as the web primary and hides Scan text in the write step', async () => {
+    const priorOS = Platform.OS;
+    Platform.OS = 'web';
+    try {
+      render(<NoteComposeScreen />);
+      expectSinglePrimary(screen);
+      expect(screen.getByRole('button', { name: 'Write note' })).toBeOnTheScreen();
+      expect(screen.queryByRole('button', { name: 'Scan text' })).toBeNull();
+      openWrite();
+      await flush();
+      expectSinglePrimary(screen);
+      expect(screen.getByLabelText('Note text')).toBeOnTheScreen();
+      expect(screen.queryByRole('button', { name: 'Scan text' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Scan again' })).toBeNull();
+      expect(manualNoteSaveAdapter.write).not.toHaveBeenCalled();
+      screen.unmount();
+    } finally { Platform.OS = priorOS; }
+  });
+
   it('gives Write and Scan equal primary weight, drops Skip category, and defaults to No category', () => {
     render(<NoteComposeScreen />);
     expectSinglePrimary(screen, { allow: 2 });

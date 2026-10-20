@@ -7,6 +7,6 @@ export * from './LibraryHeader';
 export * from './LibrarySummary';
 export * from './LibraryFilterBar';
 export * from './LibraryBookList';
+export * from './LibraryBookThumb';
 export * from './LibraryShelf';
 export * from './LibraryBentoGrid';
-export * from './LibraryPillNav';

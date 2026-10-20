@@ -34,7 +34,7 @@ describe('BookCard result action accessibility', () => {
         );
 
         for (const label of [
-            'Add A Test Book to library',
+            'Add to library: A Test Book',
             'Add A Test Book to wishlist',
             'Preview A Test Book',
             'Share A Test Book',
