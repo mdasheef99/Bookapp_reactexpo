@@ -1,0 +1,36 @@
+‹ Notes
+Read note
+Many Notes Fixture Book
+Quote
+Page 42
+A quoted line from the fixture book that should render in the note card.
+Delete note
+Edit note
+Copy text
+⏷
+⏷
+My Library
+⏷
+⏷
+Exchange
+⏷
+⏷
+Marketplace
+⏷
+⏷
+Clubs
+⏷
+⏷
+Profile
+⏷
+⏷
+marketplace/cart
+⏷
+⏷
+marketplace/requests/index
+⏷
+⏷
+marketplace/book/[listingId]
+⏷
+⏷
+marketplace/requests/[requestId]

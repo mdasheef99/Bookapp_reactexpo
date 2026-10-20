@@ -1,0 +1,41 @@
+‹ Back to options
+Add note
+Many Notes Fixture Book
+Category: No category
+Change category
+Note text
+Page (optional)
+Scan text
+Save note
+Cancel note
+⏷
+⏷
+My Library
+⏷
+⏷
+Exchange
+⏷
+⏷
+Marketplace
+⏷
+⏷
+Clubs
+⏷
+⏷
+Profile
+⏷
+⏷
+marketplace/cart
+⏷
+⏷
+marketplace/requests/index
+⏷
+⏷
+marketplace/book/[listingId]
+⏷
+⏷
+marketplace/requests/[requestId]
+Discard this note?
+Your note hasn't been saved.
+Keep editing
+Discard note

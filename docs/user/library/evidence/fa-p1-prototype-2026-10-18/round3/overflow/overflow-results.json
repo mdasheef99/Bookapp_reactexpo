@@ -1,0 +1,152 @@
+{
+  "zoom2-w390": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "requestedZoom": "2",
+    "step1_beforeHide": {
+      "zoomStyle": "2",
+      "computedZoom": "2",
+      "innerWidth": 390,
+      "clientWidth": 390,
+      "scrollWidth": 399,
+      "overflowingCount": 6,
+      "innermostCount": 3,
+      "top5Innermost": [
+        {
+          "tagName": "div",
+          "role": null,
+          "ariaLabel": null,
+          "testId": "fa-status-measure-completed",
+          "text40": "Finished",
+          "rect": {
+            "left": 356.16,
+            "right": 487.23,
+            "width": 131.08
+          },
+          "overhangPx": 97.23,
+          "minWidth": "auto",
+          "width": "65.5391px",
+          "inTabBar": false,
+          "inNav": false,
+          "fixedAncestor": null,
+          "prototypeTestId": "fa-status-measure-completed"
+        },
+        {
+          "tagName": "div",
+          "role": null,
+          "ariaLabel": null,
+          "testId": null,
+          "text40": "⏷",
+          "rect": {
+            "left": 343.34,
+            "right": 393.34,
+            "width": 50
+          },
+          "overhangPx": 3.34,
+          "minWidth": "auto",
+          "width": "25px",
+          "inTabBar": true,
+          "inNav": false,
+          "fixedAncestor": null,
+          "prototypeTestId": null
+        },
+        {
+          "tagName": "div",
+          "role": null,
+          "ariaLabel": null,
+          "testId": null,
+          "text40": "⏷",
+          "rect": {
+            "left": 343.34,
+            "right": 393.34,
+            "width": 50
+          },
+          "overhangPx": 3.34,
+          "minWidth": "auto",
+          "width": "25px",
+          "inTabBar": true,
+          "inNav": false,
+          "fixedAncestor": null,
+          "prototypeTestId": null
+        }
+      ]
+    },
+    "tabBarHidden": {
+      "found": true,
+      "tagName": "div",
+      "testId": null,
+      "role": null,
+      "rectRight": 390,
+      "rectWidth": 390
+    },
+    "step3_afterHide": {
+      "scrollWidth": 390,
+      "overflowingCount": 1,
+      "innermostCount": 1,
+      "top5Innermost": [
+        {
+          "tagName": "div",
+          "role": null,
+          "ariaLabel": null,
+          "testId": "fa-status-measure-completed",
+          "text40": "Finished",
+          "rect": {
+            "left": 356.16,
+            "right": 487.23,
+            "width": 131.08
+          },
+          "overhangPx": 97.23,
+          "minWidth": "auto",
+          "width": "65.5391px",
+          "inTabBar": false,
+          "inNav": false,
+          "fixedAncestor": null,
+          "prototypeTestId": "fa-status-measure-completed"
+        }
+      ]
+    },
+    "nonGetRequests": [
+      "POST https://ahntbtktjjmvfosgkmgn.supabase.co/auth/v1/otp",
+      "POST https://ahntbtktjjmvfosgkmgn.supabase.co/auth/v1/verify"
+    ],
+    "writes": []
+  },
+  "zoom1-w320": {
+    "viewport": {
+      "width": 320,
+      "height": 844
+    },
+    "requestedZoom": "(none)",
+    "step1_beforeHide": {
+      "zoomStyle": "",
+      "computedZoom": "1",
+      "innerWidth": 320,
+      "clientWidth": 320,
+      "scrollWidth": 320,
+      "overflowingCount": 0,
+      "innermostCount": 0,
+      "top5Innermost": []
+    },
+    "tabBarHidden": {
+      "found": true,
+      "tagName": "div",
+      "testId": null,
+      "role": null,
+      "rectRight": 320,
+      "rectWidth": 320
+    },
+    "step3_afterHide": {
+      "scrollWidth": 320,
+      "overflowingCount": 0,
+      "innermostCount": 0,
+      "top5Innermost": []
+    },
+    "nonGetRequests": [
+      "POST https://ahntbtktjjmvfosgkmgn.supabase.co/auth/v1/otp",
+      "POST https://ahntbtktjjmvfosgkmgn.supabase.co/auth/v1/verify"
+    ],
+    "writes": []
+  }
+}

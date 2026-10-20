@@ -1,0 +1,1 @@
+photo button clicked: true; file chooser opened: true

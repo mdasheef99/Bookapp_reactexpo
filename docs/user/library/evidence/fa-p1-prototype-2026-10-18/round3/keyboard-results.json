@@ -1,0 +1,321 @@
+{
+  "verdicts": {
+    "K1": {
+      "verdict": "PASS",
+      "detail": {
+        "stopsBeforeAndIncludingPrimary": [
+          "button \"Back to Library\"",
+          "radio \"Reading\" aria-checked=true",
+          "button \"Add note\""
+        ]
+      }
+    },
+    "K3": {
+      "verdict": "PASS",
+      "detail": {
+        "back": {
+          "name": "Back to Library",
+          "outlineStyle": "solid",
+          "outlineWidth": "2px",
+          "outlineColor": "rgb(122, 92, 51)",
+          "boxShadow": "none",
+          "screenshot": "kb-k3-focus-back.png"
+        },
+        "radio": {
+          "name": "Reading",
+          "outlineStyle": "solid",
+          "outlineWidth": "2px",
+          "outlineColor": "rgb(122, 92, 51)",
+          "boxShadow": "none",
+          "screenshot": "kb-k3-focus-radio.png"
+        },
+        "addnote": {
+          "name": "Add note",
+          "outlineStyle": "solid",
+          "outlineWidth": "2px",
+          "outlineColor": "rgb(122, 92, 51)",
+          "boxShadow": "none",
+          "screenshot": "kb-k3-focus-addnote.png"
+        }
+      }
+    },
+    "K2": {
+      "verdict": "PASS",
+      "detail": {
+        "radioCount": 3,
+        "initial": [
+          {
+            "name": "Want to read",
+            "checked": "false",
+            "tabindex": "-1",
+            "focused": false
+          },
+          {
+            "name": "Reading",
+            "checked": "true",
+            "tabindex": "0",
+            "focused": false
+          },
+          {
+            "name": "Finished",
+            "checked": "false",
+            "tabindex": "-1",
+            "focused": false
+          }
+        ],
+        "afterRight": [
+          {
+            "name": "Want to read",
+            "checked": "false",
+            "tabindex": "-1",
+            "focused": false
+          },
+          {
+            "name": "Reading",
+            "checked": "false",
+            "tabindex": "-1",
+            "focused": false
+          },
+          {
+            "name": "Finished",
+            "checked": "true",
+            "tabindex": "0",
+            "focused": true
+          }
+        ],
+        "afterLeft": [
+          {
+            "name": "Want to read",
+            "checked": "false",
+            "tabindex": "-1",
+            "focused": false
+          },
+          {
+            "name": "Reading",
+            "checked": "true",
+            "tabindex": "0",
+            "focused": true
+          },
+          {
+            "name": "Finished",
+            "checked": "false",
+            "tabindex": "-1",
+            "focused": false
+          }
+        ],
+        "expectedRightIdx": 2
+      }
+    },
+    "K4": {
+      "verdict": "PASS",
+      "detail": {
+        "stopsAfterPrimary": [
+          "button \"Add note\"",
+          "link \"All notes\"",
+          "button \"Your review, A book I want to return to slowly. The small observations stay with me after I put it down.\" aria-expanded=false",
+          "button \"Saved pages, 1 page\" aria-expanded=false",
+          "button \"Book information\" aria-expanded=false",
+          "button \"Ownership & condition, Owned · Good\" aria-expanded=false",
+          "button \"Remove from library\"",
+          "tab \"⏷ ⏷ My Library\" [tab bar]",
+          "tab \"⏷ ⏷ Exchange\" [tab bar]",
+          "tab \"⏷ ⏷ Marketplace\" [tab bar]",
+          "tab \"⏷ ⏷ Clubs\" [tab bar]",
+          "tab \"⏷ ⏷ Profile\" [tab bar]"
+        ],
+        "allNotes": "link \"All notes\"",
+        "reviewName": "Your review, A book I want to return to slowly. The small observations stay with me after I put it down.",
+        "reviewBefore": "false",
+        "reviewAfter": "true",
+        "communityFocusStop": null,
+        "communityDirect": {
+          "present": false
+        }
+      }
+    },
+    "K5": {
+      "verdict": "PASS",
+      "detail": {
+        "focusAtOpen": "button \"Cancel\"",
+        "tabSixTimes": [
+          "button \"Remove book\"",
+          "button \"Cancel\"",
+          "button \"Remove book\"",
+          "button \"Cancel\"",
+          "button \"Remove book\"",
+          "button \"Cancel\""
+        ],
+        "insideFlags": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "dialog": {
+          "role": "dialog",
+          "ariaModal": "true",
+          "describedBy": [
+            "«r0»"
+          ],
+          "describedText": "Your notes, review and saved pages for this book will be deleted too. You can't undo this.",
+          "describedOk": true,
+          "pageAriaHidden": "true",
+          "pageInert": true,
+          "backgroundHidden": true
+        },
+        "escapeClosesDialog": true,
+        "focusAfterEscape": "button \"Remove from library\""
+      }
+    },
+    "K6": {
+      "verdict": "PASS",
+      "detail": {
+        "total": 11,
+        "tabBarExcludedCount": 9,
+        "emptyNames": [],
+        "items": [
+          {
+            "role": "button",
+            "name": "Back to Library"
+          },
+          {
+            "role": "radio",
+            "name": "Want to read"
+          },
+          {
+            "role": "radio",
+            "name": "Reading"
+          },
+          {
+            "role": "radio",
+            "name": "Finished"
+          },
+          {
+            "role": "button",
+            "name": "Add note"
+          },
+          {
+            "role": "link",
+            "name": "All notes"
+          },
+          {
+            "role": "button",
+            "name": "Your review, A book I want to return to slowly. The small observations stay with me after I put it down."
+          },
+          {
+            "role": "button",
+            "name": "Saved pages, 1 page"
+          },
+          {
+            "role": "button",
+            "name": "Book information"
+          },
+          {
+            "role": "button",
+            "name": "Ownership & condition, Owned · Good"
+          },
+          {
+            "role": "button",
+            "name": "Remove from library"
+          }
+        ]
+      }
+    },
+    "K7": {
+      "verdict": "PASS",
+      "detail": {
+        "expectedTitle": "Walden",
+        "h1": {
+          "tag": "H1",
+          "role": "heading",
+          "level": 1,
+          "text": "Walden"
+        },
+        "yourNotesLevel2": {
+          "tag": "H2",
+          "role": "heading",
+          "level": 2,
+          "text": "Your notes"
+        },
+        "headings": [
+          {
+            "tag": "H1",
+            "role": "heading",
+            "level": 1,
+            "text": "Walden"
+          },
+          {
+            "tag": "H2",
+            "role": "heading",
+            "level": 2,
+            "text": "Your notes"
+          }
+        ],
+        "landmarks": []
+      }
+    },
+    "K8": {
+      "verdict": "FAIL",
+      "detail": {
+        "innerWidth": 390,
+        "docScrollWidth": 399,
+        "clippedLabels": []
+      }
+    },
+    "K9": {
+      "verdict": "PASS",
+      "detail": {
+        "radios": [
+          {
+            "name": "Want to read",
+            "disabled": true
+          },
+          {
+            "name": "Reading",
+            "disabled": true
+          },
+          {
+            "name": "Finished",
+            "disabled": true
+          }
+        ],
+        "addNoteCount": 1,
+        "addNoteDisabled": true,
+        "changesNeedConnectionText": true
+      }
+    }
+  },
+  "k3Styles": {
+    "back": {
+      "name": "Back to Library",
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(122, 92, 51)",
+      "boxShadow": "none",
+      "screenshot": "kb-k3-focus-back.png"
+    },
+    "radio": {
+      "name": "Reading",
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(122, 92, 51)",
+      "boxShadow": "none",
+      "screenshot": "kb-k3-focus-radio.png"
+    },
+    "addnote": {
+      "name": "Add note",
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(122, 92, 51)",
+      "boxShadow": "none",
+      "screenshot": "kb-k3-focus-addnote.png"
+    }
+  },
+  "writesBlocked": [],
+  "nonGet": [
+    "POST https://ahntbtktjjmvfosgkmgn.supabase.co/auth/v1/otp",
+    "POST https://ahntbtktjjmvfosgkmgn.supabase.co/auth/v1/verify"
+  ]
+}

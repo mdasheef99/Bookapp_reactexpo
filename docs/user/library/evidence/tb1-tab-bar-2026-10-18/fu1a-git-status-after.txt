@@ -1,0 +1,5 @@
+ M app/(tabs)/__tests__/_layout.test.tsx
+ M app/(tabs)/_layout.tsx
+?? .spec-out/
+?? .spec/
+?? app/(tabs)/__tests__/tabBarContrast.test.ts

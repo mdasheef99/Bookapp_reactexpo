@@ -1,0 +1,39 @@
+‹ Back
+Add note
+The Cover Fixture Book
+Category (optional)
+Quote
+Thought
+Takeaway
+Action
+Question
+Skip category
+Write note
+Scan text
+⏷
+⏷
+My Library
+⏷
+⏷
+Exchange
+⏷
+⏷
+Marketplace
+⏷
+⏷
+Clubs
+⏷
+⏷
+Profile
+⏷
+⏷
+marketplace/cart
+⏷
+⏷
+marketplace/requests/index
+⏷
+⏷
+marketplace/book/[listingId]
+⏷
+⏷
+marketplace/requests/[requestId]

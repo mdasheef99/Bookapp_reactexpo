@@ -1,0 +1,31 @@
+‹ Book details
+Notes
+Many Notes Fixture Book
+Add note
+⏷
+⏷
+My Library
+⏷
+⏷
+Exchange
+⏷
+⏷
+Marketplace
+⏷
+⏷
+Clubs
+⏷
+⏷
+Profile
+⏷
+⏷
+marketplace/cart
+⏷
+⏷
+marketplace/requests/index
+⏷
+⏷
+marketplace/book/[listingId]
+⏷
+⏷
+marketplace/requests/[requestId]

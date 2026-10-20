@@ -58,7 +58,7 @@ Current index node: 1d460d8d09844e6c98ac1e493c2ad938. Exact B01–B16 IDs remain
 
 | Topic | Direction | Release gate |
 |---|---|---|
-| Categories | Quote, Thought, Takeaway, Action, Question; offered before input, optional, changeable before save | Fresh live schema accepts all five values and NULL; keep application writes gated until the forward correction and separately authorized API acceptance pass |
+| Categories | Quote, Thought, Takeaway, Action, Question; offered before input, optional, changeable before save | Fresh live schema accepts all five values and NULL; application writes enabled 2026-10-18 (`1e4924a`) after the forward correction and connected API acceptance passed |
 | Input methods | Write note or Scan text; neither silently saves | Both must carry selected category and book |
 | New manual note | Blank text; no existing/sample content | No default Thought or Quote |
 | OCR | Camera or gallery, automatic text-area crop, optional crop/rotate/reset, editable result | Isolated Android automatic/manual crop proof passes; full picker/device/accessibility acceptance remains pending |
@@ -70,7 +70,7 @@ Current index node: 1d460d8d09844e6c98ac1e493c2ad938. Exact B01–B16 IDs remain
 | Saved Pages/Vault | No new passage creation in this phase | Keep the existing labeled Book Details section, current excerpt browsing and confirmed deletion accessible |
 | Copy | Approved secondary reader action; copy only the note body | Implement clipboard success/failure feedback; add no category, page, title or author silently |
 
-Question or No category must never be silently mapped to reflect or another category. UI-only demos may use explicit mock data. The current live category check accepts Question and NULL, but that alone does not authorize application writes or establish the required privilege, recovery or authenticated API contract. Hiding counters does not authorize bypassing limits or truncating a note silently.
+Question or No category must never be silently mapped to reflect or another category. UI-only demos may use explicit mock data. The live category check accepts Question and NULL. Application writes for all five categories and no category were enabled on 2026-10-18 (`1e4924a`), after the database correction `20261017083830` and connected API acceptance (Library tracker, "Note saving enabled — 2026-10-18"). Hiding counters does not authorize bypassing limits or truncating a note silently.
 
 ### 2.1 Decision ledger and provenance
 
@@ -80,7 +80,7 @@ The [review evidence receipt](./evidence/sdd06-review-2026-10-09/README.md) pres
 |---|---|---|
 | D06-01 | Start at the already-open book; retain Option B selected-book organization | Settled design scope; shelves/book entry/global navigation excluded; local manual coding subsequently authorized under D06-15 |
 | D06-02 | Notes-first creation; new standalone passages and cloud OCR deferred | Settled by earlier owner-pasted task; does not remove existing saved material or complete the broader OCR roadmap |
-| D06-03 | Five named categories before input; optional Skip/No category; changeable before save | Settled design behavior; the live constraint accepts Question/null; the application write gate remains closed pending correction and API proof |
+| D06-03 | Five named categories before input; optional Skip/No category; changeable before save | Settled design behavior; the live constraint accepts Question/null; application writes enabled 2026-10-18 (`1e4924a`) after the correction and connected API acceptance |
 | D06-04 | Page optional; explicit save; manual editor blank; OCR editable and category-preserving | Settled design behavior; save/identity contracts need runtime evidence |
 | D06-05 | Compact category Change control after the initial chooser; automatic printed-text crop with optional Adjust crop | Owner explicitly superseded the full-image default on 2026-10-15 and selected printed-text bounds; full image remains an explained fallback when bounds are absent |
 | D06-06 | Keep editing / contextual discard for unsaved fields and meaningful capture work | Recorded planning choice; no durable restart recovery implied |
@@ -137,7 +137,7 @@ Illustrative components under src/components/notes: a flow host, chooser, shared
 
 Required state concepts: authenticated actor/book; create/edit mode; creation/reader origin and collection filter/list anchor; persisted note identity/baseline for edits; current step; working text/category/page; capture source/crop/orientation; scan return context and replacement checkpoint; request generation; incomplete-result revision/acceptance; save operation identity, submitted payload and outcome. Model each fact once. A scan return context is separate from creation origin: it identifies B04, B05, B07 or B09 and the exact state to restore.
 
-UI category mapping: Quote->quote, Thought->reflect, Takeaway->distill, Action->apply; Question and no category map to `question` and `NULL`. The live constraint accepts those values, but application writes remain gated until the database correction and separately authorized API acceptance are complete. Do not rename existing stored tags just to match display labels.
+UI category mapping: Quote->quote, Thought->reflect, Takeaway->distill, Action->apply; Question and no category map to `question` and `NULL`. The live constraint accepts those values. Application writes were enabled on 2026-10-18 (`1e4924a`) after the database correction `20261017083830` and connected API acceptance. Do not rename existing stored tags just to match display labels.
 
 State machine: chooseInput -> compose OR capture -> crop -> recognizing -> review / noText / incomplete / processingError. Compose/review/edit -> saving -> confirmed reader / definite failure / uncertain reconciliation. No category/scan/crop action creates a saved record.
 

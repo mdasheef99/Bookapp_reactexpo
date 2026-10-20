@@ -1,0 +1,215 @@
+{
+  "config": {
+    "configFile": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\docs\\user\\library\\evidence\\fa-p1-prototype-2026-10-18\\round3\\playwright.capture.config.ts",
+    "rootDir": "C:/Users/LEGION/Desktop/Bookconnect4_library/docs/user/library/evidence/fa-p1-prototype-2026-10-18/round3",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/LEGION/Desktop/Bookconnect4_library/docs/user/library/evidence/fa-p1-prototype-2026-10-18/round3/test-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "C:/Users/LEGION/Desktop/Bookconnect4_library/docs/user/library/evidence/fa-p1-prototype-2026-10-18/round3",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.pw.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\docs\\user\\library\\evidence\\fa-p1-prototype-2026-10-18\\round3\\results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "r3-zoom-status.pw.ts",
+      "file": "r3-zoom-status.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Z zoom2-390-daylight-populated",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6574,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-18T14:53:46.208Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "020c1ebad3b2a18c13d5-8943be461524638533ea",
+          "file": "r3-zoom-status.pw.ts",
+          "line": 146,
+          "column": 7
+        },
+        {
+          "title": "Z zoom2-390-daylight-long-title",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5741,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-18T14:53:53.304Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "020c1ebad3b2a18c13d5-aabda2628122d2592b08",
+          "file": "r3-zoom-status.pw.ts",
+          "line": 146,
+          "column": 7
+        },
+        {
+          "title": "Z zoom2-390-midnight-populated",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5998,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-18T14:53:59.070Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "020c1ebad3b2a18c13d5-7ca9f29692317db3d110",
+          "file": "r3-zoom-status.pw.ts",
+          "line": 146,
+          "column": 7
+        },
+        {
+          "title": "Z zoom2-390-golden-populated",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6109,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-18T14:54:05.093Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "020c1ebad3b2a18c13d5-1d5749f71496851846df",
+          "file": "r3-zoom-status.pw.ts",
+          "line": 146,
+          "column": 7
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-18T14:53:44.433Z",
+    "duration": 27085.767,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

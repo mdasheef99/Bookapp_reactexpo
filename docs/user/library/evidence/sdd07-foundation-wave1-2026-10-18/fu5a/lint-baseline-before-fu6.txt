@@ -1,0 +1,82 @@
+
+> booktalks-mobile@1.0.0 lint:library
+> eslint "app/(tabs)/library" src/components/library src/components/notes src/features/books/notes
+
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\app\(tabs)\library\[bookId].tsx
+  146:8  warning  React Hook useEffect has a missing dependency: 'userBook'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\app\(tabs)\library\dev-flow-a.tsx
+  5:7  warning  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\app\(tabs)\library\index.tsx
+  73:8  warning  React Hook useCallback has a missing dependency: 'arrangement'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\app\(tabs)\library\note-compose.tsx
+    8:64   warning  'NoteFields' is defined but never used                                                                                                                               @typescript-eslint/no-unused-vars
+   36:172  warning  React Hook useMemo has missing dependencies: 'noteId' and 'operationId'. Either include them or remove the dependency array                                          react-hooks/exhaustive-deps
+   97:6    warning  React Hook useCallback has an unnecessary dependency: 'captureState'. Either exclude it or remove the dependency array                                               react-hooks/exhaustive-deps
+  143:6    warning  React Hook useEffect has missing dependencies: 'captureState.position.focus' and 'captureState.position.scroll'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  158:6    warning  React Hook useEffect has a missing dependency: 'returnContext'. Either include it or remove the dependency array                                                     react-hooks/exhaustive-deps
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\app\(tabs)\library\search.tsx
+   14:51  warning  'PaginatedResult' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+   94:82  warning  Array type using 'Array<T>' is forbidden. Use 'T[]' instead                                                       @typescript-eslint/array-type
+  142:8   warning  React Hook useEffect has a missing dependency: 'performSearch'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  397:18  warning  'err' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+  409:18  warning  'err' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\src\components\library\BookSpine.tsx
+  31:11  warning  'isInteractionActive' is assigned a value but never used                                                            @typescript-eslint/no-unused-vars
+  39:8   warning  React Hook React.useEffect has a missing dependency: 'sweepLift'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\src\components\library\DeleteBookModal.tsx
+  2:59  warning  'Dimensions' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\src\components\library\HorizontalBookVolume.tsx
+  27:114  warning  React Hook React.useEffect has a missing dependency: 'lift'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\src\components\library\LibraryHeader.tsx
+  31:110  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\src\components\library\LibraryHorizontalShelf.tsx
+  65:8  warning  React Hook React.useEffect has a missing dependency: 'refs'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\src\components\library\LibraryShelf.tsx
+  78:8  warning  React Hook React.useEffect has a missing dependency: 'shelfTranslateY'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\src\components\library\VaultPagesList.tsx
+  46:130  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  53:107  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\src\components\library\useHorizontalShelfDrag.ts
+  34:8  warning  React Hook React.useEffect has a missing dependency: 'drag'. Either include it or remove the dependency array                                   react-hooks/exhaustive-deps
+  34:9  warning  React Hook React.useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked  react-hooks/exhaustive-deps
+  46:8  warning  React Hook React.useCallback has an unnecessary dependency: 'offsets'. Either exclude it or remove the dependency array                         react-hooks/exhaustive-deps
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\src\components\library\useVerticalShelfDrag.ts
+  39:8  warning  React Hook React.useEffect has a missing dependency: 'drag'. Either include it or remove the dependency array                                   react-hooks/exhaustive-deps
+  39:9  warning  React Hook React.useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked  react-hooks/exhaustive-deps
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\src\components\notes\NoteCrop.tsx
+  57:7  warning  React Hook useMemo has a missing dependency: 'displayed'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\src\components\notes\NoteEditor.tsx
+   12:5   warning  'Keyboard' is defined but never used        @typescript-eslint/no-unused-vars
+   17:10  warning  'BlurView' is defined but never used        @typescript-eslint/no-unused-vars
+   46:21  warning  'phase' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  142:18  warning  'err' is defined but never used             @typescript-eslint/no-unused-vars
+  259:18  warning  'e' is defined but never used               @typescript-eslint/no-unused-vars
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\src\components\notes\TagSelector.tsx
+  2:10  warning  'View' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\LEGION\Desktop\Bookconnect4_fu1a\src\features\books\notes\captureAdapter.ts
+  39:18  warning  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  44:46  warning  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  56:22  warning  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  87:37  warning  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+✖ 38 problems (3 errors, 35 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

@@ -1,0 +1,853 @@
+{
+  "V1-daylight": {
+    "library": {
+      "url": "/library"
+    },
+    "exchange": {
+      "url": "/exchange"
+    },
+    "marketplace": {
+      "url": "/marketplace"
+    },
+    "clubs": {
+      "url": "/clubs"
+    },
+    "profile": {
+      "url": "/profile"
+    },
+    "tabCount": 5,
+    "tabs": [
+      {
+        "name": "Library",
+        "id": "tb1-tab-Library",
+        "rect": {
+          "x": 0,
+          "right": 78,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F3B5"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(15, 23, 42)",
+        "barBackground": "rgb(255, 255, 255)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "false",
+        "ariaLabel": "Library"
+      },
+      {
+        "name": "Exchange",
+        "id": "tb1-tab-Exchange",
+        "rect": {
+          "x": 78,
+          "right": 156,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F5B0"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(15, 23, 42)",
+        "barBackground": "rgb(255, 255, 255)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "false",
+        "ariaLabel": "Exchange"
+      },
+      {
+        "name": "Marketplace",
+        "id": "tb1-tab-Marketplace",
+        "rect": {
+          "x": 156,
+          "right": 234,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F5A7"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(15, 23, 42)",
+        "barBackground": "rgb(255, 255, 255)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "false",
+        "ariaLabel": "Marketplace"
+      },
+      {
+        "name": "Clubs",
+        "id": "tb1-tab-Clubs",
+        "rect": {
+          "x": 234,
+          "right": 312,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F49F"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(15, 23, 42)",
+        "barBackground": "rgb(255, 255, 255)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "false",
+        "ariaLabel": "Clubs"
+      },
+      {
+        "name": "Profile",
+        "id": "tb1-tab-Profile",
+        "rect": {
+          "x": 312,
+          "right": 390,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F4A9"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(15, 23, 42)",
+        "barBackground": "rgb(255, 255, 255)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "true",
+        "ariaLabel": "Profile"
+      }
+    ],
+    "bodyBackgroundStyle": "rgba(0, 0, 0, 0)"
+  },
+  "V1-golden": {
+    "library": {
+      "url": "/library"
+    },
+    "exchange": {
+      "url": "/exchange"
+    },
+    "marketplace": {
+      "url": "/marketplace"
+    },
+    "clubs": {
+      "url": "/clubs"
+    },
+    "profile": {
+      "url": "/profile"
+    },
+    "tabCount": 5,
+    "tabs": [
+      {
+        "name": "Library",
+        "id": "tb1-tab-Library",
+        "rect": {
+          "x": 0,
+          "right": 78,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F3B5"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(120, 53, 15)",
+        "barBackground": "rgb(254, 243, 199)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "false",
+        "ariaLabel": "Library"
+      },
+      {
+        "name": "Exchange",
+        "id": "tb1-tab-Exchange",
+        "rect": {
+          "x": 78,
+          "right": 156,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F5B0"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(120, 53, 15)",
+        "barBackground": "rgb(254, 243, 199)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "false",
+        "ariaLabel": "Exchange"
+      },
+      {
+        "name": "Marketplace",
+        "id": "tb1-tab-Marketplace",
+        "rect": {
+          "x": 156,
+          "right": 234,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F5A7"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(120, 53, 15)",
+        "barBackground": "rgb(254, 243, 199)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "false",
+        "ariaLabel": "Marketplace"
+      },
+      {
+        "name": "Clubs",
+        "id": "tb1-tab-Clubs",
+        "rect": {
+          "x": 234,
+          "right": 312,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F49F"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(120, 53, 15)",
+        "barBackground": "rgb(254, 243, 199)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "false",
+        "ariaLabel": "Clubs"
+      },
+      {
+        "name": "Profile",
+        "id": "tb1-tab-Profile",
+        "rect": {
+          "x": 312,
+          "right": 390,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F4A9"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(120, 53, 15)",
+        "barBackground": "rgb(254, 243, 199)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "true",
+        "ariaLabel": "Profile"
+      }
+    ],
+    "bodyBackgroundStyle": "rgba(0, 0, 0, 0)"
+  },
+  "V1-midnight": {
+    "library": {
+      "url": "/library"
+    },
+    "exchange": {
+      "url": "/exchange"
+    },
+    "marketplace": {
+      "url": "/marketplace"
+    },
+    "clubs": {
+      "url": "/clubs"
+    },
+    "profile": {
+      "url": "/profile"
+    },
+    "tabCount": 5,
+    "tabs": [
+      {
+        "name": "Library",
+        "id": "tb1-tab-Library",
+        "rect": {
+          "x": 0,
+          "right": 78,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F3B5"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(226, 232, 240)",
+        "barBackground": "rgb(30, 41, 59)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "false",
+        "ariaLabel": "Library"
+      },
+      {
+        "name": "Exchange",
+        "id": "tb1-tab-Exchange",
+        "rect": {
+          "x": 78,
+          "right": 156,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F5B0"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(226, 232, 240)",
+        "barBackground": "rgb(30, 41, 59)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "false",
+        "ariaLabel": "Exchange"
+      },
+      {
+        "name": "Marketplace",
+        "id": "tb1-tab-Marketplace",
+        "rect": {
+          "x": 156,
+          "right": 234,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F5A7"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(226, 232, 240)",
+        "barBackground": "rgb(30, 41, 59)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "false",
+        "ariaLabel": "Marketplace"
+      },
+      {
+        "name": "Clubs",
+        "id": "tb1-tab-Clubs",
+        "rect": {
+          "x": 234,
+          "right": 312,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F49F"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(226, 232, 240)",
+        "barBackground": "rgb(30, 41, 59)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "false",
+        "ariaLabel": "Clubs"
+      },
+      {
+        "name": "Profile",
+        "id": "tb1-tab-Profile",
+        "rect": {
+          "x": 312,
+          "right": 390,
+          "width": 78,
+          "height": 55
+        },
+        "labelVisible": false,
+        "labelText": null,
+        "labelOverflow": null,
+        "labelColor": null,
+        "labelFontWeight": null,
+        "labelFontSize": null,
+        "iconGlyph": "",
+        "iconGlyphCodepoints": [
+          "U+F4A9"
+        ],
+        "iconFontFamily": "ionicons",
+        "iconSvgCount": 0,
+        "iconColor": "rgb(226, 232, 240)",
+        "barBackground": "rgb(30, 41, 59)",
+        "barBackgroundTag": "div",
+        "ariaSelected": "true",
+        "ariaLabel": "Profile"
+      }
+    ],
+    "bodyBackgroundStyle": "rgba(0, 0, 0, 0)"
+  },
+  "V2": {
+    "library-home-zoom2-390": {
+      "metrics": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "innerWidth": 390,
+        "zoom": "2"
+      },
+      "labelsVisibleCount": 0,
+      "tabsWithAriaLabel": [
+        {
+          "name": "Library",
+          "ariaLabel": "Library"
+        },
+        {
+          "name": "Exchange",
+          "ariaLabel": "Exchange"
+        },
+        {
+          "name": "Marketplace",
+          "ariaLabel": "Marketplace"
+        },
+        {
+          "name": "Clubs",
+          "ariaLabel": "Clubs"
+        },
+        {
+          "name": "Profile",
+          "ariaLabel": "Profile"
+        }
+      ],
+      "tabCount": 5
+    },
+    "book-details-zoom2-390": {
+      "metrics": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "innerWidth": 390,
+        "zoom": "2"
+      },
+      "labelsVisibleCount": 0,
+      "tabsWithAriaLabel": [
+        {
+          "name": "Library",
+          "ariaLabel": "Library"
+        },
+        {
+          "name": "Exchange",
+          "ariaLabel": "Exchange"
+        },
+        {
+          "name": "Marketplace",
+          "ariaLabel": "Marketplace"
+        },
+        {
+          "name": "Clubs",
+          "ariaLabel": "Clubs"
+        },
+        {
+          "name": "Profile",
+          "ariaLabel": "Profile"
+        }
+      ],
+      "tabCount": 5
+    },
+    "library-home-zoom1-320": {
+      "metrics": {
+        "scrollWidth": 320,
+        "clientWidth": 320,
+        "innerWidth": 320,
+        "zoom": "(none)"
+      },
+      "labelsVisibleCount": 0,
+      "labelTexts": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "tabCount": 5
+    }
+  },
+  "V3": {
+    "steps": [
+      {
+        "step": "after tap Marketplace",
+        "path": "/marketplace"
+      },
+      {
+        "step": "after goto /marketplace/cart",
+        "path": "/marketplace/cart"
+      },
+      {
+        "step": "after browser Back",
+        "path": "/marketplace"
+      },
+      {
+        "step": "after tap Clubs",
+        "path": "/clubs"
+      },
+      {
+        "step": "after tap Library",
+        "path": "/library"
+      },
+      {
+        "step": "after browser Back (expect Clubs)",
+        "path": "/clubs"
+      }
+    ],
+    "inAppBackButtonOnCartFound": false
+  },
+  "V4": {
+    "tabReached": true,
+    "tabPressesToReach": 0,
+    "firstFocused": {
+      "role": "tab",
+      "aria": "Library",
+      "tag": "a"
+    },
+    "orderAfterFirst": [
+      "Library",
+      "Exchange",
+      "Marketplace",
+      "Clubs",
+      "Profile"
+    ],
+    "outlineOnFirstReached": {
+      "id": "tb1-tab-Profile",
+      "aria": "Profile",
+      "outline": "rgb(15, 23, 42) solid 2px",
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(15, 23, 42)",
+      "focusVisible": true
+    },
+    "shiftTabToClubs": {
+      "role": "tab",
+      "aria": "Clubs",
+      "tag": "a"
+    },
+    "clubsOutline": {
+      "aria": "Clubs",
+      "outline": "rgb(15, 23, 42) solid 2px",
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "focusVisible": true
+    },
+    "spaceOnClubs": {
+      "urlBefore": "/library/aaaaaaaa-0000-4000-8000-000000000001",
+      "urlAfter": "/clubs",
+      "clicks": 1,
+      "clubsAriaSelected": "true"
+    },
+    "mouseClickProfileOutline": {
+      "outline": "rgb(0, 0, 238) none 3px",
+      "outlineStyle": "none",
+      "outlineWidth": "3px",
+      "focusVisible": false,
+      "active": true
+    }
+  },
+  "V6": {
+    "/marketplace/cart": {
+      "path": "/marketplace/cart",
+      "bodyTextStart": "  Library Library   Exchange Exchange   Marketplace Marketplace   Clubs Clubs   Profile Profile",
+      "looksUnmatched": false,
+      "tabButtonNames": [
+        "Library",
+        "Exchange",
+        "Marketplace",
+        "Clubs",
+        "Profile"
+      ],
+      "tabButtonCount": 5,
+      "hasCartOrRequestsOrBookTab": false
+    },
+    "/marketplace/requests": {
+      "path": "/marketplace/requests",
+      "bodyTextStart": "  Library Library   Exchange Exchange   Marketplace Marketplace   Clubs Clubs   Profile Profile",
+      "looksUnmatched": false,
+      "tabButtonNames": [
+        "Library",
+        "Exchange",
+        "Marketplace",
+        "Clubs",
+        "Profile"
+      ],
+      "tabButtonCount": 5,
+      "hasCartOrRequestsOrBookTab": false
+    }
+  },
+  "D1": {
+    "at390": {
+      "viewport": 390,
+      "rows": [
+        {
+          "name": "Library",
+          "slotWidth": 78,
+          "probe400": 35.875,
+          "probe700": 39.9375
+        },
+        {
+          "name": "Exchange",
+          "slotWidth": 78,
+          "probe400": 50.15625,
+          "probe700": 53.4375
+        },
+        {
+          "name": "Marketplace",
+          "slotWidth": 78,
+          "probe400": 65.25,
+          "probe700": 69.984375
+        },
+        {
+          "name": "Clubs",
+          "slotWidth": 78,
+          "probe400": 29.28125,
+          "probe700": 30.890625
+        },
+        {
+          "name": "Profile",
+          "slotWidth": 78,
+          "probe400": 33.78125,
+          "probe700": 37.171875
+        }
+      ],
+      "ionFontLoaded": [
+        "ionicons:loaded"
+      ]
+    },
+    "at360": {
+      "viewport": 360,
+      "rows": [
+        {
+          "name": "Library",
+          "slotWidth": 72,
+          "probe400": 35.875,
+          "probe700": 39.9375
+        },
+        {
+          "name": "Exchange",
+          "slotWidth": 72,
+          "probe400": 50.15625,
+          "probe700": 53.4375
+        },
+        {
+          "name": "Marketplace",
+          "slotWidth": 72,
+          "probe400": 65.25,
+          "probe700": 69.984375
+        },
+        {
+          "name": "Clubs",
+          "slotWidth": 72,
+          "probe400": 29.28125,
+          "probe700": 30.890625
+        },
+        {
+          "name": "Profile",
+          "slotWidth": 72,
+          "probe400": 33.78125,
+          "probe700": 37.171875
+        }
+      ],
+      "ionFontLoaded": [
+        "ionicons:loaded"
+      ]
+    },
+    "at430": {
+      "viewport": 430,
+      "rows": [
+        {
+          "name": "Library",
+          "slotWidth": 86,
+          "probe400": 35.875,
+          "probe700": 39.9375
+        },
+        {
+          "name": "Exchange",
+          "slotWidth": 86,
+          "probe400": 50.15625,
+          "probe700": 53.4375
+        },
+        {
+          "name": "Marketplace",
+          "slotWidth": 86,
+          "probe400": 65.25,
+          "probe700": 69.984375
+        },
+        {
+          "name": "Clubs",
+          "slotWidth": 86,
+          "probe400": 29.28125,
+          "probe700": 30.890625
+        },
+        {
+          "name": "Profile",
+          "slotWidth": 86,
+          "probe400": 33.78125,
+          "probe700": 37.171875
+        }
+      ],
+      "ionFontLoaded": [
+        "ionicons:loaded"
+      ]
+    },
+    "at320": {
+      "viewport": 320,
+      "rows": [
+        {
+          "name": "Library",
+          "slotWidth": 64,
+          "probe400": 35.875,
+          "probe700": 39.9375
+        },
+        {
+          "name": "Exchange",
+          "slotWidth": 64,
+          "probe400": 50.15625,
+          "probe700": 53.4375
+        },
+        {
+          "name": "Marketplace",
+          "slotWidth": 64,
+          "probe400": 65.25,
+          "probe700": 69.984375
+        },
+        {
+          "name": "Clubs",
+          "slotWidth": 64,
+          "probe400": 29.28125,
+          "probe700": 30.890625
+        },
+        {
+          "name": "Profile",
+          "slotWidth": 64,
+          "probe400": 33.78125,
+          "probe700": 37.171875
+        }
+      ],
+      "ionFontLoaded": [
+        "ionicons:loaded"
+      ]
+    },
+    "cartAfter9s": {
+      "path": "/marketplace/cart",
+      "bodyTextStart": "We could not complete that action. Please try again. Retry   Library Library   Exchange Exchange   Marketplace Marketplace   Clubs Clubs   Profile Profile"
+    }
+  },
+  "V7": {
+    "pageAndConsoleErrorsCount": 10,
+    "pageAndConsoleErrorsSample": [
+      "console.error: Failed to load resource: net::ERR_FAILED"
+    ],
+    "nonGetRequests": [
+      "POST https://ahntbtktjjmvfosgkmgn.supabase.co/auth/v1/otp",
+      "POST https://ahntbtktjjmvfosgkmgn.supabase.co/auth/v1/verify",
+      "POST https://ahntbtktjjmvfosgkmgn.supabase.co/rest/v1/rpc/get_public_book_reviews",
+      "POST https://ahntbtktjjmvfosgkmgn.supabase.co/rest/v1/rpc/marketplace_get_active_cart",
+      "POST https://ahntbtktjjmvfosgkmgn.supabase.co/rest/v1/rpc/marketplace_list_customer_order_requests"
+    ],
+    "nonGetFromFixtureLayer": [
+      "POST /rest/v1/rpc/marketplace_get_active_cart",
+      "POST /rest/v1/rpc/marketplace_get_active_cart",
+      "POST /rest/v1/rpc/marketplace_get_active_cart",
+      "POST /rest/v1/rpc/marketplace_get_active_cart",
+      "POST /rest/v1/rpc/marketplace_list_customer_order_requests",
+      "POST /rest/v1/rpc/marketplace_list_customer_order_requests",
+      "POST /rest/v1/rpc/marketplace_get_active_cart",
+      "POST /rest/v1/rpc/marketplace_get_active_cart",
+      "POST /rest/v1/rpc/marketplace_get_active_cart",
+      "POST /rest/v1/rpc/marketplace_get_active_cart"
+    ],
+    "authCalls": [
+      "POST /auth/v1/otp",
+      "POST /auth/v1/verify"
+    ],
+    "rpcReadPosts": [
+      "POST get_public_book_reviews"
+    ],
+    "externalGets": []
+  }
+}
