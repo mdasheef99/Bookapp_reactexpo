@@ -1,6 +1,6 @@
 jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { Alert, FlatList } from 'react-native';
+import { FlatList } from 'react-native';
 import { OwnerUxClientError } from '../api/ownerUxService';
 import type {
     OwnerCandidateDetail,
@@ -17,6 +17,7 @@ import {
 } from '../testing/ownerUxTestFixtures';
 
 const mockPush = jest.fn();
+const mockDispatch = jest.fn();
 type RefetchResult<T> = {
     data: T | undefined;
     isError: boolean;
@@ -54,7 +55,7 @@ let mockCandidateState: Record<string, unknown>;
 
 jest.mock('expo-router', () => ({
     useRouter: () => ({ push: mockPush, back: jest.fn() }),
-    useNavigation: () => ({ addListener: mockAddListener }),
+    useNavigation: () => ({ addListener: mockAddListener, dispatch: mockDispatch }),
 }));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({ colors: {
@@ -600,8 +601,46 @@ describe('Phase 9 Unit 6D candidate list and strict review screens', () => {
         await waitFor(() => expect(screen.getByLabelText('Mark false')).not.toBeDisabled());
     });
 
+    it('guards unsaved full-review edits with Leave unsaved and Stay', () => {
+        const screen = render(
+            <InventoryCandidateReviewScreen sessionId={testUuid(1)} candidateId={testUuid(2)} />,
+        );
+        fireEvent.changeText(screen.getByTestId('review-price-minor'), '100');
+        const event: BeforeRemoveEvent = { preventDefault: jest.fn(), data: { action: { type: 'GO_BACK' } } };
+        act(() => mockAddListener.mock.calls.at(-1)?.[1](event));
+        expect(event.preventDefault).toHaveBeenCalled();
+        expect(screen.getByText('Leave without saving?')).toBeTruthy();
+        expect(screen.getByText('Your unsaved review edits exist only on this screen.')).toBeTruthy();
+        expect(screen.getByText('Leave unsaved')).toBeTruthy();
+        fireEvent.press(screen.getByRole('button', { name: 'Stay' }));
+        expect(mockDispatch).not.toHaveBeenCalled();
+        expect(screen.queryByText('Leave without saving?')).toBeNull();
+        act(() => mockAddListener.mock.calls.at(-1)?.[1](event));
+        fireEvent.press(screen.getByText('Leave unsaved'));
+        expect(mockDispatch).toHaveBeenCalledWith(event.data.action);
+    });
+
+    it('keeps the unsaved leave dialog available after candidate details fail to load', () => {
+        const screen = render(
+            <InventoryCandidateReviewScreen sessionId={testUuid(1)} candidateId={testUuid(2)} />,
+        );
+        fireEvent.changeText(screen.getByTestId('review-price-minor'), '100');
+        mockCandidateState = { ...mockCandidateState, error: new Error('candidate query failed') };
+        screen.rerender(
+            <InventoryCandidateReviewScreen sessionId={testUuid(1)} candidateId={testUuid(2)} />,
+        );
+        expect(screen.getByText('Candidate details could not be loaded.')).toBeTruthy();
+
+        const event: BeforeRemoveEvent = { preventDefault: jest.fn(), data: { action: { type: 'GO_BACK' } } };
+        act(() => mockAddListener.mock.calls.at(-1)?.[1](event));
+        expect(event.preventDefault).toHaveBeenCalled();
+        expect(screen.getByRole('button', { name: 'Stay' })).toBeTruthy();
+        expect(mockDispatch).not.toHaveBeenCalled();
+        fireEvent.press(screen.getByRole('button', { name: 'Leave unsaved' }));
+        expect(mockDispatch).toHaveBeenCalledWith(event.data.action);
+    });
+
     it('blocks navigation while a dirty save is in flight', () => {
-        const alert = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
         const screen = render(
             <InventoryCandidateReviewScreen sessionId={testUuid(1)} candidateId={testUuid(2)} />,
         );
@@ -615,12 +654,11 @@ describe('Phase 9 Unit 6D candidate list and strict review screens', () => {
         expect(listener).toBeDefined();
         if (!listener) throw new Error('beforeRemove listener was not installed');
         const event: BeforeRemoveEvent = { preventDefault: jest.fn(), data: { action: {} } };
-        listener(event);
+        act(() => listener(event));
         expect(event.preventDefault).toHaveBeenCalled();
-        expect(alert).toHaveBeenCalledWith(
-            'Save in progress',
-            expect.any(String),
-            [{ text: 'Stay', style: 'cancel' }],
-        );
+        expect(screen.getByText('Save in progress')).toBeTruthy();
+        expect(screen.queryByText('Leave unsaved')).toBeNull();
+        fireEvent.press(screen.getByText('Stay'));
+        expect(mockDispatch).not.toHaveBeenCalled();
     });
 });

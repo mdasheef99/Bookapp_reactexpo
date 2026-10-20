@@ -104,9 +104,6 @@ export function PostScanReviewSummary({
                 }}>
                     Review scanned books
                 </Text>
-                <Text selectable style={{ color: colors.textSecondary, lineHeight: 21 }}>
-                    Confirm each book, correct anything the scan missed, then add the ready books to private inventory.
-                </Text>
             </View>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -117,22 +114,8 @@ export function PostScanReviewSummary({
                 <SummaryMetric value={counts.committed} label="Added" />
             </View>
 
-            <Text selectable style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>
-                Detected is the session total. Ready counts books you can add now, including edits saved when added; Need review counts individual books still to fix; image attention above only describes scan processing. Cards below show active review only; added and removed books are not repeated.
-            </Text>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-                <View style={{
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    borderRadius: 999,
-                    paddingHorizontal: 10,
-                    paddingVertical: 5,
-                }}>
-                    <Text selectable style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
-                        One image · Up to 15 books
-                    </Text>
-                </View>
                 {batchLabel ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <Text selectable style={{ color: colors.textSecondary, fontSize: 12 }}>Batch</Text>

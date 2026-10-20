@@ -594,7 +594,8 @@ plus the in-app click-through and read-only SQL readback for AC17-2 to AC17-5.
   it describes; validator and `git diff --check` run; uncommitted changes
   reported.
 - **Agents:** read-only code maps by Haiku subagents; design studies and
-  reviews by OpenCode Go Muse Spark 1.3 or Space Bunny at the highest setting;
+  reviews by OpenCode Go at the highest setting: DeepSeek v4.1 Flash (most
+  precise) and MiniMax 3.1 Flash (formerly "Space Bunny"; most thorough);
   Codex `gpt-6.1-sol` (xhigh) as a second opinion when a review falls short.
   Agent output is input, never authority; the SDDs are written and verified by
   the orchestrating session.
@@ -607,6 +608,23 @@ plus the in-app click-through and read-only SQL readback for AC17-2 to AC17-5.
   Codex stops and reports if the design conflicts with the code. The
   orchestrating session does not write product code. It writes the briefs,
   reads every diff, checks claims in the code, and reviews.
+- **Briefs (Owner, 2026-10-19; adopted 2026-10-20):** before any brief is sent
+  (coding, review, test or browser), the orchestrating session checks it
+  against known traps: replaying a refused request, react-native-web
+  `Alert.alert` being a no-op, stale versions after a refetch, dead code
+  (D2-5), accessibility (D2-6), a working next step for every new message,
+  tests that prove behaviour without faked parts, and correct files and line
+  references. For risky slices, one OpenCode model also reviews the brief.
+  In slice 2 both real bugs came from gaps in the brief.
+- **Pre-merge review (Owner, 2026-10-20):** the Owner does not review PRs, so
+  before the PR an OpenCode model (DeepSeek v4.1 Flash, max, read-only, no
+  shell commands) reviews the whole slice diff against `main` as the PR
+  reviewer, and the orchestrating session reads the whole diff against the
+  SDD. Confirmed findings get one bounded red-first fix round.
+- **Credits (Owner, 2026-10-20):** delegate by cost without lowering quality.
+  The orchestrating session may run test commands itself as background jobs
+  that print only the summary and failures (cheaper than a subagent; the
+  output comes straight from Jest).
 - **Test runs:** delegated to a Haiku subagent, or to OpenCode Go, with a
   strict prompt: run exactly the listed commands, report raw pass/fail counts
   and failures verbatim, and change nothing. The orchestrating session checks
@@ -631,8 +649,8 @@ plus the in-app click-through and read-only SQL readback for AC17-2 to AC17-5.
   Add, retry or idempotency logic, server contracts, tenant or security rules,
   or SQL. The orchestrating session decides this at slice start and says why.
   UI-only or deletion slices with strong tests skip the loop.
-  1. Two read-only reviews run in parallel: OpenCode Go Space Bunny (max) and
-     Muse Spark 1.3 (xhigh).
+  1. Two read-only reviews run in parallel (starts staggered ~45 s): OpenCode
+     Go DeepSeek v4.1 Flash and MiniMax 3.1 Flash, both at max.
   2. The orchestrating session verifies every finding in the code and rejects,
      with a reason, any that are wrong.
   3. Codex `gpt-6.1-sol` (xhigh) makes bounded corrections for the confirmed
@@ -654,3 +672,14 @@ plus the in-app click-through and read-only SQL readback for AC17-2 to AC17-5.
   the planned browser check, or a shared resource such as a dev-server port
   goes to the Owner first, with a recommendation. The orchestrating session
   does not decide these itself.
+- **Documentation updates (Owner, 2026-10-19):**
+  1. The orchestrating session writes a short fact sheet: what was done,
+     evidence, mutations and the next action.
+  2. OpenCode Go Muse Spark 1.3 (xhigh) writes, from that fact sheet only:
+     - the tracker entry, in the SESSION-START log shape;
+     - the ACTIVE, DOC-13, SESSION-START and TRACKER handoffs.
+
+     It then runs the validator and `git diff --check`.
+  3. The orchestrating session reviews that diff.
+
+  SDD wording and decisions stay with the orchestrating session.

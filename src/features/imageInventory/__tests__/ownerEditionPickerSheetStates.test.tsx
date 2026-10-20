@@ -69,7 +69,7 @@ it('ordinary sheet and hardware close return focus without adopting or editing a
   jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(pickerDetail(selectedChoices(), pickerReview));
   const focus = jest.fn(); const close = jest.fn(); const manual = jest.fn();
   const view = render(<QueryClientProvider client={client}><CandidateMetadataSheet identity={pickerIdentity}
-    card={pickerCard()} visible disabled={false} onClose={close} onUseDetected={manual} onEditManually={manual}
+    card={pickerCard()} visible disabled={false} onClose={close} onEditManually={manual}
     restoreFocusRef={{ current: { focus } as unknown as View }} /></QueryClientProvider>);
   fireEvent.press(view.getByText('Close metadata'));
   await act(async () => jest.runAllTicks());
@@ -100,7 +100,7 @@ it('a cached older set cannot replace the current saved metadata or expose stale
   jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(detail);
   const view = render(<QueryClientProvider client={client}><CandidateMetadataSheet identity={pickerIdentity}
     card={pickerCard(current)} visible disabled={false} commandSlot={slots}
-    onSelection={jest.fn()} onClose={jest.fn()} onUseDetected={jest.fn()} onEditManually={jest.fn()} /></QueryClientProvider>);
+    onSelection={jest.fn()} onClose={jest.fn()} onEditManually={jest.fn()} /></QueryClientProvider>);
   await waitFor(() => expect(read).toHaveBeenCalled());
   expect(view.getByText('Title: New saved choice')).toBeTruthy();
   expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeNull();
@@ -114,23 +114,50 @@ it('announces fresh empty results politely', async () => {
   await waitFor(() => expect(view.getByText('No book results were returned.')).toBeTruthy());
   expect(view.getByText('No book results were returned.').props.accessibilityLiveRegion).toBe('polite');
 });
-it('hides stale detected identity and rejects its action even if invoked directly', async () => {
-  const older = selectedChoices();
-  const stale = { ...pickerDetail(older, pickerReview), observed: { ...pickerDetail(older).observed, title: 'Stale detected title' } };
-  const current = selectedChoices({ candidateVersion: 6, metadataRevision: 9 });
-  client.setQueryData(imageInventoryKeys.candidate(pickerIdentity, current.sessionId, current.candidateId), stale);
-  jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(stale);
-  read.mockResolvedValue(current);
-  const detected = jest.fn(), manual = jest.fn();
+it('sheet offers only edition search and choices', async () => {
+  jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(pickerDetail(selectedChoices(), pickerReview));
   const view = render(<QueryClientProvider client={client}><CandidateMetadataSheet identity={pickerIdentity}
-    card={pickerCard(current)} visible disabled={false} commandSlot={slots}
-    onSelection={jest.fn()} onClose={jest.fn()} onUseDetected={detected} onEditManually={manual} /></QueryClientProvider>);
+    card={pickerCard()} visible disabled={false} commandSlot={slots}
+    onSelection={jest.fn()} onClose={jest.fn()} onEditManually={jest.fn()} /></QueryClientProvider>);
+  await waitFor(() => expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeTruthy());
+  expect(view.getByRole('header', { name: 'Find or change edition' })).toBeTruthy();
+  for (const text of ['Detected details', 'Use detected details', 'Edit manually', 'Wrong title or author? Fix it']) {
+    expect(view.queryByText(text)).toBeNull();
+  }
+  expect(view.queryByLabelText('Corrected title')).toBeNull();
+  expect(view.queryByLabelText('Corrected author 1')).toBeNull();
+});
+it('hides fresh old results after an identity edit', async () => {
+  const choices = selectedChoices(); read.mockResolvedValue(choices);
+  const view = render(<QueryClientProvider client={client}><CandidateEditionPicker identity={pickerIdentity}
+    sessionId={choices.sessionId} candidateId={choices.candidateId} commandSlot={slots} disabled={false}
+    cardDraft={{ identityChanged: true, request: null }} onSelection={jest.fn()}>
+    {current => <Text>{current?.selection?.snapshot.title ?? 'No held selection'}</Text>}
+  </CandidateEditionPicker></QueryClientProvider>);
   await waitFor(() => expect(read).toHaveBeenCalled());
-  expect(view.queryByText('Detected title: Stale detected title')).toBeNull();
-  const action = view.UNSAFE_getAllByType(Button).find(node => node.props.title === 'Use detected details')!;
-  expect(action.props.disabled).toBe(true);
-  act(() => action.props.onPress());
-  expect(detected).not.toHaveBeenCalled(); expect(manual).not.toHaveBeenCalled();
+  expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeNull();
+  expect(view.queryByText('Chosen edition')).toBeNull();
+  await waitFor(() => expect(view.getByText('Search with saved title')).toBeTruthy());
+});
+it('search controls are labelled', async () => {
+  const choices = selectedChoices({ optionsExpiresAt: null, rows: [] }); read.mockResolvedValue(choices);
+  const view = render(<QueryClientProvider client={client}><CandidateEditionPicker identity={pickerIdentity}
+    sessionId={choices.sessionId} candidateId={choices.candidateId} commandSlot={slots} disabled={false}
+    cardDraft={{ identityChanged: true, request: null }} onSelection={jest.fn()}>{() => null}</CandidateEditionPicker></QueryClientProvider>);
+  const message = "Complete the card's details to search with the new title";
+  await waitFor(() => expect(view.queryByText(message)).toBeTruthy());
+  expect(view.getByText(message).props.accessibilityLiveRegion).toBe('polite');
+  expect(view.getByRole('button', { name: 'Search with saved title' })).not.toBeDisabled();
+});
+
+it.each(['card', 'choices'] as const)('shows Searching books for an edited identity with pending %s and no search control', async source => {
+  const choices = selectedChoices({ lookupStatus: source === 'choices' ? 'pending' : 'ready' }); read.mockResolvedValue(choices);
+  const view = render(<QueryClientProvider client={client}><CandidateEditionPicker identity={pickerIdentity}
+    sessionId={choices.sessionId} candidateId={choices.candidateId} commandSlot={slots} disabled={false}
+    cardDraft={{ identityChanged: true, pending: source === 'card', request: null }} onSelection={jest.fn()}>{() => null}</CandidateEditionPicker></QueryClientProvider>);
+  await waitFor(() => expect(view.getByText('Searching books…')).toBeTruthy());
+  expect(view.queryByText(/Complete the card's details/u)).toBeNull();
+  expect(view.queryByRole('button', { name: /Search Books|Search with saved title/u })).toBeNull();
 });
 
 // Picker §3.1/§7: known changed authority needs a new action, uncertain transport retains the command.
@@ -226,7 +253,7 @@ describe('disabled sheet reason', () => {
   const mountSheet = (disabled: boolean) => render(<QueryClientProvider client={client}><CandidateMetadataSheet
     identity={pickerIdentity} card={pickerCard()} visible disabled={disabled} commandSlot={slots}
     disabledReason="Finish editing the title or author on this card before choosing an edition."
-    onSelection={jest.fn()} onClose={jest.fn()} onUseDetected={jest.fn()} onEditManually={jest.fn()} /></QueryClientProvider>);
+    onSelection={jest.fn()} onClose={jest.fn()} onEditManually={jest.fn()} /></QueryClientProvider>);
   it('explains a caller-owned lock only while disabled', async () => {
     jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(pickerDetail());
     const locked = mountSheet(true);
@@ -272,7 +299,7 @@ describe('metadata detail loading state', () => {
   const unavailable = 'Metadata details are unavailable right now.';
   const mountSheet = () => render(<QueryClientProvider client={client}><CandidateMetadataSheet
     identity={pickerIdentity} card={pickerCard()} visible disabled={false}
-    onClose={jest.fn()} onUseDetected={jest.fn()} onEditManually={jest.fn()} /></QueryClientProvider>);
+    onClose={jest.fn()} onEditManually={jest.fn()} /></QueryClientProvider>);
   it('shows Loading metadata without the unavailable error or Retry while the first read is pending', async () => {
     const pending = deferred<ReturnType<typeof pickerDetail>>();
     jest.spyOn(ownerUxService, 'readCandidate').mockReturnValue(pending.promise as never);

@@ -630,3 +630,20 @@ describe('card Ready badge uses the add-now rule', () => {
         expect(within(screen.getByTestId('card-review-status')).getByText('Needs attention')).toBeTruthy();
     });
 });
+
+it.each([
+    [{ priceMinor: 0 }, 'Enter a price above ₹0.'],
+    [{ baseCondition: undefined }, 'Choose a condition.'],
+    [{ quantity: 0 }, 'Set a quantity from 1 to 10,000.'],
+    [{ authors: [] }, 'Add an author.'],
+] as const)('zero price card is not Ready (and other missing requirements): %p', (patch, message) => {
+    const base = reviewCard();
+    const value = { ...base, review: { ...base.review!, ...patch },
+        fieldSources: { ...base.fieldSources, authors: 'custom' as const } } as OwnerBatchReviewCard;
+    const screen = renderCard(value);
+    expect(within(screen.getByTestId('card-review-status')).getByText('Needs attention')).toBeTruthy();
+    expect(screen.getByText('• ' + message)).toBeTruthy();
+    expect(screen.getByText('Add to inventory')).toBeDisabled();
+    fireEvent.press(screen.getByText('Add to inventory'));
+    expect(screen.onAdd).not.toHaveBeenCalled();
+});

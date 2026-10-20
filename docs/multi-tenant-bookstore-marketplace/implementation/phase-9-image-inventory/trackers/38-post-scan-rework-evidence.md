@@ -564,3 +564,142 @@ Active work unit: `post_scan_rework_slice2_declutter`. Exact next authorized act
 PR #24 (slice 1). Slice 2 (SDD-1 §4) starts on the Owner's go-ahead of 2026-10-19 ("Finish fast + start
 slice 2"), on a branch from slice 1's tip, under the SDD-0 §15 process. It is a risky slice, so it gets the
 review loop. No migration.
+
+## 19. Slice 2 built: declutter the card and the edition sheet; card requirements, 2026-10-20
+
+```text
+Date/session: 2026-10-20; slice-2 session started from slice 1's tip.
+Authorized work unit and scope: post_scan_rework_slice2_declutter; slice 2
+  (SDD-1 §4, AC2-1 to AC2-10) on branch claude/phase9-psr-slice2-declutter from
+  1f98804 (slice 1 tip). Nothing committed or pushed yet; the PR #24 (slice 1)
+  merge is with the Owner.
+Completed (src/features/imageInventory/):
+  - Card: one "Find or change edition" button (View metadata removed); the
+    edition line under the title (publisher · year · ISBN-13 or ISBN-10; year =
+    first stand-alone 4-digit number in publishedDate; "Edition chosen"
+    fallback; "Finding edition…"; "No edition chosen"; "No edition chosen —
+    title or author changed"); metadata status text and source badges on
+    title/author removed; status pill announced politely.
+  - Card requirements (D2-1, one rule cardAddRequirementIssues used by the
+    badge, Add, Add all and the header count): price missing: "Set a
+    whole-rupee selling price."; ₹0: "Enter a price above ₹0." (app-only;
+    server unchanged); condition, quantity 1-10,000, author. Label stays
+    "Needs attention" (Owner decision; SDD-1 AC2-7 corrected).
+  - AC2-10: whenever title, authors, language or script differs from the chosen
+    edition's snapshot, the draft's metadataChoice becomes manual; the snapshot
+    is trusted only when the loaded choices belong to this card and name the
+    same selection. Manual default only after the lookup ends; while pending
+    the only attention item is "Finding the edition…".
+  - Edition sheet: detected details, "Use detected details", "Edit manually"
+    and EditionIdentityFix removed (file and its test deleted); Search Books
+    saves the card's edits first (frozen request, D2-2) then searches; definite
+    server refusals clear the frozen command and reload, unclear failures
+    replay it exactly; one "Retry search" at most.
+  - Header: explanation, footnote and "One image · Up to 15 books" chip removed.
+  - Leave guard: useUnsavedEditsLeaveGuard (replaces useCandidateLeaveGuard)
+    renders OwnerConfirmationDialog on all platforms (Alert.alert is a no-op on
+    web) — "Leave without saving?" / "Your card edits are not saved and will be
+    discarded." / "Stay" / "Leave and discard"; busy (Add or edition command in
+    flight) shows a Stay-only dialog. OwnerConfirmationDialog gained optional
+    cancelLabel and optional confirm.
+  - Batch review query now also polls (3 s, visible only) while any card's
+    metadataState is 'pending'.
+Process and evidence:
+  1. Codex gpt-6.1-sol xhigh built the slice red-first; the resume run fixed 5
+     suites (₹0 fixtures incidental, changed to ₹1).
+  2. The orchestrator traced the review and found two problems: the web leave
+     guard was a no-op, and save-then-search could loop on a refusal.
+  3. Review loop round 1: Muse Spark 1.3 xhigh (17 findings) and Codex
+     gpt-6.1-sol read-only (9). C1-C10 were confirmed, 2 rejected and 3
+     deferred to the Owner. The brief was checked by the orchestrator
+     checklist and Argon (max; 7 verified findings, verdict revise). C7 (two
+     copy tweaks) was cancelled as SDD-prescribed copy.
+  4. Round-1 corrections: Codex wrote the red tests, then hit a usage limit;
+     the Muse fix run hung at OpenCode startup (78 minutes, no work) and Argon
+     edited most items then stalled; Codex finished, keeping or correcting
+     Argon's edits and writing the C3 query side. GREEN 232/232; the folder run
+     gave 845 passed / 4 skipped; tsc clean.
+  5. Round 2 (correction diff only), three models at max: MiniMax 3.1 Flash
+     (most thorough, both majors), DeepSeek v4.1 Flash (4 real, 0 false) and
+     GLM 5.3 Flash (approved; missed the majors). F1-F6 were confirmed.
+     DeepSeek wrote the F1-F6 red tests (9 failing), then an OpenCode Go usage
+     limit stopped it; Codex wrote the fixes by Owner decision. GREEN 150/150;
+     the folder run gave 849 passed / 4 skipped; tsc clean.
+  6. Haiku tests: tsc clean; the folder run gave 75 suites passed / 1 skipped,
+     849 passed / 4 skipped, 0 failed; 14 named suites 295/296, the one
+     timeout (5 s) in ownerEditionPickerMounted "opens/reopens without provider
+     search…", which passes in the folder run. Re-run on a quiet machine, the
+     file passed twice, 17/17 each run.
+  7. Haiku browser check (built-in pane, port 8081, session 7a81bdb6, approved
+     script): all 6 steps passed. Step 1 showed the edition lines "New Press ·
+     1999 · 9781565845213", "Unwin Hyman · 1989 · 9780044453420" and "No
+     edition chosen", with no View metadata and a header without the
+     explanation, footnote and chip. Step 2 showed the sheet without detected
+     details, Use detected and Edit manually. Step 3, after a title edit, showed
+     "No edition chosen — title or author changed" and Ready. Step 4: one press,
+     Adding, then added. Step 5: the dialog copy was exact, and Stay kept the
+     URL. Step 6: Leave and discard went to /inventory.
+  8. Read-only server check (Supabase MCP): Book 3 (38674cf9) was committed,
+     commit_outcome committed_private, one inventory item, saved title "False
+     Dawn: The Delusions of Global Capitalism", metadataChoice manual, price
+     2500. Book 5 (a5da3bc6) was unchanged; the discarded edit was never sent.
+  9. Pre-merge review (no PR reviewer, so this stands in for one): the
+     orchestrator read the whole slice diff against SDD-1 §4 and found G1 (a
+     false "unsaved edits" warning after Add all or Remove). DeepSeek v4.1
+     Flash (max, read-only) reviewed F1-F6 (approve; one F4 nit rejected: a
+     re-sent save carries the old versions, so the server refuses it), then
+     did an independent full review of the whole slice vs 1f98804 (5 findings,
+     changes needed). Two were confirmed and fixed by Codex red-first: H1
+     (major: the full-review screen's leave dialog was missing on its
+     loading/error screens, so Back was blocked with no dialog) and H2 (minor:
+     Retry after a later plain search replayed the old identity search). G1:
+     RED 2 failed, GREEN 26/26. H1+H2: RED 2 failed, GREEN 21/21. Final run on
+     the finished code: tsc clean; folder 75 suites passed / 1 skipped, 853
+     passed / 4 skipped, 0 failed. Two earlier DeepSeek runs failed (shell
+     commands hung; a crash at step 24) and were rerun without shell access.
+  10. Browser re-check after the fixes (Haiku, built-in pane, port 8081; the
+     dev server was restarted with --offline after Expo's online version
+     check failed; the Owner signed in): A PASS - Book 5 title edit, back:
+     "Leave without saving?" / "Your card edits are not saved and will be
+     discarded." / "Stay" / "Leave and discard"; Stay kept the URL; Leave and
+     discard went to /inventory and the edit was discarded. B PASS - Book 5
+     price set to Rs 100, one Add, the card left the list (Added 5 -> 6),
+     then leaving showed no dialog. Added: "The concise encyclopaedia of
+     Western Philosophy and Philosophers" (9780044453420). Server readback
+     was not repeated; the app's Added count is the evidence.
+Files/components/migrations: all under src/features/imageInventory/.
+  EditionIdentityFix and its test were deleted. No migration and no server
+  change.
+```
+
+**Review findings.** The orchestrator checked every finding in code before acting.
+
+| Stage | Reviewers | Result |
+|---|---|---|
+| Orchestrator trace | Orchestrating session | Web leave guard no-op; save-then-search refusal loop |
+| Round 1 | Muse Spark 1.3 xhigh; Codex `gpt-6.1-sol` read-only | 17 + 9 findings; C1-C10 confirmed, 2 rejected, 3 deferred to the Owner |
+| Round-1 brief check | Orchestrator checklist + Argon (max) | 7 verified findings, verdict revise; C7 cancelled as SDD-prescribed copy |
+| Round 2 (correction diff only) | MiniMax 3.1 Flash, DeepSeek v4.1 Flash, GLM 5.3 Flash, all at max | F1-F6 confirmed |
+
+**Deviations.**
+- Round 1: Space Bunny failed twice with server errors, so Codex was substituted (deviation).
+- Round 1: the Muse fix run hung at OpenCode startup (78 minutes, no work); it was later found to be an OpenCode startup hang, not the model.
+- Round 2: the final fix was to be an OpenCode session; the OpenCode Go usage limit stopped DeepSeek, and Codex wrote the fixes by Owner decision (deviation).
+- Browser check: two timeouts were slow pages, with tests running in parallel; Haiku stopped as instructed and was resumed by the orchestrator.
+- Test run: the single 5 s timeout in `ownerEditionPickerMounted` was a timeout under load, not a code failure; the file then passed twice on a quiet machine, 17/17 each run.
+
+**Deferred to the Owner (not in slice 2).**
+- Possible-duplicate cards can still start Add from the card (pre-existing).
+- Before edition choices load, the card trusts the summary fallback (pre-existing window; the server refuses safely).
+- EditionLine text "title or author changed" also shows for language/script-only changes (SDD-prescribed text).
+- MiniMax nits left: the busy dialog copy says "Add in progress" for edition commands; there is no focus restore on Stay.
+- The flaky 5 s timeout of the first test in `ownerEditionPickerMounted` under load.
+- From the full review: after a "save then search", the card's accepted authority is dropped until the batch refetch lands (pre-existing); a no-op price or condition press counts as an edit for "Edited" and the leave guard (pre-existing); the dialog's switch to the busy copy is not announced (accessibility nit).
+- Load-dependent 5 s timeouts also seen once in `unit6gMountedRouteIntegration` (passes alone, 4/4).
+- During an edited card's Add, the card briefly showed "The saved review changed while compact edits were open. Choose which draft to continue with." before the Add finished (seen in the re-check; the message comes from card code slice 2 did not change).
+
+Mutations: one inventory commit through the app (Book 3, approved in the browser script). No migrations, no SQL writes, and no Storage, Edge, Render or deployment changes. Supabase MCP was used read-only.
+
+Tracker/source-doc updates: this section; the ACTIVE, DOC-13, SESSION-START and TRACKER handoffs.
+
+Active work unit: `post_scan_rework_slice2_declutter`, until the slice-2 PR merges. Exact next authorized action: the Owner reviews slice 2; on the Owner's request, commit (code, tests and docs; not `.claude/` or `.env.local`), push and open the slice-2 PR. Then slice 3 ("Remove the after-Add buttons and the Inventory tab's duplicate list"). No migration.

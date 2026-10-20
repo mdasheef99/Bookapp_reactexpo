@@ -1,15 +1,18 @@
 jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Modal, Platform, StyleSheet } from 'react-native';
+import * as Crypto from 'expo-crypto';
 import { act, cleanupAsync, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { BatchReviewCard } from '../components/BatchReviewCard';
+import type { IdentitySearchRequest } from '../queries/ownerEditionPickerQueries';
+import { registeredOwnerUxError } from '../api/ownerUxTransport';
 import { AddCandidateToInventoryAction } from '../components/AddCandidateToInventoryAction';
 import { CandidateReviewEditionSheet } from '../components/CandidateReviewEditionSheet';
 import { ownerUxService } from '../api/ownerUxService';
 import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
 import { CandidateCommandRegistry } from '../commit/inventoryCommitTypes';
 import { resetImageInventoryIdentityForTests, coordinateImageInventoryIdentity } from '../queries/ownerUxQueries';
-import { pickerChoices, selectedChoices, pickerIdentity, pickerCard, pickerDetail, pickerDefaults, pickerReview, deferred } from '../testing/editionPickerClientFixtures';
+import { pickerChoices, selectedChoices, pickerIdentity, pickerCard, pickerDetail, pickerDefaults as zeroPriceDefaults, pickerReview as zeroPriceReview, deferred } from '../testing/editionPickerClientFixtures';
 import { testUuid } from '../testing/ownerUxTestFixtures';
 
 jest.mock('expo-image', () => ({ Image: (props: object) => {
@@ -19,6 +22,8 @@ jest.mock('expo-image', () => ({ Image: (props: object) => {
 jest.mock('../api/ownerEditionPickerService', () => ({ ownerEditionPickerService: {
   readEditionChoices: jest.fn(), requestEditionOptions: jest.fn(), selectEdition: jest.fn(),
 } }));
+const pickerDefaults = { ...zeroPriceDefaults, priceMinor: 100 };
+const pickerReview = { ...zeroPriceReview, priceMinor: 100 };
 const initial = pickerChoices({ selection: { ...selectedChoices().selection!, confirmedByOwner: false }, reviewVersion: 1 });
 let mockDetail = pickerDetail(initial, pickerReview);
 
@@ -32,6 +37,8 @@ const drafts = jest.fn(); const refresh = jest.fn(); const add = jest.fn();
 beforeEach(() => {
   jest.useFakeTimers();
   jest.clearAllMocks(); mockDetail = pickerDetail(initial, pickerReview);
+  let captureSequence = 100;
+  jest.spyOn(Crypto, 'randomUUID').mockImplementation(() => testUuid(++captureSequence) as ReturnType<typeof Crypto.randomUUID>);
   read.mockResolvedValue(initial);
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: 0 } } });
   registry = new CandidateCommandRegistry(); let sequence = 0;
@@ -41,12 +48,15 @@ beforeEach(() => {
   resetImageInventoryIdentityForTests(pickerIdentity);
 });
 afterEach(async () => { await act(async () => { await client.cancelQueries(); }); await cleanupAsync(); client.getMutationCache().getAll().forEach(m => m.destroy()); client.clear(); jest.clearAllTimers(); jest.useRealTimers(); });
-function mount(override?: import('../contracts/ownerBatchReviewContracts').OwnerBatchReviewCard) {
+function cardScreen(override?: import('../contracts/ownerBatchReviewContracts').OwnerBatchReviewCard) {
   const card = { ...pickerCard(initial, pickerReview), allowedActions: ['save_review', 'view_metadata', 'add_to_inventory'] as import('../contracts/ownerBatchReviewContracts').OwnerBatchReviewCard['allowedActions'] };
-  return render(<QueryClientProvider client={client}><BatchReviewCard identity={pickerIdentity} card={override ?? card}
+  return <QueryClientProvider client={client}><BatchReviewCard identity={pickerIdentity} card={override ?? card}
     defaults={pickerDefaults} canMutate isOffline={false} removePending={false} addPending={false}
     commandSlot={slots} onEditionSelection={refresh} onDraftChange={drafts} onAdd={add}
-    onOpenFullCorrection={jest.fn()} onRemove={jest.fn()} /></QueryClientProvider>);
+    onOpenFullCorrection={jest.fn()} onRemove={jest.fn()} /></QueryClientProvider>;
+}
+function mount(override?: import('../contracts/ownerBatchReviewContracts').OwnerBatchReviewCard) {
+  return render(cardScreen(override));
 }
 it('opens/reopens without provider search, preserves current choice and explicitly searches only missing alternatives', async () => {
   read.mockResolvedValue({ ...initial, rows: [], optionsExpiresAt: null, lookupStatus: 'idle' });
@@ -119,7 +129,7 @@ it('resumed compact held selection survives expired options without inventing a 
   fireEvent.press(view.getByText('Add to inventory'));
   await waitFor(() => expect(add).toHaveBeenCalled());
   expect(add.mock.calls[0][2]).toMatchObject({ metadataChoice: { mode: 'edition_option', selectionId: saved.selection!.selectionId },
-    priceMinor: 0, quantity: 1, shelfLocation: 'A1' });
+    priceMinor: 100, quantity: 1, shelfLocation: 'A1' });
 });
 it('closing the sheet returns focus to the actual compact-card trigger that opened it', async () => {
   jest.replaceProperty(Platform, 'OS', 'web');
@@ -130,18 +140,13 @@ it('closing the sheet returns focus to the actual compact-card trigger that open
     expect(node).not.toBeNull();
     return node!.instance as { focus: jest.Mock; props: { accessibilityLabel: string } };
   };
-  const changeTarget = focusOf('Find or change edition'); const metadataTarget = focusOf('View metadata');
+  const changeTarget = focusOf('Find or change edition');
   expect(changeTarget.props.accessibilityLabel).toBe('Find or change edition');
-  expect(metadataTarget.props.accessibilityLabel).toBe('View metadata');
   fireEvent.press(view.getByText('Find or change edition'));
   await waitFor(() => expect(view.getByText('Close metadata')).toBeTruthy());
   fireEvent.press(view.getByText('Close metadata'));
   await act(async () => jest.runAllTicks());
   expect(changeTarget.focus.mock.contexts.at(-1)?.props.accessibilityLabel).toBe('Find or change edition');
-  fireEvent.press(view.getByText('View metadata'));
-  fireEvent.press(view.getByText('Close metadata'));
-  await act(async () => jest.runAllTicks());
-  expect(metadataTarget.focus.mock.contexts.at(-1)?.props.accessibilityLabel).toBe('View metadata');
   jest.restoreAllMocks();
 });
 
@@ -188,15 +193,15 @@ it('keeps the full-review edition trigger at its natural touch-target height and
   await waitFor(() => expect(view.getByLabelText('Select result 1: Chosen edition')).toBeTruthy());
 });
 
-it('preserves the compact-row sizing and touch targets for both metadata triggers', () => {
+it('preserves the compact-row sizing and touch target for the edition trigger', () => {
   const view = mount();
-  for (const name of ['Find or change edition', 'View metadata']) {
+  for (const name of ['Find or change edition']) {
     const style = StyleSheet.flatten(view.getByRole('button', { name }).props.style);
     expect(style).toMatchObject({ minHeight: 48, flexGrow: 1, flexBasis: 150 });
   }
 });
 // Picker EP-D07 (2026-10-17): the sheet fix saves the whole card review, then searches; the draft becomes server authority.
-it('saves a title fix with the card edits, clears the draft and searches the saved identity', async () => {
+it("Search Books saves the card's new title, then searches", async () => {
   const savedChoices = pickerChoices({ candidateVersion: initial.candidateVersion + 1, metadataRevision: initial.metadataRevision + 1,
     reviewVersion: 2, requestGeneration: 2, rows: [], optionsExpiresAt: null, lookupStatus: 'idle', selection: null });
   const save = jest.spyOn(ownerUxService, 'updateCandidateReview').mockImplementation(async () => {
@@ -209,11 +214,12 @@ it('saves a title fix with the card edits, clears the draft and searches the sav
   fireEvent.press(view.getByLabelText('Edit Price'));
   fireEvent.changeText(view.getByLabelText('Custom whole rupees'), '42');
   fireEvent.press(view.getByLabelText('Use custom price'));
+  fireEvent.press(view.getByLabelText('Edit title for Book 1: Chosen edition'));
+  fireEvent.changeText(view.getByTestId('card-title-input'), 'Corrected title');
+  fireEvent(view.getByTestId('card-title-input'), 'blur');
   fireEvent.press(view.getByText('Find or change edition'));
-  await waitFor(() => expect(view.getByText('Wrong title or author? Fix it')).toBeTruthy());
-  fireEvent.press(view.getByText('Wrong title or author? Fix it'));
-  fireEvent.changeText(view.getByLabelText('Corrected title'), 'Corrected title');
-  await act(async () => { fireEvent.press(view.getByText('Save and search again')); });
+  await waitFor(() => expect(view.getByText('Search Books')).toBeTruthy());
+  await act(async () => { fireEvent.press(view.getByText('Search Books')); });
   await waitFor(() => expect(lookup).toHaveBeenCalledTimes(1));
   expect(save).toHaveBeenCalledTimes(1);
   expect(save.mock.calls[0][0]).toMatchObject({ expectedCandidateVersion: initial.candidateVersion,
@@ -224,4 +230,131 @@ it('saves a title fix with the card edits, clears the draft and searches the sav
   // The parent card read has not caught up: Add stays locked instead of re-adopting the older card authority.
   await act(async () => { await Promise.resolve(); });
   expect(view.UNSAFE_getByType(AddCandidateToInventoryAction).props.disabled).toBe(true);
+});
+
+it('incomplete card searches only with the saved title', async () => {
+  const save = jest.spyOn(ownerUxService, 'updateCandidateReview');
+  lookup.mockResolvedValue({ operationId: testUuid(55), status: 'pending', requestGeneration: 1, optionsVersion: 1, available: true });
+  const view = mount();
+  fireEvent.press(view.getByLabelText('Edit title for Book 1: Chosen edition'));
+  fireEvent.changeText(view.getByTestId('card-title-input'), 'New title');
+  fireEvent(view.getByTestId('card-title-input'), 'blur');
+  fireEvent.press(view.getByLabelText('Edit Price'));
+  fireEvent.changeText(view.getByLabelText('Custom whole rupees'), '0');
+  fireEvent.press(view.getByLabelText('Use custom price'));
+  fireEvent.press(view.getByText('Find or change edition'));
+  await waitFor(() => expect(view.getByText("Complete the card's details to search with the new title")).toBeTruthy());
+  expect(view.queryByText('Search Books')).toBeNull();
+  fireEvent.press(view.getByLabelText('Search with saved title'));
+  await waitFor(() => expect(lookup).toHaveBeenCalledTimes(1));
+  expect(save).not.toHaveBeenCalled();
+  expect(drafts.mock.calls.at(-1)[1]).toMatchObject({ originalTitle: 'New title', priceMinor: 0 });
+  save.mockRestore();
+});
+it('replays the frozen save-then-search request after an uncertain save', async () => {
+  const pending = deferred<ReturnType<typeof pickerDetail>>();
+  const save = jest.spyOn(ownerUxService, 'updateCandidateReview').mockRejectedValueOnce(new Error('lost response')).mockReturnValueOnce(pending.promise);
+  const view = mount();
+  fireEvent.press(view.getByLabelText('Edit title for Book 1: Chosen edition'));
+  fireEvent.changeText(view.getByTestId('card-title-input'), 'New title');
+  fireEvent(view.getByTestId('card-title-input'), 'blur');
+  fireEvent.press(view.getByText('Find or change edition'));
+  await waitFor(() => expect(view.getByText('Search Books')).toBeTruthy());
+  fireEvent.press(view.getByText('Search Books'));
+  await waitFor(() => expect(view.getByText('Retry search')).toBeTruthy());
+  fireEvent.press(view.getByText('Retry search'));
+  await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+  expect(save.mock.calls[1][0]).toEqual(save.mock.calls[0][0]);
+  expect(registry.claim(initial.candidateId, 'add')).toBe(false);
+  const response = pickerDetail(selectedChoices({ reviewVersion: 2 }), { ...pickerReview, originalTitle: 'New title', metadataChoice: { mode: 'manual', selectionId: null } });
+  lookup.mockResolvedValue({ operationId: testUuid(56), status: 'pending', requestGeneration: 1, optionsVersion: 1, available: true });
+  await act(async () => pending.resolve(response));
+  await waitFor(() => expect(registry.isClaimed(initial.candidateId)).toBe(false));
+  save.mockRestore();
+});
+
+it('Add sends manual details after editing a chosen edition identity', async () => {
+  add.mockResolvedValue({ status: 'succeeded' });
+  const view = mount(); await waitFor(() => expect(read).toHaveBeenCalled());
+  fireEvent.press(view.getByLabelText('Edit title for Book 1: Chosen edition'));
+  fireEvent.changeText(view.getByTestId('card-title-input'), 'New title');
+  fireEvent(view.getByTestId('card-title-input'), 'blur');
+  fireEvent.press(view.getByText('Add to inventory'));
+  await waitFor(() => expect(add).toHaveBeenCalledTimes(1));
+  expect(add.mock.calls[0][2]).toMatchObject({ originalTitle: 'New title', metadataChoice: { mode: 'manual', selectionId: null } });
+});
+
+const identityRequest = (): IdentitySearchRequest => ({
+  review: { ...pickerReview, originalTitle: 'New title', metadataChoice: { mode: 'manual', selectionId: null } },
+  expectedCandidateVersion: initial.candidateVersion, expectedMetadataRevision: initial.metadataRevision,
+});
+
+it.each(['P9_VERSION_CONFLICT', 'P9_IDEMPOTENCY_MISMATCH'] as const)('a definite save refusal %s refreshes the card and offers a new Search Books command', async code => {
+  const error = registeredOwnerUxError(code);
+  const save = jest.spyOn(ownerUxService, 'updateCandidateReview').mockRejectedValue(error);
+  const request = identityRequest();
+  const view = mount();
+  fireEvent.press(view.getByLabelText('Edit title for Book 1: Chosen edition'));
+  fireEvent.changeText(view.getByTestId('card-title-input'), 'New title');
+  fireEvent(view.getByTestId('card-title-input'), 'blur');
+  fireEvent.press(view.getByText('Find or change edition'));
+  await waitFor(() => expect(view.getByText('Search Books')).toBeTruthy());
+  read.mockClear();
+  fireEvent.press(view.getByText('Search Books'));
+  await waitFor(() => expect(view.getByText(code === 'P9_VERSION_CONFLICT'
+    ? "This book changed. Check the card's details, then search again." : error.message)).toBeTruthy());
+  expect(read).toHaveBeenCalled();
+  expect(view.queryByText('Retry search')).toBeNull();
+  expect(ownerUxService.readCandidate).toHaveBeenCalled();
+  const refreshed = selectedChoices({ candidateVersion: 9, metadataRevision: 11, reviewVersion: 2 });
+  read.mockResolvedValue(refreshed); mockDetail = pickerDetail(refreshed, request.review);
+  const pending = deferred<ReturnType<typeof pickerDetail>>(); save.mockReturnValue(pending.promise);
+  view.rerender(cardScreen(pickerCard(refreshed, pickerReview)));
+  fireEvent.press(view.getByText('Close metadata'));
+  fireEvent.press(view.getByText('Reapply compact edits'));
+  fireEvent.press(view.getByText('Find or change edition'));
+  await waitFor(() => expect(view.getByText('Search Books')).toBeTruthy());
+  fireEvent.press(view.getByText('Search Books'));
+  await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+  expect(save.mock.calls[1][0]).toMatchObject({ expectedCandidateVersion: 9, expectedMetadataRevision: 11 });
+  expect(save.mock.calls[1][0].idempotencyKey).not.toBe(save.mock.calls[0][0].idempotencyKey);
+  expect(save.mock.calls[1][0].commandId).not.toBe(save.mock.calls[0][0].commandId);
+  lookup.mockResolvedValue({ operationId: testUuid(60), status: 'pending', requestGeneration: 1, optionsVersion: 1, available: true });
+  await act(async () => pending.resolve(mockDetail));
+  await waitFor(() => expect(registry.isClaimed(initial.candidateId)).toBe(false));
+  save.mockRestore();
+});
+
+it('a refused lookup after saving offers Search Books with a fresh lookup and no repeated save', async () => {
+  const request = identityRequest();
+  const authority = selectedChoices({ candidateVersion: 6, metadataRevision: 9, reviewVersion: 2 });
+  const saved = pickerDetail(authority, request.review);
+  saved.metadata = { ...saved.metadata, state: 'manual', selectionId: null, snapshot: null };
+  const choices = { ...authority, selection: null, lookupStatus: 'idle' as const, optionsExpiresAt: null, rows: [] };
+  const save = jest.spyOn(ownerUxService, 'updateCandidateReview').mockImplementation(async () => {
+    mockDetail = saved; read.mockResolvedValue(choices); return saved;
+  });
+  lookup.mockImplementationOnce(async () => {
+    read.mockResolvedValue({ ...choices, requestGeneration: 3 });
+    throw registeredOwnerUxError('P9_STATE_CONFLICT');
+  });
+  const view = mount();
+  fireEvent.press(view.getByLabelText('Edit title for Book 1: Chosen edition'));
+  fireEvent.changeText(view.getByTestId('card-title-input'), 'New title');
+  fireEvent(view.getByTestId('card-title-input'), 'blur');
+  fireEvent.press(view.getByText('Find or change edition'));
+  await waitFor(() => expect(view.getByText('Search Books')).toBeTruthy());
+  fireEvent.press(view.getByText('Search Books'));
+  await waitFor(() => expect(view.getByText("This book changed. Check the card's details, then search again.")).toBeTruthy());
+  expect(view.queryByText('Retry search')).toBeNull();
+  view.rerender(cardScreen({ ...pickerCard(authority, request.review), metadataState: 'manual', metadataSummary: null }));
+  await waitFor(() => expect(view.getByRole('button', { name: 'Search Books' })).not.toBeDisabled());
+  lookup.mockResolvedValue({ operationId: testUuid(61), status: 'pending', requestGeneration: 3, optionsVersion: 1, available: true });
+  fireEvent.press(view.getByText('Search Books'));
+  await waitFor(() => expect(lookup).toHaveBeenCalledTimes(2));
+  expect(save).toHaveBeenCalledTimes(1);
+  expect(lookup.mock.calls[1][0]).toMatchObject({ expectedRequestGeneration: 3 });
+  expect(lookup.mock.calls[1][0].idempotencyKey).not.toBe(lookup.mock.calls[0][0].idempotencyKey);
+  expect(lookup.mock.calls[1][0].commandId).not.toBe(lookup.mock.calls[0][0].commandId);
+  save.mockRestore();
 });

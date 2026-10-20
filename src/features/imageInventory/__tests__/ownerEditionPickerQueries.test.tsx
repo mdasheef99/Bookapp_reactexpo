@@ -2,15 +2,17 @@ jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanupAsync, renderHook, waitFor } from '@testing-library/react-native';
 import type { PropsWithChildren } from 'react';
+import * as Crypto from 'expo-crypto';
 import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
 import { useOwnerEditionPicker } from '../queries/ownerEditionPickerQueries';
 import { ownerEditionPickerKeys } from '../queries/ownerEditionPickerKeys';
-import { coordinateImageInventoryIdentity, resetImageInventoryIdentityForTests } from '../queries/ownerUxQueries';
+import { coordinateImageInventoryIdentity, resetImageInventoryIdentityForTests, useOwnerInventoryCandidate } from '../queries/ownerUxQueries';
 import { CandidateCommandRegistry } from '../commit/inventoryCommitTypes';
-import { pickerChoices, selectedChoices, pickerIdentity, deferred } from '../testing/editionPickerClientFixtures';
+import { pickerChoices, selectedChoices, pickerIdentity, pickerDetail, pickerReview, deferred } from '../testing/editionPickerClientFixtures';
 import { testUuid } from '../testing/ownerUxTestFixtures';
 import { OWNER_UX_CONTRACT_VERSION } from '../contracts/ownerUxContracts';
-import { OwnerUxClientError } from '../api/ownerUxService';
+import { OwnerUxClientError, ownerUxService } from '../api/ownerUxService';
+import * as ownerUxReviewQueries from '../queries/ownerUxReviewQueries';
 
 jest.mock('../api/ownerEditionPickerService', () => ({ ownerEditionPickerService: {
   readEditionChoices: jest.fn(), requestEditionOptions: jest.fn(), selectEdition: jest.fn(),
@@ -29,6 +31,8 @@ let slots: { claimSlot: (id: string, prefix: string) => string | null;
   releaseSlot: (id: string, token: string) => void; isCommandActive: (id: string) => boolean };
 beforeEach(() => {
   jest.clearAllMocks();
+  let captureSequence = 100;
+  jest.spyOn(Crypto, 'randomUUID').mockImplementation(() => testUuid(++captureSequence) as ReturnType<typeof Crypto.randomUUID>);
   read.mockResolvedValue(pickerChoices());
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: 0 } } });
   wrapper = ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
@@ -38,7 +42,7 @@ beforeEach(() => {
     releaseSlot: (id, token) => registry.release(id, token), isCommandActive: id => registry.isClaimed(id) };
   resetImageInventoryIdentityForTests(pickerIdentity);
 });
-afterEach(async () => { await cleanupAsync(); client.getMutationCache().getAll().forEach(m => m.destroy()); client.clear(); });
+afterEach(async () => { await cleanupAsync(); client.getMutationCache().getAll().forEach(m => m.destroy()); client.clear(); jest.restoreAllMocks(); });
 function mount(callbacks = {}) {
   return renderHook(() => useOwnerEditionPicker(pickerIdentity, request.sessionId, request.candidateId, slots, callbacks), { wrapper });
 }
@@ -263,4 +267,80 @@ it('does not adopt a replay when current server confirmation is false, even if r
   await act(async () => expect(hook.result.current.selectEdition.mutateAsync(request)).rejects.toThrow('AUTHORITY_CHANGED'));
   expect(onSelection).not.toHaveBeenCalled();
   expect(registry.isClaimed(request.candidateId)).toBe(false);
+});
+
+it('clears a definitely refused save even when the next identity request has the same fingerprint', async () => {
+  read.mockResolvedValue(selectedChoices({ reviewVersion: 1 }));
+  const review = { ...pickerReview, priceMinor: 100 };
+  const detail = pickerDetail(selectedChoices({ reviewVersion: 1 }), review);
+  const refresh = jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(detail);
+  const candidate = renderHook(() => useOwnerInventoryCandidate(pickerIdentity, request.sessionId, request.candidateId), { wrapper });
+  await waitFor(() => expect(candidate.result.current.data).toBeDefined());
+  refresh.mockClear();
+  const save = jest.spyOn(ownerUxService, 'updateCandidateReview')
+    .mockRejectedValueOnce(new OwnerUxClientError('P9_VERSION_CONFLICT', true, 'changed'))
+    .mockResolvedValueOnce(detail);
+  lookup.mockResolvedValue({ operationId: testUuid(62), status: 'pending', requestGeneration: 1, optionsVersion: 1, available: true });
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toBeDefined());
+  const identity = { review, expectedCandidateVersion: detail.candidateVersion, expectedMetadataRevision: detail.metadata.revision };
+  await act(async () => expect(hook.result.current.saveIdentityAndSearch.mutateAsync(identity)).rejects.toThrow('changed'));
+  expect(refresh).toHaveBeenCalled();
+  await act(async () => hook.result.current.saveIdentityAndSearch.mutateAsync(identity));
+  expect(save).toHaveBeenCalledTimes(2);
+  expect(save.mock.calls[1][0].idempotencyKey).not.toBe(save.mock.calls[0][0].idempotencyKey);
+  expect(save.mock.calls[1][0].commandId).not.toBe(save.mock.calls[0][0].commandId);
+});
+
+it('retains a completed save when its post-save authority check needs a refresh', async () => {
+  read.mockResolvedValue(selectedChoices({ reviewVersion: 1 }));
+  const review = { ...pickerReview, priceMinor: 100 };
+  const detail = pickerDetail(selectedChoices({ reviewVersion: 1 }), review);
+  const save = jest.spyOn(ownerUxService, 'updateCandidateReview').mockResolvedValue(detail);
+  const synchronize = jest.spyOn(ownerUxReviewQueries, 'synchronizeCandidateReviewSuccess')
+    .mockRejectedValueOnce(new OwnerUxClientError('P9_VERSION_CONFLICT', true, 'changed after save'))
+    .mockResolvedValue(undefined);
+  lookup.mockResolvedValue({ operationId: testUuid(64), status: 'pending', requestGeneration: 1, optionsVersion: 1, available: true });
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toBeDefined());
+  const identity = { review, expectedCandidateVersion: detail.candidateVersion, expectedMetadataRevision: detail.metadata.revision };
+  await act(async () => expect(hook.result.current.saveIdentityAndSearch.mutateAsync(identity))
+    .rejects.toThrow('changed after save'));
+  expect(synchronize).toHaveBeenCalledWith(client, pickerIdentity, request.sessionId, request.candidateId, detail);
+  expect(save).toHaveBeenCalledTimes(1);
+  await act(async () => expect(hook.result.current.saveIdentityAndSearch.mutateAsync(identity))
+    .resolves.toMatchObject({ detail, searched: true }));
+  expect(save).toHaveBeenCalledTimes(1);
+});
+
+it('drops only a refused lookup and rebuilds it from a fresh generation without resending the save', async () => {
+  read.mockResolvedValue(selectedChoices({ reviewVersion: 1 }));
+  const review = { ...pickerReview, priceMinor: 100 };
+  const detail = pickerDetail(selectedChoices({ reviewVersion: 1 }), review);
+  jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(detail);
+  const save = jest.spyOn(ownerUxService, 'updateCandidateReview').mockResolvedValue(detail);
+  lookup.mockRejectedValueOnce(new OwnerUxClientError('P9_STATE_CONFLICT', true, 'generation changed'))
+    .mockResolvedValueOnce({ operationId: testUuid(63), status: 'pending', requestGeneration: 4, optionsVersion: 1, available: true });
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toBeDefined());
+  const identity = { review, expectedCandidateVersion: detail.candidateVersion, expectedMetadataRevision: detail.metadata.revision };
+  await act(async () => expect(hook.result.current.saveIdentityAndSearch.mutateAsync(identity)).rejects.toThrow('generation changed'));
+  read.mockResolvedValue(selectedChoices({ requestGeneration: 4, reviewVersion: 1 }));
+  await act(async () => hook.result.current.saveIdentityAndSearch.mutateAsync(identity));
+  expect(save).toHaveBeenCalledTimes(1);
+  expect(lookup.mock.calls[1][0]).toMatchObject({ expectedRequestGeneration: 4 });
+  expect(lookup.mock.calls[1][0].idempotencyKey).not.toBe(lookup.mock.calls[0][0].idempotencyKey);
+  expect(lookup.mock.calls[1][0].commandId).not.toBe(lookup.mock.calls[0][0].commandId);
+});
+
+it.each(['P9_VERSION_CONFLICT', 'P9_OWNER_NOT_AUTHORIZED'] as const)('does not replay a definitely refused standalone lookup: %s', async code => {
+  lookup.mockRejectedValueOnce(new OwnerUxClientError(code, false, 'refused'));
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toBeDefined());
+  const command = { action: 'request_candidate_edition_options' as const, contractVersion: OWNER_UX_CONTRACT_VERSION,
+    sessionId: request.sessionId, candidateId: request.candidateId, expectedRequestGeneration: 1,
+    commandId: testUuid(64), idempotencyKey: 'lookup:definite-refusal-0001' };
+  await act(async () => expect(hook.result.current.requestOptions.mutateAsync(command)).rejects.toThrow('refused'));
+  await act(async () => expect(hook.result.current.retryLookup()).rejects.toThrow('AUTHORITY_CHANGED'));
+  expect(lookup).toHaveBeenCalledTimes(1);
 });

@@ -149,6 +149,7 @@ function resetMocks() {
 }
 
 jest.mock('expo-router', () => ({
+    useNavigation: () => ({ addListener: () => () => {}, dispatch: jest.fn() }),
     useRouter: () => mockRouter,
     useLocalSearchParams: () => ({ sessionId: '00000000-0000-4000-8000-000000000010' }),
 }));
@@ -212,7 +213,7 @@ jest.mock('../queries/ownerEditionPickerQueries', () => ({
     useOwnerEditionChoices: () => ({ data: mockEditionChoices, isLoading: false, error: null }),
     useOwnerEditionPicker: () => ({
         choices: { data: undefined, isLoading: false, error: null, refetch: jest.fn() },
-        selectEdition: {}, requestOptions: {}, selectionPending: false, lookupPending: false,
+        selectEdition: {}, requestOptions: {}, saveIdentityAndSearch: {}, identityPending: false, selectionPending: false, lookupPending: false,
         isCommandActive: () => false, retrySelection: jest.fn(), retryLookup: jest.fn(),
     }),
 }));
@@ -561,8 +562,8 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
         expect(screen.getByText(/Damage:/u)).toBeTruthy();
         fireEvent.press(screen.getByTestId('card-condition-field'));
         fireEvent.press(screen.getByText('Acceptable'));
-        fireEvent.press(screen.getByText('View metadata'));
-        expect(screen.getByText('Book metadata')).toBeTruthy();
+        fireEvent.press(screen.getByLabelText('Find or change edition'));
+        expect(screen.getByRole('header', { name: 'Find or change edition' })).toBeTruthy();
         expect(screen.getByTestId('metadata-no-selected-details')).toBeTruthy();
         fireEvent.press(screen.getByText('Close metadata'));
         fireEvent.press(screen.getByText('Open full correction'));
@@ -797,7 +798,7 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
             allowedActions: ['save_review', 'view_metadata'],
         });
         mockBatchReview = batchReviewFixture([card], { detected: 1, processing: 0 });
-        mockBatchReview.data.defaults = { ...defaultsFixture(), condition: 'good', priceMinor: 0 };
+        mockBatchReview.data.defaults = { ...defaultsFixture(), condition: 'good', priceMinor: 100 };
         const screen = render(<InventorySessionFoundationScreen sessionId={choices.sessionId} />);
         await waitFor(() => expect(screen.queryByText('Add all ready books (1)')).toBeTruthy());
         fireEvent.press(screen.getByText('Add all ready books (1)'));
@@ -805,7 +806,7 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
         await waitFor(() => expect(mockAddAll).toHaveBeenCalledTimes(1));
         expect(mockAddAll.mock.calls[0][0][0].review).toMatchObject({
             metadataChoice: { mode: 'edition_option', selectionId: choices.selection!.selectionId },
-            priceMinor: 0, baseCondition: 'good', shelfLocation: 'Front shelf',
+            priceMinor: 100, baseCondition: 'good', shelfLocation: 'Front shelf',
         });
         expect(card.review).toBeNull(); expect(card.reviewReady).toBe(false);
     });

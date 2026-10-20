@@ -8,6 +8,14 @@ import type { CandidateCommitOutcome } from '../commit/inventoryCommitCoordinato
 import { candidateDetailFixture, testUuid } from '../testing/ownerUxTestFixtures';
 
 let mockMetadataDetail = candidateDetailFixture();
+let mockEditionChoices: import('../contracts/ownerEditionPicker').EditionChoices | undefined;
+import { selectedChoices } from '../testing/editionPickerClientFixtures';
+import { cardAttentionItems } from '../components/batchReviewStatus';
+jest.mock('../components/EditionChoicesReader', () => ({ EditionChoicesReader: ({ onChoices }: any) => {
+    const React = require('react');
+    React.useEffect(() => { if (mockEditionChoices) onChoices(mockEditionChoices); }, [onChoices]);
+    return null;
+} }));
 
 // Presentation-boundary stand-in so cover rendering stays assertable.
 jest.mock('expo-image', () => ({
@@ -115,6 +123,77 @@ function renderCard(overrides: Record<string, unknown> = {}) {
     );
 }
 
+it('shows only Finding the edition while pending despite saved server blockers', () => {
+    const pending = { field: 'metadataChoice' as const, safeMessage: 'Finding the edition…' };
+    const value = card({ metadataState: 'pending', blockers: [{ code: 'metadata_choice_missing',
+        field: 'metadataChoice', safeMessage: 'Choose metadata before adding.' }] });
+    expect(cardAttentionItems({ card: value, hasEdits: false, validationIssues: [pending] })).toEqual([pending]);
+    const view = renderCard(value);
+    expect(view.getByText('• Finding the edition…')).toBeTruthy();
+    expect(view.queryByText('• Choose metadata before adding.')).toBeNull();
+});
+
+it('shows the chosen edition summary until edition choices load', () => {
+    mockEditionChoices = undefined;
+    const view = renderCard({ metadataSummary: { ...card().metadataSummary, title: 'Observed Title' } });
+    expect(view.getByText('Edition chosen')).toBeTruthy();
+    fireEvent.press(view.getByLabelText('Edit title for Book 1: Observed Title'));
+    fireEvent.changeText(view.getByTestId('card-title-input'), 'Changed title');
+    fireEvent(view.getByTestId('card-title-input'), 'blur');
+    expect(view.getByText('No edition chosen — title or author changed')).toBeTruthy();
+});
+
+it('shows only pending attention and a pending edition line with ready stale choices', () => {
+    const choices = selectedChoices();
+    mockEditionChoices = choices;
+    const value = card({ sessionId: choices.sessionId, candidateId: choices.candidateId,
+        metadataState: 'pending', blockers: [{ code: 'metadata_choice_missing',
+            field: 'metadataChoice', safeMessage: 'Choose metadata before adding.' }] });
+    const view = render(<BatchReviewCard identity={{ userId: testUuid(90), storeId: testUuid(91) }}
+        card={value} defaults={defaults} canMutate isOffline={false} removePending={false} addPending={false}
+        commandSlot={{ claimSlot: () => 'slot', releaseSlot: jest.fn(), isCommandActive: () => false }}
+        onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove} onAdd={onAdd} onDraftChange={onDraftChange} />);
+    expect(view.getByText('• Finding the edition…')).toBeTruthy();
+    expect(view.getByText('Finding edition…')).toBeTruthy();
+    expect(view.queryByText('Ready')).toBeNull();
+    mockEditionChoices = undefined;
+});
+
+it.each(['selection', 'session', 'candidate', 'manual'] as const)('does not display an untrusted %s edition snapshot', mismatch => {
+    const choices = selectedChoices({ sessionId: card().sessionId, candidateId: card().candidateId });
+    choices.selection = { ...choices.selection!, snapshot: { ...choices.selection!.snapshot, publisher: 'Stale publisher' } };
+    const value = card({ metadataSummary: { ...choices.selection.snapshot, selectionId: choices.selection.selectionId },
+        review: { ...card().review!, originalTitle: 'Title B',
+            metadataChoice: mismatch === 'manual' ? { mode: 'manual', selectionId: null }
+                : { mode: 'selected', selectionId: mismatch === 'selection' ? testUuid(99) : choices.selection.selectionId } } });
+    if (mismatch === 'session') choices.sessionId = testUuid(98);
+    if (mismatch === 'candidate') choices.candidateId = testUuid(98);
+    mockEditionChoices = choices;
+    const view = render(<BatchReviewCard identity={{ userId: testUuid(90), storeId: testUuid(91) }}
+        card={value} defaults={defaults} canMutate isOffline={false} removePending={false} addPending={false}
+        commandSlot={{ claimSlot: () => 'slot', releaseSlot: jest.fn(), isCommandActive: () => false }}
+        onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove} onAdd={onAdd} onDraftChange={onDraftChange} />);
+    expect(view.queryByText('Stale publisher · 2002')).toBeNull();
+    expect(view.getByText('Edition chosen')).toBeTruthy();
+    mockEditionChoices = undefined;
+});
+
+it('shows the identity-changed edition line for an untrusted snapshot after a title edit', () => {
+    const choices = selectedChoices({ sessionId: card().sessionId, candidateId: card().candidateId });
+    mockEditionChoices = choices;
+    const value = card({ metadataSummary: { ...card().metadataSummary, title: 'Observed Title' } });
+    const view = render(<BatchReviewCard identity={{ userId: testUuid(90), storeId: testUuid(91) }}
+        card={value} defaults={defaults} canMutate isOffline={false} removePending={false} addPending={false}
+        commandSlot={{ claimSlot: () => 'slot', releaseSlot: jest.fn(), isCommandActive: () => false }}
+        onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove} onAdd={onAdd} onDraftChange={onDraftChange} />);
+    expect(view.getByText('Edition chosen')).toBeTruthy();
+    fireEvent.press(view.getByLabelText('Edit title for Book 1: Observed Title'));
+    fireEvent.changeText(view.getByTestId('card-title-input'), 'Changed title');
+    fireEvent(view.getByTestId('card-title-input'), 'blur');
+    expect(view.getByText('No edition chosen — title or author changed')).toBeTruthy();
+    mockEditionChoices = undefined;
+});
+
 describe('Phase 9 NEW 6G-C compact review card', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -125,7 +204,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         });
     });
 
-    it('uses DOC-8 source wording for detected, default, custom, and missing fields', () => {
+    it('removes identity source chips while keeping value source cues', () => {
         const screen = renderCard({
             fieldSources: {
                 cover: 'matched', title: 'detected', authors: 'missing',
@@ -136,7 +215,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         });
         const badges = screen.getAllByText(/^(Detected|Default|Custom|Missing)$/u)
             .map((node) => node.props.children);
-        expect(badges).toContain('Detected');
+        expect(badges).not.toContain('Detected');
         expect(badges).toContain('Default');
         expect(badges).toContain('Custom');
         expect(badges).toContain('Missing');
@@ -290,23 +369,6 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         expect(editedSummary.queryByText(/Review this book\./)).toBeNull();
     });
 
-    it('lets review:null metadata Edit manually open identity editing', () => {
-        const screen = renderCard({
-            reviewVersion: null,
-            review: null,
-            metadataState: 'no_match',
-            metadataSummary: null,
-            allowedActions: ['save_review', 'view_metadata'],
-        });
-        fireEvent.press(screen.getByText('View metadata'));
-        fireEvent.press(screen.getByText('Edit manually'));
-        expect(screen.getByText(/Add title/u)).toBeTruthy();
-        expect(screen.getByText(/Add authors/u)).toBeTruthy();
-        expect(onDraftChange).toHaveBeenLastCalledWith(card().candidateId, {
-            metadataChoice: { mode: 'manual', selectionId: null },
-        });
-    });
-
     it.each(['pending', 'no_match', 'ambiguous'] as const)(
         'keeps never-reviewed observed identity visible while metadata is %s',
         (metadataState) => {
@@ -356,8 +418,6 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
             },
         });
         expect(screen.getByText('Add to inventory')).toBeDisabled();
-        fireEvent.press(screen.getByText('View metadata'));
-        fireEvent.press(screen.getByText('Use detected details'));
         fireEvent.press(screen.getByTestId('card-condition-field'));
         fireEvent.press(screen.getByText('Good'));
         fireEvent.press(screen.getByTestId('card-price-field'));
@@ -373,7 +433,6 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         expect(onAdd).toHaveBeenCalledWith(
             expect.objectContaining({ review: null, reviewVersion: null }),
             expect.objectContaining({
-                metadataChoice: { mode: 'manual', selectionId: null },
                 baseCondition: 'good', priceMinor: 2500,
             }),
             expect.objectContaining({
@@ -539,14 +598,11 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         expect(screen.getByText('Representative edition cover')).toBeTruthy();
     });
 
-    it('exposes a useful metadata status for every retained metadata state', () => {
-        expect(renderCard({ metadataState: 'selected' }).getAllByText('Provider matched').length).toBeGreaterThan(0);
-        expect(renderCard({ metadataState: 'manual' }).getByText('Manual details')).toBeTruthy();
-        expect(renderCard({ metadataState: 'no_match' }).getByText('No provider match')).toBeTruthy();
-        expect(renderCard({ metadataState: 'pending' }).getByText('Finding metadata')).toBeTruthy();
-        expect(renderCard({ metadataState: 'failed' }).getByText('Metadata failed')).toBeTruthy();
-        expect(renderCard({ metadataState: 'ambiguous' }).getByText('Metadata needs review')).toBeTruthy();
-        expect(renderCard({ metadataState: 'temporarily_unavailable' }).getByText('Metadata unavailable')).toBeTruthy();
+    it('replaces metadata status text with the pending or unchosen edition line', () => {
+        expect(renderCard({ metadataState: 'pending' }).getByText('Finding edition…')).toBeTruthy();
+        const view = renderCard({ metadataState: 'no_match', metadataSummary: null });
+        expect(view.getByText('No edition chosen')).toBeTruthy();
+        expect(view.queryByLabelText(/Metadata status:/u)).toBeNull();
     });
 
     it('shows the saved damage answer with its canonical source badge', () => {
@@ -599,44 +655,17 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         );
     });
 
-    it('opens bounded metadata separately while full correction keeps its retained route callback', () => {
-        const allowed = renderCard({ allowedActions: ['view_metadata'] });
-        fireEvent.press(allowed.getByText('View metadata'));
-        expect(allowed.getByText('Book metadata')).toBeTruthy();
-        expect(allowed.getByTestId('metadata-no-selected-details')).toBeTruthy();
-        expect(allowed.getByText('Use detected details')).toBeTruthy();
-        expect(allowed.getByText('Edit manually')).toBeTruthy();
+    it('shows one edition button and no View metadata', () => {
+        const screen = renderCard({ allowedActions: ['view_metadata'] });
+        expect(screen.queryByText('View metadata')).toBeNull();
+        expect(screen.getAllByRole('button', { name: 'Find or change edition' })).toHaveLength(1);
+        fireEvent.press(screen.getByLabelText('Find or change edition'));
+        expect(screen.getByRole('header', { name: 'Find or change edition' })).toBeTruthy();
+        expect(screen.queryByText('Detected details')).toBeNull();
         expect(onOpenFullCorrection).not.toHaveBeenCalled();
-
-        fireEvent.press(allowed.getByText('Close metadata'));
-        fireEvent.press(allowed.getByText('Open full correction'));
+        fireEvent.press(screen.getByText('Close metadata'));
+        fireEvent.press(screen.getByText('Open full correction'));
         expect(onOpenFullCorrection).toHaveBeenCalledTimes(1);
-
-        const notAllowed = renderCard({ allowedActions: [] });
-        expect(notAllowed.queryByText('View metadata')).toBeNull();
-    });
-
-    it('keeps Use detected and Edit manually bounded to explicit manual/null identity edits', () => {
-        // This ordinary-action case requires detail authority at least as new as the card.
-        mockMetadataDetail = { ...mockMetadataDetail, candidateVersion: card().candidateVersion,
-            metadata: { ...mockMetadataDetail.metadata, revision: card().metadataRevision },
-            review: { ...mockMetadataDetail.review, reviewVersion: card().reviewVersion } };
-        const detected = renderCard({ allowedActions: ['view_metadata'] });
-        fireEvent.press(detected.getByText('View metadata'));
-        fireEvent.press(detected.getByText('Use detected details'));
-        expect(onDraftChange).toHaveBeenLastCalledWith(card().candidateId, expect.objectContaining({
-            originalTitle: mockMetadataDetail.observed.title,
-            metadataChoice: { mode: 'manual', selectionId: null },
-        }));
-
-        const manual = renderCard({ allowedActions: ['view_metadata'] });
-        fireEvent.press(manual.getByText('View metadata'));
-        fireEvent.press(manual.getByText('Edit manually'));
-        expect(manual.getByText(/Matched Metadata Title/u)).toBeTruthy();
-        expect(manual.getByText(/Author A/u)).toBeTruthy();
-        expect(onDraftChange).toHaveBeenLastCalledWith(card().candidateId, {
-            metadataChoice: { mode: 'manual', selectionId: null },
-        });
     });
 
     it('shows the bounded selected metadata snapshot, cover, and a clear provider status', () => {
@@ -658,7 +687,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
             },
         });
         const screen = renderCard({ allowedActions: ['view_metadata'] });
-        fireEvent.press(screen.getByText('View metadata'));
+        fireEvent.press(screen.getByLabelText('Find or change edition'));
         expect(screen.getByTestId('selected-metadata-details')).toBeTruthy();
         expect(screen.getByText('Status: Provider metadata selected')).toBeTruthy();
         expect(screen.getByText('Title: Selected detail title')).toBeTruthy();
@@ -723,4 +752,39 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         expect(screen.getByText('Needs attention')).toBeTruthy();
         expect(screen.queryByText('Ready')).toBeNull();
     });
+});
+
+function mountEdition(snapshotPatch: Partial<NonNullable<ReturnType<typeof selectedChoices>['selection']>['snapshot']> = {}) {
+    const choices = selectedChoices({ sessionId: card().sessionId, candidateId: card().candidateId,
+        candidateVersion: 2, metadataRevision: 3, reviewVersion: 1 });
+    choices.selection = { ...choices.selection!, snapshot: { ...choices.selection!.snapshot,
+        title: 'Matched Metadata Title', authors: ['Author A'], ...snapshotPatch } };
+    mockEditionChoices = choices;
+    return render(<BatchReviewCard identity={{ userId: testUuid(90), storeId: testUuid(91) }}
+        card={card({ metadataSummary: { ...choices.selection.snapshot, selectionId: choices.selection.selectionId },
+            review: { ...card().review!, originalTitle: choices.selection.snapshot.title,
+                metadataChoice: { mode: 'edition_option', selectionId: choices.selection.selectionId } } })}
+        defaults={defaults} isOffline={false} canMutate removePending={false} addPending={false}
+        commandSlot={{ claimSlot: jest.fn(), releaseSlot: jest.fn(), isCommandActive: () => false }}
+        onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove} onAdd={onAdd} onDraftChange={onDraftChange} />);
+}
+it('edition line shows the chosen edition and clears on a title change', () => {
+    const view = mountEdition({ publisher: 'Publisher', publishedDate: 'April 1, 1999', isbn13: '9781234567890' });
+    expect(view.getByText('Publisher · 1999 · 9781234567890')).toBeTruthy();
+    fireEvent.press(view.getByLabelText('Edit title for Book 1: Matched Metadata Title'));
+    fireEvent.changeText(view.getByTestId('card-title-input'), 'Changed title');
+    fireEvent(view.getByTestId('card-title-input'), 'blur');
+    expect(view.getByText('No edition chosen — title or author changed')).toBeTruthy();
+});
+it.each([
+    [{ publisher: null, publishedDate: '1989', isbn10: '1234567890' }, '1989 · 1234567890'],
+    [{ publisher: null, publishedDate: '12345', isbn10: null }, 'Edition chosen'],
+])('edition line omits absent parts and falls back to ISBN-10: %p', (patch, expected) => {
+    expect(mountEdition(patch).getByText(expected)).toBeTruthy();
+});
+it('edition line is announced', () => {
+    const view = mountEdition();
+    expect(view.getByText('Chosen publisher · 2002').props.accessibilityLiveRegion).toBe('polite');
+    expect(view.getByText('Chosen publisher · 2002').props.accessibilityLabel).toBe('Chosen publisher · 2002');
+    expect(view.getByTestId('card-review-status').props.accessibilityLiveRegion).toBe('polite');
 });

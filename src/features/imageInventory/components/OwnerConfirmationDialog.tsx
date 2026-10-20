@@ -15,6 +15,7 @@ export function OwnerConfirmationDialog({
     visible,
     title,
     description,
+    cancelLabel = 'Cancel',
     confirmLabel,
     pending = false,
     onConfirm,
@@ -24,9 +25,10 @@ export function OwnerConfirmationDialog({
     visible: boolean;
     title: string;
     description: string;
-    confirmLabel: string;
+    cancelLabel?: string;
+    confirmLabel?: string;
     pending?: boolean;
-    onConfirm: () => void;
+    onConfirm?: () => void;
     onCancel: () => void;
     restoreFocusRef?: RefObject<View | null>;
 }) {
@@ -95,26 +97,28 @@ export function OwnerConfirmationDialog({
                     <View testID="confirmation-actions" style={{ gap: 10, flexShrink: 0 }}>
                         <Pressable
                             accessibilityRole="button"
-                            accessibilityLabel="Cancel"
+                            accessibilityLabel={cancelLabel}
                             accessibilityState={{ disabled: pending }}
                             disabled={pending}
                             onPress={cancel}
                             ref={cancelRef}
                             style={{ minHeight: 48, justifyContent: 'center', alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: colors.border }}
                         >
-                            <Text style={{ color: colors.textPrimary, fontWeight: '800' }}>Cancel</Text>
+                            <Text style={{ color: colors.textPrimary, fontWeight: '800' }}>{cancelLabel}</Text>
                         </Pressable>
+                        {onConfirm ? (
                         <Pressable
                             accessibilityRole="button"
-                            accessibilityLabel={confirmLabel}
+                            accessibilityLabel={confirmLabel ?? ''}
                             accessibilityHint={description}
                             accessibilityState={{ disabled: pending, busy: pending }}
                             disabled={pending}
                             onPress={onConfirm}
                             style={{ minHeight: 48, justifyContent: 'center', alignItems: 'center', borderRadius: 12, backgroundColor: pending ? colors.border : colors.error }}
                         >
-                            <Text style={{ color: '#fff', fontWeight: '800' }}>{confirmLabel}</Text>
+                            <Text style={{ color: '#fff', fontWeight: '800' }}>{confirmLabel ?? ''}</Text>
                         </Pressable>
+                        ) : null}
                     </View>
                 </Pressable>
             </Pressable>

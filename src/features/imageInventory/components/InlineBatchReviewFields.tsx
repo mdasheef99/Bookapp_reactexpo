@@ -1,20 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { normalizeSafeText } from '../contracts/ownerUxValidation';
 import type { CompactReviewEdits } from '../review/compactReviewDraft';
-import { SourceBadge } from './BatchReviewFieldSummary';
 
 
 type InlineReviewIdentityProps = Readonly<{
     ordinal: number;
+    children?: ReactNode;
     title: string;
     authors: readonly string[];
-    titleSourceCode: string;
-    authorsSourceCode: string;
-    titleLocal: boolean;
-    authorsLocal: boolean;
     errorFields: ReadonlySet<string>;
     disabled: boolean;
     holdBuffered?: boolean;
@@ -39,7 +35,7 @@ function sameSafeTextList(left: readonly string[], right: readonly string[], max
 }
 
 export function InlineReviewIdentity({
-    ordinal, title, authors, titleSourceCode, authorsSourceCode, titleLocal, authorsLocal,
+    ordinal, title, authors, children,
     errorFields, disabled, holdBuffered = false, resetKey = 0,
     onBufferedChange, onChange,
 }: InlineReviewIdentityProps) {
@@ -153,6 +149,7 @@ export function InlineReviewIdentity({
                     </View>
                 </Pressable>
             )}
+            {children}
             {editingAuthors ? (
                 <View testID="card-authors-editor" style={{ gap: 6, padding: 8, borderWidth: 1,
                     borderColor: colors.border, borderRadius: 12, backgroundColor: colors.bgSecondary }}>
@@ -232,10 +229,6 @@ export function InlineReviewIdentity({
                     </View>
                 </Pressable>
             )}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                <SourceBadge code={titleSourceCode} local={titleLocal} />
-                <SourceBadge code={authorsSourceCode} local={authorsLocal} />
-            </View>
         </View>
     );
 }

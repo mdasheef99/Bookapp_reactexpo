@@ -3,7 +3,10 @@ import type { OwnerCandidateReview } from '../contracts/ownerUxReviewSchema';
 import {
     buildCompactReview,
     compactReviewDisplay,
+    validateCompactReview,
 } from '../review/compactReviewDraft';
+import { candidateCommitPreparation, candidateCanStartBulkCommit, candidateCommitAuthorityKey } from '../commit/inventoryCommitPolicy';
+import { selectedChoices, pickerCard, pickerDefaults, pickerReview } from '../testing/editionPickerClientFixtures';
 
 const savedReview: OwnerCandidateReview = {
     originalTitle: 'Saved title',
@@ -247,5 +250,83 @@ describe('Phase 9 Unit 6G compact draft field/source authority', () => {
             publicationIntent: 'publish', quantity: 1,
             damageDisclosure: display.damage,
         });
+    });
+});
+
+// SDD-1 §4: shared Add requirements and chosen-edition identity.
+it.each([
+    [{ priceMinor: null }, 'Set a whole-rupee selling price.'],
+    [{ priceMinor: 0 }, 'Enter a price above ₹0.'],
+    [{ baseCondition: undefined }, 'Choose a condition.'],
+    [{ quantity: 0 }, 'Set a quantity from 1 to 10,000.'],
+    [{ authors: [] }, 'Add an author.'],
+] as const)('requires price above zero, condition, quantity and an author for Add: %p', (patch, message) => {
+    const value = card({ review: { ...savedReview, ...patch } as OwnerCandidateReview,
+        fieldSources: { ...card().fieldSources, authors: 'custom' } });
+    const result = validateCompactReview(value, { ...defaults, condition: null,
+        priceMinor: 'priceMinor' in patch && patch.priceMinor === null ? null : defaults.priceMinor }, {});
+    expect(result.issues.map(issue => issue.safeMessage)).toContain(message);
+    expect(result.review).toBeNull();
+    const draft = { card: value, edits: {}, acceptedAuthorityKey: candidateCommitAuthorityKey(value) };
+    expect(candidateCommitPreparation(draft)).toBeNull();
+    expect(candidateCanStartBulkCommit(draft)).toBe(false);
+});
+it('defaults to manual details only after the lookup ends', () => {
+    const value = card({ review: null, reviewVersion: null, metadataState: 'no_match', metadataSummary: null,
+        fieldSources: { ...card().fieldSources, title: 'detected', authors: 'detected', language: 'detected' } });
+    expect(validateCompactReview(value, defaults, {}).review?.metadataChoice).toEqual({ mode: 'manual', selectionId: null });
+    expect(validateCompactReview({ ...value, metadataState: 'pending' }, defaults, {})).toEqual({
+        review: null, issues: [{ field: 'metadataChoice', safeMessage: 'Finding the edition…' }],
+    });
+});
+it.each([
+    { originalTitle: 'Corrected title' }, { authors: ['Corrected author'] },
+    { originalLanguage: 'fr' }, { script: null },
+])('an identity edit, including script, turns the edition choice to manual: %p', edits => {
+    const choices = selectedChoices({ reviewVersion: 1 });
+    const value = pickerCard(choices, { ...pickerReview, priceMinor: 100 });
+    const result = validateCompactReview(value, pickerDefaults, edits, choices);
+    expect(result.review).not.toBeNull();
+    expect(result.review?.metadataChoice).toEqual({ mode: 'manual', selectionId: null });
+});
+it('keeps an unchanged chosen edition and its selling edits controlled', () => {
+    const choices = selectedChoices({ reviewVersion: 1 });
+    const value = pickerCard(choices, { ...pickerReview, priceMinor: 100 });
+    expect(validateCompactReview(value, pickerDefaults, { quantity: 5 }, choices).review).toMatchObject({
+        quantity: 5, metadataChoice: { mode: 'edition_option', selectionId: choices.selection!.selectionId },
+    });
+});
+
+it('an effective script edit clears the edition before edition choices load', () => {
+    const choices = selectedChoices({ reviewVersion: 1 });
+    const value = pickerCard(choices, { ...pickerReview, script: null, priceMinor: 100 });
+    expect(validateCompactReview(value, pickerDefaults, { script: 'Latn' }).review?.metadataChoice)
+        .toEqual({ mode: 'manual', selectionId: null });
+});
+
+it.each(['selection', 'session', 'candidate'] as const)('does not trust a stale %s snapshot for the saved edition choice', mismatch => {
+    const choices = selectedChoices({ reviewVersion: 1 });
+    const value = pickerCard(choices, { ...pickerReview, priceMinor: 100 });
+    const stale = { ...choices,
+        sessionId: mismatch === 'session' ? card().sessionId : choices.sessionId,
+        candidateId: mismatch === 'candidate' ? card().candidateId : choices.candidateId,
+        selection: { ...choices.selection!,
+            selectionId: mismatch === 'selection' ? card().review!.metadataChoice.selectionId! : choices.selection!.selectionId,
+            snapshot: { ...choices.selection!.snapshot, title: 'Edition A' } },
+    };
+    const result = validateCompactReview(value, pickerDefaults, { originalTitle: 'Edition A' }, stale);
+    expect(result.review?.metadataChoice).toEqual({ mode: 'manual', selectionId: null });
+    expect(result.review?.script).toBe(pickerReview.script);
+    const unowned = { ...pickerCard(choices), observed: { ...pickerCard(choices).observed, script: null } };
+    const unownedResult = validateCompactReview(unowned, pickerDefaults,
+        { originalTitle: 'Edition A', priceMinor: 100 }, stale);
+    expect(unownedResult.review?.script).toBe(unowned.observed.script);
+});
+
+it('keeps a pending card blocked even when stale choices are ready', () => {
+    const choices = selectedChoices({ reviewVersion: 1 });
+    const value = { ...pickerCard(choices, { ...pickerReview, priceMinor: 100 }), metadataState: 'pending' as const };
+    expect(validateCompactReview(value, pickerDefaults, {}, choices)).toEqual({
+        review: null, issues: [{ field: 'metadataChoice', safeMessage: 'Finding the edition…' }],
     });
 });

@@ -27,16 +27,16 @@ function harness() {
 it('compact review preserves unsaved notes and explicit null script before Save', () => {
   const card = pickerCard(selectedChoices({ reviewVersion: 1 }), pickerReview);
   expect(buildCompactReview(card, pickerDefaults, {
-    script: null, notes: { publicNote: '', internalNote: 'latest unsaved' },
+    script: null, priceMinor: 100, notes: { publicNote: '', internalNote: 'latest unsaved' },
   })).toMatchObject({ script: null, notes: { publicNote: null, internalNote: 'latest unsaved' } });
 });
 it.each(['single', 'bulk'] as const)('%s saves latest coherent controlled choice and selling fields before Add', async kind => {
   const h = harness();
-  const draft = { ...h.draft, edits: { priceMinor: 0, quantity: 6, notes: { publicNote: null, internalNote: 'saved' } } };
+  const draft = { ...h.draft, edits: { priceMinor: 100, quantity: 6, notes: { publicNote: null, internalNote: 'saved' } } };
   if (kind === 'single') await expect(h.coordinator.addCandidate(draft)).resolves.toMatchObject({ status: 'succeeded' });
   else expect((await h.coordinator.runAddAll(h.coordinator.freezeAddAll([draft]))).succeeded).toBe(1);
   expect(h.saveReview).toHaveBeenCalledWith(expect.objectContaining({ review: expect.objectContaining({
-    metadataChoice: pickerReview.metadataChoice, quantity: 6, priceMinor: 0,
+    metadataChoice: pickerReview.metadataChoice, quantity: 6, priceMinor: 100,
     notes: { publicNote: null, internalNote: 'saved' },
   }) }));
   expect(h.saveReview.mock.invocationCallOrder[0]).toBeLessThan(h.commitCandidate.mock.invocationCallOrder[0]);

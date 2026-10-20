@@ -25,6 +25,6 @@ export function CandidateReviewEditionSheet({ identity, detail, disabled, comman
         metadataSummary: detail.metadata.snapshot ? { ...detail.metadata.snapshot,
           selectionId: detail.metadata.selectionId, representativeCover: detail.metadata.representativeCover } : null }}
       onSelection={onSelection} onPendingChange={onPendingChange} onClose={() => setOpen(false)}
-      onUseDetected={manual} onEditManually={manual} restoreFocusRef={triggerRef} /> : null}
+      onEditManually={manual} restoreFocusRef={triggerRef} /> : null}
   </>;
 }

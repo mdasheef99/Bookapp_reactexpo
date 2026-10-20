@@ -1,3 +1,4 @@
+import { cardAddRequirementIssues } from '../review/compactReviewDraft';
 import { OwnerUxClientError } from '../api/ownerUxService';
 import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
@@ -30,7 +31,7 @@ export function candidateCommitPreparation(value: CandidateCommitDraft): {
     const merged = value.review ?? (value.card.review
         ? { ...value.card.review, ...value.edits }
         : null);
-    if (!merged) return null;
+    if (!merged || cardAddRequirementIssues(merged).length > 0) return null;
     const parsed = ownerCandidateReviewSchema.safeParse(merged);
     if (!parsed.success) return null;
     const needsSave = value.card.review === null
