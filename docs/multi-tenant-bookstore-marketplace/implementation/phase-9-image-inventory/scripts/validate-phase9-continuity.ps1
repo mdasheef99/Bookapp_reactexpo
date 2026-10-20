@@ -1057,11 +1057,9 @@ try {
     $wu2DiffPaths = @(
         'src/features/imageInventory/api/ownerInventoryReadService.ts',
         'src/features/imageInventory/queries/ownerInventoryReadQueries.ts',
-        'src/features/imageInventory/screens/OwnerInventoryReadScreen.tsx',
         'src/features/imageInventory/screens/InventoryFoundationScreens.tsx',
         'src/features/imageInventory/__tests__/ownerInventoryReadService.test.ts',
         'src/features/imageInventory/__tests__/ownerInventoryReadQueries.test.tsx',
-        'src/features/imageInventory/__tests__/OwnerInventoryReadScreen.test.tsx',
         'src/features/imageInventory/__tests__/ownerInventoryReadArchitecture.test.ts',
         'src/features/stores/components/InventoryFilterPanel.tsx',
         'src/features/stores/components/InventoryItem.tsx',

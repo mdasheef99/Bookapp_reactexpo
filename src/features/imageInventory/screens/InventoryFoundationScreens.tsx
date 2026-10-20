@@ -26,7 +26,6 @@ import {
 import { InventoryCandidateReviewScreen } from './CandidateReviewRouteScreen';
 import { InventoryMissedBookScreen } from './MissedBookScreen';
 import { InventoryReadinessSummaryScreen } from './ReadinessSummaryScreen';
-import { OwnerInventoryReadScreen } from './OwnerInventoryReadScreen';
 
 type QueryState = {
     isLoading: boolean;
@@ -94,10 +93,14 @@ export function InventoryHubFoundationScreen() {
 
 function Hub({ identity }: { identity: ImageInventoryIdentity }) {
     return (
-        <OwnerInventoryReadScreen
-            identity={identity}
-            scanHeader={<InventoryHubRecoveryCard identity={identity} />}
-        />
+        <ScreenBackground>
+            <ScrollView
+                contentInsetAdjustmentBehavior="automatic"
+                contentContainerStyle={{ padding: 24, paddingBottom: 40, gap: 14 }}
+            >
+                <InventoryHubRecoveryCard identity={identity} />
+            </ScrollView>
+        </ScreenBackground>
     );
 }
 

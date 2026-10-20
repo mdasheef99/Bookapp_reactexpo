@@ -54,65 +54,7 @@ const LEGACY_FILTER_GROUPS = [
     },
 ] as const;
 
-const OWNER_READ_FILTER_GROUPS = [
-    {
-        label: 'Condition',
-        testPrefix: 'filter-condition',
-        options: [
-            ['all', 'All'],
-            ['new', 'New'],
-            ['like_new', 'Like new'],
-            ['very_good', 'Very good'],
-            ['good', 'Good'],
-            ['acceptable', 'Acceptable'],
-        ],
-    },
-    {
-        label: 'Status',
-        testPrefix: 'filter-status',
-        options: [
-            ['all', 'All'],
-            ['draft', 'Draft'],
-            ['needs_review', 'Needs review'],
-            ['published', 'Published'],
-            ['paused', 'Paused'],
-            ['out_of_stock', 'Out of stock'],
-            ['blocked', 'Blocked'],
-        ],
-    },
-    {
-        label: 'Quantity',
-        testPrefix: 'filter-quantity',
-        options: [
-            ['all', 'All'],
-            ['available', 'Available'],
-            ['low_stock', 'Low stock'],
-            ['out_of_stock', 'Out'],
-        ],
-    },
-    {
-        label: 'Source',
-        testPrefix: 'filter-source',
-        options: [
-            ['all', 'All'],
-            ['manual', 'Manual'],
-            ['image_extraction', 'Image'],
-            ['metadata_import', 'Metadata'],
-        ],
-    },
-    {
-        label: 'Date',
-        testPrefix: 'filter-date',
-        options: [
-            ['all', 'All'],
-            ['last_7_days', '7 days'],
-            ['last_30_days', '30 days'],
-        ],
-    },
-] as const;
-
 export interface InventoryFilterPanelProps {
-    mode?: 'legacy' | 'ownerRead';
     conditionFilter: string;
     setConditionFilter: (value: string) => void;
     statusFilter: string;
@@ -126,7 +68,6 @@ export interface InventoryFilterPanelProps {
 }
 
 export default function InventoryFilterPanel({
-    mode = 'legacy',
     conditionFilter,
     setConditionFilter,
     statusFilter,
@@ -139,7 +80,7 @@ export default function InventoryFilterPanel({
     setDateFilter,
 }: InventoryFilterPanelProps) {
     const { colors } = useTheme();
-    const filterGroups = mode === 'ownerRead' ? OWNER_READ_FILTER_GROUPS : LEGACY_FILTER_GROUPS;
+    const filterGroups = LEGACY_FILTER_GROUPS;
 
     return (
         <View style={styles.filterPanel}>
