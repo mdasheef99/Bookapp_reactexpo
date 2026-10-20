@@ -1,9 +1,10 @@
-import { Text } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Pressable, Text } from 'react-native';
+import { Link, useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useTheme } from '@/hooks/useTheme';
+import { storeViewRoutes } from '@/features/storeView/navigation/storeViewRoutes';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 import {
     type ImageInventoryIdentity,
@@ -35,16 +36,19 @@ export function InventoryHubRecoveryCard({ identity }: { identity: ImageInventor
                         onPress={() => router.push(active ? inventoryRoutes.session(active.sessionId) : inventoryRoutes.scan())}
                         disabled={discovery.isLoading || isOffline || !discovery.data}
                     />
-                    <Button
-                        title={`Review books (${discovery.data?.needsReviewCount ?? 0})`}
-                        variant="secondary"
-                        style={{ marginTop: 10 }}
-                        onPress={() => router.push(inventoryRoutes.reviews())}
-                        disabled={discovery.isLoading || !discovery.data}
-                        accessibilityHint="Opens the bounded needs-review queue"
-                    />
                 </>
             )}
+            <Link href={storeViewRoutes.root()} asChild>
+                <Pressable
+                    accessibilityRole="link"
+                    accessibilityLabel="Added books are in Store View"
+                    style={{ minHeight: 44, marginTop: 14, justifyContent: 'center' }}
+                >
+                    <Text selectable style={{ color: colors.accent, fontWeight: '700' }}>
+                        Added books are in Store View
+                    </Text>
+                </Pressable>
+            </Link>
         </GlassCard>
     );
 }

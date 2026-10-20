@@ -1,5 +1,7 @@
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import { AddCandidateToInventoryAction } from '../components/AddCandidateToInventoryAction';
+import type { CandidateCommitOutcome } from '../commit/inventoryCommitCoordinator';
+import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
 import { useAddOwnerCandidateToInventory } from '../queries/ownerUxReviewQueries';
 import { candidateDetailFixture, testUuid } from '../testing/ownerUxTestFixtures';
 
@@ -33,6 +35,30 @@ jest.mock('expo-linear-gradient', () => ({
 
 const identity = { userId: testUuid(10), storeId: testUuid(11) } as const;
 const inventoryId = testUuid(12);
+const coordinatedCandidateId = testUuid(13);
+
+function coordinatedCard(): OwnerBatchReviewCard {
+    return {
+        candidateId: coordinatedCandidateId,
+        allowedActions: ['add_to_inventory'],
+    } as unknown as OwnerBatchReviewCard;
+}
+
+function coordinatedSuccess(): CandidateCommitOutcome {
+    return {
+        candidateId: coordinatedCandidateId,
+        status: 'succeeded',
+        stage: 'complete',
+        result: {
+            sessionId: testUuid(1),
+            candidateId: coordinatedCandidateId,
+            candidateVersion: 5,
+            inventoryId,
+            inventoryVersion: 1,
+            outcome: 'committed_private',
+        },
+    };
+}
 
 function readyDetail() {
     return candidateDetailFixture({
@@ -139,5 +165,27 @@ describe('Unit 7C WU5 post-add handoff', () => {
             inventoryId, inventoryVersion: 1, outcome: 'committed_private',
         });
         await waitFor(() => expect(screen.getByTestId('view-in-store-view')).toBeTruthy());
+    });
+
+    it('coordinated success shows only Added to Inventory without Store View navigation', () => {
+        const screen = render(
+            <AddCandidateToInventoryAction
+                card={coordinatedCard()}
+                disabled={false}
+                isOffline={false}
+                pending={false}
+                outcome={coordinatedSuccess()}
+                onAdd={jest.fn()}
+            />,
+        );
+
+        const success = screen.getByTestId(`add-to-inventory-success-${coordinatedCandidateId}`);
+        expect(within(success).getByText('Added to Inventory')).toBeTruthy();
+        expect(within(success).getByText('Added to Inventory').props.accessibilityLiveRegion)
+            .toBe('polite');
+        expect(within(success).queryByText('View in Store View')).toBeNull();
+        expect(within(success).queryAllByRole('button')).toHaveLength(0);
+        expect(mockPush).not.toHaveBeenCalled();
+        expect(mockReplace).not.toHaveBeenCalled();
     });
 });
