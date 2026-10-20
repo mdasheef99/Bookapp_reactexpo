@@ -361,9 +361,11 @@ Builds run in worktree `Bookconnect4_fu1a`, branch `sdd07/fu1a-fu3`, orchestrate
 
 **Flow B handoff (2026-10-20):** built, reviewed, verified — awaiting owner commit approval. Design finalized under the owner's delegation to the lead (SDD-07 D07-18); B-1 notes list, B-2 reader and B-3 composer choose/write, including both fix rounds, are recorded in SDD-07 §11 and the current [TRACKER](./TRACKER.md) entry. The reader's inherited cached-data/refetch-error predicate remains deferred outside Flow B; browser tests were skipped by owner decision and no device/browser screen-reader run is claimed. Database/storage mutations: none.
 
-**Active work unit:** `sdd07_flow_b_awaiting_commit_approval`.
+**Active work unit:** `sdd07_flow_d_design`.
 
-**Next exact action (2026-10-20, Flow C):** the owner approves the Flow C commit: uncommitted code and docs on `sdd07/flow-c` in `Bookconnect4_flowc`, base `main` `0a083f1` (SDD-07 §12, D07-19). Push/merge to `main` only on separate approval, after `git fetch`. Then Flow D — Remaining, or TB-1 re-scoped against `main`'s marketplace layout. `.spec/` and `.env` stay outside the commit.
+**Next exact action (2026-10-21, Flow D):** the lead finalizes the Flow D design (`.spec/FLOWD-DESIGN.md` in `Bookconnect4_flowd`, branch `sdd07/flow-d`, base `main` `60a6b6c`) under the owner's delegation and shows the owner a summary; then the Codex build. Commit and push only on owner approval. See the TRACKER top entry.
+
+**Earlier next action (2026-10-20, Flow C, done — merged to `main` at `60a6b6c`):** the owner approves the Flow C commit: uncommitted code and docs on `sdd07/flow-c` in `Bookconnect4_flowc`, base `main` `0a083f1` (SDD-07 §12, D07-19). Push/merge to `main` only on separate approval, after `git fetch`. Then Flow D — Remaining, or TB-1 re-scoped against `main`'s marketplace layout. `.spec/` and `.env` stay outside the commit.
 
 **Earlier next action (2026-10-20, Flow B, done — merged to `main`):** the owner approves the Flow B commit: uncommitted code on `sdd07/flow-b` in `Bookconnect4_flowa`, base `c92a88e`, and matching docs on `codex/library-cover-shelf` in `Bookconnect4_library`. After that, **Flow C — Capture** (`note-compose` intake/crop/review/no-text/failure), following SDD-07 §6 order. `.spec/` and `.env` stay outside the commit; push requires separate approval.
 

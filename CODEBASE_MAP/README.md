@@ -50,7 +50,7 @@ your checkout, treat it as superseded: do not use it for status, rules or layout
 | Store onboarding, dashboard, subscription | 04 § Stores | `src/features/stores/`, `app/(store-owner)/` | `src/features/stores/**/__tests__/` |
 | Login, logout, account switching | 02 | `src/application/auth/`, `src/features/auth/` | `src/application/auth/__tests__/` |
 | Clubs | 04 § Clubs, [Clubs TRACKER](../docs/user/clubs/TRACKER.md) | `src/features/clubs/`, `app/(tabs)/clubs/` | `src/features/clubs/**/__tests__/`, `npm run test:clubs:l4` |
-| Library / book search / notes | 04 § Library | `src/features/books/`, `src/components/search/`, `app/(tabs)/library/` | `src/features/books/**/__tests__/` |
+| Library / book search / notes | 04 § Library | `src/features/books/`, `src/components/library/`, `app/(tabs)/library/` | `src/features/books/**/__tests__/` |
 | Any migration, RLS, grant or bucket change | 03, 07, AGENTS.md "Database and Supabase rule" | `supabase/migrations/` | `supabase/migrations/__tests__/`, `supabase/tests/` |
 
 ## Keeping this folder accurate

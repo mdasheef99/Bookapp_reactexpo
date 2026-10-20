@@ -1,6 +1,6 @@
 # SDD-07: Book Section UI/UX Overhaul
 
-**Status:** APPROVED 2026-10-18 by the owner, with the recommended answers recorded as decisions D07-01–D07-08 (§9). Owner's words, relayed by the orchestrating session: "I approve the SDD-07 draft with your recommended answers to the 8 open questions. Record the decisions in SDD-07 and the tracker, then plan the foundation unit." Approval covers the approach, rules, scope and flow order. It does **not** authorize implementation, dependency installs, Stitch generation, migrations or commits. Later approvals (2026-10-18): the [foundation plan](./SDD-07-FOUNDATION-PLAN.md) and its 3 dev tools; Flow A Stitch generation; the Flow A direction and the DP-01 amendment (D07-09, D07-10), with the [FA-P1 prototype](./SDD-07-FLOW-A-PROTOTYPE.md) as the next unit. Flow A design FINALIZED 2026-10-18 under the owner's delegation (D07-11–D07-15, §10). Flow B design FINALIZED 2026-10-20 under the owner's delegation to the lead (D07-18); built and merged to `main` (§11). Flow C design FINALIZED 2026-10-20 under the owner's delegation (D07-19); built, reviewed and verified, awaiting owner commit approval (§12).
+**Status:** APPROVED 2026-10-18 by the owner, with the recommended answers recorded as decisions D07-01–D07-08 (§9). Owner's words, relayed by the orchestrating session: "I approve the SDD-07 draft with your recommended answers to the 8 open questions. Record the decisions in SDD-07 and the tracker, then plan the foundation unit." Approval covers the approach, rules, scope and flow order. It does **not** authorize implementation, dependency installs, Stitch generation, migrations or commits. Later approvals (2026-10-18): the [foundation plan](./SDD-07-FOUNDATION-PLAN.md) and its 3 dev tools; Flow A Stitch generation; the Flow A direction and the DP-01 amendment (D07-09, D07-10), with the [FA-P1 prototype](./SDD-07-FLOW-A-PROTOTYPE.md) as the next unit. Flow A design FINALIZED 2026-10-18 under the owner's delegation (D07-11–D07-15, §10). Flow B design FINALIZED 2026-10-20 under the owner's delegation to the lead (D07-18); built and merged to `main` (§11). Flow C design FINALIZED 2026-10-20 under the owner's delegation (D07-19); built, reviewed, verified and merged to `main` at `60a6b6c` (§12). Flow D design delegated to the lead on 2026-10-21; in progress.
 **Date:** 2026-10-18
 **Worktree:** `Bookconnect4_library`, branch `codex/library-cover-shelf` (library only)
 **Roadmap:** [LIBRARY-ROADMAP.md](./LIBRARY-ROADMAP.md) — SDD-07 is the main track; SDD-08/09/10 land on its screens.
@@ -167,7 +167,7 @@ Each design keeps an agreed, unused location so later features do not need anoth
 1. **This draft** — **approved 2026-10-18** (approach, rules, foundation unit scope, flow order; decisions D07-01–08).
 2. **Foundation unit** — owner approves the [foundation plan](./SDD-07-FOUNDATION-PLAN.md), then the token values (shown as swatches with contrast numbers) and the exact dev-dependency list (F-5) before anything is installed.
 3. **Flow A design** — Stitch exploration done in a new project (2026-10-18, [evidence](./evidence/flow-a-directions-2026-10-18/README.md)); **owner chose A1 Shelf card with A2 note passages (D07-09)**; the [FA-P1 Expo web prototype](./SDD-07-FLOW-A-PROTOTYPE.md) was built and the design **FINALIZED 2026-10-18 under the owner's delegation (D07-11, §10)**. Next: owner approval to commit the fu1a work, then the real Flow A build, then acceptance.
-4. **Flow B** — design finalized by the lead under the owner's 2026-10-20 delegation (D07-18); built, reviewed, verified and merged to `main` (§11). **Flow C** — design finalized by the lead under the owner's 2026-10-20 delegation (D07-19); built, reviewed and verified (§12), awaiting owner commit approval. **Flow D** — same sequence.
+4. **Flow B** — design finalized by the lead under the owner's 2026-10-20 delegation (D07-18); built, reviewed, verified and merged to `main` (§11). **Flow C** — design finalized by the lead under the owner's 2026-10-20 delegation (D07-19); built, reviewed, verified and merged to `main` at `60a6b6c` (§12). **Flow D** — same sequence; design delegated to the lead (2026-10-21).
 5. **No migrations** in SDD-07. Any change found to need one moves to SDD-08/09/10 and gets two approvals (create, apply).
 
 ## 9. Owner decisions (2026-10-18)
@@ -382,7 +382,7 @@ Build/fix reports record component/journey tests, scoped TypeScript and actual r
 
 ## 12. Flow C — Capture: finalized design and build (2026-10-20)
 
-**Status:** built, reviewed and verified — awaiting owner commit approval. Code is **uncommitted** in worktree `Bookconnect4_flowc`, branch `sdd07/flow-c`, base `main` `0a083f1`. Design authority: D07-19. Local design/brief/report files (`.spec/FLOWC-DESIGN.md`, `BRIEF-C1.md`, `BUILD-C1-REPORT.md`, `REVIEW-FLOWC.md`, reviewer reports in `.spec/tmp/`) stay outside the commit.
+**Status:** built, reviewed, verified and merged to `main` (`a77a879`, then evidence commit `60a6b6c`, fast-forward, owner approved). Built in worktree `Bookconnect4_flowc`, branch `sdd07/flow-c`, base `main` `0a083f1`. Design authority: D07-19. Local design/brief/report files (`.spec/FLOWC-DESIGN.md`, `BRIEF-C1.md`, `BUILD-C1-REPORT.md`, `REVIEW-FLOWC.md`, reviewer reports in `.spec/tmp/`) stay outside the commit.
 
 ### 12.1 Steps as built
 
@@ -406,7 +406,7 @@ Lead, final tree: Jest library set + `src/test-utils` + `eslint-rules` **69/69 s
 
 Not verified: the failure step on a device, TalkBack/VoiceOver, 200% text, iOS. **Database/storage mutations:** none.
 
-**Active work unit:** `sdd07_flow_c_awaiting_commit_approval`. **Next exact action:** the owner approves the Flow C commit on `sdd07/flow-c` (code + these docs); push/merge to `main` only on separate approval, after `git fetch`. Then **Flow D — Remaining** (or TB-1, which must be re-scoped against `main`'s `app/(tabs)/marketplace/_layout.tsx`).
+**Flow C closed:** committed and merged to `main` at `60a6b6c` (owner approved). **Active work unit:** `sdd07_flow_d_design` (see the TRACKER top entry). TB-1 still needs re-scoping against `main`'s `app/(tabs)/marketplace/_layout.tsx`.
 
 ## Appendix A — Essence checklist (used for every Flow A review)
 
