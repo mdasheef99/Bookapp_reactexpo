@@ -1,7 +1,8 @@
 import React from 'react';
 import { Alert, FlatList } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, renderHook, waitFor } from '@testing-library/react-native';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { BookFeedbackProvider } from '@/components/library/ui/BookFeedback';
 import SearchBooksScreen from '../search';
 import { booksService } from '@/features/books/services/booksService';
@@ -9,6 +10,7 @@ import { booksService } from '@/features/books/services/booksService';
 const mockRouterBack = jest.fn();
 const mockRefreshWishlist = jest.fn().mockResolvedValue(undefined);
 const mockSaveRecentSearch = jest.fn();
+const mockSearchBarProps: { current: any } = { current: null };
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-linear-gradient', () => {
@@ -69,7 +71,7 @@ jest.mock('@/components/search', () => {
         SkeletonCard: () => null,
         SortModal: () => null,
         RecentSearches: () => null,
-        SearchBar: ({ query, onQueryChange, onSubmit }: any) => React.createElement(
+        SearchBar: ({ query, onQueryChange, onSubmit, ...rest }: any) => (mockSearchBarProps.current = { query, ...rest }, React.createElement(
             React.Fragment,
             null,
             React.createElement(TextInput, {
@@ -82,7 +84,7 @@ jest.mock('@/components/search', () => {
                 { testID: 'library-search-submit', onPress: onSubmit },
                 React.createElement(Text, null, 'Search')
             )
-        ),
+        )),
         SearchSuggestions: () => null,
         FilterModal: ({ visible, onApply, onClose }: any) => visible ? React.createElement(
             React.Fragment,
@@ -166,6 +168,16 @@ describe('SearchBooksScreen manual entry', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('renders the shared search bar in the library palette, keeping theme-only keys', () => {
+        renderScreen();
+        const library = renderHook(() => useLibraryAppearance()).result.current;
+        const palette = mockSearchBarProps.current.paletteOverride;
+        for (const key of ['bgCard', 'border', 'shadow', 'textPrimary', 'textSecondary', 'textTertiary', 'bgSecondary', 'accent'] as const) {
+            expect(palette[key]).toBe(library[key]);
+        }
+        expect(palette.bgPrimary).toBe(library.bgPrimary ?? '#FFFFFF');
     });
 
     it('refreshes a submitted short query when filters change', async () => {

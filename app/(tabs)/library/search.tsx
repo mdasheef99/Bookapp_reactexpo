@@ -23,6 +23,7 @@ import { SortOption } from '@/lib/constants';
 import { navigateBackOrFallback } from '@/lib/navigation';
 import { useLibraryTypography } from '@/components/library/LibraryTypography';
 import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { useTheme } from '@/hooks/useTheme';
 import { useBookFeedback } from '@/components/library/ui';
 import { sortSearchResults } from '@/features/books/utils/searchResults';
 
@@ -66,6 +67,9 @@ function SearchBooksScreenContent() {
     const { session } = useAuth();
     const colors = useLibraryAppearance();
     const fonts = useLibraryTypography();
+    const { colors: themeColors } = useTheme();
+    // The shared SearchBar takes a full theme palette; library colours win.
+    const searchPalette = useMemo(() => ({ ...themeColors, ...colors }), [themeColors, colors]);
     const queryClient = useQueryClient();
     const { isOffline } = useNetworkStatus();
     const browserLocation = typeof window !== 'undefined'
@@ -606,6 +610,7 @@ function SearchBooksScreenContent() {
                         loading={loading}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
+                        paletteOverride={searchPalette}
                     />
 
                     {/* Suggestions Dropdown */}
