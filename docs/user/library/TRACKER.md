@@ -1,5 +1,25 @@
 # Library Tracker
 
+**SDD-07 Flow B (Notes) built, reviewed, verified — awaiting owner commit approval — 2026-10-20:** `sdd07_flow_b_awaiting_commit_approval`. Code is **uncommitted** on branch `sdd07/flow-b`, worktree `Bookconnect4_flowa`, base `c92a88e`; docs are on `codex/library-cover-shelf` in `Bookconnect4_library`. Full record: SDD-07 §11, decision D07-18.
+- **Design authority:** the owner delegated Flow B design decisions to the lead on 2026-10-20; finalized as `Bookconnect4_flowa/.spec/FLOWB-DESIGN.md`, reusing Flow A patterns. Approved DP-03 exception: Write note and Scan text are both primary on choose.
+- **What the owner would notice:**
+  - B-1 notes list: plain counts and pending rows, named category radios, unboxed serif passage links instead of cards, skeleton/empty/error/refresh states, and offline-disabled Add note. First-load errors have only Try again primary.
+  - B-2 reader: Back-only header, caption metadata, full selectable serif body, primary Edit, text Copy (also offline/during pending edits), and quiet trailing Delete with a destructive confirmation.
+  - B-3 choose/write: No category plus five inline chips, locked chips disabled, serif input, live 500-word count and quiet overflow feedback, primary Save and text Cancel; offline captions explain disabled Save/Replace, including in the conflict panel.
+- **Built:** B1 reading surfaces/shared UI; B3 journey-assertion migrations, strict lint scope and measured ratchet. Save/coordinator/navigation/history/conflict/pending/delete/capture behavior stays protected; the build reports list the approved presentation-assertion changes. Sources are the six Flow B design/build/review/fix reports in `Bookconnect4_flowa/.spec/`, which is never committed.
+- **Round-1 review and fixes:** Codex F1–F7 all fixed: confirmation-time connectivity, Copy during pending edits, threshold-only overflow announcements, first-load primary count, actual web-dialog name, bounded centered content and stable date tests. Actual reverts fail focused assertions; fixed bytes restored.
+- **Round-2 reviews and fixes:** Codex + DeepSeek v4.1 flash → F8 DOM-focus test for consecutive chip arrows; F9 stable post-Save overflow announcements through edits/repeated Save/clearing at the limit; F10 offline caption inside the conflict panel. All fixed, with actual regression mutations and byte-identical restoration.
+- **Verification evidence:** build/fix reports record component/journey tests, scoped TypeScript and revert checks; native component tests and actual installed RN-web in jsdom cover accessibility behavior. Final totals belong to the lead:
+
+- **Final lead verification (2026-10-20, after fix round 2, worktree `Bookconnect4_flowa`):** full Jest 68/68 suites, 1261/1261 tests PASS (incl. book-section ratchet tests); `tsc -p tsconfig.library-notes.json` 0 errors; whole-project `tsc --noEmit` 36 errors, all pre-existing and none in Flow B files; `npm run lint:library` 1 error (pre-existing `LibraryHeader.tsx:31` react/no-unescaped-entities), 267 warnings, 0 errors in the five Flow B strict files. Round-2 reviews left tracked files unchanged (fingerprint diff hash identical before/after).
+
+- **Validation limits:** browser tests skipped by owner decision; no device/browser screen-reader run. No application tests rerun for this documentation-only unit.
+- **Residual/deferred:** the reader's `unavailable` predicate is inherited unchanged from base and hides cached note content when a background book/note refetch fails. Deferred, outside Flow B scope.
+- **Database/storage mutations:** none. Marketplace Phase 9 Unit 7C/M46, DOC-13/ACTIVE and mutation authority unchanged.
+- **Documentation verification (this worktree):** named Phase 9 continuity validator PASS (195 requirement definitions, zero duplicates/missing traceability, regression probes PASS, 76 Markdown files / 55 required); repository and scoped Library-doc `git diff --check` PASS. Existing document-size notices are advisory.
+- **Session scope:** only this tracker, SDD-07 and its foundation plan edited; uncommitted. Nothing staged, committed, pushed, deployed or applied; unrelated changes preserved.
+- **Next exact action:** owner approves the Flow B commit (code on `sdd07/flow-b`, matching docs on this branch); after that, **Flow C — Capture**, per SDD-07 §6 and the foundation-plan handoff.
+
 **SDD-07 Flow A final PR review and fix round 2 on `sdd07/flow-a` — 2026-10-20:** `library_sdd07_flow_a_fix2_verified`. Follows the Flow A entry below (commit `99a3f3d`). Owner: no PR review happens elsewhere, so this is the full review. Browser re-check skipped on the owner's instruction (code checks only).
 - **Review** (independent, full PR `f568288..99a3f3d`, read-only, in parallel; brief `.spec/FLOWA-FINAL-REVIEW.md`; fingerprint unchanged):
   - Codex `gpt-6.1-sol` xhigh: "FAIL", 12 findings (4 major).
