@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Modal, Platform, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, findNodeHandle, Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LIBRARY_RADIUS, LIBRARY_SPACING, useLibraryAppearance } from './LibraryAppearance';
 import { LIBRARY_TEXT } from './LibraryTypography';
 import { BookButton, BookFeedbackSlot } from './ui';
@@ -38,36 +38,47 @@ export const DeleteBookModal = ({
       accessible
       role="dialog"
       aria-modal
-      accessibilityViewIsModal
-      accessibilityLabel={Platform.OS === 'web' ? title : `${title} ${description}`}
-      aria-describedby={DESCRIPTION_ID}
       onRequestClose={() => { if (!isDeleting) onClose(); }}
-      onShow={() => cancelRef.current?.focus()}
+      onShow={() => {
+        if (Platform.OS === 'web') {
+          cancelRef.current?.focus();
+        } else {
+          const node = findNodeHandle(cancelRef.current);
+          if (node) AccessibilityInfo.setAccessibilityFocus(node);
+        }
+      }}
     >
       <View style={[styles.scrim, { backgroundColor: colors.overlay }]}>
-        <View style={[styles.dialog, { backgroundColor: colors.bgRaised }]}>
-          <BookFeedbackSlot />
-          <Text accessibilityRole="header" style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}>
-            {title}
-          </Text>
-          <Text nativeID={DESCRIPTION_ID} style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>
-            {description}
-          </Text>
-          <View style={styles.buttons}>
-            <BookButton
-              ref={cancelRef}
-              label="Cancel"
-              variant="secondary"
-              disabled={isDeleting}
-              onPress={onClose}
-            />
-            <BookButton
-              label={isDeleting ? 'Removing…' : 'Remove book'}
-              variant="destructive"
-              disabled={isDeleting || disabled}
-              onPress={onConfirm}
-            />
-          </View>
+        <View
+          accessibilityViewIsModal
+          accessibilityLabel={Platform.OS === 'web' ? title : `${title} ${description}`}
+          aria-describedby={DESCRIPTION_ID}
+          style={[styles.dialog, { backgroundColor: colors.bgRaised }]}
+        >
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.dialogContent}>
+            <BookFeedbackSlot />
+            <Text accessibilityRole="header" style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}>
+              {title}
+            </Text>
+            <Text nativeID={DESCRIPTION_ID} style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>
+              {description}
+            </Text>
+            <View style={styles.buttons}>
+              <BookButton
+                ref={cancelRef}
+                label="Cancel"
+                variant="secondary"
+                disabled={isDeleting}
+                onPress={onClose}
+              />
+              <BookButton
+                label={isDeleting ? 'Removing…' : 'Remove book'}
+                variant="destructive"
+                disabled={isDeleting || disabled}
+                onPress={onConfirm}
+              />
+            </View>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -83,9 +94,13 @@ const styles = StyleSheet.create({
   },
   dialog: {
     width: '100%',
+    maxHeight: '90%',
+    alignSelf: 'center',
     maxWidth: DIALOG_MAX_WIDTH,
     borderRadius: LIBRARY_RADIUS.dialog,
     padding: LIBRARY_SPACING.lg,
+  },
+  dialogContent: {
     gap: LIBRARY_SPACING.md,
   },
   buttons: {

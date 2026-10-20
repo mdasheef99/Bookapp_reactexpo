@@ -75,7 +75,7 @@ describe('VaultPagesList', () => {
   });
 
   it('confirms before deleting a page and invalidates vault-pages on confirm', async () => {
-    (userBookPagesService.getPagesForBook as jest.Mock).mockResolvedValue([samplePage]);
+    (userBookPagesService.getPagesForBook as jest.Mock).mockResolvedValueOnce([samplePage]).mockResolvedValue([]);
     (userBookPagesService.deletePage as jest.Mock).mockResolvedValue(undefined);
     const ui = renderList();
     try {
@@ -93,6 +93,8 @@ describe('VaultPagesList', () => {
       fireEvent.press(within(ui.getByTestId('book-confirm-card')).getByRole('button', { name: 'Delete' }));
       await waitFor(() => expect(userBookPagesService.deletePage).toHaveBeenCalledTimes(1));
       expect(userBookPagesService.deletePage).toHaveBeenCalledWith('page-42');
+      await waitFor(() => expect(ui.queryByText('Page 42')).toBeNull());
+      expect(userBookPagesService.getPagesForBook).toHaveBeenCalledTimes(2);
     } finally {
       ui.unmount();
       ui.client.clear();
@@ -112,6 +114,17 @@ describe('VaultPagesList', () => {
       ui.unmount();
       ui.client.clear();
     }
+    (userBookPagesService.deletePage as jest.Mock).mockImplementation(() => new Promise(() => {}));
+    const pendingUi = renderList({ disabled: false });
+    try {
+      await pendingUi.findByText('Page 42');
+      expect(pendingUi.getByRole('button', { name: 'Delete page 42' }).props.accessibilityState.disabled).toBe(false);
+      fireEvent.press(pendingUi.getByRole('button', { name: 'Delete page 42' }));
+      fireEvent.press(within(pendingUi.getByTestId('book-confirm-card')).getByRole('button', { name: 'Delete' }));
+      await waitFor(() => expect(userBookPagesService.deletePage).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(pendingUi.getByRole('button', { name: 'Delete page 42' }).props.accessibilityState.disabled).toBe(true));
+      expect(pendingUi.client.isMutating()).toBe(1);
+    } finally { pendingUi.unmount(); pendingUi.client.clear(); }
   });
 
   it('keeps pages and shows quiet refresh-error line with Try again when refetch fails', async () => {

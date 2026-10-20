@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   act,
@@ -610,6 +610,10 @@ describe('6. Community reviews', () => {
       expect(expanded.getByText('Ralph Emerson')).toBeOnTheScreen();
       expect(expanded.getByText('Quiet and observant.')).toBeOnTheScreen();
       expect(expanded.getByLabelText('Rated 4 of 5')).toBeOnTheScreen();
+      for (const [id, stamp] of [['cr-1', '2026-03-12T09:00:00Z'], ['cr-2', '2026-03-10T09:00:00Z']]) {
+        const date = new Date(stamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        expect(within(ui.getByTestId(`community-review-${id}`)).getByText(date)).toBeOnTheScreen();
+      }
 
       for (const textNode of ui.UNSAFE_getAllByType(Text)) {
         const textContent = Array.isArray(textNode.props.children)
@@ -680,6 +684,34 @@ describe('7. Book information', () => {
 });
 
 describe('8. Remove from library', () => {
+  it.each(['ios', 'web'] as const)('T3 returns focus to Remove from library on %s after Cancel', async os => {
+    const previousOS = Platform.OS;
+    Platform.OS = os;
+    const nativeFocus = jest.spyOn(AccessibilityInfo, 'setAccessibilityFocus').mockImplementation(() => {});
+    const findHandle = jest.spyOn(require('react-native'), 'findNodeHandle').mockReturnValue(42);
+    const ui = renderScreen();
+    try {
+      await ui.findByText('Walden');
+      const trigger = ui.UNSAFE_getAllByType(View).find(node => node.props.accessibilityLabel === 'Remove from library')!.instance;
+      const focus = jest.spyOn(trigger, 'focus');
+      focus.mockClear();
+      fireEvent.press(ui.getByRole('button', { name: 'Remove from library' }));
+      nativeFocus.mockClear();
+      findHandle.mockClear();
+      fireEvent.press(ui.getByRole('button', { name: 'Cancel' }));
+      if (os === 'ios') {
+        expect(findHandle).toHaveBeenCalledWith(trigger);
+        expect(nativeFocus).toHaveBeenCalledWith(42);
+        expect(focus).not.toHaveBeenCalled();
+      } else {
+        expect(focus).toHaveBeenCalledTimes(1);
+        expect(nativeFocus).not.toHaveBeenCalled();
+        expect(findHandle).not.toHaveBeenCalled();
+      }
+      expect(ui.getByTestId('book-page').props.importantForAccessibility).toBe('auto');
+    } finally { ui.unmount(); ui.client.clear(); Platform.OS = previousOS; }
+  });
+
   it('opens D07-14 dialog, hides page behind, cancels without deleting, confirms once, and disables offline', async () => {
     const previousOS = Platform.OS;
     Platform.OS = 'web';
@@ -827,6 +859,81 @@ describe('11. Flow A choice radio integration', () => {
   });
 });
 // Fix-round regressions are separate from the brief A/B/C assertions above.
+describe('Flow A fix round 2', () => {
+  it('T1 settles a status write into its originating book after navigation', async () => {
+    const params = jest.spyOn(require('expo-router'), 'useLocalSearchParams');
+    params.mockReturnValue({ bookId: 'user-book-1' });
+    let finish!: () => void;
+    (booksService.updateReadingStatus as jest.Mock).mockImplementation(() => new Promise<void>(resolve => { finish = resolve; }));
+    const ui = renderScreen();
+    try {
+      await ui.findByText('Walden');
+      (booksService.getBookDetails as jest.Mock).mockImplementation(() => new Promise(() => {}));
+      act(() => { void ui.client.refetchQueries({ queryKey: ['book', 'reader-1', 'user-book-1'] }); });
+      fireEvent.press(ui.getByRole('radio', { name: 'Finished' }));
+      await waitFor(() => expect(booksService.updateReadingStatus).toHaveBeenCalledWith('user-book-1', 'completed'));
+      act(() => { ui.client.setQueryData(['book', 'reader-1', 'user-book-2'], makeBook({ id: 'user-book-2', book: { title: 'Dune' } })); });
+      params.mockReturnValue({ bookId: 'user-book-2' });
+      ui.rerender(<QueryClientProvider client={ui.client}><BookDetailScreen /></QueryClientProvider>);
+      await ui.findByText('Dune');
+      await act(async () => { finish(); });
+      await waitFor(() => expect(ui.client.isMutating()).toBe(0));
+      expect(ui.client.getQueryData<any>(['book', 'reader-1', 'user-book-1']).reading_status).toBe('completed');
+      expect(ui.client.getQueryData<any>(['book', 'reader-1', 'user-book-2']).reading_status).toBe('reading');
+      expect(ui.getByRole('radio', { name: 'Reading' }).props.accessibilityState.checked).toBe(true);
+    } finally { ui.unmount(); ui.client.clear(); }
+  });
+
+  it.each(['user', 'book'])('T1 ignores a late status error after the %s changes', async identity => {
+    const params = jest.spyOn(require('expo-router'), 'useLocalSearchParams');
+    params.mockReturnValue({ bookId: 'user-book-1' });
+    let reject!: (error: Error) => void;
+    (booksService.updateReadingStatus as jest.Mock).mockImplementation(() => new Promise((_, fail) => { reject = fail; }));
+    const ui = renderScreen();
+    try {
+      await ui.findByText('Walden');
+      fireEvent.press(ui.getByRole('radio', { name: 'Finished' }));
+      await waitFor(() => expect(booksService.updateReadingStatus).toHaveBeenCalled());
+      (booksService.getBookDetails as jest.Mock).mockImplementation(() => new Promise(() => {}));
+      if (identity === 'user') {
+        act(() => {
+          ui.client.setQueryData(['book', 'reader-2', 'user-book-1'], makeBook({ user_id: 'reader-2' }));
+          useAuthStore.setState({ session: { user: { id: 'reader-2' }, access_token: 'token-2' } as any });
+        });
+      } else {
+        act(() => { ui.client.setQueryData(['book', 'reader-1', 'user-book-2'], makeBook({ id: 'user-book-2' })); });
+        params.mockReturnValue({ bookId: 'user-book-2' });
+        ui.rerender(<QueryClientProvider client={ui.client}><BookDetailScreen /></QueryClientProvider>);
+      }
+      await act(async () => { reject(new Error('old status write failed')); });
+      await waitFor(() => expect(ui.client.isMutating()).toBe(0));
+      expect(mockNotify).not.toHaveBeenCalled();
+      expect(ui.getByRole('radio', { name: 'Reading' }).props.accessibilityState.checked).toBe(true);
+    } finally { ui.unmount(); ui.client.clear(); }
+  });
+
+  it('T2 retries a rejected collapse save after reopening without another edit', async () => {
+    (bookReviewService.update as jest.Mock).mockRejectedValueOnce(new Error('review down'));
+    const ui = renderScreen();
+    try {
+      await ui.findByText('Walden');
+      fireEvent.press(ui.getByTestId('book-row-review'));
+      fireEvent.changeText(ui.getByTestId('library-review-input'), 'Q');
+      fireEvent.press(ui.getByTestId('book-row-review'));
+      await flush();
+      await waitFor(() => expect(ui.client.isMutating()).toBe(0));
+      expect(bookReviewService.update).toHaveBeenCalledTimes(1);
+      expect(mockNotify).toHaveBeenCalledWith({ kind: 'error', message: 'review down' });
+      fireEvent.press(ui.getByTestId('book-row-review'));
+      expect(ui.getByTestId('library-review-input').props.value).toBe('Q');
+      fireEvent.press(ui.getByTestId('book-row-review'));
+      await flush();
+      await waitFor(() => expect(bookReviewService.update).toHaveBeenCalledTimes(2));
+      expect(bookReviewService.update).toHaveBeenNthCalledWith(2, expect.anything(), 'user-book-1', { review: 'Q' });
+    } finally { ui.unmount(); ui.client.clear(); }
+  });
+});
+
 describe('Flow A fix round 1', () => {
   function busyControl(host: ReturnType<ReturnType<typeof renderScreen>['getByRole']>) {
     // Native Pressable consumes aria-*; like radioControl, inspect the ancestor carrying the web prop.

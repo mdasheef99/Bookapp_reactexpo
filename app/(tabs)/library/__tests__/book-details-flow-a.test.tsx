@@ -1,7 +1,7 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, waitFor, within } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import BookDetailScreen from '../[bookId]';
 import { getLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -250,6 +250,7 @@ describe('notes states', () => {
     try {
       await ui.findByText('Walden');
       const loading = await ui.findByText('Loading notes…');
+      expect(ui.UNSAFE_queryAllByType(ActivityIndicator)).toHaveLength(0);
       expect(loading.props.accessibilityLiveRegion).toBe('polite');
       expect(ui.queryByText('No notes yet.')).toBeNull();
     } finally {
@@ -535,6 +536,31 @@ function controlsUpToPrimary(ui: ReturnType<typeof renderScreen>) {
 }
 
 describe('DP-01 focus order', () => {
+  it('T6 keeps at most 4 controls before Add note when book and notes refetches both fail', async () => {
+    (booksService.getBookDetails as jest.Mock).mockResolvedValue(makeBook());
+    (manualNotesGateway.list as jest.Mock).mockResolvedValue([makeNote('n1', '2026-10-14T12:00:00Z')]);
+    const ui = renderScreen();
+    try {
+      await ui.findByText('Walden');
+      await ui.findByTestId('book-note-n1-meta');
+      (booksService.getBookDetails as jest.Mock).mockRejectedValue(new Error('book refresh down'));
+      (manualNotesGateway.list as jest.Mock).mockRejectedValue(new Error('notes refresh down'));
+      await act(async () => {
+        await Promise.all([
+          ui.client.refetchQueries({ queryKey: ['book', 'reader-1', 'user-book-1'] }),
+          ui.client.refetchQueries({ queryKey: ['notes', 'reader-1', 'user-book-1'] }),
+        ]);
+      });
+      await ui.findByText("Couldn't refresh.");
+      await ui.findByText("Couldn't refresh notes.");
+      expect(ui.getByTestId('book-note-n1-meta')).toBeTruthy();
+      const controls = controlsUpToPrimary(ui);
+      expect(controls.length).toBeLessThanOrEqual(4);
+      expect(controls).toEqual(['Back to Library', 'radiogroup', 'Try again', 'Add note']);
+      expect(ui.getAllByRole('button', { name: 'Try again' })).toHaveLength(2);
+    } finally { ui.unmount(); ui.client.clear(); }
+  });
+
   it('populated has 3 focusables up to Add note: Back, status group, Add note', async () => {
     (booksService.getBookDetails as jest.Mock).mockResolvedValue(makeBook());
     (manualNotesGateway.list as jest.Mock).mockResolvedValue([makeNote('n1', '2026-10-14T12:00:00Z')]);

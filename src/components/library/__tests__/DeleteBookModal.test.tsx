@@ -1,6 +1,6 @@
 import React from 'react';
-import { Modal, Platform, StyleSheet, View } from 'react-native';
-import { fireEvent, render } from '@testing-library/react-native';
+import { AccessibilityInfo, Modal, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { fireEvent, render, within } from '@testing-library/react-native';
 import { DeleteBookModal } from '../DeleteBookModal';
 import { BookButton, BookFeedbackProvider } from '../ui';
 import { getLibraryAppearance, MIN_TARGET } from '../LibraryAppearance';
@@ -43,11 +43,11 @@ describe('DeleteBookModal', () => {
       expect(body.props.nativeID).toBeTruthy();
 
       const modal = ui.UNSAFE_getAllByType(Modal).find((m) => m.props.role === 'dialog')!;
-      expect(modal.props.accessibilityViewIsModal).toBe(true);
       expect(modal.props['aria-modal']).toBe(true);
       expect(modal.props.role).toBe('dialog');
-      expect(modal.props.accessibilityLabel).toBe(title);
-      expect(modal.props['aria-describedby']).toBe(body.props.nativeID);
+      const dialog = ui.UNSAFE_root.find((node: any) => node.type === 'View' && node.props.accessibilityViewIsModal === true);
+      expect(dialog.props.accessibilityLabel).toBe(title);
+      expect(dialog.props['aria-describedby']).toBe(body.props.nativeID);
 
       const buttons = ui.UNSAFE_getAllByType(BookButton);
       const cancelBtn = buttons.find((b) => b.props.label === 'Cancel')!;
@@ -65,29 +65,62 @@ describe('DeleteBookModal', () => {
     }
   });
 
-  it('includes title and body in native dialog accessibilityLabel', () => {
+  it('T5 puts the native dialog label and description association on a rendered host', () => {
     const previousOS = Platform.OS;
     Platform.OS = 'ios';
     try {
       const ui = renderModal({ bookTitle: 'Walden' });
-      const modal = ui.UNSAFE_getAllByType(Modal).find((m) => m.props.role === 'dialog')!;
-      expect(modal.props.accessibilityLabel).toBe(
+      const dialog = ui.UNSAFE_root.find((node: any) => node.type === 'View' && node.props.accessibilityViewIsModal === true);
+      expect(dialog.props.accessibilityLabel).toBe(
         `Remove “Walden” from your library? ${description}`,
       );
+      expect(dialog.props['aria-describedby']).toBe(ui.getByText(description).props.nativeID);
+      expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeOnTheScreen();
+      expect(within(dialog).getByRole('button', { name: 'Remove book' })).toBeOnTheScreen();
     } finally {
       Platform.OS = previousOS;
     }
   });
 
-  it('focuses the Cancel button on show via its ref', () => {
-    const ui = renderModal();
-    const cancelNode = ui
-      .UNSAFE_getAllByType(View)
-      .find((node) => node.props.accessibilityLabel === 'Cancel')!.instance;
-    const focusSpy = jest.spyOn(cancelNode, 'focus');
-    const modal = ui.UNSAFE_getAllByType(Modal).find((m) => m.props.role === 'dialog')!;
-    fireEvent(modal, 'show');
-    expect(focusSpy).toHaveBeenCalledTimes(1);
+  it.each(['ios', 'web'] as const)('T3 focuses Cancel on show using the %s focus API', os => {
+    const previousOS = Platform.OS;
+    Platform.OS = os;
+    const nativeFocus = jest.spyOn(AccessibilityInfo, 'setAccessibilityFocus').mockImplementation(() => {});
+    const findHandle = jest.spyOn(require('react-native'), 'findNodeHandle').mockReturnValue(42);
+    try {
+      const ui = renderModal();
+      const cancelNode = ui.UNSAFE_getAllByType(View).find(node => node.props.accessibilityLabel === 'Cancel')!.instance;
+      const focus = jest.spyOn(cancelNode, 'focus');
+      focus.mockClear();
+      nativeFocus.mockClear();
+      findHandle.mockClear();
+      const modal = ui.UNSAFE_getAllByType(Modal).find(m => m.props.role === 'dialog')!;
+      fireEvent(modal, 'show');
+      if (os === 'ios') {
+        expect(findHandle).toHaveBeenCalledWith(cancelNode);
+        expect(nativeFocus).toHaveBeenCalledWith(42);
+        expect(focus).not.toHaveBeenCalled();
+      } else {
+        expect(focus).toHaveBeenCalledTimes(1);
+        expect(nativeFocus).not.toHaveBeenCalled();
+        expect(findHandle).not.toHaveBeenCalled();
+      }
+    } finally { Platform.OS = previousOS; jest.restoreAllMocks(); }
+  });
+
+  it.each(['Walden', 'The Life and Opinions of Tristram Shandy, Gentleman'])('T4 bounds and scrolls the dialog for %s with both actions reachable', bookTitle => {
+    const ui = renderModal({ bookTitle });
+    const header = ui.getByRole('header', { name: `Remove “${bookTitle}” from your library?` });
+    let dialog = header.parent;
+    while (dialog && StyleSheet.flatten(dialog.props.style)?.maxWidth === undefined) dialog = dialog.parent;
+    expect(dialog).not.toBeNull();
+    expect(StyleSheet.flatten(dialog!.props.style)).toMatchObject({ maxHeight: '90%', width: '100%', alignSelf: 'center' });
+    const scroll = dialog!.findByType(ScrollView);
+    expect(scroll.props.keyboardShouldPersistTaps).toBe('handled');
+    expect(within(scroll).getByRole('header', { name: `Remove “${bookTitle}” from your library?` })).toBeOnTheScreen();
+    expect(within(scroll).getByText(description)).toBeOnTheScreen();
+    expect(within(scroll).getByRole('button', { name: 'Cancel' })).toBeOnTheScreen();
+    expect(within(scroll).getByRole('button', { name: 'Remove book' })).toBeOnTheScreen();
   });
 
   it('shows "Removing…" and disables both buttons while isDeleting is true', () => {

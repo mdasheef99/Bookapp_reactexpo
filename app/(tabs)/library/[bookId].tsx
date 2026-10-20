@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, useId } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Platform, AccessibilityInfo, findNodeHandle } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient, useMutationState } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -107,7 +107,12 @@ export default function BookDetailScreen() {
     const wasDeleteOpen = useRef(showDeleteModal);
     useEffect(() => {
         if (wasDeleteOpen.current && !showDeleteModal) {
-            removeTrigger.current?.focus();
+            if (Platform.OS === 'web') {
+                removeTrigger.current?.focus();
+            } else {
+                const node = findNodeHandle(removeTrigger.current);
+                if (node) AccessibilityInfo.setAccessibilityFocus(node);
+            }
         }
         wasDeleteOpen.current = showDeleteModal;
     }, [showDeleteModal]);
@@ -212,13 +217,16 @@ export default function BookDetailScreen() {
     // --- Mutations ---
 
     const updateStatusMutation = useMutation({
-        mutationFn: (status: ReadingStatus) => booksService.updateReadingStatus(bookId!, status),
-        onSuccess: (_data, status) => {
-            queryClient.setQueryData<typeof userBook>(['book', user?.id, bookId], (prev: typeof userBook) => prev ? { ...prev, reading_status: status } : prev);
-            setOptimisticStatus(null);
-            invalidateQueries();
+        mutationFn: ({ status, entryId }: { status: ReadingStatus; userId: string | undefined; entryId: string }) => booksService.updateReadingStatus(entryId, status),
+        onSuccess: (_data, { status, userId, entryId }) => {
+            const key = ['book', userId, entryId];
+            queryClient.setQueryData<typeof userBook>(key, (prev: typeof userBook) => prev ? { ...prev, reading_status: status } : prev);
+            if (userId === user?.id && entryId === bookId) setOptimisticStatus(null);
+            queryClient.invalidateQueries({ queryKey: ['library'] });
+            queryClient.invalidateQueries({ queryKey: key });
         },
-        onError: () => {
+        onError: (_error, { userId, entryId }) => {
+            if (userId !== user?.id || entryId !== bookId) return;
             setOptimisticStatus(null);
             notify({ kind: 'error', message: "Couldn't update reading status." });
         },
@@ -304,15 +312,18 @@ export default function BookDetailScreen() {
     const handleStatusChange = useCallback((val: ReadingStatus) => {
         if (!userBook || val === userBook.reading_status) return;
         setOptimisticStatus(val);
-        updateStatusMutation.mutate(val);
-    }, [userBook, updateStatusMutation]);
+        updateStatusMutation.mutate({ status: val, userId: user?.id, entryId: bookId });
+    }, [userBook, updateStatusMutation, user?.id, bookId]);
 
     const toggleRow = (id: keyof OpenRowsState) => {
         setOpenRows((prev) => ({ ...prev, [id]: !prev[id] }));
     };
 
     const handleToggleReview = () => {
-        if (openRows.review && reviewDraft.current.dirty && reviewDraft.current.textRequest === '' && !isOffline) {
+        // Blur can submit before useMutationState has rendered its pending snapshot.
+        const textRequestPending = queryClient.getMutationCache().findAll({ mutationKey: reviewMutationKey, exact: true, status: 'pending' })
+            .some(write => (write.state.variables as ReviewSubmission | undefined)?.requestId === reviewDraft.current.textRequest);
+        if (openRows.review && reviewDraft.current.dirty && !textRequestPending && !isOffline) {
             handleSaveReview();
         }
         setOpenRows((prev) => ({ ...prev, review: !prev.review }));
@@ -356,12 +367,6 @@ export default function BookDetailScreen() {
                     {backHeader}
                     <ScrollView contentContainerStyle={topStyles.content}>
                         {isOffline && <BookOffline message="Offline · Showing saved content." />}
-                        {bookIsError && (
-                            <View style={topStyles.refreshNotice}>
-                                <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>Couldn&apos;t refresh.</Text>
-                                <BookButton label="Try again" variant="text" onPress={() => { void refetchBook(); }} />
-                            </View>
-                        )}
                         <BookCover title={book.title} authors={book.authors ?? []} coverUrl={book.cover_url} />
                         <StatusSelector status={displayedStatus} onChange={handleStatusChange} disabled={statusDisabled} busy={statusPending} />
                         <NotePassages notes={notes} isPending={notesLoading} isError={notesError} onRetry={() => { void refetchNotes(); }} />
@@ -373,6 +378,13 @@ export default function BookDetailScreen() {
                             )}
                             <BookButton label="Add note" variant="primary" disabled={isOffline} onPress={() => openNoteComposer(router, user!.id, bookId, 'book')} />
                         </View>
+
+                        {bookIsError && (
+                            <View style={topStyles.refreshNotice}>
+                                <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>Couldn&apos;t refresh.</Text>
+                                <BookButton label="Try again" variant="text" onPress={() => { void refetchBook(); }} />
+                            </View>
+                        )}
 
                         <View style={topStyles.rows}>
                             {notes && notes.length > 0 && (

@@ -295,13 +295,23 @@ it('retains the exact original reader after a reopened edit retries, becomes unc
 }, 15000);
 it('hides Saved Pages when loading fails without data or when the list is empty', async () => {
   (userBookPagesService.getPagesForBook as jest.Mock).mockRejectedValueOnce(new Error('Offline'));
-  render(wrap(<VaultPagesList userBookId="book" />));
+  render(wrap(<View testID="saved-pages-region"><VaultPagesList userBookId="book" /></View>));
   await waitFor(() => expect(userBookPagesService.getPagesForBook).toHaveBeenCalledTimes(1));
   await settle();
+  await waitFor(() => expect(client.getQueryState(['vault-pages', 'book'])?.status).toBe('error'));
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
+  const region = within(screen.getByTestId('saved-pages-region'));
+  expect(region.queryAllByText(/./)).toHaveLength(0);
+  expect(region.queryAllByRole('button')).toHaveLength(0);
   expect(screen.queryByText(/No saved pages/)).toBeNull();
   expect(screen.queryByText(/NoteEditor|Save to Vault/)).toBeNull();
   (userBookPagesService.getPagesForBook as jest.Mock).mockResolvedValue([]);
   await act(async () => { await client.refetchQueries({ queryKey: ['vault-pages', 'book'] }); });
+  await waitFor(() => expect(client.getQueryState(['vault-pages', 'book'])?.status).toBe('success'));
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
+  expect(client.getQueryData(['vault-pages', 'book'])).toEqual([]);
+  expect(region.queryAllByText(/./)).toHaveLength(0);
+  expect(region.queryAllByRole('button')).toHaveLength(0);
   expect(screen.queryByText(/No saved pages/)).toBeNull();
   expect(screen.queryByText(/NoteEditor|Save to Vault/)).toBeNull();
 });
